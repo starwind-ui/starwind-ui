@@ -10,7 +10,7 @@ import type {
   AdapterOutputModel,
   AdapterPrintedFile,
 } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueOptionCollectionOverlayIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "option-collection-overlay");
@@ -141,8 +141,7 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   if (!openModel.event.cancelable || !valueModel.event.cancelable) {
     throw new TypeError(`Vue ${facts.displayName} projection requires cancelable model events.`);
   }
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-${printContextModule(facts)}
+  return `${printContextModule(facts)}
 <script setup lang="ts">
 import {
   ${runtime.factory},
@@ -487,8 +486,7 @@ onBeforeUnmount(() => {
 
 function printTrigger(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.trigger;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
@@ -523,8 +521,7 @@ defineExpose({ element: triggerRef });
 
 function printValue(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.value;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
@@ -554,8 +551,7 @@ defineExpose({ element: valueRef });
 
 function printPortal(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.portal;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
@@ -618,8 +614,7 @@ function printFloatingPart(
   const alignItemAttribute = isPopup
     ? ""
     : `\n    :${facts.attrs.alignItemWithTrigger}="props.${facts.props.alignItemWithTrigger.name} ? 'true' : 'false'"`;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
@@ -669,8 +664,7 @@ defineExpose({ element: elementRef });
 function printItem(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.item;
   const identity = facts.collection.itemIdentity;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { computed, provide, ref } from "vue";
 import {
   ${facts.context.itemContext},
@@ -711,8 +705,7 @@ defineExpose({ element: itemRef });
 
 function printItemIndicator(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.itemIndicator;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { computed, ref } from "vue";
 import {
   ${facts.context.useRootContext},
@@ -770,8 +763,7 @@ function printSimplePart(
 ): string {
   const part = facts.parts[partName];
   const htmlType = getElementType(part.defaultElement);
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

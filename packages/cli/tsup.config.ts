@@ -10,7 +10,4 @@ export default defineConfig((options) => ({
   keepNames: true,
   target: "esnext",
   outDir: "dist",
-  // banner: {
-  //   js: "#!/usr/bin/env node",
-  // },
 }));

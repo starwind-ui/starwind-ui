@@ -13,7 +13,6 @@
       "!**/vendor/**",
       "!.local/**",
       "!scripts/portable-runtime/docs/layered-docs/generated/**",
-      "!**/vendor/**",
       "!**/build/**",
       "!**/.astro/**",
       "!**/.wrangler/**",

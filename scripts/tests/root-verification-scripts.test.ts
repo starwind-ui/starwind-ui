@@ -160,7 +160,7 @@ describe("root verification scripts", () => {
       "pnpm react-demo:smoke",
       "pnpm vue-demo:smoke",
       "pnpm runtime:size:check:prepared",
-      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:check"] : []),
+      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:evidence:check"] : []),
       "pnpm release:candidate:acceptance",
     ]);
     expect(pkg.scripts?.["runtime:size:check:prepared"]).toContain("--private-vue");
@@ -294,6 +294,39 @@ describe("root verification scripts", () => {
         }),
       ]),
     );
+    expect(verifyWorkflow.jobs["build-drift"]).toMatchObject({
+      env: {
+        STARWIND_MEASUREMENT_TMP_ROOT: "${{ runner.temp }}/starwind-measurements",
+      },
+      steps: expect.arrayContaining([
+        expect.objectContaining({
+          name: "Check CLI package size",
+          run: "pnpm --filter=starwind package:check",
+        }),
+        expect.objectContaining({
+          name: "Check prepared Astro demo bundles",
+          run: "node scripts/portable-runtime/assert-astro-demo-bundles.mjs",
+        }),
+        expect.objectContaining({
+          if: "github.event.repository.private",
+          name: "Validate saved Vue performance evidence",
+          run: "pnpm runtime:perf:vue:evidence:check",
+        }),
+        expect.objectContaining({
+          name: "Check prepared package sizes",
+          run: "pnpm runtime:size:check:prepared",
+        }),
+        expect.objectContaining({
+          if: "failure()",
+          name: "Upload package-size failure diagnostics",
+          uses: "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f",
+          with: expect.objectContaining({
+            "if-no-files-found": "ignore",
+            path: expect.stringContaining("starwind-package-size-comparison/run-*/raw-evidence"),
+          }),
+        }),
+      ]),
+    });
     const browserInstallSteps = Object.values(verifyWorkflow.jobs).flatMap(({ steps = [] }) =>
       steps.filter(({ name }) => name === "Install Playwright Chromium"),
     );

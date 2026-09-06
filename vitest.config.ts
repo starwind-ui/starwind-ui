@@ -36,12 +36,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "cli",
-          include: [
-            "packages/cli/src/**/*.test.ts",
-            "packages/cli/src/**/*.spec.ts",
-            "packages/cli/tests/**/*.test.ts",
-            "packages/cli/tests/**/*.spec.ts",
-          ],
+          include: ["packages/cli/tests/**/*.test.ts", "packages/cli/tests/**/*.spec.ts"],
         },
       },
       {

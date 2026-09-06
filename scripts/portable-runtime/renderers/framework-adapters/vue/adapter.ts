@@ -4,16 +4,25 @@ import {
   normalizeHtmlAttributeName,
 } from "../future-readiness.js";
 import type { FrameworkAdapter } from "../types.js";
-import {
-  projectVueDetailedEvent,
-  projectVueModel,
-  vueAdapterPublicContract,
-} from "./public-contract.js";
 import { printVueActionSurfaceComponent, printVueActionSurfaceIndex } from "./action-surface.js";
+import {
+  isVueAnchoredMenuOverlayOutput,
+  printVueAnchoredMenuOverlayOutput,
+} from "./anchored-menu-overlay.js";
 import {
   printVueBooleanFormControlComponent,
   printVueBooleanFormControlIndex,
 } from "./boolean-form-control.js";
+import {
+  printVueColorPickerComponent,
+  printVueColorPickerIndex,
+  type VueColorPickerComponentProjection,
+  type VueColorPickerIndexProjection,
+} from "./color-picker.js";
+import {
+  isVueCompositeMenuOverlayOutput,
+  printVueCompositeMenuOverlayOutput,
+} from "./composite-menu-overlay.js";
 import {
   printVueControlledValuePresenceComponent,
   printVueControlledValuePresenceIndex,
@@ -23,9 +32,11 @@ import {
   printVueDisclosurePresenceIndex,
 } from "./disclosure-presence.js";
 import {
-  printVueFormFieldCoordinatorComponent,
-  printVueFormFieldCoordinatorIndex,
-} from "./form-field-coordinator.js";
+  isVueEditableCollectionOverlayOutput,
+  printVueEditableCollectionOverlayOutput,
+} from "./editable-collection-overlay.js";
+import { printVueEngineViewportComponent, printVueEngineViewportIndex } from "./engine-viewport.js";
+import { printVueIndexFile, printVueNamespaceExport, printVueTypeFacadeFile } from "./exports.js";
 import {
   printVueFieldCompositionComponent,
   printVueFieldCompositionIndex,
@@ -34,18 +45,10 @@ import {
   printVueFileDropControlComponent,
   printVueFileDropControlIndex,
 } from "./file-drop-control.js";
-import { printVueEngineViewportComponent, printVueEngineViewportIndex } from "./engine-viewport.js";
 import {
-  printVueColorPickerComponent,
-  printVueColorPickerIndex,
-  type VueColorPickerComponentProjection,
-  type VueColorPickerIndexProjection,
-} from "./color-picker.js";
-import {
-  printVueSidebarComponent,
-  printVueSidebarContext,
-  printVueSidebarIndex,
-} from "./sidebar.js";
+  printVueFormFieldCoordinatorComponent,
+  printVueFormFieldCoordinatorIndex,
+} from "./form-field-coordinator.js";
 import {
   printVueGroupedValueControlComponent,
   printVueGroupedValueControlHelper,
@@ -61,58 +64,52 @@ import {
   printVueNativeInputValueComponent,
   printVueNativeInputValueIndex,
 } from "./native-input-value.js";
-import {
-  isVueOptionCollectionOverlayOutput,
-  printVueOptionCollectionOverlayIndex,
-  printVueOptionCollectionOverlayOutput,
-} from "./option-collection-overlay.js";
-import {
-  isVueEditableCollectionOverlayOutput,
-  printVueEditableCollectionOverlayOutput,
-} from "./editable-collection-overlay.js";
-import {
-  isVueCompositeMenuOverlayOutput,
-  printVueCompositeMenuOverlayOutput,
-} from "./composite-menu-overlay.js";
-import {
-  isVueAnchoredMenuOverlayOutput,
-  printVueAnchoredMenuOverlayOutput,
-} from "./anchored-menu-overlay.js";
-import {
-  isVueSharedViewportNavigationOutput,
-  printVueSharedViewportNavigationOutput,
-} from "./shared-viewport-navigation.js";
 import { printVueNativeOverlayComponent, printVueNativeOverlayIndex } from "./native-overlay.js";
 import {
   printVueNotificationSystemComponent,
   printVueNotificationSystemIndex,
 } from "./notification-system.js";
 import {
+  isVueOptionCollectionOverlayOutput,
+  printVueOptionCollectionOverlayIndex,
+  printVueOptionCollectionOverlayOutput,
+} from "./option-collection-overlay.js";
+import {
   printVuePresenceFloatingOverlayComponent,
   printVuePresenceFloatingOverlayIndex,
 } from "./presence-floating-overlay.js";
 import {
-  printVueTimedFloatingOverlayComponent,
-  printVueTimedFloatingOverlayIndex,
-} from "./timed-floating-overlay.js";
-import { printVueRangeStatusComponent, printVueRangeStatusIndex } from "./range-status.js";
+  projectVueDetailedEvent,
+  projectVueModel,
+  vueAdapterPublicContract,
+} from "./public-contract.js";
 import { printVueRangeControlComponent, printVueRangeControlIndex } from "./range-control.js";
+import { printVueRangeStatusComponent, printVueRangeStatusIndex } from "./range-status.js";
 import {
   printVueRepeatedDisclosureComponent,
   printVueRepeatedDisclosureIndex,
 } from "./repeated-disclosure.js";
 import {
+  isVueSharedViewportNavigationOutput,
+  printVueSharedViewportNavigationOutput,
+} from "./shared-viewport-navigation.js";
+import {
+  printVueSidebarComponent,
+  printVueSidebarContext,
+  printVueSidebarIndex,
+} from "./sidebar.js";
+import {
   printVueSingleBooleanControlComponent,
   printVueSingleBooleanControlIndex,
 } from "./single-boolean-control.js";
 import {
+  printVueTimedFloatingOverlayComponent,
+  printVueTimedFloatingOverlayIndex,
+} from "./timed-floating-overlay.js";
+import {
   printVueViewportMeasurementComponent,
   printVueViewportMeasurementIndex,
 } from "./viewport-measurement.js";
-import { printVueIndexFile, printVueNamespaceExport, printVueTypeFacadeFile } from "./exports.js";
-
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
 
 export const vueFrameworkAdapterReadiness = defineFrameworkAdapterReadiness({
   booleanAttributeStrategy: "vue-bound-attribute",
@@ -309,7 +306,7 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
       return printVueGroupedValueControlHelper(file);
     }
     return {
-      contents: `// ${NON_SHIPPING_COMMENT}\nexport function ${file.name}(value?: string) {\n  ${file.body.code}\n}\n`,
+      contents: `export function ${file.name}(value?: string) {\n  ${file.body.code}\n}\n`,
       path: file.path,
     };
   },
@@ -405,7 +402,7 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
   },
   printTypeFacadeFile(file) {
     return {
-      contents: `// ${NON_SHIPPING_COMMENT}\n${printVueTypeFacadeFile(file)}\n`,
+      contents: `${printVueTypeFacadeFile(file)}\n`,
       path: file.path,
     };
   },
@@ -512,8 +509,7 @@ function printVueComponent(component: VueComponent): string {
     ? "defineExpose({\n  element: rootRef,\n});"
     : "";
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 ${imports}
 import { createVueAsChild } from "../_internal/as-child";
 import {
@@ -681,7 +677,7 @@ function printVueEventHandlers(
   }>,
 ): string {
   return eventFacts
-    .map(({ detailed, event, state }) => {
+    .map(({ detailed, state }) => {
       const pascalName = capitalize(state.prop.name);
       return `function handle${pascalName}Change(...[value, detail]: VueRuntimeEventBridge["${detailed.emit}"]): void {
   emit("${detailed.emit}", value, detail);

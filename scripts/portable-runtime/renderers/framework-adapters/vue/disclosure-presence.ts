@@ -3,7 +3,7 @@ import { projectVueAttributeAccess } from "./public-contract.js";
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueDisclosurePresenceIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "disclosure-presence");
@@ -41,8 +41,7 @@ function printRoot(
   const open = facts.props.open.name;
   const setterOptions = printOptions(facts.setter.options);
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import {
   type ${facts.event.detailsType},
   ${facts.runtime.factory},
@@ -161,8 +160,7 @@ function printTrigger(
     { kind: "disclosure-presence" }
   >["facts"],
 ): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { defineComponent, ref, useAttrs, type VNode } from "vue";
 import { createVueAsChild } from "../_internal/as-child";
 
@@ -225,8 +223,7 @@ function printPanel(
     { kind: "disclosure-presence" }
   >["facts"],
 ): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

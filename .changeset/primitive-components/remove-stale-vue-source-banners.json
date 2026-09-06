@@ -1,0 +1,28 @@
+{
+  "impact": "source",
+  "primitives": {
+    "accordion": "patch",
+    "alert-dialog": "patch",
+    "avatar": "patch",
+    "button": "patch",
+    "checkbox": "patch",
+    "collapsible": "patch",
+    "dialog": "patch",
+    "drawer": "patch",
+    "field": "patch",
+    "fieldset": "patch",
+    "form": "patch",
+    "input": "patch",
+    "menu": "patch",
+    "popover": "patch",
+    "preview-card": "patch",
+    "progress": "patch",
+    "radio": "patch",
+    "scroll-area": "patch",
+    "select": "patch",
+    "switch": "patch",
+    "tabs": "patch",
+    "toggle": "patch",
+    "tooltip": "patch"
+  }
+}

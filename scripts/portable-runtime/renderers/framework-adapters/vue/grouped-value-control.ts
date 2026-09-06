@@ -9,7 +9,6 @@ import type {
   AdapterIndexFile,
   AdapterPrintedFile,
 } from "../types.js";
-import { VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 import { projectVueModel } from "./public-contract.js";
 
 export function printVueGroupedValueControlComponent(
@@ -46,8 +45,7 @@ export function printVueGroupedValueControlHelper(file: AdapterHelperFile): Adap
 );`;
 
   return {
-    contents: `// ${VUE_NON_SHIPPING_COMMENT}
-import type { ${state.type} } from "${runtime.importSource}";
+    contents: `import type { ${state.type} } from "${runtime.importSource}";
 import { type InjectionKey, inject, type Ref } from "vue";
 
 export type ${context.typeName} = Readonly<{
@@ -78,8 +76,7 @@ export { ${context.componentName}, ${context.hookName} } from "./${context.compo
     : "";
 
   return {
-    contents: `// ${VUE_NON_SHIPPING_COMMENT}
-import ${exports.root} from "./${exports.root}.vue";
+    contents: `import ${exports.root} from "./${exports.root}.vue";
 
 const ${exports.namespace} = {
   Root: ${exports.root},
@@ -145,8 +142,7 @@ function printVueNormalizedGroupedValueRoot(
   const model = projectVueModel(facts.state.name);
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
   type ${facts.state.type},
@@ -377,8 +373,7 @@ function printVueArrayGroupedValueRoot(
   const model = projectVueModel(facts.state.name);
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import {
   type ${facts.state.type},
   type ${facts.event.detailsType},
@@ -599,8 +594,7 @@ function printVueScalarGroupedValueRoot(
   const model = projectVueModel(facts.state.name);
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
   type ${facts.state.type},

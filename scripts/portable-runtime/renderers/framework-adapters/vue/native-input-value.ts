@@ -3,7 +3,7 @@ import { projectVueAttributeAccess } from "./public-contract.js";
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueNativeInputValueIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "native-input-value");
@@ -24,8 +24,7 @@ export function printVueNativeInputValueComponent(file: AdapterComponentFile): A
   const value = facts.props.value.name;
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
   type ${facts.props.value.type},

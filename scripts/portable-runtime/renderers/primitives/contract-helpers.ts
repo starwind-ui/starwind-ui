@@ -94,26 +94,6 @@ export function getPropType(contract: RuntimeAdapterContract, name: string): str
   return prop.type;
 }
 
-export function getPropName(contract: RuntimeAdapterContract, name: string): string {
-  const prop = contract.props.find((entry) => entry.name === name);
-  if (!prop) {
-    throw new Error(`${contract.displayName} runtime adapter contract is missing ${name} prop.`);
-  }
-
-  return prop.name;
-}
-
-export function getPropNameForTarget(contract: RuntimeAdapterContract, target: string): string {
-  const prop = contract.props.find((entry) => entry.targets?.includes(target));
-  if (!prop) {
-    throw new Error(
-      `${contract.displayName} runtime adapter contract is missing ${target} targeted prop.`,
-    );
-  }
-
-  return prop.name;
-}
-
 export function getPropForTarget(
   contract: RuntimeAdapterContract,
   name: string,
@@ -129,21 +109,6 @@ export function getPropForTarget(
   }
 
   return prop;
-}
-
-export function getRuntimeOptionPropName(contract: RuntimeAdapterContract, name: string): string {
-  if (!contract.runtime.optionProps?.includes(name)) {
-    throw new Error(
-      `${contract.displayName} runtime adapter contract is missing ${name} runtime option.`,
-    );
-  }
-
-  const prop = contract.props.find((entry) => entry.name === name);
-  if (!prop) {
-    throw new Error(`${contract.displayName} runtime adapter contract is missing ${name} prop.`);
-  }
-
-  return prop.name;
 }
 
 export function getSetterForProp(

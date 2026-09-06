@@ -97,9 +97,9 @@ pnpm dev
 
 ## Images
 
-![Placeholder image](https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop)
+![Pricing table with Starter, Professional, and Enterprise plans](../../assets/images/pricing-9.jpg)
 
-_Caption: This is an example image with a caption below it._
+_Caption: Example pricing table with three subscription plans._
 
 ---
 

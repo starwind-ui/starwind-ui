@@ -16,7 +16,7 @@ import type {
   AdapterPrintedFile,
   AdapterViewportMeasurementFacts,
 } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueViewportMeasurementIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "viewport-measurement", {
@@ -47,8 +47,7 @@ function printRoot(facts: AdapterViewportMeasurementFacts): string {
   const threshold = facts.props.overflowEdgeThreshold;
   const elementType = getElementType(root.defaultElement);
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 
@@ -225,8 +224,7 @@ function getViewportTabIndex(): number | string {
 }`
       : "";
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref${attributeAccess.vueImport ? `, ${attributeAccess.vueImport}` : ""} } from "vue";
 
 defineOptions({ inheritAttrs: false });${props}

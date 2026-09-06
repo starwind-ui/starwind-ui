@@ -43,7 +43,7 @@ export async function waitForAstroSmokePage(page, url, options = {}) {
 
     await page.goto(url, {
       timeout: navigationTimeoutMs,
-      waitUntil: getNavigationWaitUntil(serverMode),
+      waitUntil: "networkidle",
     });
     return;
   }
@@ -51,10 +51,6 @@ export async function waitForAstroSmokePage(page, url, options = {}) {
   throw new Error(
     `Timed out waiting for Astro ${serverMode} at ${url}.\n${getServerOutput().trim()}\n${String(lastError)}`,
   );
-}
-
-function getNavigationWaitUntil(serverMode) {
-  return serverMode === "dev" ? "domcontentloaded" : "networkidle";
 }
 
 function getDefaultNavigationTimeoutMs(serverMode) {

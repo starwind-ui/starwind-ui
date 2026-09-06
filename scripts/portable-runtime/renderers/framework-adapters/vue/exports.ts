@@ -1,8 +1,5 @@
 import type { AdapterIndexFile, AdapterNamespaceExport, AdapterTypeFacadeFile } from "../types.js";
 
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export type VueIndexPrintOptions = {
   namespaceMembers?: readonly { key: string; name: string }[];
   partExportOrder?: "model" | "export-name";
@@ -36,7 +33,6 @@ export function printVueIndexFile(
     .join(partExportSeparator);
 
   return [
-    `// ${NON_SHIPPING_COMMENT}`,
     imports,
     printVueIndexPrelude(file),
     `const ${namespace} = {\n${namespaceMembers}\n};`,

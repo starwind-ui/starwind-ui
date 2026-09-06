@@ -6,6 +6,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   ZAG_VUE_COMPARATOR_VERSION,
+  getZagVueSizeComparatorPlan,
+  zagVueLiveExpectedResolvedVersions,
+  validateLiveZagVueResolvedVersions,
   STARWIND_VUE_MEASUREMENT_LABELS,
   buildNamespaceImportEntry,
   buildStarwindVueEntry,
@@ -184,6 +187,32 @@ describe("matched Zag Vue plan", () => {
       expect(importSpecifiers(row.entry)).toEqual(
         ["@zag-js/vue", ...zagVueInfrastructurePackages, row.machinePackage].sort(),
       );
+    }
+  });
+
+  it("selects current diagnostics while preserving baseline and offline comparator evidence", () => {
+    const live = getZagVueSizeComparatorPlan();
+    expect(live.version).toBe("1.43.3");
+    expect(live.installSpecifiers).toEqual(
+      zagVueComparatorPackages.map((packageName) => `${packageName}@1.43.3`),
+    );
+    expect(live.expectedResolvedVersions).toEqual(zagVueLiveExpectedResolvedVersions);
+    expect(() => live.validateResolvedVersions(live.expectedResolvedVersions)).not.toThrow();
+    expect(() => validateLiveZagVueResolvedVersions(zagVueExpectedResolvedVersions)).toThrow(
+      "expected 1.43.3, received 1.42.0",
+    );
+    const baseline = getZagVueSizeComparatorPlan({ baselineVue: true });
+    expect(baseline.version).toBe("1.42.0");
+    expect(baseline.installSpecifiers).toEqual(zagVueComparatorInstallSpecifiers);
+    expect(() => baseline.validateResolvedVersions(zagVueExpectedResolvedVersions)).not.toThrow();
+    expect(() => baseline.validateResolvedVersions(zagVueLiveExpectedResolvedVersions)).toThrow(
+      "expected 1.42.0, received 1.43.3",
+    );
+    for (const baselineVue of [false, true]) {
+      const check = getZagVueSizeComparatorPlan({ baselineVue, checkOnly: true });
+      expect(check.installSpecifiers).toEqual([]);
+      expect(check.version).toBe("1.42.0");
+      expect(check.expectedResolvedVersions).toEqual(zagVueExpectedResolvedVersions);
     }
   });
 

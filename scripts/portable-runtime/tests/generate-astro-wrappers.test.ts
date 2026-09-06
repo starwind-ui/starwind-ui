@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -21,7 +21,7 @@ describe("generateAstroWrappers", () => {
   const getTempRoot = () => tempRoot;
 
   beforeEach(async () => {
-    tempRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-runtime-generator-"));
+    tempRoot = await realpath(await mkdtemp(path.join(os.tmpdir(), "starwind-runtime-generator-")));
   });
 
   afterEach(async () => {

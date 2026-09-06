@@ -5,15 +5,11 @@ const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 import type {
   AdapterComponentFile,
   AdapterIndexFile,
+  AdapterPrintedFile,
   AdapterRangeStatusFacts,
   AdapterRangeStatusPartName,
-  AdapterPrintedFile,
 } from "../types.js";
-import {
-  printVueFamilyIndex,
-  printVueOwnedInstanceDestroy,
-  VUE_NON_SHIPPING_COMMENT,
-} from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex, printVueOwnedInstanceDestroy } from "./primitive/shared-fragments.js";
 
 export function printVueRangeStatusIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "range-status");
@@ -44,8 +40,7 @@ function printRoot(facts: AdapterRangeStatusFacts): string {
   const root = facts.parts.root;
   const elementType = getElementType(root.defaultElement);
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ${facts.runtime.factory}, type ${facts.state.valueType} } from "${facts.runtime.importSource}";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 
@@ -164,8 +159,7 @@ function printPassivePart(
     ${facts.attrs.labelRole.attribute}="${facts.attrs.labelRole.value}"`
         : "";
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

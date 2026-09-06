@@ -13,11 +13,7 @@ import type {
   AdapterMediaStatusFacts,
   AdapterPrintedFile,
 } from "../types.js";
-import {
-  printVueFamilyIndex,
-  printVueOwnedInstanceDestroy,
-  VUE_NON_SHIPPING_COMMENT,
-} from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex, printVueOwnedInstanceDestroy } from "./primitive/shared-fragments.js";
 
 export function printVueMediaStatusIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "media-status", {
@@ -42,8 +38,7 @@ export function printVueMediaStatusComponent(file: AdapterComponentFile): Adapte
 }
 
 function printRoot(facts: AdapterMediaStatusFacts): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 
@@ -85,8 +80,7 @@ function printImage(facts: AdapterMediaStatusFacts): string {
   const visibilityProperty = facts.presence.imageConcealment.property;
   const visibilityValue = facts.presence.imageConcealment.value;
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import type { ${facts.state.type}, ${facts.event.detailsType} } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
 
@@ -149,8 +143,7 @@ onBeforeUnmount(unbindLoadingStatusChange);
 }
 
 function printFallback(facts: AdapterMediaStatusFacts): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref, useAttrs } from "vue";
 
 defineOptions({ inheritAttrs: false });

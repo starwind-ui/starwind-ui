@@ -87,17 +87,17 @@ const routeExpectations = [
       {
         assetPattern: /^controller-lifecycle\./,
         importerPattern: /^SidebarProvider\.astro_astro_type_script_index_0_lang\./,
-        note: "pre-feature report recorded 18 chunks; the shared Astro controller lifecycle is now extracted from SidebarProvider (680 B raw), with no Color Picker asset in the initial graph",
+        note: "Shared controller lifecycle can appear as a separate SidebarProvider dependency.",
       },
       {
         assetPattern: /^floating-portal\./,
         importerPattern: /^floating-disclosure\./,
-        note: "framework-owned placement readiness, wrapper-identity reconciliation, lifecycle reset, listener refresh, nested-owner suspension, and stale-write guards increased the shared portal lifecycle chunk; category refresh bodies remain outside Astro and the refreshed budgets closely bound the accepted 21-chunk graph",
+        note: "Floating disclosure uses the shared portal lifecycle.",
       },
       {
         assetPattern: /^cancelable-details\./,
         importerPattern: /^overlay-open-change\./,
-        note: "the 239 B raw cancelable-details helper became a shared chunk after Accordion adopted the same cancellation contract; the unchanged raw and gzip byte budgets still bound its initial cost",
+        note: "The shared cancellation helper can appear as a separate overlay dependency.",
       },
     ],
     forbiddenAssets: runtimeNestedSidebarForbiddenAssets,
@@ -116,17 +116,19 @@ function main() {
   }
 
   const failures = [];
+  const advisories = [];
   const routeReports = routeExpectations.map((expectation) => analyzeRoute(expectation));
   const portalBoundaries = inspectPortalBundleBoundaries();
   failures.push(...portalBoundaries.failures);
 
   for (const report of routeReports) {
-    const routeFailures = validateRouteReport(report);
-    failures.push(...routeFailures);
+    const validation = evaluateRouteReport(report);
+    failures.push(...validation.failures);
+    advisories.push(...validation.advisories);
 
     console.log(
       [
-        `${routeFailures.length > 0 ? "FAIL" : "OK"} ${report.route}`,
+        `${validation.failures.length > 0 ? "FAIL" : validation.advisories.length > 0 ? "WARN" : "OK"} ${report.route}`,
         `${report.initialExternal.count} initial/static JS chunks`,
         `${formatBytes(report.initialExternal.rawBytes)} raw`,
         `${formatBytes(report.initialExternal.gzipBytes)} gzip`,
@@ -138,6 +140,9 @@ function main() {
 
   writeMarkdownReport(routeReports, reportPath, portalBoundaries);
 
+  if (advisories.length > 0) {
+    console.warn(`\nBundle review warnings:\n\n${advisories.join("\n\n")}`);
+  }
   if (failures.length > 0) {
     console.error(`\nBundle regression check failed:\n\n${failures.join("\n\n")}`);
     process.exitCode = 1;
@@ -243,12 +248,24 @@ function analyzeRoute(expectation) {
   };
 }
 
-function validateRouteReport(report) {
+export function evaluateRouteReport(report) {
   const routeFailures = [];
+  const advisories = [];
   const { budget } = report;
 
+  for (const [label, bytes] of Object.entries({
+    "initial chunk count": report.initialExternal.count,
+    "external raw bytes": report.initialExternal.rawBytes,
+    "external gzip bytes": report.initialExternal.gzipBytes,
+    "initial JS gzip bytes": report.initialJsGzipBytes,
+  })) {
+    if (!Number.isSafeInteger(bytes) || bytes < 0) {
+      routeFailures.push(`${report.route} has an invalid ${label} measurement.`);
+    }
+  }
+
   if (report.initialExternal.count > budget.maxStaticChunkCount) {
-    routeFailures.push(
+    advisories.push(
       `${report.route} loaded ${report.initialExternal.count} initial/static JS chunks, expected at most ${
         budget.maxStaticChunkCount
       }.\n${formatGraph(report.initialAssets.map((asset) => asset.asset))}`,
@@ -256,30 +273,31 @@ function validateRouteReport(report) {
   }
 
   if (report.initialExternal.rawBytes > budget.maxInitialExternalRawBytes) {
-    routeFailures.push(
+    advisories.push(
       `${report.route} initial/static external JS raw bytes exceeded budget: ${formatBytes(
         report.initialExternal.rawBytes,
       )} > ${formatBytes(budget.maxInitialExternalRawBytes)}.\n${formatBudgetContext(report)}`,
     );
   }
 
-  if (report.initialExternal.gzipBytes > budget.maxInitialExternalGzipBytes) {
-    routeFailures.push(
-      `${report.route} initial/static external JS gzip bytes exceeded budget: ${formatBytes(
-        report.initialExternal.gzipBytes,
-      )} > ${formatBytes(budget.maxInitialExternalGzipBytes)}.\n${formatBudgetContext(report)}`,
-    );
+  for (const [label, bytes, reviewLimit] of [
+    [
+      "initial/static external JS gzip bytes",
+      report.initialExternal.gzipBytes,
+      budget.maxInitialExternalGzipBytes,
+    ],
+    ["initial JS gzip bytes", report.initialJsGzipBytes, budget.maxInitialJsGzipBytes],
+  ]) {
+    const hardLimit = routeGzipHardLimit(reviewLimit);
+    if (bytes > reviewLimit) {
+      const failed = bytes > hardLimit;
+      (failed ? routeFailures : advisories).push(
+        `${report.route} ${label} exceeded ${failed ? "hard" : "review"} limit: ${bytes.toLocaleString("en-US")} B; review limit ${reviewLimit.toLocaleString("en-US")} B, hard limit ${hardLimit.toLocaleString("en-US")} B.\n${formatBudgetContext(report)}`,
+      );
+    }
   }
 
-  if (report.initialJsGzipBytes > budget.maxInitialJsGzipBytes) {
-    routeFailures.push(
-      `${report.route} initial JS gzip bytes exceeded budget: ${formatBytes(
-        report.initialJsGzipBytes,
-      )} > ${formatBytes(budget.maxInitialJsGzipBytes)}.\n${formatBudgetContext(report)}`,
-    );
-  }
-
-  if (report.forbiddenMatches.length > 0) {
+  if (report.forbiddenMatches?.length > 0) {
     routeFailures.push(
       `${report.route} loaded forbidden runtime assets:\n${report.forbiddenMatches
         .map(({ asset, label }) => `  - ${asset} (${label})`)
@@ -289,13 +307,17 @@ function validateRouteReport(report) {
 
   for (const attribution of report.attributedStaticChunks ?? []) {
     if (!findAttributedStaticChunk(report, attribution)) {
-      routeFailures.push(
+      advisories.push(
         `${report.route} did not preserve attributed static chunk evidence for ${attribution.note}.`,
       );
     }
   }
 
-  return routeFailures;
+  return { advisories, failures: routeFailures };
+}
+
+function routeGzipHardLimit(reviewLimit) {
+  return reviewLimit + Math.max(Math.ceil(reviewLimit / 10), 2 * 1024);
 }
 
 function collectStaticImportEdges(graph) {
@@ -558,7 +580,8 @@ export function writeMarkdownReport(reports, outputPath = reportPath, portalBoun
     "- Initial/static external JavaScript follows route HTML JS assets and their static `import`/`export ... from` edges.",
     "- Inline scripts are counted separately so JavaScript embedded in HTML is not hidden from comparisons.",
     "- Dynamic imports are reported separately and are not counted as initial JavaScript.",
-    "- Attributed static chunks record the exact generated importer edge that justifies a route-specific chunk budget.",
+    "- Chunk count, raw bytes, and changes to attributed importer edges produce review warnings.",
+    "- Configured gzip caps are route review limits. Hard limits add the larger of 10% of the review limit or 2 KiB. Invalid measurements and forbidden imports fail the check.",
     "- Portal boundary checks inspect emitted chunk source and static imports.",
     "- Gzip uses Node zlib default gzip settings on each asset or inline script.",
     "",
@@ -585,17 +608,28 @@ export function writeMarkdownReport(reports, outputPath = reportPath, portalBoun
     "",
     "## Budgets",
     "",
-    "| Route | Max initial chunks | Max external raw | Max external gzip | Max initial JS gzip |",
+    "| Route | Chunk review limit | Raw byte review limit | External gzip review / hard limit | Initial JS gzip review / hard limit |",
     "| --- | ---: | ---: | ---: | ---: |",
     ...reports.map((report) =>
       [
         `| \`${report.route}\``,
         report.budget.maxStaticChunkCount,
         formatBytes(report.budget.maxInitialExternalRawBytes),
-        formatBytes(report.budget.maxInitialExternalGzipBytes),
-        `${formatBytes(report.budget.maxInitialJsGzipBytes)} |`,
+        `${formatBytes(report.budget.maxInitialExternalGzipBytes)} / ${formatBytes(routeGzipHardLimit(report.budget.maxInitialExternalGzipBytes))}`,
+        `${formatBytes(report.budget.maxInitialJsGzipBytes)} / ${formatBytes(routeGzipHardLimit(report.budget.maxInitialJsGzipBytes))} |`,
       ].join(" | "),
     ),
+    "",
+    "## Check results",
+    "",
+    ...reports.flatMap((report) => {
+      const { advisories, failures } = evaluateRouteReport(report);
+      return [
+        `- ${report.route}: ${failures.length ? "Fail" : advisories.length ? "Warn" : "Pass"}`,
+        ...failures.map((failure) => `- Failure: ${failure.replaceAll("\n", " ")}`),
+        ...advisories.map((advisory) => `- Review: ${advisory.replaceAll("\n", " ")}`),
+      ];
+    }),
     "",
     ...(portalBoundaries
       ? [

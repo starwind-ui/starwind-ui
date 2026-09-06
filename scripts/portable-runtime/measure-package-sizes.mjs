@@ -31,13 +31,12 @@ import {
   measureStyledCopiedSourcePayload,
 } from "./package-size-payloads.mjs";
 import {
-  ZAG_VUE_COMPARATOR_VERSION,
+  ZAG_SIZE_COMPARATOR_VERSION,
+  getZagVueSizeComparatorPlan,
   buildStarwindVueBrowserMeasurementRows,
   starwindVueStyledComponents,
   starwindVueStyledExclusions,
   starwindZagVueOverlapMappings,
-  validateZagVueResolvedVersions,
-  zagVueComparatorInstallSpecifiers,
   zagVueComparatorPackages,
 } from "./package-size-vue-plan.mjs";
 import {
@@ -64,7 +63,6 @@ const DIAGNOSTIC_REPORT_PATH = path.join(
 const VUE_BASELINE_EVIDENCE_DIRECTORY = path.join(REPO_ROOT, "scripts/portable-runtime/evidence");
 const CHECK_ONLY = process.argv.includes("--check");
 const INCLUDE_PRIVATE_VUE = process.argv.includes("--private-vue") || !CHECK_ONLY;
-const BASELINE_VUE = process.argv.includes("--baseline-vue");
 let activeRunPaths;
 
 const requireFromRepo = createRequire(path.join(REPO_ROOT, "package.json"));
@@ -329,6 +327,21 @@ const externalPackages = [
   ...zagInfrastructurePackages,
 ];
 
+export const publicComparatorExpectedResolvedVersions = Object.freeze(
+  Object.fromEntries(
+    externalPackages.map((packageName) => [
+      packageName,
+      packageName === "@base-ui/react" ? "1.8.0" : ZAG_SIZE_COMPARATOR_VERSION,
+    ]),
+  ),
+);
+
+export const publicComparatorInstallSpecifiers = Object.freeze(
+  Object.entries(publicComparatorExpectedResolvedVersions).map(
+    ([packageName, version]) => `${packageName}@${version}`,
+  ),
+);
+
 const peerExternals = [
   "@date-fns/tz",
   "@types/react",
@@ -571,9 +584,10 @@ const supportRows = [
 export const committedComparatorBaselines = Object.freeze({
   // `pnpm runtime:size` is the explicit refresh path. Check mode keeps these comparator
   // snapshots stable so release verification measures only current Starwind artifacts.
+  // Measured 2026-09-06 with Zag 1.43.3 and Base UI 1.8.0.
   bundleResults: Object.freeze([
     Object.freeze({
-      gzipBytes: colorPickerRebaselineEvidence.standaloneComparator.zagGzipBytes,
+      gzipBytes: 29_711,
       label: "@zag-js/color-picker",
       minifiedBytes: null,
     }),
@@ -581,22 +595,22 @@ export const committedComparatorBaselines = Object.freeze({
   supportResults: Object.freeze([
     Object.freeze({
       comparisonSet: "all-three-overlap",
-      gzipBytes: 99_840,
+      gzipBytes: 100_633,
       provider: "zag",
     }),
     Object.freeze({
       comparisonSet: "all-three-overlap",
-      gzipBytes: 143_155,
+      gzipBytes: 142_412,
       provider: "base",
     }),
     Object.freeze({
       comparisonSet: "starwind-zag-overlap",
-      gzipBytes: 112_333,
+      gzipBytes: 113_098,
       provider: "zag",
     }),
     Object.freeze({
       comparisonSet: "starwind-base-overlap",
-      gzipBytes: 146_842,
+      gzipBytes: 146_385,
       provider: "base",
     }),
   ]),
@@ -655,15 +669,16 @@ export function getPackageSizeMeasurementPlan({
 }
 
 export async function runPackageSizeMeasurements({
+  baselineVue = false,
   checkOnly = false,
   includePrivateVue = !checkOnly,
   runPaths,
 } = {}) {
   const plan = getPackageSizeMeasurementPlan({ checkOnly, includePrivateVue });
   activeRunPaths = runPaths ?? createPackageSizeRunDirectory({ parentDirectory: MEASUREMENT_ROOT });
-  if (plan.installComparators) prepareTempInstall({ includePrivateVue });
+  if (plan.installComparators) prepareTempInstall({ baselineVue, includePrivateVue });
   const provenance = includePrivateVue
-    ? buildMeasurementProvenance({ checkOnly, includePrivateVue })
+    ? buildMeasurementProvenance({ baselineVue, checkOnly, includePrivateVue })
     : undefined;
 
   const bundleResults = [...plan.bundleBaselines];
@@ -783,6 +798,7 @@ async function main() {
           execFileSync("pnpm", [script], { cwd: REPO_ROOT, stdio: "inherit" });
         }
         return runPackageSizeMeasurements({
+          baselineVue: true,
           checkOnly: false,
           includePrivateVue: true,
           runPaths,
@@ -804,6 +820,8 @@ async function main() {
     includePrivateVue: INCLUDE_PRIVATE_VUE,
   });
 
+  const diagnosticsDirectory = writePackageSizeRunDiagnostics({ results });
+  console.log(`Saved current package-size measurements and diagnostics to ${diagnosticsDirectory}`);
   const reportsWritten = writePackageSizeReports(results, { checkOnly: CHECK_ONLY });
   if (!reportsWritten) {
     console.log("Package size budgets evaluated without rewriting the comparison report.");
@@ -1044,15 +1062,21 @@ function formatEvidenceDelta(bytes) {
   return `${bytes > 0 ? "+" : ""}${bytes.toLocaleString("en-US")} B`;
 }
 
-export function prepareTempInstall({ includePrivateVue = false } = {}) {
+export function prepareTempInstall({ baselineVue = false, includePrivateVue = false } = {}) {
   const runPaths = requireActiveRunPaths();
   const publicInstallRoot = comparatorInstallRoot(runPaths, "public");
-  installComparatorPackages(publicInstallRoot, externalPackages, runPaths.npmCache);
+  installComparatorPackages(
+    publicInstallRoot,
+    publicComparatorInstallSpecifiers,
+    runPaths.npmCache,
+  );
+  validateInstalledPublicComparators(publicInstallRoot);
   if (!includePrivateVue) return;
 
   const vueInstallRoot = comparatorInstallRoot(runPaths, "zag-vue-exact");
-  installComparatorPackages(vueInstallRoot, zagVueComparatorInstallSpecifiers, runPaths.npmCache);
-  validateInstalledZagVueComparator(vueInstallRoot);
+  const comparatorPlan = getZagVueSizeComparatorPlan({ baselineVue });
+  installComparatorPackages(vueInstallRoot, comparatorPlan.installSpecifiers, runPaths.npmCache);
+  validateInstalledZagVueComparator(vueInstallRoot, { baselineVue });
 }
 
 function installComparatorPackages(installRoot, packages, npmCache) {
@@ -1065,9 +1089,23 @@ function installComparatorPackages(installRoot, packages, npmCache) {
   });
 }
 
-export function validateInstalledZagVueComparator(installRoot) {
+export function validateInstalledZagVueComparator(installRoot, { baselineVue = false } = {}) {
   const resolvedVersions = readComparatorVersions(installRoot);
-  validateZagVueResolvedVersions(resolvedVersions);
+  getZagVueSizeComparatorPlan({ baselineVue }).validateResolvedVersions(resolvedVersions);
+  return resolvedVersions;
+}
+
+export function validateInstalledPublicComparators(installRoot) {
+  const resolvedVersions = readComparatorVersions(installRoot, externalPackages);
+  for (const [packageName, expectedVersion] of Object.entries(
+    publicComparatorExpectedResolvedVersions,
+  )) {
+    if (resolvedVersions[packageName] !== expectedVersion) {
+      throw new Error(
+        `${packageName}: expected ${expectedVersion}, received ${resolvedVersions[packageName]}`,
+      );
+    }
+  }
   return resolvedVersions;
 }
 
@@ -1255,9 +1293,9 @@ function getPackageVersion(label, comparatorInstall = "public") {
   return JSON.parse(readFileSync(packageJsonPath, "utf8")).version;
 }
 
-function readComparatorVersions(installRoot) {
+function readComparatorVersions(installRoot, packages = zagVueComparatorPackages) {
   return Object.fromEntries(
-    zagVueComparatorPackages.map((packageName) => [
+    packages.map((packageName) => [
       packageName,
       JSON.parse(
         readFileSync(path.join(installRoot, "node_modules", packageName, "package.json"), "utf8"),
@@ -1266,7 +1304,7 @@ function readComparatorVersions(installRoot) {
   );
 }
 
-function buildMeasurementProvenance({ checkOnly, includePrivateVue }) {
+function buildMeasurementProvenance({ baselineVue, checkOnly, includePrivateVue }) {
   const environment = collectPackageSizeEnvironment({ esbuildVersion: esbuild.version });
   const comparatorPackages =
     includePrivateVue && !checkOnly
@@ -1284,7 +1322,7 @@ function buildMeasurementProvenance({ checkOnly, includePrivateVue }) {
     comparatorPackages,
     environment,
     flags: {
-      baselineVue: BASELINE_VUE,
+      baselineVue,
       checkOnly,
       gzipLevel: 9,
       includePrivateVue,
@@ -1322,7 +1360,7 @@ export function createMeasurementProvenance({
     comparator: Object.freeze({
       name: "zag-vue",
       packages: Object.freeze(comparatorPackages),
-      version: ZAG_VUE_COMPARATOR_VERSION,
+      version: getZagVueSizeComparatorPlan(flags).version,
     }),
     environment: Object.freeze(environment),
     flags: Object.freeze(flags),
@@ -1498,7 +1536,18 @@ export function formatDiagnosticPackageSizeReport({
     "",
     "## Budget Checks",
     "",
-    "`pnpm runtime:size` treats aggregate package and support-set sizes as regression guards: they fail only after more than 10% or 15 KiB of gzip growth from the committed baseline, whichever comes first. Targeted cold imports retain strict absolute budgets. Competitor comparisons are informational.",
+    ...(packageBudgetResults.failures?.length
+      ? ["### Failures", "", ...packageBudgetResults.failures.map((failure) => `- ${failure}`), ""]
+      : []),
+    ...(packageBudgetResults.advisories?.length
+      ? [
+          "### Review warnings and comparisons",
+          "",
+          ...packageBudgetResults.advisories.map((advisory) => `- ${advisory}`),
+          "",
+        ]
+      : []),
+    "`pnpm runtime:size` treats aggregate package and support-set sizes as regression guards: they fail only after more than 10% or 15 KiB of gzip growth from the committed baseline, whichever comes first. Field and Runtime Color Picker cold imports retain strict absolute budgets. Competitor comparisons are informational.",
     `The aggregate baselines were refreshed from public commit \`${aggregateBaselineProvenance.publicCommit}\` on ${aggregateBaselineProvenance.date} for Runtime ${aggregateBaselineProvenance.release.runtime}, Astro ${aggregateBaselineProvenance.release.astro}, React ${aggregateBaselineProvenance.release.react}, and CLI ${aggregateBaselineProvenance.release.cli}. Targeted cold-import budgets were not rebaselined.`,
     "",
     ...formatColorPickerRebaselineMarkdown(),
@@ -1816,7 +1865,7 @@ function formatPrivateVueDiagnosticMarkdown({
     "",
     "## Private Vue Measurement Limitations",
     "",
-    "- Vue remains private at version `0.0.0`; these rows are diagnostics only.",
+    "- Vue is a public beta; these rows are internal size diagnostics.",
     "- Package payload gzip measures the packed archive. It is separate from browser gzip and from copied Styled source gzip.",
     "- The Styled tree is copied application source. It is not included in the Primitive package payload.",
   ];
@@ -1868,13 +1917,17 @@ function formatPrivateVueAcceptedBaselineMarkdown(packageBudgetResults) {
     "",
     "## Private Vue Adopted Budgets",
     "",
-    "Each ceiling is the stable maximum plus the larger of 5% or 1 KiB. Comparator ordering is advisory.",
+    "Growth above the larger of 5% or 1 KiB produces a review warning. Growth above the larger of 10% or 2 KiB fails the check. Both thresholds use the recorded stable maximum; the historical evidence remains unchanged. Missing or invalid measurements fail. Comparator ordering is advisory.",
     "",
-    "| Row id | Run 1 | Run 2 | Run 3 | Stable maximum | Headroom | Ceiling | Status |",
-    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+    "| Row id | Baseline | Current | Growth | Review limit | Hard limit | Status |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
     ...Object.entries(baseline.budgets).map(([id, budget]) => {
       const check = checksById.get(id);
-      return `| \`${id}\` | ${formatIntegerBytes(budget.values[0])} | ${formatIntegerBytes(budget.values[1])} | ${formatIntegerBytes(budget.values[2])} | ${formatIntegerBytes(budget.maximumBytes)} | ${formatIntegerBytes(budget.headroomBytes)} | ${formatIntegerBytes(budget.ceilingBytes)} | ${check?.status ?? "Not evaluated"} |`;
+      const growth =
+        check?.growthBytes == null
+          ? "N/A"
+          : `${formatEvidenceDelta(check.growthBytes)} (${check.growthPercent.toFixed(2)}%)`;
+      return `| \`${id}\` | ${formatIntegerBytes(budget.maximumBytes)} | ${formatExactBytes(check?.gzipBytes)} | ${growth} | ${formatIntegerBytes(budget.ceilingBytes)} | ${formatExactBytes(check?.maxGzipBytes)} | ${check?.status ?? "Not evaluated"} |`;
     }),
   ];
 }
@@ -2005,6 +2058,32 @@ function splitMarkdownSections(report) {
   }
 
   return sections;
+}
+
+export function writePackageSizeRunDiagnostics(
+  { results, error },
+  { directory = requireActiveRunPaths().rawEvidence } = {},
+) {
+  mkdirSync(directory, { recursive: true });
+  if (results) {
+    writeFileSync(
+      path.join(directory, "package-size-results.json"),
+      `${JSON.stringify(results, null, 2)}\n`,
+    );
+    const reports = formatPackageSizeReports({
+      ...results,
+      generatedDate: results.generatedDate ?? new Date().toISOString().slice(0, 10),
+    });
+    writeFileSync(path.join(directory, "package-size-comparison.md"), reports.publicReport);
+    writeFileSync(path.join(directory, "package-size-diagnostics.md"), reports.diagnosticReport);
+  }
+  if (error) {
+    writeFileSync(
+      path.join(directory, "failure.json"),
+      `${JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2)}\n`,
+    );
+  }
+  return directory;
 }
 
 export function writePackageSizeReports(
@@ -2210,5 +2289,12 @@ function isMainModule() {
 }
 
 if (isMainModule()) {
-  await main();
+  try {
+    await main();
+  } catch (error) {
+    const diagnosticsDirectory = writePackageSizeRunDiagnostics({ error });
+    console.error(error);
+    console.error(`Saved package-size failure details to ${diagnosticsDirectory}`);
+    process.exitCode = 1;
+  }
 }

@@ -14,6 +14,9 @@ import {
   formatColorPickerSizeComparisonMarkdown,
   formatPackageSizeReports,
   getPackageSizeCommandMode,
+  publicComparatorInstallSpecifiers,
+  publicComparatorExpectedResolvedVersions,
+  validateInstalledPublicComparators,
   getPackageSizeMeasurementPlan,
   measureBundle,
   resolveStarwindVueBuiltPath,
@@ -21,6 +24,7 @@ import {
   validateInstalledZagVueComparator,
   withVueSourceContribution,
   writePackageSizeReports,
+  writePackageSizeRunDiagnostics,
 } from "../measure-package-sizes.mjs";
 import {
   STARWIND_VUE_MEASUREMENT_LABELS,
@@ -250,7 +254,7 @@ describe("Vue public-beta browser measurement plan", () => {
     const provenance = createMeasurementProvenance({
       command: { arguments: ["measure-package-sizes.mjs", "--private-vue"], executable: "/node" },
       commit: "a".repeat(40),
-      comparatorPackages: { "@zag-js/vue": "1.42.0" },
+      comparatorPackages: { "@zag-js/vue": "1.43.3" },
       environment: completeEnvironmentFixture(),
       flags: { gzipLevel: 9, staticGraphHeadlines: true },
       packageVersions: { "@starwind-ui/vue": "0.0.0" },
@@ -264,8 +268,8 @@ describe("Vue public-beta browser measurement plan", () => {
       commit: "a".repeat(40),
       comparator: {
         name: "zag-vue",
-        packages: { "@zag-js/vue": "1.42.0" },
-        version: "1.42.0",
+        packages: { "@zag-js/vue": "1.43.3" },
+        version: "1.43.3",
       },
       environment: completeEnvironmentFixture(),
       flags: { gzipLevel: 9, staticGraphHeadlines: true },
@@ -273,6 +277,57 @@ describe("Vue public-beta browser measurement plan", () => {
     });
     expect(Object.isFrozen(provenance)).toBe(true);
     expect(Object.isFrozen(provenance.command.arguments)).toBe(true);
+  });
+
+  it("records the frozen comparator for baseline capture and offline checks", () => {
+    for (const flags of [{ baselineVue: true }, { checkOnly: true }]) {
+      const provenance = createMeasurementProvenance({
+        command: { arguments: [], executable: "/node" },
+        comparatorPackages: {},
+        flags,
+        environment: {},
+        packageVersions: {},
+      });
+      expect(provenance.comparator.version).toBe("1.42.0");
+    }
+  });
+
+  it("pins every public comparator and rejects version drift after installation", () => {
+    expect(publicComparatorInstallSpecifiers).toContain("@base-ui/react@1.8.0");
+    for (const adapter of ["react", "vue", "solid", "svelte"]) {
+      expect(publicComparatorInstallSpecifiers).toContain(`@zag-js/${adapter}@1.43.3`);
+    }
+    expect(publicComparatorInstallSpecifiers).toContain("@zag-js/core@1.43.3");
+    expect(publicComparatorInstallSpecifiers).toContain("@zag-js/color-picker@1.43.3");
+    expect(
+      publicComparatorInstallSpecifiers.filter((specifier) => specifier.startsWith("@zag-js/")),
+    ).toEqual(
+      Object.keys(publicComparatorExpectedResolvedVersions)
+        .filter((packageName) => packageName.startsWith("@zag-js/"))
+        .map((packageName) => `${packageName}@1.43.3`),
+    );
+    const installRoot = mkdtempSync(path.join(os.tmpdir(), "public-comparator-test-"));
+    try {
+      for (const [packageName, version] of Object.entries(
+        publicComparatorExpectedResolvedVersions,
+      )) {
+        const directory = path.join(installRoot, "node_modules", packageName);
+        mkdirSync(directory, { recursive: true });
+        writeFileSync(path.join(directory, "package.json"), JSON.stringify({ version }));
+      }
+      expect(validateInstalledPublicComparators(installRoot)).toEqual(
+        publicComparatorExpectedResolvedVersions,
+      );
+      writeFileSync(
+        path.join(installRoot, "node_modules/@zag-js/solid/package.json"),
+        JSON.stringify({ version: "1.42.0" }),
+      );
+      expect(() => validateInstalledPublicComparators(installRoot)).toThrow(
+        "@zag-js/solid: expected 1.43.3, received 1.42.0",
+      );
+    } finally {
+      rmSync(installRoot, { force: true, recursive: true });
+    }
   });
 
   it("rejects an installed comparator package with the wrong exact version", () => {
@@ -285,12 +340,12 @@ describe("Vue public-beta browser measurement plan", () => {
           path.join(packageDirectory, "package.json"),
           JSON.stringify({
             name: packageName,
-            version: packageName === "@zag-js/vue" ? "1.43.0" : "1.42.0",
+            version: packageName === "@zag-js/vue" ? "1.43.0" : "1.43.3",
           }),
         );
       }
       expect(() => validateInstalledZagVueComparator(installRoot)).toThrow(
-        "@zag-js/vue: expected 1.42.0, received 1.43.0",
+        "@zag-js/vue: expected 1.43.3, received 1.43.0",
       );
     } finally {
       rmSync(installRoot, { force: true, recursive: true });
@@ -465,7 +520,7 @@ describe("package-size public and diagnostic reports", () => {
       "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
     );
     expect(reports.diagnosticReport).toContain(
-      "| `vue.adapter-only` | 51,807 B | 51,807 B | 51,807 B | 51,807 B | 2,591 B | 54,398 B | Pass |",
+      "| `vue.adapter-only` | 51,807 B | 51,807 B (50.6 KiB) | 0 B (0.00%) | 54,398 B | 56,988 B (55.7 KiB) | Pass |",
     );
     expect(reports.diagnosticReport).toContain(
       "| Zag Vue 1.42.0 matched support | 128,292 B | Advisory snapshot |",
@@ -494,7 +549,34 @@ describe("package-size public and diagnostic reports", () => {
     );
   });
 
-  it("writes both reports normally and leaves both byte-unchanged in failed-budget check mode", () => {
+  it("retains current diagnostics when a hard failure prevents accepted report replacement", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "starwind-size-run-diagnostics-"));
+    const results = reportFixture();
+    results.packageBudgetResults.failures = ["vue.cold.select hard limit exceeded"];
+    try {
+      expect(writePackageSizeRunDiagnostics({ results }, { directory: root })).toBe(root);
+      expect(
+        JSON.parse(readFileSync(path.join(root, "package-size-results.json"), "utf8")),
+      ).toEqual(results);
+      expect(readFileSync(path.join(root, "package-size-diagnostics.md"), "utf8")).toContain(
+        "vue.cold.select hard limit exceeded",
+      );
+      expect(readFileSync(path.join(root, "package-size-comparison.md"), "utf8")).toContain(
+        "Generated: 2030-05-06",
+      );
+      writePackageSizeRunDiagnostics(
+        { error: new Error("Required package-size row failed") },
+        { directory: root },
+      );
+      expect(JSON.parse(readFileSync(path.join(root, "failure.json"), "utf8"))).toEqual({
+        error: "Required package-size row failed",
+      });
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("writes both reports normally and leaves accepted files byte-unchanged after hard failures", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "starwind-size-report-test-"));
     const publicPath = path.join(root, "package-size-comparison.md");
     const diagnosticPath = path.join(root, "diagnostics", "package-size-diagnostics.md");
@@ -747,10 +829,13 @@ function reportFixture() {
         {
           baselineGzipBytes: 51_807,
           gzipBytes: 51_807,
+          growthBytes: 0,
+          growthPercent: 0,
           headroomBytes: 2_591,
           id: "vue.adapter-only",
           label: "vue.adapter-only",
-          maxGzipBytes: 54_398,
+          maxGzipBytes: 56_988,
+          warningGzipBytes: 54_398,
           status: "Pass",
         },
       ],

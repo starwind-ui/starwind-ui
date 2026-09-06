@@ -20,11 +20,6 @@ const generatedLineHeaders = [
 ] as const;
 const vendoredLineHeader =
   "// Vendored by the Starwind CLI.\n// You own this file in your project.";
-export const vuePrimitiveQuarantineMarkers = [
-  "<!-- Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies. -->",
-  "// Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.",
-] as const;
-
 export const vuePrimitiveEditableContentMarkers = [
   { extensions: [".vue"], markers: [vendoredHtmlHeader], position: "prefix" },
   {
@@ -40,9 +35,6 @@ export function projectVuePrimitiveVendoringContent(content: string): string {
     .replaceAll(generatedHtmlHeader, vendoredHtmlHeader);
   for (const header of generatedLineHeaders) {
     projected = projected.replaceAll(header, vendoredLineHeader);
-  }
-  for (const marker of vuePrimitiveQuarantineMarkers) {
-    projected = projected.replaceAll(`${marker}\n`, "").replaceAll(marker, "");
   }
   return projected;
 }

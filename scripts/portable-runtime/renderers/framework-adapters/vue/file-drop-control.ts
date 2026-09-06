@@ -9,9 +9,6 @@ import type {
   AdapterFileDropControlPartName,
 } from "../types.js";
 
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export function printVueFileDropControlComponent(
   family: AdapterFileDropControlComponentProjection,
 ): string {
@@ -45,8 +42,7 @@ function printRoot(facts: AdapterFileDropControlFacts): string {
   const part = facts.parts.root;
   const exportName = facts.exports.root;
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
   type ${facts.event.detailsType},
@@ -122,8 +118,7 @@ function printInput(facts: AdapterFileDropControlFacts): string {
   const props = facts.props;
   const part = facts.parts.input;
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { computed, ref, useAttrs } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -189,8 +184,7 @@ function printStatusPart(
       : ` :${facts.attrs.isUploading}="props.${facts.props.isUploading.name} ? 'true' : 'false'"
     :hidden="${partName === "loadingIndicator" ? "!" : ""}props.${facts.props.isUploading.name}"`;
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

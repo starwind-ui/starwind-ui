@@ -106,7 +106,11 @@ export async function main(argv = [], dependencies = {}) {
     return;
   }
   if (config.mode === "check") {
-    return (dependencies.checkEvidence ?? checkAcceptedVuePerformanceEvidence)();
+    const result = (dependencies.checkEvidence ?? checkAcceptedVuePerformanceEvidence)();
+    (dependencies.log ?? console.log)(
+      "Validated saved Vue performance evidence. Current timing requires a new controlled capture.",
+    );
+    return result;
   }
   return (dependencies.run ?? runVuePerformance)(config, dependencies);
 }

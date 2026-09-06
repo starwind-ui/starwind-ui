@@ -12,9 +12,6 @@ import type {
 } from "../types.js";
 import { projectVueModel } from "./public-contract.js";
 
-const COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export function isVueEditableCollectionOverlayOutput(model: AdapterOutputModel): boolean {
   return model.files.some(
     (file) =>
@@ -90,8 +87,7 @@ export function printVueEditableCollectionOverlayIndex(
   const typeExports = facts.index.typeExports?.length
     ? `export type { ${facts.index.typeExports.join(", ")} } from "${facts.index.typeExportSource}";`
     : "";
-  return `// ${COMMENT}
-${imports}
+  return `${imports}
 
 export type { ${facts.context.rootContextValueType}, ${facts.context.itemContextValueType} } from "./${facts.exports.root}.vue";
 export { ${facts.context.rootContext}, ${facts.context.itemContext}, ${facts.context.useRootContext}, ${facts.context.useItemContext} } from "./${facts.exports.root}.vue";
@@ -112,8 +108,7 @@ function printRoot(f: AdapterEditableCollectionOverlayFacts): string {
   const inputModel = projectVueModel(f.states.inputValue.name);
   const openModel = projectVueModel(f.states.open.name);
   const valueModel = projectVueModel(f.states.value.name);
-  return `<!-- ${COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
 import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type ${f.context.rootContextValueType} = Readonly<{
@@ -251,8 +246,7 @@ function printButton(f: AdapterEditableCollectionOverlayFacts, name: "clear" | "
       "data-state": combobox.open.value ? "open" : "closed",
 `
       : "";
-  return `<!-- ${COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { defineComponent, ref, useAttrs, type VNode } from "vue";
 import { createVueAsChild } from "../_internal/as-child";
 import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
@@ -285,8 +279,7 @@ const AsChild = defineComponent({ inheritAttrs: false, setup() { return () => as
 }
 
 function printPortal(f: AdapterEditableCollectionOverlayFacts): string {
-  return `<!-- ${COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { reportPortalPlacement, resolvePortalPlacement } from "${f.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
@@ -312,8 +305,7 @@ function printFloatingPart(
   const p = f.parts[name];
   const popup =
     name === "popup" ? ` role="${f.popupRole}" tabindex="-1" :hidden="!combobox.open.value"` : "";
-  return `<!-- ${COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false }); const props=withDefaults(defineProps<{ align?: "start"|"center"|"end"; alignOffset?: number; avoidCollisions?: boolean; side?: "top"|"right"|"bottom"|"left"; sideOffset?: number }>(), { align: ${f.floating.alignDefault}, alignOffset: ${f.floating.alignOffsetDefault}, avoidCollisions: ${f.floating.avoidCollisionsDefault}, side: ${f.floating.sideDefault}, sideOffset: ${f.floating.sideOffsetDefault} }); defineSlots<{ default?: () => unknown }>();
@@ -325,8 +317,7 @@ const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRoot
 
 function printItem(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.item;
-  return `<!-- ${COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { computed, provide, ref } from "vue"; import { ${f.context.itemContext}, ${f.context.useRootContext} } from "./${f.exports.root}.vue";
 
 defineOptions({ inheritAttrs:false }); const props=withDefaults(defineProps<{ disabled?: boolean; value: string }>(), { disabled:false }); defineSlots<{default?:()=>unknown}>();
@@ -338,8 +329,7 @@ const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRoot
 
 function printItemIndicator(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.itemIndicator;
-  return `<!-- ${COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { computed, ref } from "vue"; import { ${f.context.useRootContext}, ${f.context.useItemContext} } from "./${f.exports.root}.vue";
 
 defineOptions({inheritAttrs:false}); defineSlots<{default?:()=>unknown}>();
@@ -367,8 +357,7 @@ function printSeparator(f: AdapterEditableCollectionOverlayFacts): string {
 }
 function printValue(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.value;
-  return `<!-- ${COMMENT} -->
-<script setup lang="ts">import { ref } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";\n\ndefineOptions({inheritAttrs:false}); const props=defineProps<{placeholder?:string}>(); const slots=defineSlots<{default?:()=>unknown}>();
+  return `<script setup lang="ts">import { ref } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";\n\ndefineOptions({inheritAttrs:false}); const props=defineProps<{placeholder?:string}>(); const slots=defineSlots<{default?:()=>unknown}>();
 const element=ref<HTMLSpanElement|null>(null); const initialPlaceholder=props.placeholder; ${f.context.useRootContext}("Value"); defineExpose({element});</script>
 <template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" :${f.attrs.value}="slots.default ? undefined : ''" data-sw-part="${p.name}" :data-placeholder="props.placeholder"><slot>{{ initialPlaceholder }}</slot></${p.defaultElement}></template>
 `;
@@ -411,8 +400,7 @@ function simpleSfc(
   templatePrefix = "",
   voidElement = false,
 ): string {
-  return `<!-- ${COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 ${setup}
 defineOptions({ inheritAttrs: false }); ${props} defineSlots<{ default?: () => unknown }>();

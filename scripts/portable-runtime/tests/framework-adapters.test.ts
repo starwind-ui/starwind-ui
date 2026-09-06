@@ -1672,7 +1672,6 @@ describe("Framework Adapter seam", () => {
       },
       readiness: vueFrameworkAdapterReadiness,
       requiredSnippets: [
-        "Internal non-shipping Vue adapter output",
         '<script setup lang="ts">',
         "defineProps",
         "onMounted",

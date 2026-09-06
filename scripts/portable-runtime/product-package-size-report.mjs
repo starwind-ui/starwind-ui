@@ -15,13 +15,7 @@ export function formatProductSizeReport({ generatedAt, react, site, vue }) {
     "",
     "This report measures JavaScript that a browser downloads. Synthetic component rows bundle each complete public component surface. React, React DOM, and Vue are external in those rows. Gzip and Brotli use the same minified output.",
     "",
-    "## ELI5 guide",
-    "",
-    "Think of a page as a backpack. The empty route is the backpack before components go inside. Total initial JS is the complete backpack a visitor downloads. Component-added JS is the extra weight after we subtract that framework's own empty backpack.",
-    "",
-    "A component row answers: how large is one complete tool? An overlap bundle answers: how large is one toolbox after shared pieces appear only once? The site table answers: what does the visitor carry on an equivalent Starwind page?",
-    "",
-    ...formatCurrentReading(react, vue, site),
+    ...formatCurrentReading(react, vue),
     ...formatFramework("React", react),
     ...formatFramework("Vue", vue),
     ...formatSite(site),
@@ -66,6 +60,15 @@ export function formatProductAttributionReport({ generatedAt, react, vue }) {
 }
 
 function formatFramework(label, data) {
+  const starwindId = `starwind-${label.toLowerCase()}`;
+  const overlapId = `${label.toLowerCase()}-exact-three-way`;
+  const combined = data.overlaps[overlapId];
+  const combinedComparisons = data.providers
+    .filter(({ id }) => id !== starwindId)
+    .map(
+      ({ id, label: providerLabel }) =>
+        `${formatPercentDifference(combined?.[starwindId]?.gzipBytes, combined?.[id]?.gzipBytes)} ${providerLabel}`,
+    );
   const providerHeaders = data.providers.map(
     ({ label: providerLabel, version }) => `${providerLabel}${version ? ` ${version}` : ""}`,
   );
@@ -85,6 +88,8 @@ function formatFramework(label, data) {
     markdownTable(["Component", ...providerHeaders], componentRows),
     "",
     `## ${label} overlap bundles`,
+    "",
+    `In the ${data.overlapMetadata?.[overlapId]?.componentCount ?? "N/A"}-component combined bundle, Starwind is ${combinedComparisons.join(" and ")}. Shared code is counted once in each bundle.`,
     "",
     markdownTable(["Overlap", "Components", ...providerHeaders], overlapRows),
     "",
@@ -116,6 +121,8 @@ function formatSite(site) {
   );
   return [
     "## Astro versus React site delivery",
+    "",
+    `For the Starwind Select site, Astro sends ${formatBytes(site.astro?.select?.gzipBytes)} gzip initially. React sends ${formatBytes(site.react?.select?.gzipBytes)} because the visitor also receives React and React DOM.`,
     "",
     "Total initial JS is the visitor-facing number for the controlled entry. The added column isolates the component cost above each framework's empty shell.",
     "",
@@ -182,42 +189,85 @@ function formatSize(size, missing = "N/A") {
   return `${formatBytes(size.gzipBytes)} / ${formatBytes(size.brotliBytes)}`;
 }
 
-function formatCurrentReading(react, vue, site) {
-  const reactExact = react.overlaps["react-exact-three-way"];
-  const vueExact = vue.overlaps["vue-exact-three-way"];
-  const reactStarwind = reactExact?.["starwind-react"]?.gzipBytes;
-  const reactArk = reactExact?.["ark-react"]?.gzipBytes;
-  const reactBase = reactExact?.["base-react"]?.gzipBytes;
-  const vueStarwind = vueExact?.["starwind-vue"]?.gzipBytes;
-  const vueArk = vueExact?.["ark-vue"]?.gzipBytes;
-  const vueReka = vueExact?.["reka-vue"]?.gzipBytes;
-  const astroSelect = site.astro?.select?.gzipBytes;
-  const reactSelect = site.react?.select?.gzipBytes;
+function formatCurrentReading(react, vue) {
   const reactWins = countProviderWins(react, "react-exact-three-way", "starwind-react");
   const vueWins = countProviderWins(vue, "vue-exact-three-way", "starwind-vue");
+  const majority = [reactWins, vueWins].every(({ wins, total }) => wins > total / 2);
+  const comparisons = [
+    ["Starwind UI React vs Ark UI React", react, "starwind-react", "ark-react"],
+    ["Starwind UI React vs Base UI React", react, "starwind-react", "base-react"],
+    ["Starwind UI Vue vs Ark UI Vue", vue, "starwind-vue", "ark-vue"],
+    ["Starwind UI Vue vs Reka UI Vue", vue, "starwind-vue", "reka-vue"],
+  ];
   return [
-    "## What the current numbers say",
+    "## Small imports for the components your page uses",
     "",
-    `- React three-way category overlap: Starwind is ${formatPercentDifference(reactStarwind, reactArk)} Ark UI and ${formatPercentDifference(reactStarwind, reactBase)} Base UI.`,
-    `- Starwind is the smallest React option in ${reactWins.wins} of the ${reactWins.total} three-way category-match individual rows. Ark's shared code catches up when all ${reactWins.total} components enter one bundle.`,
-    `- Vue three-way category overlap: Starwind is ${formatPercentDifference(vueStarwind, vueArk)} Ark UI and ${formatPercentDifference(vueStarwind, vueReka)} Reka UI.`,
-    `- Starwind is the smallest Vue option in ${vueWins.wins} of the ${vueWins.total} three-way category-match individual rows. Reka has the best combined deduplication result.`,
-    `- Starwind Select site: Astro sends ${formatBytes(astroSelect)} gzip initially. React sends ${formatBytes(reactSelect)} because the visitor also receives React and React DOM.`,
+    majority
+      ? "Starwind UI has the smallest imports in the majority of comparisons."
+      : "Individual component import sizes vary by library. The tables below compare each measured category.",
+    "",
+    "For a page that uses a few components, start with individual import sizes. This scorecard compares gzip sizes across the component categories measured for both libraries in each pair.",
+    "",
+    markdownTable(
+      ["Comparison", "Starwind smaller", "Median reduction per component"],
+      comparisons.map(([label, data, starwindId, comparatorId]) => {
+        const { smaller, total, medianReduction } = summarizeComponentComparison(
+          data,
+          starwindId,
+          comparatorId,
+        );
+        return [
+          label,
+          total > 0 ? `**${smaller} of ${total}**` : "N/A",
+          medianReduction == null ? "N/A" : `**${medianReduction.toFixed(1)}%**`,
+        ];
+      }),
+    ),
+    "",
+    "The median includes every shared measured category, including rows where Starwind is larger. The smaller count excludes ties. A page with several components needs a combined measurement to account for shared code.",
     "",
   ];
+}
+
+function summarizeComponentComparison(data, starwindId, comparatorId) {
+  const reductions = Object.values(data.components)
+    .filter(
+      (values) =>
+        Number.isFinite(values[starwindId]?.gzipBytes) &&
+        values[starwindId].gzipBytes >= 0 &&
+        Number.isFinite(values[comparatorId]?.gzipBytes) &&
+        values[comparatorId].gzipBytes > 0,
+    )
+    .map((values) => (1 - values[starwindId].gzipBytes / values[comparatorId].gzipBytes) * 100)
+    .sort((left, right) => left - right);
+  const middle = (reductions.length - 1) / 2;
+  return {
+    smaller: reductions.filter((reduction) => reduction > 0).length,
+    total: reductions.length,
+    medianReduction:
+      reductions.length > 0
+        ? (reductions[Math.floor(middle)] + reductions[Math.ceil(middle)]) / 2
+        : null,
+  };
 }
 
 function countProviderWins(data, overlapId, providerId) {
   const componentNames = data.overlapComponentNames?.[overlapId] ?? [];
   let wins = 0;
+  let total = 0;
   for (const componentName of componentNames) {
-    const sizes = Object.values(data.components[componentName] ?? {})
-      .map(({ gzipBytes }) => gzipBytes)
-      .filter(Number.isFinite);
+    const sizes = data.providers.map(({ id }) => data.components[componentName]?.[id]?.gzipBytes);
+    if (!sizes.every((bytes) => Number.isFinite(bytes) && bytes >= 0)) continue;
+    total += 1;
     const providerSize = data.components[componentName]?.[providerId]?.gzipBytes;
-    if (Number.isFinite(providerSize) && providerSize === Math.min(...sizes)) wins += 1;
+    if (
+      providerSize === Math.min(...sizes) &&
+      sizes.filter((bytes) => bytes === providerSize).length === 1
+    ) {
+      wins += 1;
+    }
   }
-  return { total: componentNames.length, wins };
+  return { total, wins };
 }
 
 function formatPercentDifference(value, comparator) {

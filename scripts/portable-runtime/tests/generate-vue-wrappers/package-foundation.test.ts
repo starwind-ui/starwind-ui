@@ -378,9 +378,9 @@ describe("Vue package foundation", () => {
     expect(rootPackage.scripts["release:prepare"]).toContain("pnpm runtime:registry:generate");
     expect(rootPackage.scripts["release:gate"]).toContain("pnpm vue-demo:smoke");
     expect(rootPackage.scripts["release:gate"]).toContain("pnpm runtime:size:check:prepared");
-    expect(rootPackage.scripts["release:gate"].includes("pnpm runtime:perf:vue:check")).toBe(
-      hasPrivateSvelte,
-    );
+    expect(
+      rootPackage.scripts["release:gate"].includes("pnpm runtime:perf:vue:evidence:check"),
+    ).toBe(hasPrivateSvelte);
     expect(rootPackage.scripts["release:gate"]).toContain("pnpm release:candidate:acceptance");
 
     const changesetConfig = JSON.parse(await readFile(".changeset/config.json", "utf8"));

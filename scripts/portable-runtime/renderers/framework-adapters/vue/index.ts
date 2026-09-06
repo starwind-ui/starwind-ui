@@ -3,29 +3,28 @@ import path from "node:path";
 
 import { projectStyledOutputModel } from "../../styled-output-model/index.js";
 import { defineFrameworkAdapterTarget } from "../target-definition.js";
+import {
+  type FrameworkAdapterTargetRegistration,
+  frameworkAdapterTargetRenderedPortal,
+} from "../types.js";
 import { vueFrameworkAdapter, vueFrameworkAdapterReadiness } from "./adapter.js";
 import {
   collectVueStyledPackageImportSources,
   projectVuePrimitiveVendoringContent,
   vuePrimitiveEditableContentMarkers,
-  vuePrimitiveQuarantineMarkers,
 } from "./cli-registry.js";
-import { generateVuePrimitivePackage } from "./primitive-package.js";
-import { writeVueAdapterOutput } from "./primitive-output-writer.js";
-import { vueManualPrimitiveGenerators } from "./manual-primitives.js";
-import { vueRenderedPortalCapability } from "./portal.js";
-import { projectVueSpecializedAdapterOutputModel } from "./specialized-adapter-spec.js";
-import { vueAdapterPublicContract } from "./public-contract.js";
-import {
-  frameworkAdapterTargetRenderedPortal,
-  type FrameworkAdapterTargetRegistration,
-} from "../types.js";
-import { generateStarwindVueWrappers, selectVueStyledContracts } from "./styled.js";
 import {
   assertVueInventorySnapshot,
   vuePackageExports,
   vuePrimitiveComponents,
 } from "./inventory.js";
+import { vueManualPrimitiveGenerators } from "./manual-primitives.js";
+import { vueRenderedPortalCapability } from "./portal.js";
+import { writeVueAdapterOutput } from "./primitive-output-writer.js";
+import { generateVuePrimitivePackage } from "./primitive-package.js";
+import { vueAdapterPublicContract } from "./public-contract.js";
+import { projectVueSpecializedAdapterOutputModel } from "./specialized-adapter-spec.js";
+import { generateStarwindVueWrappers, selectVueStyledContracts } from "./styled.js";
 
 async function generateValidatedVuePrimitivePackage(
   args: Parameters<typeof generateVuePrimitivePackage>[0],
@@ -61,7 +60,7 @@ const vueFrameworkAdapterTargetDefinition = {
     ],
     primitiveArtifact: {
       editableContentMarkers: vuePrimitiveEditableContentMarkers,
-      forbiddenContent: vuePrimitiveQuarantineMarkers,
+      forbiddenContent: [],
       includeLocalImportGraph: true,
       outputDir: "vue-primitives",
       projectContent: projectVuePrimitiveVendoringContent,
@@ -121,35 +120,23 @@ export const vueFrameworkAdapterTarget = defineFrameworkAdapterTarget(
   publicSupport: (typeof vueFrameworkAdapterTargetDefinition)["publicSupport"];
 };
 
-export { vueFrameworkAdapter, vueFrameworkAdapterReadiness };
-export { vueFutureFrameworkTracer } from "./future-framework-tracer.js";
 export {
   printVueControlledValuePresenceComponent,
   printVueControlledValuePresenceIndex,
 } from "./controlled-value-presence.js";
-export { printVueRangeControlComponent, printVueRangeControlIndex } from "./range-control.js";
-export {
-  printVueHiddenInputVisualSlotComponent,
-  printVueHiddenInputVisualSlotIndex,
-} from "./hidden-input-visual-slot.js";
-export {
-  printVueFileDropControlComponent,
-  printVueFileDropControlIndex,
-} from "./file-drop-control.js";
 export {
   printVueFieldCompositionComponent,
   printVueFieldCompositionIndex,
 } from "./field-composition.js";
 export {
-  projectVueDetailedEvent,
-  projectVueModel,
-  vueAdapterPublicContract,
-} from "./public-contract.js";
-export type {
-  VueAdapterPublicContract,
-  VueDetailedEventProjection,
-  VueModelProjection,
-} from "./public-contract.js";
+  printVueFileDropControlComponent,
+  printVueFileDropControlIndex,
+} from "./file-drop-control.js";
+export { vueFutureFrameworkTracer } from "./future-framework-tracer.js";
+export {
+  printVueHiddenInputVisualSlotComponent,
+  printVueHiddenInputVisualSlotIndex,
+} from "./hidden-input-visual-slot.js";
 export {
   printVueNativeInputValueComponent,
   printVueNativeInputValueIndex,
@@ -159,3 +146,15 @@ export {
   printVuePresenceFloatingOverlayComponent,
   printVuePresenceFloatingOverlayIndex,
 } from "./presence-floating-overlay.js";
+export type {
+  VueAdapterPublicContract,
+  VueDetailedEventProjection,
+  VueModelProjection,
+} from "./public-contract.js";
+export {
+  projectVueDetailedEvent,
+  projectVueModel,
+  vueAdapterPublicContract,
+} from "./public-contract.js";
+export { printVueRangeControlComponent, printVueRangeControlIndex } from "./range-control.js";
+export { vueFrameworkAdapter, vueFrameworkAdapterReadiness };

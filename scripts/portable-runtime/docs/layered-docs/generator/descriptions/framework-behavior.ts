@@ -3,7 +3,6 @@ import type {
   PrimitiveEventCancellationStepMetadata,
   PrimitiveFrameworkBehaviorApiMetadata,
   PrimitiveFrameworkBehaviorMetadata,
-  PrimitiveStateModelMetadata,
 } from "../../types.js";
 import { formatNaturalList } from "../shared.js";
 

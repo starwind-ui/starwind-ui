@@ -8,7 +8,7 @@ import type {
   AdapterNativeOverlayFacts,
   AdapterPrintedFile,
 } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueNativeOverlayIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "native-overlay");
@@ -138,8 +138,7 @@ provide(${contextName}, {
     instance.${facts.setter.method}(true${setterOptions});
   }`
     : "";
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-${contextPrelude}<script setup lang="ts">
+  return `${contextPrelude}<script setup lang="ts">
 import {
   type ${closeCompleteEvent.detailsType},
   type ${openEvent.detailsType},
@@ -278,8 +277,7 @@ function printPortal(facts: AdapterNativeOverlayFacts): string {
     throw new Error(`${facts.displayName} native-overlay adapter cannot print portal.`);
   }
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
 import { inject, onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
@@ -453,8 +451,7 @@ function printPart({
   part: { defaultElement: string; name: string };
   props?: string;
 }): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { type HTMLAttributes, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

@@ -1,5 +1,14 @@
 import { renameSync, writeFileSync } from "node:fs";
-import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -16,6 +25,7 @@ import {
 } from "../package-size-optimization-evidence.mjs";
 
 const repoRoot = process.cwd();
+const temporaryRoot = await realpath(os.tmpdir());
 const acceptedEvidence = JSON.parse(
   await readFile(
     path.join(repoRoot, "scripts/portable-runtime/evidence/vue-package-size-baseline.json"),
@@ -262,7 +272,7 @@ describe("package size optimization evidence", () => {
   });
 
   it("rolls back both private candidate artifacts after interrupted publication", async () => {
-    const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-rollback-"));
+    const temporaryRepo = await mkdtemp(path.join(temporaryRoot, "starwind-candidate-rollback-"));
     const evidence = buildEvidence({ beforeBytes: 52_000, afterBytes: 50_976 });
     const paths = getPackageSizeOptimizationEvidencePaths({
       candidateId: "compiler-inline-production",
@@ -393,7 +403,7 @@ describe("package size optimization evidence", () => {
   });
 
   it("runs the prepared-evidence command into the private feature directory", async () => {
-    const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-cli-"));
+    const temporaryRepo = await mkdtemp(path.join(temporaryRoot, "starwind-candidate-cli-"));
     const descriptorPath = path.join(temporaryRepo, "prepared-candidate.json");
     const descriptor = buildDescriptor({ afterBytes: 50_976, beforeBytes: 52_000 });
 
@@ -430,7 +440,7 @@ describe("package size optimization evidence", () => {
   });
 
   it("rejects an arbitrary CLI repository root", async () => {
-    const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-cli-root-"));
+    const temporaryRepo = await mkdtemp(path.join(temporaryRoot, "starwind-candidate-cli-root-"));
     const descriptorPath = path.join(temporaryRepo, "prepared-candidate.json");
 
     try {
@@ -449,7 +459,7 @@ describe("package size optimization evidence", () => {
   });
 
   it("rejects a symlinked feature destination before staging", async () => {
-    const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-symlink-"));
+    const temporaryRepo = await mkdtemp(path.join(temporaryRoot, "starwind-candidate-symlink-"));
     const acceptedDirectory = path.join(temporaryRepo, "scripts/portable-runtime/evidence");
     const featureParent = path.join(
       temporaryRepo,
@@ -480,7 +490,9 @@ describe("package size optimization evidence", () => {
         publicationError = error;
       }
 
-      expect(publicationError?.message).toContain("symlink");
+      expect(publicationError?.message).toBe(
+        `Candidate publication path ancestry contains a symlink: ${path.join(featureParent, "evidence")}`,
+      );
       expect(publicationError?.packageSizeOptimizationPublication).toEqual(
         expect.objectContaining({ phase: "path-validation" }),
       );
@@ -492,7 +504,7 @@ describe("package size optimization evidence", () => {
   });
 
   it("publishes only inside the feature evidence directory", async () => {
-    const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-scope-"));
+    const temporaryRepo = await mkdtemp(path.join(temporaryRoot, "starwind-candidate-scope-"));
     const protectedFiles = [
       "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
       "scripts/portable-runtime/evidence/vue-package-size-baseline.md",
@@ -607,7 +619,7 @@ function createFailingStageWriter() {
 }
 
 async function exercisePublicationFailure({ mutateEvidence, publicationOptions } = {}) {
-  const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-phase-"));
+  const temporaryRepo = await mkdtemp(path.join(temporaryRoot, "starwind-candidate-phase-"));
   const evidence = buildEvidence({ afterBytes: 50_976, beforeBytes: 52_000 });
   mutateEvidence?.(evidence);
   const paths = getPackageSizeOptimizationEvidencePaths({

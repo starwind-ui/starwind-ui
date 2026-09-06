@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.
-
 import ProgressIndicator from "./ProgressIndicator.vue";
 import ProgressLabel from "./ProgressLabel.vue";
 import ProgressRoot from "./ProgressRoot.vue";

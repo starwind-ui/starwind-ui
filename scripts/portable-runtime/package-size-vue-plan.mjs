@@ -1,4 +1,6 @@
+// Frozen size baseline and performance evidence use this version.
 export const ZAG_VUE_COMPARATOR_VERSION = "1.42.0";
+export const ZAG_SIZE_COMPARATOR_VERSION = "1.43.3";
 
 export const starwindVueRuntimeComponents = Object.freeze([
   "accordion",
@@ -164,6 +166,34 @@ export const zagVueExpectedResolvedVersions = Object.freeze(
   ),
 );
 
+export const zagVueLiveComparatorInstallSpecifiers = Object.freeze(
+  zagVueComparatorPackages.map((packageName) => `${packageName}@${ZAG_SIZE_COMPARATOR_VERSION}`),
+);
+
+export const zagVueLiveExpectedResolvedVersions = Object.freeze(
+  Object.fromEntries(
+    zagVueComparatorPackages.map((packageName) => [packageName, ZAG_SIZE_COMPARATOR_VERSION]),
+  ),
+);
+
+export function getZagVueSizeComparatorPlan({ baselineVue = false, checkOnly = false } = {}) {
+  const frozen = baselineVue || checkOnly;
+  return {
+    version: frozen ? ZAG_VUE_COMPARATOR_VERSION : ZAG_SIZE_COMPARATOR_VERSION,
+    installSpecifiers: checkOnly
+      ? []
+      : frozen
+        ? zagVueComparatorInstallSpecifiers
+        : zagVueLiveComparatorInstallSpecifiers,
+    expectedResolvedVersions: frozen
+      ? zagVueExpectedResolvedVersions
+      : zagVueLiveExpectedResolvedVersions,
+    validateResolvedVersions: frozen
+      ? validateZagVueResolvedVersions
+      : validateLiveZagVueResolvedVersions,
+  };
+}
+
 export function buildNamespaceImportEntry(specifiers, prefix = "pkg") {
   const stableSpecifiers = [...new Set(specifiers)].sort();
   const imports = stableSpecifiers.map(
@@ -327,6 +357,14 @@ export function buildStarwindVueBrowserMeasurementRows({ vueAlias, runtimeAlias 
 }
 
 export function validateZagVueResolvedVersions(resolvedVersions) {
+  validateZagVueVersions(resolvedVersions, ZAG_VUE_COMPARATOR_VERSION);
+}
+
+export function validateLiveZagVueResolvedVersions(resolvedVersions) {
+  validateZagVueVersions(resolvedVersions, ZAG_SIZE_COMPARATOR_VERSION);
+}
+
+function validateZagVueVersions(resolvedVersions, expectedVersion) {
   const expectedPackages = new Set(zagVueComparatorPackages);
   const missing = zagVueComparatorPackages.filter(
     (packageName) => !Object.hasOwn(resolvedVersions, packageName),
@@ -338,11 +376,11 @@ export function validateZagVueResolvedVersions(resolvedVersions) {
     .filter(
       (packageName) =>
         Object.hasOwn(resolvedVersions, packageName) &&
-        resolvedVersions[packageName] !== ZAG_VUE_COMPARATOR_VERSION,
+        resolvedVersions[packageName] !== expectedVersion,
     )
     .map(
       (packageName) =>
-        `${packageName}: expected ${ZAG_VUE_COMPARATOR_VERSION}, received ${resolvedVersions[packageName]}`,
+        `${packageName}: expected ${expectedVersion}, received ${resolvedVersions[packageName]}`,
     );
 
   if (missing.length > 0 || unexpected.length > 0 || mismatched.length > 0) {

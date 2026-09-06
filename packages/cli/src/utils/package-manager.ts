@@ -152,34 +152,6 @@ export function detectPackageManager(options: PackageManagerOptions = {}): Packa
 }
 
 /**
- * Detects and returns the default package manager based on lock files
- * @returns The detected package manager, defaults to npm if no lock file is found
- */
-export async function getDefaultPackageManager(): Promise<PackageManager> {
-  return detectPackageManager().name;
-}
-
-/**
- * Gets the appropriate command to run shadcn with the detected package manager
- * @returns The command array for execa
- */
-export async function getShadcnCommand(): Promise<[string, string[]]> {
-  const pm = await getDefaultPackageManager();
-
-  switch (pm) {
-    case "pnpm":
-      return ["pnpm", ["dlx", "shadcn@3"]];
-    case "yarn":
-      return ["yarn", ["dlx", "shadcn@3"]];
-    case "bun":
-      return ["bunx", ["shadcn@3"]];
-    case "npm":
-    default:
-      return ["npx", ["-y", "shadcn@3"]];
-  }
-}
-
-/**
  * Installs the specified packages using the detected package manager
  * @param packages - Array of package names to install
  * @param pm - The package manager to use

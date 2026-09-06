@@ -8,7 +8,6 @@ import type {
   AdapterNotificationSystemIndexProjection,
   AdapterNotificationSystemPartName,
 } from "../types.js";
-import { VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 
 export function printVueNotificationSystemComponent(
   family: AdapterNotificationSystemComponentProjection,
@@ -47,8 +46,7 @@ function printViewport(facts: AdapterNotificationSystemFacts): string {
   const options = facts.viewportOptions;
   const semantics = facts.viewportSemantics;
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
 
@@ -121,8 +119,7 @@ onBeforeUnmount(() => {
 function printTemplate(facts: AdapterNotificationSystemFacts): string {
   const variant = facts.template.variant;
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { onBeforeUnmount, onMounted, onUpdated, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -187,8 +184,7 @@ function printRoot(facts: AdapterNotificationSystemFacts): string {
   const variant = facts.template.variant;
   const state = facts.rootState;
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -230,8 +226,7 @@ function printSimplePart(
   const part = facts.parts[partName];
   const elementType = getVueElementType(part.defaultElement);
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -270,8 +265,7 @@ function printButton(
   overridableAttributes: string,
   protectedAttributes: string,
 ): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

@@ -6,30 +6,15 @@ export default defineConfig({
     projects: [
       {
         test: {
-          include: [
-            "src/**/*.test.ts",
-            "src/**/*.spec.ts",
-            "tests/**/*.test.ts",
-            "tests/**/*.spec.ts",
-          ],
-          exclude: [
-            "src/**/*.browser.test.ts",
-            "src/**/*.browser.spec.ts",
-            "tests/**/*.browser.test.ts",
-            "tests/**/*.browser.spec.ts",
-          ],
+          include: ["tests/**/*.test.ts", "tests/**/*.spec.ts"],
+          exclude: ["tests/**/*.browser.test.ts", "tests/**/*.browser.spec.ts"],
           name: "unit",
           environment: "node",
         },
       },
       {
         test: {
-          include: [
-            "src/**/*.browser.test.ts",
-            "src/**/*.browser.spec.ts",
-            "tests/**/*.browser.test.ts",
-            "tests/**/*.browser.spec.ts",
-          ],
+          include: ["tests/**/*.browser.test.ts", "tests/**/*.browser.spec.ts"],
           name: "browser",
           browser: {
             enabled: true,

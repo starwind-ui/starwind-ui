@@ -1,6 +1,5 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
@@ -103,9 +102,13 @@ describe("Vue runtime performance runner", () => {
 
   it("keeps check mode offline and free from build, install, browser, and write calls", async () => {
     const checkEvidence = vi.fn(() => "checked");
+    const log = vi.fn();
     const run = vi.fn();
-    await expect(main(["--check"], { checkEvidence, run })).resolves.toBe("checked");
+    await expect(main(["--check"], { checkEvidence, log, run })).resolves.toBe("checked");
     expect(checkEvidence).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledWith(
+      "Validated saved Vue performance evidence. Current timing requires a new controlled capture.",
+    );
     expect(run).not.toHaveBeenCalled();
   });
 
@@ -835,10 +838,13 @@ describe("Vue runtime performance runner", () => {
     expect(packageJson.scripts["runtime:perf:snapshot"]).toContain(
       "measure-runtime-performance.mjs --snapshot",
     );
-    expect(packageJson.scripts["runtime:perf:vue:check"]).toBe(
+    expect(packageJson.scripts["runtime:perf:vue:evidence:check"]).toBe(
       hasPrivateSvelte
         ? "node scripts/portable-runtime/measure-vue-runtime-performance.mjs --check"
         : undefined,
+    );
+    expect(packageJson.scripts["runtime:perf:vue:check"]).toBe(
+      hasPrivateSvelte ? "pnpm runtime:perf:vue:evidence:check" : undefined,
     );
   });
 });

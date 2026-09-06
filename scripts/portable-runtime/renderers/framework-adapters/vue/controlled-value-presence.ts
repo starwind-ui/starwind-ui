@@ -9,9 +9,6 @@ import type {
 } from "../types.js";
 import { projectVueDetailedEvent, projectVueModel } from "./public-contract.js";
 
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export function printVueControlledValuePresenceComponent(
   family: AdapterControlledValuePresenceComponentProjection,
 ): string {
@@ -41,8 +38,7 @@ export function printVueControlledValuePresenceIndex(
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 export { ${facts.context.componentName}, ${facts.context.hookName} } from "./${facts.context.componentName}";
@@ -100,8 +96,7 @@ function printRoot(facts: AdapterControlledValuePresenceFacts): string {
   const event = projectVueDetailedEvent(facts.events.valueChange.callbackProp);
   const part = facts.parts.root;
   const setterOptions = formatOptions(facts.setter.options);
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import {
   type ${facts.props.orientation.type},
   type ${facts.state.type},
@@ -233,8 +228,7 @@ function ${facts.serializer.functionName}(value: ${facts.state.type} | undefined
 
 function printList(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.list;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });
@@ -268,8 +262,7 @@ defineExpose({ element });
 
 function printTab(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.tab;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { computed, ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });
@@ -308,8 +301,7 @@ defineExpose({ element });
 
 function printPanel(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.panel;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { computed, ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });
@@ -346,8 +338,7 @@ defineExpose({ element });
 
 function printIndicator(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.indicator;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });

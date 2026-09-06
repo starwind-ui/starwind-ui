@@ -7,7 +7,6 @@ import * as migrateModule from "../../src/commands/migrate.js";
 import * as config from "../../src/utils/config.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as fs from "../../src/utils/fs.js";
-import * as packageManager from "../../src/utils/package-manager.js";
 import * as proRegistry from "../../src/utils/pro-registry.js";
 import * as registry from "../../src/utils/registry.js";
 import * as runtimeComponent from "../../src/utils/runtime-component.js";
@@ -18,9 +17,6 @@ vi.mock("../../src/utils/config.js");
 vi.mock("../../src/utils/fs.js");
 vi.mock("../../src/utils/package-manager.js", () => ({
   detectPackageManager: vi.fn(() => ({ name: "npm" })),
-  getShadcnCommand: vi.fn(async () => {
-    throw new Error("shadcn command helper should not be used for Pro installs");
-  }),
 }));
 vi.mock("../../src/utils/registry.js");
 vi.mock("../../src/utils/pro-registry.js");
@@ -51,7 +47,6 @@ vi.mocked(clackPrompts).log = mockLog as typeof clackPrompts.log;
 const mockFileExists = vi.mocked(fs.fileExists);
 const mockGetConfigState = vi.mocked(config.getConfigState);
 const mockHasLegacyStarwindUiV2ConfigShape = vi.mocked(config.hasLegacyStarwindUiV2ConfigShape);
-const mockGetShadcnCommand = vi.mocked(packageManager.getShadcnCommand);
 const mockLoadRegistry = vi.mocked(registry.loadRegistry);
 const mockParseRegistrySource = vi.mocked(registry.parseRegistrySource);
 const mockGetConfiguredRegistrySource = vi.mocked(registry.getConfiguredRegistrySource);
@@ -735,7 +730,6 @@ describe("add command", () => {
         overwrite: true,
       }),
     );
-    expect(mockGetShadcnCommand).not.toHaveBeenCalled();
     expect(mockLoadRegistry).not.toHaveBeenCalled();
     expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
   });
@@ -778,7 +772,6 @@ describe("add command", () => {
         framework: expect.any(String),
       }),
     );
-    expect(mockGetShadcnCommand).not.toHaveBeenCalled();
     expect(mockLog.success).toHaveBeenCalledWith(
       expect.stringContaining("Successfully installed components:"),
     );
