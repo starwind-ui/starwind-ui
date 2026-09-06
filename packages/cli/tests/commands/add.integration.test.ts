@@ -45,10 +45,6 @@ vi.mock("../../src/utils/registry.js", () => ({
   ),
 }));
 
-vi.mock("../../src/utils/validate.js", () => ({
-  isValidComponent: vi.fn(),
-}));
-
 vi.mock("../../src/utils/package-manager.js", () => ({
   detectPackageManager: vi.fn(() => ({ name: "npm" })),
   installDependencies: vi.fn(),
@@ -58,13 +54,11 @@ vi.mock("../../src/utils/package-manager.js", () => ({
 import * as clackPrompts from "@clack/prompts";
 import { installDependenciesWithProgress } from "../../src/utils/package-manager.js";
 import { loadRegistry, parseRegistrySource } from "../../src/utils/registry.js";
-import { isValidComponent } from "../../src/utils/validate.js";
 
 const mockInstallDependencies = vi.mocked(installDependenciesWithProgress);
 const mockEnsureAstroReactIntegration = vi.mocked(ensureAstroReactIntegration);
 const mockLoadRegistry = vi.mocked(loadRegistry);
 const mockParseRegistrySource = vi.mocked(parseRegistrySource);
-const mockIsValidComponent = vi.mocked(isValidComponent);
 const mockMultiselect = vi.mocked(clackPrompts.multiselect);
 const mockPromptLog = vi.mocked(clackPrompts.log);
 
@@ -234,7 +228,6 @@ describe.sequential("add command integration", () => {
     mockParseRegistrySource.mockImplementation((value) =>
       value ? { type: "remote", url: value } : undefined,
     );
-    mockIsValidComponent.mockResolvedValue(true);
     mockInstallDependencies.mockResolvedValue(undefined);
     mockEnsureAstroReactIntegration.mockResolvedValue({ status: "ready" });
     mockMultiselect.mockResolvedValue(["card"]);

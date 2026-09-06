@@ -260,6 +260,49 @@ describe("React Select lazy selected labels", () => {
   });
 });
 
+describe("React Select group labels", () => {
+  it("keeps the group name synchronized with a dynamic heading", async () => {
+    let setHeading!: React.Dispatch<React.SetStateAction<string>>;
+    let replacePopup!: React.DispatchWithoutAction;
+    function DynamicSelect() {
+      const [heading, updateHeading] = React.useState("Themes");
+      const [popupKey, updatePopupKey] = React.useReducer((value) => value + 1, 0);
+      setHeading = updateHeading;
+      replacePopup = updatePopupKey;
+      return (
+        <Select.Root defaultOpen modal={false}>
+          <Select.Trigger>Select theme</Select.Trigger>
+          <Select.Portal key={popupKey}>
+            <Select.Positioner>
+              <Select.Popup keepMounted>
+                <Select.Group>
+                  <Select.GroupLabel>{heading}</Select.GroupLabel>
+                  <Select.Item value="light">Light</Select.Item>
+                </Select.Group>
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      );
+    }
+
+    await mount(<DynamicSelect />);
+    await waitForMacrotask();
+    const group = document.querySelector<HTMLElement>("[data-sw-select-group]")!;
+
+    expect(group).toHaveAccessibleName("Themes");
+    await act(() => setHeading("Color themes"));
+    await waitForMacrotask();
+    expect(group).toHaveAccessibleName("Color themes");
+
+    await act(() => replacePopup());
+    await waitForMacrotask();
+    const replacementGroup = document.querySelector<HTMLElement>("[data-sw-select-group]")!;
+    expect(replacementGroup).not.toBe(group);
+    expect(replacementGroup).toHaveAccessibleName("Color themes");
+  });
+});
+
 async function mount(node: React.ReactNode): Promise<void> {
   container = document.createElement("div");
   document.body.append(container);

@@ -649,21 +649,138 @@ describe("createTabs", () => {
     expect(getPanel(nestedRoot, "nested-c").getAttribute("role")).toBe("tabpanel");
   });
 
-  it("positions the indicator with active tab CSS variables", () => {
-    const root = renderTabs({ defaultValue: "account", withIndicator: true });
-    setRect(getList(root), { height: 40, left: 10, top: 20, width: 200 });
-    setRect(getTab(root, "account"), { height: 32, left: 20, top: 24, width: 80 });
+  it.each([
+    ["ordinary", "", false],
+    ["scaled", "translate(19px, 13px) scale(1.6, 0.75)", false],
+    ["vertical", "scale(0.8, 1.4)", true],
+  ])("aligns real fractional, bordered and scrolled %s layout", (_, transform, vertical) => {
+    const root = renderGeometryTabs(vertical);
+    root.style.transform = transform;
+    const list = getList(root);
+    const wrapper = list.querySelector<HTMLElement>(".geometry-wrapper")!;
+    list.scrollLeft = 17;
+    list.scrollTop = 9;
+    wrapper.scrollLeft = 11;
+    wrapper.scrollTop = 7;
+    const tabs = createTabs(root);
+    expectIndicatorAlignment(root, "account", 1);
+    getTab(root, "password").click();
+    expectIndicatorAlignment(root, "password", 1);
+    expect(getPanel(root, "password").hidden).toBe(false);
+    tabs.destroy();
+  });
 
-    createTabs(root);
+  it.each([
+    ["ordinary", "", 1],
+    ["shared scale", "scale(1.5, 0.8)", 1],
+    ["shared rotation", "rotate(18deg)", 2],
+  ])(
+    "preserves the slot through six fractional offset parents under %s",
+    (_, transform, tolerance) => {
+      const root = renderTabs({ defaultValue: "account", withIndicator: true });
+      root.style.transform = transform;
+      const list = getList(root);
+      list.style.cssText = "position:relative;width:400px;height:100px;";
+      let parent = list;
+      for (let depth = 0; depth < 6; depth++) {
+        const wrapper = document.createElement("div");
+        wrapper.style.cssText = "position:relative;margin-left:10.375px;";
+        parent.append(wrapper);
+        parent = wrapper;
+      }
+      const account = getTab(root, "account");
+      account.style.cssText = "display:block;box-sizing:border-box;width:80px;height:30px;";
+      parent.append(account);
+      const tabs = createTabs(root);
+      expect(
+        Math.abs(
+          Number.parseFloat(getIndicator(root).style.getPropertyValue("--active-tab-left")) - 62.25,
+        ),
+      ).toBeLessThanOrEqual(tolerance);
+      tabs.destroy();
+    },
+  );
 
+  it("keeps precise offsets when the list is not an offset parent", () => {
+    const root = renderGeometryTabs(false);
+    const list = getList(root);
+    list.style.position = "static";
+    const tabs = createTabs(root);
     const indicator = getIndicator(root);
+    const tab = getTab(root, "account");
+    const expected =
+      tab.getBoundingClientRect().left - list.getBoundingClientRect().left - list.clientLeft;
+    expect(
+      Math.abs(Number.parseFloat(indicator.style.getPropertyValue("--active-tab-left")) - expected),
+    ).toBeLessThan(0.01);
+    tabs.destroy();
+  });
 
-    expect(indicator.hidden).toBe(false);
-    expect(indicator.style.getPropertyValue("--active-tab-left")).toBe("10px");
-    expect(indicator.style.getPropertyValue("--active-tab-right")).toBe("110px");
-    expect(indicator.style.getPropertyValue("--active-tab-top")).toBe("4px");
-    expect(indicator.style.getPropertyValue("--active-tab-width")).toBe("80px");
-    expect(indicator.style.getPropertyValue("--active-tab-height")).toBe("32px");
+  it("measures content-box sizes and refreshes geometry at focus boundaries", () => {
+    const root = renderGeometryTabs(false);
+    const account = getTab(root, "account");
+    account.style.boxSizing = "content-box";
+    account.style.width = "71.375px";
+    account.style.height = "24.625px";
+    const tabs = createTabs(root);
+    root.style.scale = "1.5 0.8";
+    root.style.translate = "10px 6px";
+    account.focus();
+    expectIndicatorAlignment(root, "account", 1);
+    expect(tabs.getValue()).toBe("account");
+    expect(getPanel(root, "account").hidden).toBe(false);
+    tabs.destroy();
+  });
+
+  it("keeps a translated tab's untransformed slot", () => {
+    const root = renderGeometryTabs(false);
+    const account = getTab(root, "account");
+    account.style.translate = "12px 9px";
+    const tabs = createTabs(root);
+    account.style.translate = "";
+    expectIndicatorAlignment(root, "account", 2);
+    tabs.destroy();
+  });
+
+  it.each([
+    "rotate(18deg)",
+    "skew(15deg, 8deg)",
+    "perspective(400px) rotateY(25deg)",
+    "scale(-1, 1)",
+    "scale(0)",
+  ])("uses finite layout slots under %s", (transform) => {
+    const root = renderGeometryTabs(false);
+    root.style.transform = transform;
+    const tabs = createTabs(root);
+    root.style.transform = "";
+    expectIndicatorAlignment(root, "account", 2);
+    tabs.destroy();
+  });
+
+  it("uses the layout slot for tab-local transforms and recovers after hidden refresh", () => {
+    const root = renderGeometryTabs(false);
+    const account = getTab(root, "account");
+    account.style.translate = "0.75px 0.5px";
+    account.style.transform = "scale(1.2)";
+    const tabs = createTabs(root);
+    account.style.translate = "";
+    account.style.transform = "";
+    expectIndicatorAlignment(root, "account", 2);
+    root.style.display = "none";
+    tabs.refresh();
+    for (const name of ["left", "right", "top", "bottom", "width", "height"]) {
+      expect(
+        Number.isFinite(
+          Number.parseFloat(getIndicator(root).style.getPropertyValue(`--active-tab-${name}`)),
+        ),
+      ).toBe(true);
+    }
+    root.style.display = "";
+    tabs.refresh();
+    expectIndicatorAlignment(root, "account", 1);
+    tabs.setValue(null);
+    expect(getIndicator(root).hidden).toBe(true);
+    tabs.destroy();
   });
 
   it("keeps inactive panels mounted while preserving keep-mounted markers", () => {
@@ -779,22 +896,51 @@ function getIndicator(root: HTMLElement): HTMLElement {
   return root.querySelector<HTMLElement>("[data-sw-tabs-indicator]")!;
 }
 
-function setRect(
-  element: HTMLElement,
-  rect: { height: number; left: number; top: number; width: number },
-): void {
-  Object.defineProperty(element, "getBoundingClientRect", {
-    configurable: true,
-    value: () => ({
-      bottom: rect.top + rect.height,
-      height: rect.height,
-      left: rect.left,
-      right: rect.left + rect.width,
-      toJSON: () => ({}),
-      top: rect.top,
-      width: rect.width,
-      x: rect.left,
-      y: rect.top,
-    }),
-  });
+function renderGeometryTabs(vertical: boolean): HTMLElement {
+  const root = renderTabs({ defaultValue: "account", withIndicator: true });
+  root.style.cssText = "position:relative; margin:40px; transform-origin:0 0";
+  root.setAttribute("data-orientation", vertical ? "vertical" : "horizontal");
+  const list = getList(root);
+  list.style.cssText =
+    "position:relative; box-sizing:border-box; width:260.5px; height:145.75px; border:3px solid; overflow:scroll;";
+  const wrapper = document.createElement("div");
+  wrapper.className = "geometry-wrapper";
+  wrapper.style.cssText =
+    "position:relative; margin:13.25px 0 0 21.375px; border:2px solid; width:330px; height:190px; overflow:scroll";
+  const inner = document.createElement("div");
+  inner.style.cssText =
+    "position:relative; width:500px; height:300px; padding:9.375px 0 0 12.25px; display:flex; gap:7.375px;";
+  if (vertical) inner.style.flexDirection = "column";
+  for (const value of ["account", "password"]) {
+    const tab = getTab(root, value);
+    tab.style.cssText =
+      "box-sizing:border-box; flex:none; width:81.375px; height:34.625px; border:2px solid; padding:3px;";
+    inner.append(tab);
+  }
+  wrapper.append(inner);
+  list.prepend(wrapper);
+  getIndicator(root).style.cssText =
+    "position:absolute; pointer-events:none; left:var(--active-tab-left); top:var(--active-tab-top); width:var(--active-tab-width); height:var(--active-tab-height);";
+  return root;
+}
+
+function expectIndicatorAlignment(root: HTMLElement, value: string, tolerance: number): void {
+  const indicator = getIndicator(root);
+  const tab = getTab(root, value);
+  expect(indicator.hidden).toBe(false);
+  for (const [name, expected] of [
+    ["width", 81.375],
+    ["height", 34.625],
+  ] as const) {
+    expect(
+      Math.abs(
+        Number.parseFloat(indicator.style.getPropertyValue(`--active-tab-${name}`)) - expected,
+      ),
+    ).toBeLessThanOrEqual(tolerance);
+  }
+  const actual = indicator.getBoundingClientRect();
+  const expected = tab.getBoundingClientRect();
+  for (const key of ["left", "top", "width", "height"] as const) {
+    expect(Math.abs(actual[key] - expected[key]), key).toBeLessThanOrEqual(tolerance);
+  }
 }

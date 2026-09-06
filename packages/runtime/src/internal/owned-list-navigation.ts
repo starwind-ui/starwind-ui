@@ -1,3 +1,5 @@
+import { createOwnedGroupLabels, type OwnedGroupLabelsOptions } from "./owned-group-labels";
+
 export type OwnedListNavigationAdapter = {
   clear(items: HTMLElement[], activeItem: HTMLElement | null): void;
   highlight(item: HTMLElement, previousItem: HTMLElement | null, options: { focus: boolean }): void;
@@ -36,6 +38,7 @@ export type OwnedListNavigationOptions = {
   attributeFilter?: string[];
   beforeDiscover?: (root: HTMLElement) => void;
   getText?: (item: HTMLElement) => string;
+  groupLabels?: Omit<OwnedGroupLabelsOptions, "root">;
   isHighlighted?: (item: HTMLElement) => boolean;
   isNavigable?: (item: HTMLElement) => boolean;
   isOwned?: (item: HTMLElement) => boolean;
@@ -106,6 +109,7 @@ export function createOwnedListNavigation(
   let activeItem: HTMLElement | null = null;
   let dirty = true;
   let destroyed = false;
+  let handlingMutation = false;
   let indexByItem = new Map<HTMLElement, number>();
   let items: HTMLElement[] = [];
   let navigableItems: HTMLElement[] | null = null;
@@ -113,6 +117,9 @@ export function createOwnedListNavigation(
   let root = options.root;
   let typeaheadBuffer = "";
   let typeaheadTimer: number | null = null;
+  const groupLabels = options.groupLabels
+    ? createOwnedGroupLabels({ ...options.groupLabels, root })
+    : null;
 
   const isOwned =
     options.isOwned ??
@@ -120,20 +127,30 @@ export function createOwnedListNavigation(
       options.ownerSelector ? item.closest(options.ownerSelector) === root : true);
   const isNavigable = options.isNavigable ?? (() => true);
   const getText = options.getText ?? ((item) => (item.textContent ?? "").trim());
+  const collectionAttributes = new Set(options.attributeFilter ?? []);
+
+  function reconcilePendingGroupLabels(records: MutationRecord[] = []): void {
+    if (!groupLabels) return;
+    groupLabels.reconcile([...records, ...(observer?.takeRecords() ?? [])]);
+    observer?.takeRecords();
+  }
 
   function discover(): HTMLElement[] {
+    reconcilePendingGroupLabels();
     options.beforeDiscover?.(root);
     items = Array.from(root.querySelectorAll<HTMLElement>(options.itemSelector)).filter(isOwned);
     indexByItem = new Map(items.map((item, index) => [item, index] as const));
     navigableItems = null;
     dirty = false;
     options.onRefresh?.(items);
+    if (groupLabels) observer?.takeRecords();
     return items;
   }
 
   function getItems({ force = false }: { force?: boolean } = {}): HTMLElement[] {
-    if (observer && observer.takeRecords().length > 0) {
-      handleMutation();
+    const records = !handlingMutation ? observer?.takeRecords() : undefined;
+    if (records && records.length > 0) {
+      handleMutation(records);
     }
     if (force || dirty) return discover();
     return items;
@@ -246,32 +263,57 @@ export function createOwnedListNavigation(
     if (resetBuffer) typeaheadBuffer = "";
   }
 
-  function handleMutation(): void {
-    if (destroyed) return;
-    dirty = true;
-    navigableItems = null;
-    if (options.mutationMode === "refresh") {
-      const nextItems = discover();
-      reconcile();
-      options.onMutation?.(nextItems);
+  function handleMutation(records: MutationRecord[]): void {
+    if (destroyed || handlingMutation) return;
+    handlingMutation = true;
+    try {
+      reconcilePendingGroupLabels(records);
+      const collectionChanged = records.some(
+        (record) =>
+          record.type === "childList" ||
+          (record.type === "attributes" &&
+            record.attributeName !== null &&
+            collectionAttributes.has(record.attributeName)),
+      );
+      if (!collectionChanged) return;
+
+      dirty = true;
+      navigableItems = null;
+      if (options.mutationMode === "refresh") {
+        const nextItems = discover();
+        reconcile();
+        options.onMutation?.(nextItems);
+      }
+    } finally {
+      handlingMutation = false;
     }
   }
 
   function start(): void {
     if (destroyed || observer || typeof MutationObserver === "undefined") return;
     observer = new MutationObserver(handleMutation);
+    const attributeFilter = groupLabels
+      ? Array.from(
+          new Set([
+            ...(options.attributeFilter ?? []),
+            "aria-hidden",
+            "aria-label",
+            "aria-labelledby",
+            "id",
+          ]),
+        )
+      : options.attributeFilter;
     observer.observe(root, {
-      attributeFilter:
-        options.attributeFilter && options.attributeFilter.length > 0
-          ? options.attributeFilter
-          : undefined,
-      attributes: Boolean(options.attributeFilter?.length),
+      attributeFilter: attributeFilter && attributeFilter.length > 0 ? attributeFilter : undefined,
+      attributes: Boolean(attributeFilter?.length),
       childList: true,
+      characterData: Boolean(groupLabels),
       subtree: true,
     });
   }
 
   function stop(): void {
+    if (observer) reconcilePendingGroupLabels();
     observer?.disconnect();
     observer = null;
     dirty = true;
@@ -294,6 +336,7 @@ export function createOwnedListNavigation(
       stop();
       clearTypeaheadTimer();
       clear();
+      groupLabels?.destroy();
       indexByItem.clear();
       items = [];
       navigableItems = null;
@@ -321,6 +364,7 @@ export function createOwnedListNavigation(
       const wasStarted = observer !== null;
       stop();
       root = nextRoot;
+      groupLabels?.setRoot(nextRoot);
       if (wasStarted) start();
     },
     start,

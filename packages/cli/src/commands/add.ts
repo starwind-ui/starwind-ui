@@ -42,7 +42,6 @@ import {
   resolveStarwindProRegistryImport,
 } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
-import { isValidComponent } from "@/utils/validate.js";
 
 import { init } from "./init.js";
 import { migrate } from "./migrate.js";
@@ -357,22 +356,13 @@ export async function add(
         // Get all available components once to avoid multiple registry calls
         const availableComponents = (await getRuntimeRegistrySelection()).availableComponents;
 
-        // Filter valid components and collect invalid ones
-        const { valid, invalid } = await regularComponents.reduce<
-          Promise<{ valid: string[]; invalid: string[] }>
-        >(
-          async (accPromise, component) => {
-            const acc = await accPromise;
-            const isValid = await isValidComponent(component, availableComponents);
-            if (isValid) {
-              acc.valid.push(component);
-            } else {
-              acc.invalid.push(component);
-            }
-            return acc;
-          },
-          Promise.resolve({ valid: [], invalid: [] }),
-        );
+        const availableNames = new Set(availableComponents.map(({ name }) => name));
+        const valid: string[] = [];
+        const invalid: string[] = [];
+        for (const component of regularComponents) {
+          if (availableNames.has(component)) valid.push(component);
+          else invalid.push(component);
+        }
 
         // Warn about invalid components
         if (invalid.length > 0) {

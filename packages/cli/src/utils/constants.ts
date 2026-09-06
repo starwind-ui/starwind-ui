@@ -9,7 +9,6 @@ export const PATHS = {
   STARWIND_PRO_V2_REGISTRY: "https://pro.starwind.dev/r/starwind-ui-v2/{name}",
   LOCAL_CSS_FILE: "src/styles/starwind.css",
   LOCAL_CONFIG_FILE: "starwind.config.json",
-  LOCAL_STYLES_DIR: "src/styles",
   LOCAL_COMPONENTS_DIR: "src/components",
   LOCAL_STARWIND_COMPONENTS_DIR: "src/components/starwind",
   LOCAL_STARWIND_PRIMITIVES_DIR: "src/components/starwind-primitives",
@@ -24,10 +23,3 @@ export const PATHS = {
 export const ASTRO_PACKAGES = {
   core: "astro@latest",
 } as const;
-
-/**
- * Get all Astro related packages as an array
- */
-export function getAstroPackages(): string[] {
-  return Object.values(ASTRO_PACKAGES);
-}

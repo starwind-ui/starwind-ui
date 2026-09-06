@@ -6,6 +6,7 @@ import {
 } from "../../internal/dom";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
+import { getTabsIndicatorGeometry } from "../../internal/tabs-indicator-geometry";
 
 export type TabsValue = string | null;
 export type TabsOrientation = "horizontal" | "vertical";
@@ -455,19 +456,17 @@ class TabsController implements TabsInstance {
       return;
     }
 
-    const listRect = list.getBoundingClientRect();
-    const tabRect = activeTab.element.getBoundingClientRect();
-    const left = tabRect.left - listRect.left + list.scrollLeft - list.clientLeft;
-    const top = tabRect.top - listRect.top + list.scrollTop - list.clientTop;
-    const right = getRectWidth(listRect) - left - getRectWidth(tabRect);
-    const bottom = getRectHeight(listRect) - top - getRectHeight(tabRect);
+    const { left, right, top, bottom, width, height } = getTabsIndicatorGeometry(
+      activeTab.element,
+      list,
+    );
 
     indicator.style.setProperty(TABS_ACTIVE_TAB_LEFT_CSS_VAR, `${left}px`);
     indicator.style.setProperty(TABS_ACTIVE_TAB_RIGHT_CSS_VAR, `${right}px`);
     indicator.style.setProperty(TABS_ACTIVE_TAB_TOP_CSS_VAR, `${top}px`);
     indicator.style.setProperty(TABS_ACTIVE_TAB_BOTTOM_CSS_VAR, `${bottom}px`);
-    indicator.style.setProperty(TABS_ACTIVE_TAB_WIDTH_CSS_VAR, `${getRectWidth(tabRect)}px`);
-    indicator.style.setProperty(TABS_ACTIVE_TAB_HEIGHT_CSS_VAR, `${getRectHeight(tabRect)}px`);
+    indicator.style.setProperty(TABS_ACTIVE_TAB_WIDTH_CSS_VAR, `${width}px`);
+    indicator.style.setProperty(TABS_ACTIVE_TAB_HEIGHT_CSS_VAR, `${height}px`);
     indicator.hidden = false;
   }
 
@@ -844,8 +843,4 @@ function getKeyboardDirection(orientation: TabsOrientation, key: string): -1 | 0
 
 function getRectWidth(rect: RectLike): number {
   return rect.width;
-}
-
-function getRectHeight(rect: RectLike): number {
-  return rect.height;
 }

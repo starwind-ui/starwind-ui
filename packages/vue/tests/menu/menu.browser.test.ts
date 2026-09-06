@@ -18,7 +18,9 @@ import type {
 import {
   MenuCheckboxItem,
   MenuCheckboxItemIndicator,
+  MenuGroup,
   MenuItem,
+  MenuLabel,
   MenuLinkItem,
   MenuPopup,
   MenuPortal,
@@ -357,6 +359,48 @@ describe("Vue Menu", () => {
 
     assertRadioState(host, "list", true);
     assertRadioState(host, "grid", false);
+  });
+
+  it("keeps the group name synchronized with a reactive heading", async () => {
+    const heading = ref("Actions");
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(MenuRoot, null, {
+          default: () => [
+            h(MenuTrigger, null, { default: () => "Open" }),
+            h(
+              MenuPortal,
+              { disabled: true },
+              {
+                default: () =>
+                  h(MenuPositioner, null, {
+                    default: () =>
+                      h(MenuPopup, null, {
+                        default: () =>
+                          h(MenuGroup, null, {
+                            default: () => [
+                              h(MenuLabel, null, { default: () => heading.value }),
+                              h(MenuItem, null, { default: () => "Edit" }),
+                            ],
+                          }),
+                      }),
+                  }),
+              },
+            ),
+          ],
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    host.querySelector<HTMLButtonElement>("[data-sw-menu-trigger]")!.click();
+    await frame();
+    const group = host.querySelector<HTMLElement>("[data-sw-menu-group]")!;
+
+    expect(group).toHaveAccessibleName("Actions");
+    heading.value = "Project actions";
+    await frame();
+    expect(group).toHaveAccessibleName("Project actions");
   });
 });
 

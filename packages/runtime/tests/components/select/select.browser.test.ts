@@ -2629,6 +2629,35 @@ describe("createSelect", () => {
   });
 });
 
+describe("select group labels", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    document.body.removeAttribute("style");
+    vi.useRealTimers();
+  });
+
+  it("names a group from its heading and removes managed attributes on destroy", () => {
+    const root = renderSelect();
+    const group = document.createElement("div");
+    group.setAttribute("data-sw-select-group", "");
+    group.setAttribute("role", "group");
+    const heading = document.createElement("div");
+    heading.setAttribute("data-sw-select-group-label", "");
+    heading.textContent = "Appearance";
+    group.append(heading, getItems()[0]!);
+    getList().prepend(group);
+    const select = createSelect(root);
+
+    select.open();
+
+    expect(group).toHaveAccessibleName("Appearance");
+    expect(heading).toHaveAttribute("aria-hidden", "true");
+    select.destroy();
+    expect(group).not.toHaveAttribute("aria-labelledby");
+    expect(heading).not.toHaveAttribute("aria-hidden");
+  });
+});
+
 function renderLargeSelect(count: number, options: { disabledIndex?: number } = {}): HTMLElement {
   const wrapper = document.createElement("div");
   const items = Array.from({ length: count }, (_, index) => {

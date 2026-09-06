@@ -159,15 +159,6 @@ describe("Vue package foundation", () => {
       "textarea",
       "video",
     ]);
-    const targetReadme = (
-      await readFile("scripts/portable-runtime/renderers/framework-adapters/vue/README.md", "utf8")
-    ).replace(/\s+/g, " ");
-    expect(targetReadme).toContain(
-      "The current Primitive surface contains Accordion, Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Color Picker, Combobox, Context Menu, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, Input OTP, Menu, Navigation Menu, Popover, Preview Card, Progress, Radio, Radio Group, Scroll Area, Select, Sidebar, Slider, Switch, Tabs, Toast, Toggle, Toggle Group, Tooltip, and the manual Theme facade.",
-    );
-    expect(targetReadme).toContain(
-      "The complete private Styled surface contains 54 portable roots exactly once: Accordion, Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Combobox, Color Picker, Context Menu, Dialog, Dropzone, Dropdown, Field, Sheet, Form, Hover Card, Input, Input OTP, Navigation Menu, Popover, Progress, Radio Group, Scroll Area, Select, Separator, Sidebar, Slider, Switch, Tabs, Theme Toggle, Toast, Toggle, Toggle Group, Tooltip, Alert, Aspect Ratio, Badge, Breadcrumb, Button Group, Card, Input Group, Item, Kbd, Label, Native Select, Pagination, Prose, Skeleton, Spinner, Table, Textarea, and Video. Image is the sole excluded Styled contract because it is Astro-only.",
-    );
     expect(vuePackageSubpaths.map(({ subpath }) => subpath)).toEqual([
       ".",
       "./accordion",

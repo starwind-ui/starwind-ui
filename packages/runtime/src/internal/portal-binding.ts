@@ -86,10 +86,6 @@ export function createPortalBinding(root: HTMLElement): PortalBinding {
   return binding;
 }
 
-export function getPortalBinding(root: HTMLElement): PortalBinding | null {
-  return bindings.get(root) ?? null;
-}
-
 export function pendingPortalBindingSnapshot(): PortalBindingPendingSnapshot {
   return PENDING_SNAPSHOT;
 }

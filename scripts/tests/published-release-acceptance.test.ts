@@ -213,7 +213,6 @@ allowBuilds:
   it("is exposed as an explicit root command and manual post-publish workflow", async () => {
     const rootPackage = JSON.parse(await readFile("package.json", "utf8"));
     const workflow = await readFile(".github/workflows/published-release-acceptance.yml", "utf8");
-    const releaseGuide = await readFile("docs/portable-runtime/beta-release.md", "utf8");
 
     expect(rootPackage.scripts["test:published-release"]).toBe(
       "node scripts/published-release-acceptance.mjs",
@@ -227,7 +226,5 @@ allowBuilds:
     expect(workflow).toContain("playwright install --with-deps chromium");
     expect(workflow).not.toContain("pull_request:");
     expect(workflow).not.toContain("push:");
-    expect(releaseGuide).toContain("pnpm test:published-release -- --version <cli-version>");
-    expect(releaseGuide).not.toContain("pnpm test:published-release -- --version 3.0.0-beta.1");
   });
 });

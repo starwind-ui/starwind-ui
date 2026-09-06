@@ -2803,6 +2803,38 @@ describe("createMenu", () => {
   });
 });
 
+describe("menu group labels", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    vi.useRealTimers();
+  });
+
+  it("names groups in the root popup and its owned submenu", () => {
+    const root = renderMenuWithSubmenu();
+    const popups = root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]");
+    popups.forEach((popup, index) => {
+      const group = document.createElement("div");
+      group.setAttribute("data-sw-menu-group", "");
+      group.setAttribute("role", "group");
+      const heading = document.createElement("div");
+      heading.setAttribute("data-sw-menu-label", "");
+      heading.textContent = index === 0 ? "Actions" : "More actions";
+      group.append(heading, popup.querySelector<HTMLElement>("[data-sw-menu-item]")!);
+      popup.prepend(group);
+    });
+    const menu = createMenu(root);
+    const groups = root.querySelectorAll<HTMLElement>("[data-sw-menu-group]");
+
+    menu.open();
+    expect(groups[0]).toHaveAccessibleName("Actions");
+    getSubmenuTrigger().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }),
+    );
+    expect(groups[1]).toHaveAccessibleName("More actions");
+    menu.destroy();
+  });
+});
+
 type RenderMenuOptions = {
   closeDelay?: number;
   modal?: boolean;

@@ -21,10 +21,7 @@ export function getAdapterFamilyProp(prop: {
   type: string;
 }) {
   return {
-    defaultValue:
-      prop.defaultValue === undefined
-        ? undefined
-        : formatAdapterFamilyDefaultValue(prop.defaultValue),
+    defaultValue: prop.defaultValue === undefined ? undefined : String(prop.defaultValue),
     name: prop.name,
     required: "required" in prop ? prop.required : undefined,
     type: prop.type,
@@ -278,8 +275,4 @@ export function toCamelCase(value: string): string {
 
 export function pluralizeDisplayName(value: string): string {
   return /(ch|sh|s|x)$/i.test(value) ? `${value}es` : `${value}s`;
-}
-
-function formatAdapterFamilyDefaultValue(value: unknown): string {
-  return String(value);
 }

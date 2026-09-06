@@ -20,16 +20,6 @@ type GenericAdapterPlanSource = Extract<PrimitiveGeneratorSource, "adapter-famil
 
 type AdapterOutputModelBuilder = (target: PrimitiveRouteFreeTarget) => AdapterOutputModel;
 
-export function getRouteFreePrimitiveFrameworkAdapter(target: PrimitiveRouteFreeTarget) {
-  return getPrimitiveFrameworkAdapterTarget(target).adapter;
-}
-
-export function getRouteFreePrimitiveTargets(
-  component: string,
-): readonly PrimitiveRouteFreeTarget[] {
-  return getPrimitiveFrameworkAdapterTargetsForComponent(component);
-}
-
 export function createGenericAdapterPlanPrimitiveGeneratorEntry({
   component,
   contract,
@@ -143,7 +133,7 @@ function createAdapterOutputPrimitiveGeneratorEntry({
     routeFree: {
       kind: "adapter-output-model",
       strategy,
-      targets: getRouteFreePrimitiveTargets(component),
+      targets: getPrimitiveFrameworkAdapterTargetsForComponent(component),
     },
     source,
   };

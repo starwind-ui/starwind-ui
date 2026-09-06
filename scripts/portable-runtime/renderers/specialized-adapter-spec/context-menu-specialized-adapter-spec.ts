@@ -481,7 +481,7 @@ function getContextMenuAnchoredMenuOverlayFacts(
 export function validateContextMenuSpecializedAdapterSpec(
   spec: ContextMenuSpecializedAdapterSpec,
 ): string[] {
-  const errors = validateSpecializedAdapterSpecSafely(spec);
+  const errors = validateSpecializedAdapterSpec(spec);
   if (!isRecord(spec) || spec.component !== "context-menu") {
     errors.push("Context Menu specialized adapter spec must target the context-menu primitive.");
     return errors;
@@ -1057,10 +1057,6 @@ function validateLifecycleRecipe(value: unknown): string[] {
     },
     "Context Menu specialized adapter spec lifecycle",
   );
-}
-
-function validateSpecializedAdapterSpecSafely(spec: unknown): string[] {
-  return validateSpecializedAdapterSpec(spec);
 }
 
 function validateRecordAgainstExpected(
