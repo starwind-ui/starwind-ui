@@ -123,7 +123,6 @@ const approvedVueScriptNames = [
   "l",
   "publish:vue-beta",
   "publish:vue-beta:dry-run",
-  "release:gate",
   "release:pack:vue-beta-artifacts",
   "release:vue-beta:artifacts",
   "release:vue-beta:artifacts:record",
@@ -163,7 +162,6 @@ const approvedVueScriptNameSet = new Set<string>(approvedVueScriptNames);
 const approvedVueReleaseScriptNames = new Set([
   "publish:vue-beta",
   "publish:vue-beta:dry-run",
-  "release:gate",
   "release:pack:vue-beta-artifacts",
   "release:vue-beta:artifacts",
   "release:vue-beta:artifacts:record",
@@ -730,7 +728,8 @@ describe("Vue public-beta contract gate", () => {
       scripts: {
         build: "vue-tsc -b && vite build",
         dev: "vite",
-        smoke: "pnpm build && node ../../scripts/portable-runtime/tests/smoke/vue/verify-demo.mjs",
+        smoke: "pnpm build && pnpm smoke:built",
+        "smoke:built": "node ../../scripts/portable-runtime/tests/smoke/vue/verify-demo.mjs",
       },
     });
     for (const cohortComponent of [
@@ -907,6 +906,8 @@ describe("Vue public-beta contract gate", () => {
         : undefined,
     });
     expect(findVueScriptPolicyViolations(rootScripts)).toEqual([]);
+    expect(rootScripts["release:gate"]).toBe("node scripts/release-gate.mjs");
+
     expect(
       findVueScriptPolicyViolations({
         ...rootScripts,

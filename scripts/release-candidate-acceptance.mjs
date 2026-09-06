@@ -8,8 +8,8 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-
 import { getPackageManagerCommand } from "./command-process.mjs";
+import { loadPublicReleaseArtifacts } from "./pack-public-release-artifacts.mjs";
 import {
   getFixtureFiles,
   runCommand,
@@ -734,8 +734,53 @@ export function createCandidateVerificationPlan(project, manifest = {}) {
   ];
 }
 
+export async function runCandidateProjects(projects, { concurrency = 2, runProject }) {
+  assert(
+    Number.isSafeInteger(concurrency) && concurrency > 0,
+    "Expected positive integer concurrency.",
+  );
+  let next = 0;
+  const errors = [];
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, projects.length) }, async () => {
+      while (errors.length === 0 && next < projects.length) {
+        const project = projects[next++];
+        try {
+          await runProject(project);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+    }),
+  );
+  if (errors.length === 1) throw errors[0];
+  if (errors.length) throw new AggregateError(errors, "Acceptance projects failed.");
+}
+
+export async function prepareCandidatePackages(
+  { packsDirectory, packDirectory },
+  { loadArtifacts = loadPublicReleaseArtifacts, packPackages = packWorkspacePackages } = {},
+) {
+  if (!packsDirectory) {
+    const packages = await packPackages(packDirectory);
+    return { packages, registryPackages: await getCandidateRegistryPackages(packages) };
+  }
+  const artifacts = await loadArtifacts({ outputDirectory: path.resolve(packsDirectory) });
+  const packages = {};
+  const registryPackages = {};
+  for (const key of ["runtime", "astro", "react", "vue", "cli"]) {
+    const entry = artifacts.packages[key];
+    assert(entry, `Prepared release packs are missing ${key}.`);
+    packages[key] = path.resolve(packsDirectory, entry.file);
+    if (key !== "cli") registryPackages[key] = { ...entry, file: packages[key] };
+  }
+  return { packages, registryPackages };
+}
+
 export async function runReleaseCandidateAcceptance({
   artifacts: artifactsOption,
+  concurrency = 2,
+  packsDirectory,
   keepTemp = false,
   projectIds,
 } = {}) {
@@ -743,8 +788,10 @@ export async function runReleaseCandidateAcceptance({
   const artifacts = artifactsOption
     ? path.resolve(artifactsOption)
     : await mkdtemp(path.join(os.tmpdir(), "starwind-release-candidate-artifacts-"));
-  const packages = await packWorkspacePackages(path.join(root, "packs"));
-  const registryPackages = await getCandidateRegistryPackages(packages);
+  const { packages, registryPackages } = await prepareCandidatePackages({
+    packsDirectory,
+    packDirectory: path.join(root, "packs"),
+  });
   const plan = createCandidatePlan({
     packages,
     projectIds,
@@ -788,7 +835,10 @@ export async function runReleaseCandidateAcceptance({
       await runCommand({ args: ["install"], cwd: project.directory });
     }
 
-    for (const project of plan.projects) await runProjectLifecycle(project, plan);
+    await runCandidateProjects(plan.projects, {
+      concurrency,
+      runProject: (project) => runProjectLifecycle(project, plan),
+    });
 
     const reactDemoRequire = createRequire(path.join(REPO_ROOT, "apps/react-demo/package.json"));
     const { chromium } = reactDemoRequire("playwright");
@@ -819,11 +869,23 @@ export async function runReleaseCandidateAcceptance({
 
 export function parseArgs(argv) {
   let artifacts;
+  let packsDirectory;
+  let concurrency = 2;
   let keepTemp = false;
   const projectIds = [];
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (argument === "--keep-temp") keepTemp = true;
+    if (argument === "--packs") {
+      packsDirectory = argv[++index];
+      if (!packsDirectory || packsDirectory.startsWith("--"))
+        throw new Error("Expected a path after --packs.");
+    } else if (argument === "--concurrency") {
+      concurrency = Number(argv[++index]);
+      assert(
+        Number.isSafeInteger(concurrency) && concurrency > 0,
+        "Expected positive integer concurrency.",
+      );
+    } else if (argument === "--keep-temp") keepTemp = true;
     else if (argument === "--artifacts") {
       artifacts = argv[index + 1];
       if (!artifacts) throw new Error("Expected a path after --artifacts.");
@@ -837,7 +899,13 @@ export function parseArgs(argv) {
       projectIds.push(argument.slice("--project=".length));
     } else throw new Error(`Unknown argument: ${argument}`);
   }
-  return { artifacts, keepTemp, projectIds: projectIds.length > 0 ? projectIds : undefined };
+  return {
+    artifacts,
+    concurrency,
+    packsDirectory,
+    keepTemp,
+    projectIds: projectIds.length > 0 ? projectIds : undefined,
+  };
 }
 
 async function main() {

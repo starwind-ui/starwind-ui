@@ -15,8 +15,8 @@ import { loadPublicationPlan } from "./release-publication-plan.mjs";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
 const PUBLIC_REPOSITORY = "starwind-ui/starwind-ui";
-const DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS = 12;
-const DEFAULT_REGISTRY_RETRY_DELAY_MS = 5_000;
+const DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS = 31;
+const DEFAULT_REGISTRY_RETRY_DELAY_MS = 10_000;
 
 export function createCommandSystem({ cwd = ROOT_DIR, spawnProcess = spawn } = {}) {
   async function capture(command, args) {
@@ -125,8 +125,8 @@ function isRetryableRegistryFailure(result) {
 
 function createRegistryPropagationError(subject, attempt, finalizeCommand) {
   return new Error(
-    `${subject} did not become visible on npm after ${attempt} registry ${attempt === 1 ? "check" : "checks"}. ` +
-      `The package publication may have succeeded. Wait for npm propagation, then run ${finalizeCommand}.`,
+    `${subject} did not become visible with its expected npm state after ${attempt} registry ${attempt === 1 ? "check" : "checks"}. ` +
+      `The package publication may have succeeded and is awaiting npm propagation. Do not publish again; wait, then run ${finalizeCommand}.`,
   );
 }
 
@@ -137,10 +137,15 @@ export async function verifyPublishedPackages(release, system, options = {}) {
   const finalizeCommand = release.finalizeCommand ?? "pnpm release:finalize";
   const onRetry =
     options.onRetry ??
-    ((spec, attempt) => {
+    ((subject, attempt) => {
       console.log(
-        `[finalize] Waiting for ${spec} to become visible on npm (${attempt}/${attempts})...`,
+        `[finalize] ${subject} is awaiting npm visibility; retry ${attempt + 1}/${attempts} in ${retryDelayMs / 1_000}s.`,
       );
+    });
+  const onPublished =
+    options.onPublished ??
+    ((spec, expectedTag) => {
+      console.log(`[finalize] ${spec} is visible on npm; checking dist-tag ${expectedTag}.`);
     });
   if (!Number.isInteger(attempts) || attempts < 1) {
     throw new Error("Registry verification attempts must be a positive integer.");
@@ -151,6 +156,8 @@ export async function verifyPublishedPackages(release, system, options = {}) {
 
   for (const entry of release.packages) {
     const spec = `${entry.name}@${entry.version}`;
+    const expectedTag = entry.tag ?? release.npmTag;
+    if (!expectedTag) throw new Error(`${spec} is missing its expected npm dist-tag.`);
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       const versionResult = await system.capture("npm", ["view", spec, "version", "--json"]);
       if (versionResult.code !== 0) {
@@ -169,9 +176,7 @@ export async function verifyPublishedPackages(release, system, options = {}) {
           `${spec} resolved to unexpected version ${JSON.stringify(publishedVersion)}.`,
         );
       }
-
-      const expectedTag = entry.tag ?? release.npmTag;
-      if (!expectedTag) throw new Error(`${spec} is missing its expected npm dist-tag.`);
+      onPublished(spec, expectedTag);
       const tagsResult = await system.capture("npm", ["view", spec, "dist-tags", "--json"]);
       if (tagsResult.code !== 0) {
         if (attempt < attempts && isRetryableRegistryFailure(tagsResult)) {
@@ -189,14 +194,29 @@ export async function verifyPublishedPackages(release, system, options = {}) {
         parseJsonOutput(tagsResult, `${spec} dist-tags`);
       }
       const tags = parseJsonOutput(tagsResult, `${spec} dist-tags`);
-      if (tags?.[expectedTag] !== entry.version) {
+      const taggedVersion = tags?.[expectedTag];
+      if (taggedVersion == null) {
         if (attempt < attempts) {
-          onRetry(spec, attempt);
+          onRetry(`${spec} dist-tag ${expectedTag}`, attempt);
           await waitForRetry(retryDelayMs);
           continue;
         }
-        throw new Error(
-          `${entry.name} dist-tag ${expectedTag} must point to ${entry.version}, found ${tags?.[expectedTag] ?? "nothing"}.`,
+        throw createRegistryPropagationError(
+          `${spec} dist-tag ${expectedTag}`,
+          attempt,
+          finalizeCommand,
+        );
+      }
+      if (taggedVersion !== entry.version) {
+        if (attempt < attempts) {
+          onRetry(`${spec} dist-tag ${expectedTag}`, attempt);
+          await waitForRetry(retryDelayMs);
+          continue;
+        }
+        throw createRegistryPropagationError(
+          `${entry.name} dist-tag ${expectedTag} must point to ${entry.version}, found ${taggedVersion}`,
+          attempt,
+          finalizeCommand,
         );
       }
       for (const [preservedTag, preservedVersion] of Object.entries(

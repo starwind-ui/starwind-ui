@@ -3,7 +3,6 @@ import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
-
 import {
   createCandidatePlan,
   createCandidateVerificationPlan,
@@ -13,8 +12,11 @@ import {
   getCandidateWorkspacePackage,
   getCandidateWorkspacePolicy,
   parseArgs,
+  prepareCandidatePackages,
+  runCandidateProjects,
   startCandidateRegistry,
 } from "../release-candidate-acceptance.mjs";
+import { RELEASE_PACKS, releaseGateStages } from "../release-gate.mjs";
 
 const root = path.resolve("candidate-root");
 const packages = {
@@ -27,6 +29,95 @@ const packages = {
 const vueAdapterVersion = "0.2.0";
 
 describe("release candidate acceptance", () => {
+  it("bounds active projects and waits for workers before surfacing errors", async () => {
+    let active = 0;
+    let maximum = 0;
+    const started: number[] = [];
+    const releases: (() => void)[] = [];
+    const failure = new Error("host failed");
+    const execution = runCandidateProjects([0, 1, 2], {
+      concurrency: 2,
+      runProject: async (id: number) => {
+        started.push(id);
+        maximum = Math.max(maximum, ++active);
+        await new Promise<void>((resolve) => releases.push(resolve));
+        active--;
+        if (id === 0) throw failure;
+      },
+    });
+    const rejection = expect(execution).rejects.toThrow("host failed");
+    expect(started).toEqual([0, 1]);
+    releases[0]();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(active).toBe(1);
+    expect(started).toEqual([0, 1]);
+    releases[1]();
+    await rejection;
+    expect(active).toBe(0);
+    expect(maximum).toBe(2);
+  });
+
+  it("runs every selected project with diagnostic concurrency one", async () => {
+    const seen: number[] = [];
+    await runCandidateProjects([0, 1, 2], {
+      concurrency: 1,
+      runProject: async (id: number) => {
+        seen.push(id);
+      },
+    });
+    expect(seen).toEqual([0, 1, 2]);
+    await expect(
+      runCandidateProjects([], { concurrency: 0, runProject: async () => {} }),
+    ).rejects.toThrow(/concurrency/i);
+    expect(parseArgs(["--packs", "/tmp/packs", "--concurrency", "1"])).toMatchObject({
+      packsDirectory: "/tmp/packs",
+      concurrency: 1,
+    });
+    expect(parseArgs([]).concurrency).toBe(2);
+    expect(() => parseArgs(["--concurrency", "1.5"])).toThrow(/concurrency/i);
+  });
+
+  it("reuses validated prepared packs and their packed registry metadata", async () => {
+    const entries = Object.fromEntries(
+      ["runtime", "astro", "react", "vue", "cli"].map((key) => [
+        key,
+        {
+          file: `${key}.tgz`,
+          name: key === "cli" ? "starwind" : `@starwind-ui/${key}`,
+          version: "9.8.7",
+          manifest: { name: `packed-${key}`, dependencies: { runtime: "9.8.7" } },
+        },
+      ]),
+    );
+    const loaded = await prepareCandidatePackages(
+      { packsDirectory: "/tmp/shared-packs", packDirectory: "/tmp/unused" },
+      {
+        loadArtifacts: async ({ outputDirectory }: { outputDirectory: string }) => {
+          expect(outputDirectory).toBe(path.resolve("/tmp/shared-packs"));
+          return { packages: entries };
+        },
+        packPackages: async () => {
+          throw new Error("must reuse packs");
+        },
+      },
+    );
+    expect(loaded.packages.vue).toBe(path.resolve("/tmp/shared-packs/vue.tgz"));
+    expect(loaded.registryPackages.vue.manifest).toEqual(entries.vue.manifest);
+    await expect(
+      prepareCandidatePackages(
+        { packsDirectory: "/tmp/shared-packs" },
+        {
+          loadArtifacts: async () => {
+            throw new Error("stale packs");
+          },
+          packPackages: async () => {
+            throw new Error("must not fall back to packing");
+          },
+        },
+      ),
+    ).rejects.toThrow("stale packs");
+  });
+
   it("covers supported Astro, React, and Vue versions plus each supported React host", () => {
     expect(getCandidateMatrix()).toEqual([
       expect.objectContaining({ framework: "astro", id: "astro-5", packageManager: "pnpm" }),
@@ -322,7 +413,15 @@ describe("release candidate acceptance", () => {
   it("runs once in the release gate and stays out of the public sync and publish commands", async () => {
     const manifest = JSON.parse(await readFile("package.json", "utf8"));
 
-    expect(manifest.scripts["release:gate"].match(/release:candidate:acceptance/g)).toHaveLength(1);
+    expect(manifest.scripts["release:gate"]).toBe("node scripts/release-gate.mjs");
+    expect(
+      releaseGateStages().filter(([, args]) => args[0] === "release:candidate:acceptance"),
+    ).toEqual([
+      [
+        "candidate hosts",
+        ["release:candidate:acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"],
+      ],
+    ]);
     expect(manifest.scripts["sync-public-runtime"] ?? "").not.toContain(
       "release:candidate:acceptance",
     );

@@ -76,6 +76,35 @@ The first Vue publication is historical: it published Vue `0.1.0` on `beta` and 
 `0.1.0` because no prior `latest` existed. It also published CLI `3.3.0`. Later beta publications
 must preserve the existing `latest` value.
 
+## Release preparation and verification
+
+Run `pnpm release:preflight` before opening release-tooling fixes. It copies the current source into
+an isolated temporary repository, rehearses `release:version`, checks frozen installation, tests the
+versioned registry and release helpers, and collects metadata, component-guard, and audit failures.
+The temporary repository is removed after the check.
+
+`pnpm release:gate` audits dependencies first, builds the public packages and demos once, and packs
+archives under `node_modules/.cache/starwind-release/packs/`. Each archive has its exact packed
+manifest and SHA-256 recorded in `manifest.json`. Both complete host matrices use these archives
+with two workers. Vue hosts run in separate processes. Use `--concurrency 1` on either acceptance
+command when diagnosing a host failure.
+
+The gate writes stage timings and completed checks to
+`node_modules/.cache/starwind-release/gate.json`. A later invocation reuses a completed prefix only
+when source files, the lockfile, toolchain, built outputs, archive hashes, and the stage plan match.
+It checks registry advisories on every invocation. Run `pnpm release:gate --fresh` for a complete
+rerun. Source edits or generated drift invalidate the record.
+
+The normal dry-run and user-run publisher require matching completed gate evidence for selected
+packages. They consume the verified archives through
+[pnpm's tarball publication interface](https://pnpm.io/cli/publish), so host acceptance and publication
+use the same files. The user still owns every real npm publication and authentication step.
+
+After the version PR merges, Release can reuse its bot-dispatched Verify run when the complete
+merged tree equals the tested candidate tree. Lookup errors, an unverified candidate, or changed
+content cause Verify to run again. The published-package acceptance command always runs after npm
+publication.
+
 ## Publication plans and GitHub releases
 
 The saved plan records package order, exact versions, tags, and the Vue `latest` baseline before the

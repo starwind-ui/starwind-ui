@@ -75,8 +75,6 @@ describe("Vue public-beta vertical-slice workspace contract", () => {
       kind: "subset",
     });
     expect(rootPackage.scripts["release:prepare"]).toContain("runtime:generate:all");
-    expect(rootPackage.scripts["release:gate"]).toContain("vue-demo:smoke");
-    expect(rootPackage.scripts["release:gate"]).toContain("runtime:size:check:prepared");
     expect(rootPackage.scripts["release:candidate:acceptance"]).toBe(
       "node scripts/release-candidate-acceptance.mjs",
     );

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -26,7 +27,9 @@ import {
   isPreviewTreeAlive,
   isVueHydrationMismatchWarning,
   parseArgs,
+  prepareVueHostPackages,
   runCleanupOperations,
+  runVueHostWorkers,
   runWithCleanup,
   shouldCaptureVueHydrationWarnings,
   shouldPreserveVueHostRoot,
@@ -499,23 +502,213 @@ export const StarwindCollapsibleHelper: typeof import('../app/components/starwin
     ).toThrow(/Runtime dependency/);
   });
 
+  it("checks exact archive provenance through workspace and pack directory symlinks", async () => {
+    const fixture = await mkdtemp(path.join(os.tmpdir(), "vue-pack-paths-"));
+    try {
+      const workspace = path.join(fixture, "actual/workspace");
+      const archives = path.join(fixture, "actual/packs");
+      const workspaceAlias = path.join(fixture, "workspace-alias");
+      const packsAlias = path.join(fixture, "packs-alias");
+      await mkdir(workspace, { recursive: true });
+      await mkdir(archives, { recursive: true });
+      await symlink(workspace, workspaceAlias, process.platform === "win32" ? "junction" : "dir");
+      await symlink(archives, packsAlias, process.platform === "win32" ? "junction" : "dir");
+      const versions = { runtime: "0.1.0-beta.8", vue: "0.2.0", cli: "3.3.0" };
+      let lockfile = createPackedLockfile(packages);
+      const expected: Record<string, { direct?: boolean; file: string; version: string }> = {};
+      const installed: Record<string, { name: string; version: string }> = {};
+      for (const key of ["runtime", "vue", "cli"] as const) {
+        const name = key === "cli" ? "starwind" : `@starwind-ui/${key}`;
+        const file = path.join(archives, `${key}.tgz`);
+        await writeFile(file, key);
+        lockfile = lockfile.replaceAll(
+          relativePackageFile(packages[key]),
+          path.relative(workspace, file).replaceAll("\\", "/"),
+        );
+        expected[name] = {
+          direct: key !== "runtime",
+          file: path.join(packsAlias, `${key}.tgz`),
+          version: versions[key],
+        };
+        installed[name] = { name, version: versions[key] };
+      }
+      const check = () =>
+        assertPackedVueHostProvenance({
+          expected,
+          installed,
+          lockfile,
+          lockfileDirectory: workspaceAlias,
+        });
+      expect(check).not.toThrow();
+      await writeFile(path.join(archives, "other.tgz"), "runtime");
+      expected["@starwind-ui/runtime"].file = path.join(packsAlias, "other.tgz");
+      expect(check).toThrow(/exactly one package resolution/);
+    } finally {
+      await rm(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it("stages verified shared archives outside the repository without weakening source isolation", async () => {
+    const shared = await mkdtemp(path.join(process.cwd(), "node_modules/vue-shared-packs-"));
+    const fixture = await mkdtemp(path.join(os.tmpdir(), "vue-staged-packs-"));
+    const entries: Record<
+      string,
+      { file: string; manifest: { name: string; version: string }; sha256: string }
+    > = {};
+    try {
+      for (const key of ["runtime", "vue", "cli"]) {
+        const bytes = Buffer.from(`verified-${key}`);
+        await writeFile(path.join(shared, `${key}.tgz`), bytes);
+        entries[key] = {
+          file: `${key}.tgz`,
+          manifest: { name: key, version: "9.8.7" },
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+        };
+      }
+      const outputDirectory = path.join(fixture, "packs");
+      const prepare = () =>
+        prepareVueHostPackages(
+          { packsDirectory: shared, outputDirectory },
+          {
+            loadArtifacts: async () => ({ packages: entries }),
+            packPackages: async () => {
+              throw new Error("must reuse packs");
+            },
+          },
+        );
+      const prepared = await prepare();
+      expect(prepared.manifests.vue.version).toBe("9.8.7");
+      for (const key of ["runtime", "vue", "cli"]) {
+        expect(prepared.packages[key]).toBe(path.join(outputDirectory, `${key}.tgz`));
+        expect(await readFile(prepared.packages[key])).toEqual(
+          await readFile(path.join(shared, `${key}.tgz`)),
+        );
+      }
+      const project = {
+        id: "fixture",
+        directory: fixture,
+        sourceIsolationFiles: ["vite.config.ts"],
+      };
+      await writeFile(
+        path.join(fixture, "package.json"),
+        JSON.stringify({ dependencies: { starwind: `file:${prepared.packages.cli}` } }),
+      );
+      await expect(assertNoWorkspaceSourceAliases(project)).resolves.toBeUndefined();
+      await writeFile(
+        path.join(fixture, "vite.config.ts"),
+        `export default { alias: ${JSON.stringify(path.resolve("packages/vue/src"))} };`,
+      );
+      await expect(assertNoWorkspaceSourceAliases(project)).rejects.toThrow(/contains/);
+      await writeFile(path.join(shared, "vue.tgz"), "changed after validation");
+      await expect(prepare()).rejects.toThrow(/archive changed/i);
+    } finally {
+      await rm(shared, { recursive: true, force: true });
+      await rm(fixture, { recursive: true, force: true });
+    }
+    expect(parseArgs(["--packs", "/tmp/shared-packs", "--concurrency", "1"])).toMatchObject({
+      packsDirectory: "/tmp/shared-packs",
+      concurrency: 1,
+    });
+    expect(parseArgs([]).concurrency).toBe(2);
+    expect(() => parseArgs(["--concurrency", "0"])).toThrow(/concurrency/i);
+  });
+
+  it("dispatches bounded workers with isolated roots and the same staged packs", async () => {
+    const fixtureRoot = await mkdtemp(path.join(os.tmpdir(), "vue-workers-"));
+    const contexts: { root: string; prepared: { packages: typeof packages } }[] = [];
+    let active = 0;
+    let maximum = 0;
+    let releaseWorkers!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      releaseWorkers = resolve;
+    });
+    let markBothStarted!: () => void;
+    const bothStarted = new Promise<void>((resolve) => {
+      markBothStarted = resolve;
+    });
+    try {
+      const execution = runVueHostWorkers(
+        ["one", "two", "three"].map((id) => ({ id })),
+        {
+          root: fixtureRoot,
+          prepared: { packages },
+          concurrency: 2,
+        },
+        async (_phase: string, command: { command: string; args: string[] }) => {
+          expect(command.command).toBe(process.execPath);
+          expect(command.args[1]).toBe("--tsconfig");
+          expect(command.args[2]).toBe(path.resolve("packages/cli/tsconfig.json"));
+          contexts.push(JSON.parse(await readFile(command.args.at(-1)!, "utf8")));
+          maximum = Math.max(maximum, ++active);
+          if (active === 2) markBothStarted();
+          await gate;
+          active--;
+        },
+      );
+      await bothStarted;
+      expect(active).toBe(2);
+      releaseWorkers();
+      await execution;
+      expect(maximum).toBe(2);
+      expect(new Set(contexts.map((context) => context.root)).size).toBe(3);
+      expect(
+        contexts.every(
+          (context) => JSON.stringify(context.prepared.packages) === JSON.stringify(packages),
+        ),
+      ).toBe(true);
+    } finally {
+      await rm(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("propagates a real isolated worker failure with its diagnostics", async () => {
+    const fixtureRoot = await mkdtemp(path.join(os.tmpdir(), "vue-worker-error-"));
+    try {
+      await expect(
+        runVueHostWorkers([{ id: "unknown-host" }], {
+          root: fixtureRoot,
+          prepared: { packages, manifests: {} },
+          concurrency: 1,
+        }),
+      ).rejects.toThrow(/Unknown Vue host acceptance project id/);
+      expect(
+        await readFile(path.join(fixtureRoot, "logs/unknown-host-worker.log"), "utf8"),
+      ).toContain("Unknown Vue host acceptance project id");
+      const archive = path.join(fixtureRoot, "changed.tgz");
+      await writeFile(archive, "changed");
+      await expect(
+        runVueHostWorkers([{ id: "unknown-host" }], {
+          root: fixtureRoot,
+          prepared: {
+            packages: { ...packages, runtime: archive },
+            manifests: {},
+            archiveHashes: { runtime: "original-hash" },
+          },
+          concurrency: 1,
+        }),
+      ).rejects.toThrow(/Staged release archive changed/);
+    } finally {
+      await rm(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
   it("retains failed roots and supports explicit successful retention", () => {
     expect(shouldPreserveVueHostRoot({ failed: true, keepTemp: false })).toBe(true);
     expect(shouldPreserveVueHostRoot({ failed: false, keepTemp: true })).toBe(true);
     expect(shouldPreserveVueHostRoot({ failed: false, keepTemp: false })).toBe(false);
-    expect(parseArgs(["--keep-temp"])).toEqual({
+    expect(parseArgs(["--keep-temp"])).toMatchObject({
       keepTemp: true,
       localLinkOnly: false,
       projectIds: undefined,
       rootDirectory: undefined,
     });
-    expect(parseArgs(["--local-link-only"])).toEqual({
+    expect(parseArgs(["--local-link-only"])).toMatchObject({
       keepTemp: false,
       localLinkOnly: true,
       projectIds: undefined,
       rootDirectory: undefined,
     });
-    expect(parseArgs(["--project", "nuxt-4", "--root", "/tmp/vue-host"])).toEqual({
+    expect(parseArgs(["--project", "nuxt-4", "--root", "/tmp/vue-host"])).toMatchObject({
       keepTemp: false,
       localLinkOnly: false,
       projectIds: ["nuxt-4"],

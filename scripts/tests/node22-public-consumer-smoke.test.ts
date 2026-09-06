@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -9,11 +12,75 @@ import {
   getJavaScriptTypecheckConfig,
   getPackedProjectDependencies,
   getProjectCheck,
+  loadArtifactManifest,
   parseArgs,
 } from "../node22-public-consumer-smoke.mjs";
 import { createPackPlan, parseArgs as parsePackArgs } from "../pack-public-release-artifacts.mjs";
 
 describe("Node 22 public consumer smoke", () => {
+  it("accepts legacy manifests and verifies schema 2 archive bytes", async () => {
+    const packagesDirectory = await mkdtemp(path.join(os.tmpdir(), "node-floor-artifacts-"));
+    try {
+      const packages: Record<
+        string,
+        { file: string; name: string; sha256: string; version: string }
+      > = {};
+      for (const [key, name] of Object.entries({
+        astro: "@starwind-ui/astro",
+        cli: "starwind",
+        react: "@starwind-ui/react",
+        runtime: "@starwind-ui/runtime",
+      })) {
+        const file = `${key}.tgz`;
+        const bytes = Buffer.from(`${name} archive fixture`);
+        await writeFile(path.join(packagesDirectory, file), bytes);
+        packages[key] = {
+          file,
+          name,
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+          version: "1.2.3",
+        };
+      }
+      const manifestFile = path.join(packagesDirectory, "manifest.json");
+      const save = (schemaVersion: number) =>
+        writeFile(
+          manifestFile,
+          JSON.stringify({ builtWithNode: "v24.20.0", packages, schemaVersion }),
+        );
+
+      await save(1);
+      await expect(loadArtifactManifest(packagesDirectory)).resolves.toMatchObject({
+        schemaVersion: 1,
+      });
+      await save(2);
+      await expect(loadArtifactManifest(packagesDirectory)).resolves.toMatchObject({
+        schemaVersion: 2,
+      });
+      packages.vue = {
+        file: "missing-vue.tgz",
+        name: "@starwind-ui/vue",
+        sha256: "not-used-by-the-stable-matrix",
+        version: "0.1.1",
+      };
+      await save(2);
+      await expect(loadArtifactManifest(packagesDirectory)).resolves.toMatchObject({
+        schemaVersion: 2,
+      });
+
+      await writeFile(path.join(packagesDirectory, packages.react.file), "corrupted archive");
+      await expect(loadArtifactManifest(packagesDirectory)).rejects.toThrow(
+        "@starwind-ui/react archive SHA-256 does not match",
+      );
+
+      await save(3);
+      await expect(loadArtifactManifest(packagesDirectory)).rejects.toThrow(
+        "Unsupported public artifact manifest schema: 3",
+      );
+    } finally {
+      await rm(packagesDirectory, { force: true, recursive: true });
+    }
+  });
+
   it("packs the four public packages in publication order", () => {
     const outputDirectory = path.resolve("release-packs");
 

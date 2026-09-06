@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { releaseSourceFingerprint } from "./release-inputs.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -111,6 +113,7 @@ export function parseArgs(argv) {
 }
 
 export async function packPublicReleaseArtifacts({ outputDirectory, vueBeta = false }) {
+  const sourceFingerprint = releaseSourceFingerprint(REPO_ROOT);
   const plan = createPackPlan({ outputDirectory, vueBeta });
   await mkdir(outputDirectory, { recursive: true });
   const artifactPackages = {};
@@ -127,13 +130,20 @@ export async function packPublicReleaseArtifacts({ outputDirectory, vueBeta = fa
       file: entry.fileName,
       name: packageManifest.name,
       version: packageManifest.version,
+      sha256: createHash("sha256")
+        .update(await readFile(entry.file))
+        .digest("hex"),
+      manifest: JSON.parse(
+        execFileSync("tar", ["-xOf", entry.file, "package/package.json"], { encoding: "utf8" }),
+      ),
     };
   }
 
   const artifactManifest = {
     builtWithNode: process.version,
     packages: artifactPackages,
-    schemaVersion: 1,
+    schemaVersion: 2,
+    sourceFingerprint,
   };
   await writeFile(
     path.join(outputDirectory, "manifest.json"),
@@ -141,6 +151,61 @@ export async function packPublicReleaseArtifacts({ outputDirectory, vueBeta = fa
     "utf8",
   );
   return artifactManifest;
+}
+
+export async function loadPublicReleaseArtifacts({
+  outputDirectory,
+  repoRoot = REPO_ROOT,
+  requireVue = false,
+}) {
+  const manifest = JSON.parse(await readFile(path.join(outputDirectory, "manifest.json"), "utf8"));
+  assert.equal(
+    manifest.schemaVersion,
+    2,
+    "Repack release artifacts with the current pack command.",
+  );
+  assert.equal(
+    manifest.sourceFingerprint,
+    releaseSourceFingerprint(repoRoot),
+    "Release sources or toolchain changed; rerun the release gate.",
+  );
+  assert(
+    manifest.packages && typeof manifest.packages === "object",
+    "Missing release archive inventory.",
+  );
+  const expectedPackages =
+    requireVue || Object.hasOwn(manifest.packages, "vue") ? VUE_BETA_PACKAGES : PUBLIC_PACKAGES;
+  assert.deepEqual(
+    Object.keys(manifest.packages).sort(),
+    expectedPackages.map(({ key }) => key).sort(),
+    "Release archive inventory is incomplete or unexpected.",
+  );
+  for (const [key, entry] of Object.entries(manifest.packages)) {
+    const expected = VUE_BETA_PACKAGES.find((candidate) => candidate.key === key);
+    assert(
+      expected && entry.name === expected.name && entry.file === expected.fileName,
+      `Unexpected release archive: ${key}`,
+    );
+    const archive = path.join(outputDirectory, entry.file);
+    assert.equal(
+      createHash("sha256")
+        .update(await readFile(archive))
+        .digest("hex"),
+      entry.sha256,
+      `Release archive changed: ${entry.name}`,
+    );
+    const packed = JSON.parse(
+      execFileSync("tar", ["-xOf", archive, "package/package.json"], { encoding: "utf8" }),
+    );
+    assert.deepEqual(packed, entry.manifest, `Packed metadata changed: ${entry.name}`);
+    const current = JSON.parse(
+      await readFile(path.join(repoRoot, expected.directory, "package.json"), "utf8"),
+    );
+    assert.equal(packed.name, current.name);
+    assert.equal(packed.version, current.version);
+    assert.equal(entry.version, current.version);
+  }
+  return manifest;
 }
 
 async function main() {

@@ -179,6 +179,7 @@ function getResumeIndex(resumeFrom, releasePlan = RELEASE_PACKAGE_SET) {
 }
 
 export function createPublishCommands({
+  archives,
   dryRun = false,
   otp,
   releasePlan = RELEASE_PACKAGE_SET,
@@ -197,7 +198,17 @@ export function createPublishCommands({
     if (!SAFE_DIST_TAG_PATTERN.test(packageTag)) {
       throw new Error(`Invalid npm dist-tag: ${packageTag}.`);
     }
-    const args = ["publish", "--tag", packageTag, "--access", "public", "--no-git-checks"];
+    if (archives && !archives[entry.name])
+      throw new Error(`Missing verified archive: ${entry.name}`);
+    const args = [
+      "publish",
+      ...(archives ? [archives[entry.name]] : []),
+      "--tag",
+      packageTag,
+      "--access",
+      "public",
+      "--no-git-checks",
+    ];
     if (dryRun) args.push("--dry-run");
     if (otp) args.push("--otp", otp);
     return {
@@ -620,6 +631,7 @@ async function main() {
     runReleaseFinalization,
   } = await import("./release-finalization.mjs");
   let releasePlan = VUE_BETA_RELEASE_PLAN;
+  let archives;
   if (vueBeta && gitState) {
     await captureVueBetaRegistryBaseline({ head: gitState.head, resumeFrom });
   }
@@ -653,6 +665,17 @@ async function main() {
       );
     }
     releasePlan = selected.map(({ entry }) => entry);
+    const { assertReleaseGate, RELEASE_PACKS } = await import("./release-gate.mjs");
+    const { loadPublicReleaseArtifacts } = await import("./pack-public-release-artifacts.mjs");
+    await assertReleaseGate();
+    const outputDirectory = path.join(ROOT_DIR, RELEASE_PACKS);
+    const artifacts = await loadPublicReleaseArtifacts({ outputDirectory });
+    archives = Object.fromEntries(
+      Object.values(artifacts.packages).map((entry) => [
+        entry.name,
+        path.join(outputDirectory, entry.file),
+      ]),
+    );
     console.log("[publish-plan] Routine release order:");
     for (const target of formatPublishPlan(selected)) console.log(`- ${target}`);
   } else {
@@ -663,6 +686,7 @@ async function main() {
     dryRun,
     finalize: () => runReleaseFinalization({ vueBeta }),
     publishCommands: createPublishCommands({
+      archives,
       dryRun,
       otp,
       releasePlan,

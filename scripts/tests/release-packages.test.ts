@@ -138,6 +138,22 @@ function routineConfig() {
 }
 
 describe("release package tooling", () => {
+  it("publishes the verified archive and preserves the explicit Vue beta tag", () => {
+    const entry = ROUTINE_RELEASE_PACKAGE_SET.find(({ name }) => name === "@starwind-ui/vue")!;
+    const archive = path.resolve("prepared/vue.tgz");
+    const [command] = createPublishCommands({
+      dryRun: true,
+      releasePlan: [entry],
+      archives: { [entry.name]: archive },
+      tag: "latest",
+    });
+    expect(command.args.slice(0, 4)).toEqual(["publish", archive, "--tag", "beta"]);
+    expect(command.args).toContain("--dry-run");
+    expect(() => createPublishCommands({ releasePlan: [entry], archives: {} })).toThrow(
+      "Missing verified archive",
+    );
+  });
+
   it("publishes routine Vue versions on explicit beta policy outside the fixed train", () => {
     const packageManifests = routineManifests();
     expect(
@@ -551,19 +567,7 @@ describe("release package tooling", () => {
     );
     expect(root.scripts?.["publish:beta:dry-run"]).toBe("pnpm publish:release:dry-run");
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
-    expect(commandPhases(root.scripts?.["release:gate"])).toEqual([
-      "pnpm verify:public",
-      "pnpm runtime:generate:vue:test",
-      "pnpm test:vue-cli-host-acceptance",
-      "pnpm --filter=starwind package:check",
-      "pnpm audit:prod",
-      "pnpm demo:smoke",
-      "pnpm react-demo:smoke",
-      "pnpm vue-demo:smoke",
-      "pnpm runtime:size:check:prepared",
-      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:evidence:check"] : []),
-      "pnpm release:candidate:acceptance",
-    ]);
+    expect(root.scripts?.["release:gate"]).toBe("node scripts/release-gate.mjs");
     expect(root.scripts?.["publish:release:dry-run"]).not.toContain("release:prepare");
     expect(root.scripts?.["publish:release:dry-run"]).not.toContain("release:gate");
     expect(root.scripts?.["runtime:size:check"]).toBe(

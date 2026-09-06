@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
+import { releaseGateStages } from "../../release-gate.mjs";
 
 import {
   addSourceContributionContexts,
@@ -14,13 +15,13 @@ import {
   formatColorPickerSizeComparisonMarkdown,
   formatPackageSizeReports,
   getPackageSizeCommandMode,
-  publicComparatorInstallSpecifiers,
-  publicComparatorExpectedResolvedVersions,
-  validateInstalledPublicComparators,
   getPackageSizeMeasurementPlan,
   measureBundle,
+  publicComparatorExpectedResolvedVersions,
+  publicComparatorInstallSpecifiers,
   resolveStarwindVueBuiltPath,
   summarizeDynamicBundleOutput,
+  validateInstalledPublicComparators,
   validateInstalledZagVueComparator,
   withVueSourceContribution,
   writePackageSizeReports,
@@ -55,7 +56,7 @@ describe("package-size command prerequisites", () => {
     expect(rootPackage.scripts["runtime:size:baseline:vue"]).toBe(
       "node scripts/portable-runtime/measure-package-sizes.mjs --baseline-vue",
     );
-    expect(rootPackage.scripts["release:gate"]).toContain("pnpm runtime:size:check:prepared");
+    expect(releaseGateStages().map(([, args]) => args[0])).toContain("runtime:size:check:prepared");
     expect(rootPackage.scripts["release:gate"]).not.toContain(
       "pnpm runtime:size:check:prepared:private",
     );

@@ -119,6 +119,138 @@ describe("Vue beta release finalization", () => {
     ).rejects.toThrow(/pnpm release:vue-beta:finalize/);
   });
 
+  it("retries until npm exposes a published package and its dist-tag", async () => {
+    const release = {
+      packages: [{ name: "starwind", tag: "latest", version: "3.3.2" }],
+    };
+    const waits: number[] = [];
+    const retries: string[] = [];
+    let tagChecks = 0;
+
+    await verifyPublishedPackages(
+      release,
+      {
+        capture: async (_command: string, args: string[]) => {
+          if (args[2] === "version") {
+            return { code: 0, stderr: "", stdout: JSON.stringify("3.3.2") };
+          }
+          tagChecks += 1;
+          return {
+            code: 0,
+            stderr: "",
+            stdout: JSON.stringify({ latest: tagChecks === 1 ? "3.3.1" : "3.3.2" }),
+          };
+        },
+      },
+      {
+        attempts: 2,
+        onRetry: (subject: string) => retries.push(subject),
+        retryDelayMs: 10_000,
+        wait: async (delayMs: number) => waits.push(delayMs),
+      },
+    );
+
+    expect(tagChecks).toBe(2);
+    expect(retries).toEqual(["starwind@3.3.2 dist-tag latest"]);
+    expect(waits).toEqual([10_000]);
+  });
+
+  it("leaves a recovery path when an old dist-tag does not propagate", async () => {
+    const waits: number[] = [];
+    let tagChecks = 0;
+
+    await expect(
+      verifyPublishedPackages(
+        {
+          packages: [{ name: "starwind", tag: "latest", version: "3.3.2" }],
+        },
+        {
+          capture: async (_command: string, args: string[]) => {
+            if (args[2] === "version") {
+              return { code: 0, stderr: "", stdout: JSON.stringify("3.3.2") };
+            }
+            tagChecks += 1;
+            return { code: 0, stderr: "", stdout: JSON.stringify({ latest: "3.3.1" }) };
+          },
+        },
+        {
+          attempts: 2,
+          onRetry: () => undefined,
+          retryDelayMs: 10_000,
+          wait: async (delayMs: number) => waits.push(delayMs),
+        },
+      ),
+    ).rejects.toThrow(
+      /latest must point to 3\.3\.2, found 3\.3\.1 did not become visible with its expected npm state.*pnpm release:finalize/,
+    );
+
+    expect(tagChecks).toBe(2);
+    expect(waits).toEqual([10_000]);
+  });
+
+  it("fails without retrying on a permanent npm registry error", async () => {
+    const waits: number[] = [];
+    let checks = 0;
+
+    await expect(
+      verifyPublishedPackages(
+        {
+          packages: [{ name: "starwind", tag: "latest", version: "3.3.2" }],
+        },
+        {
+          capture: async () => {
+            checks += 1;
+            return { code: 1, stderr: "npm error E401", stdout: "" };
+          },
+        },
+        {
+          attempts: 31,
+          onRetry: () => undefined,
+          wait: async (delayMs: number) => waits.push(delayMs),
+        },
+      ),
+    ).rejects.toThrow(/version could not be verified: npm error E401/);
+
+    expect(checks).toBe(1);
+    expect(waits).toEqual([]);
+  });
+
+  it("preserves Vue latest while its beta tag propagates", async () => {
+    const waits: number[] = [];
+    let tagChecks = 0;
+
+    await verifyPublishedPackages(
+      {
+        packages: [{ name: "@starwind-ui/vue", tag: "beta", version: "0.1.1" }],
+        preservedDistTags: { "@starwind-ui/vue": { latest: "0.1.0" } },
+      },
+      {
+        capture: async (_command: string, args: string[]) => {
+          if (args[2] === "version") {
+            return { code: 0, stderr: "", stdout: JSON.stringify("0.1.1") };
+          }
+          tagChecks += 1;
+          return {
+            code: 0,
+            stderr: "",
+            stdout: JSON.stringify(
+              tagChecks === 1 ? { latest: "0.1.0" } : { beta: "0.1.1", latest: "0.1.0" },
+            ),
+          };
+        },
+      },
+      {
+        attempts: 2,
+        onRetry: () => undefined,
+        retryDelayMs: 10_000,
+        wait: async (delayMs: number) => waits.push(delayMs),
+      },
+    );
+
+    expect(tagChecks).toBe(2);
+    expect(waits).toEqual([10_000]);
+  });
+
   it("verifies Vue beta and CLI latest before finalization mutates Git or GitHub", async () => {
     const packageManifests = VUE_BETA_RELEASE_PLAN.map((entry) => ({
       entry,

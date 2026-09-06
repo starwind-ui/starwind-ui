@@ -200,11 +200,12 @@
     "test:hydration:built": "node tests/integration/run-hydration-playwright.mjs && node tests/integration/run-styled-hydration-playwright.mjs",
     "test:release": "pnpm --filter=@starwind-ui/runtime build && pnpm build && pnpm test:release:built",
     "test:release:built": "vitest run --config tests/vitest.config.ts --project=release-package",
-    "test:all": "pnpm --filter=@starwind-ui/runtime build && pnpm build && pnpm test:run && pnpm test:browser && pnpm test:hydration:built && pnpm test:release:built",
+    "test:all": "pnpm --filter=@starwind-ui/runtime build && pnpm build && pnpm test:all:built",
     "test:select:built": "pnpm build && node tests/select/run-select-playwright.mjs",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
     "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,vue,md,json}\"",
-    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,vue,md,json}\" --cache"
+    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,vue,md,json}\" --cache",
+    "test:all:built": "pnpm test:run && pnpm test:browser && pnpm test:hydration:built && pnpm test:release:built"
   },
   "dependencies": {
     "@starwind-ui/runtime": "1.2.1"
