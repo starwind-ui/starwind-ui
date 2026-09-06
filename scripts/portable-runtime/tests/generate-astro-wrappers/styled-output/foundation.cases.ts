@@ -102,6 +102,8 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   const avatar = await readGeneratedFile(outputRoot, "avatar/Avatar.astro");
   const avatarImage = await readGeneratedFile(outputRoot, "avatar/AvatarImage.astro");
   const avatarFallback = await readGeneratedFile(outputRoot, "avatar/AvatarFallback.astro");
+  const avatarGroup = await readGeneratedFile(outputRoot, "avatar/AvatarGroup.astro");
+  const avatarGroupCount = await readGeneratedFile(outputRoot, "avatar/AvatarGroupCount.astro");
   const avatarVariants = await readGeneratedFile(outputRoot, "avatar/variants.ts");
   const avatarIndex = await readGeneratedFile(outputRoot, "avatar/index.ts");
 
@@ -510,7 +512,9 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(avatar).toContain('AvatarPrimitive from "../primitives/astro/avatar"');
   expect(avatar).toContain("<AvatarPrimitive.Root");
   expect(avatar).toContain("VariantProps<typeof avatar>");
+  expect(avatar).toContain('size = "md"');
   expect(avatar).toContain("avatar({ variant, size, class: className })");
+  expect(avatar).toContain("data-size={size}");
   expect(avatar).toContain('data-slot="avatar"');
   expect(avatarImage).toContain("<AvatarPrimitive.Image");
   expect(avatarImage).toContain('type Props = Omit<HTMLAttributes<"img">, "children">');
@@ -523,12 +527,24 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(avatarFallback).toContain("delay?: number");
   expect(avatarFallback).toContain("avatarFallback({ class: className })");
   expect(avatarFallback).toContain('data-slot="avatar-fallback"');
+  expect(avatarGroup).toContain('type Props = HTMLAttributes<"div">');
+  expect(avatarGroup).toContain("avatarGroup({ class: className })");
+  expect(avatarGroup).toContain('data-slot="avatar-group"');
+  expect(avatarGroupCount).toContain('type Props = HTMLAttributes<"div">');
+  expect(avatarGroupCount).toContain("avatarGroupCount({ class: className })");
+  expect(avatarGroupCount).toContain('data-slot="avatar-group-count"');
   expect(avatar).not.toContain("@starwind-ui/runtime");
   expect(avatarVariants).toContain("text-foreground bg-muted relative inline-flex overflow-hidden");
   expect(avatarVariants).toContain("border-warning");
+  expect(avatarVariants).toContain("group/avatar-group flex -space-x-2");
+  expect(avatarVariants).toContain("*:data-[slot=avatar]:ring-2");
+  expect(avatarVariants).toContain("group-has-data-[size=sm]/avatar-group:size-8");
   expect(avatarIndex).toContain("Root: Avatar");
   expect(avatarIndex).toContain("Image: AvatarImage");
   expect(avatarIndex).toContain("Fallback: AvatarFallback");
+  expect(avatarIndex).toContain("Group: AvatarGroup");
+  expect(avatarIndex).toContain("GroupCount: AvatarGroupCount");
+  expect(avatarIndex).toContain("AvatarGroup, AvatarGroupCount");
 }
 
 export async function assertAstroBadgeToneAppearanceFoundationOutput(

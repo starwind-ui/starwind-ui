@@ -11,12 +11,13 @@ export type AvatarProps = React.ComponentPropsWithoutRef<"span"> &
   };
 
 function Avatar(props: AvatarProps) {
-  const { variant, size, ref, className, children, ...rest } = props;
+  const { variant, size = "md", ref, className, children, ...rest } = props;
 
   return (
     <AvatarPrimitive.Root
       className={avatar({ variant, size, class: className })}
       {...rest}
+      data-size={size}
       ref={ref}
       data-slot="avatar"
     >

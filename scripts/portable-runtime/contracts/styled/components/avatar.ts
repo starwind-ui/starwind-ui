@@ -2,11 +2,13 @@ import type { StyledAdapterContract } from "../types.js";
 
 export const avatarStyledContract: StyledAdapterContract = {
   component: "avatar",
-  publicExports: ["Avatar", "AvatarFallback", "AvatarImage"],
+  publicExports: ["Avatar", "AvatarFallback", "AvatarGroup", "AvatarGroupCount", "AvatarImage"],
   defaultExport: {
     Root: "Avatar",
     Image: "AvatarImage",
     Fallback: "AvatarFallback",
+    Group: "AvatarGroup",
+    GroupCount: "AvatarGroupCount",
   },
   variantCollectionName: "AvatarVariants",
   variants: {
@@ -33,6 +35,19 @@ export const avatarStyledContract: StyledAdapterContract = {
     avatarFallback: {
       base: "absolute inset-0.5 flex items-center justify-center rounded-full font-medium",
     },
+    avatarGroup: {
+      base: [
+        "group/avatar-group flex -space-x-2",
+        "*:data-[slot=avatar]:ring-background *:data-[slot=avatar]:ring-2",
+      ],
+    },
+    avatarGroupCount: {
+      base: [
+        "bg-muted text-muted-foreground ring-background relative flex size-10 shrink-0 items-center justify-center rounded-full text-sm ring-2",
+        "group-has-data-[size=lg]/avatar-group:size-12 group-has-data-[size=sm]/avatar-group:size-8",
+        "[&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
+      ],
+    },
     avatarImage: { base: "relative z-1 h-full w-full object-cover" },
   },
   components: [
@@ -56,7 +71,7 @@ export const avatarStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "variant" },
-          { name: "size" },
+          { name: "size", defaultValue: '"md"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -77,6 +92,7 @@ export const avatarStyledContract: StyledAdapterContract = {
               },
             },
             { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
             { name: "data-slot", value: { type: "literal", value: "avatar" } },
           ],
@@ -197,6 +213,90 @@ export const avatarStyledContract: StyledAdapterContract = {
             { name: "spread", value: { type: "variable", name: "rest" } },
             { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
             { name: "data-slot", value: { type: "literal", value: "avatar-fallback" } },
+          ],
+          children: [{ type: "slot" }],
+        },
+      ],
+    },
+    {
+      exportName: "AvatarGroup",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
+      props: {
+        extends: [{ type: "htmlAttributes", element: "div" }],
+        fields: [
+          {
+            name: "ref",
+            optional: true,
+            type: "React.Ref<HTMLDivElement>",
+            frameworks: ["react"],
+          },
+        ],
+      },
+      destructure: {
+        props: [
+          { name: "ref", frameworks: ["react"] },
+          { name: "class", alias: "className" },
+        ],
+        rest: "rest",
+      },
+      render: [
+        {
+          type: "element",
+          tag: "div",
+          attrs: [
+            {
+              name: "class",
+              value: {
+                type: "classVariant",
+                variant: "avatarGroup",
+                args: { class: "className" },
+              },
+            },
+            { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
+            { name: "data-slot", value: { type: "literal", value: "avatar-group" } },
+          ],
+          children: [{ type: "slot" }],
+        },
+      ],
+    },
+    {
+      exportName: "AvatarGroupCount",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
+      props: {
+        extends: [{ type: "htmlAttributes", element: "div" }],
+        fields: [
+          {
+            name: "ref",
+            optional: true,
+            type: "React.Ref<HTMLDivElement>",
+            frameworks: ["react"],
+          },
+        ],
+      },
+      destructure: {
+        props: [
+          { name: "ref", frameworks: ["react"] },
+          { name: "class", alias: "className" },
+        ],
+        rest: "rest",
+      },
+      render: [
+        {
+          type: "element",
+          tag: "div",
+          attrs: [
+            {
+              name: "class",
+              value: {
+                type: "classVariant",
+                variant: "avatarGroupCount",
+                args: { class: "className" },
+              },
+            },
+            { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
+            { name: "data-slot", value: { type: "literal", value: "avatar-group-count" } },
           ],
           children: [{ type: "slot" }],
         },

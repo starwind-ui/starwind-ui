@@ -26,7 +26,13 @@ describe("generated Vue Styled Avatar", () => {
 
     const sources = Object.fromEntries(
       await Promise.all(
-        ["Avatar.vue", "AvatarImage.vue", "AvatarFallback.vue"].map(
+        [
+          "Avatar.vue",
+          "AvatarImage.vue",
+          "AvatarFallback.vue",
+          "AvatarGroup.vue",
+          "AvatarGroupCount.vue",
+        ].map(
           async (file): Promise<[string, string]> => [
             file,
             await readFile(path.join(root, "styled/avatar", file), "utf8"),
@@ -53,6 +59,11 @@ describe("generated Vue Styled Avatar", () => {
     expect(sources["AvatarFallback.vue"]).toContain("<AvatarPrimitive.AvatarFallback");
     expect(sources["AvatarFallback.vue"]).toContain("<slot />");
     expect(sources["AvatarFallback.vue"]).toContain('data-slot="avatar-fallback"');
+    for (const file of ["AvatarGroup.vue", "AvatarGroupCount.vue"]) {
+      expect(sources[file]).toContain("const element = ref<HTMLDivElement | null>(null);");
+      expect(sources[file]).toContain('ref="element"');
+      expect(sources[file]).not.toContain("AvatarPrimitive");
+    }
     expect(avatarStyledContract.variants?.avatar?.base).toBe(
       "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2",
     );
