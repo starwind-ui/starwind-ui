@@ -22,9 +22,8 @@ import {
   getAstroVueFixture,
   getViteVueFixture,
   getVueFixture,
-  getVueBetaPackVersion,
-  isPreviewTreeAlive,
   isNuxtComponentCollisionWarning,
+  isPreviewTreeAlive,
   isVueHydrationMismatchWarning,
   parseArgs,
   runCleanupOperations,
@@ -43,12 +42,6 @@ const packages = {
 };
 
 describe("production Vue CLI host acceptance", () => {
-  it("keeps the candidate CLI version when packing Vue beta hosts", () => {
-    expect(getVueBetaPackVersion("cli", "3.3.1")).toBe("3.3.1");
-    expect(getVueBetaPackVersion("runtime", "1.2.0")).toBe("1.2.0");
-    expect(getVueBetaPackVersion("vue", "0.1.0")).toBe("0.1.0");
-  });
-
   it("plans exact beta packages and includes Vue in public candidate acceptance", () => {
     const betaPlan = createVueBetaPackPlan({ outputDirectory: path.join(root, "packs") });
     const publicPlan = createPackPlan({ outputDirectory: path.join(root, "public-packs") });
@@ -451,12 +444,12 @@ export const StarwindCollapsibleHelper: typeof import('../app/components/starwin
         file: packages.runtime,
         version: "0.1.0-beta.8",
       },
-      "@starwind-ui/vue": { file: packages.vue, version: "0.1.0" },
+      "@starwind-ui/vue": { file: packages.vue, version: "0.2.0" },
       starwind: { file: packages.cli, version: "3.3.0" },
     };
     const installed = {
       "@starwind-ui/runtime": { name: "@starwind-ui/runtime", version: "0.1.0-beta.8" },
-      "@starwind-ui/vue": { name: "@starwind-ui/vue", version: "0.1.0" },
+      "@starwind-ui/vue": { name: "@starwind-ui/vue", version: "0.2.0" },
       starwind: { name: "starwind", version: "3.3.0" },
     };
     const assertLockfile = (lockfile: string, installedPackages = installed) =>
@@ -574,17 +567,18 @@ export const StarwindCollapsibleHelper: typeof import('../app/components/starwin
   });
 
   it("uses public Commander choices and checked-in Vue beta registry artifacts", async () => {
-    const [program, registry, primitives] = await Promise.all([
+    const [program, registry, primitives, vueManifest] = await Promise.all([
       readFile("packages/cli/src/program.ts", "utf8"),
       readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
       readFile("packages/cli/src/registry/primitive-vendoring-artifacts.json", "utf8"),
+      readFile("packages/vue/package.json", "utf8"),
     ]);
 
     expect(program).toContain('"vue",');
     expect(program).not.toContain("PRIVATE_VUE_FRAMEWORK_TARGET_POLICY");
     expect(JSON.parse(registry).setup.vue.adapterPackage).toEqual({
       name: "@starwind-ui/vue",
-      range: "0.1.0",
+      range: JSON.parse(vueManifest).version,
     });
     expect(
       JSON.parse(primitives).primitives.some(

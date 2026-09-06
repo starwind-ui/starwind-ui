@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import os from "node:os";
@@ -22,7 +22,6 @@ const NEXT_SCAFFOLD_VERSION = "16.3.0";
 const REACT_ROUTER_SCAFFOLD_VERSION = "8.3.0";
 const TANSTACK_CLI_VERSION = "0.70.1";
 const VITE_SCAFFOLD_VERSION = "9.1.1";
-const VUE_BETA_VERSION = "0.1.0";
 
 function fileSpecifier(file) {
   return `file:${file.replaceAll("\\", "/")}`;
@@ -126,11 +125,7 @@ export async function startCandidateRegistry(packageEntries) {
   };
 }
 
-export function getCandidateRegistryVersion(packageName, manifestVersion) {
-  return packageName === "@starwind-ui/vue" ? VUE_BETA_VERSION : manifestVersion;
-}
-
-export function getCandidateMatrix() {
+export function getCandidateMatrix({ vueAdapterVersion } = {}) {
   return [
     {
       framework: "astro",
@@ -161,7 +156,7 @@ export function getCandidateMatrix() {
       packageManager: "pnpm",
     },
     {
-      adapterVersion: VUE_BETA_VERSION,
+      ...(vueAdapterVersion ? { adapterVersion: vueAdapterVersion } : {}),
       framework: "vue",
       frameworkVersion: "3.5.39",
       host: "vite",
@@ -313,9 +308,13 @@ function getScaffoldArgs(entry) {
   ];
 }
 
-export function createCandidatePlan({ packages, projectIds, root }) {
+export function createCandidatePlan({ packages, projectIds, root, vueAdapterVersion }) {
+  assert.ok(
+    typeof vueAdapterVersion === "string" && vueAdapterVersion.trim().length > 0,
+    "The Vue candidate adapter version is required.",
+  );
   const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
-  const matrix = getCandidateMatrix();
+  const matrix = getCandidateMatrix({ vueAdapterVersion });
   const selectedIds = projectIds ? new Set(projectIds) : undefined;
   if (selectedIds) {
     for (const id of selectedIds) {
@@ -616,27 +615,6 @@ async function packWorkspacePackages(packDirectory) {
   };
 
   for (const name of ["runtime", "astro", "react", "vue", "cli"]) {
-    if (name === "vue") {
-      const sourceDirectory = path.join(REPO_ROOT, packageDirectories.vue);
-      const stageDirectory = path.join(packDirectory, "vue-package");
-      const manifest = JSON.parse(await readFile(path.join(sourceDirectory, "package.json")));
-      manifest.version = VUE_BETA_VERSION;
-      await mkdir(stageDirectory, { recursive: true });
-      await cp(path.join(sourceDirectory, "dist"), path.join(stageDirectory, "dist"), {
-        recursive: true,
-      });
-      await copyFile(path.join(REPO_ROOT, "LICENSE"), path.join(stageDirectory, "LICENSE"));
-      await copyFile(
-        path.join(sourceDirectory, "README.md"),
-        path.join(stageDirectory, "README.md"),
-      );
-      await writeFile(
-        path.join(stageDirectory, "package.json"),
-        `${JSON.stringify(manifest, null, 2)}\n`,
-      );
-      await runCommand({ args: ["pack", "--out", packages.vue], cwd: stageDirectory });
-      continue;
-    }
     await runCommand({
       args: ["pack", "--out", packages[name]],
       cwd: path.join(REPO_ROOT, packageDirectories[name]),
@@ -662,7 +640,7 @@ async function getCandidateRegistryPackages(packages) {
       file: packages[name],
       manifest,
       name: manifest.name,
-      version: getCandidateRegistryVersion(manifest.name, manifest.version),
+      version: manifest.version,
     };
   }
   return entries;
@@ -766,7 +744,13 @@ export async function runReleaseCandidateAcceptance({
     ? path.resolve(artifactsOption)
     : await mkdtemp(path.join(os.tmpdir(), "starwind-release-candidate-artifacts-"));
   const packages = await packWorkspacePackages(path.join(root, "packs"));
-  const plan = createCandidatePlan({ packages, projectIds, root });
+  const registryPackages = await getCandidateRegistryPackages(packages);
+  const plan = createCandidatePlan({
+    packages,
+    projectIds,
+    root,
+    vueAdapterVersion: registryPackages.vue.version,
+  });
   let browser;
   let registry;
 
@@ -781,7 +765,7 @@ export async function runReleaseCandidateAcceptance({
   console.log(`[candidate] diagnostic artifacts: ${artifacts}`);
 
   try {
-    registry = await startCandidateRegistry(await getCandidateRegistryPackages(packages));
+    registry = await startCandidateRegistry(registryPackages);
     for (const project of plan.projects) {
       await runCommand(project.scaffold);
       await prepareProjectManifest(project);

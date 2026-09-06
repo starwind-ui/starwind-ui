@@ -3,11 +3,14 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { valid as validSemver } from "semver";
 
 import { createSpawnCommand } from "./command-process.mjs";
+import { preparePublicationPlan } from "./release-publication-plan.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
   CHANGESET_PRIVATE_PACKAGE_POLICY,
+  ROUTINE_RELEASE_PACKAGE_SET,
   RUNTIME_FIXED_GROUP,
   RUNTIME_RELEASE_PACKAGE_SET,
 } from "./runtime-release-policy.mjs";
@@ -423,6 +426,56 @@ export async function assertReleaseMetadata() {
   return { packageManifests, tag: results[0].tag };
 }
 
+export function validateRoutineReleaseMetadata({ packageManifests, preState, config }) {
+  const baseManifests = packageManifests.filter(({ entry }) =>
+    RELEASE_PACKAGE_SET.some(({ name }) => name === entry.name),
+  );
+  const baseResult = validateReleasePackageManifests(baseManifests, preState);
+  const errors = [...baseResult.errors, ...validateReleaseChangesetConfig(config).errors];
+  if (
+    JSON.stringify(packageManifests.map(({ entry }) => entry.name)) !==
+    JSON.stringify(ROUTINE_RELEASE_PACKAGE_SET.map(({ name }) => name))
+  ) {
+    errors.push("Routine releases must include the complete ordered public package inventory.");
+  }
+  if (JSON.stringify(config?.fixed) !== JSON.stringify([RUNTIME_FIXED_GROUP])) {
+    errors.push("Vue must remain outside the Runtime, Astro, and React Changesets fixed group.");
+  }
+  const vue = packageManifests.find(({ entry }) => entry.name === "@starwind-ui/vue");
+  const runtime = baseManifests.find(({ entry }) => entry.name === "@starwind-ui/runtime");
+  if (vue?.manifest.name !== "@starwind-ui/vue" || vue?.manifest.private === true) {
+    errors.push("@starwind-ui/vue must be a public package for routine publication.");
+  }
+  if (
+    !parseVersion(vue?.manifest.version) ||
+    validSemver(vue?.manifest.version) !== vue?.manifest.version
+  ) {
+    errors.push("@starwind-ui/vue must use an exact SemVer version.");
+  }
+  if (
+    vue?.entry.tag !==
+    ROUTINE_RELEASE_PACKAGE_SET.find(({ name }) => name === "@starwind-ui/vue").tag
+  ) {
+    errors.push("@starwind-ui/vue must use its explicit release-policy tag.");
+  }
+  if (vue?.manifest.dependencies?.["@starwind-ui/runtime"] !== runtime?.manifest.version) {
+    errors.push("@starwind-ui/vue must depend on the exact current @starwind-ui/runtime version.");
+  }
+  return { errors, ok: errors.length === 0, tag: baseResult.tag };
+}
+
+export async function assertRoutineReleaseMetadata() {
+  const [packageManifests, preState, config] = await Promise.all([
+    Promise.all(ROUTINE_RELEASE_PACKAGE_SET.map(readPackageManifest)),
+    readPrereleaseState(),
+    readFile(path.join(ROOT_DIR, ".changeset", "config.json"), "utf8").then(JSON.parse),
+  ]);
+  const result = validateRoutineReleaseMetadata({ packageManifests, preState, config });
+  if (!result.ok)
+    throw new Error(`Routine release metadata is not ready:\n${result.errors.join("\n")}`);
+  return { packageManifests, tag: result.tag };
+}
+
 export function parseArgs(argv) {
   let dryRun = false;
   let publish = false;
@@ -455,7 +508,7 @@ export function parseArgs(argv) {
 
   if (dryRun === publish) throw new Error("Pass exactly one mode: --dry-run or --publish.");
   if (dryRun && resumeFrom) throw new Error("--resume-from is available only with --publish.");
-  getResumeIndex(resumeFrom, vueBeta ? VUE_BETA_RELEASE_PLAN : RELEASE_PACKAGE_SET);
+  getResumeIndex(resumeFrom, vueBeta ? VUE_BETA_RELEASE_PLAN : ROUTINE_RELEASE_PACKAGE_SET);
   return { dryRun, otp, resumeFrom, vueBeta };
 }
 
@@ -551,31 +604,68 @@ export async function executeReleasePublication({
       packageName: publishCommand.packageName,
     });
   }
-  if (!dryRun) await finalize();
+  if (!dryRun && publishCommands.length > 0) await finalize();
 }
 
 async function main() {
   const { dryRun, otp, resumeFrom, vueBeta } = parseArgs(process.argv.slice(2));
-  const metadata = vueBeta ? await assertVueBetaReleaseMetadata() : await assertReleaseMetadata();
+  const metadata = vueBeta
+    ? await assertVueBetaReleaseMetadata()
+    : await assertRoutineReleaseMetadata();
   const gitState = !dryRun ? await assertPublicMainForPublish() : undefined;
+  const {
+    assertReleaseIdentityAvailable,
+    createCommandSystem,
+    deriveReleaseIdentity,
+    runReleaseFinalization,
+  } = await import("./release-finalization.mjs");
+  let releasePlan = VUE_BETA_RELEASE_PLAN;
   if (vueBeta && gitState) {
     await captureVueBetaRegistryBaseline({ head: gitState.head, resumeFrom });
   }
-  if (vueBeta) {
+  if (!vueBeta) {
+    const head = gitState?.head ?? (await readGitOutput(["rev-parse", "HEAD"]));
+    const system = createCommandSystem();
+    const plan = await preparePublicationPlan({
+      head,
+      packageManifests: metadata.packageManifests,
+      tag: metadata.tag,
+      registry: system,
+      dryRun,
+      resumeFrom,
+    });
+    if (plan.packages.length === 0) {
+      console.log(
+        "[publish-plan] All current package versions already exist on npm; nothing to publish.",
+      );
+      return;
+    }
+    const selected = metadata.packageManifests
+      .filter(({ entry }) => plan.packages.some(({ name }) => name === entry.name))
+      .map(({ entry, manifest }) => ({
+        entry: { ...entry, tag: plan.packages.find(({ name }) => name === entry.name).tag },
+        manifest,
+      }));
+    if (!dryRun) {
+      await assertReleaseIdentityAvailable(
+        deriveReleaseIdentity(selected, metadata.tag, head),
+        system,
+      );
+    }
+    releasePlan = selected.map(({ entry }) => entry);
+    console.log("[publish-plan] Routine release order:");
+    for (const target of formatPublishPlan(selected)) console.log(`- ${target}`);
+  } else {
     console.log("[publish-plan] Approved Vue beta release order:");
     for (const target of formatPublishPlan(metadata.packageManifests)) console.log(`- ${target}`);
   }
-  const finalize = async () => {
-    const { runReleaseFinalization } = await import("./release-finalization.mjs");
-    await runReleaseFinalization({ vueBeta });
-  };
   await executeReleasePublication({
     dryRun,
-    finalize,
+    finalize: () => runReleaseFinalization({ vueBeta }),
     publishCommands: createPublishCommands({
       dryRun,
       otp,
-      releasePlan: vueBeta ? VUE_BETA_RELEASE_PLAN : RELEASE_PACKAGE_SET,
+      releasePlan,
       resumeFrom,
       tag: metadata.tag,
     }),

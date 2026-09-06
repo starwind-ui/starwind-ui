@@ -35,11 +35,13 @@ import {
   validatePublishGitState,
   validateReleaseChangesetConfig,
   validateReleasePackageManifests,
+  validateRoutineReleaseMetadata,
   validateVueBetaReleaseMetadata,
 } from "../release-packages.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
   CHANGESET_PRIVATE_PACKAGE_POLICY,
+  ROUTINE_RELEASE_PACKAGE_SET,
   RUNTIME_FIXED_GROUP,
   RUNTIME_RELEASE_PACKAGE_SET,
 } from "../runtime-release-policy.mjs";
@@ -112,7 +114,110 @@ function assertNoPrivateAdapterChangesetReleases(file: string, source: string): 
   }
 }
 
+function routineManifests() {
+  return ROUTINE_RELEASE_PACKAGE_SET.map((entry) => ({
+    entry: { ...entry },
+    manifest: {
+      name: entry.name,
+      version:
+        entry.name === "starwind" ? "3.4.0" : entry.name === "@starwind-ui/vue" ? "0.2.0" : "1.3.0",
+      private: false,
+      dependencies: entry.name === "@starwind-ui/vue" ? { "@starwind-ui/runtime": "1.3.0" } : {},
+    },
+  }));
+}
+
+function routineConfig() {
+  return {
+    ignore: [...CHANGESET_IGNORED_PACKAGES],
+    privatePackages: CHANGESET_PRIVATE_PACKAGE_POLICY,
+    fixed: [RUNTIME_FIXED_GROUP],
+  };
+}
+
 describe("release package tooling", () => {
+  it("publishes routine Vue versions on explicit beta policy outside the fixed train", () => {
+    const packageManifests = routineManifests();
+    expect(
+      validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }),
+    ).toMatchObject({ ok: true, tag: "latest" });
+    const commands = createPublishCommands({
+      releasePlan: packageManifests.map(({ entry }) => entry),
+      tag: "latest",
+    });
+    expect(commands.map(({ packageName }) => packageName)).toEqual([
+      "@starwind-ui/runtime",
+      "@starwind-ui/astro",
+      "@starwind-ui/react",
+      "@starwind-ui/vue",
+      "starwind",
+    ]);
+    expect(commands[3].args).toEqual(expect.arrayContaining(["--tag", "beta"]));
+    expect(commands[4].args).toEqual(expect.arrayContaining(["--tag", "latest"]));
+    packageManifests[3].manifest.version = "1.0.0";
+    expect(validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }).ok).toBe(
+      true,
+    );
+    expect(packageManifests[3].entry.tag).toBe("beta");
+  });
+
+  it.each(["^1.3.0", "workspace:*", "1.2.0", "*"])(
+    "rejects an inexact or stale Vue Runtime dependency %s",
+    (range) => {
+      const packageManifests = routineManifests();
+      packageManifests[3].manifest.dependencies["@starwind-ui/runtime"] = range;
+      expect(
+        validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }).errors.join(
+          "\n",
+        ),
+      ).toContain("exact current");
+    },
+  );
+
+  it.each(["0.2", "^0.2.0", "0.2.0-01"])("rejects invalid Vue package version %s", (version) => {
+    const packageManifests = routineManifests();
+    packageManifests[3].manifest.version = version;
+    expect(
+      validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }).errors.join(
+        "\n",
+      ),
+    ).toContain("exact SemVer");
+  });
+
+  it("rejects private Vue or accidental fixed-group membership", () => {
+    const packageManifests = routineManifests();
+    packageManifests[3].manifest.private = true;
+    expect(
+      validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }).errors.join(
+        "\n",
+      ),
+    ).toContain("public package");
+    packageManifests[3].manifest.private = false;
+    const config = { ...routineConfig(), fixed: [[...RUNTIME_FIXED_GROUP, "@starwind-ui/vue"]] };
+    expect(
+      validateRoutineReleaseMetadata({ packageManifests, config }).errors.join("\n"),
+    ).toContain("outside");
+  });
+
+  it("permits Vue in normal resume arguments while retaining the legacy initial selector", () => {
+    expect(parseArgs(["--publish", "--resume-from", "@starwind-ui/vue"])).toMatchObject({
+      vueBeta: false,
+      resumeFrom: "@starwind-ui/vue",
+    });
+  });
+
+  it("does not finalize a publication with no commands", async () => {
+    let finalized = false;
+    await executeReleasePublication({
+      dryRun: false,
+      publishCommands: [],
+      finalize: async () => {
+        finalized = true;
+      },
+    });
+    expect(finalized).toBe(false);
+  });
+
   it("keeps the dependency-aware Runtime publish order", () => {
     expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).toEqual([
       "@starwind-ui/runtime",
@@ -587,6 +692,14 @@ describe("release package tooling", () => {
         metadataLoader: async () => ({
           packageManifests: manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }),
           tag: "beta",
+        }),
+        publicationPlanLoader: async () => ({
+          head: "abc123",
+          snapshot: [],
+          packages: manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }).map(
+            ({ entry, manifest }) => ({ name: entry.name, version: manifest.version, tag: "beta" }),
+          ),
+          vueLatest: null,
         }),
         registryVerificationOptions: { attempts: 1 },
         system: {
