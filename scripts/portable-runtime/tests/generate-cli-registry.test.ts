@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { compileScript, compileTemplate, parse } from "@vue/compiler-sfc";
@@ -27,6 +27,7 @@ import {
   DEFAULT_REGISTRY_VERSION_MANIFEST,
   getLocalGeneratedImportCandidates,
   isValidRegistryPackageName,
+  loadPackageRanges,
   loadPrimitiveVersionManifest,
   loadRegistryVersionManifest,
   type RuntimeRegistry,
@@ -87,6 +88,27 @@ describe("generateCliRegistry", () => {
     expect(() =>
       createCliRegistryBuildPolicy([vueFrameworkAdapterTarget, vueFrameworkAdapterTarget]),
     ).toThrow(/Duplicate CLI registry target "vue"/);
+  });
+
+  it("derives Vue's exact adapter range from its current package manifest", async () => {
+    const repoRoot = path.join(tempRoot, "later-vue-version");
+    for (const source of vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? []) {
+      const packageJson = JSON.parse(await readFile(source, "utf8")) as {
+        name: string;
+        version: string;
+      };
+      if (packageJson.name === "@starwind-ui/vue") packageJson.version = "0.2.0";
+      if (packageJson.name === "@starwind-ui/runtime") packageJson.version = "4.5.6";
+      const destination = path.join(repoRoot, source);
+      await mkdir(path.dirname(destination), { recursive: true });
+      await writeFile(destination, `${JSON.stringify(packageJson, null, 2)}\n`);
+    }
+
+    const packageRanges = await loadPackageRanges(repoRoot, [vueFrameworkAdapterTarget]);
+
+    expect(packageRanges.get("@starwind-ui/vue")).toBe("0.2.0");
+    expect(packageRanges.get("@starwind-ui/runtime")).toBe("^4.5.6");
+    expect(packageRanges.get("vue")).toBe(">=3.5");
   });
 
   it("keeps generated artifacts stable across release-only version changes", async () => {

@@ -876,7 +876,7 @@ describe("Framework Adapter seam", () => {
         {
           adapterTarget: "vue",
           cliRegistry: {
-            exactAdapterPackageVersion: "0.1.0",
+            exactAdapterPackageVersion: true,
             generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
             packageMetadataSources: [
               "packages/vue/package.json",

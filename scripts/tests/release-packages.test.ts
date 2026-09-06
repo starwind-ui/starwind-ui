@@ -1,11 +1,13 @@
+import { execFileSync } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { PassThrough } from "node:stream";
+import { valid as validSemver } from "semver";
 import { describe, expect, it } from "vitest";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
 import { hasPrivateSvelte } from "../portable-runtime/tests/workspace-support.js";
 import {
@@ -253,10 +255,9 @@ describe("release package tooling", () => {
       readJson<PackageJson>("packages/vue/package.json"),
       hasPrivateSvelte ? readJson<PackageJson>("packages/svelte/package.json") : undefined,
     ]);
-    expect(vuePackage).toMatchObject({
-      name: "@starwind-ui/vue",
-      version: "0.1.0",
-    });
+    expect(vuePackage.name).toBe("@starwind-ui/vue");
+    expect(vuePackage.private).not.toBe(true);
+    expect(validSemver(vuePackage.version)).toBe(vuePackage.version);
     if (sveltePackage) {
       expect(sveltePackage).toMatchObject({
         dependencies: { "@starwind-ui/runtime": "workspace:*" },
@@ -411,10 +412,100 @@ describe("release package tooling", () => {
     ).toThrow(/@starwind-ui\/svelte/);
   });
 
+  it("refreshes exact local release dependencies before a clean frozen install", async () => {
+    const fixture = await mkdtemp(path.join(tmpdir(), "starwind-release-lockfile-"));
+    const workspace = parseYaml(await readFile("pnpm-workspace.yaml", "utf8"));
+    const runPnpm = (args: string[]) => {
+      const command = createSpawnCommand(getPackageManagerCommand("pnpm"), args);
+      try {
+        return execFileSync(command.command, command.args, {
+          cwd: fixture,
+          env: { ...process.env, CI: "true" },
+          encoding: "utf8",
+          stdio: "pipe",
+          timeout: 30_000,
+        });
+      } catch (error) {
+        const failure = error as Error & { stdout?: string; stderr?: string };
+        throw new Error(`${failure.message}\n${failure.stdout ?? ""}\n${failure.stderr ?? ""}`, {
+          cause: error,
+        });
+      }
+    };
+    const writeVersions = async (version: string) => {
+      await writeFile(
+        path.join(fixture, "packages/runtime/package.json"),
+        JSON.stringify({
+          name: "@starwind-ui/runtime",
+          version,
+        }),
+      );
+      await writeFile(
+        path.join(fixture, "packages/vue/package.json"),
+        JSON.stringify({
+          name: "@starwind-ui/vue",
+          version: "0.1.0",
+          dependencies: { "@starwind-ui/runtime": version },
+        }),
+      );
+    };
+    try {
+      await mkdir(path.join(fixture, "packages/runtime"), { recursive: true });
+      await mkdir(path.join(fixture, "packages/vue"), { recursive: true });
+      await writeFile(
+        path.join(fixture, "package.json"),
+        JSON.stringify({ name: "release-fixture", private: true }),
+      );
+      await writeFile(path.join(fixture, ".npmrc"), await readFile(".npmrc", "utf8"));
+      await writeFile(
+        path.join(fixture, "pnpm-workspace.yaml"),
+        stringifyYaml({
+          packages: ["packages/*"],
+          ...(workspace.linkWorkspacePackages === undefined
+            ? {}
+            : { linkWorkspacePackages: workspace.linkWorkspacePackages }),
+          ...(workspace.preferWorkspacePackages === undefined
+            ? {}
+            : { preferWorkspacePackages: workspace.preferWorkspacePackages }),
+        }),
+      );
+      await writeVersions("99.999.997");
+      runPnpm([
+        "install",
+        "--lockfile-only",
+        "--offline",
+        "--ignore-scripts",
+        "--no-frozen-lockfile",
+        "--link-workspace-packages",
+      ]);
+      await writeVersions("99.999.998");
+      expect(() =>
+        runPnpm(["install", "--frozen-lockfile", "--offline", "--ignore-scripts"]),
+      ).toThrow(/ERR_PNPM_OUTDATED_LOCKFILE/);
+      const root = await readJson<PackageJson>("package.json");
+      const phases = commandPhases(root.scripts?.["release:version"]);
+      const refresh = phases[phases.indexOf("changeset version") + 1];
+      // Run the release refresh against unpublished versions with registry access disabled.
+      expect(refresh).toBe("pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile");
+      runPnpm([...refresh.split(" ").slice(1), "--offline"]);
+      const lockfile = parseYaml(await readFile(path.join(fixture, "pnpm-lock.yaml"), "utf8"));
+      expect(lockfile.importers["packages/vue"].dependencies["@starwind-ui/runtime"]).toEqual({
+        specifier: "99.999.998",
+        version: "link:../runtime",
+      });
+      runPnpm(["install", "--frozen-lockfile", "--offline", "--ignore-scripts"]);
+      expect(
+        await realpath(path.join(fixture, "packages/vue/node_modules/@starwind-ui/runtime")),
+      ).toBe(await realpath(path.join(fixture, "packages/runtime")));
+    } finally {
+      await rm(fixture, { recursive: true, force: true });
+    }
+  }, 60_000);
+
   it("exposes generic release commands and beta compatibility aliases", async () => {
     const root = await readJson<PackageJson>("package.json");
     expect(root.scripts?.["release:version"]).toBe(
-      "tsx scripts/portable-runtime/styled-component-release.ts version && tsx scripts/portable-runtime/primitive-component-release.ts version && changeset version && pnpm runtime:registry:generate && pnpm runtime:docs:metadata",
+      "tsx scripts/portable-runtime/styled-component-release.ts version && tsx scripts/portable-runtime/primitive-component-release.ts version && changeset version && pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile && pnpm runtime:registry:generate && pnpm runtime:docs:metadata",
     );
     expect(root.scripts?.version).toBe("pnpm release:version");
     expect(root.scripts?.["styled:versions:stage"]).toBe(

@@ -1,6 +1,10 @@
 packages:
   - packages/*
   - apps/*
+# Resolve exact release dependencies to the matching local package before publication.
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - esbuild
