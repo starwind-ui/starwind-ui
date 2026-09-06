@@ -234,12 +234,24 @@ describe("styled component release intents", () => {
 
   it("normalizes release-managed package ranges without hiding installable source changes", () => {
     const before = registryComponent("accordion", "2.0.1");
+    before.targets!.vue = structuredClone(before.targets!.react!);
+    before.targets!.vue.packageRequirements[0] = {
+      name: "@starwind-ui/vue",
+      range: "0.1.0",
+    };
     const releaseOnly = structuredClone(before);
     releaseOnly.version = "2.0.2";
     releaseOnly.sourceVersion = "2.0.2";
     releaseOnly.targets!.astro!.packageRequirements[0].range = "^0.1.0-beta.3";
+    releaseOnly.targets!.vue!.packageRequirements[0].range = "0.1.1";
     expect(createStyledRegistryFingerprint(before)).toBe(
       createStyledRegistryFingerprint(releaseOnly),
+    );
+
+    const externalDependencyChange = structuredClone(releaseOnly);
+    externalDependencyChange.targets!.vue!.packageRequirements[1].range = "^2.0.0";
+    expect(createStyledRegistryFingerprint(before)).not.toBe(
+      createStyledRegistryFingerprint(externalDependencyChange),
     );
 
     releaseOnly.targets!.astro!.files[0].content = "changed source";
