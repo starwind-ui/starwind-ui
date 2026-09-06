@@ -37012,7 +37012,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "accordion",
       displayName: "Accordion",
       category: "controlled-value-group",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "accordion",
         factory: "createAccordion",
@@ -38238,7 +38238,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "alert-dialog",
       displayName: "Alert Dialog",
       category: "dialog-native-overlay",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "alert-dialog",
         factory: "createAlertDialog",
@@ -39711,7 +39711,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "avatar",
       displayName: "Avatar",
       category: "static-semantic",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "avatar",
         factory: "createAvatar",
@@ -40560,7 +40560,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "button",
       displayName: "Button",
       category: "static-semantic",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "button",
         factory: "createButton",
@@ -41657,7 +41657,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "checkbox",
       displayName: "Checkbox",
       category: "single-boolean-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "checkbox",
         factory: "createCheckbox",
@@ -43917,7 +43917,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "collapsible",
       displayName: "Collapsible",
       category: "presence-disclosure-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "collapsible",
         factory: "createCollapsible",
@@ -48534,7 +48534,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "combobox",
       displayName: "Combobox",
       category: "floating-value-control",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "combobox",
         factory: "createCombobox",
@@ -51952,7 +51952,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "context-menu",
       displayName: "Context Menu",
       category: "composite-menu-overlay",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "context-menu",
         factory: "createContextMenu",
@@ -56123,7 +56123,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "dialog",
       displayName: "Dialog",
       category: "dialog-native-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "dialog",
         factory: "createDialog",
@@ -57454,7 +57454,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "drawer",
       displayName: "Drawer",
       category: "dialog-native-overlay",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "drawer",
         factory: "createDrawer",
@@ -60167,7 +60167,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "field",
       displayName: "Field",
       category: "field-control-coordinator",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "field",
         factory: "createField",
@@ -61454,7 +61454,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "fieldset",
       displayName: "Fieldset",
       category: "field-control-coordinator",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "fieldset",
         factory: "createFieldset",
@@ -61780,7 +61780,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "form",
       displayName: "Form",
       category: "field-control-coordinator",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "form",
         factory: "createForm",
@@ -62286,7 +62286,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "input",
       displayName: "Input",
       category: "form-value-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "input",
         factory: "createInput",
@@ -64543,7 +64543,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "menu",
       displayName: "Menu",
       category: "composite-menu-overlay",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "menu",
         factory: "createMenu",
@@ -71168,7 +71168,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "popover",
       displayName: "Popover",
       category: "presence-floating-overlay",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "popover",
         factory: "createPopover",
@@ -73171,7 +73171,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "preview-card",
       displayName: "Preview Card",
       category: "presence-floating-overlay",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "preview-card",
         factory: "createPreviewCard",
@@ -75021,7 +75021,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "progress",
       displayName: "Progress",
       category: "static-semantic",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "progress",
         factory: "createProgress",
@@ -75872,7 +75872,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio",
       displayName: "Radio",
       category: "single-boolean-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "radio",
         factory: "createRadio",
@@ -78146,7 +78146,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "scroll-area",
       displayName: "Scroll Area",
       category: "viewport-measurement",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "scroll-area",
         factory: "createScrollArea",
@@ -78829,7 +78829,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "select",
       displayName: "Select",
       category: "floating-value-control",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "select",
         factory: "createSelect",
@@ -84937,7 +84937,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "switch",
       displayName: "Switch",
       category: "single-boolean-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "switch",
         factory: "createSwitch",
@@ -86159,7 +86159,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tabs",
       displayName: "Tabs",
       category: "controlled-value-group",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "tabs",
         factory: "createTabs",
@@ -88484,7 +88484,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toggle",
       displayName: "Toggle",
       category: "single-boolean-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       runtime: {
         primitiveId: "toggle",
         factory: "createToggle",
@@ -90319,7 +90319,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tooltip",
       displayName: "Tooltip",
       category: "presence-floating-overlay",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       runtime: {
         primitiveId: "tooltip",
         factory: "createTooltip",

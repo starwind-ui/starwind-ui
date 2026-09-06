@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/runtime",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Framework-neutral accessible DOM behavior for Starwind UI components across Astro, React, and plain HTML.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",

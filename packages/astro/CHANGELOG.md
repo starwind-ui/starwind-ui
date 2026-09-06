@@ -1,5 +1,14 @@
 # @starwind-ui/astro
 
+## 1.2.1
+
+### Patch Changes
+
+- Deliver Runtime-backed group naming and Tabs indicator geometry corrections through the first-party adapters and bundled registry. The Vue package remains on its beta release channel.
+- Remove unused internal portal methods and retired CLI helpers. Keep public behavior and component source unchanged.
+- Updated dependencies
+  - @starwind-ui/runtime@1.2.1
+
 ## 1.2.0
 
 ### Minor Changes

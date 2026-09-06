@@ -384,7 +384,7 @@ importers:
   packages/vue:
     dependencies:
       '@starwind-ui/runtime':
-        specifier: 1.2.0
+        specifier: 1.2.1
         version: link:../runtime
     devDependencies:
       '@types/node':
