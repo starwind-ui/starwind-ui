@@ -148,25 +148,14 @@ describe("root verification scripts", () => {
             name !== "audit:prod" && commandPhases(command).includes("pnpm audit:prod"),
         )
         .map(([name]) => name),
-    ).toEqual(["release:gate"]);
+    ).toEqual([]);
   });
 
   it("runs the complete candidate gate once before the package dry-run", async () => {
     const pkg = await readRootPackage();
 
-    expect(commandPhases(pkg.scripts?.["release:gate"])).toEqual([
-      "pnpm verify:public",
-      "pnpm runtime:generate:vue:test",
-      "pnpm test:vue-cli-host-acceptance",
-      "pnpm --filter=starwind package:check",
-      "pnpm audit:prod",
-      "pnpm demo:smoke",
-      "pnpm react-demo:smoke",
-      "pnpm vue-demo:smoke",
-      "pnpm runtime:size:check:prepared",
-      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:evidence:check"] : []),
-      "pnpm release:candidate:acceptance",
-    ]);
+    expect(pkg.scripts?.["release:gate"]).toBe("node scripts/release-gate.mjs");
+    expect(pkg.scripts?.["release:preflight"]).toBe("node scripts/release-preflight.mjs");
     expect(pkg.scripts?.["runtime:size:check:prepared"]).toContain("--private-vue");
     expect(commandPhases(pkg.scripts?.["publish:release:dry-run"])).toEqual([
       "pnpm release:artifacts",
@@ -267,11 +256,27 @@ describe("root verification scripts", () => {
     const source = await readFile(".github/workflows/release.yml", "utf8");
     const workflow = parse(source) as Workflow;
     expect(workflow.concurrency).toMatchObject({ "cancel-in-progress": true });
+    expect(workflow.jobs.scope).toMatchObject({
+      outputs: {
+        verification_reused: "${{ steps.verification.outputs.reusable }}",
+        versioned: "${{ steps.changes.outputs.versioned }}",
+      },
+      permissions: { actions: "read", contents: "read", "pull-requests": "read" },
+    });
     expect(workflow.jobs.verify).toMatchObject({
-      if: "needs.scope.outputs.versioned == 'true'",
+      if: "needs.scope.outputs.versioned == 'true' && needs.scope.outputs.verification_reused != 'true'",
       needs: "scope",
       uses: "./.github/workflows/verify.yml",
     });
+    expect(workflow.jobs.scope.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "verification",
+          if: "steps.changes.outputs.versioned == 'true'",
+          run: 'node scripts/check-release-verification.mjs >> "$GITHUB_OUTPUT"',
+        }),
+      ]),
+    );
     expect(workflow.jobs.release.needs).toEqual(["scope", "verify"]);
     expect(workflow.jobs.release.steps).toEqual(
       expect.arrayContaining([

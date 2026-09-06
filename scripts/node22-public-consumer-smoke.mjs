@@ -2,6 +2,7 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -232,11 +233,14 @@ function fileSpecifier(file) {
   return `file:${file.replaceAll("\\", "/")}`;
 }
 
-async function loadArtifactManifest(packagesDirectory) {
+export async function loadArtifactManifest(packagesDirectory) {
   const manifest = JSON.parse(
     await readFile(path.join(packagesDirectory, "manifest.json"), "utf8"),
   );
-  assert.equal(manifest.schemaVersion, 1);
+  assert(
+    manifest.schemaVersion === 1 || manifest.schemaVersion === 2,
+    `Unsupported public artifact manifest schema: ${String(manifest.schemaVersion)}.`,
+  );
   assert.match(manifest.builtWithNode, /^v24\./, "Public artifacts must be built under Node 24");
   const expectedNames = {
     astro: "@starwind-ui/astro",
@@ -249,7 +253,16 @@ async function loadArtifactManifest(packagesDirectory) {
     assert.equal(entry?.name, name);
     assert.equal(typeof entry.version, "string");
     assert.equal(typeof entry.file, "string");
-    await access(path.join(packagesDirectory, entry.file));
+    const archive = path.join(packagesDirectory, entry.file);
+    await access(archive);
+    if (manifest.schemaVersion === 2) {
+      assert.equal(typeof entry.sha256, "string", `${name} must record its archive SHA-256`);
+      assert.match(entry.sha256, /^[a-f0-9]{64}$/, `${name} must record its archive SHA-256`);
+      const actual = createHash("sha256")
+        .update(await readFile(archive))
+        .digest("hex");
+      assert.equal(actual, entry.sha256, `${name} archive SHA-256 does not match its manifest`);
+    }
   }
   return manifest;
 }

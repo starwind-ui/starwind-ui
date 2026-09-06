@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
+import { realpathSync } from "node:fs";
 import {
   access,
   mkdir,
@@ -21,7 +22,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { parse as parseYaml } from "yaml";
 
 import { runLoggedCommand } from "./cli-host-acceptance.mjs";
-import { startCandidateRegistry } from "./release-candidate-acceptance.mjs";
+import { loadPublicReleaseArtifacts } from "./pack-public-release-artifacts.mjs";
+import { runCandidateProjects, startCandidateRegistry } from "./release-candidate-acceptance.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -271,12 +273,24 @@ export function shouldPreserveVueHostRoot({ failed, keepTemp }) {
 
 export function parseArgs(argv) {
   let keepTemp = false;
+  let packsDirectory;
+  let concurrency = 2;
   let localLinkOnly = false;
   const projectIds = [];
   let rootDirectory;
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (argument === "--keep-temp") keepTemp = true;
+    if (argument === "--packs") {
+      packsDirectory = argv[++index];
+      if (!packsDirectory || packsDirectory.startsWith("--"))
+        throw new Error("Expected a path after --packs.");
+    } else if (argument === "--concurrency") {
+      concurrency = Number(argv[++index]);
+      assert(
+        Number.isSafeInteger(concurrency) && concurrency > 0,
+        "Expected positive integer concurrency.",
+      );
+    } else if (argument === "--keep-temp") keepTemp = true;
     else if (argument === "--local-link-only") localLinkOnly = true;
     else if (argument === "--project") {
       const projectId = argv[index + 1];
@@ -291,6 +305,8 @@ export function parseArgs(argv) {
     } else throw new Error(`Unknown argument: ${argument}`);
   }
   return {
+    concurrency,
+    packsDirectory,
     keepTemp,
     localLinkOnly,
     projectIds: projectIds.length > 0 ? projectIds : undefined,
@@ -421,12 +437,24 @@ function matchesPackedFile(value, file, lockfileDirectory) {
   const marker = value.indexOf("file:");
   if (marker === -1) return false;
   const reference = value.slice(marker).replace(/(\.tgz)\(.*$/, "$1");
-  return samePath(path.resolve(lockfileDirectory, reference.slice("file:".length)), file);
+  return samePath(
+    path.resolve(canonicalPath(lockfileDirectory), reference.slice("file:".length)),
+    file,
+  );
+}
+
+function canonicalPath(value) {
+  try {
+    return realpathSync(value);
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+    return path.resolve(value);
+  }
 }
 
 function samePath(left, right) {
   const normalize = (value) => {
-    const normalized = path.normalize(path.resolve(value));
+    const normalized = canonicalPath(value);
     return process.platform === "win32" ? normalized.toLowerCase() : normalized;
   };
   return normalize(left) === normalize(right);
@@ -1523,101 +1551,192 @@ function formatError(error) {
   return error instanceof Error ? (error.stack ?? error.message) : String(error);
 }
 
+export async function prepareVueHostPackages(
+  { packsDirectory, outputDirectory, logsDirectory },
+  { loadArtifacts = loadPublicReleaseArtifacts, packPackages = packVueBetaPackages } = {},
+) {
+  if (!packsDirectory) return packPackages(outputDirectory, logsDirectory);
+  const artifacts = await loadArtifacts({ outputDirectory: path.resolve(packsDirectory) });
+  const manifests = {};
+  const packages = {};
+  const archiveHashes = {};
+  await mkdir(outputDirectory, { recursive: true });
+  for (const key of ["runtime", "vue", "cli"]) {
+    const entry = artifacts.packages[key];
+    assert(entry, `Prepared release packs are missing ${key}.`);
+    manifests[key] = entry.manifest;
+    const bytes = await readFile(path.resolve(packsDirectory, entry.file));
+    assert.equal(
+      createHash("sha256").update(bytes).digest("hex"),
+      entry.sha256,
+      `Release archive changed: ${entry.name}`,
+    );
+    packages[key] = path.resolve(outputDirectory, entry.file);
+    await writeFile(packages[key], bytes);
+    archiveHashes[key] = entry.sha256;
+  }
+  return { manifests, packages, archiveHashes };
+}
+
+export function createVueHostWorkerCommand(contextFile) {
+  return {
+    command: process.execPath,
+    args: [
+      fileURLToPath(import.meta.resolve("tsx/cli")),
+      "--tsconfig",
+      path.join(REPO_ROOT, "packages/cli/tsconfig.json"),
+      fileURLToPath(import.meta.url),
+      "--worker",
+      contextFile,
+    ],
+    cwd: REPO_ROOT,
+    timeoutMs: 30 * 60_000,
+  };
+}
+
+export async function runVueHostWorkers(
+  projects,
+  { root, prepared, concurrency = 2 },
+  runCommand = runLoggedCommand,
+) {
+  const logs = path.join(root, "logs");
+  await mkdir(logs, { recursive: true });
+  await runCandidateProjects(projects, {
+    concurrency,
+    runProject: async ({ id }) => {
+      const workerRoot = path.join(root, "hosts", id);
+      await mkdir(workerRoot, { recursive: true });
+      const contextFile = path.join(logs, `${id}-worker.json`);
+      await writeFile(
+        contextFile,
+        JSON.stringify({
+          root: workerRoot,
+          projectIds: [id],
+          prepared,
+        }),
+      );
+      await runCommand(`${id}-worker`, createVueHostWorkerCommand(contextFile), logs);
+    },
+  });
+}
+
+async function runVueHostProject({ root, projectIds, packages, manifests }) {
+  const rootLogs = path.join(root, "logs");
+  let browser;
+  let registry;
+  await runWithCleanup(async () => {
+    const plan = createVueCliHostAcceptancePlan({ packages, root });
+    if (projectIds) {
+      const requested = new Set(projectIds);
+      plan.projects = plan.projects.filter(({ id }) => requested.has(id));
+      assert.equal(plan.projects.length, requested.size, "Unknown Vue host acceptance project id.");
+    }
+    registry = await startCandidateRegistry(
+      Object.fromEntries(
+        ["runtime", "vue"].map((key) => [
+          key,
+          {
+            file: packages[key],
+            manifest: manifests[key],
+            name: manifests[key].name,
+            version: manifests[key].version,
+          },
+        ]),
+      ),
+    );
+    const capability = await loadProductionCapability(manifests.vue.version);
+    const require = createRequire(path.join(REPO_ROOT, "package.json"));
+    const { chromium } = require("playwright");
+    browser = await chromium.launch();
+    for (const project of plan.projects) {
+      const logs = path.join(rootLogs, project.id);
+      if (project.scaffold) await runLoggedCommand("01-scaffold", project.scaffold, logs);
+      else await createOfficialVueHostFixture(project);
+      const preservedBytes = await capturePreservedVueHostBytes(project);
+      await prepareManifest(project, packages, registry.url);
+      await runLoggedCommand("02-install", packageCommand(project.directory, ["install"]), logs);
+      if (project.ssrInstall) await runLoggedCommand("02-ssr-install", project.ssrInstall, logs);
+      if (project.prepare) await runLoggedCommand("02-prepare", project.prepare, logs);
+      try {
+        await runProductionLifecycle(project, capability, logs);
+      } catch (error) {
+        throw new Error(
+          `${project.id} production CLI lifecycle failed. Expected setup, repeat setup, search, add, update, remove, and Primitive checks to pass. Evidence: ${logs}.\n${formatError(error)}`,
+          { cause: error },
+        );
+      }
+      await runLoggedCommand(
+        "09-sync-lockfile",
+        packageCommand(project.directory, ["install", "--no-frozen-lockfile"]),
+        logs,
+      );
+      await assertPreservedVueHostBytes(project, preservedBytes);
+      await writeFixture(project);
+      await verifyPackedProvenance(project, packages, manifests);
+      await verifyPackedVueExports(project, logs);
+      await assertRegistryVueHostProvenance(project);
+      await assertNoWorkspaceSourceAliases(project);
+      await runLoggedCommand("09-typecheck", project.check, logs);
+      await runLoggedCommand("10-build", project.build, logs);
+      await assertNuxtComponentDiscovery(project, logs);
+      if (project.postBuild) await runLoggedCommand("11-output-install", project.postBuild, logs);
+      await assertPreservedVueHostBytes(project, preservedBytes);
+      if (project.preview) await verifyBrowser(project, logs, browser);
+    }
+  }, [
+    async () => {
+      if (browser) await browser.close();
+    },
+    async () => {
+      if (registry) await registry.close();
+    },
+  ]);
+}
+
 export async function runVueCliHostAcceptance({
   keepTemp = false,
   localLinkOnly = false,
   projectIds,
   rootDirectory,
   skipLocalLink = true,
+  packsDirectory,
+  concurrency = 2,
 } = {}) {
   return runWithTemporaryVueHostRoot({ keepTemp, rootDirectory }, async (root) => {
     if (localLinkOnly || !skipLocalLink) await runVueLocalLinkAcceptance({ root });
     if (localLinkOnly) return { root };
-
-    const rootLogs = path.join(root, "logs");
-    const packsDirectory = path.join(root, "packs");
-    let browser;
-    let registry;
-    await runWithCleanup(async () => {
-      const { manifests, packages } = await packVueBetaPackages(packsDirectory, rootLogs);
-      const plan = createVueCliHostAcceptancePlan({ packages, root });
-      if (projectIds) {
-        const requested = new Set(projectIds);
-        plan.projects = plan.projects.filter(({ id }) => requested.has(id));
-        assert.equal(
-          plan.projects.length,
-          requested.size,
-          "Unknown Vue host acceptance project id.",
-        );
-      }
-      registry = await startCandidateRegistry(
-        Object.fromEntries(
-          ["runtime", "vue"].map((key) => [
-            key,
-            {
-              file: packages[key],
-              manifest: manifests[key],
-              name: manifests[key].name,
-              version: manifests[key].version,
-            },
-          ]),
-        ),
-      );
-      const capability = await loadProductionCapability(manifests.vue.version);
-      const require = createRequire(path.join(REPO_ROOT, "package.json"));
-      const { chromium } = require("playwright");
-      browser = await chromium.launch();
-      for (const project of plan.projects) {
-        const logs = path.join(rootLogs, project.id);
-        if (project.scaffold) await runLoggedCommand("01-scaffold", project.scaffold, logs);
-        else await createOfficialVueHostFixture(project);
-        const preservedBytes = await capturePreservedVueHostBytes(project);
-        await prepareManifest(project, packages, registry.url);
-        await runLoggedCommand("02-install", packageCommand(project.directory, ["install"]), logs);
-        if (project.ssrInstall) await runLoggedCommand("02-ssr-install", project.ssrInstall, logs);
-        if (project.prepare) await runLoggedCommand("02-prepare", project.prepare, logs);
-        try {
-          await runProductionLifecycle(project, capability, logs);
-        } catch (error) {
-          throw new Error(
-            `${project.id} production CLI lifecycle failed. Expected setup, repeat setup, search, add, update, remove, and Primitive checks to pass. Evidence: ${logs}.\n${formatError(error)}`,
-            { cause: error },
-          );
-        }
-        await runLoggedCommand(
-          "09-sync-lockfile",
-          packageCommand(project.directory, ["install", "--no-frozen-lockfile"]),
-          logs,
-        );
-        await assertPreservedVueHostBytes(project, preservedBytes);
-        await writeFixture(project);
-        await verifyPackedProvenance(project, packages, manifests);
-        await verifyPackedVueExports(project, logs);
-        await assertRegistryVueHostProvenance(project);
-        await assertNoWorkspaceSourceAliases(project);
-        await runLoggedCommand("09-typecheck", project.check, logs);
-        await runLoggedCommand("10-build", project.build, logs);
-        await assertNuxtComponentDiscovery(project, logs);
-        if (project.postBuild) await runLoggedCommand("11-output-install", project.postBuild, logs);
-        await assertPreservedVueHostBytes(project, preservedBytes);
-        if (project.preview) await verifyBrowser(project, logs, browser);
-      }
-    }, [
-      async () => {
-        if (browser) await browser.close();
-      },
-      async () => {
-        if (registry) await registry.close();
-      },
-    ]);
-    console.log(
-      "[vue-cli-host] packed Vite Vue, Astro Vue, Nuxt 3/4, Laravel/Inertia, and Quasar SPA/SSR acceptance passed",
-    );
+    const prepared = await prepareVueHostPackages({
+      packsDirectory,
+      outputDirectory: path.join(root, "packs"),
+      logsDirectory: path.join(root, "logs"),
+    });
+    const plan = createVueCliHostAcceptancePlan({ packages: prepared.packages, root });
+    const requested = projectIds ? new Set(projectIds) : undefined;
+    const projects = plan.projects.filter(({ id }) => !requested || requested.has(id));
+    if (requested)
+      assert.equal(projects.length, requested.size, "Unknown Vue host acceptance project id.");
+    await runVueHostWorkers(projects, { root, prepared, concurrency });
+    console.log("[vue-cli-host] packed Vue host acceptance passed");
     return { root };
   });
 }
 
 async function main() {
+  if (process.argv[2] === "--worker") {
+    assert.equal(process.argv.length, 4, "Expected one Vue worker context file.");
+    const context = JSON.parse(await readFile(process.argv[3], "utf8"));
+    const prepared = context.prepared;
+    for (const [key, hash] of Object.entries(prepared.archiveHashes ?? {})) {
+      const bytes = await readFile(prepared.packages[key]);
+      assert.equal(
+        createHash("sha256").update(bytes).digest("hex"),
+        hash,
+        `Staged release archive changed: ${key}`,
+      );
+    }
+    await runVueHostProject({ ...context, ...prepared });
+    return;
+  }
   await runVueCliHostAcceptance(parseArgs(process.argv.slice(2)));
 }
 export async function createOfficialVueHostFixture(project) {

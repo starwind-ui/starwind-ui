@@ -3,6 +3,7 @@ dist/
 .svelte-kit/
 *.tsbuildinfo
 .eslintcache
+.release-packs/
 
 # internal context
 .context/

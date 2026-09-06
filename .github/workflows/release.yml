@@ -13,7 +13,12 @@ jobs:
   scope:
     name: Detect version materialization
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
     outputs:
+      verification_reused: ${{ steps.verification.outputs.reusable }}
       versioned: ${{ steps.changes.outputs.versioned }}
     steps:
       - name: Checkout Repo
@@ -27,10 +32,17 @@ jobs:
         run: |
           node scripts/detect-release-version-changes.mjs "${GITHUB_SHA}^" "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
+      - name: Check reusable candidate verification
+        id: verification
+        if: steps.changes.outputs.versioned == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-release-verification.mjs >> "$GITHUB_OUTPUT"
+
   verify:
     name: Verify
     needs: scope
-    if: needs.scope.outputs.versioned == 'true'
+    if: needs.scope.outputs.versioned == 'true' && needs.scope.outputs.verification_reused != 'true'
     uses: ./.github/workflows/verify.yml
 
   release:
