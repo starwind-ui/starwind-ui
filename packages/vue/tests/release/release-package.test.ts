@@ -1313,10 +1313,13 @@ describe("release-like @starwind-ui/vue package", () => {
   });
 
   it("keeps Runtime declared and Vue external across built ESM chunks", async () => {
-    const packageJson = JSON.parse(
-      await readFile(path.join(repoRoot, "packages/vue/package.json"), "utf8"),
-    );
-    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "1.2.0" });
+    const [packageJson, runtimePackageJson] = await Promise.all([
+      readFile(path.join(repoRoot, "packages/vue/package.json"), "utf8").then(JSON.parse),
+      readFile(path.join(repoRoot, "packages/runtime/package.json"), "utf8").then(JSON.parse),
+    ]);
+    expect(packageJson.dependencies).toEqual({
+      "@starwind-ui/runtime": runtimePackageJson.version,
+    });
     expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5" });
 
     const javaScript = await readJavaScriptTree(path.join(repoRoot, "packages/vue/dist"));

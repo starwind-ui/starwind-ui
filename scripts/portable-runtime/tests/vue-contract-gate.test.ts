@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 
+import semver from "semver";
 import { describe, expect, it } from "vitest";
 
 import { PUBLIC_FRAMEWORK_TARGET_POLICY } from "../../../packages/cli/src/utils/framework-target-policy.js";
@@ -105,6 +106,7 @@ type PackageManifest = Partial<
   name?: string;
   private?: boolean;
   scripts?: Record<string, string>;
+  version?: string;
 };
 
 type TextSurface = {
@@ -149,6 +151,7 @@ const approvedVueScriptNames = [
   "vue:build",
   "vue:link",
   "vue:test",
+  "vue:test:browser:ci",
   "vue:typecheck",
   "vue:unlink",
   "vue:verify",
@@ -687,15 +690,25 @@ describe("Vue public-beta contract gate", () => {
       }
     }
 
+    const runtimeManifest = JSON.parse(
+      readFileSync(join(process.cwd(), "packages/runtime/package.json"), "utf8"),
+    ) as PackageManifest;
+    const runtimeVersion = runtimeManifest.version ?? "";
+    expect(runtimeManifest).toMatchObject({
+      name: "@starwind-ui/runtime",
+    });
+    expect(semver.valid(runtimeVersion)).toBe(runtimeVersion);
+
     const vueManifest = JSON.parse(
       readFileSync(join(process.cwd(), "packages/vue/package.json"), "utf8"),
     ) as PackageManifest;
+    const vueVersion = vueManifest.version ?? "";
     expect(vueManifest).toMatchObject({
-      dependencies: { "@starwind-ui/runtime": "1.2.0" },
+      dependencies: { "@starwind-ui/runtime": runtimeVersion },
       name: "@starwind-ui/vue",
       peerDependencies: { vue: ">=3.5" },
-      version: "0.1.0",
     });
+    expect(semver.valid(vueVersion)).toBe(vueVersion);
     expect(vueManifest.private).not.toBe(true);
     expect(Object.keys(vueManifest.exports ?? {}).sort()).toEqual(
       Object.keys(vuePackageExports).sort(),

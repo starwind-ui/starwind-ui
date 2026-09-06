@@ -91,6 +91,7 @@ describe("root verification scripts", () => {
       "tsx scripts/portable-runtime/styled-component-release.ts version",
       "tsx scripts/portable-runtime/primitive-component-release.ts version",
       "changeset version",
+      "pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile",
       "pnpm runtime:registry:generate",
       "pnpm runtime:docs:metadata",
     ]);

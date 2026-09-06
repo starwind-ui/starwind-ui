@@ -186,7 +186,6 @@ type WriteRuntimeRegistryOptions = BuildRuntimeRegistryOptions & {
 
 type TargetDefinition = {
   adapterPackage: string;
-  adapterPackageRange?: string;
   collectPackageImportSources?: (args: {
     group: StyledOutputComponentGroup;
     primitiveImportBase: string;
@@ -246,7 +245,6 @@ function createTargetDefinitions(
 
     return {
       adapterPackage,
-      adapterPackageRange: getExactAdapterPackageRange(registration),
       collectPackageImportSources:
         registration.cliRegistry.styledArtifact.collectPackageImportSources,
       generatedImportCandidateExtensions:
@@ -508,7 +506,7 @@ function buildRegistrySetup(
     setup[target.target] = {
       adapterPackage: {
         name: target.adapterPackage,
-        range: target.adapterPackageRange ?? getPackageRange(target.adapterPackage, packageRanges),
+        range: getPackageRange(target.adapterPackage, packageRanges),
       },
       packageRequirements,
     };
@@ -775,11 +773,16 @@ async function readGeneratedComponentFiles(options: {
   );
 }
 
-async function loadPackageRanges(
+export async function loadPackageRanges(
   repoRoot: string,
   targetRegistrations: readonly CliRegistryTargetRegistration[],
 ): Promise<Map<string, string>> {
   const ranges = new Map<string, string>();
+  const exactAdapterPackages = new Set(
+    targetRegistrations
+      .filter((registration) => registration.cliRegistry.exactAdapterPackageVersion)
+      .map((registration) => getCliRegistryAdapterPackage(registration.target)),
+  );
   const packageMetadataSources = [
     ...new Set(
       targetRegistrations.flatMap(
@@ -789,7 +792,7 @@ async function loadPackageRanges(
   ];
 
   for (const packageMetadataSource of packageMetadataSources) {
-    await addPackageVersionRange(ranges, repoRoot, packageMetadataSource);
+    await addPackageVersionRange(ranges, repoRoot, packageMetadataSource, exactAdapterPackages);
     await addPackageDependencyRanges(ranges, repoRoot, packageMetadataSource);
   }
 
@@ -1036,10 +1039,20 @@ async function addPackageVersionRange(
   ranges: Map<string, string>,
   repoRoot: string,
   packageJsonPath: string,
+  exactPackageNames: ReadonlySet<string>,
 ): Promise<void> {
   const packageJson = await readPackageJson(repoRoot, packageJsonPath);
   const name = getPackageName(packageJson, packageJsonPath);
 
+  if (exactPackageNames.has(name)) {
+    if (semver.valid(packageJson.version) !== packageJson.version) {
+      throw new Error(
+        `CLI registry adapter package ${name} requires an exact package version; received "${packageJson.version}" from ${packageJsonPath}.`,
+      );
+    }
+    ranges.set(name, packageJson.version);
+    return;
+  }
   ranges.set(name, packageJson.version === "0.0.0" ? "*" : `^${packageJson.version}`);
 }
 
@@ -1099,10 +1112,7 @@ function collectPackageRequirements(options: {
 
   return [...packageNames].sort().map((name) => ({
     name,
-    range:
-      name === options.target.adapterPackage && options.target.adapterPackageRange
-        ? options.target.adapterPackageRange
-        : getPackageRange(name, options.packageRanges),
+    range: getPackageRange(name, options.packageRanges),
   }));
 }
 
@@ -1206,19 +1216,6 @@ function getCliRegistryAdapterPackage(target: FrameworkAdapterRegisteredTarget):
   }
 
   return packageName;
-}
-
-function getExactAdapterPackageRange(
-  registration: CliRegistryTargetRegistration,
-): string | undefined {
-  const version = registration.cliRegistry.exactAdapterPackageVersion;
-  if (version === undefined) return undefined;
-  if (semver.valid(version) !== version) {
-    throw new Error(
-      `CLI registry target "${registration.target}" requires an exact adapter package version; received "${version}".`,
-    );
-  }
-  return version;
 }
 
 function normalizeArtifactDir(artifactDir: string): string {

@@ -49,26 +49,25 @@ vi.mock("../../src/commands/migrate.js", () => ({
 
 import type { Task } from "@clack/prompts";
 import * as clackPrompts from "@clack/prompts";
-
+import { init } from "../../src/commands/init.js";
+import { migrate } from "../../src/commands/migrate.js";
 import * as astroConfig from "../../src/utils/astro-config.js";
 import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
 import * as astroVueIntegration from "../../src/utils/astro-vue-integration.js";
 import * as config from "../../src/utils/config.js";
 import { CONFIG_SCHEMA_V2_URL } from "../../src/utils/config.js";
 import * as env from "../../src/utils/env.js";
-import * as fsUtils from "../../src/utils/fs.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import * as fsUtils from "../../src/utils/fs.js";
 import * as hostPlanner from "../../src/utils/host-planner.js";
 import * as layout from "../../src/utils/layout.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import * as reactProject from "../../src/utils/react-project.js";
-import * as snippets from "../../src/utils/snippets.js";
 import * as sleepUtils from "../../src/utils/sleep.js";
+import * as snippets from "../../src/utils/snippets.js";
 import * as tsconfig from "../../src/utils/tsconfig.js";
 import * as viteConfig from "../../src/utils/vite-config.js";
 import * as vueProject from "../../src/utils/vue-project.js";
-import { init } from "../../src/commands/init.js";
-import { migrate } from "../../src/commands/migrate.js";
 
 const actualVueProject = await vi.importActual<typeof import("../../src/utils/vue-project.js")>(
   "../../src/utils/vue-project.js",
@@ -77,12 +76,16 @@ const actualVueProject = await vi.importActual<typeof import("../../src/utils/vu
 const runtimePackage = JSON.parse(
   readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
 ) as { version: string };
+const vuePackage = JSON.parse(
+  readFileSync(new URL("../../../vue/package.json", import.meta.url), "utf8"),
+) as { version: string };
 const registryVersionManifest = JSON.parse(
   readFileSync(new URL("../../registry/styled-component-versions.json", import.meta.url), "utf8"),
 ) as { registryVersion: string };
 const CURRENT_ASTRO_SPEC = `@starwind-ui/astro@${runtimePackage.version}`;
 const CURRENT_REACT_SPEC = `@starwind-ui/react@${runtimePackage.version}`;
-const CURRENT_VUE_SPEC = "@starwind-ui/vue@0.1.0";
+const CURRENT_VUE_SPEC = `@starwind-ui/vue@${vuePackage.version}`;
+const FIXTURE_VUE_SPEC = "@starwind-ui/vue@0.1.0";
 const ASTRO_SETUP_REQUIREMENTS = [
   "@tabler/icons@^3",
   "@tailwindcss/forms@^0.5",
@@ -508,7 +511,7 @@ describe("init command", () => {
       },
     );
     expect(mockInstallDependencies.mock.calls).toEqual([
-      [[CURRENT_VUE_SPEC], "pnpm"],
+      [[FIXTURE_VUE_SPEC], "pnpm"],
       [
         ["@tailwindcss/vite@^4", "tailwindcss@^4", "tw-animate-css@^1", "@tailwindcss/forms@^0.5"],
         "pnpm",
@@ -839,7 +842,7 @@ describe("init command", () => {
 
     expect(mockDetectHostPlan).toHaveBeenCalled();
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      expect.arrayContaining(["@starwind-ui/vue@0.1.0"]),
+      expect.arrayContaining([CURRENT_VUE_SPEC]),
       "pnpm",
     );
     expect(mockUpdateConfig).toHaveBeenCalledWith(expect.objectContaining({ framework: "vue" }), {

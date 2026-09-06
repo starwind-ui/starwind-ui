@@ -1,12 +1,12 @@
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import type {
-  StyledOutputComponentGroup,
-  StyledOutputModel,
-} from "../styled-output-model/types.js";
-import type {
   AdapterColorPickerComponentProjection,
   AdapterColorPickerIndexProjection,
 } from "../primitive-output-model/index.js";
+import type {
+  StyledOutputComponentGroup,
+  StyledOutputModel,
+} from "../styled-output-model/types.js";
 
 export type FrameworkAdapterTarget = "astro" | "react" | "solid" | "svelte" | "vue" | (string & {});
 
@@ -141,7 +141,7 @@ export type FrameworkAdapterTargetPrimitiveEditableContentMarker = {
 };
 
 export type FrameworkAdapterTargetCliRegistryMetadata = {
-  exactAdapterPackageVersion?: string;
+  exactAdapterPackageVersion?: true;
   generatedImportCandidateExtensions: readonly string[];
   packageMetadataSources?: readonly string[];
   primitiveArtifact?: {

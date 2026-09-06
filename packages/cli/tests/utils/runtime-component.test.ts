@@ -60,6 +60,9 @@ const mockInstallDependencies = vi.mocked(packageManager.installDependenciesWith
 const mockConfirm = vi.mocked(clackPrompts.confirm);
 const mockIsCancel = vi.mocked(clackPrompts.isCancel);
 const mockPromptLog = vi.mocked(clackPrompts.log);
+const vuePackage = JSON.parse(
+  readFileSync(new URL("../../../vue/package.json", import.meta.url), "utf8"),
+) as { version: string };
 
 const runtimeConfig: StarwindConfig = {
   $schema: "https://starwind.dev/config-schema.v2.json",
@@ -2445,7 +2448,7 @@ describe.sequential("runtime component installs", () => {
       file.path.endsWith("/ThemeToggle.vue"),
     )!.content!;
     expect(themeToggle.targets!.vue!.packageRequirements).toEqual([
-      { name: "@starwind-ui/vue", range: "0.1.0" },
+      { name: "@starwind-ui/vue", range: vuePackage.version },
       { name: "tailwind-variants", range: "^3.2.2" },
       { name: "vue", range: ">=3.5" },
     ]);
@@ -2466,7 +2469,7 @@ describe.sequential("runtime component installs", () => {
     ).toContain('from "@starwind-ui/vue/combobox"');
 
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/vue@0.1.0", "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      [`@starwind-ui/vue@${vuePackage.version}`, "tailwind-variants@^3.2.2", "vue@>=3.5"],
       "pnpm",
     );
     expect(mockUpdateConfig).toHaveBeenCalledWith(
