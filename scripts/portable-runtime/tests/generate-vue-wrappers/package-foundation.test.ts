@@ -295,7 +295,10 @@ describe("Vue package foundation", () => {
   });
 
   it("pins a public-beta package with exact ESM and declaration exports", async () => {
-    const packageJson = JSON.parse(await readFile("packages/vue/package.json", "utf8"));
+    const [packageJson, runtimePackageJson] = await Promise.all([
+      readFile("packages/vue/package.json", "utf8").then(JSON.parse),
+      readFile("packages/runtime/package.json", "utf8").then(JSON.parse),
+    ]);
     const packageMetadataSources =
       vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? [];
 
@@ -321,7 +324,9 @@ describe("Vue package foundation", () => {
       expect(contract.import).toMatch(/^\.\/dist\/.+\.js$/);
       expect(contract.types).toMatch(/^\.\/dist\/.+\.d\.ts$/);
     }
-    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "1.2.0" });
+    expect(packageJson.dependencies).toEqual({
+      "@starwind-ui/runtime": runtimePackageJson.version,
+    });
     expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5" });
 
     const readme = await readFile("packages/vue/README.md", "utf8");
@@ -361,6 +366,7 @@ describe("Vue package foundation", () => {
   });
 
   it("exposes Vue as public beta through public generation and release verification", async () => {
+    const vuePackageJson = JSON.parse(await readFile("packages/vue/package.json", "utf8"));
     expect(vueFrameworkAdapterTarget.publicSupport).toEqual({
       cliRegistry: true,
       demoIntegration: true,
@@ -405,7 +411,7 @@ describe("Vue package foundation", () => {
       await readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
     );
     expect(bundledRegistry.setup.vue).toEqual({
-      adapterPackage: { name: "@starwind-ui/vue", range: "0.1.0" },
+      adapterPackage: { name: "@starwind-ui/vue", range: vuePackageJson.version },
       packageRequirements: [{ name: "vue", range: ">=3.5" }],
     });
     const vueRegistryComponents = bundledRegistry.components.filter(
@@ -416,7 +422,7 @@ describe("Vue package foundation", () => {
     );
     for (const component of vueRegistryComponents) {
       expect(component.targets.vue.packageRequirements).toEqual(
-        expect.arrayContaining([{ name: "@starwind-ui/vue", range: "0.1.0" }]),
+        expect.arrayContaining([{ name: "@starwind-ui/vue", range: vuePackageJson.version }]),
       );
       expect(component.targets.svelte).toBeUndefined();
     }

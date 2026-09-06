@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import semver from "semver";
 import { describe, expect, it } from "vitest";
 
 import { approvedTestHomePrefixes } from "../../../../scripts/check-test-homes.mjs";
@@ -37,6 +38,7 @@ describe("Vue public-beta vertical-slice workspace contract", () => {
       private?: boolean;
       version: string;
     }>("packages/vue/package.json");
+    const runtimePackage = await readRepoJson<{ version: string }>("packages/runtime/package.json");
     const demoPackage = await readRepoJson<{ name: string; private: boolean }>(
       "apps/vue-demo/package.json",
     );
@@ -45,10 +47,10 @@ describe("Vue public-beta vertical-slice workspace contract", () => {
     );
 
     expect(vuePackage).toMatchObject({
-      dependencies: { "@starwind-ui/runtime": "1.2.0" },
+      dependencies: { "@starwind-ui/runtime": runtimePackage.version },
       name: "@starwind-ui/vue",
-      version: "0.1.0",
     });
+    expect(semver.valid(vuePackage.version)).toBe(vuePackage.version);
     expect(vuePackage.private).toBeUndefined();
     expect(demoPackage).toMatchObject({ name: "vue-demo", private: true });
     expect(changesets.fixed.flat()).not.toContain("@starwind-ui/vue");
