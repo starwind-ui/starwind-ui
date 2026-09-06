@@ -294,10 +294,12 @@ describe("root verification scripts", () => {
         }),
       ]),
     );
+    for (const job of Object.values(verifyWorkflow.jobs)) {
+      for (const value of Object.values(job.env ?? {})) {
+        expect(value).not.toMatch(/\$\{\{[^}]*\brunner\./);
+      }
+    }
     expect(verifyWorkflow.jobs["build-drift"]).toMatchObject({
-      env: {
-        STARWIND_MEASUREMENT_TMP_ROOT: "${{ runner.temp }}/starwind-measurements",
-      },
       steps: expect.arrayContaining([
         expect.objectContaining({
           name: "Check CLI package size",
@@ -314,6 +316,9 @@ describe("root verification scripts", () => {
         }),
         expect.objectContaining({
           name: "Check prepared package sizes",
+          env: {
+            STARWIND_MEASUREMENT_TMP_ROOT: "${{ runner.temp }}/starwind-measurements",
+          },
           run: "pnpm runtime:size:check:prepared",
         }),
         expect.objectContaining({

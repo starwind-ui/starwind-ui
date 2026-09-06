@@ -233,8 +233,6 @@ jobs:
   build-drift:
     name: Build and generated drift
     runs-on: ubuntu-latest
-    env:
-      STARWIND_MEASUREMENT_TMP_ROOT: ${{ runner.temp }}/starwind-measurements
     steps:
       - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -263,6 +261,8 @@ jobs:
         if: github.event.repository.private
         run: pnpm runtime:perf:vue:evidence:check
       - name: Check prepared package sizes
+        env:
+          STARWIND_MEASUREMENT_TMP_ROOT: ${{ runner.temp }}/starwind-measurements
         run: pnpm runtime:size:check:prepared
       - name: Upload package-size failure diagnostics
         if: failure()
