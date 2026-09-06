@@ -139,9 +139,9 @@ and inputs. Comparator-relative results remain advisory and do not form a releas
 public performance claim.
 
 Accepted row JSON, the collection manifest, the private Markdown report, smoke eligibility, the Reka
-audit, and rejected diagnostics remain in the private evidence store. Run
-`pnpm runtime:perf:vue:evidence:check` for strict read-only validation of saved evidence. Current
-timing requires a new controlled capture. The check requires all 63 canonical rows and validates membership, exact
+audit, and rejected diagnostics remain in the private evidence store. The private evidence check
+performs strict read-only validation of saved evidence. Current timing requires a new controlled
+capture. The check requires all 63 canonical rows and validates membership, exact
 versions, environment identity, statistics, candidate disposition, audit linkage, and report bytes
 without a package install, network request, browser launch, or evidence write.
 
