@@ -151,6 +151,7 @@ const approvedVueScriptNames = [
   "vue:build",
   "vue:link",
   "vue:test",
+  "vue:test:browser:ci",
   "vue:typecheck",
   "vue:unlink",
   "vue:verify",
