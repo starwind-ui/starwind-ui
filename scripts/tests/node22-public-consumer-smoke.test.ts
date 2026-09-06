@@ -42,7 +42,7 @@ describe("Node 22 public consumer smoke", () => {
         };
       }
       const manifestFile = path.join(packagesDirectory, "manifest.json");
-      const save = (schemaVersion) =>
+      const save = (schemaVersion: number) =>
         writeFile(
           manifestFile,
           JSON.stringify({ builtWithNode: "v24.20.0", packages, schemaVersion }),

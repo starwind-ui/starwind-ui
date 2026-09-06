@@ -551,7 +551,10 @@ export const StarwindCollapsibleHelper: typeof import('../app/components/starwin
   it("stages verified shared archives outside the repository without weakening source isolation", async () => {
     const shared = await mkdtemp(path.join(process.cwd(), "node_modules/vue-shared-packs-"));
     const fixture = await mkdtemp(path.join(os.tmpdir(), "vue-staged-packs-"));
-    const entries = {};
+    const entries: Record<
+      string,
+      { file: string; manifest: { name: string; version: string }; sha256: string }
+    > = {};
     try {
       for (const key of ["runtime", "vue", "cli"]) {
         const bytes = Buffer.from(`verified-${key}`);
