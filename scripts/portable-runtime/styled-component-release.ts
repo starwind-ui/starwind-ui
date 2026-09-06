@@ -72,6 +72,10 @@ const RELEASE_MANAGED_PACKAGES = new Set([
   "@starwind-ui/astro",
   "@starwind-ui/react",
 ]);
+const FINGERPRINT_RELEASE_MANAGED_PACKAGES = new Set([
+  ...RELEASE_MANAGED_PACKAGES,
+  "@starwind-ui/vue",
+]);
 const FIXED_GROUP_PACKAGES = [
   "@starwind-ui/runtime",
   "@starwind-ui/astro",
@@ -155,7 +159,7 @@ export function createStyledRegistryFingerprint(component: StyledRegistryCompone
   delete (normalized as Partial<StyledRegistryComponent>).sourceVersion;
   for (const target of Object.values(normalized.targets ?? {})) {
     for (const requirement of target.packageRequirements ?? []) {
-      if (RELEASE_MANAGED_PACKAGES.has(requirement.name)) {
+      if (FINGERPRINT_RELEASE_MANAGED_PACKAGES.has(requirement.name)) {
         requirement.range = "<release-managed>";
       }
     }
