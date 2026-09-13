@@ -83,7 +83,7 @@ describe("generated Vue framework-owned Portal placement", () => {
     expect(source.indexOf("ready.value = true")).toBeLessThan(
       source.indexOf("options.runtime.reportPortalPlacement(wrapper, { ready: true"),
     );
-    expect(source).toContain("observer?.disconnect()");
+    expect(source).toContain("stopDocumentObservation?.()");
     expect(source).toContain("if (!mounted || !wrapper) return");
     expect(source).toContain('wrapper.setAttribute("data-disabled", "")');
     expect(source).toContain('const INLINE_TELEPORT_TARGET = "[data-sw-vue-inline-portal]"');

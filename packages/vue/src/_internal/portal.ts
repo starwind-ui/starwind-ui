@@ -57,6 +57,43 @@ function acceptsTeleportTarget(wrapper: HTMLElement, target: HTMLElement): boole
   );
 }
 
+const portalDocumentObservers = new WeakMap<
+  Document,
+  { observer: MutationObserver; subscribers: Set<() => void> }
+>();
+
+function observePortalDocument(ownerDocument: Document, refreshPlacement: () => void): () => void {
+  let shared = portalDocumentObservers.get(ownerDocument);
+  if (!shared) {
+    const subscribers = new Set<() => void>();
+    const observer = new MutationObserver(() => {
+      for (const subscriber of [...subscribers]) {
+        if (!subscribers.has(subscriber)) continue;
+        try {
+          subscriber();
+        } catch (error) {
+          // Keep other portals responsive when one placement callback fails.
+          queueMicrotask(() => {
+            throw error;
+          });
+        }
+      }
+    });
+    observer.observe(ownerDocument, { childList: true, subtree: true });
+    shared = { observer, subscribers };
+    portalDocumentObservers.set(ownerDocument, shared);
+  }
+
+  const subscription = () => refreshPlacement();
+  shared.subscribers.add(subscription);
+  const { observer, subscribers } = shared;
+  return () => {
+    if (!subscribers.delete(subscription) || subscribers.size > 0) return;
+    observer.disconnect();
+    portalDocumentObservers.delete(ownerDocument);
+  };
+}
+
 export function useVuePortalPlacement(options: UseVuePortalPlacementOptions): VuePortalPlacement {
   const ready = shallowRef(false);
   const target = shallowRef<PortalTarget>(INLINE_TELEPORT_TARGET);
@@ -67,12 +104,12 @@ export function useVuePortalPlacement(options: UseVuePortalPlacementOptions): Vu
   let disposed = false;
   let inlineReference: HTMLElement | null = null;
   let mounted = false;
-  let observer: MutationObserver | undefined;
+  let stopDocumentObservation: (() => void) | undefined;
   let trackedWrapper: HTMLElement | null = null;
 
   function disconnectObserver(): void {
-    observer?.disconnect();
-    observer = undefined;
+    stopDocumentObservation?.();
+    stopDocumentObservation = undefined;
   }
 
   function getInlineReference(wrapper: HTMLElement): HTMLElement {
@@ -90,7 +127,7 @@ export function useVuePortalPlacement(options: UseVuePortalPlacementOptions): Vu
   function observeOwnerDocument(wrapper: HTMLElement): void {
     disconnectObserver();
     if (!options.active() || options.disabled()) return;
-    observer = new MutationObserver(() => {
+    stopDocumentObservation = observePortalDocument(wrapper.ownerDocument, () => {
       if (disposed || !options.active() || options.disabled()) return;
       const currentTarget = target.value;
       if (!currentTarget) return;
@@ -104,7 +141,6 @@ export function useVuePortalPlacement(options: UseVuePortalPlacementOptions): Vu
         void syncPlacement();
       }
     });
-    observer.observe(wrapper.ownerDocument, { childList: true, subtree: true });
   }
 
   function targetChanged(wrapper: HTMLElement, placedTarget: HTMLElement): boolean {
