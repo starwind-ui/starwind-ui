@@ -45,6 +45,7 @@ const rekaExclusionSummaries = Object.freeze({
 export function renderVuePerformanceEvidenceMarkdown(evidence, options = {}) {
   validateVuePerformanceEvidence(evidence, options);
   const { environment, machine, revision } = evidence.collection;
+  const recordedWarmups = evidence.rows[0]?.flags.controls.rows[0]?.warmupCount ?? 0;
   const rowsById = new Map(evidence.rows.map((row) => [row.id, row]));
   const candidates = new Map(
     evidence.rows
@@ -58,7 +59,7 @@ export function renderVuePerformanceEvidenceMarkdown(evidence, options = {}) {
     "",
     "## Method",
     "",
-    "- Each result is the median of five measured samples with zero warmups.",
+    `- Each result is the median of five measured samples with ${recordedWarmups} excluded warmup${recordedWarmups === 1 ? "" : "s"}.`,
     "- Open and activation rows measure the accepted action through a visible endpoint and forced layout.",
     "- Mount rows reuse one loaded browser lifecycle for five in-page mount, layout, assertion, and unmount cycles.",
     "- Highlight rows measure a sequential pointermove sweep across the complete mounted collection.",
@@ -117,7 +118,7 @@ export function renderVuePerformanceEvidenceMarkdown(evidence, options = {}) {
     `- Viewport: ${environment.viewport.width} x ${environment.viewport.height} at ${environment.viewport.deviceScaleFactor}x`,
     `- Browser garbage collection available: ${environment.garbageCollectionAvailable ? "yes" : "no"}`,
     "- Garbage collection policy: collect before each sample when available, outside timing",
-    "- Warmups per row: 0",
+    `- Warmups per row: ${recordedWarmups}`,
     "- Measured samples per row: 5",
     "- Mount lifecycle: one loaded context, page, CDP session, and navigation for five in-page cycles",
     `- Reviewed Reka audit: \`${evidence.audit.source}\` (SHA-256 \`${evidence.audit.sha256}\`)`,
@@ -221,7 +222,7 @@ export function renderVuePerformanceRunMarkdown({ environment, flags, focused, r
     "> Diagnostic output only. Comparator-relative values are advisory.",
     "",
     `Commit: \`${environment.commit}\``,
-    "Warmups: 0",
+    `Warmups: ${flags.controls.rows[0]?.warmupCount ?? 0}`,
     `Measured samples: ${flags.smoke ? 1 : 5}`,
     "",
     "| Row | Median | Samples | Lifecycle |",

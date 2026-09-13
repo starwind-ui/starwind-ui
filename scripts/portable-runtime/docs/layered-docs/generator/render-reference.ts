@@ -24,7 +24,7 @@ sidebar:
 
 import PrimitiveInventory from "@/docs/components/primitive-reference/PrimitiveInventory.astro";
 
-Starwind currently exposes 36 Runtime-backed primitives for Astro and React. They use the same
+Starwind exposes 36 Runtime-backed primitives for Astro, React, and the Vue 3.5 public beta. They use the same
 use-case groups as the styled component overview, making it easy to move between the styled and
 behavior-first layers.
 
@@ -39,6 +39,8 @@ configuring Starwind manually, install the package that matches the files you ar
 npm install @starwind-ui/astro
 # or
 npm install @starwind-ui/react
+# or, for the Vue 3.5 public beta
+npm install @starwind-ui/vue@beta vue@^3.5
 \`\`\`
 
 You can also copy Primitive adapter source into your project with \`starwind primitives add\`. See
@@ -48,7 +50,8 @@ source, and Runtime/raw HTML tradeoffs.
 ## Import Pattern
 
 Import each Primitive from its framework package and component subpath. The individual reference
-pages show the available parts and complete examples for both frameworks.
+pages include examples for Astro, React, and Vue. The API tables cover Astro and React.
+See the [Vue guide](/docs/frameworks/vite-vue/) for setup and Vue usage.
 
 **Astro**
 
@@ -61,6 +64,15 @@ import { Accordion } from "@starwind-ui/astro/accordion";
 \`\`\`ts
 import { Accordion } from "@starwind-ui/react/accordion";
 \`\`\`
+
+**Vue 3.5 public beta**
+
+\`\`\`ts
+import Accordion from "@starwind-ui/vue/accordion";
+\`\`\`
+
+The Vue API can change during the \`0.x\` release series. Send beta feedback through the
+[issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
 
 When you vendor Primitive source, import from the configured \`primitiveDir\` or
 \`primitiveDirs.<framework>\` destination instead.
@@ -93,6 +105,7 @@ const renderBaseUiStylePrimitiveReferenceMarkdown = (primitive: PrimitiveDocsMet
     primitive.docsReference.summary,
     "",
     primitive.docsReference.frameworkCoordination,
+    "",
     "",
     renderPrimitiveUsageGuidelines(primitive),
     "",
@@ -520,7 +533,11 @@ export const getPrimitiveAuthoredExampleFrameworksInDisplayOrder = <
 ) => getPrimitiveDocsExamplesInDisplayOrder(frameworks);
 
 const getPrimitiveDocsFrameworkLabel = (framework: PrimitiveDocsFrameworkTarget) =>
-  framework === "raw-html" ? "HTML" : toDisplayTitle(framework);
+  framework === "raw-html"
+    ? "HTML"
+    : framework === "vue"
+      ? "Vue · Beta"
+      : toDisplayTitle(framework);
 
 export const isPrimitiveDocsFrameworkTarget = (
   value: string,

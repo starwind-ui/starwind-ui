@@ -1,7 +1,9 @@
 import * as React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { createContextMenu } from "@starwind-ui/runtime/context-menu";
 
 import { ContextMenu } from "../src/context-menu/index";
 
@@ -18,6 +20,79 @@ afterEach(async () => {
 });
 
 describe("React Context Menu", () => {
+  it.each(["closeDelay", "modal", "disabled"])(
+    "keeps the open invocation point when %s recreates Runtime on the same root",
+    async (option) => {
+      const onOpenChange = vi.fn();
+      const render = (updated = false) => (
+        <ContextMenu.Root
+          id="retained-context-root"
+          closeDelay={updated && option === "closeDelay" ? 340 : 200}
+          disabled={updated && option === "disabled"}
+          modal={updated && option === "modal"}
+          onOpenChange={onOpenChange}
+        >
+          <ContextMenu.Trigger id="retained-context-trigger">Actions</ContextMenu.Trigger>
+          <ContextMenu.Portal>
+            <ContextMenu.Positioner>
+              <ContextMenu.Popup id="retained-context-popup">
+                <ContextMenu.Item>Rename</ContextMenu.Item>
+              </ContextMenu.Popup>
+            </ContextMenu.Positioner>
+          </ContextMenu.Portal>
+        </ContextMenu.Root>
+      );
+      await mount(render());
+      const root = query<HTMLElement>("#retained-context-root");
+      const trigger = query<HTMLElement>("#retained-context-trigger");
+      const popup = query<HTMLElement>("#retained-context-popup");
+      const original = createContextMenu(root);
+      await act(async () => {
+        trigger.dispatchEvent(
+          new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: true,
+            clientX: 300,
+            clientY: 240,
+          }),
+        );
+        await settlePosition();
+      });
+      const oldAnchor = query<HTMLElement>("[data-sw-context-menu-anchor]");
+      const before = popup.getBoundingClientRect();
+      expect(original.getOpen()).toBe(true);
+      expect(onOpenChange).toHaveBeenCalledTimes(1);
+
+      await act(() => reactRoot!.render(render(true)));
+      await act(settlePosition);
+      const recreated = createContextMenu(root);
+      const anchor = query<HTMLElement>("[data-sw-context-menu-anchor]");
+      expect(query("#retained-context-root")).toBe(root);
+      expect(recreated).not.toBe(original);
+      expect(recreated.getOpen()).toBe(true);
+      expect(oldAnchor.isConnected).toBe(false);
+      expect(anchor).not.toBe(oldAnchor);
+      expect(document.querySelectorAll("[data-sw-context-menu-anchor]")).toHaveLength(1);
+      expect([
+        anchor.style.left,
+        anchor.style.top,
+        anchor.style.width,
+        anchor.style.height,
+      ]).toEqual(["300px", "240px", "0px", "0px"]);
+      expect(popup.hidden).toBe(false);
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      expect(popup.getBoundingClientRect().left).toBeCloseTo(before.left);
+      expect(popup.getBoundingClientRect().top).toBeCloseTo(before.top);
+      expect(onOpenChange).toHaveBeenCalledTimes(1);
+
+      await act(() => reactRoot!.unmount());
+      reactRoot = undefined;
+      expect(anchor.isConnected).toBe(false);
+      expect(document.querySelector("[data-sw-context-menu-anchor]")).toBeNull();
+      expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+    },
+  );
+
   it("opens its first placed Portal through the public Shift+F10 interaction", async () => {
     await mount(
       <ContextMenu.Root>
@@ -151,6 +226,11 @@ async function waitForPosition(popup: HTMLElement): Promise<void> {
     if (popup.style.position !== "") return;
     await new Promise(requestAnimationFrame);
   }
+}
+
+async function settlePosition(): Promise<void> {
+  await new Promise(requestAnimationFrame);
+  await new Promise(requestAnimationFrame);
 }
 
 function dispatchTouchEvent(

@@ -55,6 +55,8 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
     const defaultOpenRef = React.useRef(defaultOpen);
     const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
     const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
+    const acceptedTriggerRef = React.useRef<HTMLElement | undefined>(undefined);
+    const acceptedRootRef = React.useRef<HTMLElement | undefined>(undefined);
 
     const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
       uncontrolledOpenRef.current = nextOpen;
@@ -80,9 +82,13 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
     const initializePortalRuntime = React.useCallback(() => {
       const root = rootRef.current;
       if (!root) return;
+      if (acceptedRootRef.current !== root) {
+        acceptedRootRef.current = root;
+        acceptedTriggerRef.current = undefined;
+      }
 
       const instance = createPreviewCard(root, {
-        defaultOpen: uncontrolledOpenRef.current,
+        defaultOpen: false,
         closeDelay,
         closeOnEscape,
         closeOnOutsideInteract,
@@ -91,14 +97,22 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
         onOpenChange: (nextOpen, details) => {
           onOpenChangeRef.current?.(nextOpen, details);
         },
-        ...(openRef.current !== undefined ? { open: openRef.current } : {}),
+        ...(openRef.current !== undefined ? { open: false } : {}),
       });
       instanceRef.current = instance;
       const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
+        if (details.open && details.trigger instanceof HTMLElement) {
+          acceptedTriggerRef.current = details.trigger;
+        }
         if (openRef.current === undefined) {
           setUncontrolledOpen(details.open);
         }
       });
+      instance.setOpen(openRef.current ?? uncontrolledOpenRef.current, {
+        emit: false,
+        trigger: acceptedTriggerRef.current,
+      });
+      if (openRef.current === undefined) setUncontrolledOpen(instance.getOpen());
 
       return () => {
         unsubscribeOpenChange();

@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const approvedTestHomePrefixes = [
+  "apps/svelte-demo/tests/",
   "packages/cli/tests/",
   "packages/react/tests/",
   "packages/runtime/tests/",
@@ -15,8 +16,16 @@ export const approvedTestHomePrefixes = [
 
 export const testSuiteOwners = [
   {
+    name: "svelte-demo",
+    prefixes: ["apps/svelte-demo/tests/"],
+  },
+  {
     name: "portable-svelte",
     prefixes: ["scripts/portable-runtime/tests/generate-svelte-proof/"],
+  },
+  {
+    name: "portable-svelte-styled",
+    prefixes: ["scripts/portable-runtime/tests/generate-svelte-styled/"],
   },
   {
     name: "portable-vue",
@@ -27,6 +36,7 @@ export const testSuiteOwners = [
     prefixes: ["scripts/portable-runtime/tests/"],
     excludePrefixes: [
       "scripts/portable-runtime/tests/generate-svelte-proof/",
+      "scripts/portable-runtime/tests/generate-svelte-styled/",
       "scripts/portable-runtime/tests/generate-vue-wrappers/",
     ],
   },

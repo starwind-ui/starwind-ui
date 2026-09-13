@@ -30,6 +30,7 @@ describe("partial Primitive Framework Adapter target generation", () => {
       "astro",
       "react",
       "vue",
+      "svelte",
     ]);
   });
 

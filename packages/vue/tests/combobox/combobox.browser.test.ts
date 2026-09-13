@@ -17,6 +17,7 @@ import type {
   ComboboxInputValueChangeDetails,
   ComboboxValueChangeDetails,
 } from "@starwind-ui/runtime/combobox";
+import { createCombobox } from "@starwind-ui/runtime/combobox";
 import { createDialog } from "@starwind-ui/runtime/dialog";
 import {
   ComboboxClear,
@@ -821,4 +822,190 @@ function appendHost(): HTMLDivElement {
   const host = document.createElement("div");
   document.body.append(host);
   return host;
+}
+
+describe("Vue Combobox connected models and reset", () => {
+  it.each([
+    { props: { modelValue: "svelte" }, text: "Astro", selected: "svelte", visible: ["astro"] },
+    { props: { inputValue: "React" }, text: "React", selected: "astro", visible: ["react"] },
+    {
+      props: { modelValue: "svelte", inputValue: "Svelte" },
+      text: "Svelte",
+      selected: "svelte",
+      visible: ["astro", "react", "svelte"],
+    },
+  ])(
+    "preserves initial text and query for public props $props",
+    async ({ props, text, selected, visible }) => {
+      const fixture = await mountConnectedCombobox(props);
+      expect(fixture.runtime().getOpen()).toBe(true);
+      expect(fixture.input().value).toBe(text);
+      expect(fixture.runtime().getValue()).toBe(selected);
+      expect(fixture.visible()).toEqual(visible);
+      expect(new FormData(fixture.form).get("framework")).toBe(selected);
+    },
+  );
+  it.each(["accepted", "canceled", "new input", "new value"] as const)(
+    "settles %s reset after editing",
+    async (kind) => {
+      const fixture = await mountConnectedCombobox();
+      await fixture.edit();
+      if (kind === "canceled")
+        fixture.form.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+      fixture.form.reset();
+      if (kind === "new input") fixture.dispatchInput("ast");
+      if (kind === "new value") fixture.runtime().setValue("react", { emit: false });
+      await settleConnectedCombobox();
+      const expectedValue =
+        kind === "accepted" ? "astro" : kind === "new value" ? "react" : "svelte";
+      const expectedText =
+        kind === "accepted"
+          ? "Astro"
+          : kind === "new value"
+            ? "React"
+            : kind === "new input"
+              ? "ast"
+              : "rea";
+      expect(fixture.input().value).toBe(expectedText);
+      expect(fixture.runtime().getInputValue()).toBe(expectedText);
+      expect(new FormData(fixture.form).get("framework")).toBe(expectedValue);
+    },
+  );
+
+  it.each([false, true])(
+    "retains app-owned value after reset with owned input %s",
+    async (controlledInput) => {
+      const fixture = await mountConnectedCombobox({
+        modelValue: "svelte",
+        ...(controlledInput ? { inputValue: "rea" } : {}),
+      });
+      await fixture.type("rea");
+      fixture.form.reset();
+      await settleConnectedCombobox();
+      expect(new FormData(fixture.form).get("framework")).toBe("svelte");
+      if (controlledInput) expect(fixture.input().value).toBe("rea");
+    },
+  );
+
+  it("keeps component-owned text after a canceled reset with app-owned value", async () => {
+    const fixture = await mountConnectedCombobox({ modelValue: "svelte" });
+    await fixture.type("rea");
+    fixture.form.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+    fixture.form.reset();
+    await settleConnectedCombobox();
+    expect(fixture.input().value).toBe("rea");
+    expect(new FormData(fixture.form).get("framework")).toBe("svelte");
+  });
+
+  it.each(["callback", "dom"] as const)(
+    "restores rejected native input after %s cancellation",
+    async (kind) => {
+      const fixture = await mountConnectedCombobox(
+        kind === "callback"
+          ? {
+              onInputValueChange: (_value: string, details: ComboboxInputValueChangeDetails) =>
+                details.cancel(),
+            }
+          : {},
+      );
+      if (kind === "dom")
+        fixture
+          .root()
+          .addEventListener("starwind:input-value-change", (event) => event.preventDefault());
+      await fixture.type("rejected");
+      expect(fixture.input().value).toBe("Astro");
+      expect(fixture.runtime().getInputValue()).toBe("Astro");
+    },
+  );
+  it("keeps an input command from a later reset listener after native default work", async () => {
+    const fixture = await mountConnectedCombobox();
+    await fixture.edit();
+    fixture.form.addEventListener("reset", () => fixture.dispatchInput("ast"), { once: true });
+    fixture.form.reset();
+    await settleConnectedCombobox();
+    expect(fixture.input().value).toBe("ast");
+    expect(fixture.runtime().getInputValue()).toBe("ast");
+    expect(new FormData(fixture.form).get("framework")).toBe("svelte");
+  });
+});
+
+async function mountConnectedCombobox(props: Record<string, unknown> = {}) {
+  const host = appendHost();
+  const state = reactive({ commands: {} as Record<string, unknown> });
+  const app = createApp({
+    render: () =>
+      h("form", null, [
+        h(
+          ComboboxRoot,
+          {
+            defaultValue: "astro",
+            defaultInputValue: "Astro",
+            name: "framework",
+            ...props,
+            ...state.commands,
+          },
+          {
+            default: () => [
+              h(ComboboxInput),
+              h(ComboboxTrigger, null, { default: () => "Open" }),
+              h(ComboboxPopup, null, {
+                default: () =>
+                  [
+                    ["astro", "Astro"],
+                    ["react", "React"],
+                    ["svelte", "Svelte"],
+                  ].map(([value, text]) => h(ComboboxItem, { value }, { default: () => text })),
+              }),
+            ],
+          },
+        ),
+      ]),
+  });
+  app.mount(host);
+  cleanups.push(() => app.unmount());
+  await settleConnectedCombobox();
+  const root = () => host.querySelector<HTMLElement>("[data-sw-combobox]")!;
+  const input = () => host.querySelector<HTMLInputElement>("[data-sw-combobox-input]")!;
+  const runtime = () => createCombobox(root());
+  const dispatchInput = (value: string) => {
+    input().value = value;
+    input().dispatchEvent(new InputEvent("input", { bubbles: true }));
+  };
+  const type = async (value: string) => {
+    dispatchInput(value);
+    await settleConnectedCombobox();
+  };
+  const key = async (key: string) => {
+    input().dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    await settleConnectedCombobox();
+  };
+  host.querySelector<HTMLElement>("[data-sw-combobox-trigger]")!.click();
+  await settleConnectedCombobox();
+  return {
+    state,
+    root,
+    input,
+    runtime,
+    dispatchInput,
+    type,
+    key,
+    form: host.querySelector<HTMLFormElement>("form")!,
+    visible: () =>
+      Array.from(document.querySelectorAll<HTMLElement>("[data-sw-combobox-item]"))
+        .filter((item) => !item.hidden)
+        .map((item) => item.dataset.value),
+    edit: async () => {
+      runtime().setValue("svelte", { emit: true });
+      await key("Escape");
+      host.querySelector<HTMLElement>("[data-sw-combobox-trigger]")!.click();
+      await type("rea");
+      expect(runtime().getValue()).toBe("svelte");
+      expect(input().value).toBe("rea");
+    },
+  };
+}
+async function settleConnectedCombobox(): Promise<void> {
+  await nextTick();
+  await new Promise((resolve) => window.setTimeout(resolve, 30));
+  await nextTick();
 }

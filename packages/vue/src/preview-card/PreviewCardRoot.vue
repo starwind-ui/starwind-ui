@@ -54,6 +54,10 @@ const initialDefaultOpen = props.defaultOpen;
 const uncontrolledOpen = ref(initialDefaultOpen);
 const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
 let instance: ReturnType<typeof createPreviewCard> | undefined;
+let acceptedRoot: HTMLElement | undefined;
+let acceptedTrigger: HTMLElement | undefined;
+let unsubscribeOpenChange: (() => void) | undefined;
+let reconnectOpen: boolean | undefined;
 let portalOwner: symbol | undefined;
 let runtimeGeneration = 0;
 let disposed = false;
@@ -80,34 +84,47 @@ function destroyOwnedInstance(): void {
   const owned = instance;
   if (!owned) return;
   if (instance === owned) instance = undefined;
+  unsubscribeOpenChange?.();
+  unsubscribeOpenChange = undefined;
   owned.destroy();
 }
 
-function setupRuntime(): void {
+function setupRuntime(acceptedOpen = renderedOpen.value): void {
   const root = rootRef.value;
   if (!root) return;
-  instance = createPreviewCard(root, {
-    defaultOpen: renderedOpen.value,
+  if (acceptedRoot !== root) {
+    acceptedRoot = root;
+    acceptedTrigger = undefined;
+  }
+  const owned = createPreviewCard(root, {
+    defaultOpen: false,
     closeDelay: props.closeDelay,
     closeOnEscape: props.closeOnEscape,
     closeOnOutsideInteract: props.closeOnOutsideInteract,
     disableHoverableContent: props.disableHoverableContent,
     openDelay: props.openDelay,
     onOpenChange: handleOpenChange,
-    ...(props.open === undefined ? {} : { open: props.open }),
+    ...(props.open === undefined ? {} : { open: false }),
   });
+  instance = owned;
+  unsubscribeOpenChange = owned.subscribe("openChange", (detail) => {
+    if (instance === owned && detail.open && detail.trigger instanceof HTMLElement)
+      acceptedTrigger = detail.trigger;
+  });
+  owned.setOpen(props.open ?? acceptedOpen, { emit: false, trigger: acceptedTrigger });
+  if (props.open === undefined) uncontrolledOpen.value = owned.getOpen();
+  reconnectOpen = undefined;
 }
 
 async function recreateRuntime(): Promise<void> {
   const generation = ++runtimeGeneration;
-  const acceptedOpen = instance?.getOpen() ?? renderedOpen.value;
+  reconnectOpen = instance?.getOpen() ?? reconnectOpen ?? renderedOpen.value;
   destroyOwnedInstance();
   mounted.value = false;
   await nextTick();
   if (disposed || generation !== runtimeGeneration) return;
 
-  if (props.open === undefined) uncontrolledOpen.value = acceptedOpen;
-  setupRuntime();
+  setupRuntime(reconnectOpen);
   mounted.value = true;
 }
 

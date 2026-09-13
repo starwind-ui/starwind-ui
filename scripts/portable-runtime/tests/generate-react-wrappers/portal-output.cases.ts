@@ -43,11 +43,17 @@ export function defineReactPortalOutputTests(getTempRoot: GetTempRoot): void {
     expect(helper).toContain("records.some((record) => !record.ready)");
     expect(helper).toContain("Object.freeze({ authoredParent: record.authoredParent");
     expect(helper).toContain("createPortal(wrapper, placement.target, token)");
-    expect(helper).toContain("const observer = new MutationObserver(refreshPlacement)");
-    expect(helper).toContain("observer.observe(mutationRoot, { childList: true, subtree: true })");
+    expect(helper).toContain("const portalDocumentObservers = new WeakMap<");
+    expect(helper).toContain("observePortalDocument(wrapper.ownerDocument, refreshPlacement)");
+    expect(helper).toContain(
+      "observer.observe(ownerDocument.documentElement, { childList: true, subtree: true })",
+    );
     expect(helper).toContain("cleanupRegistration?.()");
     expect(helper).not.toContain("usePortalRuntimeRemount");
-    expect(helper).not.toContain("queueMicrotask(");
+    // Error reporting in the shared observer must not change placement scheduling.
+    expect(helper.slice(helper.indexOf("export const ReactPortal ="))).not.toContain(
+      "queueMicrotask(",
+    );
     expect(helper).not.toContain("append(");
     expect(helper).not.toContain("setInterval(");
     expect(helper).not.toContain("requestAnimationFrame(");

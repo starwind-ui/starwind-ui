@@ -158,3 +158,5 @@ Switch to Node 22.12.0, then run `npm run release:consumer:node22`.
 Before publication, run `pnpm release:gate` on the final versioned public commit. It includes the
 full test and build suite, Vue generator and host acceptance, demo smoke tests, size checks, and
 packed consumer acceptance. Publication remains a separate action.
+
+For Svelte work, follow [scoped Svelte verification](docs/agents/svelte-verification.md).

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -95,6 +95,11 @@ describe("Vue portable foundational Styled generation", () => {
     await expect(read("spinner", "Spinner.vue")).resolves.toMatch(
       /<svg[\s\S]+aria-label=\"Loading\"/,
     );
+
+    const spinnerSource = await read("spinner", "Spinner.vue");
+    expect(
+      [...spinnerSource.matchAll(/<path[^>]*\bd="([^"]+)"/g)].map((match) => match[1]),
+    ).toEqual(["M0 0h24v24H0z", "M12 3a9 9 0 1 0 9 9"]);
 
     for (const { file, group, targetType } of EXPECTED_NATIVE_REFS) {
       const source = await read(group, file);

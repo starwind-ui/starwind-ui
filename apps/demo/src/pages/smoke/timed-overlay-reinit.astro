@@ -1,0 +1,66 @@
+---
+import { TooltipRoot, TooltipTrigger, TooltipPopup } from "@starwind-ui/astro/tooltip";
+import {
+  PreviewCardRoot,
+  PreviewCardTrigger,
+  PreviewCardPopup,
+} from "@starwind-ui/astro/preview-card";
+---
+
+<html lang="en">
+  <head><title>Timed overlay initialization</title></head>
+  <body>
+    <TooltipRoot id="tooltip" openDelay={0} closeDelay={0}>
+      <TooltipTrigger id="tooltip-a" style="position:fixed;left:100px;top:200px">A</TooltipTrigger>
+      <TooltipTrigger id="tooltip-b" style="position:fixed;left:400px;top:200px">B</TooltipTrigger>
+      <TooltipPopup id="tooltip-popup" side="bottom" align="start" avoidCollisions={false}
+        >Tooltip</TooltipPopup
+      >
+    </TooltipRoot>
+    <PreviewCardRoot id="preview-card" openDelay={0} closeDelay={0}>
+      <PreviewCardTrigger id="preview-card-a" href="#a" style="position:fixed;left:100px;top:400px"
+        >A</PreviewCardTrigger
+      >
+      <PreviewCardTrigger id="preview-card-b" href="#b" style="position:fixed;left:400px;top:400px"
+        >B</PreviewCardTrigger
+      >
+      <PreviewCardPopup id="preview-card-popup" side="bottom" align="start" avoidCollisions={false}
+        >Preview</PreviewCardPopup
+      >
+    </PreviewCardRoot>
+  </body>
+</html>
+
+<script>
+  import { createTooltip } from "@starwind-ui/runtime/tooltip";
+  import { createPreviewCard } from "@starwind-ui/runtime/preview-card";
+
+  const factories = { tooltip: createTooltip, "preview-card": createPreviewCard };
+  const records = new Map<
+    string,
+    {
+      instance: ReturnType<typeof createTooltip> | ReturnType<typeof createPreviewCard>;
+      accepted: number;
+    }
+  >();
+  Object.assign(window, {
+    timedOverlayProbe: {
+      capture(family: keyof typeof factories) {
+        const root = document.getElementById(family)!;
+        const instance = factories[family](root);
+        const record = { instance, accepted: 0 };
+        instance.subscribe("openChange", () => record.accepted++);
+        records.set(family, record);
+      },
+      inspect(family: keyof typeof factories) {
+        const record = records.get(family)!;
+        return {
+          sameController: factories[family](document.getElementById(family)!) === record.instance,
+          open: record.instance.getOpen(),
+          accepted: record.accepted,
+          left: document.getElementById(`${family}-popup`)!.getBoundingClientRect().left,
+        };
+      },
+    },
+  });
+</script>

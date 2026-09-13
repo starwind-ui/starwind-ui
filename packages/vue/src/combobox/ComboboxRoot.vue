@@ -144,8 +144,21 @@ defineExpose({
 });
 
 function handleInputValueChange(inputValue: string, detail: ComboboxInputValueChangeDetails): void {
+  const connection = instance;
   emit("inputValueChange", inputValue, detail);
-  if (detail.isCanceled) return;
+  if (detail.event?.type !== "input") return;
+  const input = detail.event.target;
+  queueMicrotask(() => {
+    if (!connection || instance !== connection || !detail.isCanceled) return;
+    if (
+      !(input instanceof HTMLInputElement) ||
+      input !== rootRef.value?.querySelector("[data-sw-combobox-input]")
+    )
+      return;
+    const accepted = connection.getInputValue();
+    if (input.value !== accepted)
+      connection.setInputValue(accepted, { emit: false, filter: false });
+  });
 }
 function handleOpenChange(open: boolean, detail: ComboboxOpenChangeDetails): void {
   emit("openChange", open, detail);
@@ -177,14 +190,18 @@ function unbindReset(): void {
   resetForm = null;
 }
 function handleReset(): void {
+  const connection = instance;
+  if (!connection) return;
+  if (resetTimer !== undefined) window.clearTimeout(resetTimer);
   resetTimer = window.setTimeout(() => {
     resetTimer = undefined;
-    if (!instance) return;
-    if (props.modelValue !== undefined) instance.setValue(props.modelValue, { emit: false });
-    else uncontrolledValue.value = instance.getValue();
-    if (props.inputValue !== undefined)
+    if (instance !== connection) return;
+    if (props.modelValue !== undefined && instance.getValue() !== props.modelValue)
+      instance.setValue(props.modelValue, { emit: false });
+    if (props.inputValue !== undefined && instance.getInputValue() !== props.inputValue)
       instance.setInputValue(props.inputValue, { emit: false, filter: false });
-    else uncontrolledInputValue.value = instance.getInputValue();
+    if (props.modelValue === undefined) uncontrolledValue.value = instance.getValue();
+    if (props.inputValue === undefined) uncontrolledInputValue.value = instance.getInputValue();
   }, 0);
 }
 function bindReset(): void {

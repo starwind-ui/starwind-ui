@@ -1,12 +1,178 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createPreviewCard } from "../../../src/components/preview-card/preview-card";
+import { initStarwind } from "../../../src/init-starwind";
 
 describe("createPreviewCard", () => {
   beforeEach(() => {
     vi.useRealTimers();
     document.body.innerHTML = "";
+  });
+
+  it.each([
+    ["removed", false],
+    ["removed", true],
+    ["foreign", false],
+    ["foreign", true],
+  ] as const)(
+    "omits an invalid %s trigger with no fallback (initial open: %s)",
+    (kind, initialOpen) => {
+      const root = renderPreviewCard();
+      const trigger = getTrigger(root);
+      const controller = createPreviewCard(root, { defaultOpen: initialOpen });
+      const accepted = vi.fn();
+      controller.subscribe("openChange", accepted);
+      if (kind === "removed") trigger.remove();
+      else document.body.append(trigger);
+      controller.setOpen(true, { trigger });
+      expect(accepted).toHaveBeenLastCalledWith(
+        expect.objectContaining({ open: true, trigger: undefined }),
+      );
+      controller.setOpen(true, { trigger });
+      expect(accepted).toHaveBeenCalledTimes(2);
+      expect(accepted).toHaveBeenLastCalledWith(
+        expect.objectContaining({ open: true, trigger: undefined }),
+      );
+      controller.destroy();
+    },
+  );
+
+  it("uses a disabled owned trigger for imperative geometry while blocking hover", async () => {
+    const root = document.createElement("div");
+    root.setAttribute("data-sw-preview-card", "");
+    root.innerHTML = `<a data-sw-preview-card-trigger aria-disabled="true" style="position:fixed;left:400px;top:200px;width:40px">A</a>
+      <div data-sw-preview-card-popup data-side="bottom" data-align="start" data-avoid-collisions="false">Popup</div>`;
+    document.body.append(root);
+    const trigger = getTrigger(root);
+    const popup = getPopup(root);
+    const controller = createPreviewCard(root, { openDelay: 0 });
+    dispatchPointer(trigger, "pointerenter");
+    expect(controller.getOpen()).toBe(false);
+    controller.setOpen(true, { trigger });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+    controller.destroy();
+  });
+
+  it("publishes accepted handoffs while open and preserves the anchor on cancellation", async () => {
+    const root = renderPreviewCard({ openDelay: 0 });
+    const first = getTrigger(root);
+    const second = first.cloneNode(true) as HTMLElement;
+    first.after(second);
+    first.style.cssText = "position:fixed;left:100px;top:200px;width:40px";
+    second.style.cssText = "position:fixed;left:400px;top:200px;width:40px";
+    const popup = getPopup(root);
+    popup.setAttribute("data-side", "bottom");
+    popup.setAttribute("data-align", "start");
+    popup.setAttribute("data-avoid-collisions", "false");
+    const accepted = vi.fn();
+    const controller = createPreviewCard(root);
+    controller.subscribe("openChange", accepted);
+    dispatchPointer(first, "pointerenter");
+    expect(accepted).toHaveBeenCalledTimes(1);
+    root.addEventListener("starwind:open-change", (event) => event.preventDefault(), {
+      once: true,
+    });
+    dispatchPointer(second, "pointerenter");
+    controller.setOpen(true, { emit: false });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(100);
+    expect(accepted).toHaveBeenCalledTimes(1);
+    dispatchPointer(second, "pointerenter");
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+    expect(accepted).toHaveBeenCalledTimes(2);
+    expect(accepted).toHaveBeenLastCalledWith(
+      expect.objectContaining({ open: true, trigger: second }),
+    );
+    dispatchPointer(second, "pointerenter");
+    expect(accepted).toHaveBeenCalledTimes(2);
+    controller.destroy();
+  });
+
+  it("retires a pending hover open during silent restoration", async () => {
+    vi.useFakeTimers();
+    const root = renderPreviewCard({ openDelay: 30 });
+    const trigger = getTrigger(root);
+    const proposal = vi.fn();
+    const controller = createPreviewCard(root, { onOpenChange: proposal });
+    dispatchPointer(trigger, "pointerenter");
+    controller.setOpen(false, { emit: false, trigger });
+    await vi.advanceTimersByTimeAsync(40);
+    expect(controller.getOpen()).toBe(false);
+    expect(proposal).not.toHaveBeenCalled();
+    controller.destroy();
+  });
+
+  it("restores an owned second trigger silently and keeps canceled candidates transactional", async () => {
+    const root = document.createElement("div");
+    root.setAttribute("data-sw-preview-card", "");
+    root.innerHTML = `
+      <a data-sw-preview-card-trigger style="position:fixed;left:100px;top:200px;width:40px;height:30px">A</a>
+      <a data-sw-preview-card-trigger style="position:fixed;left:400px;top:200px;width:40px;height:30px">B</a>
+      <div data-sw-preview-card-popup data-side="bottom" data-align="start" data-avoid-collisions="false">Popup</div>`;
+    document.body.append(root);
+    const [first, second] = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-preview-card-trigger]"),
+    );
+    const popup = root.querySelector<HTMLElement>("[data-sw-preview-card-popup]")!;
+    const proposal = vi.fn();
+    const accepted = vi.fn();
+    const controller = createPreviewCard(root, { onOpenChange: proposal });
+    controller.subscribe("openChange", accepted);
+    controller.setOpen(true, { emit: false, trigger: second });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+    controller.setOpen(true, { emit: false, trigger: first });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(100);
+    expect(proposal).not.toHaveBeenCalled();
+    expect(accepted).not.toHaveBeenCalled();
+    root.addEventListener("starwind:open-change", (event) => event.preventDefault(), {
+      once: true,
+    });
+    controller.setOpen(true, { trigger: second });
+    controller.setOpen(true, { emit: false });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(100);
+    expect(accepted).not.toHaveBeenCalled();
+    controller.setOpen(true, { trigger: second });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+    expect(accepted).toHaveBeenCalledWith(expect.objectContaining({ trigger: second }));
+    controller.destroy();
+  });
+
+  it.each(["removed", "foreign", "nested"])("falls back from a %s trigger", async (kind) => {
+    const root = document.createElement("div");
+    root.setAttribute("data-sw-preview-card", "");
+    root.innerHTML = `<a data-sw-preview-card-trigger style="position:fixed;left:100px;top:200px">A</a>
+      <a data-sw-preview-card-trigger style="position:fixed;left:400px;top:200px">B</a>
+      <div data-sw-preview-card-popup data-side="bottom" data-align="start" data-avoid-collisions="false">Popup</div>`;
+    document.body.append(root);
+    const [first, second] = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-preview-card-trigger]"),
+    );
+    const popup = root.querySelector<HTMLElement>("[data-sw-preview-card-popup]")!;
+    const controller = createPreviewCard(root);
+    controller.setOpen(true, { emit: false, trigger: second });
+    if (kind === "removed") second.remove();
+    if (kind === "foreign") document.body.append(second);
+    if (kind === "nested") {
+      const nested = document.createElement("div");
+      nested.setAttribute("data-sw-preview-card", "");
+      root.append(nested);
+      nested.append(second);
+    }
+    controller.setOpen(true, { emit: false, trigger: second });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(
+      Math.round(first.getBoundingClientRect().left),
+    );
+    const accepted = vi.fn();
+    controller.subscribe("openChange", accepted);
+    controller.setOpen(true, { trigger: second });
+    expect(accepted).toHaveBeenCalledWith(expect.objectContaining({ trigger: first }));
+    controller.destroy();
   });
 
   it("initializes closed with tooltip semantics and opens from hover after the configured delay", async () => {

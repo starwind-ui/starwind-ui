@@ -275,13 +275,25 @@ describe("Framework Adapter seam", () => {
         target: "vue",
         write: "function",
       },
+      ...(hasPrivateSvelte
+        ? [
+            {
+              generatedImportCandidateExtensions: [".svelte", ".ts", ".js"],
+              project: "function",
+              target: "svelte",
+              write: "function",
+            },
+          ]
+        : []),
     ]);
 
     for (const { capability, target } of styledTargets) {
-      const contract = target === "vue" ? buttonStyledContract : separatorStyledContract;
+      const contract =
+        target === "vue" || target === "svelte" ? buttonStyledContract : separatorStyledContract;
       expect(
         capability.project({
           contracts: [contract],
+          ...(target === "svelte" ? { roots: ["button"] } : {}),
           outputRoot: "/tmp/styled",
           primitiveOutputRoot: "/tmp/primitives",
         }),
@@ -291,7 +303,7 @@ describe("Framework Adapter seam", () => {
             component: contract.component,
             components: [
               {
-                exportName: target === "vue" ? "Button" : "Separator",
+                exportName: target === "vue" || target === "svelte" ? "Button" : "Separator",
               },
             ],
           },
@@ -326,10 +338,12 @@ describe("Framework Adapter seam", () => {
       for (const { capability, target } of getFrameworkAdapterTargetsWithStyledCapability()) {
         const outputRoot = join(tempRoot, target, "styled");
         const primitiveOutputRoot = join(tempRoot, target, "primitives");
-        const contract = target === "vue" ? buttonStyledContract : separatorStyledContract;
+        const contract =
+          target === "vue" || target === "svelte" ? buttonStyledContract : separatorStyledContract;
 
         await capability.write({
           contracts: [contract],
+          ...(target === "svelte" ? { roots: ["button"] } : {}),
           generatedBy: "scripts/portable-runtime/tests/framework-adapters.test.ts",
           outputRoot,
           primitiveOutputRoot,
@@ -939,13 +953,35 @@ describe("Framework Adapter seam", () => {
           packageName: "@starwind-ui/svelte",
           primitive: {
             generatePackage: "function",
-            manualPrimitives: "undefined",
+            manualPrimitives: "object",
             outputModel: {
               projectSpecialized: "function",
               write: "function",
             },
             support: {
               components: [
+                "preview-card",
+                "tooltip",
+                "popover",
+                "drawer",
+                "alert-dialog",
+                "tabs",
+                "dropzone",
+                "input-otp",
+                "field",
+                "toggle",
+                "toggle-group",
+                "radio",
+                "radio-group",
+                "checkbox-group",
+                "switch",
+                "form",
+                "fieldset",
+                "input",
+                "collapsible",
+                "scroll-area",
+                "progress",
+                "avatar",
                 "button",
                 "carousel",
                 "checkbox",
@@ -954,6 +990,7 @@ describe("Framework Adapter seam", () => {
                 "dialog",
                 "slider",
                 "toast",
+                "theme",
               ],
               kind: "subset",
             },
@@ -966,38 +1003,25 @@ describe("Framework Adapter seam", () => {
             status: "non-shipping-tracer",
           },
           styled: {
-            project: "undefined",
-            write: "undefined",
+            project: "function",
+            write: "function",
           },
           target: "svelte",
         },
       ].filter(({ target }) => target !== "svelte" || hasPrivateSvelte),
     );
     for (const registration of primitiveFrameworkAdapterTargets) {
-      expect(Object.keys(registration).sort()).toEqual(
-        registration.target === "svelte"
-          ? [
-              "adapter",
-              "cliRegistry",
-              "displayName",
-              "home",
-              "packageName",
-              "primitive",
-              "publicSupport",
-              "target",
-            ]
-          : [
-              "adapter",
-              "cliRegistry",
-              "displayName",
-              "home",
-              "packageName",
-              "primitive",
-              "publicSupport",
-              "styled",
-              "target",
-            ],
-      );
+      expect(Object.keys(registration).sort()).toEqual([
+        "adapter",
+        "cliRegistry",
+        "displayName",
+        "home",
+        "packageName",
+        "primitive",
+        "publicSupport",
+        "styled",
+        "target",
+      ]);
       for (const key of legacyLowLevelRegistrationKeys) {
         expect(
           registration,
@@ -1006,7 +1030,7 @@ describe("Framework Adapter seam", () => {
       }
       expect(Object.keys(registration.primitive).sort()).toEqual(
         registration.target === "svelte"
-          ? ["generatePackage", "outputModel", "support"]
+          ? ["generatePackage", "manualPrimitives", "outputModel", "support"]
           : registration.target === "vue"
             ? ["generatePackage", "manualPrimitives", "outputModel", "support"]
             : ["generatePackage", "manualPrimitives", "outputModel"],
@@ -1016,9 +1040,7 @@ describe("Framework Adapter seam", () => {
           ? ["projectSpecialized", "write"]
           : ["capabilities", "projectSpecialized", "write"],
       );
-      expect(Object.keys(registration.styled ?? {}).sort()).toEqual(
-        registration.target === "svelte" ? [] : ["project", "write"],
-      );
+      expect(Object.keys(registration.styled ?? {}).sort()).toEqual(["project", "write"]);
     }
     expect(getPrimitiveFrameworkAdapterTarget("astro").adapter).toBe(astroFrameworkAdapter);
     expect(getPrimitiveFrameworkAdapterTarget("react").adapter).toBe(reactFrameworkAdapter);
@@ -1083,6 +1105,28 @@ describe("Framework Adapter seam", () => {
         primitive: {
           support: {
             components: [
+              "preview-card",
+              "tooltip",
+              "popover",
+              "drawer",
+              "alert-dialog",
+              "tabs",
+              "dropzone",
+              "input-otp",
+              "field",
+              "toggle",
+              "toggle-group",
+              "radio",
+              "radio-group",
+              "checkbox-group",
+              "switch",
+              "form",
+              "fieldset",
+              "input",
+              "collapsible",
+              "scroll-area",
+              "progress",
+              "avatar",
               "button",
               "carousel",
               "checkbox",
@@ -1091,6 +1135,7 @@ describe("Framework Adapter seam", () => {
               "dialog",
               "slider",
               "toast",
+              "theme",
             ],
             kind: "subset",
           },
@@ -1103,7 +1148,7 @@ describe("Framework Adapter seam", () => {
           status: "non-shipping-tracer",
         },
       });
-      expect(svelteTarget).not.toHaveProperty("styled");
+      expect(svelteTarget).toHaveProperty("styled");
     }
     expect(
       new Set(primitiveFrameworkAdapterTargets.map((registration) => registration.target)).size,

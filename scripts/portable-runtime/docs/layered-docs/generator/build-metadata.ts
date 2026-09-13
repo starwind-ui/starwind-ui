@@ -1,3 +1,4 @@
+import { publicFrameworks, buildPrimitivePackages } from "./public-frameworks.js";
 import { readFileSync } from "node:fs";
 import semver from "semver";
 import { runtimeAdapterContracts } from "../../../contracts/primitive/representatives.js";
@@ -171,6 +172,7 @@ export const buildLayeredDocsMetadata = (
 
   return {
     version: 1,
+    frameworks: publicFrameworks,
     runtime,
     styling,
     groups: [...groups].sort((left, right) => left.order - right.order),
@@ -272,6 +274,7 @@ const buildPrimitiveMetadata = (
   displayName: withPrimitiveDocsDisplayName(contract).displayName,
   category: contract.category,
   registryVersion,
+  packages: buildPrimitivePackages(contract.component),
   runtime: {
     ...toRuntimeFactory(contract),
     rootPart: contract.runtime.rootPart,

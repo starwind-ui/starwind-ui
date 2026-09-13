@@ -783,6 +783,85 @@ describe("createNavigationMenu", () => {
     expect(reasons).toEqual(["link-press"]);
   });
 
+  it.each([
+    { name: "ordinary link", preventNative: false },
+    { name: "native prevention", preventNative: true },
+    { name: "explicit close option", closeOption: true },
+    { name: "close opt-out", closeOption: false },
+    { name: "callback cancellation", cancel: "callback" },
+    { name: "DOM cancellation", cancel: "dom" },
+    { name: "nested Root ownership", nested: "root" },
+    { name: "nested Item ownership", nested: "item" },
+  ])("retains moved Content link behavior after collection refresh: $name", async (scenario) => {
+    const root = renderNavigationMenuWithLinks();
+    root.removeAttribute("data-default-value");
+    const content = getContent("products");
+    const link = getLink("docs");
+    link.href = "#navigation-link-regression";
+    if (scenario.closeOption !== undefined) {
+      link.setAttribute("data-close-on-click", String(scenario.closeOption));
+    }
+    let nativeCalls = 0;
+    link.addEventListener("click", (event) => {
+      nativeCalls++;
+      if (scenario.preventNative) event.preventDefault();
+    });
+    let nestedLink: HTMLAnchorElement | undefined;
+    if (scenario.nested) {
+      const boundary = document.createElement("div");
+      boundary.setAttribute(
+        scenario.nested === "root" ? "data-sw-nav-menu" : "data-sw-nav-menu-item",
+        "",
+      );
+      nestedLink = document.createElement("a");
+      nestedLink.setAttribute("data-sw-nav-menu-link", "");
+      nestedLink.href = "#nested-link-regression";
+      boundary.append(nestedLink);
+      content.append(boundary);
+    }
+    const values: Array<string | null> = [];
+    const menu = createNavigationMenu(root, {
+      onValueChange(next, details) {
+        values.push(next);
+        if (next === null && scenario.cancel === "callback") details.cancel();
+      },
+    });
+    root.addEventListener("starwind:value-change", (event) => {
+      if (scenario.cancel === "dom" && (event as CustomEvent).detail.value === null)
+        event.preventDefault();
+    });
+    try {
+      getTrigger("products").click();
+      await waitForMicrotasks();
+      expect(content.parentElement).toBe(getViewport());
+      expect(menu.getValue()).toBe("products");
+      expect(values).toEqual(["products"]);
+      if (nestedLink) {
+        nestedLink.click();
+        await waitForMicrotasks();
+        expect(menu.getValue()).toBe("products");
+        expect(values).toEqual(["products"]);
+      }
+      link.click();
+      await waitForMicrotasks();
+      expect(nativeCalls).toBe(1);
+      expect(menu.getValue()).toBe(
+        scenario.closeOption === false || scenario.cancel ? "products" : null,
+      );
+      expect(values).toEqual(scenario.closeOption === false ? ["products"] : ["products", null]);
+      menu.destroy();
+      const proposals = [...values];
+      link.click();
+      getTrigger("products").click();
+      await waitForMicrotasks();
+      expect(nativeCalls).toBe(2);
+      expect(values).toEqual(proposals);
+    } finally {
+      menu.destroy();
+      root.remove();
+    }
+  });
+
   it("toggles from Enter and Space, closes from Escape, and restores trigger focus", () => {
     const root = renderNavigationMenu();
     createNavigationMenu(root);

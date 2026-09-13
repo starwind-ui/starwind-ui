@@ -182,14 +182,37 @@ let lifecycleGeneration = 0;
 provide(${f.context.rootContext}, { disabled, element: rootRef, inputValue: renderedInputValue, mounted, open: renderedOpen, readOnly, registerPortal(owner, element) { if (element) { portalOwner = owner; portalReference = element; } else if (portalOwner === owner) { portalOwner = undefined; portalReference = null; } }, required, value: renderedValue });
 defineExpose({ element: rootRef, close: () => instance?.close(), open: () => { if (!props.disabled) instance?.open(); }, updatePosition: () => instance?.updatePosition() });
 
-function handleInputValueChange(inputValue: string, detail: ${f.events.inputValueChange.detailsType}): void { emit("${f.events.inputValueChange.name}", inputValue, detail); if (detail.isCanceled) return; }
+function handleInputValueChange(inputValue: string, detail: ${f.events.inputValueChange.detailsType}): void {
+  const connection = instance;
+  emit("${f.events.inputValueChange.name}", inputValue, detail);
+  if (detail.event?.type !== "input") return;
+  const input = detail.event.target;
+  queueMicrotask(() => {
+    if (!connection || instance !== connection || !detail.isCanceled) return;
+    if (!(input instanceof HTMLInputElement) || input !== rootRef.value?.querySelector("[${f.attrs.input}]")) return;
+    const accepted = connection.${f.states.inputValue.getter}();
+    if (input.value !== accepted) connection.${f.setters.inputValue.method}(accepted, { emit: false, filter: false });
+  });
+}
 function handleOpenChange(open: boolean, detail: ${f.events.openChange.detailsType}): void { emit("${f.events.openChange.name}", open, detail); if (detail.isCanceled) return; }
 function handleValueChange(value: string | null, detail: ${f.events.valueChange.detailsType}): void { emit("${f.events.valueChange.name}", value, detail); if (detail.isCanceled) return; }
 function acceptInputValue(detail: ${f.events.inputValueChange.detailsType}): void { const value = detail.${f.events.inputValueChange.valueProperty}; if (props.inputValue === undefined) uncontrolledInputValue.value = value; emit("${inputModel.updateEvent}", value); }
 function acceptOpen(detail: ${f.events.openChange.detailsType}): void { const value = detail.${f.events.openChange.valueProperty}; if (props.open === undefined) uncontrolledOpen.value = value; emit("${openModel.updateEvent}", value); }
 function acceptValue(detail: ${f.events.valueChange.detailsType}): void { const value = detail.${f.events.valueChange.valueProperty}; if (props.modelValue === undefined) uncontrolledValue.value = value; emit("${valueModel.updateEvent}", value); }
 function unbindReset(): void { if (resetTimer !== undefined) window.clearTimeout(resetTimer); resetTimer = undefined; resetForm?.removeEventListener("reset", handleReset); resetForm = null; }
-function handleReset(): void { resetTimer = window.setTimeout(() => { resetTimer = undefined; if (!instance) return; if (props.modelValue !== undefined) instance.${f.setters.value.method}(props.modelValue, { emit: false }); else uncontrolledValue.value = instance.${f.states.value.getter}(); if (props.inputValue !== undefined) instance.${f.setters.inputValue.method}(props.inputValue, { emit: false, filter: false }); else uncontrolledInputValue.value = instance.${f.states.inputValue.getter}(); }, 0); }
+function handleReset(): void {
+  const connection = instance;
+  if (!connection) return;
+  if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+  resetTimer = window.setTimeout(() => {
+    resetTimer = undefined;
+    if (instance !== connection) return;
+    if (props.modelValue !== undefined && instance.${f.states.value.getter}() !== props.modelValue) instance.${f.setters.value.method}(props.modelValue, { emit: false });
+    if (props.inputValue !== undefined && instance.${f.states.inputValue.getter}() !== props.inputValue) instance.${f.setters.inputValue.method}(props.inputValue, { emit: false, filter: false });
+    if (props.modelValue === undefined) uncontrolledValue.value = instance.${f.states.value.getter}();
+    if (props.inputValue === undefined) uncontrolledInputValue.value = instance.${f.states.inputValue.getter}();
+  }, 0);
+}
 function bindReset(): void { const next = hiddenInputRef.value?.form ?? null; if (next === resetForm) return; unbindReset(); resetForm = next; resetForm?.addEventListener("reset", handleReset); }
 function destroyOwnedInstance(): void { unbindReset(); unsubscribeAccepted.splice(0).forEach((unsubscribe) => unsubscribe()); const ownedInstance = instance; instance = undefined; ownedInstance?.destroy(); }
 function setupRuntime(): void {

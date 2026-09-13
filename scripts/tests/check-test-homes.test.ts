@@ -112,6 +112,34 @@ describe("test file home guardrail", () => {
     ]);
   });
 
+  it("assigns the private Svelte demo and Styled tests to their dedicated suites", () => {
+    const files = [
+      "apps/svelte-demo/tests/review.test.mjs",
+      "scripts/portable-runtime/tests/generate-svelte-styled/button.test.ts",
+    ];
+    expect(findTestHomeViolations(files)).toEqual([]);
+    expect(findTestOwnershipViolations(files)).toEqual([]);
+    expect(files.map(findTestSuiteOwners)).toEqual([["svelte-demo"], ["portable-svelte-styled"]]);
+    expect(
+      findTestSuiteOwners(
+        "scripts/portable-runtime/tests/generate-svelte-styled-extra/example.test.ts",
+      ),
+    ).toEqual(["portable-runtime"]);
+  });
+
+  it("rejects neighboring demo test homes and colocated Svelte source tests", () => {
+    const files = [
+      "apps/svelte-demo-next/tests/review.test.mjs",
+      "apps/svelte-demo/src/lib/review/example.test.ts",
+      "apps/svelte-demo/tests-extra/review.test.mjs",
+      "apps/svelte-demo/tests.test.mjs",
+      "scripts/portable-runtime/renderers/framework-adapters/svelte/example.test.ts",
+    ];
+    expect(findTestHomeViolations(files)).toEqual(files);
+    expect(findTestOwnershipViolations(files)).toEqual(files);
+    for (const file of files) expect(findTestSuiteOwners(file)).toEqual([]);
+  });
+
   it("rejects tests without exactly one suite owner", () => {
     expect(
       findTestOwnershipViolations([

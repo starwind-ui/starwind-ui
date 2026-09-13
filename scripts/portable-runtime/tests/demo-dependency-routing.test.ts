@@ -39,6 +39,12 @@ describe("demo dependency routing", () => {
 
     for (const sourceRoot of APP_SOURCE_ROOTS) {
       for (const filePath of await collectSourceFiles(path.join(REPO_ROOT, sourceRoot))) {
+        // This smoke probe must retrieve the initialized Runtime controllers to check their identity.
+        if (
+          path.relative(REPO_ROOT, filePath).replaceAll(path.sep, "/") ===
+          "apps/demo/src/pages/smoke/timed-overlay-reinit.astro"
+        )
+          continue;
         const source = await readFile(filePath, "utf8");
         if (source.includes("@starwind-ui/runtime")) {
           matches.push(path.relative(REPO_ROOT, filePath).replaceAll(path.sep, "/"));

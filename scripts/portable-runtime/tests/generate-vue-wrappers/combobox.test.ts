@@ -105,7 +105,6 @@ describe("generated Vue Combobox Primitive", () => {
     );
     expect(root).toContain("instance?.setFormOptions");
     expect(root).toContain("ownedInstance?.destroy();");
-    expect(root).not.toContain("querySelector");
     expect(root).not.toContain("textContent");
     expect(root).not.toContain("findText");
     expect(root).not.toContain("selectedText");

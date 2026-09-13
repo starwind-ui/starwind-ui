@@ -883,9 +883,12 @@ describe.sequential("config utilsDir handling", () => {
     expect(schema.properties.componentDirs.properties.astro.minLength).toBe(1);
     expect(schema.properties.componentDirs.properties.react.type).toBe("string");
     expect(schema.properties.componentDirs.properties.react.minLength).toBe(1);
+    expect(schema.properties.componentDirs.properties.vue.type).toBe("string");
+    expect(schema.properties.componentDirs.properties.vue.minLength).toBe(1);
     expect(schema.properties.componentDirs.additionalProperties).toBe(false);
     expect(schema.properties.primitiveDir.description).toContain("vendored");
     expect(schema.properties.primitiveDirs.properties.react.type).toBe("string");
+    expect(schema.properties.primitiveDirs.properties.vue.type).toBe("string");
     expect(schema.properties.primitiveDirs.additionalProperties).toBe(false);
     expect(schema.properties.primitives.description).toContain("vendored");
     const componentEntrySchemas = schema.properties.components.items.oneOf;
@@ -895,7 +898,7 @@ describe.sequential("config utilsDir handling", () => {
     const legacyComponentSchema = componentEntrySchemas.find((entry: any) =>
       Boolean(entry.properties.source),
     );
-    expect(styledComponentSchema.properties.framework.enum).toEqual(["astro", "react"]);
+    expect(styledComponentSchema.properties.framework.enum).toEqual(["astro", "react", "vue"]);
     expect(styledComponentSchema.required).toEqual(["name", "version", "framework", "registry"]);
     expect(legacyComponentSchema.properties.source.enum).toEqual(["legacy"]);
     expect(legacyComponentSchema.properties.framework).toBeUndefined();
@@ -967,6 +970,35 @@ describe.sequential("config utilsDir handling", () => {
     };
 
     expect(validateSchemaFixture(schema, validConfig)).toEqual([]);
+    const mixedVueConfig = {
+      ...validConfig,
+      componentDirs: { vue: "src/components/starwind-vue" },
+      primitiveDirs: { vue: "src/components/starwind-vue-primitives" },
+      components: [
+        ...validConfig.components,
+        {
+          name: "button",
+          version: "1.0.0",
+          framework: "vue",
+          registry: "default",
+        },
+      ],
+      primitives: [{ name: "button", version: "0.1.1", framework: "vue", source: "bundled" }],
+    };
+    expect(validateSchemaFixture(schema, mixedVueConfig)).toEqual([]);
+    expect(validateSchemaFixture(schema, { ...mixedVueConfig, framework: "vue" })).toEqual([]);
+    expect(
+      validateSchemaFixture(schema, {
+        ...mixedVueConfig,
+        componentDirs: { svelte: "src/components/starwind-svelte" },
+      }),
+    ).not.toEqual([]);
+    expect(
+      validateSchemaFixture(schema, {
+        ...mixedVueConfig,
+        componentDirs: { vue: "" },
+      }),
+    ).not.toEqual([]);
 
     const invalidConfig = {
       ...validConfig,
