@@ -70,6 +70,9 @@ import {
   workspacePrimitiveTargets as primitiveFrameworkAdapterTargets,
 } from "./workspace-support.js";
 
+// Public checkouts omit this registration, so keep the private fixture predicate string-based.
+const usesPrivateStyledFixture = (target: string) => target === "svelte";
+
 describe("Framework Adapter seam", () => {
   it("builds framework-neutral export and type facts for target printers", () => {
     const fixture = createFrameworkAdapterConformanceFixture();
@@ -289,11 +292,13 @@ describe("Framework Adapter seam", () => {
 
     for (const { capability, target } of styledTargets) {
       const contract =
-        target === "vue" || target === "svelte" ? buttonStyledContract : separatorStyledContract;
+        target === "vue" || usesPrivateStyledFixture(target)
+          ? buttonStyledContract
+          : separatorStyledContract;
       expect(
         capability.project({
           contracts: [contract],
-          ...(target === "svelte" ? { roots: ["button"] } : {}),
+          ...(usesPrivateStyledFixture(target) ? { roots: ["button"] } : {}),
           outputRoot: "/tmp/styled",
           primitiveOutputRoot: "/tmp/primitives",
         }),
@@ -303,7 +308,8 @@ describe("Framework Adapter seam", () => {
             component: contract.component,
             components: [
               {
-                exportName: target === "vue" || target === "svelte" ? "Button" : "Separator",
+                exportName:
+                  target === "vue" || usesPrivateStyledFixture(target) ? "Button" : "Separator",
               },
             ],
           },
@@ -339,11 +345,13 @@ describe("Framework Adapter seam", () => {
         const outputRoot = join(tempRoot, target, "styled");
         const primitiveOutputRoot = join(tempRoot, target, "primitives");
         const contract =
-          target === "vue" || target === "svelte" ? buttonStyledContract : separatorStyledContract;
+          target === "vue" || usesPrivateStyledFixture(target)
+            ? buttonStyledContract
+            : separatorStyledContract;
 
         await capability.write({
           contracts: [contract],
-          ...(target === "svelte" ? { roots: ["button"] } : {}),
+          ...(usesPrivateStyledFixture(target) ? { roots: ["button"] } : {}),
           generatedBy: "scripts/portable-runtime/tests/framework-adapters.test.ts",
           outputRoot,
           primitiveOutputRoot,
