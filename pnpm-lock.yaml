@@ -72,7 +72,7 @@ importers:
         version: 0.14.1
       prettier-plugin-tailwindcss:
         specifier: ^0.7.1
-        version: 0.7.4(prettier-plugin-astro@0.14.1)(prettier@3.8.3)
+        version: 0.7.4(prettier-plugin-astro@0.14.1)(prettier-plugin-svelte@3.4.1(prettier@3.8.3)(svelte@5.29.0))(prettier@3.8.3)
       semver:
         specifier: ^7.7.3
         version: 7.8.1
@@ -3725,6 +3725,12 @@ packages:
   prettier-plugin-astro@0.14.1:
     resolution: {integrity: sha512-RiBETaaP9veVstE4vUwSIcdATj6dKmXljouXc/DDNwBSPTp8FRkLGDSGFClKsAFeeg+13SB0Z1JZvbD76bigJw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+
+  prettier-plugin-svelte@3.4.1:
+    resolution: {integrity: sha512-xL49LCloMoZRvSwa6IEdN2GV6cq2IqpYGstYtMT+5wmml1/dClEoI0MZR78MiVPpu6BdQFfN0/y73yO6+br5Pg==}
+    peerDependencies:
+      prettier: ^3.0.0
+      svelte: ^3.2.0 || ^4.0.0-next.0 || ^5.0.0-next.0
 
   prettier-plugin-tailwindcss@0.7.4:
     resolution: {integrity: sha512-UKii4RjY05SNt/WQi6/NcOn/LsT0/ILLXsxygjbRg5/YZelsSu5jTqorYHPDGq4nZy5q5hpCu+XdGZ1xaJEQgw==}
@@ -8240,11 +8246,18 @@ snapshots:
       prettier: 3.8.3
       sass-formatter: 0.7.9
 
-  prettier-plugin-tailwindcss@0.7.4(prettier-plugin-astro@0.14.1)(prettier@3.8.3):
+  prettier-plugin-svelte@3.4.1(prettier@3.8.3)(svelte@5.29.0):
+    dependencies:
+      prettier: 3.8.3
+      svelte: 5.29.0
+    optional: true
+
+  prettier-plugin-tailwindcss@0.7.4(prettier-plugin-astro@0.14.1)(prettier-plugin-svelte@3.4.1(prettier@3.8.3)(svelte@5.29.0))(prettier@3.8.3):
     dependencies:
       prettier: 3.8.3
     optionalDependencies:
       prettier-plugin-astro: 0.14.1
+      prettier-plugin-svelte: 3.4.1(prettier@3.8.3)(svelte@5.29.0)
 
   prettier@2.8.8: {}
 

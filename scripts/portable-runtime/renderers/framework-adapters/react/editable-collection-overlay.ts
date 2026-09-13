@@ -18,7 +18,7 @@ export function printReactEditableCollectionOverlayComponent(
   const facts = family.facts;
 
   if (family.part === "root") {
-    return addReactPortalScope(printRootWithClosedContentFixes(facts), facts.runtime.factory);
+    return addReactPortalScope(printRootWithConnectedState(facts), facts.runtime.factory);
   }
   if (family.part === "input") return printInputWithContext(facts);
   if (family.part === "trigger") return printAsChildButtonWithContext(facts, "trigger");
@@ -98,6 +98,51 @@ function printInputWithContext(facts: AdapterEditableCollectionOverlayFacts): st
   const context = facts.context;
 
   return `import * as React from "react";\n\nimport { ${context.useRootContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${component}Props = React.InputHTMLAttributes<HTMLInputElement>;\n\nconst ${component} = React.forwardRef<HTMLInputElement, ${component}Props>(\n  function ${component}(props, forwardedRef) {\n    const combobox = ${context.useRootContext}();\n    const inputDisabled = combobox.disabled || props.disabled === true;\n    const inputReadOnly = combobox.readOnly || props.readOnly === true;\n\n    return (\n      <${facts.parts.input.defaultElement}\n        {...props}\n        ${facts.attrs.input}\n        role="${facts.inputSemantics.role}"\n        aria-autocomplete="${facts.inputSemantics.ariaAutocomplete}"\n        aria-disabled={inputDisabled ? "true" : undefined}\n        aria-expanded={combobox.open ? "true" : "false"}\n        aria-readonly={inputReadOnly ? "true" : "false"}\n        aria-required={combobox.required ? "true" : "false"}\n        autoComplete="${facts.inputSemantics.autocomplete}"\n        data-disabled={inputDisabled ? "" : undefined}\n        data-readonly={inputReadOnly ? "" : undefined}\n        data-required={combobox.required ? "" : undefined}\n        disabled={inputDisabled}\n        readOnly={inputReadOnly}\n        ref={forwardedRef}\n        value={props.value ?? combobox.inputValue}\n        onChange={props.onChange ?? noopComboboxInputChange}\n      />\n    );\n  },\n);\n\n${component}.displayName = "${facts.displayName}.Input";\n\nexport default ${component};\n\nfunction noopComboboxInputChange(_event: React.ChangeEvent<HTMLInputElement>): void {}\n`;
+}
+
+function printRootWithConnectedState(facts: AdapterEditableCollectionOverlayFacts): string {
+  const marker = "    const ensureInstance = React.useCallback(() => {";
+  return printRootWithClosedContentFixes(facts).replace(
+    marker,
+    `    React.useEffect(() => {
+      const root = rootRef.current;
+      if (!root) return;
+      const observer = new MutationObserver(() => {
+        const instance = instanceRef.current;
+        if (!instance || inputValueRef.current !== undefined) return;
+        const next = instance.getInputValue();
+        if (uncontrolledInputValueRef.current !== next) setUncontrolledInputValue(next);
+      });
+      observer.observe(root, { attributes: true, attributeFilter: ["${facts.attrs.inputValue}"] });
+      return () => observer.disconnect();
+    }, [setUncontrolledInputValue]);
+
+    React.useEffect(() => {
+      const resetForm = rootRef.current?.querySelector<HTMLInputElement>("[${facts.attrs.hiddenInput}]")?.form;
+      if (!resetForm) return;
+      let timer: number | undefined;
+      const handleReset = () => {
+        const instance = instanceRef.current;
+        if (!instance) return;
+        if (timer !== undefined) window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          timer = undefined;
+          if (instanceRef.current !== instance) return;
+          if (valueRef.current !== undefined && instance.getValue() !== valueRef.current) instance.setValue(valueRef.current, { emit: false });
+          if (inputValueRef.current !== undefined && instance.getInputValue() !== inputValueRef.current) instance.setInputValue(inputValueRef.current, { emit: false, filter: false });
+          if (valueRef.current === undefined) setUncontrolledValue(instance.getValue());
+          if (inputValueRef.current === undefined) setUncontrolledInputValue(instance.getInputValue());
+        }, 0);
+      };
+      resetForm.addEventListener("reset", handleReset);
+      return () => {
+        resetForm.removeEventListener("reset", handleReset);
+        if (timer !== undefined) window.clearTimeout(timer);
+      };
+    }, [form, setUncontrolledValue, setUncontrolledInputValue]);
+
+${marker}`,
+  );
 }
 
 function printRootWithClosedContentFixes(facts: AdapterEditableCollectionOverlayFacts): string {

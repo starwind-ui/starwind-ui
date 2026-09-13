@@ -465,6 +465,7 @@ describe("portable runtime generator structure", () => {
               "dialog",
               "slider",
               "toast",
+              "theme",
             ],
             kind: "subset",
           },

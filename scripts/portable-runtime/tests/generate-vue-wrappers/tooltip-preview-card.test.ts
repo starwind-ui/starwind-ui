@@ -49,6 +49,12 @@ describe("generated Vue timed floating overlays", () => {
         /emit\("openChange", nextOpen, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open", nextOpen\);/,
       );
       expect(root).toContain("owned.destroy()");
+      expect(root).toContain('owned.subscribe("openChange"');
+      expect(root).toContain("detail.open && detail.trigger instanceof HTMLElement");
+      expect(root).toContain("trigger: acceptedTrigger");
+      expect(root).toContain("defaultOpen: false");
+      expect(root).toContain("{ open: false }");
+      expect(root).toContain("unsubscribeOpenChange?.()");
       expect(root).toContain("mounted.value = false");
       expect(root).toContain("await nextTick()");
       expect(root).toContain("generation !== runtimeGeneration");

@@ -20,7 +20,7 @@ export type StyledAdapterContractIssue = {
   path: string;
 };
 
-const FRAMEWORK_TARGETS = ["astro", "react", "vue"] satisfies FrameworkTarget[];
+const FRAMEWORK_TARGETS = ["astro", "react", "vue", "svelte"] satisfies FrameworkTarget[];
 
 export function validateStyledAdapterContracts(
   contracts: readonly StyledAdapterContract[],

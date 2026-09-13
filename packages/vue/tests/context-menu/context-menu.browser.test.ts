@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, reactive } from "vue";
 
-import type { ContextMenuOpenChangeDetails } from "@starwind-ui/runtime/context-menu";
+import {
+  createContextMenu,
+  type ContextMenuOpenChangeDetails,
+} from "@starwind-ui/runtime/context-menu";
 import {
   ContextMenuItem,
   ContextMenuPopup,
@@ -24,6 +27,58 @@ describe("Vue Context Menu", () => {
     document.body.replaceChildren();
     vi.restoreAllMocks();
   });
+
+  it.each(["closeDelay", "modal", "disabled"])(
+    "keeps the open invocation point when %s recreates Runtime on the same root",
+    async (option) => {
+      const rootProps = reactive({ closeDelay: 200, modal: false, disabled: false });
+      const onOpenChange = vi.fn();
+      const onOpenUpdate = vi.fn();
+      const { app, host, trigger } = mountContextMenu({ rootProps, onOpenChange, onOpenUpdate });
+      await frame();
+      const root = host.querySelector<HTMLElement>("[data-sw-context-menu]")!;
+      const original = createContextMenu(root);
+      dispatchContextMenu(trigger, 300, 240);
+      await frame();
+      const popup = document.querySelector<HTMLElement>("[data-sw-menu-popup]")!;
+      const before = popup.getBoundingClientRect();
+      const oldAnchor = document.querySelector<HTMLElement>("[data-sw-context-menu-anchor]")!;
+      expect(original.getOpen()).toBe(true);
+      expect(onOpenChange).toHaveBeenCalledTimes(1);
+      expect(onOpenUpdate).toHaveBeenCalledTimes(1);
+
+      if (option === "closeDelay") rootProps.closeDelay = 340;
+      else if (option === "modal") rootProps.modal = true;
+      else rootProps.disabled = true;
+      await frame();
+      await frame();
+      const recreated = createContextMenu(root);
+      const anchor = document.querySelector<HTMLElement>("[data-sw-context-menu-anchor]")!;
+      expect(host.querySelector("[data-sw-context-menu]")).toBe(root);
+      expect(recreated).not.toBe(original);
+      expect(recreated.getOpen()).toBe(true);
+      expect(oldAnchor.isConnected).toBe(false);
+      expect(anchor).not.toBe(oldAnchor);
+      expect(document.querySelectorAll("[data-sw-context-menu-anchor]")).toHaveLength(1);
+      expect([
+        anchor.style.left,
+        anchor.style.top,
+        anchor.style.width,
+        anchor.style.height,
+      ]).toEqual(["300px", "240px", "0px", "0px"]);
+      expect(popup.hidden).toBe(false);
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      expect(popup.getBoundingClientRect().left).toBeCloseTo(before.left);
+      expect(popup.getBoundingClientRect().top).toBeCloseTo(before.top);
+      expect(onOpenChange).toHaveBeenCalledTimes(1);
+      expect(onOpenUpdate).toHaveBeenCalledTimes(1);
+
+      app.unmount();
+      expect(anchor.isConnected).toBe(false);
+      expect(document.querySelector("[data-sw-context-menu-anchor]")).toBeNull();
+      expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+    },
+  );
 
   it("anchors accepted context requests at Runtime-owned pointer coordinates", async () => {
     const events: string[] = [];
@@ -94,6 +149,7 @@ describe("Vue Context Menu", () => {
 });
 
 type RenderOptions = {
+  rootProps?: { closeDelay: number; modal: boolean; disabled: boolean };
   onOpenChange?: (open: boolean, detail: ContextMenuOpenChangeDetails) => void;
   onOpenUpdate?: (open: boolean) => void;
 };
@@ -115,6 +171,7 @@ function renderContextMenu(options: RenderOptions) {
   return h(
     ContextMenuRoot,
     {
+      ...options.rootProps,
       onOpenChange: options.onOpenChange,
       "onUpdate:open": options.onOpenUpdate,
     },

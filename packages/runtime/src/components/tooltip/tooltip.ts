@@ -56,6 +56,7 @@ export type TooltipOptions = {
 
 export type TooltipSetOpenOptions = {
   emit?: boolean;
+  trigger?: HTMLElement;
 };
 
 export type TooltipInstance = {
@@ -173,6 +174,7 @@ class TooltipController implements TooltipInstance {
   private readonly onOpenChange?: (open: boolean, details: TooltipOpenChangeDetails) => void;
   private readonly openDelay: number;
   private readonly subscribers = new Set<(details: TooltipOpenChangeDetails) => void>();
+  private readonly rootDisabledTriggerElements = new Set<HTMLElement>();
   private activeTrigger: TooltipTriggerElement | null = null;
   private closeTimer: number | null = null;
   private disabled: boolean;
@@ -257,16 +259,18 @@ class TooltipController implements TooltipInstance {
 
   setOpen(open: boolean, options: TooltipSetOpenOptions = {}): void {
     const nextOpen = open && !this.disabled;
+    const trigger = this.resolveSetOpenTrigger(options.trigger);
     if (options.emit !== false) {
-      this.requestOpen(nextOpen, { forceApply: true, reason: "imperative-action" });
+      this.requestOpen(nextOpen, {
+        forceApply: true,
+        reason: "imperative-action",
+        trigger: trigger ?? undefined,
+      });
       return;
     }
 
-    const previousOpen = this.openState;
     this.openState = nextOpen;
-    if (nextOpen && !this.activeTrigger) {
-      this.activeTrigger = this.elements.triggers[0] ?? null;
-    }
+    if (nextOpen) this.activeTrigger = trigger;
     this.applyOpenState(nextOpen);
   }
 
@@ -274,7 +278,7 @@ class TooltipController implements TooltipInstance {
     if (this.disabled === disabled) return;
 
     this.disabled = disabled;
-    if (disabled && this.openState) {
+    if (disabled) {
       this.openState = false;
       this.applyOpenState(false);
       return;
@@ -312,6 +316,7 @@ class TooltipController implements TooltipInstance {
     this.subscribers.clear();
     this.openState = false;
     this.renderState(false);
+    this.clearRootDisabledTriggerMarkers();
     this.elements.popup.hidden = true;
     instances.delete(this.root);
     this.destroyed = true;
@@ -363,7 +368,6 @@ class TooltipController implements TooltipInstance {
         "pointerenter",
         (event) => {
           if (!isMousePointer(event) || this.isTriggerDisabled(trigger)) return;
-          this.activeTrigger = trigger;
           this.openAfterDelay(trigger, { event, reason: "trigger-hover", trigger });
         },
         { signal },
@@ -387,7 +391,6 @@ class TooltipController implements TooltipInstance {
         "focusin",
         (event) => {
           if (this.isTriggerDisabled(trigger) || !this.shouldOpenFromFocus()) return;
-          this.activeTrigger = trigger;
           this.clearCloseTimer();
           this.clearOpenTimer();
           this.requestOpen(true, { event, reason: "trigger-focus", trigger });
@@ -454,23 +457,35 @@ class TooltipController implements TooltipInstance {
   }
 
   private requestOpen(open: boolean, request: OpenRequest): void {
-    if (open && request.trigger) {
-      this.activeTrigger = request.trigger;
-    }
-
+    const nextActiveTrigger = open
+      ? this.resolveSetOpenTrigger(request.trigger?.target)
+      : this.activeTrigger;
+    const shouldSwitchActiveTrigger = open && nextActiveTrigger !== this.activeTrigger;
     if (this.disabled && open) return;
-    if (open === this.openState && !this.controlled && !request.forceApply) return;
+    if (
+      open === this.openState &&
+      !this.controlled &&
+      !shouldSwitchActiveTrigger &&
+      !request.forceApply
+    )
+      return;
 
     const previousOpen = this.openState;
     runOverlayOpenChangeShell({
       root: this.root,
       controlled: this.controlled && !request.forceApply,
       createDetails: createOpenChangeDetails,
-      getTrigger: (request) => request.trigger?.target ?? this.activeTrigger?.target,
+      getTrigger: () =>
+        open ? nextActiveTrigger?.target : (request.trigger?.target ?? this.activeTrigger?.target),
       open,
       previousOpen,
       request,
+      onApplyControlledOpenState: () => {
+        if (open) this.activeTrigger = nextActiveTrigger;
+        if (shouldSwitchActiveTrigger && this.openState) this.applyOpenState(true);
+      },
       onApplyUncontrolledOpenState: () => {
+        if (open) this.activeTrigger = nextActiveTrigger;
         this.openState = open;
         this.applyOpenState(open);
       },
@@ -527,6 +542,7 @@ class TooltipController implements TooltipInstance {
   }
 
   private renderState(open: boolean): void {
+    if (!this.disabled) this.clearRootDisabledTriggerMarkers();
     const state = open ? "open" : "closed";
     const stateElements = [
       this.root,
@@ -554,6 +570,9 @@ class TooltipController implements TooltipInstance {
         element.setAttribute("data-state", state);
         setBooleanAttribute(element, "data-popup-open", open);
         setBooleanAttribute(element, "data-trigger-disabled", disabled);
+        if (this.disabled && !element.hasAttribute(TOOLTIP_DISABLED_ATTRIBUTE)) {
+          this.rootDisabledTriggerElements.add(element);
+        }
         setBooleanAttribute(element, TOOLTIP_DISABLED_ATTRIBUTE, disabled);
       }
     });
@@ -604,8 +623,25 @@ class TooltipController implements TooltipInstance {
     return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
 
+  private resolveSetOpenTrigger(candidate?: HTMLElement): TooltipTriggerElement | null {
+    const isValid = (trigger: TooltipTriggerElement) =>
+      trigger.element.isConnected &&
+      trigger.target.isConnected &&
+      isRuntimePartOwned(this.root, trigger.element, `[${TOOLTIP_ROOT_ATTRIBUTE}]`) &&
+      isRuntimePartOwned(this.root, trigger.target, `[${TOOLTIP_ROOT_ATTRIBUTE}]`);
+    return (
+      this.elements.triggers.find(
+        (trigger) =>
+          (trigger.element === candidate || trigger.target === candidate) && isValid(trigger),
+      ) ??
+      (this.activeTrigger && isValid(this.activeTrigger) ? this.activeTrigger : null) ??
+      this.elements.triggers.find(isValid) ??
+      null
+    );
+  }
+
   private getFloatingReference(): HTMLElement | null {
-    return this.activeTrigger?.target ?? this.elements.triggers[0]?.target ?? null;
+    return this.resolveSetOpenTrigger()?.target ?? null;
   }
 
   private clearFloatingStyles(): void {
@@ -711,6 +747,13 @@ class TooltipController implements TooltipInstance {
 
     window.clearTimeout(this.closeTimer);
     this.closeTimer = null;
+  }
+
+  private clearRootDisabledTriggerMarkers(): void {
+    this.rootDisabledTriggerElements.forEach((element) => {
+      element.removeAttribute(TOOLTIP_DISABLED_ATTRIBUTE);
+    });
+    this.rootDisabledTriggerElements.clear();
   }
 
   private isTriggerDisabled(trigger: TooltipTriggerElement): boolean {

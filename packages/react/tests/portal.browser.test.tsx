@@ -1,30 +1,29 @@
+import { createCombobox } from "@starwind-ui/runtime/combobox";
+import { createMenu } from "@starwind-ui/runtime/menu";
+import { createSelect } from "@starwind-ui/runtime/select";
 import * as React from "react";
 import { act } from "react";
 import { createRoot, hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
+import StyledPopover from "../../../apps/react-demo/src/components/starwind-runtime/popover/Popover";
+import StyledPopoverContent from "../../../apps/react-demo/src/components/starwind-runtime/popover/PopoverContent";
+import StyledPopoverTrigger from "../../../apps/react-demo/src/components/starwind-runtime/popover/PopoverTrigger";
 import AlertDialogPortal from "../src/alert-dialog/AlertDialogPortal";
 import { AlertDialog } from "../src/alert-dialog/index";
 import ComboboxPortal from "../src/combobox/ComboboxPortal";
 import { Combobox } from "../src/combobox/index";
 import DrawerPortal from "../src/drawer/DrawerPortal";
 import type { ReactPortalContainer } from "../src/internal/portal";
+import { Menu } from "../src/menu/index";
 import MenuPortal from "../src/menu/MenuPortal";
+import { NavigationMenu } from "../src/navigation-menu/index";
 import NavigationMenuPortal from "../src/navigation-menu/NavigationMenuPortal";
 import { Popover } from "../src/popover/index";
-import { Menu } from "../src/menu/index";
-import { NavigationMenu } from "../src/navigation-menu/index";
 import PreviewCardPortal from "../src/preview-card/PreviewCardPortal";
-import SelectPortal from "../src/select/SelectPortal";
 import { Select } from "../src/select/index";
+import SelectPortal from "../src/select/SelectPortal";
 import TooltipPortal from "../src/tooltip/TooltipPortal";
-import { createCombobox } from "@starwind-ui/runtime/combobox";
-import { createMenu } from "@starwind-ui/runtime/menu";
-import { createSelect } from "@starwind-ui/runtime/select";
-import StyledPopover from "../../../apps/react-demo/src/components/starwind-runtime/popover/Popover";
-import StyledPopoverContent from "../../../apps/react-demo/src/components/starwind-runtime/popover/PopoverContent";
-import StyledPopoverTrigger from "../../../apps/react-demo/src/components/starwind-runtime/popover/PopoverTrigger";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -54,6 +53,107 @@ afterEach(async () => {
 });
 
 describe("React-owned Portal parts", () => {
+  it("shares document observation across portal families until the last portal unmounts", async () => {
+    const activeObservers = new Set<MutationObserver>();
+    const nativeObserve = MutationObserver.prototype.observe;
+    const nativeDisconnect = MutationObserver.prototype.disconnect;
+    const observe = vi.spyOn(MutationObserver.prototype, "observe").mockImplementation(function (
+      this: MutationObserver,
+      target,
+      options,
+    ) {
+      if (target === document.documentElement) activeObservers.add(this);
+      nativeObserve.call(this, target, options);
+    });
+    const disconnect = vi
+      .spyOn(MutationObserver.prototype, "disconnect")
+      .mockImplementation(function (this: MutationObserver) {
+        activeObservers.delete(this);
+        nativeDisconnect.call(this);
+      });
+    const refs = portalParts.map(() => React.createRef<HTMLDivElement>());
+    const renderPortals = (count: number) => (
+      <>
+        {portalParts.slice(0, count).map(([family, Portal], index) => (
+          <Portal container="#ticket08-shared-target" key={family} ref={refs[index]}>
+            {family}
+          </Portal>
+        ))}
+      </>
+    );
+
+    try {
+      await mount(renderPortals(portalParts.length));
+      expect(activeObservers.size).toBe(1);
+      const sharedObserver = [...activeObservers][0];
+
+      await update(() => reactRoot!.render(renderPortals(2)));
+      expect([...activeObservers]).toEqual([sharedObserver]);
+
+      const target = makeTarget("shared-target");
+      await mutateAndWaitForPortalParent(refs[0], target, () => document.body.append(target));
+      expect(refs[1].current?.parentElement).toBe(target);
+      expect(refs.slice(2).every((ref) => ref.current === null)).toBe(true);
+      expect([...activeObservers]).toEqual([sharedObserver]);
+
+      await act(() => reactRoot!.unmount());
+      reactRoot = undefined;
+      expect(activeObservers.size).toBe(0);
+    } finally {
+      if (reactRoot) await act(() => reactRoot?.unmount());
+      reactRoot = undefined;
+      observe.mockRestore();
+      disconnect.mockRestore();
+    }
+  });
+
+  it("keeps portal subscriptions separate for each owner document", async () => {
+    const observedDocuments = new Map<MutationObserver, Document>();
+    const nativeObserve = MutationObserver.prototype.observe;
+    const nativeDisconnect = MutationObserver.prototype.disconnect;
+    const observe = vi.spyOn(MutationObserver.prototype, "observe").mockImplementation(function (
+      this: MutationObserver,
+      target,
+      options,
+    ) {
+      if (target === target.ownerDocument?.documentElement) {
+        observedDocuments.set(this, target.ownerDocument);
+      }
+      nativeObserve.call(this, target, options);
+    });
+    const disconnect = vi
+      .spyOn(MutationObserver.prototype, "disconnect")
+      .mockImplementation(function (this: MutationObserver) {
+        observedDocuments.delete(this);
+        nativeDisconnect.call(this);
+      });
+    const otherDocument = document.implementation.createHTMLDocument("other portal owner");
+    const otherRoot = createRoot(otherDocument.body);
+    const otherRef = React.createRef<HTMLDivElement>();
+
+    try {
+      await mount(<Popover.Portal>First document</Popover.Portal>);
+      await act(() => {
+        otherRoot.render(<Popover.Portal ref={otherRef}>Second document</Popover.Portal>);
+      });
+      expect(otherRef.current?.parentElement).toBe(otherDocument.body);
+      expect([...observedDocuments.values()]).toEqual(
+        expect.arrayContaining([document, otherDocument]),
+      );
+      expect(observedDocuments.size).toBe(2);
+
+      await act(() => reactRoot!.unmount());
+      reactRoot = undefined;
+      expect([...observedDocuments.values()]).toEqual([otherDocument]);
+    } finally {
+      await act(() => otherRoot.unmount());
+      if (reactRoot) await act(() => reactRoot?.unmount());
+      reactRoot = undefined;
+      observe.mockRestore();
+      disconnect.mockRestore();
+    }
+  });
+
   it("places all nine public wrappers while preserving context, logical events, native props, and refs", async () => {
     const refs = portalParts.map(() => React.createRef<HTMLDivElement>());
     const onLogicalClick = vi.fn();

@@ -1403,6 +1403,13 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(tooltipRoot).toContain(
       'data-content-hoverable={!disableHoverableContent ? "true" : "false"}',
     );
+    expect(tooltipRoot).toContain("defaultOpen: false");
+    expect(tooltipRoot).toContain("...(openRef.current !== undefined ? { open: false } : {})");
+    expect(tooltipRoot).toContain("acceptedRootRef.current !== root");
+    expect(tooltipRoot).toContain("if (details.open && details.trigger instanceof HTMLElement)");
+    expect(tooltipRoot).toContain("acceptedTriggerRef.current = details.trigger");
+    expect(tooltipRoot).toContain("trigger: acceptedTriggerRef.current");
+    expect(tooltipRoot).toContain("unsubscribeOpenChange()");
     expect(tooltipRoot).toContain("openDelay = 200");
     expect(tooltipRoot).toContain("closeDelay = 200");
     expect(tooltipRoot).toContain("instance.setDisabled(disabled)");

@@ -122,6 +122,10 @@ const initialDefaultOpen = props.${facts.props.defaultOpen.name};
 const uncontrolledOpen = ref(initialDefaultOpen);
 const renderedOpen = computed(() => ${renderedOpen});
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
+let acceptedRoot: HTMLElement | undefined;
+let acceptedTrigger: HTMLElement | undefined;
+let unsubscribeOpenChange: (() => void) | undefined;
+let reconnectOpen: boolean | undefined;
 let portalOwner: symbol | undefined;
 let runtimeGeneration = 0;
 let disposed = false;
@@ -148,34 +152,46 @@ function destroyOwnedInstance(): void {
   const owned = instance;
   if (!owned) return;
   if (instance === owned) instance = undefined;
+  unsubscribeOpenChange?.();
+  unsubscribeOpenChange = undefined;
   owned.destroy();
 }
 
-function setupRuntime(): void {
+function setupRuntime(acceptedOpen = renderedOpen.value): void {
   const root = rootRef.value;
   if (!root) return;
-  instance = ${facts.runtime.factory}(root, {
-    ${facts.props.defaultOpen.name}: renderedOpen.value,
+  if (acceptedRoot !== root) {
+    acceptedRoot = root;
+    acceptedTrigger = undefined;
+  }
+  const owned = ${facts.runtime.factory}(root, {
+    ${facts.props.defaultOpen.name}: false,
     ${facts.props.closeDelay.name}: props.${facts.props.closeDelay.name},
     ${facts.props.closeOnEscape.name}: props.${facts.props.closeOnEscape.name},
     ${facts.props.closeOnOutsideInteract.name}: props.${facts.props.closeOnOutsideInteract.name},
 ${disabledOption}    ${facts.props.disableHoverableContent.name}: props.${facts.props.disableHoverableContent.name},
     ${facts.props.openDelay.name}: props.${facts.props.openDelay.name},
     ${facts.event.callbackProp}: handleOpenChange,
-    ...(props.${facts.props.open.name} === undefined ? {} : { ${facts.props.open.name}: props.${facts.props.open.name} }),
+    ...(props.${facts.props.open.name} === undefined ? {} : { ${facts.props.open.name}: false }),
   });
+  instance = owned;
+  unsubscribeOpenChange = owned.subscribe("${facts.event.name}", (detail) => {
+    if (instance === owned && detail.open && detail.trigger instanceof HTMLElement) acceptedTrigger = detail.trigger;
+  });
+  owned.${facts.setters.open.method}(props.${facts.props.open.name} ?? acceptedOpen, { emit: false, trigger: acceptedTrigger });
+  if (props.${facts.props.open.name} === undefined) uncontrolledOpen.value = owned.${facts.state.getter}();
+  reconnectOpen = undefined;
 }
 
 async function recreateRuntime(): Promise<void> {
   const generation = ++runtimeGeneration;
-  const acceptedOpen = instance?.${facts.state.getter}() ?? renderedOpen.value;
+  reconnectOpen = instance?.${facts.state.getter}() ?? reconnectOpen ?? renderedOpen.value;
   destroyOwnedInstance();
   mounted.value = false;
   await nextTick();
   if (disposed || generation !== runtimeGeneration) return;
 
-  if (props.${facts.props.open.name} === undefined) uncontrolledOpen.value = acceptedOpen;
-  setupRuntime();
+  setupRuntime(reconnectOpen);
   mounted.value = true;
 }
 

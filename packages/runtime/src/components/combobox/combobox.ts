@@ -148,6 +148,12 @@ export type ComboboxInstance = {
   updatePosition(): void;
 };
 
+type ComboboxResetIntent = {
+  canceled: boolean;
+  revision: number;
+  previous: ComboboxResetIntent | undefined;
+};
+
 type ComboboxElements = {
   clear: HTMLElement | null;
   empty: HTMLElement | null;
@@ -339,6 +345,8 @@ class ComboboxController implements ComboboxInstance {
   private required: boolean;
   private resetForm: HTMLFormElement | null = null;
   private resetTimer: number | undefined;
+  private pendingReset: ComboboxResetIntent | undefined;
+  private formResetRevision = 0;
   private formInputDefaultInitialized = false;
   private suppressNextFocusOpen = false;
   private valueState: string | null;
@@ -472,6 +480,7 @@ class ComboboxController implements ComboboxInstance {
 
     const previousValue = this.valueState;
 
+    this.formResetRevision += 1;
     this.valueState = normalizedValue;
     this.applyValueState(normalizedValue);
     this.syncInputValueFromValue(normalizedValue);
@@ -491,6 +500,7 @@ class ComboboxController implements ComboboxInstance {
 
     const previousInputValue = this.inputValueState;
 
+    this.formResetRevision += 1;
     this.inputValueState = inputValue;
     this.applyInputValueState(inputValue);
     if (options.filter !== false) {
@@ -921,6 +931,7 @@ class ComboboxController implements ComboboxInstance {
     if (this.readOnly) return false;
 
     if (request.value === this.valueState && !this.controlledValue) {
+      this.formResetRevision += 1;
       this.markOpenCycleCommitted();
       return true;
     }
@@ -946,6 +957,7 @@ class ComboboxController implements ComboboxInstance {
       details,
       eventType: "starwind:value-change",
       notifyAccepted: (acceptedDetails) => {
+        this.formResetRevision += 1;
         this.notifyValue(acceptedDetails);
         this.markOpenCycleCommitted();
       },
@@ -986,7 +998,10 @@ class ComboboxController implements ComboboxInstance {
       },
       details,
       eventType: "starwind:input-value-change",
-      notifyAccepted: (acceptedDetails) => this.notifyInputValue(acceptedDetails),
+      notifyAccepted: (acceptedDetails) => {
+        this.formResetRevision += 1;
+        this.notifyInputValue(acceptedDetails);
+      },
       notifyCallback: (proposalDetails) =>
         this.onInputValueChange?.(request.inputValue, proposalDetails),
       rollbackCanceled: () => {
@@ -1264,21 +1279,47 @@ class ComboboxController implements ComboboxInstance {
     );
   }
 
-  private readonly handleFormReset = (): void => {
+  private readonly handleFormReset = (event: Event): void => {
     this.clearResetTimer();
-    this.resetTimer = window.setTimeout(() => {
-      this.valueState = this.initialValue;
-      this.applyValueState(this.valueState);
-
-      this.inputValueState = this.initialInputValue;
-      this.filterValueState = this.initialFilterValue;
-      this.applyInputValueState(this.inputValueState);
-      if (this.openState) {
-        this.updateFilteredItems();
-      }
-      this.resetTimer = undefined;
-    }, 0);
+    const intent: ComboboxResetIntent = {
+      canceled: false,
+      revision: this.formResetRevision,
+      previous: this.pendingReset,
+    };
+    // Finish synchronous reset dispatch without retaining its Event in a continuation.
+    queueMicrotask(() => {
+      intent.canceled = event.defaultPrevented;
+    });
+    this.pendingReset = intent;
+    this.scheduleFormReset();
   };
+
+  private scheduleFormReset(): void {
+    if (!this.pendingReset) return;
+    this.resetTimer = window.setTimeout(() => {
+      this.resetTimer = undefined;
+      let intent = this.pendingReset;
+      this.pendingReset = undefined;
+      if (this.destroyed) return;
+      while (intent?.canceled) intent = intent.previous;
+
+      const acceptedReset = intent !== undefined && intent.revision === this.formResetRevision;
+      if (acceptedReset) {
+        this.valueState = this.initialValue;
+        this.inputValueState = this.initialInputValue;
+        this.filterValueState = this.initialFilterValue;
+        if (this.openCycleInputValue !== null) {
+          this.openCycleInputValue = this.inputValueState;
+          this.openCycleFilterValue = this.filterValueState;
+          this.openCycleCommitted = false;
+        }
+      }
+      // Native reset can run after a command from a reset listener. Reapply current state.
+      this.applyValueState(this.valueState);
+      this.applyInputValueState(this.inputValueState);
+      if (this.openState) this.updateFilteredItems({ clearHighlight: acceptedReset });
+    }, 0);
+  }
 
   private clearFloatingStyles(): void {
     const elements = [this.elements.positioner, this.elements.popup].filter(
@@ -1501,6 +1542,7 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private setFilterValue(filterValue: string): void {
+    this.formResetRevision += 1;
     this.filterValueState = filterValue;
     this.updateFilteredItems();
   }
@@ -1557,12 +1599,12 @@ class ComboboxController implements ComboboxInstance {
     if (this.resetForm === nextForm) return;
 
     this.detachFormResetListener();
-    nextForm?.addEventListener("reset", this.handleFormReset);
+    nextForm?.addEventListener("reset", this.handleFormReset, true);
     this.resetForm = nextForm;
   }
 
   private detachFormResetListener(): void {
-    this.resetForm?.removeEventListener("reset", this.handleFormReset);
+    this.resetForm?.removeEventListener("reset", this.handleFormReset, true);
     this.resetForm = null;
   }
 

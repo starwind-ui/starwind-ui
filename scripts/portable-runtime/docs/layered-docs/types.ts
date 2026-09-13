@@ -1,3 +1,20 @@
+export type PublicFrameworkTarget = "astro" | "react" | "vue";
+
+export type PublicFrameworkMetadata = {
+  readonly target: PublicFrameworkTarget;
+  readonly label: string;
+  readonly maturity: "stable" | "beta";
+  readonly packageName: string;
+  readonly installSpecifier: string;
+};
+
+export type PrimitivePackageMetadata = {
+  readonly framework: PublicFrameworkTarget;
+  readonly packageName: string;
+  readonly importSource: string;
+  readonly installSpecifier: string;
+};
+
 export type StyledFrameworkTarget = "astro" | "react";
 
 export type FrameworkAvailabilityStatus =
@@ -182,7 +199,7 @@ export type StylingComponentMetadata = {
   readonly docsPath?: string;
   readonly primitiveDocsPaths: readonly string[];
   readonly publicExports: readonly string[];
-  readonly frameworkAvailability: Readonly<Record<StyledFrameworkTarget, FrameworkAvailability>>;
+  readonly frameworkAvailability: Readonly<Record<PublicFrameworkTarget, FrameworkAvailability>>;
   readonly variantCollections: readonly StylingVariantCollectionMetadata[];
   readonly slots: readonly string[];
   readonly stateSelectors: readonly StylingStateSelectorMetadata[];
@@ -436,8 +453,8 @@ export type PrimitiveDocsExampleMetadata = {
 };
 
 export type PrimitiveDocsAuthoredExampleFrameworkMetadata = {
-  readonly framework: Extract<PrimitiveDocsFrameworkTarget, "astro" | "react" | "raw-html">;
-  readonly language: "astro" | "tsx" | "html";
+  readonly framework: Extract<PrimitiveDocsFrameworkTarget, "astro" | "react" | "vue" | "raw-html">;
+  readonly language: "astro" | "tsx" | "vue" | "html";
   readonly source: string;
   readonly code: string;
 };
@@ -598,6 +615,7 @@ export type PrimitiveDocsMetadata = {
   readonly displayName: string;
   readonly category: string;
   readonly registryVersion: string;
+  readonly packages: readonly PrimitivePackageMetadata[];
   readonly runtime: PrimitiveRuntimeMetadata;
   readonly parts: readonly PrimitivePartMetadata[];
   readonly props: readonly PrimitivePropMetadata[];
@@ -624,7 +642,7 @@ export type StyledComponentDocsMetadata = {
   readonly groupId: ComponentGroupId;
   readonly docsPage: DocsPageMetadata;
   readonly foundation: BehaviorFoundationMetadata;
-  readonly frameworkAvailability: Readonly<Record<StyledFrameworkTarget, FrameworkAvailability>>;
+  readonly frameworkAvailability: Readonly<Record<PublicFrameworkTarget, FrameworkAvailability>>;
   readonly primitiveIds: readonly string[];
   readonly runtimeFactories: readonly RuntimeFactoryMetadata[];
   readonly publicExports: readonly string[];
@@ -704,6 +722,7 @@ export type StyledApiTargetMetadata = {
 };
 
 export type LayeredDocsMetadata = {
+  readonly frameworks: readonly PublicFrameworkMetadata[];
   readonly version: 1;
   readonly runtime: RuntimeDocsMetadata;
   readonly styling: StylingDocsMetadata;

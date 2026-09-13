@@ -2435,3 +2435,164 @@ function stubNoAnimations(element: HTMLElement): void {
     value: () => [],
   });
 }
+
+describe("Combobox connected reset", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    document.body.removeAttribute("style");
+    vi.useRealTimers();
+  });
+
+  it.each(["form", "ancestor", "later capture"] as const)(
+    "honors reset canceled at %s",
+    async (where) => {
+      const fixture = editingConnectedCombobox();
+      const owner = where === "ancestor" ? document.body : fixture.form;
+      const cancel = (event: Event) => event.preventDefault();
+      owner.addEventListener("reset", cancel, { capture: where === "later capture", once: true });
+      fixture.form.reset();
+      await settleReset();
+      fixture.expect("banana", "Alias", ["apple", "apricot"]);
+      expect(fixture.controller.getOpen()).toBe(true);
+      fixture.controller.destroy();
+    },
+  );
+
+  it.each(["input", "value", "native", "canceled native", "same selection"] as const)(
+    "retains a later %s action",
+    async (action) => {
+      const fixture = editingConnectedCombobox();
+      fixture.form.addEventListener(
+        "reset",
+        () => {
+          if (action === "input")
+            fixture.controller.setInputValue("Newest", { emit: false, filter: false });
+          if (action === "value") fixture.controller.setValue("apricot", { emit: false });
+          if (action === "native" || action === "canceled native") {
+            if (action === "canceled native")
+              fixture.root.addEventListener(
+                "starwind:input-value-change",
+                (event) => event.preventDefault(),
+                { once: true },
+              );
+            getInput().value = "ban";
+            getInput().dispatchEvent(new InputEvent("input", { bubbles: true }));
+          }
+          if (action === "same selection") fixture.controller.setValue("banana");
+        },
+        { once: true },
+      );
+      fixture.form.reset();
+      await settleReset();
+      expect(fixture.controller.getValue()).toBe(action === "value" ? "apricot" : "banana");
+      expect(getInput().value).toBe(
+        action === "input"
+          ? "Newest"
+          : action === "value"
+            ? "Apricot"
+            : action === "native"
+              ? "ban"
+              : "Alias",
+      );
+      if (action.includes("native")) expect(fixture.visible()).toEqual(["banana"]);
+      expect(new FormData(fixture.form).get("fruit")).toBe(fixture.controller.getValue());
+      fixture.controller.destroy();
+    },
+  );
+
+  it.each(["earlier form", "ancestor"] as const)(
+    "places commands from %s capture before observed reset",
+    async (where) => {
+      const fixture = editingConnectedCombobox(false);
+      const owner = where === "ancestor" ? document.body : fixture.form;
+      owner.addEventListener(
+        "reset",
+        () => fixture.controller.setValue("apricot", { emit: false }),
+        { capture: true, once: true },
+      );
+      fixture.connect();
+      fixture.form.reset();
+      await settleReset();
+      fixture.expect("apple", "Apple", ["apple", "banana", "apricot", "coffee-shop", "disabled"]);
+      fixture.controller.destroy();
+    },
+  );
+
+  it.each(["accepted then canceled", "command then canceled", "command then accepted"] as const)(
+    "settles the newest uncanceled intent for %s",
+    async (sequence) => {
+      const fixture = editingConnectedCombobox();
+      fixture.form.reset();
+      if (sequence !== "accepted then canceled")
+        fixture.controller.setInputValue("Newest", { emit: false, filter: false });
+      if (sequence !== "command then accepted")
+        fixture.form.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+      fixture.form.reset();
+      await settleReset();
+      expect(fixture.controller.getValue()).toBe(
+        sequence === "command then canceled" ? "banana" : "apple",
+      );
+      expect(getInput().value).toBe(sequence === "command then canceled" ? "Newest" : "Apple");
+      fixture.controller.destroy();
+    },
+  );
+
+  it("keeps open-only work independent and rebases Escape after effective reset", async () => {
+    const fixture = editingConnectedCombobox();
+    fixture.form.reset();
+    fixture.controller.setOpen(true, { emit: false });
+    await settleReset();
+    expect(fixture.controller.getOpen()).toBe(true);
+    expect(getInput().value).toBe("Apple");
+    getInput().value = "ban";
+    getInput().dispatchEvent(new InputEvent("input", { bubbles: true }));
+    getInput().dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await settleReset();
+    expect(getInput().value).toBe("Apple");
+    fixture.controller.destroy();
+  });
+});
+
+function editingConnectedCombobox(edit = true) {
+  const root = renderCombobox();
+  const form = document.createElement("form");
+  document.body.append(form);
+  form.append(root);
+  const fixture = {
+    root,
+    form,
+    controller: undefined as unknown as ReturnType<typeof createCombobox>,
+    connect() {
+      fixture.controller = createCombobox(root, {
+        defaultOpen: false,
+        defaultValue: "apple",
+        defaultInputValue: "Apple",
+        defaultFilterValue: "",
+        name: "fruit",
+      });
+    },
+    visible: () =>
+      getItems()
+        .filter((item) => !item.hidden)
+        .map((item) => item.dataset.value),
+    expect(value: string, text: string, visible: string[]) {
+      expect(fixture.controller.getValue()).toBe(value);
+      expect(fixture.controller.getInputValue()).toBe(text);
+      expect(getInput().value).toBe(text);
+      expect(new FormData(form).get("fruit")).toBe(value);
+      expect(fixture.visible()).toEqual(visible);
+    },
+  };
+  if (edit) {
+    fixture.connect();
+    fixture.controller.setValue("banana", { emit: false });
+    fixture.controller.setOpen(true, { emit: false });
+    getInput().value = "ap";
+    getInput().dispatchEvent(new InputEvent("input", { bubbles: true }));
+    fixture.controller.setInputValue("Alias", { emit: false, filter: false });
+  }
+  return fixture;
+}
+async function settleReset(): Promise<void> {
+  await new Promise((resolve) => window.setTimeout(resolve, 10));
+}

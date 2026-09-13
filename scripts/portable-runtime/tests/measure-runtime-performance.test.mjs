@@ -5,26 +5,56 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  FOCUSED_REPORT_DIR,
-  DIAGNOSTICS_REPORT_PATH,
-  REPORT_PATH,
-  buildRuntimePerformanceRunConfig,
   buildRuntimePerformanceReportPaths,
+  buildRuntimePerformanceRunConfig,
+  DIAGNOSTICS_REPORT_PATH,
+  FOCUSED_REPORT_DIR,
   formatRuntimePerformanceDiagnosticReport,
   formatRuntimePerformanceList,
   formatRuntimePerformancePublicReport,
   formatRuntimePerformanceReport,
   libraryRows,
   main,
+  measureOpenRow,
   migrateExistingRuntimePerformanceReports,
+  REPORT_PATH,
   scenarioRows,
-  writeStagedReports,
   writeRuntimePerformanceReportSet,
+  writeStagedReports,
 } from "../measure-runtime-performance.mjs";
 
 const generatedAt = new Date("2026-07-08T12:34:56.789Z");
 
 describe("runtime performance measurement filters", () => {
+  it("performs one excluded warmup and keeps five open samples", async () => {
+    let measurements = 0;
+    const page = {
+      goto: async () => {},
+      waitForFunction: async () => {},
+      keyboard: { press: async () => {} },
+      evaluate: async (operation) => {
+        if (operation.toString().includes("finishOpenSample"))
+          return { visibleMs: ++measurements, eventDurationMs: measurements };
+      },
+    };
+    const result = await measureOpenRow({
+      page,
+      scenario: { sampleCount: 5, openTarget: "[data-benchmark-trigger]" },
+      url: "http://fixture.invalid",
+    });
+    expect(measurements).toBe(6);
+    expect(result.samples).toEqual([2, 3, 4, 5, 6]);
+    expect(result.eventDurationSamples).toEqual([2, 3, 4, 5, 6]);
+  });
+
+  it("caps every active legacy row at one warmup and five measurements", () => {
+    for (const scenario of scenarioRows) {
+      if (scenario.type === "mount") {
+        expect(scenario.groupCount).toBe(5);
+        expect(scenario.iterationsPerGroup).toBe(1);
+      } else expect(scenario.sampleCount).toBe(5);
+    }
+  });
   it("keeps the no-argument run on the full official report path", () => {
     const config = buildRuntimePerformanceRunConfig([], { generatedAt });
 
@@ -153,9 +183,9 @@ describe("runtime performance measurement filters", () => {
         snapshot: true,
       }).map((file) => path.basename(file)),
     ).toEqual([
-      "runtime-performance-comparison.md",
+      "runtime-performance-stress-comparison.md",
       "runtime-performance-diagnostics.md",
-      "runtime-performance-comparison-2026-07-09.md",
+      "runtime-performance-stress-comparison-2026-07-09.md",
       "runtime-performance-diagnostics-2026-07-09.md",
     ]);
   });
@@ -200,9 +230,9 @@ describe("runtime performance measurement filters", () => {
       snapshot: true,
     });
     expect(reportPaths.map((file) => path.basename(file))).toEqual([
-      "runtime-performance-comparison.md",
+      "runtime-performance-stress-comparison.md",
       "runtime-performance-diagnostics.md",
-      "runtime-performance-comparison-2026-07-09.md",
+      "runtime-performance-stress-comparison-2026-07-09.md",
       "runtime-performance-diagnostics-2026-07-09.md",
     ]);
     for (const reportPath of reportPaths) {
@@ -211,7 +241,9 @@ describe("runtime performance measurement filters", () => {
       expect(report).toContain("22.2 ms");
       expect(report).not.toContain("11.1 ms");
     }
-    for (const reportPath of reportPaths.filter((file) => file.includes("diagnostics"))) {
+    for (const reportPath of reportPaths.filter((file) =>
+      path.basename(file).startsWith("runtime-performance-diagnostics"),
+    )) {
       expect(readFileSync(reportPath, "utf8")).toContain("21.2");
     }
   });
@@ -264,6 +296,8 @@ describe("runtime performance measurement filters", () => {
           dispatchDurationSamples: [3.1, 3.5],
           eventDurationSamples: [4.5],
           forcedLayoutDurationSamples: [6.2, 6.8],
+          updateDurationSamples: [2.0, 2.2],
+          verifiedItemCounts: [1000, 1000],
           groupAverages: [12.1, 12.5],
           library: library.key,
           libraryLabel: library.label,
@@ -287,7 +321,7 @@ describe("runtime performance measurement filters", () => {
     expect(markdown).toContain("- Scenario filters: select-trigger-mount");
     expect(markdown).toContain("- Library filters: starwind");
     expect(markdown).toContain(
-      "pnpm runtime:perf -- --scenario select-trigger-mount --library starwind",
+      "pnpm runtime:perf:stress -- --scenario select-trigger-mount --library starwind",
     );
     expect(markdown).toContain("Run the full official report with:");
     expect(markdown).toContain("temporary measurement project under the operating system's");
@@ -297,10 +331,12 @@ describe("runtime performance measurement filters", () => {
     expect(markdown).toContain("| Category | Scenario | Details | CPU | Metric | Starwind |");
     expect(markdown).toContain("| baseline-mount | Select trigger mount |");
     expect(markdown).toContain(
-      "| baseline-mount | Select trigger mount | Starwind | 10.1, 14.5 | 12.1, 12.5 | 4.5 | 3.1, 3.5 | 6.2, 6.8 |",
+      "| baseline-mount | Select trigger mount | Starwind | 10.1, 14.5 | 12.1, 12.5 | 4.5 | 3.1, 3.5 | 2.0, 2.2 | 6.2, 6.8 | 1000, 1000 |",
     );
     expect(markdown).toContain("Dispatch samples");
     expect(markdown).toContain("Forced-layout samples");
+    expect(markdown).toContain("Update-completion samples");
+    expect(markdown).toContain("Verified items");
   });
 
   it("partitions one full result into matching public and diagnostic reports", () => {
@@ -351,7 +387,7 @@ describe("runtime performance measurement filters", () => {
     const second = migrateExistingRuntimePerformanceReports({ repoRoot: root });
 
     expect(second.map((file) => readFileSync(file, "utf8"))).toEqual(firstContents);
-    expect(first).toHaveLength(6);
+    expect(first).toHaveLength(4);
     expect(first.map((file) => path.basename(file))).not.toContain(
       `runtime-performance-comparison-${generatedAt.toISOString().slice(0, 10)}.md`,
     );
@@ -360,11 +396,13 @@ describe("runtime performance measurement filters", () => {
       "utf8",
     );
     const diagnostic = readFileSync(
-      path.join(docsDir, "diagnostics/runtime-performance-diagnostics.md"),
+      path.join(
+        docsDir,
+        "diagnostics/runtime-performance-stress-migrated-diagnostics-2026-07-11.md",
+      ),
       "utf8",
     );
-    expect(publicReport).not.toContain("private threshold");
-    expect(publicReport).not.toContain("11.1, 13.5");
+    expect(publicReport).toBe(legacy);
     expect(diagnostic).toContain("Generated: 2026-07-11");
     expect(diagnostic).toMatch(/\| Dialog\s*\| 12\.3 ms\s*\|/);
     expect(diagnostic).toContain("11.1, 13.5");

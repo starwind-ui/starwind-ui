@@ -42,6 +42,13 @@ export function defineReactPreviewCardOutputTests(getTempRoot: GetTempRoot): voi
     expect(root).toContain("closeDelay = 300");
     expect(root).toContain('data-content-hoverable={!disableHoverableContent ? "true" : "false"}');
     expect(root).toContain("instance.setOpen(open, { emit: false })");
+    expect(root).toContain("defaultOpen: false");
+    expect(root).toContain("...(openRef.current !== undefined ? { open: false } : {})");
+    expect(root).toContain("acceptedRootRef.current !== root");
+    expect(root).toContain("if (details.open && details.trigger instanceof HTMLElement)");
+    expect(root).toContain("acceptedTriggerRef.current = details.trigger");
+    expect(root).toContain("trigger: acceptedTriggerRef.current");
+    expect(root).toContain("unsubscribeOpenChange()");
     expect(trigger).toContain(
       'export type PreviewCardTriggerProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "disabled"> &',
     );

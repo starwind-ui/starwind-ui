@@ -115,7 +115,9 @@
     "runtime:size:report": "node scripts/portable-runtime/product-package-size-runner.mjs report",
     "runtime:size:product": "pnpm runtime:size:starwind && node scripts/portable-runtime/product-package-size-runner.mjs site && pnpm runtime:size:report",
     "runtime:size:comparators:refresh": "node scripts/portable-runtime/product-package-size-runner.mjs refresh-comparator",
-    "runtime:perf": "node scripts/portable-runtime/measure-runtime-performance.mjs",
+    "runtime:perf": "node scripts/portable-runtime/measure-performance.mjs",
+    "runtime:perf:stress": "node scripts/portable-runtime/measure-react-stress.mjs",
+    "runtime:perf:stress:legacy": "node scripts/portable-runtime/measure-runtime-performance.mjs",
     "runtime:perf:vue": "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs",
     "runtime:perf:vue:baseline": "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs --baseline",
     "runtime:perf:snapshot": "pnpm runtime:build && pnpm react:build && node scripts/portable-runtime/measure-runtime-performance.mjs --snapshot",
@@ -150,7 +152,8 @@
     "test:vue-cli-local-link": "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs --local-link-only",
     "runtime:generate:test:ci": "pnpm exec vitest run --project=portable-runtime scripts/portable-runtime/tests/runtime-adapter-contract.test.ts scripts/portable-runtime/tests/styled-adapter-contract.test.ts scripts/portable-runtime/tests/framework-surface-manifest.test.mjs scripts/portable-runtime/tests/primitive-generator-registry.test.ts scripts/portable-runtime/tests/generate-cli-registry.test.ts scripts/portable-runtime/tests/framework-adapters.test.ts",
     "vue:test:browser:ci": "pnpm exec vitest run --config packages/vue/tests/checkbox/vitest.config.ts --project=browser && pnpm exec vitest run --config packages/vue/tests/dialog/vitest.config.ts --project=browser && pnpm exec vitest run --config packages/vue/tests/select/vitest.config.ts --project=browser",
-    "release:preflight": "node scripts/release-preflight.mjs"
+    "release:preflight": "node scripts/release-preflight.mjs",
+    "runtime:perf:interactions": "node scripts/portable-runtime/measure-react-interactions.mjs"
   },
   "dependencies": {
     "turbo": "^2.5.4"

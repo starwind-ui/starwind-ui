@@ -31,8 +31,8 @@ export const DEFAULT_COMPONENT_INSTALL_ROOT = "src/components/starwind";
 export const DEFAULT_PRIMITIVE_INSTALL_ROOT = "src/components/starwind-primitives";
 export const DEFAULT_CLI_REGISTRY_OUTPUT = "packages/cli/src/registry/bundled-registry.json";
 
-type RegistryImplementationTarget = FrameworkTarget;
-type PrimitiveVendoringFramework = FrameworkTarget;
+type RegistryImplementationTarget = FrameworkAdapterRegisteredTarget;
+type PrimitiveVendoringFramework = FrameworkAdapterRegisteredTarget;
 export type CliRegistryTargetRegistration = (typeof primitiveFrameworkAdapterTargets)[number];
 type RegistryFile = {
   content: string;
@@ -254,7 +254,7 @@ function createTargetDefinitions(
       primitiveOutputDir: registration.cliRegistry.styledArtifact.primitiveOutputDir,
       project: capability.project,
       setupPackageRequirements: registration.cliRegistry.setupPackageRequirements,
-      target: registration.target as RegistryImplementationTarget,
+      target: registration.target,
     };
   });
 }
@@ -278,7 +278,7 @@ function createPrimitiveVendoringTargetDefinitions(
       })),
       extraPackageRequirements: primitiveArtifact.extraPackageRequirements,
       forbiddenContent: [...primitiveArtifact.forbiddenContent],
-      framework: registration.target as PrimitiveVendoringFramework,
+      framework: registration.target,
       generatedImportCandidateExtensions:
         registration.cliRegistry.generatedImportCandidateExtensions,
       includeLocalImportGraph: primitiveArtifact.includeLocalImportGraph,

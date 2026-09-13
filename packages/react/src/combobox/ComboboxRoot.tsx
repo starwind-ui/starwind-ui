@@ -155,6 +155,51 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     [forwardedRef],
   );
 
+  useIsomorphicLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const observer = new MutationObserver(() => {
+      const instance = instanceRef.current;
+      if (!instance || inputValueRef.current !== undefined) return;
+      const next = instance.getInputValue();
+      if (uncontrolledInputValueRef.current !== next) setUncontrolledInputValue(next);
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["data-input-value"] });
+    return () => observer.disconnect();
+  }, [setUncontrolledInputValue]);
+
+  useIsomorphicLayoutEffect(() => {
+    const resetForm = rootRef.current?.querySelector<HTMLInputElement>(
+      "[data-sw-combobox-hidden-input]",
+    )?.form;
+    if (!resetForm) return;
+    let timer: number | undefined;
+    const handleReset = () => {
+      const instance = instanceRef.current;
+      if (!instance) return;
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = undefined;
+        if (instanceRef.current !== instance) return;
+        if (valueRef.current !== undefined && instance.getValue() !== valueRef.current)
+          instance.setValue(valueRef.current, { emit: false });
+        if (
+          inputValueRef.current !== undefined &&
+          instance.getInputValue() !== inputValueRef.current
+        )
+          instance.setInputValue(inputValueRef.current, { emit: false, filter: false });
+        if (valueRef.current === undefined) setUncontrolledValue(instance.getValue());
+        if (inputValueRef.current === undefined)
+          setUncontrolledInputValue(instance.getInputValue());
+      }, 0);
+    };
+    resetForm.addEventListener("reset", handleReset);
+    return () => {
+      resetForm.removeEventListener("reset", handleReset);
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [form, setUncontrolledValue, setUncontrolledInputValue]);
+
   const ensureInstance = React.useCallback(() => {
     const existing = instanceRef.current;
     if (existing) return existing;

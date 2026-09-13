@@ -1,3 +1,4 @@
+import { publicFrameworks } from "./public-frameworks.js";
 import { type RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
 import { starwindStyledContracts } from "../../../contracts/styled/components/index.js";
 import {
@@ -23,6 +24,7 @@ import {
   type StyledComponentDocsMetadata,
   type StyledDocsAnnotation,
   type StyledFrameworkTarget,
+  type PublicFrameworkTarget,
   type StylingComponentMetadata,
   type StylingDocsMetadata,
   type StylingLocalStylesMetadata,
@@ -656,18 +658,25 @@ export const buildFrameworkAvailability = (
   overrides: Partial<Record<StyledFrameworkTarget, FrameworkAvailability>> = {},
 ) => {
   const supportedFrameworks = new Set<ContractFrameworkTarget>(
-    contract.frameworks ?? FRAMEWORK_TARGETS,
+    contract.frameworks ?? publicFrameworks.map(({ target }) => target),
   );
 
   return Object.fromEntries(
-    FRAMEWORK_TARGETS.map((framework) => [
+    publicFrameworks.map(({ target: framework }) => [
       framework,
       {
         status: supportedFrameworks.has(framework) ? "available" : "not-yet-ported",
-        ...overrides[framework],
+        ...(framework === "vue"
+          ? supportedFrameworks.has(framework)
+            ? {}
+            : {
+                status: "unsupported",
+                reason: "This component requires its native framework integration.",
+              }
+          : overrides[framework]),
       },
     ]),
-  ) as Record<StyledFrameworkTarget, FrameworkAvailability>;
+  ) as Record<PublicFrameworkTarget, FrameworkAvailability>;
 };
 
 export const collectPrimitiveIds = (contract: StyledAdapterContract): string[] => {

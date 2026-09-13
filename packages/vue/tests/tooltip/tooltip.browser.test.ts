@@ -28,6 +28,176 @@ afterEach(() => {
 });
 
 describe("Vue Tooltip browser contract", () => {
+  it.each([false, true])(
+    "applies a newer parent %s command during nextTick recreation",
+    async (command) => {
+      const state = reactive({ open: !command, delay: 0 });
+      const changes: boolean[] = [];
+      mountRender(() =>
+        tree({
+          open: state.open,
+          openDelay: state.delay,
+          onOpenChange: (open: boolean) => changes.push(open),
+        }),
+      );
+      await wait(40);
+      expect(popup().hidden).toBe(command);
+      state.delay = 20;
+      void nextTick(() => {
+        state.open = command;
+      });
+      await wait(40);
+      expect(popup().hidden).toBe(!command);
+      expect(changes).toEqual([]);
+    },
+  );
+
+  for (const controlled of [false, true]) {
+    it(`retains accepted second-trigger geometry during recreation (${controlled ? "controlled" : "uncontrolled"})`, async () => {
+      const state = reactive({
+        open: false,
+        delay: 0,
+        cancel: false,
+        revision: 0,
+        showSecond: true,
+        foreign: false,
+        callback: 0,
+      });
+      const changes: boolean[] = [];
+      const host = mountRender(() =>
+        h(
+          TooltipRoot,
+          {
+            ...(controlled ? { open: state.open } : {}),
+            openDelay: state.delay,
+            closeDelay: 0,
+            onOpenChange: ((_revision: number) => (open: boolean, detail: { cancel(): void }) => {
+              changes.push(open);
+              if (state.cancel) detail.cancel();
+            })(state.callback),
+            "onUpdate:open": (open: boolean) => {
+              if (controlled) state.open = open;
+            },
+          },
+          {
+            default: () => [
+              ...["a", ...(state.showSecond ? ["b"] : [])].map((id, index) =>
+                h("div", { "data-sw-tooltip": id === "b" && state.foreign ? "" : undefined }, [
+                  h(
+                    TooltipTrigger,
+                    { asChild: true },
+                    {
+                      default: () =>
+                        h(
+                          "button",
+                          {
+                            key: id === "a" ? state.revision : 0,
+                            "data-anchor": id,
+                            ref: ((_revision: number) => (_node: unknown) => {})(state.callback),
+                            style: `position:fixed;left:${100 + index * 300}px;top:100px;width:60px;height:30px`,
+                          },
+                          id,
+                        ),
+                    },
+                  ),
+                ]),
+              ),
+              h(TooltipPortal, null, {
+                default: () =>
+                  h(
+                    TooltipPositioner,
+                    { side: "bottom", align: "start", avoidCollisions: false },
+                    {
+                      default: () =>
+                        h(
+                          TooltipPopup,
+                          { style: "width:80px;height:30px" },
+                          { default: () => "Details" },
+                        ),
+                    },
+                  ),
+              }),
+            ],
+          },
+        ),
+      );
+      const [a, b] = [...host.querySelectorAll<HTMLElement>("[data-anchor]")];
+      const at = (anchor: HTMLElement) =>
+        expect(
+          Math.abs(popup().getBoundingClientRect().left - anchor.getBoundingClientRect().left),
+        ).toBeLessThan(2);
+      pointer(a!, "pointerenter");
+      await wait(40);
+      at(a!);
+      pointer(b!, "pointerenter");
+      await wait(40);
+      at(b!);
+      const count = changes.length;
+      state.delay = 1;
+      await wait(40);
+      at(b!);
+      expect(changes).toHaveLength(count);
+      state.revision++;
+      await wait(40);
+      at(b!);
+      expect(changes).toHaveLength(count);
+      const currentA = host.querySelector<HTMLElement>('[data-anchor="a"]')!;
+      pointer(b!, "pointerleave");
+      await wait(40);
+      pointer(currentA, "pointerenter");
+      await wait(40);
+      at(currentA);
+      state.cancel = true;
+      pointer(b!, "pointerenter");
+      await wait(40);
+      state.delay = 2;
+      await wait(40);
+      at(currentA);
+      state.cancel = false;
+      host
+        .querySelector("[data-sw-tooltip]")!
+        .addEventListener("starwind:open-change", (event) => event.preventDefault(), {
+          once: true,
+        });
+      pointer(b!, "pointerenter");
+      await wait(40);
+      state.delay = 5;
+      await wait(40);
+      at(currentA);
+      pointer(b!, "pointerenter");
+      await wait(40);
+      at(b!);
+      state.foreign = true;
+      state.delay = 3;
+      await wait(40);
+      at(currentA);
+      state.showSecond = false;
+      state.delay = 4;
+      await wait(40);
+      at(currentA);
+      pointer(currentA, "pointerleave");
+      await wait(40);
+      state.delay = 120;
+      await wait(40);
+      pointer(currentA, "pointerenter");
+      await wait(25);
+      expect(popup().hidden).toBe(true);
+      const timerCount = changes.length;
+      state.callback++;
+      await wait(130);
+      at(currentA);
+      expect(changes).toHaveLength(timerCount + 1);
+      if (controlled) {
+        state.delay = 3;
+        void nextTick(() => {
+          state.open = false;
+        });
+        await wait(40);
+        expect(popup().hidden).toBe(true);
+      }
+    });
+  }
+
   it("preserves a declared false Boolean prop on a component-rooted trigger", async () => {
     const host = mount(
       tree(

@@ -40,6 +40,7 @@ const PRIMITIVE_GENERATOR_OWNED_USAGE_HEADINGS = new Set([
 const PRIMITIVE_AUTHORED_EXAMPLE_MANIFEST_FRAMEWORK_TARGETS = {
   astro: { framework: "astro", language: "astro" },
   react: { framework: "react", language: "tsx" },
+  vue: { framework: "vue", language: "vue" },
   html: { framework: "raw-html", language: "html" },
 } as const satisfies Readonly<
   Record<string, Pick<PrimitiveDocsAuthoredExampleFrameworkMetadata, "framework" | "language">>

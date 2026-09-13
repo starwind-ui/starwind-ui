@@ -1,3 +1,4 @@
+import { verifyAstroTimedOverlayReinit } from "./astro/timed-overlay-reinit.mjs";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -124,6 +125,7 @@ try {
     throw new Error(messages.join("\n"));
   }
 
+  await verifyAstroTimedOverlayReinit({ page, baseUrl });
   await verifyAstroCarouselClientRouterCase({ page, baseUrl });
   await page.goto(url, {
     waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",

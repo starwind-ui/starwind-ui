@@ -1,0 +1,4945 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "excludedWarmupsPerProviderWorkload": 1,
+    "measuredFreshContextsPerProviderWorkload": 5,
+    "unit": "milliseconds",
+    "aggregation": "Average valuesMs within each context, then average the five context means equally.",
+    "boundary": "Checked DOM completion; excludes paint. Mount starts after module loading."
+  },
+  "captures": [
+    {
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "sourceRevision": "1cd7f81c4c4ac9fe20ace6867e9d366213a6fd09",
+      "sourceInventorySha256": "7410f1ea08c33039ab294502aa7ceee0228c4515c90a7647e25d026637ba3070",
+      "environment": {
+        "recordedAt": "2026-09-13T14:04:56.753Z",
+        "browser": "151.0.7922.34",
+        "node": "v24.20.0",
+        "pnpm": "11.8.0",
+        "os": {
+          "platform": "darwin",
+          "release": "25.6.0",
+          "arch": "arm64"
+        },
+        "cpu": "Apple M5 Pro",
+        "logicalCpus": 18,
+        "memoryBytes": 51539607552,
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "deviceScaleFactor": 1,
+        "actualDeviceScaleFactor": 1,
+        "cpuThrottleRate": 1,
+        "cpuLabel": "native",
+        "headed": true,
+        "activePages": 1,
+        "powerState": "unknown",
+        "displayRefreshRateHz": "unknown"
+      },
+      "versions": {
+        "@ark-ui/react": "5.39.1",
+        "@base-ui/react": "1.8.0",
+        "react": "19.3.0",
+        "react-dom": "19.3.0"
+      }
+    },
+    {
+      "runId": "2026-09-13T16-27-26.895Z-stress-053eed5a",
+      "sourceRevision": "16f3daa488a62f6dcda3d5318f2243de21e809d9",
+      "sourceInventorySha256": "e93458a748b7b67df215b77d4307b1dde081082b174b483ea7c702c68178e58a",
+      "environment": {
+        "recordedAt": "2026-09-13T16:27:45.743Z",
+        "browser": "151.0.7922.34",
+        "node": "v24.20.0",
+        "pnpm": "11.8.0",
+        "os": {
+          "platform": "darwin",
+          "release": "25.6.0",
+          "arch": "arm64"
+        },
+        "cpu": "Apple M5 Pro",
+        "logicalCpus": 18,
+        "memoryBytes": 51539607552,
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "actualDeviceScaleFactor": null,
+        "cpuThrottleRate": 1,
+        "cpuLabel": null,
+        "headed": null,
+        "activePages": null,
+        "powerState": "unknown",
+        "displayRefreshRateHz": "unknown"
+      },
+      "versions": {
+        "@ark-ui/react": "5.39.1",
+        "@base-ui/react": "1.8.0",
+        "react": "19.3.0",
+        "react-dom": "19.3.0"
+      }
+    },
+    {
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "sourceRevision": "a22dd7d20834ff88ae48e1e0432806be41348fa9",
+      "sourceInventorySha256": "014d04a8f12197b81997781276a46d0927c5eaf20022f112d2e4a19db03647ab",
+      "environment": {
+        "recordedAt": "2026-09-13T16:49:40.266Z",
+        "browser": "151.0.7922.34",
+        "node": "v24.20.0",
+        "pnpm": "11.8.0",
+        "os": {
+          "platform": "darwin",
+          "release": "25.6.0",
+          "arch": "arm64"
+        },
+        "cpu": "Apple M5 Pro",
+        "logicalCpus": 18,
+        "memoryBytes": 51539607552,
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "actualDeviceScaleFactor": null,
+        "cpuThrottleRate": 1,
+        "cpuLabel": null,
+        "headed": null,
+        "activePages": null,
+        "powerState": "unknown",
+        "displayRefreshRateHz": "unknown"
+      },
+      "versions": {
+        "@ark-ui/react": "5.39.1",
+        "@base-ui/react": "1.8.0",
+        "react": "19.3.0",
+        "react-dom": "19.3.0"
+      }
+    }
+  ],
+  "rows": [
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Menu",
+      "action": "Mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 15.080000042915344,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/starwind",
+              "valuesMs": [
+                22.300000071525574
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/starwind",
+              "valuesMs": [
+                20.100000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/starwind",
+              "valuesMs": [
+                5.200000047683716
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/starwind",
+              "valuesMs": [
+                22.100000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/starwind",
+              "valuesMs": [
+                5.700000047683716
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 22.119999980926515,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/base-ui",
+              "valuesMs": [
+                7.900000095367432
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/base-ui",
+              "valuesMs": [
+                28.199999928474426
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/base-ui",
+              "valuesMs": [
+                25.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/base-ui",
+              "valuesMs": [
+                25.59999990463257
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/base-ui",
+              "valuesMs": [
+                23.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 18.75999994277954,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/ark-ui",
+              "valuesMs": [
+                27.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/ark-ui",
+              "valuesMs": [
+                21.899999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/ark-ui",
+              "valuesMs": [
+                8.099999904632568
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/ark-ui",
+              "valuesMs": [
+                28.799999952316284
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/ark-ui",
+              "valuesMs": [
+                7.599999904632568
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select",
+      "action": "Mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 15.120000004768372,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/starwind",
+              "valuesMs": [
+                21.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/starwind",
+              "valuesMs": [
+                4.900000095367432
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/starwind",
+              "valuesMs": [
+                22.199999928474426
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/starwind",
+              "valuesMs": [
+                5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/starwind",
+              "valuesMs": [
+                22
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 15.640000009536744,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/base-ui",
+              "valuesMs": [
+                24.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/base-ui",
+              "valuesMs": [
+                7.800000071525574
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/base-ui",
+              "valuesMs": [
+                29.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/base-ui",
+              "valuesMs": [
+                7.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/base-ui",
+              "valuesMs": [
+                8
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 31.859999966621398,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/ark-ui",
+              "valuesMs": [
+                31.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/ark-ui",
+              "valuesMs": [
+                31.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/ark-ui",
+              "valuesMs": [
+                31.699999928474426
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/ark-ui",
+              "valuesMs": [
+                31.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/ark-ui",
+              "valuesMs": [
+                32.39999997615814
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Combobox",
+      "action": "Mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 11.599999976158141,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/starwind",
+              "valuesMs": [
+                19.200000047683716
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/starwind",
+              "valuesMs": [
+                5.099999904632568
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/starwind",
+              "valuesMs": [
+                5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/starwind",
+              "valuesMs": [
+                5.199999928474426
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/starwind",
+              "valuesMs": [
+                23.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 31.420000004768372,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/base-ui",
+              "valuesMs": [
+                32.200000047683716
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/base-ui",
+              "valuesMs": [
+                31.600000023841858
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/base-ui",
+              "valuesMs": [
+                31.699999928474426
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/base-ui",
+              "valuesMs": [
+                29.5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/base-ui",
+              "valuesMs": [
+                32.10000002384186
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 33.42000000476837,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/ark-ui",
+              "valuesMs": [
+                32.60000002384186
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/ark-ui",
+              "valuesMs": [
+                32.800000071525574
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/ark-ui",
+              "valuesMs": [
+                34.5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/ark-ui",
+              "valuesMs": [
+                34.39999997615814
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/ark-ui",
+              "valuesMs": [
+                32.799999952316284
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Submenu",
+      "action": "Mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 12.2,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/starwind",
+              "valuesMs": [
+                5.899999976158142
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/starwind",
+              "valuesMs": [
+                5.700000047683716
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/starwind",
+              "valuesMs": [
+                5.899999976158142
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/starwind",
+              "valuesMs": [
+                23
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/starwind",
+              "valuesMs": [
+                20.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 17.759999990463257,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/base-ui",
+              "valuesMs": [
+                8
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/base-ui",
+              "valuesMs": [
+                27.399999976158142
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/base-ui",
+              "valuesMs": [
+                23.600000023841858
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/base-ui",
+              "valuesMs": [
+                21.899999976158142
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/base-ui",
+              "valuesMs": [
+                7.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 23.439999985694886,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/ark-ui",
+              "valuesMs": [
+                8
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/ark-ui",
+              "valuesMs": [
+                28.799999952316284
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/ark-ui",
+              "valuesMs": [
+                23.59999990463257
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/ark-ui",
+              "valuesMs": [
+                28.800000071525574
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/ark-ui",
+              "valuesMs": [
+                28
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (1 control)",
+      "action": "Mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 19.67999997138977,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/starwind",
+              "valuesMs": [
+                26.59999990463257
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/starwind",
+              "valuesMs": [
+                27.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/starwind",
+              "valuesMs": [
+                28.299999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/starwind",
+              "valuesMs": [
+                8.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/starwind",
+              "valuesMs": [
+                7.799999952316284
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 7.759999966621399,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/base-ui",
+              "valuesMs": [
+                7.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/base-ui",
+              "valuesMs": [
+                7.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/base-ui",
+              "valuesMs": [
+                7.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/base-ui",
+              "valuesMs": [
+                7.699999928474426
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/base-ui",
+              "valuesMs": [
+                7.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 21.319999980926514,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/ark-ui",
+              "valuesMs": [
+                8.800000071525574
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/ark-ui",
+              "valuesMs": [
+                27.699999928474426
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/ark-ui",
+              "valuesMs": [
+                9
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/ark-ui",
+              "valuesMs": [
+                31.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/ark-ui",
+              "valuesMs": [
+                29.199999928474426
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (20 controls)",
+      "action": "Mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 34.57999999523163,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/starwind",
+              "valuesMs": [
+                32.89999997615814
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/starwind",
+              "valuesMs": [
+                34.199999928474426
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/starwind",
+              "valuesMs": [
+                35.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/starwind",
+              "valuesMs": [
+                35.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/starwind",
+              "valuesMs": [
+                34.800000071525574
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 33.860000014305115,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/base-ui",
+              "valuesMs": [
+                32.89999997615814
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/base-ui",
+              "valuesMs": [
+                34
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/base-ui",
+              "valuesMs": [
+                32.200000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/base-ui",
+              "valuesMs": [
+                34.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/base-ui",
+              "valuesMs": [
+                35.40000009536743
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 40.659999990463255,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/ark-ui",
+              "valuesMs": [
+                40.89999997615814
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/ark-ui",
+              "valuesMs": [
+                39.09999990463257
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/ark-ui",
+              "valuesMs": [
+                41
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/ark-ui",
+              "valuesMs": [
+                41.10000002384186
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/ark-ui",
+              "valuesMs": [
+                41.200000047683716
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Menu",
+      "action": "Open",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.7199999570846558,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/starwind",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/starwind",
+              "valuesMs": [
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/starwind",
+              "valuesMs": [
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/starwind",
+              "valuesMs": [
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/starwind",
+              "valuesMs": [
+                1.7999999523162842
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 14.699999976158143,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/base-ui",
+              "valuesMs": [
+                14.300000071525574
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/base-ui",
+              "valuesMs": [
+                14.599999904632568
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/base-ui",
+              "valuesMs": [
+                15.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/base-ui",
+              "valuesMs": [
+                14.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/base-ui",
+              "valuesMs": [
+                14.799999952316284
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 6.059999990463257,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/ark-ui",
+              "valuesMs": [
+                6.600000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/ark-ui",
+              "valuesMs": [
+                7
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/ark-ui",
+              "valuesMs": [
+                6.199999928474426
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/ark-ui",
+              "valuesMs": [
+                5.299999952316284
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/ark-ui",
+              "valuesMs": [
+                5.200000047683716
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Menu",
+      "action": "Choose item",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 3.859999990463257,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/starwind",
+              "valuesMs": [
+                4.200000047683716
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/starwind",
+              "valuesMs": [
+                3.5
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/starwind",
+              "valuesMs": [
+                3.600000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/starwind",
+              "valuesMs": [
+                3.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/starwind",
+              "valuesMs": [
+                4.299999952316284
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 8.680000019073486,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/base-ui",
+              "valuesMs": [
+                9.200000047683716
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/base-ui",
+              "valuesMs": [
+                7.299999952316284
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/base-ui",
+              "valuesMs": [
+                8.800000071525574
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/base-ui",
+              "valuesMs": [
+                8.799999952316284
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/base-ui",
+              "valuesMs": [
+                9.300000071525574
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 5.059999990463257,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/ark-ui",
+              "valuesMs": [
+                5
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/ark-ui",
+              "valuesMs": [
+                4.599999904632568
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/ark-ui",
+              "valuesMs": [
+                5
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/ark-ui",
+              "valuesMs": [
+                5.100000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/ark-ui",
+              "valuesMs": [
+                5.600000023841858
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Menu",
+      "action": "Reopen",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.2800000190734864,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/starwind",
+              "valuesMs": [
+                1.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/starwind",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/starwind",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/starwind",
+              "valuesMs": [
+                1.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/starwind",
+              "valuesMs": [
+                1.4000000953674316
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 14.579999995231628,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/base-ui",
+              "valuesMs": [
+                14.700000047683716
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/base-ui",
+              "valuesMs": [
+                17.899999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/base-ui",
+              "valuesMs": [
+                13.5
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/base-ui",
+              "valuesMs": [
+                12.899999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/base-ui",
+              "valuesMs": [
+                13.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 4.3199999809265135,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/ark-ui",
+              "valuesMs": [
+                3.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/ark-ui",
+              "valuesMs": [
+                3.600000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/ark-ui",
+              "valuesMs": [
+                3.5999999046325684
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/ark-ui",
+              "valuesMs": [
+                3.399999976158142
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/ark-ui",
+              "valuesMs": [
+                7.600000023841858
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Menu",
+      "action": "Close with Escape",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 0.6399999856948853,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/starwind",
+              "valuesMs": [
+                0.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/starwind",
+              "valuesMs": [
+                0.6000000238418579
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/starwind",
+              "valuesMs": [
+                0.5999999046325684
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/starwind",
+              "valuesMs": [
+                0.6000000238418579
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/starwind",
+              "valuesMs": [
+                0.7000000476837158
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 7.540000033378601,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/base-ui",
+              "valuesMs": [
+                5
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/base-ui",
+              "valuesMs": [
+                8.100000023841858
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/base-ui",
+              "valuesMs": [
+                7.900000095367432
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/base-ui",
+              "valuesMs": [
+                8.300000071525574
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/base-ui",
+              "valuesMs": [
+                8.399999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 1.0799999952316284,
+          "samples": [
+            {
+              "sessionId": "menu-20/measured-1/ark-ui",
+              "valuesMs": [
+                1.2000000476837158
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-2/ark-ui",
+              "valuesMs": [
+                0.7999999523162842
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-3/ark-ui",
+              "valuesMs": [
+                1
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-4/ark-ui",
+              "valuesMs": [
+                1
+              ]
+            },
+            {
+              "sessionId": "menu-20/measured-5/ark-ui",
+              "valuesMs": [
+                1.399999976158142
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select",
+      "action": "Open",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 7.939999985694885,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/starwind",
+              "valuesMs": [
+                7.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/starwind",
+              "valuesMs": [
+                7.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/starwind",
+              "valuesMs": [
+                7.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/starwind",
+              "valuesMs": [
+                8.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/starwind",
+              "valuesMs": [
+                8
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 9.439999985694886,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/base-ui",
+              "valuesMs": [
+                8.299999952316284
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/base-ui",
+              "valuesMs": [
+                8.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/base-ui",
+              "valuesMs": [
+                14
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/base-ui",
+              "valuesMs": [
+                8.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/base-ui",
+              "valuesMs": [
+                8.299999952316284
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 5.539999985694886,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/ark-ui",
+              "valuesMs": [
+                5.399999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/ark-ui",
+              "valuesMs": [
+                5.599999904632568
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/ark-ui",
+              "valuesMs": [
+                5.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/ark-ui",
+              "valuesMs": [
+                5.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/ark-ui",
+              "valuesMs": [
+                5.600000023841858
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select",
+      "action": "Move highlight (per key)",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 0.45,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/starwind",
+              "valuesMs": [
+                0.5,
+                0.6000000238418579
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/starwind",
+              "valuesMs": [
+                0.5,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/starwind",
+              "valuesMs": [
+                0.5,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.30000007152557373
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 1.2333333253860475,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/base-ui",
+              "valuesMs": [
+                1.100000023841858,
+                1.100000023841858,
+                1.5999999046325684
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/base-ui",
+              "valuesMs": [
+                1.100000023841858,
+                1,
+                1.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/base-ui",
+              "valuesMs": [
+                0.8999999761581421,
+                1,
+                2.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/base-ui",
+              "valuesMs": [
+                1,
+                0.8999999761581421,
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/base-ui",
+              "valuesMs": [
+                1,
+                1,
+                1.399999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 1.45,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/ark-ui",
+              "valuesMs": [
+                1.4000000953674316,
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/ark-ui",
+              "valuesMs": [
+                1.2999999523162842,
+                1.5999999046325684
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/ark-ui",
+              "valuesMs": [
+                1.2999999523162842,
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/ark-ui",
+              "valuesMs": [
+                1.2999999523162842,
+                1.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/ark-ui",
+              "valuesMs": [
+                1.2000000476837158,
+                1.4000000953674316
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select",
+      "action": "Choose item",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 2.800000023841858,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/starwind",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/starwind",
+              "valuesMs": [
+                2.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/starwind",
+              "valuesMs": [
+                2.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/starwind",
+              "valuesMs": [
+                2.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/starwind",
+              "valuesMs": [
+                2.799999952316284
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 9.240000009536743,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/base-ui",
+              "valuesMs": [
+                9
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/base-ui",
+              "valuesMs": [
+                9.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/base-ui",
+              "valuesMs": [
+                10.399999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/base-ui",
+              "valuesMs": [
+                8.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/base-ui",
+              "valuesMs": [
+                9.200000047683716
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 2.0799999952316286,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/ark-ui",
+              "valuesMs": [
+                2.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/ark-ui",
+              "valuesMs": [
+                2
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/ark-ui",
+              "valuesMs": [
+                1.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/ark-ui",
+              "valuesMs": [
+                2.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/ark-ui",
+              "valuesMs": [
+                2.299999952316284
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select",
+      "action": "Submit form",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.0400000095367432,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/starwind",
+              "valuesMs": [
+                1
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/starwind",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/starwind",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/starwind",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/starwind",
+              "valuesMs": [
+                0.8999999761581421
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 2.460000014305115,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/base-ui",
+              "valuesMs": [
+                2.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/base-ui",
+              "valuesMs": [
+                2.3000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/base-ui",
+              "valuesMs": [
+                2.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/base-ui",
+              "valuesMs": [
+                2.5
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/base-ui",
+              "valuesMs": [
+                2.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 2.7,
+          "samples": [
+            {
+              "sessionId": "select-100/measured-1/ark-ui",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-2/ark-ui",
+              "valuesMs": [
+                2.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-3/ark-ui",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-4/ark-ui",
+              "valuesMs": [
+                2.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-100/measured-5/ark-ui",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Combobox",
+      "action": "Filter results (per character)",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 5.711428574153355,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/starwind",
+              "valuesMs": [
+                6.399999976158142,
+                3.700000047683716,
+                3.799999952316284,
+                5.700000047683716,
+                5.399999976158142,
+                8,
+                7.399999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/starwind",
+              "valuesMs": [
+                6.5,
+                3.399999976158142,
+                3.700000047683716,
+                5.600000023841858,
+                5.899999976158142,
+                7.899999976158142,
+                6.899999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/starwind",
+              "valuesMs": [
+                6.600000023841858,
+                3.5999999046325684,
+                3.5999999046325684,
+                5.5,
+                5.100000023841858,
+                7.799999952316284,
+                7.399999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/starwind",
+              "valuesMs": [
+                6.399999976158142,
+                3.600000023841858,
+                3.700000047683716,
+                5.799999952316284,
+                5.400000095367432,
+                8.200000047683716,
+                7.299999952316284
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/starwind",
+              "valuesMs": [
+                6.400000095367432,
+                3.600000023841858,
+                3.600000023841858,
+                5.299999952316284,
+                5.300000071525574,
+                8.100000023841858,
+                7.300000071525574
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 6.360000010899135,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/base-ui",
+              "valuesMs": [
+                16.300000071525574,
+                2.899999976158142,
+                2.799999952316284,
+                4.200000047683716,
+                4.100000023841858,
+                10.100000023841858,
+                4.600000023841858
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/base-ui",
+              "valuesMs": [
+                16.199999928474426,
+                2.5,
+                2.700000047683716,
+                4.100000023841858,
+                4.399999976158142,
+                9.799999952316284,
+                4.199999928474426
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/base-ui",
+              "valuesMs": [
+                16.300000071525574,
+                2.700000047683716,
+                2.600000023841858,
+                4.699999928474426,
+                4.100000023841858,
+                9.699999928474426,
+                4.300000071525574
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/base-ui",
+              "valuesMs": [
+                16.40000009536743,
+                2.700000047683716,
+                2.700000047683716,
+                4,
+                3.799999952316284,
+                9.600000023841858,
+                4.600000023841858
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/base-ui",
+              "valuesMs": [
+                16.700000047683716,
+                2.600000023841858,
+                2.600000023841858,
+                4.299999952316284,
+                4.200000047683716,
+                9.800000071525574,
+                5.299999952316284
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 6.660000007493156,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/ark-ui",
+              "valuesMs": [
+                4.899999976158142,
+                5,
+                6.700000047683716,
+                10.300000071525574,
+                8.899999976158142,
+                7.299999952316284,
+                3.399999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/ark-ui",
+              "valuesMs": [
+                4.900000095367432,
+                5.100000023841858,
+                6.200000047683716,
+                10.400000095367432,
+                9.100000023841858,
+                7.699999928474426,
+                3.299999952316284
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/ark-ui",
+              "valuesMs": [
+                5.100000023841858,
+                4.799999952316284,
+                6.300000071525574,
+                10.800000071525574,
+                8.899999976158142,
+                7.700000047683716,
+                3.5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/ark-ui",
+              "valuesMs": [
+                4.899999976158142,
+                5,
+                6,
+                11,
+                9.199999928474426,
+                7.5,
+                3
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/ark-ui",
+              "valuesMs": [
+                4.899999976158142,
+                4.900000095367432,
+                6.399999976158142,
+                10.299999952316284,
+                9.299999952316284,
+                7.300000071525574,
+                3.100000023841858
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Combobox",
+      "action": "Move highlight (per key)",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 0.31999999682108565,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/starwind",
+              "valuesMs": [
+                0.20000004768371582,
+                0.2999999523162842,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/starwind",
+              "valuesMs": [
+                0.2999999523162842,
+                0.30000007152557373,
+                0.5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/starwind",
+              "valuesMs": [
+                0.19999992847442627,
+                0.10000002384185791,
+                0.5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/starwind",
+              "valuesMs": [
+                0.19999992847442627,
+                0.19999992847442627,
+                0.5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/starwind",
+              "valuesMs": [
+                0.30000007152557373,
+                0.30000007152557373,
+                0.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 1.2933333237965903,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/base-ui",
+              "valuesMs": [
+                1,
+                1,
+                2.0999999046325684
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/base-ui",
+              "valuesMs": [
+                1.100000023841858,
+                1,
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/base-ui",
+              "valuesMs": [
+                1,
+                1.0999999046325684,
+                1.899999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/base-ui",
+              "valuesMs": [
+                0.8999999761581421,
+                1,
+                2.100000023841858
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/base-ui",
+              "valuesMs": [
+                0.8999999761581421,
+                0.8999999761581421,
+                1.7000000476837158
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 1.1600000063578286,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/ark-ui",
+              "valuesMs": [
+                0.7000000476837158,
+                0.8000000715255737,
+                1.600000023841858
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/ark-ui",
+              "valuesMs": [
+                0.8000000715255737,
+                1,
+                2.1999999284744263
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/ark-ui",
+              "valuesMs": [
+                0.8999999761581421,
+                1.100000023841858,
+                1.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/ark-ui",
+              "valuesMs": [
+                0.8000000715255737,
+                0.8999999761581421,
+                1.5
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/ark-ui",
+              "valuesMs": [
+                0.7999999523162842,
+                0.8999999761581421,
+                1.5999999046325684
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Combobox",
+      "action": "Choose item",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 9.819999980926514,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/starwind",
+              "valuesMs": [
+                9.199999928474426
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/starwind",
+              "valuesMs": [
+                10.299999952316284
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/starwind",
+              "valuesMs": [
+                9.899999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/starwind",
+              "valuesMs": [
+                9.800000071525574
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/starwind",
+              "valuesMs": [
+                9.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 4.12000002861023,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/base-ui",
+              "valuesMs": [
+                4.300000071525574
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/base-ui",
+              "valuesMs": [
+                4
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/base-ui",
+              "valuesMs": [
+                4.200000047683716
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/base-ui",
+              "valuesMs": [
+                4.200000047683716
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/base-ui",
+              "valuesMs": [
+                3.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 2.299999976158142,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/ark-ui",
+              "valuesMs": [
+                2.299999952316284
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/ark-ui",
+              "valuesMs": [
+                2.200000047683716
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/ark-ui",
+              "valuesMs": [
+                2.299999952316284
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/ark-ui",
+              "valuesMs": [
+                2.299999952316284
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/ark-ui",
+              "valuesMs": [
+                2.399999976158142
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Combobox",
+      "action": "Submit form",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.2199999809265136,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/starwind",
+              "valuesMs": [
+                1.1999999284744263
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/starwind",
+              "valuesMs": [
+                1.2000000476837158
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/starwind",
+              "valuesMs": [
+                1.2000000476837158
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/starwind",
+              "valuesMs": [
+                1.2999999523162842
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/starwind",
+              "valuesMs": [
+                1.1999999284744263
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 1.2200000047683717,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/base-ui",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/base-ui",
+              "valuesMs": [
+                1.2000000476837158
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/base-ui",
+              "valuesMs": [
+                1.2999999523162842
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/base-ui",
+              "valuesMs": [
+                1.3000000715255737
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/base-ui",
+              "valuesMs": [
+                1.1999999284744263
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 1.4999999761581422,
+          "samples": [
+            {
+              "sessionId": "combobox-500/measured-1/ark-ui",
+              "valuesMs": [
+                1.399999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-2/ark-ui",
+              "valuesMs": [
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-3/ark-ui",
+              "valuesMs": [
+                1.600000023841858
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-4/ark-ui",
+              "valuesMs": [
+                1.399999976158142
+              ]
+            },
+            {
+              "sessionId": "combobox-500/measured-5/ark-ui",
+              "valuesMs": [
+                1.399999976158142
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Submenu",
+      "action": "Open parent menu",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.9,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/starwind",
+              "valuesMs": [
+                1.899999976158142
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/starwind",
+              "valuesMs": [
+                2
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/starwind",
+              "valuesMs": [
+                1.9000000953674316
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/starwind",
+              "valuesMs": [
+                1.7999999523162842
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/starwind",
+              "valuesMs": [
+                1.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 14.12000002861023,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/base-ui",
+              "valuesMs": [
+                13.400000095367432
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/base-ui",
+              "valuesMs": [
+                14.700000047683716
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/base-ui",
+              "valuesMs": [
+                14.600000023841858
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/base-ui",
+              "valuesMs": [
+                13.799999952316284
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/base-ui",
+              "valuesMs": [
+                14.100000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 6.320000028610229,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/ark-ui",
+              "valuesMs": [
+                7
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/ark-ui",
+              "valuesMs": [
+                5.700000047683716
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/ark-ui",
+              "valuesMs": [
+                5.5
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/ark-ui",
+              "valuesMs": [
+                7.800000071525574
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/ark-ui",
+              "valuesMs": [
+                5.600000023841858
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Submenu",
+      "action": "Choose item",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 3.8799999952316284,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/starwind",
+              "valuesMs": [
+                4.100000023841858
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/starwind",
+              "valuesMs": [
+                4.299999952316284
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/starwind",
+              "valuesMs": [
+                3.1999999284744263
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/starwind",
+              "valuesMs": [
+                4.200000047683716
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/starwind",
+              "valuesMs": [
+                3.600000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 9.699999976158143,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/base-ui",
+              "valuesMs": [
+                9.5
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/base-ui",
+              "valuesMs": [
+                9.899999976158142
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/base-ui",
+              "valuesMs": [
+                9.699999928474426
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/base-ui",
+              "valuesMs": [
+                9.699999928474426
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/base-ui",
+              "valuesMs": [
+                9.700000047683716
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 5.620000004768372,
+          "samples": [
+            {
+              "sessionId": "submenu-8x8/measured-1/ark-ui",
+              "valuesMs": [
+                6
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-2/ark-ui",
+              "valuesMs": [
+                5.899999976158142
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-3/ark-ui",
+              "valuesMs": [
+                5.300000071525574
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-4/ark-ui",
+              "valuesMs": [
+                4.799999952316284
+              ]
+            },
+            {
+              "sessionId": "submenu-8x8/measured-5/ark-ui",
+              "valuesMs": [
+                6.100000023841858
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (1 control)",
+      "action": "Open",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 5.459999990463257,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/starwind",
+              "valuesMs": [
+                5.5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/starwind",
+              "valuesMs": [
+                5.5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/starwind",
+              "valuesMs": [
+                5.5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/starwind",
+              "valuesMs": [
+                5.399999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/starwind",
+              "valuesMs": [
+                5.399999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 9.459999990463256,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/base-ui",
+              "valuesMs": [
+                9.199999928474426
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/base-ui",
+              "valuesMs": [
+                9.200000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/base-ui",
+              "valuesMs": [
+                9.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/base-ui",
+              "valuesMs": [
+                9.299999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/base-ui",
+              "valuesMs": [
+                10
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 3.980000042915344,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/ark-ui",
+              "valuesMs": [
+                3.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/ark-ui",
+              "valuesMs": [
+                3.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/ark-ui",
+              "valuesMs": [
+                3.5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/ark-ui",
+              "valuesMs": [
+                3.9000000953674316
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/ark-ui",
+              "valuesMs": [
+                5.200000047683716
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (1 control)",
+      "action": "Close with Escape",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 0.9399999856948853,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/starwind",
+              "valuesMs": [
+                1
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/starwind",
+              "valuesMs": [
+                0.8999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/starwind",
+              "valuesMs": [
+                1
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/starwind",
+              "valuesMs": [
+                0.7999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/starwind",
+              "valuesMs": [
+                1
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 6.560000014305115,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/base-ui",
+              "valuesMs": [
+                7
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/base-ui",
+              "valuesMs": [
+                6
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/base-ui",
+              "valuesMs": [
+                8.200000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/base-ui",
+              "valuesMs": [
+                6.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/base-ui",
+              "valuesMs": [
+                5.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 3.4200000047683714,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/ark-ui",
+              "valuesMs": [
+                3
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/ark-ui",
+              "valuesMs": [
+                1.3000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/ark-ui",
+              "valuesMs": [
+                5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/ark-ui",
+              "valuesMs": [
+                4.5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/ark-ui",
+              "valuesMs": [
+                3.299999952316284
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (1 control)",
+      "action": "Reopen",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 5.600000023841858,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/starwind",
+              "valuesMs": [
+                6.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/starwind",
+              "valuesMs": [
+                8.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/starwind",
+              "valuesMs": [
+                2.3000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/starwind",
+              "valuesMs": [
+                7.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/starwind",
+              "valuesMs": [
+                2.600000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 10.940000009536742,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/base-ui",
+              "valuesMs": [
+                11.199999928474426
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/base-ui",
+              "valuesMs": [
+                12.200000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/base-ui",
+              "valuesMs": [
+                10.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/base-ui",
+              "valuesMs": [
+                10.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/base-ui",
+              "valuesMs": [
+                10.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 4.460000014305114,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/ark-ui",
+              "valuesMs": [
+                1.7999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/ark-ui",
+              "valuesMs": [
+                8.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/ark-ui",
+              "valuesMs": [
+                8.5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/ark-ui",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/ark-ui",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (1 control)",
+      "action": "Move highlight (per key)",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 0.39999998807907106,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.5
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/starwind",
+              "valuesMs": [
+                0.30000007152557373,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.3999999761581421
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 1.1733333269755044,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/base-ui",
+              "valuesMs": [
+                0.6000000238418579,
+                1,
+                2.200000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/base-ui",
+              "valuesMs": [
+                0.5999999046325684,
+                0.7999999523162842,
+                2
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/base-ui",
+              "valuesMs": [
+                0.6000000238418579,
+                1.100000023841858,
+                1.2999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/base-ui",
+              "valuesMs": [
+                0.7999999523162842,
+                1,
+                2.200000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/base-ui",
+              "valuesMs": [
+                0.6000000238418579,
+                0.8999999761581421,
+                1.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 0.8300000190734863,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/ark-ui",
+              "valuesMs": [
+                0.7000000476837158,
+                0.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/ark-ui",
+              "valuesMs": [
+                0.6000000238418579,
+                0.8999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/ark-ui",
+              "valuesMs": [
+                0.8000000715255737,
+                1
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/ark-ui",
+              "valuesMs": [
+                0.8000000715255737,
+                1
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/ark-ui",
+              "valuesMs": [
+                0.7000000476837158,
+                1.100000023841858
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (1 control)",
+      "action": "Choose item",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.7400000095367432,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/starwind",
+              "valuesMs": [
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/starwind",
+              "valuesMs": [
+                1.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/starwind",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/starwind",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/starwind",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 5.540000009536743,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/base-ui",
+              "valuesMs": [
+                5.399999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/base-ui",
+              "valuesMs": [
+                6.099999904632568
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/base-ui",
+              "valuesMs": [
+                4.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/base-ui",
+              "valuesMs": [
+                6.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/base-ui",
+              "valuesMs": [
+                5.400000095367432
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 1.3,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/ark-ui",
+              "valuesMs": [
+                1.2000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/ark-ui",
+              "valuesMs": [
+                1.399999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/ark-ui",
+              "valuesMs": [
+                1.2999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/ark-ui",
+              "valuesMs": [
+                1.2999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/ark-ui",
+              "valuesMs": [
+                1.3000000715255737
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (1 control)",
+      "action": "Submit form",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.0199999809265137,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/starwind",
+              "valuesMs": [
+                1
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/starwind",
+              "valuesMs": [
+                1.0999999046325684
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/starwind",
+              "valuesMs": [
+                1.0999999046325684
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/starwind",
+              "valuesMs": [
+                0.9000000953674316
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/starwind",
+              "valuesMs": [
+                1
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 1.7600000143051147,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/base-ui",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/base-ui",
+              "valuesMs": [
+                1.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/base-ui",
+              "valuesMs": [
+                1.7999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/base-ui",
+              "valuesMs": [
+                1.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/base-ui",
+              "valuesMs": [
+                1.6999999284744263
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 1.7800000190734864,
+          "samples": [
+            {
+              "sessionId": "select-page-1/measured-1/ark-ui",
+              "valuesMs": [
+                1.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-2/ark-ui",
+              "valuesMs": [
+                1.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-3/ark-ui",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-4/ark-ui",
+              "valuesMs": [
+                1.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-1/measured-5/ark-ui",
+              "valuesMs": [
+                1.899999976158142
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (20 controls)",
+      "action": "Open",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 5.520000004768372,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/starwind",
+              "valuesMs": [
+                5.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/starwind",
+              "valuesMs": [
+                5.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/starwind",
+              "valuesMs": [
+                5.399999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/starwind",
+              "valuesMs": [
+                5.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/starwind",
+              "valuesMs": [
+                5.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 13.060000014305114,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/base-ui",
+              "valuesMs": [
+                9.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/base-ui",
+              "valuesMs": [
+                16.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/base-ui",
+              "valuesMs": [
+                15.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/base-ui",
+              "valuesMs": [
+                14.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/base-ui",
+              "valuesMs": [
+                9
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 4.579999995231629,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/ark-ui",
+              "valuesMs": [
+                3
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/ark-ui",
+              "valuesMs": [
+                3.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/ark-ui",
+              "valuesMs": [
+                10.299999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/ark-ui",
+              "valuesMs": [
+                3
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/ark-ui",
+              "valuesMs": [
+                3
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (20 controls)",
+      "action": "Close with Escape",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.0400000095367432,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/starwind",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/starwind",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/starwind",
+              "valuesMs": [
+                1
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/starwind",
+              "valuesMs": [
+                1.0999999046325684
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/starwind",
+              "valuesMs": [
+                0.9000000953674316
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 5.8999999284744264,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/base-ui",
+              "valuesMs": [
+                5.099999904632568
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/base-ui",
+              "valuesMs": [
+                7.599999904632568
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/base-ui",
+              "valuesMs": [
+                7.699999928474426
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/base-ui",
+              "valuesMs": [
+                4.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/base-ui",
+              "valuesMs": [
+                4.199999928474426
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 3.019999957084656,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/ark-ui",
+              "valuesMs": [
+                3.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/ark-ui",
+              "valuesMs": [
+                1.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/ark-ui",
+              "valuesMs": [
+                2.5999999046325684
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/ark-ui",
+              "valuesMs": [
+                4.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/ark-ui",
+              "valuesMs": [
+                2.1999999284744263
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (20 controls)",
+      "action": "Reopen",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 2.699999976158142,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/starwind",
+              "valuesMs": [
+                2.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/starwind",
+              "valuesMs": [
+                2.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/starwind",
+              "valuesMs": [
+                2.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/starwind",
+              "valuesMs": [
+                2.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/starwind",
+              "valuesMs": [
+                2.6999999284744263
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 10.559999990463258,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/base-ui",
+              "valuesMs": [
+                10.399999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/base-ui",
+              "valuesMs": [
+                10.599999904632568
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/base-ui",
+              "valuesMs": [
+                11.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/base-ui",
+              "valuesMs": [
+                9.800000071525574
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/base-ui",
+              "valuesMs": [
+                10.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 1.8400000095367433,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/ark-ui",
+              "valuesMs": [
+                1.7999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/ark-ui",
+              "valuesMs": [
+                1.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/ark-ui",
+              "valuesMs": [
+                2
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/ark-ui",
+              "valuesMs": [
+                1.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/ark-ui",
+              "valuesMs": [
+                1.7999999523162842
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (20 controls)",
+      "action": "Move highlight (per key)",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 0.42000000476837157,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/starwind",
+              "valuesMs": [
+                0.3999999761581421,
+                0.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/starwind",
+              "valuesMs": [
+                0.5,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/starwind",
+              "valuesMs": [
+                0.30000007152557373,
+                0.3999999761581421
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/starwind",
+              "valuesMs": [
+                0.40000009536743164,
+                0.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 1.1933333237965902,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/base-ui",
+              "valuesMs": [
+                0.7000000476837158,
+                0.8999999761581421,
+                2
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/base-ui",
+              "valuesMs": [
+                0.6999999284744263,
+                0.8999999761581421,
+                1.7999999523162842
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/base-ui",
+              "valuesMs": [
+                0.6000000238418579,
+                1,
+                2.1999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/base-ui",
+              "valuesMs": [
+                0.7000000476837158,
+                1,
+                1.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/base-ui",
+              "valuesMs": [
+                0.5,
+                0.8999999761581421,
+                2.100000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 0.8100000262260437,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/ark-ui",
+              "valuesMs": [
+                0.6000000238418579,
+                1
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/ark-ui",
+              "valuesMs": [
+                0.8000000715255737,
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/ark-ui",
+              "valuesMs": [
+                0.7000000476837158,
+                0.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/ark-ui",
+              "valuesMs": [
+                0.6000000238418579,
+                0.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/ark-ui",
+              "valuesMs": [
+                0.7999999523162842,
+                0.8999999761581421
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (20 controls)",
+      "action": "Choose item",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 2.7,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/starwind",
+              "valuesMs": [
+                2.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/starwind",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/starwind",
+              "valuesMs": [
+                2.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/starwind",
+              "valuesMs": [
+                2.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/starwind",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 7.440000033378601,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/base-ui",
+              "valuesMs": [
+                7.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/base-ui",
+              "valuesMs": [
+                7.300000071525574
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/base-ui",
+              "valuesMs": [
+                7.5
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/base-ui",
+              "valuesMs": [
+                7.300000071525574
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/base-ui",
+              "valuesMs": [
+                7.5
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 6.979999995231628,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/ark-ui",
+              "valuesMs": [
+                7.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/ark-ui",
+              "valuesMs": [
+                6.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/ark-ui",
+              "valuesMs": [
+                7
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/ark-ui",
+              "valuesMs": [
+                6.899999976158142
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/ark-ui",
+              "valuesMs": [
+                7
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "native",
+      "runId": "2026-09-13T14-04-39.100Z-capture-15216c25",
+      "workload": "Select page (20 controls)",
+      "action": "Submit form",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.700000023841858,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/starwind",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/starwind",
+              "valuesMs": [
+                1.6999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/starwind",
+              "valuesMs": [
+                1.600000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/starwind",
+              "valuesMs": [
+                1.7000000476837158
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/starwind",
+              "valuesMs": [
+                1.8000000715255737
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 3.0599999904632567,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/base-ui",
+              "valuesMs": [
+                2.9000000953674316
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/base-ui",
+              "valuesMs": [
+                3.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/base-ui",
+              "valuesMs": [
+                3.1999999284744263
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/base-ui",
+              "valuesMs": [
+                3
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/base-ui",
+              "valuesMs": [
+                3.0999999046325684
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 5.880000019073487,
+          "samples": [
+            {
+              "sessionId": "select-page-20/measured-1/ark-ui",
+              "valuesMs": [
+                5.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-2/ark-ui",
+              "valuesMs": [
+                5.799999952316284
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-3/ark-ui",
+              "valuesMs": [
+                6.100000023841858
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-4/ark-ui",
+              "valuesMs": [
+                5.800000071525574
+              ]
+            },
+            {
+              "sessionId": "select-page-20/measured-5/ark-ui",
+              "valuesMs": [
+                5.900000095367432
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-27-26.895Z-stress-053eed5a",
+      "workload": "Dialog",
+      "action": "open",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 4.720000004768371,
+          "samples": [
+            {
+              "sessionId": "dialog/starwind/1",
+              "valuesMs": [
+                5
+              ]
+            },
+            {
+              "sessionId": "dialog/starwind/2",
+              "valuesMs": [
+                4.899999976158142
+              ]
+            },
+            {
+              "sessionId": "dialog/starwind/3",
+              "valuesMs": [
+                4.600000023841858
+              ]
+            },
+            {
+              "sessionId": "dialog/starwind/4",
+              "valuesMs": [
+                4.5
+              ]
+            },
+            {
+              "sessionId": "dialog/starwind/5",
+              "valuesMs": [
+                4.600000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 9.6,
+          "samples": [
+            {
+              "sessionId": "dialog/base-ui/1",
+              "valuesMs": [
+                9.899999976158142
+              ]
+            },
+            {
+              "sessionId": "dialog/base-ui/2",
+              "valuesMs": [
+                8.899999976158142
+              ]
+            },
+            {
+              "sessionId": "dialog/base-ui/3",
+              "valuesMs": [
+                9
+              ]
+            },
+            {
+              "sessionId": "dialog/base-ui/4",
+              "valuesMs": [
+                9
+              ]
+            },
+            {
+              "sessionId": "dialog/base-ui/5",
+              "valuesMs": [
+                11.200000047683716
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 11.819999980926514,
+          "samples": [
+            {
+              "sessionId": "dialog/ark-ui/1",
+              "valuesMs": [
+                12.5
+              ]
+            },
+            {
+              "sessionId": "dialog/ark-ui/2",
+              "valuesMs": [
+                11.899999976158142
+              ]
+            },
+            {
+              "sessionId": "dialog/ark-ui/3",
+              "valuesMs": [
+                11.799999952316284
+              ]
+            },
+            {
+              "sessionId": "dialog/ark-ui/4",
+              "valuesMs": [
+                11.600000023841858
+              ]
+            },
+            {
+              "sessionId": "dialog/ark-ui/5",
+              "valuesMs": [
+                11.299999952316284
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "workload": "Navigation Menu",
+      "action": "switch",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 2.6800000429153443,
+          "samples": [
+            {
+              "sessionId": "navigation-menu/starwind/1",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/starwind/2",
+              "valuesMs": [
+                2.700000047683716
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/starwind/3",
+              "valuesMs": [
+                2.600000023841858
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/starwind/4",
+              "valuesMs": [
+                2.8000000715255737
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/starwind/5",
+              "valuesMs": [
+                2.600000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 7.059999990463257,
+          "samples": [
+            {
+              "sessionId": "navigation-menu/base-ui/1",
+              "valuesMs": [
+                7.5
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/base-ui/2",
+              "valuesMs": [
+                7.100000023841858
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/base-ui/3",
+              "valuesMs": [
+                6.899999976158142
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/base-ui/4",
+              "valuesMs": [
+                6.799999952316284
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/base-ui/5",
+              "valuesMs": [
+                7
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 8.120000052452088,
+          "samples": [
+            {
+              "sessionId": "navigation-menu/ark-ui/1",
+              "valuesMs": [
+                6.899999976158142
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/ark-ui/2",
+              "valuesMs": [
+                7.700000047683716
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/ark-ui/3",
+              "valuesMs": [
+                9.300000071525574
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/ark-ui/4",
+              "valuesMs": [
+                7.300000071525574
+              ]
+            },
+            {
+              "sessionId": "navigation-menu/ark-ui/5",
+              "valuesMs": [
+                9.400000095367432
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "workload": "Tabs",
+      "action": "mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 44.619999980926515,
+          "samples": [
+            {
+              "sessionId": "tabs/starwind/1",
+              "valuesMs": [
+                45.89999997615814
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/2",
+              "valuesMs": [
+                44.09999990463257
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/3",
+              "valuesMs": [
+                46.39999997615814
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/4",
+              "valuesMs": [
+                44.5
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/5",
+              "valuesMs": [
+                42.200000047683716
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 71.65999999046326,
+          "samples": [
+            {
+              "sessionId": "tabs/base-ui/1",
+              "valuesMs": [
+                61.60000002384186
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/2",
+              "valuesMs": [
+                62.199999928474426
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/3",
+              "valuesMs": [
+                76.10000002384186
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/4",
+              "valuesMs": [
+                78.39999997615814
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/5",
+              "valuesMs": [
+                80
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 40.02000002861023,
+          "samples": [
+            {
+              "sessionId": "tabs/ark-ui/1",
+              "valuesMs": [
+                47.699999928474426
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/2",
+              "valuesMs": [
+                33.700000047683716
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/3",
+              "valuesMs": [
+                33.800000071525574
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/4",
+              "valuesMs": [
+                51.40000009536743
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/5",
+              "valuesMs": [
+                33.5
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "workload": "Tabs",
+      "action": "select-last",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 2.100000023841858,
+          "samples": [
+            {
+              "sessionId": "tabs/starwind/1",
+              "valuesMs": [
+                2
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/2",
+              "valuesMs": [
+                2.100000023841858
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/3",
+              "valuesMs": [
+                2
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/4",
+              "valuesMs": [
+                2.3000000715255737
+              ]
+            },
+            {
+              "sessionId": "tabs/starwind/5",
+              "valuesMs": [
+                2.100000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 28.580000019073488,
+          "samples": [
+            {
+              "sessionId": "tabs/base-ui/1",
+              "valuesMs": [
+                25
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/2",
+              "valuesMs": [
+                26.100000023841858
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/3",
+              "valuesMs": [
+                26.100000023841858
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/4",
+              "valuesMs": [
+                26.300000071525574
+              ]
+            },
+            {
+              "sessionId": "tabs/base-ui/5",
+              "valuesMs": [
+                39.39999997615814
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 36.95999999046326,
+          "samples": [
+            {
+              "sessionId": "tabs/ark-ui/1",
+              "valuesMs": [
+                36.89999997615814
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/2",
+              "valuesMs": [
+                36.700000047683716
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/3",
+              "valuesMs": [
+                36.60000002384186
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/4",
+              "valuesMs": [
+                36.89999997615814
+              ]
+            },
+            {
+              "sessionId": "tabs/ark-ui/5",
+              "valuesMs": [
+                37.699999928474426
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "workload": "Accordion",
+      "action": "mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 42.9,
+          "samples": [
+            {
+              "sessionId": "accordion/starwind/1",
+              "valuesMs": [
+                41.5
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/2",
+              "valuesMs": [
+                43.300000071525574
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/3",
+              "valuesMs": [
+                45.10000002384186
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/4",
+              "valuesMs": [
+                43
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/5",
+              "valuesMs": [
+                41.59999990463257
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 72.18000001907349,
+          "samples": [
+            {
+              "sessionId": "accordion/base-ui/1",
+              "valuesMs": [
+                77.70000004768372
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/2",
+              "valuesMs": [
+                80.69999992847443
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/3",
+              "valuesMs": [
+                61.40000009536743
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/4",
+              "valuesMs": [
+                77.5
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/5",
+              "valuesMs": [
+                63.60000002384186
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 48.78000001907348,
+          "samples": [
+            {
+              "sessionId": "accordion/ark-ui/1",
+              "valuesMs": [
+                55.10000002384186
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/2",
+              "valuesMs": [
+                38.10000002384186
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/3",
+              "valuesMs": [
+                56.10000002384186
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/4",
+              "valuesMs": [
+                55.39999997615814
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/5",
+              "valuesMs": [
+                39.200000047683716
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "workload": "Accordion",
+      "action": "expand-last",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 2.4799999952316285,
+          "samples": [
+            {
+              "sessionId": "accordion/starwind/1",
+              "valuesMs": [
+                2.5
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/2",
+              "valuesMs": [
+                2.5
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/3",
+              "valuesMs": [
+                2.399999976158142
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/4",
+              "valuesMs": [
+                2.399999976158142
+              ]
+            },
+            {
+              "sessionId": "accordion/starwind/5",
+              "valuesMs": [
+                2.600000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 18.480000019073486,
+          "samples": [
+            {
+              "sessionId": "accordion/base-ui/1",
+              "valuesMs": [
+                18.100000023841858
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/2",
+              "valuesMs": [
+                18.300000071525574
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/3",
+              "valuesMs": [
+                19.399999976158142
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/4",
+              "valuesMs": [
+                18.700000047683716
+              ]
+            },
+            {
+              "sessionId": "accordion/base-ui/5",
+              "valuesMs": [
+                17.899999976158142
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 21.4,
+          "samples": [
+            {
+              "sessionId": "accordion/ark-ui/1",
+              "valuesMs": [
+                21.699999928474426
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/2",
+              "valuesMs": [
+                21.5
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/3",
+              "valuesMs": [
+                21.200000047683716
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/4",
+              "valuesMs": [
+                21.200000047683716
+              ]
+            },
+            {
+              "sessionId": "accordion/ark-ui/5",
+              "valuesMs": [
+                21.399999976158142
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "workload": "Radio Group",
+      "action": "mount",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 62.42000002861023,
+          "samples": [
+            {
+              "sessionId": "radio-group/starwind/1",
+              "valuesMs": [
+                48.60000002384186
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/2",
+              "valuesMs": [
+                66.59999990463257
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/3",
+              "valuesMs": [
+                66.30000007152557
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/4",
+              "valuesMs": [
+                65.70000004768372
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/5",
+              "valuesMs": [
+                64.90000009536743
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 55.91999998092651,
+          "samples": [
+            {
+              "sessionId": "radio-group/base-ui/1",
+              "valuesMs": [
+                49.39999997615814
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/2",
+              "valuesMs": [
+                64.5
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/3",
+              "valuesMs": [
+                50.299999952316284
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/4",
+              "valuesMs": [
+                50.299999952316284
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/5",
+              "valuesMs": [
+                65.10000002384186
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 41.5,
+          "samples": [
+            {
+              "sessionId": "radio-group/ark-ui/1",
+              "valuesMs": [
+                45.800000071525574
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/2",
+              "valuesMs": [
+                43.60000002384186
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/3",
+              "valuesMs": [
+                43.89999997615814
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/4",
+              "valuesMs": [
+                29.399999976158142
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/5",
+              "valuesMs": [
+                44.799999952316284
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite": "stress",
+      "runId": "2026-09-13T16-49-21.501Z-stress-dae7fe98",
+      "workload": "Radio Group",
+      "action": "select-last",
+      "values": [
+        {
+          "provider": "starwind",
+          "meanMs": 1.1200000047683716,
+          "samples": [
+            {
+              "sessionId": "radio-group/starwind/1",
+              "valuesMs": [
+                1.1999999284744263
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/2",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/3",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/4",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            },
+            {
+              "sessionId": "radio-group/starwind/5",
+              "valuesMs": [
+                1.100000023841858
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "base-ui",
+          "meanMs": 34.30000004768372,
+          "samples": [
+            {
+              "sessionId": "radio-group/base-ui/1",
+              "valuesMs": [
+                35.199999928474426
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/2",
+              "valuesMs": [
+                34.40000009536743
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/3",
+              "valuesMs": [
+                34.40000009536743
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/4",
+              "valuesMs": [
+                33.60000002384186
+              ]
+            },
+            {
+              "sessionId": "radio-group/base-ui/5",
+              "valuesMs": [
+                33.90000009536743
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "ark-ui",
+          "meanMs": 31.739999985694887,
+          "samples": [
+            {
+              "sessionId": "radio-group/ark-ui/1",
+              "valuesMs": [
+                31.399999976158142
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/2",
+              "valuesMs": [
+                31.100000023841858
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/3",
+              "valuesMs": [
+                31.199999928474426
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/4",
+              "valuesMs": [
+                32
+              ]
+            },
+            {
+              "sessionId": "radio-group/ark-ui/5",
+              "valuesMs": [
+                33
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

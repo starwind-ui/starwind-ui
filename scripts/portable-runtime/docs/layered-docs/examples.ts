@@ -14,6 +14,7 @@ const requiredExampleTargets = [
   "raw-html",
   "astro",
   "react",
+  "vue",
 ] as const satisfies readonly PrimitiveDocsFrameworkTarget[];
 
 export const primitiveDocsExampleCoveragePolicy = {
@@ -74,6 +75,39 @@ import { Select } from "@starwind-ui/astro/select";
   </ColorPicker.FormatControl>
   <ColorPicker.HiddenInput />
 </ColorPicker.Root>`,
+      },
+      {
+        framework: "vue",
+        language: "vue",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-composite-format-control-vue`,
+        code: `<script setup lang="ts">
+import { ColorPicker } from "@starwind-ui/vue/color-picker";
+import { Select } from "@starwind-ui/vue/select";
+</script>
+
+<template>
+<ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+  <ColorPicker.ValueInput />
+  <ColorPicker.FormatControl>
+    <Select.Root defaultValue="hex">
+      <Select.Trigger aria-label="Color format">
+        <Select.Value>HEX</Select.Value>
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup>
+          <Select.List>
+            <Select.Item value="hex"><Select.ItemText>HEX</Select.ItemText></Select.Item>
+            <Select.Item value="rgb"><Select.ItemText>RGB</Select.ItemText></Select.Item>
+            <Select.Item value="hsl"><Select.ItemText>HSL</Select.ItemText></Select.Item>
+            <Select.Item value="hsb"><Select.ItemText>HSB</Select.ItemText></Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+  </ColorPicker.FormatControl>
+  <ColorPicker.HiddenInput />
+</ColorPicker.Root>
+</template>`,
       },
       {
         framework: "react",
@@ -177,6 +211,27 @@ import { ColorPicker } from "@starwind-ui/astro/color-picker";
   </ColorPicker.FormatSelect>
   <ColorPicker.HiddenInput />
 </ColorPicker.Root>`,
+      },
+      {
+        framework: "vue",
+        language: "vue",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-native-format-select-vue`,
+        code: `<script setup lang="ts">
+import { ColorPicker } from "@starwind-ui/vue/color-picker";
+</script>
+
+<template>
+<ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+  <ColorPicker.ValueInput />
+  <ColorPicker.FormatSelect aria-label="Color format">
+    <option value="hex">HEX</option>
+    <option value="rgb">RGB</option>
+    <option value="hsl">HSL</option>
+    <option value="hsb">HSB</option>
+  </ColorPicker.FormatSelect>
+  <ColorPicker.HiddenInput />
+</ColorPicker.Root>
+</template>`,
       },
       {
         framework: "react",
@@ -564,8 +619,13 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
   tooltip: [
     { part: "trigger", text: "Hover me" },
     {
-      part: "positioner",
-      children: [{ part: "popup", children: [{ part: "arrow" }] }],
+      part: "portal",
+      children: [
+        {
+          part: "positioner",
+          children: [{ part: "popup", children: [{ part: "arrow" }] }],
+        },
+      ],
     },
   ],
 } as const satisfies Readonly<Record<string, readonly ExampleNode[]>>;
@@ -585,6 +645,7 @@ function buildPrimitiveDocsExampleRegistry(
           "raw-html": buildExampleEntry(contract, "raw-html"),
           astro: buildExampleEntry(contract, "astro"),
           react: buildExampleEntry(contract, "react"),
+          vue: buildExampleEntry(contract, "vue"),
         },
       },
     ]),
@@ -607,6 +668,12 @@ function buildExampleEntry(
       summary: `Use the Astro primitive adapter to render ${contract.displayName} anatomy with the Runtime wiring included.`,
       language: "astro",
       code: renderAstroExample(contract),
+    },
+    vue: {
+      title: "Vue · Beta",
+      summary: `Use the Vue 3.5 beta adapter to render ${contract.displayName} anatomy.`,
+      language: "vue",
+      code: renderVueExample(contract),
     },
     react: {
       title: "React",
@@ -659,6 +726,21 @@ import { ${namespace} } from "@starwind-ui/astro/${contract.component}";
 ---
 
 ${markup}`;
+}
+
+function renderVueExample(contract: RuntimeAdapterContract) {
+  const namespace = toPascalCase(contract.component);
+  const rootPart = getRootPart(contract);
+  const children = getExampleLayout(contract);
+  const markup = renderAdapterNode(contract, { part: rootPart.name, children }, 2, "vue");
+
+  return `<script setup lang="ts">
+import ${namespace} from "@starwind-ui/vue/${contract.component}";
+</script>
+
+<template>
+${markup}
+</template>`;
 }
 
 function renderReactExample(contract: RuntimeAdapterContract) {
@@ -721,7 +803,7 @@ function renderAdapterNode(
   contract: RuntimeAdapterContract,
   node: ExampleNode,
   depth: number,
-  framework: "astro" | "react",
+  framework: "astro" | "react" | "vue",
 ): string {
   const part = getPart(contract, node.part);
   const publicParts = getPublicAdapterParts(contract);
@@ -799,10 +881,14 @@ function renderAdapterAttributes(
   contract: RuntimeAdapterContract,
   part: PrimitivePart,
   nodeProps: Readonly<Record<string, ExamplePropValue>> | undefined,
-  framework: "astro" | "react",
+  framework: "astro" | "react" | "vue",
 ) {
   return getExamplePropsForPart(contract, part, nodeProps)
-    .map((prop) => `${prop.name}=${formatAdapterPropValue(prop.value, framework)}`)
+    .map((prop) =>
+      framework === "vue"
+        ? `${prop.value.kind === "string" ? "" : ":"}${prop.name}="${escapeAttribute(String(prop.value.value))}"`
+        : `${prop.name}=${formatAdapterPropValue(prop.value, framework)}`,
+    )
     .join(" ");
 }
 

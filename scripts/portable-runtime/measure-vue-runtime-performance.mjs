@@ -1132,6 +1132,12 @@ export async function runVuePerformanceBrowser({
         let rowPage;
         try {
           rowPage = await createRowPage();
+          if (!smoke)
+            await runMountIteration({
+              page: rowPage.page,
+              recordSample: false,
+              session: rowPage.session,
+            });
           for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
             await runMountIteration({
               page: rowPage.page,
@@ -1146,7 +1152,7 @@ export async function runVuePerformanceBrowser({
         }
       } else {
         const sampleCount = smoke ? 1 : row.withinRunSampleCount;
-        for (let index = 0; index < sampleCount; index += 1) {
+        for (let index = smoke ? 0 : -1; index < sampleCount; index += 1) {
           let context;
           let page;
           let teardownComplete = false;
@@ -1190,7 +1196,7 @@ export async function runVuePerformanceBrowser({
             await deadline("teardown", () => page.evaluate(() => window.__runtimePerf.teardown()));
             teardownComplete = true;
             await assertCleanup(page);
-            samples.push(sample);
+            if (index >= 0) samples.push(sample);
           } catch (error) {
             rowErrors.push(error instanceof Error ? error.message : String(error));
           } finally {
