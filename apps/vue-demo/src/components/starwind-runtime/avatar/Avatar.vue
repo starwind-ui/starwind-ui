@@ -15,7 +15,7 @@ type AvatarDeclaredProps = {
   variant?: AvatarProps["variant"];
   size?: AvatarProps["size"];
 } & /* @vue-ignore */ AvatarProps;
-const { variant, size, class: className } = defineProps<AvatarDeclaredProps>();
+const { variant, size = "md", class: className } = defineProps<AvatarDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
@@ -47,6 +47,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :ref="setElement"
     :class="avatar({ variant, size, class: className })"
     v-bind="$attrs"
+    :data-size="size"
     data-slot="avatar"
   >
     <slot />

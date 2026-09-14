@@ -98,7 +98,10 @@ export function specializeVueStyledComponent(
     result.setup.push("defineExpose({ element });");
   }
 
-  if (groupName === "avatar") {
+  if (
+    groupName === "avatar" &&
+    ["Avatar", "AvatarFallback", "AvatarImage"].includes(component.exportName)
+  ) {
     const elementType =
       component.exportName === "AvatarImage" ? "HTMLImageElement" : "HTMLSpanElement";
     addPrimitiveBinding(component.render, "avatar", avatarPart(component.exportName), refBinding());
