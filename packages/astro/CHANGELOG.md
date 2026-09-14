@@ -1,5 +1,24 @@
 # @starwind-ui/astro
 
+## 1.3.0
+
+### Minor Changes
+
+- Add an optional trigger to the Tooltip and Preview Card Runtime `setOpen` methods so callers can restore an open overlay at a connected trigger owned by its root. React preserves the accepted trigger when its controller is recreated, which keeps Tooltip and Hover Card content anchored during supported updates. Canceled changes preserve the accepted anchor, and silent restoration preserves event behavior. Tooltip also clears pending opens when disabled and restores trigger interaction when enabled again.
+- React Tooltip now requires an explicit `Tooltip.Portal`. Wrap the Positioner and Popup in Portal; use `disabled` on that Portal for inline placement. Missing Portal composition throws a clear error before Runtime starts. Styled Tooltip already supplies Portal.
+
+  The published Primitive example omitted Portal. Consumers following that example must add the wrapper. This minor release corrects the example and enforces the intended Portal composition. Runtime, Astro, and React advance together under the fixed package group policy. Runtime and Astro implementation code is unchanged by this correction. CLI delivery remains a patch.
+
+### Patch Changes
+
+- Preserve connected Combobox state when native form reset is canceled or superseded by later input or value work. Reconcile React and Vue controlled values after reset, restore React text after Escape, and restore Vue input text when a native input proposal is canceled.
+- Keep an open Context Menu at its invocation point when its Runtime controller is recreated for the same root element. Preserve the last document-coordinate rectangle while removing the retired anchor and interaction work. This also retains the point for an imperative opening after same-element reuse; the next activation replaces it, and a fresh root starts at zero.
+- Keep Navigation Menu content links connected after Content moves into the shared Viewport. Preserve link close options, cancellation, and nested menu ownership during collection refresh.
+- Share React portal document observation across mounted portal instances. This reduces mutation-record work when mounting many floating components while preserving target changes, hydration, and cleanup. Vendored React primitives receive the same helper update.
+- Prevent immediate Toast updates and resolved promises from skipping entry motion or using an incorrect stack height. Track queued entry frames for the current toast element and cancel them when the toast closes or its manager is destroyed.
+- Updated dependencies
+  - @starwind-ui/runtime@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes

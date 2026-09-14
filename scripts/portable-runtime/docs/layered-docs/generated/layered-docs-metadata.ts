@@ -38623,7 +38623,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "alert-dialog",
       displayName: "Alert Dialog",
       category: "dialog-native-overlay",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -49171,7 +49171,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "combobox",
       displayName: "Combobox",
       category: "floating-value-control",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -52619,7 +52619,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "context-menu",
       displayName: "Context Menu",
       category: "composite-menu-overlay",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -58181,7 +58181,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "drawer",
       displayName: "Drawer",
       category: "dialog-native-overlay",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -65480,7 +65480,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "menu",
       displayName: "Menu",
       category: "composite-menu-overlay",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -69816,7 +69816,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "navigation-menu",
       displayName: "Navigation Menu",
       category: "floating-value-control",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       packages: [
         {
           framework: "astro",
@@ -72165,7 +72165,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "popover",
       displayName: "Popover",
       category: "presence-floating-overlay",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -74198,7 +74198,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "preview-card",
       displayName: "Preview Card",
       category: "presence-floating-overlay",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -80006,7 +80006,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "select",
       displayName: "Select",
       category: "floating-value-control",
-      registryVersion: "1.1.1",
+      registryVersion: "1.1.2",
       packages: [
         {
           framework: "astro",
@@ -89000,7 +89000,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toast",
       displayName: "Toast",
       category: "notification-system",
-      registryVersion: "1.0.0",
+      registryVersion: "1.0.1",
       packages: [
         {
           framework: "astro",
@@ -91742,7 +91742,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tooltip",
       displayName: "Tooltip",
       category: "presence-floating-overlay",
-      registryVersion: "1.1.1",
+      registryVersion: "1.2.0",
       packages: [
         {
           framework: "astro",
