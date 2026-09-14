@@ -205,7 +205,7 @@ describe("createToastManager", () => {
     expect(getToastByText("Runtime namespaced toast")).not.toBeNull();
   });
 
-  it("keeps variant updates visible when the toast is re-rendered", () => {
+  it("keeps variant updates visible after entry finishes", async () => {
     const viewport = renderToaster();
     const manager = createToastManager(viewport);
 
@@ -217,6 +217,8 @@ describe("createToastManager", () => {
     });
 
     expect(getToast(id)?.hasAttribute("data-starting-style")).toBe(true);
+    await vi.advanceTimersByTimeAsync(32);
+    expect(getToast(id)?.hasAttribute("data-starting-style")).toBe(false);
 
     manager.update(id, {
       description: "The same toast is now success.",
@@ -232,6 +234,107 @@ describe("createToastManager", () => {
     expect(getPart(updated, "data-sw-toast-description")?.textContent).toBe(
       "The same toast is now success.",
     );
+  });
+
+  it.each(["success", "error"] as const)(
+    "preserves entry for an immediate %s result",
+    async (variant) => {
+      const manager = createToastManager(renderToaster());
+      const pending = toast.promise(
+        variant === "success" ? Promise.resolve("Done") : Promise.reject(new Error("Failed")),
+        {
+          loading: "Loading",
+          success: { title: "Done", duration: 0 },
+          error: { title: "Failed", duration: 0 },
+        },
+      );
+      const loading = manager.getToasts()[0].element!;
+      await pending.catch(() => {});
+      const current = manager.getToasts()[0].element!;
+
+      expect(current).not.toBe(loading);
+      expect(current.getAttribute("data-variant")).toBe(variant);
+      expect(current.hasAttribute("data-starting-style")).toBe(true);
+      await vi.advanceTimersByTimeAsync(16);
+      expect(current.hasAttribute("data-starting-style")).toBe(true);
+      await vi.advanceTimersByTimeAsync(16);
+      expect(current.hasAttribute("data-starting-style")).toBe(false);
+    },
+  );
+
+  it("measures current promise templates for stack offsets and an expanded viewport", async () => {
+    const viewport = renderToaster({ limit: 3 });
+    createToastManager(viewport);
+    await Promise.all(
+      ["First", "Second", "Third"].map((title) =>
+        toast.promise(Promise.resolve(title), {
+          loading: "Loading",
+          success: (value) => ({ title: value, description: "Details", duration: 0 }),
+          error: "Failed",
+        }),
+      ),
+    );
+    viewport.dispatchEvent(new MouseEvent("mouseenter"));
+    await vi.advanceTimersByTimeAsync(32);
+
+    const items = Array.from(viewport.querySelectorAll<HTMLElement>("[data-toast-id]"));
+    let offset = 0;
+    for (const item of items) {
+      expect(item.offsetHeight).toBeGreaterThan(0);
+      expect(item.style.getPropertyValue("--toast-offset-y")).toBe(`${offset}px`);
+      offset += item.offsetHeight + 8;
+    }
+    expect(viewport.style.height).toBe(`${offset - 8}px`);
+  });
+
+  it("lets a replacement between entry frames paint before it enters", async () => {
+    const viewport = renderToaster();
+    const manager = createToastManager(viewport);
+    const id = manager.add({ title: "Loading", variant: "loading" });
+    await vi.advanceTimersByTimeAsync(16);
+    manager.update(id, { title: "Done", variant: "success", duration: 0 });
+    const current = getToast(id)!;
+
+    await vi.advanceTimersByTimeAsync(16);
+    expect(current.hasAttribute("data-starting-style")).toBe(true);
+    await vi.advanceTimersByTimeAsync(16);
+    expect(current.hasAttribute("data-starting-style")).toBe(false);
+  });
+
+  it.each([0, 16])("cancels entry work when closed after %i ms", async (elapsed) => {
+    const manager = createToastManager(renderToaster());
+    const onClose = vi.fn();
+    const onRemove = vi.fn();
+    const id = manager.add({ title: "Closing during entry", duration: 0, onClose, onRemove });
+    await vi.advanceTimersByTimeAsync(elapsed);
+    const item = getToast(id)!;
+    manager.close(id);
+    const closingMarkup = item.outerHTML;
+
+    await vi.advanceTimersByTimeAsync(48);
+    expect(item.outerHTML).toBe(closingMarkup);
+    expect(item.getAttribute("data-state")).toBe("closed");
+    expect(onClose).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(152);
+    expect(item.isConnected).toBe(false);
+    expect(onRemove).toHaveBeenCalledOnce();
+  });
+
+  it.each([0, 16])("cancels entry work when destroyed after %i ms", async (elapsed) => {
+    const viewport = renderToaster();
+    const manager = createToastManager(viewport);
+    const id = manager.add({ title: "Removed during entry", duration: 0 });
+    await vi.advanceTimersByTimeAsync(elapsed);
+    const item = getToast(id)!;
+    manager.destroy();
+    const removedMarkup = item.outerHTML;
+    const viewportMarkup = viewport.outerHTML;
+
+    await vi.advanceTimersByTimeAsync(48);
+    expect(item.isConnected).toBe(false);
+    expect(item.outerHTML).toBe(removedMarkup);
+    expect(viewport.outerHTML).toBe(viewportMarkup);
+    expect(manager.getToasts()).toEqual([]);
   });
 
   it("wires toast root labels and descriptions from visible title and description parts", () => {
@@ -328,6 +431,7 @@ describe("createToastManager", () => {
 
     const loadingToast = getToastByText("Loading promise");
     expect(loadingToast?.getAttribute("data-variant")).toBe("loading");
+    await vi.advanceTimersByTimeAsync(32);
 
     resolvePromise("result");
     await result;
