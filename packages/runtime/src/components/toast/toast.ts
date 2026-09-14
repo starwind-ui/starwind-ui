@@ -225,6 +225,7 @@ class ToastManagerController implements ToastManager {
   readonly viewport: HTMLElement;
 
   private readonly abortController = new AbortController();
+  private readonly entryFrames = new Map<ToastState, number>();
   private readonly mutationObserver: MutationObserver;
   private activeSwipe: ActiveSwipe | null = null;
   private counter = 0;
@@ -339,6 +340,7 @@ class ToastManagerController implements ToastManager {
     if (!toast || toast.closing) return;
 
     toast.closing = true;
+    this.cancelToastEntry(toast);
     this.clearTimer(toast);
     toast.onClose?.();
 
@@ -381,6 +383,7 @@ class ToastManagerController implements ToastManager {
     this.abortController.abort();
     this.mutationObserver.disconnect();
     this.toasts.forEach((toast) => {
+      this.cancelToastEntry(toast);
       this.clearTimer(toast);
       if (toast.removalTimerId !== undefined) {
         window.clearTimeout(toast.removalTimerId);
@@ -557,16 +560,40 @@ class ToastManagerController implements ToastManager {
     this.viewport.insertBefore(element, this.viewport.firstElementChild);
     this.setupToastElement(element, toast);
 
-    requestAnimationFrame(() => {
-      toast.height = element.offsetHeight;
-      this.updatePositions();
-      requestAnimationFrame(() => {
-        element.removeAttribute("data-starting-style");
-      });
-    });
+    this.scheduleToastEntry(toast);
 
     this.restartTimer(toast);
     return true;
+  }
+
+  private scheduleToastEntry(toast: ToastState): void {
+    this.cancelToastEntry(toast);
+    this.entryFrames.set(
+      toast,
+      requestAnimationFrame(() => {
+        this.entryFrames.delete(toast);
+        if (this.destroyed || toast.closing || !toast.element) return;
+
+        toast.height = toast.element.offsetHeight;
+        this.updatePositions();
+        this.updateViewportHeight();
+        this.entryFrames.set(
+          toast,
+          requestAnimationFrame(() => {
+            this.entryFrames.delete(toast);
+            if (this.destroyed || toast.closing) return;
+            toast.element?.removeAttribute("data-starting-style");
+          }),
+        );
+      }),
+    );
+  }
+
+  private cancelToastEntry(toast: ToastState): void {
+    const frame = this.entryFrames.get(toast);
+    if (frame === undefined) return;
+    cancelAnimationFrame(frame);
+    this.entryFrames.delete(toast);
   }
 
   private cloneToastElement(toast: ToastState): HTMLElement | null {
@@ -708,7 +735,8 @@ class ToastManagerController implements ToastManager {
     const next = this.cloneToastElement(toast);
     if (!next) return false;
 
-    next.removeAttribute("data-starting-style");
+    const entering = previous.hasAttribute("data-starting-style");
+    if (!entering) next.removeAttribute("data-starting-style");
     next.style.setProperty("--toast-index", previous.style.getPropertyValue("--toast-index"));
     next.style.setProperty("--toast-offset-y", previous.style.getPropertyValue("--toast-offset-y"));
     if (this.expanded) next.setAttribute("data-expanded", "");
@@ -723,6 +751,9 @@ class ToastManagerController implements ToastManager {
     }
     toast.height = next.offsetHeight;
     this.updatePositions();
+    this.updateViewportHeight();
+    // A replacement needs its own painted starting style before entry can advance.
+    if (entering) this.scheduleToastEntry(toast);
     return true;
   }
 

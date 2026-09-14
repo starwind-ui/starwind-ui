@@ -1,0 +1,4 @@
+{
+  "primitives": { "toast": "patch" },
+  "impact": "behavior"
+}
