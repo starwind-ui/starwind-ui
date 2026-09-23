@@ -882,3 +882,173 @@ function makeTarget(name: string): HTMLElement {
   target.dataset.ticket08Target = name;
   return target;
 }
+
+describe("Navigation Menu moved Content ownership", () => {
+  it("hydrates the carrier before Runtime moves Content and later releases it", async () => {
+    const errors: unknown[] = [];
+    const contentRef = React.createRef<HTMLDivElement>();
+    const tree = (showContent: boolean) => (
+      <NavigationMenu.Root defaultValue="products" openDelay={0} closeDelay={0}>
+        <NavigationMenu.List>
+          <NavigationMenu.Item value="products">
+            <NavigationMenu.Trigger>Products</NavigationMenu.Trigger>
+            {showContent && (
+              <NavigationMenu.Content ref={contentRef}>
+                <a href="#products">Products</a>
+              </NavigationMenu.Content>
+            )}
+          </NavigationMenu.Item>
+          <NavigationMenu.Item value="support">
+            <NavigationMenu.Trigger data-hydrated-support>Support</NavigationMenu.Trigger>
+            <NavigationMenu.Content data-hydrated-content>
+              <a href="#support">Support</a>
+            </NavigationMenu.Content>
+          </NavigationMenu.Item>
+        </NavigationMenu.List>
+        <NavigationMenu.Portal>
+          <NavigationMenu.Positioner>
+            <NavigationMenu.Popup>
+              <NavigationMenu.Viewport />
+            </NavigationMenu.Popup>
+          </NavigationMenu.Positioner>
+        </NavigationMenu.Portal>
+      </NavigationMenu.Root>
+    );
+    container = document.createElement("div");
+    container.innerHTML = renderToString(tree(true));
+    document.body.append(container);
+    const original = container.querySelector<HTMLDivElement>("[data-sw-nav-menu-content]")!;
+    const root = container.querySelector<HTMLElement>("[data-sw-nav-menu]")!;
+    await act(async () => {
+      reactRoot = hydrateRoot(container!, tree(true), {
+        onRecoverableError: (error) => errors.push(error),
+        onUncaughtError: (error) => errors.push(error),
+      });
+      await Promise.resolve();
+    });
+    expect(contentRef.current).toBe(original);
+    expect(original.parentElement).toHaveAttribute("data-sw-nav-menu-viewport");
+    await update(() => reactRoot!.render(tree(false)));
+    expect(original.isConnected).toBe(false);
+    expect(contentRef.current).toBeNull();
+    expect(container.querySelector("[data-sw-nav-menu]")).toBe(root);
+    await update(() => root.querySelector<HTMLElement>("[data-hydrated-support]")!.click());
+    expect(document.querySelector("[data-hydrated-content]")?.parentElement).toHaveAttribute(
+      "data-sw-nav-menu-viewport",
+    );
+    await act(() => reactRoot!.unmount());
+    reactRoot = undefined;
+    expect(document.querySelector("[data-sw-nav-menu-content]")).toBeNull();
+    expect(document.querySelector("[data-sw-nav-menu-portal]")).toBeNull();
+    expect(errors).toEqual([]);
+  });
+
+  for (const strict of [false, true]) {
+    for (const action of ["remove-content", "rekey-content", "remove-item"] as const) {
+      it(`keeps its Root usable after ${action} (${strict ? "Strict Mode" : "normal"})`, async () => {
+        const errors: unknown[] = [];
+        const liveContents = new Set<HTMLDivElement>();
+        const makeContentRef = () => {
+          let current: HTMLDivElement | null = null;
+          return (node: HTMLDivElement | null) => {
+            if (current) liveContents.delete(current);
+            current = node;
+            if (node) liveContents.add(node);
+          };
+        };
+        let productsRef = makeContentRef();
+        const supportRef = makeContentRef();
+        const tree = (changed: boolean) => {
+          const menu = (
+            <NavigationMenu.Root openDelay={0} closeDelay={0} data-lifetime-root>
+              <NavigationMenu.List>
+                {!(changed && action === "remove-item") && (
+                  <NavigationMenu.Item value="products">
+                    <NavigationMenu.Trigger data-lifetime-trigger="products">
+                      Products
+                    </NavigationMenu.Trigger>
+                    {!(changed && action === "remove-content") && (
+                      <NavigationMenu.Content
+                        key={changed && action === "rekey-content" ? "second" : "first"}
+                        ref={productsRef}
+                        data-lifetime-content="products"
+                        data-slot="test-content"
+                      >
+                        <NavigationMenu.Link href="#products">Products link</NavigationMenu.Link>
+                      </NavigationMenu.Content>
+                    )}
+                  </NavigationMenu.Item>
+                )}
+                <NavigationMenu.Item value="support">
+                  <NavigationMenu.Trigger data-lifetime-trigger="support">
+                    Support
+                  </NavigationMenu.Trigger>
+                  <NavigationMenu.Content ref={supportRef} data-lifetime-content="support">
+                    <NavigationMenu.Link href="#support">Support link</NavigationMenu.Link>
+                  </NavigationMenu.Content>
+                </NavigationMenu.Item>
+              </NavigationMenu.List>
+              <NavigationMenu.Portal>
+                <NavigationMenu.Positioner>
+                  <NavigationMenu.Popup>
+                    <NavigationMenu.Viewport />
+                  </NavigationMenu.Popup>
+                </NavigationMenu.Positioner>
+              </NavigationMenu.Portal>
+            </NavigationMenu.Root>
+          );
+          return strict ? <React.StrictMode>{menu}</React.StrictMode> : menu;
+        };
+        container = document.createElement("div");
+        document.body.append(container);
+        reactRoot = createRoot(container, { onUncaughtError: (error) => errors.push(error) });
+        await update(() => reactRoot!.render(tree(false)));
+        const root = container.querySelector<HTMLElement>("[data-lifetime-root]")!;
+        const originalContent = root.querySelector<HTMLDivElement>(
+          '[data-lifetime-content="products"]',
+        )!;
+        expect(liveContents.has(originalContent)).toBe(true);
+        await update(() =>
+          root.querySelector<HTMLElement>('[data-lifetime-trigger="products"]')!.click(),
+        );
+        expect(originalContent.parentElement).toHaveAttribute("data-sw-nav-menu-viewport");
+        expect(originalContent.hidden).toBe(false);
+        productsRef = makeContentRef();
+        await update(() => reactRoot!.render(tree(false)));
+        expect(originalContent.parentElement).toHaveAttribute("data-sw-nav-menu-viewport");
+        expect(liveContents.has(originalContent)).toBe(true);
+        await update(() => reactRoot!.render(tree(true)));
+        expect(errors).toEqual([]);
+        expect(container.querySelector("[data-lifetime-root]")).toBe(root);
+        expect(originalContent.isConnected).toBe(false);
+        expect(liveContents.has(originalContent)).toBe(false);
+        if (action === "rekey-content") {
+          const replacement = document.querySelector<HTMLDivElement>(
+            '[data-lifetime-content="products"]',
+          )!;
+          expect(replacement).not.toBe(originalContent);
+          expect(liveContents.has(replacement)).toBe(true);
+          expect(replacement).toHaveAttribute("data-slot", "test-content");
+        }
+        await update(() =>
+          root.querySelector<HTMLElement>('[data-lifetime-trigger="support"]')!.click(),
+        );
+        const support = document.querySelector<HTMLDivElement>(
+          '[data-lifetime-content="support"]',
+        )!;
+        expect(support.parentElement).toHaveAttribute("data-sw-nav-menu-viewport");
+        expect(support.hidden).toBe(false);
+        await update(() =>
+          support.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" })),
+        );
+        expect(root).toHaveAttribute("data-state", "closed");
+        await act(() => reactRoot!.unmount());
+        reactRoot = undefined;
+        expect(liveContents.size).toBe(0);
+        expect(document.querySelector("[data-sw-nav-menu-content]")).toBeNull();
+        expect(document.querySelector("[data-sw-nav-menu-portal]")).toBeNull();
+        expect(errors).toEqual([]);
+      });
+    }
+  }
+});

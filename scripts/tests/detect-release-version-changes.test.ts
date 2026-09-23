@@ -15,6 +15,14 @@ describe("release version detection", () => {
       ),
     ).toBe(true);
   });
+  it("detects the initial public Svelte beta version", () => {
+    expect(
+      hasReleaseVersionChange(
+        { svelte: { version: "0.0.0", private: true } },
+        { svelte: { version: "0.1.0" } },
+      ),
+    ).toBe(true);
+  });
   it.each(["runtime", "astro", "react", "cli"])("detects %s version changes", (name) => {
     expect(
       hasReleaseVersionChange({ [name]: { version: "1.0.0" } }, { [name]: { version: "1.0.1" } }),
@@ -30,7 +38,7 @@ describe("release version detection", () => {
     expect(
       hasReleaseVersionChange(
         {},
-        { vue: { version: "0.0.1", private: true }, svelte: { version: "1.0.0" } },
+        { vue: { version: "0.0.1", private: true }, svelte: { version: "1.0.0", private: true } },
       ),
     ).toBe(false);
   });

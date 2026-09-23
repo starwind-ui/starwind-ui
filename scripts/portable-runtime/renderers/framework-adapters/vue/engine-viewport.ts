@@ -1,3 +1,9 @@
+import {
+  carouselAxis,
+  carouselConnectionType,
+  carouselInputs,
+  carouselLifecycle,
+} from "../../shared-recipes/media/carousel.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -53,7 +59,7 @@ import {
   type ${facts.runtime.instanceType},
   type ${facts.runtime.optionsType},
 } from "${facts.runtime.importSource}";
-import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { ${root}Props } from "./${facts.displayName}Types.js";
 
 defineOptions({ inheritAttrs: false });
@@ -72,61 +78,28 @@ const rawProps = withDefaults(
 );
 const props = rawProps as ${root}Props;
 const element = ref<HTMLDivElement | null>(null);
-let instance: ${facts.runtime.instanceType} | undefined;
+const connection: ${carouselConnectionType(facts)} = {};
 let refreshRevision = 0;
-
-function currentOptions(): ${facts.runtime.optionsType}["opts"] {
-  return {
-    axis:
-      props.${props.orientation.name} === "vertical"
-        ? "${props.orientation.axisMap.vertical}"
-        : "${props.orientation.axisMap.horizontal}",
-    ...props.${props.opts.name},
-  };
-}
+${carouselLifecycle(facts, (name) => `props.${name}`)}
 
 async function refreshAfterVueFlush(): Promise<void> {
   const revision = ++refreshRevision;
   await nextTick();
-  if (revision !== refreshRevision || !instance) return;
-  instance.reInit(currentOptions(), props.${props.plugins.name});
+  if (revision !== refreshRevision) return;
+  syncCarouselOptions();
 }
 
 defineExpose({ element });
-
-onMounted(() => {
-  if (!element.value) return;
-  instance = ${facts.runtime.factory}(element.value, {
-    ${props.orientation.name}: props.${props.orientation.name},
-    ${props.opts.name}: props.${props.opts.name},
-    ${props.plugins.name}: props.${props.plugins.name},
-    ${props.setApi.name}: (api) => props.${props.setApi.name}?.(api),
-  });
-});
-
-onUpdated(() => {
-  void refreshAfterVueFlush();
-});
-
+onMounted(() => { if (element.value) connectCarousel(element.value); });
 watch(
-  () => [props.${props.orientation.name}, props.${props.opts.name}, props.${props.plugins.name}] as const,
+  () => [${carouselInputs(facts)
+    .map((name) => `props.${name}`)
+    .join(", ")}] as const,
   () => void refreshAfterVueFlush(),
   { flush: "post" },
 );
-
-watch(
-  () => props.${props.setApi.name},
-  (setApi) => {
-    if (setApi && instance) setApi(instance.api);
-  },
-);
-
-onBeforeUnmount(() => {
-  refreshRevision += 1;
-  const owned = instance;
-  instance = undefined;
-  owned?.destroy();
-});
+watch(() => props.${props.setApi.name}, publishCarouselApi);
+onBeforeUnmount(() => { refreshRevision += 1; disconnectCarousel(); });
 </script>
 
 <template>
@@ -137,11 +110,7 @@ onBeforeUnmount(() => {
     ${facts.attrs.role}="${facts.semantics.rootRole}"
     ${facts.attrs.roledescription}="${facts.semantics.rootRoledescription}"
     ${facts.attrs.autoInit}="${props.autoInit.falseValue}"
-    :${facts.attrs.axis}="
-      props.${props.orientation.name} === 'vertical'
-        ? '${props.orientation.axisMap.vertical}'
-        : '${props.orientation.axisMap.horizontal}'
-    "
+    :${facts.attrs.axis}="${carouselAxis(facts, (name) => `props.${name}`).replaceAll('"', "'")}"
     :${facts.attrs.opts}="JSON.stringify(props.${props.opts.name})"
   >
     <slot />

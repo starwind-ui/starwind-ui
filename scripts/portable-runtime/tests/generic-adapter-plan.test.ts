@@ -2,7 +2,6 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-
 import {
   alertDialogRuntimeAdapterContract,
   avatarRuntimeAdapterContract,
@@ -50,6 +49,7 @@ import {
   validateGenericAdapterPlanCoverageManifest,
 } from "../renderers/generic-adapter-plan/index.js";
 import { timedFloatingOverlayContractSummary } from "../renderers/generic-adapter-plan/timed-floating-overlay-contract-summary.js";
+import { normalizeTypeScriptSource } from "./source-comparison.js";
 
 function printAstroGenericAdapterOutputModel(plan: GenericAdapterPlan) {
   return printGenericAdapterOutputModel(
@@ -323,6 +323,7 @@ describe("GenericAdapterPlan", () => {
     expect(plan.runtime).toEqual({
       destroys: true,
       factory: "createDialog",
+      refresh: { method: "refresh", parts: "owned-controls", state: "preserve" },
       importSource: "@starwind-ui/runtime/dialog",
       optionProps: [
         "closeOnEscape",
@@ -1240,6 +1241,7 @@ function expectPrintedFilesToMatchPackage(
 }
 
 function normalizePrintedComparison(contents: string): string {
+  if (!contents.trimStart().startsWith("---")) return normalizeTypeScriptSource(contents);
   return contents
     .replace(/\s+/g, " ")
     .replace(/\s*([(){}\[\],;])\s*/g, "$1")

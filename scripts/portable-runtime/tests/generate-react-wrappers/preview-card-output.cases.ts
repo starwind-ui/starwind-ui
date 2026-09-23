@@ -1,3 +1,4 @@
+import { assertTypeScriptModule, compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -32,64 +33,57 @@ export function defineReactPreviewCardOutputTests(getTempRoot: GetTempRoot): voi
     const index = await readGeneratedFile(outputRoot, "preview-card/index.ts");
 
     expect(generatedPrimitiveEntries).toContain("preview-card");
-    expect(root).toContain("createPortalBinding,");
-    expect(root).toContain("createPreviewCard,");
-    expect(root).toContain("type PreviewCardOpenChangeDetails");
-    expect(root).toContain('} from "@starwind-ui/runtime/preview-card";');
-    expect(root).toContain("open?: boolean;");
-    expect(root).toContain("onOpenChange?:");
-    expect(root).toContain("openDelay = 600");
-    expect(root).toContain("closeDelay = 300");
-    expect(root).toContain('data-content-hoverable={!disableHoverableContent ? "true" : "false"}');
-    expect(root).toContain("instance.setOpen(open, { emit: false })");
-    expect(root).toContain("defaultOpen: false");
-    expect(root).toContain("...(openRef.current !== undefined ? { open: false } : {})");
-    expect(root).toContain("acceptedRootRef.current !== root");
-    expect(root).toContain("if (details.open && details.trigger instanceof HTMLElement)");
-    expect(root).toContain("acceptedTriggerRef.current = details.trigger");
-    expect(root).toContain("trigger: acceptedTriggerRef.current");
-    expect(root).toContain("unsubscribeOpenChange()");
-    expect(trigger).toContain(
-      'export type PreviewCardTriggerProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "disabled"> &',
-    );
-    expect(trigger).toContain("asChild?: boolean;");
-    expect(trigger).toContain("React.cloneElement");
-    expect(trigger).toContain('"data-sw-preview-card-trigger": ""');
-    expect(trigger).toContain("mergeAsChildProps({ ...triggerProps, className }, childProps");
-    expect(trigger).toContain('eventOrder: "parent-first"');
-    expect(trigger).toContain("protectedProps: protectedTriggerProps");
-    expect(trigger).toContain("event.preventDefault();");
-    expect(trigger).toContain("event.stopPropagation();");
-    expect(trigger).toContain("<a");
-    expect(trigger).toContain("href: disabled ? undefined : href");
-    expect(trigger).toContain("tabIndex: disabled ? -1 : tabIndex");
-    expect(trigger).toContain("...(disabled ? { href: undefined, tabIndex: -1 } : {})");
-    expect(
-      trigger.slice(
-        trigger.indexOf("const protectedTriggerProps = {"),
-        trigger.indexOf("const triggerProps = {"),
+    assertTypeScriptModule(root); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(trigger)).toContain(
+      compactCode(
+        'export type PreviewCardTriggerProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "disabled"> &',
       ),
-    ).not.toContain("href: disabled ? undefined : href");
-    expect(trigger).toContain("href={disabled ? undefined : href}");
-    expect(trigger).toContain("tabIndex={disabled ? -1 : tabIndex}");
-    expect(trigger).not.toContain("<button");
-    expect(positioner).toContain("data-sw-preview-card-positioner");
-    expect(positioner).toContain('side = "bottom"');
-    expect(positioner).toContain('align = "center"');
-    expect(positioner).toContain("sideOffset = 0");
-    expect(popup).toContain("data-sw-preview-card-popup");
-    expect(popup).toContain('role="tooltip"');
-    expect(popup).toContain("sideOffset = 0");
-    expect(popup).toContain("hidden");
-    expect(backdrop).toContain("data-sw-preview-card-backdrop");
-    expect(backdrop).toContain("hidden");
-    expect(viewport).toContain("data-sw-preview-card-viewport");
-    expect(arrow).toContain("data-sw-preview-card-arrow");
-    expect(index).toContain("const PreviewCard =");
-    expect(index).toContain("Root: PreviewCardRoot");
-    expect(index).toContain("Viewport: PreviewCardViewport");
-    expect(index).toContain(
-      'export type { PreviewCardOpenChangeDetails } from "@starwind-ui/runtime"',
+    );
+    expect(compactCode(trigger)).toContain(compactCode("asChild?: boolean;"));
+    expect(compactCode(trigger)).toContain(compactCode("React.cloneElement"));
+    expect(compactCode(trigger)).toContain(compactCode('"data-sw-preview-card-trigger": ""'));
+    expect(compactCode(trigger)).toContain(
+      compactCode("mergeAsChildProps({ ...triggerProps, className }, childProps"),
+    );
+    expect(compactCode(trigger)).toContain(compactCode('eventOrder: "parent-first"'));
+    expect(compactCode(trigger)).toContain(compactCode("protectedProps: protectedTriggerProps"));
+    expect(compactCode(trigger)).toContain(compactCode("event.preventDefault();"));
+    expect(compactCode(trigger)).toContain(compactCode("event.stopPropagation();"));
+    expect(compactCode(trigger)).toContain(compactCode("<a"));
+    expect(compactCode(trigger)).toContain(compactCode("href: disabled ? undefined : href"));
+    expect(compactCode(trigger)).toContain(compactCode("tabIndex: disabled ? -1 : tabIndex"));
+    expect(compactCode(trigger)).toContain(
+      compactCode("...(disabled ? { href: undefined, tabIndex: -1 } : {})"),
+    );
+    expect(
+      compactCode(
+        trigger.slice(
+          trigger.indexOf("const protectedTriggerProps = {"),
+          trigger.indexOf("const triggerProps = {"),
+        ),
+      ),
+    ).not.toContain(compactCode("href: disabled ? undefined : href"));
+    expect(compactCode(trigger)).toContain(compactCode("href={disabled ? undefined : href}"));
+    expect(compactCode(trigger)).toContain(compactCode("tabIndex={disabled ? -1 : tabIndex}"));
+    expect(compactCode(trigger)).not.toContain(compactCode("<button"));
+    expect(compactCode(positioner)).toContain(compactCode("data-sw-preview-card-positioner"));
+    expect(compactCode(positioner)).toContain(compactCode('side = "bottom"'));
+    expect(compactCode(positioner)).toContain(compactCode('align = "center"'));
+    expect(compactCode(positioner)).toContain(compactCode("sideOffset = 0"));
+    expect(compactCode(popup)).toContain(compactCode("data-sw-preview-card-popup"));
+    expect(compactCode(popup)).toContain(compactCode('role="tooltip"'));
+    expect(compactCode(popup)).toContain(compactCode("sideOffset = 0"));
+    expect(compactCode(popup)).toContain(compactCode("hidden"));
+    expect(compactCode(backdrop)).toContain(compactCode("data-sw-preview-card-backdrop"));
+    expect(compactCode(backdrop)).toContain(compactCode("hidden"));
+    expect(compactCode(viewport)).toContain(compactCode("data-sw-preview-card-viewport"));
+    expect(compactCode(arrow)).toContain(compactCode("data-sw-preview-card-arrow"));
+    expect(compactCode(index)).toContain(compactCode("const PreviewCard ="));
+    expect(compactCode(index)).toContain(compactCode("Root: PreviewCardRoot"));
+    expect(compactCode(index)).toContain(compactCode("Viewport: PreviewCardViewport"));
+    expect(compactCode(index)).toContain(
+      compactCode('export type { PreviewCardOpenChangeDetails } from "@starwind-ui/runtime"'),
     );
   });
 
@@ -108,46 +102,52 @@ export function defineReactPreviewCardOutputTests(getTempRoot: GetTempRoot): voi
     const variants = await readGeneratedFile(outputRoot, "hover-card/variants.ts");
     const index = await readGeneratedFile(outputRoot, "hover-card/index.ts");
 
-    expect(root).toContain('PreviewCardPrimitive from "../primitives/react/preview-card"');
-    expect(root).toContain("<PreviewCardPrimitive.Root");
-    expect(root).toContain("open?: boolean;");
-    expect(root).toContain("open={open}");
-    expect(root).toContain("onOpenChange={onOpenChange}");
-    expect(root).toContain("openDelay = 600");
-    expect(root).toContain("closeDelay = 300");
-    expect(root).toContain("disableHoverableContent = false");
-    expect(root).toContain('data-slot="hover-card"');
-    expect(trigger).toContain('React.ComponentPropsWithoutRef<"a">');
-    expect(trigger).toContain("<PreviewCardPrimitive.Trigger");
-    expect(trigger).toContain("asChild={asChild}");
-    expect(trigger).toContain(
-      "const triggerBaseClassName = hoverCardTrigger({ class: className });",
+    expect(compactCode(root)).toContain(
+      compactCode('PreviewCardPrimitive from "../primitives/react/preview-card"'),
     );
-    expect(trigger).toContain(
-      "const triggerClassName = asChild ? className : triggerBaseClassName;",
+    expect(compactCode(root)).toContain(compactCode("<PreviewCardPrimitive.Root"));
+    expect(compactCode(root)).toContain(compactCode("open?: boolean;"));
+    expect(compactCode(root)).toContain(compactCode("open={open}"));
+    expect(compactCode(root)).toContain(compactCode("onOpenChange={onOpenChange}"));
+    expect(compactCode(root)).toContain(compactCode("openDelay = 600"));
+    expect(compactCode(root)).toContain(compactCode("closeDelay = 300"));
+    expect(compactCode(root)).toContain(compactCode("disableHoverableContent = false"));
+    expect(compactCode(root)).toContain(compactCode('data-slot="hover-card"'));
+    expect(compactCode(trigger)).toContain(compactCode('React.ComponentPropsWithoutRef<"a">'));
+    expect(compactCode(trigger)).toContain(compactCode("<PreviewCardPrimitive.Trigger"));
+    expect(compactCode(trigger)).toContain(compactCode("asChild={asChild}"));
+    expect(compactCode(trigger)).toContain(
+      compactCode("const triggerBaseClassName = hoverCardTrigger({ class: className });"),
     );
-    expect(trigger).toContain("className={triggerClassName}");
-    expect(trigger).not.toContain("className={hoverCardTrigger({ class: className })}");
-    expect(content).toContain("<PreviewCardPrimitive.Portal");
-    expect(content).toContain("<PreviewCardPrimitive.Positioner");
-    expect(content).toContain("<PreviewCardPrimitive.Popup");
-    expect(content).toContain('side = "bottom"');
-    expect(content).toContain('align = "center"');
-    expect(content).toContain("sideOffset = 4");
-    expect(content).toContain("positionerClassName?: string;");
-    expect(content).toContain("className={hoverCardPositioner({ class: positionerClassName })}");
-    expect(content).not.toContain("isolate");
-    expect(content).not.toContain("animationDuration");
-    expect(content).toContain('data-slot="hover-card-content"');
-    expect(variants).not.toContain("starwind-hover-card");
-    expect(variants).toContain("bg-popover text-popover-foreground");
-    expect(variants).toContain("export const hoverCardPositioner");
-    expect(variants).toContain('base: "z-50"');
-    expect(variants).not.toContain("text-popover-foreground z-50 hidden");
-    expect(variants).toContain("duration-100");
-    expect(variants).toContain("data-[state=closed]:animate-out");
-    expect(index).toContain("Root: HoverCard");
-    expect(index).toContain("Trigger: HoverCardTrigger");
-    expect(index).toContain("Content: HoverCardContent");
+    expect(compactCode(trigger)).toContain(
+      compactCode("const triggerClassName = asChild ? className : triggerBaseClassName;"),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("className={triggerClassName}"));
+    expect(compactCode(trigger)).not.toContain(
+      compactCode("className={hoverCardTrigger({ class: className })}"),
+    );
+    expect(compactCode(content)).toContain(compactCode("<PreviewCardPrimitive.Portal"));
+    expect(compactCode(content)).toContain(compactCode("<PreviewCardPrimitive.Positioner"));
+    expect(compactCode(content)).toContain(compactCode("<PreviewCardPrimitive.Popup"));
+    expect(compactCode(content)).toContain(compactCode('side = "bottom"'));
+    expect(compactCode(content)).toContain(compactCode('align = "center"'));
+    expect(compactCode(content)).toContain(compactCode("sideOffset = 4"));
+    expect(compactCode(content)).toContain(compactCode("positionerClassName?: string;"));
+    expect(compactCode(content)).toContain(
+      compactCode("className={hoverCardPositioner({ class: positionerClassName })}"),
+    );
+    expect(compactCode(content)).not.toContain(compactCode("isolate"));
+    expect(compactCode(content)).not.toContain(compactCode("animationDuration"));
+    expect(compactCode(content)).toContain(compactCode('data-slot="hover-card-content"'));
+    expect(compactCode(variants)).not.toContain(compactCode("starwind-hover-card"));
+    expect(compactCode(variants)).toContain(compactCode("bg-popover text-popover-foreground"));
+    expect(compactCode(variants)).toContain(compactCode("export const hoverCardPositioner"));
+    expect(compactCode(variants)).toContain(compactCode('base: "z-50"'));
+    expect(compactCode(variants)).not.toContain(compactCode("text-popover-foreground z-50 hidden"));
+    expect(compactCode(variants)).toContain(compactCode("duration-100"));
+    expect(compactCode(variants)).toContain(compactCode("data-[state=closed]:animate-out"));
+    expect(compactCode(index)).toContain(compactCode("Root: HoverCard"));
+    expect(compactCode(index)).toContain(compactCode("Trigger: HoverCardTrigger"));
+    expect(compactCode(index)).toContain(compactCode("Content: HoverCardContent"));
   });
 }

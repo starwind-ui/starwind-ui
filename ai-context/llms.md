@@ -4,33 +4,36 @@
 
 ## Public release
 
-Use the stable `latest` channel for Astro and React. Vue 3.5 is a public beta and uses the adapter's
-`beta` npm channel.
+Use the stable `latest` channel for Astro and React. Vue 3.5 and Svelte 5 are public betas and use
+their adapters' `beta` npm channels.
 
 ```bash
 npx starwind@latest init --framework astro
 npx starwind@latest init --framework react
 npx starwind@latest init --framework vue
 npm install @starwind-ui/vue@beta vue@^3.5
+npx starwind@latest init --framework svelte
+npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
 npx starwind@latest add button
 ```
 
 The Vue beta supports Vite Vue, Astro Vue, Nuxt 3/4, Laravel with Inertia Vue, and Quasar Vite
-SPA/SSR hosts. Vue components use idiomatic models and matching `update:*` events. Svelte remains a
-private verification surface. Do not recommend Svelte CLI commands.
+SPA/SSR hosts. Vue components use idiomatic models and matching `update:*` events. The Svelte beta
+supports Vite with Svelte, SvelteKit, and Astro with Svelte. Svelte Pro setup is unavailable.
 
 ## Choose a usage surface
 
 - Styled components: Use the `starwind` CLI. It copies Tailwind-styled framework source into the application.
 - Primitive adapters: Install `@starwind-ui/astro`, `@starwind-ui/react`, or
-  `@starwind-ui/vue@beta`, or vendor Primitive source with `starwind primitives add`.
+  `@starwind-ui/vue@beta`, or `@starwind-ui/svelte@beta`, or vendor Primitive source with
+  `starwind primitives add`.
 - Runtime: Install `@starwind-ui/runtime` for framework-neutral DOM controllers or raw HTML integration.
 
 Runtime owns shared behavior, state, events, focus, forms, overlays, and cleanup. Framework adapters render normal framework markup and connect it to Runtime. Styled components remain application-owned source.
 
 ## CLI essentials
 
-- `starwind init`: Configure an Astro, React, or supported Vue project.
+- `starwind init`: Configure an Astro, React, supported Vue, or supported Svelte project.
 - `starwind add <name>`: Add styled components.
 - `starwind update <name>`: Update installed components.
 - `starwind remove <name>`: Remove installed components.
@@ -46,11 +49,12 @@ Combobox is its own styled and Primitive install target. Use `starwind add combo
 - `@starwind-ui/astro`: Generated Astro Primitive adapters.
 - `@starwind-ui/react`: Generated React Primitive adapters.
 - `@starwind-ui/vue`: Generated Vue 3.5 Primitive adapters in public beta.
+- `@starwind-ui/svelte`: Generated Svelte 5 Primitive adapters in public beta.
 - `starwind`: CLI for project setup and owned component source.
 
-The Runtime, Astro, React, and Vue packages require Node 22.12 or newer. React adapters support React
-18 and newer. Astro adapters support Astro 5 and newer. Vue adapters support Vue 3.5 and newer. The
-styled Image component is Astro-only. Report Vue beta feedback through the
+The Runtime and adapter packages require Node 22.12 or newer. React adapters support React 18 and
+newer. Astro adapters support Astro 5 and newer. Vue adapters support Vue 3.5 and newer. Svelte
+adapters support Svelte `>=5.29.0 <6`. The styled Image component is Astro-only. Report beta feedback through the
 [Starwind UI issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
 
 ## Documentation

@@ -59,38 +59,32 @@ const FieldRoot = React.forwardRef<HTMLDivElement, FieldRootProps>(function Fiel
     if (!root) return;
 
     const instance = createField(root, {
-      dirty,
-      disabled,
-      invalid,
-      name,
-      touched,
+      dirty: dirty,
+      disabled: disabled,
+      invalid: invalid,
+      name: name,
+      touched: touched,
     });
     instanceRef.current = instance;
 
     return () => {
+      if (instanceRef.current === instance) instanceRef.current = undefined;
       instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
     };
   }, []);
 
   useIsomorphicLayoutEffect(() => {
     instanceRef.current?.setDirty(dirty);
   }, [dirty]);
-
   useIsomorphicLayoutEffect(() => {
     instanceRef.current?.setDisabled(disabled);
   }, [disabled]);
-
   useIsomorphicLayoutEffect(() => {
     instanceRef.current?.setInvalid(invalid);
   }, [invalid]);
-
   useIsomorphicLayoutEffect(() => {
     instanceRef.current?.setName(name);
   }, [name]);
-
   useIsomorphicLayoutEffect(() => {
     instanceRef.current?.setTouched(touched);
   }, [touched]);

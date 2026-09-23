@@ -8,7 +8,7 @@ export const publicFrameworks: readonly PublicFrameworkMetadata[] = frameworkAda
   .filter(({ publicSupport }) => publicSupport.publicDocsClaim)
   .map(({ target, displayName, packageName, publicSupport }) => {
     if (!packageName) throw new Error(`Public framework ${target} needs a package name.`);
-    if (target !== "astro" && target !== "react" && target !== "vue") {
+    if (target !== "astro" && target !== "react" && target !== "svelte" && target !== "vue") {
       throw new Error(`Public docs metadata needs a declared framework target: ${target}.`);
     }
     const maturity = publicSupport.status === "public-beta" ? "beta" : "stable";

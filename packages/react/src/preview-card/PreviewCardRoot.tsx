@@ -19,7 +19,9 @@ import {
   useReactPortalScope,
 } from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
+export const TimedPlacementContext = React.createContext<
+  ((element: HTMLElement, attributes: Record<string, string> | null) => void) | undefined
+>(undefined);
 export type PreviewCardRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
   defaultOpen?: boolean;
   open?: boolean;
@@ -28,9 +30,8 @@ export type PreviewCardRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "o
   closeOnOutsideInteract?: boolean;
   disableHoverableContent?: boolean;
   openDelay?: number;
-  onOpenChange?: (open: boolean, details: PreviewCardOpenChangeDetails) => void;
+  onOpenChange?: (open: boolean, detail: PreviewCardOpenChangeDetails) => void;
 };
-
 const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
   function PreviewCardRoot(
     {
@@ -47,30 +48,46 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLDivElement>(null);
-    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
-    const portalRuntimeActivation = portalScope.activation;
-    const instanceRef = React.useRef<ReturnType<typeof createPreviewCard> | undefined>(undefined);
-    const onOpenChangeRef = React.useRef(onOpenChange);
-    const openRef = React.useRef(open);
-    const defaultOpenRef = React.useRef(defaultOpen);
-    const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
-    const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
-    const acceptedTriggerRef = React.useRef<HTMLElement | undefined>(undefined);
-    const acceptedRootRef = React.useRef<HTMLElement | undefined>(undefined);
-
-    const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
-      uncontrolledOpenRef.current = nextOpen;
-      setUncontrolledOpenState(nextOpen);
-    }, []);
-
+    const inputs = React.useRef({
+      open,
+      closeDelay,
+      closeOnEscape,
+      closeOnOutsideInteract,
+      disableHoverableContent,
+      openDelay,
+      onOpenChange,
+    });
     useIsomorphicLayoutEffect(() => {
-      onOpenChangeRef.current = onOpenChange;
-    }, [onOpenChange]);
+      inputs.current = {
+        open,
+        closeDelay,
+        closeOnEscape,
+        closeOnOutsideInteract,
+        disableHoverableContent,
+        openDelay,
+        onOpenChange,
+      };
+    });
+    const initialDefaultOpen = React.useRef(defaultOpen ?? false).current;
+    const initialOpen = React.useRef(open ?? initialDefaultOpen).current;
+    const [renderedState, setRenderedOpen] = React.useState<boolean>(initialOpen);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createPreviewCard>;
+      unsubscribe?: () => void;
+      accepted: boolean;
+      initialized: boolean;
+      trigger?: HTMLElement;
+    }>({ accepted: initialOpen, initialized: false }).current;
+    const authoredPlacement = React.useRef(new Map<HTMLElement, Record<string, string>>()).current;
 
-    useIsomorphicLayoutEffect(() => {
-      openRef.current = open;
-    }, [open]);
-
+    function registerPlacement(
+      element: HTMLElement,
+      attributes: Record<string, string> | null,
+    ): void {
+      if (attributes) authoredPlacement.set(element, attributes);
+      else authoredPlacement.delete(element);
+    }
+    const publishPlacement = React.useCallback(registerPlacement, []);
     const composedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
         rootRef.current = node;
@@ -79,89 +96,95 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
       [forwardedRef],
     );
 
+    function disconnectRuntime(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      connection.accepted = owned.getOpen();
+      connection.unsubscribe?.();
+      connection.unsubscribe = undefined;
+      connection.instance = undefined;
+      owned.destroy();
+    }
+    function connectRuntime(root: HTMLDivElement): void {
+      disconnectRuntime();
+      const desired = inputs.current.open ?? connection.accepted;
+      const owned = createPreviewCard(root, {
+        defaultOpen: false,
+        ...(inputs.current.open !== undefined ? { open: false } : {}),
+        closeDelay: inputs.current.closeDelay,
+        closeOnEscape: inputs.current.closeOnEscape,
+        closeOnOutsideInteract: inputs.current.closeOnOutsideInteract,
+        disableHoverableContent: inputs.current.disableHoverableContent,
+        openDelay: inputs.current.openDelay,
+        onOpenChange: (next, detail) => {
+          inputs.current.onOpenChange?.(next, detail);
+        },
+      });
+      connection.instance = owned;
+      connection.initialized = true;
+      connection.unsubscribe = owned.subscribe("openChange", (detail) => {
+        if (connection.instance !== owned) return;
+        connection.accepted = detail.open;
+        if (detail.open && detail.trigger instanceof HTMLElement)
+          connection.trigger = detail.trigger;
+        if (inputs.current.open === undefined) setRenderedOpen(detail.open);
+      });
+      if (owned.getOpen() !== desired)
+        owned.setOpen(desired, { emit: false, trigger: connection.trigger });
+      connection.accepted = owned.getOpen();
+      if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+    }
+    function applyParentCommand(): void {
+      const next = inputs.current.open;
+      const owned = connection.instance;
+      if (next === undefined || !owned) return;
+      if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+      connection.accepted = owned.getOpen();
+      if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+    }
+
+    function connectSurface(root: HTMLDivElement): void {
+      for (const [element, attributes] of authoredPlacement) {
+        for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+      }
+      connectRuntime(root);
+    }
+    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
     const initializePortalRuntime = React.useCallback(() => {
       const root = rootRef.current;
       if (!root) return;
-      if (acceptedRootRef.current !== root) {
-        acceptedRootRef.current = root;
-        acceptedTriggerRef.current = undefined;
-      }
 
-      const instance = createPreviewCard(root, {
-        defaultOpen: false,
-        closeDelay,
-        closeOnEscape,
-        closeOnOutsideInteract,
-        disableHoverableContent,
-        openDelay,
-        onOpenChange: (nextOpen, details) => {
-          onOpenChangeRef.current?.(nextOpen, details);
-        },
-        ...(openRef.current !== undefined ? { open: false } : {}),
-      });
-      instanceRef.current = instance;
-      const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
-        if (details.open && details.trigger instanceof HTMLElement) {
-          acceptedTriggerRef.current = details.trigger;
-        }
-        if (openRef.current === undefined) {
-          setUncontrolledOpen(details.open);
-        }
-      });
-      instance.setOpen(openRef.current ?? uncontrolledOpenRef.current, {
-        emit: false,
-        trigger: acceptedTriggerRef.current,
-      });
-      if (openRef.current === undefined) setUncontrolledOpen(instance.getOpen());
-
-      return () => {
-        unsubscribeOpenChange();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
+      connectSurface(root);
+      return disconnectRuntime;
     }, [closeDelay, closeOnEscape, closeOnOutsideInteract, disableHoverableContent, openDelay]);
-
     useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
-
     useIsomorphicLayoutEffect(() => {
-      if (!portalScope.isReady()) return;
-      const root = rootRef.current;
-      if (!root) return;
-      refreshPreviewCardPortalSurface(root);
-    }, [portalRuntimeActivation]);
+      if (portalScope.isReady() && rootRef.current)
+        refreshPreviewCardPortalSurface(rootRef.current);
+    }, [portalScope.activation]);
+    useIsomorphicLayoutEffect(applyParentCommand, [open]);
 
-    useIsomorphicLayoutEffect(() => {
-      if (open === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getOpen() === open) return;
-
-      instance.setOpen(open, { emit: false });
-    }, [open]);
-
-    const renderedOpen = open ?? uncontrolledOpen;
-
+    const renderedOpen = open ?? renderedState;
     return (
       <ReactPortalScopeProvider scope={portalScope}>
-        <div
-          data-sw-preview-card
-          data-default-open={defaultOpenRef.current ? "true" : undefined}
-          data-close-delay={closeDelay}
-          data-close-on-escape={closeOnEscape ? "true" : "false"}
-          data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-          data-content-hoverable={!disableHoverableContent ? "true" : "false"}
-          data-open-delay={openDelay}
-          data-state={renderedOpen ? "open" : "closed"}
-          ref={composedRef}
-          {...props}
-        />
+        <TimedPlacementContext.Provider value={publishPlacement}>
+          <div
+            {...props}
+            data-sw-preview-card
+            data-sw-part={"root"}
+            data-default-open={initialDefaultOpen ? "true" : undefined}
+            data-close-delay={closeDelay}
+            data-close-on-escape={String(closeOnEscape)}
+            data-close-on-outside-interact={String(closeOnOutsideInteract)}
+            data-content-hoverable={String(!disableHoverableContent)}
+            data-open-delay={openDelay}
+            data-state={renderedOpen ? "open" : "closed"}
+            ref={composedRef}
+          />
+        </TimedPlacementContext.Provider>
       </ReactPortalScopeProvider>
     );
   },
 );
-
 PreviewCardRoot.displayName = "PreviewCard.Root";
-
 export default PreviewCardRoot;

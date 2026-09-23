@@ -1,0 +1,4 @@
+{
+  "components": { "select": "patch" },
+  "impact": "behavior"
+}

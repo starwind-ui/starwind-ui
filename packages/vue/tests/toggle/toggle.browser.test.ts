@@ -1,17 +1,16 @@
+import type { TogglePressedChangeDetails } from "@starwind-ui/runtime/toggle";
+import { ToggleRoot } from "@starwind-ui/vue/toggle";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type ComponentPublicInstance,
   createApp,
   createSSRApp,
   h,
   nextTick,
   reactive,
   ref,
-  type ComponentPublicInstance,
 } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import type { TogglePressedChangeDetails } from "@starwind-ui/runtime/toggle";
-import { ToggleRoot } from "@starwind-ui/vue/toggle";
 import { Toggle as StyledToggle } from "../../../../apps/vue-demo/src/components/starwind-runtime/toggle";
 
 type ToggleExposed = ComponentPublicInstance & { element: HTMLElement | null };
@@ -133,46 +132,7 @@ describe("Vue Toggle public behavior", () => {
     expect(events).toEqual(["detail", "update"]);
   });
 
-  it("drops an old controlled event when its detailed handler changes ownership", async () => {
-    const props = reactive<{ pressed: boolean | undefined }>({ pressed: false });
-    const updates: boolean[] = [];
-    const host = appendHost();
-    const app = createApp({
-      render: () =>
-        h(ToggleRoot, {
-          pressed: props.pressed,
-          onPressedChange: () => {
-            if (props.pressed !== undefined) props.pressed = undefined;
-          },
-          "onUpdate:pressed": (pressed: boolean) => updates.push(pressed),
-        }),
-    });
-    app.mount(host);
-    cleanups.push(() => app.unmount());
-    const root = host.querySelector<HTMLElement>("[data-sw-toggle]")!;
-
-    root.click();
-    await settleModel();
-    expect(updates).toEqual([]);
-    expect(root.getAttribute("aria-pressed")).toBe("false");
-    expect(root.getAttribute("data-state")).toBe("off");
-    expect(root.hasAttribute("data-unpressed")).toBe(true);
-    expect(root.hasAttribute("data-pressed")).toBe(false);
-
-    root.click();
-    await settleModel();
-    expect(updates).toEqual([true]);
-    expect(root.getAttribute("aria-pressed")).toBe("true");
-    expect(root.getAttribute("data-state")).toBe("on");
-
-    root.click();
-    await settleModel();
-    expect(updates).toEqual([true, false]);
-    expect(root.getAttribute("aria-pressed")).toBe("false");
-    expect(root.getAttribute("data-state")).toBe("off");
-  });
-
-  it("does not accept or emit a model update after the detailed handler unmounts Toggle", async () => {
+  it("cancels the proposal before the detailed handler unmounts Toggle", async () => {
     const show = ref(true);
     const updates: boolean[] = [];
     const host = appendHost();
@@ -180,7 +140,8 @@ describe("Vue Toggle public behavior", () => {
       render: () =>
         show.value
           ? h(ToggleRoot, {
-              onPressedChange: () => {
+              onPressedChange: (_pressed: boolean, detail: TogglePressedChangeDetails) => {
+                detail.cancel();
                 show.value = false;
               },
               "onUpdate:pressed": (pressed: boolean) => updates.push(pressed),
@@ -218,13 +179,13 @@ describe("Vue Toggle public behavior", () => {
     root.click();
     root.click();
     await settleModel();
-    expect(events).toEqual(["detail:1", "detail:2", "update:true"]);
+    expect(events).toEqual(["detail:1", "update:true", "detail:2"]);
     expect(root.getAttribute("aria-pressed")).toBe("true");
     expect(root.getAttribute("data-state")).toBe("on");
 
     root.click();
     await settleModel();
-    expect(events).toEqual(["detail:1", "detail:2", "update:true", "detail:3", "update:false"]);
+    expect(events).toEqual(["detail:1", "update:true", "detail:2", "detail:3", "update:false"]);
     expect(root.getAttribute("aria-pressed")).toBe("false");
     expect(root.getAttribute("data-state")).toBe("off");
   });

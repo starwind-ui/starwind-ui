@@ -32,7 +32,7 @@ const FieldError = React.forwardRef<HTMLDivElement, FieldErrorProps>(function Fi
   { children, hidden = true, match = false, messageSource, ...props },
   ref,
 ) {
-  const serializedMatch = typeof match === "boolean" ? String(match) : match;
+  const serializedMatch = String(match);
 
   return (
     <div

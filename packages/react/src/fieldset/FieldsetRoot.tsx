@@ -9,56 +9,47 @@ import { createFieldset } from "@starwind-ui/runtime/fieldset";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
-export type FieldsetRootProps = React.ComponentPropsWithoutRef<"fieldset">;
-
+export type FieldsetRootProps = Omit<React.ComponentPropsWithoutRef<"fieldset">, "disabled"> & {
+  disabled?: boolean;
+};
 const FieldsetRoot = React.forwardRef<HTMLFieldSetElement, FieldsetRootProps>(function FieldsetRoot(
-  { children, disabled = false, ...props },
+  { children, disabled = false, ...rest },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLFieldSetElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createFieldset> | undefined>(undefined);
-
   const composedRef = React.useCallback(
-    (node: HTMLFieldSetElement | null) => {
-      rootRef.current = node;
-      return setRef(forwardedRef, node);
+    (element: HTMLFieldSetElement | null) => {
+      rootRef.current = element;
+      return setRef(forwardedRef, element);
     },
     [forwardedRef],
   );
-
+  const initialDisabled = React.useRef(disabled).current;
+  const owned = React.useRef<ReturnType<typeof createFieldset> | undefined>(undefined);
   useIsomorphicLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const instance = createFieldset(root, { disabled });
-    instanceRef.current = instance;
-
+    const element = rootRef.current;
+    if (!element) return;
+    owned.current = createFieldset(element, { disabled: disabled });
     return () => {
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
+      const previous = owned.current;
+      owned.current = undefined;
+      previous?.destroy();
     };
   }, []);
-
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setDisabled(disabled);
+    owned.current?.setDisabled(disabled);
   }, [disabled]);
-
   return (
     <fieldset
-      data-sw-fieldset
-      data-disabled={disabled ? "" : undefined}
-      disabled={disabled}
+      {...rest}
+      data-sw-fieldset={""}
+      disabled={initialDisabled}
+      data-disabled={initialDisabled ? "" : undefined}
       ref={composedRef}
-      {...props}
     >
       {children}
     </fieldset>
   );
 });
-
 FieldsetRoot.displayName = "Fieldset.Root";
-
 export default FieldsetRoot;

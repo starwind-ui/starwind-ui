@@ -7,6 +7,8 @@
 
 import * as React from "react";
 
+export const AccordionItemContext = React.createContext(false);
+
 export type AccordionItemProps = React.HTMLAttributes<HTMLDivElement> & {
   value?: string;
   disabled?: boolean;
@@ -17,14 +19,16 @@ const AccordionItem = React.forwardRef<HTMLDivElement, AccordionItemProps>(funct
   forwardedRef,
 ) {
   return (
-    <div
-      data-sw-accordion-item
-      data-value={value}
-      data-disabled={disabled ? "" : undefined}
-      data-state="closed"
-      ref={forwardedRef}
-      {...props}
-    />
+    <AccordionItemContext.Provider value={disabled}>
+      <div
+        data-sw-accordion-item
+        data-value={value}
+        data-disabled={disabled ? "" : undefined}
+        data-state="closed"
+        ref={forwardedRef}
+        {...props}
+      />
+    </AccordionItemContext.Provider>
   );
 });
 

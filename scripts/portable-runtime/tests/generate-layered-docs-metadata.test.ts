@@ -305,7 +305,7 @@ const auditedAsChildVisualOwnership = [
 ] as const;
 
 describe("generateLayeredDocsMetadata", () => {
-  it("reports public Vue beta availability separately from API and example coverage", () => {
+  it("reports public beta availability separately from API and example coverage", () => {
     const metadata = buildLayeredDocsMetadata();
     expect(metadata.frameworks).toEqual([
       {
@@ -329,9 +329,19 @@ describe("generateLayeredDocsMetadata", () => {
         packageName: "@starwind-ui/vue",
         installSpecifier: "@starwind-ui/vue@beta",
       },
+      {
+        target: "svelte",
+        label: "Svelte",
+        maturity: "beta",
+        packageName: "@starwind-ui/svelte",
+        installSpecifier: "@starwind-ui/svelte@beta",
+      },
     ]);
     for (const component of metadata.styledComponents) {
       expect(component.frameworkAvailability.vue.status).toBe(
+        component.id === "image" ? "unsupported" : "available",
+      );
+      expect(component.frameworkAvailability.svelte.status).toBe(
         component.id === "image" ? "unsupported" : "available",
       );
       expect(Object.keys(component.styledApi)).toEqual(["astro", "react"]);
@@ -342,6 +352,12 @@ describe("generateLayeredDocsMetadata", () => {
         packageName: "@starwind-ui/vue",
         importSource: `@starwind-ui/vue/${primitive.id}`,
         installSpecifier: "@starwind-ui/vue@beta",
+      });
+      expect(primitive.packages).toContainEqual({
+        framework: "svelte",
+        packageName: "@starwind-ui/svelte",
+        importSource: `@starwind-ui/svelte/${primitive.id}`,
+        installSpecifier: "@starwind-ui/svelte@beta",
       });
     }
   });

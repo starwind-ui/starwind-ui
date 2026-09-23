@@ -24,6 +24,7 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(functi
 ) {
   const protectedTriggerProps = {
     "data-sw-tooltip-trigger": "",
+    "data-sw-part": "trigger",
     "data-disabled": disabled ? "" : undefined,
     "aria-disabled": disabled ? "true" : undefined,
     "data-state": "closed",

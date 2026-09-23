@@ -6,26 +6,24 @@ import {
   type ToggleGroupValueChangeDetails,
 } from "@starwind-ui/runtime/toggle-group";
 import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
-
 import { ToggleGroupContext } from "./ToggleGroupContext";
 
 defineOptions({ inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
     defaultValue?: ToggleGroupValue;
     disabled?: boolean;
     loopFocus?: boolean;
-    modelValue?: ToggleGroupValue;
     multiple?: boolean;
     orientation?: "horizontal" | "vertical";
+    modelValue?: ToggleGroupValue;
   }>(),
   {
     disabled: false,
     loopFocus: true,
-    modelValue: undefined,
     multiple: false,
     orientation: "horizontal",
+    modelValue: undefined,
   },
 );
 const emit = defineEmits<{
@@ -34,176 +32,132 @@ const emit = defineEmits<{
 }>();
 defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
-const rootRef = ref<HTMLElement | null>(null);
-const initialDefaultValue = normalizeValue(props.defaultValue ?? [], props.multiple);
-const uncontrolledValue = ref<ToggleGroupValue>(initialDefaultValue);
-const renderedValue = computed(() =>
-  normalizeValue(props.modelValue ?? uncontrolledValue.value, props.multiple),
-);
-const renderedDisabled = computed(() => props.disabled);
-const renderedLoopFocus = computed(() => props.loopFocus);
-const renderedMultiple = computed(() => props.multiple);
-const renderedOrientation = computed(() => props.orientation);
-let instance: ReturnType<typeof createToggleGroup> | undefined;
-let observer: MutationObserver | undefined;
-let unsubscribeValueChange: (() => void) | undefined;
-let instanceGeneration = 0;
-let mounted = false;
-
-provide(ToggleGroupContext, {
-  disabled: renderedDisabled,
-  loopFocus: renderedLoopFocus,
-  multiple: renderedMultiple,
-  orientation: renderedOrientation,
-  value: renderedValue,
-});
-
+const rootRef = ref<HTMLDivElement | null>(null);
 defineExpose({ element: rootRef });
+const initialDefault = normalizeValue(props.defaultValue ?? [], props.multiple);
+const renderedValue = ref<ToggleGroupValue>(initialDefault);
+const connection: {
+  instance?: ReturnType<typeof createToggleGroup>;
+  unsubscribe?: () => void;
+  observer?: MutationObserver;
+  ownDisabled?: boolean;
+  accepted: ToggleGroupValue;
+} = { accepted: initialDefault };
 
-function setUncontrolledValue(nextValue: ToggleGroupValue): void {
-  const normalizedValue = normalizeValue(nextValue, props.multiple);
-  if (areValuesEqual(uncontrolledValue.value, normalizedValue)) return;
-  uncontrolledValue.value = normalizedValue;
+const effectiveDisabled = computed(() => props.disabled);
+const selected = computed(() =>
+  normalizeValue(props.modelValue ?? renderedValue.value, props.multiple),
+);
+function normalizeValue(value: string[], multiple: boolean) {
+  const next = Array.from(new Set(value.filter((item) => item.length > 0)));
+  return multiple ? next : next.slice(0, 1);
 }
-
-function handleValueChangeProposal(
-  _value: ToggleGroupValue,
-  detail: ToggleGroupValueChangeDetails,
-): void {
-  emit("valueChange", detail.value, detail);
+function isModelEqual(left: string[] | undefined, right: string[] | undefined) {
+  return (
+    left === right ||
+    (left !== undefined &&
+      right !== undefined &&
+      left.length === right.length &&
+      left.every((entry, index) => entry === right[index]))
+  );
 }
-
-function handleAcceptedValueChange(detail: ToggleGroupValueChangeDetails): void {
-  const nextValue = normalizeValue(detail.value, props.multiple);
-  if (props.modelValue === undefined) setUncontrolledValue(nextValue);
-  emit("update:modelValue", nextValue);
+function copyModel(value: string[]) {
+  return [...value];
 }
-
-function destroyOwnedInstance(): void {
-  instanceGeneration += 1;
-  observer?.disconnect();
-  observer = undefined;
-  unsubscribeValueChange?.();
-  unsubscribeValueChange = undefined;
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  instance = undefined;
-  ownedInstance.destroy();
+function disconnect() {
+  const owned = connection.instance;
+  connection.observer?.disconnect();
+  connection.observer = undefined;
+  connection.unsubscribe?.();
+  connection.unsubscribe = undefined;
+  connection.instance = undefined;
+  owned?.destroy();
 }
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  const createdInstance = createToggleGroup(element, {
-    defaultValue: renderedValue.value,
+function publishReadback(owned: ReturnType<typeof createToggleGroup>) {
+  if (connection.instance !== owned) return;
+  const next = owned.getValue();
+  if (!isModelEqual(connection.accepted, next)) {
+    connection.accepted = next;
+    renderedValue.value = next;
+  }
+}
+function connect(root: HTMLDivElement) {
+  disconnect();
+  const desired = normalizeValue(props.modelValue ?? initialDefault, props.multiple);
+  const owned = createToggleGroup(root, {
+    defaultValue: desired,
     disabled: props.disabled,
     loopFocus: props.loopFocus,
     multiple: props.multiple,
     orientation: props.orientation,
-    onValueChange: handleValueChangeProposal,
-    ...(props.modelValue === undefined ? {} : { value: renderedValue.value }),
+    ...(props.modelValue !== undefined ? { value: desired } : {}),
+    onValueChange: (next, detail) => {
+      emit("valueChange", next, detail);
+    },
   });
-  instance = createdInstance;
-  unsubscribeValueChange = createdInstance.subscribe("valueChange", handleAcceptedValueChange);
-
-  observer = new MutationObserver(() => {
-    if (props.modelValue !== undefined || instance !== createdInstance) return;
-    setUncontrolledValue(parseToggleGroupValueAttribute(element.getAttribute("data-value")));
+  connection.instance = owned;
+  connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+    if (connection.instance !== owned || detail.isCanceled) return;
+    publishReadback(owned);
+    emit("update:modelValue", detail.value);
   });
-  observer.observe(element, {
-    attributes: true,
-    attributeFilter: ["data-value"],
+  connection.observer = new MutationObserver(() => {
+    publishReadback(owned);
   });
-  if (props.modelValue === undefined) {
-    setUncontrolledValue(parseToggleGroupValueAttribute(element.getAttribute("data-value")));
-  }
+  connection.observer.observe(root, { attributes: true, attributeFilter: ["data-value"] });
+  publishReadback(owned);
 }
-
+function applyParent() {
+  const owned = connection.instance,
+    input = props.modelValue;
+  if (!owned || input === undefined) return;
+  const next = normalizeValue(input, props.multiple);
+  if (isModelEqual(owned.getValue(), next)) return;
+  owned.setValue(next, { emit: false });
+  publishReadback(owned);
+}
+function applyOptions() {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.refresh();
+  owned.setDisabled(props.disabled);
+  owned.setLoopFocus(props.loopFocus);
+  owned.setMultiple(props.multiple);
+  owned.setOrientation(props.orientation);
+  applyParent();
+  publishReadback(owned);
+}
 onMounted(() => {
-  mounted = true;
-  setupRuntime();
+  if (rootRef.value) connect(rootRef.value);
 });
-
+onBeforeUnmount(disconnect);
 watch(
-  () => props.modelValue,
-  (value, previousValue) => {
-    const controllednessChanged = (value === undefined) !== (previousValue === undefined);
-    if (controllednessChanged) {
-      if (value === undefined && instance) setUncontrolledValue(instance.getValue());
-      setupRuntime();
-      return;
-    }
-    if (value === undefined || !instance) return;
-    const normalizedValue = normalizeValue(value, props.multiple);
-    if (areValuesEqual(instance.getValue(), normalizedValue)) return;
-    instance.setValue(normalizedValue, { emit: false });
-  },
+  () => [props.disabled, props.loopFocus, props.multiple, props.orientation],
+  () => queueMicrotask(applyOptions),
   { flush: "post" },
 );
 watch(
-  () => props.disabled,
-  (value) => instance?.setDisabled(value),
-);
-watch(
-  () => props.loopFocus,
-  (value) => instance?.setLoopFocus(value),
-);
-watch(
-  () => props.multiple,
-  (value) => {
-    instance?.setMultiple(value);
-    if (props.modelValue === undefined && instance) {
-      setUncontrolledValue(instance.getValue());
-    } else if (props.modelValue !== undefined && instance) {
-      instance.setValue(normalizeValue(props.modelValue, value), { emit: false });
-    }
-  },
+  () => [props.modelValue, props.multiple],
+  () => queueMicrotask(applyParent),
   { flush: "post" },
 );
-watch(
-  () => props.orientation,
-  (value) => instance?.setOrientation(value),
-);
-
-onBeforeUnmount(() => {
-  mounted = false;
-  destroyOwnedInstance();
+provide(ToggleGroupContext, {
+  value: selected,
+  disabled: computed(() => props.disabled),
+  multiple: computed(() => props.multiple),
+  loopFocus: computed(() => props.loopFocus),
+  orientation: computed(() => props.orientation),
 });
-
-function areValuesEqual(left: ToggleGroupValue, right: ToggleGroupValue): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function normalizeValue(value: ToggleGroupValue, multiple: boolean): ToggleGroupValue {
-  const values = Array.from(new Set(value.filter((item) => item.length > 0)));
-  return multiple ? values : values.slice(0, 1);
-}
-
-function parseToggleGroupValueAttribute(value: string | null): ToggleGroupValue {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
 </script>
-
 <template>
   <div
     ref="rootRef"
     v-bind="attrs"
-    data-sw-toggle-group
-    :data-default-value="
-      initialDefaultValue.length ? JSON.stringify(initialDefaultValue) : undefined
-    "
-    :data-value="JSON.stringify(renderedValue)"
-    :data-disabled="props.disabled ? '' : undefined"
+    data-sw-toggle-group=""
+    data-sw-part="root"
+    :data-default-value="initialDefault.length ? JSON.stringify(initialDefault) : undefined"
+    :data-value="JSON.stringify(selected)"
+    :data-disabled="effectiveDisabled ? '' : undefined"
     :data-loop-focus="props.loopFocus ? undefined : 'false'"
     :data-multiple="props.multiple ? '' : undefined"
     :data-orientation="props.orientation"

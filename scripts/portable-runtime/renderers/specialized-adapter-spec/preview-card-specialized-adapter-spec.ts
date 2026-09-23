@@ -6,6 +6,7 @@ import type {
   AdapterTimedFloatingOverlayComponentProjection,
   AdapterTimedFloatingOverlayFacts,
 } from "../framework-adapters/index.js";
+import { withAcceptedModelPublications } from "../primitive-output-model/accepted-model-publication.js";
 import {
   buildBaseSpecializedAdapterSpec,
   validateSpecializedAdapterSpec,
@@ -323,7 +324,6 @@ export function validatePreviewCardSpecializedAdapterSpec(
   errors.push(...validateStateControl(spec, previewCard.stateControl));
   errors.push(...validateTriggerProjection(spec, previewCard.triggerProjection));
 
-
   if (!arraysEqual(asArray(previewCard.runtimeBoundary), PREVIEW_CARD_RUNTIME_BOUNDARY)) {
     errors.push(
       "Preview Card specialized adapter spec runtimeBoundary must match Runtime-owned behavior.",
@@ -362,7 +362,7 @@ export function buildPreviewCardAdapterOutputModel(
     },
   ];
 
-  return { files };
+  return withAcceptedModelPublications({ files }, spec.events, spec.root.part);
 }
 
 function createPreviewCardComponentFile(
@@ -494,10 +494,7 @@ function getPreviewCardComponentProps(
 function getPreviewCardTimedFloatingOverlayFacts(
   spec: PreviewCardSpecializedAdapterSpec,
 ): AdapterTimedFloatingOverlayFacts {
-  const portalPart = getRequiredValue(
-    spec.previewCard.floating.portalPart,
-    "floating portal part",
-  );
+  const portalPart = getRequiredValue(spec.previewCard.floating.portalPart, "floating portal part");
   const anatomy = {
     arrow: getPreviewCardAnatomyPart(spec, "arrow"),
     backdrop: getPreviewCardAnatomyPart(spec, "backdrop"),
@@ -1108,10 +1105,7 @@ function getAsChild(spec: SpecializedAdapterSpec, partName: string) {
   return asChild;
 }
 
-function getPreviewCardAnatomyPart(
-  spec: PreviewCardSpecializedAdapterSpec,
-  partName: string,
-) {
+function getPreviewCardAnatomyPart(spec: PreviewCardSpecializedAdapterSpec, partName: string) {
   const part = spec.previewCard.anatomy.find((candidate) => candidate.part === partName);
   if (!part) {
     throw new Error(
@@ -1313,11 +1307,7 @@ function getStateSetter(spec: SpecializedAdapterSpec, stateModel: string) {
   return setter;
 }
 
-function getStaticAttribute(
-  spec: SpecializedAdapterSpec,
-  partName: string,
-  name: string,
-) {
+function getStaticAttribute(spec: SpecializedAdapterSpec, partName: string, name: string) {
   const attribute = spec.renderPlan.staticAttributes.find(
     (candidate) => candidate.part === partName && candidate.name === name,
   );

@@ -186,6 +186,7 @@ export const tooltipRuntimeAdapterContract = {
     {
       name: "openChange",
       stateModel: "open",
+      acceptanceNotification: "controller-subscription",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onOpenChange",

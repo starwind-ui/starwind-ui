@@ -113,6 +113,13 @@ export function projectVueDetailedEvent(runtimeHandler: string): VueDetailedEven
 }
 
 const modelPolicy = {
+  colorPicker: {
+    ownership: "independent-value-and-format-fixed-at-mount",
+    initialDefined: "parent-controlled",
+    initialUndefined: "runtime-owned",
+    laterUndefined: "retain-last-controlled-value",
+    laterDefined: "ignored-by-initially-uncontrolled-model",
+  },
   acceptedUncontrolledValue: "latest-accepted-value",
   controlledWhen: "model-prop-is-not-undefined",
   defaultPropChanges: "ignored-after-initial-seed",

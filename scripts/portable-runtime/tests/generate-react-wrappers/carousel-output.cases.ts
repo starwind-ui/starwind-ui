@@ -1,3 +1,4 @@
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -28,47 +29,54 @@ export function defineReactCarouselOutputTests(getTempRoot: GetTempRoot): void {
     const index = await readGeneratedFile(outputRoot, "carousel/index.ts");
 
     expect(generatedPrimitiveEntries).toContain("carousel");
-    expect(root).toContain('from "@starwind-ui/runtime/carousel";');
-    expect(root).toContain("type CarouselInstance");
-    expect(root).toContain("type CarouselOptions");
-    expect(root).toContain("createCarousel");
-    expect(root).toContain('opts?: CarouselOptions["opts"]');
-    expect(root).toContain('plugins?: CarouselOptions["plugins"]');
-    expect(root).toContain('setApi?: (api: CarouselInstance["api"]) => void');
-    expect(root).toContain('const DEFAULT_CAROUSEL_OPTS: CarouselOptions["opts"] = {};');
+    expect(compactCode(root)).toContain(compactCode('from "@starwind-ui/runtime/carousel";'));
+    expect(compactCode(root)).toContain(compactCode("type CarouselInstance"));
+    expect(compactCode(root)).toContain(compactCode("type CarouselOptions"));
+    expect(compactCode(root)).toContain(compactCode("createCarousel"));
+    expect(compactCode(root)).toContain(compactCode('opts?: CarouselOptions["opts"]'));
+    expect(compactCode(root)).toContain(compactCode('plugins?: CarouselOptions["plugins"]'));
+    expect(compactCode(root)).toContain(
+      compactCode('setApi?: (api: CarouselInstance["api"]) => void'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('const DEFAULT_CAROUSEL_OPTS: CarouselOptions["opts"] = {};'),
+    );
     expect(root.indexOf("const DEFAULT_CAROUSEL_OPTS")).toBeLessThan(
       root.indexOf("const CarouselRoot = React.forwardRef"),
     );
-    expect(root).toContain(
-      '{ orientation = "horizontal", opts = DEFAULT_CAROUSEL_OPTS, plugins, setApi, ...props }',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        '{ orientation = "horizontal", opts = DEFAULT_CAROUSEL_OPTS, plugins, setApi, ...props }',
+      ),
     );
-    expect(root).not.toContain("opts = {}");
-    expect(root).toContain("createCarousel(root");
-    expect(root).toContain("plugins: pluginsRef.current");
-    expect(root).toContain("setApiRef.current?.(api)");
-    expect(root).toContain('data-auto-init="false"');
+    expect(compactCode(root)).not.toContain(compactCode("opts = {}"));
+    expect(compactCode(root)).toContain(compactCode("createCarousel(root"));
+    expect(compactCode(root)).toContain(compactCode("plugins: inputs.current.plugins"));
+    expect(compactCode(root)).toContain(compactCode("inputs.current.setApi?.(api)"));
+    expect(compactCode(root)).toContain(compactCode('data-auto-init="false"'));
     expect(root.indexOf("{...props}")).toBeLessThan(root.indexOf('data-auto-init="false"'));
-    expect(root).toContain('data-axis={orientation === "vertical" ? "y" : "x"}');
-    expect(root).toContain("data-opts={JSON.stringify(opts)}");
-    expect(root).toContain("const skipInitialReInitRef = React.useRef(true)");
-    expect(root.indexOf("if (skipInitialReInitRef.current)")).toBeLessThan(
+    expect(compactCode(root)).toContain(
+      compactCode('data-axis={orientation === "vertical" ? "y" : "x"}'),
+    );
+    expect(compactCode(root)).toContain(compactCode("data-opts={JSON.stringify(opts)}"));
+    expect(root.indexOf("next.plugins === previous.plugins")).toBeLessThan(
       root.indexOf("instance.reInit"),
     );
     expect(root.indexOf('role="region"')).toBeLessThan(root.indexOf("{...props}"));
     expect(root.indexOf('aria-roledescription="carousel"')).toBeLessThan(
       root.indexOf("{...props}"),
     );
-    expect(viewport).toContain("data-sw-carousel-viewport");
-    expect(container).toContain("data-sw-carousel-container");
-    expect(item).toContain("data-sw-carousel-item");
-    expect(item).toContain('role="group"');
-    expect(item).toContain('aria-roledescription="slide"');
-    expect(previous).toContain("data-sw-carousel-previous");
-    expect(next).toContain("data-sw-carousel-next");
-    expect(index).toContain("Root: CarouselRoot");
-    expect(index).toContain("Viewport: CarouselViewport");
-    expect(index).toContain(
-      'export type { CarouselInstance, CarouselOptions } from "@starwind-ui/runtime"',
+    expect(compactCode(viewport)).toContain(compactCode("data-sw-carousel-viewport"));
+    expect(compactCode(container)).toContain(compactCode("data-sw-carousel-container"));
+    expect(compactCode(item)).toContain(compactCode("data-sw-carousel-item"));
+    expect(compactCode(item)).toContain(compactCode('role="group"'));
+    expect(compactCode(item)).toContain(compactCode('aria-roledescription="slide"'));
+    expect(compactCode(previous)).toContain(compactCode("data-sw-carousel-previous"));
+    expect(compactCode(next)).toContain(compactCode("data-sw-carousel-next"));
+    expect(compactCode(index)).toContain(compactCode("Root: CarouselRoot"));
+    expect(compactCode(index)).toContain(compactCode("Viewport: CarouselViewport"));
+    expect(compactCode(index)).toContain(
+      compactCode('export type { CarouselInstance, CarouselOptions } from "@starwind-ui/runtime"'),
     );
   });
 
@@ -89,23 +97,27 @@ export function defineReactCarouselOutputTests(getTempRoot: GetTempRoot): void {
     const variants = await readGeneratedFile(outputRoot, "carousel/variants.ts");
     const index = await readGeneratedFile(outputRoot, "carousel/index.ts");
 
-    expect(root).toContain('CarouselPrimitive from "../primitives/react/carousel"');
-    expect(root).toContain("<CarouselPrimitive.Root");
-    expect(root).toContain('data-slot="carousel"');
-    expect(content).toContain("<CarouselPrimitive.Viewport");
-    expect(content).toContain("className={carouselContent()}");
-    expect(content).toContain("<CarouselPrimitive.Container");
-    expect(content).toContain("className={carouselContainer({ class: className })}");
-    expect(content).toContain('data-slot="carousel-container"');
-    expect(item).toContain("<CarouselPrimitive.Item");
-    expect(previous).toContain("IconChevronLeft as ChevronLeft");
-    expect(previous).not.toContain("data-sw-carousel-previous");
-    expect(next).toContain("IconChevronRight as ChevronRight");
-    expect(next).not.toContain("data-sw-carousel-next");
-    expect(variants).not.toContain("starwind-carousel");
-    expect(variants).toContain("group/carousel relative");
-    expect(variants).toContain("overflow-hidden");
-    expect(index).toContain("Root: Carousel");
-    expect(index).toContain("Content: CarouselContent");
+    expect(compactCode(root)).toContain(
+      compactCode('CarouselPrimitive from "../primitives/react/carousel"'),
+    );
+    expect(compactCode(root)).toContain(compactCode("<CarouselPrimitive.Root"));
+    expect(compactCode(root)).toContain(compactCode('data-slot="carousel"'));
+    expect(compactCode(content)).toContain(compactCode("<CarouselPrimitive.Viewport"));
+    expect(compactCode(content)).toContain(compactCode("className={carouselContent()}"));
+    expect(compactCode(content)).toContain(compactCode("<CarouselPrimitive.Container"));
+    expect(compactCode(content)).toContain(
+      compactCode("className={carouselContainer({ class: className })}"),
+    );
+    expect(compactCode(content)).toContain(compactCode('data-slot="carousel-container"'));
+    expect(compactCode(item)).toContain(compactCode("<CarouselPrimitive.Item"));
+    expect(compactCode(previous)).toContain(compactCode("IconChevronLeft as ChevronLeft"));
+    expect(compactCode(previous)).not.toContain(compactCode("data-sw-carousel-previous"));
+    expect(compactCode(next)).toContain(compactCode("IconChevronRight as ChevronRight"));
+    expect(compactCode(next)).not.toContain(compactCode("data-sw-carousel-next"));
+    expect(compactCode(variants)).not.toContain(compactCode("starwind-carousel"));
+    expect(compactCode(variants)).toContain(compactCode("group/carousel relative"));
+    expect(compactCode(variants)).toContain(compactCode("overflow-hidden"));
+    expect(compactCode(index)).toContain(compactCode("Root: Carousel"));
+    expect(compactCode(index)).toContain(compactCode("Content: CarouselContent"));
   });
 }

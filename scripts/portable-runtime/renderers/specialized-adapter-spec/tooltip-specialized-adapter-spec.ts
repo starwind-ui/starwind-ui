@@ -6,6 +6,7 @@ import type {
   AdapterTimedFloatingOverlayComponentProjection,
   AdapterTimedFloatingOverlayFacts,
 } from "../framework-adapters/index.js";
+import { withAcceptedModelPublications } from "../primitive-output-model/accepted-model-publication.js";
 import {
   buildBaseSpecializedAdapterSpec,
   validateSpecializedAdapterSpec,
@@ -310,7 +311,6 @@ export function validateTooltipSpecializedAdapterSpec(
   errors.push(...validatePresence(spec, tooltip.presence));
   errors.push(...validateStateControl(spec, tooltip.stateControl));
 
-
   if (!arraysEqual(asArray(tooltip.runtimeBoundary), TOOLTIP_RUNTIME_BOUNDARY)) {
     errors.push(
       "Tooltip specialized adapter spec runtimeBoundary must match Runtime-owned behavior.",
@@ -347,7 +347,7 @@ export function buildTooltipAdapterOutputModel(
     },
   ];
 
-  return { files };
+  return withAcceptedModelPublications({ files }, spec.events, spec.root.part);
 }
 
 function createTooltipComponentFile(
@@ -1146,10 +1146,7 @@ function getTooltipFloatingAttribute(
   return positionerAttribute;
 }
 
-function getTooltipSpecFileBasename(
-  spec: TooltipSpecializedAdapterSpec,
-  partName: string,
-): string {
+function getTooltipSpecFileBasename(spec: TooltipSpecializedAdapterSpec, partName: string): string {
   const file = spec.files.find(
     (candidate) => candidate.kind === "part" && candidate.part === partName,
   );

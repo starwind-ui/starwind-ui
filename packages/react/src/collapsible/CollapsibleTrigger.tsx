@@ -13,6 +13,7 @@ import {
   mergeAsChildProps,
   useComposedRefs,
 } from "../internal/compose-refs";
+import { DisclosureDisabledContext } from "./CollapsibleRoot";
 
 export type CollapsibleTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   asChild?: boolean;
@@ -20,21 +21,28 @@ export type CollapsibleTriggerProps = React.ButtonHTMLAttributes<HTMLButtonEleme
 
 const CollapsibleTrigger = React.forwardRef<HTMLElement, CollapsibleTriggerProps>(
   function CollapsibleTrigger({ asChild = false, children, className, ...props }, forwardedRef) {
-    const protectedTriggerProps = {
-      "data-sw-collapsible-trigger": "",
-      "aria-expanded": "false",
-      "data-state": "closed",
-    } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
-    const triggerProps = {
-      ...protectedTriggerProps,
-      ...props,
-    } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
-
+    const rootDisabled = React.useContext(DisclosureDisabledContext);
     const asChildElement = getAsChildElement(children);
     const composedRef = useComposedRefs(
       forwardedRef,
       asChildElement ? getElementRef(asChildElement) : undefined,
     );
+    const disabled =
+      rootDisabled || Boolean(props.disabled) || Boolean(asChildElement?.props.disabled);
+    const protectedTriggerProps = {
+      "data-sw-collapsible-trigger": "",
+      disabled,
+      "data-disabled": disabled ? "" : undefined,
+      "aria-expanded": "false",
+      "data-state": "closed",
+    } satisfies React.ButtonHTMLAttributes<HTMLButtonElement> &
+      Record<`data-${string}`, string | undefined>;
+    const triggerProps = {
+      ...protectedTriggerProps,
+      ...props,
+      disabled,
+    } satisfies React.ButtonHTMLAttributes<HTMLButtonElement> &
+      Record<`data-${string}`, string | undefined>;
 
     if (asChild && asChildElement) {
       const child = asChildElement;

@@ -1,14 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { aspectRatioStyledContract } from "../../contracts/styled/components/aspect-ratio.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { generateFrameworkStyledWrappers } from "../../renderers/framework-wrapper-generator.js";
+import { compactCode } from "../source-comparison.js";
 
 const VUE_TSC_TIMEOUT_MS = 30_000;
 const temporaryRoots: string[] = [];
@@ -83,16 +82,20 @@ describe("generic Vue Styled object expressions", () => {
       "utf8",
     );
 
-    expect(source).toContain(
-      "const wrapperStyle = computed(() => ({ paddingBottom: `${100 / ratio}%` }));",
+    expect(compactCode(source)).toContain(
+      compactCode("const wrapperStyle = computed(() => ({ paddingBottom: `${100 / ratio}%` }));"),
     );
-    expect(source).toContain(
-      "const assertedStyle = computed(() => ({ opacity: ratio } as const));",
+    expect(compactCode(source)).toContain(
+      compactCode("const assertedStyle = computed(() => ({ opacity: ratio } as const));"),
     );
-    expect(source).toContain(
-      "const satisfiedStyle = computed(() => ({ opacity: ratio } satisfies Record<string, number>));",
+    expect(compactCode(source)).toContain(
+      compactCode(
+        "const satisfiedStyle = computed(() => ({ opacity: ratio } satisfies Record<string, number>));",
+      ),
     );
-    expect(source).toContain("const doubleRatio = computed(() => ratio * 2);");
+    expect(compactCode(source)).toContain(
+      compactCode("const doubleRatio = computed(() => ratio * 2);"),
+    );
     await expectVueTypecheck(root, outputRoot);
   });
 
@@ -100,8 +103,8 @@ describe("generic Vue Styled object expressions", () => {
     const { outputRoot, root } = await generate([aspectRatioStyledContract]);
     const source = await readFile(path.join(outputRoot, "aspect-ratio", "AspectRatio.vue"), "utf8");
 
-    expect(source).toContain(
-      "const wrapperStyle = computed(() => ({ paddingBottom: `${100 / ratio}%` }));",
+    expect(compactCode(source)).toContain(
+      compactCode("const wrapperStyle = computed(() => ({ paddingBottom: `${100 / ratio}%` }));"),
     );
     await expectVueTypecheck(root, outputRoot);
   });

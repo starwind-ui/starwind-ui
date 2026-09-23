@@ -50,7 +50,8 @@ export async function writeGeneratedFile(
   contents: string,
 ): Promise<void> {
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, fileName), `${contents.trimEnd()}\n`);
+  const normalized = fileName.endsWith(".svelte") ? contents.replace(/[\t ]+$/gm, "") : contents;
+  await writeFile(path.join(dir, fileName), `${normalized.trimEnd()}\n`);
 }
 
 function formatObjectKey(key: string): string {

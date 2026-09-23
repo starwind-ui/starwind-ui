@@ -2,6 +2,7 @@ import { verifyDialogEntryAnimationGestures } from "../../shared/dialog-entry-an
 import { verifyDialogFloatingOverlays } from "../../shared/dialog-floating-overlays.mjs";
 
 export async function verifyAstroDialogCases({ page }) {
+  await verifyAstroDialogControlRefreshCase({ page });
   await verifyDialogEntryAnimationGestures({
     backdrop: '#runtime-dialog-default > [data-slot="dialog-backdrop"]',
     content: page.locator('#runtime-dialog-default [data-slot="dialog-content"]'),
@@ -339,4 +340,152 @@ export async function verifyAstroDialogCases({ page }) {
       selectTrigger: "runtime-dialog-select-trigger",
     },
   });
+}
+
+export async function verifyAstroDialogControlRefreshCase({ page, inspectRuntime = false }) {
+  await page.evaluate(async (inspectRuntime) => {
+    const assert = (value, message) => {
+      if (!value) throw new Error(message);
+    };
+    const settle = () =>
+      new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const init = (root) =>
+      document.dispatchEvent(new CustomEvent("starwind:init", { detail: { root } }));
+    const fixtures = [];
+    for (const name of ["dialog", "alert-dialog", "drawer"]) {
+      const outer = document.createElement("div");
+      outer.setAttribute("data-sw-dialog", "");
+      const root = document.createElement("div");
+      root.setAttribute(`data-sw-${name}`, "");
+      root.innerHTML = `<dialog data-sw-${name}-${name === "dialog" ? "content" : "popup"}><h2 data-sw-${name}-title>Late controls</h2><input aria-label="Focus" /></dialog>`;
+      if (name !== "dialog") root.innerHTML = `<div data-sw-${name}-portal>${root.innerHTML}</div>`;
+      outer.innerHTML =
+        "<dialog data-sw-dialog-content><h2 data-sw-dialog-title>Outer</h2></dialog>";
+      outer.append(root);
+      document.body.append(outer);
+      init(outer);
+      const popup = root.querySelector("dialog");
+      const portal = root.querySelector(`[data-sw-${name}-portal]`);
+      const factory = inspectRuntime ? globalThis.__dialogProofFactories[name] : undefined;
+      const instance = factory?.(root);
+      const outerInstance = inspectRuntime
+        ? globalThis.__dialogProofFactories.dialog(outer)
+        : undefined;
+      let refreshes = 0,
+        outerRefreshes = 0;
+      if (instance) {
+        const refresh = instance.refresh.bind(instance);
+        instance.refresh = () => {
+          refreshes++;
+          refresh();
+        };
+      }
+      if (outerInstance) {
+        const refresh = outerInstance.refresh.bind(outerInstance);
+        outerInstance.refresh = () => {
+          outerRefreshes++;
+          refresh();
+        };
+      }
+      const trigger = document.createElement("button");
+      trigger.setAttribute(`data-sw-${name}-trigger`, "");
+      root.prepend(trigger);
+      init(trigger);
+      init(root);
+      if (inspectRuntime)
+        assert(
+          refreshes === 2 && outerRefreshes === 0,
+          name + " scopes refresh nearest owner once",
+        );
+      assert(
+        trigger.getAttribute("aria-controls") === popup.id &&
+          trigger.getAttribute("aria-expanded") === "false",
+        name + " trigger ARIA",
+      );
+      let proposals = 0;
+      root.addEventListener("starwind:open-change", () => proposals++);
+      const veto = (event) => event.preventDefault();
+      outer.addEventListener("starwind:open-change", veto);
+      trigger.click();
+      assert(!popup.open && proposals === 1, name + " ancestor veto");
+      outer.removeEventListener("starwind:open-change", veto);
+      trigger.focus();
+      trigger.click();
+      await settle();
+      assert(popup.open && proposals === 2, name + " accepted once");
+      if (portal) assert(!root.contains(portal), name + " standard portal moved");
+      const focused = document.activeElement;
+      const beforeCloseRefresh = refreshes;
+      const close = document.createElement("button");
+      close.setAttribute(`data-sw-${name}-close`, "");
+      popup.append(close);
+      init(close);
+      assert(
+        (portal ?? root).querySelector("dialog") === popup &&
+          document.activeElement === focused &&
+          popup.open &&
+          document.body.hasAttribute("data-sw-scroll-locked"),
+        name + " stable popup and focus",
+      );
+      if (instance)
+        assert(
+          factory(root) === instance &&
+            refreshes === beforeCloseRefresh + 1 &&
+            outerRefreshes === 0,
+          name +
+            " stable controller " +
+            JSON.stringify({ same: factory(root) === instance, refreshes, outerRefreshes }),
+        );
+      const nested = document.createElement("div");
+      nested.setAttribute(`data-sw-${name}`, "");
+      nested.innerHTML = `<dialog data-sw-${name}-${name === "dialog" ? "content" : "popup"}><h2 data-sw-${name}-title>Nested</h2></dialog>`;
+      popup.append(nested);
+      const beforeNested = refreshes;
+      init(nested);
+      let nestedRefreshes = 0;
+      if (factory) {
+        const owner = factory(nested),
+          refresh = owner.refresh.bind(owner);
+        owner.refresh = () => {
+          nestedRefreshes++;
+          refresh();
+        };
+      }
+      const nestedClose = document.createElement("button");
+      nestedClose.setAttribute(`data-sw-${name}-close`, "");
+      nested.querySelector("dialog").append(nestedClose);
+      init(nestedClose);
+      nestedClose.click();
+      assert(popup.open, name + " nested control leaves parent open");
+      if (inspectRuntime)
+        assert(
+          refreshes === beforeNested && nestedRefreshes === 1,
+          name + " nearest nested owner refreshes once",
+        );
+      const replacement = close.cloneNode();
+      close.replaceWith(replacement);
+      init(replacement);
+      close.click();
+      assert(popup.open && proposals === 2, name + " detached close inactive");
+      replacement.click();
+      await settle();
+      assert(!popup.open && proposals === 3, name + " late close acts once");
+      trigger.click();
+      await settle();
+      assert(popup.open, name + " repeated activation");
+      fixtures.push({ outer, popup, trigger, instance });
+      replacement.click();
+      await settle();
+    }
+    if (inspectRuntime) {
+      for (const fixture of fixtures) fixture.instance.setOpen(true, { emit: false });
+      document.dispatchEvent(new Event("astro:before-swap"));
+      assert(!document.body.hasAttribute("data-sw-scroll-locked"), "Astro teardown releases locks");
+      for (const { popup, trigger } of fixtures) {
+        trigger.click();
+        assert(!popup.open, "Astro teardown retires controls");
+      }
+    }
+    for (const { outer } of fixtures) outer.remove();
+  }, inspectRuntime);
 }

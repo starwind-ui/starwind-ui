@@ -6,39 +6,34 @@
 "use client";
 
 import * as React from "react";
-
 import { useTabsContext } from "./TabsContext";
-
-export type TabsPanelProps = React.HTMLAttributes<HTMLDivElement> & {
-  keepMounted?: boolean;
-  value: string;
-};
-
+export type TabsPanelProps = Omit<
+  React.ComponentPropsWithoutRef<"div">,
+  "value" | "keepMounted"
+> & { value: string; keepMounted?: boolean };
 const TabsPanel = React.forwardRef<HTMLDivElement, TabsPanelProps>(function TabsPanel(
-  { keepMounted = false, value, ...props },
-  forwardedRef,
+  { children, value, keepMounted = false, ...rest },
+  ref,
 ) {
-  const { orientation, value: selectedValue } = useTabsContext();
-  const active = value === selectedValue;
-  const state = active ? "active" : "inactive";
-
+  const { orientation, value: selected } = useTabsContext();
+  const active = selected === value;
   return (
     <div
-      data-sw-tabs-panel
-      data-keep-mounted={keepMounted ? "" : undefined}
+      {...rest}
+      data-sw-tabs-panel={""}
+      data-sw-part={"panel"}
       data-orientation={orientation}
       data-value={value}
       data-active={active ? "" : undefined}
-      data-state={state}
+      data-state={active ? "active" : "inactive"}
+      data-keep-mounted={keepMounted ? "" : undefined}
       hidden={!active}
-      ref={forwardedRef}
-      role="tabpanel"
       tabIndex={active ? 0 : -1}
-      {...props}
-    />
+      role={"tabpanel"}
+      ref={ref}
+    >
+      {children}
+    </div>
   );
 });
-
-TabsPanel.displayName = "Tabs.Panel";
-
 export default TabsPanel;

@@ -4,7 +4,7 @@ import fs from "fs-extra";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 
-const LAYOUT_PATHS = ["src/layouts/Layout.astro", "src/layouts/BaseLayout.astro"] as const;
+export const LAYOUT_PATHS = ["src/layouts/Layout.astro", "src/layouts/BaseLayout.astro"] as const;
 
 /**
  * Finds the main layout file in the project

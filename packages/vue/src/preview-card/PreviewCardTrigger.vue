@@ -35,8 +35,7 @@ function protectedProps() {
     "data-state": "closed",
     "data-close-delay": props.closeDelay,
     "data-open-delay": props.openDelay,
-    href: props.disabled ? undefined : attrs.href,
-    tabindex: props.disabled ? -1 : attrs.tabindex,
+    ...(props.disabled ? { href: undefined, tabindex: -1 } : {}),
     onClick: handleClick,
     "data-sw-part": "trigger",
   };

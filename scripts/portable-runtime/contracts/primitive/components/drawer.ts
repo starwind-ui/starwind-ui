@@ -5,6 +5,7 @@ export const drawerRuntimeAdapterContract = {
   category: "dialog-native-overlay",
   displayName: "Drawer",
   runtime: {
+    refresh: { method: "refresh", parts: "owned-controls", state: "preserve" },
     factory: "createDrawer",
     importSource: "@starwind-ui/runtime/drawer",
     rootPart: "root",
@@ -115,6 +116,13 @@ export const drawerRuntimeAdapterContract = {
     },
   ],
   props: [
+    {
+      defaultValue: "false",
+      name: "asChild",
+      kind: "rendering",
+      targets: ["trigger", "close"],
+      type: "boolean",
+    },
     { name: "open", kind: "control", targets: ["root"], type: "boolean" },
     {
       defaultValue: "false",
@@ -158,6 +166,7 @@ export const drawerRuntimeAdapterContract = {
     {
       name: "openChange",
       stateModel: "open",
+      acceptanceNotification: "controller-subscription",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onOpenChange",

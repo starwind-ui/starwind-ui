@@ -6,41 +6,36 @@
 "use client";
 
 import * as React from "react";
-
 import { useTabsContext } from "./TabsContext";
-
-export type TabsTabProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type" | "value"> & {
-  disabled?: boolean;
+export type TabsTabProps = Omit<React.ComponentPropsWithoutRef<"button">, "value" | "disabled"> & {
   value: string;
+  disabled?: boolean;
 };
-
 const TabsTab = React.forwardRef<HTMLButtonElement, TabsTabProps>(function TabsTab(
-  { disabled = false, value, ...props },
-  forwardedRef,
+  { children, value, disabled = false, ...rest },
+  ref,
 ) {
-  const { orientation, value: selectedValue } = useTabsContext();
-  const active = value === selectedValue;
-  const state = active ? "active" : "inactive";
-
+  const { orientation, value: selected } = useTabsContext();
+  const active = selected === value;
   return (
     <button
-      data-sw-tabs-tab
-      data-disabled={disabled ? "" : undefined}
+      {...rest}
+      data-sw-tabs-tab={""}
+      data-sw-part={"tab"}
       data-orientation={orientation}
       data-value={value}
-      aria-selected={active}
       data-active={active ? "" : undefined}
-      data-state={state}
+      data-state={active ? "active" : "inactive"}
+      data-disabled={disabled ? "" : undefined}
       disabled={disabled}
-      ref={forwardedRef}
-      role="tab"
+      aria-selected={active}
       tabIndex={active && !disabled ? 0 : -1}
-      type="button"
-      {...props}
-    />
+      role={"tab"}
+      type={"button"}
+      ref={ref}
+    >
+      {children}
+    </button>
   );
 });
-
-TabsTab.displayName = "Tabs.Tab";
-
 export default TabsTab;

@@ -1,0 +1,99 @@
+import {
+  createPopover,
+  createPortalBinding,
+  type PopoverCloseCompleteDetails,
+  type PopoverOpenChangeDetails,
+  refreshPopoverPortalSurface,
+} from "@starwind-ui/runtime/popover";
+import * as React from "react";
+import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
+import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
+
+export const PopoverPartContext = React.createContext<{ registerPlacement(element: HTMLElement, attributes: Record<string, string> | null): void } | null>(null);
+
+export type PopoverRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
+  defaultOpen?: boolean;
+  open?: boolean;
+  closeOnEscape?: boolean;
+  closeOnOutsideInteract?: boolean;
+  modal?: boolean;
+  openOnHover?: boolean;
+  closeDelay?: number;
+  onCloseComplete?: (details: PopoverCloseCompleteDetails) => void;
+  onOpenChange?: (open: boolean, details: PopoverOpenChangeDetails) => void;
+};
+
+const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function PopoverRoot(
+  {
+    defaultOpen = false,
+    open,
+    closeOnEscape = true,
+    closeOnOutsideInteract = true,
+    modal = false,
+    openOnHover = false,
+    closeDelay = 200,
+    onCloseComplete,
+    onOpenChange,
+    ...props
+  },
+  forwardedRef,
+) {
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+  const portalRuntimeActivation = portalScope.activation;
+  const inputs = React.useRef({ open, closeOnEscape, closeOnOutsideInteract, modal, openOnHover, onOpenChange, onCloseComplete });
+  useIsomorphicLayoutEffect(() => {
+    inputs.current = { open, closeOnEscape, closeOnOutsideInteract, modal, openOnHover, onOpenChange, onCloseComplete };
+  });
+  const defaultOpenRef = React.useRef(defaultOpen);
+  __ACCEPTED_CELL__
+  __CONTROLLER_CELL__
+  __AUTHORED_PLACEMENT__
+  const partContext = React.useMemo(() => ({ registerPlacement }), []);
+  const composedRef = React.useCallback((node: HTMLDivElement | null) => {
+    rootRef.current = node;
+    return setRef(forwardedRef, node);
+  }, [forwardedRef]);
+  __LIFECYCLE__
+  __CONNECT_SURFACE__
+  const initializePortalRuntime = React.useCallback(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    connectSurface(root);
+    return disconnectRuntime;
+  }, [__CONSTRUCTOR_INPUTS__]);
+  useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+  useIsomorphicLayoutEffect(() => {
+    if (portalScope.isReady() && rootRef.current) refreshPopoverPortalSurface(rootRef.current);
+  }, [portalRuntimeActivation]);
+  __OBSERVE_MODEL__
+  const renderedOpen = open ?? renderedState;
+
+  return (
+    <ReactPortalScopeProvider scope={portalScope}>
+    <PopoverPartContext.Provider value={partContext}>
+      <div
+        data-sw-popover
+        data-default-open={defaultOpenRef.current ? "true" : undefined}
+        data-close-on-escape={closeOnEscape ? "true" : "false"}
+        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+        data-modal={modal ? "true" : "false"}
+        data-open-on-hover={openOnHover ? "true" : undefined}
+        data-close-delay={closeDelay}
+        data-state={renderedOpen ? "open" : "closed"}
+        ref={composedRef}
+        {...props}
+      />
+    </PopoverPartContext.Provider>
+    </ReactPortalScopeProvider>
+  );
+});
+
+PopoverRoot.displayName = "Popover.Root";
+
+export default PopoverRoot;

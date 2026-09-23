@@ -9,7 +9,11 @@ defineSlots<{ default?: () => unknown }>();
 const root = useNavigationMenuRootContext("NavigationMenuItem");
 const element = ref<HTMLLIElement | null>(null);
 const itemValue = computed(() => props.value);
-const open = computed(() => itemValue.value !== undefined && root.value.value === itemValue.value);
+const open = computed(() =>
+  itemValue.value === undefined
+    ? root.value.value !== null && false
+    : root.value.value !== null && root.value.value === itemValue.value,
+);
 provide(NavigationMenuItemContext, { open, value: itemValue });
 defineExpose({ element });
 </script>

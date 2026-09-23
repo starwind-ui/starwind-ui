@@ -7,25 +7,28 @@ import { fileURLToPath } from "node:url";
 
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-
-import type { StarwindConfig, StarwindConfigFor } from "../../src/utils/config.js";
-import * as config from "../../src/utils/config.js";
-import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
-import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
-import * as packageManager from "../../src/utils/package-manager.js";
-import {
-  getPrimitiveComponents,
-  installPrimitiveComponents,
-  planPrimitiveComponentUpdates,
-  type PrimitiveVendoringArtifact,
-  type PrimitiveVendoringArtifactSet,
-  updatePrimitiveComponents,
-} from "../../src/utils/primitive-component.js";
 import {
   buildPrimitiveVendoringArtifacts,
   createCliRegistryBuildPolicy,
 } from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { svelteFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/svelte/index.js";
 import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
+import type { StarwindConfig } from "../../src/utils/config.js";
+import * as config from "../../src/utils/config.js";
+import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
+import {
+  type CliFrameworkTarget,
+  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+} from "../../src/utils/framework-target-policy.js";
+import * as packageManager from "../../src/utils/package-manager.js";
+import {
+  getPrimitiveComponents,
+  installPrimitiveComponents,
+  type PrimitiveVendoringArtifact,
+  type PrimitiveVendoringArtifactSet,
+  planPrimitiveComponentUpdates,
+  updatePrimitiveComponents,
+} from "../../src/utils/primitive-component.js";
 
 vi.mock("@clack/prompts", () => ({
   confirm: vi.fn(),
@@ -851,7 +854,7 @@ describe.sequential("primitive component vendoring", () => {
     );
   });
   it("vendors a valid Vue artifact through the production policy", async () => {
-    const vueConfig: StarwindConfigFor<"astro" | "react" | "vue"> = {
+    const vueConfig: StarwindConfig = {
       ...primitiveConfig,
       framework: "vue",
       primitives: [],
@@ -873,6 +876,29 @@ describe.sequential("primitive component vendoring", () => {
       "pnpm",
     );
   });
+
+  it("reads canonical public Svelte artifacts without private integrity metadata", async () => {
+    const repositoryRoot = fileURLToPath(new URL("../../../..", import.meta.url));
+    const projectRoot = process.cwd();
+    let generated: PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
+    try {
+      process.chdir(repositoryRoot);
+      generated = (await buildPrimitiveVendoringArtifacts({
+        repoRoot: repositoryRoot,
+        targetPolicy: createCliRegistryBuildPolicy([svelteFrameworkAdapterTarget]),
+      })) as PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
+    } finally {
+      process.chdir(projectRoot);
+    }
+    const read = (artifacts = generated) =>
+      getPrimitiveComponents({
+        artifacts,
+        framework: "svelte",
+      });
+    expect(read()).toHaveLength(36);
+    expect(generated.integrity).toBeUndefined();
+    expect(generated.validation).toBeUndefined();
+  }, 30_000);
 
   it("reads public Vue artifacts without private integrity metadata", () => {
     const artifactSet = createValidVueArtifactSet(createValidVueArtifact());

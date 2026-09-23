@@ -188,6 +188,15 @@ export function getMediaStatusFacts(plan: GenericAdapterPlan): AdapterMediaStatu
     throw new Error(`${plan.displayName} generic adapter plan is not a media-status plan.`);
   }
 
+  const refresh = plan.runtime.refresh;
+  if (
+    refresh?.method !== "refresh" ||
+    refresh.parts !== "owned-descendants" ||
+    refresh.state !== "preserve" ||
+    refresh.formOwner !== undefined
+  ) {
+    throw new Error("Avatar requires state-preserving owned-part refresh without form ownership.");
+  }
   const rootPart = getPart(plan, plan.runtime.rootPart);
   const imagePart = getPart(plan, "image");
   const fallbackPart = getPart(plan, "fallback");
@@ -278,6 +287,7 @@ export function getMediaStatusFacts(plan: GenericAdapterPlan): AdapterMediaStatu
       src: srcProp,
     },
     runtime: {
+      refresh,
       factory: plan.runtime.factory,
       importSource: plan.runtime.importSource,
       setupFunction: `setup${pluralizeDisplayName(plan.displayName)}`,

@@ -73,6 +73,7 @@ describe("root verification scripts", () => {
       "pnpm runtime:test",
       "pnpm react:test",
       "pnpm vue:test",
+      "pnpm test:form-parity",
     ]);
   });
 
@@ -128,14 +129,17 @@ describe("root verification scripts", () => {
     ]);
     expect(pkg.scripts?.["build:public"]).toContain("--filter=@starwind-ui/vue");
     expect(pkg.scripts?.["build:public"]).toContain("--filter=vue-demo");
-    expect(pkg.scripts?.["build:public"]).not.toMatch(/svelte/);
+    expect(pkg.scripts?.["build:public"]).toContain("--filter=@starwind-ui/svelte");
+    expect(pkg.scripts?.["build:public"]).toContain("--filter=svelte-demo");
     expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=@starwind-ui/vue");
     expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=vue-demo");
-    expect(pkg.scripts?.["typecheck:public"]).not.toMatch(/svelte/);
+    expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=@starwind-ui/svelte");
+    expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=svelte-demo");
     expect(commandPhases(pkg.scripts?.["runtime:generate:all"])).toEqual([
       "pnpm runtime:generate:astro",
       "pnpm runtime:generate:react",
       "pnpm runtime:generate:vue",
+      "pnpm runtime:generate:svelte",
     ]);
     expect(phases.some((phase) => /audit/i.test(phase))).toBe(false);
     expect(phases).not.toContain("pnpm runtime:generate:test");
@@ -194,11 +198,11 @@ describe("root verification scripts", () => {
     expect(runs).toEqual(
       expect.arrayContaining([
         "pnpm check && pnpm test:homes && pnpm runtime:generate:typecheck",
-        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run",
+        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run && pnpm svelte:test",
         "pnpm runtime:generate:test:ci",
         "pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci",
         "pnpm runtime:generate:all && pnpm runtime:registry:generate",
-        "pnpm exec turbo build --filter=@starwind-ui/runtime --filter=@starwind-ui/react --filter=@starwind-ui/vue --filter=starwind",
+        "pnpm exec turbo build --filter=@starwind-ui/runtime --filter=@starwind-ui/react --filter=@starwind-ui/vue --filter=@starwind-ui/svelte --filter=starwind",
         "git diff --exit-code",
         "pnpm --filter=starwind package:check",
         'pnpm styled:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',

@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 export function hasReleaseVersionChange(before, after) {
-  return ["runtime", "astro", "react", "cli", "vue"].some((name) => {
+  return ["runtime", "astro", "react", "cli", "vue", "svelte"].some((name) => {
     const previous = before[name];
     const current = after[name];
     return current && current.private !== true && current.version !== previous?.version;
@@ -11,7 +11,7 @@ export function hasReleaseVersionChange(before, after) {
 
 function readPackages(ref) {
   return Object.fromEntries(
-    ["runtime", "astro", "react", "cli", "vue"].map((name) => {
+    ["runtime", "astro", "react", "cli", "vue", "svelte"].map((name) => {
       const content = execFileSync("git", ["show", `${ref}:packages/${name}/package.json`], {
         encoding: "utf8",
       });

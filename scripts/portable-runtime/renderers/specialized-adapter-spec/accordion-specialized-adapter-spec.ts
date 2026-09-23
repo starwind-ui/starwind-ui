@@ -50,10 +50,10 @@ type AccordionEventRecipe = {
 };
 
 type AccordionItemContextRecipe = {
-  consumers: ["trigger", "panel"];
+  consumers: ["trigger"];
   name: "accordionItem";
   providerPart: "item";
-  provides: ["value", "disabled"];
+  provides: ["disabled"];
 };
 
 type AccordionNamespaceRecipe = {
@@ -692,10 +692,10 @@ function buildNamespaceRecipe(spec: SpecializedAdapterSpec): AccordionNamespaceR
 
 function buildItemContextRecipe(): AccordionItemContextRecipe {
   return {
-    consumers: ["trigger", "panel"],
+    consumers: ["trigger"],
     name: "accordionItem",
     providerPart: "item",
-    provides: ["value", "disabled"],
+    provides: ["disabled"],
   };
 }
 

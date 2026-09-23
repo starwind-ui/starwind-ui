@@ -20,59 +20,69 @@ import {
   useReactPortalScope,
 } from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
+export const NativeOverlayControlContext = React.createContext<(() => void) | undefined>(undefined);
 export type AlertDialogRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
-  defaultOpen?: boolean;
   open?: boolean;
+  defaultOpen?: boolean;
   closeOnEscape?: boolean;
   closeOnOutsideInteract?: boolean;
   modal?: boolean;
-  onCloseComplete?: (details: AlertDialogCloseCompleteDetails) => void;
-  onOpenChange?: (open: boolean, details: AlertDialogOpenChangeDetails) => void;
+  onOpenChange?: (open: boolean, detail: AlertDialogOpenChangeDetails) => void;
+  onCloseComplete?: (detail: AlertDialogCloseCompleteDetails) => void;
 };
-
 const AlertDialogRoot = React.forwardRef<HTMLDivElement, AlertDialogRootProps>(
   function AlertDialogRoot(
     {
-      defaultOpen = false,
       open,
+      defaultOpen,
       closeOnEscape = true,
       closeOnOutsideInteract = false,
       modal = true,
-      onCloseComplete,
       onOpenChange,
+      onCloseComplete,
       ...props
     },
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLDivElement>(null);
-    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
-    const portalRuntimeActivation = portalScope.activation;
-    const instanceRef = React.useRef<ReturnType<typeof createAlertDialog> | undefined>(undefined);
-    const onCloseCompleteRef = React.useRef(onCloseComplete);
-    const onOpenChangeRef = React.useRef(onOpenChange);
-    const openRef = React.useRef(open);
-    const defaultOpenRef = React.useRef(defaultOpen);
-    const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
-    const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
-
-    const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
-      uncontrolledOpenRef.current = nextOpen;
-      setUncontrolledOpenState(nextOpen);
-    }, []);
-
+    const inputs = React.useRef({
+      open,
+      closeOnEscape,
+      closeOnOutsideInteract,
+      modal,
+      onOpenChange,
+      onCloseComplete,
+    });
     useIsomorphicLayoutEffect(() => {
-      onCloseCompleteRef.current = onCloseComplete;
-    }, [onCloseComplete]);
-
-    useIsomorphicLayoutEffect(() => {
-      onOpenChangeRef.current = onOpenChange;
-    }, [onOpenChange]);
-
-    useIsomorphicLayoutEffect(() => {
-      openRef.current = open;
-    }, [open]);
-
+      inputs.current = {
+        open,
+        closeOnEscape,
+        closeOnOutsideInteract,
+        modal,
+        onOpenChange,
+        onCloseComplete,
+      };
+    });
+    const initialDefaultOpen = React.useRef(defaultOpen ?? false).current;
+    const initialOpen = React.useRef(open ?? initialDefaultOpen).current;
+    const [renderedState, setRenderedOpen] = React.useState<boolean>(initialOpen);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createAlertDialog>;
+      unsubscribe?: () => void;
+      accepted: boolean;
+      initialized: boolean;
+      refreshPending?: boolean;
+    }>({ accepted: initialOpen, initialized: false }).current;
+    function refreshControls(): void {
+      const owned = connection.instance;
+      if (!owned || connection.refreshPending) return;
+      connection.refreshPending = true;
+      queueMicrotask(() => {
+        connection.refreshPending = false;
+        if (connection.instance === owned) owned.refresh();
+      });
+    }
+    const requestRefresh = React.useCallback(refreshControls, []);
     const composedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
         rootRef.current = node;
@@ -81,76 +91,84 @@ const AlertDialogRoot = React.forwardRef<HTMLDivElement, AlertDialogRootProps>(
       [forwardedRef],
     );
 
+    function disconnectRuntime(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      connection.accepted = owned.getOpen();
+      connection.unsubscribe?.();
+      connection.unsubscribe = undefined;
+      connection.instance = undefined;
+      owned.destroy();
+    }
+    function connectRuntime(root: HTMLDivElement): void {
+      disconnectRuntime();
+      const desired = inputs.current.open ?? connection.accepted;
+      const recreating = connection.initialized;
+      const owned = createAlertDialog(root, {
+        defaultOpen: recreating ? false : desired,
+        ...(inputs.current.open !== undefined ? { open: recreating ? false : desired } : {}),
+        closeOnEscape: inputs.current.closeOnEscape,
+        closeOnOutsideInteract: inputs.current.closeOnOutsideInteract,
+        modal: inputs.current.modal,
+        onOpenChange: (next, detail) => {
+          inputs.current.onOpenChange?.(next, detail);
+        },
+        onCloseComplete: (detail) => {
+          inputs.current.onCloseComplete?.(detail);
+        },
+      });
+      connection.instance = owned;
+      connection.initialized = true;
+      connection.unsubscribe = owned.subscribe("openChange", (detail) => {
+        if (connection.instance !== owned) return;
+        connection.accepted = detail.open;
+        if (inputs.current.open === undefined) setRenderedOpen(detail.open);
+      });
+      if (recreating && desired) owned.setOpen(desired, { emit: false });
+      connection.accepted = owned.getOpen();
+      if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+    }
+    function applyParentCommand(): void {
+      const next = inputs.current.open;
+      const owned = connection.instance;
+      if (next === undefined || !owned) return;
+      if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+      connection.accepted = owned.getOpen();
+      if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+    }
+
+    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
     const initializePortalRuntime = React.useCallback(() => {
       const root = rootRef.current;
       if (!root) return;
-
-      const instance = createAlertDialog(root, {
-        defaultOpen: uncontrolledOpenRef.current,
-        closeOnEscape,
-        closeOnOutsideInteract,
-        modal,
-        onCloseComplete: (details) => {
-          onCloseCompleteRef.current?.(details);
-        },
-        onOpenChange: (nextOpen, details) => {
-          onOpenChangeRef.current?.(nextOpen, details);
-        },
-        ...(openRef.current !== undefined ? { open: openRef.current } : {}),
-      });
-      instanceRef.current = instance;
-      const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
-        if (openRef.current === undefined) {
-          setUncontrolledOpen(details.open);
-        }
-      });
-
-      return () => {
-        unsubscribeOpenChange();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
+      connectRuntime(root);
+      return disconnectRuntime;
     }, [closeOnEscape, closeOnOutsideInteract, modal]);
-
     useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
-
     useIsomorphicLayoutEffect(() => {
-      if (!portalScope.isReady()) return;
-      const root = rootRef.current;
-      if (!root) return;
-      refreshAlertDialogPortalSurface(root);
-    }, [portalRuntimeActivation]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (open === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getOpen() === open) return;
-
-      instance.setOpen(open, { emit: false });
-    }, [open]);
-
-    const renderedOpen = open ?? uncontrolledOpen;
-
+      if (portalScope.isReady() && rootRef.current)
+        refreshAlertDialogPortalSurface(rootRef.current);
+    }, [portalScope.activation]);
+    useIsomorphicLayoutEffect(applyParentCommand, [open]);
+    const renderedOpen = open ?? renderedState;
     return (
       <ReactPortalScopeProvider scope={portalScope}>
-        <div
-          data-sw-alert-dialog
-          data-default-open={defaultOpenRef.current ? "true" : undefined}
-          data-close-on-escape={closeOnEscape ? "true" : "false"}
-          data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-          data-modal={modal ? "true" : "false"}
-          data-state={renderedOpen ? "open" : "closed"}
-          ref={composedRef}
-          {...props}
-        />
+        <NativeOverlayControlContext.Provider value={requestRefresh}>
+          <div
+            data-sw-alert-dialog
+            data-sw-part="root"
+            data-default-open={initialDefaultOpen ? "true" : undefined}
+            data-close-on-escape={String(closeOnEscape)}
+            data-close-on-outside-interact={String(closeOnOutsideInteract)}
+            data-modal={String(modal)}
+            data-state={renderedOpen ? "open" : "closed"}
+            ref={composedRef}
+            {...props}
+          />
+        </NativeOverlayControlContext.Provider>
       </ReactPortalScopeProvider>
     );
   },
 );
-
 AlertDialogRoot.displayName = "AlertDialog.Root";
-
 export default AlertDialogRoot;

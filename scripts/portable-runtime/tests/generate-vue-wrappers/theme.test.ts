@@ -1,10 +1,9 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { generateVuePrimitiveWrappers } from "../../generate-vue-wrappers.js";
+import { compactCode } from "../source-comparison.js";
 
 describe("Vue Theme facade generation", () => {
   const temporaryRoots: string[] = [];
@@ -22,11 +21,13 @@ describe("Vue Theme facade generation", () => {
     await generateVuePrimitiveWrappers({ outputDir: "generated", repoRoot });
 
     const source = await readFile(path.join(repoRoot, "generated/theme/index.ts"), "utf8");
-    expect(source).toContain(
-      'export type { ThemeInitScriptOptions } from "@starwind-ui/runtime/theme";',
+    expect(compactCode(source)).toContain(
+      compactCode('export type { ThemeInitScriptOptions } from "@starwind-ui/runtime/theme";'),
     );
-    expect(source).toContain(
-      'export { getThemeInitScript, initThemeController } from "@starwind-ui/runtime/theme";',
+    expect(compactCode(source)).toContain(
+      compactCode(
+        'export { getThemeInitScript, initThemeController } from "@starwind-ui/runtime/theme";',
+      ),
     );
     expect(source).not.toMatch(/useTheme|ThemeControllerInstance|createThemeController/);
   });

@@ -16,7 +16,13 @@ const ColorPickerAreaBackground = React.forwardRef<HTMLDivElement, ColorPickerAr
   function ColorPickerAreaBackground({ children, ...props }, forwardedRef) {
     const areaContext = useColorPickerAreaContext();
     const { props: projectedProps } = useColorPickerPartProjection(
-      { part: "areaBackground", ...areaContext },
+      {
+        part: "areaBackground",
+        xChannel: areaContext.xChannel,
+        yChannel: areaContext.yChannel,
+        xStep: areaContext.xStep,
+        yStep: areaContext.yStep,
+      },
       { ...props, "data-sw-color-picker-area-background": "" },
     );
     return (

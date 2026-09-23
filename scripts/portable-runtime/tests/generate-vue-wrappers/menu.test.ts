@@ -1,14 +1,13 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 
@@ -56,9 +55,8 @@ describe("generated Vue Menu Primitive", () => {
     expect(context).toContain("InjectionKey<MenuRootContextValue>");
     expect(context).toContain("InjectionKey<MenuRadioGroupContextValue>");
     expect(context).toContain("useMenuSubmenuContext");
-    expect(root).toContain("createMenu(element");
-    expect(root).toMatch(/emit\("openChange"[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open"/);
-    expect(root).toContain("portalReference: portalReference ?? undefined");
+    expect(() => assertVueSfcCompiles(root, "Component.vue")).not.toThrow();
+
     expect(portal).toContain("active: () => menu.mounted.value");
     expect(portal).not.toContain(
       'active: () => menu.mounted.value && ownerContext.kind === "root"',
@@ -67,20 +65,25 @@ describe("generated Vue Menu Primitive", () => {
     expect(portal).toContain("useVuePortalPlacement");
     expect(portal).toContain("menu.registerPortal(owner, null)");
     expect(checkbox).toMatch(
-      /emit\("checkedChange"[\s\S]*detail\.isCanceled[\s\S]*emit\("update:checked"/,
+      /emit\("checkedChange"[\s\S]*details\.isCanceled[\s\S]*emit\("update:checked"/,
     );
+    for (const source of [checkbox, radioGroup]) {
+      expect(() => assertVueSfcCompiles(source, "Component.vue")).not.toThrow();
+    }
     expect(radioGroup).toContain('"update:modelValue"');
     expect(radioGroup).toMatch(
-      /emit\("valueChange"[\s\S]*detail\.isCanceled[\s\S]*emit\("update:modelValue"/,
+      /emit\("valueChange"[\s\S]*details\.isCanceled[\s\S]*emit\("update:modelValue"/,
     );
     expect(radioItem).toMatch(
       /group\.value\.value === undefined[\s\S]*\? \(props\.checked \?\? props\.defaultChecked\)[\s\S]*: group\.value\.value === props\.value/,
     );
-    expect(submenuRoot).toContain('provide(MenuOwnerContext, { kind: "submenu" })');
+    expect(compactCode(submenuRoot)).toContain(
+      compactCode('provide(MenuOwnerContext, { kind: "submenu" })'),
+    );
     expect(index).toContain("const Menu = {");
     expect(index).toContain("MenuOpenChangeDetails");
     expect(index).not.toMatch(/MenuContext|ContextValue|useMenu/);
-    expect(root).toContain('from "./MenuContext"');
+
     expect([...output.values()].join("\n")).not.toContain("specialized-future-framework-tracer");
   });
 

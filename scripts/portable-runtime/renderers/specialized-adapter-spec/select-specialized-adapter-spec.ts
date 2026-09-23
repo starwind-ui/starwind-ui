@@ -6,6 +6,7 @@ import type {
   AdapterOptionCollectionOverlayPartName,
   AdapterOutputModel,
 } from "../framework-adapters/index.js";
+import { withAcceptedModelPublications } from "../primitive-output-model/accepted-model-publication.js";
 import { createPrimitiveAttributeMap } from "../primitives/contract-helpers.js";
 import { buildBaseSpecializedAdapterSpec } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec } from "./types.js";
@@ -310,14 +311,18 @@ export function buildSelectAdapterOutputModel(
 ): AdapterOutputModel {
   const facts = getSelectOptionCollectionOverlayFacts(spec);
 
-  return {
-    files: [
-      ...SELECT_OUTPUT_MODEL_PARTS.map((partName) =>
-        createSelectComponentFile(spec, partName, facts),
-      ),
-      createSelectIndexFile(spec, facts),
-    ],
-  };
+  return withAcceptedModelPublications(
+    {
+      files: [
+        ...SELECT_OUTPUT_MODEL_PARTS.map((partName) =>
+          createSelectComponentFile(spec, partName, facts),
+        ),
+        createSelectIndexFile(spec, facts),
+      ],
+    },
+    spec.events,
+    spec.root.part,
+  );
 }
 
 function createSelectComponentFile(

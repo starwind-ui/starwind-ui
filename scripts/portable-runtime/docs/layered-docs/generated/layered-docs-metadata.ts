@@ -30,6 +30,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       packageName: "@starwind-ui/vue",
       installSpecifier: "@starwind-ui/vue@beta",
     },
+    {
+      target: "svelte",
+      label: "Svelte",
+      maturity: "beta",
+      packageName: "@starwind-ui/svelte",
+      installSpecifier: "@starwind-ui/svelte@beta",
+    },
   ],
   runtime: {
     packageName: "@starwind-ui/runtime",
@@ -261,7 +268,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           factory: "createDialog",
           primitiveId: "dialog",
           rootDiscoveryAttribute: "data-sw-dialog",
-          selector: "[data-sw-dialog]",
+          selector: "[data-sw-dialog]:not([data-sw-alert-dialog]):not([data-sw-drawer])",
           once: false,
           notes: [],
         },
@@ -5792,6 +5799,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "syncKey",
           "value",
         ],
+        optionPropLifecycles: {
+          syncKey: "constructor-only",
+        },
         destroys: true,
         docsPath: "/docs/runtime/#create-tabs",
         stateModels: [
@@ -7157,6 +7167,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7241,6 +7254,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7312,6 +7328,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -7525,6 +7544,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7568,6 +7590,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -7640,6 +7665,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -7746,6 +7774,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7820,6 +7851,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -7899,6 +7933,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8187,6 +8224,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -8317,6 +8357,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8477,6 +8520,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8796,6 +8842,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -8831,6 +8880,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8893,6 +8945,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -9581,6 +9636,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -9946,6 +10004,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -10243,6 +10304,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -10426,6 +10490,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -10722,6 +10789,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -10827,6 +10897,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11069,6 +11142,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11143,6 +11219,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11254,6 +11333,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "unsupported",
             reason: "This component requires its native framework integration.",
           },
+          svelte: {
+            status: "unsupported",
+            reason: "This component requires its native framework integration.",
+          },
         },
         variantCollections: [
           {
@@ -11287,6 +11370,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11346,6 +11432,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11580,6 +11669,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11744,6 +11836,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11902,6 +11997,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11962,6 +12060,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -12005,6 +12106,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -12106,6 +12210,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -12497,6 +12604,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -12565,6 +12675,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -12719,6 +12832,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -12801,6 +12917,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -12842,6 +12961,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -13047,6 +13169,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -13226,6 +13351,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -13569,6 +13697,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -13624,6 +13755,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -13800,6 +13934,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -14634,6 +14771,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -14667,6 +14807,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -14866,6 +15009,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -14899,6 +15045,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -15010,6 +15159,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15112,6 +15264,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15200,6 +15355,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15252,6 +15410,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -15393,6 +15554,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -15889,6 +16053,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15955,6 +16122,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -16338,6 +16508,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -16548,6 +16721,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           vue: {
             status: "available",
           },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -16679,6 +16855,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -16949,6 +17128,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -17139,6 +17321,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -17597,6 +17782,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -17725,6 +17913,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -18006,6 +18197,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -18275,6 +18469,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -18580,6 +18777,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "button",
@@ -18814,6 +19014,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -18997,6 +19200,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -19306,6 +19512,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -19758,6 +19967,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "checkbox",
@@ -19992,6 +20204,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "checkbox-group",
@@ -20151,6 +20366,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -20360,6 +20578,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -21867,6 +22088,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "combobox",
@@ -22972,6 +23196,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "context-menu",
@@ -23953,6 +24180,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "dialog",
@@ -24347,6 +24577,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -25431,6 +25664,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "dropzone",
@@ -25645,6 +25881,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -26462,6 +26701,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "form",
@@ -26587,6 +26829,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "Form",
               props: [
                 {
+                  name: "errorOptions",
+                  type: "FormExternalErrorOptions",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "form",
+                    part: "Root",
+                    propName: "errorOptions",
+                  },
+                  description: "Controls the visibility of supplied errors and whether editing a field clears them.",
+                  descriptionSource: "annotation",
+                },
+                {
+                  name: "errors",
+                  type: "FormExternalErrors",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "form",
+                    part: "Root",
+                    propName: "errors",
+                  },
+                  description: "Supplies external field and form errors, including server validation results. Replace the value to update errors or clear it to remove previously supplied errors.",
+                  descriptionSource: "annotation",
+                },
+                {
                   name: "errorVisibility",
                   type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
@@ -26598,6 +26866,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   },
                   defaultValue: "\"submit\"",
                   description: "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+                  descriptionSource: "annotation",
+                },
+                {
+                  name: "options",
+                  type: "FormOptions",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "form",
+                    part: "Root",
+                    propName: "options",
+                  },
+                  description: "Configures custom field and form validators, asynchronous validation, debounce, managed submission, and external-error reset behavior.",
                   descriptionSource: "annotation",
                 },
                 {
@@ -26677,6 +26958,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -27030,6 +27314,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "unsupported",
           reason: "This component requires its native framework integration.",
         },
+        svelte: {
+          status: "unsupported",
+          reason: "This component requires its native framework integration.",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -27115,6 +27403,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -27321,6 +27612,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -27641,6 +27935,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "input-otp",
@@ -27880,6 +28177,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -28383,6 +28683,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -28504,6 +28807,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -28622,6 +28928,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -28813,6 +29122,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -29564,6 +29876,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -30009,6 +30324,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "popover",
@@ -30391,6 +30709,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "progress",
@@ -30587,6 +30908,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -30675,6 +30999,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -31052,6 +31379,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "scroll-area",
@@ -31352,6 +31682,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -32259,6 +32592,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -32381,6 +32717,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -32779,6 +33118,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -33964,6 +34306,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -34056,6 +34401,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -34322,6 +34670,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -34418,6 +34769,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -34698,6 +35052,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -35012,6 +35369,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -35435,6 +35795,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -35557,6 +35920,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -35819,6 +36185,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -36271,6 +36640,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "toggle",
@@ -36504,6 +36876,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -36885,6 +37260,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "tooltip",
@@ -37156,6 +37534,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         vue: {
           status: "available",
         },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -37386,6 +37767,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/accordion",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/accordion",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -38643,6 +39030,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/alert-dialog",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/alert-dialog",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "alert-dialog",
@@ -38817,6 +39210,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          defaultValue: "false",
+          name: "asChild",
+          kind: "rendering",
+          targets: [
+            "trigger",
+            "close",
+          ],
+          type: "boolean",
+        },
         {
           name: "open",
           kind: "control",
@@ -39690,6 +40093,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               discoveryAttribute: "data-sw-alert-dialog-trigger",
               props: [
                 {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Trigger element.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "targetId",
                   kind: "attribute",
                   targets: [
@@ -39981,7 +40396,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-alert-dialog-close",
-              props: [],
+              props: [
+                {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Close element.",
+                  descriptionSource: "authored",
+                },
+              ],
               dataAttributes: [
                 {
                   name: "data-sw-alert-dialog-close",
@@ -40145,6 +40573,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/avatar",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/avatar",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -41025,6 +41459,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/button",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/button",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "button",
@@ -41380,6 +41820,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/carousel",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/carousel",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -42181,6 +42627,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/checkbox",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/checkbox",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -43672,6 +44124,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/checkbox-group",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/checkbox-group",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "checkbox-group",
@@ -44501,6 +44959,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/collapsible",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/collapsible",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -45546,6 +46010,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/color-picker",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/color-picker",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -49191,6 +49661,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/combobox",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/combobox",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "combobox",
@@ -52638,6 +53114,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/context-menu",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/context-menu",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -56840,6 +57322,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/dialog",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/dialog",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "dialog",
@@ -56978,6 +57466,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          defaultValue: "false",
+          name: "asChild",
+          kind: "rendering",
+          targets: [
+            "trigger",
+            "close",
+          ],
+          type: "boolean",
+        },
         {
           name: "open",
           kind: "control",
@@ -57840,6 +58338,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               discoveryAttribute: "data-sw-dialog-trigger",
               props: [
                 {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Trigger element.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "targetId",
                   kind: "attribute",
                   targets: [
@@ -58049,7 +58559,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-dialog-close",
-              props: [],
+              props: [
+                {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Close element.",
+                  descriptionSource: "authored",
+                },
+              ],
               dataAttributes: [
                 {
                   name: "data-sw-dialog-close",
@@ -58200,6 +58723,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/drawer",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/drawer",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -58374,6 +58903,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          defaultValue: "false",
+          name: "asChild",
+          kind: "rendering",
+          targets: [
+            "trigger",
+            "close",
+          ],
+          type: "boolean",
+        },
         {
           name: "open",
           kind: "control",
@@ -59256,6 +59795,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               discoveryAttribute: "data-sw-drawer-trigger",
               props: [
                 {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Trigger element.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "targetId",
                   kind: "attribute",
                   targets: [
@@ -59565,7 +60116,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-drawer-close",
-              props: [],
+              props: [
+                {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Close element.",
+                  descriptionSource: "authored",
+                },
+              ],
               dataAttributes: [
                 {
                   name: "data-sw-drawer-close",
@@ -59728,6 +60292,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/dropzone",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/dropzone",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -60973,6 +61543,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/field",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/field",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -62291,6 +62867,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/fieldset",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/fieldset",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "fieldset",
@@ -62647,6 +63229,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/form",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/form",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "form",
@@ -62717,6 +63305,39 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          unsupportedTargets: [
+            "astro",
+          ],
+          name: "options",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormOptions",
+        },
+        {
+          unsupportedTargets: [
+            "astro",
+          ],
+          name: "errors",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormExternalErrors",
+        },
+        {
+          unsupportedTargets: [
+            "astro",
+          ],
+          name: "errorOptions",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormExternalErrorOptions",
+        },
         {
           name: "data-error-visibility",
           kind: "option",
@@ -62815,8 +63436,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "Retrieve the idempotent imperative controller with createForm(element); the component does not expose a controller ref.",
         ],
         react: [
-          "Create the Form runtime once for the real form element and clean it up on unmount.",
-          "Keep the public ref on the HTMLFormElement; retrieve the idempotent imperative controller with createForm(element).",
+          "Create one controller for the native form. Apply options before errors after connection. Watch prop replacement without deep traversal; each input has its own update lifetime.",
+          "Replacing options resets omitted keys to Runtime defaults. Replacing errors replaces the complete error map; removing a previously supplied input clears it. Omitted inputs preserve imperative setup.",
+          "Keep the public ref on HTMLFormElement; retrieve the imperative controller with createForm(element). Runtime owns all validation and submission behavior.",
+        ],
+        vue: [
+          "Create one controller for the native form. Apply options before errors after connection. Watch prop replacement without deep traversal; each input has its own update lifetime.",
+          "Replacing options resets omitted keys to Runtime defaults. Replacing errors replaces the complete error map; removing a previously supplied input clears it. Omitted inputs preserve imperative setup.",
+          "Keep the public ref on HTMLFormElement; retrieve the imperative controller with createForm(element). Runtime owns all validation and submission behavior.",
+        ],
+        svelte: [
+          "Create one controller for the native form. Apply options before errors after connection. Watch prop replacement without deep traversal; each input has its own update lifetime.",
+          "Replacing options resets omitted keys to Runtime defaults. Replacing errors replaces the complete error map; removing a previously supplied input clears it. Omitted inputs preserve imperative setup.",
+          "Keep the public ref on HTMLFormElement; retrieve the imperative controller with createForm(element). Runtime owns all validation and submission behavior.",
         ],
       },
       docsReference: {
@@ -62916,6 +63548,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               defaultElement: "form",
               discoveryAttribute: "data-sw-form",
               props: [
+                {
+                  unsupportedTargets: [
+                    "astro",
+                  ],
+                  name: "options",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormOptions",
+                  description: "Configures the options option for the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "astro",
+                  ],
+                  name: "errors",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormExternalErrors",
+                  description: "Configures the errors option for the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "astro",
+                  ],
+                  name: "errorOptions",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormExternalErrorOptions",
+                  description: "Configures the error options option for the Root part.",
+                  descriptionSource: "authored",
+                },
                 {
                   name: "data-error-visibility",
                   kind: "option",
@@ -63182,6 +63853,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/input",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/input",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -63943,6 +64620,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/input-otp",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/input-otp",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -65499,6 +66182,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/menu",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/menu",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -69836,6 +70525,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/navigation-menu",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/navigation-menu",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "navigation-menu",
@@ -72185,6 +72880,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/popover",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/popover",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "popover",
@@ -74218,6 +74919,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/preview-card",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/preview-card",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "preview-card",
@@ -76098,6 +76805,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/progress",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/progress",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "progress",
@@ -76978,6 +77691,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/radio",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/radio",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -78235,6 +78954,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/radio-group",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/radio-group",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "radio-group",
@@ -79313,6 +80038,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/scroll-area",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/scroll-area",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "scroll-area",
@@ -80025,6 +80756,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/select",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/select",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -82811,6 +83548,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/sidebar",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/sidebar",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "sidebar",
@@ -84750,6 +85493,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/slider",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/slider",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "slider",
@@ -86230,6 +86979,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/switch",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/switch",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "switch",
@@ -87482,6 +88237,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/tabs",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/tabs",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "tabs",
@@ -87494,6 +88255,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "syncKey",
           "value",
         ],
+        optionPropLifecycles: {
+          syncKey: "constructor-only",
+        },
         destroys: true,
       },
       parts: [
@@ -89020,6 +89784,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importSource: "@starwind-ui/vue/toast",
           installSpecifier: "@starwind-ui/vue@beta",
         },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/toast",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
       ],
       runtime: {
         primitiveId: "toast",
@@ -89866,6 +90636,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/toggle",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/toggle",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -90808,6 +91584,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/toggle-group",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/toggle-group",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {
@@ -91761,6 +92543,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/tooltip",
           installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/tooltip",
+          installSpecifier: "@starwind-ui/svelte@beta",
         },
       ],
       runtime: {

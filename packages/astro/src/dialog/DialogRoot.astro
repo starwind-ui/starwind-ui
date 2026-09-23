@@ -34,12 +34,13 @@ const {
 </div>
 
 <script>
-  import { createDialog } from "@starwind-ui/runtime/dialog";
+  import { createDialog, resolveDialogOwner } from "@starwind-ui/runtime/dialog";
   import {
     registerAstroControllerLifecycle,
     trackAstroController,
   } from "../internal/controller-lifecycle";
 
+  let knownRoots = new WeakSet<HTMLElement>();
   const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
     const initRoot =
       event?.type === "starwind:init" && event instanceof CustomEvent
@@ -50,8 +51,13 @@ const {
       : document;
     const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
 
-    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
-      candidates.unshift(scopedRoot as HTMLElement);
+    if (scopedRoot instanceof Element) {
+      if (scopedRoot.matches(selector)) candidates.unshift(scopedRoot as HTMLElement);
+      else if (!scopedRoot.matches("[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]")) {
+        const owner = resolveDialogOwner(scopedRoot);
+        if (owner?.matches(selector) && knownRoots.has(owner) && !candidates.includes(owner))
+          candidates.push(owner);
+      }
     }
 
     return candidates;
@@ -61,10 +67,18 @@ const {
     value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
 
   const setupDialogs = (event?: Event) => {
-    getInitCandidates(event, "[data-sw-dialog]").forEach((root) =>
-      trackAstroController("DialogRoot", root, createDialog(root)),
-    );
+    getInitCandidates(
+      event,
+      "[data-sw-dialog]:not([data-sw-alert-dialog]):not([data-sw-drawer])",
+    ).forEach((root) => {
+      const instance = trackAstroController("DialogRoot", root, createDialog(root));
+      if (knownRoots.has(root)) instance.refresh();
+      knownRoots.add(root);
+    });
   };
 
+  document.addEventListener("astro:before-swap", () => {
+    knownRoots = new WeakSet();
+  });
   registerAstroControllerLifecycle("DialogRoot", setupDialogs);
 </script>

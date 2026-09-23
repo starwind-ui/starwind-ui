@@ -189,14 +189,6 @@ export const sheetStyledContract: StyledAdapterContract = {
             code: "className",
           },
         },
-        {
-          frameworks: ["react"],
-          name: "asChildRest",
-          value: {
-            type: "raw",
-            code: "rest as unknown as React.HTMLAttributes<HTMLDivElement>",
-          },
-        },
       ],
       render: [
         {
@@ -217,11 +209,6 @@ export const sheetStyledContract: StyledAdapterContract = {
                   name: "spread",
                   value: { type: "variable", name: "rest" },
                   frameworks: ["astro"],
-                },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "asChildRest" },
-                  frameworks: ["react"],
                 },
                 { name: "data-slot", value: { type: "literal", value: "sheet-trigger" } },
                 { name: "data-sw-drawer-trigger" },
@@ -487,14 +474,6 @@ export const sheetStyledContract: StyledAdapterContract = {
             code: "className",
           },
         },
-        {
-          frameworks: ["react"],
-          name: "asChildRest",
-          value: {
-            type: "raw",
-            code: "rest as unknown as React.HTMLAttributes<HTMLDivElement>",
-          },
-        },
       ],
       render: [
         {
@@ -511,11 +490,6 @@ export const sheetStyledContract: StyledAdapterContract = {
                   name: "spread",
                   value: { type: "variable", name: "rest" },
                   frameworks: ["astro"],
-                },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "asChildRest" },
-                  frameworks: ["react"],
                 },
                 { name: "data-slot", value: { type: "literal", value: "sheet-close" } },
                 { name: "data-sw-drawer-close" },

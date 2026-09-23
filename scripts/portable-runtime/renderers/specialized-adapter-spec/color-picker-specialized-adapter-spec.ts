@@ -7,6 +7,9 @@ import type {
   PrimitiveSetterContract,
   RuntimeAdapterContract,
 } from "../../contracts/primitive/types.js";
+import type { AdapterComponentFile, AdapterOutputModel } from "../framework-adapters/index.js";
+import { withAcceptedModelPublications } from "../primitive-output-model/accepted-model-publication.js";
+import { requireColorPickerModelOwnership } from "../primitive-output-model/color-picker.js";
 import type {
   AdapterColorPickerEvent,
   AdapterColorPickerFacts,
@@ -15,7 +18,6 @@ import type {
   AdapterColorPickerState,
 } from "../primitive-output-model/index.js";
 import { COLOR_PICKER_PART_NAMES } from "../primitive-output-model/index.js";
-import type { AdapterComponentFile, AdapterOutputModel } from "../framework-adapters/index.js";
 import {
   buildBaseSpecializedAdapterSpec,
   validateSpecializedAdapterSpec,
@@ -203,12 +205,17 @@ export function buildColorPickerSpecializedAdapterSpec(
     ]),
   );
 
+  requireColorPickerModelOwnership(contract.stateModels ?? []);
   const states = Object.fromEntries(
     REQUIRED_STATES.map((name) => {
       const state = requireNamed(contract.stateModels, name, "state model");
       return [name, { ...state, name } satisfies AdapterColorPickerState];
     }),
   ) as Record<(typeof REQUIRED_STATES)[number], AdapterColorPickerState>;
+
+  if (REQUIRED_STATES.some((name) => states[name].runtimeSyncEvent !== "stateSync")) {
+    throw new Error("Color Picker models require Runtime stateSync after form reset.");
+  }
 
   const events = Object.fromEntries(
     REQUIRED_EVENTS.map((name) => [name, toEvent(requireNamed(contract.events, name, "event"))]),
@@ -469,7 +476,7 @@ export function buildColorPickerAdapterOutputModel(
     path: "color-picker/index.ts",
     typeFacades: [],
   });
-  return { files };
+  return withAcceptedModelPublications({ files }, spec.events, spec.root.part);
 }
 
 function createComponentFile(

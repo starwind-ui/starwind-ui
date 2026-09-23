@@ -5,6 +5,7 @@ export const inputRuntimeAdapterContract = {
   category: "form-value-control",
   displayName: "Input",
   runtime: {
+    refresh: { method: "refresh", formOwner: "native-input", parts: "root", state: "preserve" },
     factory: "createInput",
     importSource: "@starwind-ui/runtime/input",
     rootPart: "root",

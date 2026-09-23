@@ -21,7 +21,12 @@ const ColorPickerChannelSliderThumb = React.forwardRef<
 >(function ColorPickerChannelSliderThumb({ children, ...props }, forwardedRef) {
   const sliderContext = useColorPickerChannelSliderContext();
   const { props: projectedProps } = useColorPickerPartProjection(
-    { part: "channelSliderThumb", ...sliderContext },
+    {
+      part: "channelSliderThumb",
+      channel: sliderContext.channel,
+      orientation: sliderContext.orientation,
+      step: sliderContext.step,
+    },
     { ...props, "data-sw-color-picker-channel-slider-thumb": "" },
   );
   return (

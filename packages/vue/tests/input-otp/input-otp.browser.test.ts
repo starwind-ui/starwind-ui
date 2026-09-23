@@ -1,7 +1,3 @@
-import { createApp, createSSRApp, h, nextTick, ref, type ComponentPublicInstance } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { InputOtpValueChangeDetails } from "@starwind-ui/runtime/input-otp";
 import { FieldRoot } from "@starwind-ui/vue/field";
 import {
@@ -10,6 +6,9 @@ import {
   InputOtpSeparator,
   InputOtpSlot,
 } from "@starwind-ui/vue/input-otp";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { type ComponentPublicInstance, createApp, createSSRApp, h, nextTick, ref } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   InputOtp as StyledInputOtp,
   InputOtpGroup as StyledInputOtpGroup,
@@ -28,6 +27,121 @@ afterEach(() => {
 });
 
 describe("Vue Input OTP public behavior", () => {
+  it.each([{ readOnly: true }, { pattern: "[0-9]" }])(
+    "preserves the original reset seed through %j reconstruction",
+    async (options) => {
+      const props = ref<Record<string, unknown>>({ defaultValue: "12", name: "code" });
+      const updates: string[] = [];
+      const host = appendHost();
+      const app = createApp({
+        render: () =>
+          h("form", null, [
+            otpTree(InputOtpRoot, InputOtpGroup, InputOtpSlot, {
+              ...props.value,
+              "onUpdate:modelValue": (value: string) => updates.push(value),
+            }),
+          ]),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await settle();
+      const form = host.querySelector("form")!;
+      const input = host.querySelector<HTMLInputElement>("input")!;
+      input.value = "34";
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      await settle();
+      props.value = { ...props.value, ...options, defaultValue: "99" };
+      await settle();
+      expect(input.value).toBe("34");
+      form.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+      form.reset();
+      await settle();
+      expect(input.value).toBe("34");
+      form.reset();
+      await settle();
+      expect(input.value).toBe("12");
+      expect(new FormData(form).get("code")).toBe("12");
+      props.value = { ...props.value, readOnly: false, pattern: "[0-9]+" };
+      await settle();
+      expect(input.value).toBe("12");
+      expect(updates).toEqual(["34"]);
+    },
+  );
+
+  it.each(["34", ""])(
+    "hydrates initial model %j and retains the current controlled command after reconstruction",
+    async (initial) => {
+      const model = ref(initial);
+      const readOnly = ref(false);
+      const changes: string[] = [];
+      const component = {
+        render: () =>
+          h("form", null, [
+            otpTree(InputOtpRoot, InputOtpGroup, InputOtpSlot, {
+              defaultValue: "12",
+              modelValue: model.value,
+              readOnly: readOnly.value,
+              name: "code",
+              onValueChange: (value: string) => changes.push(value),
+            }),
+          ]),
+      };
+      const host = appendHost();
+      host.innerHTML = await renderToString(createSSRApp(component));
+      expect(host.querySelector<HTMLInputElement>("input")!.value).toBe(initial);
+      const app = createSSRApp(component);
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await settle();
+      const input = host.querySelector<HTMLInputElement>("input")!;
+      const form = host.querySelector("form")!;
+      expect(input.value).toBe(initial);
+      readOnly.value = true;
+      await settle();
+      form.reset();
+      await settle();
+      expect(input.value).toBe(initial);
+      model.value = "56";
+      readOnly.value = false;
+      await settle();
+      form.reset();
+      await settle();
+      expect(input.value).toBe("56");
+      expect(new FormData(form).get("code")).toBe("56");
+      expect(changes).toEqual([]);
+    },
+  );
+
+  it("refreshes length while retaining fixed indexed slots", async () => {
+    const maxLength = ref(6);
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        otpTree(InputOtpRoot, InputOtpGroup, InputOtpSlot, {
+          defaultValue: "1234",
+          maxLength: maxLength.value,
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await settle();
+    const slots = [...host.querySelectorAll("[data-sw-input-otp-slot]")];
+    maxLength.value = 3;
+    await settle();
+    expect(host.querySelector<HTMLInputElement>("input")!.value).toBe("123");
+    maxLength.value = 6;
+    await settle();
+    host
+      .querySelector<HTMLElement>("[data-sw-input-otp]")!
+      .dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    host
+      .querySelector<HTMLElement>("[data-sw-input-otp]")!
+      .dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "4" }));
+    await settle();
+    expect(host.querySelector<HTMLInputElement>("input")!.value).toBe("1234");
+    expect([...host.querySelectorAll("[data-sw-input-otp-slot]")]).toEqual(slots);
+  });
+
   it("orders cancelable changes before updates and reconciles a rejected controlled proposal", async () => {
     const model = ref("12");
     const cancelNext = ref(true);

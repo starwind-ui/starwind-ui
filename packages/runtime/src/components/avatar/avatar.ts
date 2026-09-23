@@ -67,11 +67,17 @@ export function createAvatar(root: HTMLElement, options: AvatarOptions = {}): Av
   return instance;
 }
 
+export function refreshExistingAvatar(root: HTMLElement): AvatarInstance | undefined {
+  const instance = instances.get(root);
+  instance?.refresh();
+  return instance;
+}
+
 class AvatarController implements AvatarInstance {
   readonly root: HTMLElement;
 
-  private readonly abortController = new AbortController();
-  private readonly elements: AvatarElements;
+  private readonly imageBindings = new Map<HTMLImageElement, AbortController>();
+  private elements: AvatarElements;
   private readonly mutationObserver: MutationObserver;
   private readonly onLoadingStatusChange?: (
     status: AvatarImageLoadingStatus,
@@ -121,7 +127,46 @@ class AvatarController implements AvatarInstance {
   }
 
   refresh(): void {
-    this.setImageLoadingStatus(this.readImageLoadingStatus());
+    if (this.destroyed) return;
+
+    const previous = this.elements;
+    const next = getAvatarElements(this.root);
+    const sourceChanged = this.mutationObserver
+      .takeRecords()
+      .some((record) => next.images.includes(record.target as HTMLImageElement));
+    const retainedFallbacks = new Map(
+      previous.fallbacks.map((fallback) => [fallback.element, fallback]),
+    );
+    next.fallbacks = next.fallbacks.map((fallback) => {
+      const retained = retainedFallbacks.get(fallback.element);
+      if (!retained || retained.delay !== fallback.delay) return fallback;
+      retainedFallbacks.delete(fallback.element);
+      return retained;
+    });
+    retainedFallbacks.forEach((fallback) => this.clearFallbackTimer(fallback));
+
+    const imagesChanged =
+      previous.images.length !== next.images.length ||
+      previous.images.some((image, index) => image !== next.images[index]);
+    this.elements = next;
+    if (imagesChanged) {
+      this.imageBindings.forEach((binding, image) => {
+        if (next.images.includes(image)) return;
+        binding.abort();
+        this.imageBindings.delete(image);
+      });
+      this.mutationObserver.disconnect();
+      this.bindEvents();
+      this.observeImages();
+    }
+
+    const status =
+      previous.images[0] === next.images[0] && !sourceChanged
+        ? this.imageLoadingStatus
+        : this.readImageLoadingStatus();
+    if (sourceChanged && status !== "loaded") this.restartFallbackDelay();
+    if (status !== this.imageLoadingStatus) this.setImageLoadingStatus(status);
+    else this.render();
   }
 
   subscribe(
@@ -141,7 +186,8 @@ class AvatarController implements AvatarInstance {
   destroy(): void {
     if (this.destroyed) return;
 
-    this.abortController.abort();
+    this.imageBindings.forEach((binding) => binding.abort());
+    this.imageBindings.clear();
     this.mutationObserver.disconnect();
     this.clearFallbackTimers();
     this.subscribers.clear();
@@ -150,20 +196,22 @@ class AvatarController implements AvatarInstance {
   }
 
   private bindEvents(): void {
-    const { signal } = this.abortController;
-
     this.elements.images.forEach((image) => {
+      if (this.imageBindings.has(image)) return;
+      const binding = new AbortController();
+      this.imageBindings.set(image, binding);
+      const { signal } = binding;
       image.addEventListener(
         "load",
         (event) => {
-          this.setImageLoadingStatus("loaded", { event });
+          if (isOwnedByRoot(image, this.root)) this.setImageLoadingStatus("loaded", { event });
         },
         { signal },
       );
       image.addEventListener(
         "error",
         (event) => {
-          this.setImageLoadingStatus("error", { event });
+          if (isOwnedByRoot(image, this.root)) this.setImageLoadingStatus("error", { event });
         },
         { signal },
       );

@@ -43,6 +43,7 @@ const preview = SHOULD_SPAWN_SERVER
         cwd: DEMO_ROOT,
         env: {
           ...process.env,
+          ASTRO_PREVIEW_BACKGROUND: "0",
           ASTRO_TELEMETRY_DISABLED: "1",
         },
         stdio: ["ignore", "pipe", "pipe"],
@@ -126,6 +127,9 @@ try {
   }
 
   await verifyAstroTimedOverlayReinit({ page, baseUrl });
+  await page.goto(carouselClientRouterStartUrl, {
+    waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",
+  });
   await verifyAstroCarouselClientRouterCase({ page, baseUrl });
   await page.goto(url, {
     waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",

@@ -1,3 +1,9 @@
+import {
+  dropzoneConnection,
+  dropzoneIndicatorHidden,
+  dropzoneInitialState,
+  dropzoneTabIndex,
+} from "../../shared-recipes/structured/file-controls/dropzone-recipe.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -38,6 +44,11 @@ export function printVueFileDropControlIndex(
 }
 
 function printRoot(facts: AdapterFileDropControlFacts): string {
+  const connection = dropzoneConnection(facts, {
+    read: "readInputs()",
+    notify: (files, detail) => `emit("filesChange", ${files}, ${detail});`,
+    untrack: (body) => body,
+  });
   const props = facts.props;
   const part = facts.parts.root;
   const exportName = facts.exports.root;
@@ -48,6 +59,7 @@ import {
   type ${facts.event.detailsType},
 } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { observeFormDiscovery } from "../_internal/form-discovery";
 
 defineOptions({ inheritAttrs: false });
 
@@ -66,33 +78,17 @@ const emit = defineEmits<{
 }>();
 const attrs = useAttrs();
 const element = ref<HTMLLabelElement | null>(null);
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
+const readInputs = () => ({ disabled: props.disabled, isUploading: props.isUploading });
+${connection}
+let connection: ReturnType<typeof connectDropzone> | undefined;
 
 defineExpose({ element });
 
 onMounted(() => {
-  if (!element.value) return;
-  instance = ${facts.runtime.factory}(element.value, {
-    ${props.disabled.name}: props.${props.disabled.name},
-    ${props.isUploading.name}: props.${props.isUploading.name},
-    ${facts.event.callbackProp}: (files, detail) => emit("filesChange", files, detail),
-  });
+  if (element.value) connection = connectDropzone(element.value);
 });
-
-watch(
-  () => props.${props.disabled.name},
-  (value) => instance?.${facts.setters.disabled}(value),
-);
-
-watch(
-  () => props.${props.isUploading.name},
-  (value) => instance?.${facts.setters.uploading}(value),
-);
-
-onBeforeUnmount(() => {
-  instance?.destroy();
-  instance = undefined;
-});
+watch(readInputs, () => connection?.update());
+onBeforeUnmount(() => { connection?.destroy(); connection = undefined; });
 </script>
 
 <template>
@@ -100,12 +96,12 @@ onBeforeUnmount(() => {
     ref="element"
     ${facts.attrs.root}
     :${facts.attrs.disabled}="props.${props.disabled.name} ? '' : undefined"
-    ${facts.attrs.dragActive}="false"
-    ${facts.attrs.hasFiles}="false"
+    ${facts.attrs.dragActive}="${dropzoneInitialState.dragActive}"
+    ${facts.attrs.hasFiles}="${dropzoneInitialState.hasFiles}"
     :${facts.attrs.isUploading}="props.${props.isUploading.name} ? 'true' : 'false'"
     :${facts.attrs.ariaDisabled}="props.${props.disabled.name} ? 'true' : 'false'"
     ${facts.attrs.role}="${part.role}"
-    :tabindex="props.${props.disabled.name} ? -1 : 0"
+    :tabindex="${dropzoneTabIndex(`props.${props.disabled.name}`)}"
     v-bind="attrs"
   >
     <slot />
@@ -182,7 +178,7 @@ function printStatusPart(
     partName === "filesList"
       ? ` ${facts.fileList.stateAttribute}="${facts.fileList.emptyInitialState}"`
       : ` :${facts.attrs.isUploading}="props.${facts.props.isUploading.name} ? 'true' : 'false'"
-    :hidden="${partName === "loadingIndicator" ? "!" : ""}props.${facts.props.isUploading.name}"`;
+    :hidden="${dropzoneIndicatorHidden(partName, `props.${facts.props.isUploading.name}`)}"`;
 
   return `<script setup lang="ts">
 import { ref } from "vue";

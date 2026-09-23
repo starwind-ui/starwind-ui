@@ -1,12 +1,43 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createField } from "../../../src/components/field";
-import { createForm } from "../../../src/components/form";
 import { createFieldset } from "../../../src/components/fieldset/fieldset";
+import { createForm } from "../../../src/components/form";
 
 describe("createFieldset", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+  });
+
+  it("tracks owned legend ids while protecting explicit and nested labels", async () => {
+    document.body.innerHTML = `<fieldset data-sw-fieldset><div data-sw-fieldset-legend id="first">Outer</div><fieldset data-sw-fieldset><div data-sw-fieldset-legend id="nested">Inner</div></fieldset></fieldset>`;
+    const root = document.querySelector<HTMLFieldSetElement>("fieldset")!;
+    const legend = root.querySelector<HTMLElement>("[data-sw-fieldset-legend]")!;
+    const nested = root.querySelector<HTMLFieldSetElement>("fieldset")!;
+    const instance = createFieldset(root);
+    const inner = createFieldset(nested);
+    legend.id = "changed";
+    nested.querySelector<HTMLElement>("[data-sw-fieldset-legend]")!.id = "inner-changed";
+    await waitForMacrotask();
+    expect(root.getAttribute("aria-labelledby")).toBe("changed");
+    expect(nested.getAttribute("aria-labelledby")).toBe("inner-changed");
+    root.setAttribute("aria-label", "Explicit");
+    await waitForMacrotask();
+    expect(root.hasAttribute("aria-labelledby")).toBe(false);
+    legend.id = "later";
+    await waitForMacrotask();
+    expect(root.getAttribute("aria-label")).toBe("Explicit");
+    expect(root.hasAttribute("aria-labelledby")).toBe(false);
+    root.removeAttribute("aria-label");
+    await waitForMacrotask();
+    expect(root.getAttribute("aria-labelledby")).toBe("later");
+    root.setAttribute("aria-labelledby", "consumer");
+    legend.id = "last";
+    await waitForMacrotask();
+    expect(root.getAttribute("aria-labelledby")).toBe("consumer");
+    instance.destroy();
+    inner.destroy();
+    expect(root.getAttribute("aria-labelledby")).toBe("consumer");
   });
 
   it("labels the root from its legend and propagates disabled state to owned fields", async () => {
@@ -124,7 +155,7 @@ describe("createFieldset", () => {
     expect(fieldset).not.toHaveAttribute("aria-labelledby");
   });
 
-  it("restores caller-authored aria-labelledby when destroying a managed legend association", () => {
+  it("preserves caller-authored aria-labelledby with an owned legend", () => {
     document.body.innerHTML = `
       <span id="external-label">Account settings</span>
       <fieldset data-sw-fieldset aria-labelledby="external-label">
@@ -133,10 +164,9 @@ describe("createFieldset", () => {
     `;
 
     const fieldset = document.querySelector<HTMLFieldSetElement>("[data-sw-fieldset]")!;
-    const legend = document.querySelector<HTMLElement>("[data-sw-fieldset-legend]")!;
     const instance = createFieldset(fieldset);
 
-    expect(fieldset.getAttribute("aria-labelledby")).toBe(legend.id);
+    expect(fieldset.getAttribute("aria-labelledby")).toBe("external-label");
 
     instance.destroy();
 

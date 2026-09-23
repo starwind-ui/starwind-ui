@@ -1,3 +1,8 @@
+import {
+  initializeThemeControl,
+  themeControlSlotFallback,
+  themeToggleNativePolicy,
+} from "../../../shared-recipes/passive/theme-toggle.js";
 import type {
   StyledOutputAttribute,
   StyledOutputComponent,
@@ -199,6 +204,12 @@ export function specializeVueStyledComponent(
   }
 
   if (groupName === "toast" && component.exportName === "Toaster") {
+    for (const name of ["gap", "peek"]) {
+      addPrimitiveBinding(component.render, "toast", "Viewport", {
+        name,
+        value: { type: "variable", name },
+      });
+    }
     addPrimitiveBinding(component.render, "toast", "Viewport", refBinding());
     result.exposedRefs.push(primitiveRef("HTMLDivElement"));
     result.imports.push(...primitiveRefImports());
@@ -366,16 +377,16 @@ export function specializeVueStyledComponent(
       const spreadIndex = root.attrs.findIndex((attribute) => attribute.name === "spread");
       root.attrs.splice(spreadIndex + 1, 0, {
         name: "type",
-        value: { type: "literal", value: "button" },
+        value: { type: "literal", value: themeToggleNativePolicy.type },
       });
       mapAttribute([root], "data-slot", () => ({
         name: "data-slot",
-        value: { type: "raw", code: "dataSlot || 'theme-toggle'" },
+        value: { type: "raw", code: themeControlSlotFallback("dataSlot") },
       }));
     }
     result.exposedRefs.push({ bridge: "element", elementTypes: ["HTMLButtonElement"] });
     result.imports.push({ kind: "value", name: "onMounted" }, { kind: "value", name: "ref" });
-    result.setup.push("onMounted(() => {\n  initThemeController();\n});");
+    result.setup.push("onMounted(() => {\n  " + initializeThemeControl() + "\n});");
     result.rootBindings.push({ attribute: "ref", target: "theme toggle button" });
   }
 

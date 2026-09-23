@@ -60,6 +60,55 @@ function validateContract(
     discoveryAttributes.add(part.discoveryAttribute);
   }
 
+  if (contract.component === "avatar" || contract.component === "fieldset") {
+    const refresh = contract.runtime.refresh;
+    if (
+      refresh?.method !== "refresh" ||
+      refresh.parts !== "owned-descendants" ||
+      refresh.state !== "preserve" ||
+      refresh.formOwner !== undefined
+    ) {
+      issues.push(
+        issue(
+          contract,
+          "runtime.refresh",
+          "Owned DOM parts require state-preserving refresh without form ownership.",
+        ),
+      );
+    }
+  }
+
+  if (["dialog", "alert-dialog", "drawer"].includes(contract.component)) {
+    const refresh = contract.runtime.refresh;
+    if (
+      refresh?.method !== "refresh" ||
+      refresh.parts !== "owned-controls" ||
+      refresh.state !== "preserve" ||
+      refresh.formOwner !== undefined
+    ) {
+      issues.push(
+        issue(
+          contract,
+          "runtime.refresh",
+          "Owned overlay controls require state-preserving refresh without form ownership.",
+        ),
+      );
+    }
+  }
+
+  if (
+    contract.component === "tabs" &&
+    contract.runtime.optionPropLifecycles?.syncKey !== "constructor-only"
+  ) {
+    issues.push(
+      issue(
+        contract,
+        "runtime.optionPropLifecycles.syncKey",
+        "Tabs syncKey is captured at component creation.",
+      ),
+    );
+  }
+
   const props = contract.props;
   if (!contract.runtime.factory?.trim()) {
     issues.push(issue(contract, "runtime.factory", "Missing runtime factory."));
@@ -140,6 +189,36 @@ function validateContract(
   }
 
   for (const stateModel of contract.stateModels ?? []) {
+    if (
+      stateModel.resetBaseline === "mount" &&
+      (!stateModel.defaultProp || !stateModel.runtimeGetter || !stateModel.runtimeSetter)
+    ) {
+      issues.push(
+        issue(
+          contract,
+          `stateModels.${stateModel.name}.resetBaseline`,
+          "A mount reset baseline requires a default prop and Runtime getter/setter.",
+        ),
+      );
+    }
+    if (contract.component === "color-picker" && ["value", "format"].includes(stateModel.name)) {
+      const policy = stateModel.ownership;
+      if (
+        policy?.controlledWhen !== "initial-defined" ||
+        policy.lifetime !== "mount" ||
+        policy.laterUndefined !== "retain-controlled-value" ||
+        policy.laterDefined !== "ignore-when-uncontrolled"
+      ) {
+        issues.push(
+          issue(
+            contract,
+            `stateModels.${stateModel.name}.ownership`,
+            "Color Picker requires fixed initial-defined model ownership until unmount.",
+          ),
+        );
+      }
+    }
+
     if (stateModel.controlledProp) {
       requireProp(
         contract,
@@ -161,6 +240,37 @@ function validateContract(
   }
 
   for (const event of contract.events ?? []) {
+    if (
+      event.acceptanceNotification === "controller-subscription" &&
+      (!event.stateModel ||
+        event.emitsFrom !== contract.runtime.rootPart ||
+        event.cancelable !== true ||
+        event.callbackTiming !== "before-state-commit")
+    ) {
+      issues.push(
+        issue(
+          contract,
+          `events.${event.name}.acceptanceNotification`,
+          "Accepted model subscription requires a cancelable root state proposal.",
+        ),
+      );
+    }
+    if (
+      event.acceptanceNotification === "after-dom-dispatch" &&
+      (!event.stateModel ||
+        !event.domEvent ||
+        event.emitsFrom === contract.runtime.rootPart ||
+        event.cancelable !== true ||
+        event.callbackTiming !== "before-state-commit")
+    ) {
+      issues.push(
+        issue(
+          contract,
+          `events.${event.name}.acceptanceNotification`,
+          "Accepted DOM publication requires a cancelable part state proposal with a DOM event.",
+        ),
+      );
+    }
     requireProp(contract, props, event.callbackProp, `events.${event.name}.callbackProp`, issues);
     requirePart(contract, parts, event.emitsFrom, `events.${event.name}.emitsFrom`, issues);
     if (

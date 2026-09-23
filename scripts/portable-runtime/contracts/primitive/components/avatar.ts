@@ -5,6 +5,7 @@ export const avatarRuntimeAdapterContract = {
   category: "static-semantic",
   displayName: "Avatar",
   runtime: {
+    refresh: { method: "refresh", parts: "owned-descendants", state: "preserve" },
     factory: "createAvatar",
     importSource: "@starwind-ui/runtime/avatar",
     rootPart: "root",

@@ -2,200 +2,143 @@
 <script setup lang="ts">
 import { createToggle, type TogglePressedChangeDetails } from "@starwind-ui/runtime/toggle";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
-
 import { useToggleGroupContext } from "../toggle-group/ToggleGroupContext";
 
 defineOptions({ inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
-    pressed?: boolean;
     defaultPressed?: boolean;
     disabled?: boolean;
     nativeButton?: boolean;
+    pressed?: boolean;
     syncGroup?: string;
     value?: string;
   }>(),
-  {
-    pressed: undefined,
-    defaultPressed: false,
-    disabled: false,
-    nativeButton: true,
-  },
+  { defaultPressed: false, disabled: false, nativeButton: true, pressed: undefined },
 );
 const emit = defineEmits<{
   pressedChange: [value: boolean, detail: TogglePressedChangeDetails];
   "update:pressed": [value: boolean];
 }>();
-defineSlots<{
-  default?: () => unknown;
-}>();
+defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
 const rootRef = ref<HTMLElement | null>(null);
+defineExpose({ element: rootRef });
+const initialDefault = props.defaultPressed ?? false;
+const renderedValue = ref<boolean>(initialDefault);
+const connection: {
+  instance?: ReturnType<typeof createToggle>;
+  unsubscribe?: () => void;
+  observer?: MutationObserver;
+  ownDisabled?: boolean;
+  accepted: boolean;
+} = { accepted: initialDefault };
 const toggleGroup = useToggleGroupContext();
 const isGroupOwned = toggleGroup !== undefined;
 const groupPressed = computed(() =>
-  toggleGroup && props.value !== undefined
-    ? toggleGroup.value.value.includes(props.value)
+  toggleGroup !== undefined && props.value !== undefined
+    ? toggleGroup!.value.value.includes(props.value!)
     : undefined,
 );
 const effectiveDisabled = computed(() => props.disabled || toggleGroup?.disabled.value === true);
-const initialDefaultPressed = props.defaultPressed;
-const uncontrolledPressed = ref(initialDefaultPressed);
-const runtimePressed = ref(initialDefaultPressed);
-const renderedPressed = computed(
-  () =>
-    groupPressed.value ??
-    (isGroupOwned ? runtimePressed.value : (props.pressed ?? uncontrolledPressed.value)),
-);
-let instance: ReturnType<typeof createToggle> | undefined;
-let observer: MutationObserver | undefined;
-let instanceGeneration = 0;
-let mounted = false;
-
-defineExpose({
-  element: rootRef,
-});
-
-function handlePressedChange(pressed: boolean, detail: TogglePressedChangeDetails): void {
-  const eventInstance = instance;
-  const eventGeneration = instanceGeneration;
-  const eventWasGroupOwned = isGroupOwned;
-  const eventWasControlled = !eventWasGroupOwned && props.pressed !== undefined;
-  emit("pressedChange", pressed, detail);
-  queueMicrotask(() => {
-    if (
-      detail.isCanceled ||
-      !mounted ||
-      instance !== eventInstance ||
-      instanceGeneration !== eventGeneration
-    ) {
-      return;
-    }
-
-    if (!eventWasGroupOwned && !eventWasControlled) {
-      uncontrolledPressed.value = pressed;
-    }
-    emit("update:pressed", pressed);
-  });
+const selected = computed(() => groupPressed.value ?? props.pressed ?? renderedValue.value);
+function disconnect() {
+  const owned = connection.instance;
+  connection.observer?.disconnect();
+  connection.observer = undefined;
+  connection.unsubscribe?.();
+  connection.unsubscribe = undefined;
+  connection.instance = undefined;
+  owned?.destroy();
 }
-
-function destroyOwnedInstance(): void {
-  instanceGeneration += 1;
-  observer?.disconnect();
-  observer = undefined;
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
+function publishReadback(owned: ReturnType<typeof createToggle>) {
+  if (connection.instance !== owned) return;
+  const next = owned.getPressed();
+  renderedValue.value = next;
 }
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  instance = createToggle(element, {
-    defaultPressed: renderedPressed.value,
-    disabled: effectiveDisabled.value,
+function connect(root: HTMLElement) {
+  disconnect();
+  const desired = isGroupOwned
+    ? (groupPressed.value ?? renderedValue.value)
+    : (props.pressed ?? renderedValue.value);
+  const owned = createToggle(root, {
+    defaultPressed: desired,
+    disabled: props.disabled,
     nativeButton: props.nativeButton,
     syncGroup: props.syncGroup,
     value: props.value,
-    onPressedChange: handlePressedChange,
-    ...(isGroupOwned
-      ? { pressed: renderedPressed.value }
-      : props.pressed === undefined
-        ? {}
-        : { pressed: props.pressed }),
+    ...(isGroupOwned || props.pressed !== undefined ? { pressed: desired } : {}),
+    onPressedChange: (next, detail) => {
+      emit("pressedChange", next, detail);
+    },
   });
-
-  const syncRuntimePressed = () => {
-    runtimePressed.value = element.getAttribute("aria-pressed") === "true";
-  };
-  observer = new MutationObserver(syncRuntimePressed);
-  observer.observe(element, {
-    attributes: true,
-    attributeFilter: ["aria-pressed"],
+  connection.instance = owned;
+  connection.ownDisabled = props.disabled;
+  connection.unsubscribe = owned.subscribe("pressedChange", (detail) => {
+    if (connection.instance !== owned || detail.isCanceled) return;
+    publishReadback(owned);
+    emit("update:pressed", detail.pressed);
   });
-  syncRuntimePressed();
+  connection.observer = new MutationObserver(() => {
+    publishReadback(owned);
+  });
+  connection.observer.observe(root, { attributes: true, attributeFilter: ["aria-pressed"] });
+  publishReadback(owned);
 }
-
+function applyParent() {
+  if (isGroupOwned) return;
+  const owned = connection.instance,
+    next = props.pressed;
+  if (!owned || next === undefined || owned.getPressed() === next) return;
+  owned.setPressed(next, { emit: false, sync: true });
+  publishReadback(owned);
+}
+function applyDisabled() {
+  const owned = connection.instance,
+    next = props.disabled;
+  if (!owned || next === connection.ownDisabled) return;
+  connection.ownDisabled = next;
+  owned.setDisabled(next);
+  if (isGroupOwned && next) owned.root.setAttribute("data-disabled", "");
+}
 onMounted(() => {
-  mounted = true;
-  setupRuntime();
+  if (rootRef.value) connect(rootRef.value);
 });
-
+onBeforeUnmount(disconnect);
 watch(
-  () => props.pressed,
-  (pressed, previousPressed) => {
-    if (isGroupOwned) return;
-    const controllednessChanged = (pressed === undefined) !== (previousPressed === undefined);
-    if (controllednessChanged) {
-      if (pressed === undefined && instance) {
-        uncontrolledPressed.value = instance.getPressed();
-      }
-      setupRuntime();
-      return;
-    }
-    if (pressed === undefined || !instance || Object.is(instance.getPressed(), pressed)) {
-      return;
-    }
-
-    instance.setPressed(pressed, { emit: false, sync: true });
+  () => [props.nativeButton, props.syncGroup, props.value],
+  () => {
+    if (rootRef.value) connect(rootRef.value);
   },
   { flush: "post" },
 );
-watch(groupPressed, (nextPressed) => {
-  if (
-    !isGroupOwned ||
-    nextPressed === undefined ||
-    !instance ||
-    Object.is(instance.getPressed(), nextPressed)
-  ) {
-    return;
-  }
-  instance.setPressed(nextPressed, { emit: false, sync: true });
-});
-watch(effectiveDisabled, (nextDisabled) => {
-  if (!instance || rootRef.value?.hasAttribute("data-disabled") === nextDisabled) return;
-  instance.setDisabled(nextDisabled);
-});
-watch(() => [props.nativeButton, props.syncGroup, props.value] as const, setupRuntime, {
-  flush: "post",
-});
-
-onBeforeUnmount(() => {
-  mounted = false;
-  destroyOwnedInstance();
-});
+watch(() => [props.pressed], applyParent, { flush: "post" });
+watch(() => [props.disabled], applyDisabled, { flush: "post" });
 </script>
-
 <template>
   <component
     :is="props.nativeButton ? 'button' : 'span'"
     ref="rootRef"
     v-bind="attrs"
-    data-sw-toggle
+    data-sw-toggle=""
     data-sw-part="root"
-    :type="props.nativeButton ? 'button' : undefined"
-    :role="props.nativeButton ? undefined : 'button'"
-    :aria-disabled="!props.nativeButton && effectiveDisabled ? 'true' : undefined"
-    :aria-pressed="String(renderedPressed)"
     :data-default-pressed="
-      !isGroupOwned && props.pressed === undefined && initialDefaultPressed ? 'true' : undefined
+      !isGroupOwned && props.pressed === undefined && initialDefault ? 'true' : undefined
     "
-    :data-disabled="effectiveDisabled ? '' : undefined"
     :data-native="props.nativeButton ? undefined : 'false'"
-    :data-pressed="renderedPressed ? '' : undefined"
-    :data-state="renderedPressed ? 'on' : 'off'"
     :data-sync-group="props.syncGroup"
-    :data-unpressed="renderedPressed ? undefined : ''"
     :data-value="props.value"
+    :aria-pressed="selected"
+    :aria-disabled="!props.nativeButton && effectiveDisabled ? 'true' : undefined"
+    :data-disabled="effectiveDisabled ? '' : undefined"
+    :data-pressed="selected ? '' : undefined"
+    :data-unpressed="selected ? undefined : ''"
+    :data-state="selected ? 'on' : 'off'"
     :disabled="props.nativeButton ? effectiveDisabled : undefined"
+    :role="props.nativeButton ? undefined : 'button'"
+    :type="props.nativeButton ? 'button' : undefined"
     :tabindex="props.nativeButton ? undefined : effectiveDisabled ? -1 : 0"
     :value="props.nativeButton ? props.value : undefined"
-  >
-    <slot />
-  </component>
+    ><slot
+  /></component>
 </template>

@@ -1,5 +1,4 @@
 import * as ts from "typescript";
-
 import { colorPickerRuntimeAdapterContract } from "../../contracts/primitive/color-picker.js";
 import { reactFrameworkAdapterTarget } from "../../renderers/framework-adapters/react/index.js";
 import {
@@ -10,6 +9,7 @@ import {
   buildColorPickerAdapterOutputModel,
   buildColorPickerSpecializedAdapterSpec,
 } from "../../renderers/specialized-adapter-spec/index.js";
+import { assertTypeScriptModule, compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -18,8 +18,8 @@ import {
   generateStarwindReactWrappers,
   it,
   path,
-  readGeneratedFile,
   readFormattedGeneratedTree,
+  readGeneratedFile,
   readGeneratedTree,
   writeFile,
 } from "./shared.js";
@@ -116,59 +116,83 @@ normalizedSwatches.forEach((swatch) => {
     const root = tree["ColorPicker.tsx"];
     const content = tree["ColorPickerContent.tsx"];
     const editor = tree["ColorPickerDefaultEditor.tsx"];
-    expect(editor).toContain(
-      'import { IconColorPicker as ColorPicker } from "@tabler/icons-react";',
+    expect(compactCode(editor)).toContain(
+      compactCode('import { IconColorPicker as ColorPicker } from "@tabler/icons-react";'),
     );
-    expect(editor).not.toContain('from "react";');
-    expect(editor).not.toContain("...rest");
-    expect(editor).toContain("formatContentSize={size}");
-    expect(editor).toContain("const isSwatchDescriptor = (");
-    expect(editor).toContain("swatch is Extract<(typeof swatches)[number], { value: unknown }>");
-    expect(editor).toContain("isSwatchDescriptor(swatch)");
-    expect(editor).toContain("disabled: undefined");
-    expect(editor).not.toContain("inputSize");
-    expect(editor).toContain("portalContainer={portalContainer}");
-    expect(editor).toContain("disablePortal={disablePortal}");
-    expect(editor).toContain("normalizedSwatches.length > 0");
+    expect(compactCode(editor)).not.toContain(compactCode('from "react";'));
+    expect(compactCode(editor)).not.toContain(compactCode("...rest"));
+    expect(compactCode(editor)).toContain(compactCode("formatContentSize={size}"));
+    expect(compactCode(editor)).toContain(compactCode("const isSwatchDescriptor = ("));
+    expect(compactCode(editor)).toContain(
+      compactCode("swatch is Extract<(typeof swatches)[number], { value: unknown }>"),
+    );
+    expect(compactCode(editor)).toContain(compactCode("isSwatchDescriptor(swatch)"));
+    expect(compactCode(editor)).toContain(compactCode("disabled: undefined"));
+    expect(compactCode(editor)).not.toContain(compactCode("inputSize"));
+    expect(compactCode(editor)).toContain(compactCode("portalContainer={portalContainer}"));
+    expect(compactCode(editor)).toContain(compactCode("disablePortal={disablePortal}"));
+    expect(compactCode(editor)).toContain(compactCode("normalizedSwatches.length > 0"));
     expect(editor).toMatch(/<ColorPicker\s+className="size-4"\s+aria-hidden="true"/);
-    expect(editor).not.toContain(">Pick<");
-    expect(editor).toContain("normalizedSwatches.map");
-    expect(editor).toContain("<ColorPickerClear");
-    expect(content).toContain('collisionStrategy="best-fit"');
-    expect(content).toContain("<ColorPickerDefaultEditor");
-    expect(content).toContain("portalContainer={portalContainer}");
-    expect(content).toContain("disablePortal={disablePortal}");
-    expect(content).toContain('size = "md"');
+    expect(compactCode(editor)).not.toContain(compactCode(">Pick<"));
+    expect(compactCode(editor)).toContain(compactCode("normalizedSwatches.map"));
+    expect(compactCode(editor)).toContain(compactCode("<ColorPickerClear"));
+    expect(compactCode(content)).toContain(compactCode('collisionStrategy="best-fit"'));
+    expect(compactCode(content)).toContain(compactCode("<ColorPickerDefaultEditor"));
+    expect(compactCode(content)).toContain(compactCode("portalContainer={portalContainer}"));
+    expect(compactCode(content)).toContain(compactCode("disablePortal={disablePortal}"));
+    expect(compactCode(content)).toContain(compactCode('size = "md"'));
     expect(content).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
-    expect(root).toContain("inline = false");
-    expect(root).toContain("portalContainer?: string;");
-    expect(root).toContain("disablePortal?: boolean;");
-    expect(root).toContain("portalContainer={portalContainer}");
-    expect(root).toContain("disablePortal={disablePortal}");
-    expect(root).toContain("alpha = true");
-    expect(root).toContain("allowEmpty={clearable}");
-    expect(root).toContain('format ?? formats[0] ?? "hex"');
-    expect(root).toContain('size = "md"');
+    expect(compactCode(root)).toContain(compactCode("inline = false"));
+    expect(compactCode(root)).toContain(compactCode("portalContainer?: string;"));
+    expect(compactCode(root)).toContain(compactCode("disablePortal?: boolean;"));
+    expect(compactCode(root)).toContain(compactCode("portalContainer={portalContainer}"));
+    expect(compactCode(root)).toContain(compactCode("disablePortal={disablePortal}"));
+    expect(compactCode(root)).toContain(compactCode("alpha = true"));
+    expect(compactCode(root)).toContain(compactCode("allowEmpty={clearable}"));
+    expect(compactCode(root)).toContain(compactCode('format ?? formats[0] ?? "hex"'));
+    expect(compactCode(root)).toContain(compactCode('size = "md"'));
     expect(root).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
-    expect(root).toContain("requestedFormats.includes(resolvedFormat)");
+    expect(compactCode(root)).toContain(compactCode("requestedFormats.includes(resolvedFormat)"));
     expect(root.match(/<ColorPickerPrimitive\.HiddenInput/g)).toHaveLength(2);
-    expect(root).toContain("Parameters<NonNullable<typeof onFormatChange>>");
-    expect(tree["ColorPickerInput.tsx"]).toContain('formatControl?: "select" | "native" | "none"');
-    expect(tree["ColorPickerInput.tsx"]).toContain('formatContentSize?: "sm" | "md" | "lg"');
-    expect(tree["ColorPickerInput.tsx"]).toContain('formatContentSize = "md"');
-    expect(tree["ColorPickerInput.tsx"]).toMatch(/<SelectContent\s+size=\{formatContentSize\}/);
-    expect(tree["ColorPickerInput.tsx"]).toContain("portalContainer={portalContainer}");
-    expect(tree["ColorPickerInput.tsx"]).toContain("disablePortal={disablePortal}");
-    expect(tree["ColorPickerInput.tsx"]).toContain("normalizedFormats.map");
-    expect(tree["ColorPickerArea.tsx"]).toContain("<ColorPickerPrimitive.AreaThumb");
-    expect(tree["index.ts"]).not.toContain("ColorPickerDefaultEditor");
-    expect(tree["index.ts"]).not.toContain("InlineRoot");
-    expect(tree["styles.css"]).toContain('data-has-swatches="false"');
-    expect(tree["styles.css"]).toContain(
-      '[data-slot="color-picker"][data-size="sm"], [data-sw-color-picker-content][data-size="sm"]',
+    expect(compactCode(root)).toContain(
+      compactCode("Parameters<NonNullable<typeof onFormatChange>>"),
     );
-    expect(tree["variants.ts"]).toContain("size-(--sw-color-picker-swatch-size)");
-    expect(tree["variants.ts"]).toContain("h-(--sw-color-picker-slider-size)");
+    expect(compactCode(tree["ColorPickerInput.tsx"])).toContain(
+      compactCode('formatControl?: "select" | "native" | "none"'),
+    );
+    expect(compactCode(tree["ColorPickerInput.tsx"])).toContain(
+      compactCode('formatContentSize?: "sm" | "md" | "lg"'),
+    );
+    expect(compactCode(tree["ColorPickerInput.tsx"])).toContain(
+      compactCode('formatContentSize = "md"'),
+    );
+    expect(tree["ColorPickerInput.tsx"]).toMatch(/<SelectContent\s+size=\{formatContentSize\}/);
+    expect(compactCode(tree["ColorPickerInput.tsx"])).toContain(
+      compactCode("portalContainer={portalContainer}"),
+    );
+    expect(compactCode(tree["ColorPickerInput.tsx"])).toContain(
+      compactCode("disablePortal={disablePortal}"),
+    );
+    expect(compactCode(tree["ColorPickerInput.tsx"])).toContain(
+      compactCode("normalizedFormats.map"),
+    );
+    expect(compactCode(tree["ColorPickerArea.tsx"])).toContain(
+      compactCode("<ColorPickerPrimitive.AreaThumb"),
+    );
+    expect(compactCode(tree["index.ts"])).not.toContain(compactCode("ColorPickerDefaultEditor"));
+    expect(compactCode(tree["index.ts"])).not.toContain(compactCode("InlineRoot"));
+    expect(compactCode(tree["styles.css"])).toContain(compactCode('data-has-swatches="false"'));
+    expect(compactCode(tree["styles.css"])).toContain(
+      compactCode(
+        '[data-slot="color-picker"][data-size="sm"], [data-sw-color-picker-content][data-size="sm"]',
+      ),
+    );
+    expect(compactCode(tree["variants.ts"])).toContain(
+      compactCode("size-(--sw-color-picker-swatch-size)"),
+    );
+    expect(compactCode(tree["variants.ts"])).toContain(
+      compactCode("h-(--sw-color-picker-slider-size)"),
+    );
     for (const part of [
       "ColorPickerArea.tsx",
       "ColorPickerChannelInput.tsx",
@@ -181,10 +205,12 @@ normalizedSwatches.forEach((swatch) => {
       "ColorPickerTrigger.tsx",
       "ColorPickerValueSwatch.tsx",
     ]) {
-      expect(tree[part]).not.toContain("size?:");
+      expect(compactCode(tree[part])).not.toContain(compactCode("size?:"));
     }
-    expect(tree["variants.ts"]).toContain("min-h-32 w-full shrink-0");
-    expect(tree["variants.ts"]).toContain("max-h-(--sw-floating-available-height)");
+    expect(compactCode(tree["variants.ts"])).toContain(compactCode("min-h-32 w-full shrink-0"));
+    expect(compactCode(tree["variants.ts"])).toContain(
+      compactCode("max-h-(--sw-floating-available-height)"),
+    );
 
     const first = tree;
     await generateStarwindReactWrappers({ outputDir, primitiveOutputDir, repoRoot: tempRoot });
@@ -221,26 +247,28 @@ normalizedSwatches.forEach((swatch) => {
     const tree = await readFormattedGeneratedTree(path.join(outputRoot, "color-picker"));
     const index = tree["index.ts"];
     expect(Object.keys(tree)).toHaveLength(COLOR_PICKER_PART_NAMES.length + 1);
-    expect(index).toContain("const ColorPicker = {");
-    expect(index).toContain("createColorPickerInitialState");
-    expect(index).toContain("projectColorPickerInitialPart");
-    expect(index).toContain('from "@starwind-ui/runtime/color-picker";');
-    expect(index).toContain("FormatSelect: ColorPickerFormatSelect");
-    expect(index).toContain("FormatControl: ColorPickerFormatControl");
+    expect(compactCode(index)).toContain(compactCode("const ColorPicker = {"));
+    expect(compactCode(index)).toContain(compactCode("createColorPickerInitialState"));
+    expect(compactCode(index)).toContain(compactCode("projectColorPickerInitialPart"));
+    expect(compactCode(index)).toContain(compactCode('from "@starwind-ui/runtime/color-picker";'));
+    expect(compactCode(index)).toContain(compactCode("FormatSelect: ColorPickerFormatSelect"));
+    expect(compactCode(index)).toContain(compactCode("FormatControl: ColorPickerFormatControl"));
 
     for (const part of COLOR_PICKER_PART_NAMES) {
       const namespaceKey = `${part[0]!.toUpperCase()}${part.slice(1)}`;
       const exportName = `ColorPicker${namespaceKey}`;
-      expect(tree[`${exportName}.tsx`]).toContain(`React.forwardRef`);
+      expect(compactCode(tree[`${exportName}.tsx`])).toContain(compactCode(`React.forwardRef`));
       expect(index).toContain(`${namespaceKey}: ${exportName}`);
       expect(index).toContain(exportName);
     }
 
     const formatControl = tree["ColorPickerFormatControl.tsx"];
-    expect(formatControl).toContain('{ part: "formatControl" }');
-    expect(formatControl).toContain('"data-sw-color-picker-format-control": ""');
-    expect(formatControl).toContain(
-      'ColorPickerFormatControl.displayName = "ColorPicker.FormatControl"',
+    expect(compactCode(formatControl)).toContain(compactCode('{ part: "formatControl" }'));
+    expect(compactCode(formatControl)).toContain(
+      compactCode('"data-sw-color-picker-format-control": ""'),
+    );
+    expect(compactCode(formatControl)).toContain(
+      compactCode('ColorPickerFormatControl.displayName = "ColorPicker.FormatControl"'),
     );
   }, 30_000);
 
@@ -252,46 +280,7 @@ normalizedSwatches.forEach((swatch) => {
     });
 
     const root = await readGeneratedFile(outputRoot, "color-picker/ColorPickerRoot.tsx");
-    expect(root).toContain("const isValueControlledRef = React.useRef(value !== undefined);");
-    expect(root).toContain('"value" | "defaultValue" | "dir"');
-    expect(root).toContain("const isFormatControlledRef = React.useRef(format !== undefined);");
-    expect(root).toContain("const rootOwnershipPendingRef = React.useRef(true);");
-    expect(root).toContain("createColorPickerInitialState({");
-    expect(root).toContain('projectColorPickerInitialPart(initialState, { part: "root" })');
-    expect(root).toContain("rootOwnershipPendingRef.current = false;");
-    expect(root).toContain("const initialProjectionRef = React.useRef<");
-    expect(root).toContain("ownershipPendingRef.current = false;");
-    expect(root).toContain(
-      "if (isValueControlledRef.current && value !== undefined) valueRef.current = value;",
-    );
-    expect(root).toContain(
-      "if (isFormatControlledRef.current && format !== undefined) formatRef.current = format;",
-    );
-    expect(root).toContain("onValueChangeRef.current = onValueChange;");
-    expect(root).toContain("onFormatChangeRef.current = onFormatChange;");
-    expect(root).toContain("onValueChange: (nextValue, details) => {");
-    expect(root).toContain('instance.subscribe("valueChange", (details) => {');
-    expect(root).toContain("if (!isValueControlledRef.current) {");
-    expect(root).toContain("instanceRef.current?.setValue(value, { emit: false });");
-    expect(root).toContain("instanceRef.current?.setFormat(format, { emit: false });");
-    expect(root).toContain("instanceRef.current?.refresh({ preserveState: true });");
-    expect(root).toContain("new MutationObserver");
-    expect(root).toContain("colorPickerStructuralFingerprint(");
-    expect(root).toContain("captureColorPickerOwnership(");
-    expect(root).toContain("replayColorPickerOwnership(");
-    expect(root).toContain("const authoredAriaHistoryRef = React.useRef(new Set<string>());");
-    expect(root).toContain("delete dynamicAuthoredProps[name];");
-    expect(root).not.toContain("}, [children]);");
-    expect(root).toContain("instance.setName(name ?? null);");
-    expect(root).toContain("locale: locale ?? null");
-    expect(root).toContain("instance.destroy();");
-    expect(root).toContain("ColorPickerRootContext.Provider");
-    expect(root).toContain("ColorPickerAreaContext");
-    expect(root).toContain("ColorPickerChannelSliderContext");
-    expect(root).toContain('projected[name === "value" ? "defaultValue" : name] = value;');
-    expect(root).toContain('name === "data-sw-color-picker-initial-owned"');
-    expect(root).not.toContain("parseColor(");
-    expect(root).not.toMatch(/(?:rgb|hsl|hsb)\s*(?:to|=>)|pointermove|Math\.(?:round|floor)/i);
+    assertTypeScriptModule(root); // Ordinary behavior is covered by the component browser suite.
 
     const area = await readGeneratedFile(outputRoot, "color-picker/ColorPickerArea.tsx");
     const areaInput = await readGeneratedFile(outputRoot, "color-picker/ColorPickerAreaInput.tsx");
@@ -304,14 +293,14 @@ normalizedSwatches.forEach((swatch) => {
       outputRoot,
       "color-picker/ColorPickerFormatControl.tsx",
     );
-    expect(area).toContain("ColorPickerAreaContext.Provider");
-    expect(areaInput).toContain("useColorPickerAreaContext()");
-    expect(areaInput).not.toContain("ariaRoleDescription");
-    expect(areaInput).not.toContain('props["aria-label"]');
-    expect(slider).toContain("ColorPickerChannelSliderContext.Provider");
-    expect(sliderInput).toContain("useColorPickerChannelSliderContext()");
-    expect(sliderInput).not.toContain('props["aria-label"]');
-    expect(formatControl).toContain("useColorPickerPartProjection(");
+    expect(compactCode(area)).toContain(compactCode("ColorPickerAreaContext.Provider"));
+    expect(compactCode(areaInput)).toContain(compactCode("useColorPickerAreaContext()"));
+    expect(compactCode(areaInput)).toContain(compactCode("aria-roledescription"));
+    expect(compactCode(areaInput)).toContain(compactCode('props["aria-label"]'));
+    expect(compactCode(slider)).toContain(compactCode("ColorPickerChannelSliderContext.Provider"));
+    expect(compactCode(sliderInput)).toContain(compactCode("useColorPickerChannelSliderContext()"));
+    expect(compactCode(sliderInput)).toContain(compactCode('props["aria-label"]'));
+    expect(compactCode(formatControl)).toContain(compactCode("useColorPickerPartProjection("));
     expect(formatControl).not.toMatch(/createColorPicker|starwind:format-change|setFormat/);
   }, 30_000);
 

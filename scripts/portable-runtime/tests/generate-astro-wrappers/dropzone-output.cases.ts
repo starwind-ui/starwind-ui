@@ -40,6 +40,9 @@ export function defineAstroDropzoneOutputTests(getTempRoot: GetTempRoot): void {
     expect(root).toContain("data-is-uploading");
     expect(root).toContain('role="button"');
     expect(root).toContain('registerAstroControllerLifecycle("DropzoneRoot", setupDropzones)');
+    expect(root).toContain("instance.refresh()");
+    expect(root).toContain("knownRoots.has(owner)");
+    expect(root).toContain("scopedRoot.parentElement?.closest<HTMLElement>(selector)");
     expect(input).toContain("data-sw-dropzone-input");
     expect(input).toContain('type="file"');
     expect(input).toContain("class: className");

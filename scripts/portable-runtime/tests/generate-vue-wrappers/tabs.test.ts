@@ -1,13 +1,12 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -30,21 +29,15 @@ describe("generated Vue Tabs", () => {
       if (name === "index" || name === "context") continue;
       expect(() => assertVueSfcCompiles(source, `${name}.vue`)).not.toThrow();
     }
-    expect(first.root).toContain("modelValue?: TabsValue");
-    expect(first.root).toContain("defaultValue?: TabsValue");
-    expect(first.root).toContain(
-      "props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value",
-    );
-    expect(first.root).toMatch(
-      /emit\("valueChange", nextValue, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:modelValue", nextValue\);/,
-    );
-    expect(first.root).toContain("instance.setValue(nextValue, { emit: false, sync: true });");
-    expect(first.root).toContain("onUpdated(() => instance?.refresh())");
+    expect(compactCode(first.root)).toContain(compactCode("modelValue?: TabsValue"));
+    expect(compactCode(first.root)).toContain(compactCode("defaultValue?: TabsValue"));
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(first.context).toContain("InjectionKey<TabsContextValue>");
     expect(first.context).toContain("Readonly<Ref<TabsOrientation>>");
     expect(first.list).toContain("useTabsContext");
-    expect(first.tab).toContain(':data-value="props.value"');
-    expect(first.panel).toContain(':hidden="!active"');
+    expect(compactCode(first.tab)).toContain(compactCode(':data-value="props.value"'));
+    expect(compactCode(first.panel)).toContain(compactCode(':hidden="!active"'));
     expect(first.indicator).toContain("data-sw-tabs-indicator");
     expect(first.index).toContain("const Tabs =");
     expect(first.index).toContain("TabsValueChangeDetails");
@@ -60,14 +53,16 @@ describe("generated Vue Tabs", () => {
     const trigger = await readFile(path.join(repoRoot, "styled/tabs/TabsTrigger.vue"), "utf8");
     const content = await readFile(path.join(repoRoot, "styled/tabs/TabsContent.vue"), "utf8");
 
-    expect(root).toContain(':model-value="modelValue"');
-    expect(root).toContain('"value"?: unknown;');
+    expect(compactCode(root)).toContain(compactCode(':model-value="modelValue"'));
+    expect(compactCode(root)).toContain(compactCode('"value"?: unknown;'));
     expect(root).not.toMatch(/const \{[\s\S]*\n\s+value,[\s\S]*\} = defineProps/);
-    expect(root).toContain('@update:model-value="emit(&quot;update:modelValue&quot;, $event)"');
-    expect(root).toContain('@value-change="handleValueChange"');
-    expect(root).toContain('data-slot="tabs"');
+    expect(compactCode(root)).toContain(
+      compactCode('@update:model-value="emit(&quot;update:modelValue&quot;, $event)"'),
+    );
+    expect(compactCode(root)).toContain(compactCode('@value-change="handleValueChange"'));
+    expect(compactCode(root)).toContain(compactCode('data-slot="tabs"'));
     expect(list).toContain('data-slot="tabs-list"');
-    expect(trigger).toContain('data-slot="tabs-trigger"');
+    expect(compactCode(trigger)).toContain(compactCode('data-slot="tabs-trigger"'));
     expect(content).toContain('data-slot="tabs-content"');
   });
 

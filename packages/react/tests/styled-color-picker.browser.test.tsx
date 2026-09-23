@@ -123,10 +123,11 @@ describe("React styled Color Picker root", () => {
       expect(container!.querySelector("[data-sw-popover]")).toBeNull();
       expect(root).not.toHaveAttribute("data-floating-root");
 
-      await act(() => {
+      await act(async () => {
         input.value = "rgb(0, 255, 0)";
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
       });
 
       expect(root.getAttribute("data-value")).toBe("#00ff00");
@@ -496,7 +497,7 @@ async function mount(node: React.ReactNode) {
 async function settle() {
   await act(async () => {
     await Promise.resolve();
-    await Promise.resolve();
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
   });
 }
 

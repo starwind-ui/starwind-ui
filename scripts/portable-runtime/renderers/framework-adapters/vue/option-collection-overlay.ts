@@ -1,3 +1,15 @@
+import {
+  selectFragments,
+  selectOptionObservers,
+  selectParentCommand,
+  selectResetSettlement,
+} from "../../shared-recipes/structured/select.js";
+import {
+  selectSelection,
+  selectSelectionAttributes,
+  selectValueFallback,
+} from "../../shared-recipes/structured/select-parts.js";
+import { getVueAcceptedModelEvent } from "./accepted-model-publication.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -60,7 +72,12 @@ function printComponent(
     AdapterOptionCollectionOverlayPartName,
     (facts: AdapterOptionCollectionOverlayFacts) => string
   > = {
-    root: printRoot,
+    root: (value) =>
+      printRoot(
+        value,
+        getVueAcceptedModelEvent(file, "open"),
+        getVueAcceptedModelEvent(file, "value"),
+      ),
     label: (value) => printSimplePart(value, "label"),
     trigger: printTrigger,
     value: printValue,
@@ -102,6 +119,7 @@ export type ${context.rootContextValueType} = Readonly<{
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
+  requestRefresh(): void;
   registerPortal(owner: symbol, element: HTMLElement | null): void;
   required: ComputedRef<boolean>;
   selectedLabel: ComputedRef<string | null>;
@@ -130,7 +148,11 @@ export function ${context.useItemContext}(part = "part"): ${context.itemContextV
 </script>`;
 }
 
-function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
+function printRoot(
+  facts: AdapterOptionCollectionOverlayFacts,
+  acceptedOpenEvent: string,
+  acceptedValueEvent: string,
+): string {
   const { attrs, events, props, runtime, state } = facts;
   const openModel = requireModel(facts, "open");
   const valueModel = requireModel(facts, "value");
@@ -144,7 +166,10 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   return `${printContextModule(facts)}
 <script setup lang="ts">
 import {
+  createPortalBinding,
   ${runtime.factory},
+  readyPortalBindingSnapshot,
+  reportPortalPlacement,
   type ${events.openChange.detailsType},
   type ${events.valueChange.detailsType},
 } from "${runtime.importSource}";
@@ -222,11 +247,15 @@ const disabled = computed(() => props.${props.disabled.name});
 const readOnly = computed(() => props.${props.readOnly.name});
 const required = computed(() => props.${props.required.name});
 let instance: ReturnType<typeof ${runtime.factory}> | undefined;
+let portalBinding: ReturnType<typeof createPortalBinding> | undefined;
+let unsubscribeOpenChange: (() => void) | undefined;
+let unsubscribeValueChange: (() => void) | undefined;
 let portalOwner: symbol | undefined;
 let portalReference: HTMLElement | null = null;
 let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
+let refreshPending = false;
 
 provide(${facts.context.rootContext}, {
   disabled,
@@ -234,11 +263,14 @@ provide(${facts.context.rootContext}, {
   mounted,
   open: renderedOpen,
   readOnly,
+  requestRefresh,
   registerPortal(owner, element) {
     if (element) {
+      if (portalOwner !== owner || portalReference !== element) clearPortalBinding();
       portalOwner = owner;
       portalReference = element;
     } else if (portalOwner === owner) {
+      clearPortalBinding();
       portalOwner = undefined;
       portalReference = null;
     }
@@ -258,11 +290,7 @@ defineExpose({
 });
 
 function readItemLabel(item: HTMLElement | undefined): string | null {
-  if (!item) return null;
-  const textElement = item.querySelector<HTMLElement>("[${itemTextAttribute}]");
-  if (textElement) return textElement.textContent?.trim() ?? "";
-  const text = item.textContent?.trim() ?? "";
-  return text.length > 0 ? text : null;
+  ${selectFragments("vue").labelReader}
 }
 
 function findSelectedLabel(value: string | null): string | null {
@@ -280,21 +308,6 @@ function syncSelectedLabel(value: string | null, item?: HTMLElement): void {
   selectedLabelState.value = { label: readItemLabel(item) ?? findSelectedLabel(value), value };
 }
 
-function handleOpenChange(open: boolean, detail: ${events.openChange.detailsType}): void {
-  emit("openChange", open, detail);
-  if (detail.isCanceled) return;
-  if (props.open === undefined) uncontrolledOpen.value = open;
-  emit("update:open", open);
-}
-
-function handleValueChange(value: string | null, detail: ${events.valueChange.detailsType}): void {
-  emit("valueChange", value, detail);
-  if (detail.isCanceled) return;
-  syncSelectedLabel(value, detail.item);
-  if (props.modelValue === undefined) uncontrolledValue.value = value;
-  emit("update:modelValue", value);
-}
-
 function unbindFormReset(): void {
   if (resetTimer !== undefined) window.clearTimeout(resetTimer);
   resetTimer = undefined;
@@ -302,18 +315,8 @@ function unbindFormReset(): void {
   resetForm = null;
 }
 
-function handleFormReset(): void {
-  if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-  resetTimer = window.setTimeout(() => {
-    resetTimer = undefined;
-    if (!instance) return;
-    if (props.modelValue !== undefined) {
-      instance.${state.value.setter}(props.modelValue, { emit: false });
-      return;
-    }
-    uncontrolledValue.value = instance.${state.value.getter}();
-    syncSelectedLabel(uncontrolledValue.value);
-  }, 0);
+function handleFormReset(event: Event): void {
+  ${selectResetSettlement("vue")}
 }
 
 function bindFormReset(): void {
@@ -325,35 +328,56 @@ function bindFormReset(): void {
 }
 
 function destroyOwnedInstance(): void {
+  unsubscribeOpenChange?.();
+  unsubscribeOpenChange = undefined;
+  unsubscribeValueChange?.();
+  unsubscribeValueChange = undefined;
   unbindFormReset();
   const ownedInstance = instance;
   instance = undefined;
   ownedInstance?.${facts.lifecycle.cleanup}();
 }
 
+function clearPortalBinding(): void {
+  portalBinding?.destroy();
+  portalBinding = undefined;
+}
+
+function requestRefresh(): void {
+  const owner = instance;
+  if (refreshPending) return;
+  refreshPending = true;
+  queueMicrotask(() => {
+    refreshPending = false;
+    if (instance !== owner || (owner && rootRef.value !== owner.root) || !rootRef.value) return;
+    if (owner) {
+      if (props.open === undefined) uncontrolledOpen.value = owner.${state.open.getter}();
+      if (props.modelValue === undefined) uncontrolledValue.value = owner.${state.value.getter}();
+    }
+    const trigger = [...rootRef.value.querySelectorAll<HTMLElement>("[${attrs.trigger}]")].find(
+      (candidate) => candidate.closest("[${attrs.root}]") === rootRef.value,
+    );
+    if (!trigger) {
+      destroyOwnedInstance();
+      return;
+    }
+    setupRuntime();
+  });
+}
+
 function setupRuntime(): void {
   destroyOwnedInstance();
   const element = rootRef.value;
   if (!element) return;
-  instance = ${runtime.factory}(element, {
-    ${props.autoComplete.name}: props.${props.autoComplete.name},
-    ${props.defaultOpen.name}: props.${props.disabled.name} ? false : uncontrolledOpen.value,
-    ${props.defaultValue.name}: uncontrolledValue.value,
-    ${props.disabled.name}: props.${props.disabled.name},
-    ${props.form.name}: props.${props.form.name},
-    ${props.highlightItemOnHover.name}: props.${props.highlightItemOnHover.name},
-    ${props.modal.name}: props.${props.modal.name},
-    ${props.name.name}: props.${props.name.name},
-    ${events.openChange.callbackProp}: handleOpenChange,
-    ${events.valueChange.callbackProp}: handleValueChange,
-    ${facts.portal.referenceOption}: portalReference ?? undefined,
-    ${props.readOnly.name}: props.${props.readOnly.name},
-    ${props.required.name}: props.${props.required.name},
-    ...(props.open === undefined
-      ? {}
-      : { open: props.${props.disabled.name} ? false : props.open }),
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
-  });
+  const portalTarget = portalReference?.parentElement;
+  if (portalReference && portalTarget) {
+    portalBinding ??= createPortalBinding(element);
+    portalBinding.publish(
+      readyPortalBindingSnapshot(element, [{ authoredParent: element, wrapper: portalReference }]),
+    );
+    reportPortalPlacement(portalReference, { ready: true, target: portalTarget });
+  }
+  ${selectFragments("vue").connection}
   syncSelectedLabel(instance.${state.value.getter}());
   bindFormReset();
 }
@@ -386,7 +410,7 @@ watch(
       !instance ||
       Object.is(instance.${state.open.getter}(), open)
     ) return;
-    instance.${state.open.setter}(open, { emit: false });
+    ${selectParentCommand("vue", "open", "open")}
   },
   { flush: "post" },
 );
@@ -398,48 +422,21 @@ watch(
       void recreateRuntimeAfterControllednessChange();
       return;
     }
-    if (value === undefined || !instance || Object.is(instance.${state.value.getter}(), value)) return;
-    instance.${state.value.setter}(value, { emit: false });
+    if (value === undefined || !instance) return;
+    ${selectParentCommand("vue", "value", "value")}
     await nextTick();
     syncSelectedLabel(value);
   },
   { flush: "post" },
 );
-watch(
-  () => props.${props.disabled.name},
-  (value) => {
-    if (!instance) return;
-    instance.${setters.disabled}(value);
-    if (value) {
-      if (props.open === undefined) uncontrolledOpen.value = false;
-      return;
-    }
 
-    const nextOpen = props.open ?? uncontrolledOpen.value;
-    if (!Object.is(instance.${state.open.getter}(), nextOpen)) {
-      instance.${state.open.setter}(nextOpen, { emit: false });
-    }
-  },
-);
-watch(() => props.${props.readOnly.name}, (value) => instance?.${setters.readOnly}(value));
-watch(() => props.${props.modal.name}, (value) => instance?.${setters.modal}(value));
-watch(
-  () => props.${props.highlightItemOnHover.name},
-  (value) => instance?.${setters.highlightItemOnHover}(value),
-);
-watch(
-  () => [props.${props.autoComplete.name}, props.${props.form.name}, props.${props.name.name}, props.${props.required.name}] as const,
-  ([autoComplete, form, name, required]) => {
-    instance?.${facts.form.setter.method}({ autoComplete, form, name, required });
-    bindFormReset();
-  },
-  { flush: "post" },
-);
+${selectOptionObservers("vue")}
 
 onBeforeUnmount(() => {
   lifecycleGeneration += 1;
   mounted.value = false;
   destroyOwnedInstance();
+  clearPortalBinding();
 });
 </script>
 
@@ -487,19 +484,55 @@ onBeforeUnmount(() => {
 function printTrigger(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.trigger;
   return `<script setup lang="ts">
-import { ref } from "vue";
+import { defineComponent, type HTMLAttributes, useAttrs, type VNode } from "vue";
+import { useVueNativeControl } from "../_internal/native-control";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
-defineSlots<{ default?: () => unknown }>();
-const triggerRef = ref<HTMLButtonElement | null>(null);
+type NativeElementProps = /* @vue-ignore */ HTMLAttributes;
+const props = withDefaults(defineProps<{ ${facts.props.asChild.name}?: ${facts.props.asChild.type} } & NativeElementProps>(), { ${facts.props.asChild.name}: false });
+const slots = defineSlots<{ default?: () => VNode[] }>();
+const attrs = useAttrs();
 const select = ${facts.context.useRootContext}("Trigger");
-defineExpose({ element: triggerRef });
+const { element, render: renderAsChild, setElement } = useVueNativeControl(
+  "${facts.exports.trigger}",
+  select.requestRefresh,
+);
+const AsChildTrigger = defineComponent({
+  inheritAttrs: false,
+  setup() {
+    return () => {
+      const children = slots.default?.() ?? [];
+      const child = children[0];
+      return renderAsChild({
+        children,
+        consumerProps: attrs,
+        defaultNativeButtonType: "button",
+        protectedProps: {
+        "aria-disabled": select.disabled.value ? "true" : undefined,
+        "aria-expanded": select.open.value,
+        "aria-haspopup": "listbox",
+        "aria-readonly": select.readOnly.value,
+        "aria-required": select.required.value,
+        "data-disabled": select.disabled.value ? "" : undefined,
+        "data-state": select.open.value ? "open" : "closed",
+        "${facts.attrs.trigger}": "",
+        "data-sw-part": "${part.name}",
+        disabled: child?.type === "button" && select.disabled.value ? true : undefined,
+        role: "${part.role ?? "combobox"}",
+        },
+      });
+    };
+  },
+});
+defineExpose({ element });
 </script>
 
 <template>
+  <AsChildTrigger v-if="props.${facts.props.asChild.name}" />
   <button
-    ref="triggerRef"
+    v-else
+    :ref="setElement"
     v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.trigger}
     data-sw-part="${part.name}"
@@ -542,7 +575,7 @@ defineExpose({ element: valueRef });
     :data-placeholder="props.placeholder"
   >
     <slot :label="select.selectedLabel.value" :value="select.value.value">{{
-      select.selectedLabel.value ?? props.placeholder
+      ${selectValueFallback("select.selectedLabel.value", "props.placeholder")}
     }}</slot>
   </span>
 </template>
@@ -678,7 +711,7 @@ const itemRef = ref<HTMLDivElement | null>(null);
 const select = ${facts.context.useRootContext}("Item");
 const value = computed(() => props.${identity.prop});
 const disabled = computed(() => props.disabled);
-const selected = computed(() => select.value.value === value.value);
+const selected = computed(() => ${selectSelection("select.value.value", "value.value")});
 provide(${facts.context.itemContext}, { disabled, value });
 defineExpose({ element: itemRef });
 </script>
@@ -691,10 +724,9 @@ defineExpose({ element: itemRef });
     data-sw-part="${part.name}"
     :${identity.attribute}="props.${identity.prop}"
     role="${part.role ?? "option"}"
-    :aria-selected="selected"
+    ${selectSelectionAttributes("vue", "item")}
     :aria-disabled="props.disabled ? 'true' : undefined"
     :${facts.attrs.disabled}="props.disabled ? '' : undefined"
-    :data-selected="selected ? '' : undefined"
     tabindex="-1"
   >
     <slot />
@@ -717,7 +749,7 @@ defineSlots<{ default?: () => unknown }>();
 const indicatorRef = ref<HTMLSpanElement | null>(null);
 const select = ${facts.context.useRootContext}("ItemIndicator");
 const item = ${facts.context.useItemContext}("ItemIndicator");
-const selected = computed(() => select.value.value === item.value.value);
+const selected = computed(() => ${selectSelection("select.value.value", "item.value.value")});
 defineExpose({ element: indicatorRef });
 </script>
 
@@ -728,10 +760,7 @@ defineExpose({ element: indicatorRef });
     ${facts.attrs.itemIndicator}
     data-sw-part="${part.name}"
     aria-hidden="true"
-    :data-state="selected ? 'checked' : 'unchecked'"
-    :data-visible="selected ? '' : undefined"
-    :data-hidden="selected ? undefined : ''"
-    :hidden="!selected"
+    ${selectSelectionAttributes("vue", "indicator")}
   >
     <slot />
   </${part.defaultElement}>

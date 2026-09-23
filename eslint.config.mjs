@@ -17,6 +17,7 @@ export default defineConfig([
       "**/*/dist/**",
       "**/*/node_modules/**",
       "**/*/.astro/**",
+      "**/.svelte-kit/**",
       "**/coverage/**",
       "**/*.d.ts",
       "**/*.tsx",

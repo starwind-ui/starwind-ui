@@ -1,10 +1,10 @@
+import { colorPickerPrimitiveDocsAuthoredExamples } from "./examples.js";
 import type {
   ComponentGroupMetadata,
   DocsPageStatus,
   PrimitiveDocsEnrichment,
   StyledDocsAnnotation,
 } from "./types.js";
-import { colorPickerPrimitiveDocsAuthoredExamples } from "./examples.js";
 
 const componentPage = (slug: string, status: DocsPageStatus = "published") => ({
   status,
@@ -309,6 +309,24 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     styledApi: {
       Form: {
         props: {
+          options: {
+            frameworks: ["react"],
+            description:
+              "Configures custom field and form validators, asynchronous validation, debounce, managed submission, and external-error reset behavior.",
+            type: "FormOptions",
+          },
+          errors: {
+            frameworks: ["react"],
+            description:
+              "Supplies external field and form errors, including server validation results. Replace the value to update errors or clear it to remove previously supplied errors.",
+            type: "FormExternalErrors",
+          },
+          errorOptions: {
+            frameworks: ["react"],
+            description:
+              "Controls the visibility of supplied errors and whether editing a field clears them.",
+            type: "FormExternalErrorOptions",
+          },
           errorVisibility: {
             defaultValue: '"submit"',
             description:

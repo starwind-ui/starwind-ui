@@ -11,7 +11,7 @@ export type PopoverArrowProps = React.HTMLAttributes<HTMLDivElement>;
 
 const PopoverArrow = React.forwardRef<HTMLDivElement, PopoverArrowProps>(
   function PopoverArrow(props, forwardedRef) {
-    return <div data-sw-popover-arrow ref={forwardedRef} {...props} />;
+    return <div {...props} data-sw-popover-arrow="" ref={forwardedRef} />;
   },
 );
 

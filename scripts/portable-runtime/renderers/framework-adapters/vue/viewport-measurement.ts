@@ -1,3 +1,4 @@
+import { scrollAreaRecipe, scrollAreaThresholds } from "../../shared-recipes/media/scroll-area.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -62,14 +63,6 @@ type ${facts.threshold.typeName} =
       yEnd: number;
     }>;
 
-type ${facts.threshold.attributesTypeName} = {
-  shared?: number;
-  xEnd?: number;
-  xStart?: number;
-  yEnd?: number;
-  yStart?: number;
-};
-
 const props = defineProps<{
   ${threshold.name}?: ${facts.threshold.typeName};
 }>();
@@ -127,31 +120,7 @@ watch(
   { flush: "post" },
 );
 
-function ${facts.threshold.helperName}(
-  threshold: ${facts.threshold.typeName} | undefined,
-): ${facts.threshold.attributesTypeName} {
-  if (typeof threshold === "number") {
-    const shared = ${facts.threshold.normalizeHelperName}(threshold);
-    return shared === undefined ? {} : { shared };
-  }
-
-  if (!threshold) return {};
-
-  return {
-    xEnd: "xEnd" in threshold ? ${facts.threshold.normalizeHelperName}(threshold.xEnd) : undefined,
-    xStart:
-      "xStart" in threshold ? ${facts.threshold.normalizeHelperName}(threshold.xStart) : undefined,
-    yEnd: "yEnd" in threshold ? ${facts.threshold.normalizeHelperName}(threshold.yEnd) : undefined,
-    yStart:
-      "yStart" in threshold ? ${facts.threshold.normalizeHelperName}(threshold.yStart) : undefined,
-  };
-}
-
-function ${facts.threshold.normalizeHelperName}(value: number | undefined): number | undefined {
-  if (value === undefined || !Number.isFinite(value)) return undefined;
-
-  return Math.max(value, 0);
-}
+${scrollAreaThresholds(facts)}
 </script>
 
 <template>
@@ -201,7 +170,7 @@ const props = withDefaults(
       ? `
     role="${facts.parts.viewport.role}"
     :tabindex="getViewportTabIndex()"
-    :style="[attrs.style, { overflow: 'scroll' }]"`
+    :style="[attrs.style, { overflow: '${scrollAreaRecipe.viewport.overflow}' }]"`
       : partName === "scrollbar"
         ? `
     :${facts.attrs.keepMounted}="props.${facts.props.keepMounted.name} ? '' : undefined"
@@ -220,7 +189,7 @@ const props = withDefaults(
 
 function getViewportTabIndex(): number | string {
   const value = attrs.tabindex ?? attrs.tabIndex;
-  return typeof value === "number" || typeof value === "string" ? value : -1;
+  return typeof value === "number" || typeof value === "string" ? value : ${scrollAreaRecipe.viewport.initialTabIndex};
 }`
       : "";
 

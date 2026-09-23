@@ -173,17 +173,16 @@ const forbiddenPublicVueScriptCommandPatterns = [
   /(?:pack-public-release-artifacts|published-release-acceptance|release-candidate-acceptance|release-packages)\.mjs\b/i,
   /(?:runtime:registry(?::|\b)|generate-cli-registry|packages\/cli\/(?:registry|src\/registry))/i,
 ] as const;
-const approvedChangesetIgnore = [
-  "demo",
-  "react-demo",
-  "vue-demo",
-  ...(existsSync(join(process.cwd(), "packages/svelte/package.json"))
-    ? ["@starwind-ui/svelte"]
-    : []),
-];
+const approvedChangesetIgnore = ["demo", "react-demo", "vue-demo"];
 const approvedProductPositioningVueClaim =
-  /Current first-party Primitive adapter packages are Astro, React, and the Vue 3\.5 public beta\.\s+Runtime adapter contract types also allow future targets such as Svelte and Solid\. Claim support\s+only after generated package output, demos, host checks, and release metadata exist\./;
+  /Current first-party Primitive adapter packages are Astro, React, the Vue 3\.5 public beta, and the\s+Svelte 5 public beta\. Runtime adapter contract types also allow future targets such as Solid\. Claim support\s+only after generated package output, demos, host checks, and release metadata exist\./;
 const approvedVueArchitectureDoc = "docs/adr/0011-use-idiomatic-vue-adapter-semantics.md";
+const approvedVueDocumentationPaths = new Set([
+  "docs/agents/svelte-verification.md",
+  "docs/product/research/ai-citation-empirical-evidence-2026-09.md",
+  "docs/product/research/ai-engine-official-guidance-2026-09.md",
+  "docs/product/research/starwind-ai-citation-strategy-2026-09.md",
+]);
 
 const publicCliTextSurfacePaths = [
   "packages/cli/src/index.ts",
@@ -259,6 +258,9 @@ function isApprovedVueDocumentation({ path, source }: TextSurface): boolean {
   if (path === "docs/agents/test-health.md") return true;
   if (path === "docs/release/versioning.md") return true;
   if (path === approvedVueArchitectureDoc) return true;
+  if (path === "docs/adr/0018-use-accepted-svelte-models-and-semantic-child-snippets.md")
+    return true;
+  if (approvedVueDocumentationPaths.has(path)) return true;
   if (path !== "docs/product/positioning.md") return false;
 
   return approvedProductPositioningVueClaim.test(source);
@@ -777,17 +779,23 @@ describe("Vue public-beta contract gate", () => {
     ]);
     expect(PUBLIC_FRAMEWORK_TARGET_POLICY).toEqual({
       cacheKey: "public",
-      configTargets: ["astro", "react", "vue"],
-      labels: { astro: "Astro", react: "React", vue: "Vue (beta)" },
+      configTargets: ["astro", "react", "vue", "svelte"],
+      labels: {
+        astro: "Astro",
+        react: "React",
+        svelte: "Svelte 5 (beta)",
+        vue: "Vue (beta)",
+      },
       primitiveArtifactIntegrity: undefined,
-      registryTargets: ["legacy-astro", "astro", "react", "vue"],
+      registryTargets: ["legacy-astro", "astro", "react", "vue", "svelte"],
       requiredAdapterPackages: {
         "legacy-astro": [],
         astro: ["@starwind-ui/astro"],
         react: ["@starwind-ui/react"],
+        svelte: ["@starwind-ui/svelte"],
         vue: ["@starwind-ui/vue"],
       },
-      setupTargets: ["astro", "react", "vue"],
+      setupTargets: ["astro", "react", "vue", "svelte"],
     });
 
     const publicReleaseSurfaces = readTextSurfaces(publicReleaseSurfacePaths);
@@ -844,6 +852,8 @@ describe("Vue public-beta contract gate", () => {
             path === "docs/agents/test-health.md" ||
             path === "docs/release/versioning.md" ||
             path === approvedVueArchitectureDoc ||
+            path === "docs/adr/0018-use-accepted-svelte-models-and-semantic-child-snippets.md" ||
+            approvedVueDocumentationPaths.has(path) ||
             path === "docs/product/positioning.md",
         ),
     ).toBe(true);

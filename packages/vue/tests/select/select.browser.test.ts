@@ -1,19 +1,8 @@
-import {
-  createApp,
-  createSSRApp,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-} from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type {
   SelectOpenChangeDetails,
   SelectValueChangeDetails,
 } from "@starwind-ui/runtime/select";
+import { createPortalBinding } from "@starwind-ui/runtime/select";
 import {
   SelectGroup,
   SelectGroupLabel,
@@ -33,6 +22,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@starwind-ui/vue/select";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  createSSRApp,
+  h,
+  nextTick,
+  reactive,
+  ref,
+  type VNode,
+} from "vue";
+import { renderToString } from "vue/server-renderer";
+import {
+  Select as StyledSelect,
+  SelectContent as StyledSelectContent,
+  SelectTrigger as StyledSelectTrigger,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/select";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 type SelectExposed = ComponentPublicInstance & {
   close(): void;
@@ -525,22 +532,245 @@ describe("Vue Select public behavior", () => {
     expect(abort).toHaveBeenCalledTimes(1);
     expect(overlays.children).toHaveLength(0);
   });
+
+  it("rebinds a direct Primitive composed trigger after native child replacement", async () => {
+    type ExposedElement = ComponentPublicInstance & { element: HTMLElement | null };
+    const replacement = ref(false);
+    const exposed = ref<ExposedElement | null>(null);
+    const sequence: Array<Element | null> = [];
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect({}, [], { disabled: true }, () =>
+          h(
+            SelectTrigger,
+            { asChild: true, ref: exposed },
+            {
+              default: () =>
+                h(
+                  replacement.value ? "a" : "button",
+                  {
+                    href: replacement.value ? "#select" : undefined,
+                    key: replacement.value ? "new" : "old",
+                    ref: (value: Element | null) => sequence.push(value),
+                  },
+                  "Choose",
+                ),
+            },
+          ),
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    const oldTrigger = host.querySelector<HTMLElement>("[data-sw-select-trigger]")!;
+    oldTrigger.click();
+    await frame();
+    expect(oldTrigger.getAttribute("aria-expanded")).toBe("true");
+
+    replacement.value = true;
+    await nextTick();
+    await nextTick();
+    const newTrigger = host.querySelector<HTMLElement>("[data-sw-select-trigger]")!;
+    expect(newTrigger.tagName).toBe("A");
+    expect(exposed.value!.element).toBe(newTrigger);
+    expect(sequence).toEqual([oldTrigger, oldTrigger, null, newTrigger]);
+    expect(newTrigger.getAttribute("aria-expanded")).toBe("true");
+    newTrigger.click();
+    await frame();
+    expect(newTrigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("delegates Styled SelectTrigger composition and clears its exposed element", async () => {
+    type ExposedElement = ComponentPublicInstance & { element: HTMLElement | null };
+    const show = ref(true);
+    const showContent = ref(true);
+    const replacement = ref(false);
+    const exposed = ref<ExposedElement | null>(null);
+    let child: Element | null = null;
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(StyledSelect, null, {
+          default: () =>
+            show.value
+              ? [
+                  h(
+                    StyledSelectTrigger,
+                    { asChild: true, class: "styled-trigger", ref: exposed },
+                    {
+                      default: () =>
+                        h(
+                          replacement.value ? "a" : "button",
+                          {
+                            class: "native-trigger",
+                            href: replacement.value ? "#select" : undefined,
+                            key: replacement.value ? "new" : "old",
+                            ref: (value: Element | null) => (child = value),
+                          },
+                          "Choose",
+                        ),
+                    },
+                  ),
+                  showContent.value ? h(StyledSelectContent) : null,
+                ]
+              : [],
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    const trigger = host.querySelector<HTMLElement>("[data-sw-select-trigger]")!;
+    expect(trigger.classList.contains("styled-trigger")).toBe(true);
+    expect(trigger.classList.contains("native-trigger")).toBe(true);
+    expect(trigger).toBe(child);
+    expect(exposed.value!.element).toBe(trigger);
+    const retained = exposed.value!;
+
+    replacement.value = true;
+    await nextTick();
+    await nextTick();
+    const replaced = host.querySelector<HTMLElement>("[data-sw-select-trigger]")!;
+    expect(replaced.tagName).toBe("A");
+    expect(replaced).toBe(child);
+    expect(retained.element).toBe(replaced);
+
+    const root = host.querySelector<HTMLElement>("[data-sw-select]")!;
+    const replacementBinding = createPortalBinding(root);
+    showContent.value = false;
+    await nextTick();
+    const bindingAfterPortalRemoval = createPortalBinding(root);
+    expect(bindingAfterPortalRemoval).not.toBe(replacementBinding);
+    bindingAfterPortalRemoval.destroy();
+
+    show.value = false;
+    await nextTick();
+    expect(child).toBeNull();
+    expect(retained.element).toBeNull();
+  });
+
+  it("keeps native disabled off a composed anchor while retaining disabled state", async () => {
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect({ disabled: true }, [], { disabled: true }, () =>
+          h(
+            SelectTrigger,
+            { asChild: true },
+            { default: () => h("a", { href: "#select" }, "Choose") },
+          ),
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    const anchor = host.querySelector<HTMLAnchorElement>("[data-sw-select-trigger]")!;
+    expect(anchor.tagName).toBe("A");
+    expect(anchor.hasAttribute("disabled")).toBe(false);
+    expect(anchor.getAttribute("aria-disabled")).toBe("true");
+    expect(anchor.hasAttribute("data-disabled")).toBe(true);
+  });
+
+  it("does not use a nested Select trigger when the outer trigger is removed", async () => {
+    const showOuterTrigger = ref(true);
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect(
+          {},
+          [],
+          { disabled: true },
+          () =>
+            showOuterTrigger.value ? h(SelectTrigger, null, { default: () => "Outer" }) : null,
+          [renderSelect({}, [], { disabled: true })],
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    expect(host.querySelectorAll("[data-sw-select-trigger]")).toHaveLength(2);
+    showOuterTrigger.value = false;
+    await nextTick();
+    await Promise.resolve();
+
+    const nestedTrigger = host.querySelector<HTMLButtonElement>("[data-sw-select-trigger]")!;
+    expect(host.querySelectorAll("[data-sw-select-trigger]")).toHaveLength(1);
+    nestedTrigger.click();
+    await frame();
+    expect(nestedTrigger.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("finds the owned trigger when a nested Select trigger precedes it", async () => {
+    const replacement = ref(false);
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect(
+          {},
+          [],
+          { disabled: true },
+          () =>
+            h(
+              SelectTrigger,
+              { asChild: true },
+              {
+                default: () =>
+                  h(
+                    replacement.value ? "a" : "button",
+                    {
+                      href: replacement.value ? "#outer-select" : undefined,
+                      key: replacement.value ? "new" : "old",
+                    },
+                    "Outer",
+                  ),
+              },
+            ),
+          [],
+          [renderSelect({}, [], { disabled: true })],
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    replacement.value = true;
+    await nextTick();
+    await nextTick();
+    const roots = host.querySelectorAll<HTMLElement>("[data-sw-select]");
+    const outerTrigger = roots[0]!.querySelector<HTMLAnchorElement>(
+      ":scope > [data-sw-select-trigger]",
+    )!;
+    expect(outerTrigger.tagName).toBe("A");
+    outerTrigger.click();
+    await frame();
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+  });
 });
 
 function renderSelect(
   rootProps: Record<string, unknown>,
   items: SelectItemValue[],
   portalProps: { container?: string | HTMLElement; disabled?: boolean },
+  trigger?: () => VNode | null,
+  extraChildren: VNode[] = [],
+  beforeTriggerChildren: VNode[] = [],
 ) {
   return h(SelectRoot, rootProps, {
     default: () => [
       h(SelectLabel, null, { default: () => "Fruit" }),
-      h(SelectTrigger, null, {
-        default: () => [
-          h(SelectValue, { placeholder: "Pick fruit" }),
-          h(SelectIcon, null, { default: () => "⌄" }),
-        ],
-      }),
+      ...beforeTriggerChildren,
+      trigger
+        ? trigger()
+        : h(SelectTrigger, null, {
+            default: () => [
+              h(SelectValue, { placeholder: "Pick fruit" }),
+              h(SelectIcon, null, { default: () => "⌄" }),
+            ],
+          }),
       h(SelectPortal, portalProps, {
         default: () =>
           h(
@@ -579,6 +809,7 @@ function renderSelect(
             },
           ),
       }),
+      ...extraChildren,
     ],
   });
 }
@@ -625,3 +856,38 @@ function expectOwnedPortal(
     location === "remote" ? 1 : 0,
   );
 }
+
+const acceptanceItems = [
+  { label: "Apple", value: "apple" },
+  { label: "Banana", value: "banana" },
+];
+testAcceptedModelPublication({
+  name: "Select open",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => renderSelect({}, acceptanceItems, { disabled: true }),
+  root: "[data-sw-select]",
+  act: (root) => root.querySelector<HTMLElement>("[data-sw-select-trigger]")!.click(),
+  read: (root) => root.getAttribute("data-state") === "open",
+});
+testAcceptedModelPublication({
+  name: "Select value",
+  model: "modelValue",
+  proposal: "onValueChange",
+  domEvent: "starwind:value-change",
+  initial: "apple",
+  accepted: "banana",
+  tree: () =>
+    renderSelect({ defaultValue: "apple", defaultOpen: true }, acceptanceItems, { disabled: true }),
+  root: "[data-sw-select]",
+  act: (root) =>
+    root.querySelector<HTMLElement>('[data-sw-select-item][data-value="banana"]')!.click(),
+  read: (root) => {
+    const value = root.querySelector<HTMLInputElement>("[data-sw-select-input]")!.value;
+    expect(root.getAttribute("data-selected-label")).toBe(value === "apple" ? "Apple" : "Banana");
+    return value;
+  },
+});

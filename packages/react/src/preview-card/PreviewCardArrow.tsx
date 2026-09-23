@@ -6,15 +6,19 @@
 "use client";
 
 import * as React from "react";
-
 export type PreviewCardArrowProps = React.HTMLAttributes<HTMLDivElement>;
-
 const PreviewCardArrow = React.forwardRef<HTMLDivElement, PreviewCardArrowProps>(
-  function PreviewCardArrow(props, forwardedRef) {
-    return <div data-sw-preview-card-arrow data-state="closed" ref={forwardedRef} {...props} />;
+  function PreviewCardArrow(props, ref) {
+    return (
+      <div
+        {...props}
+        data-sw-preview-card-arrow=""
+        data-sw-part="arrow"
+        data-state="closed"
+        ref={ref}
+      />
+    );
   },
 );
-
 PreviewCardArrow.displayName = "PreviewCard.Arrow";
-
 export default PreviewCardArrow;

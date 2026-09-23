@@ -1,0 +1,229 @@
+@import "../../demo/src/styles/starwind.css";
+@source "./**/*.{svelte,ts}";
+@source "../../../packages/svelte/dist";
+
+html {
+  scroll-padding-top: 6rem;
+  scrollbar-gutter: stable;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.site-header a,
+.catalog-nav a,
+.review-link {
+  text-underline-offset: 0.25em;
+}
+.site-header a:focus-visible,
+.skip-link:focus-visible,
+.catalog-nav a:focus-visible,
+.review-link:focus-visible,
+.source-example > summary:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+.site-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  min-height: 4.5rem;
+  padding: 1rem max(1.25rem, calc((100% - 72rem) / 2));
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  font-weight: 750;
+  text-decoration: none;
+  letter-spacing: -0.025em;
+}
+.brand span {
+  color: var(--muted-foreground);
+  font-weight: 450;
+  margin-left: 0.4rem;
+}
+.site-header nav {
+  margin-left: auto;
+  font-size: 0.875rem;
+}
+.private-label,
+.component-label {
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -5rem;
+  z-index: 100;
+  background: var(--background);
+  padding: 0.75rem;
+}
+.skip-link:focus {
+  top: 0.5rem;
+}
+.review-shell {
+  width: min(100% - 2.5rem, 72rem);
+  margin-inline: auto;
+  padding-block: 3.5rem 5rem;
+}
+.review-hero {
+  margin-bottom: 2.5rem;
+}
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.home > h1,
+.review-hero > h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.12;
+}
+.section-heading h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+.review-subheading {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 650;
+}
+.review-card > p,
+.review-hero > p:not(.eyebrow),
+.home > p:not(.eyebrow),
+.review-shell > footer > p {
+  margin-block: 0.8rem 1.4rem;
+  color: var(--muted-foreground);
+  line-height: 1.65;
+}
+.catalog-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+.catalog-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.catalog-nav a:hover {
+  background: var(--muted);
+}
+.pending-label {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+.review-card {
+  min-width: 0;
+  padding: clamp(1.1rem, 3vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--card);
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.scenario {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--background);
+  scroll-margin-top: 2rem;
+}
+.full-width {
+  grid-column: 1 / -1;
+}
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.review-output {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+.source-example {
+  margin-top: 1.5rem;
+}
+.source-example summary {
+  cursor: pointer;
+  width: fit-content;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.source-example > pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 1.25rem;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  background: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.8;
+}
+.planned-section {
+  padding-block: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.planned-section > h2 {
+  font-size: 1.2rem;
+}
+.planned-section > p {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+.home .review-link {
+  display: inline-block;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .review-shell {
+    padding-top: 2rem;
+  }
+  .review-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .site-header {
+    gap: 0.65rem;
+  }
+  .site-header nav {
+    width: 100%;
+    margin-left: 0;
+  }
+  .scenario {
+    padding: 1rem;
+  }
+}

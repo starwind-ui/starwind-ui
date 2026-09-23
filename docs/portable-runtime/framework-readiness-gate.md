@@ -161,9 +161,9 @@ Those registrations are authoritative rather than the future-framework tracer li
 public-support capabilities are enabled together. Beta support does not add Vue to the stable
 Runtime, Astro, and React fixed package group.
 
-Existing Solid tracers are frozen comparison artifacts. Svelte has a private verification package
-for Button, Carousel, Checkbox, Select, Accordion, Dialog, Slider, and Toast. None of these targets
-is a preview or shipping adapter.
+Existing Solid tracers are frozen comparison artifacts. Svelte is a registered Svelte 5 public-beta
+target across the complete Primitive and portable Styled surfaces. Its four public-support
+capabilities are enabled together, and it stays outside the stable fixed package group.
 
 ## Gate Tiers
 
@@ -257,8 +257,9 @@ while keeping primitive behavior in Runtime. The older Menu, Navigation Menu, an
 fixtures remain source-level tracer evidence. Solid's equivalent fixtures are frozen comparisons
 rather than an active expansion target.
 
-Svelte is not ready for preview until its private package expands beyond the proof cohort and meets
-the remaining readiness gates. Its private package exports must not be presented as public support.
+Svelte consumes the registered Generic Adapter Plans, Adapter Family Plans, and Specialized Adapter
+Specs through its Framework Adapter. Its public-beta package is ready for Vite with Svelte,
+SvelteKit, and Astro with Svelte hosts.
 
 ## Required Validation Coverage
 

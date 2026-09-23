@@ -143,66 +143,47 @@ defineExpose({
   updatePosition: () => instance?.updatePosition(),
 });
 
-function handleInputValueChange(inputValue: string, detail: ComboboxInputValueChangeDetails): void {
-  const connection = instance;
-  emit("inputValueChange", inputValue, detail);
-  if (detail.event?.type !== "input") return;
-  const input = detail.event.target;
-  queueMicrotask(() => {
-    if (!connection || instance !== connection || !detail.isCanceled) return;
-    if (
-      !(input instanceof HTMLInputElement) ||
-      input !== rootRef.value?.querySelector("[data-sw-combobox-input]")
-    )
-      return;
-    const accepted = connection.getInputValue();
-    if (input.value !== accepted)
-      connection.setInputValue(accepted, { emit: false, filter: false });
-  });
-}
-function handleOpenChange(open: boolean, detail: ComboboxOpenChangeDetails): void {
-  emit("openChange", open, detail);
-  if (detail.isCanceled) return;
-}
-function handleValueChange(value: string | null, detail: ComboboxValueChangeDetails): void {
-  emit("valueChange", value, detail);
-  if (detail.isCanceled) return;
-}
-function acceptInputValue(detail: ComboboxInputValueChangeDetails): void {
-  const value = detail.inputValue;
-  if (props.inputValue === undefined) uncontrolledInputValue.value = value;
-  emit("update:inputValue", value);
-}
-function acceptOpen(detail: ComboboxOpenChangeDetails): void {
-  const value = detail.open;
-  if (props.open === undefined) uncontrolledOpen.value = value;
-  emit("update:open", value);
-}
-function acceptValue(detail: ComboboxValueChangeDetails): void {
-  const value = detail.value;
-  if (props.modelValue === undefined) uncontrolledValue.value = value;
-  emit("update:modelValue", value);
-}
 function unbindReset(): void {
   if (resetTimer !== undefined) window.clearTimeout(resetTimer);
   resetTimer = undefined;
   resetForm?.removeEventListener("reset", handleReset);
   resetForm = null;
 }
-function handleReset(): void {
-  const connection = instance;
-  if (!connection) return;
-  if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-  resetTimer = window.setTimeout(() => {
-    resetTimer = undefined;
-    if (instance !== connection) return;
-    if (props.modelValue !== undefined && instance.getValue() !== props.modelValue)
-      instance.setValue(props.modelValue, { emit: false });
-    if (props.inputValue !== undefined && instance.getInputValue() !== props.inputValue)
-      instance.setInputValue(props.inputValue, { emit: false, filter: false });
-    if (props.modelValue === undefined) uncontrolledValue.value = instance.getValue();
-    if (props.inputValue === undefined) uncontrolledInputValue.value = instance.getInputValue();
-  }, 0);
+function handleReset(event: Event): void {
+  const owned = instance;
+  if (!owned) return;
+  const beforeValue = owned.getValue();
+  const beforeInputValue = owned.getInputValue();
+  window.clearTimeout(resetTimer);
+  queueMicrotask(() => {
+    if (instance !== owned) return;
+    resetTimer = window.setTimeout(() => {
+      resetTimer = undefined;
+      if (instance !== owned) return;
+      const nextValue =
+        props.modelValue !== undefined
+          ? props.modelValue
+          : event.defaultPrevented
+            ? beforeValue
+            : owned.getValue();
+      const nextInputValue =
+        props.inputValue !== undefined
+          ? props.inputValue
+          : event.defaultPrevented
+            ? beforeInputValue
+            : owned.getInputValue();
+
+      owned.setValue(nextValue, { emit: false });
+      if (props.modelValue === undefined) {
+        uncontrolledValue.value = owned.getValue();
+      }
+
+      owned.setInputValue(nextInputValue, { emit: false, filter: false });
+      if (props.inputValue === undefined) {
+        uncontrolledInputValue.value = owned.getInputValue();
+      }
+    }, 0);
+  });
 }
 function bindReset(): void {
   const next = hiddenInputRef.value?.form ?? null;
@@ -219,14 +200,14 @@ function destroyOwnedInstance(): void {
   ownedInstance?.destroy();
 }
 function setupRuntime(): void {
-  const preservedInputValue = props.inputValue ?? uncontrolledInputValue.value;
   destroyOwnedInstance();
   if (!rootRef.value) return;
-  const created = createCombobox(rootRef.value, {
-    autoComplete: props.autoComplete,
-    defaultInputValue: preservedInputValue,
-    defaultOpen: props.disabled ? false : uncontrolledOpen.value,
+
+  const created = createCombobox(rootRef.value!, {
     defaultValue: uncontrolledValue.value,
+    defaultInputValue: uncontrolledInputValue.value,
+    defaultOpen: props.disabled ? false : uncontrolledOpen.value,
+    autoComplete: props.autoComplete,
     disabled: props.disabled,
     filterMode: props.filterMode,
     form: props.form,
@@ -234,25 +215,78 @@ function setupRuntime(): void {
     locale: props.locale,
     modal: props.modal,
     name: props.name,
-    onInputValueChange: handleInputValueChange,
-    onOpenChange: handleOpenChange,
-    onValueChange: handleValueChange,
-    portalReference: portalReference ?? undefined,
     readOnly: props.readOnly,
     required: props.required,
-    ...(props.inputValue === undefined ? {} : { inputValue: props.inputValue }),
-    ...(props.open === undefined ? {} : { open: props.open }),
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
+    onValueChange: (next, detail) => {
+      emit("valueChange", next, detail);
+    },
+    onInputValueChange: (next, detail) => {
+      emit("inputValueChange", next, detail);
+      if (detail.event?.type === "input")
+        queueMicrotask(() => {
+          if (!detail.isCanceled || instance !== created) return;
+          created.setInputValue(created.getInputValue(), { emit: false, filter: false });
+        });
+    },
+    onOpenChange: (next, detail) => {
+      emit("openChange", next, detail);
+    },
+
+    portalReference: portalReference ?? undefined,
+    ...(props.modelValue !== undefined ? { value: props.modelValue } : {}),
+    ...(props.inputValue !== undefined ? { inputValue: props.inputValue } : {}),
+    ...(props.open !== undefined ? { open: props.open } : {}),
   });
   instance = created;
-  unsubscribeAccepted = [
-    created.subscribe("inputValueChange", acceptInputValue),
-    created.subscribe("openChange", acceptOpen),
-    created.subscribe("valueChange", acceptValue),
-  ];
-  if (props.inputValue === undefined) uncontrolledInputValue.value = created.getInputValue();
-  if (props.open === undefined) uncontrolledOpen.value = created.getOpen();
-  if (props.modelValue === undefined) uncontrolledValue.value = created.getValue();
+  unsubscribeAccepted.push(
+    created.subscribe("valueChange", (detail) => {
+      if (instance !== created) return;
+      const nextText = created.getInputValue();
+
+      if (props.inputValue === undefined) {
+        const nextInput = detail.value === null ? "" : (nextText ?? created.getInputValue());
+        if (created.getInputValue() !== nextInput)
+          created.setInputValue(nextInput, { emit: false, filter: false });
+        if (props.inputValue === undefined) {
+          uncontrolledInputValue.value = nextInput;
+        }
+        emit("update:inputValue", nextInput);
+      }
+      if (props.modelValue === undefined) {
+        uncontrolledValue.value = detail.value;
+      }
+      emit("update:modelValue", detail.value);
+    }),
+  );
+  unsubscribeAccepted.push(
+    created.subscribe("inputValueChange", (detail) => {
+      if (instance !== created) return;
+
+      if (props.inputValue === undefined) {
+        uncontrolledInputValue.value = detail.inputValue;
+      }
+      emit("update:inputValue", detail.inputValue);
+    }),
+  );
+  unsubscribeAccepted.push(
+    created.subscribe("openChange", (detail) => {
+      if (instance !== created) return;
+
+      if (props.open === undefined) {
+        uncontrolledOpen.value = detail.open;
+      }
+      emit("update:open", detail.open);
+    }),
+  );
+  if (props.modelValue === undefined) {
+    uncontrolledValue.value = created.getValue();
+  }
+  if (props.inputValue === undefined) {
+    uncontrolledInputValue.value = created.getInputValue();
+  }
+  if (props.open === undefined) {
+    uncontrolledOpen.value = created.getOpen();
+  }
   bindReset();
 }
 async function recreate(): Promise<void> {
@@ -269,81 +303,98 @@ onMounted(() => {
   mounted.value = true;
 });
 watch(
-  () => props.inputValue,
-  (value, previous) => {
-    if ((value === undefined) !== (previous === undefined)) {
-      if (value === undefined && instance) uncontrolledInputValue.value = instance.getInputValue();
+  () => props.modelValue,
+  (nextValue, previous) => {
+    if ((nextValue === undefined) !== (previous === undefined)) {
+      if (nextValue === undefined && instance) uncontrolledValue.value = instance.getValue();
       void recreate();
       return;
     }
-    if (value === undefined || !instance || Object.is(instance.getInputValue(), value)) return;
-    instance.setInputValue(value, { emit: false, filter: false });
+    const owned = instance;
+    if (nextValue === undefined || !owned) return;
+    const next = nextValue;
+    if (owned.getValue() !== next) owned.setValue(next, { emit: false });
+    if (props.inputValue === undefined) {
+      uncontrolledInputValue.value = owned.getInputValue();
+    }
+  },
+  { flush: "post" },
+);
+watch(
+  () => props.inputValue,
+  (nextValue, previous) => {
+    if ((nextValue === undefined) !== (previous === undefined)) {
+      if (nextValue === undefined && instance)
+        uncontrolledInputValue.value = instance.getInputValue();
+      void recreate();
+      return;
+    }
+    const owned = instance;
+    if (nextValue === undefined || !owned) return;
+    const next = nextValue;
+    if (owned.getInputValue() !== next) owned.setInputValue(next, { emit: false, filter: false });
   },
   { flush: "post" },
 );
 watch(
   () => props.open,
-  (value, previous) => {
-    if ((value === undefined) !== (previous === undefined)) {
-      if (value === undefined && instance) uncontrolledOpen.value = instance.getOpen();
+  (nextValue, previous) => {
+    if ((nextValue === undefined) !== (previous === undefined)) {
+      if (nextValue === undefined && instance) uncontrolledOpen.value = instance.getOpen();
       void recreate();
       return;
     }
-    if (value === undefined || props.disabled || !instance || Object.is(instance.getOpen(), value))
-      return;
-    instance.setOpen(value, { emit: false });
+    const owned = instance;
+    if (nextValue === undefined || !owned) return;
+    const next = props.disabled ? false : nextValue;
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
   },
   { flush: "post" },
 );
 watch(
-  () => props.modelValue,
-  (value, previous) => {
-    if ((value === undefined) !== (previous === undefined)) {
-      if (value === undefined && instance) uncontrolledValue.value = instance.getValue();
-      void recreate();
-      return;
+  [() => props.disabled],
+  () => {
+    const owned = instance;
+    if (!owned) return;
+    owned.setDisabled(props.disabled);
+    const next = props.disabled ? false : (props.open ?? uncontrolledOpen.value);
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+    if (props.open === undefined) {
+      uncontrolledOpen.value = owned.getOpen();
     }
-    if (value === undefined || !instance || Object.is(instance.getValue(), value)) return;
-    instance.setValue(value, { emit: false });
-    if (props.inputValue === undefined) uncontrolledInputValue.value = instance.getInputValue();
   },
   { flush: "post" },
 );
 watch(
-  () => props.disabled,
-  (value) => {
-    if (!instance) return;
-    instance.setDisabled(value);
-    if (value) {
-      if (props.open === undefined) uncontrolledOpen.value = false;
-      return;
-    }
-    const nextOpen = props.open ?? uncontrolledOpen.value;
-    if (!Object.is(instance.getOpen(), nextOpen)) instance.setOpen(nextOpen, { emit: false });
+  [() => props.autoComplete, () => props.form, () => props.name, () => props.required],
+  () => {
+    const owned = instance;
+    if (!owned) return;
+    owned.setFormOptions({
+      autoComplete: props.autoComplete,
+      form: props.form,
+      name: props.name,
+      required: props.required,
+    });
+
+    bindReset();
   },
+  { flush: "post" },
 );
 watch(
-  () =>
-    [
-      props.readOnly,
-      props.filterMode,
-      props.locale,
-      props.modal,
-      props.highlightItemOnHover,
-    ] as const,
+  [
+    () => props.filterMode,
+    () => props.highlightItemOnHover,
+    () => props.locale,
+    () => props.modal,
+    () => props.readOnly,
+  ],
   () => {
     void recreate();
   },
   { flush: "post" },
 );
-watch(
-  () => [props.autoComplete, props.form, props.name, props.required] as const,
-  ([autoComplete, form, name, required]) => {
-    instance?.setFormOptions({ autoComplete, form, name, required });
-    bindReset();
-  },
-  { flush: "post" },
-);
+
 onBeforeUnmount(() => {
   lifecycleGeneration += 1;
   mounted.value = false;

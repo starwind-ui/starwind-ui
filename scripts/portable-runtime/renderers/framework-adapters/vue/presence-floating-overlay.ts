@@ -1,3 +1,11 @@
+import {
+  controlAttributes,
+  floatingInputs,
+  partAttributes,
+  popoverPartPolicy,
+} from "../../shared-recipes/structured/part-policy.js";
+import { renderRoot as renderSharedPopoverRoot } from "../../shared-recipes/structured/popover.js";
+import { getVueAcceptedModelEvent } from "./accepted-model-publication.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -27,7 +35,7 @@ export function printVuePresenceFloatingOverlayComponent(
   const { facts, part } = family;
   const contents =
     part === "root"
-      ? printRoot(facts)
+      ? printRoot(facts, getVueAcceptedModelEvent(file, "open"))
       : part === "trigger"
         ? printTrigger(facts)
         : part === "portal"
@@ -43,212 +51,8 @@ export function printVuePresenceFloatingOverlayComponent(
   return { contents, path: `${file.path}.vue` };
 }
 
-function printRoot(facts: AdapterPresenceFloatingOverlayFacts): string {
-  const { closeComplete, openChange } = facts.events;
-  const {
-    closeDelay,
-    closeOnEscape,
-    closeOnOutsideInteract,
-    defaultOpen,
-    modal,
-    open,
-    openOnHover,
-  } = facts.props;
-  const setterOptions = printOptions(facts.setter.options);
-  const contextName = `${facts.displayName}Context`;
-
-  return `<script lang="ts">
-import type { InjectionKey, Ref } from "vue";
-
-export type ${facts.displayName}ContextValue = {
-  element: Readonly<Ref<HTMLElement | null>>;
-  mounted: Readonly<Ref<boolean>>;
-  registerPortal: (owner: symbol, element: HTMLElement | null) => void;
-};
-
-export const ${contextName}: InjectionKey<${facts.displayName}ContextValue> = Symbol("${contextName}");
-</script>
-
-<script setup lang="ts">
-import {
-  type ${closeComplete.detailsType},
-  type ${openChange.detailsType},
-  ${facts.runtime.factory},
-} from "${facts.runtime.importSource}";
-import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
-import { useVueAsChildRuntimeOwner } from "../_internal/as-child";
-
-defineOptions({ inheritAttrs: false });
-
-const props = withDefaults(
-  defineProps<{
-    ${defaultOpen.name}?: boolean;
-    ${open.name}?: boolean;
-    ${closeOnEscape.name}?: boolean;
-    ${closeOnOutsideInteract.name}?: boolean;
-    ${modal.name}?: boolean;
-    ${openOnHover.name}?: boolean;
-    ${closeDelay.name}?: number;
-  }>(),
-  {
-    ${defaultOpen.name}: ${defaultOpen.defaultValue},
-    ${open.name}: undefined,
-    ${closeOnEscape.name}: ${closeOnEscape.defaultValue},
-    ${closeOnOutsideInteract.name}: ${closeOnOutsideInteract.defaultValue},
-    ${modal.name}: ${modal.defaultValue},
-    ${openOnHover.name}: ${openOnHover.defaultValue},
-    ${closeDelay.name}: ${closeDelay.defaultValue},
-  },
-);
-const emit = defineEmits<{
-  ${closeComplete.name}: [detail: ${closeComplete.detailsType}];
-  ${openChange.name}: [open: boolean, detail: ${openChange.detailsType}];
-  "update:${open.name}": [open: boolean];
-}>();
-defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLDivElement | null>(null);
-const initialDefaultOpen = props.${defaultOpen.name};
-const uncontrolledOpen = ref(initialDefaultOpen);
-const renderedOpen = computed(() => props.${open.name} ?? uncontrolledOpen.value);
-const mounted = ref(false);
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let portalOwner: symbol | undefined;
-let runtimeGeneration = 0;
-
-provide(${contextName}, {
-  element: rootRef,
-  mounted,
-  registerPortal(owner, element) {
-    if (element) {
-      portalOwner = owner;
-      return;
-    }
-    if (portalOwner === owner) portalOwner = undefined;
-  },
-});
-
-defineExpose({ element: rootRef });
-
-function handleOpenChange(nextOpen: boolean, detail: ${openChange.detailsType}): void {
-  const eventWasControlled = props.${open.name} !== undefined;
-  emit("${openChange.name}", nextOpen, detail);
-  if (detail.isCanceled) return;
-
-  if (!eventWasControlled) uncontrolledOpen.value = nextOpen;
-  emit("update:${open.name}", nextOpen);
-}
-
-function handleCloseComplete(detail: ${closeComplete.detailsType}): void {
-  emit("${closeComplete.name}", detail);
-}
-
-function destroyOwnedInstance(): void {
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(recreatedOpen?: boolean): void {
-  const recreating = recreatedOpen !== undefined || instance !== undefined;
-  const acceptedOpen = recreatedOpen ?? instance?.${facts.state.getter}() ?? renderedOpen.value;
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  if (props.${open.name} === undefined) uncontrolledOpen.value = acceptedOpen;
-  instance = ${facts.runtime.factory}(element, {
-    ${defaultOpen.name}: recreating ? false : acceptedOpen,
-    ${closeOnEscape.name}: props.${closeOnEscape.name},
-    ${closeOnOutsideInteract.name}: props.${closeOnOutsideInteract.name},
-    ${modal.name}: props.${modal.name},
-    ${openOnHover.name}: props.${openOnHover.name},
-    ${closeComplete.callbackProp}: handleCloseComplete,
-    ${openChange.callbackProp}: handleOpenChange,
-    ...(props.${open.name} === undefined
-      ? {}
-      : { ${open.name}: recreating ? false : props.${open.name} }),
-  });
-
-  if (recreating && acceptedOpen) {
-    instance.${facts.setter.method}(true${setterOptions});
-  }
-}
-
-async function recreateRuntime(): Promise<void> {
-  const generation = ++runtimeGeneration;
-  const acceptedOpen = instance?.${facts.state.getter}() ?? renderedOpen.value;
-  destroyOwnedInstance();
-  mounted.value = false;
-  await nextTick();
-  if (generation !== runtimeGeneration) return;
-  setupRuntime(acceptedOpen);
-  mounted.value = true;
-}
-
-useVueAsChildRuntimeOwner(rootRef, recreateRuntime);
-onMounted(() => {
-  setupRuntime();
-  mounted.value = true;
-});
-
-watch(
-  () => props.${open.name},
-  (nextOpen, previousOpen) => {
-    const controllednessChanged = (nextOpen === undefined) !== (previousOpen === undefined);
-    if (controllednessChanged) {
-      void recreateRuntime();
-      return;
-    }
-    if (nextOpen === undefined || !instance || Object.is(instance.${facts.state.getter}(), nextOpen)) {
-      return;
-    }
-
-    instance.${facts.setter.method}(nextOpen${setterOptions});
-  },
-  { flush: "post" },
-);
-watch(
-  [
-    () => props.${closeOnEscape.name},
-    () => props.${closeOnOutsideInteract.name},
-    () => props.${modal.name},
-    () => props.${openOnHover.name},
-  ],
-  () => {
-    void recreateRuntime();
-  },
-  { flush: "post" },
-);
-
-onBeforeUnmount(() => {
-  runtimeGeneration += 1;
-  mounted.value = false;
-  portalOwner = undefined;
-  destroyOwnedInstance();
-});
-</script>
-
-<template>
-  <${facts.parts.root.defaultElement}
-    ref="rootRef"
-    v-bind="attrs"
-    ${facts.attrs.root}
-    data-sw-part="${facts.parts.root.name}"
-    :${facts.attrs.rootDefaultOpen}="initialDefaultOpen ? 'true' : undefined"
-    :${facts.attrs.rootCloseOnEscape}="props.${closeOnEscape.name} ? 'true' : 'false'"
-    :${facts.attrs.rootCloseOnOutsideInteract}="props.${closeOnOutsideInteract.name} ? 'true' : 'false'"
-    :${facts.attrs.rootModal}="props.${modal.name} ? 'true' : 'false'"
-    :${facts.attrs.rootOpenOnHover}="props.${openOnHover.name} ? 'true' : undefined"
-    :${facts.attrs.rootCloseDelay}="props.${closeDelay.name}"
-    :${facts.attrs.rootState}="renderedOpen ? 'open' : 'closed'"
-  >
-    <slot />
-  </${facts.parts.root.defaultElement}>
-</template>
-`;
+function printRoot(_facts: AdapterPresenceFloatingOverlayFacts, _acceptedEvent: string): string {
+  return renderSharedPopoverRoot("vue");
 }
 
 function printTrigger(facts: AdapterPresenceFloatingOverlayFacts): string {
@@ -276,10 +80,7 @@ const AsChildTrigger = defineComponent({
     return () => {
       const children = slots.default?.() ?? [];
       const protectedProps = {
-        "${facts.attrs.trigger}": "",
-        "${facts.attrs.triggerAriaHaspopup}": "dialog",
-        "${facts.attrs.triggerAriaExpanded}": "false",
-        "${facts.attrs.triggerState}": "closed",
+${controlAttributes(popoverPartPolicy(facts, "trigger"))}
         "data-sw-part": "${part.name}",
       };
       return asChild.render({
@@ -299,12 +100,8 @@ const AsChildTrigger = defineComponent({
     v-else
     :ref="setElement"
     v-bind="attrs"
-    ${facts.attrs.trigger}
+    ${partAttributes("vue", popoverPartPolicy(facts, "trigger"))}
     data-sw-part="${part.name}"
-    ${facts.attrs.triggerType}="button"
-    ${facts.attrs.triggerAriaHaspopup}="dialog"
-    ${facts.attrs.triggerAriaExpanded}="false"
-    ${facts.attrs.triggerState}="closed"
   >
     <slot />
   </${part.defaultElement}>
@@ -316,7 +113,7 @@ function printPortal(facts: AdapterPresenceFloatingOverlayFacts): string {
   const part = facts.parts.portal;
   return `<script setup lang="ts">
 import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
-import { inject, onBeforeUnmount, onMounted, ref } from "vue";
+import { inject, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
 import { ${facts.displayName}Context } from "./${facts.exports.root}.vue";
 
@@ -329,7 +126,6 @@ const props = withDefaults(
 defineSlots<{ default?: () => unknown }>();
 const root = inject(${facts.displayName}Context);
 if (!root) throw new TypeError("${facts.exports.portal} must be nested inside ${facts.exports.root}.");
-const owner = Symbol("${facts.exports.portal}");
 const element = ref<HTMLDivElement | null>(null);
 const placement = useVuePortalPlacement({
   active: () => root.mounted.value,
@@ -340,8 +136,6 @@ const placement = useVuePortalPlacement({
   runtime: { reportPortalPlacement, resolvePortalPlacement },
 });
 
-onMounted(() => root.registerPortal(owner, element.value));
-onBeforeUnmount(() => root.registerPortal(owner, null));
 
 defineExpose({ element });
 </script>
@@ -371,13 +165,9 @@ function printFloatingPart(
   partName: "popup" | "positioner",
 ): string {
   const part = facts.parts[partName];
-  const hidden = partName === "popup" ? `\n    ${facts.attrs.popupHidden}` : "";
-  const semantics =
-    partName === "popup"
-      ? `\n    ${facts.attrs.popupRole}="${facts.parts.popup.role}"\n    :${facts.attrs.popupTabIndex.toLowerCase()}="-1"`
-      : "";
   return `<script setup lang="ts">
-import { type HTMLAttributes, ref } from "vue";
+import { type HTMLAttributes, inject, ref, watchEffect } from "vue";
+import { PopoverContext } from "./PopoverRoot.vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -400,6 +190,15 @@ const props = withDefaults(
 );
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null);
+const owner = inject(PopoverContext);
+watchEffect(onCleanup => {
+  const node = element.value;
+  if (!node) return;
+  owner?.registerPlacement(node, { ${floatingInputs(facts)
+    .map(([name, input]) => `${JSON.stringify(name)}: String(props.${input})`)
+    .join(", ")} });
+  onCleanup(() => owner?.registerPlacement(node, null));
+}, { flush: "post" });
 
 defineExpose({ element });
 </script>
@@ -408,14 +207,8 @@ defineExpose({ element });
   <${part.defaultElement}
     ref="element"
     v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
-    ${facts.attrs[partName]}
+    ${partAttributes("vue", popoverPartPolicy(facts, partName))}
     data-sw-part="${part.name}"
-    ${facts.attrs[`${partName}State`]}="closed"
-    :${facts.attrs.floatingSide}="props.${facts.props.side.name}"
-    :${facts.attrs.floatingAlign}="props.${facts.props.align.name}"
-    :${facts.attrs.floatingSideOffset}="props.${facts.props.sideOffset.name}"
-    :${facts.attrs.floatingAvoidCollisions}="props.${facts.props.avoidCollisions.name} ? 'true' : 'false'"
-    :${facts.attrs.floatingCollisionStrategy}="props.${facts.props.collisionStrategy.name}"${semantics}${hidden}
   >
     <slot />
   </${part.defaultElement}>
@@ -424,27 +217,23 @@ defineExpose({ element });
 }
 
 function printBackdrop(facts: AdapterPresenceFloatingOverlayFacts): string {
-  return printPart(facts, "backdrop", [
-    `${facts.attrs.backdropState}="closed"`,
-    facts.attrs.backdropHidden,
-  ]);
+  return printPart(facts, "backdrop");
 }
 
 function printClose(facts: AdapterPresenceFloatingOverlayFacts): string {
-  return printPart(facts, "close", [`${facts.attrs.closeType}="button"`]);
+  return printPart(facts, "close");
 }
 
 function printSimplePart(
   facts: AdapterPresenceFloatingOverlayFacts,
   partName: "arrow" | "description" | "title" | "viewport",
 ): string {
-  return printPart(facts, partName, []);
+  return printPart(facts, partName);
 }
 
 function printPart(
   facts: AdapterPresenceFloatingOverlayFacts,
   partName: "arrow" | "backdrop" | "close" | "description" | "title" | "viewport",
-  extraAttrs: string[],
 ): string {
   const part = facts.parts[partName];
   return `<script setup lang="ts">
@@ -464,9 +253,8 @@ defineExpose({ element });
   <${part.defaultElement}
     ref="element"
     v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
-    ${facts.attrs[partName]}
+    ${partAttributes("vue", popoverPartPolicy(facts, partName))}
     data-sw-part="${part.name}"
-    ${extraAttrs.join("\n    ")}
   >
     <slot />
   </${part.defaultElement}>

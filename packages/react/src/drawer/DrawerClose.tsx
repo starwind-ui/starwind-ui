@@ -6,14 +6,52 @@
 "use client";
 
 import * as React from "react";
+import { useNativeOverlayControl } from "../internal/native-overlay-control";
+import { NativeOverlayControlContext } from "./DrawerRoot";
 
-export type DrawerCloseProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+export type DrawerCloseProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  asChild?: boolean;
+};
 
-const DrawerClose = React.forwardRef<HTMLButtonElement, DrawerCloseProps>(
-  function DrawerClose(props, forwardedRef) {
-    return <button type="button" data-sw-drawer-close ref={forwardedRef} {...props} />;
-  },
-);
+const DrawerClose = React.forwardRef<HTMLButtonElement, DrawerCloseProps>(function DrawerClose(
+  { asChild = false, children, className, ...props },
+  forwardedRef,
+) {
+  const requestRefresh = React.useContext(NativeOverlayControlContext);
+  const { controlKey, setControlElement } = useNativeOverlayControl({
+    asChild,
+    children,
+    forwardedRef,
+    requestRefresh,
+  });
+
+  if (asChild) {
+    return (
+      <div
+        className={className}
+        data-as-child
+        {...(props as React.HTMLAttributes<HTMLDivElement>)}
+        data-sw-drawer-close
+        key={controlKey}
+        ref={setControlElement}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-sw-drawer-close
+      className={className}
+      ref={setControlElement as React.Ref<HTMLButtonElement>}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+});
 
 DrawerClose.displayName = "Drawer.Close";
 

@@ -1,5 +1,5 @@
 import * as p from "@clack/prompts";
-
+import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import {
   getConfigState,
   hasLegacyStarwindUiV2ConfigShape,
@@ -8,12 +8,12 @@ import {
   type StarwindFramework,
 } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
-import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import {
+  type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   isConfigTarget,
-  type PrivateVueCliFrameworkTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -25,16 +25,16 @@ import {
 } from "@/utils/pro-registry.js";
 import { selectComponents } from "@/utils/prompts.js";
 import {
+  type ComponentFor,
   getConfiguredRegistrySource,
   loadRegistry,
   parseRegistrySource,
-  type ComponentFor,
   type RegistrySource,
   type StarwindRegistryFor,
 } from "@/utils/registry.js";
 import {
-  installRuntimeComponents,
   type InstallRuntimeComponentsOptions,
+  installRuntimeComponents,
 } from "@/utils/runtime-component.js";
 import {
   importStarwindProRegistryFromComponentsJson,
@@ -57,12 +57,14 @@ interface AddOptions {
 }
 
 export type PrivateVueAddOptions = Omit<AddOptions, "framework"> & {
-  framework?: PrivateVueCliFrameworkTarget;
+  framework?: CliFrameworkTarget;
 };
 
 export type PrivateVueAddDependencies = {
-  registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+  registry: StarwindRegistryFor<CliFrameworkTarget>;
+  targetPolicy:
+    | FrameworkTargetPolicy<CliFrameworkTarget>
+    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
 };
 
 type AddResult = {
@@ -74,16 +76,16 @@ type AddResult = {
 
 type RuntimeRegistrySelection =
   | {
-      availableComponents: ComponentFor<PrivateVueCliFrameworkTarget>[];
+      availableComponents: ComponentFor<CliFrameworkTarget>[];
       mode: "single";
-      registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
+      registry: StarwindRegistryFor<CliFrameworkTarget>;
       source?: RegistrySource;
     }
   | {
-      availableComponents: ComponentFor<PrivateVueCliFrameworkTarget>[];
-      customRegistry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
+      availableComponents: ComponentFor<CliFrameworkTarget>[];
+      customRegistry: StarwindRegistryFor<CliFrameworkTarget>;
       customSource: RegistrySource;
-      defaultRegistry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
+      defaultRegistry: StarwindRegistryFor<CliFrameworkTarget>;
       defaultSource?: RegistrySource;
       mode: "overlay";
     };
@@ -103,9 +105,8 @@ export async function add(
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
     const packageManager = options?.packageManager ?? detectPackageManager().name;
     const selectedStarwindUiMajor = options?.starwindUiVersion === "2" ? 2 : 3;
-    const targetPolicy =
-      dependencies?.targetPolicy ??
-      (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
+    const targetPolicy = (dependencies?.targetPolicy ??
+      PUBLIC_FRAMEWORK_TARGET_POLICY) as FrameworkTargetPolicy<CliFrameworkTarget>;
     if (options?.framework && !isConfigTarget(targetPolicy, options.framework)) {
       throw new Error(
         `Framework "${options.framework}" is not available under the ${targetPolicy.cacheKey} target policy.`,
@@ -114,7 +115,7 @@ export async function add(
     const loadRuntimeRegistry = (source: RegistrySource | undefined) =>
       dependencies
         ? loadRegistry(source, { targetPolicy })
-        : (loadRegistry(source) as Promise<StarwindRegistryFor<PrivateVueCliFrameworkTarget>>);
+        : (loadRegistry(source) as Promise<StarwindRegistryFor<CliFrameworkTarget>>);
 
     // Check if starwind.config.json exists
     const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
@@ -216,7 +217,7 @@ export async function add(
       }
     }
 
-    const runtimeConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> | undefined =
+    const runtimeConfig: StarwindConfigFor<CliFrameworkTarget> | undefined =
       configState.status === "current" ? configState.config : undefined;
     const explicitRuntimeRegistrySource = parseRegistrySource(options?.registry);
     const configuredRuntimeRegistrySource = runtimeConfig
@@ -296,6 +297,10 @@ export async function add(
 
       // Handle registry components (e.g., @starwind-pro/login1)
       if (registryComponents.length > 0) {
+        if (runtimeConfig?.framework === "svelte") {
+          throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
+        }
+
         let proInstallConfig = selectedStarwindUiMajor === 2 ? configState.config : runtimeConfig;
 
         if (selectedStarwindUiMajor === 2) {
@@ -659,10 +664,10 @@ function formatStarwindCommand(
 }
 
 function filterUninstalledComponents(
-  availableComponents: ComponentFor<PrivateVueCliFrameworkTarget>[],
-  config: StarwindConfigFor<PrivateVueCliFrameworkTarget> | undefined,
-  framework?: PrivateVueCliFrameworkTarget,
-): ComponentFor<PrivateVueCliFrameworkTarget>[] {
+  availableComponents: ComponentFor<CliFrameworkTarget>[],
+  config: StarwindConfigFor<CliFrameworkTarget> | undefined,
+  framework?: CliFrameworkTarget,
+): ComponentFor<CliFrameworkTarget>[] {
   const targetFramework = framework ?? config?.framework;
   const installedNames = new Set(
     (config?.components ?? [])
@@ -678,11 +683,11 @@ function filterUninstalledComponents(
 }
 
 function mergeOverlayComponents(
-  customComponents: ComponentFor<PrivateVueCliFrameworkTarget>[],
-  defaultComponents: ComponentFor<PrivateVueCliFrameworkTarget>[],
-  framework?: PrivateVueCliFrameworkTarget,
-): ComponentFor<PrivateVueCliFrameworkTarget>[] {
-  const mergedComponents: ComponentFor<PrivateVueCliFrameworkTarget>[] = [];
+  customComponents: ComponentFor<CliFrameworkTarget>[],
+  defaultComponents: ComponentFor<CliFrameworkTarget>[],
+  framework?: CliFrameworkTarget,
+): ComponentFor<CliFrameworkTarget>[] {
+  const mergedComponents: ComponentFor<CliFrameworkTarget>[] = [];
   const seenNames = new Set<string>();
 
   const componentNames = new Set([

@@ -38,6 +38,7 @@ const initialDefaultOpen = props.defaultOpen;
 const uncontrolledOpen = ref(initialDefaultOpen);
 const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
 let instance: ReturnType<typeof createContextMenu> | undefined;
+let unsubscribeOpenChange: (() => void) | undefined;
 let generation = 0;
 
 provide(MenuRootContext, {
@@ -54,28 +55,41 @@ defineExpose({
   open: () => instance?.open(),
 });
 
-function handleOpenChange(open: boolean, detail: ContextMenuOpenChangeDetails): void {
-  emit("openChange", open, detail);
-  if (detail.isCanceled) return;
-  if (props.open === undefined) uncontrolledOpen.value = open;
-  emit("update:open", open);
-}
 function destroyOwnedInstance(): void {
   const owned = instance;
-  instance = undefined;
-  owned?.destroy();
+  if (!owned) return;
+  unsubscribeOpenChange?.();
+  unsubscribeOpenChange = undefined;
+  if (instance === owned) {
+    instance = undefined;
+  }
+  owned.destroy();
 }
 function setupRuntime(): void {
   const element = rootRef.value;
   if (!element) return;
-  instance = createContextMenu(element, {
+  const owned = createContextMenu(element, {
     defaultOpen: uncontrolledOpen.value,
     disabled: props.disabled,
     modal: props.modal,
     closeDelay: props.closeDelay,
-    onOpenChange: handleOpenChange,
-    onCloseComplete: (detail) => emit("closeComplete", detail),
-    ...(props.open === undefined ? {} : { open: props.open }),
+    onOpenChange: (next, details) => {
+      emit("openChange", next, details);
+    },
+    onCloseComplete: (details) => {
+      if (instance !== owned) return;
+      emit("closeComplete", details);
+    },
+
+    ...(props.open !== undefined ? { open: props.open } : {}),
+  });
+  instance = owned;
+  unsubscribeOpenChange = owned.subscribe("openChange", (details) => {
+    if (instance !== owned) return;
+    if (props.open === undefined) {
+      uncontrolledOpen.value = details.open;
+    }
+    emit("update:open", details.open);
   });
 }
 async function recreateRuntime(): Promise<void> {
@@ -100,8 +114,10 @@ watch(
       void recreateRuntime();
       return;
     }
-    if (open === undefined || !instance || Object.is(instance.getOpen(), open)) return;
-    instance.setOpen(open, { emit: false });
+    const owned = instance;
+    if (!owned || props.open === undefined) return;
+    const next = props.open;
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
   },
   { flush: "post" },
 );

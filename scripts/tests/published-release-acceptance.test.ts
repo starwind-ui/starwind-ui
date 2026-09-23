@@ -27,6 +27,7 @@ describe("published release acceptance", () => {
   - astro
   - react
   - vue
+  - svelte
 minimumReleaseAge: 0
 minimumReleaseAgeStrict: false
 allowBuilds:
@@ -70,25 +71,46 @@ allowBuilds:
   });
 
   it("requires an exact prerelease or stable CLI version", () => {
-    expect(parseArgs(["--version", "3.0.0-beta.1", "--vue-version", "0.1.0"])).toEqual({
+    expect(
+      parseArgs([
+        "--version",
+        "3.0.0-beta.1",
+        "--vue-version",
+        "0.1.0",
+        "--svelte-version",
+        "0.1.0",
+      ]),
+    ).toEqual({
       artifacts: undefined,
       keepTemp: false,
+      svelteVersion: "0.1.0",
       version: "3.0.0-beta.1",
       vueVersion: "0.1.0",
     });
-    expect(parseArgs(["--", "--version", "3.0.0-beta.1", "--vue-version=0.1.0"])).toEqual({
+    expect(
+      parseArgs([
+        "--",
+        "--version",
+        "3.0.0-beta.1",
+        "--vue-version=0.1.0",
+        "--svelte-version=0.1.0",
+      ]),
+    ).toEqual({
       artifacts: undefined,
       keepTemp: false,
+      svelteVersion: "0.1.0",
       version: "3.0.0-beta.1",
       vueVersion: "0.1.0",
     });
 
-    expect(parseArgs(["--version", "3.0.0", "--vue-version", "0.1.0"])).toMatchObject({
+    expect(
+      parseArgs(["--version", "3.0.0", "--vue-version", "0.1.0", "--svelte-version", "0.1.0"]),
+    ).toMatchObject({
       version: "3.0.0",
     });
-    expect(parseArgs(["--version", "3.0.0-rc.2", "--vue-version", "0.1.0"])).toMatchObject({
-      version: "3.0.0-rc.2",
-    });
+    expect(
+      parseArgs(["--version", "3.0.0-rc.2", "--vue-version", "0.1.0", "--svelte-version", "0.1.0"]),
+    ).toMatchObject({ version: "3.0.0-rc.2" });
     expect(() => parseArgs(["--version", "beta"])).toThrow(/exact semver version/i);
     expect(() => parseArgs([])).toThrow(/--version/);
     expect(() => parseArgs(["--version", "3.0.0-beta.1"])).toThrow(/--vue-version/);
@@ -104,15 +126,22 @@ allowBuilds:
     const root = path.resolve("published-beta-test-root");
     const plan = createAcceptancePlan({
       root,
+      svelteVersion: "0.1.0",
       version: "3.0.0-beta.1",
       vueVersion: "0.1.0",
     });
 
-    expect(plan.projects.map((project) => project.framework)).toEqual(["astro", "react", "vue"]);
+    expect(plan.projects.map((project) => project.framework)).toEqual([
+      "astro",
+      "react",
+      "vue",
+      "svelte",
+    ]);
     expect(plan.projects.map((project) => project.directory)).toEqual([
       path.join(root, "astro"),
       path.join(root, "react"),
       path.join(root, "vue"),
+      path.join(root, "svelte"),
     ]);
     expect(plan.projects[0].scaffold.args).toEqual([
       "create",
@@ -141,6 +170,7 @@ allowBuilds:
       "vue-ts",
       "--no-interactive",
     ]);
+    expect(plan.projects[3]).toMatchObject({ expectedAdapterVersion: "0.1.0" });
     expect(plan.install).toEqual({ args: ["install"], cwd: root });
 
     for (const project of plan.projects) {
@@ -166,10 +196,12 @@ allowBuilds:
     const astro = getFixtureFiles("astro");
     const react = getFixtureFiles("react");
     const vue = getFixtureFiles("vue");
+    const svelte = getFixtureFiles("svelte");
 
     expect(astro.map((file) => file.path)).toEqual(["src/pages/index.astro"]);
     expect(react.map((file) => file.path)).toEqual(["src/App.tsx"]);
     expect(vue.map((file) => file.path)).toEqual(["src/App.vue"]);
+    expect(svelte.map((file) => file.path)).toEqual(["src/App.svelte"]);
 
     for (const fixture of [astro[0].content, react[0].content]) {
       expect(fixture).toContain('id="dialog-trigger"');
@@ -184,11 +216,13 @@ allowBuilds:
     expect(vue[0].content).toContain('from "./components/starwind/dialog"');
     expect(vue[0].content).toContain("Open Vue dialog");
     expect(vue[0].content).toContain("Published Vue Runtime panel");
+    expect(svelte[0].content).toContain("Open Svelte dialog");
   });
 
   it("installs every component imported by each published fixture", () => {
     const plan = createAcceptancePlan({
       root: "/tmp/published",
+      svelteVersion: "0.1.0",
       version: "3.3.0",
       vueVersion: "0.1.0",
     });
@@ -221,8 +255,10 @@ allowBuilds:
     expect(workflow).toContain("workflow_dispatch:");
     expect(workflow).toContain("version:");
     expect(workflow).toContain("vue_version:");
+    expect(workflow).toContain("svelte_version:");
     expect(workflow).toContain("pnpm test:published-release -- --version");
     expect(workflow).toContain('--vue-version "${{ inputs.vue_version }}"');
+    expect(workflow).toContain('--svelte-version "${{ inputs.svelte_version }}"');
     expect(workflow).toContain("playwright install --with-deps chromium");
     expect(workflow).not.toContain("pull_request:");
     expect(workflow).not.toContain("push:");

@@ -7,6 +7,7 @@
 
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import { MediaStatusContext } from "./AvatarRoot";
 
 export type AvatarFallbackProps = React.HTMLAttributes<HTMLSpanElement> & {
   delay?: number;
@@ -14,10 +15,15 @@ export type AvatarFallbackProps = React.HTMLAttributes<HTMLSpanElement> & {
 
 const AvatarFallback = React.forwardRef<HTMLSpanElement, AvatarFallbackProps>(
   function AvatarFallback({ delay, hidden, ...props }, forwardedRef) {
+    const requestRefresh = React.useContext(MediaStatusContext);
+    React.useEffect(() => {
+      requestRefresh?.();
+      return () => requestRefresh?.();
+    }, [requestRefresh, delay]);
     const composedRef = React.useCallback(
       (node: HTMLSpanElement | null) => {
         if (node) {
-          node.hidden = hidden ?? delay !== undefined;
+          node.hidden = delay !== undefined || Boolean(hidden);
         }
 
         return setRef(forwardedRef, node);

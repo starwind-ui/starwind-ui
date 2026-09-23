@@ -7,6 +7,7 @@ import type {
   AdapterIndexFile,
   AdapterOutputModel,
 } from "../framework-adapters/index.js";
+import { withAcceptedModelPublications } from "../primitive-output-model/accepted-model-publication.js";
 import { createPrimitiveAttributeMap } from "../primitives/contract-helpers.js";
 import {
   buildBaseSpecializedAdapterSpec,
@@ -280,7 +281,7 @@ export function buildContextMenuAdapterOutputModel(
     createContextMenuIndexFile(spec, facts),
   ];
 
-  return { files };
+  return withAcceptedModelPublications({ files }, spec.events, spec.root.part);
 }
 
 function createContextMenuComponentFile(

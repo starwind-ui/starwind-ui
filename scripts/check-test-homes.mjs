@@ -144,6 +144,7 @@ export function listRepositoryFiles(cwd = process.cwd()) {
     ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
     {
       cwd,
+      maxBuffer: 64 * 1024 * 1024,
     },
   );
 

@@ -1,0 +1,6 @@
+{
+  "primitives": {
+    "checkbox-group": "patch"
+  },
+  "impact": "behavior"
+}

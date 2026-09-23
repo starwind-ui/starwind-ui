@@ -1,3 +1,10 @@
+import {
+  connectField,
+  disconnectField,
+  fieldMatch,
+  fieldSynchronizations,
+} from "../../shared-recipes/structured/document-controls/field-recipe.js";
+import { formTimingValue } from "../../shared-recipes/structured/document-controls/form-policy.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -107,47 +114,24 @@ defineExpose({ element: rootRef });
 function destroyOwnedInstance(): void {
   const ownedInstance = instance;
   if (!ownedInstance) return;
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
+${disconnectField("instance", "ownedInstance", { kind: "local" })}
 }
 
 onMounted(() => {
   const element = rootRef.value;
   if (!element) throw new Error("${facts.exports.root} requires its root before Runtime setup.");
-  instance = ${facts.runtime.factory}(element, {
-    ${dirty.prop.name}: props.${dirty.prop.name},
-    ${disabled.prop.name}: props.${disabled.prop.name},
-    ${invalid.prop.name}: props.${invalid.prop.name},
-    ${name.prop.name}: props.${name.prop.name},
-    ${touched.prop.name}: props.${touched.prop.name},
-  });
+  ${connectField(facts, { read: (name) => `props.${name}` }, "element", "instance", "connected")}
 });
 
-watch(
-  () => props.${dirty.prop.name},
-  (value) => instance?.${dirty.setter}(value),
-  { flush: "post" },
-);
-watch(
-  () => props.${disabled.prop.name},
-  (value) => instance?.${disabled.setter}(value),
-  { flush: "post" },
-);
-watch(
-  () => props.${invalid.prop.name},
-  (value) => instance?.${invalid.setter}(value),
-  { flush: "post" },
-);
-watch(
-  () => props.${name.prop.name},
-  (value) => instance?.${name.setter}(value),
-  { flush: "post" },
-);
-watch(
-  () => props.${touched.prop.name},
-  (value) => instance?.${touched.setter}(value),
-  { flush: "post" },
-);
+${fieldSynchronizations(
+  facts,
+  {
+    read: (name) => `props.${name}`,
+    observe: (name, body) => `watch(() => props.${name}, () => { ${body} }, { flush: "post" });`,
+  },
+  "instance",
+)}
+
 onBeforeUnmount(destroyOwnedInstance);
 </script>
 
@@ -159,12 +143,12 @@ onBeforeUnmount(destroyOwnedInstance);
     data-sw-part="${root.name}"
     :${dirty.attribute}="props.${dirty.prop.name} ? '' : undefined"
     :${disabled.attribute}="props.${disabled.prop.name} ? '' : undefined"
-    :${errorVisibility.attribute}="props.${errorVisibility.dataPropName} ?? props.${errorVisibility.prop.name}"
+    :${errorVisibility.attribute}="${formTimingValue(`props.${errorVisibility.dataPropName}`, `props.${errorVisibility.prop.name}`)}"
     :${invalid.attribute}="props.${invalid.prop.name} ? '' : undefined"
     :${name.attribute}="props.${name.prop.name}"
-    :${revalidationTiming.attribute}="props.${revalidationTiming.dataPropName} ?? props.${revalidationTiming.prop.name}"
+    :${revalidationTiming.attribute}="${formTimingValue(`props.${revalidationTiming.dataPropName}`, `props.${revalidationTiming.prop.name}`)}"
     :${touched.attribute}="props.${touched.prop.name} ? '' : undefined"
-    :${validationTiming.attribute}="props.${validationTiming.dataPropName} ?? props.${validationTiming.prop.name}"
+    :${validationTiming.attribute}="${formTimingValue(`props.${validationTiming.dataPropName}`, `props.${validationTiming.prop.name}`)}"
   >
     <slot />
   </${root.defaultElement}>
@@ -246,7 +230,7 @@ const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 
 function serializeMatch(value: ${facts.message.matchType}): string {
-  return typeof value === "boolean" ? String(value) : value;
+  return ${fieldMatch("value")};
 }
 </script>
 
@@ -288,7 +272,7 @@ const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 
 function serializeMatch(value: ${facts.message.matchType}): string {
-  return typeof value === "boolean" ? String(value) : value;
+  return ${fieldMatch("value")};
 }
 </script>
 

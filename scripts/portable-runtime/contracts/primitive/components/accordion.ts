@@ -100,6 +100,7 @@ export const accordionRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      acceptanceNotification: "controller-subscription",
       stateModel: "value",
       callbackProp: "onValueChange",
       callbackTiming: "before-state-commit",
@@ -169,7 +170,7 @@ export const accordionRuntimeAdapterContract = {
     {
       affectedFrameworks: ["astro", "react", "solid", "svelte", "vue"],
       boundary:
-        "The component template still owns AccordionValue serialization/equality, creation-only type/defaultValue/collapsible options, runtime-owned item discovery, trigger/panel accessibility id linking, keyboard navigation, collapsible panel height measurement, close-animation hidden cleanup, and structural child changes that currently require controller recreation because the runtime exposes no refresh API.",
+        "The component template still owns AccordionValue serialization/equality, creation-only type/defaultValue/collapsible options, runtime-owned item discovery, trigger/panel accessibility id linking, keyboard navigation, collapsible panel height measurement, close-animation hidden cleanup, and structural child changes handled by the Runtime collection observer and refresh API.",
       contractOwnedFacts: [
         "component id",
         "display name",

@@ -1,6 +1,7 @@
 import { getPrimitivePackageExportNames } from "../primitive-inventory.js";
 import { astroFrameworkAdapterTarget } from "./astro/index.js";
 import { reactFrameworkAdapterTarget } from "./react/index.js";
+import { svelteFrameworkAdapterTarget } from "./svelte/index.js";
 import { vueFrameworkAdapterTarget } from "./vue/index.js";
 import type {
   FrameworkAdapterTargetPrimitiveSupport,
@@ -11,6 +12,7 @@ export const primitiveFrameworkAdapterTargets = [
   astroFrameworkAdapterTarget,
   reactFrameworkAdapterTarget,
   vueFrameworkAdapterTarget,
+  svelteFrameworkAdapterTarget,
 ] as const satisfies readonly FrameworkAdapterTargetRegistration[];
 
 export const frameworkAdapterTargets = primitiveFrameworkAdapterTargets;

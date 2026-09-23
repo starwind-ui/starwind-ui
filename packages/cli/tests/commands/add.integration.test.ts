@@ -933,6 +933,27 @@ describe.sequential("add command integration", () => {
     ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
+  it("rejects Pro blocks for Svelte before config or component writes", async () => {
+    const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    config.framework = "svelte";
+    await writeFile("starwind.config.json", JSON.stringify(config, null, 2) + "\n", "utf-8");
+    const savedConfig = await readFile("starwind.config.json", "utf-8");
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    await expect(
+      add(["@starwind-pro/hero-01"], { packageManager: "pnpm", yes: true }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      "Svelte 5 beta does not support Starwind Pro setup.",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    await expect(readFile("starwind.config.json", "utf-8")).resolves.toBe(savedConfig);
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
   it("rejects mixed V2 Pro and base names before fetches and writes", async () => {
     await writeLegacyConfig({ components: [{ name: "button", version: "2.1.0" }] });
     globalThis.fetch = vi.fn() as unknown as typeof fetch;

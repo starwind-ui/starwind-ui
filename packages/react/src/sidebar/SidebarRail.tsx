@@ -16,13 +16,14 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, SidebarRailProps>(
 
     return (
       <button
-        type="button"
-        data-sw-sidebar-rail
-        aria-expanded={sidebarContext?.expanded ?? false}
+        {...props}
+        data-sw-sidebar-rail={""}
+        data-sw-part={"rail"}
         data-state={sidebarContext?.state ?? "expanded"}
+        aria-expanded={sidebarContext?.expanded ?? false}
+        type={"button"}
         tabIndex={-1}
         ref={forwardedRef}
-        {...props}
       />
     );
   },

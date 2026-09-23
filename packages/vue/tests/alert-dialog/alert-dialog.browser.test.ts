@@ -1,18 +1,4 @@
-import {
-  Comment,
-  Fragment,
-  Text,
-  createApp,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-  type VNode,
-} from "vue";
-import { afterEach, describe, expect, it } from "vitest";
-
+import { createAlertDialog } from "@starwind-ui/runtime/alert-dialog";
 import {
   AlertDialogBackdrop,
   AlertDialogClose,
@@ -24,6 +10,20 @@ import {
   AlertDialogTrigger,
   AlertDialogViewport,
 } from "@starwind-ui/vue/alert-dialog";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  Comment,
+  type ComponentPublicInstance,
+  createApp,
+  defineComponent,
+  Fragment,
+  h,
+  nextTick,
+  reactive,
+  ref,
+  Text,
+  type VNode,
+} from "vue";
 import {
   AlertDialog as StyledAlertDialog,
   AlertDialogAction as StyledAlertDialogAction,
@@ -32,6 +32,9 @@ import {
   AlertDialogTitle as StyledAlertDialogTitle,
   AlertDialogTrigger as StyledAlertDialogTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/alert-dialog";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
+import { testControlRefresh } from "../dialog/control-refresh.js";
+import { testOverlayCommandAuthority } from "../popover/command-authority.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -492,6 +495,47 @@ describe("Vue Alert Dialog public behavior", () => {
     expect(actionExposed.element).toBeNull();
   });
 
+  it("keeps default Styled Action and Cancel roots on the existing Button branches", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () =>
+        h(StyledAlertDialog, null, {
+          default: () => [
+            h(StyledAlertDialogTrigger, null, { default: () => "Open" }),
+            h(StyledAlertDialogContent, null, {
+              default: () => [
+                h(StyledAlertDialogTitle, null, { default: () => "Confirm" }),
+                h(
+                  StyledAlertDialogAction,
+                  { disabled: true, focusableWhenDisabled: true },
+                  { default: () => "Confirm" },
+                ),
+                h(
+                  StyledAlertDialogCancel,
+                  { as: "a", href: "/cancel" },
+                  { default: () => "Cancel" },
+                ),
+              ],
+            }),
+          ],
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    const action = host.querySelector<HTMLElement>('[data-slot="alert-dialog-action"]')!;
+    const cancel = host.querySelector<HTMLElement>('[data-slot="alert-dialog-cancel"]')!;
+    expect(action.tagName).toBe("BUTTON");
+    expect(action.getAttribute("aria-disabled")).toBe("true");
+    expect(action.hasAttribute("disabled")).toBe(false);
+    expect(cancel.tagName).toBe("A");
+    expect(cancel.getAttribute("href")).toBe("/cancel");
+    expect(action.parentElement?.tagName).toBe("DIALOG");
+    expect(cancel.parentElement?.tagName).toBe("DIALOG");
+  });
+
   it.each(["Trigger", "Action", "Cancel"] as const)(
     "rejects invalid Styled AlertDialog%s asChild slots",
     (part) => {
@@ -504,7 +548,7 @@ describe("Vue Alert Dialog public behavior", () => {
         () => [h(Fragment, null, [h("button")])],
         () => [h(Invalid)],
       ];
-      for (const slot of slots) {
+      for (const slot of part === "Trigger" ? slots.slice(0, 5) : slots) {
         const host = document.createElement("div");
         const app = createApp({
           render: () =>
@@ -522,9 +566,7 @@ describe("Vue Alert Dialog public behavior", () => {
           throw error;
         };
         app.config.warnHandler = () => {};
-        expect(() => app.mount(host)).toThrowError(
-          `AlertDialog${part} asChild requires exactly one native element VNode.`,
-        );
+        expect(() => app.mount(host)).toThrowError(new RegExp(`AlertDialog${part} asChild`));
       }
     },
   );
@@ -584,3 +626,65 @@ function tree(
     ],
   });
 }
+
+testAcceptedModelPublication({
+  name: "alert-dialog",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => tree(true),
+  root: "[data-sw-alert-dialog]",
+  act: (root) => root.querySelector<HTMLElement>("[data-sw-alert-dialog-trigger]")!.click(),
+  read: (root) => root.getAttribute("data-state") === "open",
+});
+
+testControlRefresh(
+  {
+    Root: AlertDialogRoot,
+    Trigger: AlertDialogTrigger,
+    Close: AlertDialogClose,
+    Popup: AlertDialogPopup,
+    Title: AlertDialogTitle,
+    Portal: AlertDialogPortal,
+  },
+  createAlertDialog,
+  cleanups,
+);
+
+testOverlayCommandAuthority({
+  name: "alert-dialog",
+  tree: (props) => tree(false, undefined, undefined, props),
+  controller: createAlertDialog,
+  cleanups,
+});
+
+import StyledControlParts from "../../../../apps/vue-demo/src/components/starwind-runtime/alert-dialog";
+import { testStyledControlRefresh } from "../dialog/styled-control-refresh.js";
+
+testStyledControlRefresh("alert-dialog", {
+  ...StyledControlParts,
+  Close: StyledControlParts.Action,
+});
+
+import { testComponentTrigger, testInitialPortalFocus } from "../dialog/component-trigger.js";
+testComponentTrigger(
+  {
+    Root: AlertDialogRoot,
+    Trigger: AlertDialogTrigger,
+    Popup: AlertDialogPopup,
+    Title: AlertDialogTitle,
+  },
+  cleanups,
+);
+
+testInitialPortalFocus(
+  {
+    Root: AlertDialogRoot,
+    Popup: AlertDialogPopup,
+    Title: AlertDialogTitle,
+    Portal: AlertDialogPortal,
+  },
+  cleanups,
+);

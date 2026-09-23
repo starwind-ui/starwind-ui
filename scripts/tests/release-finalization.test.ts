@@ -23,6 +23,19 @@ describe("Vue beta release finalization", () => {
     },
   );
 
+  it.each(["0.1.0", "0.2.0", "1.0.0"])(
+    "gives a Svelte-only beta %s its own GitHub prerelease identity",
+    (version) => {
+      expect(
+        deriveReleaseIdentity(
+          [{ entry: { name: "@starwind-ui/svelte", tag: "beta" }, manifest: { version } }],
+          "latest",
+          "abc123",
+        ),
+      ).toMatchObject({ prerelease: true, tagName: `svelte-v${version}` });
+    },
+  );
+
   it("gives a Runtime update its own identity when the CLI is unchanged", () => {
     expect(
       deriveReleaseIdentity(
@@ -44,6 +57,7 @@ describe("Vue beta release finalization", () => {
     ["@starwind-ui/vue", "0.1.0", "beta", "0.0.8", "0.1.0", false],
     ["@starwind-ui/vue", "0.1.0", "beta", null, "0.2.0", false],
     ["@starwind-ui/vue", "0.1.1", "beta", null, "0.1.1", false],
+    ["@starwind-ui/svelte", "0.1.0", "beta", null, "0.1.0", false],
     ["@starwind-ui/react", "0.1.0", "beta", null, "0.1.0", false],
     ["@starwind-ui/vue", "0.1.0", "next", null, "0.1.0", false],
   ])(
@@ -398,6 +412,47 @@ describe("routine release finalization", () => {
     packages: [{ name: "@starwind-ui/vue", version: "0.1.1", tag: "beta" }],
     vueLatest: "0.1.0",
   };
+
+  it("finalizes a first Svelte-only beta without creating latest", async () => {
+    const svelteManifests = [
+      {
+        entry: { name: "@starwind-ui/svelte", tag: "beta" },
+        manifest: { version: "0.1.0" },
+      },
+    ];
+    const release = await runReleaseFinalization({
+      gitStateLoader: async () => ({ head: "abc123" }),
+      metadataLoader: async () => ({ packageManifests: svelteManifests, tag: "latest" }),
+      publicationPlanLoader: async () => ({
+        packages: [{ name: "@starwind-ui/svelte", tag: "beta", version: "0.1.0" }],
+        svelteLatest: null,
+        vueLatest: null,
+      }),
+      registryVerificationOptions: { attempts: 1 },
+      system: {
+        capture: async (command: string, args: string[]) => {
+          if (command === "npm") {
+            return {
+              code: 0,
+              stderr: "",
+              stdout: JSON.stringify(args[2] === "version" ? "0.1.0" : { beta: "0.1.0" }),
+            };
+          }
+          if (command === "git" && args[0] === "ls-remote") {
+            return { code: 0, stderr: "", stdout: "" };
+          }
+          return { code: 1, stderr: "release not found", stdout: "" };
+        },
+        run: async () => undefined,
+      },
+    });
+
+    expect(release).toMatchObject({
+      prerelease: true,
+      preservedDistTags: { "@starwind-ui/svelte": { latest: null } },
+      tagName: "svelte-v0.1.0",
+    });
+  });
 
   it.each(["0.1.0", "0.1.1"])(
     "finalizes the saved Vue-only plan with latest at %s",

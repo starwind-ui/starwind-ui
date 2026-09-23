@@ -4,7 +4,8 @@ import type {
   AvatarImageLoadingStatus,
   AvatarLoadingStatusChangeDetails,
 } from "@starwind-ui/runtime/avatar";
-import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { type CSSProperties, inject, onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { mediaStatusKey } from "./AvatarRoot.vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -16,21 +17,16 @@ const emit = defineEmits<{
   loadingStatusChange: [status: AvatarImageLoadingStatus, detail: AvatarLoadingStatusChangeDetails];
 }>();
 const attrs = useAttrs();
+const requestRefresh = inject(mediaStatusKey, undefined);
 const imageRef = ref<HTMLImageElement | null>(null);
 let eventRoot: HTMLElement | undefined;
 
 defineExpose({ element: imageRef });
 
 function handleLoadingStatusChange(event: Event): void {
+  if (event.target !== eventRoot) return;
   const detail = (event as CustomEvent<AvatarLoadingStatusChangeDetails>).detail;
   emit("loadingStatusChange", detail.status, detail);
-}
-
-function notifyCurrentLoadingStatus(root: HTMLElement): void {
-  const status = root.getAttribute("data-image-loading-status") as AvatarImageLoadingStatus | null;
-  if (!status || status === "idle") return;
-
-  emit("loadingStatusChange", status, { previousStatus: "idle", status });
 }
 
 function unbindLoadingStatusChange(): void {
@@ -44,9 +40,16 @@ onMounted(() => {
 
   eventRoot = root;
   root.addEventListener("starwind:loading-status-change", handleLoadingStatusChange);
-  notifyCurrentLoadingStatus(root);
+  const status = root.getAttribute("data-image-loading-status") as AvatarImageLoadingStatus | null;
+  if (status && status !== "idle") {
+    emit("loadingStatusChange", status, { previousStatus: "idle", status });
+  }
+  requestRefresh?.();
 });
-onBeforeUnmount(unbindLoadingStatusChange);
+onBeforeUnmount(() => {
+  unbindLoadingStatusChange();
+  requestRefresh?.();
+});
 </script>
 
 <template>
@@ -57,7 +60,7 @@ onBeforeUnmount(unbindLoadingStatusChange);
     :src="props.src"
     data-sw-avatar-image
     data-image-loading-status="idle"
-    :style="[attrs.style, { visibility: 'hidden' }]"
+    :style="[attrs.style, { visibility: imageRef?.style.visibility ?? 'hidden' } as CSSProperties]"
     :hidden="false"
   />
 </template>

@@ -6,7 +6,9 @@
 "use client";
 
 import * as React from "react";
-
+import { useComposedRefs } from "../internal/compose-refs";
+import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
+import { TimedPlacementContext } from "./TooltipRoot";
 export type TooltipPopupProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "tabIndex" | "tabindex"
@@ -16,27 +18,39 @@ export type TooltipPopupProps = Omit<
   sideOffset?: number;
   avoidCollisions?: boolean;
 };
-
 const TooltipPopup = React.forwardRef<HTMLDivElement, TooltipPopupProps>(function TooltipPopup(
   { side = "top", align = "center", sideOffset = 8, avoidCollisions = true, ...props },
   forwardedRef,
 ) {
+  const register = React.useContext(TimedPlacementContext),
+    element = React.useRef<HTMLDivElement>(null);
+  const composedRef = useComposedRefs(forwardedRef, element);
+  useIsomorphicLayoutEffect(() => {
+    const node = element.current;
+    if (!node) return;
+    register?.(node, {
+      "data-side": String(side),
+      "data-align": String(align),
+      "data-side-offset": String(sideOffset),
+      "data-avoid-collisions": String(avoidCollisions),
+    });
+    return () => register?.(node, null);
+  }, [register, side, align, sideOffset, avoidCollisions]);
   return (
     <div
-      data-sw-tooltip-popup
-      role="tooltip"
+      {...props}
+      data-sw-tooltip-popup=""
+      data-sw-part="popup"
       data-state="closed"
       data-side={side}
       data-align={align}
       data-side-offset={sideOffset}
-      data-avoid-collisions={avoidCollisions ? "true" : "false"}
+      data-avoid-collisions={String(avoidCollisions)}
+      role="tooltip"
       hidden
-      ref={forwardedRef}
-      {...props}
+      ref={composedRef}
     />
   );
 });
-
 TooltipPopup.displayName = "Tooltip.Popup";
-
 export default TooltipPopup;

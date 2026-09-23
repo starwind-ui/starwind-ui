@@ -186,6 +186,10 @@ export function buildTabsSpecializedAdapterSpec(
     throw new Error(`${spec.displayName} cannot be rendered as the Tabs specialized adapter spec.`);
   }
 
+  if (contract.runtime.optionPropLifecycles?.syncKey !== "constructor-only") {
+    throw new Error("Tabs syncKey requires creation-only lifetime capture.");
+  }
+
   for (const part of TABS_REQUIRED_PARTS) {
     assertPart(spec, part);
   }
@@ -273,7 +277,6 @@ export function validateTabsSpecializedAdapterSpec(spec: TabsSpecializedAdapterS
   errors.push(...validatePresence(spec, tabs.presence));
   errors.push(...validateNamespace(spec, tabs.namespace));
 
-
   if (!arraysEqual(asArray(tabs.runtimeBoundary), TABS_RUNTIME_BOUNDARY)) {
     errors.push("Tabs specialized adapter spec runtimeBoundary must match Runtime-owned behavior.");
   }
@@ -281,9 +284,7 @@ export function validateTabsSpecializedAdapterSpec(spec: TabsSpecializedAdapterS
   return errors;
 }
 
-export function buildTabsAdapterOutputModel(
-  spec: TabsSpecializedAdapterSpec,
-): AdapterOutputModel {
+export function buildTabsAdapterOutputModel(spec: TabsSpecializedAdapterSpec): AdapterOutputModel {
   assertValidTabsAdapterOutputModelSpec(spec);
 
   const facts = getTabsControlledValuePresenceFacts(spec);
@@ -466,7 +467,9 @@ function getTabsControlledValuePresenceFacts(
   const valueControl = spec.tabs.valueControl;
   const options = spec.tabs.options;
   const panelVisibility = spec.tabs.panelVisibility;
-  const entriesByPart = new Map(spec.tabs.namespace.objectEntries.map((entry) => [entry.part, entry]));
+  const entriesByPart = new Map(
+    spec.tabs.namespace.objectEntries.map((entry) => [entry.part, entry]),
+  );
   const props = {
     activateOnFocus: getAdapterFamilyProp(
       getTargetProp(spec, options.activateOnFocus.prop, options.activateOnFocus.targetPart),
@@ -496,7 +499,11 @@ function getTabsControlledValuePresenceFacts(
       defaultValue: valueControl.state.initialAttribute,
       disabled: getStaticAttributeName(spec, anatomy.tab.part, "data-disabled"),
       indicator: anatomy.indicator.discoveryAttribute,
-      indicatorOrientation: getStaticAttributeName(spec, anatomy.indicator.part, "data-orientation"),
+      indicatorOrientation: getStaticAttributeName(
+        spec,
+        anatomy.indicator.part,
+        "data-orientation",
+      ),
       keepMounted: panelVisibility.keepMounted.attribute,
       list: anatomy.list.discoveryAttribute,
       listOrientation: getStaticAttributeName(spec, anatomy.list.part, "data-orientation"),
@@ -1028,10 +1035,7 @@ function getTabsSpecFileBasename(spec: TabsSpecializedAdapterSpec, partName: str
   return file.exportName;
 }
 
-function getControlledValuePresencePart(
-  spec: TabsSpecializedAdapterSpec,
-  partName: string,
-) {
+function getControlledValuePresencePart(spec: TabsSpecializedAdapterSpec, partName: string) {
   const part = getTabsAnatomyPart(spec, partName);
 
   return {

@@ -20,6 +20,7 @@ discover React from one target home.
 - `styled.ts` and `styled/`: styled component projection, printing, and writing for React
   demo/runtime wrappers.
 - `lifecycle-projection.ts`: React ref/effect/callback helpers.
+- `form-discovery.ts`: shared document discovery for Runtime Input and Dropzone refresh.
 - `*-overlay.ts`, `engine-viewport.ts`, and related modules: specialized family projection helpers.
 
 For the renderer fragment/helper pattern future targets should follow, see

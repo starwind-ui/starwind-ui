@@ -18,6 +18,7 @@ export type SidebarSpecializedAdapterSpec = SpecializedAdapterSpec & {
     adapterKind: "presence-disclosure-control";
     anatomy: SidebarAnatomyRecipe[];
     context: SidebarContextRecipe;
+    connection: AdapterSidebarFacts["connection"];
     namespace: SidebarNamespaceRecipe;
     providerOptions: SidebarProviderOptionsRecipe;
     runtimeBoundary: string[];
@@ -202,6 +203,11 @@ const SIDEBAR_NAMESPACE_NAMED_EXPORTS = [
   "SidebarTrigger",
 ] as const;
 const SIDEBAR_REQUIRED_PARTS = SIDEBAR_ANATOMY_PARTS;
+const SIDEBAR_CONNECTION = {
+  contextState: "controller-readback",
+  mobileSheetOwner: "nearest-provider",
+  mobileSheetState: "accepted-after-dispatch",
+} as const;
 const SIDEBAR_RUNTIME_BOUNDARY = [
   "desktop open state commit and controlled sync",
   "mobile open state commit and controlled sync",
@@ -259,6 +265,7 @@ export function buildSidebarSpecializedAdapterSpec(
       adapterKind: "presence-disclosure-control",
       anatomy: buildAnatomyRecipes(spec),
       context: buildContextRecipe(),
+      connection: { ...SIDEBAR_CONNECTION },
       namespace: buildNamespaceRecipe(spec),
       providerOptions: buildProviderOptionsRecipe(spec),
       runtimeBoundary: [...SIDEBAR_RUNTIME_BOUNDARY],
@@ -308,6 +315,7 @@ export function validateSidebarSpecializedAdapterSpec(
     "adapterKind",
     "anatomy",
     "context",
+    "connection",
     "namespace",
     "providerOptions",
     "runtimeBoundary",
@@ -323,6 +331,11 @@ export function validateSidebarSpecializedAdapterSpec(
     "stateSynchronization",
     "storagePersistence",
   ]);
+  if (!recordsEqual(sidebar.connection, SIDEBAR_CONNECTION)) {
+    errors.push(
+      "Sidebar specialized adapter spec connection must preserve restored context and accepted nearest-provider Sheet state.",
+    );
+  }
 
   for (const field of Object.keys(sidebar)) {
     if (behaviorFields.has(field)) {
@@ -356,7 +369,6 @@ export function validateSidebarSpecializedAdapterSpec(
       "Sidebar specialized adapter spec styled boundary must match styled-only Sidebar anatomy.",
     );
   }
-
 
   if (!arraysEqual(asArray(sidebar.runtimeBoundary), SIDEBAR_RUNTIME_BOUNDARY)) {
     errors.push(
@@ -567,6 +579,7 @@ function getSidebarFacts(spec: SidebarSpecializedAdapterSpec): AdapterSidebarFac
       triggerState: toggleTargets.trigger.stateAttribute,
       triggerType: toggleTargets.trigger.buttonTypeAttribute,
     },
+    connection: { ...spec.sidebar.connection },
     context: {
       contextExports: [...spec.sidebar.namespace.contextExports],
       contextTypeExports: [...spec.sidebar.namespace.contextTypeExports],
@@ -1064,10 +1077,7 @@ function getPart(spec: SpecializedAdapterSpec, partName: string) {
   return part;
 }
 
-function getSidebarOutputAnatomyPart(
-  spec: SidebarSpecializedAdapterSpec,
-  partName: string,
-) {
+function getSidebarOutputAnatomyPart(spec: SidebarSpecializedAdapterSpec, partName: string) {
   const part = spec.sidebar.anatomy.find((candidate) => candidate.part === partName);
   if (!part) {
     throw new Error(
@@ -1123,10 +1133,7 @@ function getSidebarOutputFileBasename(
   return file.exportName;
 }
 
-function assertSidebarOutputPublicRef(
-  spec: SidebarSpecializedAdapterSpec,
-  partName: string,
-): void {
+function assertSidebarOutputPublicRef(spec: SidebarSpecializedAdapterSpec, partName: string): void {
   if (!hasPublicRef(spec, partName)) {
     throw new Error(
       `Sidebar specialized adapter spec output model requires ${partName} public ref.`,

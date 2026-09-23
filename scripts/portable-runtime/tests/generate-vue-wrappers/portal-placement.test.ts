@@ -1,11 +1,10 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { generateVuePrimitiveWrappers } from "../../generate-vue-wrappers.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
+import { compactCode } from "../source-comparison.js";
 
 const portalFamilies = [
   ["alert-dialog", "AlertDialogPortal.vue", "alert-dialog"],
@@ -38,16 +37,22 @@ describe("generated Vue framework-owned Portal placement", () => {
       expect(source).toContain(
         `import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/${runtimeSubpath}";`,
       );
-      expect(source).toContain('import { useVuePortalPlacement } from "../_internal/portal";');
-      expect(source).toContain('data-sw-portal-placement="framework"');
-      expect(source).toContain("data-floating-root");
-      expect(source).toContain(":data-disabled=\"props.disabled ? '' : undefined\"");
-      expect(source).toContain(":data-placement=\"placement.ready.value ? 'ready' : 'pending'\"");
-      expect(source).toContain(':to="placement.target.value"');
-      expect(source).toContain(':disabled="placement.disabled.value"');
-      expect(source).toContain("reference: () =>");
-      expect(source).not.toContain(':to="props.container"');
-      expect(source).not.toContain('container: "body"');
+      expect(compactCode(source)).toContain(
+        compactCode('import { useVuePortalPlacement } from "../_internal/portal";'),
+      );
+      expect(compactCode(source)).toContain(compactCode('data-sw-portal-placement="framework"'));
+      expect(compactCode(source)).toContain(compactCode("data-floating-root"));
+      expect(compactCode(source)).toContain(
+        compactCode(":data-disabled=\"props.disabled ? '' : undefined\""),
+      );
+      expect(compactCode(source)).toContain(
+        compactCode(":data-placement=\"placement.ready.value ? 'ready' : 'pending'\""),
+      );
+      expect(compactCode(source)).toContain(compactCode(':to="placement.target.value"'));
+      expect(compactCode(source)).toContain(compactCode(':disabled="placement.disabled.value"'));
+      expect(compactCode(source)).toContain(compactCode("reference: () =>"));
+      expect(compactCode(source)).not.toContain(compactCode(':to="props.container"'));
+      expect(compactCode(source)).not.toContain(compactCode('container: "body"'));
     }
   });
 
@@ -57,37 +62,45 @@ describe("generated Vue framework-owned Portal placement", () => {
     await generateVuePrimitiveWrappers({ outputDir: "generated", repoRoot });
     const source = await readFile(path.join(repoRoot, "generated/_internal/portal.ts"), "utf8");
 
-    expect(source).toContain("export function useVuePortalPlacement");
-    expect(source).toContain("options.runtime.resolvePortalPlacement");
-    expect(source).toContain("options.runtime.reportPortalPlacement");
-    expect(source).toContain("options.reference?.()");
-    expect(source).toContain("if (inlineReference?.isConnected) return inlineReference");
-    expect(source).toContain(
-      "if (authoredRoot instanceof HTMLElement && authoredRoot.isConnected) return authoredRoot",
+    expect(compactCode(source)).toContain(compactCode("export function useVuePortalPlacement"));
+    expect(compactCode(source)).toContain(compactCode("options.runtime.resolvePortalPlacement"));
+    expect(compactCode(source)).toContain(compactCode("options.runtime.reportPortalPlacement"));
+    expect(compactCode(source)).toContain(compactCode("options.reference?.()"));
+    expect(compactCode(source)).toContain(
+      compactCode("if (inlineReference?.isConnected) return inlineReference"),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode(
+        "if (authoredRoot instanceof HTMLElement && authoredRoot.isConnected) return authoredRoot",
+      ),
     );
     expect(source.indexOf("inlineReference?.isConnected")).toBeLessThan(
       source.indexOf("options.reference?.()"),
     );
-    expect(source).toContain("new MutationObserver");
-    expect(source).toContain("wrapper.parentElement");
-    expect(source).toContain("function acceptsTeleportTarget(");
-    expect(source).toContain("target.ownerDocument === wrapper.ownerDocument");
-    expect(source).toContain("target !== wrapper");
-    expect(source).toContain("!wrapper.contains(target)");
-    expect(source).toContain("wrapper.parentElement !== target.value");
-    expect(source).toContain("targetChanged(wrapper, placedTarget)");
-    expect(source).not.toContain("nextTarget.contains(wrapper)");
+    expect(compactCode(source)).toContain(compactCode("new MutationObserver"));
+    expect(compactCode(source)).toContain(compactCode("wrapper.parentElement"));
+    expect(compactCode(source)).toContain(compactCode("function acceptsTeleportTarget("));
+    expect(compactCode(source)).toContain(
+      compactCode("target.ownerDocument === wrapper.ownerDocument"),
+    );
+    expect(compactCode(source)).toContain(compactCode("target !== wrapper"));
+    expect(compactCode(source)).toContain(compactCode("!wrapper.contains(target)"));
+    expect(compactCode(source)).toContain(compactCode("wrapper.parentElement !== target.value"));
+    expect(compactCode(source)).toContain(compactCode("targetChanged(wrapper, placedTarget)"));
+    expect(compactCode(source)).not.toContain(compactCode("nextTarget.contains(wrapper)"));
     expect(source.indexOf("ready.value = false")).toBeLessThan(
       source.indexOf("options.runtime.reportPortalPlacement(wrapper, null)"),
     );
     expect(source.indexOf("ready.value = true")).toBeLessThan(
       source.indexOf("options.runtime.reportPortalPlacement(wrapper, { ready: true"),
     );
-    expect(source).toContain("stopDocumentObservation?.()");
-    expect(source).toContain("if (!mounted || !wrapper) return");
-    expect(source).toContain('wrapper.setAttribute("data-disabled", "")');
-    expect(source).toContain('const INLINE_TELEPORT_TARGET = "[data-sw-vue-inline-portal]"');
-    expect(source).not.toContain('shallowRef<PortalTarget>("body")');
-    expect(source).not.toContain("@starwind-ui/runtime/");
+    expect(compactCode(source)).toContain(compactCode("stopDocumentObservation?.()"));
+    expect(compactCode(source)).toContain(compactCode("if (!mounted || !wrapper) return"));
+    expect(compactCode(source)).toContain(compactCode('wrapper.setAttribute("data-disabled", "")'));
+    expect(compactCode(source)).toContain(
+      compactCode('const INLINE_TELEPORT_TARGET = "[data-sw-vue-inline-portal]"'),
+    );
+    expect(compactCode(source)).not.toContain(compactCode('shallowRef<PortalTarget>("body")'));
+    expect(compactCode(source)).not.toContain(compactCode("@starwind-ui/runtime/"));
   });
 });

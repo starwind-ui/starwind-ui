@@ -27,7 +27,7 @@ describe("Vue public-beta vertical-slice workspace contract", () => {
       "vue-demo:smoke": "pnpm --filter=vue-demo smoke",
     });
     expect(rootPackage.scripts["runtime:generate:all"]).toBe(
-      "pnpm runtime:generate:astro && pnpm runtime:generate:react && pnpm runtime:generate:vue",
+      "pnpm runtime:generate:astro && pnpm runtime:generate:react && pnpm runtime:generate:vue && pnpm runtime:generate:svelte",
     );
   });
 

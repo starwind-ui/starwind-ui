@@ -181,6 +181,51 @@ describe("setup command", () => {
     expect(mockSetupStarwindProEnv).toHaveBeenCalled();
   });
 
+  it("rejects Pro setup for an existing Svelte config before mutation", async () => {
+    mockGetConfig.mockResolvedValue({
+      $schema: "https://starwind.dev/config-schema.v2.json",
+      version: 2,
+      framework: "svelte",
+      registry: { source: "bundled", version: "0.1.0" },
+      tailwind: { css: "src/styles/globals.css", baseColor: "neutral", cssVariables: true },
+      componentDir: "src/components/starwind",
+      components: [],
+    });
+
+    await expect(setup({ pro: true })).rejects.toThrow("process.exit called");
+
+    expect(mockLog.error).toHaveBeenCalledWith(
+      "Svelte 5 beta does not support Starwind Pro setup.",
+    );
+    expect(mockCheckStarwindProEnv).not.toHaveBeenCalled();
+    expect(mockSetupStarwindProConfig).not.toHaveBeenCalled();
+    expect(mockSetupStarwindProEnv).not.toHaveBeenCalled();
+  });
+
+  it("passes Pro intent to init before a missing-config setup can mutate a Svelte host", async () => {
+    mockFileExists.mockResolvedValue(false);
+    mockGetConfig.mockResolvedValue({
+      $schema: "https://starwind.dev/config-schema.v2.json",
+      version: 2,
+      framework: "svelte",
+      registry: { source: "bundled", version: "0.1.0" },
+      tailwind: { css: "src/styles/globals.css", baseColor: "neutral", cssVariables: true },
+      componentDir: "src/components/starwind",
+      components: [],
+    });
+
+    await expect(setup({ yes: true })).rejects.toThrow("process.exit called");
+
+    expect(mockInit).toHaveBeenCalledWith(true, {
+      defaults: true,
+      packageManager: undefined,
+      pro: true,
+    });
+    expect(mockCheckStarwindProEnv).not.toHaveBeenCalled();
+    expect(mockSetupStarwindProConfig).not.toHaveBeenCalled();
+    expect(mockSetupStarwindProEnv).not.toHaveBeenCalled();
+  });
+
   it("should handle errors during setup", async () => {
     mockSetupStarwindProConfig.mockRejectedValue(
       new Error("Failed to update starwind.config.json"),

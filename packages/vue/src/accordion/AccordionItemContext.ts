@@ -6,7 +6,6 @@
 import { type InjectionKey, inject } from "vue";
 
 export type AccordionItemContextValue = Readonly<{
-  value: string | undefined;
   disabled: boolean;
 }>;
 

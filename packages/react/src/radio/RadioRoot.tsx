@@ -9,251 +9,265 @@ import { createRadio, type RadioCheckedChangeDetails } from "@starwind-ui/runtim
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 import { useRadioGroupContext } from "../radio-group/RadioGroupContext";
-
 export type RadioRootProps = Omit<
-  React.HTMLAttributes<HTMLSpanElement>,
-  "defaultChecked" | "onChange"
-> &
-  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "defaultChecked" | "onChange" | "type"> & {
-    checked?: boolean;
-    defaultChecked?: boolean;
-    disabled?: boolean;
-    form?: string;
-    id?: string;
-    name?: string;
-    nativeButton?: boolean;
-    onCheckedChange?: (checked: boolean, details: RadioCheckedChangeDetails) => void;
-    readOnly?: boolean;
-    required?: boolean;
-    value: string;
-  };
-
-const visuallyHiddenStyle = {
-  border: 0,
-  clip: "rect(0 0 0 0)",
-  height: "1px",
-  margin: "-1px",
-  overflow: "hidden",
-  position: "absolute",
-  whiteSpace: "nowrap",
-  width: "1px",
-} satisfies React.CSSProperties;
-
+  React.HTMLAttributes<HTMLSpanElement> & React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "onChange" | "defaultChecked" | "type" | "value"
+> & {
+  defaultChecked?: boolean;
+  disabled?: boolean;
+  form?: string;
+  id?: string;
+  name?: string;
+  nativeButton?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  checked?: boolean;
+  value: string;
+  onCheckedChange?: (checked: boolean, detail: RadioCheckedChangeDetails) => void;
+};
 const RadioRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, RadioRootProps>(
   function RadioRoot(
     {
-      checked,
       children,
-      defaultChecked = false,
+      defaultChecked,
       disabled = false,
       form,
       id,
       name,
       nativeButton = false,
-      onCheckedChange,
       readOnly = false,
       required = false,
+      checked,
       value,
-      ...props
+      onCheckedChange,
+      ...rest
     },
     forwardedRef,
   ) {
-    const rootRef = React.useRef<HTMLSpanElement | HTMLButtonElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createRadio> | undefined>(undefined);
-    const checkedRef = React.useRef(checked);
-    const onCheckedChangeRef = React.useRef(onCheckedChange);
-    const defaultCheckedRef = React.useRef(defaultChecked);
-    const radioGroup = useRadioGroupContext();
-    const groupChecked = radioGroup && value !== undefined ? radioGroup.value === value : undefined;
-    const effectiveDisabled = disabled || radioGroup?.disabled === true;
-    const effectiveForm = form ?? radioGroup?.form;
-    const effectiveName = name ?? radioGroup?.name;
-    const effectiveReadOnly = readOnly || radioGroup?.readOnly === true;
-    const effectiveRequired = required || radioGroup?.required === true;
-    const [uncontrolledChecked, setUncontrolledCheckedState] = React.useState(
-      groupChecked ?? defaultCheckedRef.current,
-    );
-    const uncontrolledCheckedRef = React.useRef(uncontrolledChecked);
-
-    const setUncontrolledChecked = React.useCallback((nextChecked: boolean) => {
-      uncontrolledCheckedRef.current = nextChecked;
-      setUncontrolledCheckedState(nextChecked);
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      checkedRef.current = checked;
-    }, [checked]);
-
-    useIsomorphicLayoutEffect(() => {
-      onCheckedChangeRef.current = onCheckedChange;
-    }, [onCheckedChange]);
-
+    const inputs = React.useRef({
+      defaultChecked,
+      disabled,
+      form,
+      id,
+      name,
+      nativeButton,
+      readOnly,
+      required,
+      checked,
+      value,
+      onCheckedChange,
+    });
+    inputs.current = {
+      defaultChecked,
+      disabled,
+      form,
+      id,
+      name,
+      nativeButton,
+      readOnly,
+      required,
+      checked,
+      value,
+      onCheckedChange,
+    };
+    const group = useRadioGroupContext();
+    function groupChecked() {
+      return group === undefined ? undefined : group?.value === inputs.current.value;
+    }
+    function effectiveChecked() {
+      return groupChecked() ?? inputs.current.checked;
+    }
+    function effectiveDisabled() {
+      return inputs.current.disabled || group?.disabled === true;
+    }
+    function effectiveReadOnly() {
+      return inputs.current.readOnly || group?.readOnly === true;
+    }
+    function effectiveRequired() {
+      return inputs.current.required || group?.required === true;
+    }
+    function effectiveForm() {
+      return group?.form ?? inputs.current.form;
+    }
+    function effectiveName() {
+      return group?.name ?? inputs.current.name;
+    }
+    const initialChecked = React.useRef(
+      effectiveChecked() ?? inputs.current.defaultChecked ?? false,
+    ).current;
+    const resetSeed = React.useRef(inputs.current.defaultChecked ?? initialChecked).current;
+    const [renderedValue, setRenderedValue] = React.useState(initialChecked);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createRadio>;
+      accepted: boolean;
+      unsubscribe?: () => void;
+      unsubscribeSync?: () => void;
+      disabled?: boolean;
+      readOnly?: boolean;
+    }>({ accepted: initialChecked }).current;
+    const rootRef = React.useRef<HTMLElement | null>(null);
     const composedRef = React.useCallback(
-      (node: HTMLSpanElement | HTMLButtonElement | null) => {
+      (node: HTMLElement | null) => {
         rootRef.current = node;
         return setRef(forwardedRef, node);
       },
       [forwardedRef],
     );
-
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root) return;
-
-      const instance = createRadio(root, {
-        defaultChecked: uncontrolledCheckedRef.current,
-        disabled: effectiveDisabled,
-        form: effectiveForm,
-        id,
-        name: effectiveName,
-        readOnly: effectiveReadOnly,
-        required: effectiveRequired,
-        value,
-        onCheckedChange: (checked, details) => {
-          onCheckedChangeRef.current?.(checked, details);
+    const selected = effectiveChecked() ?? renderedValue;
+    function disconnect() {
+      const owned = connection.instance;
+      if (!owned) return;
+      connection.accepted = owned.getChecked();
+      connection.unsubscribe?.();
+      connection.unsubscribeSync?.();
+      connection.instance = undefined;
+      owned.destroy();
+    }
+    function publishRuntime(owned: ReturnType<typeof createRadio>) {
+      if (connection.instance !== owned) return;
+      const next = owned.getChecked();
+      connection.accepted = next;
+      if (group === undefined && inputs.current.checked === undefined) setRenderedValue(next);
+    }
+    function connect(root: HTMLElement) {
+      disconnect();
+      const desired = effectiveChecked() ?? connection.accepted;
+      const owned = createRadio(root, {
+        defaultChecked: resetSeed,
+        ...(group !== undefined || inputs.current.checked !== undefined
+          ? { checked: desired }
+          : {}),
+        disabled: inputs.current.disabled,
+        form: inputs.current.form,
+        id: inputs.current.id,
+        name: inputs.current.name,
+        readOnly: inputs.current.readOnly,
+        required: inputs.current.required,
+        value: inputs.current.value,
+        onCheckedChange: (next, detail) => {
+          inputs.current.onCheckedChange?.(next, detail);
         },
-        ...(checkedRef.current !== undefined
-          ? { checked: checkedRef.current }
-          : groupChecked !== undefined
-            ? { checked: groupChecked }
-            : {}),
       });
-      instanceRef.current = instance;
-      const unsubscribe = instance.subscribe("checkedChange", (details) => {
-        details.onAccepted(() => {
-          if (checkedRef.current === undefined && radioGroup === undefined) {
-            setUncontrolledChecked(details.checked);
-          }
-        });
+      connection.instance = owned;
+      connection.disabled = inputs.current.disabled;
+      connection.readOnly = inputs.current.readOnly;
+      if (owned.getChecked() !== desired) owned.setChecked(desired, { emit: false });
+      connection.unsubscribe = owned.subscribe("checkedChange", (detail) =>
+        detail.onAccepted(() => {
+          if (connection.instance !== owned) return;
+          publishRuntime(owned);
+        }),
+      );
+      connection.unsubscribeSync = owned.subscribe("stateSync", () => {
+        publishRuntime(owned);
       });
-      const unsubscribeStateSync = instance.subscribe("stateSync", () => {
-        if (checkedRef.current === undefined && radioGroup === undefined) {
-          setUncontrolledChecked(instance.getChecked());
-        }
+      publishRuntime(owned);
+    }
+    function applyParent() {
+      const owned = connection.instance,
+        next = effectiveChecked();
+      if (!owned || next === undefined || owned.getChecked() === next) return;
+      owned.setChecked(next, { emit: false });
+      publishRuntime(owned);
+    }
+    function applyOwnState() {
+      const owned = connection.instance;
+      if (!owned) return;
+      const nextdisabled = inputs.current.disabled;
+      if (nextdisabled !== connection.disabled) {
+        connection.disabled = nextdisabled;
+        owned.setDisabled(nextdisabled);
+        if (group && nextdisabled) owned.root.setAttribute("data-disabled", "");
+      }
+      const nextreadOnly = inputs.current.readOnly;
+      if (nextreadOnly !== connection.readOnly) {
+        connection.readOnly = nextreadOnly;
+        owned.setReadOnly(nextreadOnly);
+        if (group && nextreadOnly) owned.root.setAttribute("data-readonly", "");
+      }
+    }
+    function applyFormOptions() {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.setFormOptions({
+        form: inputs.current.form,
+        name: inputs.current.name,
+        required: inputs.current.required,
+        value: inputs.current.value,
       });
-
-      return () => {
-        unsubscribeStateSync();
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
-    }, [effectiveForm, effectiveName, id, nativeButton, value]);
-
+    }
     useIsomorphicLayoutEffect(() => {
-      if (checked === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getChecked() === checked) return;
-
-      instance.setChecked(checked, { emit: false });
-    }, [checked]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (groupChecked === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getChecked() === groupChecked) return;
-
-      instance.setChecked(groupChecked, { emit: false });
-    }, [groupChecked]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setDisabled(effectiveDisabled);
-    }, [effectiveDisabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setReadOnly(effectiveReadOnly);
-    }, [effectiveReadOnly]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setFormOptions({
-        form: effectiveForm,
-        name: effectiveName,
-        required: effectiveRequired,
-        value,
-      });
-    }, [effectiveForm, effectiveName, effectiveRequired, value]);
-
-    const renderedChecked = checked ?? groupChecked ?? uncontrolledChecked;
-    const commonProps: React.HTMLAttributes<HTMLElement> &
-      Record<`data-${string}`, string | undefined> = {
-      "data-sw-radio": "",
-      "data-default-checked": defaultCheckedRef.current ? "true" : undefined,
-      "data-form": effectiveForm,
-      "data-id": id,
-      "data-name": effectiveName,
-      "data-value": value,
-      "aria-checked": renderedChecked,
-      "data-checked": renderedChecked ? "" : undefined,
-      "data-disabled": effectiveDisabled ? "" : undefined,
-      "data-readonly": effectiveReadOnly ? "" : undefined,
-      "data-required": effectiveRequired ? "" : undefined,
-      "data-unchecked": !renderedChecked ? "" : undefined,
-      role: "radio",
-      tabIndex: effectiveDisabled ? -1 : 0,
-    };
+      if (rootRef.current) connect(rootRef.current);
+      return disconnect;
+    }, [id, nativeButton]);
+    useIsomorphicLayoutEffect(applyParent, [checked, groupChecked()]);
+    React.useEffect(applyOwnState, [disabled, readOnly]);
+    useIsomorphicLayoutEffect(applyFormOptions, [form, name, required, value]);
     const input = (
       <input
-        data-sw-radio-input
-        aria-hidden="true"
-        defaultChecked={renderedChecked}
-        defaultValue={value}
-        disabled={effectiveDisabled}
-        form={effectiveForm}
-        id={nativeButton ? undefined : id}
-        name={effectiveName}
-        required={effectiveRequired}
-        style={visuallyHiddenStyle}
-        tabIndex={-1}
-        type="radio"
+        {...{
+          "data-sw-radio-input": "",
+          type: "radio",
+          "aria-hidden": "true",
+          tabIndex: -1,
+          defaultChecked: initialChecked,
+          disabled: effectiveDisabled(),
+          form: effectiveForm(),
+          name: effectiveName(),
+          required: effectiveRequired(),
+          defaultValue: inputs.current.value,
+          id: inputs.current.nativeButton ? undefined : inputs.current.id,
+        }}
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          margin: -1,
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+          whiteSpace: "nowrap",
+          border: 0,
+        }}
       />
     );
-
-    if (nativeButton) {
-      return (
-        <>
-          <button
-            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-            {...commonProps}
-            disabled={effectiveDisabled}
-            id={id}
-            ref={composedRef as React.Ref<HTMLButtonElement>}
-            type="button"
-          >
-            {children}
-          </button>
-          {input}
-        </>
-      );
-    }
-
+    const element = React.createElement(
+      inputs.current.nativeButton ? "button" : "span",
+      {
+        ...rest,
+        ...{
+          "data-sw-radio": "",
+          "data-sw-part": "root",
+          role: "radio",
+          "aria-checked": selected,
+          "aria-disabled": effectiveDisabled() ? "true" : undefined,
+          "data-default-checked": group === undefined && resetSeed ? "true" : undefined,
+          "data-checked": selected ? "" : undefined,
+          "data-unchecked": selected ? undefined : "",
+          "data-disabled": effectiveDisabled() ? "" : undefined,
+          "data-readonly": effectiveReadOnly() ? "" : undefined,
+          "data-required": effectiveRequired() ? "" : undefined,
+          "data-form": inputs.current.form,
+          "data-id": inputs.current.id,
+          "data-name": inputs.current.name,
+          "data-value": inputs.current.value,
+          id: inputs.current.nativeButton ? inputs.current.id : undefined,
+          type: inputs.current.nativeButton ? "button" : undefined,
+          disabled: inputs.current.nativeButton ? effectiveDisabled() : undefined,
+          tabIndex: effectiveDisabled() ? -1 : 0,
+        },
+        ref: composedRef,
+      },
+      children,
+      !inputs.current.nativeButton ? input : undefined,
+    );
     return (
-      <span
-        {...(props as React.HTMLAttributes<HTMLSpanElement>)}
-        {...commonProps}
-        ref={composedRef as React.Ref<HTMLSpanElement>}
-      >
-        {children}
-        {input}
-      </span>
+      <>
+        {element}
+        {inputs.current.nativeButton ? input : null}
+      </>
     );
   },
 );
-
 RadioRoot.displayName = "Radio.Root";
-
 export default RadioRoot;

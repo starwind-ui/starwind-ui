@@ -1,14 +1,13 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 
@@ -48,15 +47,15 @@ describe("generated Vue Carousel Primitive", () => {
     const index = output.get("index.ts")!;
     const all = [...output.values()].join("\n");
 
-    expect(root).toContain("createCarousel");
-    expect(root).toContain("onMounted");
-    expect(root).toContain("onBeforeUnmount");
-    expect(root).toContain("watch(");
-    expect(root).toContain("instance.reInit");
-    expect(root).toContain("setApi(instance.api)");
-    expect(root).toContain("defineExpose");
-    expect(root).toContain("defineExpose({ element })");
-    expect(root).toContain('data-auto-init="false"');
+    expect(compactCode(root)).toContain(compactCode("createCarousel"));
+    expect(compactCode(root)).toContain(compactCode("onMounted"));
+    expect(compactCode(root)).toContain(compactCode("onBeforeUnmount"));
+    expect(compactCode(root)).toContain(compactCode("watch("));
+    expect(compactCode(root)).toContain(compactCode("instance.reInit"));
+    expect(compactCode(root)).toContain(compactCode("callback?.(instance.api)"));
+    expect(compactCode(root)).toContain(compactCode("defineExpose"));
+    expect(compactCode(root)).toContain(compactCode("defineExpose({ element })"));
+    expect(compactCode(root)).toContain(compactCode('data-auto-init="false"'));
     expect(item).toContain('role="group"');
     expect(item).toContain('aria-roledescription="slide"');
     expect(previous).toContain('type="button"');

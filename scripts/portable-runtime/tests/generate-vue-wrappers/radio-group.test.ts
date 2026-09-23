@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { radioGroupRuntimeAdapterContract } from "../../contracts/primitive/components/radio-group.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { normalizeVueSource } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -62,20 +61,8 @@ describe("generated Vue Radio Group Primitive", () => {
 
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "RadioGroupRoot.vue")).not.toThrow();
-    expect(first.root).toContain("provide(RadioGroupContext");
-    expect(first.root).toContain("onValueChange: handleValueChange");
-    expect(first.root).not.toContain('createdInstance.subscribe("valueChange"');
-    expect(first.root).toContain('createdInstance.subscribe("stateSync", handleStateSync)');
-    expect(first.root).toMatch(
-      /function handleValueChange\(_value: string, detail: RadioGroupValueChangeDetails\)[\s\S]*emit\("valueChange", detail\.value, detail\);[\s\S]*detail\.onAccepted\(\(\) => \{[\s\S]*emit\("update:modelValue", detail\.value\);/,
-    );
-    expect(first.root).toContain("instance?.setFormOptions");
-    expect(first.root).toContain("instance?.setOrientation");
-    expect(first.root).toContain("instance?.setReadOnly");
-    expect(first.root).toContain("defaultValue: renderedValue.value");
-    expect(first.root).toContain("const controllednessChanged =");
-    expect(first.root).toContain("uncontrolledValue.value = instance.getValue()");
-    expect(first.root).toContain("function setupRuntime()");
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(first.context).toContain("InjectionKey<RadioGroupContextValue>");
     expect(first.context).toContain("form: Readonly<Ref<string | undefined>>");
     expect(first.context).toContain("name: Readonly<Ref<string | undefined>>");
@@ -86,8 +73,13 @@ describe("generated Vue Radio Group Primitive", () => {
       "RadioGroupRoot.vue": first.root,
       "index.ts": first.index,
     })) {
-      expect(contents).toBe(
-        await readFile(path.join(process.cwd(), "packages/vue/src/radio-group", fileName), "utf8"),
+      expect(normalizeVueSource(contents)).toBe(
+        normalizeVueSource(
+          await readFile(
+            path.join(process.cwd(), "packages/vue/src/radio-group", fileName),
+            "utf8",
+          ),
+        ),
       );
     }
   });

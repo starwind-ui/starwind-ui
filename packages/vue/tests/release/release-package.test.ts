@@ -252,6 +252,7 @@ const EXPECTED_DIALOG_EXPORTS = [
   "Dialog",
   "DialogBackdrop",
   "DialogClose",
+  "DialogContext",
   "DialogDescription",
   "DialogPopup",
   "DialogRoot",
@@ -263,6 +264,7 @@ const EXPECTED_DRAWER_EXPORTS = [
   "Drawer",
   "DrawerBackdrop",
   "DrawerClose",
+  "DrawerContext",
   "DrawerDescription",
   "DrawerPopup",
   "DrawerPortal",
@@ -285,6 +287,7 @@ const EXPECTED_ALERT_DIALOG_EXPORTS = [
   "AlertDialog",
   "AlertDialogBackdrop",
   "AlertDialogClose",
+  "AlertDialogContext",
   "AlertDialogDescription",
   "AlertDialogPopup",
   "AlertDialogPortal",
@@ -292,6 +295,7 @@ const EXPECTED_ALERT_DIALOG_EXPORTS = [
   "AlertDialogTitle",
   "AlertDialogTrigger",
   "AlertDialogViewport",
+  "__useAlertDialogControl",
   "default",
 ].sort();
 const EXPECTED_INPUT_EXPORTS = ["Input", "InputRoot", "default"].sort();
@@ -403,7 +407,8 @@ const EXPECTED_TOGGLE_GROUP_EXPORTS = [
 const EXPECTED_ENTRY_JAVA_SCRIPT = vuePackageSubpaths
   .map(({ exportTarget }) => exportTarget.import.replace("./dist/", ""))
   .sort();
-const EXPECTED_SHARED_JAVA_SCRIPT_CHUNKS = vuePackageSubpaths.length + 6;
+// Native overlay controls add one shared helper chunk to the existing helper inventory.
+const EXPECTED_SHARED_JAVA_SCRIPT_CHUNKS = vuePackageSubpaths.length + 8;
 
 describe("release-like @starwind-ui/vue package", () => {
   it("imports the exact built root and component subpath values", async () => {

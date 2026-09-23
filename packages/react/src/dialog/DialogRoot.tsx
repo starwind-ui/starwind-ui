@@ -14,55 +14,68 @@ import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
+export const NativeOverlayControlContext = React.createContext<(() => void) | undefined>(undefined);
 export type DialogRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
-  defaultOpen?: boolean;
   open?: boolean;
+  defaultOpen?: boolean;
   closeOnEscape?: boolean;
   closeOnOutsideInteract?: boolean;
   modal?: boolean;
-  onCloseComplete?: (details: DialogCloseCompleteDetails) => void;
-  onOpenChange?: (open: boolean, details: DialogOpenChangeDetails) => void;
+  onOpenChange?: (open: boolean, detail: DialogOpenChangeDetails) => void;
+  onCloseComplete?: (detail: DialogCloseCompleteDetails) => void;
 };
-
 const DialogRoot = React.forwardRef<HTMLDivElement, DialogRootProps>(function DialogRoot(
   {
-    defaultOpen = false,
     open,
+    defaultOpen,
     closeOnEscape = true,
     closeOnOutsideInteract = true,
     modal = true,
-    onCloseComplete,
     onOpenChange,
+    onCloseComplete,
     ...props
   },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createDialog> | undefined>(undefined);
-  const onCloseCompleteRef = React.useRef(onCloseComplete);
-  const onOpenChangeRef = React.useRef(onOpenChange);
-  const openRef = React.useRef(open);
-  const defaultOpenRef = React.useRef(defaultOpen);
-  const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
-  const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
-
-  const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
-    uncontrolledOpenRef.current = nextOpen;
-    setUncontrolledOpenState(nextOpen);
-  }, []);
-
+  const inputs = React.useRef({
+    open,
+    closeOnEscape,
+    closeOnOutsideInteract,
+    modal,
+    onOpenChange,
+    onCloseComplete,
+  });
   useIsomorphicLayoutEffect(() => {
-    onCloseCompleteRef.current = onCloseComplete;
-  }, [onCloseComplete]);
-
-  useIsomorphicLayoutEffect(() => {
-    onOpenChangeRef.current = onOpenChange;
-  }, [onOpenChange]);
-
-  useIsomorphicLayoutEffect(() => {
-    openRef.current = open;
-  }, [open]);
-
+    inputs.current = {
+      open,
+      closeOnEscape,
+      closeOnOutsideInteract,
+      modal,
+      onOpenChange,
+      onCloseComplete,
+    };
+  });
+  const initialDefaultOpen = React.useRef(defaultOpen ?? false).current;
+  const initialOpen = React.useRef(open ?? initialDefaultOpen).current;
+  const [renderedState, setRenderedOpen] = React.useState<boolean>(initialOpen);
+  const connection = React.useRef<{
+    instance?: ReturnType<typeof createDialog>;
+    unsubscribe?: () => void;
+    accepted: boolean;
+    initialized: boolean;
+    refreshPending?: boolean;
+  }>({ accepted: initialOpen, initialized: false }).current;
+  function refreshControls(): void {
+    const owned = connection.instance;
+    if (!owned || connection.refreshPending) return;
+    connection.refreshPending = true;
+    queueMicrotask(() => {
+      connection.refreshPending = false;
+      if (connection.instance === owned) owned.refresh();
+    });
+  }
+  const requestRefresh = React.useCallback(refreshControls, []);
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
@@ -71,64 +84,75 @@ const DialogRoot = React.forwardRef<HTMLDivElement, DialogRootProps>(function Di
     [forwardedRef],
   );
 
+  function disconnectRuntime(): void {
+    const owned = connection.instance;
+    if (!owned) return;
+    connection.accepted = owned.getOpen();
+    connection.unsubscribe?.();
+    connection.unsubscribe = undefined;
+    connection.instance = undefined;
+    owned.destroy();
+  }
+  function connectRuntime(root: HTMLDivElement): void {
+    disconnectRuntime();
+    const desired = inputs.current.open ?? connection.accepted;
+    const recreating = connection.initialized;
+    const owned = createDialog(root, {
+      defaultOpen: recreating ? false : desired,
+      ...(inputs.current.open !== undefined ? { open: recreating ? false : desired } : {}),
+      closeOnEscape: inputs.current.closeOnEscape,
+      closeOnOutsideInteract: inputs.current.closeOnOutsideInteract,
+      modal: inputs.current.modal,
+      onOpenChange: (next, detail) => {
+        inputs.current.onOpenChange?.(next, detail);
+      },
+      onCloseComplete: (detail) => {
+        inputs.current.onCloseComplete?.(detail);
+      },
+    });
+    connection.instance = owned;
+    connection.initialized = true;
+    connection.unsubscribe = owned.subscribe("openChange", (detail) => {
+      if (connection.instance !== owned) return;
+      connection.accepted = detail.open;
+      if (inputs.current.open === undefined) setRenderedOpen(detail.open);
+    });
+    if (recreating && desired) owned.setOpen(desired, { emit: false });
+    connection.accepted = owned.getOpen();
+    if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+  }
+  function applyParentCommand(): void {
+    const next = inputs.current.open;
+    const owned = connection.instance;
+    if (next === undefined || !owned) return;
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+    connection.accepted = owned.getOpen();
+    if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+  }
+
   useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-
-    const instance = createDialog(root, {
-      defaultOpen: uncontrolledOpenRef.current,
-      closeOnEscape,
-      closeOnOutsideInteract,
-      modal,
-      onCloseComplete: (details) => {
-        onCloseCompleteRef.current?.(details);
-      },
-      onOpenChange: (nextOpen, details) => {
-        onOpenChangeRef.current?.(nextOpen, details);
-      },
-      ...(openRef.current !== undefined ? { open: openRef.current } : {}),
-    });
-    instanceRef.current = instance;
-    const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
-      if (openRef.current === undefined) {
-        setUncontrolledOpen(details.open);
-      }
-    });
-
-    return () => {
-      unsubscribeOpenChange();
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
-    };
+    connectRuntime(root);
+    return disconnectRuntime;
   }, [closeOnEscape, closeOnOutsideInteract, modal]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (open === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    if (instance.getOpen() === open) return;
-
-    instance.setOpen(open, { emit: false });
-  }, [open]);
-
-  const renderedOpen = open ?? uncontrolledOpen;
-
+  useIsomorphicLayoutEffect(applyParentCommand, [open]);
+  const renderedOpen = open ?? renderedState;
   return (
-    <div
-      data-sw-dialog
-      data-default-open={defaultOpenRef.current ? "true" : undefined}
-      data-close-on-escape={closeOnEscape ? "true" : "false"}
-      data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-      data-modal={modal ? "true" : "false"}
-      data-state={renderedOpen ? "open" : "closed"}
-      ref={composedRef}
-      {...props}
-    />
+    <NativeOverlayControlContext.Provider value={requestRefresh}>
+      <div
+        data-sw-dialog
+        data-sw-part="root"
+        data-default-open={initialDefaultOpen ? "true" : undefined}
+        data-close-on-escape={String(closeOnEscape)}
+        data-close-on-outside-interact={String(closeOnOutsideInteract)}
+        data-modal={String(modal)}
+        data-state={renderedOpen ? "open" : "closed"}
+        ref={composedRef}
+        {...props}
+      />
+    </NativeOverlayControlContext.Provider>
   );
 });
-
 DialogRoot.displayName = "Dialog.Root";
-
 export default DialogRoot;

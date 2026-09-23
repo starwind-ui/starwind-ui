@@ -2,14 +2,11 @@
 <script setup lang="ts">
 import { createRadio, type RadioCheckedChangeDetails } from "@starwind-ui/runtime/radio";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
-
 import { useRadioGroupContext } from "../radio-group/RadioGroupContext";
 
 defineOptions({ inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
-    checked?: boolean;
     defaultChecked?: boolean;
     disabled?: boolean;
     form?: string;
@@ -18,15 +15,16 @@ const props = withDefaults(
     nativeButton?: boolean;
     readOnly?: boolean;
     required?: boolean;
+    checked?: boolean;
     value: string;
   }>(),
   {
-    checked: undefined,
-    defaultChecked: false,
     disabled: false,
     nativeButton: false,
     readOnly: false,
     required: false,
+    checked: undefined,
+    defaultChecked: undefined,
   },
 );
 const emit = defineEmits<{
@@ -34,180 +32,208 @@ const emit = defineEmits<{
   "update:checked": [value: boolean];
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLElement | null>(null);
-const inputRef = ref<HTMLInputElement | null>(null);
-const radioGroup = useRadioGroupContext();
-const isGroupOwned = radioGroup !== undefined;
-const groupChecked = computed(() =>
-  radioGroup ? radioGroup.value.value === props.value : undefined,
-);
-const effectiveDisabled = computed(() => props.disabled || radioGroup?.disabled.value === true);
-const effectiveForm = computed(() => props.form ?? radioGroup?.form?.value);
-const effectiveName = computed(() => props.name ?? radioGroup?.name?.value);
-const effectiveReadOnly = computed(() => props.readOnly || radioGroup?.readOnly.value === true);
-const effectiveRequired = computed(() => props.required || radioGroup?.required.value === true);
-const initialDefaultChecked = props.defaultChecked;
-const uncontrolledChecked = ref(initialDefaultChecked);
-const renderedChecked = computed(() =>
-  isGroupOwned ? (groupChecked.value ?? false) : (props.checked ?? uncontrolledChecked.value),
-);
-let instance: ReturnType<typeof createRadio> | undefined;
-let unsubscribeStateSync: (() => void) | undefined;
-let instanceGeneration = 0;
-let mounted = false;
-
+const attrs = useAttrs(),
+  rootRef = ref<HTMLElement | null>(null),
+  inputRef = ref<HTMLInputElement | null>(null);
 defineExpose({ element: rootRef, input: inputRef });
-
-function handleCheckedChange(_checked: boolean, detail: RadioCheckedChangeDetails): void {
-  const eventInstance = instance;
-  const eventGeneration = instanceGeneration;
-  const eventWasGroupOwned = isGroupOwned;
-  const eventWasControlled = !eventWasGroupOwned && props.checked !== undefined;
-  emit("checkedChange", detail.checked, detail);
-  detail.onAccepted(() => {
-    if (!mounted || instance !== eventInstance || instanceGeneration !== eventGeneration) {
-      return;
-    }
-    if (!eventWasGroupOwned && !eventWasControlled) {
-      uncontrolledChecked.value = detail.checked;
-    }
-    emit("update:checked", detail.checked);
-  });
+const group = useRadioGroupContext();
+function groupChecked() {
+  return group === undefined ? undefined : group?.value.value === props.value;
 }
-
-function handleStateSync(): void {
-  if (!isGroupOwned && props.checked === undefined && instance) {
-    uncontrolledChecked.value = instance.getChecked();
+function effectiveChecked() {
+  return groupChecked() ?? props.checked;
+}
+function effectiveDisabled() {
+  return props.disabled || group?.disabled.value === true;
+}
+function effectiveReadOnly() {
+  return props.readOnly || group?.readOnly.value === true;
+}
+function effectiveRequired() {
+  return props.required || group?.required.value === true;
+}
+function effectiveForm() {
+  return group?.form?.value ?? props.form;
+}
+function effectiveName() {
+  return group?.name?.value ?? props.name;
+}
+const initialChecked = effectiveChecked() ?? props.defaultChecked ?? false;
+const resetSeed = props.defaultChecked ?? initialChecked;
+const renderedValue = ref(initialChecked);
+const connection: {
+  instance?: ReturnType<typeof createRadio>;
+  accepted: boolean;
+  unsubscribe?: () => void;
+  unsubscribeSync?: () => void;
+  disabled?: boolean;
+  readOnly?: boolean;
+} = { accepted: initialChecked };
+const selected = computed(() => effectiveChecked() ?? renderedValue.value);
+function disconnect() {
+  const owned = connection.instance;
+  if (!owned) return;
+  connection.accepted = owned.getChecked();
+  connection.unsubscribe?.();
+  connection.unsubscribeSync?.();
+  connection.instance = undefined;
+  owned.destroy();
+}
+function publishRuntime(owned: ReturnType<typeof createRadio>) {
+  if (connection.instance !== owned) return;
+  const next = owned.getChecked();
+  connection.accepted = next;
+  renderedValue.value = next;
+}
+function connect(root: HTMLElement) {
+  disconnect();
+  const desired = effectiveChecked() ?? connection.accepted;
+  const owned = createRadio(root, {
+    defaultChecked: resetSeed,
+    ...(group !== undefined || props.checked !== undefined ? { checked: desired } : {}),
+    disabled: props.disabled,
+    form: props.form,
+    id: props.id,
+    name: props.name,
+    readOnly: props.readOnly,
+    required: props.required,
+    value: props.value,
+    onCheckedChange: (next, detail) => {
+      emit("checkedChange", next, detail);
+    },
+  });
+  connection.instance = owned;
+  connection.disabled = props.disabled;
+  connection.readOnly = props.readOnly;
+  if (owned.getChecked() !== desired) owned.setChecked(desired, { emit: false });
+  connection.unsubscribe = owned.subscribe("checkedChange", (detail) =>
+    detail.onAccepted(() => {
+      if (connection.instance !== owned) return;
+      publishRuntime(owned);
+      emit("update:checked", detail.checked);
+    }),
+  );
+  connection.unsubscribeSync = owned.subscribe("stateSync", () => {
+    publishRuntime(owned);
+  });
+  publishRuntime(owned);
+}
+function applyParent() {
+  const owned = connection.instance,
+    next = effectiveChecked();
+  if (!owned || next === undefined || owned.getChecked() === next) return;
+  owned.setChecked(next, { emit: false });
+  publishRuntime(owned);
+}
+function applyOwnState() {
+  const owned = connection.instance;
+  if (!owned) return;
+  const nextdisabled = props.disabled;
+  if (nextdisabled !== connection.disabled) {
+    connection.disabled = nextdisabled;
+    owned.setDisabled(nextdisabled);
+    if (group && nextdisabled) owned.root.setAttribute("data-disabled", "");
+  }
+  const nextreadOnly = props.readOnly;
+  if (nextreadOnly !== connection.readOnly) {
+    connection.readOnly = nextreadOnly;
+    owned.setReadOnly(nextreadOnly);
+    if (group && nextreadOnly) owned.root.setAttribute("data-readonly", "");
   }
 }
-
-function destroyOwnedInstance(): void {
-  instanceGeneration += 1;
-  unsubscribeStateSync?.();
-  unsubscribeStateSync = undefined;
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  const createdInstance = createRadio(element, {
-    defaultChecked: renderedChecked.value,
-    disabled: effectiveDisabled.value,
-    form: effectiveForm.value,
-    id: props.id,
-    name: effectiveName.value,
-    readOnly: effectiveReadOnly.value,
-    required: effectiveRequired.value,
+function applyFormOptions() {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.setFormOptions({
+    form: props.form,
+    name: props.name,
+    required: props.required,
     value: props.value,
-    onCheckedChange: handleCheckedChange,
-    ...(isGroupOwned
-      ? { checked: groupChecked.value ?? false }
-      : props.checked !== undefined
-        ? { checked: props.checked }
-        : {}),
   });
-  instance = createdInstance;
-  unsubscribeStateSync = createdInstance.subscribe("stateSync", handleStateSync);
 }
-
 onMounted(() => {
-  mounted = true;
-  setupRuntime();
+  if (rootRef.value) connect(rootRef.value);
 });
-
+onBeforeUnmount(disconnect);
 watch(
-  () => props.checked,
-  (checked, previousChecked) => {
-    if (isGroupOwned) return;
-    const controllednessChanged = (checked === undefined) !== (previousChecked === undefined);
-    if (controllednessChanged) {
-      if (checked === undefined && instance) {
-        uncontrolledChecked.value = instance.getChecked();
-      }
-      setupRuntime();
-      return;
-    }
-    if (checked === undefined || !instance || Object.is(instance.getChecked(), checked)) {
-      return;
-    }
-    instance.setChecked(checked, { emit: false });
+  () => [props.id, props.nativeButton],
+  () => {
+    if (rootRef.value) connect(rootRef.value);
   },
   { flush: "post" },
 );
-watch(groupChecked, (checked) => {
-  if (!isGroupOwned || checked === undefined || !instance) return;
-  if (Object.is(instance.getChecked(), checked)) return;
-  instance.setChecked(checked, { emit: false });
-});
-watch(effectiveDisabled, (nextDisabled) => instance?.setDisabled(nextDisabled));
-watch(effectiveReadOnly, (nextReadOnly) => instance?.setReadOnly(nextReadOnly));
+watch(() => [props.checked, groupChecked()], applyParent, { flush: "post" });
 watch(
-  () => [effectiveForm.value, effectiveName.value, effectiveRequired.value, props.value] as const,
-  ([nextForm, nextName, nextRequired, nextValue]) => {
-    instance?.setFormOptions({
-      form: nextForm,
-      name: nextName,
-      required: nextRequired,
-      value: nextValue,
-    });
-  },
+  () => [props.disabled, props.readOnly],
+  () => queueMicrotask(applyOwnState),
   { flush: "post" },
 );
-watch(() => [props.id, props.nativeButton] as const, setupRuntime, { flush: "post" });
-
-onBeforeUnmount(() => {
-  mounted = false;
-  destroyOwnedInstance();
+watch(() => [props.form, props.name, props.required, props.value], applyFormOptions, {
+  flush: "post",
 });
 </script>
-
 <template>
   <component
     :is="props.nativeButton ? 'button' : 'span'"
-    ref="rootRef"
     v-bind="attrs"
-    data-sw-radio
+    ref="rootRef"
+    data-sw-radio=""
     data-sw-part="root"
-    :type="props.nativeButton ? 'button' : undefined"
     role="radio"
-    :aria-checked="String(renderedChecked)"
-    :aria-disabled="effectiveDisabled ? 'true' : undefined"
-    :data-default-checked="!isGroupOwned && initialDefaultChecked ? 'true' : undefined"
-    :data-checked="renderedChecked ? '' : undefined"
-    :data-unchecked="renderedChecked ? undefined : ''"
-    :data-disabled="effectiveDisabled ? '' : undefined"
-    :data-form="effectiveForm"
+    :aria-checked="selected"
+    :aria-disabled="effectiveDisabled() ? 'true' : undefined"
+    :data-default-checked="group === undefined && resetSeed ? 'true' : undefined"
+    :data-checked="selected ? '' : undefined"
+    :data-unchecked="selected ? undefined : ''"
+    :data-disabled="effectiveDisabled() ? '' : undefined"
+    :data-readonly="effectiveReadOnly() ? '' : undefined"
+    :data-required="effectiveRequired() ? '' : undefined"
+    :data-form="props.form"
     :data-id="props.id"
-    :data-name="effectiveName"
-    :data-readonly="effectiveReadOnly ? '' : undefined"
-    :data-required="effectiveRequired ? '' : undefined"
+    :data-name="props.name"
     :data-value="props.value"
     :id="props.nativeButton ? props.id : undefined"
-    :tabindex="effectiveDisabled ? -1 : 0"
-    :disabled="props.nativeButton ? effectiveDisabled : undefined"
-  >
-    <slot />
-    <input
-      v-if="!props.nativeButton"
+    :type="props.nativeButton ? 'button' : undefined"
+    :disabled="props.nativeButton ? effectiveDisabled() : undefined"
+    :tabindex="effectiveDisabled() ? -1 : 0"
+    ><slot /><template v-if="!props.nativeButton"
+      ><input
+        ref="inputRef"
+        data-sw-radio-input=""
+        type="radio"
+        aria-hidden="true"
+        :tabindex="-1"
+        :checked="initialChecked"
+        :disabled="effectiveDisabled()"
+        :form="effectiveForm()"
+        :name="effectiveName()"
+        :required="effectiveRequired()"
+        :value="props.value"
+        :id="props.nativeButton ? undefined : props.id"
+        style="
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0 0 0 0);
+          white-space: nowrap;
+          border: 0;
+        " /></template></component
+  ><template v-if="props.nativeButton"
+    ><input
       ref="inputRef"
-      data-sw-radio-input
-      aria-hidden="true"
-      tabindex="-1"
+      data-sw-radio-input=""
       type="radio"
-      :checked="renderedChecked"
-      :disabled="effectiveDisabled"
-      :form="effectiveForm"
-      :id="props.id"
-      :name="effectiveName"
-      :required="effectiveRequired"
+      aria-hidden="true"
+      :tabindex="-1"
+      :checked="initialChecked"
+      :disabled="effectiveDisabled()"
+      :form="effectiveForm()"
+      :name="effectiveName()"
+      :required="effectiveRequired()"
       :value="props.value"
+      :id="props.nativeButton ? undefined : props.id"
       style="
         position: absolute;
         width: 1px;
@@ -218,30 +244,5 @@ onBeforeUnmount(() => {
         white-space: nowrap;
         border: 0;
       "
-    />
-  </component>
-  <input
-    v-if="props.nativeButton"
-    ref="inputRef"
-    data-sw-radio-input
-    aria-hidden="true"
-    tabindex="-1"
-    type="radio"
-    :checked="renderedChecked"
-    :disabled="effectiveDisabled"
-    :form="effectiveForm"
-    :name="effectiveName"
-    :required="effectiveRequired"
-    :value="props.value"
-    style="
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
-      border: 0;
-    "
-  />
+  /></template>
 </template>

@@ -19,7 +19,11 @@ const server = external
   ? null
   : spawn(process.execPath, [astroBin, "preview", "--host", host, "--port", String(port)], {
       cwd: demoRoot,
-      env: { ...process.env, ASTRO_TELEMETRY_DISABLED: "1" },
+      env: {
+        ...process.env,
+        ASTRO_PREVIEW_BACKGROUND: "0",
+        ASTRO_TELEMETRY_DISABLED: "1",
+      },
       stdio: ["ignore", "pipe", "pipe"],
     });
 

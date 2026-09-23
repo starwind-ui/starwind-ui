@@ -1,9 +1,13 @@
+import { alertDialogStyledContract } from "../../contracts/styled/components/alert-dialog.js";
+import { dialogStyledContract } from "../../contracts/styled/components/dialog.js";
+import { sheetStyledContract } from "../../contracts/styled/components/sheet.js";
+import { toastStyledContract } from "../../contracts/styled/components/toast.js";
+import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import {
   assertNoStarwindClassHooksInStyledContracts,
   assertNoStarwindClassHooksInTree,
 } from "../../starwind-class-guard.js";
-import { toastStyledContract } from "../../contracts/styled/components/toast.js";
-import type { StyledAdapterContract } from "../../contracts/styled/types.js";
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -24,6 +28,75 @@ import { assertReactStyledOverlayOutput } from "./styled-output/overlay.cases.js
 import { assertReactStyledStateOutput } from "./styled-output/state.cases.js";
 
 export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
+  it("keeps Styled overlay mechanics in Primitive-owned controls", async () => {
+    const tempRoot = getTempRoot();
+    for (const primitiveImportBase of ["@starwind-ui/react", undefined]) {
+      const outputDir = primitiveImportBase ? "package" : "local";
+      await generateStarwindReactWrappers({
+        contracts: [dialogStyledContract, alertDialogStyledContract, sheetStyledContract],
+        outputDir,
+        primitiveImportBase,
+        primitiveOutputDir: "primitives",
+        repoRoot: tempRoot,
+      });
+      const tree = await readGeneratedTree(path.join(tempRoot, outputDir));
+      for (const [group, family, controls] of [
+        [
+          "dialog",
+          "Dialog",
+          [
+            ["DialogTrigger", "Trigger", 1],
+            ["DialogClose", "Close", 1],
+          ],
+        ],
+        [
+          "sheet",
+          "Sheet",
+          [
+            ["SheetTrigger", "Trigger", 1],
+            ["SheetClose", "Close", 1],
+          ],
+        ],
+        [
+          "alert-dialog",
+          "AlertDialog",
+          [
+            ["AlertDialogTrigger", "Trigger", 1],
+            ["AlertDialogAction", "Close", 0],
+            ["AlertDialogCancel", "Close", 0],
+          ],
+        ],
+      ] as const)
+        for (const [name, part, branchCount] of controls) {
+          const source = tree[`${group}/${name}.tsx`]!;
+          expect(compactCode(source)).toContain(compactCode('"use client";'));
+          expect(
+            source.match(new RegExp(`<${family}Primitive\\.${part}\\b`, "g")) ?? [],
+          ).toHaveLength(branchCount);
+          expect(source).not.toContain(`${family}ControlContext`);
+          expect(compactCode(source)).not.toContain(compactCode("observedControls"));
+          expect(compactCode(source)).not.toContain(compactCode("querySelectorAll"));
+          expect(compactCode(source)).not.toContain(compactCode("MutationObserver"));
+          if (name === "AlertDialogAction" || name === "AlertDialogCancel") {
+            expect(compactCode(source)).toContain(compactCode("__useAlertDialogControl"));
+            expect(compactCode(source)).toContain(compactCode("setControlElement"));
+            expect(compactCode(source)).toContain(compactCode("data-as-child"));
+            expect(compactCode(source)).toContain(
+              compactCode(
+                "const asChildRest = rest as unknown as React.HTMLAttributes<HTMLDivElement>;",
+              ),
+            );
+            expect(compactCode(source)).toContain(compactCode("{...asChildRest}"));
+            expect(compactCode(source)).toContain(compactCode("<Button"));
+            expect(compactCode(source)).toContain(compactCode("{...rest}"));
+          } else {
+            expect(compactCode(source)).not.toContain(compactCode("setControlElement"));
+            expect(compactCode(source)).not.toContain(compactCode("data-as-child"));
+          }
+        }
+    }
+  });
+
   it("exposes the styled Toast facade through package and local React Primitive sources", async () => {
     const tempRoot = getTempRoot();
     const packageOutputDir = "generated/package-backed";
@@ -58,10 +131,14 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
 
     assertReactToastFacade(packageIndex, "@starwind-ui/react/toast");
     assertReactToastFacade(localIndex, "../../primitives/react/toast");
-    expect(primitiveIndex).toContain(
-      'export type { ToastApi, ToastOptions, ToastPromiseOptions } from "@starwind-ui/runtime";',
+    expect(compactCode(primitiveIndex)).toContain(
+      compactCode(
+        'export type { ToastApi, ToastOptions, ToastPromiseOptions } from "@starwind-ui/runtime";',
+      ),
     );
-    expect(primitiveIndex).toContain('export { toast } from "@starwind-ui/runtime/toast";');
+    expect(compactCode(primitiveIndex)).toContain(
+      compactCode('export { toast } from "@starwind-ui/runtime/toast";'),
+    );
   });
 
   it("renders declared forward refs generically without changing plain components", async () => {
@@ -132,14 +209,20 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     const forwarded = await readGeneratedFile(outputRoot, "DeclaredTarget.tsx");
     const plain = await readGeneratedFile(outputRoot, "PlainSibling.tsx");
 
-    expect(forwarded).toContain('import * as React from "react";');
-    expect(forwarded).toContain("React.forwardRef<HTMLButtonElement, DeclaredTargetProps>");
-    expect(forwarded).toContain("function DeclaredTarget(props, forwardedRef)");
-    expect(forwarded).toContain("ref={forwardedRef}");
+    expect(compactCode(forwarded)).toContain(compactCode('import * as React from "react";'));
+    expect(compactCode(forwarded)).toContain(
+      compactCode("React.forwardRef<HTMLButtonElement, DeclaredTargetProps>"),
+    );
+    expect(compactCode(forwarded)).toContain(
+      compactCode("function DeclaredTarget(props, forwardedRef)"),
+    );
+    expect(compactCode(forwarded)).toContain(compactCode("ref={forwardedRef}"));
     expect(forwarded).not.toMatch(/\bref,\s*\n/);
-    expect(plain).toContain('import type * as React from "react";');
-    expect(plain).toContain("function PlainSibling(props: PlainSiblingProps)");
-    expect(plain).not.toContain("forwardRef");
+    expect(compactCode(plain)).toContain(compactCode('import type * as React from "react";'));
+    expect(compactCode(plain)).toContain(
+      compactCode("function PlainSibling(props: PlainSiblingProps)"),
+    );
+    expect(compactCode(plain)).not.toContain(compactCode("forwardRef"));
   });
 
   it("generates Badge tone and appearance styled React output", async () => {
@@ -203,49 +286,75 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     expect(buttonIndex).toMatch(/^"use client";/);
     expect(alert).not.toMatch(/^"use client";/);
     expect(alertIndex).not.toMatch(/^"use client";/);
-    expect(button).toContain('import ButtonPrimitive from "@starwind-ui/react/button";');
-    expect(button).not.toContain("primitives/react");
-    expect(buttonIndex).toContain("const ButtonParts = {");
-    expect(buttonIndex).toContain("export default ButtonParts;");
+    expect(compactCode(button)).toContain(
+      compactCode('import ButtonPrimitive from "@starwind-ui/react/button";'),
+    );
+    expect(compactCode(button)).not.toContain(compactCode("primitives/react"));
+    expect(compactCode(buttonIndex)).toContain(compactCode("const ButtonParts = {"));
+    expect(compactCode(buttonIndex)).toContain(compactCode("export default ButtonParts;"));
     expect(buttonIndex).not.toMatch(/export default\s*{/);
     expect(buttonIndex).not.toMatch(/export\s*{[^}]*\bButtonParts\b/);
-    expect(badgeIndex).toContain("export default Badge;");
-    expect(carousel).toContain('import CarouselPrimitive from "@starwind-ui/react/carousel";');
-    expect(carousel).toContain('opts?: import("@starwind-ui/react/carousel").CarouselOptions');
-    expect(carouselVariants).toContain(
-      'import { button as buttonVariants } from "../button/variants";',
+    expect(compactCode(badgeIndex)).toContain(compactCode("export default Badge;"));
+    expect(compactCode(carousel)).toContain(
+      compactCode('import CarouselPrimitive from "@starwind-ui/react/carousel";'),
     );
-    expect(carouselVariants).toContain("export const carouselControl = tv({");
-    expect(carouselVariants).toContain("extend: buttonVariants");
-    expect(carouselVariants).toContain("defaultVariants: {");
-    expect(carouselVariants).toContain('variant: "outline"');
-    expect(carouselVariants).toContain('size: "icon"');
-    expect(carouselVariants).toContain('"absolute size-8 rounded-full"');
-    expect(carouselNext).toContain("const controlClassName = carouselNext({ class: className });");
-    expect(carouselNext).toContain(
-      "className={carouselControl({ variant, size, class: controlClassName })}",
+    expect(compactCode(carousel)).toContain(
+      compactCode('opts?: import("@starwind-ui/react/carousel").CarouselOptions'),
     );
-    expect(carouselPrevious).toContain(
-      "const controlClassName = carouselPrevious({ class: className });",
+    expect(compactCode(carouselVariants)).toContain(
+      compactCode('import { button as buttonVariants } from "../button/variants";'),
     );
-    expect(carouselPrevious).toContain(
-      "className={carouselControl({ variant, size, class: controlClassName })}",
+    expect(compactCode(carouselVariants)).toContain(
+      compactCode("export const carouselControl = tv({"),
     );
-    expect(form).toContain('validationTiming?: import("@starwind-ui/react/form")');
-    expect(field).toContain('validationTiming?: import("@starwind-ui/react/form")');
-    expect(navigationMenu).toContain(
-      'import NavigationMenuPrimitive from "@starwind-ui/react/navigation-menu";',
+    expect(compactCode(carouselVariants)).toContain(compactCode("extend: buttonVariants"));
+    expect(compactCode(carouselVariants)).toContain(compactCode("defaultVariants: {"));
+    expect(compactCode(carouselVariants)).toContain(compactCode('variant: "outline"'));
+    expect(compactCode(carouselVariants)).toContain(compactCode('size: "icon"'));
+    expect(compactCode(carouselVariants)).toContain(compactCode('"absolute size-8 rounded-full"'));
+    expect(compactCode(carouselNext)).toContain(
+      compactCode("const controlClassName = carouselNext({ class: className });"),
     );
-    expect(navigationMenu).toContain('import("@starwind-ui/react/navigation-menu")');
-    expect(navigationMenu).not.toContain('import("@starwind-ui/runtime")');
-    expect(select).toContain('import SelectPrimitive from "@starwind-ui/react/select";');
-    expect(select).toContain('import("@starwind-ui/react/select").SelectOpenChangeDetails');
-    expect(select).toContain('import("@starwind-ui/react/select").SelectValueChangeDetails');
-    expect(select).not.toContain('import("@starwind-ui/runtime")');
-    expect(themeToggle).toContain(
-      'import { initThemeController } from "@starwind-ui/react/theme";',
+    expect(compactCode(carouselNext)).toContain(
+      compactCode("className={carouselControl({ variant, size, class: controlClassName })}"),
     );
-    expect(toaster).toContain('import ToastPrimitive from "@starwind-ui/react/toast";');
+    expect(compactCode(carouselPrevious)).toContain(
+      compactCode("const controlClassName = carouselPrevious({ class: className });"),
+    );
+    expect(compactCode(carouselPrevious)).toContain(
+      compactCode("className={carouselControl({ variant, size, class: controlClassName })}"),
+    );
+    expect(compactCode(form)).toContain(
+      compactCode('validationTiming?: import("@starwind-ui/react/form")'),
+    );
+    expect(compactCode(field)).toContain(
+      compactCode('validationTiming?: import("@starwind-ui/react/form")'),
+    );
+    expect(compactCode(navigationMenu)).toContain(
+      compactCode('import NavigationMenuPrimitive from "@starwind-ui/react/navigation-menu";'),
+    );
+    expect(compactCode(navigationMenu)).toContain(
+      compactCode('import("@starwind-ui/react/navigation-menu")'),
+    );
+    expect(compactCode(navigationMenu)).not.toContain(
+      compactCode('import("@starwind-ui/runtime")'),
+    );
+    expect(compactCode(select)).toContain(
+      compactCode('import SelectPrimitive from "@starwind-ui/react/select";'),
+    );
+    expect(compactCode(select)).toContain(
+      compactCode('import("@starwind-ui/react/select").SelectOpenChangeDetails'),
+    );
+    expect(compactCode(select)).toContain(
+      compactCode('import("@starwind-ui/react/select").SelectValueChangeDetails'),
+    );
+    expect(compactCode(select)).not.toContain(compactCode('import("@starwind-ui/runtime")'));
+    expect(compactCode(themeToggle)).toContain(
+      compactCode('import { initThemeController } from "@starwind-ui/react/theme";'),
+    );
+    expect(compactCode(toaster)).toContain(
+      compactCode('import ToastPrimitive from "@starwind-ui/react/toast";'),
+    );
 
     const outputTree = await readGeneratedTree(outputRoot);
     const directRuntimeRefs = Object.entries(outputTree)
@@ -295,80 +404,100 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
       "styles.css",
       "variants.ts",
     ]);
-    expect(root).toContain('import { Popover } from "../popover";');
-    expect(root).toContain('import ColorPickerPrimitive from "../primitives/react/color-picker";');
-    expect(root).toContain('import * as React from "react";');
-    expect(root).toContain("React.forwardRef<HTMLDivElement, ColorPickerProps>");
-    expect(root).toContain("function ColorPicker(props, forwardedRef)");
+    expect(compactCode(root)).toContain(compactCode('import { Popover } from "../popover";'));
+    expect(compactCode(root)).toContain(
+      compactCode('import ColorPickerPrimitive from "../primitives/react/color-picker";'),
+    );
+    expect(compactCode(root)).toContain(compactCode('import * as React from "react";'));
+    expect(compactCode(root)).toContain(
+      compactCode("React.forwardRef<HTMLDivElement, ColorPickerProps>"),
+    );
+    expect(compactCode(root)).toContain(compactCode("function ColorPicker(props, forwardedRef)"));
     expect(root).not.toMatch(/&\s*React\.ComponentProps<typeof Popover>/);
-    expect(root).toContain("value={value}");
-    expect(root).toContain("format={resolvedFormat}");
-    expect(root).toContain("alpha = true");
-    expect(root).toContain("inline = false");
-    expect(root).toContain("allowEmpty={clearable}");
-    expect(root).toContain("onValueChange={onValueChange}");
-    expect(root).toContain("onValueCommitted={onValueCommitted}");
-    expect(root).toContain("onFormatChange={handleFormatChange}");
-    expect(root).toContain("defaultOpen={defaultOpen}");
-    expect(root).toContain("onOpenChange={onOpenChange}");
+    expect(compactCode(root)).toContain(compactCode("value={value}"));
+    expect(compactCode(root)).toContain(compactCode("format={resolvedFormat}"));
+    expect(compactCode(root)).toContain(compactCode("alpha = true"));
+    expect(compactCode(root)).toContain(compactCode("inline = false"));
+    expect(compactCode(root)).toContain(compactCode("allowEmpty={clearable}"));
+    expect(compactCode(root)).toContain(compactCode("onValueChange={onValueChange}"));
+    expect(compactCode(root)).toContain(compactCode("onValueCommitted={onValueCommitted}"));
+    expect(compactCode(root)).toContain(compactCode("onFormatChange={handleFormatChange}"));
+    expect(compactCode(root)).toContain(compactCode("defaultOpen={defaultOpen}"));
+    expect(compactCode(root)).toContain(compactCode("onOpenChange={onOpenChange}"));
     expect(root).toMatch(
       /<ColorPickerPrimitive\.Root[\s\S]*?\{\.\.\.rest\}[\s\S]*?data-floating-root/,
     );
-    expect(root).toContain("React.useState(initialFormat)");
-    expect(root).toContain("requestedFormats.includes(resolvedFormat)");
-    expect(root).not.toContain("open={value}");
-    expect(root).toContain("data-floating-root={true}");
-    expect(root).toContain('size = "md"');
+    expect(compactCode(root)).toContain(compactCode("React.useState(initialFormat)"));
+    expect(compactCode(root)).toContain(compactCode("requestedFormats.includes(resolvedFormat)"));
+    expect(compactCode(root)).not.toContain(compactCode("open={value}"));
+    expect(compactCode(root)).toContain(compactCode("data-floating-root={true}"));
+    expect(compactCode(root)).toContain(compactCode('size = "md"'));
     expect(root).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
     expect(root.match(/<ColorPickerPrimitive\.Root/g)).toHaveLength(2);
     expect(root.match(/<ColorPickerPrimitive\.HiddenInput/g)).toHaveLength(2);
-    expect(root).toContain("Parameters<NonNullable<typeof onFormatChange>>");
-    expect(content).toContain("<ColorPickerDefaultEditor");
-    expect(content).toContain("<PopoverContent");
+    expect(compactCode(root)).toContain(
+      compactCode("Parameters<NonNullable<typeof onFormatChange>>"),
+    );
+    expect(compactCode(content)).toContain(compactCode("<ColorPickerDefaultEditor"));
+    expect(compactCode(content)).toContain(compactCode("<PopoverContent"));
     expect(content).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
-    expect(editor).toContain("<ColorPickerArea");
+    expect(compactCode(editor)).toContain(compactCode("<ColorPickerArea"));
     expect(editor.match(/<ColorPickerChannelSlider/g)).toHaveLength(2);
-    expect(editor).toContain("normalizedSwatches.map");
-    expect(editor).toContain("<ColorPickerClear");
-    expect(area).not.toContain("Popover");
-    expect(input).not.toContain("Popover");
-    expect(input).toContain('formatControl?: "select" | "native" | "none";');
-    expect(input).toContain('formatControl = "select"');
-    expect(input).toContain('formatContentSize = "md"');
+    expect(compactCode(editor)).toContain(compactCode("normalizedSwatches.map"));
+    expect(compactCode(editor)).toContain(compactCode("<ColorPickerClear"));
+    expect(compactCode(area)).not.toContain(compactCode("Popover"));
+    expect(compactCode(input)).not.toContain(compactCode("Popover"));
+    expect(compactCode(input)).toContain(
+      compactCode('formatControl?: "select" | "native" | "none";'),
+    );
+    expect(compactCode(input)).toContain(compactCode('formatControl = "select"'));
+    expect(compactCode(input)).toContain(compactCode('formatContentSize = "md"'));
     expect(input).toMatch(/<SelectContent\s+size=\{formatContentSize\}/);
-    expect(input).not.toContain("size?:");
-    expect(input).toContain("<ColorPickerPrimitive.ValueInput");
-    expect(input).toContain('formatControl === "native"');
-    expect(input).toContain("<ColorPickerPrimitive.FormatSelect");
-    expect(input).toContain("<ColorPickerPrimitive.FormatControl");
-    expect(input).toContain("normalizedFormats.map");
-    expect(trigger).toContain("<PopoverTrigger");
-    expect(trigger).not.toContain("size?:");
-    expect(index).toContain("const ColorPickerVariants = {");
-    expect(index).toContain("Root: ColorPicker");
-    expect(index).not.toContain("InlineRoot");
-    expect(index).not.toContain("ColorPickerDefaultEditor");
-    expect(styles).toContain('[data-slot="color-picker-transparency-grid"]');
-    expect(styles).toContain('[data-slot="color-picker-channel-slider"][data-channel="hue"]');
-    expect(styles).toContain(
-      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+    expect(compactCode(input)).not.toContain(compactCode("size?:"));
+    expect(compactCode(input)).toContain(compactCode("<ColorPickerPrimitive.ValueInput"));
+    expect(compactCode(input)).toContain(compactCode('formatControl === "native"'));
+    expect(compactCode(input)).toContain(compactCode("<ColorPickerPrimitive.FormatSelect"));
+    expect(compactCode(input)).toContain(compactCode("<ColorPickerPrimitive.FormatControl"));
+    expect(compactCode(input)).toContain(compactCode("normalizedFormats.map"));
+    expect(compactCode(trigger)).toContain(compactCode("<PopoverTrigger"));
+    expect(compactCode(trigger)).not.toContain(compactCode("size?:"));
+    expect(compactCode(index)).toContain(compactCode("const ColorPickerVariants = {"));
+    expect(compactCode(index)).toContain(compactCode("Root: ColorPicker"));
+    expect(compactCode(index)).not.toContain(compactCode("InlineRoot"));
+    expect(compactCode(index)).not.toContain(compactCode("ColorPickerDefaultEditor"));
+    expect(compactCode(styles)).toContain(
+      compactCode('[data-slot="color-picker-transparency-grid"]'),
     );
-    expect(styles).toContain("{ position: fixed; z-index: 60; }");
-    expect(styles).toContain(
-      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] { display: contents; }',
+    expect(compactCode(styles)).toContain(
+      compactCode('[data-slot="color-picker-channel-slider"][data-channel="hue"]'),
     );
-    expect(variants).toContain("--sw-color-picker-area-thumb-color");
-    expect(channelSlider).toContain("--sw-color-picker-channel-thumb-color");
+    expect(compactCode(styles)).toContain(
+      compactCode(
+        '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+      ),
+    );
+    expect(compactCode(styles)).toContain(compactCode("{ position: fixed; z-index: 60; }"));
+    expect(compactCode(styles)).toContain(
+      compactCode(
+        '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] { display: contents; }',
+      ),
+    );
+    expect(compactCode(variants)).toContain(compactCode("--sw-color-picker-area-thumb-color"));
+    expect(compactCode(channelSlider)).toContain(
+      compactCode("--sw-color-picker-channel-thumb-color"),
+    );
 
     const colorPickerOutputRoot = path.join(outputRoot, "color-picker");
     await formatGeneratedOutput([colorPickerOutputRoot]);
     const firstFormattedTree = await readGeneratedTree(colorPickerOutputRoot);
 
-    expect(firstFormattedTree["variants.ts"]).toContain(`import {
+    expect(compactCode(firstFormattedTree["variants.ts"])).toContain(
+      compactCode(`import {
   nativeSelectIcon as nativeSelectIconRecipe,
   nativeSelect as nativeSelectRecipe,
   nativeSelectWrapper as nativeSelectWrapperRecipe,
-} from "../native-select/variants";`);
+} from "../native-select/variants";`),
+    );
 
     await generate();
     await formatGeneratedOutput([colorPickerOutputRoot]);
@@ -381,7 +510,8 @@ function assertReactToastFacade(source: string, primitiveSource: string): void {
   expect(source).toContain(
     `export type { ToastApi, ToastOptions, ToastPromiseOptions } from "${primitiveSource}";`,
   );
-  expect(source).toContain(`const ToastParts = {
+  expect(compactCode(source)).toContain(
+    compactCode(`const ToastParts = {
   Viewport: Toaster,
   Template: ToastTemplate,
   Item: ToastItem,
@@ -390,6 +520,7 @@ function assertReactToastFacade(source: string, primitiveSource: string): void {
   Description: ToastDescription,
   Action: ToastAction,
   Close: ToastClose,
-};`);
+};`),
+  );
   expect(source).not.toMatch(/const ToastParts = \{[^}]*\b(?:Manager|toast)\b/);
 }

@@ -13,7 +13,7 @@ defineExpose({ element });
   <div
     ref="element"
     v-bind="$attrs"
-    data-sw-preview-card-arrow
+    data-sw-preview-card-arrow=""
     data-sw-part="arrow"
     data-state="closed"
   >

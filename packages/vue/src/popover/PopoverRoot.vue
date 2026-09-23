@@ -5,7 +5,7 @@ import type { InjectionKey, Ref } from "vue";
 export type PopoverContextValue = {
   element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
-  registerPortal: (owner: symbol, element: HTMLElement | null) => void;
+  registerPlacement(element: HTMLElement, attributes: Record<string, string> | null): void;
 };
 
 export const PopoverContext: InjectionKey<PopoverContextValue> = Symbol("PopoverContext");
@@ -54,99 +54,104 @@ const initialDefaultOpen = props.defaultOpen;
 const uncontrolledOpen = ref(initialDefaultOpen);
 const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
 const mounted = ref(false);
-let instance: ReturnType<typeof createPopover> | undefined;
-let portalOwner: symbol | undefined;
+const connection: {
+  instance?: ReturnType<typeof createPopover>;
+  unsubscribe?: () => void;
+  accepted: boolean;
+  initialized: boolean;
+} = { accepted: props.open ?? initialDefaultOpen, initialized: false };
+const authoredPlacement = new Map<HTMLElement, Record<string, string>>();
+function hasRequiredSurface(): boolean {
+  return [...authoredPlacement.keys()].some(
+    (element) => element.isConnected && element.matches("[data-sw-popover-popup]"),
+  );
+}
+function registerPlacement(element: HTMLElement, attributes: Record<string, string> | null): void {
+  if (attributes) authoredPlacement.set(element, attributes);
+  else authoredPlacement.delete(element);
+}
 let runtimeGeneration = 0;
-
-provide(PopoverContext, {
-  element: rootRef,
-  mounted,
-  registerPortal(owner, element) {
-    if (element) {
-      portalOwner = owner;
-      return;
-    }
-    if (portalOwner === owner) portalOwner = undefined;
-  },
-});
-
+provide(PopoverContext, { element: rootRef, mounted, registerPlacement });
 defineExpose({ element: rootRef });
 
-function handleOpenChange(nextOpen: boolean, detail: PopoverOpenChangeDetails): void {
-  const eventWasControlled = props.open !== undefined;
-  emit("openChange", nextOpen, detail);
-  if (detail.isCanceled) return;
-
-  if (!eventWasControlled) uncontrolledOpen.value = nextOpen;
-  emit("update:open", nextOpen);
+function disconnectRuntime(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  connection.accepted = owned.getOpen();
+  connection.unsubscribe?.();
+  connection.unsubscribe = undefined;
+  connection.instance = undefined;
+  owned.destroy();
 }
-
-function handleCloseComplete(detail: PopoverCloseCompleteDetails): void {
-  emit("closeComplete", detail);
-}
-
-function destroyOwnedInstance(): void {
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(recreatedOpen?: boolean): void {
-  const recreating = recreatedOpen !== undefined || instance !== undefined;
-  const acceptedOpen = recreatedOpen ?? instance?.getOpen() ?? renderedOpen.value;
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  if (props.open === undefined) uncontrolledOpen.value = acceptedOpen;
-  instance = createPopover(element, {
-    defaultOpen: recreating ? false : acceptedOpen,
+function connectRuntime(root: HTMLDivElement): void {
+  disconnectRuntime();
+  const desired = props.open ?? connection.accepted;
+  const recreating = connection.initialized;
+  const owned = createPopover(root, {
+    defaultOpen: recreating ? false : desired,
+    ...(props.open !== undefined ? { open: recreating ? false : desired } : {}),
     closeOnEscape: props.closeOnEscape,
     closeOnOutsideInteract: props.closeOnOutsideInteract,
     modal: props.modal,
     openOnHover: props.openOnHover,
-    onCloseComplete: handleCloseComplete,
-    onOpenChange: handleOpenChange,
-    ...(props.open === undefined ? {} : { open: recreating ? false : props.open }),
+    onOpenChange: (next, detail) => {
+      emit("openChange", next, detail);
+    },
+    onCloseComplete: (detail) => {
+      emit("closeComplete", detail);
+    },
   });
-
-  if (recreating && acceptedOpen) {
-    instance.setOpen(true, { emit: false });
-  }
+  connection.instance = owned;
+  connection.initialized = true;
+  connection.unsubscribe = owned.subscribe("openChange", (detail) => {
+    if (connection.instance !== owned) return;
+    connection.accepted = detail.open;
+    uncontrolledOpen.value = detail.open;
+    emit("update:open", detail.open);
+  });
+  if (recreating && desired) owned.setOpen(desired, { emit: false });
+  connection.accepted = owned.getOpen();
+  uncontrolledOpen.value = connection.accepted;
+}
+function applyParentCommand(): void {
+  const next = props.open;
+  const owned = connection.instance;
+  if (next === undefined || !owned) return;
+  if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+  connection.accepted = owned.getOpen();
+  uncontrolledOpen.value = connection.accepted;
 }
 
-async function recreateRuntime(): Promise<void> {
+function connectSurface(root: HTMLDivElement): void {
+  if (!hasRequiredSurface()) {
+    disconnectRuntime();
+    return;
+  }
+
+  for (const [element, attributes] of authoredPlacement) {
+    for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+  }
+  connectRuntime(root);
+}
+async function reconnectAfterDom(): Promise<void> {
   const generation = ++runtimeGeneration;
-  const acceptedOpen = instance?.getOpen() ?? renderedOpen.value;
-  destroyOwnedInstance();
+  disconnectRuntime();
   mounted.value = false;
   await nextTick();
-  if (generation !== runtimeGeneration) return;
-  setupRuntime(acceptedOpen);
+  if (generation !== runtimeGeneration || !rootRef.value) return;
+  connectSurface(rootRef.value);
   mounted.value = true;
 }
-
-useVueAsChildRuntimeOwner(rootRef, recreateRuntime);
+useVueAsChildRuntimeOwner(rootRef, reconnectAfterDom);
 onMounted(() => {
-  setupRuntime();
+  if (rootRef.value) connectSurface(rootRef.value);
   mounted.value = true;
 });
-
 watch(
   () => props.open,
-  (nextOpen, previousOpen) => {
-    const controllednessChanged = (nextOpen === undefined) !== (previousOpen === undefined);
-    if (controllednessChanged) {
-      void recreateRuntime();
-      return;
-    }
-    if (nextOpen === undefined || !instance || Object.is(instance.getOpen(), nextOpen)) {
-      return;
-    }
-
-    instance.setOpen(nextOpen, { emit: false });
+  (next, previous) => {
+    if ((next === undefined) !== (previous === undefined)) void reconnectAfterDom();
+    else applyParentCommand();
   },
   { flush: "post" },
 );
@@ -158,16 +163,14 @@ watch(
     () => props.openOnHover,
   ],
   () => {
-    void recreateRuntime();
+    void reconnectAfterDom();
   },
   { flush: "post" },
 );
-
 onBeforeUnmount(() => {
-  runtimeGeneration += 1;
+  runtimeGeneration++;
   mounted.value = false;
-  portalOwner = undefined;
-  destroyOwnedInstance();
+  disconnectRuntime();
 });
 </script>
 

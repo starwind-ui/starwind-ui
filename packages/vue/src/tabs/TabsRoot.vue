@@ -6,123 +6,109 @@ import {
   type TabsValue,
   type TabsValueChangeDetails,
 } from "@starwind-ui/runtime/tabs";
-import {
-  computed,
-  onBeforeUnmount,
-  onMounted,
-  onUpdated,
-  provide,
-  ref,
-  toRef,
-  useAttrs,
-  watch,
-} from "vue";
+import { computed, onBeforeUnmount, onMounted, onUpdated, provide, ref, toRef, watch } from "vue";
 import { TabsContext } from "./TabsContext";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
   defineProps<{
-    defaultValue?: TabsValue;
     modelValue?: TabsValue;
+    defaultValue?: TabsValue;
     orientation?: TabsOrientation;
     syncKey?: string;
   }>(),
-  {
-    defaultValue: undefined,
-    modelValue: undefined,
-    orientation: "horizontal",
-    syncKey: undefined,
-  },
+  { modelValue: undefined, defaultValue: undefined, orientation: "horizontal", syncKey: undefined },
 );
 const emit = defineEmits<{
   valueChange: [value: TabsValue, detail: TabsValueChangeDetails];
   "update:modelValue": [value: TabsValue];
 }>();
 defineSlots<{ default?: (props: { value: TabsValue; orientation: TabsOrientation }) => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
-const initialDefaultValue = props.defaultValue;
-const uncontrolledValue = ref<TabsValue>(initialDefaultValue ?? null);
-const renderedValue = computed(() =>
-  props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value,
-);
-const orientation = toRef(props, "orientation");
-provide(TabsContext, { orientation, value: renderedValue });
-let instance: ReturnType<typeof createTabs> | undefined;
 defineExpose({ element: rootRef });
-
-function handleValueChange(_value: TabsValue, detail: TabsValueChangeDetails): void {
-  const nextValue = detail.value;
-  const eventWasControlled = props.modelValue !== undefined;
-  emit("valueChange", nextValue, detail);
-  if (detail.isCanceled) return;
-  if (!eventWasControlled) uncontrolledValue.value = nextValue;
-  emit("update:modelValue", nextValue);
+const initialDefault = props.defaultValue;
+const initialSyncKey = props.syncKey;
+const renderedValue = ref<TabsValue>(
+  normalizeModel(props.modelValue !== undefined ? props.modelValue : initialDefault),
+);
+const selected = computed(() =>
+  normalizeModel(props.modelValue !== undefined ? props.modelValue : renderedValue.value),
+);
+provide(TabsContext, { value: selected, orientation: toRef(props, "orientation"), refresh });
+const connection: { instance?: ReturnType<typeof createTabs>; unsubscribe?: () => void } = {};
+function normalizeModel(next: TabsValue | undefined): TabsValue {
+  return next ?? null;
 }
-
-function destroyOwnedInstance(): void {
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
+function publish(owned: ReturnType<typeof createTabs>) {
+  if (connection.instance !== owned) return;
+  const next = owned.getValue();
+  if (props.modelValue === undefined) renderedValue.value = next;
 }
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-  instance = createTabs(element, {
-    defaultValue: uncontrolledValue.value,
+function disconnect() {
+  const owned = connection.instance;
+  if (!owned) return;
+  connection.unsubscribe?.();
+  connection.unsubscribe = undefined;
+  connection.instance = undefined;
+  owned.destroy();
+}
+function connect(root: HTMLDivElement) {
+  disconnect();
+  const desired = props.modelValue !== undefined ? props.modelValue : initialDefault;
+  const owned = createTabs(root, {
+    defaultValue: desired,
+    ...(props.modelValue !== undefined ? { value: desired } : {}),
     orientation: props.orientation,
-    syncKey: props.syncKey,
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
-    onValueChange: handleValueChange,
+    syncKey: initialSyncKey,
+    onValueChange: (next, detail) => {
+      emit("valueChange", next, detail);
+    },
   });
-  if (props.modelValue === undefined) uncontrolledValue.value = instance.getValue();
+  connection.instance = owned;
+  connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+    if (connection.instance !== owned || detail.isCanceled) return;
+    if (props.modelValue === undefined) renderedValue.value = detail.value;
+    emit("update:modelValue", detail.value);
+  });
+  if (props.modelValue !== undefined && owned.getValue() !== desired)
+    owned.setValue(desired ?? null, { emit: false, sync: false });
+  publish(owned);
 }
-
-onMounted(setupRuntime);
-onUpdated(() => instance?.refresh());
-watch(
-  () => props.modelValue,
-  (nextValue, previousValue) => {
-    const controllednessChanged = (nextValue === undefined) !== (previousValue === undefined);
-    if (controllednessChanged) {
-      if (nextValue === undefined && instance) uncontrolledValue.value = instance.getValue();
-      setupRuntime();
-      return;
-    }
-    if (nextValue === undefined || !instance || Object.is(instance.getValue(), nextValue)) return;
-    instance.setValue(nextValue, { emit: false, sync: true });
-  },
-  { flush: "post" },
-);
-watch(
-  () => props.syncKey,
-  (nextValue, previousValue) => {
-    if (nextValue !== previousValue) setupRuntime();
-  },
-  { flush: "post" },
-);
-onBeforeUnmount(destroyOwnedInstance);
-
-function serializeTabsValue(value: TabsValue | undefined): string | undefined {
-  if (value === undefined) return undefined;
-  return value === null ? "null" : value;
+function applyParent() {
+  const owned = connection.instance,
+    next = props.modelValue;
+  if (!owned || next === undefined || owned.getValue() === next) return;
+  owned.refresh();
+  if (owned.getValue() !== next) owned.setValue(next, { emit: false, sync: true });
+  publish(owned);
 }
+function refresh() {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.refresh();
+  publish(owned);
+}
+function serialize(next: TabsValue | undefined) {
+  return next === null ? "null" : next;
+}
+onMounted(() => {
+  if (rootRef.value) connect(rootRef.value);
+});
+onUpdated(refresh);
+onBeforeUnmount(disconnect);
+watch(() => props.modelValue, applyParent, { flush: "post" });
 </script>
-
 <template>
   <div
+    v-bind="$attrs"
     ref="rootRef"
-    v-bind="attrs"
-    data-sw-tabs
-    data-sw-part="root"
-    :data-default-value="serializeTabsValue(initialDefaultValue)"
+    :data-sw-tabs="''"
+    :data-sw-part="'root'"
+    :data-default-value="serialize(initialDefault)"
+    :data-sync-key="initialSyncKey"
+    :data-value="serialize(selected)"
     :data-orientation="props.orientation"
-    :data-sync-key="props.syncKey"
-    :data-value="serializeTabsValue(renderedValue)"
   >
-    <slot :value="renderedValue" :orientation="props.orientation" />
+    <slot :value="selected" :orientation="props.orientation" />
   </div>
 </template>

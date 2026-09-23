@@ -11,9 +11,6 @@ const props = withDefaults(defineProps<{ value?: string; disabled?: boolean }>()
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null);
 const itemContext: AccordionItemContextValue = {
-  get value() {
-    return props.value;
-  },
   get disabled() {
     return props.disabled;
   },

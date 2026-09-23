@@ -89,7 +89,7 @@ describe.sequential("runtime registry loading", () => {
 
   it("exposes normalized source versions from registry reader APIs", async () => {
     const loadedRegistry = await loadRegistry({ type: "bundled" });
-    const explicitlyTypedRegistry = await loadRegistry<"astro" | "react" | "vue">(
+    const explicitlyTypedRegistry = await loadRegistry(
       { type: "bundled" },
       { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
     );
@@ -182,8 +182,8 @@ describe.sequential("runtime registry loading", () => {
     {
       name: "unsupported targets",
       setup: {
-        svelte: {
-          adapterPackage: { name: "@starwind-ui/svelte", range: "^0.1.0" },
+        solid: {
+          adapterPackage: { name: "@starwind-ui/solid", range: "^0.1.0" },
           packageRequirements: [],
         },
       },
@@ -769,10 +769,10 @@ describe.sequential("runtime registry loading", () => {
             {
               ...validRegistry.components[0],
               targets: {
-                svelte: {
-                  files: [{ path: "button/Button.svelte", content: "<button />" }],
+                solid: {
+                  files: [{ path: "button/Button.tsx", content: "export function Button() {}" }],
                   componentDependencies: [],
-                  packageRequirements: [{ name: "@starwind-ui/svelte", range: "^0.1.0" }],
+                  packageRequirements: [{ name: "@starwind-ui/solid", range: "^0.1.0" }],
                 },
               },
             },
@@ -785,7 +785,7 @@ describe.sequential("runtime registry loading", () => {
     );
 
     await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
-      /components\.0\.targets\.svelte/,
+      /components\.0\.targets\.solid/,
     );
   });
 
@@ -965,6 +965,48 @@ describe.sequential("runtime registry loading", () => {
     await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
       /components\.0\.targets\.astro\.packageRequirements/,
     );
+  });
+
+  it("admits Svelte registry data through the production policy", async () => {
+    const registryPath = join(tempDir, "svelte-registry.json");
+    const svelteRegistry = {
+      $schema: "https://starwind.dev/registry-schema.v2.json",
+      version: "2.0.0",
+      setup: {
+        svelte: {
+          adapterPackage: { name: "@starwind-ui/svelte", range: "0.0.0" },
+          packageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
+        },
+      },
+      components: [
+        {
+          name: "button",
+          version: "2.4.0",
+          type: "component",
+          dependencies: [],
+          targets: {
+            svelte: {
+              files: [{ path: "button/Button.svelte", content: "<button />\n" }],
+              componentDependencies: [],
+              packageRequirements: [{ name: "@starwind-ui/svelte", range: "0.0.0" }],
+            },
+          },
+        },
+      ],
+    };
+    await writeFile(registryPath, JSON.stringify(svelteRegistry, null, 2), "utf-8");
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).resolves.toMatchObject({
+      setup: { svelte: { adapterPackage: { name: "@starwind-ui/svelte" } } },
+      components: [
+        {
+          name: "button",
+          targets: {
+            svelte: { packageRequirements: [{ name: "@starwind-ui/svelte", range: "0.0.0" }] },
+          },
+        },
+      ],
+    });
   });
 
   it("accepts Vue registry setup and prepared targets through the production policy", async () => {

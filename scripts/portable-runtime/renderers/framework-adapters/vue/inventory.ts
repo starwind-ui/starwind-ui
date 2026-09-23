@@ -587,6 +587,8 @@ export const vueBuildEntryPoints = Object.fromEntries(
 
 export const vueGeneratedSourceFiles = [
   "_internal/as-child.ts",
+  "_internal/form-discovery.ts",
+  "_internal/native-control.ts",
   "_internal/portal.ts",
   "index.ts",
   ...vueAdapterInventory.runtimePrimitives.flatMap(({ sourceFiles }) => sourceFiles),

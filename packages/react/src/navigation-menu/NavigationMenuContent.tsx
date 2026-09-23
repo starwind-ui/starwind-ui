@@ -11,8 +11,23 @@ export type NavigationMenuContentProps = React.HTMLAttributes<HTMLDivElement>;
 
 const NavigationMenuContent = React.forwardRef<HTMLDivElement, NavigationMenuContentProps>(
   function NavigationMenuContent(props, forwardedRef) {
+    const ownershipRef = React.useRef<{ carrier: HTMLDivElement; content: Element } | null>(null);
+    const registerCarrier = React.useCallback((carrier: HTMLDivElement | null) => {
+      const previous = ownershipRef.current;
+      ownershipRef.current = null;
+      // Return Runtime-moved Content before React removes its stationary owner.
+      if (previous && previous.content.parentNode !== previous.carrier) {
+        previous.carrier.append(previous.content);
+      }
+      if (carrier?.firstElementChild) {
+        ownershipRef.current = { carrier, content: carrier.firstElementChild };
+      }
+    }, []);
+
     return (
-      <div data-sw-nav-menu-content="" data-state="closed" hidden ref={forwardedRef} {...props} />
+      <div style={{ display: "contents" }} ref={registerCarrier}>
+        <div data-sw-nav-menu-content="" data-state="closed" hidden ref={forwardedRef} {...props} />
+      </div>
     );
   },
 );

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -12,7 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const RELEASE_PACKS = "node_modules/.cache/starwind-release/packs";
 const RECORD = "node_modules/.cache/starwind-release/gate.json";
 
-export function releaseGateStages({ privateEvidence = false } = {}) {
+export function releaseGateStages() {
   return [
     ["static", ["check:public"]],
     ["styled metadata", ["styled:versions:check"]],
@@ -24,26 +23,22 @@ export function releaseGateStages({ privateEvidence = false } = {}) {
     ["package size", ["--filter=starwind", "package:check"]],
     [
       "pack",
-      [
-        "exec",
-        "node",
-        "scripts/pack-public-release-artifacts.mjs",
-        "--vue-beta",
-        "--output",
-        RELEASE_PACKS,
-      ],
+      ["exec", "node", "scripts/pack-public-release-artifacts.mjs", "--output", RELEASE_PACKS],
     ],
     ["repo and generator tests", ["test:run"]],
     ["runtime tests", ["runtime:test"]],
     ["react tests", ["react:test"]],
     ["vue tests", ["--filter=@starwind-ui/vue", "test:all:built"]],
     ["vue generator tests", ["runtime:generate:vue:test"]],
+    ["svelte tests", ["--filter=@starwind-ui/svelte", "test:run"]],
+    ["svelte generator tests", ["runtime:generate:svelte:test"]],
     ["astro demo", ["demo:smoke"]],
     ["react demo", ["react-demo:smoke"]],
     ["vue demo", ["--filter=vue-demo", "smoke:built"]],
+    ["svelte demo", ["svelte:demo:test"]],
     ["bundle sizes", ["runtime:size:check:prepared"]],
-    ...(privateEvidence ? [["private Vue evidence", ["runtime:perf:vue:evidence:check"]]] : []),
     ["Vue hosts", ["test:vue-cli-host-acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"]],
+    ["Svelte hosts", ["test:svelte-cli-host-acceptance", `--packs=${RELEASE_PACKS}`]],
     [
       "candidate hosts",
       ["release:candidate:acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"],
@@ -71,9 +66,7 @@ export async function assertReleaseGate({ root = ROOT } = {}) {
       reusableGateRecord(record, {
         source: releaseSourceFingerprint(root),
         outputs: releaseOutputFingerprint(root, path.join(root, RELEASE_PACKS)),
-        stages: releaseGateStages({
-          privateEvidence: existsSync(path.join(root, "packages/svelte/package.json")),
-        }),
+        stages: releaseGateStages(),
       }),
     "Release gate evidence is missing or stale; run pnpm release:gate.",
   );
@@ -81,6 +74,7 @@ export async function assertReleaseGate({ root = ROOT } = {}) {
     outputDirectory: path.join(root, RELEASE_PACKS),
     repoRoot: root,
     requireVue: true,
+    requireSvelte: true,
   });
   return record;
 }
@@ -90,9 +84,7 @@ export async function runReleaseGate({ root = ROOT, fresh = false, run = runRele
   // Registry advisories can change without a source edit, so audit on every invocation.
   await run(["audit:prod"], root);
   await run(["exec", "node", "scripts/release-preflight.mjs", "--metadata"], root);
-  const stages = releaseGateStages({
-    privateEvidence: existsSync(path.join(root, "packages/svelte/package.json")),
-  });
+  const stages = releaseGateStages();
   const source = releaseSourceFingerprint(root);
   const packs = path.join(root, RELEASE_PACKS);
   const recordFile = path.join(root, RECORD);
@@ -128,7 +120,12 @@ export async function runReleaseGate({ root = ROOT, fresh = false, run = runRele
     await writeFile(recordFile, `${JSON.stringify(record, null, 2)}\n`);
     console.log(`[release-gate] passed ${name} (${record.completed.at(-1).seconds.toFixed(1)}s)`);
   }
-  await loadPublicReleaseArtifacts({ outputDirectory: packs, repoRoot: root, requireVue: true });
+  await loadPublicReleaseArtifacts({
+    outputDirectory: packs,
+    repoRoot: root,
+    requireVue: true,
+    requireSvelte: true,
+  });
   record.complete = true;
   record.outputs = releaseOutputFingerprint(root, packs);
   await writeFile(recordFile, `${JSON.stringify(record, null, 2)}\n`);

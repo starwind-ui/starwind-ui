@@ -8,6 +8,7 @@ export type SelectContextValue = Readonly<{
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
+  requestRefresh(): void;
   registerPortal(owner: symbol, element: HTMLElement | null): void;
   required: ComputedRef<boolean>;
   selectedLabel: ComputedRef<string | null>;
@@ -38,7 +39,10 @@ export function useSelectItemContext(part = "part"): SelectItemContextValue {
 </script>
 <script setup lang="ts">
 import {
+  createPortalBinding,
   createSelect,
+  readyPortalBindingSnapshot,
+  reportPortalPlacement,
   type SelectOpenChangeDetails,
   type SelectValueChangeDetails,
 } from "@starwind-ui/runtime/select";
@@ -105,11 +109,15 @@ const disabled = computed(() => props.disabled);
 const readOnly = computed(() => props.readOnly);
 const required = computed(() => props.required);
 let instance: ReturnType<typeof createSelect> | undefined;
+let portalBinding: ReturnType<typeof createPortalBinding> | undefined;
+let unsubscribeOpenChange: (() => void) | undefined;
+let unsubscribeValueChange: (() => void) | undefined;
 let portalOwner: symbol | undefined;
 let portalReference: HTMLElement | null = null;
 let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
+let refreshPending = false;
 
 provide(SelectContext, {
   disabled,
@@ -117,11 +125,14 @@ provide(SelectContext, {
   mounted,
   open: renderedOpen,
   readOnly,
+  requestRefresh,
   registerPortal(owner, element) {
     if (element) {
+      if (portalOwner !== owner || portalReference !== element) clearPortalBinding();
       portalOwner = owner;
       portalReference = element;
     } else if (portalOwner === owner) {
+      clearPortalBinding();
       portalOwner = undefined;
       portalReference = null;
     }
@@ -163,21 +174,6 @@ function syncSelectedLabel(value: string | null, item?: HTMLElement): void {
   selectedLabelState.value = { label: readItemLabel(item) ?? findSelectedLabel(value), value };
 }
 
-function handleOpenChange(open: boolean, detail: SelectOpenChangeDetails): void {
-  emit("openChange", open, detail);
-  if (detail.isCanceled) return;
-  if (props.open === undefined) uncontrolledOpen.value = open;
-  emit("update:open", open);
-}
-
-function handleValueChange(value: string | null, detail: SelectValueChangeDetails): void {
-  emit("valueChange", value, detail);
-  if (detail.isCanceled) return;
-  syncSelectedLabel(value, detail.item);
-  if (props.modelValue === undefined) uncontrolledValue.value = value;
-  emit("update:modelValue", value);
-}
-
 function unbindFormReset(): void {
   if (resetTimer !== undefined) window.clearTimeout(resetTimer);
   resetTimer = undefined;
@@ -185,18 +181,33 @@ function unbindFormReset(): void {
   resetForm = null;
 }
 
-function handleFormReset(): void {
-  if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-  resetTimer = window.setTimeout(() => {
-    resetTimer = undefined;
-    if (!instance) return;
-    if (props.modelValue !== undefined) {
-      instance.setValue(props.modelValue, { emit: false });
-      return;
-    }
-    uncontrolledValue.value = instance.getValue();
-    syncSelectedLabel(uncontrolledValue.value);
-  }, 0);
+function handleFormReset(event: Event): void {
+  const revision = uncontrolledValue.value;
+  window.clearTimeout(resetTimer);
+  queueMicrotask(() => {
+    if (!(instance !== undefined)) return;
+    resetTimer = window.setTimeout(() => {
+      if (!(instance !== undefined)) return;
+      const superseded = revision !== uncontrolledValue.value;
+      const before = uncontrolledValue.value;
+      const initialResetValue = initialDefaultValue;
+      const next =
+        props.modelValue !== undefined
+          ? props.modelValue
+          : event.defaultPrevented || superseded
+            ? before
+            : initialResetValue;
+      const resetOwner = instance!;
+      resetOwner.setValue(next, { emit: false });
+      const acceptedValue = resetOwner.getValue();
+
+      if (props.modelValue === undefined) {
+        uncontrolledValue.value = acceptedValue;
+      }
+
+      syncSelectedLabel(acceptedValue);
+    }, 0);
+  });
 }
 
 function bindFormReset(): void {
@@ -208,32 +219,94 @@ function bindFormReset(): void {
 }
 
 function destroyOwnedInstance(): void {
+  unsubscribeOpenChange?.();
+  unsubscribeOpenChange = undefined;
+  unsubscribeValueChange?.();
+  unsubscribeValueChange = undefined;
   unbindFormReset();
   const ownedInstance = instance;
   instance = undefined;
   ownedInstance?.destroy();
 }
 
+function clearPortalBinding(): void {
+  portalBinding?.destroy();
+  portalBinding = undefined;
+}
+
+function requestRefresh(): void {
+  const owner = instance;
+  if (refreshPending) return;
+  refreshPending = true;
+  queueMicrotask(() => {
+    refreshPending = false;
+    if (instance !== owner || (owner && rootRef.value !== owner.root) || !rootRef.value) return;
+    if (owner) {
+      if (props.open === undefined) uncontrolledOpen.value = owner.getOpen();
+      if (props.modelValue === undefined) uncontrolledValue.value = owner.getValue();
+    }
+    const trigger = [
+      ...rootRef.value.querySelectorAll<HTMLElement>("[data-sw-select-trigger]"),
+    ].find((candidate) => candidate.closest("[data-sw-select]") === rootRef.value);
+    if (!trigger) {
+      destroyOwnedInstance();
+      return;
+    }
+    setupRuntime();
+  });
+}
+
 function setupRuntime(): void {
   destroyOwnedInstance();
   const element = rootRef.value;
   if (!element) return;
-  instance = createSelect(element, {
-    autoComplete: props.autoComplete,
+  const portalTarget = portalReference?.parentElement;
+  if (portalReference && portalTarget) {
+    portalBinding ??= createPortalBinding(element);
+    portalBinding.publish(
+      readyPortalBindingSnapshot(element, [{ authoredParent: element, wrapper: portalReference }]),
+    );
+    reportPortalPlacement(portalReference, { ready: true, target: portalTarget });
+  }
+  const owned = createSelect(element, {
     defaultOpen: props.disabled ? false : uncontrolledOpen.value,
     defaultValue: uncontrolledValue.value,
+    autoComplete: props.autoComplete,
     disabled: props.disabled,
     form: props.form,
     highlightItemOnHover: props.highlightItemOnHover,
     modal: props.modal,
     name: props.name,
-    onOpenChange: handleOpenChange,
-    onValueChange: handleValueChange,
-    portalReference: portalReference ?? undefined,
     readOnly: props.readOnly,
     required: props.required,
-    ...(props.open === undefined ? {} : { open: props.disabled ? false : props.open }),
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
+    onOpenChange: (next, detail) => {
+      emit("openChange", next, detail);
+    },
+    onValueChange: (next, detail) => {
+      emit("valueChange", next, detail);
+    },
+    portalReference: portalReference ?? undefined,
+    ...(props.open !== undefined ? { open: props.disabled ? false : props.open } : {}),
+    ...(props.modelValue !== undefined ? { value: props.modelValue } : {}),
+  });
+  instance = owned;
+  owned.setValue(props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value, {
+    emit: false,
+  });
+  unsubscribeOpenChange = owned.subscribe("openChange", (detail) => {
+    if (instance !== owned) return;
+    if (props.open === undefined) {
+      uncontrolledOpen.value = detail.open;
+    }
+    emit("update:open", detail.open);
+  });
+  unsubscribeValueChange = owned.subscribe("valueChange", (detail) => {
+    if (instance !== owned) return;
+    syncSelectedLabel(detail.value, detail.item);
+    if (props.modelValue === undefined) {
+      uncontrolledValue.value = detail.value;
+    }
+    emit("update:modelValue", detail.value);
   });
   syncSelectedLabel(instance.getValue());
   bindFormReset();
@@ -263,7 +336,8 @@ watch(
     }
     if (open === undefined || props.disabled || !instance || Object.is(instance.getOpen(), open))
       return;
-    instance.setOpen(open, { emit: false });
+    if (instance.getOpen() !== (props.disabled ? false : open))
+      instance.setOpen(props.disabled ? false : open, { emit: false });
   },
   { flush: "post" },
 );
@@ -275,45 +349,67 @@ watch(
       void recreateRuntimeAfterControllednessChange();
       return;
     }
-    if (value === undefined || !instance || Object.is(instance.getValue(), value)) return;
-    instance.setValue(value, { emit: false });
+    if (value === undefined || !instance) return;
+    if (instance.getValue() !== value || value === "") instance.setValue(value, { emit: false });
     await nextTick();
     syncSelectedLabel(value);
   },
   { flush: "post" },
 );
-watch(
-  () => props.disabled,
-  (value) => {
-    if (!instance) return;
-    instance.setDisabled(value);
-    if (value) {
-      if (props.open === undefined) uncontrolledOpen.value = false;
-      return;
-    }
 
-    const nextOpen = props.open ?? uncontrolledOpen.value;
-    if (!Object.is(instance.getOpen(), nextOpen)) {
-      instance.setOpen(nextOpen, { emit: false });
+watch(
+  [() => props.disabled],
+  () => {
+    const owned = instance;
+    if (!owned) return;
+    owned.setDisabled(props.disabled);
+    const desired = props.disabled ? false : (props.open ?? uncontrolledOpen.value);
+    if (owned.getOpen() !== desired) owned.setOpen(desired, { emit: false });
+    if (props.open === undefined) {
+      uncontrolledOpen.value = owned.getOpen();
     }
   },
+  { flush: "post" },
 );
 watch(
-  () => props.readOnly,
-  (value) => instance?.setReadOnly(value),
+  [() => props.readOnly],
+  () => {
+    const owned = instance;
+    if (!owned) return;
+    owned.setReadOnly(props.readOnly);
+  },
+  { flush: "post" },
 );
 watch(
-  () => props.modal,
-  (value) => instance?.setModal(value),
+  [() => props.modal],
+  () => {
+    const owned = instance;
+    if (!owned) return;
+    owned.setModal(props.modal);
+  },
+  { flush: "post" },
 );
 watch(
-  () => props.highlightItemOnHover,
-  (value) => instance?.setHighlightItemOnHover(value),
+  [() => props.highlightItemOnHover],
+  () => {
+    const owned = instance;
+    if (!owned) return;
+    owned.setHighlightItemOnHover(props.highlightItemOnHover);
+  },
+  { flush: "post" },
 );
 watch(
-  () => [props.autoComplete, props.form, props.name, props.required] as const,
-  ([autoComplete, form, name, required]) => {
-    instance?.setFormOptions({ autoComplete, form, name, required });
+  [() => props.autoComplete, () => props.form, () => props.name, () => props.required],
+  () => {
+    const owned = instance;
+    if (!owned) return;
+    owned.setFormOptions({
+      autoComplete: props.autoComplete,
+      form: props.form,
+      name: props.name,
+      required: props.required,
+    });
+
     bindFormReset();
   },
   { flush: "post" },
@@ -323,6 +419,7 @@ onBeforeUnmount(() => {
   lifecycleGeneration += 1;
   mounted.value = false;
   destroyOwnedInstance();
+  clearPortalBinding();
 });
 </script>
 

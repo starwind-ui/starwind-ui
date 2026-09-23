@@ -123,15 +123,18 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(dialogTrigger).toContain("targetId?: string;");
   expect(dialogTrigger).toContain("targetId,");
   expect(dialogTrigger).toContain("targetId={targetId}");
-  expect(dialogTrigger).toContain("data-sw-dialog-target-id={targetId}");
+  expect(dialogTrigger).toContain("<DialogPrimitive.Trigger");
+  expect(dialogTrigger).toContain("asChild={asChild}");
   expect(dialogTrigger).not.toContain("for?: string;");
   expect(dialogTrigger).not.toContain("dialogFor");
   expect(dialogTrigger).not.toContain("data-dialog-for");
-  expect(dialogTrigger).toContain("data-as-child");
-  expect(dialogTrigger).toContain("data-sw-dialog-trigger");
+  expect(dialogTrigger).not.toContain("data-as-child");
+  expect(dialogTrigger).not.toContain("data-sw-dialog-trigger");
   expect(dialogClose).toContain("asChild?: boolean;");
-  expect(dialogClose).toContain("data-as-child");
-  expect(dialogClose).toContain("data-sw-dialog-close");
+  expect(dialogClose).toContain("<DialogPrimitive.Close");
+  expect(dialogClose).toContain("asChild={asChild}");
+  expect(dialogClose).not.toContain("data-as-child");
+  expect(dialogClose).not.toContain("data-sw-dialog-close");
   expect(dialogContent).toContain('import type * as React from "react";');
   expect(dialogContent).toContain("backdrop ??");
   expect(dialogContent).toContain("<DialogPrimitive.Backdrop");
@@ -177,12 +180,13 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(sheetTrigger).toContain("targetId?: string;");
   expect(sheetTrigger).toContain("targetId,");
   expect(sheetTrigger).toContain("targetId={targetId}");
-  expect(sheetTrigger).toContain("data-sw-drawer-target-id={targetId}");
+  expect(sheetTrigger).toContain("<SheetPrimitive.Trigger");
+  expect(sheetTrigger).toContain("asChild={asChild}");
   expect(sheetTrigger).not.toContain("for?: string;");
   expect(sheetTrigger).not.toContain("dialogFor");
   expect(sheetTrigger).not.toContain("data-dialog-for");
-  expect(sheetTrigger).toContain("data-as-child");
-  expect(sheetTrigger).toContain("data-sw-drawer-trigger");
+  expect(sheetTrigger).not.toContain("data-as-child");
+  expect(sheetTrigger).not.toContain("data-sw-drawer-trigger");
   expect(sheetContent).toContain('import type * as React from "react";');
   expect(sheetContent).toContain("backdrop ??");
   expect(sheetContent).toContain("<SheetPrimitive.Backdrop");
@@ -204,8 +208,8 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(sheetContent).toContain('<span className="sr-only">Close sheet</span>');
   expect(sheetContent).not.toContain('aria-label="Close dialog"');
   expect(sheetClose).toContain("asChild?: boolean;");
-  expect(sheetClose).toContain("data-as-child");
-  expect(sheetClose).toContain("data-sw-drawer-close");
+  expect(sheetClose).not.toContain("data-as-child");
+  expect(sheetClose).not.toContain("data-sw-drawer-close");
   expect(sheetClose).toContain("<SheetPrimitive.Close");
   expect(sheetClose).not.toContain("starwind-sheet-close");
   expect(sheetClose).toContain("const closeClassName = className;");
@@ -611,12 +615,13 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(alertDialogTrigger).toContain("targetId?: string;");
   expect(alertDialogTrigger).toContain("targetId,");
   expect(alertDialogTrigger).toContain("targetId={targetId}");
-  expect(alertDialogTrigger).toContain("data-sw-alert-dialog-target-id={targetId}");
+  expect(alertDialogTrigger).toContain("<AlertDialogPrimitive.Trigger");
+  expect(alertDialogTrigger).toContain("asChild={asChild}");
   expect(alertDialogTrigger).not.toContain("for?: string;");
   expect(alertDialogTrigger).not.toContain("dialogFor");
   expect(alertDialogTrigger).not.toContain("data-dialog-for");
-  expect(alertDialogTrigger).toContain("data-as-child");
-  expect(alertDialogTrigger).toContain("data-sw-alert-dialog-trigger");
+  expect(alertDialogTrigger).not.toContain("data-as-child");
+  expect(alertDialogTrigger).not.toContain("data-sw-alert-dialog-trigger");
   expect(alertDialogContent).toContain("<AlertDialogPrimitive.Backdrop");
   expect(alertDialogContent).toContain("<AlertDialogPrimitive.Popup");
   expect(alertDialogContent).toContain('role="alertdialog"');
@@ -634,13 +639,15 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(alertDialogAction).toContain("<Button");
   expect(alertDialogAction).toContain("variant={variant}");
   expect(alertDialogAction).toContain("size={size}");
-  expect(alertDialogAction).not.toContain("<AlertDialogPrimitive.Close");
+  expect(alertDialogAction).toContain("__useAlertDialogControl");
+  expect(alertDialogAction).toContain("ref={setControlElement}");
+  expect(alertDialogAction).not.toContain("AlertDialogPrimitive.Close");
   expect(alertDialogAction).toContain("asChild?: boolean;");
   expect(alertDialogAction).toContain("data-as-child");
   expect(alertDialogAction).toContain('data-slot="alert-dialog-action"');
   expect(alertDialogAction).toContain("data-sw-alert-dialog-close");
   expect(alertDialogAction).toContain(
-    "alertDialogActionAsChild({ variant, size, class: className })",
+    "alertDialogActionAsChild({ class: className, size, variant })",
   );
   expect(alertDialogAction).toContain("alertDialogAction({ class: className })");
   expect(alertDialogCancel).toContain('import { Button } from "../button"');
@@ -651,13 +658,15 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(alertDialogCancel).toContain("<Button");
   expect(alertDialogCancel).toContain("variant={variant}");
   expect(alertDialogCancel).toContain("size={size}");
-  expect(alertDialogCancel).not.toContain("<AlertDialogPrimitive.Close");
+  expect(alertDialogCancel).toContain("__useAlertDialogControl");
+  expect(alertDialogCancel).toContain("ref={setControlElement}");
+  expect(alertDialogCancel).not.toContain("AlertDialogPrimitive.Close");
   expect(alertDialogCancel).toContain("asChild?: boolean;");
   expect(alertDialogCancel).toContain("data-as-child");
   expect(alertDialogCancel).toContain('data-slot="alert-dialog-cancel"');
   expect(alertDialogCancel).toContain("data-sw-alert-dialog-close");
   expect(alertDialogCancel).toContain(
-    "alertDialogCancelAsChild({ variant, size, class: className })",
+    "alertDialogCancelAsChild({ class: className, size, variant })",
   );
   expect(alertDialogCancel).toContain("alertDialogCancel({ class: className })");
   expect(alertDialogVariants).not.toContain("starwind-alert-dialog");

@@ -11,9 +11,10 @@ import {
   type ColorPickerValueCommitDetails,
   createColorPicker,
   createColorPickerInitialState,
+  parseColor,
   projectColorPickerInitialPart,
 } from "@starwind-ui/runtime/color-picker";
-import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
 import { ColorPickerRootContext, mergeColorPickerProjection } from "./ColorPickerContext.js";
 
 defineOptions({ inheritAttrs: false });
@@ -54,26 +55,23 @@ const emit = defineEmits<{
 defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
+const initialDefaultValue = props.defaultValue;
+const seed = {
+  ...(props.modelValue !== undefined ? { value: props.modelValue } : {}),
+  defaultValue: initialDefaultValue,
+  format: props.format,
+};
 const initial = createColorPickerInitialState({
-  ...(props.modelValue !== undefined
-    ? { value: props.modelValue }
-    : { defaultValue: props.defaultValue }),
-  ...(props.format === undefined ? {} : { format: props.format }),
+  ...seed,
   alpha: props.alpha,
   allowEmpty: props.allowEmpty,
 });
-const uncontrolledValue = ref<ColorPickerColor | null>(initial.value);
-const uncontrolledFormat = ref<ColorPickerFormat>(initial.format);
-const renderedValue = computed(() =>
-  props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value,
-);
-const renderedFormat = computed(() =>
-  props.format !== undefined ? props.format : uncontrolledFormat.value,
-);
+const acceptedValue = ref<ColorPickerColor | null>(initial.value);
+const acceptedFormat = ref<ColorPickerFormat>(initial.format);
 const initialState = computed(() =>
   createColorPickerInitialState({
-    value: renderedValue.value,
-    format: renderedFormat.value,
+    value: acceptedValue.value,
+    format: acceptedFormat.value,
     alpha: props.alpha,
     allowEmpty: props.allowEmpty,
     disabled: props.disabled,
@@ -95,107 +93,11 @@ const rootProps = computed(() =>
 );
 defineExpose({ element });
 
-let instance: ReturnType<typeof createColorPicker> | undefined;
-let observer: MutationObserver | undefined;
-let refreshQueued = false;
-const ownershipSeeds = new Map<Element, string>();
-const structuralIds = new WeakMap<Element, number>();
-let nextStructuralId = 1;
-let structuralFingerprint = "";
-const partSelector =
-  "[data-sw-color-picker], [data-sw-color-picker-label], [data-sw-color-picker-control], [data-sw-color-picker-value-input], [data-sw-color-picker-value-swatch], [data-sw-color-picker-value-text], [data-sw-color-picker-area], [data-sw-color-picker-area-background], [data-sw-color-picker-area-thumb], [data-sw-color-picker-area-input], [data-sw-color-picker-channel-slider], [data-sw-color-picker-channel-slider-track], [data-sw-color-picker-channel-slider-thumb], [data-sw-color-picker-channel-input], [data-sw-color-picker-channel-field], [data-sw-color-picker-format-select], [data-sw-color-picker-format-control], [data-sw-color-picker-transparency-grid], [data-sw-color-picker-swatch-group], [data-sw-color-picker-swatch], [data-sw-color-picker-eye-dropper], [data-sw-color-picker-clear], [data-sw-color-picker-hidden-input]";
-const configurationAttributes = [
-  "data-axis",
-  "data-channel",
-  "data-disabled",
-  "data-orientation",
-  "data-step",
-  "data-value",
-  "data-x-channel",
-  "data-y-channel",
-  "aria-label",
-  "aria-labelledby",
-  "aria-roledescription",
-];
-
-function ownedParts(rootElement: HTMLElement): Element[] {
-  return [rootElement, ...rootElement.querySelectorAll(partSelector)].filter(
-    (part) => part.closest("[data-sw-color-picker]") === rootElement,
-  );
-}
-function captureOwnership(rootElement: HTMLElement): void {
-  for (const part of ownedParts(rootElement)) {
-    const marker = part.getAttribute("data-sw-color-picker-initial-owned");
-    if (marker) ownershipSeeds.set(part, marker);
-  }
-}
-function replayOwnership(rootElement: HTMLElement): void {
-  for (const [part, marker] of ownershipSeeds) {
-    if (!part.isConnected || part.closest("[data-sw-color-picker]") !== rootElement)
-      ownershipSeeds.delete(part);
-    else part.setAttribute("data-sw-color-picker-initial-owned", marker);
-  }
-}
-function relevantMutation(record: MutationRecord, rootElement: HTMLElement): boolean {
-  const target = record.target instanceof Element ? record.target : undefined;
-  if (!target || target.closest("[data-sw-color-picker]") !== rootElement) return false;
-  if (record.type === "childList") return true;
-  if (record.type !== "attributes" || !record.attributeName) return false;
-  if (["data-value", "data-disabled"].includes(record.attributeName))
-    return target.hasAttribute("data-sw-color-picker-swatch");
-  return true;
-}
-function configurationFor(part: Element): readonly string[] {
-  if (part.hasAttribute("data-sw-color-picker-area")) return ["data-x-channel", "data-y-channel"];
-  if (part.hasAttribute("data-sw-color-picker-area-input"))
-    return ["data-axis", "data-step", "aria-label", "aria-labelledby", "aria-roledescription"];
-  if (part.hasAttribute("data-sw-color-picker-channel-slider"))
-    return ["data-channel", "data-orientation"];
-  if (part.hasAttribute("data-sw-color-picker-channel-input")) return ["data-step"];
-  if (part.hasAttribute("data-sw-color-picker-channel-field")) return ["data-channel"];
-  if (part.hasAttribute("data-sw-color-picker-swatch")) return ["data-value", "data-disabled"];
-  return [];
-}
-function fingerprint(rootElement: HTMLElement): string {
-  return ownedParts(rootElement)
-    .map((part) => {
-      let id = structuralIds.get(part);
-      if (id === undefined) {
-        id = nextStructuralId++;
-        structuralIds.set(part, id);
-      }
-      const attributes = configurationFor(part)
-        .map((name) => name + "=" + (part.getAttribute(name) ?? ""))
-        .join(";");
-      return id + ":" + part.tagName + ":" + attributes;
-    })
-    .join("|");
-}
-function queueRefresh(): void {
-  if (refreshQueued) return;
-  refreshQueued = true;
-  queueMicrotask(() => {
-    refreshQueued = false;
-    if (!element.value || !instance) return;
-    const nextFingerprint = fingerprint(element.value);
-    if (nextFingerprint === structuralFingerprint) return;
-    structuralFingerprint = nextFingerprint;
-    captureOwnership(element.value);
-    instance.refresh({ preserveState: true });
-    structuralFingerprint = fingerprint(element.value);
-  });
-}
-
-onMounted(() => {
-  const rootElement = element.value;
-  if (!rootElement) return;
-  replayOwnership(rootElement);
-  captureOwnership(rootElement);
-  instance = createColorPicker(rootElement, {
-    ...(props.modelValue !== undefined
-      ? { value: props.modelValue }
-      : { defaultValue: props.defaultValue }),
-    format: renderedFormat.value,
+let connection: ReturnType<typeof connectColorPicker> | undefined;
+function readOptions(): ColorPickerOptions {
+  return {
+    value: props.modelValue,
+    format: props.format,
     alpha: props.alpha,
     allowEmpty: props.allowEmpty,
     disabled: props.disabled,
@@ -208,115 +110,334 @@ onMounted(() => {
     getAriaValueText: props.getAriaValueText,
     getAreaRoleDescription: props.getAreaRoleDescription,
     getColorDescription: props.getColorDescription,
-    onValueChange: (value, details) => {
-      const eventWasControlled = props.modelValue !== undefined;
-      emit("valueChange", value, details);
-      if (details.isCanceled) return;
-      if (!eventWasControlled) uncontrolledValue.value = value;
+    onValueChange: (value, details) => emit("valueChange", value, details),
+    onValueCommitted: (value, details) => emit("valueCommitted", value, details),
+    onFormatChange: (format, details) => emit("formatChange", format, details),
+  };
+}
+type ColorPickerConnectionTransport = {
+  seed: Pick<ColorPickerOptions, "value" | "defaultValue" | "format">;
+  read(): ColorPickerOptions;
+  restoreAuthoredOwnership?(): void;
+  captureAuthoredOwnership?(): void;
+  own?(instance: ReturnType<typeof createColorPicker> | undefined): void;
+  observe(value: ColorPickerColor | null, format: ColorPickerFormat): void;
+  publishValue?(value: ColorPickerColor | null): void;
+  publishFormat?(format: ColorPickerFormat): void;
+  afterUpdate(run: () => void): void;
+};
+
+function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionTransport) {
+  const valueControlled = transport.seed.value !== undefined;
+  const formatControlled = transport.seed.format !== undefined;
+  let controlledValue = transport.seed.value;
+  let controlledFormat = transport.seed.format;
+  let active = true;
+  let pending = false;
+  let applied = transport.read();
+  transport.restoreAuthoredOwnership?.();
+  transport.captureAuthoredOwnership?.();
+  const initialOptions = { ...applied, ...transport.seed };
+  // Runtime captures value ownership from property presence at construction.
+  if (!valueControlled) delete initialOptions.value;
+  const owner = createColorPicker(root, {
+    ...initialOptions,
+    onValueChange(next, details) {
+      transport.read().onValueChange?.(next, details);
+      afterUpdate();
+    },
+    onValueCommitted(next, details) {
+      transport.read().onValueCommitted?.(next, details);
+    },
+    onFormatChange(next, details) {
+      transport.read().onFormatChange?.(next, details);
+    },
+  });
+  transport.own?.(owner);
+  // Keep the last valid command, including when later input is undefined.
+  if (valueControlled) controlledValue = owner.getValue();
+  if (formatControlled) controlledFormat = owner.getFormat();
+  let observedValue = owner.getValue();
+  let observedFormat = owner.getFormat();
+
+  function sameValue(
+    left: ColorPickerValue | undefined,
+    right: ColorPickerValue | undefined,
+  ): boolean {
+    return (
+      Object.is(left, right) ||
+      (typeof left === "object" &&
+        left !== null &&
+        typeof right === "object" &&
+        right !== null &&
+        left.equals(right))
+    );
+  }
+  function syncModels(next: ColorPickerOptions): void {
+    if (valueControlled) {
+      const parsed =
+        next.value === null
+          ? next.allowEmpty
+            ? null
+            : undefined
+          : typeof next.value === "string"
+            ? (parseColor(next.value) ?? undefined)
+            : next.value;
+      if (parsed !== undefined) controlledValue = parsed;
+      if (controlledValue !== undefined && !sameValue(owner.getValue(), controlledValue))
+        owner.setValue(controlledValue, { emit: false });
+    }
+    if (formatControlled) {
+      if (next.format !== undefined) controlledFormat = next.format;
+      if (controlledFormat !== undefined && owner.getFormat() !== controlledFormat)
+        owner.setFormat(controlledFormat, { emit: false });
+    }
+  }
+  function applyOptions(next: ColorPickerOptions): void {
+    if (
+      Object.is(next.alpha, applied.alpha) &&
+      Object.is(next.allowEmpty, applied.allowEmpty) &&
+      Object.is(next.disabled, applied.disabled) &&
+      Object.is(next.readOnly, applied.readOnly) &&
+      Object.is(next.name, applied.name) &&
+      Object.is(next.form, applied.form) &&
+      Object.is(next.required, applied.required) &&
+      Object.is(next.locale, applied.locale) &&
+      Object.is(next.dir, applied.dir) &&
+      Object.is(next.getAriaValueText, applied.getAriaValueText) &&
+      Object.is(next.getAreaRoleDescription, applied.getAreaRoleDescription) &&
+      Object.is(next.getColorDescription, applied.getColorDescription)
+    )
+      return;
+    if (!Object.is(next.disabled, applied.disabled)) owner.setDisabled(next.disabled ?? false);
+    if (!Object.is(next.readOnly, applied.readOnly)) owner.setReadOnly(next.readOnly ?? false);
+    if (!Object.is(next.name, applied.name)) owner.setName(next.name ?? null);
+    owner.setOptions({
+      alpha: next.alpha ?? true,
+      allowEmpty: next.allowEmpty ?? false,
+      dir: next.dir ?? null,
+      form: next.form ?? null,
+      getAreaRoleDescription: next.getAreaRoleDescription,
+      getAriaValueText: next.getAriaValueText,
+      getColorDescription: next.getColorDescription,
+      locale: next.locale ?? null,
+      required: next.required ?? false,
+    });
+    applied = next;
+  }
+  function update(refresh = true): void {
+    if (!active) return;
+    const next = transport.read();
+    if (refresh) owner.refresh({ preserveState: true });
+    applyOptions(next);
+    syncModels(next);
+    observedValue = owner.getValue();
+    observedFormat = owner.getFormat();
+    transport.observe(observedValue, observedFormat);
+  }
+  function afterUpdate(): void {
+    if (pending || !active) return;
+    pending = true;
+    transport.afterUpdate(() => {
+      pending = false;
+      update();
+    });
+  }
+  const unsubscribeValue = owner.subscribe("valueChange", (details) => {
+    if (!active) return;
+    transport.publishValue?.(details.value);
+    afterUpdate();
+  });
+  const unsubscribeFormat = owner.subscribe("formatChange", (details) => {
+    if (!active) return;
+    transport.publishFormat?.(details.format);
+    afterUpdate();
+  });
+  const unsubscribeReset = owner.subscribe("stateSync", () => {
+    const previousValue = observedValue,
+      previousFormat = observedFormat;
+    update();
+    if (!valueControlled && !sameValue(previousValue, observedValue))
+      transport.publishValue?.(observedValue);
+    if (!formatControlled && previousFormat !== observedFormat)
+      transport.publishFormat?.(observedFormat);
+  });
+  update();
+  return {
+    update,
+    destroy() {
+      active = false;
+      unsubscribeReset();
+      unsubscribeFormat();
+      unsubscribeValue();
+      transport.own?.(undefined);
+      owner.destroy();
+    },
+  };
+}
+
+let stopObservation: (() => void) | undefined;
+function colorPickerStructure(root: HTMLElement) {
+  const seeds = new Map<Element, string>();
+  const ids = new WeakMap<Element, number>();
+  let nextId = 0;
+  const ownedParts = () =>
+    [
+      root,
+      ...root.querySelectorAll(
+        "[data-sw-color-picker], [data-sw-color-picker-label], [data-sw-color-picker-control], [data-sw-color-picker-value-input], [data-sw-color-picker-value-swatch], [data-sw-color-picker-value-text], [data-sw-color-picker-area], [data-sw-color-picker-area-background], [data-sw-color-picker-area-thumb], [data-sw-color-picker-area-input], [data-sw-color-picker-channel-slider], [data-sw-color-picker-channel-slider-track], [data-sw-color-picker-channel-slider-thumb], [data-sw-color-picker-channel-input], [data-sw-color-picker-channel-field], [data-sw-color-picker-format-select], [data-sw-color-picker-format-control], [data-sw-color-picker-transparency-grid], [data-sw-color-picker-swatch-group], [data-sw-color-picker-swatch], [data-sw-color-picker-eye-dropper], [data-sw-color-picker-clear], [data-sw-color-picker-hidden-input]",
+      ),
+    ].filter((part) => part.closest("[data-sw-color-picker]") === root);
+  function configuration(part: Element): readonly string[] {
+    if (part.hasAttribute("data-sw-color-picker-area")) return ["data-x-channel", "data-y-channel"];
+    if (part.hasAttribute("data-sw-color-picker-area-input"))
+      return ["data-axis", "data-step", "aria-label", "aria-labelledby", "aria-roledescription"];
+    if (part.hasAttribute("data-sw-color-picker-channel-slider"))
+      return ["data-channel", "data-orientation"];
+    if (part.hasAttribute("data-sw-color-picker-channel-input")) return ["data-step"];
+    if (part.hasAttribute("data-sw-color-picker-channel-field")) return ["data-channel"];
+    if (part.hasAttribute("data-sw-color-picker-swatch")) return ["data-value", "data-disabled"];
+    return [];
+  }
+  function captureOwnership(): void {
+    for (const part of ownedParts()) {
+      const marker = part.getAttribute("data-sw-color-picker-initial-owned");
+      if (marker) seeds.set(part, marker);
+    }
+  }
+  function restoreOwnership(): void {
+    for (const [part, marker] of seeds) {
+      if (!part.isConnected || part.closest("[data-sw-color-picker]") !== root) {
+        seeds.delete(part);
+        continue;
+      }
+      part.setAttribute("data-sw-color-picker-initial-owned", marker);
+    }
+  }
+  function fingerprint(): string {
+    return ownedParts()
+      .map((part) => {
+        let id = ids.get(part);
+        if (id === undefined) {
+          id = nextId++;
+          ids.set(part, id);
+        }
+        return (
+          id +
+          ":" +
+          part.tagName +
+          ":" +
+          configuration(part)
+            .map((name) => name + "=" + (part.getAttribute(name) ?? ""))
+            .join(";")
+        );
+      })
+      .join("|");
+  }
+  function observe(refresh: () => void): () => void {
+    let previous = fingerprint(),
+      pending = false,
+      active = true;
+    const observer = new MutationObserver((records) => {
+      const relevant = records.some((record) => {
+        const target = record.target instanceof Element ? record.target : undefined;
+        if (!target || target.closest("[data-sw-color-picker]") !== root) return false;
+        if (record.type === "childList") return true;
+        return (
+          record.type === "attributes" &&
+          record.attributeName !== null &&
+          configuration(target).includes(record.attributeName)
+        );
+      });
+      if (!relevant || pending) return;
+      pending = true;
+      queueMicrotask(() => {
+        pending = false;
+        if (!active) return;
+        const next = fingerprint();
+        if (next === previous) return;
+        previous = next;
+        captureOwnership();
+        refresh();
+        previous = fingerprint();
+      });
+    });
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: [
+        "aria-label",
+        "aria-labelledby",
+        "aria-roledescription",
+        "data-axis",
+        "data-channel",
+        "data-disabled",
+        "data-orientation",
+        "data-step",
+        "data-value",
+        "data-x-channel",
+        "data-y-channel",
+      ],
+      childList: true,
+      subtree: true,
+    });
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }
+  return { captureOwnership, restoreOwnership, observe };
+}
+
+onMounted(() => {
+  const rootElement = element.value;
+  if (!rootElement) return;
+  const structure = colorPickerStructure(rootElement);
+  connection = connectColorPicker(rootElement, {
+    seed,
+    read: readOptions,
+    restoreAuthoredOwnership: structure.restoreOwnership,
+    captureAuthoredOwnership: structure.captureOwnership,
+    observe: (value, format) => {
+      acceptedValue.value = value;
+      acceptedFormat.value = format;
+    },
+    publishValue: (value) => {
       emit("update:modelValue", value);
     },
-    onValueCommitted: (value, details) => emit("valueCommitted", value, details),
-    onFormatChange: (format, details) => {
-      const eventWasControlled = props.format !== undefined;
-      emit("formatChange", format, details);
-      if (!eventWasControlled) uncontrolledFormat.value = format;
+    publishFormat: (format) => {
       emit("update:format", format);
     },
+    afterUpdate: (run) => {
+      void nextTick(run);
+    },
   });
-  instance.refresh();
-  structuralFingerprint = fingerprint(rootElement);
-  observer = new MutationObserver((records) => {
-    if (records.some((record) => relevantMutation(record, rootElement))) queueRefresh();
-  });
-  observer.observe(rootElement, {
-    attributes: true,
-    attributeFilter: configurationAttributes,
-    childList: true,
-    subtree: true,
-  });
+  stopObservation = structure.observe(() => connection?.update());
 });
 watch(
-  () => props.modelValue,
-  (value, previousValue) => {
-    if (!instance) return;
-    if (value === undefined) {
-      if (previousValue !== undefined) {
-        instance.refresh({ preserveState: true });
-        instance.setValue(uncontrolledValue.value, { emit: false });
-      }
-      return;
-    }
-    instance.refresh({ preserveState: true });
-    instance.setValue(value, { emit: false });
-    uncontrolledValue.value = instance.getValue();
-  },
-  { flush: "post" },
-);
-watch(
-  () => props.format,
-  (format, previousFormat) => {
-    if (!instance) return;
-    if (format === undefined) {
-      if (previousFormat !== undefined) {
-        instance.refresh({ preserveState: true });
-        instance.setFormat(uncontrolledFormat.value, { emit: false });
-      }
-      return;
-    }
-    instance.refresh({ preserveState: true });
-    instance.setFormat(format, { emit: false });
-    uncontrolledFormat.value = instance.getFormat();
-  },
-  { flush: "post" },
-);
-watch(
-  () => props.disabled,
-  (value) => instance?.setDisabled(value),
-  { flush: "post" },
-);
-watch(
-  () => props.readOnly,
-  (value) => instance?.setReadOnly(value),
-  { flush: "post" },
-);
-watch(
-  () => props.name,
-  (value) => instance?.setName(value ?? null),
-  { flush: "post" },
-);
-watch(
-  [
-    () => props.alpha,
-    () => props.allowEmpty,
-    () => props.dir,
-    () => props.form,
-    () => props.getAreaRoleDescription,
-    () => props.getAriaValueText,
-    () => props.getColorDescription,
-    () => props.locale,
-    () => props.required,
+  () => [
+    props.modelValue,
+    props.format,
+    props.alpha,
+    props.allowEmpty,
+    props.disabled,
+    props.readOnly,
+    props.name,
+    props.form,
+    props.required,
+    props.locale,
+    props.dir,
+    props.getAriaValueText,
+    props.getAreaRoleDescription,
+    props.getColorDescription,
   ],
-  () =>
-    instance?.setOptions({
-      alpha: props.alpha,
-      allowEmpty: props.allowEmpty,
-      dir: props.dir ?? null,
-      form: props.form ?? null,
-      getAreaRoleDescription: props.getAreaRoleDescription,
-      getAriaValueText: props.getAriaValueText,
-      getColorDescription: props.getColorDescription,
-      locale: props.locale ?? null,
-      required: props.required,
-    }),
+  () => connection?.update(),
   { flush: "post" },
 );
 onBeforeUnmount(() => {
-  observer?.disconnect();
-  observer = undefined;
-  const owned = instance;
-  instance = undefined;
-  owned?.destroy();
-  ownershipSeeds.clear();
+  stopObservation?.();
+  stopObservation = undefined;
+  connection?.destroy();
+  connection = undefined;
 });
 </script>
 

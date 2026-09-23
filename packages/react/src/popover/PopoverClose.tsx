@@ -11,7 +11,7 @@ export type PopoverCloseProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const PopoverClose = React.forwardRef<HTMLButtonElement, PopoverCloseProps>(
   function PopoverClose(props, forwardedRef) {
-    return <button type="button" data-sw-popover-close ref={forwardedRef} {...props} />;
+    return <button {...props} data-sw-popover-close="" type="button" ref={forwardedRef} />;
   },
 );
 

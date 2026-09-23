@@ -1,5 +1,6 @@
 import type {
   PrimitivePropContract,
+  PrimitiveRefreshContract,
   PrimitiveRuntimeOptionLifecycle,
   PrimitiveSetterContract,
   RuntimeAdapterContract,
@@ -10,6 +11,7 @@ import type {
   AdapterFileDropControlPartName,
   AdapterOutputModel,
 } from "../framework-adapters/index.js";
+import { requireRefreshConnection } from "../primitive-output-model/refresh-connection.js";
 import {
   buildBaseSpecializedAdapterSpec,
   validateSpecializedAdapterSpec,
@@ -20,6 +22,7 @@ export type DropzoneSpecializedAdapterSpec = SpecializedAdapterSpec & {
   sourcePrimitiveContract: RuntimeAdapterContract;
   dropzone: {
     adapterKind: "file-drop-control";
+    refresh: PrimitiveRefreshContract;
     anatomy: DropzoneAnatomyRecipe[];
     disabledControl: DropzoneDisabledControlRecipe;
     fileInput: DropzoneFileInputRecipe;
@@ -238,6 +241,7 @@ export function buildDropzoneSpecializedAdapterSpec(
     sourcePrimitiveContract: contract,
     dropzone: {
       adapterKind: "file-drop-control",
+      refresh: requireRefreshConnection(contract.runtime.refresh, "owned-descendants"),
       anatomy: buildAnatomyRecipes(spec),
       disabledControl: buildDisabledControlRecipe(spec, contract),
       fileInput: buildFileInputRecipe(spec),
@@ -270,8 +274,15 @@ export function validateDropzoneSpecializedAdapterSpec(
     errors.push('Dropzone specialized adapter spec adapterKind must be "file-drop-control".');
   }
 
+  try {
+    requireRefreshConnection(dropzone.refresh as PrimitiveRefreshContract, "owned-descendants");
+  } catch (error) {
+    errors.push((error as Error).message);
+  }
+
   const expectedFields = new Set([
     "adapterKind",
+    "refresh",
     "anatomy",
     "disabledControl",
     "fileInput",
@@ -325,7 +336,6 @@ export function validateDropzoneSpecializedAdapterSpec(
   errors.push(...validateFormBridge(spec, dropzone.formBridge));
   errors.push(...validateNamespace(spec, dropzone.namespace));
   errors.push(...validateShippingFiles(spec));
-
 
   if (!arraysEqual(asArray(dropzone.runtimeBoundary), DROPZONE_RUNTIME_BOUNDARY)) {
     errors.push(
@@ -609,6 +619,7 @@ function getDropzoneFileDropControlFacts(
       required: getAdapterFamilyProp(getTargetProp(spec, "required", "input")),
     },
     runtime: {
+      refresh: requireRefreshConnection(spec.dropzone.refresh, "owned-descendants"),
       factory: spec.root.runtimeFactory,
       importSource: spec.root.runtimeImportSource,
       setupFunction: `setup${pluralizeDisplayName(spec.displayName)}`,
@@ -1183,15 +1194,10 @@ function getRequiredState(spec: SpecializedAdapterSpec, stateName: string): Drop
   return state as DropzoneRequiredState;
 }
 
-function getDropzoneAnatomyPart(
-  spec: DropzoneSpecializedAdapterSpec,
-  partName: string,
-) {
+function getDropzoneAnatomyPart(spec: DropzoneSpecializedAdapterSpec, partName: string) {
   const part = spec.dropzone.anatomy.find((candidate) => candidate.part === partName);
   if (!part) {
-    throw new Error(
-      `Dropzone specialized adapter spec output model requires ${partName} part.`,
-    );
+    throw new Error(`Dropzone specialized adapter spec output model requires ${partName} part.`);
   }
 
   return part;
@@ -1220,9 +1226,7 @@ function getDropzoneSpecFileBasename(
     (candidate) => candidate.kind === "part" && candidate.part === partName,
   );
   if (!file || file.kind !== "part") {
-    throw new Error(
-      `Dropzone specialized adapter spec output model requires ${partName} file.`,
-    );
+    throw new Error(`Dropzone specialized adapter spec output model requires ${partName} file.`);
   }
 
   const expectedPath = `${spec.component}/${file.exportName}`;

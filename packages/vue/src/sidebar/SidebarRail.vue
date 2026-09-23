@@ -13,10 +13,11 @@ defineExpose({ element });
   <button
     ref="element"
     v-bind="$attrs"
-    data-sw-sidebar-rail
-    type="button"
-    :aria-expanded="context.expanded.value"
+    :data-sw-sidebar-rail="''"
+    :data-sw-part="'rail'"
     :data-state="context.state.value"
+    :aria-expanded="context.expanded.value"
+    :type="'button'"
     :tabindex="-1"
   >
     <slot />

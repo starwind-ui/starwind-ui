@@ -1,7 +1,9 @@
+import { createToggle } from "@starwind-ui/runtime/toggle";
 import * as React from "react";
 import { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { createRoot, hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Toggle } from "../../src/toggle";
 import { ToggleGroup, useToggleGroupContext } from "../../src/toggle-group";
@@ -16,9 +18,171 @@ afterEach(async () => {
   container?.remove();
   reactRoot = undefined;
   container = undefined;
+  vi.restoreAllMocks();
 });
 
 describe("React Toggle Group context", () => {
+  it.each([true, false])(
+    "retains changes to item disabled while its group is disabled (native=%s)",
+    async (nativeButton) => {
+      const changes = vi.fn();
+      const presses = vi.fn();
+      const tree = (groupDisabled: boolean, itemDisabled: boolean, value = ["alpha"]) => (
+        <React.StrictMode>
+          <ToggleGroup.Root disabled={groupDisabled} value={value} onValueChange={changes}>
+            <Toggle.Root
+              value="alpha"
+              nativeButton={nativeButton}
+              disabled={itemDisabled}
+              onPressedChange={presses}
+            >
+              Alpha
+            </Toggle.Root>
+          </ToggleGroup.Root>
+        </React.StrictMode>
+      );
+      await mount(tree(true, false));
+      const item = query<HTMLElement>('[data-sw-toggle][data-value="alpha"]');
+      const instance = createToggle(item);
+      const render = async (groupDisabled: boolean, itemDisabled: boolean, value?: string[]) => {
+        await act(async () => {
+          reactRoot!.render(tree(groupDisabled, itemDisabled, value));
+          await Promise.resolve();
+        });
+      };
+      const expectDisabled = (disabled: boolean) => {
+        expect(item.hasAttribute("data-disabled")).toBe(disabled);
+        if (nativeButton) expect((item as HTMLButtonElement).disabled).toBe(disabled);
+        else expect(item.getAttribute("aria-disabled")).toBe(disabled ? "true" : null);
+      };
+      await render(true, true);
+      await render(false, true);
+      expectDisabled(true);
+      await click(item);
+      expect(changes).not.toHaveBeenCalled();
+      expect(presses).not.toHaveBeenCalled();
+      await render(true, true);
+      await render(true, false);
+      expectDisabled(true);
+      await render(false, false);
+      expectDisabled(false);
+      await click(item);
+      expect(changes).toHaveBeenCalledTimes(1);
+      expect(presses).toHaveBeenCalledTimes(1);
+      await render(true, false);
+      await render(false, true, []);
+      expectDisabled(true);
+      expect(item).toHaveAttribute("aria-pressed", "false");
+      expect(createToggle(item)).toBe(instance);
+      expect(query('[data-sw-toggle][data-value="alpha"]')).toBe(item);
+      await act(async () => {
+        reactRoot!.render(tree(true, true));
+        reactRoot!.render(tree(false, false));
+        await Promise.resolve();
+      });
+      expectDisabled(false);
+      await act(() => {
+        reactRoot!.render(tree(true, true));
+        reactRoot!.unmount();
+      });
+      reactRoot = undefined;
+      const detachedMarkup = item.outerHTML;
+      await Promise.resolve();
+      expect(item.outerHTML).toBe(detachedMarkup);
+      expect(changes).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("hydrates effective group state and preserves each item's own disabled state", async () => {
+    const changes = vi.fn();
+    const tree = (disabled: boolean, value = ["alpha"]) => (
+      <React.StrictMode>
+        <ToggleGroup.Root disabled={disabled} value={value} onValueChange={changes}>
+          <Toggle.Root value="alpha" pressed={false}>
+            Alpha
+          </Toggle.Root>
+          <Toggle.Root value="beta" disabled pressed>
+            Beta
+          </Toggle.Root>
+          <Toggle.Root value="gamma" nativeButton={false}>
+            Gamma
+          </Toggle.Root>
+        </ToggleGroup.Root>
+      </React.StrictMode>
+    );
+    container = document.createElement("div");
+    document.body.append(container);
+    container.innerHTML = renderToString(tree(true));
+    const alpha = query<HTMLButtonElement>('[data-sw-toggle][data-value="alpha"]');
+    const beta = query<HTMLButtonElement>('[data-sw-toggle][data-value="beta"]');
+    const gamma = query<HTMLElement>('[data-sw-toggle][data-value="gamma"]');
+    expect(alpha.disabled).toBe(true);
+    expect(beta.disabled).toBe(true);
+    expect(gamma).toHaveAttribute("aria-disabled", "true");
+    expect(alpha).toHaveAttribute("aria-pressed", "true");
+    expect(beta).toHaveAttribute("aria-pressed", "false");
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const recoverable = vi.fn();
+    await act(async () => {
+      reactRoot = hydrateRoot(container!, tree(true), { onRecoverableError: recoverable });
+      await Promise.resolve();
+    });
+    const instance = createToggle(alpha);
+    expect(alpha.disabled).toBe(true);
+    await act(async () => {
+      reactRoot!.render(tree(false, ["gamma"]));
+      await Promise.resolve();
+    });
+    expect(alpha.disabled).toBe(false);
+    expect(beta.disabled).toBe(true);
+    expect(gamma).not.toHaveAttribute("aria-disabled");
+    expect(alpha).toHaveAttribute("aria-pressed", "false");
+    expect(beta).toHaveAttribute("aria-pressed", "false");
+    expect(gamma).toHaveAttribute("aria-pressed", "true");
+    expect(createToggle(alpha)).toBe(instance);
+    await click(alpha);
+    expect(changes).toHaveBeenCalledTimes(1);
+    expect(alpha).toHaveAttribute("aria-pressed", "false");
+    await click(beta);
+    expect(changes).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      reactRoot!.render(tree(true, ["gamma"]));
+      await Promise.resolve();
+    });
+    expect(alpha.disabled).toBe(true);
+    expect(beta.disabled).toBe(true);
+    await act(async () => {
+      reactRoot!.render(tree(false, ["alpha"]));
+      await Promise.resolve();
+    });
+    expect(alpha.disabled).toBe(false);
+    expect(beta.disabled).toBe(true);
+    expect(alpha).toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelectorAll("[data-sw-toggle]")).toHaveLength(3);
+    expect(recoverable).not.toHaveBeenCalled();
+    expect(errors).not.toHaveBeenCalled();
+  });
+
+  it("publishes accepted uncontrolled group selection once while ignoring item pressed props", async () => {
+    const changes = vi.fn();
+    await mount(
+      <ToggleGroup.Root defaultValue={["alpha"]} onValueChange={changes}>
+        <Toggle.Root value="alpha" pressed={false}>
+          Alpha
+        </Toggle.Root>
+        <Toggle.Root value="beta" pressed>
+          Beta
+        </Toggle.Root>
+      </ToggleGroup.Root>,
+    );
+    const alpha = query<HTMLButtonElement>('[data-sw-toggle][data-value="alpha"]');
+    const beta = query<HTMLButtonElement>('[data-sw-toggle][data-value="beta"]');
+    await click(beta);
+    expect(alpha).toHaveAttribute("aria-pressed", "false");
+    expect(beta).toHaveAttribute("aria-pressed", "true");
+    expect(changes).toHaveBeenCalledTimes(1);
+  });
+
   it("provides normalized group state while the hook and Toggle remain standalone-safe", async () => {
     await mount(
       <>

@@ -21,6 +21,10 @@ import {
 } from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
+export const PopoverPartContext = React.createContext<{
+  registerPlacement(element: HTMLElement, attributes: Record<string, string> | null): void;
+} | null>(null);
+
 export type PopoverRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
   defaultOpen?: boolean;
   open?: boolean;
@@ -51,31 +55,48 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
   const rootRef = React.useRef<HTMLDivElement>(null);
   const portalScope = useReactPortalScope(rootRef, createPortalBinding);
   const portalRuntimeActivation = portalScope.activation;
-  const instanceRef = React.useRef<ReturnType<typeof createPopover> | undefined>(undefined);
-  const onCloseCompleteRef = React.useRef(onCloseComplete);
-  const onOpenChangeRef = React.useRef(onOpenChange);
-  const openRef = React.useRef(open);
+  const inputs = React.useRef({
+    open,
+    closeOnEscape,
+    closeOnOutsideInteract,
+    modal,
+    openOnHover,
+    onOpenChange,
+    onCloseComplete,
+  });
+  useIsomorphicLayoutEffect(() => {
+    inputs.current = {
+      open,
+      closeOnEscape,
+      closeOnOutsideInteract,
+      modal,
+      openOnHover,
+      onOpenChange,
+      onCloseComplete,
+    };
+  });
   const defaultOpenRef = React.useRef(defaultOpen);
-  const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
-  const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
-
-  const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
-    uncontrolledOpenRef.current = nextOpen;
-    setUncontrolledOpenState(nextOpen);
-  }, []);
-
-  useIsomorphicLayoutEffect(() => {
-    onCloseCompleteRef.current = onCloseComplete;
-  }, [onCloseComplete]);
-
-  useIsomorphicLayoutEffect(() => {
-    onOpenChangeRef.current = onOpenChange;
-  }, [onOpenChange]);
-
-  useIsomorphicLayoutEffect(() => {
-    openRef.current = open;
-  }, [open]);
-
+  const [renderedState, setRenderedOpen] = React.useState(open ?? defaultOpen);
+  const connection = React.useRef<{
+    instance?: ReturnType<typeof createPopover>;
+    unsubscribe?: () => void;
+    accepted: boolean;
+    initialized: boolean;
+  }>({ accepted: open ?? defaultOpen, initialized: false }).current;
+  const authoredPlacement = React.useRef(new Map<HTMLElement, Record<string, string>>()).current;
+  function hasRequiredSurface(): boolean {
+    return [...authoredPlacement.keys()].some(
+      (element) => element.isConnected && element.matches("[data-sw-popover-popup]"),
+    );
+  }
+  function registerPlacement(
+    element: HTMLElement,
+    attributes: Record<string, string> | null,
+  ): void {
+    if (attributes) authoredPlacement.set(element, attributes);
+    else authoredPlacement.delete(element);
+  }
+  const partContext = React.useMemo(() => ({ registerPlacement }), []);
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
@@ -84,74 +105,93 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
     [forwardedRef],
   );
 
+  function disconnectRuntime(): void {
+    const owned = connection.instance;
+    if (!owned) return;
+    connection.accepted = owned.getOpen();
+    connection.unsubscribe?.();
+    connection.unsubscribe = undefined;
+    connection.instance = undefined;
+    owned.destroy();
+  }
+  function connectRuntime(root: HTMLDivElement): void {
+    disconnectRuntime();
+    const desired = inputs.current.open ?? connection.accepted;
+    const recreating = connection.initialized;
+    const owned = createPopover(root, {
+      defaultOpen: recreating ? false : desired,
+      ...(inputs.current.open !== undefined ? { open: recreating ? false : desired } : {}),
+      closeOnEscape: inputs.current.closeOnEscape,
+      closeOnOutsideInteract: inputs.current.closeOnOutsideInteract,
+      modal: inputs.current.modal,
+      openOnHover: inputs.current.openOnHover,
+      onOpenChange: (next, detail) => {
+        inputs.current.onOpenChange?.(next, detail);
+      },
+      onCloseComplete: (detail) => {
+        inputs.current.onCloseComplete?.(detail);
+      },
+    });
+    connection.instance = owned;
+    connection.initialized = true;
+    connection.unsubscribe = owned.subscribe("openChange", (detail) => {
+      if (connection.instance !== owned) return;
+      connection.accepted = detail.open;
+      if (inputs.current.open === undefined) setRenderedOpen(detail.open);
+    });
+    if (recreating && desired) owned.setOpen(desired, { emit: false });
+    connection.accepted = owned.getOpen();
+    if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+  }
+  function applyParentCommand(): void {
+    const next = inputs.current.open;
+    const owned = connection.instance;
+    if (next === undefined || !owned) return;
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+    connection.accepted = owned.getOpen();
+    if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+  }
+
+  function connectSurface(root: HTMLDivElement): void {
+    if (!hasRequiredSurface()) {
+      disconnectRuntime();
+      return;
+    }
+
+    for (const [element, attributes] of authoredPlacement) {
+      for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+    }
+    connectRuntime(root);
+  }
   const initializePortalRuntime = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
-
-    const instance = createPopover(root, {
-      defaultOpen: uncontrolledOpenRef.current,
-      closeOnEscape,
-      closeOnOutsideInteract,
-      modal,
-      openOnHover,
-      onCloseComplete: (details) => {
-        onCloseCompleteRef.current?.(details);
-      },
-      onOpenChange: (nextOpen, details) => {
-        onOpenChangeRef.current?.(nextOpen, details);
-      },
-      ...(openRef.current !== undefined ? { open: openRef.current } : {}),
-    });
-    instanceRef.current = instance;
-    const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
-      if (openRef.current === undefined) {
-        setUncontrolledOpen(details.open);
-      }
-    });
-
-    return () => {
-      unsubscribeOpenChange();
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
-    };
+    connectSurface(root);
+    return disconnectRuntime;
   }, [closeOnEscape, closeOnOutsideInteract, modal, openOnHover]);
-
   useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
-
   useIsomorphicLayoutEffect(() => {
-    if (!portalScope.isReady()) return;
-    const root = rootRef.current;
-    if (!root) return;
-    refreshPopoverPortalSurface(root);
+    if (portalScope.isReady() && rootRef.current) refreshPopoverPortalSurface(rootRef.current);
   }, [portalRuntimeActivation]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (open === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    if (instance.getOpen() === open) return;
-
-    instance.setOpen(open, { emit: false });
-  }, [open]);
-
-  const renderedOpen = open ?? uncontrolledOpen;
+  useIsomorphicLayoutEffect(applyParentCommand, [open]);
+  const renderedOpen = open ?? renderedState;
 
   return (
     <ReactPortalScopeProvider scope={portalScope}>
-      <div
-        data-sw-popover
-        data-default-open={defaultOpenRef.current ? "true" : undefined}
-        data-close-on-escape={closeOnEscape ? "true" : "false"}
-        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-        data-modal={modal ? "true" : "false"}
-        data-open-on-hover={openOnHover ? "true" : undefined}
-        data-close-delay={closeDelay}
-        data-state={renderedOpen ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-      />
+      <PopoverPartContext.Provider value={partContext}>
+        <div
+          data-sw-popover
+          data-default-open={defaultOpenRef.current ? "true" : undefined}
+          data-close-on-escape={closeOnEscape ? "true" : "false"}
+          data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+          data-modal={modal ? "true" : "false"}
+          data-open-on-hover={openOnHover ? "true" : undefined}
+          data-close-delay={closeDelay}
+          data-state={renderedOpen ? "open" : "closed"}
+          ref={composedRef}
+          {...props}
+        />
+      </PopoverPartContext.Provider>
     </ReactPortalScopeProvider>
   );
 });

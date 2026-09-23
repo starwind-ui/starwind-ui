@@ -60,15 +60,15 @@ shared version advance even when their files stay unchanged. Their adapter npm p
 release solely because Vue changed. Changes to shared Runtime behavior still follow the fixed-group
 rules below.
 
-Vue's npm package has a separate beta version history outside the Runtime, Astro, and React fixed
+Vue and Svelte have separate beta version histories outside the Runtime, Astro, and React fixed
 group. A normal `pnpm publish:release:dry-run` previews a manifest-derived selection for Runtime,
-Astro, React, Vue, and CLI. A user-run `pnpm publish:release` saves that selection as an immutable
+Astro, React, Vue, Svelte, and CLI. A user-run `pnpm publish:release` saves that selection as an immutable
 plan before its first npm publication. A new selection omits an exact version that already exists on
 npm. Recovery reads the original saved plan and resumes only its remaining suffix.
 
-Vue entries in a normal plan always publish on `beta`, even when the Vue version has no SemVer
-prerelease suffix. Vue `latest` stays at its captured baseline until an approved promotion changes
-it. Component versions do not set the Vue package channel. Stable graduation and fixed-group
+Vue and Svelte entries in a normal plan always publish on `beta`, even when the package version has
+no SemVer prerelease suffix. Each package's `latest` stays at its captured baseline until an
+approved promotion changes it. Component versions do not set a beta package channel. Stable graduation and fixed-group
 membership require a separate approved decision. The legacy `--vue-beta` mode exists only to
 recover the frozen first `0.1.0` release; it is not an ordinary Vue release path.
 
@@ -107,14 +107,15 @@ publication.
 
 ## Publication plans and GitHub releases
 
-The saved plan records package order, exact versions, tags, and the Vue `latest` baseline before the
+The saved plan records package order, exact versions, tags, and each beta package's `latest` baseline before the
 first npm publication. It is stored under
 `node_modules/.cache/starwind-release/publication-plans/<head>.json`. A plan can contain any changed
-subset of Runtime, Astro, React, Vue, and CLI. Svelte is private and never appears in the plan.
+subset of Runtime, Astro, React, Vue, Svelte, and CLI. Older Vue-only plans retain their original snapshot.
 
 Finalization creates one GitHub release from the same plan. A plan with a CLI package uses
-`v<cli-version>`. A plan with Runtime and no CLI uses `runtime-v<runtime-version>`. A Vue-only plan uses
-`vue-v<vue-version>`, marks the GitHub release as a prerelease, and sets `latest` to `false`.
+`v<cli-version>`. A plan with Runtime and no CLI uses `runtime-v<runtime-version>`. Vue-only and
+Svelte-only plans use `vue-v<vue-version>` and `svelte-v<svelte-version>`. Both create a prerelease
+GitHub release with `latest` set to `false`.
 The publisher finalizes automatically after all plan entries publish. Use standalone
 `pnpm release:finalize` only when npm publication completed but finalization failed.
 

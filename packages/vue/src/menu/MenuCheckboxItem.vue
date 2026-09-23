@@ -31,28 +31,56 @@ function sync(value: boolean) {
   item.setAttribute("aria-checked", String(value));
   item.toggleAttribute("data-checked", value);
   item.toggleAttribute("data-unchecked", !value);
-  item
-    .querySelectorAll<HTMLElement>("[data-sw-menu-checkbox-item-indicator]")
-    .forEach((indicator) => {
-      indicator.setAttribute("data-state", value ? "checked" : "unchecked");
-      indicator.toggleAttribute("data-visible", value);
-      indicator.toggleAttribute("data-hidden", !value);
-    });
+  for (const indicator of item.querySelectorAll<HTMLElement>(
+    "[data-sw-menu-checkbox-item-indicator]",
+  )) {
+    if (indicator.closest("[data-sw-menu-checkbox-item]") !== item) continue;
+    indicator.setAttribute("aria-hidden", "true");
+    indicator.setAttribute("data-state", value ? "checked" : "unchecked");
+    indicator.toggleAttribute("data-visible", value);
+    indicator.toggleAttribute("data-hidden", !value);
+  }
 }
+let disposed = false;
 function handle(event: Event) {
-  const detail = (event as CustomEvent<MenuCheckedChangeDetails>).detail;
-  emit("checkedChange", detail.checked, detail);
-  if (detail.isCanceled) return;
-  if (props.checked === undefined) uncontrolledChecked.value = detail.checked;
-  else void nextTick(() => sync(props.checked!));
-  emit("update:checked", detail.checked);
+  if (event.target !== element.value) return;
+  const ownerElement = element.value;
+  if (!ownerElement) return;
+  const details = (event as CustomEvent<MenuCheckedChangeDetails>).detail;
+  const inputAtDispatch = props.checked;
+  emit("checkedChange", details.checked, details);
+  queueMicrotask(async () => {
+    await nextTick();
+    if (
+      !(!disposed && element.value === ownerElement && ownerElement.isConnected) ||
+      details.isCanceled ||
+      props.checked !== inputAtDispatch
+    )
+      return;
+    if (props.checked === undefined) {
+      uncontrolledChecked.value = details.checked;
+    }
+    emit("update:checked", details.checked);
+    await nextTick();
+    if (
+      !disposed &&
+      element.value === ownerElement &&
+      ownerElement.isConnected &&
+      props.checked !== undefined
+    ) {
+      sync(props.checked);
+    }
+  });
 }
 onMounted(() => element.value?.addEventListener("starwind:checked-change", handle));
-onBeforeUnmount(() => element.value?.removeEventListener("starwind:checked-change", handle));
+onBeforeUnmount(() => {
+  disposed = true;
+  element.value?.removeEventListener("starwind:checked-change", handle);
+});
 watch(
   () => props.checked,
-  (value) => {
-    if (value !== undefined) sync(value);
+  (next) => {
+    if (next !== undefined) sync(next);
   },
   { flush: "post" },
 );

@@ -6,15 +6,13 @@
 "use client";
 
 import * as React from "react";
-
 export type TooltipArrowProps = React.HTMLAttributes<HTMLDivElement>;
-
 const TooltipArrow = React.forwardRef<HTMLDivElement, TooltipArrowProps>(
-  function TooltipArrow(props, forwardedRef) {
-    return <div data-sw-tooltip-arrow data-state="closed" ref={forwardedRef} {...props} />;
+  function TooltipArrow(props, ref) {
+    return (
+      <div {...props} data-sw-tooltip-arrow="" data-sw-part="arrow" data-state="closed" ref={ref} />
+    );
   },
 );
-
 TooltipArrow.displayName = "Tooltip.Arrow";
-
 export default TooltipArrow;

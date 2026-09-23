@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ColorPicker } from "../src/color-picker/index";
+import { ColorPicker, parseColor } from "../src/color-picker/index";
 
 let reactRoot: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -516,3 +516,192 @@ function pointer(type: string, clientX: number, clientY: number, buttons: number
     pointerId: 17,
   });
 }
+
+it("keeps current parent-controlled color and format through native form reset", async () => {
+  const changed = vi.fn();
+  const picker = (value: string, format: "hex" | "rgb") => (
+    <form>
+      <ColorPicker.Root value={value} format={format} name="accent" onValueChange={changed}>
+        <ColorPicker.ValueInput />
+        <ColorPicker.HiddenInput />
+      </ColorPicker.Root>
+    </form>
+  );
+  await mount(picker("#ff0000", "hex"));
+  await render(picker("#00ff00", "rgb"));
+  const form = query<HTMLFormElement>("form");
+  await act(() => form.reset());
+  await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+  expect(
+    parseColor(query<HTMLElement>("[data-sw-color-picker]").dataset.value!)?.toString("hex"),
+  ).toBe("#00ff00");
+  expect(query<HTMLElement>("[data-sw-color-picker]").dataset.format).toBe("rgb");
+  expect(new FormData(form).get("accent")).toContain("0, 255, 0");
+  expect(changed).not.toHaveBeenCalled();
+  form.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+  await act(() => form.reset());
+  await render(picker("#0000ff", "hex"));
+  await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+  expect(query<HTMLElement>("[data-sw-color-picker]").dataset.value).toContain("0000ff");
+  expect(changed).not.toHaveBeenCalled();
+  await act(() => {
+    form.reset();
+    reactRoot?.unmount();
+  });
+  reactRoot = undefined;
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(container!.children).toHaveLength(0);
+  expect(changed).not.toHaveBeenCalled();
+});
+
+it("restores canceled uncontrolled resets while preserving newer accepted interactions", async () => {
+  const changed = vi.fn();
+  await mount(
+    <form>
+      <ColorPicker.Root defaultValue="#0000ff" onValueChange={changed}>
+        <ColorPicker.Swatch swatchValue="#00ff00">Green</ColorPicker.Swatch>
+        <ColorPicker.Swatch swatchValue="#ff0000">Red</ColorPicker.Swatch>
+        <ColorPicker.HiddenInput />
+      </ColorPicker.Root>
+    </form>,
+  );
+  const form = query<HTMLFormElement>("form");
+  const swatches = container!.querySelectorAll<HTMLButtonElement>("[data-sw-color-picker-swatch]");
+  await act(() => swatches[0]!.click());
+  form.addEventListener("reset", (event) => event.preventDefault());
+  await act(() => form.reset());
+  await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+  expect(
+    parseColor(query<HTMLElement>("[data-sw-color-picker]").dataset.value!)?.toString("hex"),
+  ).toBe("#00ff00");
+  await act(() => {
+    form.reset();
+    swatches[1]!.click();
+  });
+  await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+  expect(query<HTMLElement>("[data-sw-color-picker]").dataset.value).toContain("ff0000");
+  expect(changed).toHaveBeenCalledTimes(2);
+});
+
+it.each([
+  [false, false],
+  [false, true],
+  [true, false],
+  [true, true],
+])(
+  "fixes independent value=%s and format=%s ownership until remount",
+  async (valueControlled, formatControlled) => {
+    const picker = (
+      value: string | undefined,
+      format: "hex" | "rgb" | "hsl" | "hsb" | undefined,
+      key = 0,
+    ) => (
+      <ColorPicker.Root key={key} value={value} format={format} defaultValue="#0000ff">
+        <ColorPicker.Swatch swatchValue="#ff0000">Red</ColorPicker.Swatch>
+        <ColorPicker.FormatSelect>
+          <option value="hex">Hex</option>
+          <option value="rgb">RGB</option>
+          <option value="hsl">HSL</option>
+          <option value="hsb">HSB</option>
+        </ColorPicker.FormatSelect>
+        <ColorPicker.HiddenInput />
+      </ColorPicker.Root>
+    );
+    const color = () =>
+      parseColor(query<HTMLElement>("[data-sw-color-picker]").dataset.value!)?.toString("hex");
+    await mount(
+      picker(valueControlled ? "#0000ff" : undefined, formatControlled ? "hex" : undefined),
+    );
+    await render(picker("#00ff00", "rgb"));
+    expect(color()).toBe(valueControlled ? "#00ff00" : "#0000ff");
+    expect(query<HTMLSelectElement>("select").value).toBe(formatControlled ? "rgb" : "hex");
+    await render(picker(undefined, undefined));
+    await act(() => query<HTMLButtonElement>("button").click());
+    expect(color()).toBe(valueControlled ? "#00ff00" : "#ff0000");
+    await act(() => {
+      const select = query<HTMLSelectElement>("select");
+      select.value = "hsl";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(query<HTMLSelectElement>("select").value).toBe(formatControlled ? "rgb" : "hsl");
+    await render(picker("#ff0000", "hsb"));
+    expect(color()).toBe("#ff0000");
+    expect(query<HTMLSelectElement>("select").value).toBe(formatControlled ? "hsb" : "hsl");
+    await render(picker("#00ff00", "rgb", 1));
+    expect(color()).toBe("#00ff00");
+    expect(query<HTMLSelectElement>("select").value).toBe("rgb");
+  },
+);
+
+it.each(["value", "format"])(
+  "keeps the untouched model after canceled reset and a newer %s change",
+  async (model) => {
+    await mount(
+      <form>
+        <ColorPicker.Root defaultValue="#0000ff" name="accent">
+          <ColorPicker.Swatch swatchValue="#00ff00">Green</ColorPicker.Swatch>
+          <ColorPicker.Swatch swatchValue="#ff0000">Red</ColorPicker.Swatch>
+          <ColorPicker.FormatSelect>
+            <option value="hex">Hex</option>
+            <option value="hsl">HSL</option>
+            <option value="rgb">RGB</option>
+          </ColorPicker.FormatSelect>
+          <ColorPicker.HiddenInput />
+        </ColorPicker.Root>
+      </form>,
+    );
+    const form = query<HTMLFormElement>("form"),
+      select = query<HTMLSelectElement>("select");
+    const swatches = container!.querySelectorAll<HTMLButtonElement>(
+      "[data-sw-color-picker-swatch]",
+    );
+    const changeFormat = (format: string) => {
+      select.value = format;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    await act(() => {
+      swatches[0]!.click();
+      changeFormat("hsl");
+    });
+    form.addEventListener("reset", (event) => event.preventDefault());
+    await act(() => {
+      form.reset();
+      if (model === "value") swatches[1]!.click();
+      else changeFormat("rgb");
+    });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+    expect(
+      parseColor(query<HTMLElement>("[data-sw-color-picker]").dataset.value!)?.toString("hex"),
+    ).toBe(model === "value" ? "#ff0000" : "#00ff00");
+    expect(select.value).toBe(model === "value" ? "hsl" : "rgb");
+    expect(parseColor(String(new FormData(form).get("accent")))?.toString("hex")).toBe(
+      model === "value" ? "#ff0000" : "#00ff00",
+    );
+  },
+);
+it.each(["invalid", null])(
+  "keeps the last valid controlled color after rejected input %s and reset",
+  async (invalid) => {
+    const picker = (value: string | null) => (
+      <form>
+        <ColorPicker.Root value={value} name="accent">
+          <ColorPicker.HiddenInput />
+        </ColorPicker.Root>
+      </form>
+    );
+    await mount(picker("#ff0000"));
+    await render(picker("#00ff00"));
+    await render(picker(invalid));
+    expect(query<HTMLElement>("[data-sw-color-picker]").dataset.value).toContain("00ff00");
+    await act(() => query<HTMLFormElement>("form").reset());
+    await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+    expect(query<HTMLElement>("[data-sw-color-picker]").dataset.value).toContain("00ff00");
+    await render(picker("#0000ff"));
+    await act(() => {
+      query<HTMLFormElement>("form").reset();
+      reactRoot!.render(picker(invalid));
+    });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+    expect(query<HTMLElement>("[data-sw-color-picker]").dataset.value).toContain("0000ff");
+  },
+);

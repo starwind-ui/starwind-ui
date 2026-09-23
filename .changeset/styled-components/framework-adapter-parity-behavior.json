@@ -1,0 +1,21 @@
+{
+  "components": {
+    "accordion": "patch",
+    "avatar": "patch",
+    "checkbox": "patch",
+    "collapsible": "patch",
+    "color-picker": "patch",
+    "context-menu": "patch",
+    "dropdown": "patch",
+    "field": "patch",
+    "input-otp": "patch",
+    "popover": "patch",
+    "select": "patch",
+    "switch": "patch",
+    "tabs": "patch",
+    "toggle": "patch",
+    "toggle-group": "patch",
+    "tooltip": "patch"
+  },
+  "impact": "behavior"
+}

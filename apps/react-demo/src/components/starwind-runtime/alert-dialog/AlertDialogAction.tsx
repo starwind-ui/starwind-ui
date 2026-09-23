@@ -1,3 +1,6 @@
+"use client";
+
+import { __useAlertDialogControl } from "@starwind-ui/react/alert-dialog";
 import type * as React from "react";
 import { Button } from "../button";
 import { alertDialogAction, alertDialogActionAsChild } from "./variants";
@@ -9,16 +12,24 @@ export type AlertDialogActionProps = React.ComponentProps<typeof Button> & {
 function AlertDialogAction(props: AlertDialogActionProps) {
   const { asChild = false, variant = "default", size = "md", className, children, ...rest } = props;
 
+  const consumerRef = (props as { ref?: React.Ref<HTMLElement> }).ref;
+  const { controlKey, setControlElement } = __useAlertDialogControl({
+    asChild,
+    children,
+    forwardedRef: consumerRef,
+  });
   const asChildRest = rest as unknown as React.HTMLAttributes<HTMLDivElement>;
 
   if (asChild) {
     return (
       <div
-        className={alertDialogActionAsChild({ variant, size, class: className })}
+        className={alertDialogActionAsChild({ class: className, size, variant })}
         data-as-child
         {...asChildRest}
         data-slot="alert-dialog-action"
         data-sw-alert-dialog-close
+        key={controlKey}
+        ref={setControlElement}
       >
         {children}
       </div>
@@ -33,6 +44,7 @@ function AlertDialogAction(props: AlertDialogActionProps) {
       {...rest}
       data-slot="alert-dialog-action"
       data-sw-alert-dialog-close
+      ref={setControlElement}
     >
       {children}
     </Button>

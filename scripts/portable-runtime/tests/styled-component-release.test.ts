@@ -624,7 +624,12 @@ describe("styled component release intents", () => {
     expect(accordion.version).toBe(
       applyStyledVersionIntents(currentManifest.components, { accordion: "patch" }).accordion,
     );
-    expect(Object.keys(accordion.targets ?? {}).sort()).toEqual(["astro", "react", "vue"]);
+    expect(Object.keys(accordion.targets ?? {}).sort()).toEqual([
+      "astro",
+      "react",
+      "svelte",
+      "vue",
+    ]);
     expect(
       Object.values(accordion.targets ?? {}).flatMap((target) =>
         target.files.map((file) => file.content),

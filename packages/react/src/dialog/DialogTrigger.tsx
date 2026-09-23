@@ -6,13 +6,43 @@
 "use client";
 
 import * as React from "react";
+import { useNativeOverlayControl } from "../internal/native-overlay-control";
+import { NativeOverlayControlContext } from "./DialogRoot";
 
 export type DialogTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  asChild?: boolean;
   targetId?: string;
 };
 
 const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
-  function DialogTrigger({ targetId, ...props }, forwardedRef) {
+  function DialogTrigger(
+    { asChild = false, children, className, targetId, ...props },
+    forwardedRef,
+  ) {
+    const requestRefresh = React.useContext(NativeOverlayControlContext);
+    const { controlKey, setControlElement } = useNativeOverlayControl({
+      asChild,
+      children,
+      forwardedRef,
+      requestRefresh,
+    });
+
+    if (asChild) {
+      return (
+        <div
+          className={className}
+          data-as-child
+          data-sw-dialog-target-id={targetId}
+          {...(props as React.HTMLAttributes<HTMLDivElement>)}
+          data-sw-dialog-trigger
+          key={controlKey}
+          ref={setControlElement}
+        >
+          {children}
+        </div>
+      );
+    }
+
     return (
       <button
         type="button"
@@ -20,9 +50,12 @@ const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
         aria-haspopup="dialog"
         data-sw-dialog-target-id={targetId}
         data-state="closed"
-        ref={forwardedRef}
+        className={className}
+        ref={setControlElement as React.Ref<HTMLButtonElement>}
         {...props}
-      />
+      >
+        {children}
+      </button>
     );
   },
 );

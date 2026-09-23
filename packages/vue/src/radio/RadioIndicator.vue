@@ -3,35 +3,20 @@
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
-
-const props = withDefaults(
-  defineProps<{
-    keepMounted?: boolean;
-  }>(),
-  {
-    keepMounted: false,
-  },
-);
-defineSlots<{
-  default?: () => unknown;
-}>();
-const indicatorRef = ref<HTMLElement | null>(null);
-
-defineExpose({
-  element: indicatorRef,
-});
+const props = withDefaults(defineProps<{ keepMounted?: boolean }>(), { keepMounted: false });
+defineSlots<{ default?: () => unknown }>();
+const element = ref<HTMLSpanElement | null>(null);
+defineExpose({ element });
 </script>
-
 <template>
   <span
-    ref="indicatorRef"
     v-bind="$attrs"
-    data-sw-radio-indicator
+    ref="element"
+    data-sw-radio-indicator=""
     data-sw-part="indicator"
     :data-keep-mounted="props.keepMounted ? '' : undefined"
-    data-unchecked
+    data-unchecked=""
     :hidden="!props.keepMounted"
-  >
-    <slot />
-  </span>
+    ><slot
+  /></span>
 </template>
