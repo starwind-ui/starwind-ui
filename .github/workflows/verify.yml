@@ -76,7 +76,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Run Node suites
-        run: pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run && pnpm --filter=@starwind-ui/svelte test:run
+        run: pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run && pnpm svelte:test
       - name: Check adapter contracts and registry
         run: pnpm runtime:generate:test:ci
 
@@ -101,7 +101,7 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Run browser suites
-        run: pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci && pnpm svelte:test
+        run: pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci
       - name: Check Form parity across frameworks
         run: pnpm test:form-parity
 

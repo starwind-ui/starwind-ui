@@ -198,9 +198,9 @@ describe("root verification scripts", () => {
     expect(runs).toEqual(
       expect.arrayContaining([
         "pnpm check && pnpm test:homes && pnpm runtime:generate:typecheck",
-        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run && pnpm --filter=@starwind-ui/svelte test:run",
+        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run && pnpm svelte:test",
         "pnpm runtime:generate:test:ci",
-        "pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci && pnpm svelte:test",
+        "pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci",
         "pnpm runtime:generate:all && pnpm runtime:registry:generate",
         "pnpm exec turbo build --filter=@starwind-ui/runtime --filter=@starwind-ui/react --filter=@starwind-ui/vue --filter=@starwind-ui/svelte --filter=starwind",
         "git diff --exit-code",
