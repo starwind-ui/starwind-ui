@@ -155,6 +155,7 @@ export const inputOtpRuntimeAdapterContract = {
       name: "value",
       controlledProp: "value",
       defaultProp: "defaultValue",
+      resetBaseline: "mount",
       initialAttribute: "data-value",
       runtimeGetter: "getValue",
       runtimeSetter: "setValue",

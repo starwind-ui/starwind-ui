@@ -212,6 +212,7 @@ type PrimitiveVendoringTargetDefinition = {
   generatedImportCandidateExtensions: readonly string[];
   includeLocalImportGraph?: boolean;
   outputDir: string;
+  formatContent?(content: string, sourcePath: string): Promise<string>;
   projectContent(content: string): string;
   publicRegistry: boolean;
   sourceRoot: string;
@@ -283,6 +284,7 @@ function createPrimitiveVendoringTargetDefinitions(
         registration.cliRegistry.generatedImportCandidateExtensions,
       includeLocalImportGraph: primitiveArtifact.includeLocalImportGraph,
       outputDir: primitiveArtifact.outputDir,
+      formatContent: primitiveArtifact.formatContent,
       projectContent: primitiveArtifact.projectContent,
       publicRegistry: registration.publicSupport.cliRegistry,
       sourceRoot: primitiveArtifact.sourceRoot,
@@ -620,6 +622,7 @@ export async function buildPrimitiveVendoringArtifacts(
             includeLocalImportGraph: target.includeLocalImportGraph,
             outputRoot,
             primitiveInstallRoot,
+            formatContent: target.formatContent,
             projectContent: target.projectContent,
             repoRoot,
             sourceRoot: target.sourceRoot,
@@ -1157,7 +1160,7 @@ function collectPrimitivePackageRequirements(options: {
 function collectImportSources(source: string): string[] {
   const importSources = new Set<string>();
   const staticImportPattern =
-    /(?:import|export)\s+(?:type\s+)?(?:[^"';]*?\s+from\s+)?["']([^"']+)["']/g;
+    /\b(?:import|export)\s*(?:type\s+)?(?:[^"';]*?\bfrom\s*)?["']([^"']+)["']/g;
   const dynamicImportPattern = /import\(["']([^"']+)["']\)/g;
 
   for (const match of source.matchAll(staticImportPattern)) {
@@ -1300,6 +1303,7 @@ async function readGeneratedPrimitiveFiles(options: {
   includeLocalImportGraph?: boolean;
   outputRoot: string;
   primitiveInstallRoot: string;
+  formatContent?(content: string, sourcePath: string): Promise<string>;
   projectContent(content: string): string;
   repoRoot: string;
   sourceRoot: string;
@@ -1316,10 +1320,12 @@ async function readGeneratedPrimitiveFiles(options: {
       const sourcePath = path.join(options.repoRoot, options.sourceRoot, relativePath);
       const generatedContent = await readFile(path.join(options.outputRoot, relativePath), "utf8");
       const content = options.projectContent(
-        await formatWithPrettier(generatedContent, {
-          ...((await resolvePrettierConfig(sourcePath)) ?? {}),
-          filepath: sourcePath,
-        }),
+        options.formatContent
+          ? await options.formatContent(generatedContent, sourcePath)
+          : await formatWithPrettier(generatedContent, {
+              ...((await resolvePrettierConfig(sourcePath)) ?? {}),
+              filepath: sourcePath,
+            }),
       );
       const targetPath = createPrimitiveVendoringPath(options.primitiveInstallRoot, relativePath);
 
@@ -1460,7 +1466,7 @@ function createSourceHash(content: string): string {
 
 const RELEASE_MANAGED_PRIMITIVE_PACKAGE_PREFIX = "@starwind-ui/";
 
-function createPrimitiveArtifactIntegrityFingerprint(
+export function createPrimitiveArtifactIntegrityFingerprint(
   artifactSet: PrimitiveVendoringArtifacts,
 ): string {
   const document = {

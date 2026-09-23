@@ -55,8 +55,14 @@ describe("production Vue CLI host acceptance", () => {
       "@starwind-ui/vue",
       "starwind",
     ]);
-    expect(publicPlan.packages.map(({ key }) => key)).toEqual(["runtime", "astro", "react", "cli"]);
-    expect(publicPlan.packages.map(({ key }) => key)).not.toContain("vue");
+    expect(publicPlan.packages.map(({ key }) => key)).toEqual([
+      "runtime",
+      "astro",
+      "react",
+      "vue",
+      "svelte",
+      "cli",
+    ]);
     expect(
       createPackPlan({
         outputDirectory: path.join(root, "public-beta-packs"),

@@ -13,6 +13,7 @@ const context = useSidebarContext();
 const asChild = createVueAsChild("Sidebar.MenuButton", element);
 const protectedProps = computed(() => ({
   "data-sw-sidebar-menu-button": "",
+  "data-sw-part": "menuButton",
   "data-sidebar-state": context.state.value,
 }));
 const AsChildRoot = defineComponent({
@@ -36,7 +37,8 @@ defineExpose({ element });
     ref="element"
     v-bind="attrs"
     type="button"
-    data-sw-sidebar-menu-button
+    :data-sw-sidebar-menu-button="''"
+    :data-sw-part="'menuButton'"
     :data-sidebar-state="context.state.value"
   >
     <slot />

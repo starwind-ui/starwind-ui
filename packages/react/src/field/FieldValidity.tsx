@@ -29,7 +29,7 @@ const FieldValidity = React.forwardRef<HTMLDivElement, FieldValidityProps>(funct
   { children, hidden = true, match = true, ...props },
   ref,
 ) {
-  const serializedMatch = typeof match === "boolean" ? String(match) : match;
+  const serializedMatch = String(match);
 
   return (
     <div data-sw-field-validity data-match={serializedMatch} hidden={hidden} ref={ref} {...props}>

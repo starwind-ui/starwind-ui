@@ -18,7 +18,10 @@ import {
   updateConfig,
 } from "../../src/utils/config.js";
 import { PATHS } from "../../src/utils/constants.js";
-import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import {
+  createPrivateSvelteFrameworkTargetPolicy,
+  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+} from "../../src/utils/framework-target-policy.js";
 import * as fsUtils from "../../src/utils/fs.js";
 
 const DEFAULT_SCHEMA = "https://starwind.dev/config-schema.json";
@@ -183,7 +186,7 @@ describe.sequential("config utilsDir handling", () => {
         {
           $schema: CONFIG_SCHEMA_V2_URL,
           version: 2,
-          framework: "svelte",
+          framework: "solid",
           registry: {
             source: "bundled",
             version: "2.0.0",
@@ -898,7 +901,12 @@ describe.sequential("config utilsDir handling", () => {
     const legacyComponentSchema = componentEntrySchemas.find((entry: any) =>
       Boolean(entry.properties.source),
     );
-    expect(styledComponentSchema.properties.framework.enum).toEqual(["astro", "react", "vue"]);
+    expect(styledComponentSchema.properties.framework.enum).toEqual([
+      "astro",
+      "react",
+      "vue",
+      "svelte",
+    ]);
     expect(styledComponentSchema.required).toEqual(["name", "version", "framework", "registry"]);
     expect(legacyComponentSchema.properties.source.enum).toEqual(["legacy"]);
     expect(legacyComponentSchema.properties.framework).toBeUndefined();
@@ -990,9 +998,13 @@ describe.sequential("config utilsDir handling", () => {
     expect(
       validateSchemaFixture(schema, {
         ...mixedVueConfig,
+        framework: "svelte",
         componentDirs: { svelte: "src/components/starwind-svelte" },
+        primitiveDirs: { svelte: "src/components/starwind-svelte-primitives" },
+        components: [{ ...mixedVueConfig.components[1], framework: "svelte" }],
+        primitives: [{ ...mixedVueConfig.primitives[0], framework: "svelte" }],
       }),
-    ).not.toEqual([]);
+    ).toEqual([]);
     expect(
       validateSchemaFixture(schema, {
         ...mixedVueConfig,
@@ -1052,10 +1064,10 @@ describe.sequential("config utilsDir handling", () => {
       validateSchemaFixture(schema, {
         ...validConfig,
         componentDirs: {
-          vue: "src/components/starwind-vue",
+          solid: "src/components/starwind-solid",
         },
       }),
-    ).toEqual(expect.arrayContaining([expect.stringContaining("$.componentDirs.vue")]));
+    ).toEqual(expect.arrayContaining([expect.stringContaining("$.componentDirs.solid")]));
 
     expect(
       validateSchemaFixture(schema, {
@@ -1553,7 +1565,7 @@ describe.sequential("config utilsDir handling", () => {
           },
           componentDir: "src/components/starwind",
           componentDirs: {
-            svelte: "src/components/starwind-svelte",
+            solid: "src/components/starwind-solid",
           },
           components: [],
         },
@@ -1563,7 +1575,7 @@ describe.sequential("config utilsDir handling", () => {
       "utf-8",
     );
 
-    await expect(getConfigState()).rejects.toThrow(/componentDirs\.svelte/);
+    await expect(getConfigState()).rejects.toThrow(/componentDirs\.solid/);
 
     await writeFile(
       "starwind.config.json",
@@ -1723,6 +1735,49 @@ describe.sequential("config utilsDir handling", () => {
     );
 
     await expect(getConfigState()).rejects.toThrow(/component "button" version/);
+  });
+
+  it("accepts Svelte config through the production and trusted-artifact policies", () => {
+    const svelteConfig = {
+      $schema: CONFIG_SCHEMA_V2_URL,
+      version: 2,
+      framework: "svelte",
+      registry: { source: "local", version: "2.0.0", path: "registry.json" },
+      tailwind: {
+        css: "src/styles/starwind.css",
+        baseColor: "neutral",
+        cssVariables: true,
+      },
+      componentDir: "src/components/starwind",
+      componentDirs: { svelte: "src/components/starwind-svelte" },
+      primitiveDir: "src/components/starwind-primitives",
+      primitiveDirs: { svelte: "src/components/starwind-svelte-primitives" },
+      components: [
+        {
+          name: "button",
+          version: "2.4.0",
+          framework: "svelte",
+          registry: "default",
+        },
+      ],
+      primitives: [{ name: "accordion", version: "1.0.0", framework: "svelte" }],
+    };
+
+    const policy = createPrivateSvelteFrameworkTargetPolicy(`sha256:${"a".repeat(64)}`);
+    expect(parseCurrentConfig(svelteConfig)).toMatchObject({
+      framework: "svelte",
+      componentDirs: { svelte: "src/components/starwind-svelte" },
+      primitiveDirs: { svelte: "src/components/starwind-svelte-primitives" },
+      components: [{ name: "button", framework: "svelte" }],
+      primitives: [{ name: "accordion", framework: "svelte" }],
+    });
+    expect(parseCurrentConfig(svelteConfig, policy)).toMatchObject({
+      framework: "svelte",
+      componentDirs: { svelte: "src/components/starwind-svelte" },
+      primitiveDirs: { svelte: "src/components/starwind-svelte-primitives" },
+      components: [{ name: "button", framework: "svelte" }],
+      primitives: [{ name: "accordion", framework: "svelte" }],
+    });
   });
 
   it("accepts complete Vue config data through the production policy", () => {

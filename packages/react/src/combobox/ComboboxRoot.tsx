@@ -174,31 +174,56 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     )?.form;
     if (!resetForm) return;
     let timer: number | undefined;
-    const handleReset = () => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (timer !== undefined) window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        timer = undefined;
-        if (instanceRef.current !== instance) return;
-        if (valueRef.current !== undefined && instance.getValue() !== valueRef.current)
-          instance.setValue(valueRef.current, { emit: false });
-        if (
-          inputValueRef.current !== undefined &&
-          instance.getInputValue() !== inputValueRef.current
-        )
-          instance.setInputValue(inputValueRef.current, { emit: false, filter: false });
-        if (valueRef.current === undefined) setUncontrolledValue(instance.getValue());
-        if (inputValueRef.current === undefined)
-          setUncontrolledInputValue(instance.getInputValue());
-      }, 0);
+    const handleReset = (event: Event) => {
+      const owned = instanceRef.current;
+      if (!owned) return;
+      const beforeValue = owned.getValue();
+      const beforeInputValue = owned.getInputValue();
+      window.clearTimeout(timer);
+      queueMicrotask(() => {
+        if (instanceRef.current !== owned) return;
+        timer = window.setTimeout(() => {
+          timer = undefined;
+          if (instanceRef.current !== owned) return;
+          const nextValue =
+            valueRef.current !== undefined
+              ? valueRef.current
+              : event.defaultPrevented
+                ? beforeValue
+                : owned.getValue();
+          const nextInputValue =
+            inputValueRef.current !== undefined
+              ? inputValueRef.current
+              : event.defaultPrevented
+                ? beforeInputValue
+                : owned.getInputValue();
+
+          owned.setValue(nextValue, { emit: false });
+          if (valueRef.current === undefined) {
+            setUncontrolledValue(owned.getValue());
+          }
+
+          owned.setInputValue(nextInputValue, { emit: false, filter: false });
+          if (inputValueRef.current === undefined) {
+            setUncontrolledInputValue(owned.getInputValue());
+          }
+
+          const settledText = findSelectedComboboxItemText(children, owned.getValue());
+          setSelectedInputValue({ inputValue: settledText, value: owned.getValue() });
+          rootRef.current
+            ?.querySelectorAll<HTMLElement>("[data-sw-combobox-value]")
+            .forEach((element) => {
+              element.textContent = settledText ?? element.getAttribute("data-placeholder") ?? "";
+            });
+        }, 0);
+      });
     };
     resetForm.addEventListener("reset", handleReset);
     return () => {
       resetForm.removeEventListener("reset", handleReset);
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [form, setUncontrolledValue, setUncontrolledInputValue]);
+  }, [children, form, setUncontrolledValue, setUncontrolledInputValue]);
 
   const ensureInstance = React.useCallback(() => {
     const existing = instanceRef.current;
@@ -212,87 +237,76 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     const selectedInitialInputValue = findSelectedComboboxItemText(children, selectedInitialValue);
     const defaultRuntimeInputValue =
       uncontrolledInputValueRef.current ?? selectedInitialInputValue ?? "";
-    const defaultRuntimeFilterValue = uncontrolledInputValueRef.current ?? "";
 
     if (!portalScope.isReady()) return;
 
     const instance = createCombobox(root, {
-      autoComplete,
+      defaultValue: uncontrolledValueRef.current,
       defaultInputValue: defaultRuntimeInputValue,
-      ...(inputValueRef.current === undefined
-        ? { defaultFilterValue: defaultRuntimeFilterValue }
-        : {}),
+      defaultOpen: disabled ? false : uncontrolledOpenRef.current,
+      autoComplete: autoComplete,
+      disabled: disabled,
+      filterMode: filterMode,
+      form: form,
+      highlightItemOnHover: highlightItemOnHover,
+      locale: locale,
+      modal: modal,
+      name: name,
+      readOnly: readOnly,
+      required: required,
+      onValueChange: (next, detail) => {
+        onValueChangeRef.current?.(next, detail);
+      },
+      onInputValueChange: (next, detail) => {
+        onInputValueChangeRef.current?.(next, detail);
+      },
+      onOpenChange: (next, detail) => {
+        onOpenChangeRef.current?.(next, detail);
+      },
+      defaultFilterValue:
+        (inputValueRef.current ?? defaultRuntimeInputValue) === selectedInitialInputValue
+          ? ""
+          : (inputValueRef.current ?? defaultRuntimeInputValue),
       ...(selectedInitialInputValue !== null
         ? { defaultValueText: selectedInitialInputValue }
         : {}),
-      defaultOpen: uncontrolledOpenRef.current,
-      defaultValue: uncontrolledValueRef.current,
-      disabled,
-      filterMode,
-      form,
-      highlightItemOnHover,
-      locale,
-      modal,
-      name,
-      onInputValueChange: (nextInputValue, details) => {
-        onInputValueChangeRef.current?.(nextInputValue, details);
-      },
-      onOpenChange: (nextOpen, details) => {
-        onOpenChangeRef.current?.(nextOpen, details);
-      },
-      onValueChange: (nextValue, details) => {
-        onValueChangeRef.current?.(nextValue, details);
-      },
-      readOnly,
-      required,
+
+      ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
       ...(inputValueRef.current !== undefined ? { inputValue: inputValueRef.current } : {}),
       ...(openRef.current !== undefined ? { open: openRef.current } : {}),
-      ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
     instanceRef.current = instance;
-    instance.subscribe("inputValueChange", (details) => {
+    instance.subscribe("valueChange", (detail) => {
+      if (instanceRef.current !== instance) return;
+      const nextText =
+        getTextFromComboboxItem(detail.item) ??
+        (detail.value === null ? null : findSelectedComboboxItemText(children, detail.value)) ??
+        instance.getInputValue();
+      setSelectedInputValue({ inputValue: nextText || null, value: detail.value });
       if (inputValueRef.current === undefined) {
-        setUncontrolledInputValue(details.inputValue);
-      }
-    });
-    instance.subscribe("openChange", (details) => {
-      if (openRef.current === undefined) {
-        setUncontrolledOpen(details.open);
-      }
-    });
-    instance.subscribe("valueChange", (details) => {
-      const nextValue = details.value;
-      const nextRuntimeInputValue =
-        inputValueRef.current === undefined ? instance.getInputValue() : undefined;
-      const nextSelectedInputValue =
-        getTextFromComboboxItem(details.item) ??
-        (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
-        nextRuntimeInputValue ??
-        null;
-      if (nextSelectedInputValue !== null || nextValue === null) {
-        setSelectedInputValue({
-          inputValue:
-            nextSelectedInputValue && nextSelectedInputValue.length > 0
-              ? nextSelectedInputValue
-              : null,
-          value: nextValue,
-        });
-      }
-
-      if (inputValueRef.current === undefined) {
-        const nextInputValue =
-          nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
-        if (nextRuntimeInputValue !== nextInputValue) {
-          instance.setInputValue(nextInputValue, {
-            emit: false,
-            filter: false,
-          });
+        const nextInput = detail.value === null ? "" : (nextText ?? instance.getInputValue());
+        if (instance.getInputValue() !== nextInput)
+          instance.setInputValue(nextInput, { emit: false, filter: false });
+        if (inputValueRef.current === undefined) {
+          setUncontrolledInputValue(nextInput);
         }
-        setUncontrolledInputValue(nextInputValue);
       }
-
       if (valueRef.current === undefined) {
-        setUncontrolledValue(nextValue);
+        setUncontrolledValue(detail.value);
+      }
+    });
+    instance.subscribe("inputValueChange", (detail) => {
+      if (instanceRef.current !== instance) return;
+
+      if (inputValueRef.current === undefined) {
+        setUncontrolledInputValue(detail.inputValue);
+      }
+    });
+    instance.subscribe("openChange", (detail) => {
+      if (instanceRef.current !== instance) return;
+
+      if (openRef.current === undefined) {
+        setUncontrolledOpen(detail.open);
       }
     });
     return instance;
@@ -439,48 +453,53 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
   }, [ensureInstance, open, uncontrolledOpen]);
 
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setFormOptions({ autoComplete, form, name, required });
+    const owned = instanceRef.current;
+    if (!owned) return;
+    owned.setDisabled(disabled);
+    const next = disabled ? false : (openRef.current ?? uncontrolledOpenRef.current);
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+    if (openRef.current === undefined) {
+      setUncontrolledOpen(owned.getOpen());
+    }
+  }, [disabled]);
+  useIsomorphicLayoutEffect(() => {
+    const owned = instanceRef.current;
+    if (!owned) return;
+    owned.setFormOptions({
+      autoComplete: autoComplete,
+      form: form,
+      name: name,
+      required: required,
+    });
   }, [autoComplete, form, name, required]);
 
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setDisabled(disabled);
-  }, [disabled]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (inputValue === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    if (instance.getInputValue() === inputValue) return;
-
-    instance.setInputValue(inputValue, { emit: false, filter: false });
-  }, [inputValue]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (open === undefined) return;
-    const instance = open ? ensureInstance() : instanceRef.current;
-    if (!instance) return;
-    if (instance.getOpen() === open) return;
-
-    instance.setOpen(open, { emit: false });
-  }, [ensureInstance, open]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (value === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    const previousValue = instance.getValue();
-    if (previousValue !== value) {
-      instance.setValue(value, { emit: false });
-    }
-
+    const nextValue = value;
+    if (nextValue === undefined) return;
+    const owned = instanceRef.current;
+    if (!owned) return;
+    const next = nextValue;
+    if (owned.getValue() !== next) owned.setValue(next, { emit: false });
     if (inputValueRef.current === undefined) {
-      const nextInputValue = instance.getInputValue();
-      if (uncontrolledInputValueRef.current !== nextInputValue) {
-        setUncontrolledInputValue(nextInputValue);
-      }
+      setUncontrolledInputValue(owned.getInputValue());
     }
-  }, [setUncontrolledInputValue, value]);
+  }, [value]);
+  useIsomorphicLayoutEffect(() => {
+    const nextValue = inputValue;
+    if (nextValue === undefined) return;
+    const owned = instanceRef.current;
+    if (!owned) return;
+    const next = nextValue;
+    if (owned.getInputValue() !== next) owned.setInputValue(next, { emit: false, filter: false });
+  }, [inputValue]);
+  useIsomorphicLayoutEffect(() => {
+    const nextValue = open;
+    if (nextValue === undefined) return;
+    const owned = nextValue ? ensureInstance() : instanceRef.current;
+    if (!owned) return;
+    const next = disabled ? false : nextValue;
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+  }, [open, disabled, ensureInstance]);
 
   const selectedValue = value !== undefined ? value : (uncontrolledValue ?? null);
   useIsomorphicLayoutEffect(() => {

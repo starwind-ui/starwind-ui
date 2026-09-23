@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
+import { createAlertDialog } from "../src/components/alert-dialog";
+import { createAvatar } from "../src/components/avatar";
 import { createButton } from "../src/components/button";
+import { createDialog } from "../src/components/dialog";
+import { createDrawer } from "../src/components/drawer";
+import { createDropzone } from "../src/components/dropzone";
+import { createInput } from "../src/components/input";
 import { initStarwind } from "../src/init-starwind";
 
 type TrackedCleanup = ReturnType<typeof initStarwind>;
@@ -32,6 +37,172 @@ describe("initStarwind", () => {
     document.body.style.overflow = "";
     document.documentElement.className = "";
     localStorage.clear();
+  });
+
+  it.each([
+    { name: "dialog", factory: createDialog, popupAttribute: "data-sw-dialog-content" },
+    {
+      name: "alert-dialog",
+      factory: createAlertDialog,
+      popupAttribute: "data-sw-alert-dialog-popup",
+    },
+    { name: "drawer", factory: createDrawer, popupAttribute: "data-sw-drawer-popup" },
+  ])(
+    "refreshes scoped $name controls once without refreshing their ancestor",
+    ({ name, factory, popupAttribute }) => {
+      document.body.innerHTML = `<div data-sw-dialog id="outer"><dialog data-sw-dialog-content><div data-sw-${name} id="inner"><dialog ${popupAttribute}></dialog></div></dialog></div>`;
+      initStarwindForTest(document);
+      const outer = createDialog(document.querySelector<HTMLElement>("#outer")!);
+      const root = document.querySelector<HTMLElement>("#inner")!;
+      const instance = factory(root);
+      const outerRefresh = vi.spyOn(outer, "refresh");
+      const refresh = vi.spyOn(instance, "refresh");
+      const trigger = document.createElement("button");
+      trigger.setAttribute(`data-sw-${name}-trigger`, "");
+      root.prepend(trigger);
+      initStarwindForTest(trigger);
+      expect(refresh).toHaveBeenCalledTimes(1);
+      initStarwindForTest(root);
+      expect(refresh).toHaveBeenCalledTimes(2);
+      expect(outerRefresh).not.toHaveBeenCalled();
+      expect(factory(root)).toBe(instance);
+      trigger.click();
+      expect(instance.getOpen()).toBe(true);
+      const close = document.createElement("button");
+      close.setAttribute(`data-sw-${name}-close`, "");
+      root.querySelector("dialog")!.append(close);
+      const cleanup = initStarwindForTest(close);
+      expect(refresh).toHaveBeenCalledTimes(3);
+      close.click();
+      expect(instance.getOpen()).toBe(false);
+      cleanup.destroy();
+      trigger.click();
+      expect(instance.getOpen()).toBe(false);
+      expect(outerRefresh).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { name: "alert-dialog", factory: createAlertDialog },
+    { name: "drawer", factory: createDrawer },
+  ])(
+    "refreshes a late $name Close scoped inside its moved standard portal",
+    async ({ name, factory }) => {
+      document.body.innerHTML = `<div data-sw-${name} id="portal-owner"><button data-sw-${name}-trigger>Open</button><div data-sw-${name}-portal><dialog data-sw-${name}-popup><h2 data-sw-${name}-title>Owner</h2><input aria-label="Focus" /><div data-sw-${name} id="nested-owner"><dialog data-sw-${name}-popup><h2 data-sw-${name}-title>Nested</h2></dialog></div></dialog></div></div>`;
+      const cleanup = initStarwindForTest(document);
+      const root = document.querySelector<HTMLElement>("#portal-owner")!;
+      const nested = document.querySelector<HTMLElement>("#nested-owner")!;
+      const instance = factory(root),
+        nestedInstance = factory(nested);
+      const popup = root.querySelector<HTMLDialogElement>("dialog")!;
+      const portal = root.querySelector<HTMLElement>(`[data-sw-${name}-portal]`)!;
+      const trigger = root.querySelector<HTMLButtonElement>("button")!;
+      trigger.focus();
+      trigger.click();
+      expect(popup.open).toBe(true);
+      expect(root.contains(portal)).toBe(false);
+      const focused = document.activeElement;
+      const refresh = vi.spyOn(instance, "refresh"),
+        nestedRefresh = vi.spyOn(nestedInstance, "refresh");
+      const close = document.createElement("button");
+      close.setAttribute(`data-sw-${name}-close`, "");
+      popup.append(close);
+      initStarwindForTest(close);
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(nestedRefresh).not.toHaveBeenCalled();
+      expect(factory(root)).toBe(instance);
+      expect(portal.querySelector("dialog")).toBe(popup);
+      expect(document.activeElement).toBe(focused);
+      expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+      const nestedClose = document.createElement("button");
+      nestedClose.setAttribute(`data-sw-${name}-close`, "");
+      nested.querySelector("dialog")!.append(nestedClose);
+      initStarwindForTest(nestedClose);
+      expect(nestedRefresh).toHaveBeenCalledTimes(1);
+      expect(refresh).toHaveBeenCalledTimes(1);
+      nestedClose.click();
+      expect(instance.getOpen()).toBe(true);
+      close.click();
+      expect(instance.getOpen()).toBe(false);
+      await vi.waitFor(() => expect(popup.open).toBe(false));
+      trigger.click();
+      expect(popup.open).toBe(true);
+      cleanup.destroy();
+      initStarwindForTest(close);
+      expect(refresh).toHaveBeenCalledTimes(1);
+      trigger.click();
+      close.click();
+      expect(popup.open).toBe(false);
+      expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+    },
+  );
+
+  it("refreshes an existing Avatar once for root and child scopes with nearest-owner isolation", () => {
+    document.body.innerHTML = `<span data-sw-avatar id="outer"><span data-sw-avatar-fallback>Outer</span><span data-sw-avatar id="inner"><span data-sw-avatar-fallback>Inner</span></span></span>`;
+    initStarwindForTest(document);
+    const outer = document.querySelector<HTMLElement>("#outer")!;
+    const root = document.querySelector<HTMLElement>("#inner")!;
+    const instance = createAvatar(root);
+    const outerRefresh = vi.spyOn(createAvatar(outer), "refresh");
+    const refresh = vi.spyOn(instance, "refresh");
+    const image = document.createElement("img");
+    image.setAttribute("data-sw-avatar-image", "");
+    image.src = "/avatar.png";
+    root.append(image);
+    initStarwindForTest(image);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(outerRefresh).not.toHaveBeenCalled();
+    image.dispatchEvent(new Event("load"));
+    expect(instance.getImageLoadingStatus()).toBe("loaded");
+    initStarwindForTest(root);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    expect(outerRefresh).not.toHaveBeenCalled();
+    expect(createAvatar(root)).toBe(instance);
+    const cleanup = initStarwindForTest(image);
+    expect(refresh).toHaveBeenCalledTimes(3);
+    cleanup.destroy();
+    image.dispatchEvent(new Event("error"));
+    expect(instance.getImageLoadingStatus()).toBe("loaded");
+  });
+
+  it("initializes matching Input and Dropzone scopes and reconnects only existing child owners", async () => {
+    document.body.innerHTML = `<form id="old"></form><form id="new"></form><input data-sw-input form="old" value="seed"><section data-sw-dropzone><input data-sw-dropzone-input type="file" name="file" form="old"></section>`;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-input]")!;
+    const root = document.querySelector<HTMLElement>("[data-sw-dropzone]")!;
+    const inputCleanup = initStarwindForTest(input);
+    const dropCleanup = initStarwindForTest(root);
+    expect(input).toHaveAttribute("data-filled");
+    expect(root).toHaveAttribute("role", "button");
+    const inputController = createInput(input);
+    const dropController = createDropzone(root);
+    const file = new File(["file"], "file.txt");
+    dropController.setFiles([file], { emit: false });
+    const replacement = dropController.input.cloneNode() as HTMLInputElement;
+    replacement.setAttribute("form", "new");
+    dropController.input.replaceWith(replacement);
+    initStarwindForTest(replacement);
+    initStarwindForTest(replacement);
+    expect(dropController.input).toBe(replacement);
+    expect(
+      (new FormData(document.querySelector<HTMLFormElement>("#new")!).get("file") as File).name,
+    ).toBe(file.name);
+    input.setAttribute("form", "new");
+    inputController.setValue("accepted", { emit: false });
+    initStarwindForTest(input);
+    document.querySelector<HTMLFormElement>("#new")!.reset();
+    await vi.waitFor(() => expect(inputController.getValue()).toBe("seed"));
+    await vi.waitFor(() => expect(dropController.getFiles()).toEqual([]));
+    inputCleanup.destroy();
+    dropCleanup.destroy();
+    replacement.remove();
+    const unrelated = document.createElement("section");
+    unrelated.setAttribute("data-sw-dropzone", "");
+    const child = document.createElement("span");
+    unrelated.append(child);
+    document.body.append(unrelated);
+    initStarwindForTest(child);
+    expect(unrelated).not.toHaveAttribute("role");
+    expect(unrelated.querySelector("input")).toBeNull();
   });
 
   it("initializes accordions under the provided root", () => {

@@ -1,0 +1,82 @@
+<script module lang="ts">
+  import { getContext } from "svelte";
+  type DialogButtonContext = { registerPlacement(element: HTMLElement, attributes: Record<string, string> | null): void; readonly mounted: boolean; registerPortal(owner: symbol, element: HTMLElement | null, authoredParent?: HTMLElement, prepare?: () => () => void): void };
+  const dialogButtonContext = Symbol("Popover part context");
+  export function getDialogButtonContext(): DialogButtonContext | undefined { return getContext(dialogButtonContext); }
+</script>
+<script lang="ts">
+  import { type PopoverCloseCompleteDetails, type PopoverOpenChangeDetails, createPortalBinding, readyPortalBindingSnapshot, createPopover } from "@starwind-ui/runtime/popover";
+  import { setContext, untrack, type Snippet } from "svelte";
+  import type { Attachment } from "svelte/attachments";
+  import type { HTMLAttributes } from "svelte/elements";
+
+  type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
+    children?: Snippet<[boolean]>;
+    defaultOpen?: boolean;
+    open?: boolean;
+    closeOnEscape?: boolean;
+    closeOnOutsideInteract?: boolean;
+    modal?: boolean;
+    openOnHover?: boolean;
+    closeDelay?: number;
+    onOpenChange?: (open: boolean, detail: PopoverOpenChangeDetails) => void;
+    onCloseComplete?: (detail: PopoverCloseCompleteDetails) => void;
+    ref?: (element: HTMLDivElement | null) => void;
+  };
+
+  let { children, defaultOpen, open = $bindable(), closeOnEscape = true, closeOnOutsideInteract = true, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
+  const initialModel = untrack(() => open);
+  const initialDefaultOpen = untrack(() => defaultOpen) ?? initialModel ?? false;
+  __ACCEPTED_CELL__
+  let surfaceReady = $state(false);
+  __AUTHORED_PLACEMENT__
+  let mounted = $state(false);
+  const portals = new Map<symbol, { wrapper: HTMLElement; authoredParent: HTMLElement; prepare?: () => () => void }>();
+  let binding: ReturnType<typeof createPortalBinding> | undefined;
+  setContext<DialogButtonContext>(dialogButtonContext, {
+    get mounted() { return mounted; },
+    registerPlacement,
+    registerPortal(owner, element, authoredParent, prepare) {
+      if (element && authoredParent) portals.set(owner, { wrapper: element, authoredParent, prepare }); else portals.delete(owner);
+      binding?.publish(readyPortalBindingSnapshot(bindingRoot!, [...portals.values()]));
+    },
+
+  });
+
+  __CONTROLLER_CELL__
+  __LIFECYCLE__
+  __CONNECT_SURFACE__
+  let bindingRoot: HTMLDivElement | undefined;
+  const attachRuntime: Attachment<HTMLDivElement> = (root) => {
+    bindingRoot = root;
+    binding = createPortalBinding(root);
+    binding.publish(readyPortalBindingSnapshot(root, [...portals.values()]));
+    mounted = true;
+    $effect(() => {
+      void [__CONSTRUCTOR_INPUTS__, surfaceReady];
+      untrack(() => connectSurface(root));
+      return disconnectRuntime;
+    });
+    __OBSERVE_MODEL__
+    return () => { mounted = false; binding?.destroy(); binding = undefined; bindingRoot = undefined; };
+  };
+  import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
+  const attachRef = createAttachRef<HTMLDivElement>(() => ref);
+</script>
+
+<div
+  {...rest}
+  data-sw-popover=""
+  data-sw-part="root"
+  data-default-open={initialDefaultOpen ? "true" : undefined}
+  data-close-on-escape={String(closeOnEscape)}
+  data-close-on-outside-interact={String(closeOnOutsideInteract)}
+  data-modal={String(modal)}
+  data-open-on-hover={String(openOnHover)}
+  data-close-delay={closeDelay}
+  data-state={renderedOpen ? "open" : "closed"}
+  {@attach attachRuntime}
+  {@attach attachRef}
+>
+  {@render children?.(renderedOpen)}
+</div>

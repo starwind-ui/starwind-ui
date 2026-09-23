@@ -18,6 +18,14 @@ const sidebarStyle = [
 ];
 
 export const sidebarStyledContract: StyledAdapterContract = {
+  annotations: {
+    behaviorOwnership: [
+      "Runtime selects the nearest Provider's mobile Sheet and synchronizes its accepted state after proposal dispatch.",
+    ],
+    composition: [
+      "The mobile Sheet retains data-sidebar=mobile so its Provider can find the owned bridge. Framework bindings publish only accepted Sheet output.",
+    ],
+  },
   component: "sidebar",
   publicExports: [
     "Sidebar",

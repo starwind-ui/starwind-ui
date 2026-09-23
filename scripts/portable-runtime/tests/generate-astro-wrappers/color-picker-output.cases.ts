@@ -191,7 +191,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
       renderStyledFixture(styledIndex, primitiveIndex),
     );
 
-    const require = createRequire(path.resolve("packages/astro/package.json"));
+    const require = createRequire(path.join(appRoot, "astro.config.mjs"));
     const astroPackage = require.resolve("astro/package.json");
     const astroBin = path.join(path.dirname(astroPackage), "bin/astro.mjs");
     await execFileAsync(process.execPath, [astroBin, "build", "--root", appRoot], {
@@ -363,7 +363,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     const primitiveIndex = "../vendor/starwind-astro/color-picker/index.ts";
     await writeFile(path.join(pageDir, "index.astro"), renderFixture(primitiveIndex));
 
-    const require = createRequire(path.resolve("packages/astro/package.json"));
+    const require = createRequire(path.join(appRoot, "astro.config.mjs"));
     const astroPackage = require.resolve("astro/package.json");
     const astroBin = path.join(path.dirname(astroPackage), "bin/astro.mjs");
     await execFileAsync(process.execPath, [astroBin, "build", "--root", appRoot], {

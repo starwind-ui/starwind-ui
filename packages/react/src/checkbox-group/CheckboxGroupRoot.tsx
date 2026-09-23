@@ -13,54 +13,36 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 import { CheckboxGroupContext } from "./CheckboxGroupContext";
-
 export type CheckboxGroupRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "onChange"
 > & {
   defaultValue?: CheckboxGroupValue;
   disabled?: boolean;
-  onValueChange?: (value: CheckboxGroupValue, details: CheckboxGroupValueChangeDetails) => void;
   value?: CheckboxGroupValue;
+  onValueChange?: (value: CheckboxGroupValue, detail: CheckboxGroupValueChangeDetails) => void;
 };
-
 const CheckboxGroupRoot = React.forwardRef<HTMLDivElement, CheckboxGroupRootProps>(
   function CheckboxGroupRoot(
-    { defaultValue, disabled = false, onValueChange, value, ...props },
+    { children, defaultValue, disabled = false, value, onValueChange, ...rest },
     forwardedRef,
   ) {
-    const rootRef = React.useRef<HTMLDivElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createCheckboxGroup> | undefined>(undefined);
-    const defaultValueRef = React.useRef(defaultValue);
-    const disabledRef = React.useRef(disabled);
-    const valueRef = React.useRef(value);
-    const onValueChangeRef = React.useRef(onValueChange);
-    const [uncontrolledValue, setUncontrolledValueState] = React.useState<CheckboxGroupValue>(
-      () => defaultValueRef.current ?? [],
-    );
-    const uncontrolledValueRef = React.useRef(uncontrolledValue);
-
-    const setUncontrolledValue = React.useCallback((nextValue: CheckboxGroupValue) => {
-      if (areValuesEqual(uncontrolledValueRef.current, nextValue)) return;
-
-      uncontrolledValueRef.current = nextValue;
-      setUncontrolledValueState(nextValue);
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      disabledRef.current = disabled;
-    }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      valueRef.current = value;
-    }, [value]);
-
-    useIsomorphicLayoutEffect(() => {
-      onValueChangeRef.current = onValueChange;
-    }, [onValueChange]);
-
+    const inputs = React.useRef({ defaultValue, disabled, value, onValueChange });
+    inputs.current = { defaultValue, disabled, value, onValueChange };
+    const resetSeed = React.useRef(
+      copyModel(inputs.current.defaultValue ?? inputs.current.value ?? []),
+    ).current;
+    const initialValue = React.useRef(copyModel(inputs.current.value ?? resetSeed)).current;
+    const [renderedValue, setRenderedValue] = React.useState<CheckboxGroupValue>(initialValue);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createCheckboxGroup>;
+      accepted: CheckboxGroupValue;
+      unsubscribe?: () => void;
+      unsubscribeSync?: () => void;
+      observer?: MutationObserver;
+    }>({ accepted: initialValue }).current;
+    const rootRef = React.useRef<HTMLDivElement | null>(null);
     const composedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
         rootRef.current = node;
@@ -68,112 +50,102 @@ const CheckboxGroupRoot = React.forwardRef<HTMLDivElement, CheckboxGroupRootProp
       },
       [forwardedRef],
     );
-
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root) return;
-
-      const instance = createCheckboxGroup(root, {
-        defaultValue: defaultValueRef.current,
-        disabled: disabledRef.current,
-        onValueChange: (details) => {
-          onValueChangeRef.current?.(details.value, details);
+    const selected = inputs.current.value ?? renderedValue;
+    function isModelEqual(left: string[] | undefined, right: string[] | undefined) {
+      return (
+        left === right ||
+        (left !== undefined &&
+          right !== undefined &&
+          left.length === right.length &&
+          left.every((value, index) => value === right[index]))
+      );
+    }
+    function copyModel(value: string[]) {
+      return [...value];
+    }
+    function disconnect() {
+      const owned = connection.instance;
+      connection.unsubscribe?.();
+      connection.unsubscribeSync?.();
+      connection.observer?.disconnect();
+      connection.instance = undefined;
+      owned?.destroy();
+    }
+    function publishRuntime(owned: ReturnType<typeof createCheckboxGroup>) {
+      if (connection.instance !== owned) return;
+      const next = owned.getValue();
+      if (!isModelEqual(connection.accepted, next)) {
+        connection.accepted = copyModel(next);
+        if (inputs.current.value === undefined) setRenderedValue(next);
+      }
+    }
+    function connect(root: HTMLDivElement) {
+      disconnect();
+      const desired = inputs.current.value ?? initialValue;
+      const owned = createCheckboxGroup(root, {
+        defaultValue: copyModel(resetSeed),
+        disabled: inputs.current.disabled,
+        ...(inputs.current.value !== undefined ? { value: desired } : {}),
+        onValueChange: (detail) => {
+          inputs.current.onValueChange?.(copyModel(detail.value), detail);
         },
-        ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
       });
-      instanceRef.current = instance;
-      const unsubscribe = instance.subscribe("valueChange", (details) => {
-        if (details.isCanceled) return;
-
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(details.value);
-        }
+      connection.instance = owned;
+      if (!isModelEqual(owned.getValue(), desired)) owned.setValue(desired, { emit: false });
+      connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+        if (connection.instance !== owned || detail.isCanceled) return;
+        publishRuntime(owned);
       });
-
-      return () => {
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
+      connection.observer = new MutationObserver(() => {
+        publishRuntime(owned);
+      });
+      connection.observer.observe(root, { attributes: true, attributeFilter: ["data-value"] });
+      publishRuntime(owned);
+    }
+    function applyParent() {
+      const owned = connection.instance,
+        next = inputs.current.value;
+      if (!owned || next === undefined || isModelEqual(owned.getValue(), next)) return;
+      owned.setValue(next, { emit: false });
+      publishRuntime(owned);
+    }
+    function applyOptions() {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.refresh();
+      owned.setDisabled(inputs.current.disabled);
+      applyParent();
+      publishRuntime(owned);
+    }
+    useIsomorphicLayoutEffect(() => {
+      if (rootRef.current) connect(rootRef.current);
+      return disconnect;
     }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root || typeof MutationObserver === "undefined") return;
-
-      const syncUncontrolledValue = () => {
-        if (valueRef.current !== undefined) return;
-
-        setUncontrolledValue(parseCheckboxGroupValueAttribute(root.getAttribute("data-value")));
-      };
-      const observer = new MutationObserver(syncUncontrolledValue);
-      observer.observe(root, { attributes: true, attributeFilter: ["data-value"] });
-      syncUncontrolledValue();
-
-      return () => {
-        observer.disconnect();
-      };
-    }, [setUncontrolledValue]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setDisabled(disabled);
-    }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (value === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (areValuesEqual(instance.getValue(), value)) return;
-
-      instance.setValue(value, { emit: false });
-    }, [value]);
-
-    const renderedValue = value ?? uncontrolledValue;
-    const contextValue = React.useMemo(
-      () => ({ disabled, value: renderedValue }),
-      [disabled, renderedValue],
+    useIsomorphicLayoutEffect(applyOptions, [disabled]);
+    useIsomorphicLayoutEffect(applyParent, [value]);
+    const context = React.useMemo(
+      () => ({ disabled: inputs.current.disabled, value: selected }),
+      [disabled, selected],
     );
-
     return (
-      <CheckboxGroupContext.Provider value={contextValue}>
+      <CheckboxGroupContext.Provider value={context}>
         <div
-          data-sw-checkbox-group
-          data-default-value={
-            defaultValueRef.current ? JSON.stringify(defaultValueRef.current) : undefined
-          }
-          data-value={JSON.stringify(renderedValue)}
-          data-disabled={disabled ? "" : undefined}
+          {...rest}
+          {...{
+            "data-sw-checkbox-group": "",
+            "data-sw-part": "root",
+            role: "group",
+            "data-default-value": JSON.stringify(resetSeed),
+            "data-value": JSON.stringify(selected),
+            "data-disabled": inputs.current.disabled ? "" : undefined,
+          }}
           ref={composedRef}
-          role="group"
-          {...props}
-        />
+        >
+          {children}
+        </div>
       </CheckboxGroupContext.Provider>
     );
   },
 );
-
 CheckboxGroupRoot.displayName = "CheckboxGroup.Root";
-
 export default CheckboxGroupRoot;
-
-function areValuesEqual(left: CheckboxGroupValue, right: CheckboxGroupValue): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function parseCheckboxGroupValueAttribute(value: string | null): CheckboxGroupValue {
-  if (!value) return [];
-
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.filter((item): item is string => typeof item === "string");
-  } catch {
-    return [];
-  }
-}

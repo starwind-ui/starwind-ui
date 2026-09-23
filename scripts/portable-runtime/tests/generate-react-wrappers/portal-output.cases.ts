@@ -1,3 +1,4 @@
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -30,69 +31,93 @@ export function defineReactPortalOutputTests(getTempRoot: GetTempRoot): void {
     });
 
     const helper = await readGeneratedFile(outputRoot, "internal/portal.tsx");
-    expect(helper).toContain('import { createPortal } from "react-dom";');
-    expect(helper).toContain("export type ReactPortalContainer =");
-    expect(helper).toContain("React.RefObject<HTMLElement | null>");
-    expect(helper).toContain("useIsomorphicLayoutEffect(() =>");
-    expect(helper).toContain("const token = React.useId()");
-    expect(helper).toContain("new Map<PortalToken, PortalRecord>()");
-    expect(helper).toContain("export function useReactPortalScope");
-    expect(helper).toContain("export function useReactPortalRuntimeLifecycle");
-    expect(helper).toContain("if (cleanupRef.current || !scopeRef.current.isReady()) return");
-    expect(helper).toContain('const [phase, setPhase] = React.useState<"inline" | "placed">');
-    expect(helper).toContain("records.some((record) => !record.ready)");
-    expect(helper).toContain("Object.freeze({ authoredParent: record.authoredParent");
-    expect(helper).toContain("createPortal(wrapper, placement.target, token)");
-    expect(helper).toContain("const portalDocumentObservers = new WeakMap<");
-    expect(helper).toContain("observePortalDocument(wrapper.ownerDocument, refreshPlacement)");
-    expect(helper).toContain(
-      "observer.observe(ownerDocument.documentElement, { childList: true, subtree: true })",
+    expect(compactCode(helper)).toContain(compactCode('import { createPortal } from "react-dom";'));
+    expect(compactCode(helper)).toContain(compactCode("export type ReactPortalContainer ="));
+    expect(compactCode(helper)).toContain(compactCode("React.RefObject<HTMLElement | null>"));
+    expect(compactCode(helper)).toContain(compactCode("useIsomorphicLayoutEffect(() =>"));
+    expect(compactCode(helper)).toContain(compactCode("const token = React.useId()"));
+    expect(compactCode(helper)).toContain(compactCode("new Map<PortalToken, PortalRecord>()"));
+    expect(compactCode(helper)).toContain(compactCode("export function useReactPortalScope"));
+    expect(compactCode(helper)).toContain(
+      compactCode("export function useReactPortalRuntimeLifecycle"),
     );
-    expect(helper).toContain("cleanupRegistration?.()");
-    expect(helper).not.toContain("usePortalRuntimeRemount");
+    expect(compactCode(helper)).toContain(
+      compactCode("if (cleanupRef.current || !scopeRef.current.isReady()) return"),
+    );
+    expect(compactCode(helper)).toContain(
+      compactCode('const [phase, setPhase] = React.useState<"inline" | "placed">'),
+    );
+    expect(compactCode(helper)).toContain(compactCode("records.some((record) => !record.ready)"));
+    expect(compactCode(helper)).toContain(
+      compactCode("Object.freeze({ authoredParent: record.authoredParent"),
+    );
+    expect(compactCode(helper)).toContain(
+      compactCode("createPortal(wrapper, placement.target, token)"),
+    );
+    expect(compactCode(helper)).toContain(
+      compactCode("const portalDocumentObservers = new WeakMap<"),
+    );
+    expect(compactCode(helper)).toContain(
+      compactCode("observePortalDocument(wrapper.ownerDocument, refreshPlacement)"),
+    );
+    expect(compactCode(helper)).toContain(
+      compactCode(
+        "observer.observe(ownerDocument.documentElement, { childList: true, subtree: true })",
+      ),
+    );
+    expect(compactCode(helper)).toContain(compactCode("cleanupRegistration?.()"));
+    expect(compactCode(helper)).not.toContain(compactCode("usePortalRuntimeRemount"));
     // Error reporting in the shared observer must not change placement scheduling.
-    expect(helper.slice(helper.indexOf("export const ReactPortal ="))).not.toContain(
-      "queueMicrotask(",
+    expect(compactCode(helper.slice(helper.indexOf("export const ReactPortal =")))).not.toContain(
+      compactCode("queueMicrotask("),
     );
-    expect(helper).not.toContain("append(");
-    expect(helper).not.toContain("setInterval(");
-    expect(helper).not.toContain("requestAnimationFrame(");
+    expect(compactCode(helper)).not.toContain(compactCode("append("));
+    expect(compactCode(helper)).not.toContain(compactCode("setInterval("));
+    expect(compactCode(helper)).not.toContain(compactCode("requestAnimationFrame("));
 
     for (const [family, component, rootComponent, discoveryAttribute] of portalFamilies) {
       const portal = await readGeneratedFile(outputRoot, `${family}/${component}.tsx`);
       const root = await readGeneratedFile(outputRoot, `${family}/${rootComponent}.tsx`);
 
-      expect(portal).toContain(
-        'import { ReactPortal, type ReactPortalProps } from "../internal/portal";',
+      expect(compactCode(portal)).toContain(
+        compactCode('import { ReactPortal, type ReactPortalProps } from "../internal/portal";'),
       );
       expect(portal).toContain(`export type ${component}Props = ReactPortalProps;`);
-      expect(portal).toContain(`<ReactPortal`);
+      expect(compactCode(portal)).toContain(compactCode(`<ReactPortal`));
       expect(portal).toContain(`discoveryAttribute="${discoveryAttribute}"`);
-      expect(portal).toContain("resolvePlacement={resolvePortalPlacement}");
-      expect(portal).toContain("reportPlacement={reportPortalPlacement}");
-      expect(root).toContain("useReactPortalScope");
-      expect(root).toContain('from "../internal/portal";');
-      expect(root).toContain(
-        "const portalScope = useReactPortalScope(rootRef, createPortalBinding)",
+      expect(compactCode(portal)).toContain(
+        compactCode("resolvePlacement={resolvePortalPlacement}"),
       );
-      expect(root).toContain("const portalRuntimeActivation = portalScope.activation");
-      expect(root).toContain("if (!portalScope.isReady()) return");
-      expect(root).toContain("PortalSurface(root)");
-      expect(root).toContain("<ReactPortalScopeProvider scope={portalScope}>");
+      expect(compactCode(portal)).toContain(compactCode("reportPlacement={reportPortalPlacement}"));
+      expect(compactCode(root)).toContain(compactCode("useReactPortalScope"));
+      expect(compactCode(root)).toContain(compactCode('from "../internal/portal";'));
+      expect(compactCode(root)).toContain(
+        compactCode("useReactPortalScope(rootRef, createPortalBinding)"),
+      );
+      expect(compactCode(root)).toContain(compactCode("portalScope"));
+      expect(compactCode(root)).toContain(compactCode("portalScope.isReady()"));
+      expect(root).toMatch(/refresh\w+PortalSurface\((?:root|rootRef.current)\)/);
+      expect(compactCode(root)).toContain(
+        compactCode("<ReactPortalScopeProvider scope={portalScope}>"),
+      );
       if (family === "combobox" || family === "select") {
-        expect(root).toContain("portalRuntimeActivation,");
-        expect(root).not.toContain("useReactPortalRuntimeLifecycle(portalScope");
+        expect(compactCode(root)).toContain(compactCode("portalRuntimeActivation,"));
+        expect(compactCode(root)).not.toContain(
+          compactCode("useReactPortalRuntimeLifecycle(portalScope"),
+        );
       } else {
-        expect(root).toContain("const initializePortalRuntime = React.useCallback");
-        expect(root).toContain(
-          "useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime)",
+        expect(compactCode(root)).toContain(
+          compactCode("const initializePortalRuntime = React.useCallback"),
+        );
+        expect(compactCode(root)).toContain(
+          compactCode("useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime)"),
         );
       }
     }
 
     const button = await readGeneratedFile(outputRoot, "button/ButtonRoot.tsx");
-    expect(button).not.toContain("internal/portal");
-    expect(button).not.toContain("react-dom");
+    expect(compactCode(button)).not.toContain(compactCode("internal/portal"));
+    expect(compactCode(button)).not.toContain(compactCode("react-dom"));
 
     const tree = await readGeneratedTree(outputRoot);
     for (const [indexPath, index] of Object.entries(tree)) {

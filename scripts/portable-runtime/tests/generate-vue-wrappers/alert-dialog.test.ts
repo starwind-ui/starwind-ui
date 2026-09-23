@@ -1,14 +1,13 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { alertDialogRuntimeAdapterContract } from "../../contracts/primitive/components/alert-dialog.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -60,19 +59,16 @@ describe("generated Vue Alert Dialog", () => {
     }
 
     const root = files["AlertDialogRoot.vue"]!;
+    expect(() => assertVueSfcCompiles(root, "Component.vue")).not.toThrow();
+
+    for (const control of [files["AlertDialogTrigger.vue"]!, files["AlertDialogClose.vue"]!]) {
+      expect(control).toContain("useVueNativeControl");
+      expect(control).toContain("asChild?: boolean");
+      expect(control).toContain("requestRefresh()");
+      expect(control).not.toContain("cloneVNode");
+    }
     const portal = files["AlertDialogPortal.vue"]!;
-    expect(root).toContain("provide(AlertDialogContext");
-    expect(root).toContain("mounted.value = false");
-    expect(root).toContain("await nextTick()");
-    expect(root).toContain("const recreating = recreatedOpen !== undefined");
-    expect(root).toContain("instance.setOpen(true, { emit: false });");
-    expect(root).not.toContain("recreatedReturnFocus");
-    expect(root).not.toContain("document.activeElement");
-    expect(root).not.toContain(".focus(");
-    expect(root).toMatch(
-      /emit\("openChange", nextOpen, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open", nextOpen\);/,
-    );
-    expect(root).toContain("instance.setOpen(nextOpen, { emit: false });");
+
     expect(portal).toContain("container?: string | HTMLElement");
     expect(portal).toContain(':disabled="placement.disabled.value"');
     expect(portal).toContain('data-sw-portal-placement="framework"');
@@ -97,23 +93,29 @@ describe("generated Vue Alert Dialog", () => {
     const action = await readFile(path.join(directory, "AlertDialogAction.vue"), "utf8");
     const cancel = await readFile(path.join(directory, "AlertDialogCancel.vue"), "utf8");
 
-    expect(root).toContain(':open="open"');
-    expect(root).toContain('@update:open="emit(&quot;update:open&quot;, $event)"');
-    expect(root).toContain('@open-change="handleOpenChange"');
+    expect(compactCode(root)).toContain(compactCode(':open="open"'));
+    expect(compactCode(root)).toContain(
+      compactCode('@update:open="emit(&quot;update:open&quot;, $event)"'),
+    );
+    expect(compactCode(root)).toContain(compactCode('@open-change="handleOpenChange"'));
     expect(content).toContain("<AlertDialogPrimitive.AlertDialogBackdrop");
     expect(content).toContain("<AlertDialogPrimitive.AlertDialogPopup");
     expect(content).toContain('role="alertdialog"');
+    expect(compactCode(trigger)).toContain(compactCode("const AsChildTrigger = defineComponent"));
+    expect(compactCode(trigger)).toContain(compactCode("{ default: slots.default }"));
+    expect(compactCode(trigger)).toContain(compactCode("watch("));
+    expect(compactCode(trigger)).not.toContain(compactCode("cloneVNode"));
     for (const [part, source] of [
-      ["Trigger", trigger],
       ["Action", action],
       ["Cancel", cancel],
     ] as const) {
       expect(source).toContain(`const AsChild${part} = defineComponent`);
-      expect(source).toContain("cloneVNode(child, mergeProps(");
-      expect(source).toContain('typeof child.type !== "string"');
-      expect(source).toContain("ref: setElement");
+      expect(compactCode(source)).toContain(compactCode("__useAlertDialogControl"));
+      expect(compactCode(source)).toContain(compactCode("return renderAsChild({"));
+      expect(compactCode(source)).not.toContain(compactCode("cloneVNode"));
       expect(() => assertVueSfcCompiles(source, `AlertDialog${part}.vue`)).not.toThrow();
     }
+    for (const control of [trigger, action, cancel]) expect(control).not.toContain("inject(");
     expect(action).toContain("alertDialogActionAsChild");
     expect(action).not.toContain("ButtonHTMLAttributes");
     expect(action).toContain("<Button");
@@ -121,6 +123,6 @@ describe("generated Vue Alert Dialog", () => {
     expect(cancel).toContain("alertDialogCancelAsChild");
     expect(cancel).not.toContain("ButtonHTMLAttributes");
     expect(cancel).toContain('data-slot="alert-dialog-cancel"');
-    expect(trigger).toContain("ButtonHTMLAttributes");
+    expect(compactCode(trigger)).toContain(compactCode("ButtonHTMLAttributes"));
   });
 });

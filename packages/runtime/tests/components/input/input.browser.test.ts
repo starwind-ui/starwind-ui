@@ -8,6 +8,67 @@ describe("createInput", () => {
     document.body.innerHTML = "";
   });
 
+  it("refreshes actual form ownership while preserving value, seed, identity and subscriptions", async () => {
+    const input = renderInput({ value: "seed" });
+    const first = document.createElement("form");
+    const second = document.createElement("form");
+    first.id = "first-input-form";
+    second.id = "second-input-form";
+    document.body.append(first, second);
+    input.setAttribute("form", first.id);
+    const instance = createInput(input);
+    const notify = vi.fn();
+    instance.subscribe("valueChange", notify);
+    instance.setValue("accepted", { emit: false });
+    first.reset();
+    input.setAttribute("form", second.id);
+    instance.refresh();
+    expect(createInput(input)).toBe(instance);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getValue()).toBe("accepted");
+    expect(input.value).toBe("accepted");
+    first.reset();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getValue()).toBe("accepted");
+    second.reset();
+    await vi.waitFor(() => expect(instance.getValue()).toBe("seed"));
+    expect(input).not.toHaveAttribute("data-dirty");
+    input.value = "typed";
+    input.dispatchEvent(new InputEvent("input"));
+    expect(notify).toHaveBeenCalledTimes(1);
+    instance.destroy();
+    input.value = "after destroy";
+    instance.refresh();
+    expect(input.value).toBe("after destroy");
+  });
+
+  it("refreshes a changed form id while retaining canceled and pending native reset semantics", async () => {
+    const input = renderInput({ value: "seed" });
+    const first = document.createElement("form");
+    const second = document.createElement("form");
+    first.id = "owner";
+    input.setAttribute("form", "owner");
+    document.body.append(first, second);
+    const instance = createInput(input);
+    instance.setValue("accepted", { emit: false });
+    first.id = "retired";
+    second.id = "owner";
+    instance.refresh();
+    expect(input.form).toBe(second);
+    first.reset();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getValue()).toBe("accepted");
+    second.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+    second.reset();
+    instance.refresh();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getValue()).toBe("accepted");
+    second.reset();
+    instance.refresh();
+    await vi.waitFor(() => expect(instance.getValue()).toBe("seed"));
+    instance.destroy();
+  });
+
   it("initializes filled input state from the native value", () => {
     const input = renderInput({ value: "Ada" });
 

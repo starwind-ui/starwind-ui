@@ -24,31 +24,59 @@ function sync(next: string) {
   const group = element.value;
   if (!group) return;
   group.setAttribute("data-value", next);
-  group.querySelectorAll<HTMLElement>("[data-sw-menu-radio-item]").forEach((item) => {
-    if (item.closest("[data-sw-menu-radio-group]") !== group) return;
+  for (const item of group.querySelectorAll<HTMLElement>("[data-sw-menu-radio-item]")) {
+    if (item.closest("[data-sw-menu-radio-group]") !== group) continue;
     const checked = item.getAttribute("data-value") === next;
     item.setAttribute("aria-checked", String(checked));
     item.toggleAttribute("data-checked", checked);
     item.toggleAttribute("data-unchecked", !checked);
-    item
-      .querySelectorAll<HTMLElement>("[data-sw-menu-radio-item-indicator]")
-      .forEach((indicator) => {
-        indicator.setAttribute("data-state", checked ? "checked" : "unchecked");
-        indicator.toggleAttribute("data-visible", checked);
-        indicator.toggleAttribute("data-hidden", !checked);
-      });
+    for (const indicator of item.querySelectorAll<HTMLElement>(
+      "[data-sw-menu-radio-item-indicator]",
+    )) {
+      if (indicator.closest("[data-sw-menu-radio-item]") !== item) continue;
+      indicator.setAttribute("aria-hidden", "true");
+      indicator.setAttribute("data-state", checked ? "checked" : "unchecked");
+      indicator.toggleAttribute("data-visible", checked);
+      indicator.toggleAttribute("data-hidden", !checked);
+    }
+  }
+}
+let disposed = false;
+function handle(event: Event) {
+  if (event.target !== element.value) return;
+  const ownerElement = element.value;
+  if (!ownerElement) return;
+  const details = (event as CustomEvent<MenuValueChangeDetails>).detail;
+  const inputAtDispatch = props.modelValue;
+  emit("valueChange", details.value, details);
+  queueMicrotask(async () => {
+    await nextTick();
+    if (
+      !(!disposed && element.value === ownerElement && ownerElement.isConnected) ||
+      details.isCanceled ||
+      props.modelValue !== inputAtDispatch
+    )
+      return;
+    if (props.modelValue === undefined) {
+      uncontrolledValue.value = details.value;
+    }
+    emit("update:modelValue", details.value);
+    await nextTick();
+    if (
+      !disposed &&
+      element.value === ownerElement &&
+      ownerElement.isConnected &&
+      props.modelValue !== undefined
+    ) {
+      sync(props.modelValue);
+    }
   });
 }
-function handle(event: Event) {
-  const detail = (event as CustomEvent<MenuValueChangeDetails>).detail;
-  emit("valueChange", detail.value, detail);
-  if (detail.isCanceled) return;
-  if (props.modelValue === undefined) uncontrolledValue.value = detail.value;
-  else void nextTick(() => sync(props.modelValue!));
-  emit("update:modelValue", detail.value);
-}
 onMounted(() => element.value?.addEventListener("starwind:value-change", handle));
-onBeforeUnmount(() => element.value?.removeEventListener("starwind:value-change", handle));
+onBeforeUnmount(() => {
+  disposed = true;
+  element.value?.removeEventListener("starwind:value-change", handle);
+});
 watch(
   () => props.modelValue,
   (next) => {

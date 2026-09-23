@@ -1,16 +1,4 @@
 import {
-  createApp,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-  type VNode,
-} from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import {
   TooltipArrow,
   TooltipPopup,
   TooltipPortal,
@@ -18,6 +6,18 @@ import {
   TooltipRoot,
   TooltipTrigger,
 } from "@starwind-ui/vue/tooltip";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  defineComponent,
+  h,
+  nextTick,
+  reactive,
+  ref,
+  type VNode,
+} from "vue";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -28,6 +28,46 @@ afterEach(() => {
 });
 
 describe("Vue Tooltip browser contract", () => {
+  it.each([false, true])("re-enables continuing open with controlled=%s", async (controlled) => {
+    const state = reactive({ disabled: false, open: true as boolean | undefined, delay: 0 });
+    const proposals: boolean[] = [],
+      updates: boolean[] = [];
+    const host = mountRender(() =>
+      tree({
+        open: controlled ? state.open : undefined,
+        defaultOpen: true,
+        disabled: state.disabled,
+        openDelay: state.delay,
+        closeDelay: 0,
+        onOpenChange: (open: boolean, detail: { cancel(): void }) => {
+          proposals.push(open);
+          detail.cancel();
+        },
+        "onUpdate:open": (open: boolean) => updates.push(open),
+      }),
+    );
+    await wait(60);
+    expect(popup().hidden).toBe(false);
+    state.disabled = true;
+    await wait(60);
+    expect(popup().hidden).toBe(true);
+    state.disabled = false;
+    await wait(60);
+    expect(popup().hidden).toBe(!controlled);
+    expect(proposals).toEqual([]);
+    expect(updates).toEqual([]);
+    state.disabled = true;
+    state.delay = 20;
+    await wait(60);
+    state.open = false;
+    state.disabled = false;
+    await wait(60);
+    expect(popup().hidden).toBe(true);
+    expect(proposals).toEqual([]);
+    expect(updates).toEqual([]);
+    expect(host.querySelector("[data-sw-tooltip]")!.getAttribute("data-state")).toBe("closed");
+  });
+
   it.each([false, true])(
     "applies a newer parent %s command during nextTick recreation",
     async (command) => {
@@ -492,3 +532,19 @@ async function wait(milliseconds: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
   await nextTick();
 }
+
+testAcceptedModelPublication({
+  name: "tooltip",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => tree({ openDelay: 0, closeDelay: 0 }),
+  root: "[data-sw-tooltip]",
+  act: (root) => {
+    const trigger = root.querySelector<HTMLElement>("[data-sw-tooltip-trigger]")!;
+    pointer(trigger, "pointerenter");
+  },
+  read: (root) => root.getAttribute("data-state") === "open",
+});

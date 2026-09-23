@@ -86,19 +86,22 @@ const ContextMenuRoot = React.forwardRef<HTMLDivElement, ContextMenuRootProps>(
 
       const instance = createContextMenu(root, {
         defaultOpen: uncontrolledOpenRef.current,
-        disabled,
-        modal,
-        closeDelay,
+        disabled: disabled,
+        modal: modal,
+        closeDelay: closeDelay,
+        onOpenChange: (next, details) => {
+          onOpenChangeRef.current?.(next, details);
+        },
         onCloseComplete: (details) => {
+          if (instanceRef.current !== instance) return;
           onCloseCompleteRef.current?.(details);
         },
-        onOpenChange: (nextOpen, details) => {
-          onOpenChangeRef.current?.(nextOpen, details);
-        },
+
         ...(openRef.current !== undefined ? { open: openRef.current } : {}),
       });
       instanceRef.current = instance;
       const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
+        if (instanceRef.current !== instance) return;
         if (openRef.current === undefined) {
           setUncontrolledOpen(details.open);
         }
@@ -106,10 +109,10 @@ const ContextMenuRoot = React.forwardRef<HTMLDivElement, ContextMenuRootProps>(
 
       return () => {
         unsubscribeOpenChange();
-        instance.destroy();
         if (instanceRef.current === instance) {
           instanceRef.current = undefined;
         }
+        instance.destroy();
       };
     }, [disabled, modal, closeDelay]);
 
@@ -123,12 +126,10 @@ const ContextMenuRoot = React.forwardRef<HTMLDivElement, ContextMenuRootProps>(
     }, [portalRuntimeActivation]);
 
     useIsomorphicLayoutEffect(() => {
-      if (open === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getOpen() === open) return;
-
-      instance.setOpen(open, { emit: false });
+      const owned = instanceRef.current;
+      if (!owned || openRef.current === undefined) return;
+      const next = openRef.current;
+      if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
     }, [open]);
 
     const renderedOpen = open ?? uncontrolledOpen;

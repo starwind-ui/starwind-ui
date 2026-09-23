@@ -1,8 +1,4 @@
-export const CHANGESET_IGNORED_PACKAGES = Object.freeze([
-  "demo",
-  "react-demo",
-  "vue-demo",
-]);
+export const CHANGESET_IGNORED_PACKAGES = Object.freeze(["demo", "react-demo", "vue-demo"]);
 
 export const CHANGESET_PRIVATE_PACKAGE_POLICY = Object.freeze({
   version: false,
@@ -29,8 +25,15 @@ export const VUE_RELEASE_POLICY = Object.freeze({
   tag: "beta",
 });
 
+export const SVELTE_RELEASE_POLICY = Object.freeze({
+  directory: "packages/svelte",
+  name: "@starwind-ui/svelte",
+  tag: "beta",
+});
+
 export const ROUTINE_RELEASE_PACKAGE_SET = Object.freeze([
   ...RUNTIME_RELEASE_PACKAGE_SET.slice(0, 3),
   VUE_RELEASE_POLICY,
+  SVELTE_RELEASE_POLICY,
   RUNTIME_RELEASE_PACKAGE_SET[3],
 ]);

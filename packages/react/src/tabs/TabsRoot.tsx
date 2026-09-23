@@ -14,136 +14,119 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 import { TabsContext } from "./TabsContext";
-
 export type TabsRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "onChange"
 > & {
+  value?: TabsValue;
   defaultValue?: TabsValue;
-  onValueChange?: (value: TabsValue, details: TabsValueChangeDetails) => void;
   orientation?: TabsOrientation;
   syncKey?: string;
-  value?: TabsValue;
+  onValueChange?: (value: TabsValue, details: TabsValueChangeDetails) => void;
 };
-
 const TabsRoot = React.forwardRef<HTMLDivElement, TabsRootProps>(function TabsRoot(
-  { defaultValue, onValueChange, orientation = "horizontal", syncKey, value, children, ...props },
-  forwardedRef,
+  { value, defaultValue, orientation = "horizontal", syncKey, onValueChange, children, ...rest },
+  ref,
 ) {
+  const inputs = React.useRef({ value, orientation, onValueChange, defaultValue, syncKey });
+  inputs.current = { value, orientation, onValueChange, defaultValue, syncKey };
+  const initialDefault = React.useRef(inputs.current.defaultValue).current;
+  const initialSyncKey = React.useRef(inputs.current.syncKey).current;
+  const [renderedValue, setRenderedValue] = React.useState<TabsValue>(
+    normalizeModel(inputs.current.value !== undefined ? inputs.current.value : initialDefault),
+  );
+  const connection = React.useRef<{
+    instance?: ReturnType<typeof createTabs>;
+    unsubscribe?: () => void;
+  }>({}).current;
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createTabs> | undefined>(undefined);
-  const defaultValueRef = React.useRef(defaultValue);
-  const onValueChangeRef = React.useRef(onValueChange);
-  const orientationRef = React.useRef(orientation);
-  const syncKeyRef = React.useRef(syncKey);
-  const valueRef = React.useRef(value);
-  const [uncontrolledValue, setUncontrolledValue] = React.useState<TabsValue>(
-    () => defaultValueRef.current ?? null,
-  );
-
-  useIsomorphicLayoutEffect(() => {
-    onValueChangeRef.current = onValueChange;
-  }, [onValueChange]);
-
-  useIsomorphicLayoutEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-
-  useIsomorphicLayoutEffect(() => {
-    orientationRef.current = orientation;
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.refresh();
-  }, [orientation]);
-
   const composedRef = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      rootRef.current = node;
-      return setRef(forwardedRef, node);
+    (element: HTMLDivElement | null) => {
+      rootRef.current = element;
+      return setRef(ref, element);
     },
-    [forwardedRef],
+    [ref],
   );
-
-  useIsomorphicLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const instance = createTabs(root, {
-      defaultValue: defaultValueRef.current,
-      onValueChange: (_nextValue, details) => {
-        onValueChangeRef.current?.(details.value, details);
+  function normalizeModel(next: TabsValue | undefined): TabsValue {
+    return next ?? null;
+  }
+  function publish(owned: ReturnType<typeof createTabs>) {
+    if (connection.instance !== owned) return;
+    const next = owned.getValue();
+    if (inputs.current.value === undefined) setRenderedValue(next);
+  }
+  function disconnect() {
+    const owned = connection.instance;
+    if (!owned) return;
+    connection.unsubscribe?.();
+    connection.unsubscribe = undefined;
+    connection.instance = undefined;
+    owned.destroy();
+  }
+  function connect(root: HTMLDivElement) {
+    disconnect();
+    const desired = inputs.current.value !== undefined ? inputs.current.value : initialDefault;
+    const owned = createTabs(root, {
+      defaultValue: desired,
+      ...(inputs.current.value !== undefined ? { value: desired } : {}),
+      orientation: inputs.current.orientation,
+      syncKey: initialSyncKey,
+      onValueChange: (next, detail) => {
+        inputs.current.onValueChange?.(next, detail);
       },
-      orientation: orientationRef.current,
-      syncKey: syncKeyRef.current,
-      ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
-    instanceRef.current = instance;
-    if (valueRef.current === undefined) {
-      setUncontrolledValue(instance.getValue());
-    }
-
-    const unsubscribe = instance.subscribe("valueChange", (details) => {
-      if (details.isCanceled) return;
-
-      if (valueRef.current === undefined) {
-        setUncontrolledValue(details.value);
-      }
+    connection.instance = owned;
+    connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+      if (connection.instance !== owned || detail.isCanceled) return;
+      if (inputs.current.value === undefined) setRenderedValue(detail.value);
     });
-
-    return () => {
-      unsubscribe();
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
-    };
+    if (inputs.current.value !== undefined && owned.getValue() !== desired)
+      owned.setValue(desired ?? null, { emit: false, sync: false });
+    publish(owned);
+  }
+  function applyParent() {
+    const owned = connection.instance,
+      next = inputs.current.value;
+    if (!owned || next === undefined || owned.getValue() === next) return;
+    owned.refresh();
+    if (owned.getValue() !== next) owned.setValue(next, { emit: false, sync: true });
+    publish(owned);
+  }
+  function refresh() {
+    const owned = connection.instance;
+    if (!owned) return;
+    owned.refresh();
+    publish(owned);
+  }
+  function serialize(next: TabsValue | undefined) {
+    return next === null ? "null" : next;
+  }
+  useIsomorphicLayoutEffect(() => {
+    if (rootRef.current) connect(rootRef.current);
+    return disconnect;
   }, []);
-
-  useIsomorphicLayoutEffect(() => {
-    if (value === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    instance.refresh();
-    if (instance.getValue() === value) return;
-
-    instance.setValue(value, { emit: false, sync: true });
-  }, [value]);
-
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.refresh();
-  }, [children]);
-
-  const renderedValue = value !== undefined ? value : uncontrolledValue;
-  const contextValue = React.useMemo(
-    () => ({ orientation, value: renderedValue }),
-    [orientation, renderedValue],
+  useIsomorphicLayoutEffect(applyParent, [value]);
+  useIsomorphicLayoutEffect(refresh, [orientation, children]);
+  const selected = normalizeModel(
+    inputs.current.value !== undefined ? inputs.current.value : renderedValue,
   );
-
+  const context = React.useMemo(() => ({ value: selected, orientation }), [selected, orientation]);
   return (
-    <TabsContext.Provider value={contextValue}>
+    <TabsContext.Provider value={context}>
       <div
-        data-sw-tabs
-        data-default-value={serializeTabsValue(defaultValueRef.current)}
-        data-orientation={orientation}
-        data-sync-key={syncKey}
-        data-value={serializeTabsValue(renderedValue)}
+        {...rest}
+        data-sw-tabs={""}
+        data-sw-part={"root"}
+        data-default-value={serialize(initialDefault)}
+        data-sync-key={initialSyncKey}
+        data-value={serialize(selected)}
+        data-orientation={inputs.current.orientation}
         ref={composedRef}
-        {...props}
       >
         {children}
       </div>
     </TabsContext.Provider>
   );
 });
-
-TabsRoot.displayName = "Tabs.Root";
-
 export default TabsRoot;
-
-function serializeTabsValue(value: TabsValue | undefined): string | undefined {
-  if (value === undefined) return undefined;
-  return value === null ? "null" : value;
-}

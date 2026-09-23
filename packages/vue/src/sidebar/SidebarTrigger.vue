@@ -13,8 +13,9 @@ const context = useSidebarContext();
 const asChild = createVueAsChild("Sidebar.Trigger", element);
 const protectedProps = computed(() => ({
   "data-sw-sidebar-trigger": "",
-  "aria-expanded": context.expanded.value,
+  "data-sw-part": "trigger",
   "data-state": context.state.value,
+  "aria-expanded": context.expanded.value,
 }));
 const AsChildRoot = defineComponent({
   inheritAttrs: false,
@@ -37,9 +38,10 @@ defineExpose({ element });
     ref="element"
     v-bind="attrs"
     type="button"
-    data-sw-sidebar-trigger
-    :aria-expanded="context.expanded.value"
+    :data-sw-sidebar-trigger="''"
+    :data-sw-part="'trigger'"
     :data-state="context.state.value"
+    :aria-expanded="context.expanded.value"
   >
     <slot />
   </button>

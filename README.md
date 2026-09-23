@@ -13,7 +13,8 @@
 **Astro-first, framework-portable UI components you can own.**
 
 Starwind UI gives you accessible, Tailwind CSS components with Starwind/shadcn-style ergonomics,
-backed by a portable Runtime that powers Astro, React, and Vue 3.5 beta adapters today.
+backed by a portable Runtime that powers Astro, React, Vue 3.5 beta, and Svelte 5 beta adapters
+today.
 
 **[Explore Components](https://starwind.dev/docs/components/)**
 
@@ -22,7 +23,7 @@ backed by a portable Runtime that powers Astro, React, and Vue 3.5 beta adapters
 - **🎯 Own Your Code** — Styled components live in your project, where you can understand and customize them.
 - **✨ Animated by Default** — Smooth, polished animations out of the box with Tailwind CSS v4.
 - **♿ Accessible** — Keyboard navigable and screen reader friendly. Built with a11y in mind.
-- **🚀 Portable Runtime** — Shared DOM behavior with generated Astro, React, and Vue 3.5 beta adapters.
+- **🚀 Portable Runtime** — Shared DOM behavior with generated Astro, React, Vue 3.5 beta, and Svelte 5 beta adapters.
 - **🛠️ CLI-Powered** — Add only what you need with a simple `npx starwind add` command.
 
 > Looking for the main package? See [starwind-ui/cli](/packages/cli/README.md).
@@ -56,6 +57,19 @@ event listeners. The Styled Image component remains Astro-only. The Vue API can 
 `0.x` series. Report beta feedback in the
 [Starwind UI issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
 
+### Svelte 5 beta
+
+Try the public beta in Vite with Svelte, SvelteKit, or Astro with Svelte:
+
+```bash
+npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
+npx starwind@latest init --framework svelte
+```
+
+The beta provides the same 36 Primitive families and 54 portable Styled components as the other
+first-party adapters. The Styled Image component remains Astro-only. Starwind Pro setup is not
+available for Svelte. The Svelte API can change during the `0.x` series.
+
 ## Runtime Architecture
 
 Starwind components use a framework adapter backed by the shared, framework-neutral Runtime.
@@ -64,7 +78,7 @@ Starwind components use a framework adapter backed by the shared, framework-neut
 flowchart TD
   App["Your application"]
   Components["Starwind components you own<br/>Tailwind CSS + framework markup"]
-  Adapter["Framework adapter<br/>Astro, React, or Vue 3.5 beta"]
+  Adapter["Framework adapter<br/>Astro, React, Vue 3.5 beta, or Svelte 5 beta"]
   Runtime["Starwind Runtime<br/>shared accessible behavior"]
   Browser["Browser APIs and the DOM"]
 

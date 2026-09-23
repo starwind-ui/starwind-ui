@@ -20,75 +20,82 @@ export type SwitchRootProps = Omit<
     disabled?: boolean;
     form?: string;
     id?: string;
-    inputRef?: React.Ref<HTMLInputElement>;
     name?: string;
     nativeButton?: boolean;
-    onCheckedChange?: (checked: boolean, details: SwitchCheckedChangeDetails) => void;
     readOnly?: boolean;
     required?: boolean;
     uncheckedValue?: string;
     value?: string;
+    onCheckedChange?: (checked: boolean, details: SwitchCheckedChangeDetails) => void;
+    inputRef?: React.Ref<HTMLInputElement>;
   };
-
 const visuallyHiddenStyle = {
-  border: 0,
-  clip: "rect(0 0 0 0)",
+  position: "absolute",
+  width: "1px",
   height: "1px",
   margin: "-1px",
   overflow: "hidden",
-  position: "absolute",
+  clip: "rect(0 0 0 0)",
   whiteSpace: "nowrap",
-  width: "1px",
+  border: 0,
 } satisfies React.CSSProperties;
 
 const SwitchRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, SwitchRootProps>(
   function SwitchRoot(
     {
-      checked,
       children,
-      defaultChecked = false,
+      checked,
+      defaultChecked,
       disabled = false,
       form,
       id,
-      inputRef,
       name,
       nativeButton = false,
-      onCheckedChange,
       readOnly = false,
       required = false,
       uncheckedValue,
       value,
+      onCheckedChange,
+      inputRef,
       ...props
     },
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLSpanElement | HTMLButtonElement>(null);
-    const inputElementRef = React.useRef<HTMLInputElement>(null);
-    const runtimeInputNameRef = React.useRef<string | undefined>(name);
-    const instanceRef = React.useRef<ReturnType<typeof createSwitch> | undefined>(undefined);
-    const checkedRef = React.useRef(checked);
-    const onCheckedChangeRef = React.useRef(onCheckedChange);
-    const resetSyncTimerRef = React.useRef<number | undefined>(undefined);
-    const defaultCheckedRef = React.useRef(defaultChecked);
-    const [uncontrolledChecked, setUncontrolledCheckedState] = React.useState(
-      defaultCheckedRef.current,
-    );
-    const uncontrolledCheckedRef = React.useRef(uncontrolledChecked);
+    const inputElement = React.useRef<HTMLInputElement>(null);
 
-    const setUncontrolledChecked = React.useCallback((nextChecked: boolean) => {
-      runtimeInputNameRef.current = inputElementRef.current?.name || undefined;
-      uncontrolledCheckedRef.current = nextChecked;
-      setUncontrolledCheckedState(nextChecked);
-    }, []);
-
+    const effectiveDisabledValue = disabled;
+    const inputs = React.useRef({ checked, onCheckedChange });
     useIsomorphicLayoutEffect(() => {
-      checkedRef.current = checked;
-    }, [checked]);
+      inputs.current = { checked, onCheckedChange };
+    });
 
-    useIsomorphicLayoutEffect(() => {
-      onCheckedChangeRef.current = onCheckedChange;
-    }, [onCheckedChange]);
+    function effectiveChecked(): boolean | undefined {
+      return inputs.current.checked;
+    }
+    function effectiveDisabled(): boolean {
+      return effectiveDisabledValue;
+    }
+    const initial = React.useRef<{ checked: boolean; reset: boolean } | undefined>(undefined);
+    if (!initial.current) {
+      const initialChecked = checked ?? defaultChecked ?? false;
+      const resetSeed = defaultChecked ?? initialChecked;
+      initial.current = { checked: initialChecked, reset: resetSeed };
+    }
+    const initialChecked = initial.current.checked;
+    const resetSeed = initial.current.reset;
+    const [renderedState, setRenderedChecked] = React.useState<boolean>(initialChecked);
 
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createSwitch>;
+      input?: HTMLInputElement;
+      accepted: boolean;
+      unsubscribe?: () => void;
+      form?: HTMLFormElement;
+      resetTimer?: number;
+      runtimeInputName?: string;
+      nameObserver?: MutationObserver;
+    }>({ accepted: initialChecked }).current;
     const composedRef = React.useCallback(
       (node: HTMLSpanElement | HTMLButtonElement | null) => {
         rootRef.current = node;
@@ -96,234 +103,208 @@ const SwitchRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, SwitchR
       },
       [forwardedRef],
     );
-
     const composedInputRef = React.useCallback(
       (node: HTMLInputElement | null) => {
-        inputElementRef.current = node;
+        inputElement.current = node;
         return setRef(inputRef, node);
       },
       [inputRef],
     );
 
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root) return;
-
-      const instance = createSwitch(root, {
-        defaultChecked: uncontrolledCheckedRef.current,
-        disabled,
-        form,
-        id,
-        name,
-        readOnly,
-        required,
-        uncheckedValue,
-        value,
-        onCheckedChange: (checked, details) => {
-          onCheckedChangeRef.current?.(checked, details);
-        },
-        ...(checkedRef.current !== undefined ? { checked: checkedRef.current } : {}),
-      });
-      instanceRef.current = instance;
-      const formElement = inputElementRef.current?.form ?? null;
-      const syncUncontrolledAfterFormReset = () => {
-        if (checkedRef.current !== undefined) return;
-
-        if (resetSyncTimerRef.current !== undefined) {
-          window.clearTimeout(resetSyncTimerRef.current);
-        }
-
-        resetSyncTimerRef.current = window.setTimeout(() => {
-          resetSyncTimerRef.current = undefined;
-          const currentInstance = instanceRef.current;
-          if (!currentInstance) return;
-
-          setUncontrolledChecked(currentInstance.getChecked());
-        }, 0);
-      };
-      const unsubscribe = instance.subscribe("checkedChange", (details) => {
-        if (details.isCanceled) return;
-
-        if (checkedRef.current === undefined) {
-          setUncontrolledChecked(details.checked);
-        }
-      });
-      formElement?.addEventListener("reset", syncUncontrolledAfterFormReset);
-
-      return () => {
-        formElement?.removeEventListener("reset", syncUncontrolledAfterFormReset);
-        if (resetSyncTimerRef.current !== undefined) {
-          window.clearTimeout(resetSyncTimerRef.current);
-          resetSyncTimerRef.current = undefined;
-        }
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
-    }, [id, nativeButton, readOnly]);
-
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root || typeof MutationObserver === "undefined") return;
-
-      const syncUncontrolledChecked = () => {
-        if (checkedRef.current !== undefined) return;
-
-        const nextChecked = root.getAttribute("aria-checked") === "true";
-        if (uncontrolledCheckedRef.current !== nextChecked) {
-          setUncontrolledChecked(nextChecked);
-        }
-      };
-      const observer = new MutationObserver(syncUncontrolledChecked);
-      observer.observe(root, { attributes: true, attributeFilter: ["aria-checked"] });
-      syncUncontrolledChecked();
-
-      return () => {
-        observer.disconnect();
-      };
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      if (checked === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getChecked() === checked) return;
-
-      instance.setChecked(checked, { emit: false });
-    }, [checked]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setDisabled(disabled);
-    }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setFormOptions({
-        form,
-        name,
-        required,
-        uncheckedValue,
-        value,
-      });
-    }, [form, name, required, uncheckedValue, value]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (name !== undefined) return;
-      const inputElement = inputElementRef.current;
-      if (!inputElement || typeof MutationObserver === "undefined") return;
-
-      const syncRuntimeInputName = () => {
-        runtimeInputNameRef.current = inputElement.name || undefined;
-      };
-      const observer = new MutationObserver(syncRuntimeInputName);
-      observer.observe(inputElement, { attributes: true, attributeFilter: ["name"] });
-      syncRuntimeInputName();
-
-      return () => {
-        observer.disconnect();
-      };
-    }, [name]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (name !== undefined) return;
-      const inputElement = inputElementRef.current;
-      const runtimeInputName = runtimeInputNameRef.current;
+    function disconnectRuntime(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      connection.accepted = owned.getChecked();
+      connection.unsubscribe?.();
+      connection.unsubscribe = undefined;
+      connection.nameObserver?.disconnect();
+      connection.nameObserver = undefined;
+      unbindFormReset();
+      connection.instance = undefined;
+      owned.destroy();
+      const unchecked = connection.input?.nextElementSibling;
       if (
-        !inputElement ||
-        runtimeInputName === undefined ||
-        inputElement.name === runtimeInputName
-      ) {
-        return;
-      }
+        unchecked instanceof HTMLInputElement &&
+        unchecked.hasAttribute("data-sw-switch-unchecked-input")
+      )
+        unchecked.remove();
+      connection.input = undefined;
+    }
+    function connectRuntime(root: HTMLElement, input: HTMLInputElement): void {
+      disconnectRuntime();
+      const desired = effectiveChecked() ?? connection.accepted;
+      const owned = createSwitch(root, {
+        defaultChecked: resetSeed,
+        ...(inputs.current.checked !== undefined ? { checked: desired } : {}),
+        disabled: effectiveDisabled(),
+        form: form,
+        id: id,
+        name: name,
+        readOnly: readOnly,
+        required: required,
+        uncheckedValue: uncheckedValue,
+        value: value,
+        onCheckedChange: (next, detail) => {
+          inputs.current.onCheckedChange?.(next, detail);
+        },
+      });
+      connection.instance = owned;
+      connection.input = input;
+      connection.nameObserver = new MutationObserver(captureNativeInputAttributes);
+      connection.nameObserver.observe(input, { attributes: true, attributeFilter: ["name"] });
+      if (owned.getChecked() !== desired) owned.setChecked(desired, { emit: false });
+      connection.unsubscribe = owned.subscribe("checkedChange", (detail) => {
+        if (connection.instance !== owned || detail.isCanceled) return;
 
-      inputElement.name = runtimeInputName;
-    });
+        renderRuntimeState(detail.checked);
+      });
+      bindFormReset();
+      renderRuntimeState();
+    }
+    function captureNativeInputAttributes(): void {
+      connection.runtimeInputName = connection.input?.name;
+    }
+    function restoreNativeInputAttributes(): void {
+      const input = connection.input;
+      if (
+        name === undefined &&
+        input &&
+        connection.runtimeInputName !== undefined &&
+        input.name !== connection.runtimeInputName
+      )
+        input.name = connection.runtimeInputName;
+    }
+    function renderRuntimeState(next = connection.instance?.getChecked()): void {
+      if (next === undefined) return;
+      connection.accepted = next;
+      captureNativeInputAttributes();
+      if (inputs.current.checked === undefined) setRenderedChecked(connection.accepted);
+    }
+    function applyParentCommand(): void {
+      const owned = connection.instance;
+      const next = effectiveChecked();
+      if (!owned || next === undefined) return;
+      if (owned.getChecked() !== next || connection.input?.checked !== next)
+        owned.setChecked(next, { emit: false });
 
-    const renderedChecked = checked ?? uncontrolledChecked;
-    const commonProps: React.HTMLAttributes<HTMLElement> &
-      Record<`data-${string}`, string | undefined> = {
-      "data-sw-switch": "",
-      "data-default-checked": defaultCheckedRef.current ? "true" : undefined,
-      "data-form": form,
-      "data-id": id,
-      "data-name": name,
-      "data-unchecked-value": uncheckedValue,
-      "data-value": value,
-      "aria-checked": renderedChecked,
-      "aria-readonly": readOnly ? "true" : undefined,
-      "aria-required": required ? "true" : undefined,
-      "data-checked": renderedChecked ? "" : undefined,
-      "data-disabled": disabled ? "" : undefined,
-      "data-filled": renderedChecked ? "" : undefined,
-      "data-readonly": readOnly ? "" : undefined,
-      "data-required": required ? "" : undefined,
-      "data-unchecked": !renderedChecked ? "" : undefined,
-      role: "switch",
-      tabIndex: disabled ? -1 : 0,
-    };
+      renderRuntimeState();
+    }
+    function clearResetTask(): void {
+      if (connection.resetTimer !== undefined) window.clearTimeout(connection.resetTimer);
+      connection.resetTimer = undefined;
+    }
+    function unbindFormReset(): void {
+      clearResetTask();
+      connection.form?.removeEventListener("reset", handleFormReset);
+      connection.form = undefined;
+    }
+    function handleFormReset(event: Event): void {
+      clearResetTask();
+      const owned = connection.instance;
+      // Runtime registers its reset task first. Read public state after it settles.
+      connection.resetTimer = window.setTimeout(() => {
+        connection.resetTimer = undefined;
+        if (
+          event.defaultPrevented ||
+          !owned ||
+          connection.instance !== owned ||
+          inputs.current.checked !== undefined
+        )
+          return;
+
+        renderRuntimeState(owned.getChecked());
+      }, 0);
+    }
+    function bindFormReset(): void {
+      const next = connection.input?.form ?? undefined;
+      if (next === connection.form) return;
+      unbindFormReset();
+      connection.form = next;
+      next?.addEventListener("reset", handleFormReset);
+    }
+    function applyLive0(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.setDisabled(effectiveDisabled());
+    }
+    function applyLive1(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.setFormOptions({
+        form: form,
+        name: name,
+        required: required,
+        uncheckedValue: uncheckedValue,
+        value: value,
+      });
+      bindFormReset();
+      captureNativeInputAttributes();
+    }
+
+    useIsomorphicLayoutEffect(() => {
+      if (rootRef.current && inputElement.current)
+        connectRuntime(rootRef.current, inputElement.current);
+      return disconnectRuntime;
+    }, [id, readOnly, nativeButton]);
+    useIsomorphicLayoutEffect(restoreNativeInputAttributes);
+    useIsomorphicLayoutEffect(applyParentCommand, [checked]);
+    useIsomorphicLayoutEffect(applyLive0, [effectiveDisabledValue]);
+    useIsomorphicLayoutEffect(applyLive1, [form, name, required, uncheckedValue, value]);
+    const renderedChecked = checked ?? renderedState;
+
     const input = (
       <input
         data-sw-switch-input
         aria-hidden="true"
-        defaultChecked={defaultCheckedRef.current}
-        defaultValue={value}
-        disabled={disabled}
-        form={form}
-        id={getSwitchInputId(id, nativeButton)}
-        name={name}
-        ref={composedInputRef}
-        required={required}
-        style={visuallyHiddenStyle}
-        tabIndex={-1}
         type="checkbox"
+        tabIndex={-1}
+        defaultChecked={initialChecked}
+        disabled={effectiveDisabledValue}
+        form={form}
+        id={id ? (nativeButton ? `${id}-input` : id) : undefined}
+        name={name}
+        required={required}
+        defaultValue={value}
+        style={visuallyHiddenStyle}
+        ref={composedInputRef}
       />
     );
-
-    if (nativeButton) {
-      return (
-        <>
-          <button
-            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-            {...commonProps}
-            disabled={disabled}
-            id={id}
-            ref={composedRef as React.Ref<HTMLButtonElement>}
-            type="button"
-          >
-            {children}
-          </button>
-          {input}
-        </>
-      );
-    }
-
+    const Root = nativeButton ? "button" : "span";
     return (
       <>
-        <span
-          {...(props as React.HTMLAttributes<HTMLSpanElement>)}
-          {...commonProps}
-          ref={composedRef as React.Ref<HTMLSpanElement>}
+        <Root
+          {...props}
+          data-sw-switch={""}
+          data-sw-part={"root"}
+          role={"switch"}
+          aria-checked={renderedChecked}
+          aria-disabled={effectiveDisabledValue ? "true" : undefined}
+          aria-readonly={readOnly}
+          aria-required={required}
+          data-default-checked={resetSeed ? "true" : undefined}
+          data-checked={renderedChecked ? "" : undefined}
+          data-unchecked={renderedChecked ? undefined : ""}
+          data-disabled={effectiveDisabledValue ? "" : undefined}
+          data-readonly={readOnly ? "" : undefined}
+          data-required={required ? "" : undefined}
+          data-filled={renderedChecked ? "" : undefined}
+          data-form={form}
+          data-id={id}
+          data-name={name}
+          data-unchecked-value={uncheckedValue}
+          data-value={value}
+          id={nativeButton ? id : undefined}
+          tabIndex={effectiveDisabledValue ? -1 : 0}
+          disabled={nativeButton ? effectiveDisabledValue : undefined}
+          type={nativeButton ? "button" : undefined}
+          ref={composedRef}
         >
           {children}
-        </span>
+        </Root>
         {input}
       </>
     );
   },
 );
-
 SwitchRoot.displayName = "Switch.Root";
-
 export default SwitchRoot;
-
-function getSwitchInputId(id: string | undefined, nativeButton: boolean): string | undefined {
-  if (!id) return undefined;
-  return nativeButton ? `${id}-input` : id;
-}

@@ -1,6 +1,3 @@
-import { createApp, h, nextTick, reactive } from "vue";
-import { afterEach, describe, expect, it } from "vitest";
-
 import {
   PreviewCardArrow,
   PreviewCardBackdrop,
@@ -11,6 +8,9 @@ import {
   PreviewCardTrigger,
   PreviewCardViewport,
 } from "@starwind-ui/vue/preview-card";
+import { afterEach, describe, expect, it } from "vitest";
+import { createApp, h, nextTick, reactive } from "vue";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -257,6 +257,46 @@ describe("Vue Preview Card browser contract", () => {
     expect(events).toEqual(["detail:true", "detail:true", "update:true"]);
   });
 
+  it("preserves child anchor navigation and focus until explicitly disabled", async () => {
+    const state = reactive({ disabled: false });
+    const host = mountRender(() =>
+      h(
+        PreviewCardRoot,
+        { openDelay: 0 },
+        {
+          default: () => [
+            h(
+              PreviewCardTrigger,
+              { asChild: true, disabled: state.disabled },
+              {
+                default: () => h("a", { href: "#child-profile" }, "Profile"),
+              },
+            ),
+            h(PreviewCardPopup, {}, { default: () => "Profile details" }),
+          ],
+        },
+      ),
+    );
+    await nextTick();
+    const link = host.querySelector<HTMLAnchorElement>("[data-sw-preview-card-trigger]")!;
+    expect(link.getAttribute("href")).toBe("#child-profile");
+    link.focus();
+    expect(document.activeElement).toBe(link);
+    await nextTick();
+    expect(popup().hidden).toBe(false);
+    state.disabled = true;
+    await nextTick();
+    expect(link.hasAttribute("href")).toBe(false);
+    expect(link.tabIndex).toBe(-1);
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    link.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(true);
+    state.disabled = false;
+    await nextTick();
+    expect(link.getAttribute("href")).toBe("#child-profile");
+    expect(link.tabIndex).toBe(0);
+  });
+
   it("projects disabled anchor behavior and isolates multiple instances", async () => {
     const disabled = mount(tree({}, {}, { disabled: true, href: "#profile" }));
     const link = disabled.querySelector<HTMLAnchorElement>("[data-sw-preview-card-trigger]")!;
@@ -366,3 +406,19 @@ async function wait(milliseconds: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
   await nextTick();
 }
+
+testAcceptedModelPublication({
+  name: "preview-card",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => tree({ openDelay: 0, closeDelay: 0 }),
+  root: "[data-sw-preview-card]",
+  act: (root) => {
+    const trigger = root.querySelector<HTMLElement>("[data-sw-preview-card-trigger]")!;
+    pointer(trigger, "pointerenter");
+  },
+  read: (root) => root.getAttribute("data-state") === "open",
+});

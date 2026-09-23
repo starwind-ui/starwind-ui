@@ -6,17 +6,20 @@
 "use client";
 
 import * as React from "react";
-
 export type PreviewCardBackdropProps = React.HTMLAttributes<HTMLDivElement>;
-
 const PreviewCardBackdrop = React.forwardRef<HTMLDivElement, PreviewCardBackdropProps>(
-  function PreviewCardBackdrop(props, forwardedRef) {
+  function PreviewCardBackdrop(props, ref) {
     return (
-      <div data-sw-preview-card-backdrop data-state="closed" hidden ref={forwardedRef} {...props} />
+      <div
+        {...props}
+        data-sw-preview-card-backdrop=""
+        data-sw-part="backdrop"
+        data-state="closed"
+        hidden
+        ref={ref}
+      />
     );
   },
 );
-
 PreviewCardBackdrop.displayName = "PreviewCard.Backdrop";
-
 export default PreviewCardBackdrop;

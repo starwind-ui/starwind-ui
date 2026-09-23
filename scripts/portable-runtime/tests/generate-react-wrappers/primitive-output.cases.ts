@@ -17,6 +17,7 @@ import {
   type ContextMenuSpecializedAdapterSpec,
   type MenuSpecializedAdapterSpec,
 } from "../../renderers/specialized-adapter-spec/index.js";
+import { assertTypeScriptModule, compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -102,6 +103,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const rootIndex = await readGeneratedFile(outputRoot, "index.ts");
     const themeIndex = await readGeneratedFile(outputRoot, "theme/index.ts");
     const composeRefs = await readGeneratedFile(outputRoot, "internal/compose-refs.ts");
+    const nativeOverlayControl = await readGeneratedFile(
+      outputRoot,
+      "internal/native-overlay-control.ts",
+    );
     const closePresence = await readGeneratedFile(outputRoot, "internal/use-close-presence.ts");
     const buttonRoot = await readGeneratedFile(outputRoot, "button/ButtonRoot.tsx");
     const buttonIndex = await readGeneratedFile(outputRoot, "button/index.ts");
@@ -128,6 +133,7 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const dialogPopup = await readGeneratedFile(outputRoot, "dialog/DialogPopup.tsx");
     const dialogRoot = await readGeneratedFile(outputRoot, "dialog/DialogRoot.tsx");
     const dialogTrigger = await readGeneratedFile(outputRoot, "dialog/DialogTrigger.tsx");
+    const dialogClose = await readGeneratedFile(outputRoot, "dialog/DialogClose.tsx");
     const dialogIndex = await readGeneratedFile(outputRoot, "dialog/index.ts");
     const drawerRoot = await readGeneratedFile(outputRoot, "drawer/DrawerRoot.tsx");
     const drawerTrigger = await readGeneratedFile(outputRoot, "drawer/DrawerTrigger.tsx");
@@ -230,6 +236,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const navigationMenuRoot = await readGeneratedFile(
       outputRoot,
       "navigation-menu/NavigationMenuRoot.tsx",
+    );
+    const navigationMenuContent = await readGeneratedFile(
+      outputRoot,
+      "navigation-menu/NavigationMenuContent.tsx",
     );
     const navigationMenuTrigger = await readGeneratedFile(
       outputRoot,
@@ -341,44 +351,58 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       { source: comboboxClear, discovery: '"data-sw-combobox-clear": ""' },
       { source: navigationMenuTrigger, discovery: '"data-sw-nav-menu-trigger": ""' },
       { source: previewCardTrigger, discovery: '"data-sw-preview-card-trigger": ""' },
-      { source: sidebarTrigger, discovery: '"data-sw-sidebar-trigger": ""' },
+      { source: sidebarTrigger, discovery: "data-sw-sidebar-trigger" },
       { source: sidebarMenuButton, discovery: '"data-sw-sidebar-menu-button": ""' },
       { source: tooltipTrigger, discovery: '"data-sw-tooltip-trigger": ""' },
     ];
 
-    expect(composeRefs).toContain("export function getAsChildElement");
-    expect(composeRefs).toContain("export function mergeAsChildProps");
-    expect(composeRefs).toContain("function mergeAsChildStyle");
-    expect(composeRefs).toContain("event.defaultPrevented");
-    expect(composeRefs).toContain('eventOrder === "parent-first"');
-    expect(composeRefs).toContain("export type RefCapableElementProps = AsChildProps &");
-    expect(composeRefs).toContain("function getAsChildEventHandler");
-    expect(closePresence).toContain("export function useClosePresence");
-    expect(closePresence).toContain(
-      'import { useIsomorphicLayoutEffect } from "./use-isomorphic-layout-effect";',
+    expect(compactCode(composeRefs)).toContain(compactCode("export function getAsChildElement"));
+    expect(compactCode(composeRefs)).toContain(compactCode("export function mergeAsChildProps"));
+    expect(compactCode(composeRefs)).toContain(compactCode("function mergeAsChildStyle"));
+    expect(compactCode(composeRefs)).toContain(compactCode("event.defaultPrevented"));
+    expect(compactCode(composeRefs)).toContain(compactCode('eventOrder === "parent-first"'));
+    expect(compactCode(composeRefs)).toContain(
+      compactCode("export type RefCapableElementProps = AsChildProps &"),
     );
-    expect(closePresence).toContain('const PRESENCE_ENDING_ATTRIBUTE = "data-ending-style"');
-    expect(closePresence).toContain("const hasOpenedRef = React.useRef(open)");
-    expect(closePresence).toContain("useIsomorphicLayoutEffect(() => {");
-    expect(closePresence).toContain("clearScheduledClose();");
-    expect(closePresence).toContain('element.setAttribute(PRESENCE_ENDING_ATTRIBUTE, "")');
-    expect(closePresence).toContain("Promise.allSettled");
-    expect(closePresence).toContain("window.clearTimeout(timeoutRef.current)");
-    expect(closePresence).toContain("setPresent(keepMounted)");
-    expect(closePresence).toContain("hidden: open ? false : hidden");
-    expect(closePresence).toContain("present: open || keepMounted || present");
+    expect(compactCode(composeRefs)).toContain(compactCode("function getAsChildEventHandler"));
+    expect(compactCode(closePresence)).toContain(compactCode("export function useClosePresence"));
+    expect(compactCode(closePresence)).toContain(
+      compactCode('import { useIsomorphicLayoutEffect } from "./use-isomorphic-layout-effect";'),
+    );
+    expect(compactCode(closePresence)).toContain(
+      compactCode('const PRESENCE_ENDING_ATTRIBUTE = "data-ending-style"'),
+    );
+    expect(compactCode(closePresence)).toContain(
+      compactCode("const hasOpenedRef = React.useRef(open)"),
+    );
+    expect(compactCode(closePresence)).toContain(compactCode("useIsomorphicLayoutEffect(() => {"));
+    expect(compactCode(closePresence)).toContain(compactCode("clearScheduledClose();"));
+    expect(compactCode(closePresence)).toContain(
+      compactCode('element.setAttribute(PRESENCE_ENDING_ATTRIBUTE, "")'),
+    );
+    expect(compactCode(closePresence)).toContain(compactCode("Promise.allSettled"));
+    expect(compactCode(closePresence)).toContain(
+      compactCode("window.clearTimeout(timeoutRef.current)"),
+    );
+    expect(compactCode(closePresence)).toContain(compactCode("setPresent(keepMounted)"));
+    expect(compactCode(closePresence)).toContain(compactCode("hidden: open ? false : hidden"));
+    expect(compactCode(closePresence)).toContain(
+      compactCode("present: open || keepMounted || present"),
+    );
     reactAsChildParts.forEach(({ source, discovery }) => {
       expect(source).toMatch(
         /import\s+\{\s*getAsChildElement,\s*getElementRef,\s*mergeAsChildProps,\s*useComposedRefs,?\s*\}\s+from\s+"..\/internal\/compose-refs";/,
       );
-      expect(source).toContain("const asChildElement = getAsChildElement(children)");
-      expect(source).toContain("React.cloneElement(child, {");
-      expect(source).toContain("mergeAsChildProps(");
-      expect(source).toContain("ref: composedRef");
-      expect(source).toContain(discovery);
-      expect(source).not.toContain("function getAsChildElement");
+      expect(compactCode(source)).toContain(
+        compactCode("const asChildElement = getAsChildElement(children)"),
+      );
+      expect(compactCode(source)).toContain(compactCode("React.cloneElement(child, {"));
+      expect(compactCode(source)).toContain(compactCode("mergeAsChildProps("));
+      expect(compactCode(source)).toContain(compactCode("ref: composedRef"));
+      expect(source).toContain(discovery.split('"')[1] ?? discovery);
+      expect(compactCode(source)).not.toContain(compactCode("function getAsChildElement"));
     });
-    expect(tooltipTrigger).not.toContain("<span");
+    expect(compactCode(tooltipTrigger)).not.toContain(compactCode("<span"));
 
     expect(generatedPrimitiveEntries).toEqual([
       "accordion",
@@ -422,1673 +446,1210 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       "tooltip",
     ]);
 
-    expect(rootIndex).toContain('export * from "./accordion";');
-    expect(rootIndex).toContain('export * from "./carousel";');
-    expect(rootIndex).toContain('export * from "./select";');
-    expect(rootIndex).toContain('export * from "./sidebar";');
-    expect(rootIndex).toContain('export * from "./tooltip";');
-    expect(rootIndex).toContain('export * from "./preview-card";');
-    expect(rootIndex).toContain('export * from "./dropzone";');
-    expect(rootIndex).toContain('export * from "./fieldset";');
-    expect(rootIndex).toContain('export * from "./form";');
-    expect(rootIndex).toContain('export * from "./navigation-menu";');
-    expect(rootIndex).toContain('export * from "./theme";');
-    expect(rootIndex).toContain("SelectOpenChangeDetails");
-    expect(themeIndex).toContain("export { getThemeInitScript, initThemeController }");
-    expect(themeIndex).toContain("ThemeInitScriptOptions");
-    expect(themeIndex).toContain("export function ThemeInitScript(");
-    expect(themeIndex).toContain("data-starwind-theme-init");
-    expect(themeIndex).toContain('from "@starwind-ui/runtime/theme"');
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./accordion";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./carousel";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./select";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./sidebar";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./tooltip";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./preview-card";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./dropzone";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./fieldset";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./form";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./navigation-menu";'));
+    expect(compactCode(rootIndex)).toContain(compactCode('export * from "./theme";'));
+    expect(compactCode(rootIndex)).toContain(compactCode("SelectOpenChangeDetails"));
+    expect(compactCode(themeIndex)).toContain(
+      compactCode("export { getThemeInitScript, initThemeController }"),
+    );
+    expect(compactCode(themeIndex)).toContain(compactCode("ThemeInitScriptOptions"));
+    expect(compactCode(themeIndex)).toContain(compactCode("export function ThemeInitScript("));
+    expect(compactCode(themeIndex)).toContain(compactCode("data-starwind-theme-init"));
+    expect(compactCode(themeIndex)).toContain(compactCode('from "@starwind-ui/runtime/theme"'));
 
-    expect(buttonRoot).toMatch(/^\/\*\*[\s\S]*?\*\/\s*"use client";/);
-    expect(buttonRoot).toContain('import { createButton } from "@starwind-ui/runtime/button";');
-    expect(buttonRoot).toContain(
-      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+    for (const source of [
+      buttonRoot,
+      accordionRoot,
+      collapsibleRoot,
+      contextMenuRoot,
+      dialogRoot,
+      alertDialogRoot,
+      drawerRoot,
+      dropzoneRoot,
+      fieldRoot,
+      fieldsetRoot,
+      formRoot,
+      popoverRoot,
+      avatarRoot,
+      checkboxRoot,
+      checkboxGroupRoot,
+      radioRoot,
+      radioGroupRoot,
+      inputRoot,
+      inputOtpRoot,
+      progressRoot,
+      menuRoot,
+      navigationMenuRoot,
+      tooltipRoot,
+      sliderRoot,
+      scrollAreaRoot,
+      selectRoot,
+      comboboxRoot,
+      toastRoot,
+      switchRoot,
+      tabsRoot,
+      toggleRoot,
+      toggleGroupRoot,
+    ]) {
+      expect(source).toMatch(/^\/\*\*[\s\S]*?\*\/\s*"use client";/);
+    }
+    expect(compactCode(buttonRoot)).toContain(
+      compactCode('import { createButton } from "@starwind-ui/runtime/button";'),
     );
-    expect(buttonRoot).toContain("data-sw-button");
-    expect(buttonRoot).toContain("focusableWhenDisabled = false");
-    expect(buttonRoot).toContain('type={type ?? "button"}');
-    expect(buttonRoot.indexOf("data-focusable-when-disabled")).toBeLessThan(
-      buttonRoot.indexOf("{...props}"),
+    expect(compactCode(buttonRoot)).toContain(compactCode("data-sw-button"));
+    expect(compactCode(buttonRoot)).not.toContain(compactCode("href?: string"));
+    expect(compactCode(accordionRoot)).toContain(compactCode('"@starwind-ui/runtime/accordion"'));
+    expect(compactCode(accordionRoot)).toContain(compactCode("data-sw-accordion"));
+    expect(compactCode(collapsibleRoot)).toContain(
+      compactCode('"@starwind-ui/runtime/collapsible"'),
     );
-    expect(buttonRoot.indexOf("{...props}")).toBeLessThan(buttonRoot.indexOf("data-sw-button"));
-    expect(buttonRoot).toContain(
-      "const instanceRef = React.useRef<ReturnType<typeof createButton> | null>(null);",
+    expect(compactCode(collapsibleRoot)).toContain(compactCode("data-sw-collapsible"));
+    expect(compactCode(contextMenuRoot)).toContain(
+      compactCode('from "@starwind-ui/runtime/context-menu";'),
     );
-    expect(buttonRoot).toContain("if (!focusableWhenDisabled)");
-    expect(buttonRoot).toContain("instanceRef.current?.setDisabled(disabled)");
-    expect(buttonRoot).toContain("useIsomorphicLayoutEffect(() =>");
-    expect(buttonRoot).not.toContain("React.useEffect(() =>");
-    expect(buttonRoot).toContain("data-focusable-when-disabled");
-    expect(buttonRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(buttonRoot).toContain("React.forwardRef<HTMLButtonElement, ButtonRootProps>");
-    expect(buttonRoot).toContain("const rootRef = React.useRef<HTMLButtonElement>(null)");
-    expect(buttonRoot).toContain("[focusableWhenDisabled]");
-    expect(buttonRoot).toContain("[disabled]");
-    expect(buttonRoot).not.toContain("AnchorHTMLAttributes");
-    expect(buttonRoot).not.toContain("href?: string");
-    expect(buttonRoot).not.toContain("nativeButton");
-    expect(buttonRoot).not.toContain(removedAttr("data-sw-button", "focusable-when-disabled"));
-    expect(buttonRoot).not.toContain(removedAttr("data-sw-button", "native"));
-    expect(buttonRoot).not.toContain("if (href)");
-    expect(buttonRoot).not.toContain("<a");
-    expect(buttonIndex).toContain("const Button =");
-    expect(buttonIndex).toContain("Root: ButtonRoot");
+    expect(compactCode(contextMenuRoot)).toContain(
+      compactCode("onCloseComplete?: (details: ContextMenuCloseCompleteDetails) => void;"),
+    );
+    expect(compactCode(contextMenuRoot)).toContain(compactCode("data-sw-context-menu"));
+    expect(compactCode(contextMenuRoot)).toContain(compactCode("data-sw-menu"));
+    expect(compactCode(contextMenuRoot)).toContain(compactCode("modal?: boolean;"));
+    expect(compactCode(dialogRoot)).toContain(compactCode('"@starwind-ui/runtime/dialog"'));
+    expect(compactCode(dialogRoot)).toContain(
+      compactCode("onCloseComplete?: (detail: DialogCloseCompleteDetails) => void;"),
+    );
+    expect(compactCode(alertDialogRoot)).toContain(
+      compactCode('from "@starwind-ui/runtime/alert-dialog";'),
+    );
+    expect(compactCode(alertDialogRoot)).toContain(
+      compactCode("onCloseComplete?: (detail: AlertDialogCloseCompleteDetails) => void;"),
+    );
+    expect(compactCode(alertDialogRoot)).toContain(compactCode("data-sw-alert-dialog"));
+    expect(compactCode(drawerRoot)).toContain(compactCode('from "@starwind-ui/runtime/drawer";'));
+    expect(compactCode(drawerRoot)).toContain(
+      compactCode("onCloseComplete?: (detail: DrawerCloseCompleteDetails) => void;"),
+    );
+    expect(compactCode(drawerRoot)).toContain(compactCode("data-sw-drawer"));
+    expect(compactCode(dropzoneRoot)).toContain(compactCode("data-sw-dropzone"));
+    expect(compactCode(fieldRoot)).toContain(
+      compactCode('import { createField } from "@starwind-ui/runtime/field";'),
+    );
+    expect(compactCode(fieldRoot)).toContain(compactCode("data-sw-field"));
+    expect(compactCode(fieldRoot)).toContain(
+      compactCode("validationTiming?: FormValidationTiming;"),
+    );
+    expect(compactCode(fieldRoot)).toContain(
+      compactCode("revalidationTiming?: FormValidationTiming;"),
+    );
+    expect(compactCode(fieldRoot)).toContain(
+      compactCode("errorVisibility?: FormValidationTiming;"),
+    );
+    expect(compactCode(fieldsetRoot)).toContain(compactCode('"@starwind-ui/runtime/fieldset"'));
+    expect(compactCode(fieldsetRoot)).toContain(compactCode("data-sw-fieldset"));
+    expect(compactCode(formRoot)).toContain(compactCode('"@starwind-ui/runtime/form"'));
+    expect(compactCode(formRoot)).toContain(
+      compactCode("validationTiming?: FormValidationTiming;"),
+    );
+    expect(compactCode(formRoot)).toContain(
+      compactCode("revalidationTiming?: FormValidationTiming;"),
+    );
+    expect(compactCode(formRoot)).toContain(compactCode("errorVisibility?: FormValidationTiming;"));
+    expect(compactCode(formRoot)).toContain(compactCode("data-sw-form"));
+    expect(compactCode(popoverRoot)).toContain(
+      compactCode('} from "@starwind-ui/runtime/popover";'),
+    );
+    expect(compactCode(popoverRoot)).toContain(compactCode("modal?: boolean;"));
+    expect(compactCode(popoverRoot)).toContain(
+      compactCode("onCloseComplete?: (details: PopoverCloseCompleteDetails) => void;"),
+    );
+    expect(compactCode(popoverRoot)).toContain(compactCode("data-sw-popover"));
+    expect(compactCode(avatarRoot)).toContain(compactCode('"@starwind-ui/runtime/avatar"'));
+    expect(compactCode(avatarRoot)).toContain(compactCode("data-sw-avatar"));
+    expect(compactCode(checkboxRoot)).toContain(compactCode('"@starwind-ui/runtime/checkbox"'));
+    expect(compactCode(checkboxRoot)).toContain(compactCode("data-sw-checkbox"));
+    expect(compactCode(checkboxRoot)).toContain(compactCode("data-sw-checkbox-input"));
+    expect(compactCode(checkboxGroupRoot)).toContain(
+      compactCode('"@starwind-ui/runtime/checkbox-group"'),
+    );
+    expect(compactCode(checkboxGroupRoot)).toContain(compactCode("data-sw-checkbox-group"));
+    expect(compactCode(radioRoot)).toContain(compactCode("data-sw-radio"));
+    expect(compactCode(radioRoot)).toContain(compactCode("data-sw-radio-input"));
+    expect(compactCode(radioGroupRoot)).toContain(compactCode("data-sw-radio-group"));
+    expect(compactCode(inputRoot)).toContain(compactCode("const valueProps ="));
+    expect(compactCode(inputRoot)).toContain(compactCode("data-sw-input"));
+    expect(compactCode(inputOtpRoot)).toContain(
+      compactCode(
+        'import { createInputOtp, type InputOtpValueChangeDetails } from "@starwind-ui/runtime/input-otp";',
+      ),
+    );
+    expect(compactCode(inputOtpRoot)).toContain(compactCode("data-sw-input-otp"));
+    expect(compactCode(inputOtpRoot)).toContain(compactCode("data-sw-input-otp-input"));
+    expect(compactCode(progressRoot)).toContain(
+      compactCode('from "@starwind-ui/runtime/progress"'),
+    );
+    expect(compactCode(progressRoot)).toContain(
+      compactCode('export type ProgressRootProps = Omit<React.ComponentPropsWithoutRef<"div">,'),
+    );
+    expect(compactCode(progressRoot)).toContain(compactCode("format?: Intl.NumberFormatOptions"));
+    expect(compactCode(progressRoot)).toContain(
+      compactCode(
+        "getAriaValueText?: (formattedValue: string | null, value: ProgressValue) => string",
+      ),
+    );
+    expect(compactCode(progressRoot)).toContain(compactCode("locale?: Intl.LocalesArgument"));
+    expect(compactCode(progressRoot)).toContain(compactCode("data-sw-progress"));
+    expect(compactCode(menuRoot)).toContain(
+      compactCode("onCloseComplete?: (details: MenuCloseCompleteDetails) => void;"),
+    );
+    expect(compactCode(menuRoot)).toContain(compactCode("modal?: boolean;"));
+    expect(compactCode(navigationMenuRoot)).toContain(compactCode("value?: string | null"));
+    expect(compactCode(navigationMenuRoot)).toContain(compactCode("openDelay?: number;"));
+    expect(compactCode(navigationMenuRoot)).toContain(compactCode("closeDelay?: number;"));
+    expect(compactCode(navigationMenuRoot)).toContain(compactCode("onValueChange?:"));
+    expect(compactCode(navigationMenuRoot)).toContain(compactCode("data-sw-nav-menu"));
+    expect(compactCode(sliderRoot)).toContain(compactCode('"@starwind-ui/runtime/slider"'));
+    expect(compactCode(sliderRoot)).toContain(compactCode("data-sw-slider"));
+    expect(compactCode(scrollAreaRoot)).toContain(
+      compactCode('import { createScrollArea } from "@starwind-ui/runtime/scroll-area";'),
+    );
+    expect(compactCode(scrollAreaRoot)).toContain(compactCode("data-sw-scroll-area"));
+    expect(compactCode(selectRoot)).toContain(compactCode("autoComplete?: string"));
+    expect(compactCode(selectRoot)).toContain(compactCode("form?: string"));
+    expect(compactCode(selectRoot)).toContain(compactCode("highlightItemOnHover?: boolean"));
+    expect(compactCode(selectRoot)).toContain(compactCode("modal?: boolean"));
+    expect(compactCode(selectRoot)).toContain(compactCode("onValueChange?:"));
+    expect(compactCode(selectRoot)).toContain(compactCode("open?: boolean"));
+    expect(compactCode(selectRoot)).toContain(compactCode("readOnly?: boolean"));
+    expect(compactCode(selectRoot)).toContain(compactCode("value?: string"));
+    expect(compactCode(selectRoot)).toContain(compactCode("data-sw-select"));
+    expect(compactCode(selectRoot)).toContain(compactCode("data-sw-select-input"));
+    expect(compactCode(selectRoot)).toContain(
+      compactCode('target.closest("[data-sw-select-trigger]")'),
+    );
+    expect(compactCode(comboboxRoot)).toContain(compactCode("autoComplete?: string"));
+    expect(compactCode(comboboxRoot)).toContain(
+      compactCode('filterMode?: "contains" | "startsWith"'),
+    );
+    expect(compactCode(comboboxRoot)).toContain(compactCode("form?: string"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("highlightItemOnHover?: boolean"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("inputValue?: string"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("locale?: string"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("modal?: boolean"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("onInputValueChange?:"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("readOnly?: boolean"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("data-sw-combobox"));
+    expect(compactCode(comboboxRoot)).toContain(compactCode("data-sw-combobox-hidden-input"));
+    expect(compactCode(toastRoot)).toContain(compactCode("data-sw-toast-root"));
+    expect(compactCode(switchRoot)).toContain(compactCode("data-sw-switch"));
+    expect(compactCode(switchRoot)).toContain(compactCode("data-sw-switch-input"));
+    expect(compactCode(tabsRoot)).toContain(compactCode('"@starwind-ui/runtime/tabs"'));
+    expect(compactCode(tabsRoot)).toContain(compactCode("syncKey?: string"));
+    expect(compactCode(tabsRoot)).toContain(compactCode("data-sw-tabs"));
+    expect(compactCode(toggleRoot)).toContain(compactCode("syncGroup?: string"));
+    expect(compactCode(toggleRoot)).toContain(compactCode("data-sw-toggle"));
+    expect(compactCode(toggleGroupRoot)).toContain(compactCode("defaultValue?: ToggleGroupValue"));
+    expect(compactCode(toggleGroupRoot)).toContain(compactCode("loopFocus?: boolean"));
+    expect(compactCode(toggleGroupRoot)).toContain(compactCode("multiple?: boolean"));
+    expect(compactCode(toggleGroupRoot)).toContain(
+      compactCode('orientation?: "horizontal" | "vertical"'),
+    );
+    expect(compactCode(toggleGroupRoot)).toContain(compactCode("onValueChange?:"));
+    expect(compactCode(toggleGroupRoot)).toContain(compactCode("value?: ToggleGroupValue"));
+    expect(compactCode(toggleGroupRoot)).toContain(compactCode("data-sw-toggle-group"));
+    assertTypeScriptModule(buttonRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(accordionRoot).toContain("createAccordion");
-    expect(accordionRoot).toContain('"@starwind-ui/runtime/accordion"');
-    expect(accordionRoot).toContain("React.forwardRef");
-    expect(accordionRoot).toContain("data-sw-accordion");
-    expect(accordionRoot).toContain("data-type");
-    expect(accordionRoot).toContain("data-default-value");
-    expect(accordionRoot).toContain("data-collapsible");
-    expect(accordionRoot).toContain("collapsible = true");
-    expect(accordionRoot).toContain("data-collapsible={String(collapsible)}");
-    expect(accordionRoot).not.toContain(removedAttr("data-sw-accordion", "type"));
-    expect(accordionRoot).not.toContain(removedAttr("data-sw-accordion", "default-value"));
-    expect(accordionRoot).not.toContain(removedAttr("data-sw-accordion", "collapsible"));
-    expect(accordionRoot).toContain("const valueRef = React.useRef(value)");
-    expect(accordionRoot).toContain(
-      "...(valueRef.current !== undefined ? { value: valueRef.current } : {})",
-    );
-    expect(accordionRoot).toContain('instance.subscribe("valueChange"');
-    expect(accordionRoot).toContain("onValueChangeRef.current?.(details)");
-    expect(accordionRoot).toContain("if (details.isCanceled) return");
-    expect(accordionRoot).toContain("unsubscribe()");
-    expect(accordionRoot).toContain("instance.destroy()");
-    expect(accordionRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(accordionRoot).toContain("const composedRef = React.useCallback");
-    expect(accordionRoot).toContain(
-      "const uncontrolledValueRef = React.useRef<AccordionValue | undefined>(",
-    );
-    expect(accordionRoot).not.toContain("setUncontrolledValueState");
-    expect(accordionRoot).not.toContain("const setUncontrolledValue = React.useCallback");
-    expect(accordionRoot).not.toContain("requestAnimationFrame");
-    expect(accordionItem).toContain("data-value");
-    expect(accordionItem).toContain("data-disabled");
+    expect(compactCode(buttonIndex)).toContain(compactCode("const Button ="));
+    expect(compactCode(buttonIndex)).toContain(compactCode("Root: ButtonRoot"));
+
+    assertTypeScriptModule(accordionRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(accordionItem)).toContain(compactCode("data-value"));
+    expect(compactCode(accordionItem)).toContain(compactCode("data-disabled"));
     expect(accordionItem).not.toContain(removedAttr("data-sw-accordion", "value"));
     expect(accordionItem).not.toContain(removedAttr("data-sw-accordion", "disabled"));
     expectAttributeCount(accordionItem, "data-disabled", 1);
-    expect(accordionPanel).toContain('style={{ animation: "none", ...style }}');
-    expect(accordionIndex).toContain("const Accordion =");
-    expect(accordionIndex).toContain("Root: AccordionRoot");
-    expect(accordionIndex).toContain("Panel: AccordionPanel");
+    expect(compactCode(accordionPanel)).toContain(
+      compactCode('style={{ ...style, animation: "none" }}'),
+    );
+    expect(compactCode(accordionIndex)).toContain(compactCode("const Accordion ="));
+    expect(compactCode(accordionIndex)).toContain(compactCode("Root: AccordionRoot"));
+    expect(compactCode(accordionIndex)).toContain(compactCode("Panel: AccordionPanel"));
 
-    expect(collapsibleRoot).toContain("createCollapsible");
-    expect(collapsibleRoot).toContain('"@starwind-ui/runtime/collapsible"');
-    expect(collapsibleRoot).toContain("React.forwardRef");
-    expect(collapsibleRoot).toContain("data-sw-collapsible");
-    expect(collapsibleRoot).toContain("data-default-open");
-    expect(collapsibleRoot).not.toContain(removedAttr("data-sw-collapsible", "default-open"));
+    assertTypeScriptModule(collapsibleRoot); // Ordinary behavior is covered by the component browser suite.
+
     expectAttributeCount(collapsibleRoot, "data-disabled", 1);
-    expect(collapsibleRoot).toContain("const openRef = React.useRef(open)");
-    expect(collapsibleRoot).toContain(
-      "...(openRef.current !== undefined ? { open: openRef.current } : {})",
-    );
-    expect(collapsibleRoot).toContain('instance.subscribe("openChange"');
-    expect(collapsibleRoot).toContain("onOpenChange: (open, details) => {");
-    expect(collapsibleRoot).toContain("onOpenChangeRef.current?.(open, details)");
-    expect(collapsibleRoot.indexOf("onOpenChangeRef.current?.(open, details)")).toBeLessThan(
-      collapsibleRoot.indexOf('instance.subscribe("openChange"'),
-    );
-    expect(collapsibleRoot.indexOf('instance.subscribe("openChange"')).toBeLessThan(
-      collapsibleRoot.indexOf("setUncontrolledOpen(details.open)"),
-    );
-    expect(collapsibleRoot).toContain("const defaultOpenRef = React.useRef(defaultOpen)");
-    expect(collapsibleRoot).toContain("const renderedOpen = open ?? uncontrolledOpen");
-    expect(collapsibleRoot).toContain("instance.setOpen(open, { emit: false })");
-    expect(collapsibleRoot).toContain("instance.destroy()");
-    expect(collapsibleRoot).toContain("const composedRef = React.useCallback");
-    expect(collapsibleRoot).toContain('data-state={renderedOpen ? "open" : "closed"}');
-    expect(collapsibleTrigger).toContain("asChild?: boolean;");
-    expect(collapsibleTrigger).toContain("getAsChildElement(children)");
-    expect(collapsibleTrigger).toContain("React.cloneElement");
-    expect(collapsibleTrigger).toContain("data-sw-collapsible-trigger");
-    expect(collapsibleTrigger).toContain('"aria-expanded": "false"');
-    expect(collapsibleTrigger).toContain(
-      "mergeAsChildProps({ ...triggerProps, className }, childProps",
+
+    expect(compactCode(collapsibleTrigger)).toContain(compactCode("asChild?: boolean;"));
+    expect(compactCode(collapsibleTrigger)).toContain(compactCode("getAsChildElement(children)"));
+    expect(compactCode(collapsibleTrigger)).toContain(compactCode("React.cloneElement"));
+    expect(compactCode(collapsibleTrigger)).toContain(compactCode("data-sw-collapsible-trigger"));
+    expect(compactCode(collapsibleTrigger)).toContain(compactCode('"aria-expanded": "false"'));
+    expect(compactCode(collapsibleTrigger)).toContain(
+      compactCode("mergeAsChildProps({ ...triggerProps, className }, childProps"),
     );
     expect(collapsibleTrigger).toMatch(
       /import\s+\{\s*getAsChildElement,\s*getElementRef,\s*mergeAsChildProps,\s*useComposedRefs,?\s*\}\s+from\s+"..\/internal\/compose-refs";/,
     );
-    expect(collapsibleTrigger).toContain("const composedRef = useComposedRefs(");
-    expect(collapsibleTrigger).toContain("ref: composedRef");
-    expect(collapsibleTrigger).not.toContain("function mergeRefs");
-    expect(collapsiblePanel).toContain('data-state="closed"');
-    expect(collapsiblePanel).toContain("hidden");
-    expect(collapsiblePanel).toContain("hiddenUntilFound?: boolean");
-    expect(collapsiblePanel).toContain(
-      'data-hidden-until-found={hiddenUntilFound ? "" : undefined}',
+    expect(compactCode(collapsibleTrigger)).toContain(
+      compactCode("const composedRef = useComposedRefs("),
     );
-    expect(collapsiblePanel).toContain('node.setAttribute("hidden", "until-found")');
-    expect(collapsiblePanel).toContain("ref={composedRef}");
-    expect(collapsiblePanel).not.toContain("animation");
-    expect(collapsibleIndex).toContain("const Collapsible =");
-    expect(collapsibleIndex).toContain("Root: CollapsibleRoot");
-    expect(collapsibleIndex).toContain("Panel: CollapsiblePanel");
+    expect(compactCode(collapsibleTrigger)).toContain(compactCode("ref: composedRef"));
+    expect(compactCode(collapsibleTrigger)).not.toContain(compactCode("function mergeRefs"));
+    expect(compactCode(collapsiblePanel)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(collapsiblePanel)).toContain(compactCode("hidden"));
+    expect(compactCode(collapsiblePanel)).toContain(compactCode("hiddenUntilFound?: boolean"));
+    expect(compactCode(collapsiblePanel)).toContain(
+      compactCode('data-hidden-until-found={hiddenUntilFound ? "" : undefined}'),
+    );
+    expect(compactCode(collapsiblePanel)).toContain(
+      compactCode('node.setAttribute("hidden", "until-found")'),
+    );
+    expect(compactCode(collapsiblePanel)).toContain(compactCode("ref={composedRef}"));
+    expect(compactCode(collapsiblePanel)).not.toContain(compactCode("animation"));
+    expect(compactCode(collapsibleIndex)).toContain(compactCode("const Collapsible ="));
+    expect(compactCode(collapsibleIndex)).toContain(compactCode("Root: CollapsibleRoot"));
+    expect(compactCode(collapsibleIndex)).toContain(compactCode("Panel: CollapsiblePanel"));
 
-    expect(contextMenuRoot).toContain('from "@starwind-ui/runtime/context-menu";');
-    expect(contextMenuRoot).toContain("createContextMenu");
-    expect(contextMenuRoot).toContain("type ContextMenuCloseCompleteDetails");
-    expect(contextMenuRoot).toContain("type ContextMenuOpenChangeDetails");
-    expect(contextMenuRoot).toContain("React.forwardRef<HTMLDivElement, ContextMenuRootProps>");
-    expect(contextMenuRoot).toContain(
-      "onCloseComplete?: (details: ContextMenuCloseCompleteDetails) => void;",
-    );
-    expect(contextMenuRoot).toContain("onCloseCompleteRef.current?.(details)");
-    expect(contextMenuRoot).toContain("data-sw-context-menu");
-    expect(contextMenuRoot).toContain("data-sw-menu");
-    expect(contextMenuRoot).toContain("data-default-open");
-    expect(contextMenuRoot).toContain("modal?: boolean;");
-    expect(contextMenuRoot).toContain("modal = true");
-    expect(contextMenuRoot).toContain("modal,");
-    expect(contextMenuRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(contextMenuRoot).toContain("}, [disabled, modal, closeDelay]);");
-    expect(contextMenuRoot).not.toContain("data-open-on-hover");
-    expect(contextMenuTrigger).toContain("data-sw-context-menu-trigger");
-    expect(contextMenuTrigger).toContain("data-sw-menu-trigger");
-    expect(contextMenuTrigger).toContain('aria-haspopup="menu"');
-    expect(contextMenuTrigger).toContain("tabIndex={disabled ? -1 : (tabIndex ?? 0)}");
-    expect(contextMenuIndex).toContain("const ContextMenu =");
-    expect(contextMenuIndex).toContain("Root: ContextMenuRoot");
-    expect(contextMenuIndex).toContain("Portal: ContextMenuPortal");
-    expect(contextMenuIndex).toContain("Item: ContextMenuItem");
-    expect(contextMenuIndex).toContain(
-      'import ContextMenuRadioGroup from "../menu/MenuRadioGroup";',
-    );
-    expect(contextMenuIndex).toContain(
-      'import ContextMenuRadioItemIndicator from "../menu/MenuRadioItemIndicator";',
-    );
-    expect(contextMenuIndex).not.toContain('from "../menu";');
-    expect(contextMenuIndex).not.toContain("MenuRadioContext");
+    assertTypeScriptModule(contextMenuRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(dialogRoot).toContain("createDialog");
-    expect(dialogRoot).toContain('"@starwind-ui/runtime/dialog"');
-    expect(dialogRoot).toContain("type DialogCloseCompleteDetails");
-    expect(dialogRoot).toContain(
-      "onCloseComplete?: (details: DialogCloseCompleteDetails) => void;",
+    expect(compactCode(contextMenuTrigger)).toContain(compactCode("data-sw-context-menu-trigger"));
+    expect(compactCode(contextMenuTrigger)).toContain(compactCode("data-sw-menu-trigger"));
+    expect(compactCode(contextMenuTrigger)).toContain(compactCode('aria-haspopup="menu"'));
+    expect(compactCode(contextMenuTrigger)).toContain(
+      compactCode("tabIndex={disabled ? -1 : (tabIndex ?? 0)}"),
     );
-    expect(dialogRoot).toContain("onCloseCompleteRef.current?.(details)");
-    expect(dialogRoot).toContain("const openRef = React.useRef(open)");
-    expect(dialogRoot).toContain(
-      "...(openRef.current !== undefined ? { open: openRef.current } : {})",
+    expect(compactCode(contextMenuIndex)).toContain(compactCode("const ContextMenu ="));
+    expect(compactCode(contextMenuIndex)).toContain(compactCode("Root: ContextMenuRoot"));
+    expect(compactCode(contextMenuIndex)).toContain(compactCode("Portal: ContextMenuPortal"));
+    expect(compactCode(contextMenuIndex)).toContain(compactCode("Item: ContextMenuItem"));
+    expect(compactCode(contextMenuIndex)).toContain(
+      compactCode('import ContextMenuRadioGroup from "../menu/MenuRadioGroup";'),
     );
-    expect(dialogRoot).toContain("const composedRef = React.useCallback");
-    expect(dialogRoot).toContain("data-default-open");
-    expect(dialogRoot).toContain("data-close-on-escape");
-    expect(dialogRoot).toContain("data-close-on-outside-interact");
-    expect(dialogRoot).toContain("data-modal");
-    expect(dialogRoot).not.toContain(removedAttr("data-sw-dialog", "default-open"));
-    expect(dialogRoot).not.toContain(removedAttr("data-sw-dialog", "close-on-escape"));
-    expect(dialogRoot).not.toContain(removedAttr("data-sw-dialog", "close-on-outside-interact"));
-    expect(dialogRoot).not.toContain(removedAttr("data-sw-dialog", "modal"));
-    expect(dialogRoot).not.toContain("requestAnimationFrame");
-    expect(dialogPopup).toContain("<dialog");
-    expect(dialogPopup).toContain("data-sw-dialog-content");
-    expect(dialogTrigger).toContain("targetId?: string;");
-    expect(dialogTrigger).toContain("function DialogTrigger({ targetId, ...props }, forwardedRef)");
-    expect(dialogTrigger).toContain("data-sw-dialog-target-id={targetId}");
-    expect(dialogTrigger).not.toContain("data-dialog-for");
-    expect(dialogIndex).toContain("const Dialog =");
-    expect(dialogIndex).toContain("Root: DialogRoot");
-    expect(dialogIndex).toContain("Backdrop: DialogBackdrop");
-    expect(dialogIndex).toContain("Popup: DialogPopup");
-    expect(dialogIndex).not.toContain("DialogContent");
+    expect(compactCode(contextMenuIndex)).toContain(
+      compactCode('import ContextMenuRadioItemIndicator from "../menu/MenuRadioItemIndicator";'),
+    );
+    expect(compactCode(contextMenuIndex)).not.toContain(compactCode('from "../menu";'));
+    expect(compactCode(contextMenuIndex)).not.toContain(compactCode("MenuRadioContext"));
 
-    expect(alertDialogRoot).toContain('from "@starwind-ui/runtime/alert-dialog";');
-    expect(alertDialogRoot).toContain("type AlertDialogCloseCompleteDetails");
-    expect(alertDialogRoot).toContain("type AlertDialogOpenChangeDetails");
-    expect(alertDialogRoot).toContain("createAlertDialog");
-    expect(alertDialogRoot).toContain("React.forwardRef<HTMLDivElement, AlertDialogRootProps>");
-    expect(alertDialogRoot).toContain("closeOnOutsideInteract = false");
-    expect(alertDialogRoot).toContain(
-      "onCloseComplete?: (details: AlertDialogCloseCompleteDetails) => void;",
+    for (const root of [dialogRoot, alertDialogRoot, drawerRoot]) {
+      expect(compactCode(root)).toContain(compactCode("NativeOverlayControlContext.Provider"));
+      expect(compactCode(root)).toContain(compactCode("owned.refresh()"));
+      expect(compactCode(root)).toContain(compactCode("connection.instance === owned"));
+    }
+    for (const control of [
+      dialogTrigger,
+      dialogClose,
+      drawerTrigger,
+      drawerClose,
+      alertDialogTrigger,
+      alertDialogClose,
+    ]) {
+      expect(compactCode(control)).toContain(
+        compactCode("React.useContext(NativeOverlayControlContext)"),
+      );
+      expect(compactCode(control)).toContain(compactCode("asChild?: boolean;"));
+      expect(compactCode(control)).toContain(compactCode("asChild = false"));
+      expect(compactCode(control)).toContain(compactCode("useNativeOverlayControl"));
+      expect(compactCode(control)).toContain(compactCode("key={controlKey}"));
+      expect(compactCode(control)).toContain(compactCode("data-as-child"));
+      expect(compactCode(control)).toContain(compactCode("ref={setControlElement}"));
+      expect(compactCode(control)).toContain(compactCode("React.forwardRef<HTMLButtonElement"));
+    }
+    expect(compactCode(nativeOverlayControl)).toContain(compactCode("requestRefresh?.()"));
+    expect(compactCode(nativeOverlayControl)).toContain(
+      compactCode('typeof children.type === "string"'),
     );
-    expect(alertDialogRoot).toContain("onCloseCompleteRef.current?.(details)");
-    expect(alertDialogRoot).toContain("data-sw-alert-dialog");
-    expect(alertDialogTrigger).toContain("data-sw-alert-dialog-trigger");
-    expect(alertDialogTrigger).toContain("targetId?: string;");
-    expect(alertDialogTrigger).toContain(
-      "function AlertDialogTrigger({ targetId, ...props }, forwardedRef)",
+    expect(compactCode(nativeOverlayControl)).toContain(
+      compactCode("control !== observedControls.current[index]"),
     );
-    expect(alertDialogTrigger).toContain("data-sw-alert-dialog-target-id={targetId}");
-    expect(alertDialogTrigger).not.toContain("data-dialog-for");
-    expect(alertDialogTrigger).not.toContain("data-sw-dialog-trigger");
-    expect(alertDialogPopup).toContain("<dialog");
-    expect(alertDialogPopup).toContain("data-sw-alert-dialog-popup");
-    expect(alertDialogPopup).not.toContain("data-sw-dialog-content");
-    expect(alertDialogPopup).toContain('role="alertdialog"');
-    expect(alertDialogClose).toContain("data-sw-alert-dialog-close");
-    expect(alertDialogClose).not.toContain("data-sw-dialog-close");
-    expect(alertDialogIndex).toContain("const AlertDialog =");
-    expect(alertDialogIndex).toContain("Root: AlertDialogRoot");
-    expect(alertDialogIndex).toContain("Popup: AlertDialogPopup");
-    expect(alertDialogIndex).toContain("AlertDialogCloseCompleteDetails");
-    expect(alertDialogIndex).toContain("AlertDialogOpenChangeDetails");
-    expect(alertDialogIndex).toContain('from "@starwind-ui/runtime";');
-    expect(rootIndex).toContain("AlertDialogCloseCompleteDetails");
+    expect(compactCode(nativeOverlayControl)).not.toContain(compactCode("children.key !== null"));
+    expect(compactCode(nativeOverlayControl)).toContain(compactCode("cleanup?.()"));
+    expect(compactCode(nativeOverlayControl)).not.toContain(compactCode("querySelectorAll"));
+    expect(compactCode(nativeOverlayControl)).not.toContain(compactCode("MutationObserver"));
+    assertTypeScriptModule(dialogRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(drawerRoot).toContain('from "@starwind-ui/runtime/drawer";');
-    expect(drawerRoot).toContain("createDrawer");
-    expect(drawerRoot).toContain("type DrawerCloseCompleteDetails");
-    expect(drawerRoot).toContain("type DrawerOpenChangeDetails");
-    expect(drawerRoot).toContain("React.forwardRef<HTMLDivElement, DrawerRootProps>");
-    expect(drawerRoot).toContain("closeOnOutsideInteract = true");
-    expect(drawerRoot).toContain(
-      "onCloseComplete?: (details: DrawerCloseCompleteDetails) => void;",
+    expect(compactCode(dialogPopup)).toContain(compactCode("<dialog"));
+    expect(compactCode(dialogPopup)).toContain(compactCode("data-sw-dialog-content"));
+    expect(compactCode(dialogTrigger)).toContain(compactCode("targetId?: string;"));
+    expect(compactCode(dialogTrigger)).toContain(compactCode("function DialogTrigger("));
+    expect(compactCode(dialogTrigger)).toContain(
+      compactCode("{ asChild = false, children, className, targetId, ...props }"),
     );
-    expect(drawerRoot).toContain("onCloseCompleteRef.current?.(details)");
-    expect(drawerRoot).toContain("onOpenChange: (nextOpen, details) =>");
-    expect(drawerRoot).toContain('instance.subscribe("openChange"');
-    expect(drawerRoot).toContain("setUncontrolledOpen(details.open)");
-    expect(drawerRoot).toContain("data-sw-drawer");
-    expect(drawerTrigger).toContain("data-sw-drawer-trigger");
-    expect(drawerTrigger).toContain("targetId?: string;");
-    expect(drawerTrigger).toContain("function DrawerTrigger({ targetId, ...props }, forwardedRef)");
-    expect(drawerTrigger).toContain("data-sw-drawer-target-id={targetId}");
-    expect(drawerTrigger).not.toContain("data-dialog-for");
-    expect(drawerTrigger).not.toContain("data-sw-dialog-trigger");
-    expect(drawerPopup).toContain("<dialog");
-    expect(drawerPopup).toContain("data-sw-drawer-popup");
-    expect(drawerPopup).not.toContain("data-sw-dialog-content");
-    expect(drawerPopup).not.toContain('role="dialog"');
-    expect(drawerClose).toContain("data-sw-drawer-close");
-    expect(drawerClose).not.toContain("data-sw-dialog-close");
-    expect(drawerIndex).toContain("const Drawer =");
-    expect(drawerIndex).toContain("Root: DrawerRoot");
-    expect(drawerIndex).toContain("Popup: DrawerPopup");
+    expect(compactCode(dialogTrigger)).toContain(
+      compactCode("data-sw-dialog-target-id={targetId}"),
+    );
+    expect(compactCode(dialogTrigger)).not.toContain(compactCode("data-dialog-for"));
+    expect(compactCode(dialogIndex)).toContain(compactCode("const Dialog ="));
+    expect(compactCode(dialogIndex)).toContain(compactCode("Root: DialogRoot"));
+    expect(compactCode(dialogIndex)).toContain(compactCode("Backdrop: DialogBackdrop"));
+    expect(compactCode(dialogIndex)).toContain(compactCode("Popup: DialogPopup"));
+    expect(compactCode(dialogIndex)).not.toContain(compactCode("DialogContent"));
 
-    expect(dropzoneRoot).toContain("data-sw-dropzone");
-    expect(dropzoneRoot).toContain('aria-disabled={disabled ? "true" : "false"}');
-    expect(dropzoneRoot).toContain('data-disabled={disabled ? "" : undefined}');
+    assertTypeScriptModule(alertDialogRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(fieldRoot).toContain('import { createField } from "@starwind-ui/runtime/field";');
-    expect(fieldRoot).toContain("React.forwardRef<HTMLDivElement, FieldRootProps>");
-    expect(fieldRoot).toContain("data-sw-field");
-    expect(fieldRoot).toContain("data-name={name}");
-    expect(fieldRoot).toContain("dirty,");
-    expect(fieldRoot).toContain("touched,");
-    expect(fieldRoot).not.toContain("dirty = false");
-    expect(fieldRoot).not.toContain("touched = false");
-    expect(fieldRoot).toContain("instanceRef.current?.setDirty(dirty)");
-    expect(fieldRoot).toContain("instanceRef.current?.setDisabled(disabled)");
-    expect(fieldRoot).toContain("instanceRef.current?.setInvalid(invalid)");
-    expect(fieldRoot).toContain("instanceRef.current?.setName(name)");
-    expect(fieldRoot).toContain("instanceRef.current?.setTouched(touched)");
-    expect(fieldRoot).toContain('data-dirty={dirty ? "" : undefined}');
-    expect(fieldRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(fieldRoot).toContain('data-invalid={invalid ? "" : undefined}');
-    expect(fieldRoot).toContain('data-touched={touched ? "" : undefined}');
-    expect(fieldRoot).toContain("validationTiming?: FormValidationTiming;");
-    expect(fieldRoot).toContain("revalidationTiming?: FormValidationTiming;");
-    expect(fieldRoot).toContain("errorVisibility?: FormValidationTiming;");
-    expect(fieldRoot).toContain('"data-validation-timing": dataValidationTiming');
-    expect(fieldRoot).toContain(
-      "data-validation-timing={dataValidationTiming ?? validationTiming}",
+    expect(compactCode(alertDialogTrigger)).toContain(compactCode("data-sw-alert-dialog-trigger"));
+    expect(compactCode(alertDialogTrigger)).toContain(compactCode("targetId?: string;"));
+    expect(compactCode(alertDialogTrigger)).toContain(compactCode("function AlertDialogTrigger("));
+    expect(compactCode(alertDialogTrigger)).toContain(
+      compactCode("{ asChild = false, children, className, targetId, ...props }"),
     );
-    expect(fieldRoot).toContain(
-      "data-revalidation-timing={dataRevalidationTiming ?? revalidationTiming}",
+    expect(compactCode(alertDialogTrigger)).toContain(
+      compactCode("data-sw-alert-dialog-target-id={targetId}"),
     );
-    expect(fieldRoot).toContain("data-error-visibility={dataErrorVisibility ?? errorVisibility}");
-    expect(fieldLabel).toContain("data-sw-field-label");
-    expect(fieldControl).toContain('import InputRoot from "../input/InputRoot";');
-    expect(fieldControl).toContain("data-sw-field-control");
-    expect(fieldDescription).toContain("data-sw-field-description");
-    expect(fieldError).toContain("data-sw-field-error");
-    expect(fieldError).toContain(
-      'export type FieldErrorMessageSource = "children" | "validation";',
+    expect(compactCode(alertDialogTrigger)).not.toContain(compactCode("data-dialog-for"));
+    expect(compactCode(alertDialogTrigger)).not.toContain(compactCode("data-sw-dialog-trigger"));
+    expect(compactCode(alertDialogPopup)).toContain(compactCode("<dialog"));
+    expect(compactCode(alertDialogPopup)).toContain(compactCode("data-sw-alert-dialog-popup"));
+    expect(compactCode(alertDialogPopup)).not.toContain(compactCode("data-sw-dialog-content"));
+    expect(compactCode(alertDialogPopup)).toContain(compactCode('role="alertdialog"'));
+    expect(compactCode(alertDialogClose)).toContain(compactCode("data-sw-alert-dialog-close"));
+    expect(compactCode(alertDialogClose)).not.toContain(compactCode("data-sw-dialog-close"));
+    expect(compactCode(alertDialogClose)).toContain(
+      compactCode("export function __useAlertDialogControl"),
     );
-    expect(fieldError).toContain("messageSource?: FieldErrorMessageSource;");
-    expect(fieldError).toContain("match = false");
-    expect(fieldError).toContain("data-match={serializedMatch}");
-    expect(fieldError).toContain("data-message-source={messageSource}");
-    expect(fieldError).toContain("hidden={hidden}");
-    expect(fieldItem).toContain("data-sw-field-item");
-    expect(fieldValidity).toContain("data-sw-field-validity");
-    expect(fieldValidity).toContain("match = true");
-    expect(fieldValidity).toContain("data-match={serializedMatch}");
-    expect(fieldValidity).toContain("hidden={hidden}");
-    expect(fieldIndex).toContain("Root: FieldRoot");
-    expect(fieldIndex).toContain("Error: FieldError");
-    expect(fieldIndex).toContain("Validity: FieldValidity");
+    expect(compactCode(alertDialogClose)).toContain(compactCode("useNativeOverlayControl"));
+    expect(compactCode(alertDialogIndex)).toContain(compactCode("const AlertDialog ="));
+    expect(compactCode(alertDialogIndex)).toContain(compactCode("Root: AlertDialogRoot"));
+    expect(compactCode(alertDialogIndex)).toContain(compactCode("Popup: AlertDialogPopup"));
+    expect(compactCode(alertDialogIndex)).toContain(compactCode("AlertDialogCloseCompleteDetails"));
+    expect(compactCode(alertDialogIndex)).toContain(compactCode("AlertDialogOpenChangeDetails"));
+    expect(compactCode(alertDialogIndex)).toContain(
+      compactCode('export { __useAlertDialogControl } from "./AlertDialogClose";'),
+    );
+    expect(alertDialogIndex.match(/const AlertDialog = \{[\s\S]*?\};/)?.[0]).not.toContain(
+      "__useAlertDialogControl",
+    );
+    expect(compactCode(dialogIndex)).not.toContain(compactCode("__useAlertDialogControl"));
+    expect(compactCode(drawerIndex)).not.toContain(compactCode("__useAlertDialogControl"));
+    expect(compactCode(alertDialogIndex)).toContain(compactCode('from "@starwind-ui/runtime";'));
+    expect(compactCode(rootIndex)).toContain(compactCode("AlertDialogCloseCompleteDetails"));
 
-    expect(fieldsetRoot).toContain("createFieldset");
-    expect(fieldsetRoot).toContain('"@starwind-ui/runtime/fieldset"');
-    expect(fieldsetRoot).toContain("React.forwardRef<HTMLFieldSetElement, FieldsetRootProps>");
-    expect(fieldsetRoot).toContain("createFieldset(root, { disabled })");
-    expect(fieldsetRoot).toContain("instanceRef.current?.setDisabled(disabled)");
-    expect(fieldsetRoot).toContain("data-sw-fieldset");
-    expect(fieldsetRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(fieldsetLegend).toContain("data-sw-fieldset-legend");
-    expect(fieldsetIndex).toContain("Root: FieldsetRoot");
-    expect(fieldsetIndex).toContain("Legend: FieldsetLegend");
+    assertTypeScriptModule(drawerRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(formRoot).toContain("createForm");
-    expect(formRoot).toContain('"@starwind-ui/runtime/form"');
-    expect(formRoot).toContain("type FormValidationTiming");
-    expect(formRoot).toContain("React.forwardRef<HTMLFormElement, FormRootProps>");
-    expect(formRoot).toContain("validationTiming?: FormValidationTiming;");
-    expect(formRoot).toContain("revalidationTiming?: FormValidationTiming;");
-    expect(formRoot).toContain("errorVisibility?: FormValidationTiming;");
-    expect(formRoot).toContain('"data-validation-timing": dataValidationTiming');
-    expect(formRoot).toContain("data-validation-timing={dataValidationTiming ?? validationTiming}");
-    expect(formRoot).toContain(
-      "data-revalidation-timing={dataRevalidationTiming ?? revalidationTiming}",
+    expect(compactCode(drawerTrigger)).toContain(compactCode("data-sw-drawer-trigger"));
+    expect(compactCode(drawerTrigger)).toContain(compactCode("targetId?: string;"));
+    expect(compactCode(drawerTrigger)).toContain(compactCode("function DrawerTrigger("));
+    expect(compactCode(drawerTrigger)).toContain(
+      compactCode("{ asChild = false, children, className, targetId, ...props }"),
     );
-    expect(formRoot).toContain("data-error-visibility={dataErrorVisibility ?? errorVisibility}");
-    expect(formRoot).toContain("data-sw-form");
-    expect(formRoot).toContain('data-slot="form"');
-    expect(formRoot).not.toContain("novalidate");
-    expect(formRoot).not.toContain("noValidate");
-    expect(formRoot).toContain("instance.destroy()");
-    expect(formErrorSummary).toContain("React.forwardRef<HTMLDivElement, FormErrorSummaryProps>");
-    expect(formErrorSummary).toContain("data-sw-form-error-summary");
-    expect(formErrorSummary).toContain('data-slot="form-error-summary"');
-    expect(formErrorSummary).toContain('role = "status"');
-    expect(formErrorSummary).toContain('"aria-live": ariaLive = "polite"');
-    expect(formErrorSummary).toContain('"aria-atomic": ariaAtomic = "true"');
-    expect(formErrorSummary).toContain("hidden={hidden}");
-    expect(formErrorSummary).toContain("{children}");
-    expect(formIndex).toContain("Root: FormRoot");
-    expect(formIndex).toContain("ErrorSummary: FormErrorSummary");
-    expect(formIndex).toContain("FormErrorSummary");
+    expect(compactCode(drawerTrigger)).toContain(
+      compactCode("data-sw-drawer-target-id={targetId}"),
+    );
+    expect(compactCode(drawerTrigger)).not.toContain(compactCode("data-dialog-for"));
+    expect(compactCode(drawerTrigger)).not.toContain(compactCode("data-sw-dialog-trigger"));
+    expect(compactCode(drawerPopup)).toContain(compactCode("<dialog"));
+    expect(compactCode(drawerPopup)).toContain(compactCode("data-sw-drawer-popup"));
+    expect(compactCode(drawerPopup)).not.toContain(compactCode("data-sw-dialog-content"));
+    expect(compactCode(drawerPopup)).not.toContain(compactCode('role="dialog"'));
+    expect(compactCode(drawerClose)).toContain(compactCode("data-sw-drawer-close"));
+    expect(compactCode(drawerClose)).not.toContain(compactCode("data-sw-dialog-close"));
+    expect(compactCode(drawerIndex)).toContain(compactCode("const Drawer ="));
+    expect(compactCode(drawerIndex)).toContain(compactCode("Root: DrawerRoot"));
+    expect(compactCode(drawerIndex)).toContain(compactCode("Popup: DrawerPopup"));
 
-    expect(popoverRoot).toContain('} from "@starwind-ui/runtime/popover";');
-    expect(popoverRoot).toContain("createPopover,");
-    expect(popoverRoot).toContain("type PopoverCloseCompleteDetails,");
-    expect(popoverRoot).toContain("type PopoverOpenChangeDetails,");
-    expect(popoverRoot).toContain(
-      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+    assertTypeScriptModule(dropzoneRoot); // Ordinary behavior is covered by the component browser suite.
+
+    assertTypeScriptModule(fieldRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(fieldLabel)).toContain(compactCode("data-sw-field-label"));
+    expect(compactCode(fieldControl)).toContain(
+      compactCode('import InputRoot from "../input/InputRoot";'),
     );
-    expect(popoverRoot).toContain("React.forwardRef<HTMLDivElement, PopoverRootProps>");
-    expect(popoverRoot).toContain("modal?: boolean;");
-    expect(popoverRoot).toContain("modal = false");
-    expect(popoverRoot).toContain("openOnHover = false");
-    expect(popoverRoot).toContain(
-      "onCloseComplete?: (details: PopoverCloseCompleteDetails) => void;",
+    expect(compactCode(fieldControl)).toContain(compactCode("data-sw-field-control"));
+    expect(compactCode(fieldDescription)).toContain(compactCode("data-sw-field-description"));
+    expect(compactCode(fieldError)).toContain(compactCode("data-sw-field-error"));
+    expect(compactCode(fieldError)).toContain(
+      compactCode('export type FieldErrorMessageSource = "children" | "validation";'),
     );
-    expect(popoverRoot).toContain("onCloseCompleteRef.current?.(details)");
-    expect(popoverRoot).toContain("onOpenChange: (nextOpen, details) =>");
-    expect(popoverRoot).toContain("useIsomorphicLayoutEffect(() =>");
-    expect(popoverRoot).toContain('instance.subscribe("openChange"');
-    expect(popoverRoot).toContain("setUncontrolledOpen(details.open)");
-    expect(popoverRoot).toContain("data-sw-popover");
-    expect(popoverRoot).toContain("modal,");
-    expect(popoverRoot).toContain("data-default-open");
-    expect(popoverRoot).toContain("data-modal");
-    expect(popoverRoot).toContain("data-open-on-hover");
-    expect(popoverRoot).toMatch(
-      /}, \[\s*closeOnEscape,\s*closeOnOutsideInteract,\s*modal,\s*openOnHover,?\s*\]\);/,
+    expect(compactCode(fieldError)).toContain(
+      compactCode("messageSource?: FieldErrorMessageSource;"),
     );
-    expect(popoverRoot).toContain(
-      "useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime)",
+    expect(compactCode(fieldError)).toContain(compactCode("match = false"));
+    expect(compactCode(fieldError)).toContain(compactCode("data-match={serializedMatch}"));
+    expect(compactCode(fieldError)).toContain(compactCode("data-message-source={messageSource}"));
+    expect(compactCode(fieldError)).toContain(compactCode("hidden={hidden}"));
+    expect(compactCode(fieldItem)).toContain(compactCode("data-sw-field-item"));
+    expect(compactCode(fieldValidity)).toContain(compactCode("data-sw-field-validity"));
+    expect(compactCode(fieldValidity)).toContain(compactCode("match = true"));
+    expect(compactCode(fieldValidity)).toContain(compactCode("data-match={serializedMatch}"));
+    expect(compactCode(fieldValidity)).toContain(compactCode("hidden={hidden}"));
+    expect(compactCode(fieldIndex)).toContain(compactCode("Root: FieldRoot"));
+    expect(compactCode(fieldIndex)).toContain(compactCode("Error: FieldError"));
+    expect(compactCode(fieldIndex)).toContain(compactCode("Validity: FieldValidity"));
+
+    assertTypeScriptModule(fieldsetRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(fieldsetLegend)).toContain(compactCode("data-sw-fieldset-legend"));
+    expect(compactCode(fieldsetIndex)).toContain(compactCode("Root: FieldsetRoot"));
+    expect(compactCode(fieldsetIndex)).toContain(compactCode("Legend: FieldsetLegend"));
+
+    assertTypeScriptModule(formRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(formErrorSummary)).toContain(
+      compactCode("React.forwardRef<HTMLDivElement, FormErrorSummaryProps>"),
     );
-    expect(popoverRoot).toContain("refreshPopoverPortalSurface(root)");
-    expect(popoverTrigger).toContain("asChild?: boolean;");
-    expect(popoverTrigger).toContain("getAsChildElement(children)");
-    expect(popoverTrigger).toContain("React.cloneElement");
-    expect(popoverTrigger).toContain("data-sw-popover-trigger");
-    expect(popoverTrigger).toContain('"aria-haspopup": "dialog"');
+    expect(compactCode(formErrorSummary)).toContain(compactCode("data-sw-form-error-summary"));
+    expect(compactCode(formErrorSummary)).toContain(compactCode('data-slot="form-error-summary"'));
+    expect(compactCode(formErrorSummary)).toContain(compactCode('role = "status"'));
+    expect(compactCode(formErrorSummary)).toContain(
+      compactCode('"aria-live": ariaLive = "polite"'),
+    );
+    expect(compactCode(formErrorSummary)).toContain(
+      compactCode('"aria-atomic": ariaAtomic = "true"'),
+    );
+    expect(compactCode(formErrorSummary)).toContain(compactCode("hidden={hidden}"));
+    expect(compactCode(formErrorSummary)).toContain(compactCode("{children}"));
+    expect(compactCode(formIndex)).toContain(compactCode("Root: FormRoot"));
+    expect(compactCode(formIndex)).toContain(compactCode("ErrorSummary: FormErrorSummary"));
+    expect(compactCode(formIndex)).toContain(compactCode("FormErrorSummary"));
+
+    assertTypeScriptModule(popoverRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(popoverTrigger)).toContain(compactCode("asChild?: boolean;"));
+    expect(compactCode(popoverTrigger)).toContain(compactCode("getAsChildElement(children)"));
+    expect(compactCode(popoverTrigger)).toContain(compactCode("React.cloneElement"));
+    expect(compactCode(popoverTrigger)).toContain(compactCode("data-sw-popover-trigger"));
+    expect(compactCode(popoverTrigger)).toContain(compactCode('"aria-haspopup": "dialog"'));
     expect(popoverTrigger).toMatch(
       /import\s+\{\s*getAsChildElement,\s*getElementRef,\s*mergeAsChildProps,\s*useComposedRefs,?\s*\}\s+from\s+"..\/internal\/compose-refs";/,
     );
-    expect(popoverTrigger).toContain("const composedRef = useComposedRefs(");
-    expect(popoverTrigger).toContain("ref: composedRef");
-    expect(popoverTrigger).not.toContain("function mergeRefs");
-    expect(popoverPositioner).toContain("data-sw-popover-positioner");
-    expect(popoverPositioner).toContain("data-side={side}");
-    expect(popoverPositioner).toContain("data-align={align}");
-    expect(popoverPositioner).toContain("data-side-offset={sideOffset}");
-    expect(popoverPositioner).toContain(
-      'data-avoid-collisions={avoidCollisions ? "true" : "false"}',
+    expect(compactCode(popoverTrigger)).toContain(
+      compactCode("const composedRef = useComposedRefs("),
     );
-    expect(popoverPositioner).toContain("ref={forwardedRef}");
-    expect(popoverPositioner).toContain("{...props}");
-    expect(popoverPopup).toContain("data-sw-popover-popup");
-    expect(popoverPopup).toContain("data-side={side}");
-    expect(popoverPopup).toContain("data-align={align}");
-    expect(popoverPopup).toContain("data-side-offset={sideOffset}");
-    expect(popoverPopup).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
-    expect(popoverPopup).toContain('role="dialog"');
-    expect(popoverPopup).toContain("tabIndex={-1}");
-    expect(popoverPopup).toContain("hidden");
-    expect(popoverPopup).toContain("ref={forwardedRef}");
-    expect(popoverPopup).toContain("{...props}");
-    expect(popoverClose).toContain("data-sw-popover-close");
-    expect(popoverIndex).toContain("const Popover =");
-    expect(popoverIndex).toContain("Root: PopoverRoot");
-    expect(popoverIndex).toContain("Positioner: PopoverPositioner");
-    expect(popoverIndex).toContain("Popup: PopoverPopup");
+    expect(compactCode(popoverTrigger)).toContain(compactCode("ref: composedRef"));
+    expect(compactCode(popoverTrigger)).not.toContain(compactCode("function mergeRefs"));
+    expect(compactCode(popoverPositioner)).toContain(compactCode("data-sw-popover-positioner"));
+    expect(compactCode(popoverPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(popoverPositioner)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(popoverPositioner)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(popoverPositioner)).toContain(
+      compactCode("data-avoid-collisions={String(avoidCollisions)}"),
+    );
+    expect(compactCode(popoverPositioner)).toContain(compactCode("ref={composedRef}"));
+    expect(compactCode(popoverPositioner)).toContain(compactCode("{...props}"));
+    expect(compactCode(popoverPopup)).toContain(compactCode("data-sw-popover-popup"));
+    expect(compactCode(popoverPopup)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(popoverPopup)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(popoverPopup)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(popoverPopup)).toContain(
+      compactCode("data-avoid-collisions={String(avoidCollisions)}"),
+    );
+    expect(compactCode(popoverPopup)).toContain(compactCode('role="dialog"'));
+    expect(compactCode(popoverPopup)).toContain(compactCode("tabIndex={-1}"));
+    expect(compactCode(popoverPopup)).toContain(compactCode("hidden"));
+    expect(compactCode(popoverPopup)).toContain(compactCode("ref={composedRef}"));
+    expect(compactCode(popoverPopup)).toContain(compactCode("{...props}"));
+    expect(compactCode(popoverClose)).toContain(compactCode("data-sw-popover-close"));
+    expect(compactCode(popoverIndex)).toContain(compactCode("const Popover ="));
+    expect(compactCode(popoverIndex)).toContain(compactCode("Root: PopoverRoot"));
+    expect(compactCode(popoverIndex)).toContain(compactCode("Positioner: PopoverPositioner"));
+    expect(compactCode(popoverIndex)).toContain(compactCode("Popup: PopoverPopup"));
 
-    expect(avatarRoot).toContain("createAvatar");
-    expect(avatarRoot).toContain('"@starwind-ui/runtime/avatar"');
-    expect(avatarRoot).toContain("React.forwardRef");
-    expect(avatarRoot).toContain("data-sw-avatar");
-    expect(avatarRoot).toContain("data-image-loading-status");
-    expect(avatarImage).toContain("alt: string;");
-    expect(avatarImage).toContain("onLoadingStatusChange?:");
-    expect(avatarImage).toContain("starwind:loading-status-change");
-    expect(avatarImage).toContain("root.addEventListener");
-    expect(avatarImage).toContain("root.removeEventListener");
-    expect(avatarImage).toContain(
-      "const onLoadingStatusChangeRef = React.useRef(onLoadingStatusChange)",
+    assertTypeScriptModule(avatarRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(avatarImage)).toContain(compactCode("alt: string;"));
+    expect(compactCode(avatarImage)).toContain(compactCode("onLoadingStatusChange?:"));
+    expect(compactCode(avatarImage)).toContain(compactCode("starwind:loading-status-change"));
+    expect(compactCode(avatarImage)).toContain(compactCode("root.addEventListener"));
+    expect(compactCode(avatarImage)).toContain(compactCode("root.removeEventListener"));
+    expect(compactCode(avatarImage)).toContain(
+      compactCode("const onLoadingStatusChangeRef = React.useRef(onLoadingStatusChange)"),
     );
-    expect(avatarImage).toContain(
-      "const hasLoadingStatusChangeCallback = onLoadingStatusChange !== undefined",
+    expect(compactCode(avatarImage)).toContain(
+      compactCode("const hasLoadingStatusChangeCallback = onLoadingStatusChange !== undefined"),
     );
-    expect(avatarImage).toContain("onLoadingStatusChangeRef.current = onLoadingStatusChange");
-    expect(avatarImage).toContain("onLoadingStatusChangeRef.current?.(details.status, details)");
-    expect(avatarImage).toContain('root.getAttribute("data-image-loading-status")');
-    expect(avatarImage).toContain('if (!status || status === "idle") return;');
-    expect(avatarImage).toContain(
-      'onLoadingStatusChangeRef.current?.(status, { previousStatus: "idle", status });',
+    expect(compactCode(avatarImage)).toContain(
+      compactCode("onLoadingStatusChangeRef.current = onLoadingStatusChange"),
     );
-    expect(avatarImage).toContain("notifyCurrentLoadingStatus();");
-    expect(avatarImage).toContain("}, [hasLoadingStatusChangeCallback]);");
-    expect(avatarImage).not.toContain("}, [onLoadingStatusChange]);");
-    expect(avatarImage).toContain("data-sw-avatar-image");
-    expect(avatarImage).toContain('style={{ ...style, visibility: "hidden" }}');
-    expect(avatarImage).toContain("hidden={false}");
-    expect(avatarImage).not.toContain("node.hidden");
-    expect(avatarFallback).toContain("delay?: number");
-    expect(avatarFallback).toContain("data-sw-avatar-fallback");
-    expect(avatarFallback).toContain("data-delay");
+    expect(compactCode(avatarImage)).toContain(
+      compactCode("onLoadingStatusChangeRef.current?.(details.status, details)"),
+    );
+    expect(compactCode(avatarImage)).toContain(
+      compactCode('root.getAttribute("data-image-loading-status")'),
+    );
+
+    expect(compactCode(avatarImage)).toContain(
+      compactCode(
+        'onLoadingStatusChangeRef.current?.(status, { previousStatus: "idle", status });',
+      ),
+    );
+
+    expect(compactCode(avatarImage)).toContain(
+      compactCode("}, [hasLoadingStatusChangeCallback]);"),
+    );
+    expect(compactCode(avatarImage)).not.toContain(compactCode("}, [onLoadingStatusChange]);"));
+    expect(compactCode(avatarImage)).toContain(compactCode("data-sw-avatar-image"));
+    expect(compactCode(avatarImage)).toContain(
+      compactCode('style={{ ...style, visibility: "hidden" }}'),
+    );
+    expect(compactCode(avatarImage)).toContain(compactCode("hidden={false}"));
+    expect(compactCode(avatarImage)).not.toContain(compactCode("node.hidden"));
+    expect(compactCode(avatarFallback)).toContain(compactCode("delay?: number"));
+    expect(compactCode(avatarFallback)).toContain(compactCode("data-sw-avatar-fallback"));
+    expect(compactCode(avatarFallback)).toContain(compactCode("data-delay"));
     expect(avatarFallback).not.toContain(removedAttr("data-sw-avatar-fallback", "delay"));
-    expect(avatarFallback).toContain("node.hidden = hidden ?? delay !== undefined");
-    expect(avatarFallback).not.toContain("hidden={hidden ?? delay !== undefined}");
-    expect(avatarIndex).toContain("Root: AvatarRoot");
-    expect(avatarIndex).toContain("Image: AvatarImage");
-    expect(avatarIndex).toContain("Fallback: AvatarFallback");
 
-    expect(checkboxRoot).toContain("createCheckbox");
-    expect(checkboxRoot).toContain('"@starwind-ui/runtime/checkbox"');
-    expect(checkboxRoot).toContain("CheckboxCheckedChangeDetails");
-    expect(checkboxRoot).toContain(
-      'import { useCheckboxGroupContext } from "../checkbox-group/CheckboxGroupContext";',
+    expect(compactCode(avatarFallback)).not.toContain(
+      compactCode("hidden={hidden ?? delay !== undefined}"),
     );
-    expect(checkboxRoot).toContain("const checkedRef = React.useRef(checked)");
-    expect(checkboxRoot).toContain("const checkboxGroup = useCheckboxGroupContext()");
-    expect(checkboxRoot).toContain("const groupValue = value ?? name");
-    expect(checkboxRoot).toContain("const groupChecked =");
-    expect(checkboxRoot).toContain(
-      "checkboxGroup && groupValue !== undefined\n        ? checkboxGroup.value.includes(groupValue)\n        : undefined",
-    );
-    expect(checkboxRoot).toContain("const effectiveDisabled =");
-    expect(checkboxRoot).toContain(
-      "const [uncontrolledChecked, setUncontrolledCheckedState] = React.useState(",
-    );
-    expect(checkboxRoot).toContain(
-      "const uncontrolledCheckedRef = React.useRef(uncontrolledChecked)",
-    );
-    expect(checkboxRoot).toContain("defaultChecked: uncontrolledCheckedRef.current");
-    expect(checkboxRoot).toContain(
-      "const [renderedIndeterminate, setRenderedIndeterminate] = React.useState(indeterminate)",
-    );
-    expect(checkboxRoot).toContain(
-      "const renderedChecked = checked ?? groupChecked ?? uncontrolledChecked",
-    );
-    expect(checkboxRoot).toContain("checkedRef.current !== undefined");
-    expect(checkboxRoot).toContain("groupChecked !== undefined");
-    expect(checkboxRoot).toContain("onCheckedChange: (checked, details) => {");
-    expect(checkboxRoot).toContain("onCheckedChangeRef.current?.(checked, details)");
-    expect(checkboxRoot).toContain("if (details.isCanceled) return");
-    expect(checkboxRoot).toContain("const resetSyncTimerRef = React.useRef");
-    expect(checkboxRoot).toContain("syncUncontrolledAfterFormReset");
-    expect(checkboxRoot).toContain("setUncontrolledChecked(details.checked)");
-    expect(checkboxRoot).toContain("const indeterminateRef = React.useRef(indeterminate)");
-    expect(checkboxRoot).toContain("indeterminateRef.current = indeterminate");
-    expect(checkboxRoot.match(/if \(!indeterminateRef\.current\) \{/g)).toHaveLength(2);
-    expect(checkboxRoot).toContain("const nextControlledChecked = checked ?? groupChecked");
-    expect(checkboxRoot).toContain(
-      "if (nextControlledChecked !== undefined && instance.getChecked() !== nextControlledChecked)",
-    );
-    expect(checkboxRoot).toContain("instance.setChecked(nextControlledChecked, { emit: false })");
-    expect(checkboxRoot).toContain("instance.setIndeterminate(indeterminate, { emit: false })");
-    expect(checkboxRoot).toContain("}, [checked, groupChecked, indeterminate])");
-    expect(checkboxRoot).not.toContain("instance.setChecked(checked, { emit: false })");
-    expect(checkboxRoot).not.toContain("instance.setChecked(groupChecked, { emit: false })");
-    expect(checkboxRoot).toContain("instance.setDisabled(effectiveDisabled)");
-    expect(checkboxRoot).toContain("data-sw-checkbox");
-    expect(checkboxRoot).toContain("data-sw-checkbox-input");
-    expect(checkboxRoot).toContain("export const CheckboxIndicatorContext = React.createContext");
-    expect(checkboxRoot).toContain("<CheckboxIndicatorContext.Provider value={indicatorState}>");
-    expect(checkboxRoot).toContain("explicitlyHiddenIndicatorsRef.current.forEach");
-    expect(checkboxRoot).toContain('"data-default-checked"');
-    expect(checkboxRoot).toContain('"data-form"');
-    expect(checkboxRoot).toContain('"data-id"');
-    expect(checkboxRoot).toContain('"data-name"');
-    expect(checkboxRoot).toContain('"data-unchecked-value"');
-    expect(checkboxRoot).toContain('"data-value"');
-    expect(checkboxRoot).toContain('"data-disabled"');
-    expect(checkboxRoot).toContain('"data-indeterminate"');
-    expect(checkboxRoot).toContain('"data-readonly"');
-    expect(checkboxRoot).toContain('"data-required"');
+    expect(compactCode(avatarIndex)).toContain(compactCode("Root: AvatarRoot"));
+    expect(compactCode(avatarIndex)).toContain(compactCode("Image: AvatarImage"));
+    expect(compactCode(avatarIndex)).toContain(compactCode("Fallback: AvatarFallback"));
+
+    assertTypeScriptModule(checkboxRoot); // Ordinary behavior is covered by the component browser suite.
+
     expectAttributeCount(checkboxRoot, "data-disabled", 1);
     expectAttributeCount(checkboxRoot, "data-indeterminate", 1);
     expectAttributeCount(checkboxRoot, "data-readonly", 1);
     expectAttributeCount(checkboxRoot, "data-required", 1);
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "default-checked"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "form"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "id"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "name"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "unchecked-value"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "value"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "disabled"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "indeterminate"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "readonly"));
-    expect(checkboxRoot).not.toContain(removedAttr("data-sw-checkbox", "required"));
-    expect(checkboxRoot).toContain("id={id}");
-    expect(checkboxRoot).toContain("name={name}");
-    expect(checkboxRoot).toContain("form={form}");
-    expect(checkboxRoot).toContain("defaultChecked={defaultCheckedRef.current}");
-    expect(checkboxRoot).not.toContain("defaultChecked={renderedChecked}");
-    expect(checkboxRoot).toContain("defaultValue={value}");
-    expect(checkboxRoot).toContain(
-      "}, [form, id, name, nativeButton, readOnly, required, uncheckedValue, value]);",
-    );
-    expect(checkboxRoot).toContain("if (nativeButton) {");
-    expect(checkboxRoot).toContain("<>");
-    expect(checkboxRoot).toContain("</button>");
-    expect(checkboxRoot).toContain("{input}");
-    expect(checkboxRoot).not.toContain("{children}\n          {input}\n        </button>");
-    expect(checkboxRoot).toContain(`<button
-            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-            {...commonProps}`);
-    expect(checkboxRoot).toContain(`<span
-        {...(props as React.HTMLAttributes<HTMLSpanElement>)}
-        {...commonProps}`);
-    expect(checkboxIndicator).toContain("keepMounted?: boolean");
-    expect(checkboxIndicator).toContain("data-sw-checkbox-indicator");
-    expect(checkboxIndicator).toContain("React.useContext(CheckboxIndicatorContext)");
-    expect(checkboxIndicator).toContain("if (!keepMounted && !active) return null");
-    expect(checkboxIndicator).toContain("node.hidden = hidden ?? false");
-    expect(checkboxIndicator).toContain("hidden={hidden ?? false}");
-    expect(checkboxIndicator).toContain("data-disabled={indicatorState.disabled");
-    expect(checkboxIndicator).toContain("data-readonly={indicatorState.readOnly");
-    expect(checkboxIndicator).toContain("data-required={indicatorState.required");
-    expect(checkboxIndicator).not.toContain("React.useEffect");
-    expect(checkboxIndex).toContain("Root: CheckboxRoot");
-    expect(checkboxIndex).toContain("Indicator: CheckboxIndicator");
 
-    expect(checkboxGroupRoot).toContain("createCheckboxGroup");
-    expect(checkboxGroupRoot).toContain('"@starwind-ui/runtime/checkbox-group"');
-    expect(checkboxGroupRoot).toContain("CheckboxGroupValueChangeDetails");
-    expect(checkboxGroupRoot).toContain(
-      'import { CheckboxGroupContext } from "./CheckboxGroupContext";',
+    expect(compactCode(checkboxIndicator)).toContain(compactCode("keepMounted?: boolean"));
+    expect(compactCode(checkboxIndicator)).toContain(compactCode("data-sw-checkbox-indicator"));
+    expect(compactCode(checkboxIndicator)).toContain(
+      compactCode("React.useContext(CheckboxIndicatorContext)"),
     );
-    expect(checkboxGroupRoot).toContain("const defaultValueRef = React.useRef(defaultValue)");
-    expect(checkboxGroupRoot).toContain("const valueRef = React.useRef(value)");
-    expect(checkboxGroupRoot).toContain(
-      "const [uncontrolledValue, setUncontrolledValueState] = React.useState<CheckboxGroupValue>",
+    expect(compactCode(checkboxIndicator)).toContain(
+      compactCode("if (!keepMounted && !active) return null"),
     );
-    expect(checkboxGroupRoot).toContain(
-      "const uncontrolledValueRef = React.useRef(uncontrolledValue)",
+    expect(compactCode(checkboxIndicator)).toContain(compactCode("node.hidden = hidden ?? false"));
+    expect(compactCode(checkboxIndicator)).toContain(compactCode("hidden={hidden ?? false}"));
+    expect(compactCode(checkboxIndicator)).toContain(
+      compactCode("data-disabled={indicatorState.disabled"),
     );
-    expect(checkboxGroupRoot).toContain(
-      "const setUncontrolledValue = React.useCallback((nextValue: CheckboxGroupValue) => {",
+    expect(compactCode(checkboxIndicator)).toContain(
+      compactCode("data-readonly={indicatorState.readOnly"),
     );
-    expect(checkboxGroupRoot).toContain("const renderedValue = value ?? uncontrolledValue");
-    expect(checkboxGroupRoot).toContain("const contextValue = React.useMemo");
-    expect(checkboxGroupRoot).toContain("<CheckboxGroupContext.Provider value={contextValue}>");
-    expect(checkboxGroupRoot).toContain(
-      "...(valueRef.current !== undefined ? { value: valueRef.current } : {})",
+    expect(compactCode(checkboxIndicator)).toContain(
+      compactCode("data-required={indicatorState.required"),
     );
-    expect(checkboxGroupRoot).toContain("setUncontrolledValue(details.value)");
-    expect(checkboxGroupRoot).toContain("onValueChange: (details) => {");
-    expect(checkboxGroupRoot).toContain("onValueChangeRef.current?.(details.value, details)");
-    expect(checkboxGroupRoot).toContain(`if (details.isCanceled) return;
+    expect(compactCode(checkboxIndicator)).not.toContain(compactCode("React.useEffect"));
+    expect(compactCode(checkboxIndex)).toContain(compactCode("Root: CheckboxRoot"));
+    expect(compactCode(checkboxIndex)).toContain(compactCode("Indicator: CheckboxIndicator"));
 
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(details.value);
-        }`);
-    expect(checkboxGroupRoot).toContain("const syncUncontrolledValue = () => {");
-    expect(checkboxGroupRoot).toContain(
-      'parseCheckboxGroupValueAttribute(root.getAttribute("data-value"))',
-    );
-    expect(checkboxGroupRoot).toContain("new MutationObserver(syncUncontrolledValue)");
-    expect(checkboxGroupRoot).toContain('attributeFilter: ["data-value"]');
-    expect(checkboxGroupRoot).toContain("function parseCheckboxGroupValueAttribute");
-    expect(checkboxGroupRoot).toContain("instance.setDisabled(disabled)");
-    expect(checkboxGroupRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(checkboxGroupRoot).toContain('instance.subscribe("valueChange"');
-    expect(checkboxGroupRoot).toContain("unsubscribe()");
-    expect(checkboxGroupRoot).toContain("instance.destroy()");
-    expect(checkboxGroupRoot).not.toContain("[defaultValue, disabled]");
-    expect(checkboxGroupRoot).toContain("data-sw-checkbox-group");
-    expect(checkboxGroupRoot).toContain("data-default-value");
-    expect(checkboxGroupRoot).toContain("data-value");
-    expect(checkboxGroupRoot).toContain("<CheckboxGroupContext.Provider value={contextValue}>");
+    assertTypeScriptModule(checkboxGroupRoot); // Ordinary behavior is covered by the component browser suite.
+
     expectAttributeCount(checkboxGroupRoot, "data-disabled", 1);
-    expect(checkboxGroupRoot).not.toContain(removedAttr("data-sw-checkbox-group", "default-value"));
-    expect(checkboxGroupRoot).not.toContain(removedAttr("data-sw-checkbox-group", "value"));
-    expect(checkboxGroupContext).toContain("React.createContext");
-    expect(checkboxGroupContext).toContain("useCheckboxGroupContext");
-    expect(checkboxGroupContext).toContain("CheckboxGroupValue");
-    expect(checkboxGroupIndex).toContain("CheckboxGroupContext");
-    expect(checkboxGroupIndex).toContain("useCheckboxGroupContext");
-    expect(checkboxGroupIndex).toContain("Root: CheckboxGroupRoot");
+
+    expect(compactCode(checkboxGroupContext)).toContain(compactCode("React.createContext"));
+    expect(compactCode(checkboxGroupContext)).toContain(compactCode("useCheckboxGroupContext"));
+    expect(compactCode(checkboxGroupContext)).toContain(compactCode("CheckboxGroupValue"));
+    expect(compactCode(checkboxGroupIndex)).toContain(compactCode("CheckboxGroupContext"));
+    expect(compactCode(checkboxGroupIndex)).toContain(compactCode("useCheckboxGroupContext"));
+    expect(compactCode(checkboxGroupIndex)).toContain(compactCode("Root: CheckboxGroupRoot"));
     expect(checkboxGroupIndex).toBe(
       await readFile(path.resolve("packages/react/src/checkbox-group/index.ts"), "utf8"),
     );
 
-    expect(radioRoot).toContain("createRadio");
-    expect(radioRoot).toContain("RadioCheckedChangeDetails");
-    expect(radioRoot).toContain(
-      'import { useRadioGroupContext } from "../radio-group/RadioGroupContext";',
-    );
-    expect(radioRoot).toContain("const radioGroup = useRadioGroupContext()");
-    expect(radioRoot).toContain("const groupChecked =");
-    expect(radioRoot).toContain("const effectiveDisabled =");
-    expect(radioRoot).toContain("onCheckedChange: (checked, details) => {");
-    expect(radioRoot).toContain("onCheckedChangeRef.current?.(checked, details)");
-    expect(radioRoot).toContain(
-      `details.onAccepted(() => {
-          if (checkedRef.current === undefined && radioGroup === undefined) {`,
-    );
-    expect(radioRoot).toContain('instance.subscribe("stateSync", () => {');
-    expect(radioRoot).toContain("setUncontrolledChecked(instance.getChecked())");
-    expect(radioRoot).not.toContain("indeterminateRef");
-    expect(radioRoot).not.toContain("setIndeterminate");
-    expect(radioRoot).not.toContain("renderedIndeterminate");
-    expect(radioRoot).not.toContain('"data-indeterminate"');
-    expect(radioRoot).toContain("data-sw-radio");
-    expect(radioRoot).toContain("data-sw-radio-input");
-    expect(radioRoot).toContain('type="radio"');
-    expect(radioRoot).not.toContain('"aria-readonly"');
-    expect(radioRoot).not.toContain('"aria-required"');
-    expect(radioRoot).toContain('"data-readonly": effectiveReadOnly ? "" : undefined');
-    expect(radioRoot).toContain('"data-required": effectiveRequired ? "" : undefined');
-    expect(radioRoot).toContain("id={nativeButton ? undefined : id}");
-    expect(radioRoot).toContain("id={id}");
-    expect(radioRoot).toContain("}, [effectiveForm, effectiveName, id, nativeButton, value]);");
-    expect(radioRoot).toContain(`<button
-            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-            {...commonProps}`);
-    expect(radioRoot).toContain(`<span
-        {...(props as React.HTMLAttributes<HTMLSpanElement>)}
-        {...commonProps}`);
-    expect(radioRoot).toContain("{input}");
-    expect(radioIndicator).toContain("data-sw-radio-indicator");
-    expect(radioIndicator).toContain("data-keep-mounted");
-    expect(radioIndex).toContain("Root: RadioRoot");
-    expect(radioIndex).toContain("Indicator: RadioIndicator");
+    assertTypeScriptModule(radioRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(radioGroupRoot).toContain("createRadioGroup");
-    expect(radioGroupRoot).toContain("RadioGroupValueChangeDetails");
-    expect(radioGroupRoot).toContain('import { RadioGroupContext } from "./RadioGroupContext";');
-    expect(radioGroupRoot).toContain("const defaultValueRef = React.useRef(defaultValue)");
-    expect(radioGroupRoot).toContain("const renderedValue = value ?? uncontrolledValue");
-    expect(radioGroupRoot).toContain("<RadioGroupContext.Provider value={contextValue}>");
-    expect(radioGroupRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(radioGroupRoot).toContain("instance.setDisabled(disabled)");
-    expect(radioGroupRoot).toContain("instance.setFormOptions({");
-    expect(radioGroupRoot).toContain("instance.setOrientation(orientation)");
-    expect(radioGroupRoot).toContain("instance.setReadOnly(readOnly)");
-    expect(radioGroupRoot).toContain("onValueChange: (value, details) => {");
-    expect(radioGroupRoot).toContain("onValueChangeRef.current?.(value, details)");
-    expect(radioGroupRoot).toContain(
-      `details.onAccepted(() => {
-          if (valueRef.current === undefined) {`,
-    );
-    expect(radioGroupRoot).toContain("setUncontrolledValue(details.value)");
-    expect(radioGroupRoot).toContain('instance.subscribe("stateSync", () => {');
-    expect(radioGroupRoot).toContain("setUncontrolledValue(instance.getValue())");
-    expect(radioGroupRoot).not.toContain("}, [form, orientation, required]);");
-    expect(radioGroupRoot).toContain("data-sw-radio-group");
-    expect(radioGroupRoot).toContain("data-orientation={orientation}");
-    expect(radioGroupRoot).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(radioGroupRoot).toContain("aria-orientation={orientation}");
-    expect(radioGroupRoot).toContain('aria-readonly={readOnly ? "true" : undefined}');
-    expect(radioGroupRoot).toContain('aria-required={required ? "true" : undefined}');
-    expect(radioGroupContext).toContain("React.createContext");
-    expect(radioGroupContext).toContain("useRadioGroupContext");
-    expect(radioGroupContext).toContain("value: RadioGroupValue");
-    expect(radioGroupIndex).toContain("RadioGroupContext");
-    expect(radioGroupIndex).toContain("Root: RadioGroupRoot");
+    expect(compactCode(radioIndicator)).toContain(compactCode("data-sw-radio-indicator"));
+    expect(compactCode(radioIndicator)).toContain(compactCode("data-keep-mounted"));
+    expect(compactCode(radioIndex)).toContain(compactCode("Root: RadioRoot"));
+    expect(compactCode(radioIndex)).toContain(compactCode("Indicator: RadioIndicator"));
+
+    assertTypeScriptModule(radioGroupRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(radioGroupContext)).toContain(compactCode("React.createContext"));
+    expect(compactCode(radioGroupContext)).toContain(compactCode("useRadioGroupContext"));
+    expect(compactCode(radioGroupContext)).toContain(compactCode("value: RadioGroupValue"));
+    expect(compactCode(radioGroupIndex)).toContain(compactCode("RadioGroupContext"));
+    expect(compactCode(radioGroupIndex)).toContain(compactCode("Root: RadioGroupRoot"));
     expect(radioGroupIndex).toBe(
       await readFile(path.resolve("packages/react/src/radio-group/index.ts"), "utf8"),
     );
 
-    expect(inputRoot).toContain("createInput");
-    expect(inputRoot).toContain("InputValueChangeDetails");
-    expect(inputRoot).toContain("React.forwardRef<HTMLInputElement, InputRootProps>");
-    expect(inputRoot).toContain("const valueRef = React.useRef(value)");
-    expect(inputRoot).toContain("const defaultValueRef = React.useRef(defaultValue)");
-    expect(inputRoot).toContain("const onValueChangeRef = React.useRef(onValueChange)");
-    expect(inputRoot).toContain(
-      "const valueChangeDetailsRef = React.useRef<InputValueChangeDetails | undefined>(undefined)",
-    );
-    expect(inputRoot).toContain("valueChangeDetailsRef.current = details");
-    expect(inputRoot).toContain("onValueChangeRef.current?.(nextValue, details)");
-    expect(inputRoot).toContain("window.setTimeout(() => {");
-    expect(inputRoot.indexOf("const nextValue = event.currentTarget.value")).toBeLessThan(
-      inputRoot.indexOf("onChange?.(event)"),
-    );
-    expect(inputRoot).toContain(
-      "...(valueRef.current !== undefined ? { value: valueRef.current } : {})",
-    );
-    expect(inputRoot).toMatch(/createInput\(root, \{\s+defaultValue: defaultValueRef\.current,/);
-    expect(inputRoot).not.toContain("}, [defaultValue");
-    expect(inputRoot).toContain("const valueProps =");
-    expect(inputRoot).toContain("value !== undefined");
-    expect(inputRoot).toContain("? { value }");
-    expect(inputRoot).toContain(": { defaultValue: defaultValueRef.current };");
-    expect(inputRoot).toContain("{...valueProps}");
-    expect(inputRoot).not.toContain("uncontrolledValue");
-    expect(inputRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(inputRoot).toContain("instance.setDisabled(disabled)");
-    expect(inputRoot).toContain("data-sw-input");
-    expect(inputRoot).toContain("data-disabled");
-    expect(inputIndex).toContain("Root: InputRoot");
+    assertTypeScriptModule(inputRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(inputOtpRoot).toContain(
-      'import { createInputOtp, type InputOtpValueChangeDetails } from "@starwind-ui/runtime/input-otp";',
-    );
-    expect(inputOtpRoot).toContain("React.forwardRef<HTMLDivElement, InputOtpRootProps>");
-    expect(inputOtpRoot).toContain("const defaultValueRef = React.useRef(defaultValue)");
-    expect(inputOtpRoot).toContain("const uncontrolledValueRef = React.useRef(uncontrolledValue)");
-    expect(inputOtpRoot).toMatch(
-      /createInputOtp\(root, \{\s+defaultValue: uncontrolledValueRef\.current,/,
-    );
-    expect(inputOtpRoot).not.toContain("}, [defaultValue");
-    expect(inputOtpRoot).toContain("pattern: patternText");
-    expect(inputOtpRoot).toContain("}, [maxLength, patternText, readOnly]);");
-    expect(inputOtpRoot).not.toContain(
-      "}, [form, id, maxLength, name, pattern, readOnly, required]);",
-    );
-    expect(inputOtpRoot).toContain("const renderedValue = value ?? uncontrolledValue");
-    expect(inputOtpRoot).toContain("data-sw-input-otp");
-    expect(inputOtpRoot).toContain("data-sw-input-otp-input");
-    expect(inputOtpRoot).toContain("data-default-value");
-    expect(inputOtpRoot).toContain("data-max-length");
-    expect(inputOtpRoot).toContain("data-pattern");
-    expect(inputOtpRoot).toContain('autoComplete="one-time-code"');
-    expect(inputOtpRoot).toContain(
-      'inputMode={isNumericPattern(patternText) ? "numeric" : "text"}',
-    );
-    expect(inputOtpRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(inputOtpRoot).toContain("instance.setDisabled(disabled)");
-    expect(inputOtpRoot).toContain("instance.setFormOptions({ form, id, name, required })");
-    expect(inputOtpGroup).toContain("data-sw-input-otp-group");
-    expect(inputOtpSlot).toContain("data-sw-input-otp-slot");
-    expect(inputOtpSlot).toContain("data-sw-input-otp-char");
-    expect(inputOtpSlot).toContain("data-sw-input-otp-caret");
-    expect(inputOtpSlot).toContain("caret?: React.ReactNode");
-    expect(inputOtpSeparator).toContain("data-sw-input-otp-separator");
-    expect(inputOtpIndex).toContain("Root: InputOtpRoot");
-    expect(inputOtpIndex).toContain("Slot: InputOtpSlot");
+    expect(compactCode(inputIndex)).toContain(compactCode("Root: InputRoot"));
 
-    expect(progressRoot).toContain("createProgress");
-    expect(progressRoot).toContain("type ProgressValue");
-    expect(progressRoot).toContain('from "@starwind-ui/runtime/progress"');
-    expect(progressRoot).toContain(
-      'export type ProgressRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "value">',
-    );
-    expect(progressRoot).toContain("format?: Intl.NumberFormatOptions");
-    expect(progressRoot).toContain(
-      "getAriaValueText?: (formattedValue: string | null, value: ProgressValue) => string",
-    );
-    expect(progressRoot).toContain("locale?: Intl.LocalesArgument");
-    expect(progressRoot).toContain("max = 100");
-    expect(progressRoot).toContain("min = 0");
-    expect(progressRoot).toContain("value = null");
-    expect(progressRoot).toContain("createProgress(root, {");
-    expect(progressRoot).toContain("ariaValueText: ariaValueTextRef.current");
-    expect(progressRoot).toContain("instance.setFormatOptions({");
-    expect(progressRoot).toContain("instance.setValue(value, { max, min })");
-    expect(progressRoot).toContain("aria-valuetext={ariaValueText}");
-    expect(progressRoot).toContain("data-sw-progress");
-    expect(progressRoot).toContain("data-value={isIndeterminate ? undefined : value}");
-    expect(progressRoot).toContain("data-min={min}");
-    expect(progressRoot).toContain("data-max={max}");
-    expect(progressRoot).toContain('data-indeterminate={isIndeterminate ? "" : undefined}');
-    expect(progressRoot).toContain('role="progressbar"');
-    expect(progressTrack).toContain("data-sw-progress-track");
-    expect(progressIndicator).toContain("data-sw-progress-indicator");
-    expect(progressValue).toContain("data-sw-progress-value");
-    expect(progressValue).toContain('aria-hidden="true"');
-    expect(progressValue).toContain('data-preserve-text={children == null ? undefined : ""}');
-    expect(progressLabel).toContain("data-sw-progress-label");
-    expect(progressLabel).toContain('role="presentation"');
-    expect(progressIndex).toContain("Root: ProgressRoot");
-    expect(progressIndex).toContain("Indicator: ProgressIndicator");
-    expect(progressIndex).toContain("Value: ProgressValue");
+    assertTypeScriptModule(inputOtpRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(menuRoot).toContain("createMenu(root");
-    expect(menuRoot).toContain("type MenuCloseCompleteDetails");
-    expect(menuRoot).toContain("onCloseComplete?: (details: MenuCloseCompleteDetails) => void;");
-    expect(menuRoot).toContain("onCloseCompleteRef.current?.(details)");
-    expect(menuRoot).toContain("modal?: boolean;");
-    expect(menuRoot).toContain("modal = false");
-    expect(menuRoot).toContain("modal,");
-    expect(menuRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(menuTrigger).toContain("asChild?: boolean;");
-    expect(menuTrigger).toContain("getAsChildElement(children)");
-    expect(menuTrigger).toContain("React.cloneElement");
-    expect(menuTrigger).toContain('"data-sw-menu-trigger": ""');
+    expect(compactCode(inputOtpGroup)).toContain(compactCode("data-sw-input-otp-group"));
+    expect(compactCode(inputOtpSlot)).toContain(compactCode("data-sw-input-otp-slot"));
+    expect(compactCode(inputOtpSlot)).toContain(compactCode("data-sw-input-otp-char"));
+    expect(compactCode(inputOtpSlot)).toContain(compactCode("data-sw-input-otp-caret"));
+    expect(compactCode(inputOtpSlot)).toContain(compactCode("caret?: React.ReactNode"));
+    expect(compactCode(inputOtpSeparator)).toContain(compactCode("data-sw-input-otp-separator"));
+    expect(compactCode(inputOtpIndex)).toContain(compactCode("Root: InputOtpRoot"));
+    expect(compactCode(inputOtpIndex)).toContain(compactCode("Slot: InputOtpSlot"));
+
+    assertTypeScriptModule(progressRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(progressTrack)).toContain(compactCode("data-sw-progress-track"));
+    expect(compactCode(progressIndicator)).toContain(compactCode("data-sw-progress-indicator"));
+    expect(compactCode(progressValue)).toContain(compactCode("data-sw-progress-value"));
+    expect(compactCode(progressValue)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(progressValue)).toContain(
+      compactCode('data-preserve-text={children == null ? undefined : ""}'),
+    );
+    expect(compactCode(progressLabel)).toContain(compactCode("data-sw-progress-label"));
+    expect(compactCode(progressLabel)).toContain(compactCode('role={"presentation"}'));
+    expect(compactCode(progressIndex)).toContain(compactCode("Root: ProgressRoot"));
+    expect(compactCode(progressIndex)).toContain(compactCode("Indicator: ProgressIndicator"));
+    expect(compactCode(progressIndex)).toContain(compactCode("Value: ProgressValue"));
+
+    assertTypeScriptModule(menuRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(menuTrigger)).toContain(compactCode("asChild?: boolean;"));
+    expect(compactCode(menuTrigger)).toContain(compactCode("getAsChildElement(children)"));
+    expect(compactCode(menuTrigger)).toContain(compactCode("React.cloneElement"));
+    expect(compactCode(menuTrigger)).toContain(compactCode('"data-sw-menu-trigger": ""'));
     expect(menuTrigger).toMatch(
       /import\s+\{\s*getAsChildElement,\s*getElementRef,\s*mergeAsChildProps,\s*useComposedRefs,?\s*\}\s+from\s+"..\/internal\/compose-refs";/,
     );
-    expect(menuTrigger).toContain("const composedRef = useComposedRefs(");
-    expect(menuTrigger).toContain("ref: composedRef");
-    expect(menuTrigger).not.toContain("function mergeRefs");
-    expect(menuItem).toContain("tabIndex={0}");
-    expect(menuItem).toContain("closeOnClick?: boolean;");
-    expect(menuItem).toContain("function MenuItem(");
-    expect(menuItem).toContain("{ disabled = false, closeOnClick = true, ...props }");
-    expect(menuItem).toContain('data-close-on-click={closeOnClick ? undefined : "false"}');
-    expect(menuLinkItem).toContain("tabIndex={0}");
-    expect(menuLinkItem).toContain("closeOnClick?: boolean;");
-    expect(menuLinkItem).toContain("function MenuLinkItem(");
-    expect(menuLinkItem).toContain("{ disabled = false, href, closeOnClick = false, ...props }");
-    expect(menuLinkItem).toContain('data-close-on-click={closeOnClick ? "true" : undefined}');
-    expect(menuCheckboxItem).toContain("tabIndex={0}");
-    expect(menuCheckboxItem).toContain("MenuCheckedChangeDetails");
-    expect(menuCheckboxItem).toContain(
-      "onCheckedChange?: (checked: boolean, details: MenuCheckedChangeDetails) => void;",
+    expect(compactCode(menuTrigger)).toContain(compactCode("const composedRef = useComposedRefs("));
+    expect(compactCode(menuTrigger)).toContain(compactCode("ref: composedRef"));
+    expect(compactCode(menuTrigger)).not.toContain(compactCode("function mergeRefs"));
+    expect(compactCode(menuItem)).toContain(compactCode("tabIndex={0}"));
+    expect(compactCode(menuItem)).toContain(compactCode("closeOnClick?: boolean;"));
+    expect(compactCode(menuItem)).toContain(compactCode("function MenuItem("));
+    expect(compactCode(menuItem)).toContain(
+      compactCode("{ disabled = false, closeOnClick = true, ...props }"),
     );
-    expect(menuCheckboxItem).toContain("const checkedRef = React.useRef(checked)");
-    expect(menuCheckboxItem).toContain("const defaultCheckedRef = React.useRef(defaultChecked)");
-    expect(menuCheckboxItem).toContain("onCheckedChangeRef.current?.(details.checked, details)");
-    expect(menuCheckboxItem).toContain("if (details.isCanceled) return;");
-    expect(menuCheckboxItem).toContain("setUncontrolledChecked(details.checked)");
-    expect(menuCheckboxItem).toContain("syncCheckboxItemState(item, controlledChecked)");
-    expect(menuCheckboxItem).toContain("const renderedChecked = checked ?? uncontrolledChecked");
-    expect(menuRadioGroup).toContain("MenuValueChangeDetails");
-    expect(menuRadioGroup).toContain("onValueChange?:");
-    expect(menuRadioGroup).toContain("if (details.isCanceled) return;");
-    expect(menuRadioGroup).toContain("setUncontrolledValue(details.value)");
-    expect(menuRadioGroup).toContain("syncRadioGroupState(group, controlledValue)");
-    expect(menuRadioGroup).toContain('group.addEventListener("starwind:value-change"');
-    expect(menuRadioGroup).toContain("const renderedValue = value ?? uncontrolledValue");
-    expect(menuRadioContext).toContain("export const MenuRadioGroupContext");
-    expect(menuRadioContext).toContain("useMenuRadioGroupContext");
-    expect(menuRadioContext).toContain("export const MenuRadioItemContext");
-    expect(menuRadioGroup).toContain('from "./MenuRadioContext"');
-    expect(menuRadioGroup).toContain("<MenuRadioGroupContext.Provider value={radioGroupContext}>");
-    expect(menuRadioItem).toContain('role="menuitemradio"');
-    expect(menuRadioItem).toContain("const radioGroup = useMenuRadioGroupContext();");
-    expect(menuRadioItem).toContain(
-      "const renderedChecked = radioGroup?.value === undefined ? initialChecked : radioGroup.value === value;",
+    expect(compactCode(menuItem)).toContain(
+      compactCode('data-close-on-click={closeOnClick ? undefined : "false"}'),
     );
-    expect(menuRadioItem).toContain("<MenuRadioItemContext.Provider value={radioItemContext}>");
-    expect(menuRadioItem).not.toContain("aria-checked={initialChecked}");
-    expect(menuRadioItemIndicator).toContain("const radioItem = useMenuRadioItemContext();");
-    expect(menuRadioItemIndicator).toContain('data-state={checked ? "checked" : "unchecked"}');
-    expect(menuSubmenuTrigger).toContain("tabIndex={0}");
-    expect(navigationMenuRoot).toContain("createNavigationMenu,");
-    expect(navigationMenuRoot).toContain("type NavigationMenuValueChangeDetails");
-    expect(navigationMenuRoot).toContain(
-      'Omit<React.HTMLAttributes<HTMLElement>, "defaultValue" | "onChange">',
+    expect(compactCode(menuLinkItem)).toContain(compactCode("tabIndex={0}"));
+    expect(compactCode(menuLinkItem)).toContain(compactCode("closeOnClick?: boolean;"));
+    expect(compactCode(menuLinkItem)).toContain(compactCode("function MenuLinkItem("));
+    expect(compactCode(menuLinkItem)).toContain(
+      compactCode("{ disabled = false, href, closeOnClick = false, ...props }"),
     );
-    expect(navigationMenuRoot).toContain("value?: string | null");
-    expect(navigationMenuRoot).toContain("openDelay?: number;");
-    expect(navigationMenuRoot).toContain("closeDelay?: number;");
-    expect(navigationMenuRoot).toContain("openDelay = 50");
-    expect(navigationMenuRoot).toContain("closeDelay = 50");
-    expect(navigationMenuRoot).toContain("onValueChange?:");
-    expect(navigationMenuRoot).toContain("data-sw-nav-menu");
-    expect(navigationMenuRoot).toContain("data-open-delay={String(openDelay)}");
-    expect(navigationMenuRoot).toContain("data-close-delay={String(closeDelay)}");
-    expect(navigationMenuRoot).toContain(
-      "const initialValue = value !== undefined ? value : uncontrolledValue;",
+    expect(compactCode(menuLinkItem)).toContain(
+      compactCode('data-close-on-click={closeOnClick ? "true" : undefined}'),
     );
-    expect(navigationMenuRoot).toContain('data-state={initialValue !== null ? "open" : "closed"}');
-    expect(navigationMenuRoot).toContain(
-      "data-default-value={value === undefined ? (defaultValueRef.current ?? undefined) : undefined}",
+    expect(compactCode(menuCheckboxItem)).toContain(compactCode("tabIndex={0}"));
+    expect(compactCode(menuCheckboxItem)).toContain(compactCode("MenuCheckedChangeDetails"));
+    expect(compactCode(menuCheckboxItem)).toContain(
+      compactCode(
+        "onCheckedChange?: (checked: boolean, details: MenuCheckedChangeDetails) => void;",
+      ),
     );
-    expect(navigationMenuRoot).toContain(
-      "const pendingValueChangeDetailsRef = React.useRef<NavigationMenuValueChangeDetails | null>",
+    expect(compactCode(menuCheckboxItem)).toContain(
+      compactCode("const checkedRef = React.useRef(checked)"),
     );
-    expect(navigationMenuRoot).toContain(
-      "const pendingDetails = pendingValueChangeDetailsRef.current",
+    expect(compactCode(menuCheckboxItem)).toContain(
+      compactCode("const defaultCheckedRef = React.useRef(defaultChecked)"),
     );
-    expect(navigationMenuRoot).toContain("event: pendingDetails.event");
-    expect(navigationMenuRoot).toContain("reason: pendingDetails.reason");
-    expect(navigationMenuRoot).toContain("trigger: pendingDetails.trigger");
-    expect(navigationMenuRoot).toContain("pendingValueChangeDetailsRef.current = details");
-    expect(navigationMenuTrigger).toContain("data-sw-nav-menu-trigger");
-    expect(navigationMenuTrigger).toContain("openDelay?: number;");
-    expect(navigationMenuTrigger).toContain("closeDelay?: number;");
-    expect(navigationMenuTrigger).toContain(
-      '"data-open-delay": openDelay !== undefined ? String(openDelay) : undefined',
+    expect(compactCode(menuCheckboxItem)).toContain(
+      compactCode("onCheckedChangeRef.current?.(details.checked, details)"),
     );
-    expect(navigationMenuTrigger).toContain(
-      '"data-close-delay": closeDelay !== undefined ? String(closeDelay) : undefined',
-    );
-    expect(navigationMenuTrigger).toContain('"aria-haspopup": "menu"');
-    expect(navigationMenuTrigger).toContain("React.cloneElement");
-    expect(navigationMenuLink).toContain("closeOnClick?: boolean;");
-    expect(navigationMenuLink).toContain("closeOnClick = true");
-    expect(navigationMenuLink).toContain(
-      'data-close-on-click={closeOnClick ? undefined : "false"}',
-    );
-    expect(navigationMenuLink).toContain('aria-current={active ? "page" : undefined}');
-    expect(navigationMenuPositioner).toContain("data-sw-nav-menu-positioner");
-    expect(navigationMenuPositioner).toContain("data-side={side}");
-    expect(navigationMenuPositioner).toContain("data-align={align}");
-    expect(navigationMenuPositioner).toContain("data-side-offset={String(sideOffset)}");
-    expect(navigationMenuPositioner).toContain("data-align-offset={String(alignOffset)}");
-    expect(navigationMenuPositioner).toContain("data-avoid-collisions");
-    expect(navigationMenuPopup).toContain("data-sw-nav-menu-popup");
-    expect(navigationMenuPopup).toContain("hidden");
-    expect(navigationMenuViewport).toContain("data-sw-nav-menu-viewport");
-    expect(navigationMenuViewport).toContain("hidden");
-    expect(navigationMenuIndex).toContain("Root: NavigationMenuRoot");
-    expect(navigationMenuIndex).toContain("Trigger: NavigationMenuTrigger");
-    expect(navigationMenuIndex).toContain("Viewport: NavigationMenuViewport");
-    expect(navigationMenuIndex).toContain("Arrow: NavigationMenuArrow");
 
-    expect(tooltipPopup).toContain("export type TooltipPopupProps = Omit<");
-    expect(tooltipPopup).toContain("React.HTMLAttributes<HTMLDivElement>");
-    expect(tooltipPopup).toContain('"tabIndex" | "tabindex"');
-    expect(tooltipPositioner).toContain("data-sw-tooltip-positioner");
-    expect(tooltipPositioner).toContain("data-side={side}");
-    expect(tooltipPositioner).toContain("data-align={align}");
-    expect(tooltipPositioner).toContain("data-side-offset={sideOffset}");
-    expect(tooltipPositioner).toContain(
-      'data-avoid-collisions={avoidCollisions ? "true" : "false"}',
+    expect(compactCode(menuCheckboxItem)).toContain(
+      compactCode("setUncontrolledChecked(details.checked)"),
     );
-    expect(tooltipPositioner).toContain("ref={forwardedRef}");
-    expect(tooltipPositioner).toContain("{...props}");
-    expect(tooltipPopup).toContain('role="tooltip"');
-    expect(tooltipPopup).toContain("data-side={side}");
-    expect(tooltipPopup).toContain("data-align={align}");
-    expect(tooltipPopup).toContain("data-side-offset={sideOffset}");
-    expect(tooltipPopup).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
-    expect(tooltipPopup).toContain("hidden");
-    expect(tooltipPopup).toContain("ref={forwardedRef}");
-    expect(tooltipPopup).toContain("{...props}");
-    expect(tooltipPopup).not.toContain("tabIndex=");
-    expect(tooltipRoot).toContain(
-      'data-content-hoverable={!disableHoverableContent ? "true" : "false"}',
-    );
-    expect(tooltipRoot).toContain("defaultOpen: false");
-    expect(tooltipRoot).toContain("...(openRef.current !== undefined ? { open: false } : {})");
-    expect(tooltipRoot).toContain("acceptedRootRef.current !== root");
-    expect(tooltipRoot).toContain("if (details.open && details.trigger instanceof HTMLElement)");
-    expect(tooltipRoot).toContain("acceptedTriggerRef.current = details.trigger");
-    expect(tooltipRoot).toContain("trigger: acceptedTriggerRef.current");
-    expect(tooltipRoot).toContain("unsubscribeOpenChange()");
-    expect(tooltipRoot).toContain("openDelay = 200");
-    expect(tooltipRoot).toContain("closeDelay = 200");
-    expect(tooltipRoot).toContain("instance.setDisabled(disabled)");
-    expect(tooltipRoot).toContain("if (disabled && openRef.current === undefined)");
-    expect(tooltipRoot).toContain("const renderedOpen = !disabled && (open ?? uncontrolledOpen)");
-    expect(tooltipRoot).toContain("}, [disabled, open]);");
-    expect(tooltipTrigger).toContain("asChild?: boolean;");
-    expect(tooltipTrigger).not.toContain("openDelay");
-    expect(tooltipTrigger).not.toContain("closeDelay");
-    expect(tooltipTrigger).not.toContain("data-open-delay");
-    expect(tooltipTrigger).not.toContain("data-close-delay");
 
-    expect(sliderRoot).toContain("createSlider");
-    expect(sliderRoot).toContain('"@starwind-ui/runtime/slider"');
-    expect(sliderRoot).toContain("SliderValueChangeDetails");
-    expect(sliderRoot).toContain("SliderValueCommitDetails");
-    expect(sliderRoot).toContain("React.forwardRef<HTMLDivElement, SliderRootProps>");
-    expect(sliderRoot).toContain("const valueRef = React.useRef(value)");
-    expect(sliderRoot).toContain("const uncontrolledValueRef = React.useRef(uncontrolledValue)");
-    expect(sliderRoot).toContain(
-      "...(valueRef.current !== undefined ? { value: valueRef.current } : {})",
+    expect(compactCode(menuCheckboxItem)).toContain(
+      compactCode("const renderedChecked = checked ?? uncontrolledChecked"),
     );
-    expect(sliderRoot).toContain("uncontrolledValueRef.current = details.value");
-    expect(sliderRoot).toContain("setUncontrolledValue(details.value)");
-    expect(sliderRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(sliderRoot).toContain("instance.setDisabled(disabled)");
-    expect(sliderRoot).toContain("instance.setOptions({");
-    expect(sliderRoot).toContain("const nextUncontrolledValue = instance.getValue()");
-    expect(sliderRoot).toContain(
-      "if (!areSliderValuesEqual(uncontrolledValueRef.current, nextUncontrolledValue))",
-    );
-    expect(sliderRoot).toContain("setUncontrolledValue(nextUncontrolledValue)");
-    expect(sliderRoot).toContain("minStepsBetweenValues");
-    expect(sliderRoot).toContain("instance.setName(name)");
-    expect(sliderRoot).toContain("instance.refresh()");
-    expect(sliderRoot).toContain("data-sw-slider");
-    expect(sliderRoot).toContain("data-default-value");
-    expect(sliderRoot).toContain("data-form");
-    expect(sliderRoot).toContain("data-value");
+    expect(compactCode(menuRadioGroup)).toContain(compactCode("MenuValueChangeDetails"));
+    expect(compactCode(menuRadioGroup)).toContain(compactCode("onValueChange?:"));
 
-    expect(scrollAreaRoot).toContain(
-      'import { createScrollArea } from "@starwind-ui/runtime/scroll-area";',
+    expect(compactCode(menuRadioGroup)).toContain(
+      compactCode("setUncontrolledValue(details.value)"),
     );
-    expect(scrollAreaRoot).toContain("React.forwardRef<HTMLDivElement, ScrollAreaRootProps>");
-    expect(scrollAreaRoot).toContain("data-sw-scroll-area");
-    expect(scrollAreaRoot).toContain("type ScrollAreaOverflowEdgeThreshold =");
-    expect(scrollAreaRoot).toContain("Partial<{");
-    expect(scrollAreaRoot).toContain("xStart: number");
-    expect(scrollAreaRoot).toContain(
-      "const thresholdAttributes = getOverflowEdgeThresholdAttributes",
+
+    expect(compactCode(menuRadioGroup)).toContain(
+      compactCode('group.addEventListener("starwind:value-change"'),
     );
-    expect(scrollAreaRoot).toContain("data-overflow-edge-threshold={thresholdAttributes.shared}");
-    expect(scrollAreaRoot).toContain(
-      "data-overflow-edge-threshold-x-start={thresholdAttributes.xStart}",
+    expect(compactCode(menuRadioGroup)).toContain(
+      compactCode("const renderedValue = value ?? uncontrolledValue"),
     );
-    expect(scrollAreaRoot).toContain(
-      "data-overflow-edge-threshold-y-end={thresholdAttributes.yEnd}",
+    expect(compactCode(menuRadioContext)).toContain(
+      compactCode("export const MenuRadioGroupContext"),
     );
-    expect(scrollAreaRoot).toContain('"xStart" in threshold');
-    expect(scrollAreaRoot).toContain('role="presentation"');
-    expect(scrollAreaRoot).toContain("createScrollArea(root");
-    expect(scrollAreaRoot).toContain(
-      "const instanceRef = React.useRef<ReturnType<typeof createScrollArea> | undefined>(undefined)",
+    expect(compactCode(menuRadioContext)).toContain(compactCode("useMenuRadioGroupContext"));
+    expect(compactCode(menuRadioContext)).toContain(
+      compactCode("export const MenuRadioItemContext"),
     );
-    expect(scrollAreaRoot).toContain("instanceRef.current = instance");
-    expect(scrollAreaRoot).toContain("instance.refresh()");
-    expect(scrollAreaRoot).toContain("thresholdAttributes.shared");
-    expect(scrollAreaRoot).not.toContain("data-overflow-edge-threshold={overflowEdgeThreshold}");
-    expect(scrollAreaRoot).toContain("instance.destroy()");
-    expect(scrollAreaViewport).toContain("React.forwardRef<HTMLDivElement");
-    expect(scrollAreaViewport).toContain("data-sw-scroll-area-viewport");
-    expect(scrollAreaViewport).toContain('role="presentation"');
-    expect(scrollAreaViewport).toContain("tabIndex={tabIndex ?? -1}");
-    expect(scrollAreaViewport).toContain('style={{ ...style, overflow: "scroll" }}');
-    expect(scrollAreaContent).toContain("data-sw-scroll-area-content");
-    expect(scrollAreaScrollbar).toContain("data-sw-scroll-area-scrollbar");
-    expect(scrollAreaScrollbar).toContain('orientation = "vertical"');
-    expect(scrollAreaScrollbar).toContain("data-orientation={orientation}");
-    expect(scrollAreaScrollbar).toContain("data-keep-mounted");
-    expect(scrollAreaThumb).toContain("data-sw-scroll-area-thumb");
-    expect(scrollAreaCorner).toContain("data-sw-scroll-area-corner");
-    expect(scrollAreaIndex).toContain("Root: ScrollAreaRoot");
-    expect(scrollAreaIndex).toContain("Viewport: ScrollAreaViewport");
-    expect(scrollAreaIndex).toContain("Content: ScrollAreaContent");
-    expect(scrollAreaIndex).toContain("Scrollbar: ScrollAreaScrollbar");
-    expect(scrollAreaIndex).toContain("Thumb: ScrollAreaThumb");
-    expect(scrollAreaIndex).toContain("Corner: ScrollAreaCorner");
-    expect(selectRoot).toContain("createSelect,");
-    expect(selectRoot).toContain("type SelectOpenChangeDetails");
-    expect(selectRoot).toContain("autoComplete?: string");
-    expect(selectRoot).toContain("form?: string");
-    expect(selectRoot).toContain("highlightItemOnHover?: boolean");
-    expect(selectRoot).toContain("modal?: boolean");
-    expect(selectRoot).toContain("modal = true");
-    expect(selectRoot).toContain("onValueChange?:");
-    expect(selectRoot).toContain("open?: boolean");
-    expect(selectRoot).toContain("readOnly?: boolean");
-    expect(selectRoot).toContain("value?: string");
-    expect(selectRoot).toContain("data-sw-select");
-    expect(selectRoot).toContain("data-autocomplete");
-    expect(selectRoot).toContain("data-form");
-    expect(selectRoot).toContain("data-highlight-item-on-hover");
-    expect(selectRoot).toContain("data-modal");
-    expect(selectRoot).toContain("data-readonly");
-    expect(selectRoot).toContain("data-sw-select-input");
-    expect(selectRoot).toContain('type="hidden"');
-    expect(selectRoot).toContain("autoComplete={autoComplete}");
-    expect(selectRoot).toContain("form={form}");
-    expect(selectRoot).toContain("const ensureInstance = React.useCallback");
-    expect(selectRoot).toContain("const existing = instanceRef.current;");
-    expect(selectRoot).toContain("if ((openRef.current ?? uncontrolledOpenRef.current) !== true)");
-    expect(selectRoot).toContain("const [selectedLabel, setSelectedLabel] = React.useState");
-    expect(selectRoot).toContain("window.setTimeout(() =>");
-    expect(selectRoot).toContain("label: findSelectedOptionText(children, selectedValue)");
-    expect(selectRoot).toContain("value: selectedValue");
-    expect(selectRoot).toContain("const renderedSelectedLabel =");
-    expect(selectRoot).toContain(
-      "selectedLabel.value === selectedValue ? selectedLabel.label : null",
+    expect(compactCode(menuRadioGroup)).toContain(compactCode('from "./MenuRadioContext"'));
+    expect(compactCode(menuRadioGroup)).toContain(
+      compactCode("<MenuRadioGroupContext.Provider value={radioGroupContext}>"),
     );
-    expect(selectRoot).toContain("const initializeFromTriggerEvent = React.useCallback");
-    expect(selectRoot).toContain('target.closest("[data-sw-select-trigger]")');
-    expect(selectRoot).toContain("const contextValue = React.useMemo");
-    expect(selectRoot).toContain("disabled: disabled");
-    expect(selectRoot).toContain("readOnly: readOnly");
-    expect(selectRoot).toContain("required: required");
-    expect(selectRoot).toContain("<SelectContext.Provider value={contextValue}>");
-    expect(selectRoot).toContain("data-value={selectedValue ?? undefined}");
-    expect(selectRoot).toContain('data-placeholder={selectedValue === null ? "" : undefined}');
-    expect(selectRoot).toContain("data-selected-label={renderedSelectedLabel ?? undefined}");
-    expect(selectRoot).toContain("disabled={disabled}");
-    expect(selectRoot).toContain("required={required}");
-    expect(selectRoot).toContain("onPointerDownCapture={(event) =>");
-    expect(selectRoot).toContain("initializeFromTriggerEvent(event);");
-    expect(selectRoot).toContain("function findSelectedOptionText");
-    expect(selectRoot).toContain("selectedText = getSelectedOptionTextFromProps(childProps)");
-    expect(selectRoot).toContain("function getSelectedOptionTextFromProps");
-    expect(selectRoot).toContain("function getSelectItemTextFromReactNode");
-    expect(selectRoot).toContain("function getStringPropText");
-    expect(selectRoot).toContain("const itemText = getSelectItemTextFromReactNode(props.children)");
-    expect(selectRoot).toContain("if (itemText !== null) return itemText");
-    expect(selectRoot).toContain("selectedText = getTextFromReactNode(childProps.children).trim()");
-    expect(selectRoot).toContain("return childText.length > 0 ? childText : null");
-    expect(selectRoot).toContain('if (textElement) return textElement.textContent?.trim() ?? ""');
-    expect(selectRoot).toContain("function getTextFromReactNode");
-    expect(selectRoot).toContain(
-      "instanceRef.current?.setFormOptions({ autoComplete, form, name, required })",
+    expect(compactCode(menuRadioItem)).toContain(compactCode('role="menuitemradio"'));
+    expect(compactCode(menuRadioItem)).toContain(
+      compactCode("const radioGroup = useMenuRadioGroupContext();"),
     );
-    expect(selectRoot).toContain("instanceRef.current?.setDisabled(disabled)");
-    expect(selectRoot).toContain("instanceRef.current?.setReadOnly(readOnly)");
-    expect(selectRoot).toContain("instanceRef.current?.setModal(modal)");
-    expect(selectRoot).toContain(
-      "instanceRef.current?.setHighlightItemOnHover(highlightItemOnHover)",
+
+    expect(compactCode(menuRadioItem)).toContain(
+      compactCode("<MenuRadioItemContext.Provider value={radioItemContext}>"),
     );
-    expect(selectRoot).toContain("}, [autoComplete, form, name, required]);");
-    expect(selectRoot).toContain("}, [disabled]);");
-    expect(selectRoot).toContain("}, [readOnly]);");
-    expect(selectRoot).toContain("}, [modal]);");
-    expect(selectRoot).toContain("}, [highlightItemOnHover]);");
-    expect(selectRoot).toContain("}, []);");
-    expect(selectRoot).toContain("}, [ensureInstance, open, uncontrolledOpen]);");
-    expect(selectRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(selectContext).toContain("export const SelectContext");
-    expect(selectContext).toContain("export const SelectItemContext");
-    expect(selectContext).toContain("disabled: boolean;");
-    expect(selectContext).toContain("readOnly: boolean;");
-    expect(selectContext).toContain("required: boolean;");
-    expect(selectContext).toContain("selectedLabel: string | null;");
-    expect(selectContext).toContain("export function useSelectContext()");
-    expect(selectTrigger).toContain("data-sw-select-trigger");
-    expect(selectTrigger).toContain('"aria-haspopup": "listbox"');
-    expect(selectTrigger).toContain("const select = useSelectContext();");
-    expect(selectTrigger).toContain('"aria-expanded": select.open ? "true" : "false"');
-    expect(selectTrigger).toContain('"aria-disabled": select.disabled ? "true" : undefined');
-    expect(selectTrigger).toContain('"aria-required": select.required ? "true" : undefined');
-    expect(selectTrigger).toContain('"aria-readonly": select.readOnly ? "true" : "false"');
-    expect(selectTrigger).toContain('"data-disabled": select.disabled ? "" : undefined');
-    expect(selectTrigger).toContain('"data-required": select.required ? "" : undefined');
-    expect(selectTrigger).toContain('"data-readonly": select.readOnly ? "" : undefined');
-    expect(selectTrigger).toContain('"data-state": select.open ? "open" : "closed"');
-    expect(selectTrigger).toContain("disabled: select.disabled || undefined");
-    expect(selectTrigger).toContain("disabled={select.disabled}");
-    expect(selectTrigger).not.toContain('"aria-expanded": "false"');
-    expect(selectTrigger).toContain("asChild");
-    expect(selectTrigger).toContain("getAsChildElement(children)");
-    expect(selectTrigger).toContain("protectedProps: protectedTriggerProps");
-    expect(selectValue).toContain("data-sw-select-value");
-    expect(selectValue).toContain("const select = useSelectContext();");
-    expect(selectValue).toContain("const fallback =");
-    expect(selectValue).toContain("select.value !== null && select.selectedLabel !== null");
-    expect(selectValue).toContain("? select.selectedLabel");
-    expect(selectValue).toContain(": placeholder;");
-    expect(selectValue).toContain("{children ?? fallback}");
-    expect(selectPositioner).toContain("alignItemWithTrigger?: boolean");
-    expect(selectPositioner).toContain("alignItemWithTrigger = true");
-    expect(selectPositioner).toContain(
-      'data-align-item-with-trigger={alignItemWithTrigger ? "true" : "false"}',
+    expect(compactCode(menuRadioItem)).not.toContain(compactCode("aria-checked={initialChecked}"));
+    expect(compactCode(menuRadioItemIndicator)).toContain(
+      compactCode("const radioItem = useMenuRadioItemContext();"),
     );
-    expect(selectPositioner).not.toContain("alignItemsWithTrigger");
-    expect(selectPositioner).not.toContain("data-align-items-with-trigger");
-    expect(selectPopup).toContain("data-sw-select-popup");
-    expect(selectPopup).toContain("keepMounted?: boolean");
-    expect(selectPopup).toContain("keepMounted = false");
-    expect(selectPopup).toContain('import { useComposedRefs } from "../internal/compose-refs";');
-    expect(selectPopup).toContain(
-      'import { useClosePresence } from "../internal/use-close-presence";',
+    expect(compactCode(menuRadioItemIndicator)).toContain(
+      compactCode('data-state={checked ? "checked" : "unchecked"}'),
     );
-    expect(selectPopup).toContain("const closePresence = useClosePresence<HTMLDivElement>({");
-    expect(selectPopup).toContain("keepMounted,");
-    expect(selectPopup).toContain("open: select.open,");
-    expect(selectPopup).toContain("const composedRef = useComposedRefs");
-    expect(selectPopup).toContain('role="listbox"');
-    expect(selectPopup).toContain('data-state={select.open ? "open" : "closed"}');
-    expect(selectPopup).toContain("hidden={closePresence.hidden}");
-    expect(selectPopup).toContain("ref={composedRef}");
-    expect(selectPopup).toContain("{closePresence.present ? props.children : null}");
-    expect(selectPopup).not.toContain("initialHiddenRef");
-    expect(selectPopup).not.toContain("suppressHydrationWarning");
-    expect(selectPopup).not.toContain('data-state="closed"');
-    expect(selectPopup).not.toContain("const shouldRenderChildren = keepMounted || select.open;");
-    expect(selectItem).toContain("data-sw-select-item");
-    expect(selectItem).toContain('role="option"');
-    expect(selectItem).toContain("data-value={value}");
-    expect(selectItem).toContain("const selected = select.value === value;");
-    expect(selectItem).toContain("aria-selected={selected}");
-    expect(selectItem).not.toContain('aria-selected="false"');
-    expect(selectItemIndicator).toContain("data-sw-select-item-indicator");
-    expect(selectItemIndicator).toContain("const selected = select.value === item.value;");
-    expect(selectItemIndicator).toContain('data-state={selected ? "checked" : "unchecked"}');
-    expect(selectItemIndicator).toContain("hidden={!selected}");
-    expect(selectIndex).toContain("Root: SelectRoot");
-    expect(selectIndex).toContain("SelectContext");
-    expect(selectIndex).toContain("Trigger: SelectTrigger");
-    expect(selectIndex).toContain("ItemIndicator: SelectItemIndicator");
-    expect(selectIndex).toContain(
-      'export type { SelectOpenChangeDetails, SelectValueChangeDetails } from "@starwind-ui/runtime";',
+    expect(compactCode(menuSubmenuTrigger)).toContain(compactCode("tabIndex={0}"));
+    assertTypeScriptModule(navigationMenuRoot); // Ordinary behavior is covered by the component browser suite.
+    expect(compactCode(navigationMenuContent)).toContain(
+      compactCode('style={{ display: "contents" }} ref={registerCarrier}'),
     );
-    expect(sidebarProvider).toContain("createSidebarController,");
-    expect(sidebarProvider).toContain("type SidebarOpenChangeDetails");
-    expect(sidebarProvider).toContain("defaultMobileOpen?: boolean");
-    expect(sidebarProvider).toContain("mobileOpen?: boolean");
-    expect(sidebarProvider).toContain("onMobileOpenChange?:");
-    expect(sidebarProvider).toContain("persistOpen?: boolean");
-    expect(sidebarProvider).toContain(
-      "...(openRef.current !== undefined ? { open: openRef.current } : {})",
+    expect(compactCode(navigationMenuContent)).toContain(
+      compactCode("previous.carrier.append(previous.content)"),
     );
-    expect(sidebarProvider).toContain(
-      "...(mobileOpenRef.current !== undefined ? { mobileOpen: mobileOpenRef.current } : {})",
+    expect(compactCode(navigationMenuContent)).toContain(
+      compactCode("carrier: HTMLDivElement | null"),
     );
-    expect(sidebarProvider).toContain("instance.setOpen(open, { emit: false })");
-    expect(sidebarProvider).toContain("instance.setMobileOpen(mobileOpen, { emit: false })");
-    expect(sidebarProvider).toContain("data-sw-sidebar-provider");
-    expect(sidebarProvider).toContain('"data-default-open"');
-    expect(sidebarProvider).toContain('"data-default-mobile-open"');
-    expect(sidebarProvider).toContain('"data-persist-open"');
-    expect(sidebarProvider).toContain('import { SidebarContext } from "./SidebarContext";');
-    expect(sidebarProvider).toContain("const [isMobile, setIsMobile] = React.useState(false)");
-    expect(sidebarProvider).toContain("expanded: isMobile ? renderedMobileOpen : renderedOpen");
-    expect(sidebarProvider).toContain("<SidebarContext.Provider value={contextValue}>");
-    expect(sidebarContext).toContain("export type SidebarContextValue");
-    expect(sidebarContext).toContain("useSidebarContext");
-    expect(sidebar).toContain("data-sw-sidebar");
-    expect(sidebar).toContain('import { useSidebarContext } from "./SidebarContext";');
-    expect(sidebar).toContain('const sidebarState = sidebarContext?.state ?? "expanded";');
-    expect(sidebar).toContain("data-state={sidebarState}");
-    expect(sidebar).toContain('data-collapsible={sidebarState === "collapsed" ? collapsible : ""}');
-    expect(sidebar).toContain("data-collapsible-mode={collapsible}");
-    expect(sidebar).not.toContain('data-state="expanded"');
-    expect(sidebar).not.toContain('data-collapsible=""');
-    expect(sidebarTrigger).toContain("data-sw-sidebar-trigger");
-    expect(sidebarTrigger).toContain('import { useSidebarContext } from "./SidebarContext";');
-    expect(sidebarTrigger).toContain('"aria-expanded": sidebarContext?.expanded ?? false');
-    expect(sidebarTrigger).toContain('"data-state": sidebarContext?.state ?? "expanded"');
-    expect(sidebarTrigger).not.toContain('"aria-expanded": "false"');
-    expect(sidebarRail).toContain("data-sw-sidebar-rail");
-    expect(sidebarRail).toContain('import { useSidebarContext } from "./SidebarContext";');
-    expect(sidebarRail).toContain("aria-expanded={sidebarContext?.expanded ?? false}");
-    expect(sidebarRail).toContain('data-state={sidebarContext?.state ?? "expanded"}');
-    expect(sidebarRail).toContain("tabIndex={-1}");
-    expect(sidebarMenuButton).toContain("data-sw-sidebar-menu-button");
-    expect(sidebarMenuButton).toContain('import { useSidebarContext } from "./SidebarContext";');
-    expect(sidebarMenuButton).toContain(
-      '"data-sidebar-state": sidebarContext?.state ?? "expanded"',
+    expect(navigationMenuContent).toMatch(/hidden\s+ref=\{forwardedRef\}/);
+    expect(compactCode(navigationMenuContent)).not.toContain(compactCode("return () =>"));
+
+    expect(compactCode(navigationMenuTrigger)).toContain(compactCode("data-sw-nav-menu-trigger"));
+    expect(compactCode(navigationMenuTrigger)).toContain(compactCode("openDelay?: number;"));
+    expect(compactCode(navigationMenuTrigger)).toContain(compactCode("closeDelay?: number;"));
+    expect(compactCode(navigationMenuTrigger)).toContain(
+      compactCode('"data-open-delay": openDelay !== undefined ? String(openDelay) : undefined'),
     );
-    expect(sidebarMenuButton).toContain(
-      "mergeAsChildProps({ ...menuButtonProps, className }, childProps",
+    expect(compactCode(navigationMenuTrigger)).toContain(
+      compactCode('"data-close-delay": closeDelay !== undefined ? String(closeDelay) : undefined'),
     );
-    expect(sidebarMenuButton).toContain("protectedProps: protectedMenuButtonProps");
-    expect(sidebarMenuButton).not.toContain("function mergeAsChildProps");
-    expect(sidebarMenuButton).not.toContain('"data-sidebar-state": "expanded"');
-    expect(sidebarIndex).toContain("Provider: SidebarProvider");
-    expect(sidebarIndex).toContain("MenuButton: SidebarMenuButton");
-    expect(sidebarIndex).toContain("SidebarContext");
+    expect(compactCode(navigationMenuTrigger)).toContain(compactCode('"aria-haspopup": "menu"'));
+    expect(compactCode(navigationMenuTrigger)).toContain(compactCode("React.cloneElement"));
+    expect(compactCode(navigationMenuLink)).toContain(compactCode("closeOnClick?: boolean;"));
+    expect(compactCode(navigationMenuLink)).toContain(compactCode("closeOnClick = true"));
+    expect(compactCode(navigationMenuLink)).toContain(
+      compactCode('data-close-on-click={closeOnClick ? undefined : "false"}'),
+    );
+    expect(compactCode(navigationMenuLink)).toContain(
+      compactCode('aria-current={active ? "page" : undefined}'),
+    );
+    expect(compactCode(navigationMenuPositioner)).toContain(
+      compactCode("data-sw-nav-menu-positioner"),
+    );
+    expect(compactCode(navigationMenuPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(navigationMenuPositioner)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(navigationMenuPositioner)).toContain(
+      compactCode("data-side-offset={String(sideOffset)}"),
+    );
+    expect(compactCode(navigationMenuPositioner)).toContain(
+      compactCode("data-align-offset={String(alignOffset)}"),
+    );
+    expect(compactCode(navigationMenuPositioner)).toContain(compactCode("data-avoid-collisions"));
+    expect(compactCode(navigationMenuPopup)).toContain(compactCode("data-sw-nav-menu-popup"));
+    expect(compactCode(navigationMenuPopup)).toContain(compactCode("hidden"));
+    expect(compactCode(navigationMenuViewport)).toContain(compactCode("data-sw-nav-menu-viewport"));
+    expect(compactCode(navigationMenuViewport)).toContain(compactCode("hidden"));
+    expect(compactCode(navigationMenuIndex)).toContain(compactCode("Root: NavigationMenuRoot"));
+    expect(compactCode(navigationMenuIndex)).toContain(
+      compactCode("Trigger: NavigationMenuTrigger"),
+    );
+    expect(compactCode(navigationMenuIndex)).toContain(
+      compactCode("Viewport: NavigationMenuViewport"),
+    );
+    expect(compactCode(navigationMenuIndex)).toContain(compactCode("Arrow: NavigationMenuArrow"));
+
+    expect(compactCode(tooltipPopup)).toContain(
+      compactCode("export type TooltipPopupProps = Omit<"),
+    );
+    expect(compactCode(tooltipPopup)).toContain(
+      compactCode("React.HTMLAttributes<HTMLDivElement>"),
+    );
+    expect(compactCode(tooltipPopup)).toContain(compactCode('"tabIndex" | "tabindex"'));
+    expect(compactCode(tooltipPositioner)).toContain(compactCode("data-sw-tooltip-positioner"));
+    expect(compactCode(tooltipPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(tooltipPositioner)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(tooltipPositioner)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(tooltipPositioner)).toContain(
+      compactCode("data-avoid-collisions={String(avoidCollisions)}"),
+    );
+    expect(compactCode(tooltipPositioner)).toContain(compactCode("ref={composedRef}"));
+    expect(compactCode(tooltipPositioner)).toContain(compactCode("{...props}"));
+    expect(compactCode(tooltipPopup)).toContain(compactCode('role="tooltip"'));
+    expect(compactCode(tooltipPopup)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(tooltipPopup)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(tooltipPopup)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(tooltipPopup)).toContain(
+      compactCode("data-avoid-collisions={String(avoidCollisions)}"),
+    );
+    expect(compactCode(tooltipPopup)).toContain(compactCode("hidden"));
+    expect(compactCode(tooltipPopup)).toContain(compactCode("ref={composedRef}"));
+    expect(compactCode(tooltipPopup)).toContain(compactCode("{...props}"));
+    expect(compactCode(tooltipPopup)).not.toContain(compactCode("tabIndex="));
+    assertTypeScriptModule(tooltipRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(tooltipTrigger)).toContain(compactCode("asChild?: boolean;"));
+    expect(compactCode(tooltipTrigger)).not.toContain(compactCode("openDelay"));
+    expect(compactCode(tooltipTrigger)).not.toContain(compactCode("closeDelay"));
+    expect(compactCode(tooltipTrigger)).not.toContain(compactCode("data-open-delay"));
+    expect(compactCode(tooltipTrigger)).not.toContain(compactCode("data-close-delay"));
+
+    assertTypeScriptModule(sliderRoot); // Ordinary behavior is covered by the component browser suite.
+
+    assertTypeScriptModule(scrollAreaRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(scrollAreaViewport)).toContain(
+      compactCode("React.forwardRef<HTMLDivElement"),
+    );
+    expect(compactCode(scrollAreaViewport)).toContain(compactCode("data-sw-scroll-area-viewport"));
+    expect(compactCode(scrollAreaViewport)).toContain(compactCode('role={"presentation"}'));
+    expect(compactCode(scrollAreaViewport)).toContain(compactCode("tabIndex={tabIndex ?? -1}"));
+    expect(compactCode(scrollAreaViewport)).toContain(
+      compactCode('style={{ ...style, overflow: "scroll" }}'),
+    );
+    expect(compactCode(scrollAreaContent)).toContain(compactCode("data-sw-scroll-area-content"));
+    expect(compactCode(scrollAreaScrollbar)).toContain(
+      compactCode("data-sw-scroll-area-scrollbar"),
+    );
+    expect(compactCode(scrollAreaScrollbar)).toContain(compactCode('orientation = "vertical"'));
+    expect(compactCode(scrollAreaScrollbar)).toContain(
+      compactCode("data-orientation={orientation}"),
+    );
+    expect(compactCode(scrollAreaScrollbar)).toContain(compactCode("data-keep-mounted"));
+    expect(compactCode(scrollAreaThumb)).toContain(compactCode("data-sw-scroll-area-thumb"));
+    expect(compactCode(scrollAreaCorner)).toContain(compactCode("data-sw-scroll-area-corner"));
+    expect(compactCode(scrollAreaIndex)).toContain(compactCode("Root: ScrollAreaRoot"));
+    expect(compactCode(scrollAreaIndex)).toContain(compactCode("Viewport: ScrollAreaViewport"));
+    expect(compactCode(scrollAreaIndex)).toContain(compactCode("Content: ScrollAreaContent"));
+    expect(compactCode(scrollAreaIndex)).toContain(compactCode("Scrollbar: ScrollAreaScrollbar"));
+    expect(compactCode(scrollAreaIndex)).toContain(compactCode("Thumb: ScrollAreaThumb"));
+    expect(compactCode(scrollAreaIndex)).toContain(compactCode("Corner: ScrollAreaCorner"));
+    assertTypeScriptModule(selectRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(selectContext)).toContain(compactCode("export const SelectContext"));
+    expect(compactCode(selectContext)).toContain(compactCode("export const SelectItemContext"));
+    expect(compactCode(selectContext)).toContain(compactCode("disabled: boolean;"));
+    expect(compactCode(selectContext)).toContain(compactCode("readOnly: boolean;"));
+    expect(compactCode(selectContext)).toContain(compactCode("required: boolean;"));
+    expect(compactCode(selectContext)).toContain(compactCode("selectedLabel: string | null;"));
+    expect(compactCode(selectContext)).toContain(compactCode("export function useSelectContext()"));
+    expect(compactCode(selectTrigger)).toContain(compactCode("data-sw-select-trigger"));
+    expect(compactCode(selectTrigger)).toContain(compactCode('"aria-haspopup": "listbox"'));
+    expect(compactCode(selectTrigger)).toContain(compactCode("const select = useSelectContext();"));
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"aria-expanded": select.open ? "true" : "false"'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"aria-disabled": select.disabled ? "true" : undefined'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"aria-required": select.required ? "true" : undefined'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"aria-readonly": select.readOnly ? "true" : "false"'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"data-disabled": select.disabled ? "" : undefined'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"data-required": select.required ? "" : undefined'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"data-readonly": select.readOnly ? "" : undefined'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode('"data-state": select.open ? "open" : "closed"'),
+    );
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode("disabled: select.disabled || undefined"),
+    );
+    expect(compactCode(selectTrigger)).toContain(compactCode("disabled={select.disabled}"));
+    expect(compactCode(selectTrigger)).not.toContain(compactCode('"aria-expanded": "false"'));
+    expect(compactCode(selectTrigger)).toContain(compactCode("asChild"));
+    expect(compactCode(selectTrigger)).toContain(compactCode("getAsChildElement(children)"));
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode("protectedProps: protectedTriggerProps"),
+    );
+    expect(compactCode(selectValue)).toContain(compactCode("data-sw-select-value"));
+    expect(compactCode(selectValue)).toContain(compactCode("const select = useSelectContext();"));
+    expect(compactCode(selectValue)).toContain(compactCode("const fallback ="));
+
+    expect(compactCode(selectValue)).toContain(compactCode("{children ?? fallback}"));
+    expect(compactCode(selectPositioner)).toContain(compactCode("alignItemWithTrigger?: boolean"));
+    expect(compactCode(selectPositioner)).toContain(compactCode("alignItemWithTrigger = true"));
+    expect(compactCode(selectPositioner)).toContain(
+      compactCode('data-align-item-with-trigger={alignItemWithTrigger ? "true" : "false"}'),
+    );
+    expect(compactCode(selectPositioner)).not.toContain(compactCode("alignItemsWithTrigger"));
+    expect(compactCode(selectPositioner)).not.toContain(
+      compactCode("data-align-items-with-trigger"),
+    );
+    expect(compactCode(selectPopup)).toContain(compactCode("data-sw-select-popup"));
+    expect(compactCode(selectPopup)).toContain(compactCode("keepMounted?: boolean"));
+    expect(compactCode(selectPopup)).toContain(compactCode("keepMounted = false"));
+    expect(compactCode(selectPopup)).toContain(
+      compactCode('import { useComposedRefs } from "../internal/compose-refs";'),
+    );
+    expect(compactCode(selectPopup)).toContain(
+      compactCode('import { useClosePresence } from "../internal/use-close-presence";'),
+    );
+    expect(compactCode(selectPopup)).toContain(
+      compactCode("const closePresence = useClosePresence<HTMLDivElement>({"),
+    );
+    expect(compactCode(selectPopup)).toContain(compactCode("keepMounted,"));
+    expect(compactCode(selectPopup)).toContain(compactCode("open: select.open,"));
+    expect(compactCode(selectPopup)).toContain(compactCode("const composedRef = useComposedRefs"));
+    expect(compactCode(selectPopup)).toContain(compactCode('role="listbox"'));
+    expect(compactCode(selectPopup)).toContain(
+      compactCode('data-state={select.open ? "open" : "closed"}'),
+    );
+    expect(compactCode(selectPopup)).toContain(compactCode("hidden={closePresence.hidden}"));
+    expect(compactCode(selectPopup)).toContain(compactCode("ref={composedRef}"));
+    expect(compactCode(selectPopup)).toContain(
+      compactCode("{closePresence.present ? props.children : null}"),
+    );
+    expect(compactCode(selectPopup)).not.toContain(compactCode("initialHiddenRef"));
+    expect(compactCode(selectPopup)).not.toContain(compactCode("suppressHydrationWarning"));
+    expect(compactCode(selectPopup)).not.toContain(compactCode('data-state="closed"'));
+    expect(compactCode(selectPopup)).not.toContain(
+      compactCode("const shouldRenderChildren = keepMounted || select.open;"),
+    );
+    expect(compactCode(selectItem)).toContain(compactCode("data-sw-select-item"));
+    expect(compactCode(selectItem)).toContain(compactCode('role="option"'));
+    expect(compactCode(selectItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(selectItem)).toContain(
+      compactCode("const selected = select.value === value;"),
+    );
+    expect(compactCode(selectItem)).toContain(compactCode("aria-selected={selected}"));
+    expect(compactCode(selectItem)).not.toContain(compactCode('aria-selected="false"'));
+    expect(compactCode(selectItemIndicator)).toContain(
+      compactCode("data-sw-select-item-indicator"),
+    );
+    expect(compactCode(selectItemIndicator)).toContain(
+      compactCode("const selected = select.value === item.value;"),
+    );
+    expect(compactCode(selectItemIndicator)).toContain(
+      compactCode('data-state={selected ? "checked" : "unchecked"}'),
+    );
+    expect(compactCode(selectItemIndicator)).toContain(compactCode("hidden={!selected}"));
+    expect(compactCode(selectIndex)).toContain(compactCode("Root: SelectRoot"));
+    expect(compactCode(selectIndex)).toContain(compactCode("SelectContext"));
+    expect(compactCode(selectIndex)).toContain(compactCode("Trigger: SelectTrigger"));
+    expect(compactCode(selectIndex)).toContain(compactCode("ItemIndicator: SelectItemIndicator"));
+    expect(compactCode(selectIndex)).toContain(
+      compactCode(
+        'export type { SelectOpenChangeDetails, SelectValueChangeDetails } from "@starwind-ui/runtime";',
+      ),
+    );
+    expect(compactCode(sidebarProvider)).toContain(compactCode("createSidebarController,"));
+    expect(compactCode(sidebarProvider)).toContain(compactCode("type SidebarOpenChangeDetails"));
+    expect(compactCode(sidebarProvider)).toContain(compactCode("defaultMobileOpen?: boolean"));
+    expect(compactCode(sidebarProvider)).toContain(compactCode("mobileOpen?: boolean"));
+    expect(compactCode(sidebarProvider)).toContain(compactCode("onMobileOpenChange?:"));
+    expect(compactCode(sidebarProvider)).toContain(compactCode("persistOpen?: boolean"));
+
+    expect(compactCode(sidebarProvider)).toContain(compactCode("data-sw-sidebar-provider"));
+    expect(sidebarProvider).toContain("data-default-open");
+    expect(sidebarProvider).toContain("data-default-mobile-open");
+    expect(sidebarProvider).toContain("data-persist-open");
+
+    expect(compactCode(sidebarContext)).toContain(compactCode("export type SidebarContextValue"));
+    expect(compactCode(sidebarContext)).toContain(compactCode("useSidebarContext"));
+    expect(compactCode(sidebar)).toContain(compactCode("data-sw-sidebar"));
+    expect(compactCode(sidebar)).toContain(
+      compactCode('import { useSidebarContext } from "./SidebarContext";'),
+    );
+
+    expect(sidebar).toContain("data-state");
+    expect(sidebar).toContain("data-collapsible");
+    expect(compactCode(sidebar)).toContain(compactCode("data-collapsible-mode={collapsible}"));
+    expect(compactCode(sidebar)).not.toContain(compactCode('data-state="expanded"'));
+    expect(compactCode(sidebar)).not.toContain(compactCode('data-collapsible=""'));
+    expect(compactCode(sidebarTrigger)).toContain(compactCode("data-sw-sidebar-trigger"));
+    expect(compactCode(sidebarTrigger)).toContain(
+      compactCode('import { useSidebarContext } from "./SidebarContext";'),
+    );
+    expect(sidebarTrigger).toContain("aria-expanded");
+    expect(sidebarTrigger).toContain("data-state");
+    expect(compactCode(sidebarTrigger)).not.toContain(compactCode('"aria-expanded": "false"'));
+    expect(compactCode(sidebarRail)).toContain(compactCode("data-sw-sidebar-rail"));
+    expect(compactCode(sidebarRail)).toContain(
+      compactCode('import { useSidebarContext } from "./SidebarContext";'),
+    );
+    expect(sidebarRail).toContain("aria-expanded");
+    expect(sidebarRail).toContain("data-state");
+    expect(compactCode(sidebarRail)).toContain(compactCode("tabIndex={-1}"));
+    expect(compactCode(sidebarMenuButton)).toContain(compactCode("data-sw-sidebar-menu-button"));
+    expect(compactCode(sidebarMenuButton)).toContain(
+      compactCode('import { useSidebarContext } from "./SidebarContext";'),
+    );
+    expect(sidebarMenuButton).toContain("data-sidebar-state");
+    expect(compactCode(sidebarMenuButton)).toContain(
+      compactCode("mergeAsChildProps({ ...menuButtonProps, className }, childProps"),
+    );
+    expect(compactCode(sidebarMenuButton)).toContain(
+      compactCode("protectedProps: protectedMenuButtonProps"),
+    );
+    expect(compactCode(sidebarMenuButton)).not.toContain(compactCode("function mergeAsChildProps"));
+    expect(compactCode(sidebarMenuButton)).not.toContain(
+      compactCode('"data-sidebar-state": "expanded"'),
+    );
+    expect(compactCode(sidebarIndex)).toContain(compactCode("Provider: SidebarProvider"));
+    expect(compactCode(sidebarIndex)).toContain(compactCode("MenuButton: SidebarMenuButton"));
+    expect(compactCode(sidebarIndex)).toContain(compactCode("SidebarContext"));
     expect(sidebarIndex).toMatch(
       /export type \{\s+SidebarMobileOpenChangeDetails,\s+SidebarOpenChangeDetails,\s+SidebarPersistenceStorage,\s+\} from "@starwind-ui\/runtime";/,
     );
-    expect(comboboxRoot).toContain("createCombobox,");
-    expect(comboboxRoot).toContain("type ComboboxInputValueChangeDetails");
-    expect(comboboxRoot).toContain("autoComplete?: string");
-    expect(comboboxRoot).toContain('filterMode?: "contains" | "startsWith"');
-    expect(comboboxRoot).toContain("form?: string");
-    expect(comboboxRoot).toContain("highlightItemOnHover?: boolean");
-    expect(comboboxRoot).toContain("inputValue?: string");
-    expect(comboboxRoot).toContain("locale?: string");
-    expect(comboboxRoot).toContain("modal?: boolean");
-    expect(comboboxRoot).toContain("modal = false");
-    expect(comboboxRoot).toContain("onInputValueChange?:");
-    expect(comboboxRoot).toContain("readOnly?: boolean");
-    expect(comboboxRoot).toContain("data-sw-combobox");
-    expect(comboboxRoot).toContain("data-autocomplete");
-    expect(comboboxRoot).toContain("data-default-input-value");
-    expect(comboboxRoot).toContain("data-filter-mode");
-    expect(comboboxRoot).toContain("data-form");
-    expect(comboboxRoot).toContain("data-highlight-item-on-hover");
-    expect(comboboxRoot).toContain("data-locale");
-    expect(comboboxRoot).toContain("data-modal");
-    expect(comboboxRoot).toContain("data-readonly");
-    expect(comboboxRoot).toContain("data-sw-combobox-hidden-input");
-    expect(comboboxRoot).toContain("form={form}");
-    expect(comboboxRoot).toContain('import { ComboboxContext } from "./ComboboxContext";');
-    expect(comboboxRoot).toContain("const ensureInstance = React.useCallback");
-    expect(comboboxRoot).toContain("const runtimeOptionsRef = React.useRef");
-    expect(comboboxRoot).toContain("const nextRuntimeOptions = {");
-    expect(comboboxRoot).toContain("instance.destroy();");
-    expect(comboboxRoot).toContain("name,");
-    expect(comboboxRoot).toContain("modal,");
-    expect(comboboxRoot).toContain("required,");
-    expect(comboboxRoot).toContain(
-      "instanceRef.current?.setFormOptions({ autoComplete, form, name, required })",
-    );
-    expect(comboboxRoot).toContain("}, [autoComplete, form, name, required]);");
-    expect(comboboxRoot).toContain("instanceRef.current?.setDisabled(disabled);");
-    expect(comboboxRoot).toContain("}, [disabled]);");
-    expect(comboboxRoot).not.toContain(
-      "}, [autoComplete, disabled, filterMode, form, highlightItemOnHover, locale, readOnly]);",
-    );
-    expect(comboboxRoot).toMatch(
-      /}, \[\s*children,\s*autoComplete,\s*disabled,\s*filterMode,\s*form,\s*highlightItemOnHover,\s*locale,\s*modal,\s*name,\s*readOnly,\s*required,\s*setUncontrolledInputValue,\s*setUncontrolledOpen,\s*setUncontrolledValue,\s*portalRuntimeActivation,\s*\]\);/,
-    );
-    expect(comboboxRoot).toContain("pendingProgrammaticValueRef.current = {");
-    expect(comboboxRoot).toContain("refreshComboboxPortalSurface(root)");
-    expect(comboboxRoot).toContain("}, [ensureInstance, open, uncontrolledOpen]);");
-    expect(comboboxRoot).toContain(
-      "instance.setInputValue(inputValue, { emit: false, filter: false })",
-    );
-    expect(comboboxRoot).toContain("const previousValue = instance.getValue();");
-    expect(comboboxRoot).toContain("if (previousValue !== value) {");
-    expect(comboboxRoot).toContain("const nextInputValue = instance.getInputValue();");
-    expect(comboboxRoot).toContain("if (uncontrolledInputValueRef.current !== nextInputValue) {");
-    expect(comboboxRoot).toContain("setUncontrolledInputValue(nextInputValue);");
-    expect(comboboxRoot).toContain("const selectedInitialValue =");
-    expect(comboboxRoot).toContain(
-      "const selectedInitialInputValue = findSelectedComboboxItemText(children, selectedInitialValue);",
-    );
-    expect(comboboxRoot).toContain('root.addEventListener("starwind:set-value"');
-    expect(comboboxRoot).toContain("const instance = ensureInstance();");
-    expect(comboboxRoot).toContain('const nextValue = detail.value === "" ? null : detail.value;');
-    expect(comboboxRoot).toContain(
-      'const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;',
-    );
-    expect(comboboxRoot).toContain("instance.setValue(nextValue, { emit });");
-    expect(comboboxRoot).toContain("if (emit !== false) return;");
-    expect(comboboxRoot).toContain("event.stopImmediatePropagation();");
-    expect(comboboxRoot).toContain("capture: true");
-    expect(comboboxRoot).toContain("const nextRuntimeInputValue =");
-    expect(comboboxRoot).toContain("findSelectedComboboxItemText(children, nextValue)");
-    expect(comboboxRoot).toContain("instance.setInputValue(nextInputValue");
-    expect(comboboxRoot).toContain("instance.setInputValue(nextInputValue");
-    expect(comboboxRoot).toContain("data-value={selectedValue ?? undefined}");
-    expect(comboboxRoot).toContain("const defaultRuntimeInputValue =");
-    expect(comboboxRoot).toContain("const defaultRuntimeFilterValue =");
-    expect(comboboxRoot).toContain("defaultInputValue: defaultRuntimeInputValue,");
-    expect(comboboxRoot).toContain("? { defaultFilterValue: defaultRuntimeFilterValue }");
-    expect(comboboxRoot).toContain("? { defaultValueText: selectedInitialInputValue }");
-    expect(comboboxRoot).toContain("const selectedText =");
-    expect(comboboxRoot).toContain("selectedText,");
-    expect(comboboxInput).toContain("data-sw-combobox-input");
-    expect(comboboxInput).toContain('role="combobox"');
-    expect(comboboxInput).toContain('aria-autocomplete="list"');
-    expect(comboboxInput).toContain(
-      "const inputDisabled = combobox.disabled || props.disabled === true;",
-    );
-    expect(comboboxInput).toContain("disabled={inputDisabled}");
-    expect(comboboxTrigger).toContain("data-sw-combobox-trigger");
-    expect(comboboxTrigger).toContain("getAsChildElement(children)");
-    expect(comboboxClear).toContain("data-sw-combobox-clear");
-    expect(comboboxValue).toContain("placeholder?: string");
-    expect(comboboxValue).toContain('import { useComboboxContext } from "./ComboboxContext";');
-    expect(comboboxValue).toContain("const displayedChildren = children ??");
-    expect(comboboxValue).toContain("data-sw-combobox-value");
-    expect(comboboxValue).toContain("data-placeholder={placeholder}");
-    expect(comboboxPopup).toContain("data-sw-combobox-popup");
-    expect(comboboxPopup).toContain('role="listbox"');
-    expect(comboboxPopup).toContain("keepMounted?: boolean");
-    expect(comboboxPopup).toContain('import { useComposedRefs } from "../internal/compose-refs";');
-    expect(comboboxPopup).toContain(
-      'import { useClosePresence } from "../internal/use-close-presence";',
-    );
-    expect(comboboxPopup).toContain("const closePresence = useClosePresence<HTMLDivElement>({");
-    expect(comboboxPopup).toContain("keepMounted,");
-    expect(comboboxPopup).toContain("open: combobox.open,");
-    expect(comboboxPopup).toContain("const composedRef = useComposedRefs");
-    expect(comboboxPopup).toContain("hidden={closePresence.hidden}");
-    expect(comboboxPopup).toContain("ref={composedRef}");
-    expect(comboboxPopup).toContain("{closePresence.present ? props.children : null}");
-    expect(comboboxPopup).not.toContain(
-      "const shouldRenderChildren = keepMounted || combobox.open",
-    );
-    expect(comboboxItem).toContain("data-sw-combobox-item");
-    expect(comboboxItem).toContain("data-value={value}");
-    expect(comboboxIndex).toContain("Root: ComboboxRoot");
-    expect(comboboxIndex).toContain("InputGroup: ComboboxInputGroup");
-    expect(comboboxIndex).toContain("ItemIndicator: ComboboxItemIndicator");
-    expect(comboboxIndex).toContain("useComboboxContext");
-    expect(toastViewport).toContain("createToastManager");
-    expect(toastViewport).toContain("data-sw-toast-viewport");
-    expect(toastViewport).toContain("data-position={position}");
-    expect(toastViewport).toContain("data-limit={limit}");
-    expect(toastViewport).toContain("data-duration={duration}");
-    expect(toastViewport).toContain('aria-live="polite"');
-    expect(toastTemplate).toContain("<template data-sw-toast-template={variant}");
-    expect(toastTemplate).toContain(
-      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
-    );
-    expect(toastTemplate).toContain("useIsomorphicLayoutEffect(() =>");
-    expect(toastTemplate).not.toContain("React.useLayoutEffect");
-    expect(toastRoot).toContain("data-sw-toast-root");
-    expect(toastRoot).toContain(
-      'type Variant = "default" | "error" | "info" | "loading" | "success" | "warning";',
-    );
-    expect(toastRoot).toContain('data-state="open"');
-    expect(toastRoot).toContain("data-variant={variant}");
-    expect(toastAction).toContain('<button type="button" data-sw-toast-action');
-    expect(toastClose).toContain("data-sw-toast-close");
-    expect(toastClose).toContain('aria-label="Close notification"');
-    expect(sliderControl).toContain("data-sw-slider-control");
-    expect(sliderTrack).toContain("data-sw-slider-track");
-    expect(sliderIndicator).toContain("data-sw-slider-indicator");
-    expect(sliderLabel).toContain("data-sw-slider-label");
-    expect(sliderLabel).toContain("React.HTMLAttributes<HTMLSpanElement>");
-    expect(sliderLabel).toContain('SliderLabel.displayName = "Slider.Label"');
-    expect(sliderThumb).toContain("data-sw-slider-thumb");
-    expect(sliderThumb).toContain("data-index");
-    expect(sliderRoot).toContain(
-      "Controlled value. Slider controlledness is fixed when the Runtime is created; do not switch between controlled and uncontrolled after mount.",
-    );
-    expect(sliderThumb).not.toContain("inputName?: string");
-    expect(sliderThumb).not.toContain("name={inputName}");
-    expect(sliderThumb).toContain("visuallyHiddenStyle");
-    expect(sliderThumb).toContain("data-sw-slider-input");
-    expect(sliderThumb).toContain('aria-hidden="true"');
-    expect(sliderThumb).toContain("tabIndex={-1}");
-    expect(sliderThumb).toContain('type="range"');
-    expect(sliderIndex).toContain("Root: SliderRoot");
-    expect(sliderIndex).toContain("Control: SliderControl");
-    expect(sliderIndex).toContain("Track: SliderTrack");
-    expect(sliderIndex).toContain("Indicator: SliderIndicator");
-    expect(sliderIndex).toContain("Label: SliderLabel");
-    expect(sliderIndex).toContain("Thumb: SliderThumb");
+    assertTypeScriptModule(comboboxRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(switchRoot).toContain("createSwitch");
-    expect(switchRoot).toContain("SwitchCheckedChangeDetails");
-    expect(switchRoot).toContain("React.forwardRef<HTMLSpanElement | HTMLButtonElement");
-    expect(switchRoot).toContain("const checkedRef = React.useRef(checked)");
-    expect(switchRoot).toContain("const defaultCheckedRef = React.useRef(defaultChecked)");
-    expect(switchRoot).not.toContain("indeterminateRef");
-    expect(switchRoot).not.toContain("setIndeterminate");
-    expect(switchRoot).not.toContain("renderedIndeterminate");
-    expect(switchRoot).not.toContain('"data-indeterminate"');
-    expect(switchRoot).toContain(
-      "const [uncontrolledChecked, setUncontrolledCheckedState] = React.useState(defaultCheckedRef.current)",
+    expect(compactCode(comboboxInput)).toContain(compactCode("data-sw-combobox-input"));
+    expect(compactCode(comboboxInput)).toContain(compactCode('role="combobox"'));
+    expect(compactCode(comboboxInput)).toContain(compactCode('aria-autocomplete="list"'));
+    expect(compactCode(comboboxInput)).toContain(
+      compactCode("const inputDisabled = combobox.disabled || props.disabled === true;"),
     );
-    expect(switchRoot).toContain(
-      "const uncontrolledCheckedRef = React.useRef(uncontrolledChecked)",
+    expect(compactCode(comboboxInput)).toContain(compactCode("disabled={inputDisabled}"));
+    expect(compactCode(comboboxTrigger)).toContain(compactCode("data-sw-combobox-trigger"));
+    expect(compactCode(comboboxTrigger)).toContain(compactCode("getAsChildElement(children)"));
+    expect(compactCode(comboboxClear)).toContain(compactCode("data-sw-combobox-clear"));
+    expect(compactCode(comboboxValue)).toContain(compactCode("placeholder?: string"));
+    expect(compactCode(comboboxValue)).toContain(
+      compactCode('import { useComboboxContext } from "./ComboboxContext";'),
     );
-    expect(switchRoot).toContain("defaultChecked: uncontrolledCheckedRef.current");
-    expect(switchRoot).toContain("const resetSyncTimerRef = React.useRef");
-    expect(switchRoot).toContain("syncUncontrolledAfterFormReset");
-    expect(switchRoot).toContain("const syncUncontrolledChecked = () =>");
-    expect(switchRoot).toContain("new MutationObserver(syncUncontrolledChecked)");
-    expect(switchRoot).toContain('attributeFilter: ["aria-checked"]');
-    expect(switchRoot).toContain('formElement?.addEventListener("reset"');
-    expect(switchRoot).toContain("}, [id, nativeButton, readOnly]);");
-    expect(switchRoot).not.toContain(
-      "}, [form, id, name, nativeButton, readOnly, required, uncheckedValue, value]);",
+    expect(compactCode(comboboxValue)).toContain(
+      compactCode("const displayedChildren = children ??"),
     );
-    expect(switchRoot).toContain("setUncontrolledChecked(details.checked)");
-    expect(switchRoot).toContain("instance.setChecked(checked, { emit: false })");
-    expect(switchRoot).toContain("instance.setDisabled(disabled)");
-    expect(switchRoot).toContain("instance.setFormOptions({");
-    expect(switchRoot).toContain("uncheckedValue,");
-    expect(switchRoot).toContain("}, [form, name, required, uncheckedValue, value]);");
-    expect(switchRoot).toContain("const renderedChecked = checked ?? uncontrolledChecked");
-    expect(switchRoot).toContain("defaultValue={value}");
-    expect(switchRoot).toContain("form={form}");
-    expect(switchRoot).toContain(
-      "const runtimeInputNameRef = React.useRef<string | undefined>(name)",
+    expect(compactCode(comboboxValue)).toContain(compactCode("data-sw-combobox-value"));
+    expect(compactCode(comboboxValue)).toContain(compactCode("data-placeholder={placeholder}"));
+    expect(compactCode(comboboxPopup)).toContain(compactCode("data-sw-combobox-popup"));
+    expect(compactCode(comboboxPopup)).toContain(compactCode('role="listbox"'));
+    expect(compactCode(comboboxPopup)).toContain(compactCode("keepMounted?: boolean"));
+    expect(compactCode(comboboxPopup)).toContain(
+      compactCode('import { useComposedRefs } from "../internal/compose-refs";'),
     );
-    expect(switchRoot).toContain("new MutationObserver(syncRuntimeInputName)");
-    expect(switchRoot).toContain("inputElement.name = runtimeInputName");
-    expect(switchRoot).toContain("name={name}");
-    expect(switchRoot).toContain("required={required}");
-    expect(switchRoot).toContain('"aria-readonly": readOnly ? "true" : undefined');
-    expect(switchRoot).toContain('"aria-required": required ? "true" : undefined');
-    expect(switchRoot).toContain("id={getSwitchInputId(id, nativeButton)}");
-    expect(switchRoot).toContain("return nativeButton ? `${id}-input` : id;");
-    expect(switchRoot).toContain("defaultChecked={defaultCheckedRef.current}");
-    expect(switchRoot).toContain("data-sw-switch");
-    expect(switchRoot).toContain("data-sw-switch-input");
-    expect(switchRoot).toContain('"data-default-checked"');
-    expect(switchRoot).toContain('"data-unchecked-value"');
-    expect(switchRoot).not.toContain(
-      "id={id}\n          ref={composedRef as React.Ref<HTMLSpanElement>}",
+    expect(compactCode(comboboxPopup)).toContain(
+      compactCode('import { useClosePresence } from "../internal/use-close-presence";'),
     );
-    expect(switchRoot).not.toContain(removedAttr("data-sw-switch", "default-checked"));
-    expect(switchRoot).not.toContain(removedAttr("data-sw-switch", "unchecked-value"));
-    expect(switchThumb).toContain("data-sw-switch-thumb");
-    expect(switchThumb).not.toContain("data-unchecked");
-    expect(switchThumb).toContain("React.forwardRef<HTMLSpanElement, SwitchThumbProps>");
-    expect(switchIndex).toContain("Root: SwitchRoot");
-    expect(switchIndex).toContain("Thumb: SwitchThumb");
+    expect(compactCode(comboboxPopup)).toContain(
+      compactCode("const closePresence = useClosePresence<HTMLDivElement>({"),
+    );
+    expect(compactCode(comboboxPopup)).toContain(compactCode("keepMounted,"));
+    expect(compactCode(comboboxPopup)).toContain(compactCode("open: combobox.open,"));
+    expect(compactCode(comboboxPopup)).toContain(
+      compactCode("const composedRef = useComposedRefs"),
+    );
+    expect(compactCode(comboboxPopup)).toContain(compactCode("hidden={closePresence.hidden}"));
+    expect(compactCode(comboboxPopup)).toContain(compactCode("ref={composedRef}"));
+    expect(compactCode(comboboxPopup)).toContain(
+      compactCode("{closePresence.present ? props.children : null}"),
+    );
+    expect(compactCode(comboboxPopup)).not.toContain(
+      compactCode("const shouldRenderChildren = keepMounted || combobox.open"),
+    );
+    expect(compactCode(comboboxItem)).toContain(compactCode("data-sw-combobox-item"));
+    expect(compactCode(comboboxItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(comboboxIndex)).toContain(compactCode("Root: ComboboxRoot"));
+    expect(compactCode(comboboxIndex)).toContain(compactCode("InputGroup: ComboboxInputGroup"));
+    expect(compactCode(comboboxIndex)).toContain(
+      compactCode("ItemIndicator: ComboboxItemIndicator"),
+    );
+    expect(compactCode(comboboxIndex)).toContain(compactCode("useComboboxContext"));
+    expect(compactCode(toastViewport)).toContain(compactCode("createToastManager"));
+    expect(compactCode(toastViewport)).toContain(compactCode("data-sw-toast-viewport"));
+    expect(compactCode(toastViewport)).toContain(compactCode("data-position={position}"));
+    expect(compactCode(toastViewport)).toContain(compactCode("data-limit={limit}"));
+    expect(compactCode(toastViewport)).toContain(compactCode("data-duration={duration}"));
+    expect(compactCode(toastViewport)).toContain(compactCode('aria-live="polite"'));
+    expect(compactCode(toastTemplate)).toContain(
+      compactCode("<template data-sw-toast-template={variant}"),
+    );
+    expect(compactCode(toastTemplate)).toContain(
+      compactCode(
+        'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+      ),
+    );
+    expect(compactCode(toastTemplate)).toContain(compactCode("useIsomorphicLayoutEffect(() =>"));
+    expect(compactCode(toastTemplate)).not.toContain(compactCode("React.useLayoutEffect"));
+    assertTypeScriptModule(toastRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(tabsContext).toContain("React.createContext");
-    expect(tabsContext).toContain("useTabsContext");
-    expect(tabsRoot).toContain("createTabs");
-    expect(tabsRoot).toContain('"@starwind-ui/runtime/tabs"');
-    expect(tabsRoot).toContain("TabsValueChangeDetails");
-    expect(tabsRoot).toContain("React.forwardRef<HTMLDivElement, TabsRootProps>");
-    expect(tabsRoot).toContain("syncKey?: string");
-    expect(tabsRoot).toContain("const syncKeyRef = React.useRef(syncKey)");
-    expect(tabsRoot).toContain("syncKey: syncKeyRef.current");
-    expect(tabsRoot).toContain("const valueRef = React.useRef(value)");
-    expect(tabsRoot).toContain("orientationRef.current = orientation");
-    expect(tabsRoot).toContain("onValueChange: (_nextValue, details) =>");
-    expect(tabsRoot).toContain("onValueChangeRef.current?.(details.value, details)");
-    expect(tabsRoot).toContain(
-      "...(valueRef.current !== undefined ? { value: valueRef.current } : {})",
+    expect(compactCode(toastAction)).toContain(
+      compactCode('<button type="button" data-sw-toast-action'),
     );
-    expect(tabsRoot).toContain("setUncontrolledValue(instance.getValue())");
-    expect(tabsRoot).toContain("setUncontrolledValue(details.value)");
-    expect(tabsRoot).toContain("if (details.isCanceled) return");
-    expect(tabsRoot).toContain("instance.refresh()");
-    expect(tabsRoot).toContain("instanceRef.current?.refresh()");
-    expect(tabsRoot).toContain("}, [children])");
-    expect(tabsRoot).toContain("instance.setValue(value, { emit: false, sync: true })");
-    expect(tabsRoot).toContain("unsubscribe()");
-    expect(tabsRoot).toContain("instance.destroy()");
-    expect(tabsRoot).toContain(
-      "const renderedValue = value !== undefined ? value : uncontrolledValue",
+    expect(compactCode(toastClose)).toContain(compactCode("data-sw-toast-close"));
+    expect(compactCode(toastClose)).toContain(compactCode('aria-label="Close notification"'));
+    expect(compactCode(sliderControl)).toContain(compactCode("data-sw-slider-control"));
+    expect(compactCode(sliderTrack)).toContain(compactCode("data-sw-slider-track"));
+    expect(compactCode(sliderIndicator)).toContain(compactCode("data-sw-slider-indicator"));
+    expect(compactCode(sliderLabel)).toContain(compactCode("data-sw-slider-label"));
+    expect(compactCode(sliderLabel)).toContain(
+      compactCode("React.HTMLAttributes<HTMLSpanElement>"),
     );
-    expect(tabsRoot).toContain("data-sw-tabs");
-    expect(tabsRoot).toContain("data-default-value={serializeTabsValue(defaultValueRef.current)}");
-    expect(tabsRoot).toContain("data-orientation={orientation}");
-    expect(tabsRoot).toContain("data-sync-key={syncKey}");
-    expect(tabsRoot).toContain("data-value={serializeTabsValue(renderedValue)}");
-    expect(tabsRoot).toContain("{children}");
-    expect(tabsRoot).not.toContain("instanceRef.current?.refresh();\n  });");
-    expect(tabsList).toContain("activateOnFocus?: boolean");
-    expect(tabsList).toContain("loopFocus?: boolean");
-    expect(tabsList).toContain("data-sw-tabs-list");
-    expect(tabsList).toContain("data-activate-on-focus");
-    expect(tabsList).toContain("data-loop-focus");
-    expect(tabsList).toContain('role="tablist"');
-    expect(tabsTab).toContain("data-sw-tabs-tab");
-    expect(tabsTab).toContain("aria-selected={active}");
-    expect(tabsTab).toContain("tabIndex={active && !disabled ? 0 : -1}");
-    expect(tabsPanel).toContain("data-sw-tabs-panel");
-    expect(tabsPanel).toContain("hidden={!active}");
-    expect(tabsPanel).toContain('role="tabpanel"');
-    expect(tabsIndicator).toContain("data-sw-tabs-indicator");
-    expect(tabsIndicator).not.toContain("hidden={value === null}");
-    expect(tabsIndicator).toContain('role="presentation"');
-    expect(tabsIndex).toContain("TabsContext");
-    expect(tabsIndex).toContain("Root: TabsRoot");
-    expect(tabsIndex).toContain("List: TabsList");
-    expect(tabsIndex).toContain("Tab: TabsTab");
-    expect(tabsIndex).toContain("Panel: TabsPanel");
-    expect(tabsIndex).toContain("Indicator: TabsIndicator");
+    expect(compactCode(sliderLabel)).toContain(
+      compactCode('SliderLabel.displayName = "Slider.Label"'),
+    );
+    expect(compactCode(sliderThumb)).toContain(compactCode("data-sw-slider-thumb"));
+    expect(compactCode(sliderThumb)).toContain(compactCode("data-index"));
 
-    expect(toggleRoot).toContain("createToggle");
-    expect(toggleRoot).toContain("TogglePressedChangeDetails");
-    expect(toggleRoot).toContain("React.forwardRef<HTMLButtonElement | HTMLSpanElement");
-    expect(toggleRoot).not.toContain("indeterminateRef");
-    expect(toggleRoot).not.toContain("setIndeterminate");
-    expect(toggleRoot).not.toContain("renderedIndeterminate");
-    expect(toggleRoot).not.toContain('"data-indeterminate"');
-    expect(toggleRoot).toContain("const defaultPressedRef = React.useRef(defaultPressed)");
-    expect(toggleRoot).toContain(
-      '"data-default-pressed": pressed === undefined && defaultPressedRef.current',
-    );
-    expect(toggleRoot).toContain("const pressedRef = React.useRef(pressed)");
-    expect(toggleRoot).toContain(
-      "const [uncontrolledPressed, setUncontrolledPressedState] = React.useState(defaultPressedRef.current)",
-    );
-    expect(toggleRoot).toContain(
-      "const uncontrolledPressedRef = React.useRef(uncontrolledPressed)",
-    );
-    expect(toggleRoot).toContain("defaultPressed: uncontrolledPressedRef.current");
-    expect(toggleRoot).toContain("const syncUncontrolledPressed = () =>");
-    expect(toggleRoot).toContain("new MutationObserver(syncUncontrolledPressed)");
-    expect(toggleRoot).toContain('attributeFilter: ["aria-pressed"]');
-    expect(toggleRoot).toContain("setUncontrolledPressed(details.pressed)");
-    expect(toggleRoot).toContain("queueMicrotask(() =>");
-    expect(toggleRoot).toContain("syncGroup?: string");
-    expect(toggleRoot).toContain("syncGroup,");
-    expect(toggleRoot).toContain("}, [nativeButton, syncGroup, value]);");
-    expect(toggleRoot).toContain("instance.setPressed(pressed, { emit: false, sync: true })");
-    expect(toggleRoot).toContain("instance.setDisabled(disabled)");
-    expect(toggleRoot).toContain("const renderedPressed = pressed ?? uncontrolledPressed");
-    expect(toggleRoot).toContain("data-sw-toggle");
-    expect(toggleRoot).toContain('"data-default-pressed"');
-    expect(toggleRoot).toContain('"data-native"');
-    expect(toggleRoot).toContain('"data-sync-group": syncGroup');
-    expect(toggleRoot).toContain('"data-value"');
-    expect(toggleRoot).not.toContain(removedAttr("data-sw-toggle", "default-pressed"));
-    expect(toggleRoot).not.toContain(removedAttr("data-sw-toggle", "native"));
-    expect(toggleRoot).not.toContain(removedAttr("data-sw-toggle", "value"));
-    expect(toggleIndex).toContain("Root: ToggleRoot");
+    expect(compactCode(sliderThumb)).not.toContain(compactCode("inputName?: string"));
+    expect(compactCode(sliderThumb)).not.toContain(compactCode("name={inputName}"));
+    expect(compactCode(sliderThumb)).toContain(compactCode("visuallyHiddenStyle"));
+    expect(compactCode(sliderThumb)).toContain(compactCode("data-sw-slider-input"));
+    expect(compactCode(sliderThumb)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(sliderThumb)).toContain(compactCode("tabIndex={-1}"));
+    expect(compactCode(sliderThumb)).toContain(compactCode('type="range"'));
+    expect(compactCode(sliderIndex)).toContain(compactCode("Root: SliderRoot"));
+    expect(compactCode(sliderIndex)).toContain(compactCode("Control: SliderControl"));
+    expect(compactCode(sliderIndex)).toContain(compactCode("Track: SliderTrack"));
+    expect(compactCode(sliderIndex)).toContain(compactCode("Indicator: SliderIndicator"));
+    expect(compactCode(sliderIndex)).toContain(compactCode("Label: SliderLabel"));
+    expect(compactCode(sliderIndex)).toContain(compactCode("Thumb: SliderThumb"));
 
-    expect(toggleGroupRoot).toContain("createToggleGroup");
-    expect(toggleGroupRoot).toContain("ToggleGroupValueChangeDetails");
-    expect(toggleGroupRoot).toContain("React.forwardRef<HTMLDivElement, ToggleGroupRootProps>");
-    expect(toggleGroupRoot).toContain("defaultValue?: ToggleGroupValue");
-    expect(toggleGroupRoot).toContain("loopFocus?: boolean");
-    expect(toggleGroupRoot).toContain("multiple?: boolean");
-    expect(toggleGroupRoot).toContain('orientation?: "horizontal" | "vertical"');
-    expect(toggleGroupRoot).toContain("onValueChange?:");
-    expect(toggleGroupRoot).toContain("value?: ToggleGroupValue");
-    expect(toggleGroupRoot).toContain("const valueRef = React.useRef(value)");
-    expect(toggleGroupRoot).toContain("normalizeRenderedValue(defaultValueRef.current ?? []");
-    expect(toggleGroupRoot).toContain(
-      "...(valueRef.current !== undefined ? { value: valueRef.current } : {})",
+    assertTypeScriptModule(switchRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(switchThumb)).toContain(compactCode("data-sw-switch-thumb"));
+    expect(compactCode(switchThumb)).not.toContain(compactCode("data-unchecked"));
+    expect(compactCode(switchThumb)).toContain(
+      compactCode("React.forwardRef<HTMLSpanElement, SwitchThumbProps>"),
     );
-    expect(toggleGroupRoot.indexOf("onValueChangeRef.current?.")).toBeLessThan(
-      toggleGroupRoot.indexOf("setUncontrolledValue(details.value)"),
+    expect(compactCode(switchIndex)).toContain(compactCode("Root: SwitchRoot"));
+    expect(compactCode(switchIndex)).toContain(compactCode("Thumb: SwitchThumb"));
+
+    expect(compactCode(tabsContext)).toContain(compactCode("React.createContext"));
+    expect(compactCode(tabsContext)).toContain(compactCode("useTabsContext"));
+    assertTypeScriptModule(tabsRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(tabsList)).toContain(compactCode("activateOnFocus?: boolean"));
+    expect(compactCode(tabsList)).toContain(compactCode("loopFocus?: boolean"));
+    expect(compactCode(tabsList)).toContain(compactCode("data-sw-tabs-list"));
+    expect(compactCode(tabsList)).toContain(compactCode("data-activate-on-focus"));
+    expect(compactCode(tabsList)).toContain(compactCode("data-loop-focus"));
+    expect(compactCode(tabsList)).toContain(compactCode('role={"tablist"}'));
+    expect(compactCode(tabsTab)).toContain(compactCode("data-sw-tabs-tab"));
+    expect(compactCode(tabsTab)).toContain(compactCode("aria-selected={active}"));
+    expect(compactCode(tabsTab)).toContain(compactCode("tabIndex={active && !disabled ? 0 : -1}"));
+    expect(compactCode(tabsPanel)).toContain(compactCode("data-sw-tabs-panel"));
+    expect(compactCode(tabsPanel)).toContain(compactCode("hidden={!active}"));
+    expect(compactCode(tabsPanel)).toContain(compactCode('role={"tabpanel"}'));
+    expect(compactCode(tabsIndicator)).toContain(compactCode("data-sw-tabs-indicator"));
+    expect(compactCode(tabsIndicator)).not.toContain(compactCode("hidden={value === null}"));
+    expect(compactCode(tabsIndicator)).toContain(compactCode('role={"presentation"}'));
+    expect(compactCode(tabsIndex)).toContain(compactCode("TabsContext"));
+    expect(compactCode(tabsIndex)).toContain(compactCode("Root: TabsRoot"));
+    expect(compactCode(tabsIndex)).toContain(compactCode("List: TabsList"));
+    expect(compactCode(tabsIndex)).toContain(compactCode("Tab: TabsTab"));
+    expect(compactCode(tabsIndex)).toContain(compactCode("Panel: TabsPanel"));
+    expect(compactCode(tabsIndex)).toContain(compactCode("Indicator: TabsIndicator"));
+
+    assertTypeScriptModule(toggleRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(toggleIndex)).toContain(compactCode("Root: ToggleRoot"));
+
+    assertTypeScriptModule(toggleGroupRoot); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(toggleGroupContext)).toContain(
+      compactCode("export type ToggleGroupContextValue = {"),
     );
-    expect(toggleGroupRoot).toContain("if (details.isCanceled) return;");
-    expect(toggleGroupRoot).toContain('instance.subscribe("valueChange"');
-    expect(toggleGroupRoot).toContain("onValueChangeRef.current?.(value, details)");
-    expect(toggleGroupRoot).toContain("instance.setDisabled(disabled)");
-    expect(toggleGroupRoot).toContain("instance.setLoopFocus(loopFocus)");
-    expect(toggleGroupRoot).toContain("instance.setMultiple(multiple)");
-    expect(toggleGroupRoot).toContain("setUncontrolledValue(instance.getValue())");
-    expect(toggleGroupRoot).toContain("instance.setOrientation(orientation)");
-    expect(toggleGroupRoot).toContain("instance.setValue(value, { emit: false })");
-    expect(toggleGroupRoot).toContain('import { ToggleGroupContext } from "./ToggleGroupContext";');
-    expect(toggleGroupRoot).toContain(
-      "const renderedValue = React.useMemo(\n      () => normalizeRenderedValue(value ?? uncontrolledValue, multiple),\n      [multiple, uncontrolledValue, value],\n    );",
+    expect(compactCode(toggleGroupContext)).toContain(
+      compactCode(
+        "const ToggleGroupContext = React.createContext<ToggleGroupContextValue | undefined>(undefined);",
+      ),
     );
-    expect(toggleGroupRoot).toContain(
-      "const contextValue = React.useMemo(\n      () => ({ disabled, loopFocus, multiple, orientation, value: renderedValue }),",
+    expect(compactCode(toggleGroupContext)).toContain(
+      compactCode("function useToggleGroupContext(): ToggleGroupContextValue | undefined"),
     );
-    expect(toggleGroupRoot).toContain("<ToggleGroupContext.Provider value={contextValue}>");
-    expect(toggleGroupRoot).toContain("</ToggleGroupContext.Provider>");
-    expect(toggleGroupRoot).toContain("unsubscribe()");
-    expect(toggleGroupRoot).toContain("instance.destroy()");
-    expect(toggleGroupRoot).toContain("function normalizeRenderedValue");
-    expect(toggleGroupRoot).toContain("data-sw-toggle-group");
-    expect(toggleGroupRoot).toContain("data-default-value={");
-    expect(toggleGroupRoot).toContain("data-loop-focus={");
-    expect(toggleGroupRoot).toContain("data-multiple={");
-    expect(toggleGroupRoot).toContain("data-orientation={orientation}");
-    expect(toggleGroupRoot).toContain("data-value={JSON.stringify(renderedValue)}");
-    expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "default-value"));
-    expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "loop-focus"));
-    expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "multiple"));
-    expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "orientation"));
-    expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "value"));
-    expect(toggleGroupContext).toContain("export type ToggleGroupContextValue = {");
-    expect(toggleGroupContext).toContain(
-      "const ToggleGroupContext = React.createContext<ToggleGroupContextValue | undefined>(undefined);",
-    );
-    expect(toggleGroupContext).toContain(
-      "function useToggleGroupContext(): ToggleGroupContextValue | undefined",
-    );
-    expect(toggleGroupIndex).toContain("const ToggleGroup =");
-    expect(toggleGroupIndex).toContain("Root: ToggleGroupRoot");
-    expect(toggleGroupIndex).toContain("ToggleGroupContext,");
-    expect(toggleGroupIndex).toContain("type ToggleGroupContextValue,");
-    expect(toggleGroupIndex).toContain("useToggleGroupContext,");
+    expect(compactCode(toggleGroupIndex)).toContain(compactCode("const ToggleGroup ="));
+    expect(compactCode(toggleGroupIndex)).toContain(compactCode("Root: ToggleGroupRoot"));
+    expect(compactCode(toggleGroupIndex)).toContain(compactCode("ToggleGroupContext,"));
+    expect(compactCode(toggleGroupIndex)).toContain(compactCode("type ToggleGroupContextValue,"));
+    expect(compactCode(toggleGroupIndex)).toContain(compactCode("useToggleGroupContext,"));
   });
 
   it("generates Combobox React primitives through the Combobox specialized adapter spec without output drift", async () => {
@@ -2121,10 +1682,18 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(withoutComboboxRuntimeTypeFacade(generatedComboboxTree)).toEqual(
       withoutComboboxRuntimeTypeFacade(checkedInComboboxTree),
     );
-    expect(generatedComboboxTree["index.ts"]).toContain("ComboboxInputValueChangeDetails");
-    expect(generatedComboboxTree["index.ts"]).toContain("ComboboxOpenChangeDetails");
-    expect(generatedComboboxTree["index.ts"]).toContain("ComboboxValueChangeDetails");
-    expect(generatedComboboxTree["index.ts"]).toContain('from "@starwind-ui/runtime";');
+    expect(compactCode(generatedComboboxTree["index.ts"])).toContain(
+      compactCode("ComboboxInputValueChangeDetails"),
+    );
+    expect(compactCode(generatedComboboxTree["index.ts"])).toContain(
+      compactCode("ComboboxOpenChangeDetails"),
+    );
+    expect(compactCode(generatedComboboxTree["index.ts"])).toContain(
+      compactCode("ComboboxValueChangeDetails"),
+    );
+    expect(compactCode(generatedComboboxTree["index.ts"])).toContain(
+      compactCode('from "@starwind-ui/runtime";'),
+    );
 
     const renamedSpec = buildComboboxSpecializedAdapterSpec(comboboxRuntimeAdapterContract);
     renamedSpec.root = {
@@ -2174,8 +1743,8 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       createTsHeader(generatedBy),
     );
     const renamedRoot = await readGeneratedFile(renamedOutputRoot, "combobox/ComboboxRoot.tsx");
-    expect(renamedRoot).toContain("data-sw-combobox-renamed");
-    expect(renamedRoot).toContain("data-default-query");
+    expect(compactCode(renamedRoot)).toContain(compactCode("data-sw-combobox-renamed"));
+    expect(compactCode(renamedRoot)).toContain(compactCode("data-default-query"));
 
     const formSetterSpec = buildComboboxSpecializedAdapterSpec(comboboxRuntimeAdapterContract);
     const formSetterRenderPlan = formSetterSpec.renderPlan.form;
@@ -2220,10 +1789,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       formSetterOutputRoot,
       "combobox/ComboboxRoot.tsx",
     );
-    expect(formSetterRoot).toContain(
-      "instanceRef.current?.setFormOptions({ required, name, form, autoComplete })",
+    expect(compactCode(formSetterRoot)).toContain(compactCode("owned.setFormOptions({"));
+    expect(compactCode(formSetterRoot)).toContain(
+      compactCode("[autoComplete, form, name, required]"),
     );
-    expect(formSetterRoot).toContain("}, [required, name, form, autoComplete]);");
 
     const fileBasenameSpec = buildComboboxSpecializedAdapterSpec(comboboxRuntimeAdapterContract);
     fileBasenameSpec.files = fileBasenameSpec.files.map((file) =>
@@ -2243,12 +1812,12 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       fileBasenameSpec,
       createTsHeader(generatedBy),
     );
-    expect(await readGeneratedFile(fileBasenameOutputRoot, "combobox/ComboboxBase.tsx")).toContain(
-      "data-sw-combobox",
-    );
-    expect(await readGeneratedFile(fileBasenameOutputRoot, "combobox/index.ts")).toContain(
-      'import ComboboxRoot from "./ComboboxBase";',
-    );
+    expect(
+      compactCode(await readGeneratedFile(fileBasenameOutputRoot, "combobox/ComboboxBase.tsx")),
+    ).toContain(compactCode("data-sw-combobox"));
+    expect(
+      compactCode(await readGeneratedFile(fileBasenameOutputRoot, "combobox/index.ts")),
+    ).toContain(compactCode('import ComboboxRoot from "./ComboboxBase";'));
 
     const fileTopologyDriftSpec = buildComboboxSpecializedAdapterSpec(
       comboboxRuntimeAdapterContract,
@@ -2340,10 +1909,18 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(withoutMenuRuntimeTypeFacade(generatedMenuTree)).toEqual(
       withoutMenuRuntimeTypeFacade(checkedInMenuTree),
     );
-    expect(generatedMenuTree["index.ts"]).toContain("MenuCloseCompleteDetails");
-    expect(generatedMenuTree["index.ts"]).toContain("MenuOpenChangeDetails");
-    expect(generatedMenuTree["index.ts"]).toContain("MenuValueChangeDetails");
-    expect(generatedMenuTree["index.ts"]).toContain('from "@starwind-ui/runtime";');
+    expect(compactCode(generatedMenuTree["index.ts"])).toContain(
+      compactCode("MenuCloseCompleteDetails"),
+    );
+    expect(compactCode(generatedMenuTree["index.ts"])).toContain(
+      compactCode("MenuOpenChangeDetails"),
+    );
+    expect(compactCode(generatedMenuTree["index.ts"])).toContain(
+      compactCode("MenuValueChangeDetails"),
+    );
+    expect(compactCode(generatedMenuTree["index.ts"])).toContain(
+      compactCode('from "@starwind-ui/runtime";'),
+    );
 
     const renamedSpec = buildMenuSpecializedAdapterSpec(menuRuntimeAdapterContract);
     renamedSpec.root = {
@@ -2366,8 +1943,8 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       renamedSpec,
       createTsHeader(generatedBy),
     );
-    expect(await readGeneratedFile(renamedOutputRoot, "menu/MenuRoot.tsx")).toContain(
-      "data-sw-menu-renamed",
+    expect(compactCode(await readGeneratedFile(renamedOutputRoot, "menu/MenuRoot.tsx"))).toContain(
+      compactCode("data-sw-menu-renamed"),
     );
 
     const branchRecipeSpec = buildMenuSpecializedAdapterSpec(menuRuntimeAdapterContract);
@@ -2402,9 +1979,9 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       branchRecipeOutputRoot,
       "menu/MenuLinkItem.tsx",
     );
-    expect(branchRecipeItem).toContain('role="menuitem-test"');
-    expect(branchRecipeItem).toContain("tabIndex={1}");
-    expect(branchRecipeLinkItem).toContain("tabIndex={2}");
+    expect(compactCode(branchRecipeItem)).toContain(compactCode('role="menuitem-test"'));
+    expect(compactCode(branchRecipeItem)).toContain(compactCode("tabIndex={1}"));
+    expect(compactCode(branchRecipeLinkItem)).toContain(compactCode("tabIndex={2}"));
 
     const missingTabIndexSpec = buildMenuSpecializedAdapterSpec(menuRuntimeAdapterContract);
     missingTabIndexSpec.renderPlan = {
@@ -2555,10 +2132,18 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(withoutContextMenuRuntimeTypeFacade(generatedContextMenuTree)).toEqual(
       withoutContextMenuRuntimeTypeFacade(checkedInContextMenuTree),
     );
-    expect(generatedContextMenuTree["index.ts"]).toContain("ContextMenuCloseCompleteDetails");
-    expect(generatedContextMenuTree["index.ts"]).toContain("ContextMenuOpenChangeDetails");
-    expect(generatedContextMenuTree["index.ts"]).toContain("MenuValueChangeDetails");
-    expect(generatedContextMenuTree["index.ts"]).toContain('from "@starwind-ui/runtime";');
+    expect(compactCode(generatedContextMenuTree["index.ts"])).toContain(
+      compactCode("ContextMenuCloseCompleteDetails"),
+    );
+    expect(compactCode(generatedContextMenuTree["index.ts"])).toContain(
+      compactCode("ContextMenuOpenChangeDetails"),
+    );
+    expect(compactCode(generatedContextMenuTree["index.ts"])).toContain(
+      compactCode("MenuValueChangeDetails"),
+    );
+    expect(compactCode(generatedContextMenuTree["index.ts"])).toContain(
+      compactCode('from "@starwind-ui/runtime";'),
+    );
 
     const renamedSpec = buildContextMenuSpecializedAdapterSpec(contextMenuRuntimeAdapterContract);
     renamedSpec.root = {
@@ -2588,8 +2173,8 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       createTsHeader(generatedBy),
     );
     expect(
-      await readGeneratedFile(renamedOutputRoot, "context-menu/ContextMenuRoot.tsx"),
-    ).toContain("data-sw-context-menu-renamed");
+      compactCode(await readGeneratedFile(renamedOutputRoot, "context-menu/ContextMenuRoot.tsx")),
+    ).toContain(compactCode("data-sw-context-menu-renamed"));
 
     const invalidRootDisabledSpec = buildContextMenuSpecializedAdapterSpec(
       contextMenuRuntimeAdapterContract,

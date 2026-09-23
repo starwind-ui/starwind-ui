@@ -28,26 +28,64 @@ const CarouselRoot = React.forwardRef<HTMLDivElement, CarouselRootProps>(functio
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<CarouselInstance | undefined>(undefined);
-  const optsRef = React.useRef(opts);
-  const pluginsRef = React.useRef(plugins);
-  const setApiRef = React.useRef(setApi);
-  const skipInitialReInitRef = React.useRef(true);
+  const inputs = React.useRef({ orientation, opts, plugins, setApi });
+  inputs.current = { orientation, opts, plugins, setApi };
+  const connection = React.useRef<{
+    instance?: CarouselInstance;
+    inputs?: CarouselOptions;
+    callback?: CarouselOptions["setApi"];
+  }>({}).current;
 
-  useIsomorphicLayoutEffect(() => {
-    optsRef.current = opts;
-  }, [opts]);
-
-  useIsomorphicLayoutEffect(() => {
-    pluginsRef.current = plugins;
-  }, [plugins]);
-
-  useIsomorphicLayoutEffect(() => {
-    setApiRef.current = setApi;
-    if (setApi && instanceRef.current) {
-      setApi(instanceRef.current.api);
-    }
-  }, [setApi]);
+  function readCarouselInputs(): CarouselOptions {
+    return {
+      orientation: inputs.current.orientation,
+      opts: inputs.current.opts,
+      plugins: inputs.current.plugins,
+    };
+  }
+  function connectCarousel(root: HTMLElement): void {
+    disconnectCarousel();
+    const initial = readCarouselInputs();
+    connection.inputs = initial;
+    connection.callback = inputs.current.setApi;
+    connection.instance = createCarousel(root, {
+      ...initial,
+      setApi: (api) => inputs.current.setApi?.(api),
+    });
+  }
+  function syncCarouselOptions(): void {
+    const instance = connection.instance;
+    const previous = connection.inputs;
+    if (!instance || !previous) return;
+    const next = readCarouselInputs();
+    if (
+      next.orientation === previous.orientation &&
+      next.opts === previous.opts &&
+      next.plugins === previous.plugins
+    )
+      return;
+    connection.inputs = next;
+    const options: CarouselOptions["opts"] = {
+      axis: next.orientation === "vertical" ? "y" : "x",
+      ...next.opts,
+    };
+    const nextPlugins = next.plugins;
+    instance.reInit(options, nextPlugins);
+  }
+  function publishCarouselApi(): void {
+    const instance = connection.instance;
+    const callback = inputs.current.setApi;
+    if (!instance || callback === connection.callback) return;
+    connection.callback = callback;
+    callback?.(instance.api);
+  }
+  function disconnectCarousel(): void {
+    const instance = connection.instance;
+    connection.instance = undefined;
+    connection.inputs = undefined;
+    connection.callback = undefined;
+    instance?.destroy();
+  }
 
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
@@ -60,36 +98,11 @@ const CarouselRoot = React.forwardRef<HTMLDivElement, CarouselRootProps>(functio
   useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-
-    const instance = createCarousel(root, {
-      orientation,
-      opts: optsRef.current,
-      plugins: pluginsRef.current,
-      setApi: (api) => {
-        setApiRef.current?.(api);
-      },
-    });
-    instanceRef.current = instance;
-
-    return () => {
-      instance.destroy();
-      skipInitialReInitRef.current = true;
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
-    };
+    connectCarousel(root);
+    return disconnectCarousel;
   }, []);
-
-  useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-    if (skipInitialReInitRef.current) {
-      skipInitialReInitRef.current = false;
-      return;
-    }
-
-    instance.reInit({ axis: orientation === "vertical" ? "y" : "x", ...opts }, plugins);
-  }, [orientation, opts, plugins]);
+  useIsomorphicLayoutEffect(syncCarouselOptions, [orientation, opts, plugins]);
+  useIsomorphicLayoutEffect(publishCarouselApi, [setApi]);
 
   return (
     <div

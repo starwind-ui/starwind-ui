@@ -21,7 +21,12 @@ const ColorPickerChannelSliderTrack = React.forwardRef<
 >(function ColorPickerChannelSliderTrack({ children, ...props }, forwardedRef) {
   const sliderContext = useColorPickerChannelSliderContext();
   const { props: projectedProps } = useColorPickerPartProjection(
-    { part: "channelSliderTrack", ...sliderContext },
+    {
+      part: "channelSliderTrack",
+      channel: sliderContext.channel,
+      orientation: sliderContext.orientation,
+      step: sliderContext.step,
+    },
     { ...props, "data-sw-color-picker-channel-slider-track": "" },
   );
   return (

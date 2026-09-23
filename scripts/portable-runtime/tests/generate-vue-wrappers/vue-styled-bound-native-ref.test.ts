@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { compactCode } from "../source-comparison.js";
 
 const BOUND_NATIVE_REF_FIXTURE = {
   component: "bound-native-ref-fixture",
@@ -58,9 +58,11 @@ describe("generic Vue Styled bound native refs", () => {
 
     const source = renderVueComponent(group, component, options);
 
-    expect(source).toContain("const element = ref<HTMLElement | null>(null);");
-    expect(source).toContain("defineExpose({ element });");
-    expect(source).toContain(':is="Tag"');
+    expect(compactCode(source)).toContain(
+      compactCode("const element = ref<HTMLElement | null>(null);"),
+    );
+    expect(compactCode(source)).toContain(compactCode("defineExpose({ element });"));
+    expect(compactCode(source)).toContain(compactCode(':is="Tag"'));
     expect(source.match(/ref="element"/g)).toHaveLength(1);
     expect(() => assertVueSfcCompiles(source, "BoundNativeRoot.vue")).not.toThrow();
   });

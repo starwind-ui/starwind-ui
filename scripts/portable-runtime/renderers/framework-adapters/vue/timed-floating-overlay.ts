@@ -1,3 +1,11 @@
+import { partAttributes } from "../../shared-recipes/structured/part-policy.js";
+import { renderTimedRoot } from "../../shared-recipes/structured/timed/frame.js";
+import {
+  timedPartPolicy,
+  timedPlacementInputs,
+  timedTriggerPolicy,
+} from "../../shared-recipes/structured/timed/recipe.js";
+import { getVueAcceptedModelEvent } from "./accepted-model-publication.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -12,7 +20,26 @@ import type {
 import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueTimedFloatingOverlayIndex(file: AdapterIndexFile): AdapterPrintedFile {
-  return printVueFamilyIndex(file, "timed-floating-overlay");
+  if (file.family?.kind !== "timed-floating-overlay")
+    throw new TypeError("Timed Vue index requires timed facts");
+  const facts = file.family.facts;
+  return printVueFamilyIndex(
+    {
+      ...file,
+      exports: {
+        ...file.exports,
+        members: [
+          ...file.exports.members,
+          ...facts.index.typeExports.map((name) => ({
+            name,
+            from: facts.runtime.typeImportSource,
+            kind: "type" as const,
+          })),
+        ],
+      },
+    },
+    "timed-floating-overlay",
+  );
 }
 
 export function printVueTimedFloatingOverlayComponent(
@@ -28,7 +55,7 @@ export function printVueTimedFloatingOverlayComponent(
   const { facts, part } = family;
   const contents =
     part === "root"
-      ? printRoot(facts)
+      ? printRoot(facts, getVueAcceptedModelEvent(file, "open"))
       : part === "trigger"
         ? printTrigger(facts)
         : part === "portal"
@@ -39,218 +66,8 @@ export function printVueTimedFloatingOverlayComponent(
   return { contents, path: `${file.path}.vue` };
 }
 
-function printRoot(facts: AdapterTimedFloatingOverlayFacts): string {
-  const disabledProp = facts.root.disabled
-    ? `    ${facts.props.disabled.name}?: ${facts.props.disabled.type};\n`
-    : "";
-  const disabledDefault = facts.root.disabled
-    ? `    ${facts.props.disabled.name}: ${facts.props.disabled.defaultValue},\n`
-    : "";
-  const disabledOption = facts.root.disabled
-    ? `    ${facts.props.disabled.name}: props.${facts.props.disabled.name},\n`
-    : "";
-  const disabledAttribute =
-    facts.root.disabled && facts.attrs.rootDisabled
-      ? `\n    :${facts.attrs.rootDisabled}="props.${facts.props.disabled.name} ? '' : undefined"`
-      : "";
-  const renderedOpen = facts.root.disabled
-    ? `!props.${facts.props.disabled.name} && (props.${facts.props.open.name} ?? uncontrolledOpen.value)`
-    : `props.${facts.props.open.name} ?? uncontrolledOpen.value`;
-  const disabledWatch = facts.root.disabled
-    ? `
-watch(
-  () => props.${facts.props.disabled.name},
-  (disabled) => {
-    instance?.${facts.setters.disabled.method}(disabled);
-    if (disabled && props.${facts.props.open.name} === undefined) uncontrolledOpen.value = false;
-  },
-  { flush: "post" },
-);
-`
-    : "";
-  const setterOptions = printOptions(facts.setters.open.options);
-  const contextName = `${facts.displayName}Context`;
-
-  return `<script lang="ts">
-import type { InjectionKey, Ref } from "vue";
-
-export type ${contextName}Value = {
-  element: Readonly<Ref<HTMLElement | null>>;
-  mounted: Readonly<Ref<boolean>>;
-  registerPortal: (owner: symbol, element: HTMLElement | null) => void;
-};
-
-export const ${contextName}: InjectionKey<${contextName}Value> = Symbol("${contextName}");
-</script>
-
-<script setup lang="ts">
-import { ${facts.runtime.factory}, type ${facts.event.detailsType} } from "${facts.runtime.importSource}";
-import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
-import { useVueAsChildRuntimeOwner } from "../_internal/as-child";
-
-defineOptions({ inheritAttrs: false });
-
-const props = withDefaults(
-  defineProps<{
-    ${facts.props.defaultOpen.name}?: ${facts.props.defaultOpen.type};
-    ${facts.props.open.name}?: ${facts.props.open.type};
-    ${facts.props.closeDelay.name}?: ${facts.props.closeDelay.type};
-    ${facts.props.closeOnEscape.name}?: ${facts.props.closeOnEscape.type};
-    ${facts.props.closeOnOutsideInteract.name}?: ${facts.props.closeOnOutsideInteract.type};
-${disabledProp}    ${facts.props.disableHoverableContent.name}?: ${facts.props.disableHoverableContent.type};
-    ${facts.props.openDelay.name}?: ${facts.props.openDelay.type};
-  }>(),
-  {
-    ${facts.props.defaultOpen.name}: ${facts.props.defaultOpen.defaultValue},
-    ${facts.props.open.name}: undefined,
-    ${facts.props.closeDelay.name}: ${facts.props.closeDelay.defaultValue},
-    ${facts.props.closeOnEscape.name}: ${facts.props.closeOnEscape.defaultValue},
-    ${facts.props.closeOnOutsideInteract.name}: ${facts.props.closeOnOutsideInteract.defaultValue},
-${disabledDefault}    ${facts.props.disableHoverableContent.name}: ${facts.props.disableHoverableContent.defaultValue},
-    ${facts.props.openDelay.name}: ${facts.props.openDelay.defaultValue},
-  },
-);
-const emit = defineEmits<{
-  ${facts.event.name}: [open: ${facts.event.valueType}, detail: ${facts.event.detailsType}];
-  "update:${facts.props.open.name}": [open: ${facts.event.valueType}];
-}>();
-defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLElement | null>(null);
-const mounted = ref(false);
-const initialDefaultOpen = props.${facts.props.defaultOpen.name};
-const uncontrolledOpen = ref(initialDefaultOpen);
-const renderedOpen = computed(() => ${renderedOpen});
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let acceptedRoot: HTMLElement | undefined;
-let acceptedTrigger: HTMLElement | undefined;
-let unsubscribeOpenChange: (() => void) | undefined;
-let reconnectOpen: boolean | undefined;
-let portalOwner: symbol | undefined;
-let runtimeGeneration = 0;
-let disposed = false;
-
-provide(${contextName}, {
-  element: rootRef,
-  mounted,
-  registerPortal(owner, element) {
-    if (element) portalOwner = owner;
-    else if (portalOwner === owner) portalOwner = undefined;
-  },
-});
-
-defineExpose({ element: rootRef });
-
-function handleOpenChange(nextOpen: ${facts.event.valueType}, detail: ${facts.event.detailsType}): void {
-  emit("${facts.event.name}", nextOpen, detail);
-  if (detail.isCanceled) return;
-  if (props.${facts.props.open.name} === undefined) uncontrolledOpen.value = nextOpen;
-  emit("update:${facts.props.open.name}", nextOpen);
-}
-
-function destroyOwnedInstance(): void {
-  const owned = instance;
-  if (!owned) return;
-  if (instance === owned) instance = undefined;
-  unsubscribeOpenChange?.();
-  unsubscribeOpenChange = undefined;
-  owned.destroy();
-}
-
-function setupRuntime(acceptedOpen = renderedOpen.value): void {
-  const root = rootRef.value;
-  if (!root) return;
-  if (acceptedRoot !== root) {
-    acceptedRoot = root;
-    acceptedTrigger = undefined;
-  }
-  const owned = ${facts.runtime.factory}(root, {
-    ${facts.props.defaultOpen.name}: false,
-    ${facts.props.closeDelay.name}: props.${facts.props.closeDelay.name},
-    ${facts.props.closeOnEscape.name}: props.${facts.props.closeOnEscape.name},
-    ${facts.props.closeOnOutsideInteract.name}: props.${facts.props.closeOnOutsideInteract.name},
-${disabledOption}    ${facts.props.disableHoverableContent.name}: props.${facts.props.disableHoverableContent.name},
-    ${facts.props.openDelay.name}: props.${facts.props.openDelay.name},
-    ${facts.event.callbackProp}: handleOpenChange,
-    ...(props.${facts.props.open.name} === undefined ? {} : { ${facts.props.open.name}: false }),
-  });
-  instance = owned;
-  unsubscribeOpenChange = owned.subscribe("${facts.event.name}", (detail) => {
-    if (instance === owned && detail.open && detail.trigger instanceof HTMLElement) acceptedTrigger = detail.trigger;
-  });
-  owned.${facts.setters.open.method}(props.${facts.props.open.name} ?? acceptedOpen, { emit: false, trigger: acceptedTrigger });
-  if (props.${facts.props.open.name} === undefined) uncontrolledOpen.value = owned.${facts.state.getter}();
-  reconnectOpen = undefined;
-}
-
-async function recreateRuntime(): Promise<void> {
-  const generation = ++runtimeGeneration;
-  reconnectOpen = instance?.${facts.state.getter}() ?? reconnectOpen ?? renderedOpen.value;
-  destroyOwnedInstance();
-  mounted.value = false;
-  await nextTick();
-  if (disposed || generation !== runtimeGeneration) return;
-
-  setupRuntime(reconnectOpen);
-  mounted.value = true;
-}
-
-useVueAsChildRuntimeOwner(rootRef, recreateRuntime);
-onMounted(() => {
-  disposed = false;
-  setupRuntime();
-  mounted.value = true;
-});
-
-watch(
-  () => props.${facts.props.open.name},
-  (open) => {
-    if (open === undefined || !instance || Object.is(instance.${facts.state.getter}(), open)) return;
-    instance.${facts.setters.open.method}(open${setterOptions});
-  },
-  { flush: "post" },
-);
-watch(
-  [
-    () => props.${facts.props.closeDelay.name},
-    () => props.${facts.props.closeOnEscape.name},
-    () => props.${facts.props.closeOnOutsideInteract.name},
-    () => props.${facts.props.disableHoverableContent.name},
-    () => props.${facts.props.openDelay.name},
-  ],
-  () => {
-    void recreateRuntime();
-  },
-  { flush: "post" },
-);
-${disabledWatch}
-onBeforeUnmount(() => {
-  disposed = true;
-  runtimeGeneration += 1;
-  mounted.value = false;
-  portalOwner = undefined;
-  destroyOwnedInstance();
-});
-</script>
-
-<template>
-  <${facts.parts.root.defaultElement}
-    ref="rootRef"
-    v-bind="attrs"
-    ${facts.attrs.root}
-    data-sw-part="${facts.parts.root.name}"
-    :${facts.attrs.rootDefaultOpen}="initialDefaultOpen ? 'true' : undefined"
-    :${facts.attrs.rootCloseDelay}="props.${facts.props.closeDelay.name}"
-    :${facts.attrs.rootCloseOnEscape}="props.${facts.props.closeOnEscape.name} ? 'true' : 'false'"
-    :${facts.attrs.rootCloseOnOutsideInteract}="props.${facts.props.closeOnOutsideInteract.name} ? 'true' : 'false'"
-    :${facts.attrs.rootContentHoverable}="props.${facts.props.disableHoverableContent.name} ? 'false' : 'true'"${disabledAttribute}
-    :${facts.attrs.rootOpenDelay}="props.${facts.props.openDelay.name}"
-    :${facts.attrs.rootState}="renderedOpen ? 'open' : 'closed'"
-  >
-    <slot />
-  </${facts.parts.root.defaultElement}>
-</template>
-`;
+function printRoot(facts: AdapterTimedFloatingOverlayFacts, _acceptedEvent: string): string {
+  return renderTimedRoot("vue", facts);
 }
 
 function printTrigger(facts: AdapterTimedFloatingOverlayFacts): string {
@@ -288,8 +105,8 @@ function protectedProps() {
     "${facts.attrs.trigger}": "",
     "${facts.attrs.triggerDisabled}": props.${facts.props.disabled.name} ? "" : undefined,
     "${facts.attrs.triggerAriaDisabled}": props.${facts.props.disabled.name} ? "true" : undefined,
-    "${facts.attrs.triggerState}": "closed",
-${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    href: props.${facts.props.disabled.name} ? undefined : attrs.href,\n    tabindex: props.${facts.props.disabled.name} ? -1 : attrs.tabindex,\n    onClick: handleClick,\n` : nativeDisabled ? `    "${nativeDisabled}": props.${facts.props.disabled.name},\n` : ""}    "data-sw-part": "${facts.parts.trigger.name}",
+    "${facts.attrs.triggerState}": "${timedTriggerPolicy.state}",
+${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    ...(props.${facts.props.disabled.name} ? { href: undefined, tabindex: -1 } : {}),\n    onClick: handleClick,\n` : nativeDisabled ? `    "${nativeDisabled}": props.${facts.props.disabled.name},\n` : ""}    "data-sw-part": "${facts.parts.trigger.name}",
   };
 }
 const AsChildTrigger = defineComponent({
@@ -317,7 +134,7 @@ const AsChildTrigger = defineComponent({
     data-sw-part="${facts.parts.trigger.name}"
     :${facts.attrs.triggerDisabled}="props.${facts.props.disabled.name} ? '' : undefined"
     :${facts.attrs.triggerAriaDisabled}="props.${facts.props.disabled.name} ? 'true' : undefined"
-    ${facts.attrs.triggerState}="closed"
+    ${facts.attrs.triggerState}="${timedTriggerPolicy.state}"
 ${anchor ? `    :${closeDelay}="props.${facts.props.closeDelay.name}"\n    :${openDelay}="props.${facts.props.openDelay.name}"\n    :href="props.${facts.props.disabled.name} ? undefined : (attrs.href as string | undefined)"\n    :tabindex="props.${facts.props.disabled.name} ? -1 : (attrs.tabindex as number | undefined)"\n    @click="handleClick"\n` : `    type="button"\n    :disabled="props.${facts.props.disabled.name}"\n`}  >
     <slot />
   </${facts.trigger.renderedElement}>
@@ -360,44 +177,21 @@ defineExpose({ element });
 
 function printFloatingPart(
   facts: AdapterTimedFloatingOverlayFacts,
-  partName: "popup" | "positioner",
+  partName: "positioner" | "popup",
 ): string {
-  const part = facts.parts[partName];
-  const role = partName === "popup" ? `\n    role="${facts.popupRole}"` : "";
-  const hidden = partName === "popup" ? `\n    ${facts.attrs.popupHidden}` : "";
+  const inputs = timedPlacementInputs(facts),
+    fields = inputs.map(([, name]) => facts.props[name as keyof typeof facts.props]);
   return `<script setup lang="ts">
-import { type HTMLAttributes, ref } from "vue";
-defineOptions({ inheritAttrs: false });
-type NativeElementProps = /* @vue-ignore */ HTMLAttributes;
-const props = withDefaults(defineProps<{
-  ${facts.props.side.name}?: ${facts.props.side.type};
-  ${facts.props.align.name}?: ${facts.props.align.type};
-  ${facts.props.sideOffset.name}?: number;
-  ${facts.props.avoidCollisions.name}?: boolean;
-} & NativeElementProps>(), {
-  ${facts.props.side.name}: ${facts.props.side.defaultValue},
-  ${facts.props.align.name}: ${facts.props.align.defaultValue},
-  ${facts.props.sideOffset.name}: ${facts.props.sideOffset.defaultValue},
-  ${facts.props.avoidCollisions.name}: ${facts.props.avoidCollisions.defaultValue},
-});
-defineSlots<{ default?: () => unknown }>();
-const element = ref<HTMLElement | null>(null);
-defineExpose({ element });
+import {inject,ref,watchEffect} from 'vue';
+import {${facts.displayName}Context} from './${facts.exports.root}.vue';
+defineOptions({inheritAttrs:false});
+const props=withDefaults(defineProps<{${fields.map((p) => `${p.name}?:${p.type};`).join("")}}>(),{${fields.map((p) => `${p.name}:${p.defaultValue}`).join(", ")}});
+defineSlots<{default?:()=>unknown}>();
+const element=ref<HTMLDivElement|null>(null),owner=inject(${facts.displayName}Context,undefined);
+watchEffect(onCleanup=>{const node=element.value;if(!node)return;owner?.registerPlacement(node,{${inputs.map(([attr, input]) => `${JSON.stringify(attr)}:String(props.${input})`).join(", ")}});onCleanup(()=>owner?.registerPlacement(node,null));},{flush:'post'});
+defineExpose({element});
 </script>
-<template>
-  <${part.defaultElement}
-    ref="element"
-    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
-    ${facts.attrs[partName]}
-    data-sw-part="${part.name}"
-    ${facts.attrs[`${partName}State`]}="closed"
-    :${facts.attrs.side}="props.${facts.props.side.name}"
-    :${facts.attrs.align}="props.${facts.props.align.name}"
-    :${facts.attrs.sideOffset}="props.${facts.props.sideOffset.name}"
-    :${facts.attrs.avoidCollisions}="props.${facts.props.avoidCollisions.name} ? 'true' : 'false'"${role}${hidden}
-  ><slot /></${part.defaultElement}>
-</template>
-`;
+<template><div ref="element" v-bind="$attrs" ${partAttributes("vue", timedPartPolicy(facts, partName))}><slot/></div></template>`;
 }
 
 function printSimplePart(
@@ -424,7 +218,7 @@ defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLElement | null>(null);
 defineExpose({ element });
 </script>
-<template><${part.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${discovery} data-sw-part="${part.name}" ${extras}><slot /></${part.defaultElement}></template>
+<template><${part.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${partAttributes("vue", timedPartPolicy(facts, partName))}><slot /></${part.defaultElement}></template>
 `;
 }
 

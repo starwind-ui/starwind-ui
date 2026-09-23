@@ -10,47 +10,49 @@ import {
   CONFIG_SCHEMA_V2_URL,
   getConfigState,
   hasStarwindProAuthConfig,
-  setupStarwindProConfig,
   type StarwindFramework,
+  setupStarwindProConfig,
   updateConfig,
 } from "@/utils/config.js";
 import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
 import { filterUninstalledDependencies } from "@/utils/dependency-resolver.js";
 import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
 import {
+  type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   isConfigTarget,
-  type PrivateVueCliFrameworkTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
   detectHostPlan,
+  detectPrivateHostPlan,
   formatDetectedHost,
   formatPrivateDetectedHost,
+  type HostPlan,
   validateHostTarget,
   validatePrivateHostTarget,
-  type HostPlan,
 } from "@/utils/host-planner.js";
+import type { HostProjectPreparation } from "@/utils/host-project.js";
 import { setupLayoutCssImport } from "@/utils/layout.js";
 import {
   detectPackageManager,
   installDependencies,
   type PackageManager,
 } from "@/utils/package-manager.js";
-import { loadRegistry, type StarwindRegistryFor } from "@/utils/registry.js";
 import {
   getReactPackageRequirements,
-  setupReactProject,
   type ReactProjectPlan,
+  setupReactProject,
   validateReactProjectSetup,
 } from "@/utils/react-project.js";
+import { loadRegistry, type StarwindRegistryFor } from "@/utils/registry.js";
 import { getRuntimeSetupPlan } from "@/utils/runtime-setup.js";
 import { sleep } from "@/utils/sleep.js";
 import { setupSnippets } from "@/utils/snippets.js";
 import { setupTsConfig } from "@/utils/tsconfig.js";
-import type { VueHostProjectPreparation } from "@/utils/vue-host-project.js";
 
 import { migrate } from "./migrate.js";
 
@@ -64,16 +66,18 @@ type InitOptions = {
 };
 
 export type PrivateVueInitOptions = Omit<InitOptions, "framework"> & {
-  framework?: PrivateVueCliFrameworkTarget;
+  framework?: CliFrameworkTarget;
 };
 
 export type PrivateVueInitDependencies = {
-  hostPlan?: HostPlan<PrivateVueCliFrameworkTarget>;
-  registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+  hostPlan?: HostPlan<CliFrameworkTarget>;
+  registry: StarwindRegistryFor<CliFrameworkTarget>;
+  targetPolicy:
+    | FrameworkTargetPolicy<CliFrameworkTarget>
+    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
 };
 
-function resolveFrameworkOption<TFramework extends PrivateVueCliFrameworkTarget>(
+function resolveFrameworkOption<TFramework extends CliFrameworkTarget>(
   options: PrivateVueInitOptions | undefined,
   targetPolicy: FrameworkTargetPolicy<TFramework>,
 ): TFramework | undefined {
@@ -97,18 +101,18 @@ function resolveFrameworkOption<TFramework extends PrivateVueCliFrameworkTarget>
 }
 
 async function selectHostTarget(
-  plan: HostPlan<PrivateVueCliFrameworkTarget>,
-  explicitFramework: PrivateVueCliFrameworkTarget | undefined,
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+  plan: HostPlan<CliFrameworkTarget>,
+  explicitFramework: CliFrameworkTarget | undefined,
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>,
   privateVue: boolean,
-): Promise<PrivateVueCliFrameworkTarget> {
+): Promise<CliFrameworkTarget> {
   if (explicitFramework) {
     const framework = privateVue
       ? validatePrivateHostTarget(plan, explicitFramework, targetPolicy)
       : (validateHostTarget(
           plan as HostPlan<StarwindFramework>,
           explicitFramework as StarwindFramework,
-        ) as PrivateVueCliFrameworkTarget);
+        ) as CliFrameworkTarget);
     p.log.info(
       privateVue
         ? formatPrivateDetectedHost(plan, framework, targetPolicy)
@@ -142,7 +146,7 @@ async function selectHostTarget(
       label: targetPolicy.labels[target.framework],
       value: target.framework,
     })),
-  })) as PrivateVueCliFrameworkTarget | symbol;
+  })) as CliFrameworkTarget | symbol;
 
   if (p.isCancel(framework)) {
     p.cancel("Operation cancelled.");
@@ -236,11 +240,15 @@ export async function init(
 
     const pkg = await readJsonFile("package.json");
     const pm: PackageManager = options?.packageManager ?? detectPackageManager().name;
-    const targetPolicy =
-      dependencies?.targetPolicy ??
-      (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
+    const targetPolicy = (dependencies?.targetPolicy ??
+      PUBLIC_FRAMEWORK_TARGET_POLICY) as FrameworkTargetPolicy<CliFrameworkTarget>;
     const selectedFramework = resolveFrameworkOption(options, targetPolicy);
     const configState = dependencies ? await getConfigState(targetPolicy) : await getConfigState();
+    if (
+      options?.pro &&
+      (selectedFramework === "svelte" || configState.config.framework === "svelte")
+    )
+      throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
 
     if (configState.status === "legacy") {
       const shouldMigrate = options?.defaults
@@ -288,23 +296,29 @@ export async function init(
       return;
     }
 
-    const hostPlan = dependencies?.hostPlan ?? (await detectHostPlan(pkg));
+    const hostPlan =
+      dependencies?.hostPlan ??
+      (dependencies ? await detectPrivateHostPlan(pkg, targetPolicy) : await detectHostPlan(pkg));
     const defaultFramework = await selectHostTarget(
-      hostPlan as HostPlan<PrivateVueCliFrameworkTarget>,
+      hostPlan as HostPlan<CliFrameworkTarget>,
       selectedFramework,
       targetPolicy,
       isConfigTarget(targetPolicy, "vue"),
     );
     const isAstroReactTarget = hostPlan.host.kind === "astro" && defaultFramework === "react";
-    const vueHostProject = defaultFramework === "vue" ? hostPlan.vueHostProject : undefined;
-    if (defaultFramework === "vue" && !vueHostProject) {
+    const svelteHostProject =
+      defaultFramework === "svelte" ? hostPlan.svelteHostProject : undefined;
+    const hostProject = defaultFramework === "vue" ? hostPlan.vueHostProject : svelteHostProject;
+    if ((defaultFramework === "vue" || defaultFramework === "svelte") && !hostProject) {
       throw new Error(
-        "The Vue target requires a supported host before initialization can continue.",
+        `The ${targetPolicy.labels[defaultFramework]} target requires a supported host before initialization can continue.`,
       );
     }
-    const isAstroSecondaryTarget = isAstroReactTarget || vueHostProject?.isSecondaryTarget === true;
-    const projectFramework: PrivateVueCliFrameworkTarget =
-      vueHostProject?.projectFramework ?? (isAstroReactTarget ? "astro" : defaultFramework);
+    if (defaultFramework === "svelte" && options?.pro)
+      throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
+    const isAstroSecondaryTarget = isAstroReactTarget || hostProject?.isSecondaryTarget === true;
+    const projectFramework: CliFrameworkTarget =
+      hostProject?.projectFramework ?? (isAstroReactTarget ? "astro" : defaultFramework);
     const reactProjectPlan: ReactProjectPlan | undefined = hostPlan.reactProject;
     if (isAstroReactTarget) {
       const setupOutcome = await ensureAstroReactIntegration({
@@ -320,20 +334,20 @@ export async function init(
       }
       await validateReactProjectSetup(reactProjectPlan);
     }
-    await vueHostProject?.validate();
+    await hostProject?.validate();
     const bundledRegistry =
       dependencies?.registry ?? (await loadRegistry({ type: "bundled" }, { targetPolicy }));
     const runtimeSetupPlan = dependencies
       ? getRuntimeSetupPlan(defaultFramework, bundledRegistry, targetPolicy)
       : getRuntimeSetupPlan(defaultFramework as StarwindFramework, bundledRegistry);
-    let vueHostPreparation: VueHostProjectPreparation | undefined;
-    if (vueHostProject) {
-      vueHostPreparation = await vueHostProject.prepare({
+    let hostPreparation: HostProjectPreparation | undefined;
+    if (hostProject) {
+      hostPreparation = await hostProject.prepare({
         packageManager: pm,
         projectPackage: pkg,
         skipPrompts: options?.defaults,
       });
-      if (vueHostPreparation.status === "cancelled" || vueHostPreparation.status === "declined") {
+      if (hostPreparation.status === "cancelled" || hostPreparation.status === "declined") {
         return;
       }
     }
@@ -341,13 +355,13 @@ export async function init(
     // Check Astro version compatibility
     const installTasks = [];
     const configTasks = [];
-    if (vueHostPreparation?.status === "prepared" && vueHostPreparation.applyIntegration) {
+    if (hostPreparation?.status === "prepared" && hostPreparation.applyIntegration) {
       configTasks.push({
-        title: vueHostPreparation.integrationLabel,
+        title: hostPreparation.integrationLabel,
         task: async () => {
-          await vueHostPreparation.applyIntegration();
+          await hostPreparation.applyIntegration();
           await sleep(250);
-          return vueHostPreparation.integrationResult;
+          return hostPreparation.integrationResult;
         },
       });
     }
@@ -358,12 +372,12 @@ export async function init(
     let configChoices;
     const defaultComponentDir =
       reactProjectPlan?.componentDir ??
-      vueHostProject?.componentDir ??
+      hostProject?.componentDir ??
       (isAstroSecondaryTarget
         ? "src/components/starwind-" + defaultFramework
         : PATHS.LOCAL_STARWIND_COMPONENTS_DIR);
     const defaultCssFile =
-      reactProjectPlan?.cssFile ?? vueHostProject?.cssFile ?? PATHS.LOCAL_CSS_FILE;
+      reactProjectPlan?.cssFile ?? hostProject?.cssFile ?? PATHS.LOCAL_CSS_FILE;
 
     // Use defaults if specified, otherwise prompt user for choices
     if (options?.defaults) {
@@ -469,18 +483,19 @@ export async function init(
       );
     }
 
-    if (vueHostProject?.lockCssFile && configChoices.cssFile !== vueHostProject.cssFile) {
+    if (hostProject?.lockCssFile && configChoices.cssFile !== hostProject.cssFile) {
       throw new Error(
         "The detected " +
-          vueHostProject.hostLabel +
+          hostProject.hostLabel +
           " host requires the plan-owned stylesheet path " +
-          vueHostProject.cssFile +
+          hostProject.cssFile +
           ".",
       );
     }
 
-    const utilsDir =
-      reactProjectPlan?.utilsDir ?? vueHostProject?.utilsDir ?? PATHS.LOCAL_UTILS_DIR;
+    await svelteHostProject?.validateChoices(configChoices);
+
+    const utilsDir = reactProjectPlan?.utilsDir ?? hostProject?.utilsDir ?? PATHS.LOCAL_UTILS_DIR;
 
     // ================================================================
     //            Make sure appropriate directories exist
@@ -500,22 +515,23 @@ export async function init(
     // ================================================================
     //                     Prepare VS Code snippets
     // ================================================================
-    configTasks.push({
-      title: "Setting up VS Code snippets",
-      task: async () => {
-        await setupSnippets();
-        await sleep(250);
-        return "VS Code snippets configured";
-      },
-    });
-
-    if (vueHostProject) {
+    if (!svelteHostProject)
       configTasks.push({
-        title: vueHostProject.setupLabel,
+        title: "Setting up VS Code snippets",
         task: async () => {
-          await vueHostProject.setup(configChoices.cssFile);
+          await setupSnippets();
           await sleep(250);
-          return vueHostProject.setupResult;
+          return "VS Code snippets configured";
+        },
+      });
+
+    if (hostProject) {
+      configTasks.push({
+        title: hostProject.setupLabel,
+        task: async () => {
+          await hostProject.setup(configChoices.cssFile);
+          await sleep(250);
+          return hostProject.setupResult;
         },
       });
     } else if (projectFramework === "astro") {
@@ -547,26 +563,27 @@ export async function init(
     // ================================================================
     //                Prepare TypeScript config file setup
     // ================================================================
-    configTasks.push({
-      title: "Setup TypeScript path aliases",
-      task: async () => {
-        const success = vueHostProject
-          ? await vueHostProject.setupTypeScript()
-          : projectFramework === "react"
-            ? await setupTsConfig(
-                "react",
-                reactProjectPlan!.sourceRoot,
-                reactProjectPlan!.kind === "vite" &&
-                  /\.(?:js|jsx)$/.test(reactProjectPlan!.cssEntry),
-              )
-            : await setupTsConfig("astro");
-        if (!success) {
-          throw new Error("Failed to setup tsconfig.json");
-        }
-        await sleep(250);
-        return "TypeScript path aliases configured";
-      },
-    });
+    if (!svelteHostProject)
+      configTasks.push({
+        title: "Setup TypeScript path aliases",
+        task: async () => {
+          const success = hostProject
+            ? await hostProject.setupTypeScript()
+            : projectFramework === "react"
+              ? await setupTsConfig(
+                  "react",
+                  reactProjectPlan!.sourceRoot,
+                  reactProjectPlan!.kind === "vite" &&
+                    /\.(?:js|jsx)$/.test(reactProjectPlan!.cssEntry),
+                )
+              : await setupTsConfig("astro");
+          if (!success) {
+            throw new Error("Failed to setup tsconfig.json");
+          }
+          await sleep(250);
+          return "TypeScript path aliases configured";
+        },
+      });
 
     // ================================================================
     //                      Prepare CSS file
@@ -583,7 +600,7 @@ export async function init(
       );
     }
     updatedTailwindConfig =
-      vueHostProject?.prepareStylesheet(updatedTailwindConfig) ?? updatedTailwindConfig;
+      hostProject?.prepareStylesheet(updatedTailwindConfig) ?? updatedTailwindConfig;
 
     if (cssFileExists) {
       const shouldOverride = options?.defaults
@@ -620,19 +637,19 @@ export async function init(
       });
     }
 
-    if (vueHostProject?.setupCss) {
+    if (hostProject?.setupCss) {
       configTasks.push({
-        title: vueHostProject.setupCssLabel,
+        title: hostProject.setupCssLabel,
         task: async () => {
-          const success = await vueHostProject.setupCss(configChoices.cssFile);
+          const success = await hostProject.setupCss(configChoices.cssFile);
           if (!success) {
             throw new Error("Failed to configure the host CSS entry");
           }
           await sleep(250);
-          return vueHostProject.setupCssResult;
+          return hostProject.setupCssResult;
         },
       });
-    } else if (!vueHostProject && projectFramework === "astro") {
+    } else if (!hostProject && projectFramework === "astro") {
       // ================================================================
       //                 Add CSS import to layout file
       // ================================================================
@@ -740,7 +757,7 @@ export async function init(
       },
     });
 
-    if (projectFramework === "astro") {
+    if (projectFramework === "astro" && !svelteHostProject) {
       if (pkg.dependencies?.astro) {
         const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
         if (!semver.gte(astroVersion, MIN_ASTRO_VERSION)) {
@@ -802,10 +819,11 @@ export async function init(
     // ================================================================
     const otherPackages = reactProjectPlan
       ? getReactPackageRequirements(runtimeSetupPlan.packageRequirements, reactProjectPlan.kind)
-      : vueHostProject
-        ? vueHostProject.requirements(runtimeSetupPlan.packageRequirements)
+      : hostProject
+        ? hostProject.requirements(runtimeSetupPlan.packageRequirements)
         : runtimeSetupPlan.packageRequirements;
-    const vueUpgradeRequired = vueHostProject?.vueUpgradeRequired ?? false;
+    const vueUpgradeRequired =
+      defaultFramework === "vue" ? (hostPlan.vueHostProject?.vueUpgradeRequired ?? false) : false;
 
     if (otherPackages.length > 0) {
       const shouldInstall = options?.defaults

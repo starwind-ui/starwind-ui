@@ -4,6 +4,7 @@ import type {
   AdapterNativeOverlayFacts,
   AdapterOutputModel,
 } from "../../framework-adapters/types.js";
+import { withAcceptedModelPublications } from "../../primitive-output-model/accepted-model-publication.js";
 import type { AdapterOutputFamilyPlan } from "../adapter-family-plans.js";
 import type { GenericAdapterPlan } from "../types.js";
 import {
@@ -66,7 +67,7 @@ function buildNativeOverlayOutputModel(plan: GenericAdapterPlan): AdapterOutputM
     ],
   });
 
-  return { files };
+  return withAcceptedModelPublications({ files }, plan.events, plan.runtime.rootPart);
 }
 
 function createNativeOverlayComponentFile(
@@ -195,9 +196,24 @@ function getNativeOverlayPropsForPart(
   if (partName === "trigger") {
     return [
       {
+        kind: "boolean" as const,
+        name: facts.props.asChild.name,
+        type: facts.props.asChild.type,
+      },
+      {
         kind: "string" as const,
         name: facts.props.targetId.name,
         type: facts.props.targetId.type,
+      },
+    ];
+  }
+
+  if (partName === "close") {
+    return [
+      {
+        kind: "boolean" as const,
+        name: facts.props.asChild.name,
+        type: facts.props.asChild.type,
       },
     ];
   }
@@ -240,6 +256,7 @@ function isNativeOverlayOutputModelPlan(plan: GenericAdapterPlan): boolean {
   const expectedPropNames =
     plan.component === "drawer"
       ? [
+          "asChild",
           "open",
           "defaultOpen",
           "closeOnEscape",
@@ -251,6 +268,7 @@ function isNativeOverlayOutputModelPlan(plan: GenericAdapterPlan): boolean {
           "side",
         ]
       : [
+          "asChild",
           "open",
           "defaultOpen",
           "closeOnEscape",
@@ -293,6 +311,7 @@ function isNativeOverlayOutputModelPlan(plan: GenericAdapterPlan): boolean {
     (setter) => "stateModel" in setter && setter.stateModel === "open",
   );
   const sideProp = plan.props.find((prop) => prop.name === "side");
+  const asChildProp = plan.props.find((prop) => prop.name === "asChild");
   const popupRoleAttribute = plan.staticAttributes.find(
     (attribute) => attribute.part === "popup" && attribute.name === "role",
   );
@@ -320,6 +339,9 @@ function isNativeOverlayOutputModelPlan(plan: GenericAdapterPlan): boolean {
     titlePart?.defaultElement === "h2" &&
     descriptionPart?.defaultElement === "p" &&
     closePart?.defaultElement === "button" &&
+    asChildProp?.defaultValue === "false" &&
+    asChildProp.kind === "rendering" &&
+    hasExactNames(asChildProp.targets ?? [], ["trigger", "close"]) &&
     (plan.component === "drawer"
       ? sideProp?.targets?.includes("popup") === true &&
         sideProp.defaultValue === '"right"' &&
@@ -377,6 +399,17 @@ function getNativeOverlayFacts(plan: GenericAdapterPlan): AdapterNativeOverlayFa
     throw new Error(`${plan.displayName} generic adapter plan is not a native-overlay plan.`);
   }
 
+  const refresh = plan.runtime.refresh;
+  if (
+    refresh?.method !== "refresh" ||
+    refresh.parts !== "owned-controls" ||
+    refresh.state !== "preserve" ||
+    refresh.formOwner !== undefined
+  ) {
+    throw new Error(
+      "Native overlay requires state-preserving owned-control refresh without form ownership.",
+    );
+  }
   const rootPart = getPart(plan, "root");
   const triggerPart = getPart(plan, "trigger");
   const portalPart = plan.parts.find((part) => part.name === "portal");
@@ -410,6 +443,7 @@ function getNativeOverlayFacts(plan: GenericAdapterPlan): AdapterNativeOverlayFa
   const sideProp = plan.props.find(
     (prop) => prop.name === "side" && prop.targets?.includes("popup"),
   );
+  const asChildProp = getPlanPropForTarget(plan, "asChild", "trigger");
   const targetIdAttribute = plan.staticAttributes.find(
     (attribute) =>
       attribute.part === triggerPart.name &&
@@ -551,6 +585,7 @@ function getNativeOverlayFacts(plan: GenericAdapterPlan): AdapterNativeOverlayFa
     },
     popupRoleValue: getStaticAttributeValue(plan, popupPart, "role"),
     props: {
+      asChild: getAdapterFamilyProp(asChildProp),
       closeOnEscape: getAdapterFamilyProp(getPlanProp(plan, closeOnEscapeProp!)),
       closeOnOutsideInteract: getAdapterFamilyProp(getPlanProp(plan, closeOnOutsideInteractProp!)),
       defaultOpen: getAdapterFamilyProp(getPlanProp(plan, defaultOpenProp)),
@@ -560,6 +595,7 @@ function getNativeOverlayFacts(plan: GenericAdapterPlan): AdapterNativeOverlayFa
       targetId: getAdapterFamilyProp(getPlanPropForTarget(plan, "targetId", "trigger")),
     },
     runtime: {
+      refresh,
       factory: plan.runtime.factory,
       importSource: plan.runtime.importSource,
       setupFunction: `setup${pluralizeDisplayName(plan.displayName)}`,

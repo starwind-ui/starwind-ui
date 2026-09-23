@@ -5,6 +5,7 @@ export const fieldsetRuntimeAdapterContract = {
   category: "field-control-coordinator",
   displayName: "Fieldset",
   runtime: {
+    refresh: { method: "refresh", parts: "owned-descendants", state: "preserve" },
     factory: "createFieldset",
     importSource: "@starwind-ui/runtime/fieldset",
     rootPart: "root",

@@ -27,7 +27,7 @@ const ColorPickerArea = React.forwardRef<HTMLDivElement, ColorPickerAreaProps>(
       [xChannel, yChannel, xStep, yStep],
     );
     const { props: projectedProps } = useColorPickerPartProjection(
-      { part: "area", ...areaContextValue },
+      { part: "area", xChannel: xChannel, yChannel: yChannel, xStep: xStep, yStep: yStep },
       {
         ...props,
         "data-sw-color-picker-area": "",

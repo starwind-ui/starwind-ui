@@ -401,11 +401,16 @@ export async function runReleaseFinalization({
   if (vueBeta) {
     release.finalizeCommand = "pnpm release:vue-beta:finalize";
   }
+  const preservedDistTags = {};
   if (release.packages.some((entry) => entry.name === "@starwind-ui/vue" && entry.tag === "beta")) {
-    release.preservedDistTags = {
-      "@starwind-ui/vue": { latest: baseline.vueLatest },
-    };
+    preservedDistTags["@starwind-ui/vue"] = { latest: baseline.vueLatest };
   }
+  if (
+    release.packages.some((entry) => entry.name === "@starwind-ui/svelte" && entry.tag === "beta")
+  ) {
+    preservedDistTags["@starwind-ui/svelte"] = { latest: baseline.svelteLatest };
+  }
+  if (Object.keys(preservedDistTags).length > 0) release.preservedDistTags = preservedDistTags;
   await verifyPublishedPackages(release, system, registryVerificationOptions);
   await finalizeVerifiedRelease(release, system);
   return release;

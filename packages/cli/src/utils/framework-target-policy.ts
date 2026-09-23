@@ -1,9 +1,9 @@
-export type CliFrameworkTarget = "astro" | "react" | "vue";
-export type PublicCliFrameworkTarget = CliFrameworkTarget;
+export type PublicCliFrameworkTarget = "astro" | "react" | "svelte" | "vue";
+export type CliFrameworkTarget = PublicCliFrameworkTarget;
 export type RegistryTargetFor<TFramework extends CliFrameworkTarget> = "legacy-astro" | TFramework;
 
 export interface FrameworkTargetPolicy<TFramework extends CliFrameworkTarget> {
-  readonly cacheKey: "public" | "private-vue";
+  readonly cacheKey: "public" | "private-vue" | "private-svelte";
   readonly configTargets: readonly TFramework[];
   readonly registryTargets: readonly RegistryTargetFor<TFramework>[];
   readonly setupTargets: readonly TFramework[];
@@ -40,27 +40,55 @@ function defineFrameworkTargetPolicy<TFramework extends CliFrameworkTarget>(
 export const PUBLIC_FRAMEWORK_TARGET_POLICY = defineFrameworkTargetPolicy<PublicCliFrameworkTarget>(
   {
     cacheKey: "public",
-    configTargets: ["astro", "react", "vue"],
-    registryTargets: ["legacy-astro", "astro", "react", "vue"],
-    setupTargets: ["astro", "react", "vue"],
+    configTargets: ["astro", "react", "vue", "svelte"],
+    registryTargets: ["legacy-astro", "astro", "react", "vue", "svelte"],
+    setupTargets: ["astro", "react", "vue", "svelte"],
     labels: {
       astro: "Astro",
       react: "React",
       vue: "Vue (beta)",
+      svelte: "Svelte 5 (beta)",
     },
     requiredAdapterPackages: {
       "legacy-astro": [],
       astro: ["@starwind-ui/astro"],
       react: ["@starwind-ui/react"],
       vue: ["@starwind-ui/vue"],
+      svelte: ["@starwind-ui/svelte"],
     },
   },
 );
 
-export type PrivateVueCliFrameworkTarget = CliFrameworkTarget;
+export type PrivateVueCliFrameworkTarget = PublicCliFrameworkTarget;
 
 /** @deprecated Vue now uses the production framework target policy. */
 export const PRIVATE_VUE_FRAMEWORK_TARGET_POLICY = PUBLIC_FRAMEWORK_TARGET_POLICY;
+
+const privateSveltePolicies = new WeakSet<object>();
+
+/** Repository callers supply the fingerprint from canonical private artifact generation. */
+export function createPrivateSvelteFrameworkTargetPolicy(
+  fingerprint: string,
+): FrameworkTargetPolicy<CliFrameworkTarget> {
+  if (!/^sha256:[a-f0-9]{64}$/.test(fingerprint)) {
+    throw new Error('Primitive artifact target "svelte" has an invalid trusted fingerprint.');
+  }
+  const policy = defineFrameworkTargetPolicy<CliFrameworkTarget>({
+    ...PUBLIC_FRAMEWORK_TARGET_POLICY,
+    cacheKey: "private-svelte",
+    configTargets: [...PUBLIC_FRAMEWORK_TARGET_POLICY.configTargets],
+    registryTargets: [...PUBLIC_FRAMEWORK_TARGET_POLICY.registryTargets],
+    setupTargets: [...PUBLIC_FRAMEWORK_TARGET_POLICY.setupTargets],
+    labels: { ...PUBLIC_FRAMEWORK_TARGET_POLICY.labels },
+    requiredAdapterPackages: {
+      ...PUBLIC_FRAMEWORK_TARGET_POLICY.requiredAdapterPackages,
+      svelte: ["@starwind-ui/svelte"],
+    },
+    primitiveArtifactIntegrity: { svelte: fingerprint },
+  });
+  privateSveltePolicies.add(policy);
+  return policy;
+}
 
 export function getPrimitiveArtifactIntegrityFingerprint<TFramework extends CliFrameworkTarget>(
   policy: FrameworkTargetPolicy<TFramework>,
@@ -71,10 +99,11 @@ export function getPrimitiveArtifactIntegrityFingerprint<TFramework extends CliF
 
   if (
     (policy as unknown as FrameworkTargetPolicy<CliFrameworkTarget>) !==
-    PUBLIC_FRAMEWORK_TARGET_POLICY
+      PUBLIC_FRAMEWORK_TARGET_POLICY &&
+    !privateSveltePolicies.has(policy)
   ) {
     throw new Error(
-      "Primitive artifact fingerprints require the exact registered public framework target policy.",
+      "Primitive artifact fingerprints require the exact registered framework target policy.",
     );
   }
   if (!/^sha256:[a-f0-9]{64}$/.test(fingerprint)) {

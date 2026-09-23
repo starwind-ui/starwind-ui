@@ -1,0 +1,9 @@
+{
+  "primitives": {
+    "alert-dialog": "minor",
+    "dialog": "minor",
+    "drawer": "minor",
+    "select": "minor"
+  },
+  "impact": "source"
+}

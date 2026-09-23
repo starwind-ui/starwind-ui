@@ -1,6 +1,6 @@
 import path from "node:path";
-
 import type { StyledAdapterContract } from "../../../../contracts/styled/types.js";
+import { assertStyledSidebarConnection } from "../../../primitive-output-model/sidebar-connection.js";
 import { writeGeneratedFile } from "../../../shared.js";
 import {
   projectStyledOutputModel,
@@ -12,6 +12,7 @@ import { REACT_FRAMEWORK } from "./constants.js";
 import { isForFramework } from "./formatting.js";
 import { renderComponentImports } from "./imports.js";
 import { renderIndex } from "./index-output.js";
+import { isAlertDialogButtonControl, projectNativeOverlayControl } from "./native-overlay.js";
 import { getReactPrimitiveAliases } from "./primitive-helpers.js";
 import {
   getRuntimeImportRewriteContext,
@@ -57,6 +58,7 @@ async function generateStyledOutputComponentGroup(
   primitiveImportBase: string | undefined,
 ): Promise<void> {
   const dir = path.join(outputRoot, group.component);
+  assertStyledSidebarConnection(group);
   const clientHeader = '"use client";\n\n';
   const groupHasClientComponent = group.components.some(isReactStyledClientComponent);
   const writes: Array<Promise<void>> = [
@@ -104,7 +106,12 @@ async function generateStyledOutputComponentGroup(
 }
 
 function isReactStyledClientComponent(component: StyledOutputComponent): boolean {
-  return Object.keys(getReactPrimitiveAliases(component)).length > 0;
+  const projectedComponent = projectNativeOverlayControl(component);
+
+  return (
+    isAlertDialogButtonControl(projectedComponent) ||
+    Object.keys(getReactPrimitiveAliases(projectedComponent)).length > 0
+  );
 }
 
 function renderComponent(
@@ -120,7 +127,9 @@ function renderComponent(
     component.forwardRef && isForFramework(component.forwardRef, REACT_FRAMEWORK)
       ? component.forwardRef
       : undefined;
-  const renderedComponent = forwardRef ? projectForwardedRef(component) : component;
+  const renderedComponent = projectNativeOverlayControl(
+    forwardRef ? projectForwardedRef(component) : component,
+  );
   const primitiveAliases = getReactPrimitiveAliases(renderedComponent);
   const runtimeImportContext = getRuntimeImportRewriteContext(
     renderedComponent,

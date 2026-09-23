@@ -313,6 +313,7 @@ const EXPECTED_ALERT_DIALOG_EXPORTS = [
   "AlertDialog",
   "AlertDialogBackdrop",
   "AlertDialogClose",
+  "AlertDialogContext",
   "AlertDialogDescription",
   "AlertDialogPopup",
   "AlertDialogPortal",
@@ -320,6 +321,7 @@ const EXPECTED_ALERT_DIALOG_EXPORTS = [
   "AlertDialogTitle",
   "AlertDialogTrigger",
   "AlertDialogViewport",
+  "__useAlertDialogControl",
   "default",
 ].sort();
 const EXPECTED_AVATAR_EXPORTS = [
@@ -395,6 +397,7 @@ const EXPECTED_DIALOG_EXPORTS = [
   "Dialog",
   "DialogBackdrop",
   "DialogClose",
+  "DialogContext",
   "DialogDescription",
   "DialogPopup",
   "DialogRoot",
@@ -406,6 +409,7 @@ const EXPECTED_DRAWER_EXPORTS = [
   "Drawer",
   "DrawerBackdrop",
   "DrawerClose",
+  "DrawerContext",
   "DrawerDescription",
   "DrawerPopup",
   "DrawerPortal",

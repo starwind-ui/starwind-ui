@@ -21,8 +21,30 @@ export function defineAstroScopedInitOutputTests(getTempRoot: GetTempRoot): void
     );
 
     expect(initScripts.length).toBeGreaterThan(0);
+    for (const name of ["input/InputRoot.astro", "dropzone/DropzoneRoot.astro"]) {
+      expect(tree[name]).toContain("instance.refresh()");
+      expect(tree[name]).toContain("knownRoots.has(owner)");
+    }
 
     for (const [relativePath, source] of initScripts) {
+      if (relativePath === "avatar/AvatarRoot.astro") {
+        expect(source).toContain('event?.type === "starwind:init"');
+        expect(source).toContain("event.detail?.root");
+        expect(source).toContain(
+          "initRoot instanceof Document || initRoot instanceof DocumentFragment || initRoot instanceof Element ? initRoot : document",
+        );
+        expect(source).toContain('const selector = "[data-sw-avatar]";');
+        expect(source).toContain("scope.querySelectorAll<HTMLElement>(selector)");
+        expect(source).toContain("if (scope.matches(selector)) candidates.unshift(scope)");
+        expect(source).toContain("scope.parentElement?.closest<HTMLElement>(selector)");
+        expect(source).toContain(
+          "if (owner && knownRoots.has(owner) && !candidates.includes(owner)) candidates.push(owner)",
+        );
+        expect(source).toContain("if (knownRoots.has(root)) instance.refresh()");
+        expect(source).toMatch(/const setup\w+ = \(event\?: Event\) => \{/);
+        expect(source).not.toMatch(/document\s*\.\s*querySelectorAll<HTMLElement>/);
+        continue;
+      }
       expect(source, relativePath).toContain("const getInitCandidates = (");
       expect(source, relativePath).toContain('event?.type === "starwind:init"');
       expect(source, relativePath).toContain("const initRoot =");
@@ -33,7 +55,14 @@ export function defineAstroScopedInitOutputTests(getTempRoot: GetTempRoot): void
       expect(source, relativePath).toContain("value instanceof DocumentFragment");
       expect(source, relativePath).toContain("value instanceof Element");
       expect(source, relativePath).toMatch(/const setup\w+ = \(event\?: Event\) => \{/);
-      expect(source, relativePath).toMatch(/getInitCandidates\(event,\s*"\[[^"]+\]"\)/);
+      if (relativePath === "dialog/DialogRoot.astro") {
+        expect(source).toContain(
+          'getInitCandidates(event, "[data-sw-dialog]:not([data-sw-alert-dialog]):not([data-sw-drawer])")',
+        );
+      }
+      expect(source, relativePath).toMatch(
+        /getInitCandidates\(event,\s*"\[[^"]+\](?::not\(\[[^"\]]+\]\))*"\)/,
+      );
       expect(source, relativePath).not.toMatch(/document\s*\.\s*querySelectorAll<HTMLElement>/);
     }
   });

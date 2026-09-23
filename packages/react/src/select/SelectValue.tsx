@@ -18,8 +18,7 @@ const SelectValue = React.forwardRef<HTMLSpanElement, SelectValueProps>(function
   forwardedRef,
 ) {
   const select = useSelectContext();
-  const fallback =
-    select.value !== null && select.selectedLabel !== null ? select.selectedLabel : placeholder;
+  const fallback = select.selectedLabel ?? placeholder;
 
   return (
     <span data-sw-select-value data-placeholder={placeholder} ref={forwardedRef} {...props}>

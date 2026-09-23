@@ -1,4 +1,11 @@
+import { assertBooleanStatePolicy } from "../../primitive-output-model/boolean-state-policy.js";
+import { renderRadioIndicator, renderRadioRoot } from "../../shared-recipes/grouped/radio.js";
+import { checkboxIndicatorPolicy } from "../../shared-recipes/structured/forms/indicator.js";
+import { renderFormRoot } from "../../shared-recipes/structured/forms/root.js";
+import { checkboxIndicatorTransport } from "../form-control-operations.js";
+import { getVueAcceptedModelEvent } from "./accepted-model-publication.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
+import { radioOperations } from "./recipe-radio.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
@@ -22,6 +29,23 @@ export function printVueBooleanFormControlComponent(
     );
   }
   assertBooleanFormControlFacts(family.facts);
+  assertBooleanStatePolicy(family.facts);
+  if (family.part === "root" && family.facts.runtime.factory !== "createRadio")
+    getVueAcceptedModelEvent(file, family.facts.state.name);
+  assertBooleanFormControlFacts(family.facts);
+  if (family.facts.runtime.factory === "createRadio")
+    return {
+      path: `${file.path}.vue`,
+      contents:
+        family.part === "root"
+          ? renderRadioRoot(radioOperations, family.facts)
+          : renderRadioIndicator(radioOperations, family.facts),
+    };
+  if (
+    family.part === "root" &&
+    (family.facts.displayName === "Checkbox" || family.facts.displayName === "Switch")
+  )
+    return { path: `${file.path}.vue`, contents: renderFormRoot(family.facts.displayName, "vue") };
 
   if (family.facts.behavior.inputPlacement === "external") {
     return family.part === "root"
@@ -55,279 +79,7 @@ function printVueRadioRoot(
   file: AdapterComponentFile,
   facts: BooleanFormControlFacts,
 ): AdapterPrintedFile {
-  const state = facts.props.state.name;
-  const defaultState = facts.props.defaultState.name;
-  const disabled = facts.props.disabled.name;
-  const form = requireProp(facts.props.form?.name, "form", facts.displayName);
-  const id = requireProp(facts.props.id?.name, "id", facts.displayName);
-  const name = requireProp(facts.props.name?.name, "name", facts.displayName);
-  const nativeButton = facts.props.nativeButton.name;
-  const readOnly = requireProp(facts.props.readOnly?.name, "readOnly", facts.displayName);
-  const required = requireProp(facts.props.required?.name, "required", facts.displayName);
-  const value = requireProp(facts.props.value?.name, "value", facts.displayName);
-  const group = facts.group;
-  const detailType = facts.event.detailsType;
-  const formOptionsSetter = facts.setters.formOptions;
-  const readOnlySetter = facts.setters.readOnly;
-  if (!group || group.requirement !== "optional") {
-    throw new TypeError("Vue Radio projection requires optional radio-group context facts.");
-  }
-  if (!formOptionsSetter || !readOnlySetter || !facts.state.syncEvent) {
-    throw new TypeError(
-      "Vue Radio projection requires form, read-only, and state-sync contract facts.",
-    );
-  }
-
-  return {
-    contents: `<script setup lang="ts">
-import { ${facts.runtime.factory}, type ${detailType} } from "${facts.runtime.importSource}";
-import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
-
-import { ${group.hookName} } from "${group.importPath}";
-
-defineOptions({ inheritAttrs: false });
-
-const props = withDefaults(
-  defineProps<{
-    ${state}?: boolean;
-    ${defaultState}?: boolean;
-    ${disabled}?: boolean;
-    ${form}?: string;
-    ${id}?: string;
-    ${name}?: string;
-    ${nativeButton}?: boolean;
-    ${readOnly}?: boolean;
-    ${required}?: boolean;
-    ${value}: string;
-  }>(),
-  {
-    ${state}: undefined,
-    ${defaultState}: false,
-    ${disabled}: false,
-    ${nativeButton}: false,
-    ${readOnly}: false,
-    ${required}: false,
-  },
-);
-const emit = defineEmits<{
-  ${facts.event.name}: [value: boolean, detail: ${detailType}];
-  "update:${state}": [value: boolean];
-}>();
-defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLElement | null>(null);
-const inputRef = ref<HTMLInputElement | null>(null);
-const ${group.variableName} = ${group.hookName}();
-const isGroupOwned = ${group.variableName} !== undefined;
-const groupChecked = computed(() =>
-  ${group.variableName} ? ${group.variableName}.${value}.value === props.${value} : undefined,
-);
-const effectiveDisabled = computed(() => props.${disabled} || ${group.variableName}?.${disabled}.value === true);
-const effectiveForm = computed(() => props.${form} ?? ${group.variableName}?.${form}?.value);
-const effectiveName = computed(() => props.${name} ?? ${group.variableName}?.${name}?.value);
-const effectiveReadOnly = computed(() => props.${readOnly} || ${group.variableName}?.${readOnly}.value === true);
-const effectiveRequired = computed(() => props.${required} || ${group.variableName}?.${required}.value === true);
-const initialDefaultChecked = props.${defaultState};
-const uncontrolledChecked = ref(initialDefaultChecked);
-const renderedChecked = computed(() =>
-  isGroupOwned ? (groupChecked.value ?? false) : (props.${state} ?? uncontrolledChecked.value),
-);
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let unsubscribeStateSync: (() => void) | undefined;
-let instanceGeneration = 0;
-let mounted = false;
-
-defineExpose({ element: rootRef, input: inputRef });
-
-function handleCheckedChange(_checked: boolean, detail: ${detailType}): void {
-  const eventInstance = instance;
-  const eventGeneration = instanceGeneration;
-  const eventWasGroupOwned = isGroupOwned;
-  const eventWasControlled = !eventWasGroupOwned && props.${state} !== undefined;
-  emit("${facts.event.name}", detail.${facts.event.valueProperty}, detail);
-  detail.onAccepted(() => {
-    if (!mounted || instance !== eventInstance || instanceGeneration !== eventGeneration) {
-      return;
-    }
-    if (!eventWasGroupOwned && !eventWasControlled) {
-      uncontrolledChecked.value = detail.${facts.event.valueProperty};
-    }
-    emit("update:${state}", detail.${facts.event.valueProperty});
-  });
-}
-
-function handleStateSync(): void {
-  if (!isGroupOwned && props.${state} === undefined && instance) {
-    uncontrolledChecked.value = instance.${facts.state.getter}();
-  }
-}
-
-function destroyOwnedInstance(): void {
-  instanceGeneration += 1;
-  unsubscribeStateSync?.();
-  unsubscribeStateSync = undefined;
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  const createdInstance = ${facts.runtime.factory}(element, {
-    ${defaultState}: renderedChecked.value,
-    ${disabled}: effectiveDisabled.value,
-    ${form}: effectiveForm.value,
-    ${id}: props.${id},
-    ${name}: effectiveName.value,
-    ${readOnly}: effectiveReadOnly.value,
-    ${required}: effectiveRequired.value,
-    ${value}: props.${value},
-    ${facts.event.callbackProp}: handleCheckedChange,
-    ...(isGroupOwned
-      ? { ${state}: groupChecked.value ?? false }
-      : props.${state} !== undefined
-        ? { ${state}: props.${state} }
-        : {}),
-  });
-  instance = createdInstance;
-  unsubscribeStateSync = createdInstance.subscribe("${facts.state.syncEvent}", handleStateSync);
-}
-
-onMounted(() => {
-  mounted = true;
-  setupRuntime();
-});
-
-watch(
-  () => props.${state},
-  (checked, previousChecked) => {
-    if (isGroupOwned) return;
-    const controllednessChanged = (checked === undefined) !== (previousChecked === undefined);
-    if (controllednessChanged) {
-      if (checked === undefined && instance) {
-        uncontrolledChecked.value = instance.${facts.state.getter}();
-      }
-      setupRuntime();
-      return;
-    }
-    if (checked === undefined || !instance || Object.is(instance.${facts.state.getter}(), checked)) {
-      return;
-    }
-    instance.${facts.setters.state.method}(checked, { emit: false });
-  },
-  { flush: "post" },
-);
-watch(groupChecked, (checked) => {
-  if (!isGroupOwned || checked === undefined || !instance) return;
-  if (Object.is(instance.${facts.state.getter}(), checked)) return;
-  instance.${facts.setters.state.method}(checked, { emit: false });
-});
-watch(effectiveDisabled, (nextDisabled) => instance?.${facts.setters.disabled.method}(nextDisabled));
-watch(effectiveReadOnly, (nextReadOnly) => instance?.${readOnlySetter.method}(nextReadOnly));
-watch(
-  () => [effectiveForm.value, effectiveName.value, effectiveRequired.value, props.${value}] as const,
-  ([nextForm, nextName, nextRequired, nextValue]) => {
-    instance?.${formOptionsSetter.method}({
-      ${form}: nextForm,
-      ${name}: nextName,
-      ${required}: nextRequired,
-      ${value}: nextValue,
-    });
-  },
-  { flush: "post" },
-);
-watch(() => [props.${id}, props.${nativeButton}] as const, setupRuntime, { flush: "post" });
-
-onBeforeUnmount(() => {
-  mounted = false;
-  destroyOwnedInstance();
-});
-</script>
-
-<template>
-  <component
-    :is="props.${nativeButton} ? 'button' : 'span'"
-    ref="rootRef"
-    v-bind="attrs"
-    ${facts.attrs.root}
-    data-sw-part="${facts.parts.root.name}"
-    :type="props.${nativeButton} ? 'button' : undefined"
-    role="${facts.render.role}"
-    :aria-checked="String(renderedChecked)"
-    :aria-disabled="effectiveDisabled ? 'true' : undefined"
-    :${facts.attrs.defaultState}="!isGroupOwned && initialDefaultChecked ? 'true' : undefined"
-    :${facts.attrs.truthyPresence}="renderedChecked ? '' : undefined"
-    :${facts.attrs.falsyPresence}="renderedChecked ? undefined : ''"
-    :${facts.attrs.disabled}="effectiveDisabled ? '' : undefined"
-    :${facts.attrs.form}="effectiveForm"
-    :${facts.attrs.id}="props.${id}"
-    :${facts.attrs.name}="effectiveName"
-    :${facts.attrs.readOnly}="effectiveReadOnly ? '' : undefined"
-    :${facts.attrs.required}="effectiveRequired ? '' : undefined"
-    :${facts.attrs.value}="props.${value}"
-    :id="props.${nativeButton} ? props.${id} : undefined"
-    :tabindex="effectiveDisabled ? -1 : 0"
-    :disabled="props.${nativeButton} ? effectiveDisabled : undefined"
-  >
-    <slot />
-    <input
-      v-if="!props.${nativeButton}"
-      ref="inputRef"
-      ${facts.attrs.input}
-      aria-hidden="true"
-      tabindex="-1"
-      type="${facts.input.type}"
-      :checked="renderedChecked"
-      :disabled="effectiveDisabled"
-      :form="effectiveForm"
-      :id="props.${id}"
-      :name="effectiveName"
-      :required="effectiveRequired"
-      :value="props.${value}"
-      style="
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        white-space: nowrap;
-        border: 0;
-      "
-    />
-  </component>
-  <input
-    v-if="props.${nativeButton}"
-    ref="inputRef"
-    ${facts.attrs.input}
-    aria-hidden="true"
-    tabindex="-1"
-    type="${facts.input.type}"
-    :checked="renderedChecked"
-    :disabled="effectiveDisabled"
-    :form="effectiveForm"
-    :name="effectiveName"
-    :required="effectiveRequired"
-    :value="props.${value}"
-    style="
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
-      border: 0;
-    "
-  />
-</template>
-`,
-    path: `${file.path}.vue`,
-  };
+  return { path: `${file.path}.vue`, contents: renderRadioRoot(radioOperations, facts) };
 }
 
 function printVueCheckboxRoot(
@@ -335,6 +87,7 @@ function printVueCheckboxRoot(
   facts: BooleanFormControlFacts,
 ): AdapterPrintedFile {
   const state = facts.props.state.name;
+  const acceptedEvent = getVueAcceptedModelEvent(file, facts.state.name);
   const defaultState = facts.props.defaultState.name;
   const disabled = facts.props.disabled.name;
   const form = requireProp(facts.props.form?.name, "form", facts.displayName);
@@ -420,13 +173,14 @@ const rootRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 ${groupSetup}
 const initialDefaultChecked = props.${defaultState} ?? false;
-const initialChecked = props.${state} ?? groupChecked.value ?? initialDefaultChecked;
+const initialChecked = groupChecked.value ?? props.${state} ?? initialDefaultChecked;
 const uncontrolledChecked = ref(groupChecked.value ?? initialDefaultChecked);
 const renderedChecked = computed(
-  () => props.${state} ?? groupChecked.value ?? uncontrolledChecked.value,
+  () => groupChecked.value ?? props.${state} ?? uncontrolledChecked.value,
 );
 const renderedIndeterminate = ref(props.${indeterminate});
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
+let unsubscribeCheckedChange: (() => void) | undefined;
 let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 
@@ -436,13 +190,6 @@ defineExpose({
 
 function handleCheckedChange(checked: boolean, detail: ${detailType}): void {
   emit("${facts.event.name}", checked, detail);
-  if (detail.isCanceled) return;
-
-  if (props.${state} === undefined) {
-    uncontrolledChecked.value = checked;
-  }
-  if (!props.${indeterminate}) renderedIndeterminate.value = false;
-  emit("update:${state}", checked);
 }
 
 function clearResetTimer(): void {
@@ -458,11 +205,17 @@ function unbindFormReset(): void {
   resetForm = null;
 }
 
-function handleFormReset(): void {
+function handleFormReset(event: Event): void {
   clearResetTimer();
+  const ownedInstance = instance;
   resetTimer = window.setTimeout(() => {
-    const ownedInstance = instance;
-    if (ownedInstance && props.${state} === undefined) {
+    if (
+      !event.defaultPrevented &&
+      ownedInstance &&
+      instance === ownedInstance &&
+      groupChecked.value === undefined &&
+      props.${state} === undefined
+    ) {
       uncontrolledChecked.value = ownedInstance.${facts.state.getter}();
       if (!props.${indeterminate}) renderedIndeterminate.value = false;
     }
@@ -480,6 +233,8 @@ function bindFormReset(): void {
 }
 
 function destroyOwnedInstance(): void {
+  unsubscribeCheckedChange?.();
+  unsubscribeCheckedChange = undefined;
   unbindFormReset();
   const ownedInstance = instance;
   if (!ownedInstance) return;
@@ -500,12 +255,14 @@ function removeRuntimeOwnedUncheckedInput(): void {
 }
 
 function setupRuntime(): void {
+  const currentChecked =
+    groupChecked.value ?? props.${state} ?? instance?.${facts.state.getter}() ?? renderedChecked.value;
   destroyOwnedInstance();
   const element = rootRef.value;
   if (!element) return;
 
   const options = {
-    ${defaultState}: renderedChecked.value,
+    ${defaultState}: initialDefaultChecked,
     ${disabled}: effectiveDisabled.value,
     ${form}: props.${form},
     ${id}: props.${id},
@@ -516,13 +273,24 @@ function setupRuntime(): void {
     ${uncheckedValue}: props.${uncheckedValue},
     ${value}: props.${value},
     ${facts.event.callbackProp}: handleCheckedChange,
-    ...(props.${state} !== undefined
-      ? { ${state}: props.${state} }
-      : groupChecked.value !== undefined
-        ? { ${state}: groupChecked.value }
+    ...(groupChecked.value !== undefined
+      ? { ${state}: groupChecked.value }
+      : props.${state} !== undefined
+        ? { ${state}: props.${state} }
         : {}),
   };
   instance = ${facts.runtime.factory}(element, options);
+  const ownedInstance = instance;
+  ownedInstance.${facts.setters.state.method}(currentChecked, { emit: false });
+  ownedInstance.${facts.setters.indeterminate?.method ?? "setIndeterminate"}(props.${indeterminate}, { emit: false });
+  unsubscribeCheckedChange = ownedInstance.subscribe("${acceptedEvent}", (detail) => {
+    if (instance !== ownedInstance) return;
+    const checked = detail.${facts.event.valueProperty};
+    if (groupChecked.value === undefined && props.${state} === undefined)
+      uncontrolledChecked.value = checked;
+    if (!props.${indeterminate}) renderedIndeterminate.value = false;
+    if (groupChecked.value === undefined) emit("update:${state}", checked);
+  });
   bindFormReset();
 }
 
@@ -531,6 +299,7 @@ onMounted(setupRuntime);
 watch(
   () => props.${state},
   (checked, previousChecked) => {
+    if (groupChecked.value !== undefined) return;
     const controllednessChanged = (checked === undefined) !== (previousChecked === undefined);
     if (controllednessChanged) {
       if (checked === undefined && instance) {
@@ -548,7 +317,7 @@ watch(
   { flush: "post" },
 );
 watch(groupChecked, (checked) => {
-  if (checked === undefined || props.${state} !== undefined || !instance) return;
+  if (checked === undefined || !instance) return;
   if (Object.is(instance.${facts.state.getter}(), checked)) return;
   instance.${facts.setters.state.method}(checked, { emit: false });
 });
@@ -669,6 +438,9 @@ function printVueCheckboxIndicator(
   facts: BooleanFormControlFacts,
 ): AdapterPrintedFile {
   const keepMounted = requireProp(facts.props.keepMounted?.name, "keepMounted", facts.displayName);
+  const visibility = checkboxIndicatorPolicy(checkboxIndicatorTransport.vue, {
+    keepMounted: `props.${keepMounted}`,
+  });
   const indicator = facts.parts.stateIndicator;
   if (!indicator) {
     throw new TypeError(`Vue ${facts.displayName} projection requires an indicator part.`);
@@ -706,7 +478,7 @@ defineExpose({
     data-sw-part="${indicator.name}"
     :${facts.attrs.stateIndicatorKeepMounted}="props.${keepMounted} ? '' : undefined"
     ${facts.attrs.stateIndicatorFalsyPresence}
-    :hidden="!props.${keepMounted}"
+    :hidden="${visibility.initialHidden}"
   >
     <slot />
   </span>
@@ -721,6 +493,7 @@ function printVueExternalBooleanRoot(
   facts: BooleanFormControlFacts,
 ): AdapterPrintedFile {
   const state = facts.props.state.name;
+  const acceptedEvent = getVueAcceptedModelEvent(file, facts.state.name);
   const defaultState = facts.props.defaultState.name;
   const disabled = facts.props.disabled.name;
   const form = requireProp(facts.props.form?.name, "form", facts.displayName);
@@ -786,9 +559,11 @@ const attrs = useAttrs();
 const rootRef = ref<HTMLElement | null>(null);
 const ${inputRefProp} = ref<HTMLInputElement | null>(null);
 const initialDefaultChecked = props.${defaultState};
+const initialChecked = props.${state} ?? initialDefaultChecked;
 const uncontrolledChecked = ref(initialDefaultChecked);
 const renderedChecked = computed(() => props.${state} ?? uncontrolledChecked.value);
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
+let unsubscribeCheckedChange: (() => void) | undefined;
 let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 
@@ -799,10 +574,6 @@ defineExpose({
 
 function handleCheckedChange(checked: boolean, detail: ${detailType}): void {
   emit("${facts.event.name}", checked, detail);
-  if (detail.isCanceled) return;
-
-  if (props.${state} === undefined) uncontrolledChecked.value = checked;
-  emit("update:${state}", checked);
 }
 
 function clearResetTimer(): void {
@@ -817,11 +588,17 @@ function unbindFormReset(): void {
   resetForm = null;
 }
 
-function handleFormReset(): void {
+function handleFormReset(event: Event): void {
   clearResetTimer();
+  const ownedInstance = instance;
   resetTimer = window.setTimeout(() => {
-    if (instance && props.${state} === undefined) {
-      uncontrolledChecked.value = instance.${facts.state.getter}();
+    if (
+      !event.defaultPrevented &&
+      ownedInstance &&
+      instance === ownedInstance &&
+      props.${state} === undefined
+    ) {
+      uncontrolledChecked.value = ownedInstance.${facts.state.getter}();
     }
     resetTimer = undefined;
   }, 0);
@@ -846,6 +623,8 @@ function removeRuntimeOwnedUncheckedInput(): void {
 }
 
 function destroyOwnedInstance(): void {
+  unsubscribeCheckedChange?.();
+  unsubscribeCheckedChange = undefined;
   unbindFormReset();
   const ownedInstance = instance;
   if (!ownedInstance) return;
@@ -855,12 +634,13 @@ function destroyOwnedInstance(): void {
 }
 
 function setupRuntime(): void {
+  const currentChecked = props.${state} ?? instance?.${facts.state.getter}() ?? renderedChecked.value;
   destroyOwnedInstance();
   const element = rootRef.value;
   if (!element) return;
 
   instance = ${facts.runtime.factory}(element, {
-    ${defaultState}: renderedChecked.value,
+    ${defaultState}: initialDefaultChecked,
     ${disabled}: props.${disabled},
     ${form}: props.${form},
     ${id}: props.${id},
@@ -871,6 +651,14 @@ function setupRuntime(): void {
     ${value}: props.${value},
     ${facts.event.callbackProp}: handleCheckedChange,
     ...(props.${state} === undefined ? {} : { ${state}: props.${state} }),
+  });
+  const ownedInstance = instance;
+  ownedInstance.${facts.setters.state.method}(currentChecked, { emit: false });
+  unsubscribeCheckedChange = ownedInstance.subscribe("${acceptedEvent}", (detail) => {
+    if (instance !== ownedInstance) return;
+    const checked = detail.${facts.event.valueProperty};
+    if (props.${state} === undefined) uncontrolledChecked.value = checked;
+    emit("update:${state}", checked);
   });
   bindFormReset();
 }
@@ -957,7 +745,7 @@ onBeforeUnmount(destroyOwnedInstance);
     aria-hidden="true"
     tabindex="-1"
     type="${facts.input.type}"
-    :checked="initialDefaultChecked"
+    :checked="initialChecked"
     :disabled="props.${disabled}"
     :form="props.${form}"
     :id="props.${id} ? (props.${nativeButton} ? \`\${props.${id}}-input\` : props.${id}) : undefined"

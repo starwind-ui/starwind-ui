@@ -1,24 +1,24 @@
+import { createTabs, type TabsValue, type TabsValueChangeDetails } from "@starwind-ui/runtime/tabs";
+import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTab } from "@starwind-ui/vue/tabs";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import {
+  type ComponentPublicInstance,
   createApp,
   createSSRApp,
   h,
   nextTick,
   reactive,
   ref,
-  type ComponentPublicInstance,
 } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { userEvent } from "vitest/browser";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import type { TabsValue, TabsValueChangeDetails } from "@starwind-ui/runtime/tabs";
-import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTab } from "@starwind-ui/vue/tabs";
 import {
   Tabs as StyledTabs,
   TabsContent as StyledTabsContent,
   TabsList as StyledTabsList,
   TabsTrigger as StyledTabsTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/tabs";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 type ElementExpose = ComponentPublicInstance & { element: HTMLElement | null };
 const cleanups: Array<() => void> = [];
@@ -31,6 +31,90 @@ afterEach(() => {
 });
 
 describe("Vue Tabs public behavior", () => {
+  it.each([undefined, "mount-key"])(
+    "freezes syncKey %s through changes and unrelated reconstruction",
+    async (initialKey) => {
+      localStorage.setItem("starwind-tabs-mount-key", "c");
+      localStorage.setItem("starwind-tabs-next-key", "b");
+      const state = reactive({
+        syncKey: initialKey as string | undefined,
+        value: undefined as TabsValue | undefined,
+        orientation: "horizontal" as "horizontal" | "vertical",
+        parts: 0,
+        lifetime: 0,
+      });
+      const host = appendHost();
+      const parts = () => [
+        h(TabsList, { key: state.parts }, () =>
+          ["a", "b", "c"].map((value) =>
+            h(TabsTab, { value, "data-test-tab": value }, () => value),
+          ),
+        ),
+        ...["a", "b", "c"].map((value) => h(TabsPanel, { value }, () => value)),
+      ];
+      const app = createApp({
+        render: () =>
+          h("div", [
+            h(
+              TabsRoot,
+              {
+                key: state.lifetime,
+                "data-owner": "",
+                defaultValue: "a",
+                syncKey: state.syncKey,
+                modelValue: state.value,
+                orientation: state.orientation,
+              },
+              parts,
+            ),
+            h(TabsRoot, { "data-peer": "", defaultValue: "a", syncKey: "mount-key" }, parts),
+          ]),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await settle();
+      const root = () => host.querySelector<HTMLElement>("[data-owner]")!;
+      const peer = createTabs(host.querySelector<HTMLElement>("[data-peer]")!);
+      const click = (value: string) =>
+        root().querySelector<HTMLButtonElement>(`[data-test-tab="${value}"]`)!.click();
+      const initial = createTabs(root());
+      expect(initial.getValue()).toBe(initialKey ? "c" : "a");
+      state.syncKey = "next-key";
+      await settle();
+      expect(createTabs(root())).toBe(initial);
+      expect(root().getAttribute("data-sync-key")).toBe(initialKey ?? null);
+      click("b");
+      await settle();
+      expect(initial.getValue()).toBe("b");
+      expect(peer.getValue()).toBe(initialKey ? "b" : "c");
+      state.orientation = "vertical";
+      state.parts++;
+      await settleMutation();
+      expect(createTabs(root())).toBe(initial);
+      expect(root().getAttribute("data-sync-key")).toBe(initialKey ?? null);
+      state.value = "c";
+      await settle();
+      expect(createTabs(root())).toBe(initial);
+      expect(createTabs(root()).getValue()).toBe("c");
+      expect(root().getAttribute("data-sync-key")).toBe(initialKey ?? null);
+      state.value = undefined;
+      await settle();
+      click("a");
+      await settle();
+      expect(peer.getValue()).toBe(initialKey ? "a" : "c");
+      expect(localStorage.getItem("starwind-tabs-next-key")).toBe("b");
+      const retired = root();
+      state.lifetime++;
+      await settle();
+      expect(root()).not.toBe(retired);
+      expect(root().getAttribute("data-sync-key")).toBe("next-key");
+      expect(createTabs(root()).getValue()).toBe("b");
+      click("c");
+      await settle();
+      expect(localStorage.getItem("starwind-tabs-next-key")).toBe("c");
+    },
+  );
+
   it("keeps controlled and canceled proposals parent-owned and preserves event order", async () => {
     const state = reactive({ cancel: true, value: "account" as TabsValue });
     const events: string[] = [];
@@ -268,3 +352,18 @@ function appendHost(): HTMLDivElement {
   document.body.append(host);
   return host;
 }
+
+testAcceptedModelPublication({
+  name: "TabsRoot",
+  model: "modelValue",
+  proposal: "onValueChange",
+  domEvent: "starwind:value-change",
+  initial: "account",
+  accepted: "password",
+  tree: () => h(TabsRoot, { defaultValue: "account" }, () => tabsTree()),
+  root: "[data-sw-tabs]",
+  act: (root) =>
+    root.querySelector<HTMLButtonElement>('[data-sw-tabs-tab][data-value="password"]')!.click(),
+  read: (root) =>
+    root.querySelector('[data-sw-tabs-tab][aria-selected="true"]')?.getAttribute("data-value"),
+});

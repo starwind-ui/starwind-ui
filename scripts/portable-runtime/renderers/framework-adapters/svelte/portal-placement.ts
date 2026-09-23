@@ -1,0 +1,86 @@
+export function printSveltePortalPlacement(): string {
+  return `import { observePortalDocument } from "./portal-document-observer.js";
+
+type PortalRuntime = {
+  resolvePortalPlacement(element: HTMLElement, options: {
+    container?: Element | string | null;
+    disabled: boolean;
+    mode: "framework";
+    reference: Element;
+  }): { target: HTMLElement };
+  reportPortalPlacement(element: HTMLElement, placement: { ready: boolean; target: HTMLElement } | null): void;
+};
+
+export function createPortalPlacement(
+  element: HTMLDivElement,
+  reference: Element,
+  runtime: PortalRuntime,
+  preserveFocus = false,
+  reportPreparation = true,
+) {
+  const authoredParent = element.parentNode;
+  const authoredNextSibling = element.nextSibling;
+  let stopDocumentObservation: (() => void) | undefined;
+  let placedTarget: HTMLElement | null = null;
+
+  const move = (parent: Node, next: Node | null = null) => {
+    if (!preserveFocus) {
+      parent.insertBefore(element, next);
+      return;
+    }
+    const focused = element.ownerDocument.activeElement;
+    const restoreFocus = focused instanceof HTMLElement && element.contains(focused);
+    parent.insertBefore(element, next);
+    if (restoreFocus && focused.isConnected) focused.focus({ preventScroll: true });
+  };
+  const restore = () => {
+    if (!authoredParent) return;
+    move(authoredParent, authoredNextSibling?.parentNode === authoredParent ? authoredNextSibling : null);
+  };
+  const disconnect = () => {
+    stopDocumentObservation?.();
+    stopDocumentObservation = undefined;
+    runtime.reportPortalPlacement(element, null);
+  };
+  const reset = () => {
+    disconnect();
+    placedTarget = null;
+    restore();
+  };
+  const resolveTarget = (container: string | HTMLElement | undefined) =>
+    runtime.resolvePortalPlacement(element, { container, disabled: false, mode: "framework", reference }).target;
+  const place = (container: string | HTMLElement | undefined) => {
+    const target = resolveTarget(container);
+    if (placedTarget === target && element.parentElement === target) return;
+    runtime.reportPortalPlacement(element, { ready: false, target });
+    move(target);
+    placedTarget = target;
+    if (element.parentElement === target) runtime.reportPortalPlacement(element, { ready: true, target });
+  };
+  const prepare = () => {
+    if (element.parentNode === authoredParent) return () => {};
+    const parent = element.parentNode;
+    const next = element.nextSibling;
+    if (reportPreparation && parent instanceof HTMLElement) runtime.reportPortalPlacement(element, { ready: false, target: parent });
+    restore();
+    return () => {
+      if (!parent) return;
+      move(parent, next?.parentNode === parent ? next : null);
+      if (reportPreparation && parent instanceof HTMLElement) runtime.reportPortalPlacement(element, { ready: true, target: parent });
+    };
+  };
+  const update = (active: boolean, container: string | HTMLElement | undefined) => {
+    reset();
+    element.toggleAttribute("data-disabled", !active);
+    if (!active) return;
+    place(container);
+    stopDocumentObservation = observePortalDocument(element.ownerDocument, () => {
+      const target = resolveTarget(container);
+      if (target !== placedTarget || element.parentElement !== target) place(container);
+    });
+    return reset;
+  };
+  return { authoredParent, prepare, update, disconnect, restore };
+}
+`;
+}

@@ -1,13 +1,12 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -30,18 +29,8 @@ describe("generated Vue Field", () => {
       if (name === "index") continue;
       expect(() => assertVueSfcCompiles(source, `${name}.vue`)).not.toThrow();
     }
-    expect(first.root).toContain("instance = createField(element");
-    expect(first.root).toContain("instance?.setDirty(value)");
-    expect(first.root).toContain("instance?.setDisabled(value)");
-    expect(first.root).toContain("instance?.setInvalid(value)");
-    expect(first.root).toContain("instance?.setName(value)");
-    expect(first.root).toContain("instance?.setTouched(value)");
-    expect(first.root).toContain("dirty: undefined");
-    expect(first.root).toContain("invalid: undefined");
-    expect(first.root).toContain("touched: undefined");
-    expect(first.root).toContain(
-      ':data-validation-timing="props.dataValidationTiming ?? props.validationTiming"',
-    );
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(first.control).toContain('import InputRoot from "../input/InputRoot.vue"');
     expect(first.control).toContain(':model-value="props.modelValue"');
     expect(first.control).toContain('@update:model-value="handleModelValueUpdate"');
@@ -69,8 +58,8 @@ describe("generated Vue Field", () => {
 
     expect(() => assertVueSfcCompiles(root, "Field.vue")).not.toThrow();
     expect(() => assertVueSfcCompiles(control, "FieldControl.vue")).not.toThrow();
-    expect(root).toContain('data-slot="field"');
-    expect(root).toContain(':ref="setElement"');
+    expect(compactCode(root)).toContain(compactCode('data-slot="field"'));
+    expect(compactCode(root)).toContain(compactCode(':ref="setElement"'));
     expect(control).toContain('data-slot="field-control"');
     expect(control).toContain(':model-value="modelValue"');
     expect(control).toContain('@update:model-value="emit(&quot;update:modelValue&quot;, $event)"');

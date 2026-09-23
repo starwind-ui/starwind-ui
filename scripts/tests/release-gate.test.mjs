@@ -4,7 +4,12 @@ import os from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
-import { releaseGateStages, reusableGateRecord, runReleaseGate } from "../release-gate.mjs";
+import {
+  RELEASE_PACKS,
+  releaseGateStages,
+  reusableGateRecord,
+  runReleaseGate,
+} from "../release-gate.mjs";
 
 const roots = [];
 const recordFile = path.join("node_modules", ".cache", "starwind-release", "gate.json");
@@ -70,11 +75,27 @@ describe("release gate checkpoints", () => {
     const publicStages = releaseGateStages();
     const index = (name) => publicStages.findIndex(([candidate]) => candidate === name);
     expect(index("build")).toBeLessThan(index("pack"));
-    for (const stage of ["vue tests", "vue demo", "Vue hosts", "candidate hosts"])
+    for (const stage of [
+      "vue tests",
+      "vue demo",
+      "Vue hosts",
+      "svelte tests",
+      "svelte demo",
+      "Svelte hosts",
+      "candidate hosts",
+    ])
       expect(index("pack")).toBeLessThan(index(stage));
     expect(publicStages.find(([name]) => name === "vue tests")[1]).toContain("test:all:built");
     expect(publicStages.find(([name]) => name === "vue demo")[1]).toContain("smoke:built");
-    expect(releaseGateStages({ privateEvidence: true })).toHaveLength(publicStages.length + 1);
+    expect(publicStages.find(([name]) => name === "svelte tests")[1]).toEqual([
+      "--filter=@starwind-ui/svelte",
+      "test:run",
+    ]);
+    expect(publicStages.find(([name]) => name === "Svelte hosts")[1]).toEqual([
+      "test:svelte-cli-host-acceptance",
+      `--packs=${RELEASE_PACKS}`,
+    ]);
+    expect(releaseGateStages({ privateEvidence: true })).toEqual(publicStages);
   });
 
   it("reuses a completed prefix after a later stage fails", async () => {

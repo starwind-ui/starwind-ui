@@ -1,11 +1,10 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { projectVueAttributeAccess } from "../../renderers/framework-adapters/vue/public-contract.js";
+import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
@@ -81,7 +80,7 @@ describe("Vue attribute access projection", () => {
     for (const fixture of fixtures) {
       const output = await source(fixture);
       expect(output, fixture).toContain("useAttrs");
-      expect(output, fixture).toContain("const attrs = useAttrs();");
+      expect(output, fixture).toMatch(/const attrs\s*=\s*useAttrs\(\);/);
     }
   });
 
@@ -92,15 +91,30 @@ describe("Vue attribute access projection", () => {
         listVueFiles(path.join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime")),
       ])
     ).flat();
-    const sources = await Promise.all(files.map((file) => readFile(file, "utf8")));
-    const templateOnly = sources.filter((output) => output.includes('v-bind="$attrs"'));
-    const setup = sources.filter((output) => output.includes("const attrs = useAttrs();"));
+    const outputs = await Promise.all(
+      files.map(async (file) => ({ file, source: await readFile(file, "utf8") })),
+    );
+    const templateBindings = outputs.filter(({ source }) => source.includes('v-bind="$attrs"'));
+    const setup = outputs.filter(({ source }) => source.includes("const attrs = useAttrs();"));
+    const dualAccess = templateBindings.filter(({ source }) =>
+      source.includes("const attrs = useAttrs();"),
+    );
 
-    expect(templateOnly).toHaveLength(354);
-    expect(setup).toHaveLength(138);
-    for (const output of templateOnly) {
-      expect(output).not.toContain("const attrs = useAttrs();");
-      expect(output.replaceAll("$attrs", "")).not.toMatch(/\battrs\b/);
+    expect(templateBindings).toHaveLength(357);
+    // Six overlay Trigger/Close parts and Select.Trigger now merge attrs in setup.
+    expect(setup).toHaveLength(136);
+    expect(dualAccess.map(({ file }) => path.relative(process.cwd(), file)).sort()).toEqual([
+      "packages/vue/src/alert-dialog/AlertDialogClose.vue",
+      "packages/vue/src/alert-dialog/AlertDialogTrigger.vue",
+      "packages/vue/src/dialog/DialogClose.vue",
+      "packages/vue/src/dialog/DialogTrigger.vue",
+      "packages/vue/src/drawer/DrawerClose.vue",
+      "packages/vue/src/drawer/DrawerTrigger.vue",
+      "packages/vue/src/select/SelectTrigger.vue",
+    ]);
+    for (const { source } of templateBindings.filter((output) => !dualAccess.includes(output))) {
+      expect(() => assertVueSfcCompiles(source, "Component.vue")).not.toThrow();
+      expect(source.replaceAll("$attrs", "")).not.toMatch(/\battrs\b/);
     }
   });
 

@@ -30,6 +30,7 @@ const { props: projectedProps, text } = useColorPickerPartProjection(
     channel: slider.channel.value,
     orientation: slider.orientation.value,
     step: props.step ?? slider.step.value,
+    ariaLabel: attrs["aria-label"] as string | undefined,
   }),
   attrs,
   () => ({

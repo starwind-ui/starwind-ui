@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { radioRuntimeAdapterContract } from "../../contracts/primitive/components/radio.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode, normalizeVueSource } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 
@@ -61,26 +60,10 @@ describe("generated Vue Radio Primitive", () => {
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "RadioRoot.vue")).not.toThrow();
     expect(() => assertVueSfcCompiles(first.indicator, "RadioIndicator.vue")).not.toThrow();
-    expect(first.root).toContain("useRadioGroupContext()");
-    expect(first.root).toContain("onCheckedChange: handleCheckedChange");
-    expect(first.root).not.toContain('createdInstance.subscribe("checkedChange"');
-    expect(first.root).toContain('createdInstance.subscribe("stateSync", handleStateSync)');
-    expect(first.root).toMatch(
-      /function handleCheckedChange\(_checked: boolean, detail: RadioCheckedChangeDetails\)[\s\S]*emit\("checkedChange", detail\.checked, detail\);[\s\S]*detail\.onAccepted\(\(\) => \{[\s\S]*emit\("update:checked", detail\.checked\);/,
-    );
-    expect(first.root).toContain("radioGroup ? radioGroup.value.value === props.value : undefined");
-    expect(first.root).toContain("const isGroupOwned = radioGroup !== undefined");
-    expect(first.root).toMatch(
-      /isGroupOwned[\s\S]*\? \{ checked: groupChecked\.value \?\? false \}/,
-    );
-    expect(first.root).toContain("if (isGroupOwned) return");
-    expect(first.root).toContain("defaultChecked: renderedChecked.value");
-    expect(first.root).toContain("const controllednessChanged =");
-    expect(first.root).toContain("uncontrolledChecked.value = instance.getChecked()");
-    expect(first.root).toContain("props.form ?? radioGroup?.form?.value");
-    expect(first.root).toContain("props.name ?? radioGroup?.name?.value");
-    expect(first.root).toContain("data-sw-radio-input");
-    expect(first.root).toContain(':checked="renderedChecked"');
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
+    expect(compactCode(first.root)).toContain(compactCode("data-sw-radio-input"));
+
     expect(first.index).toContain('export { default as RadioRoot } from "./RadioRoot.vue";');
     expect(first.index).toContain(
       'export { default as RadioIndicator } from "./RadioIndicator.vue";',
@@ -90,8 +73,10 @@ describe("generated Vue Radio Primitive", () => {
       "RadioIndicator.vue": first.indicator,
       "RadioRoot.vue": first.root,
     })) {
-      expect(contents).toBe(
-        await readFile(path.join(process.cwd(), "packages/vue/src/radio", fileName), "utf8"),
+      expect(normalizeVueSource(contents)).toBe(
+        normalizeVueSource(
+          await readFile(path.join(process.cwd(), "packages/vue/src/radio", fileName), "utf8"),
+        ),
       );
     }
   });

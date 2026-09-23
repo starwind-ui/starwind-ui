@@ -34,6 +34,7 @@ export type InputInstance = {
   readonly root: HTMLInputElement;
   destroy(): void;
   getValue(): string;
+  refresh(): void;
   setDisabled(disabled: boolean): void;
   setValue(value: InputValue, options?: InputSetValueOptions): void;
   subscribe(event: "valueChange", callback: (details: InputValueChangeDetails) => void): () => void;
@@ -51,11 +52,21 @@ export function createInput(root: HTMLElement, options: InputOptions = {}): Inpu
   }
 
   const existing = instances.get(root);
-  if (existing) return existing;
+  if (existing) {
+    existing.refresh();
+    return existing;
+  }
 
   const instance = new InputController(root, options);
   instances.set(root, instance);
   return instance;
+}
+
+/** Internal scoped-initialization hook; only reconnects an existing owner. */
+export function refreshExistingInput(root: HTMLElement): InputInstance | null {
+  const instance = instances.get(root as HTMLInputElement);
+  instance?.refresh();
+  return instance ?? null;
 }
 
 class InputController implements InputInstance {
@@ -69,6 +80,7 @@ class InputController implements InputInstance {
   private disabled: boolean;
   private destroyed = false;
   private focused = false;
+  private form: HTMLFormElement | null = null;
   private resetTimer: number | undefined;
   private touched = false;
   private value: string;
@@ -86,12 +98,14 @@ class InputController implements InputInstance {
     this.writeRootValue(this.value);
     this.render();
     this.bindEvents();
+    this.refresh();
   }
 
   destroy(): void {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.form?.removeEventListener("reset", this.handleFormReset);
     this.clearResetTimer();
     instances.delete(this.root);
     this.destroyed = true;
@@ -99,6 +113,18 @@ class InputController implements InputInstance {
 
   getValue(): string {
     return this.value;
+  }
+
+  refresh(): void {
+    if (this.destroyed) return;
+    const form = this.root.form;
+    if (form === this.form) return;
+    this.form?.removeEventListener("reset", this.handleFormReset);
+    this.clearResetTimer();
+    this.form = form;
+    form?.addEventListener("reset", this.handleFormReset);
+    this.writeRootValue(this.value);
+    this.render();
   }
 
   setDisabled(disabled: boolean): void {
@@ -149,7 +175,6 @@ class InputController implements InputInstance {
     this.root.addEventListener("input", this.handleInput, { signal });
     this.root.addEventListener("focus", this.handleFocus, { signal });
     this.root.addEventListener("blur", this.handleBlur, { signal });
-    this.root.form?.addEventListener("reset", this.handleFormReset, { signal });
   }
 
   private readonly handleInput = (event: Event): void => {
@@ -184,9 +209,12 @@ class InputController implements InputInstance {
     this.render();
   };
 
-  private readonly handleFormReset = (): void => {
+  private readonly handleFormReset = (event: Event): void => {
     this.clearResetTimer();
+    const form = this.form;
     this.resetTimer = window.setTimeout(() => {
+      this.resetTimer = undefined;
+      if (this.destroyed || event.defaultPrevented || this.root.form !== form) return;
       this.value = this.root.value;
       this.render();
       this.resetTimer = undefined;

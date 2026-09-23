@@ -34,6 +34,7 @@ const { disabled = false, isUploading = false, ...rest } = Astro.props;
     trackAstroController,
   } from "../internal/controller-lifecycle";
 
+  let knownRoots = new WeakSet<HTMLElement>();
   const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
     const initRoot =
       event?.type === "starwind:init" && event instanceof CustomEvent
@@ -43,22 +44,26 @@ const { disabled = false, isUploading = false, ...rest } = Astro.props;
       ? initRoot
       : document;
     const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
-
     if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
       candidates.unshift(scopedRoot as HTMLElement);
     }
-
+    if (scopedRoot instanceof Element) {
+      const owner = scopedRoot.parentElement?.closest<HTMLElement>(selector);
+      if (owner && knownRoots.has(owner) && !candidates.includes(owner)) candidates.push(owner);
+    }
     return candidates;
   };
-
   const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
     value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
-
   const setupDropzones = (event?: Event) => {
-    getInitCandidates(event, "[data-sw-dropzone]").forEach((root) =>
-      trackAstroController("DropzoneRoot", root, createDropzone(root)),
-    );
+    getInitCandidates(event, "[data-sw-dropzone]").forEach((root) => {
+      const instance = trackAstroController("DropzoneRoot", root, createDropzone(root));
+      instance.refresh();
+      knownRoots.add(root);
+    });
   };
-
+  document.addEventListener("astro:before-swap", () => {
+    knownRoots = new WeakSet();
+  });
   registerAstroControllerLifecycle("DropzoneRoot", setupDropzones);
 </script>

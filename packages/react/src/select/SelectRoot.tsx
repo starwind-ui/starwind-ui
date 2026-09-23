@@ -63,6 +63,16 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   const rootRef = React.useRef<HTMLDivElement>(null);
   const portalScope = useReactPortalScope(rootRef, createPortalBinding);
   const portalRuntimeActivation = portalScope.activation;
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const childrenRef = React.useRef(children);
+  const valueRevisionRef = React.useRef(0);
+  const resetRef = React.useRef<{
+    form: HTMLFormElement | null;
+    listener?: (event: Event) => void;
+    timer?: number;
+    generation: number;
+    needsRender?: boolean;
+  }>({ form: null, generation: 0 });
   const instanceRef = React.useRef<ReturnType<typeof createSelect> | undefined>(undefined);
   const onOpenChangeRef = React.useRef(onOpenChange);
   const onValueChangeRef = React.useRef(onValueChange);
@@ -85,6 +95,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   }, []);
 
   const setUncontrolledValue = React.useCallback((nextValue: string | null) => {
+    valueRevisionRef.current += 1;
     uncontrolledValueRef.current = nextValue;
     setUncontrolledValueState(nextValue);
   }, []);
@@ -102,8 +113,13 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   }, [open]);
 
   useIsomorphicLayoutEffect(() => {
+    valueRevisionRef.current += 1;
     valueRef.current = value;
   }, [value]);
+
+  useIsomorphicLayoutEffect(() => {
+    childrenRef.current = children;
+  }, [children]);
 
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
@@ -123,42 +139,43 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
     if (!portalScope.isReady()) return;
 
     const instance = createSelect(root, {
-      defaultOpen: uncontrolledOpenRef.current,
-      defaultValue: uncontrolledValueRef.current,
-      disabled,
-      autoComplete,
-      form,
-      highlightItemOnHover,
-      modal,
-      onOpenChange: (nextOpen, details) => {
-        onOpenChangeRef.current?.(nextOpen, details);
+      defaultOpen: disabled ? false : uncontrolledOpenRef.current,
+      defaultValue: defaultValueRef.current,
+      autoComplete: autoComplete,
+      disabled: disabled,
+      form: form,
+      highlightItemOnHover: highlightItemOnHover,
+      modal: modal,
+      name: name,
+      readOnly: readOnly,
+      required: required,
+      onOpenChange: (next, detail) => {
+        onOpenChangeRef.current?.(next, detail);
       },
-      onValueChange: (nextValue, details) => {
-        onValueChangeRef.current?.(nextValue, details);
+      onValueChange: (next, detail) => {
+        onValueChangeRef.current?.(next, detail);
       },
-      name,
-      readOnly,
-      required,
-      ...(openRef.current !== undefined ? { open: openRef.current } : {}),
+
+      ...(openRef.current !== undefined ? { open: disabled ? false : openRef.current } : {}),
       ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
     instanceRef.current = instance;
-    instance.subscribe("openChange", (details) => {
+    instance.setValue(
+      valueRef.current !== undefined ? valueRef.current : (uncontrolledValueRef.current ?? null),
+      { emit: false },
+    );
+    instance.subscribe("openChange", (detail) => {
+      if (instanceRef.current !== instance) return;
       if (openRef.current === undefined) {
-        setUncontrolledOpen(details.open);
+        setUncontrolledOpen(detail.open);
       }
     });
-    instance.subscribe("valueChange", (details) => {
-      const nextSelectedLabel = getTextFromSelectItem(details.item);
-      if (nextSelectedLabel !== null || details.value === null) {
-        setSelectedLabel({
-          label: nextSelectedLabel,
-          value: details.value,
-        });
-      }
-
+    instance.subscribe("valueChange", (detail) => {
+      if (instanceRef.current !== instance) return;
+      const label = getTextFromSelectItem(detail.item);
+      if (label !== null || detail.value === null) setSelectedLabel({ label, value: detail.value });
       if (valueRef.current === undefined) {
-        setUncontrolledValue(details.value);
+        setUncontrolledValue(detail.value);
       }
     });
     return instance;
@@ -243,6 +260,12 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
 
   useIsomorphicLayoutEffect(() => {
     return () => {
+      const reset = resetRef.current;
+      reset.generation += 1;
+      window.clearTimeout(reset.timer);
+      if (reset.listener) reset.form?.removeEventListener("reset", reset.listener);
+      reset.form = null;
+      reset.needsRender = false;
       instanceRef.current?.destroy();
       instanceRef.current = undefined;
     };
@@ -255,41 +278,53 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   }, [ensureInstance, open, uncontrolledOpen]);
 
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setFormOptions({ autoComplete, form, name, required });
-  }, [autoComplete, form, name, required]);
-
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setDisabled(disabled);
+    const owned = instanceRef.current;
+    if (!owned) return;
+    owned.setDisabled(disabled);
+    const desired = disabled ? false : (openRef.current ?? uncontrolledOpenRef.current);
+    if (owned.getOpen() !== desired) owned.setOpen(desired, { emit: false });
+    if (openRef.current === undefined) {
+      setUncontrolledOpen(owned.getOpen());
+    }
   }, [disabled]);
-
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setReadOnly(readOnly);
+    const owned = instanceRef.current;
+    if (!owned) return;
+    owned.setReadOnly(readOnly);
   }, [readOnly]);
-
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setModal(modal);
+    const owned = instanceRef.current;
+    if (!owned) return;
+    owned.setModal(modal);
   }, [modal]);
-
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setHighlightItemOnHover(highlightItemOnHover);
+    const owned = instanceRef.current;
+    if (!owned) return;
+    owned.setHighlightItemOnHover(highlightItemOnHover);
   }, [highlightItemOnHover]);
-
+  useIsomorphicLayoutEffect(() => {
+    const owned = instanceRef.current;
+    if (!owned) return;
+    owned.setFormOptions({
+      autoComplete: autoComplete,
+      form: form,
+      name: name,
+      required: required,
+    });
+  }, [autoComplete, form, name, required]);
   useIsomorphicLayoutEffect(() => {
     if (open === undefined) return;
     const instance = open ? ensureInstance() : instanceRef.current;
     if (!instance) return;
-    if (instance.getOpen() === open) return;
-
-    instance.setOpen(open, { emit: false });
+    if (instance.getOpen() !== (disabled ? false : open))
+      instance.setOpen(disabled ? false : open, { emit: false });
   }, [ensureInstance, open]);
 
   useIsomorphicLayoutEffect(() => {
     if (value === undefined) return;
     const instance = instanceRef.current;
     if (!instance) return;
-    if (instance.getValue() === value) return;
-
-    instance.setValue(value, { emit: false });
+    if (instance.getValue() !== value || value === "") instance.setValue(value, { emit: false });
   }, [value]);
 
   const renderedOpen = open ?? uncontrolledOpen;
@@ -309,6 +344,71 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
 
     return () => window.clearTimeout(timer);
   }, [children, selectedValue]);
+  useIsomorphicLayoutEffect(() => {
+    const input = inputRef.current;
+    const root = rootRef.current;
+    const reset = resetRef.current;
+    if (reset.needsRender) {
+      reset.needsRender = false;
+      // The committed label cache lets Runtime render a closed popup's selected value.
+      instanceRef.current?.setValue(selectedValue, { emit: false });
+    }
+    const formElement = input?.form ?? null;
+    if (reset.form === formElement) return;
+    if (reset.listener) reset.form?.removeEventListener("reset", reset.listener);
+    reset.form = formElement;
+    if (!input || !root || !formElement) return;
+
+    const handleReset = (event: Event) => {
+      const generation = ++reset.generation;
+      const revision = valueRevisionRef.current;
+      window.clearTimeout(reset.timer);
+      queueMicrotask(() => {
+        if (
+          !(
+            reset.generation === generation &&
+            rootRef.current === root &&
+            inputRef.current === input
+          )
+        )
+          return;
+        reset.timer = window.setTimeout(() => {
+          if (
+            !(
+              reset.generation === generation &&
+              rootRef.current === root &&
+              inputRef.current === input
+            )
+          )
+            return;
+          const superseded = revision !== valueRevisionRef.current;
+          const before = uncontrolledValueRef.current ?? null;
+          const initialResetValue = defaultValueRef.current ?? null;
+          const next =
+            valueRef.current !== undefined
+              ? valueRef.current
+              : event.defaultPrevented || superseded
+                ? before
+                : initialResetValue;
+          const resetOwner = instanceRef.current;
+          resetOwner?.setValue(next, { emit: false });
+          const acceptedValue = resetOwner ? resetOwner.getValue() : next === "" ? null : next;
+          input.value = acceptedValue ?? "";
+          if (valueRef.current === undefined) {
+            setUncontrolledValue(acceptedValue);
+          }
+          reset.needsRender = true;
+          setSelectedLabel({
+            label: findSelectedOptionText(childrenRef.current, acceptedValue),
+            value: acceptedValue,
+          });
+        }, 0);
+      });
+    };
+    reset.listener = handleReset;
+    formElement.addEventListener("reset", handleReset);
+  });
+
   const renderedSelectedLabel = selectedLabel.value === selectedValue ? selectedLabel.label : null;
   const initializeFromTriggerEvent = React.useCallback(
     (event: React.SyntheticEvent<HTMLDivElement>) => {
@@ -375,6 +475,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
           }}
         >
           <input
+            ref={inputRef}
             data-sw-select-input
             type="hidden"
             autoComplete={autoComplete}
@@ -516,10 +617,8 @@ function getTextFromReactNode(node: React.ReactNode): string {
 
 function getTextFromSelectItem(item: HTMLElement | undefined): string | null {
   if (!item) return null;
-
   const textElement = item.querySelector<HTMLElement>("[data-sw-select-item-text]");
   if (textElement) return textElement.textContent?.trim() ?? "";
-
   const text = item.textContent?.trim() ?? "";
   return text.length > 0 ? text : null;
 }

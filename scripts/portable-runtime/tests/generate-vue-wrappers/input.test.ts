@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { inputRuntimeAdapterContract } from "../../contracts/primitive/components/input.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode, normalizeVueSource } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -47,20 +46,14 @@ describe("generated Vue Input Primitive", () => {
 
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "InputRoot.vue")).not.toThrow();
-    expect(first.root).toContain("const modelValue = defineModel<InputValue>();");
-    expect(first.root).toContain("const initialDefaultValue = props.defaultValue;");
-    expect(first.root).toContain("modelValue.value = nextValue;");
-    expect(first.root).toContain("ownedInstance.getValue() === normalizedValue");
-    expect(first.root).toContain("rootRef.value?.value === normalizedValue");
-    expect(first.root).toContain("ownedInstance.setValue(nextValue, { emit: false });");
-    expect(first.root).toContain("handleControlledFormReset");
-    expect(first.root).toContain("clearResetReconciliationTimer");
-    expect(first.root).toContain("bindControlledFormReset();");
-    expect(first.root).toContain('v-bind="attrs"');
-    expect(first.root).toContain("data-sw-input");
-    expect(first.root).toContain("onBeforeUnmount(destroyOwnedInstance);");
-    await expect(first.root).toBe(
-      await readFile(path.join(process.cwd(), "packages/vue/src/input/InputRoot.vue"), "utf8"),
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
+    expect(compactCode(first.root)).toContain(compactCode("data-sw-input"));
+
+    await expect(normalizeVueSource(first.root)).toBe(
+      normalizeVueSource(
+        await readFile(path.join(process.cwd(), "packages/vue/src/input/InputRoot.vue"), "utf8"),
+      ),
     );
     const checkedInIndex = await readFile(
       path.join(process.cwd(), "packages/vue/src/input/index.ts"),

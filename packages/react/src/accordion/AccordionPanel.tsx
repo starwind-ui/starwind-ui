@@ -13,12 +13,12 @@ const AccordionPanel = React.forwardRef<HTMLDivElement, AccordionPanelProps>(
   function AccordionPanel({ style, ...props }, forwardedRef) {
     return (
       <div
-        data-sw-accordion-content
+        {...props}
+        data-sw-accordion-content=""
         data-state="closed"
         hidden
         ref={forwardedRef}
-        style={{ animation: "none", ...style }}
-        {...props}
+        style={{ ...style, animation: "none" }}
       />
     );
   },

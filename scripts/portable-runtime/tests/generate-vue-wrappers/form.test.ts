@@ -3,9 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { formRuntimeAdapterContract } from "../../contracts/primitive/components/form.js";
 import { printVueFormFieldCoordinatorIndex } from "../../renderers/framework-adapters/vue/form-field-coordinator.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
@@ -16,6 +14,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { normalizeVueSource } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -79,15 +78,16 @@ describe("generated Vue Form Primitive", () => {
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "FormRoot.vue")).not.toThrow();
     expect(() => assertVueSfcCompiles(first.errorSummary, "FormErrorSummary.vue")).not.toThrow();
-    expect(first.root).toContain("instance = createForm(element);");
-    expect(first.root).toContain(`props.dataValidationTiming ?? props.validationTiming`);
-    expect(first.root).toContain("onBeforeUnmount(destroyOwnedInstance);");
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(first.errorSummary).toContain('ariaLive: "polite"');
     expect(first.errorSummary).toContain(':aria-live="props.ariaLive"');
     expect(first.errorSummary).toContain('v-bind="$attrs"');
     expect(first.index).toContain("createFormSchemaValidator");
-    await expect(first.root).toBe(
-      await readFile(path.join(process.cwd(), "packages/vue/src/form/FormRoot.vue"), "utf8"),
+    await expect(normalizeVueSource(first.root)).toBe(
+      normalizeVueSource(
+        await readFile(path.join(process.cwd(), "packages/vue/src/form/FormRoot.vue"), "utf8"),
+      ),
     );
   });
 

@@ -1,3 +1,4 @@
+import { createPopover } from "@starwind-ui/runtime/popover";
 import {
   PopoverBackdrop,
   PopoverClose,
@@ -18,6 +19,8 @@ import {
 } from "@starwind-ui/vue/tooltip";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, reactive, ref } from "vue";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
+import { testOverlayCommandAuthority } from "../popover/command-authority.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -609,3 +612,18 @@ function trackPortalDocumentObservers(): Map<MutationObserver, Document> {
   });
   return observers;
 }
+
+testAcceptedModelPublication({
+  name: "popover",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => tree({}, { disabled: true }),
+  root: "[data-sw-popover]",
+  act: (root) => root.querySelector<HTMLElement>("[data-sw-popover-trigger]")!.click(),
+  read: (root) => root.getAttribute("data-state") === "open",
+});
+
+testOverlayCommandAuthority({ name: "popover", tree: tree, controller: createPopover, cleanups });

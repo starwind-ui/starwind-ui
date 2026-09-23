@@ -1,13 +1,8 @@
-import { createApp, h, nextTick, ref } from "vue";
-import { afterEach, describe, expect, it } from "vitest";
-import { userEvent } from "vitest/browser";
-
 import {
   CollapsiblePanel,
   CollapsibleRoot,
   CollapsibleTrigger,
 } from "@starwind-ui/vue/collapsible";
-
 import {
   SidebarComponent,
   SidebarMenuButton,
@@ -15,6 +10,9 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@starwind-ui/vue/sidebar";
+import { afterEach, describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
+import { createApp, h, nextTick, ref } from "vue";
 import {
   Collapsible as StyledCollapsible,
   CollapsibleContent as StyledCollapsibleContent,
@@ -27,8 +25,11 @@ import {
   DropdownTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/dropdown";
 import {
+  Sidebar as StyledSidebar,
   SidebarMenuButton as StyledSidebarMenuButton,
   SidebarMenuItem as StyledSidebarMenuItem,
+  SidebarProvider as StyledSidebarProvider,
+  SidebarTrigger as StyledSidebarTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/sidebar";
 
 const cleanups: Array<() => void> = [];
@@ -40,6 +41,95 @@ afterEach(() => {
 });
 
 describe("Vue Sidebar public behavior", () => {
+  it("keeps nested Styled mobile Sheets with their accepted Provider through veto and remount", async () => {
+    const models: boolean[] = [];
+    const shown = ref(true);
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () =>
+        shown.value
+          ? h(
+              StyledSidebarProvider,
+              {
+                mobileQuery: "(min-width: 0px)",
+                "data-owner": "outer",
+                "onUpdate:mobileOpen": (open: boolean) => models.push(open),
+              },
+              {
+                default: () => [
+                  h(
+                    StyledSidebarProvider,
+                    { mobileQuery: "(min-width: 0px)", "data-owner": "inner" },
+                    { default: () => h(StyledSidebar, {}, { default: () => "Inner" }) },
+                  ),
+                  h(StyledSidebar, {}, { default: () => "Outer" }),
+                  h(StyledSidebarTrigger, { "data-outer-trigger": "" }),
+                ],
+              },
+            )
+          : null,
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await settle();
+    const owner = host.querySelector<HTMLElement>('[data-owner="outer"]')!;
+    const inner = host.querySelector<HTMLElement>('[data-owner="inner"]')!;
+    const sheets = [...owner.querySelectorAll<HTMLElement>('[data-sidebar="mobile"]')];
+    const sheet = sheets[1]!;
+    const popup = sheet.querySelector<HTMLDialogElement>("dialog")!;
+    const trigger = owner.querySelector<HTMLElement>("[data-outer-trigger]")!;
+    const veto = (event: Event) => {
+      if (event.target === sheet) event.preventDefault();
+    };
+    document.addEventListener("starwind:open-change", veto);
+    trigger.click();
+    await settle();
+    expect(popup.open).toBe(false);
+    expect(owner.dataset.mobileOpen).toBe("false");
+    expect(models).toEqual([]);
+    document.removeEventListener("starwind:open-change", veto);
+    trigger.click();
+    await settle();
+    expect(popup.open).toBe(true);
+    expect(inner.dataset.mobileOpen).toBe("false");
+    expect(sheets[0]!.querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
+    document.addEventListener("starwind:open-change", veto);
+    sheet.dispatchEvent(new CustomEvent("dialog:close"));
+    await settle();
+    expect(popup.open).toBe(true);
+    expect(owner.dataset.mobileOpen).toBe("true");
+    expect(models).toEqual([true]);
+    document.removeEventListener("starwind:open-change", veto);
+    document.addEventListener(
+      "starwind:open-change",
+      () => owner.dispatchEvent(new CustomEvent("sidebar:open-mobile")),
+      { once: true },
+    );
+    sheet.dispatchEvent(new CustomEvent("dialog:close"));
+    await settle();
+    expect(popup.open).toBe(true);
+    expect(owner.dataset.mobileOpen).toBe("true");
+    sheet.dispatchEvent(new CustomEvent("dialog:close"));
+    await settle();
+    expect(owner.dataset.mobileOpen).toBe("false");
+    trigger.click();
+    await settle();
+    popup.dispatchEvent(new Event("transitionend"));
+    await settle();
+    expect(popup.open).toBe(true);
+    shown.value = false;
+    await nextTick();
+    const count = models.length;
+    sheet.dispatchEvent(new CustomEvent("dialog:open"));
+    await settle();
+    expect(models).toHaveLength(count);
+    shown.value = true;
+    await settle();
+    expect(host.querySelector<HTMLElement>('[data-owner="outer"]')!.dataset.mobileOpen).toBe(
+      "false",
+    );
+  });
   it("runs uncontrolled desktop and mobile requests through Runtime", async () => {
     const desktop = mountSidebar({ defaultOpen: true, mobileQuery: "(max-width: 0px)" });
     await settle();

@@ -1,14 +1,13 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 
@@ -47,11 +46,11 @@ describe("generated Vue Context Menu Primitive", () => {
     const trigger = output.get("ContextMenuTrigger.vue")!;
     const index = output.get("index.ts")!;
 
-    expect(root).toContain("createContextMenu");
-    expect(root).toContain('from "../menu/MenuContext"');
-    expect(root).toContain("provide(MenuRootContext");
-    expect(root).toContain('provide(MenuOwnerContext, { kind: "root" })');
-    expect(trigger).toContain("useMenuRootContext");
+    expect(compactCode(root)).toContain(compactCode("createContextMenu"));
+    expect(compactCode(root)).toContain(compactCode('from "../menu/MenuContext"'));
+    expect(compactCode(root)).toContain(compactCode("provide(MenuRootContext"));
+    expect(compactCode(root)).toContain(compactCode('provide(MenuOwnerContext, { kind: "root" })'));
+    expect(compactCode(trigger)).toContain(compactCode("useMenuRootContext"));
     expect(index).toContain('import ContextMenuPortal from "../menu/MenuPortal.vue"');
     expect(index).toContain(
       'import ContextMenuSubmenuTrigger from "../menu/MenuSubmenuTrigger.vue"',

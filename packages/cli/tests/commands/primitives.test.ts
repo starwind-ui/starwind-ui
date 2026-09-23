@@ -946,11 +946,11 @@ describe("primitives command", () => {
           },
         ];
       }
-      if (options.framework === "vue") {
+      if (options.framework === "vue" || options.framework === "svelte") {
         return [
           {
             component: "button",
-            framework: "vue",
+            framework: options.framework,
             version: "0.1.0",
             files: [],
             packageRequirements: [],
@@ -973,7 +973,7 @@ describe("primitives command", () => {
 
     const output = JSON.parse(consoleLogSpy.mock.calls[0][0] as string);
     expect(output.filters.framework).toBe("all");
-    expect(output.primitives.total).toBe(3);
+    expect(output.primitives.total).toBe(4);
     expect(output.primitives.results).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -987,6 +987,10 @@ describe("primitives command", () => {
         expect.objectContaining({
           framework: "vue",
           installCommand: "starwind primitives add button --framework vue",
+        }),
+        expect.objectContaining({
+          framework: "svelte",
+          installCommand: "starwind primitives add button --framework svelte",
         }),
       ]),
     );

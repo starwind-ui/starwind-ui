@@ -14,14 +14,6 @@ type ScrollAreaOverflowEdgeThreshold =
       yEnd: number;
     }>;
 
-type ScrollAreaOverflowEdgeThresholdAttributes = {
-  shared?: number;
-  xEnd?: number;
-  xStart?: number;
-  yEnd?: number;
-  yStart?: number;
-};
-
 const props = defineProps<{
   overflowEdgeThreshold?: ScrollAreaOverflowEdgeThreshold;
 }>();
@@ -81,6 +73,13 @@ watch(
   { flush: "post" },
 );
 
+type ScrollAreaOverflowEdgeThresholdAttributes = {
+  shared?: number;
+  xEnd?: number;
+  xStart?: number;
+  yEnd?: number;
+  yStart?: number;
+};
 function getOverflowEdgeThresholdAttributes(
   threshold: ScrollAreaOverflowEdgeThreshold | undefined,
 ): ScrollAreaOverflowEdgeThresholdAttributes {
@@ -88,22 +87,16 @@ function getOverflowEdgeThresholdAttributes(
     const shared = normalizeOverflowEdgeThresholdValue(threshold);
     return shared === undefined ? {} : { shared };
   }
-
   if (!threshold) return {};
-
   return {
-    xEnd: "xEnd" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.xEnd) : undefined,
-    xStart:
-      "xStart" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.xStart) : undefined,
-    yEnd: "yEnd" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.yEnd) : undefined,
-    yStart:
-      "yStart" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.yStart) : undefined,
+    xEnd: normalizeOverflowEdgeThresholdValue(threshold.xEnd),
+    xStart: normalizeOverflowEdgeThresholdValue(threshold.xStart),
+    yEnd: normalizeOverflowEdgeThresholdValue(threshold.yEnd),
+    yStart: normalizeOverflowEdgeThresholdValue(threshold.yStart),
   };
 }
-
 function normalizeOverflowEdgeThresholdValue(value: number | undefined): number | undefined {
   if (value === undefined || !Number.isFinite(value)) return undefined;
-
   return Math.max(value, 0);
 }
 </script>

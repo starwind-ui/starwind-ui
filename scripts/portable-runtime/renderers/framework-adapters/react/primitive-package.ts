@@ -1,11 +1,12 @@
 import { rm } from "node:fs/promises";
-
 import { appendRuntimeTypeFacades, renderPrimitiveIndex } from "../../primitive-index.js";
 import { createTsHeader, writeGeneratedFile } from "../../shared.js";
 import type { FrameworkAdapterTargetPrimitivePackageGenerator } from "../types.js";
+import { printReactFormDiscovery } from "./form-discovery.js";
 import { renderReactPortalHelperFile } from "./portal.js";
 import {
   renderComposeRefsFile,
+  renderNativeOverlayControlFile,
   renderUseClosePresenceFile,
   renderUseIsomorphicLayoutEffectFile,
 } from "./primitive-output-writer.js";
@@ -33,6 +34,11 @@ export const generateReactPrimitivePackage: FrameworkAdapterTargetPrimitivePacka
       ),
       writeGeneratedFile(
         `${outputRoot}/internal`,
+        "native-overlay-control.ts",
+        renderNativeOverlayControlFile(moduleHeader),
+      ),
+      writeGeneratedFile(
+        `${outputRoot}/internal`,
         "use-close-presence.ts",
         renderUseClosePresenceFile(moduleHeader),
       ),
@@ -40,6 +46,11 @@ export const generateReactPrimitivePackage: FrameworkAdapterTargetPrimitivePacka
         `${outputRoot}/internal`,
         "portal.tsx",
         renderReactPortalHelperFile(moduleHeader),
+      ),
+      writeGeneratedFile(
+        `${outputRoot}/internal`,
+        "form-discovery.ts",
+        moduleHeader + printReactFormDiscovery(),
       ),
       writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader)),
     ]);

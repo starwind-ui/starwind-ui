@@ -135,6 +135,20 @@ export function getAstDefaultExportCallObject(
   return object && !hasUnsafeAstObjectShape(object) ? object : undefined;
 }
 
+/** Read a direct object export or one object argument to a known imported config function. */
+export function getAstDefaultExportObject(
+  module: ParsedSourceModule,
+  callName?: string,
+): AstObjectExpression | undefined {
+  const exports = module.body.filter((node) => node.type === "ExportDefaultDeclaration") as Array<
+    AstNode & { declaration: AstNode }
+  >;
+  if (exports.length !== 1) return undefined;
+  const object = asAstObjectExpression(exports[0]!.declaration);
+  if (object) return hasUnsafeAstObjectShape(object) ? undefined : object;
+  return callName ? getAstDefaultExportCallObject(module, callName) : undefined;
+}
+
 export function getAstDefaultExportRange(module: ParsedSourceModule): SourceRange | undefined {
   const exports = module.body.filter((node) => node.type === "ExportDefaultDeclaration");
   return exports.length === 1 ? getAstNodeRange(exports[0]!) : undefined;

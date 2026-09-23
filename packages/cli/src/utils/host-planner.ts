@@ -1,8 +1,8 @@
 import fs from "fs-extra";
-
 import { inspectAstroReactConfig } from "./astro-config.js";
 import type { StarwindFramework } from "./config.js";
 import {
+  type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   isConfigTarget,
   type PrivateVueCliFrameworkTarget,
@@ -14,6 +14,11 @@ import {
   type ReactHostKind,
   type ReactProjectPlan,
 } from "./react-project.js";
+import {
+  detectSvelteHostProject,
+  getSvelteHostEvidenceRequests,
+  type SvelteHostProjectPlan,
+} from "./svelte-host-project.js";
 import {
   detectVueHostProject,
   getPrivateVueHostEvidenceRequests,
@@ -27,7 +32,14 @@ export type ProjectPackage = {
   peerDependencies?: Record<string, string>;
 };
 
-export type HostKind = "astro" | "laravel" | "nuxt" | "quasar" | ReactHostKind | "unknown";
+export type HostKind =
+  | "astro"
+  | "laravel"
+  | "nuxt"
+  | "quasar"
+  | "sveltekit"
+  | ReactHostKind
+  | "unknown";
 export type HostTargetReadiness = "configurable" | "ready";
 
 export type HostTarget<TFramework extends string = string> = {
@@ -44,6 +56,7 @@ export type HostPlan<TFramework extends string = string> = {
   reactProject?: ReactProjectPlan;
   targets: HostTarget<TFramework>[];
   vueHostProject?: VueHostProjectPlan;
+  svelteHostProject?: SvelteHostProjectPlan;
 };
 
 export type HostEvidence = {
@@ -76,7 +89,7 @@ export async function detectHostPlan(
   pkg: ProjectPackage,
   reader: HostEvidenceReader = defaultEvidenceReader,
 ): Promise<HostPlan<StarwindFramework>> {
-  return detectPrivateVueHostPlan(pkg, PUBLIC_FRAMEWORK_TARGET_POLICY, reader);
+  return detectPrivateHostPlan(pkg, PUBLIC_FRAMEWORK_TARGET_POLICY, reader);
 }
 
 export async function detectPrivateVueHostPlan(
@@ -101,6 +114,63 @@ export async function detectPrivateVueHostPlan(
     ? { content: projectFiles[astroConfigPath]!, path: astroConfigPath }
     : undefined;
   return getPrivateVueHostPlan(pkg, { astroConfig, existingPaths, projectFiles }, targetPolicy);
+}
+
+export async function detectPrivateHostPlan<TFramework extends CliFrameworkTarget>(
+  pkg: ProjectPackage,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+  reader: HostEvidenceReader = defaultEvidenceReader,
+): Promise<HostPlan<TFramework>> {
+  const existingPaths = new Set(await detectReactProjectPaths(reader.pathExists));
+  const projectFiles: Record<string, string> = {};
+  const requests = [
+    ...getPrivateVueHostEvidenceRequests(),
+    ...(isConfigTarget(targetPolicy, "svelte") ? getSvelteHostEvidenceRequests() : []),
+  ];
+  const readRequests = new Map<string, boolean>();
+  for (const request of requests)
+    readRequests.set(request.path, Boolean(readRequests.get(request.path) || request.readContent));
+  await Promise.all(
+    [...readRequests].map(async ([path, readContent]) => {
+      if (!(await reader.pathExists(path))) return;
+      existingPaths.add(path);
+      if (readContent) projectFiles[path] = await reader.readFile(path);
+    }),
+  );
+  const astroPath = ASTRO_CONFIG_PATHS.find((path) => existingPaths.has(path));
+  return getPrivateHostPlan(
+    pkg,
+    {
+      existingPaths,
+      projectFiles,
+      astroConfig: astroPath ? { path: astroPath, content: projectFiles[astroPath]! } : undefined,
+    },
+    targetPolicy,
+  );
+}
+
+export function getPrivateHostPlan<TFramework extends CliFrameworkTarget>(
+  pkg: ProjectPackage,
+  evidence: HostEvidence,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): HostPlan<TFramework> {
+  const publicPlan = getPrivateVueHostPlan(
+    pkg,
+    evidence,
+    PUBLIC_FRAMEWORK_TARGET_POLICY,
+  ) as HostPlan<TFramework>;
+  if (!isConfigTarget(targetPolicy, "svelte")) return publicPlan;
+  const detection = detectSvelteHostProject(pkg, evidence, publicPlan.host.kind);
+  if (!detection) return publicPlan;
+  if (detection.status === "failed")
+    return { ...publicPlan, diagnostic: detection.diagnostic, host: detection.host };
+  const targets = publicPlan.host.kind === "astro" ? publicPlan.targets : [];
+  return {
+    ...publicPlan,
+    host: { kind: detection.plan.hostKind, label: detection.plan.hostLabel },
+    targets: [...targets, { framework: "svelte" as TFramework, readiness: "ready" }],
+    svelteHostProject: detection.plan,
+  };
 }
 
 export function getHostPlan(
@@ -187,11 +257,11 @@ export function getPrivateVueHostPlan(
   };
 }
 
-export function validatePrivateHostTarget(
-  plan: HostPlan<PrivateVueCliFrameworkTarget>,
-  framework: PrivateVueCliFrameworkTarget,
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
-): PrivateVueCliFrameworkTarget {
+export function validatePrivateHostTarget<TFramework extends CliFrameworkTarget>(
+  plan: HostPlan<TFramework>,
+  framework: TFramework,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): TFramework {
   if (
     isConfigTarget(targetPolicy, framework) &&
     plan.targets.some((target) => target.framework === framework)
@@ -203,10 +273,10 @@ export function validatePrivateHostTarget(
   );
 }
 
-export function formatPrivateDetectedHost(
-  plan: HostPlan<PrivateVueCliFrameworkTarget>,
-  framework: PrivateVueCliFrameworkTarget,
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+export function formatPrivateDetectedHost<TFramework extends CliFrameworkTarget>(
+  plan: HostPlan<TFramework>,
+  framework: TFramework,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
 ): string {
   const target = targetPolicy.labels[framework];
   return plan.host.kind === framework

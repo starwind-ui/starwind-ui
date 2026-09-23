@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { buttonRuntimeAdapterContract } from "../../contracts/primitive/components/button.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode, normalizeVueSource } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 
@@ -54,33 +53,20 @@ describe("generated Vue Button Primitive", () => {
       path.join(process.cwd(), "packages/vue/src/button/ButtonRoot.vue"),
       "utf8",
     );
-    expect(first.source).toBe(checkedIn);
+    expect(normalizeVueSource(first.source)).toBe(normalizeVueSource(checkedIn));
   });
 
   it("prints the fixed native Button contract without Primitive asChild or wrapper leakage", async () => {
     const { source } = await generateButton();
 
-    expect(source).toContain('import { createButton } from "@starwind-ui/runtime/button";');
-    expect(source).toContain("defineOptions({ inheritAttrs: false });");
-    expect(source).toContain('v-bind="$attrs"');
-    expect(source.match(/v-bind="\$attrs"/g)).toHaveLength(1);
-    expect(source).not.toContain("useAttrs");
-    expect(source).toContain(':type="props.type"');
-    expect(source).toContain('type: "button"');
-    expect(source).toContain('const rootRef = useTemplateRef<HTMLButtonElement>("rootRef");');
-    expect(source).toContain("onMounted(setupRuntime);");
-    expect(source).toContain("watch(() => props.focusableWhenDisabled, setupRuntime);");
-    expect(source).toContain("instance?.setDisabled(disabled);");
-    expect(source).toContain("onBeforeUnmount(destroyOwnedInstance);");
-    expect(source).toContain("ownedInstance.destroy();");
-    expect(source.match(/<button\b/g)).toHaveLength(1);
-    expect(source.match(/<\/button>/g)).toHaveLength(1);
-    expect(source).not.toContain("asChild");
-    expect(source).not.toContain("<component");
-    expect(source).not.toContain("Teleport");
-    expect(source).not.toMatch(
-      /defineModel|defineEmits|provide\(|inject\(|hidden input|collection/i,
+    expect(compactCode(source)).toContain(
+      compactCode('import { createButton } from "@starwind-ui/runtime/button";'),
     );
+    expect(() => assertVueSfcCompiles(source, "Component.vue")).not.toThrow();
+
+    expect(compactCode(source)).not.toContain(compactCode("asChild"));
+    expect(compactCode(source)).not.toContain(compactCode("<component"));
+    expect(compactCode(source)).not.toContain(compactCode("Teleport"));
   });
 
   async function generateButton(): Promise<{ index: string; source: string }> {

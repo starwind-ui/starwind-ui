@@ -1,3 +1,10 @@
+import {
+  navigationInitialProjection,
+  navigationItemOpen,
+  navigationMenuConnection,
+  navigationMenuFragments,
+  navigationMenuPlan,
+} from "../../shared-recipes/structured/navigation-menu.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -101,6 +108,13 @@ export function use${facts.displayName}ViewportContext(consumer: string) { retur
 
 function printRoot(facts: AdapterSharedViewportNavigationFacts): string {
   const p = facts.props;
+  const initial = navigationInitialProjection("vue", {
+    readModel: "props.modelValue",
+    readDefault: `props.${p.defaultValue.name}`,
+    readDefaultCell: "initialDefaultValue",
+    readAccepted: "uncontrolledValue.value",
+    fallback: p.defaultValue.defaultValue ?? "null",
+  });
   const event = facts.valueControl.event;
   return `${printContext(facts)}
 <script setup lang="ts">
@@ -111,21 +125,19 @@ defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
 const props = withDefaults(defineProps<{ modelValue?: ${p.value.type}; ${p.defaultValue.name}?: ${p.defaultValue.type}; ${p.openDelay.name}?: ${p.openDelay.type}; ${p.closeDelay.name}?: ${p.closeDelay.type}; ${p.closeOnEscape.name}?: ${p.closeOnEscape.type}; ${p.closeOnOutsideInteract.name}?: ${p.closeOnOutsideInteract.type}; ${p.orientation.name}?: ${facts.displayName}Orientation }>(), { modelValue: undefined, ${p.defaultValue.name}: ${valueDefault(p.defaultValue, "null")}, ${p.openDelay.name}: ${valueDefault(p.openDelay, "50")}, ${p.closeDelay.name}: ${valueDefault(p.closeDelay, "50")}, ${p.closeOnEscape.name}: ${valueDefault(p.closeOnEscape, "true")}, ${p.closeOnOutsideInteract.name}: ${valueDefault(p.closeOnOutsideInteract, "true")}, ${p.orientation.name}: ${valueDefault(p.orientation, '"horizontal"')} });
 const emit = defineEmits<{ "update:modelValue": [value: ${event.valueType}]; ${event.name}: [value: ${event.valueType}, detail: ${event.detailsType}] }>();
-const publicAttrs = useAttrs(); const element = ref<HTMLElement | null>(null); const mounted = ref(false); const initialDefaultValue = props.${p.defaultValue.name}; const uncontrolledValue = ref<${event.valueType}>(initialDefaultValue); const value = computed(() => props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value); const orientation = computed(() => props.${p.orientation.name});
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined; let generation = 0; let pendingDetail: ${event.detailsType} | undefined; let acceptedDetail: ${event.detailsType} | undefined; let unsubscribeValueChange: (() => void) | undefined;
+const publicAttrs = useAttrs(); const element = ref<HTMLElement | null>(null); const mounted = ref(false); const initialDefaultValue = ${initial.defaultSeed}; const uncontrolledValue = ref<${event.valueType}>(${initial.acceptedSeed}); const value = computed(() => ${initial.rendered}); const orientation = computed(() => props.${p.orientation.name});
+let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined; let generation = 0; let acceptedDetail: ${event.detailsType} | undefined; let unsubscribeValueChange: (() => void) | undefined;
 provide(${facts.displayName}RootContext, { element, mounted, orientation, value }); defineExpose({ element, getValue: () => instance?.${facts.valueControl.state.getter}(), setValue: (next: ${event.valueType}) => instance?.${facts.valueControl.controlledResync.setter}(next) });
-function handleValueChange(next: ${event.valueType}, detail: ${event.detailsType}) { pendingDetail = detail; emit("${event.name}", next, detail); }
-function handleAcceptedValueChange(detail: ${event.detailsType}) { if (pendingDetail === detail) pendingDetail = undefined; if (props.modelValue === undefined) uncontrolledValue.value = detail.value; emit("update:modelValue", detail.value); if (props.modelValue !== undefined) { acceptedDetail = detail; void resyncControlled(detail); } }
-async function resyncControlled(detail: ${event.detailsType}) { await nextTick(); if (acceptedDetail !== detail || props.modelValue === undefined || !instance) return; acceptedDetail = undefined; instance.${facts.valueControl.controlledResync.setter}(props.modelValue, { emit: false, ${facts.valueControl.controlledResync.preserveDetailFields.map((field) => `${field}: detail.${field}`).join(", ")} }); }
+async function resyncControlled(detail: ${event.detailsType}) { ${navigationMenuFragments("vue", facts).commitRequest} }
 function syncUncontrolledFromRuntime() { if (props.modelValue !== undefined || !instance) return; const current = instance.${facts.valueControl.state.getter}(); if (!Object.is(uncontrolledValue.value, current)) uncontrolledValue.value = current; }
-function destroyOwnedInstance() { const owned = instance; instance = undefined; unsubscribeValueChange?.(); unsubscribeValueChange = undefined; pendingDetail = undefined; acceptedDetail = undefined; owned?.${facts.runtime.destroyMethod}(); }
-function setupRuntime() { if (!element.value) return; instance = ${facts.runtime.factory}(element.value, { ${p.defaultValue.name}: uncontrolledValue.value, ${p.openDelay.name}: props.${p.openDelay.name}, ${p.closeDelay.name}: props.${p.closeDelay.name}, ${p.closeOnEscape.name}: props.${p.closeOnEscape.name}, ${p.closeOnOutsideInteract.name}: props.${p.closeOnOutsideInteract.name}, ...(props.modelValue === undefined ? {} : { ${p.value.name}: props.modelValue }), ${event.callbackProp}: handleValueChange }); unsubscribeValueChange = instance.subscribe("valueChange", handleAcceptedValueChange); }
-async function recreateRuntime() { const current = instance?.${facts.valueControl.state.getter}(); if (props.modelValue === undefined && current !== undefined) uncontrolledValue.value = current; const ownGeneration = ++generation; mounted.value = false; destroyOwnedInstance(); await nextTick(); if (ownGeneration !== generation || !element.value) return; setupRuntime(); mounted.value = true; }
+function destroyOwnedInstance() { const owned = instance; if (!owned) return; ${navigationMenuFragments("vue", facts).cleanup} }
+function setupRuntime() { if (!element.value) return; ${navigationMenuConnection("vue", facts)} }
+async function recreateRuntime() { ${navigationMenuFragments("vue", facts).retainBeforeReconnect} const ownGeneration = ++generation; mounted.value = false; destroyOwnedInstance(); await nextTick(); if (ownGeneration !== generation || !element.value) return; setupRuntime(); mounted.value = true; }
 useVueAsChildRuntimeOwner(element, recreateRuntime);
 onMounted(() => { setupRuntime(); mounted.value = true; });
 onUpdated(syncUncontrolledFromRuntime);
-watch(() => props.modelValue, (next, previous) => { if ((next === undefined) !== (previous === undefined)) { void recreateRuntime(); return; } if (next === undefined || !instance || Object.is(instance.${facts.valueControl.state.getter}(), next)) return; instance.${facts.valueControl.controlledResync.setter}(next, { emit: false }); }, { flush: "post" });
-watch([() => props.${p.openDelay.name}, () => props.${p.closeDelay.name}, () => props.${p.closeOnEscape.name}, () => props.${p.closeOnOutsideInteract.name}], () => { void recreateRuntime(); }, { flush: "post" });
+watch(() => props.modelValue, (next, previous) => { if ((next === undefined) !== (previous === undefined)) { void recreateRuntime(); return; } { ${navigationMenuFragments("vue", facts).parentCommand} } }, { flush: "post" });
+watch([${navigationMenuPlan.options.map((name) => `() => props.${name}`).join(", ")}], () => { void recreateRuntime(); }, { flush: "post" });
 onBeforeUnmount(() => { generation += 1; mounted.value = false; destroyOwnedInstance(); });
 </script>
 <template><${facts.parts.root.defaultElement} ref="element" v-bind="publicAttrs" ${facts.attrs.root} data-sw-part="${facts.parts.root.name}" :${facts.attrs.defaultValue}="props.modelValue === undefined ? initialDefaultValue ?? undefined : undefined" :${facts.attrs.controlledValue}="props.modelValue === null ? '' : undefined" :${facts.attrs.value}="props.modelValue ?? undefined" :${facts.attrs.openDelay}="props.${p.openDelay.name}" :${facts.attrs.closeDelay}="props.${p.closeDelay.name}" :${facts.attrs.closeOnEscape}="props.${p.closeOnEscape.name} ? 'true' : 'false'" :${facts.attrs.closeOnOutsideInteract}="props.${p.closeOnOutsideInteract.name} ? 'true' : 'false'" :${facts.attrs.orientation}="props.${p.orientation.name}" :${facts.valueControl.state.renderedStateAttribute}="value === null ? 'closed' : 'open'"><slot /></${facts.parts.root.defaultElement}></template>
@@ -134,7 +146,7 @@ onBeforeUnmount(() => { generation += 1; mounted.value = false; destroyOwnedInst
 
 function printItem(facts: AdapterSharedViewportNavigationFacts): string {
   return `<script setup lang="ts">import { computed, provide, ref } from "vue"; import { ${facts.displayName}ItemContext, use${facts.displayName}RootContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); const props = defineProps<{ ${facts.item.valueProp.name}?: ${facts.item.valueProp.type} }>(); defineSlots<{ default?: () => unknown }>();
-const root = use${facts.displayName}RootContext("${facts.exports.item}"); const element = ref<HTMLLIElement | null>(null); const itemValue = computed(() => props.${facts.item.valueProp.name}); const open = computed(() => itemValue.value !== undefined && root.value.value === itemValue.value); provide(${facts.displayName}ItemContext, { open, value: itemValue }); defineExpose({ element });</script>
+const root = use${facts.displayName}RootContext("${facts.exports.item}"); const element = ref<HTMLLIElement | null>(null); const itemValue = computed(() => props.${facts.item.valueProp.name}); const open = computed(() => ${navigationItemOpen("root.value.value", "itemValue.value", "false")}); provide(${facts.displayName}ItemContext, { open, value: itemValue }); defineExpose({ element });</script>
 <template><${facts.parts.item.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.item} data-sw-part="${facts.parts.item.name}" :${facts.attrs.itemValue}="props.${facts.item.valueProp.name}" :${facts.item.stateAttribute}="open ? 'open' : '${facts.item.stateValue}'"><slot /></${facts.parts.item.defaultElement}></template>
 `;
 }

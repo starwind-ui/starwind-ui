@@ -6,36 +6,50 @@
 "use client";
 
 import * as React from "react";
-
+import { useComposedRefs } from "../internal/compose-refs";
+import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
+import { TimedPlacementContext } from "./PreviewCardRoot";
 export type PreviewCardPopupProps = React.HTMLAttributes<HTMLDivElement> & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
 };
-
 const PreviewCardPopup = React.forwardRef<HTMLDivElement, PreviewCardPopupProps>(
   function PreviewCardPopup(
     { side = "bottom", align = "center", sideOffset = 0, avoidCollisions = true, ...props },
     forwardedRef,
   ) {
+    const register = React.useContext(TimedPlacementContext),
+      element = React.useRef<HTMLDivElement>(null);
+    const composedRef = useComposedRefs(forwardedRef, element);
+    useIsomorphicLayoutEffect(() => {
+      const node = element.current;
+      if (!node) return;
+      register?.(node, {
+        "data-side": String(side),
+        "data-align": String(align),
+        "data-side-offset": String(sideOffset),
+        "data-avoid-collisions": String(avoidCollisions),
+      });
+      return () => register?.(node, null);
+    }, [register, side, align, sideOffset, avoidCollisions]);
     return (
       <div
-        data-sw-preview-card-popup
-        role="tooltip"
+        {...props}
+        data-sw-preview-card-popup=""
+        data-sw-part="popup"
         data-state="closed"
         data-side={side}
         data-align={align}
         data-side-offset={sideOffset}
-        data-avoid-collisions={avoidCollisions ? "true" : "false"}
+        data-avoid-collisions={String(avoidCollisions)}
+        role="tooltip"
         hidden
-        ref={forwardedRef}
-        {...props}
+        ref={composedRef}
       />
     );
   },
 );
-
 PreviewCardPopup.displayName = "PreviewCard.Popup";
-
 export default PreviewCardPopup;

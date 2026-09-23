@@ -1,3 +1,16 @@
+import {
+  comboboxFragments,
+  comboboxModelObservers,
+  comboboxOptionObservers,
+  comboboxPlan,
+  comboboxResetSettlement,
+} from "../../shared-recipes/structured/combobox.js";
+import {
+  comboboxInheritedBoolean,
+  comboboxSelection,
+  comboboxSelectionAttributes,
+  comboboxValueFallback,
+} from "../../shared-recipes/structured/combobox-parts.js";
 import type {
   AdapterEditableCollectionOverlayComponentProjection,
   AdapterEditableCollectionOverlayFacts,
@@ -90,14 +103,14 @@ function printRootWithLazyClosedContentSupport(
   const valueEvent = facts.events.valueChange;
   const context = facts.context;
 
-  return `import {\n  type ${inputValueEvent.detailsType},\n  type ${openEvent.detailsType},\n  type ${valueEvent.detailsType},\n  ${facts.runtime.factory},\n} from "${facts.runtime.importSource}";\nimport * as React from "react";\n\nimport { ${context.rootContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${root}Props = Omit<\n  React.HTMLAttributes<HTMLDivElement>,\n  "${props.defaultValue.name}" | "onChange"\n> & {\n  ${props.autoComplete.name}?: ${props.autoComplete.type};\n  ${props.defaultInputValue.name}?: ${props.defaultInputValue.type};\n  ${props.defaultOpen.name}?: ${props.defaultOpen.type};\n  ${props.defaultValue.name}?: ${props.defaultValue.type};\n  ${props.disabled.name}?: ${props.disabled.type};\n  ${props.filterMode.name}?: ${props.filterMode.type};\n  ${props.form.name}?: ${props.form.type};\n  ${props.highlightItemOnHover.name}?: ${props.highlightItemOnHover.type};\n  ${props.inputValue.name}?: ${props.inputValue.type};\n  ${props.locale.name}?: ${props.locale.type};\n  ${props.modal.name}?: ${props.modal.type};\n  ${props.name.name}?: ${props.name.type};\n  ${inputValueEvent.callbackProp}?: (\n    ${inputValueEvent.valueProperty}: ${inputValueEvent.valueType},\n    details: ${inputValueEvent.detailsType},\n  ) => void;\n  ${openEvent.callbackProp}?: (${openEvent.valueProperty}: ${openEvent.valueType}, details: ${openEvent.detailsType}) => void;\n  ${valueEvent.callbackProp}?: (${valueEvent.valueProperty}: ${valueEvent.valueType}, details: ${valueEvent.detailsType}) => void;\n  ${props.open.name}?: ${props.open.type};\n  ${props.readOnly.name}?: ${props.readOnly.type};\n  ${props.required.name}?: ${props.required.type};\n  ${props.value.name}?: ${props.value.type};\n};\n\nconst ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(\n  function ${root}(\n    {\n      ${props.autoComplete.name},\n      ${props.defaultInputValue.name},\n      ${props.defaultOpen.name} = ${getDefault(props.defaultOpen, "false")},\n      ${props.defaultValue.name},\n      ${props.disabled.name} = ${getDefault(props.disabled, "false")},\n      ${props.filterMode.name} = ${getDefault(props.filterMode, '"contains"')},\n      ${props.form.name},\n      ${props.highlightItemOnHover.name} = ${getDefault(props.highlightItemOnHover, "true")},\n      ${props.inputValue.name},\n      ${props.locale.name},\n      ${props.modal.name} = ${getDefault(props.modal, "false")},\n      ${props.name.name},\n      ${inputValueEvent.callbackProp},\n      ${openEvent.callbackProp},\n      ${valueEvent.callbackProp},\n      ${props.open.name},\n      ${props.readOnly.name} = ${getDefault(props.readOnly, "false")},\n      ${props.required.name} = ${getDefault(props.required, "false")},\n      ${props.value.name},\n      children,\n      ...props\n    },\n    forwardedRef,\n  ) {\n    const rootRef = React.useRef<HTMLDivElement>(null);\n    const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(undefined);\n    const ${props.inputValue.name}Ref = React.useRef(${props.inputValue.name});\n    const ${inputValueEvent.callbackProp}Ref = React.useRef(${inputValueEvent.callbackProp});\n    const ${openEvent.callbackProp}Ref = React.useRef(${openEvent.callbackProp});\n    const ${valueEvent.callbackProp}Ref = React.useRef(${valueEvent.callbackProp});\n    const ${props.open.name}Ref = React.useRef(${props.open.name});\n    const ${props.value.name}Ref = React.useRef(${props.value.name});\n    const ${props.defaultInputValue.name}Ref = React.useRef(${props.defaultInputValue.name});\n    const ${props.defaultOpen.name}Ref = React.useRef(${props.defaultOpen.name});\n    const ${props.defaultValue.name}Ref = React.useRef(${props.defaultValue.name});\n    const [uncontrolledInputValue, setUncontrolledInputValueState] = React.useState(${props.defaultInputValue.name}Ref.current);\n    const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(${props.defaultOpen.name}Ref.current);\n    const [uncontrolledValue, setUncontrolledValueState] = React.useState(${props.defaultValue.name}Ref.current);\n    const [selectedInputValue, setSelectedInputValue] = React.useState<{\n      inputValue: string | null;\n      value: string | null;\n    }>(() => ({ inputValue: null, value: null }));\n    const uncontrolledInputValueRef = React.useRef(uncontrolledInputValue);\n    const uncontrolledOpenRef = React.useRef(uncontrolledOpen);\n    const uncontrolledValueRef = React.useRef(uncontrolledValue);\n\n    const setUncontrolledInputValue = React.useCallback((nextInputValue: ${props.inputValue.type}) => {\n      uncontrolledInputValueRef.current = nextInputValue;\n      setUncontrolledInputValueState(nextInputValue);\n    }, []);\n\n    const setUncontrolledOpen = React.useCallback((nextOpen: ${props.open.type}) => {\n      uncontrolledOpenRef.current = nextOpen;\n      setUncontrolledOpenState(nextOpen);\n    }, []);\n\n    const setUncontrolledValue = React.useCallback((nextValue: ${props.value.type}) => {\n      uncontrolledValueRef.current = nextValue;\n      setUncontrolledValueState(nextValue);\n    }, []);\n\n    React.useEffect(() => {\n      ${props.inputValue.name}Ref.current = ${props.inputValue.name};\n    }, [${props.inputValue.name}]);\n\n    React.useEffect(() => {\n      ${inputValueEvent.callbackProp}Ref.current = ${inputValueEvent.callbackProp};\n    }, [${inputValueEvent.callbackProp}]);\n\n    React.useEffect(() => {\n      ${openEvent.callbackProp}Ref.current = ${openEvent.callbackProp};\n    }, [${openEvent.callbackProp}]);\n\n    React.useEffect(() => {\n      ${valueEvent.callbackProp}Ref.current = ${valueEvent.callbackProp};\n    }, [${valueEvent.callbackProp}]);\n\n    React.useEffect(() => {\n      ${props.open.name}Ref.current = ${props.open.name};\n    }, [${props.open.name}]);\n\n    React.useEffect(() => {\n      ${props.value.name}Ref.current = ${props.value.name};\n    }, [${props.value.name}]);\n\n    const composedRef = React.useCallback(\n      (node: HTMLDivElement | null) => {\n        rootRef.current = node;\n        setRef(forwardedRef, node);\n      },\n      [forwardedRef],\n    );\n\n    const ensureInstance = React.useCallback(() => {\n      const existing = instanceRef.current;\n      if (existing) return existing;\n\n      const root = rootRef.current;\n      if (!root) return undefined;\n\n      const instance = ${facts.runtime.factory}(root, {\n        ${props.autoComplete.name},\n        ${props.defaultInputValue.name}: uncontrolledInputValueRef.current,\n        ${props.defaultOpen.name}: uncontrolledOpenRef.current,\n        ${props.defaultValue.name}: uncontrolledValueRef.current,\n        ${props.disabled.name},\n        ${props.filterMode.name},\n        ${props.form.name},\n        ${props.highlightItemOnHover.name},\n        ${props.locale.name},\n        ${props.modal.name},\n        ${props.name.name},\n        ${inputValueEvent.callbackProp}: (nextInputValue, details) => {\n          ${inputValueEvent.callbackProp}Ref.current?.(nextInputValue, details);\n          if (details.isCanceled) return;\n\n          if (${props.inputValue.name}Ref.current === undefined) {\n            setUncontrolledInputValue(nextInputValue);\n          }\n        },\n        ${openEvent.callbackProp}: (nextOpen, details) => {\n          ${openEvent.callbackProp}Ref.current?.(nextOpen, details);\n          if (details.isCanceled) return;\n\n          if (${props.open.name}Ref.current === undefined) {\n            setUncontrolledOpen(nextOpen);\n          }\n        },\n        ${valueEvent.callbackProp}: (nextValue, details) => {\n          ${valueEvent.callbackProp}Ref.current?.(nextValue, details);\n          if (details.isCanceled) return;\n\n          const nextSelectedInputValue = getTextFromComboboxItem(details.item);\n          if (nextSelectedInputValue !== null || nextValue === null) {\n            setSelectedInputValue({ inputValue: nextSelectedInputValue, value: nextValue });\n          }\n\n          if (${props.value.name}Ref.current === undefined) {\n            setUncontrolledValue(nextValue);\n          }\n        },\n        ${props.readOnly.name},\n        ${props.required.name},\n        ...(${props.inputValue.name}Ref.current !== undefined ? { ${props.inputValue.name}: ${props.inputValue.name}Ref.current } : {}),\n        ...(${props.open.name}Ref.current !== undefined ? { ${props.open.name}: ${props.open.name}Ref.current } : {}),\n        ...(${props.value.name}Ref.current !== undefined ? { ${props.value.name}: ${props.value.name}Ref.current } : {}),\n      });\n      instanceRef.current = instance;\n      return instance;\n    }, [\n      ${props.autoComplete.name},\n      ${props.disabled.name},\n      ${props.filterMode.name},\n      ${props.form.name},\n      ${props.highlightItemOnHover.name},\n      ${props.locale.name},\n      ${props.modal.name},\n      ${props.name.name},\n      ${props.readOnly.name},\n      ${props.required.name},\n      setUncontrolledInputValue,\n      setUncontrolledOpen,\n      setUncontrolledValue,\n    ]);\n\n    React.useEffect(() => {\n      return () => {\n        instanceRef.current?.destroy();\n        instanceRef.current = undefined;\n      };\n    }, []);\n\n    React.useEffect(() => {\n      if ((${props.open.name}Ref.current ?? uncontrolledOpenRef.current) !== true) return;\n\n      ensureInstance();\n    }, [ensureInstance, ${props.open.name}, uncontrolledOpen]);\n\n    React.useEffect(() => {\n      instanceRef.current?.${facts.formSetter.method}(${renderObjectShorthand(facts.formSetter.props)});\n    }, ${renderDependencyList(facts.formSetter.dependencies)});\n\n    React.useEffect(() => {\n      instanceRef.current?.${facts.setters.disabled.method}(${props.disabled.name});\n    }, [${props.disabled.name}]);\n\n    React.useEffect(() => {\n      if (${props.inputValue.name} === undefined) return;\n      const instance = instanceRef.current;\n      if (!instance) return;\n      if (instance.${facts.states.inputValue.getter}() === ${props.inputValue.name}) return;\n\n      instance.${facts.setters.inputValue.method}(${props.inputValue.name}, ${formatOptions(facts.setters.inputValue.options)});\n    }, [${props.inputValue.name}]);\n\n    React.useEffect(() => {\n      if (${props.open.name} === undefined) return;\n      const instance = ${props.open.name} ? ensureInstance() : instanceRef.current;\n      if (!instance) return;\n      if (instance.${facts.states.open.getter}() === ${props.open.name}) return;\n\n      instance.${facts.setters.open.method}(${props.open.name}, ${formatOptions(facts.setters.open.options)});\n    }, [ensureInstance, ${props.open.name}]);\n\n    React.useEffect(() => {\n      if (${props.value.name} === undefined) return;\n      const instance = instanceRef.current;\n      if (!instance) return;\n\n      const previousValue = instance.${facts.states.value.getter}();\n      if (previousValue !== ${props.value.name}) {\n        instance.${facts.setters.value.method}(${props.value.name}, ${formatOptions(facts.setters.value.options)});\n      }\n\n      if (${props.inputValue.name}Ref.current === undefined) {\n        const nextInputValue = instance.${facts.states.inputValue.getter}();\n        if (uncontrolledInputValueRef.current !== nextInputValue) {\n          setUncontrolledInputValue(nextInputValue);\n        }\n      }\n    }, [setUncontrolledInputValue, ${props.value.name}]);\n\n    const selectedValue = ${props.value.name} !== undefined ? ${props.value.name} : (uncontrolledValue ?? null);\n    React.useEffect(() => {\n      const timer = window.setTimeout(() => {\n        setSelectedInputValue({\n          inputValue: findSelectedComboboxItemText(children, selectedValue),\n          value: selectedValue,\n        });\n      }, 0);\n\n      return () => window.clearTimeout(timer);\n    }, [children, selectedValue]);\n\n    const renderedInputValue =\n      ${props.inputValue.name} !== undefined\n        ? ${props.inputValue.name}\n        : uncontrolledInputValue !== undefined\n          ? uncontrolledInputValue\n          : selectedInputValue.value === selectedValue\n            ? (selectedInputValue.inputValue ?? "")\n            : "";\n    const renderedOpen = ${props.open.name} ?? uncontrolledOpen;\n    const renderedValue = selectedValue ?? "";\n    const initializeFromInteractiveEvent = React.useCallback(\n      (event: React.SyntheticEvent<HTMLDivElement>) => {\n        if (${props.disabled.name}) return;\n        const target = event.target;\n        if (!(target instanceof Element)) return;\n        if (!target.closest("[${facts.attrs.trigger}], [${facts.attrs.input}], [${facts.attrs.clear}]")) return;\n\n        ensureInstance();\n      },\n      [ensureInstance, ${props.disabled.name}],\n    );\n    const contextValue = React.useMemo(\n      () => ({\n        disabled: ${props.disabled.name},\n        inputValue: renderedInputValue ?? "",\n        open: renderedOpen,\n        readOnly: ${props.readOnly.name},\n        required: ${props.required.name},\n        value: selectedValue,\n      }),\n      [\n        ${props.disabled.name},\n        renderedInputValue,\n        renderedOpen,\n        ${props.readOnly.name},\n        ${props.required.name},\n        selectedValue,\n      ],\n    );\n\n    return (\n      <${context.rootContext}.Provider value={contextValue}>\n        <${facts.parts.root.defaultElement}\n          ${facts.attrs.root}\n          ${facts.attrs.autoComplete}={${props.autoComplete.name}}\n          ${facts.attrs.defaultInputValue}={${props.defaultInputValue.name}Ref.current}\n          ${facts.attrs.defaultOpen}={${props.defaultOpen.name}Ref.current ? "true" : undefined}\n          ${facts.attrs.defaultValue}={${props.defaultValue.name}Ref.current ?? undefined}\n          ${facts.attrs.disabled}={${props.disabled.name} ? "" : undefined}\n          ${facts.attrs.filterMode}={${props.filterMode.name}}\n          ${facts.attrs.form}={${props.form.name}}\n          ${facts.attrs.highlightItemOnHover}={${props.highlightItemOnHover.name} ? "true" : "false"}\n          ${facts.attrs.inputValue}={renderedInputValue}\n          ${facts.attrs.locale}={${props.locale.name}}\n          ${facts.attrs.modal}={${props.modal.name} ? "true" : "false"}\n          ${facts.attrs.name}={${props.name.name}}\n          ${facts.attrs.readOnly}={${props.readOnly.name} ? "" : undefined}\n          ${facts.attrs.required}={${props.required.name} ? "" : undefined}\n          data-state={renderedOpen ? "open" : "closed"}\n          ref={composedRef}\n          {...props}\n          onClickCapture={(event) => {\n            props.onClickCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onFocusCapture={(event) => {\n            props.onFocusCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onInputCapture={(event) => {\n            props.onInputCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onKeyDownCapture={(event) => {\n            props.onKeyDownCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onPointerDownCapture={(event) => {\n            props.onPointerDownCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n        >\n          <input\n            ${facts.attrs.hiddenInput}\n            type="${facts.hiddenInput.constantAttributes.type}"\n            autoComplete={${props.autoComplete.name}}\n            form={${props.form.name}}\n            name={${props.name.name}}\n            disabled={${props.disabled.name}}\n            required={${props.required.name}}\n            value={renderedValue}\n            aria-hidden="${facts.hiddenInput.constantAttributes.ariaHidden}"\n            tabIndex={${facts.hiddenInput.constantAttributes.tabIndex}}\n            readOnly\n          />\n          {children}\n        </${facts.parts.root.defaultElement}>\n      </${context.rootContext}.Provider>\n    );\n  },\n);\n\n${root}.displayName = "${facts.displayName}.Root";\n\nexport default ${root};\n\n${printSetRef()}\n\nfunction findSelectedComboboxItemText(\n  children: React.ReactNode,\n  selectedValue: string | null,\n): string | null {\n  if (selectedValue === null) return null;\n\n  let selectedText: string | null = null;\n\n  const visit = (node: React.ReactNode): void => {\n    if (selectedText !== null) return;\n\n    React.Children.forEach(node, (child) => {\n      if (selectedText !== null || !React.isValidElement(child)) return;\n\n      const childProps = child.props as {\n        children?: React.ReactNode;\n        label?: unknown;\n        textValue?: unknown;\n        value?: unknown;\n        "aria-label"?: unknown;\n      };\n      if (childProps.value === selectedValue) {\n        selectedText = getSelectedComboboxTextFromProps(childProps);\n        return;\n      }\n\n      visit(childProps.children);\n    });\n  };\n\n  visit(children);\n  return selectedText;\n}\n\nfunction getSelectedComboboxTextFromProps(props: {\n  children?: React.ReactNode;\n  label?: unknown;\n  textValue?: unknown;\n  "aria-label"?: unknown;\n}): string | null {\n  const explicitText =\n    getStringPropText(props.textValue) ??\n    getStringPropText(props.label) ??\n    getStringPropText(props["aria-label"]);\n  if (explicitText !== null) return explicitText;\n\n  const childText =\n    getComboboxItemTextFromReactNode(props.children) ?? getTextFromReactNode(props.children).trim();\n  return childText.length > 0 ? childText : null;\n}\n\nfunction getComboboxItemTextFromReactNode(node: React.ReactNode): string | null {\n  let selectedText: string | null = null;\n\n  const visit = (candidate: React.ReactNode): void => {\n    if (selectedText !== null) return;\n\n    React.Children.forEach(candidate, (child) => {\n      if (selectedText !== null || !React.isValidElement(child)) return;\n\n      const childProps = child.props as {\n        children?: React.ReactNode;\n        ${JSON.stringify(facts.attrs.itemText)}?: unknown;\n      };\n      if (isComboboxItemTextElement(child)) {\n        const text = getTextFromReactNode(childProps.children).trim();\n        selectedText = text.length > 0 ? text : null;\n        return;\n      }\n\n      visit(childProps.children);\n    });\n  };\n\n  visit(node);\n  return selectedText;\n}\n\nfunction getStringPropText(value: unknown): string | null {\n  if (typeof value !== "string" && typeof value !== "number") return null;\n\n  const text = String(value).trim();\n  return text.length > 0 ? text : null;\n}\n\nfunction isComboboxItemTextElement(node: React.ReactElement): boolean {\n  const props = node.props as { ${JSON.stringify(facts.attrs.itemText)}?: unknown };\n  if (props[${JSON.stringify(facts.attrs.itemText)}] !== undefined) return true;\n\n  const displayName = getReactComponentDisplayName(node.type);\n  return displayName === "Combobox.ItemText" || displayName === "ComboboxItemText";\n}\n\nfunction getReactComponentDisplayName(type: unknown): string | null {\n  if (typeof type === "string") return null;\n  if (typeof type !== "function" && (typeof type !== "object" || type === null)) return null;\n\n  const candidate = type as { displayName?: string; name?: string };\n  return candidate.displayName ?? candidate.name ?? null;\n}\n\nfunction getTextFromReactNode(node: React.ReactNode): string {\n  if (node === null || node === undefined || typeof node === "boolean") return "";\n  if (typeof node === "string" || typeof node === "number") return String(node);\n  if (!React.isValidElement(node)) {\n    let text = "";\n    React.Children.forEach(node, (child) => {\n      text += getTextFromReactNode(child);\n    });\n    return text;\n  }\n\n  return getTextFromReactNode((node.props as { children?: React.ReactNode }).children);\n}\n\nfunction getTextFromComboboxItem(item: HTMLElement | undefined): string | null {\n  if (!item) return null;\n\n  const textElement = item.querySelector<HTMLElement>("[${facts.attrs.itemText}]");\n  const text = (textElement ?? item).textContent?.trim() ?? "";\n  return text.length > 0 ? text : null;\n}\n`;
+  return `import {\n  type ${inputValueEvent.detailsType},\n  type ${openEvent.detailsType},\n  type ${valueEvent.detailsType},\n  ${facts.runtime.factory},\n} from "${facts.runtime.importSource}";\nimport * as React from "react";\n\nimport { ${context.rootContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${root}Props = Omit<\n  React.HTMLAttributes<HTMLDivElement>,\n  "${props.defaultValue.name}" | "onChange"\n> & {\n  ${props.autoComplete.name}?: ${props.autoComplete.type};\n  ${props.defaultInputValue.name}?: ${props.defaultInputValue.type};\n  ${props.defaultOpen.name}?: ${props.defaultOpen.type};\n  ${props.defaultValue.name}?: ${props.defaultValue.type};\n  ${props.disabled.name}?: ${props.disabled.type};\n  ${props.filterMode.name}?: ${props.filterMode.type};\n  ${props.form.name}?: ${props.form.type};\n  ${props.highlightItemOnHover.name}?: ${props.highlightItemOnHover.type};\n  ${props.inputValue.name}?: ${props.inputValue.type};\n  ${props.locale.name}?: ${props.locale.type};\n  ${props.modal.name}?: ${props.modal.type};\n  ${props.name.name}?: ${props.name.type};\n  ${inputValueEvent.callbackProp}?: (\n    ${inputValueEvent.valueProperty}: ${inputValueEvent.valueType},\n    details: ${inputValueEvent.detailsType},\n  ) => void;\n  ${openEvent.callbackProp}?: (${openEvent.valueProperty}: ${openEvent.valueType}, details: ${openEvent.detailsType}) => void;\n  ${valueEvent.callbackProp}?: (${valueEvent.valueProperty}: ${valueEvent.valueType}, details: ${valueEvent.detailsType}) => void;\n  ${props.open.name}?: ${props.open.type};\n  ${props.readOnly.name}?: ${props.readOnly.type};\n  ${props.required.name}?: ${props.required.type};\n  ${props.value.name}?: ${props.value.type};\n};\n\nconst ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(\n  function ${root}(\n    {\n      ${props.autoComplete.name},\n      ${props.defaultInputValue.name},\n      ${props.defaultOpen.name} = ${getDefault(props.defaultOpen, "false")},\n      ${props.defaultValue.name},\n      ${props.disabled.name} = ${getDefault(props.disabled, "false")},\n      ${props.filterMode.name} = ${getDefault(props.filterMode, '"contains"')},\n      ${props.form.name},\n      ${props.highlightItemOnHover.name} = ${getDefault(props.highlightItemOnHover, "true")},\n      ${props.inputValue.name},\n      ${props.locale.name},\n      ${props.modal.name} = ${getDefault(props.modal, "false")},\n      ${props.name.name},\n      ${inputValueEvent.callbackProp},\n      ${openEvent.callbackProp},\n      ${valueEvent.callbackProp},\n      ${props.open.name},\n      ${props.readOnly.name} = ${getDefault(props.readOnly, "false")},\n      ${props.required.name} = ${getDefault(props.required, "false")},\n      ${props.value.name},\n      children,\n      ...props\n    },\n    forwardedRef,\n  ) {\n    const rootRef = React.useRef<HTMLDivElement>(null);\n    const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(undefined);\n    const ${props.inputValue.name}Ref = React.useRef(${props.inputValue.name});\n    const ${inputValueEvent.callbackProp}Ref = React.useRef(${inputValueEvent.callbackProp});\n    const ${openEvent.callbackProp}Ref = React.useRef(${openEvent.callbackProp});\n    const ${valueEvent.callbackProp}Ref = React.useRef(${valueEvent.callbackProp});\n    const ${props.open.name}Ref = React.useRef(${props.open.name});\n    const ${props.value.name}Ref = React.useRef(${props.value.name});\n    const ${props.defaultInputValue.name}Ref = React.useRef(${props.defaultInputValue.name});\n    const ${props.defaultOpen.name}Ref = React.useRef(${props.defaultOpen.name});\n    const ${props.defaultValue.name}Ref = React.useRef(${props.defaultValue.name});\n    const [uncontrolledInputValue, setUncontrolledInputValueState] = React.useState(${props.defaultInputValue.name}Ref.current);\n    const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(${props.defaultOpen.name}Ref.current);\n    const [uncontrolledValue, setUncontrolledValueState] = React.useState(${props.defaultValue.name}Ref.current);\n    const [selectedInputValue, setSelectedInputValue] = React.useState<{\n      inputValue: string | null;\n      value: string | null;\n    }>(() => ({ inputValue: null, value: null }));\n    const uncontrolledInputValueRef = React.useRef(uncontrolledInputValue);\n    const uncontrolledOpenRef = React.useRef(uncontrolledOpen);\n    const uncontrolledValueRef = React.useRef(uncontrolledValue);\n\n    const setUncontrolledInputValue = React.useCallback((nextInputValue: ${props.inputValue.type}) => {\n      uncontrolledInputValueRef.current = nextInputValue;\n      setUncontrolledInputValueState(nextInputValue);\n    }, []);\n\n    const setUncontrolledOpen = React.useCallback((nextOpen: ${props.open.type}) => {\n      uncontrolledOpenRef.current = nextOpen;\n      setUncontrolledOpenState(nextOpen);\n    }, []);\n\n    const setUncontrolledValue = React.useCallback((nextValue: ${props.value.type}) => {\n      uncontrolledValueRef.current = nextValue;\n      setUncontrolledValueState(nextValue);\n    }, []);\n\n    React.useEffect(() => {\n      ${props.inputValue.name}Ref.current = ${props.inputValue.name};\n    }, [${props.inputValue.name}]);\n\n    React.useEffect(() => {\n      ${inputValueEvent.callbackProp}Ref.current = ${inputValueEvent.callbackProp};\n    }, [${inputValueEvent.callbackProp}]);\n\n    React.useEffect(() => {\n      ${openEvent.callbackProp}Ref.current = ${openEvent.callbackProp};\n    }, [${openEvent.callbackProp}]);\n\n    React.useEffect(() => {\n      ${valueEvent.callbackProp}Ref.current = ${valueEvent.callbackProp};\n    }, [${valueEvent.callbackProp}]);\n\n    React.useEffect(() => {\n      ${props.open.name}Ref.current = ${props.open.name};\n    }, [${props.open.name}]);\n\n    React.useEffect(() => {\n      ${props.value.name}Ref.current = ${props.value.name};\n    }, [${props.value.name}]);\n\n    const composedRef = React.useCallback(\n      (node: HTMLDivElement | null) => {\n        rootRef.current = node;\n        setRef(forwardedRef, node);\n      },\n      [forwardedRef],\n    );\n\n    const ensureInstance = React.useCallback(() => {\n      const existing = instanceRef.current;\n      if (existing) return existing;\n\n      const root = rootRef.current;\n      if (!root) return undefined;\n\n      ${comboboxFragments("react").construction}\n      ${comboboxFragments("react").subscriptions}\n      return instance;\n    }, [\n      ${props.autoComplete.name},\n      ${props.disabled.name},\n      ${props.filterMode.name},\n      ${props.form.name},\n      ${props.highlightItemOnHover.name},\n      ${props.locale.name},\n      ${props.modal.name},\n      ${props.name.name},\n      ${props.readOnly.name},\n      ${props.required.name},\n      setUncontrolledInputValue,\n      setUncontrolledOpen,\n      setUncontrolledValue,\n    ]);\n\n    React.useEffect(() => {\n      return () => {\n        instanceRef.current?.destroy();\n        instanceRef.current = undefined;\n      };\n    }, []);\n\n    React.useEffect(() => {\n      if ((${props.open.name}Ref.current ?? uncontrolledOpenRef.current) !== true) return;\n\n      ensureInstance();\n    }, [ensureInstance, ${props.open.name}, uncontrolledOpen]);\n\n    ${comboboxOptionObservers("react")}\n\n    ${comboboxModelObservers("react")}\n\n    const selectedValue = ${props.value.name} !== undefined ? ${props.value.name} : (uncontrolledValue ?? null);\n    React.useEffect(() => {\n      const timer = window.setTimeout(() => {\n        setSelectedInputValue({\n          inputValue: findSelectedComboboxItemText(children, selectedValue),\n          value: selectedValue,\n        });\n      }, 0);\n\n      return () => window.clearTimeout(timer);\n    }, [children, selectedValue]);\n\n    const renderedInputValue =\n      ${props.inputValue.name} !== undefined\n        ? ${props.inputValue.name}\n        : uncontrolledInputValue !== undefined\n          ? uncontrolledInputValue\n          : selectedInputValue.value === selectedValue\n            ? (selectedInputValue.inputValue ?? "")\n            : "";\n    const renderedOpen = ${props.open.name} ?? uncontrolledOpen;\n    const renderedValue = selectedValue ?? "";\n    const initializeFromInteractiveEvent = React.useCallback(\n      (event: React.SyntheticEvent<HTMLDivElement>) => {\n        if (${props.disabled.name}) return;\n        const target = event.target;\n        if (!(target instanceof Element)) return;\n        if (!target.closest("[${facts.attrs.trigger}], [${facts.attrs.input}], [${facts.attrs.clear}]")) return;\n\n        ensureInstance();\n      },\n      [ensureInstance, ${props.disabled.name}],\n    );\n    const contextValue = React.useMemo(\n      () => ({\n        disabled: ${props.disabled.name},\n        inputValue: renderedInputValue ?? "",\n        open: renderedOpen,\n        readOnly: ${props.readOnly.name},\n        required: ${props.required.name},\n        value: selectedValue,\n      }),\n      [\n        ${props.disabled.name},\n        renderedInputValue,\n        renderedOpen,\n        ${props.readOnly.name},\n        ${props.required.name},\n        selectedValue,\n      ],\n    );\n\n    return (\n      <${context.rootContext}.Provider value={contextValue}>\n        <${facts.parts.root.defaultElement}\n          ${facts.attrs.root}\n          ${facts.attrs.autoComplete}={${props.autoComplete.name}}\n          ${facts.attrs.defaultInputValue}={${props.defaultInputValue.name}Ref.current}\n          ${facts.attrs.defaultOpen}={${props.defaultOpen.name}Ref.current ? "true" : undefined}\n          ${facts.attrs.defaultValue}={${props.defaultValue.name}Ref.current ?? undefined}\n          ${facts.attrs.disabled}={${props.disabled.name} ? "" : undefined}\n          ${facts.attrs.filterMode}={${props.filterMode.name}}\n          ${facts.attrs.form}={${props.form.name}}\n          ${facts.attrs.highlightItemOnHover}={${props.highlightItemOnHover.name} ? "true" : "false"}\n          ${facts.attrs.inputValue}={renderedInputValue}\n          ${facts.attrs.locale}={${props.locale.name}}\n          ${facts.attrs.modal}={${props.modal.name} ? "true" : "false"}\n          ${facts.attrs.name}={${props.name.name}}\n          ${facts.attrs.readOnly}={${props.readOnly.name} ? "" : undefined}\n          ${facts.attrs.required}={${props.required.name} ? "" : undefined}\n          data-state={renderedOpen ? "open" : "closed"}\n          ref={composedRef}\n          {...props}\n          onClickCapture={(event) => {\n            props.onClickCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onFocusCapture={(event) => {\n            props.onFocusCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onInputCapture={(event) => {\n            props.onInputCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onKeyDownCapture={(event) => {\n            props.onKeyDownCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n          onPointerDownCapture={(event) => {\n            props.onPointerDownCapture?.(event);\n            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);\n          }}\n        >\n          <input\n            ${facts.attrs.hiddenInput}\n            type="${facts.hiddenInput.constantAttributes.type}"\n            autoComplete={${props.autoComplete.name}}\n            form={${props.form.name}}\n            name={${props.name.name}}\n            disabled={${props.disabled.name}}\n            required={${props.required.name}}\n            value={renderedValue}\n            aria-hidden="${facts.hiddenInput.constantAttributes.ariaHidden}"\n            tabIndex={${facts.hiddenInput.constantAttributes.tabIndex}}\n            readOnly\n          />\n          {children}\n        </${facts.parts.root.defaultElement}>\n      </${context.rootContext}.Provider>\n    );\n  },\n);\n\n${root}.displayName = "${facts.displayName}.Root";\n\nexport default ${root};\n\n${printSetRef()}\n\nfunction findSelectedComboboxItemText(\n  children: React.ReactNode,\n  selectedValue: string | null,\n): string | null {\n  if (selectedValue === null) return null;\n\n  let selectedText: string | null = null;\n\n  const visit = (node: React.ReactNode): void => {\n    if (selectedText !== null) return;\n\n    React.Children.forEach(node, (child) => {\n      if (selectedText !== null || !React.isValidElement(child)) return;\n\n      const childProps = child.props as {\n        children?: React.ReactNode;\n        label?: unknown;\n        textValue?: unknown;\n        value?: unknown;\n        "aria-label"?: unknown;\n      };\n      if (childProps.value === selectedValue) {\n        selectedText = getSelectedComboboxTextFromProps(childProps);\n        return;\n      }\n\n      visit(childProps.children);\n    });\n  };\n\n  visit(children);\n  return selectedText;\n}\n\nfunction getSelectedComboboxTextFromProps(props: {\n  children?: React.ReactNode;\n  label?: unknown;\n  textValue?: unknown;\n  "aria-label"?: unknown;\n}): string | null {\n  const explicitText =\n    getStringPropText(props.textValue) ??\n    getStringPropText(props.label) ??\n    getStringPropText(props["aria-label"]);\n  if (explicitText !== null) return explicitText;\n\n  const childText =\n    getComboboxItemTextFromReactNode(props.children) ?? getTextFromReactNode(props.children).trim();\n  return childText.length > 0 ? childText : null;\n}\n\nfunction getComboboxItemTextFromReactNode(node: React.ReactNode): string | null {\n  let selectedText: string | null = null;\n\n  const visit = (candidate: React.ReactNode): void => {\n    if (selectedText !== null) return;\n\n    React.Children.forEach(candidate, (child) => {\n      if (selectedText !== null || !React.isValidElement(child)) return;\n\n      const childProps = child.props as {\n        children?: React.ReactNode;\n        ${JSON.stringify(facts.attrs.itemText)}?: unknown;\n      };\n      if (isComboboxItemTextElement(child)) {\n        const text = getTextFromReactNode(childProps.children).trim();\n        selectedText = text.length > 0 ? text : null;\n        return;\n      }\n\n      visit(childProps.children);\n    });\n  };\n\n  visit(node);\n  return selectedText;\n}\n\nfunction getStringPropText(value: unknown): string | null {\n  if (typeof value !== "string" && typeof value !== "number") return null;\n\n  const text = String(value).trim();\n  return text.length > 0 ? text : null;\n}\n\nfunction isComboboxItemTextElement(node: React.ReactElement): boolean {\n  const props = node.props as { ${JSON.stringify(facts.attrs.itemText)}?: unknown };\n  if (props[${JSON.stringify(facts.attrs.itemText)}] !== undefined) return true;\n\n  const displayName = getReactComponentDisplayName(node.type);\n  return displayName === "Combobox.ItemText" || displayName === "ComboboxItemText";\n}\n\nfunction getReactComponentDisplayName(type: unknown): string | null {\n  if (typeof type === "string") return null;\n  if (typeof type !== "function" && (typeof type !== "object" || type === null)) return null;\n\n  const candidate = type as { displayName?: string; name?: string };\n  return candidate.displayName ?? candidate.name ?? null;\n}\n\nfunction getTextFromReactNode(node: React.ReactNode): string {\n  if (node === null || node === undefined || typeof node === "boolean") return "";\n  if (typeof node === "string" || typeof node === "number") return String(node);\n  if (!React.isValidElement(node)) {\n    let text = "";\n    React.Children.forEach(node, (child) => {\n      text += getTextFromReactNode(child);\n    });\n    return text;\n  }\n\n  return getTextFromReactNode((node.props as { children?: React.ReactNode }).children);\n}\n\nfunction getTextFromComboboxItem(item: HTMLElement | undefined): string | null {\n  if (!item) return null;\n\n  const textElement = item.querySelector<HTMLElement>("[${facts.attrs.itemText}]");\n  const text = (textElement ?? item).textContent?.trim() ?? "";\n  return text.length > 0 ? text : null;\n}\n`;
 }
 
 function printInputWithContext(facts: AdapterEditableCollectionOverlayFacts): string {
   const component = facts.exports.input;
   const context = facts.context;
 
-  return `import * as React from "react";\n\nimport { ${context.useRootContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${component}Props = React.InputHTMLAttributes<HTMLInputElement>;\n\nconst ${component} = React.forwardRef<HTMLInputElement, ${component}Props>(\n  function ${component}(props, forwardedRef) {\n    const combobox = ${context.useRootContext}();\n    const inputDisabled = combobox.disabled || props.disabled === true;\n    const inputReadOnly = combobox.readOnly || props.readOnly === true;\n\n    return (\n      <${facts.parts.input.defaultElement}\n        {...props}\n        ${facts.attrs.input}\n        role="${facts.inputSemantics.role}"\n        aria-autocomplete="${facts.inputSemantics.ariaAutocomplete}"\n        aria-disabled={inputDisabled ? "true" : undefined}\n        aria-expanded={combobox.open ? "true" : "false"}\n        aria-readonly={inputReadOnly ? "true" : "false"}\n        aria-required={combobox.required ? "true" : "false"}\n        autoComplete="${facts.inputSemantics.autocomplete}"\n        data-disabled={inputDisabled ? "" : undefined}\n        data-readonly={inputReadOnly ? "" : undefined}\n        data-required={combobox.required ? "" : undefined}\n        disabled={inputDisabled}\n        readOnly={inputReadOnly}\n        ref={forwardedRef}\n        value={props.value ?? combobox.inputValue}\n        onChange={props.onChange ?? noopComboboxInputChange}\n      />\n    );\n  },\n);\n\n${component}.displayName = "${facts.displayName}.Input";\n\nexport default ${component};\n\nfunction noopComboboxInputChange(_event: React.ChangeEvent<HTMLInputElement>): void {}\n`;
+  return `import * as React from "react";\n\nimport { ${context.useRootContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${component}Props = React.InputHTMLAttributes<HTMLInputElement>;\n\nconst ${component} = React.forwardRef<HTMLInputElement, ${component}Props>(\n  function ${component}(props, forwardedRef) {\n    const combobox = ${context.useRootContext}();\n    const inputDisabled = ${comboboxInheritedBoolean("combobox.disabled", "props.disabled === true")};\n    const inputReadOnly = ${comboboxInheritedBoolean("combobox.readOnly", "props.readOnly === true")};\n\n    return (\n      <${facts.parts.input.defaultElement}\n        {...props}\n        ${facts.attrs.input}\n        role="${facts.inputSemantics.role}"\n        aria-autocomplete="${facts.inputSemantics.ariaAutocomplete}"\n        aria-disabled={inputDisabled ? "true" : undefined}\n        aria-expanded={combobox.open ? "true" : "false"}\n        aria-readonly={inputReadOnly ? "true" : "false"}\n        aria-required={combobox.required ? "true" : "false"}\n        autoComplete="${facts.inputSemantics.autocomplete}"\n        data-disabled={inputDisabled ? "" : undefined}\n        data-readonly={inputReadOnly ? "" : undefined}\n        data-required={combobox.required ? "" : undefined}\n        disabled={inputDisabled}\n        readOnly={inputReadOnly}\n        ref={forwardedRef}\n        value={props.value ?? combobox.inputValue}\n        onChange={props.onChange ?? noopComboboxInputChange}\n      />\n    );\n  },\n);\n\n${component}.displayName = "${facts.displayName}.Input";\n\nexport default ${component};\n\nfunction noopComboboxInputChange(_event: React.ChangeEvent<HTMLInputElement>): void {}\n`;
 }
 
 function printRootWithConnectedState(facts: AdapterEditableCollectionOverlayFacts): string {
@@ -121,25 +134,13 @@ function printRootWithConnectedState(facts: AdapterEditableCollectionOverlayFact
       const resetForm = rootRef.current?.querySelector<HTMLInputElement>("[${facts.attrs.hiddenInput}]")?.form;
       if (!resetForm) return;
       let timer: number | undefined;
-      const handleReset = () => {
-        const instance = instanceRef.current;
-        if (!instance) return;
-        if (timer !== undefined) window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-          timer = undefined;
-          if (instanceRef.current !== instance) return;
-          if (valueRef.current !== undefined && instance.getValue() !== valueRef.current) instance.setValue(valueRef.current, { emit: false });
-          if (inputValueRef.current !== undefined && instance.getInputValue() !== inputValueRef.current) instance.setInputValue(inputValueRef.current, { emit: false, filter: false });
-          if (valueRef.current === undefined) setUncontrolledValue(instance.getValue());
-          if (inputValueRef.current === undefined) setUncontrolledInputValue(instance.getInputValue());
-        }, 0);
-      };
+      const handleReset = (event: Event) => { ${comboboxResetSettlement("react")} };
       resetForm.addEventListener("reset", handleReset);
       return () => {
         resetForm.removeEventListener("reset", handleReset);
         if (timer !== undefined) window.clearTimeout(timer);
       };
-    }, [form, setUncontrolledValue, setUncontrolledInputValue]);
+    }, [children, form, setUncontrolledValue, setUncontrolledInputValue]);
 
 ${marker}`,
   );
@@ -150,23 +151,6 @@ function printRootWithClosedContentFixes(facts: AdapterEditableCollectionOverlay
   let output = printRootWithLazyClosedContentSupport(facts);
 
   output = output.replace(
-    `      const instance = ${facts.runtime.factory}(root, {
-        ${props.autoComplete.name},
-        ${props.defaultInputValue.name}: uncontrolledInputValueRef.current,`,
-    `      const selectedInitialValue =
-        ${props.value.name}Ref.current !== undefined ? ${props.value.name}Ref.current : (uncontrolledValueRef.current ?? null);
-      const selectedInitialInputValue = findSelectedComboboxItemText(children, selectedInitialValue);
-      const defaultRuntimeInputValue =
-        uncontrolledInputValueRef.current ?? selectedInitialInputValue ?? "";
-      const defaultRuntimeFilterValue = uncontrolledInputValueRef.current ?? "";
-
-      const instance = ${facts.runtime.factory}(root, {
-        ${props.autoComplete.name},
-        ${props.defaultInputValue.name}: defaultRuntimeInputValue,
-        ...(${props.inputValue.name}Ref.current === undefined ? { defaultFilterValue: defaultRuntimeFilterValue } : {}),
-        ...(selectedInitialInputValue !== null ? { defaultValueText: selectedInitialInputValue } : {}),`,
-  );
-  output = output.replace(
     `    }, [
       ${props.autoComplete.name},`,
     `    }, [
@@ -175,50 +159,11 @@ function printRootWithClosedContentFixes(facts: AdapterEditableCollectionOverlay
   );
 
   output = output.replace(
-    `          const nextSelectedInputValue = getTextFromComboboxItem(details.item);
-          if (nextSelectedInputValue !== null || nextValue === null) {
-            setSelectedInputValue({ inputValue: nextSelectedInputValue, value: nextValue });
-          }
-
-          if (${props.value.name}Ref.current === undefined) {`,
-    `          const nextRuntimeInputValue =
-            ${props.inputValue.name}Ref.current === undefined ? instanceRef.current?.${facts.states.inputValue.getter}() : undefined;
-          const nextSelectedInputValue =
-            getTextFromComboboxItem(details.item) ??
-            (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
-            nextRuntimeInputValue ??
-            null;
-          if (nextSelectedInputValue !== null || nextValue === null) {
-            setSelectedInputValue({
-              inputValue: nextSelectedInputValue && nextSelectedInputValue.length > 0 ? nextSelectedInputValue : null,
-              value: nextValue,
-            });
-          }
-
-          if (${props.inputValue.name}Ref.current === undefined) {
-            const nextInputValue = nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
-            if (nextRuntimeInputValue !== nextInputValue) {
-              instanceRef.current?.${facts.setters.inputValue.method}(nextInputValue, {
-                emit: false,
-                filter: false,
-              });
-            }
-            setUncontrolledInputValue(nextInputValue);
-          }
-
-          if (${props.value.name}Ref.current === undefined) {`,
-  );
-
-  output = output.replace(
     `    const ${props.defaultValue.name}Ref = React.useRef(${props.defaultValue.name});
     const [uncontrolledInputValue, setUncontrolledInputValueState] = React.useState(${props.defaultInputValue.name}Ref.current);`,
     `    const ${props.defaultValue.name}Ref = React.useRef(${props.defaultValue.name});
     const runtimeOptionsRef = React.useRef({
-      ${props.filterMode.name},
-      ${props.highlightItemOnHover.name},
-      ${props.locale.name},
-      ${props.modal.name},
-      ${props.readOnly.name},
+      ${comboboxPlan.constructorOnlyInputs.join(", ")},
     });
     const pendingProgrammaticValueRef = React.useRef<{
       emit?: boolean;
@@ -236,21 +181,13 @@ function printRootWithClosedContentFixes(facts: AdapterEditableCollectionOverlay
     openEffect,
     `    React.useEffect(() => {
       const nextRuntimeOptions = {
-        ${props.filterMode.name},
-        ${props.highlightItemOnHover.name},
-        ${props.locale.name},
-        ${props.modal.name},
-        ${props.readOnly.name},
+        ${comboboxPlan.constructorOnlyInputs.join(", ")},
       };
       const previousRuntimeOptions = runtimeOptionsRef.current;
       runtimeOptionsRef.current = nextRuntimeOptions;
 
       if (
-        previousRuntimeOptions.${props.filterMode.name} === nextRuntimeOptions.${props.filterMode.name} &&
-        previousRuntimeOptions.${props.highlightItemOnHover.name} === nextRuntimeOptions.${props.highlightItemOnHover.name} &&
-        previousRuntimeOptions.${props.locale.name} === nextRuntimeOptions.${props.locale.name} &&
-        previousRuntimeOptions.${props.modal.name} === nextRuntimeOptions.${props.modal.name} &&
-        previousRuntimeOptions.${props.readOnly.name} === nextRuntimeOptions.${props.readOnly.name}
+        ${comboboxPlan.constructorOnlyInputs.map((name) => `previousRuntimeOptions.${name} === nextRuntimeOptions.${name}`).join(" && ")}
       ) {
         return;
       }
@@ -267,11 +204,7 @@ function printRootWithClosedContentFixes(facts: AdapterEditableCollectionOverlay
       }
     }, [
       ensureInstance,
-      ${props.filterMode.name},
-      ${props.highlightItemOnHover.name},
-      ${props.locale.name},
-      ${props.modal.name},
-      ${props.readOnly.name},
+      ${comboboxPlan.constructorOnlyInputs.join(", ")},
     ]);
 
 ${openEffect}`,
@@ -403,121 +336,6 @@ ${openEffect}`,
           data-state={renderedOpen ? "open" : "closed"}`,
   );
 
-  const inputValueEvent = facts.events.inputValueChange;
-  const openEvent = facts.events.openChange;
-  const valueEvent = facts.events.valueChange;
-  output = output.replace(
-    `        ${inputValueEvent.callbackProp}: (nextInputValue, details) => {
-          ${inputValueEvent.callbackProp}Ref.current?.(nextInputValue, details);
-          if (details.isCanceled) return;
-
-          if (${props.inputValue.name}Ref.current === undefined) {
-            setUncontrolledInputValue(nextInputValue);
-          }
-        },`,
-    `        ${inputValueEvent.callbackProp}: (nextInputValue, details) => {
-          ${inputValueEvent.callbackProp}Ref.current?.(nextInputValue, details);
-        },`,
-  );
-  output = output.replace(
-    `        ${openEvent.callbackProp}: (nextOpen, details) => {
-          ${openEvent.callbackProp}Ref.current?.(nextOpen, details);
-          if (details.isCanceled) return;
-
-          if (${props.open.name}Ref.current === undefined) {
-            setUncontrolledOpen(nextOpen);
-          }
-        },`,
-    `        ${openEvent.callbackProp}: (nextOpen, details) => {
-          ${openEvent.callbackProp}Ref.current?.(nextOpen, details);
-        },`,
-  );
-  output = output.replace(
-    `        ${valueEvent.callbackProp}: (nextValue, details) => {
-          ${valueEvent.callbackProp}Ref.current?.(nextValue, details);
-          if (details.isCanceled) return;
-
-          const nextRuntimeInputValue =
-            ${props.inputValue.name}Ref.current === undefined ? instanceRef.current?.${facts.states.inputValue.getter}() : undefined;
-          const nextSelectedInputValue =
-            getTextFromComboboxItem(details.item) ??
-            (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
-            nextRuntimeInputValue ??
-            null;
-          if (nextSelectedInputValue !== null || nextValue === null) {
-            setSelectedInputValue({
-              inputValue: nextSelectedInputValue && nextSelectedInputValue.length > 0 ? nextSelectedInputValue : null,
-              value: nextValue,
-            });
-          }
-
-          if (${props.inputValue.name}Ref.current === undefined) {
-            const nextInputValue = nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
-            if (nextRuntimeInputValue !== nextInputValue) {
-              instanceRef.current?.${facts.setters.inputValue.method}(nextInputValue, {
-                emit: false,
-                filter: false,
-              });
-            }
-            setUncontrolledInputValue(nextInputValue);
-          }
-
-          if (${props.value.name}Ref.current === undefined) {
-            setUncontrolledValue(nextValue);
-          }
-        },`,
-    `        ${valueEvent.callbackProp}: (nextValue, details) => {
-          ${valueEvent.callbackProp}Ref.current?.(nextValue, details);
-        },`,
-  );
-  output = output.replace(
-    `      instanceRef.current = instance;
-      return instance;`,
-    `      instanceRef.current = instance;
-      instance.subscribe("${inputValueEvent.name}", (details) => {
-        if (${props.inputValue.name}Ref.current === undefined) {
-          setUncontrolledInputValue(details.${inputValueEvent.valueProperty});
-        }
-      });
-      instance.subscribe("${openEvent.name}", (details) => {
-        if (${props.open.name}Ref.current === undefined) {
-          setUncontrolledOpen(details.${openEvent.valueProperty});
-        }
-      });
-      instance.subscribe("${valueEvent.name}", (details) => {
-        const nextValue = details.${valueEvent.valueProperty};
-        const nextRuntimeInputValue =
-          ${props.inputValue.name}Ref.current === undefined ? instance.${facts.states.inputValue.getter}() : undefined;
-        const nextSelectedInputValue =
-          getTextFromComboboxItem(details.item) ??
-          (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
-          nextRuntimeInputValue ??
-          null;
-        if (nextSelectedInputValue !== null || nextValue === null) {
-          setSelectedInputValue({
-            inputValue: nextSelectedInputValue && nextSelectedInputValue.length > 0 ? nextSelectedInputValue : null,
-            value: nextValue,
-          });
-        }
-
-        if (${props.inputValue.name}Ref.current === undefined) {
-          const nextInputValue = nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
-          if (nextRuntimeInputValue !== nextInputValue) {
-            instance.${facts.setters.inputValue.method}(nextInputValue, {
-              emit: false,
-              filter: false,
-            });
-          }
-          setUncontrolledInputValue(nextInputValue);
-        }
-
-        if (${props.value.name}Ref.current === undefined) {
-          setUncontrolledValue(nextValue);
-        }
-      });
-      return instance;`,
-  );
-
   return output;
 }
 
@@ -568,14 +386,14 @@ function printItemWithContext(facts: AdapterEditableCollectionOverlayFacts): str
   const props = facts.props;
   const context = facts.context;
 
-  return `import * as React from "react";\n\nimport { ${context.itemContext}, ${context.useRootContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${component}Props = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {\n  ${props.itemDisabled.name}?: ${props.itemDisabled.type};\n  ${props.itemValue.name}: ${props.itemValue.type};\n};\n\nconst ${component} = React.forwardRef<HTMLDivElement, ${component}Props>(\n  function ${component}({ ${props.itemDisabled.name} = ${getDefault(props.itemDisabled, "false")}, ${props.itemValue.name}, ...props }, forwardedRef) {\n    const combobox = ${context.useRootContext}();\n    const selected = combobox.value === ${props.itemValue.name};\n    const itemContextValue = React.useMemo(() => ({ value: ${props.itemValue.name} }), [${props.itemValue.name}]);\n\n    return (\n      <${context.itemContext}.Provider value={itemContextValue}>\n        <${facts.parts.item.defaultElement}\n          ${facts.attrs.item}\n          ${facts.attrs.valueData}={${props.itemValue.name}}\n          role="${facts.collection.item.role}"\n          aria-selected={selected}\n          ${facts.collection.item.disabled.ariaAttribute}={${props.itemDisabled.name} || undefined}\n          ${facts.attrs.disabled}={${props.itemDisabled.name} ? "" : undefined}\n          data-selected={selected ? "" : undefined}\n          tabIndex={${facts.collection.item.initialProjection.tabIndex}}\n          ref={forwardedRef}\n          {...props}\n        />\n      </${context.itemContext}.Provider>\n    );\n  },\n);\n\n${component}.displayName = "${facts.displayName}.Item";\n\nexport default ${component};\n`;
+  return `import * as React from "react";\n\nimport { ${context.itemContext}, ${context.useRootContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${component}Props = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {\n  ${props.itemDisabled.name}?: ${props.itemDisabled.type};\n  ${props.itemValue.name}: ${props.itemValue.type};\n};\n\nconst ${component} = React.forwardRef<HTMLDivElement, ${component}Props>(\n  function ${component}({ ${props.itemDisabled.name} = ${getDefault(props.itemDisabled, "false")}, ${props.itemValue.name}, ...props }, forwardedRef) {\n    const combobox = ${context.useRootContext}();\n    const selected = ${comboboxSelection("combobox.value", props.itemValue.name)};\n    const itemContextValue = React.useMemo(() => ({ value: ${props.itemValue.name} }), [${props.itemValue.name}]);\n\n    return (\n      <${context.itemContext}.Provider value={itemContextValue}>\n        <${facts.parts.item.defaultElement}\n          ${facts.attrs.item}\n          ${facts.attrs.valueData}={${props.itemValue.name}}\n          role="${facts.collection.item.role}"\n          ${comboboxSelectionAttributes("react", "item")}\n          ${facts.collection.item.disabled.ariaAttribute}={${props.itemDisabled.name} || undefined}\n          ${facts.attrs.disabled}={${props.itemDisabled.name} ? "" : undefined}\n          tabIndex={${facts.collection.item.initialProjection.tabIndex}}\n          ref={forwardedRef}\n          {...props}\n        />\n      </${context.itemContext}.Provider>\n    );\n  },\n);\n\n${component}.displayName = "${facts.displayName}.Item";\n\nexport default ${component};\n`;
 }
 
 function printItemIndicatorWithContext(facts: AdapterEditableCollectionOverlayFacts): string {
   const component = facts.exports.itemIndicator;
   const context = facts.context;
 
-  return `import * as React from "react";\n\nimport { ${context.useRootContext}, ${context.useItemContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${component}Props = React.HTMLAttributes<HTMLSpanElement>;\n\nconst ${component} = React.forwardRef<HTMLSpanElement, ${component}Props>(\n  function ${component}(props, forwardedRef) {\n    const combobox = ${context.useRootContext}();\n    const item = ${context.useItemContext}();\n    const selected = combobox.value === item.value;\n\n    return (\n      <${facts.parts.itemIndicator.defaultElement}\n        ${facts.attrs.itemIndicator}\n        aria-hidden="true"\n        ${facts.collection.itemIndicator.selectedStateAttribute}={selected ? "checked" : "unchecked"}\n        data-visible={selected ? "" : undefined}\n        data-hidden={selected ? undefined : ""}\n        hidden={!selected}\n        ref={forwardedRef}\n        {...props}\n      />\n    );\n  },\n);\n\n${component}.displayName = "${facts.displayName}.ItemIndicator";\n\nexport default ${component};\n`;
+  return `import * as React from "react";\n\nimport { ${context.useRootContext}, ${context.useItemContext} } from "./${context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${component}Props = React.HTMLAttributes<HTMLSpanElement>;\n\nconst ${component} = React.forwardRef<HTMLSpanElement, ${component}Props>(\n  function ${component}(props, forwardedRef) {\n    const combobox = ${context.useRootContext}();\n    const item = ${context.useItemContext}();\n    const selected = ${comboboxSelection("combobox.value", "item.value")};\n\n    return (\n      <${facts.parts.itemIndicator.defaultElement}\n        ${facts.attrs.itemIndicator}\n        aria-hidden="true"\n        ${comboboxSelectionAttributes("react", "indicator")}\n        ref={forwardedRef}\n        {...props}\n      />\n    );\n  },\n);\n\n${component}.displayName = "${facts.displayName}.ItemIndicator";\n\nexport default ${component};\n`;
 }
 
 function printFloatingPart(

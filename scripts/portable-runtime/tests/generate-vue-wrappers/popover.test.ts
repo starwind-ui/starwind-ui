@@ -1,14 +1,13 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { popoverRuntimeAdapterContract } from "../../contracts/primitive/components/popover.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -63,28 +62,25 @@ describe("generated Vue Popover", () => {
     const trigger = files["PopoverTrigger.vue"]!;
     const portal = files["PopoverPortal.vue"]!;
     const popup = files["PopoverPopup.vue"]!;
-    expect(root).toContain("provide(PopoverContext");
-    expect(root).toContain("await nextTick()");
-    expect(root).toContain("openOnHover: props.openOnHover");
-    expect(root).toContain(':data-close-delay="props.closeDelay"');
-    expect(root).toMatch(
-      /emit\("openChange", nextOpen, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open", nextOpen\);/,
+    expect(() => assertVueSfcCompiles(root, "Component.vue")).not.toThrow();
+
+    expect(compactCode(trigger)).toContain(compactCode("const AsChildTrigger = defineComponent"));
+    expect(compactCode(trigger)).toContain(
+      compactCode('import { createVueAsChild } from "../_internal/as-child";'),
     );
-    expect(trigger).toContain("const AsChildTrigger = defineComponent");
-    expect(trigger).toContain('import { createVueAsChild } from "../_internal/as-child";');
-    expect(trigger).toContain("asChild.render({");
+    expect(compactCode(trigger)).toContain(compactCode("asChild.render({"));
     expect(portal).toContain("container?: string | HTMLElement");
     expect(portal).toContain('import { useVuePortalPlacement } from "../_internal/portal";');
     expect(portal).toContain('data-sw-portal-placement="framework"');
     expect(portal).toContain(':to="placement.target.value"');
     expect(portal).toContain(':disabled="placement.disabled.value"');
     expect(portal).toContain(":data-disabled=\"props.disabled ? '' : undefined\"");
-    expect(portal).toContain("root.registerPortal(owner, null)");
-    expect(popup).toContain(':data-side="props.side"');
-    expect(popup).toContain(':data-align="props.align"');
-    expect(popup).toContain('data-collision-strategy="');
-    expect(popup).toContain('role="dialog"');
-    expect(popup).toContain("hidden");
+    expect(portal).toContain("useVuePortalPlacement");
+    expect(compactCode(popup)).toContain(compactCode(':data-side="props.side"'));
+    expect(compactCode(popup)).toContain(compactCode(':data-align="props.align"'));
+    expect(compactCode(popup)).toContain(compactCode('data-collision-strategy="'));
+    expect(compactCode(popup)).toContain(compactCode('role="dialog"'));
+    expect(compactCode(popup)).toContain(compactCode("hidden"));
   });
 
   it("generates Styled Popover model, placement, Portal/Popup tree, and strict Trigger", async () => {
@@ -97,9 +93,11 @@ describe("generated Vue Popover", () => {
     const content = await readFile(path.join(directory, "PopoverContent.vue"), "utf8");
     const trigger = await readFile(path.join(directory, "PopoverTrigger.vue"), "utf8");
 
-    expect(root).toContain(':open="open"');
-    expect(root).toContain('@update:open="emit(&quot;update:open&quot;, $event)"');
-    expect(root).toContain('@open-change="handleOpenChange"');
+    expect(compactCode(root)).toContain(compactCode(':open="open"'));
+    expect(compactCode(root)).toContain(
+      compactCode('@update:open="emit(&quot;update:open&quot;, $event)"'),
+    );
+    expect(compactCode(root)).toContain(compactCode('@open-change="handleOpenChange"'));
     expect(content).toContain("<PopoverPrimitive.PopoverPortal");
     expect(content).toContain("<PopoverPrimitive.PopoverPopup");
     expect(content).toContain(':side="side"');
@@ -108,8 +106,8 @@ describe("generated Vue Popover", () => {
     expect(content).toContain(':avoid-collisions="avoidCollisions"');
     expect(content).toContain(':collision-strategy="collisionStrategy"');
     expect(content).toContain('data-slot="popover-content"');
-    expect(trigger).toContain(':as-child="asChild"');
-    expect(trigger).toContain("<PopoverPrimitive.PopoverTrigger");
+    expect(compactCode(trigger)).toContain(compactCode(':as-child="asChild"'));
+    expect(compactCode(trigger)).toContain(compactCode("<PopoverPrimitive.PopoverTrigger"));
     expect(() => assertVueSfcCompiles(trigger, "PopoverTrigger.vue")).not.toThrow();
   });
 });

@@ -6,34 +6,48 @@
 "use client";
 
 import * as React from "react";
-
+import { useComposedRefs } from "../internal/compose-refs";
+import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
+import { TimedPlacementContext } from "./PreviewCardRoot";
 export type PreviewCardPositionerProps = React.HTMLAttributes<HTMLDivElement> & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
 };
-
 const PreviewCardPositioner = React.forwardRef<HTMLDivElement, PreviewCardPositionerProps>(
   function PreviewCardPositioner(
     { side = "bottom", align = "center", sideOffset = 0, avoidCollisions = true, ...props },
     forwardedRef,
   ) {
+    const register = React.useContext(TimedPlacementContext),
+      element = React.useRef<HTMLDivElement>(null);
+    const composedRef = useComposedRefs(forwardedRef, element);
+    useIsomorphicLayoutEffect(() => {
+      const node = element.current;
+      if (!node) return;
+      register?.(node, {
+        "data-side": String(side),
+        "data-align": String(align),
+        "data-side-offset": String(sideOffset),
+        "data-avoid-collisions": String(avoidCollisions),
+      });
+      return () => register?.(node, null);
+    }, [register, side, align, sideOffset, avoidCollisions]);
     return (
       <div
-        data-sw-preview-card-positioner
+        {...props}
+        data-sw-preview-card-positioner=""
+        data-sw-part="positioner"
         data-state="closed"
         data-side={side}
         data-align={align}
         data-side-offset={sideOffset}
-        data-avoid-collisions={avoidCollisions ? "true" : "false"}
-        ref={forwardedRef}
-        {...props}
+        data-avoid-collisions={String(avoidCollisions)}
+        ref={composedRef}
       />
     );
   },
 );
-
 PreviewCardPositioner.displayName = "PreviewCard.Positioner";
-
 export default PreviewCardPositioner;

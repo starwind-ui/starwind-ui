@@ -7,6 +7,7 @@ import type { TabsOrientation, TabsValue } from "@starwind-ui/runtime/tabs";
 import { type InjectionKey, inject, type Ref } from "vue";
 
 export type TabsContextValue = Readonly<{
+  refresh(): void;
   orientation: Readonly<Ref<TabsOrientation>>;
   value: Readonly<Ref<TabsValue>>;
 }>;

@@ -1,10 +1,11 @@
 import { rm } from "node:fs/promises";
 import path from "node:path";
-
 import { appendRuntimeTypeFacades, renderPrimitiveIndex } from "../../primitive-index.js";
 import { createTsHeader, writeGeneratedFile } from "../../shared.js";
 import type { FrameworkAdapterTargetPrimitivePackageGenerator } from "../types.js";
 import { renderVueAsChildHelper } from "./as-child.js";
+import { printVueFormDiscovery } from "./form-discovery.js";
+import { renderVueNativeControlHelper } from "./native-control.js";
 import { renderVuePortalHelper } from "./portal.js";
 
 export function createVueComponentHeader(generatedBy: string): string {
@@ -30,8 +31,18 @@ export const generateVuePrimitivePackage: FrameworkAdapterTargetPrimitivePackage
     ),
     writeGeneratedFile(
       path.join(outputRoot, "_internal"),
+      "native-control.ts",
+      renderVueNativeControlHelper(generatedBy),
+    ),
+    writeGeneratedFile(
+      path.join(outputRoot, "_internal"),
       "portal.ts",
       renderVuePortalHelper(generatedBy),
+    ),
+    writeGeneratedFile(
+      path.join(outputRoot, "_internal"),
+      "form-discovery.ts",
+      moduleHeader + printVueFormDiscovery(),
     ),
     writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader, components)),
   ]);

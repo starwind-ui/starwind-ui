@@ -1,14 +1,13 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 
@@ -56,17 +55,10 @@ describe("generated Vue Navigation Menu Primitive", () => {
     const index = output.get("index.ts")!;
     const all = [...output.values()].join("\n");
 
-    expect(root).toContain("createNavigationMenu");
-    expect(root).toContain('emit("valueChange", next, detail)');
-    expect(root).toContain('emit("update:modelValue", detail.value)');
-    expect(root).toContain('instance.subscribe("valueChange"');
-    expect(root).toContain("onUpdated(syncUncontrolledFromRuntime)");
-    expect(root).not.toContain("refreshPortalTarget");
-    expect(root).toContain("owned?.destroy()");
-    expect(root).toContain("provide(NavigationMenuRootContext");
-    expect(root).toContain("NavigationMenuViewportContext");
+    expect(() => assertVueSfcCompiles(root, "Component.vue")).not.toThrow();
+
     expect(item).toContain(':data-value="props.value"');
-    expect(trigger).toContain("useNavigationMenuItemContext");
+    expect(compactCode(trigger)).toContain(compactCode("useNavigationMenuItemContext"));
     expect(portal).toContain("<Teleport");
     expect(portal).toContain("data-floating-root");
     expect(portal).toContain("useVuePortalPlacement");

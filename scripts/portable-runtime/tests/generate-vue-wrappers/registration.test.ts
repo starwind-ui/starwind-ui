@@ -77,7 +77,7 @@ describe("registered Vue Framework Adapter target", () => {
     ).toThrow(/status "public-beta" requires .* to be true together.*publicDocsClaim/);
   });
 
-  it("keeps stable and quarantined target support classifications unchanged", () => {
+  it("keeps stable, beta and quarantined target support classifications distinct", () => {
     const shipping = {
       cliRegistry: true,
       demoIntegration: true,
@@ -96,7 +96,10 @@ describe("registered Vue Framework Adapter target", () => {
     expect(getPrimitiveFrameworkAdapterTarget("astro").publicSupport).toEqual(shipping);
     expect(getPrimitiveFrameworkAdapterTarget("react").publicSupport).toEqual(shipping);
     if (hasPrivateSvelte)
-      expect(getWorkspacePrimitiveTarget("svelte").publicSupport).toEqual(quarantined);
+      expect(getWorkspacePrimitiveTarget("svelte").publicSupport).toEqual({
+        ...shipping,
+        status: "public-beta",
+      });
     expect(solidFrameworkAdapterReadiness.publicSupport).toEqual(quarantined);
   });
 
@@ -158,6 +161,7 @@ describe("registered Vue Framework Adapter target", () => {
       "astro",
       "react",
       "vue",
+      ...(hasPrivateSvelte ? ["svelte"] : []),
     ]);
     expect(Object.keys(vueFrameworkAdapterTarget.primitive.manualPrimitives ?? {})).toEqual([
       "theme",

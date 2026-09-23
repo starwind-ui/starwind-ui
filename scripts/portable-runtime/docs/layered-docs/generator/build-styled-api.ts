@@ -7,9 +7,10 @@ import type {
   StyledComponentContract,
 } from "../../../contracts/styled/types.js";
 import { resolveStyledVariantDefinition } from "../../../contracts/styled/variant-resolution.js";
+import { commonStyledPropDescriptions } from "../styled-api-descriptions.js";
 import type {
-  StyledApiExportMetadata,
   StyledApiExportAnnotation,
+  StyledApiExportMetadata,
   StyledApiInheritanceMetadata,
   StyledApiPropMetadata,
   StyledApiTargetMetadata,
@@ -17,7 +18,6 @@ import type {
   StyledDocsAnnotation,
   StyledFrameworkTarget,
 } from "../types.js";
-import { commonStyledPropDescriptions } from "../styled-api-descriptions.js";
 
 const TARGETS = ["astro", "react"] as const satisfies readonly StyledFrameworkTarget[];
 const FRAMEWORK_PLUMBING_PROPS = new Set(["children", "class", "className", "data-slot", "ref"]);
@@ -141,7 +141,15 @@ const buildExportMetadata = (
   framework: StyledFrameworkTarget,
   validationIssues: string[],
 ): StyledApiExportMetadata => {
-  const exportAnnotation = annotation.styledApi?.[component.exportName];
+  const authoredAnnotation = annotation.styledApi?.[component.exportName];
+  const exportAnnotation = authoredAnnotation && {
+    ...authoredAnnotation,
+    props: Object.fromEntries(
+      Object.entries(authoredAnnotation.props ?? {}).filter(
+        ([, prop]) => !prop.frameworks || prop.frameworks.includes(framework),
+      ),
+    ),
+  };
   const primitiveParts = collectPrimitivePartReferences(component.render);
   const candidates = collectPropCandidates(
     contract,

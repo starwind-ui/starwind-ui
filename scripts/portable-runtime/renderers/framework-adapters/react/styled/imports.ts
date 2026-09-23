@@ -11,6 +11,7 @@ import { rewriteRuntimeImportSource } from "../../../styled-runtime-imports.js";
 import { collectComponentVariants, renderComposedComponentImports } from "./component-discovery.js";
 import { REACT_FRAMEWORK } from "./constants.js";
 import { isForFramework } from "./formatting.js";
+import { isAlertDialogButtonControl } from "./native-overlay.js";
 import { collectPrimitiveComponents, getReactPrimitiveAliases } from "./primitive-helpers.js";
 
 export function renderComponentImports(
@@ -57,6 +58,13 @@ export function renderComponentImports(
 
   for (const importLine of renderNamedExternalImports(component, runtimeImportContext)) {
     imports.push(importLine);
+  }
+
+  if (isAlertDialogButtonControl(component)) {
+    const importPath = primitiveImportBase
+      ? `${primitiveImportBase}/alert-dialog`
+      : getRelativeImportPath(dir, path.join(primitiveOutputRoot, "alert-dialog"));
+    imports.push(`import { __useAlertDialogControl } from "${importPath}";`);
   }
 
   for (const primitiveComponent of collectPrimitiveComponents(component.render)) {

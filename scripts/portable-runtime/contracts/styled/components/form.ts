@@ -1,3 +1,4 @@
+import { formReactiveProps } from "../../primitive/components/form.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const formStyledContract: StyledAdapterContract = {
@@ -32,6 +33,12 @@ export const formStyledContract: StyledAdapterContract = {
           { type: "variantProps", variant: "form" },
         ],
         fields: [
+          ...formReactiveProps.map(({ name, type }) => ({
+            name,
+            optional: true,
+            type: `import("@starwind-ui/runtime/form").${type}`,
+            frameworks: ["react", "vue", "svelte"] as ("react" | "vue" | "svelte")[],
+          })),
           {
             name: "errorVisibility",
             optional: true,
@@ -57,6 +64,10 @@ export const formStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
+          ...formReactiveProps.map(({ name }) => ({
+            name,
+            frameworks: ["react", "vue", "svelte"] as ("react" | "vue" | "svelte")[],
+          })),
           { name: "errorVisibility" },
           { name: "revalidationTiming" },
           { name: "ref", frameworks: ["react"] },
@@ -71,6 +82,11 @@ export const formStyledContract: StyledAdapterContract = {
           component: "form",
           part: "Root",
           attrs: [
+            ...formReactiveProps.map(({ name }) => ({
+              name,
+              value: { type: "variable" as const, name },
+              frameworks: ["react", "vue", "svelte"] as ("react" | "vue" | "svelte")[],
+            })),
             {
               name: "class",
               value: {

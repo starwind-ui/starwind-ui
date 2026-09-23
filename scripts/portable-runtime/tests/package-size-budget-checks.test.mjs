@@ -4,6 +4,7 @@ import {
   aggregateBaselineProvenance,
   evaluatePackageSizeBudgets,
   evaluateVueSizeBudget,
+  reactAdapterOnlyBaselineProvenance,
 } from "../package-size-budget-checks.mjs";
 import { vuePackageSizeBaseline } from "../vue-package-size-baseline.mjs";
 
@@ -21,6 +22,13 @@ describe("package size budget checks", () => {
     });
     expect(Object.isFrozen(aggregateBaselineProvenance)).toBe(true);
     expect(Object.isFrozen(aggregateBaselineProvenance.release)).toBe(true);
+    expect(reactAdapterOnlyBaselineProvenance).toEqual({
+      command: "pnpm runtime:size:check",
+      context: "accepted pre-release React adapter candidate",
+      date: "2026-09-17",
+      measuredGzipBytes: 40_770,
+    });
+    expect(Object.isFrozen(reactAdapterOnlyBaselineProvenance)).toBe(true);
   });
 
   it("allows normal aggregate feature growth while reporting the real Zag advisory", () => {
@@ -42,9 +50,9 @@ describe("package size budget checks", () => {
           maxGzipBytes: 153_960,
         }),
         expect.objectContaining({
-          baselineGzipBytes: 36_486,
+          baselineGzipBytes: 40_770,
           label: "@starwind-ui/react (adapter only)",
-          maxGzipBytes: 40_134,
+          maxGzipBytes: 44_847,
         }),
         expect.objectContaining({
           baselineGzipBytes: 179_332,
@@ -149,7 +157,7 @@ describe("package size budget checks", () => {
     const atCeiling = evaluatePackageSizeBudgets({
       bundleResults: [
         { label: "@starwind-ui/runtime", gzipBytes: 153_960 },
-        { label: "@starwind-ui/react (adapter only)", gzipBytes: 40_134 },
+        { label: "@starwind-ui/react (adapter only)", gzipBytes: 44_847 },
         { label: "@starwind-ui/react + runtime", gzipBytes: 194_692 },
         { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
       ],
@@ -158,7 +166,7 @@ describe("package size budget checks", () => {
     const oneByteAbove = evaluatePackageSizeBudgets({
       bundleResults: [
         { label: "@starwind-ui/runtime", gzipBytes: 153_961 },
-        { label: "@starwind-ui/react (adapter only)", gzipBytes: 40_135 },
+        { label: "@starwind-ui/react (adapter only)", gzipBytes: 44_848 },
         { label: "@starwind-ui/react + runtime", gzipBytes: 194_693 },
         { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
       ],

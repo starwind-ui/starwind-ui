@@ -223,6 +223,9 @@ export function defineRuntimeFormControlTests(): void {
       { part: "error-summary", public: true },
     ]);
     expect(form.props).toEqual([
+      expect.objectContaining({ name: "options", type: "FormOptions" }),
+      expect.objectContaining({ name: "errors", type: "FormExternalErrors" }),
+      expect.objectContaining({ name: "errorOptions", type: "FormExternalErrorOptions" }),
       {
         name: "data-error-visibility",
         kind: "option",
@@ -293,7 +296,7 @@ export function defineRuntimeFormControlTests(): void {
       "Retrieve the idempotent imperative controller with createForm(element); the component does not expose a controller ref.",
     );
     expect(form.frameworkNotes?.react).toContain(
-      "Keep the public ref on the HTMLFormElement; retrieve the idempotent imperative controller with createForm(element).",
+      "Keep the public ref on HTMLFormElement; retrieve the imperative controller with createForm(element). Runtime owns all validation and submission behavior.",
     );
   });
 
@@ -495,6 +498,7 @@ export function defineRuntimeFormControlTests(): void {
     expect(checkbox.form?.fieldIntegration).toBe(true);
     expect(checkbox.context).toContainEqual({
       name: "checkbox-group",
+      stateOwnership: "group-membership",
       direction: "consumes",
       requirement: "optional",
       values: ["disabled", "value"],

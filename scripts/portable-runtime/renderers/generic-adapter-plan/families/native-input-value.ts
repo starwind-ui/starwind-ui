@@ -3,6 +3,7 @@ import type {
   AdapterNativeInputValueFacts,
   AdapterOutputModel,
 } from "../../framework-adapters/types.js";
+import { requireRefreshConnection } from "../../primitive-output-model/refresh-connection.js";
 import type { AdapterOutputFamilyPlan } from "../adapter-family-plans.js";
 import type {
   GenericAdapterPlan,
@@ -277,6 +278,7 @@ export function getNativeInputValueFacts(plan: GenericAdapterPlan): AdapterNativ
       value: getAdapterFamilyProp(getPlanProp(plan, "value")),
     },
     runtime: {
+      refresh: requireRefreshConnection(plan.runtime.refresh, "root"),
       disabledSetter: {
         method: disabledSetter.method,
         options: disabledSetter.options,

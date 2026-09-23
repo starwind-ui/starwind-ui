@@ -1,20 +1,23 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick, reactive } from "vue";
-
 import {
-  createContextMenu,
   type ContextMenuOpenChangeDetails,
+  createContextMenu,
 } from "@starwind-ui/runtime/context-menu";
 import {
+  ContextMenuCheckboxItem,
   ContextMenuItem,
   ContextMenuPopup,
   ContextMenuPortal,
   ContextMenuPositioner,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
   ContextMenuRoot,
   ContextMenuSubmenuRoot,
   ContextMenuSubmenuTrigger,
   ContextMenuTrigger,
 } from "@starwind-ui/vue/context-menu";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick, reactive } from "vue";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -234,3 +237,216 @@ async function frame(): Promise<void> {
   await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
   await nextTick();
 }
+
+testAcceptedModelPublication({
+  name: "context-menu",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => renderContextMenu({}),
+  root: "[data-sw-context-menu]",
+  act: (root) =>
+    dispatchContextMenu(root.querySelector<HTMLElement>("[data-sw-context-menu-trigger]")!, 30, 40),
+  read: (root) => root.getAttribute("data-state") === "open",
+});
+
+describe("accepted item models", () => {
+  for (const kind of ["checkbox", "radio"] as const) {
+    for (const bound of [false, true]) {
+      for (const veto of ["callback", "ancestor"] as const) {
+        it(`${kind} ${bound ? "bound" : "unbound"} waits for ${veto} acceptance`, async () => {
+          const state = reactive({ checked: false, value: "a", cancel: true });
+          const updates: unknown[] = [];
+          const snapshots: number[] = [];
+          const host = document.createElement("div");
+          document.body.append(host);
+          const proposal = (_value: unknown, detail: { cancel(): void }) => {
+            if (state.cancel && veto === "callback") detail.cancel();
+          };
+          const app = createApp({
+            render: () =>
+              h(ContextMenuRoot, { defaultOpen: true }, () => [
+                h(ContextMenuTrigger, null, () => "Actions"),
+                h(ContextMenuPortal, { disabled: true }, () =>
+                  h(ContextMenuPositioner, null, () =>
+                    h(ContextMenuPopup, null, () =>
+                      kind === "checkbox"
+                        ? h(
+                            ContextMenuCheckboxItem,
+                            {
+                              ...(bound ? { checked: state.checked } : {}),
+                              onCheckedChange: proposal,
+                              "onUpdate:checked": (next: boolean) => {
+                                updates.push(next);
+                                if (bound) state.checked = next;
+                              },
+                            },
+                            () => "Check",
+                          )
+                        : h(
+                            ContextMenuRadioGroup,
+                            {
+                              defaultValue: "a",
+                              ...(bound ? { modelValue: state.value } : {}),
+                              onValueChange: proposal,
+                              "onUpdate:modelValue": (next: string) => {
+                                updates.push(next);
+                                if (bound) state.value = next;
+                              },
+                            },
+                            () => [
+                              h(
+                                ContextMenuRadioItem,
+                                { value: "a", closeOnClick: false },
+                                () => "A",
+                              ),
+                              h(
+                                ContextMenuRadioItem,
+                                { value: "b", closeOnClick: false },
+                                () => "B",
+                              ),
+                            ],
+                          ),
+                    ),
+                  ),
+                ),
+              ]),
+          });
+          app.mount(host);
+          try {
+            await frame();
+            const eventName =
+              kind === "checkbox" ? "starwind:checked-change" : "starwind:value-change";
+            host.addEventListener(eventName, (event) => {
+              snapshots.push(updates.length);
+              if (state.cancel && veto === "ancestor") event.preventDefault();
+            });
+            const item = host.querySelector<HTMLElement>(
+              kind === "checkbox"
+                ? "[data-sw-menu-checkbox-item]"
+                : '[data-sw-menu-radio-item][data-value="b"]',
+            )!;
+            item.click();
+            await frame();
+            expect(updates).toEqual([]);
+            expect(item.getAttribute("aria-checked")).toBe("false");
+            state.cancel = false;
+            item.click();
+            state.cancel = true;
+            const second =
+              kind === "checkbox"
+                ? item
+                : host.querySelector<HTMLElement>('[data-sw-menu-radio-item][data-value="a"]')!;
+            second.click();
+            await frame();
+            expect(updates).toEqual([kind === "checkbox" ? true : "b"]);
+            expect(snapshots).toEqual([0, 0, 0]);
+            expect(item.getAttribute("aria-checked")).toBe("true");
+          } finally {
+            app.unmount();
+            host.remove();
+          }
+        });
+      }
+    }
+    for (const action of ["parent", "remove", "replace"] as const) {
+      it(`${kind} drops settlement after ${action}`, async () => {
+        const state = reactive({
+          shown: true,
+          key: 0,
+          checked: undefined as boolean | undefined,
+          value: undefined as string | undefined,
+        });
+        const updates: unknown[] = [];
+        const host = document.createElement("div");
+        document.body.append(host);
+        const app = createApp({
+          render: () =>
+            h(ContextMenuRoot, { defaultOpen: true }, () => [
+              h(ContextMenuTrigger, null, () => "Actions"),
+              h(ContextMenuPortal, { disabled: true }, () =>
+                h(ContextMenuPositioner, null, () =>
+                  h(ContextMenuPopup, null, () =>
+                    !state.shown
+                      ? []
+                      : kind === "checkbox"
+                        ? h(
+                            ContextMenuCheckboxItem,
+                            {
+                              key: state.key,
+                              checked: state.checked,
+                              "onUpdate:checked": (next: boolean) => updates.push(next),
+                            },
+                            () => "Check",
+                          )
+                        : h(
+                            ContextMenuRadioGroup,
+                            {
+                              key: state.key,
+                              defaultValue: "a",
+                              modelValue: state.value,
+                              "onUpdate:modelValue": (next: string) => updates.push(next),
+                            },
+                            () => [
+                              h(
+                                ContextMenuRadioItem,
+                                { value: "a", closeOnClick: false },
+                                () => "A",
+                              ),
+                              h(
+                                ContextMenuRadioItem,
+                                { value: "b", closeOnClick: false },
+                                () => "B",
+                              ),
+                              h(
+                                ContextMenuRadioItem,
+                                { value: "c", closeOnClick: false },
+                                () => "C",
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ]),
+        });
+        app.mount(host);
+        try {
+          await frame();
+          host.addEventListener(
+            kind === "checkbox" ? "starwind:checked-change" : "starwind:value-change",
+            () => {
+              if (action === "parent") {
+                state.checked = false;
+                state.value = "c";
+              } else if (action === "remove") state.shown = false;
+              else state.key += 1;
+            },
+          );
+          const selector =
+            kind === "checkbox"
+              ? "[data-sw-menu-checkbox-item]"
+              : '[data-sw-menu-radio-item][data-value="b"]';
+          const old = host.querySelector<HTMLElement>(selector)!;
+          old.click();
+          await frame();
+          expect(updates).toEqual([]);
+          if (action === "parent") {
+            expect(old.getAttribute("aria-checked")).toBe("false");
+            if (kind === "radio")
+              expect(
+                host
+                  .querySelector('[data-value="c"][role="menuitemradio"]')
+                  ?.getAttribute("aria-checked"),
+              ).toBe("true");
+          } else expect(old.isConnected).toBe(false);
+        } finally {
+          app.unmount();
+          host.remove();
+        }
+      });
+    }
+  }
+});

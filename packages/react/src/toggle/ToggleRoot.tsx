@@ -9,21 +9,19 @@ import { createToggle, type TogglePressedChangeDetails } from "@starwind-ui/runt
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
+import { useToggleGroupContext } from "../toggle-group/ToggleGroupContext";
 export type ToggleRootProps = Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  "aria-pressed" | "defaultPressed" | "onChange" | "type" | "value"
-> &
-  Omit<React.HTMLAttributes<HTMLSpanElement>, "aria-pressed" | "defaultPressed" | "onChange"> & {
-    defaultPressed?: boolean;
-    disabled?: boolean;
-    nativeButton?: boolean;
-    onPressedChange?: (pressed: boolean, details: TogglePressedChangeDetails) => void;
-    pressed?: boolean;
-    syncGroup?: string;
-    value?: string;
-  };
-
+  React.ButtonHTMLAttributes<HTMLButtonElement> & React.HTMLAttributes<HTMLSpanElement>,
+  "onChange" | "aria-pressed" | "defaultPressed" | "type" | "value"
+> & {
+  defaultPressed?: boolean;
+  disabled?: boolean;
+  nativeButton?: boolean;
+  pressed?: boolean;
+  syncGroup?: string;
+  value?: string;
+  onPressedChange?: (value: boolean, detail: TogglePressedChangeDetails) => void;
+};
 const ToggleRoot = React.forwardRef<HTMLButtonElement | HTMLSpanElement, ToggleRootProps>(
   function ToggleRoot(
     {
@@ -31,37 +29,42 @@ const ToggleRoot = React.forwardRef<HTMLButtonElement | HTMLSpanElement, ToggleR
       defaultPressed = false,
       disabled = false,
       nativeButton = true,
-      onPressedChange,
       pressed,
       syncGroup,
       value,
-      ...props
+      onPressedChange,
+      ...rest
     },
     forwardedRef,
   ) {
-    const rootRef = React.useRef<HTMLButtonElement | HTMLSpanElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createToggle> | undefined>(undefined);
-    const onPressedChangeRef = React.useRef(onPressedChange);
-    const pressedRef = React.useRef(pressed);
-    const defaultPressedRef = React.useRef(defaultPressed);
-    const [uncontrolledPressed, setUncontrolledPressedState] = React.useState(
-      defaultPressedRef.current,
-    );
-    const uncontrolledPressedRef = React.useRef(uncontrolledPressed);
-
-    const setUncontrolledPressed = React.useCallback((nextPressed: boolean) => {
-      uncontrolledPressedRef.current = nextPressed;
-      setUncontrolledPressedState(nextPressed);
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      onPressedChangeRef.current = onPressedChange;
-    }, [onPressedChange]);
-
-    useIsomorphicLayoutEffect(() => {
-      pressedRef.current = pressed;
-    }, [pressed]);
-
+    const inputs = React.useRef({
+      defaultPressed,
+      disabled,
+      nativeButton,
+      pressed,
+      syncGroup,
+      value,
+      onPressedChange,
+    });
+    inputs.current = {
+      defaultPressed,
+      disabled,
+      nativeButton,
+      pressed,
+      syncGroup,
+      value,
+      onPressedChange,
+    };
+    const initialDefault = React.useRef(inputs.current.defaultPressed ?? false).current;
+    const [renderedValue, setRenderedValue] = React.useState<boolean>(initialDefault);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createToggle>;
+      unsubscribe?: () => void;
+      observer?: MutationObserver;
+      ownDisabled?: boolean;
+      accepted: boolean;
+    }>({ accepted: initialDefault }).current;
+    const rootRef = React.useRef<HTMLButtonElement | HTMLSpanElement | null>(null);
     const composedRef = React.useCallback(
       (node: HTMLButtonElement | HTMLSpanElement | null) => {
         rootRef.current = node;
@@ -69,125 +72,109 @@ const ToggleRoot = React.forwardRef<HTMLButtonElement | HTMLSpanElement, ToggleR
       },
       [forwardedRef],
     );
-
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root) return;
-
-      const instance = createToggle(root, {
-        defaultPressed: uncontrolledPressedRef.current,
-        disabled,
-        nativeButton,
-        syncGroup,
-        value,
-        onPressedChange: (pressed, details) => {
-          onPressedChangeRef.current?.(pressed, details);
-        },
-        ...(pressedRef.current !== undefined ? { pressed: pressedRef.current } : {}),
-      });
-      instanceRef.current = instance;
-      const unsubscribe = instance.subscribe("pressedChange", (details) => {
-        queueMicrotask(() => {
-          if (details.isCanceled) return;
-
-          if (pressedRef.current === undefined) {
-            setUncontrolledPressed(details.pressed);
-          }
-        });
-      });
-
-      return () => {
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
-    }, [nativeButton, syncGroup, value]);
-
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root || typeof MutationObserver === "undefined") return;
-
-      const syncUncontrolledPressed = () => {
-        if (pressedRef.current !== undefined) return;
-
-        const nextPressed = root.getAttribute("aria-pressed") === "true";
-        if (uncontrolledPressedRef.current !== nextPressed) {
-          setUncontrolledPressed(nextPressed);
-        }
-      };
-      const observer = new MutationObserver(syncUncontrolledPressed);
-      observer.observe(root, { attributes: true, attributeFilter: ["aria-pressed"] });
-      syncUncontrolledPressed();
-
-      return () => {
-        observer.disconnect();
-      };
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      if (pressed === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getPressed() === pressed) return;
-
-      instance.setPressed(pressed, { emit: false, sync: true });
-    }, [pressed]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setDisabled(disabled);
-    }, [disabled]);
-
-    const renderedPressed = pressed ?? uncontrolledPressed;
-    const commonProps: React.HTMLAttributes<HTMLElement> &
-      Record<`data-${string}`, string | undefined> = {
-      "data-sw-toggle": "",
-      "data-default-pressed":
-        pressed === undefined && defaultPressedRef.current ? "true" : undefined,
-      "data-native": !nativeButton ? "false" : undefined,
-      "data-sync-group": syncGroup,
-      "data-value": value,
-      "aria-disabled": !nativeButton && disabled ? "true" : undefined,
-      "aria-pressed": renderedPressed,
-      "data-disabled": disabled ? "" : undefined,
-      "data-pressed": renderedPressed ? "" : undefined,
-      "data-state": renderedPressed ? "on" : "off",
-      "data-unpressed": !renderedPressed ? "" : undefined,
-      role: !nativeButton ? "button" : undefined,
-      tabIndex: !nativeButton ? (disabled ? -1 : 0) : undefined,
-    };
-
-    if (nativeButton) {
-      return (
-        <button
-          {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-          {...commonProps}
-          disabled={disabled}
-          ref={composedRef as React.Ref<HTMLButtonElement>}
-          type="button"
-          value={value}
-        >
-          {children}
-        </button>
-      );
+    const toggleGroup = useToggleGroupContext();
+    const isGroupOwned = toggleGroup !== undefined;
+    const groupPressed =
+      toggleGroup !== undefined && inputs.current.value !== undefined
+        ? toggleGroup!.value.includes(inputs.current.value!)
+        : undefined;
+    const effectiveDisabled = inputs.current.disabled || toggleGroup?.disabled === true;
+    const selected = groupPressed ?? inputs.current.pressed ?? renderedValue;
+    function disconnect() {
+      const owned = connection.instance;
+      connection.observer?.disconnect();
+      connection.observer = undefined;
+      connection.unsubscribe?.();
+      connection.unsubscribe = undefined;
+      connection.instance = undefined;
+      owned?.destroy();
     }
-
-    return (
-      <span
-        {...(props as React.HTMLAttributes<HTMLSpanElement>)}
-        {...commonProps}
-        ref={composedRef as React.Ref<HTMLSpanElement>}
-      >
-        {children}
-      </span>
+    function publishReadback(owned: ReturnType<typeof createToggle>) {
+      if (connection.instance !== owned) return;
+      const next = owned.getPressed();
+      if (inputs.current.pressed === undefined) setRenderedValue(next);
+    }
+    function connect(root: HTMLElement) {
+      disconnect();
+      const desired = isGroupOwned
+        ? (groupPressed ?? renderedValue)
+        : (inputs.current.pressed ?? renderedValue);
+      const owned = createToggle(root, {
+        defaultPressed: desired,
+        disabled: inputs.current.disabled,
+        nativeButton: inputs.current.nativeButton,
+        syncGroup: inputs.current.syncGroup,
+        value: inputs.current.value,
+        ...(isGroupOwned || inputs.current.pressed !== undefined ? { pressed: desired } : {}),
+        onPressedChange: (next, detail) => {
+          inputs.current.onPressedChange?.(next, detail);
+        },
+      });
+      connection.instance = owned;
+      connection.ownDisabled = inputs.current.disabled;
+      connection.unsubscribe = owned.subscribe("pressedChange", (detail) => {
+        if (connection.instance !== owned || detail.isCanceled) return;
+        publishReadback(owned);
+      });
+      connection.observer = new MutationObserver(() => {
+        publishReadback(owned);
+      });
+      connection.observer.observe(root, { attributes: true, attributeFilter: ["aria-pressed"] });
+      publishReadback(owned);
+    }
+    function applyParent() {
+      if (isGroupOwned) return;
+      const owned = connection.instance,
+        next = inputs.current.pressed;
+      if (!owned || next === undefined || owned.getPressed() === next) return;
+      owned.setPressed(next, { emit: false, sync: true });
+      publishReadback(owned);
+    }
+    function applyDisabled() {
+      const owned = connection.instance,
+        next = inputs.current.disabled;
+      if (!owned || next === connection.ownDisabled) return;
+      connection.ownDisabled = next;
+      owned.setDisabled(next);
+      if (isGroupOwned && next) owned.root.setAttribute("data-disabled", "");
+    }
+    useIsomorphicLayoutEffect(() => {
+      if (rootRef.current) connect(rootRef.current);
+      return disconnect;
+    }, [nativeButton, syncGroup, value]);
+    useIsomorphicLayoutEffect(applyParent, [pressed]);
+    React.useEffect(applyDisabled, [disabled]);
+    return React.createElement(
+      nativeButton ? "button" : "span",
+      {
+        ...rest,
+        ...{
+          "data-sw-toggle": "",
+          "data-sw-part": "root",
+          "data-default-pressed":
+            !isGroupOwned && inputs.current.pressed === undefined && initialDefault
+              ? "true"
+              : undefined,
+          "data-native": inputs.current.nativeButton ? undefined : "false",
+          "data-sync-group": inputs.current.syncGroup,
+          "data-value": inputs.current.value,
+          "aria-pressed": selected,
+          "aria-disabled": !inputs.current.nativeButton && effectiveDisabled ? "true" : undefined,
+          "data-disabled": effectiveDisabled ? "" : undefined,
+          "data-pressed": selected ? "" : undefined,
+          "data-unpressed": selected ? undefined : "",
+          "data-state": selected ? "on" : "off",
+          disabled: inputs.current.nativeButton ? effectiveDisabled : undefined,
+          role: inputs.current.nativeButton ? undefined : "button",
+          type: inputs.current.nativeButton ? "button" : undefined,
+          tabIndex: inputs.current.nativeButton ? undefined : effectiveDisabled ? -1 : 0,
+          value: inputs.current.nativeButton ? inputs.current.value : undefined,
+        },
+        ref: composedRef,
+      },
+      children,
     );
   },
 );
-
 ToggleRoot.displayName = "Toggle.Root";
-
 export default ToggleRoot;

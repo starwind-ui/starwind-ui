@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import * as SelectPrimitive from "@starwind-ui/vue/select";
-import { useSelectContext } from "@starwind-ui/vue/select";
 import type { ClassValue, VariantProps } from "tailwind-variants";
 import {
   type ButtonHTMLAttributes,
   type ComponentPublicInstance,
-  cloneVNode,
   computed,
   defineComponent,
-  isVNode,
+  h,
   mergeProps,
+  nextTick,
   ref,
+  shallowRef,
   useAttrs,
   type VNode,
+  watch,
 } from "vue";
 import { selectTrigger, selectValue } from "./variants";
 
@@ -50,51 +51,57 @@ const {
 } = defineProps<SelectTriggerDeclaredProps>();
 const slots = defineSlots<{ default?: () => VNode[]; icon?: () => VNode[] }>();
 const attrs = useAttrs();
-const select = useSelectContext("StyledTrigger");
 const element = ref<HTMLElement | null>(null);
 const triggerClass = computed(() => selectTrigger({ size, class: className }));
+const pendingPrimitiveRef = shallowRef<
+  ({ element?: HTMLElement | null } & ComponentPublicInstance) | null
+>(null);
+
+watch(
+  () => {
+    const owner = pendingPrimitiveRef.value;
+    return [owner, owner?.element] as const;
+  },
+  ([owner, value]) => {
+    if (pendingPrimitiveRef.value !== owner) return;
+    element.value = value instanceof HTMLElement ? value : null;
+  },
+  { flush: "post" },
+);
 
 defineExpose({ element });
 
 function setElement(value: Element | ComponentPublicInstance | null): void {
   if (value instanceof HTMLElement) {
+    pendingPrimitiveRef.value = null;
     element.value = value;
     return;
   }
-  const exposed = (value as { element?: HTMLElement | null } | null)?.element;
-  element.value = exposed instanceof HTMLElement ? exposed : null;
+  const exposed = value as ({ element?: HTMLElement | null } & ComponentPublicInstance) | null;
+  pendingPrimitiveRef.value = exposed;
+  element.value = exposed?.element instanceof HTMLElement ? exposed.element : null;
+  if (!exposed || element.value) return;
+
+  void nextTick(() => {
+    if (pendingPrimitiveRef.value !== exposed) return;
+    element.value = exposed.element instanceof HTMLElement ? exposed.element : null;
+  });
 }
 
 const AsChildTrigger = defineComponent({
   inheritAttrs: false,
   setup() {
-    return () => {
-      const children = slots.default?.() ?? [];
-      const child = children[0];
-      if (children.length !== 1 || !isVNode(child) || typeof child.type !== "string") {
-        throw new TypeError("SelectTrigger asChild requires exactly one native element VNode.");
-      }
-
-      const defaultedProps =
-        child.type === "button" && child.props?.type === undefined ? { type: "button" } : {};
-      const consumerProps = mergeProps(attrs, { class: triggerClass.value });
-      const protectedProps = {
-        "aria-disabled": select.disabled.value ? "true" : undefined,
-        "aria-expanded": select.open.value,
-        "aria-haspopup": "listbox",
-        "aria-readonly": select.readOnly.value,
-        "aria-required": select.required.value,
-        "data-disabled": select.disabled.value ? "" : undefined,
-        "data-slot": "select-trigger",
-        "data-state": select.open.value ? "open" : "closed",
-        "data-sw-part": "trigger",
-        "data-sw-select-trigger": "",
-        disabled: child.type === "button" && select.disabled.value ? true : undefined,
-        ref: setElement,
-        role: "combobox",
-      };
-      return cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true);
-    };
+    return () =>
+      h(
+        SelectPrimitive.SelectTrigger,
+        mergeProps(attrs, {
+          asChild: true,
+          class: triggerClass.value,
+          "data-slot": "select-trigger",
+          ref: setElement,
+        }),
+        { default: slots.default },
+      );
   },
 });
 </script>

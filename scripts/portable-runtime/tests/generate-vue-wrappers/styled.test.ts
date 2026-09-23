@@ -1,28 +1,28 @@
+import { spawnSync } from "node:child_process";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { spawnSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-
 import { compileScript, parse } from "@vue/compiler-sfc";
+import { afterEach, describe, expect, it } from "vitest";
 import { createSSRApp, defineComponent, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it } from "vitest";
+import { formatGeneratedOutput } from "../../format-generated-output.js";
 
 import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
-import { formatGeneratedOutput } from "../../format-generated-output.js";
+import {
+  vuePrimitiveComponents,
+  vueStyledComponents,
+} from "../../renderers/framework-adapters/vue/inventory.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import {
   renderIcon,
   renderVueComponent,
 } from "../../renderers/framework-adapters/vue/styled/render.js";
-import {
-  vuePrimitiveComponents,
-  vueStyledComponents,
-} from "../../renderers/framework-adapters/vue/inventory.js";
 import { generateFrameworkStyledWrappers } from "../../renderers/framework-wrapper-generator.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { compactCode } from "../source-comparison.js";
 import { PORTABLE_STYLED_CLOSURE } from "../styled-contracts/portable-styled-closure.test.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
@@ -1457,25 +1457,19 @@ describe("generated Vue Styled wrappers", () => {
     expect(firstTree["checkbox/Checkbox.vue"]).toContain(':for="id"');
     expect(firstTree["checkbox/Checkbox.vue"]).toContain("{{ label }}");
     expect(firstTree["select/SelectTrigger.vue"]).toContain('data-slot="select-trigger"');
-    expect(firstTree["select/SelectTrigger.vue"]).toContain("cloneVNode");
+    expect(firstTree["select/SelectTrigger.vue"]).toContain("<SelectPrimitive.SelectTrigger");
+    expect(firstTree["select/SelectTrigger.vue"]).toContain('v-if="asChild"');
+    expect(firstTree["select/SelectTrigger.vue"]).toContain(
+      "const AsChildTrigger = defineComponent",
+    );
+    expect(firstTree["select/SelectTrigger.vue"]).toContain("{ default: slots.default }");
+    expect(firstTree["select/SelectTrigger.vue"]).not.toContain("cloneVNode");
     expect(firstTree["select/SelectTrigger.vue"]).toContain("mergeProps");
-    expect(firstTree["select/SelectTrigger.vue"]).toContain("isVNode");
-    expect(firstTree["select/SelectTrigger.vue"]).toContain("children.length !== 1");
-    expect(firstTree["select/SelectTrigger.vue"]).toContain('typeof child.type !== "string"');
-    expect(firstTree["select/SelectTrigger.vue"]).toContain(
-      "SelectTrigger asChild requires exactly one native element VNode.",
-    );
-    expect(firstTree["select/SelectTrigger.vue"]).toMatch(
-      /cloneVNode\([\s\S]*mergeProps\([\s\S]*\),\s*true\)/,
-    );
-    expect(firstTree["select/SelectTrigger.vue"]).toContain(
-      "const consumerProps = mergeProps(attrs, { class: triggerClass.value });",
-    );
+    expect(firstTree["select/SelectTrigger.vue"]).not.toContain("isVNode");
     expect(firstTree["select/SelectTrigger.vue"]).toContain("defineExpose({ element });");
-    expect(firstTree["select/SelectTrigger.vue"]).toContain("ref: setElement");
-    expect(firstTree["select/SelectTrigger.vue"]).toContain(
-      'child.type === "button" && child.props?.type === undefined ? { type: "button" } : {}',
-    );
+    expect(firstTree["select/SelectTrigger.vue"]).toContain(':ref="setElement"');
+    expect(firstTree["select/SelectTrigger.vue"]).toContain("pendingPrimitiveRef");
+    expect(firstTree["select/SelectTrigger.vue"]).toContain("watch(");
     expect(firstTree["select/SelectValue.vue"]).toContain('v-if="$slots.default"');
     expect(firstTree["select/SelectValue.vue"]).toContain('<template #default="slotProps">');
     expect(firstTree["select/SelectValue.vue"]).toContain('<slot v-bind="slotProps" />');
@@ -1568,9 +1562,13 @@ describe("generated Vue Styled wrappers", () => {
       primitiveOutputRoot: "primitives",
     });
 
-    expect(source).not.toContain("defineOptions({ inheritAttrs: false });");
-    expect(source).toContain("useAttrs");
-    expect(source).toContain('const consumerId = computed(() => attrs["id"]);');
+    expect(compactCode(source)).not.toContain(
+      compactCode("defineOptions({ inheritAttrs: false });"),
+    );
+    expect(compactCode(source)).toContain(compactCode("useAttrs"));
+    expect(compactCode(source)).toContain(
+      compactCode('const consumerId = computed(() => attrs["id"]);'),
+    );
   });
 
   it("fails generation for an unsupported Styled icon instead of substituting another glyph", () => {

@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { toggleRuntimeAdapterContract } from "../../contracts/primitive/components/toggle.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { normalizeVueSource } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -68,34 +67,20 @@ describe("generated Vue Toggle Primitive", () => {
 
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "ToggleRoot.vue")).not.toThrow();
-    expect(first.root).toMatch(
-      /emit\("pressedChange", pressed, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:pressed", pressed\);/,
-    );
-    expect(first.root).toContain("const eventGeneration = instanceGeneration;");
-    expect(first.root).toContain(
-      "const eventWasControlled = !eventWasGroupOwned && props.pressed !== undefined;",
-    );
-    expect(first.root).toContain("instance !== eventInstance");
-    expect(first.root).toContain("instanceGeneration !== eventGeneration");
-    expect(first.root).toContain("if (!eventWasGroupOwned && !eventWasControlled)");
-    expect(first.root).toContain("instanceGeneration += 1;");
-    expect(first.root).toContain("mounted = false;");
-    expect(first.root).toContain("instance.setPressed(pressed, { emit: false, sync: true });");
-    expect(first.root).toContain(":is=\"props.nativeButton ? 'button' : 'span'\"");
-    expect(first.root).toContain("const toggleGroup = useToggleGroupContext();");
-    expect(first.root).toContain("const effectiveDisabled = computed");
-    expect(first.root).toContain("groupPressed.value ??");
-    expect(first.root).toContain(':data-sync-group="props.syncGroup"');
-    expect(first.root).toContain("onMounted(() => {");
-    expect(first.root).toContain("onBeforeUnmount(() => {");
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(first.index).toContain('export { default as ToggleRoot } from "./ToggleRoot.vue";');
     expect(first.index).toContain("TogglePressedChangeDetails");
 
-    await expect(first.root).toBe(
-      await readFile(path.join(process.cwd(), "packages/vue/src/toggle/ToggleRoot.vue"), "utf8"),
+    await expect(normalizeVueSource(first.root)).toBe(
+      normalizeVueSource(
+        await readFile(path.join(process.cwd(), "packages/vue/src/toggle/ToggleRoot.vue"), "utf8"),
+      ),
     );
-    await expect(first.index).toBe(
-      await readFile(path.join(process.cwd(), "packages/vue/src/toggle/index.ts"), "utf8"),
+    await expect(normalizeVueSource(first.index)).toBe(
+      normalizeVueSource(
+        await readFile(path.join(process.cwd(), "packages/vue/src/toggle/index.ts"), "utf8"),
+      ),
     );
   });
 

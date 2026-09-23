@@ -1,13 +1,12 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   InputOtpGroup,
   InputOtpRoot,
   InputOtpSeparator,
   InputOtpSlot,
 } from "@starwind-ui/vue/input-otp";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   InputOtp as StyledInputOtp,
   InputOtpGroup as StyledInputOtpGroup,
@@ -16,6 +15,20 @@ import {
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/input-otp";
 
 describe("Vue Input OTP SSR", () => {
+  it.each(["34", ""])(
+    "renders the effective initial model %j separately from the reset seed",
+    async (modelValue) => {
+      const html = await renderToString(
+        createSSRApp({
+          render: () => h(InputOtpRoot, { defaultValue: "12", modelValue, name: "code" }),
+        }),
+      );
+      expect(html).toContain('data-default-value="12"');
+      expect(html.match(/<input[^>]*>/)?.[0]).toMatch(
+        modelValue ? /value="34"/ : / value(?:="")?[ >]/,
+      );
+    },
+  );
   it("renders deterministic native input and indexed visual slots without browser globals", async () => {
     const render = () =>
       renderToString(

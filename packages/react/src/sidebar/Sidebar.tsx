@@ -20,18 +20,18 @@ const SidebarComponent = React.forwardRef<HTMLDivElement, SidebarComponentProps>
     forwardedRef,
   ) {
     const sidebarContext = useSidebarContext();
-    const sidebarState = sidebarContext?.state ?? "expanded";
 
     return (
       <div
-        data-sw-sidebar
-        data-state={sidebarState}
-        data-collapsible={sidebarState === "collapsed" ? collapsible : ""}
+        {...props}
+        data-sw-sidebar={""}
+        data-sw-part={"sidebar"}
+        data-state={sidebarContext?.state ?? "expanded"}
+        data-collapsible={(sidebarContext?.state ?? "expanded") === "collapsed" ? collapsible : ""}
         data-collapsible-mode={collapsible}
         data-variant={variant}
         data-side={side}
         ref={forwardedRef}
-        {...props}
       />
     );
   },

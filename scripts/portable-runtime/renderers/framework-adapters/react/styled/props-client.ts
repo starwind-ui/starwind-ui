@@ -26,6 +26,7 @@ import {
   toReactSlotPropName,
 } from "./formatting.js";
 import { collectPrimitiveComponents } from "./primitive-helpers.js";
+import { renderAlertDialogButtonControlSetup } from "./native-overlay.js";
 import { renderReturn, renderValueExpression } from "./render-tree.js";
 
 export function renderProps(
@@ -156,11 +157,12 @@ export function renderComponentBody(
   const namedSlots = collectReactNamedSlots(component.render);
   const hasChildren = usesStyledOutputDefaultSlot(component.render);
   const destructure = renderDestructure(component.destructure, namedSlots, hasChildren);
+  const nativeOverlayControl = renderAlertDialogButtonControlSetup(component);
   const variables = renderVariables(component.variables ?? [], REACT_FRAMEWORK);
   const clientEffect = renderClientEffect(component, runtimeImportContext);
   const renderedReturn = renderReturn(component.render, primitiveAliases);
 
-  return [destructure, variables, clientEffect, renderedReturn]
+  return [destructure, nativeOverlayControl, variables, clientEffect, renderedReturn]
     .filter(Boolean)
     .map((block) => indentBlock(block, 1))
     .join("\n\n");

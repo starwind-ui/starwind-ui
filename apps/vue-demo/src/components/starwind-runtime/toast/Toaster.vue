@@ -86,6 +86,8 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
 <template>
   <ToastPrimitive.ToastViewport
     :ref="setElement"
+    :peek="peek"
+    :gap="gap"
     :class="toastViewport({ class: className })"
     :duration="duration"
     :limit="limit"

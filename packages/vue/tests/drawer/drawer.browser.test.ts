@@ -1,6 +1,4 @@
-import { createApp, h, nextTick, reactive, ref } from "vue";
-import { afterEach, describe, expect, it } from "vitest";
-
+import { createDrawer } from "@starwind-ui/runtime/drawer";
 import {
   DrawerBackdrop,
   DrawerClose,
@@ -12,6 +10,11 @@ import {
   DrawerTrigger,
   DrawerViewport,
 } from "@starwind-ui/vue/drawer";
+import { afterEach, describe, expect, it } from "vitest";
+import { createApp, h, nextTick, reactive, ref } from "vue";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
+import { testControlRefresh } from "../dialog/control-refresh.js";
+import { testOverlayCommandAuthority } from "../popover/command-authority.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -272,3 +275,47 @@ async function waitForDialogClosed(dialog: HTMLDialogElement): Promise<void> {
 
   throw new Error("Drawer did not reach its closed native state.");
 }
+
+testAcceptedModelPublication({
+  name: "drawer",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => tree({}, { disabled: true }),
+  root: "[data-sw-drawer]",
+  act: (root) => root.querySelector<HTMLElement>("[data-sw-drawer-trigger]")!.click(),
+  read: (root) => root.getAttribute("data-state") === "open",
+});
+
+testControlRefresh(
+  {
+    Root: DrawerRoot,
+    Trigger: DrawerTrigger,
+    Close: DrawerClose,
+    Popup: DrawerPopup,
+    Title: DrawerTitle,
+    Portal: DrawerPortal,
+  },
+  createDrawer,
+  cleanups,
+);
+
+testOverlayCommandAuthority({ name: "drawer", tree: tree, controller: createDrawer, cleanups });
+
+import StyledControlParts from "../../../../apps/vue-demo/src/components/starwind-runtime/sheet";
+import { testStyledControlRefresh } from "../dialog/styled-control-refresh.js";
+
+testStyledControlRefresh("drawer", { ...StyledControlParts, Close: StyledControlParts.Close });
+
+import { testComponentTrigger, testInitialPortalFocus } from "../dialog/component-trigger.js";
+testComponentTrigger(
+  { Root: DrawerRoot, Trigger: DrawerTrigger, Popup: DrawerPopup, Title: DrawerTitle },
+  cleanups,
+);
+
+testInitialPortalFocus(
+  { Root: DrawerRoot, Popup: DrawerPopup, Title: DrawerTitle, Portal: DrawerPortal },
+  cleanups,
+);

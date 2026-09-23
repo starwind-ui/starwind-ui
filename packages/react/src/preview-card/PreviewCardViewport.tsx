@@ -6,15 +6,19 @@
 "use client";
 
 import * as React from "react";
-
 export type PreviewCardViewportProps = React.HTMLAttributes<HTMLDivElement>;
-
 const PreviewCardViewport = React.forwardRef<HTMLDivElement, PreviewCardViewportProps>(
-  function PreviewCardViewport(props, forwardedRef) {
-    return <div data-sw-preview-card-viewport data-state="closed" ref={forwardedRef} {...props} />;
+  function PreviewCardViewport(props, ref) {
+    return (
+      <div
+        {...props}
+        data-sw-preview-card-viewport=""
+        data-sw-part="viewport"
+        data-state="closed"
+        ref={ref}
+      />
+    );
   },
 );
-
 PreviewCardViewport.displayName = "PreviewCard.Viewport";
-
 export default PreviewCardViewport;

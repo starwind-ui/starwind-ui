@@ -9,67 +9,189 @@ import { createInputOtp, type InputOtpValueChangeDetails } from "@starwind-ui/ru
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 export type InputOtpRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "id" | "onChange" | "pattern" | "value"
 > & {
   defaultValue?: string;
+  value?: string;
   disabled?: boolean;
   form?: string;
   id?: string;
   maxLength?: number;
   name?: string;
-  onValueChange?: (value: string, details: InputOtpValueChangeDetails) => void;
   pattern?: RegExp | string;
   readOnly?: boolean;
   required?: boolean;
-  value?: string;
+  onValueChange?: (value: string, details: InputOtpValueChangeDetails) => void;
 };
-
 const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(function InputOtpRoot(
   {
     children,
     defaultValue,
+    value,
     disabled = false,
     form,
     id,
     maxLength = 6,
     name,
-    onValueChange,
     pattern,
     readOnly = false,
     required = false,
-    value,
+    onValueChange,
     ...props
   },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createInputOtp> | undefined>(undefined);
-  const onValueChangeRef = React.useRef(onValueChange);
-  const valueRef = React.useRef(value);
-  const defaultValueRef = React.useRef(defaultValue);
-  const [uncontrolledValue, setUncontrolledValueState] = React.useState(
-    defaultValueRef.current ?? "",
+  const seed = React.useRef(defaultValue ?? "");
+  const [current, setCurrent] = React.useState(seed.current);
+  const currentRef = React.useRef(current);
+  const patternText = (pattern instanceof RegExp ? pattern.source : (pattern ?? "\\d")).replace(
+    /^\^|\$$/g,
+    "",
   );
-  const uncontrolledValueRef = React.useRef(uncontrolledValue);
-  const patternText = normalizePattern(pattern);
-  const renderedValue = value ?? uncontrolledValue;
-
-  const setUncontrolledValue = React.useCallback((nextValue: string) => {
-    uncontrolledValueRef.current = nextValue;
-    setUncontrolledValueState(nextValue);
-  }, []);
-
+  const inputs = React.useRef({
+    value,
+    disabled,
+    form,
+    id,
+    maxLength,
+    name,
+    pattern: patternText,
+    readOnly,
+    required,
+    onValueChange,
+  });
   useIsomorphicLayoutEffect(() => {
-    onValueChangeRef.current = onValueChange;
-  }, [onValueChange]);
-
-  useIsomorphicLayoutEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-
+    inputs.current = {
+      value,
+      disabled,
+      form,
+      id,
+      maxLength,
+      name,
+      pattern: patternText,
+      readOnly,
+      required,
+      onValueChange,
+    };
+  });
+  function connectOtp(root: HTMLElement) {
+    let previous = inputs.current;
+    const controlled = previous.value !== undefined;
+    let instance: ReturnType<typeof createInputOtp>;
+    let unsubscribe = () => {};
+    let disposed = false;
+    let associated: HTMLFormElement | null = null;
+    let resetTimer: number | undefined;
+    function publishCurrent(): void {
+      const accepted = instance.getValue();
+      if (!controlled) {
+        currentRef.current = accepted;
+        setCurrent(accepted);
+      }
+    }
+    function synchronize(value: string | undefined): void {
+      if (value === undefined) return;
+      if (instance.getValue() !== value) instance.setValue(value, { emit: false });
+      publishCurrent();
+    }
+    function clearReset(): void {
+      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+      resetTimer = undefined;
+    }
+    function reset(event: Event): void {
+      clearReset();
+      resetTimer = window.setTimeout(() => {
+        resetTimer = undefined;
+        if (disposed || event.defaultPrevented) return;
+        if (controlled) synchronize(inputs.current.value);
+        else publishCurrent();
+      }, 0);
+    }
+    function bindReset(): void {
+      const form = root.querySelector<HTMLInputElement>("[data-sw-input-otp-input]")?.form ?? null;
+      if (associated === form) return;
+      clearReset();
+      associated?.removeEventListener("reset", reset);
+      associated = form;
+      associated?.addEventListener("reset", reset);
+    }
+    function stop(): void {
+      clearReset();
+      associated?.removeEventListener("reset", reset);
+      associated = null;
+      unsubscribe();
+      instance.destroy();
+    }
+    function start(value: string): void {
+      const options = inputs.current;
+      instance = createInputOtp(root, {
+        disabled: options.disabled,
+        form: options.form,
+        id: options.id,
+        maxLength: options.maxLength,
+        name: options.name,
+        pattern: options.pattern,
+        readOnly: options.readOnly,
+        required: options.required,
+        defaultValue: seed.current,
+        onValueChange(next, detail) {
+          inputs.current.onValueChange?.(next, detail);
+        },
+        ...(controlled && options.value !== undefined ? { value: options.value } : {}),
+      });
+      instance.setValue(controlled ? (options.value ?? value) : value, { emit: false });
+      publishCurrent();
+      const owner = instance;
+      unsubscribe = instance.subscribe("valueChange", () => {
+        if (disposed || owner !== instance) return;
+        publishCurrent();
+      });
+      bindReset();
+    }
+    start(previous.value ?? currentRef.current);
+    return {
+      update(): void {
+        const next = inputs.current;
+        if (
+          next.pattern !== previous.pattern ||
+          next.readOnly !== previous.readOnly ||
+          next.maxLength !== previous.maxLength
+        ) {
+          const accepted = instance.getValue();
+          stop();
+          start(accepted);
+        } else {
+          instance.refresh();
+        }
+        if (next.disabled !== previous.disabled) instance.setDisabled(next.disabled);
+        if (
+          next.form !== previous.form ||
+          next.id !== previous.id ||
+          next.name !== previous.name ||
+          next.required !== previous.required
+        ) {
+          instance.setFormOptions({
+            ...(next.form !== previous.form ? { form: next.form } : {}),
+            ...(next.id !== previous.id ? { id: next.id } : {}),
+            ...(next.name !== previous.name ? { name: next.name } : {}),
+            ...(next.required !== previous.required ? { required: next.required } : {}),
+          });
+        }
+        if (controlled) synchronize(next.value);
+        publishCurrent();
+        bindReset();
+        previous = next;
+      },
+      destroy(): void {
+        disposed = true;
+        stop();
+      },
+    };
+  }
+  const connectionRef = React.useRef<ReturnType<typeof connectOtp> | undefined>(undefined);
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
@@ -77,65 +199,25 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
     },
     [forwardedRef],
   );
-
   useIsomorphicLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const instance = createInputOtp(root, {
-      defaultValue: uncontrolledValueRef.current,
-      disabled,
-      maxLength,
-      onValueChange: (nextValue, details) => {
-        onValueChangeRef.current?.(nextValue, details);
-      },
-      pattern: patternText,
-      readOnly,
-      ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
-    });
-    instanceRef.current = instance;
-    const unsubscribeValueChange = instance.subscribe("valueChange", (details) => {
-      if (valueRef.current === undefined) {
-        setUncontrolledValue(details.value);
-      }
-    });
-
+    const element = rootRef.current;
+    if (!element) return;
+    const owned = connectOtp(element);
+    connectionRef.current = owned;
     return () => {
-      unsubscribeValueChange();
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
+      if (connectionRef.current === owned) connectionRef.current = undefined;
+      owned.destroy();
     };
-  }, [maxLength, patternText, readOnly]);
-
+  }, []);
   useIsomorphicLayoutEffect(() => {
-    if (value === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    if (instance.getValue() === value) return;
-
-    instance.setValue(value, { emit: false });
-  }, [value]);
-
-  useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setDisabled(disabled);
-  }, [disabled]);
-
-  useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setFormOptions({ form, id, name, required });
-  }, [form, id, name, required]);
-
+    connectionRef.current?.update();
+  });
+  const renderedValue = value ?? current;
   return (
     <div
+      ref={composedRef}
       data-sw-input-otp
-      data-default-value={defaultValueRef.current}
+      data-default-value={seed.current}
       data-disabled={disabled ? "" : undefined}
       data-form={form}
       data-id={id}
@@ -146,7 +228,6 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
       data-required={required ? "" : undefined}
       data-value={renderedValue}
       aria-disabled={disabled}
-      ref={composedRef}
       tabIndex={disabled ? -1 : 0}
       {...props}
     >
@@ -158,7 +239,7 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
         disabled={disabled}
         form={form}
         id={id}
-        inputMode={isNumericPattern(patternText) ? "numeric" : "text"}
+        inputMode={["\\d", "[0-9]", "\\d+", "[0-9]+"].includes(patternText) ? "numeric" : "text"}
         maxLength={maxLength}
         name={name}
         readOnly={readOnly}
@@ -169,16 +250,5 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
     </div>
   );
 });
-
 InputOtpRoot.displayName = "InputOtp.Root";
-
 export default InputOtpRoot;
-
-function normalizePattern(pattern: RegExp | string | undefined): string {
-  const source = pattern instanceof RegExp ? pattern.source : pattern;
-  return (source ?? "\\d").replace(/^\^|\$$/g, "");
-}
-
-function isNumericPattern(pattern: string): boolean {
-  return ["\\d", "[0-9]", "\\d+", "[0-9]+"].includes(pattern);
-}

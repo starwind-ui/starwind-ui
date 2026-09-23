@@ -1,4 +1,4 @@
-export type PublicFrameworkTarget = "astro" | "react" | "vue";
+export type PublicFrameworkTarget = "astro" | "react" | "svelte" | "vue";
 
 export type PublicFrameworkMetadata = {
   readonly target: PublicFrameworkTarget;
@@ -754,6 +754,7 @@ export type StyledApiInheritanceAnnotation = {
 };
 
 export type StyledApiPropAnnotation = {
+  readonly frameworks?: readonly StyledFrameworkTarget[];
   readonly classification?: StyledApiPropClassification;
   readonly visualOwnership?: StyledApiVisualOwnership;
   readonly defaultValue?: string;

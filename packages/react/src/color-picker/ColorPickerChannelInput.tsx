@@ -16,7 +16,7 @@ export type ColorPickerChannelInputProps = React.ComponentPropsWithoutRef<"input
 const ColorPickerChannelInput = React.forwardRef<HTMLInputElement, ColorPickerChannelInputProps>(
   function ColorPickerChannelInput({ channel = "hue", ...props }, forwardedRef) {
     const { props: projectedProps } = useColorPickerPartProjection(
-      { part: "channelInput", channel },
+      { part: "channelInput", channel: channel },
       { ...props, "data-sw-color-picker-channel-field": "", "data-channel": channel },
     );
     return <input {...projectedProps} ref={forwardedRef} />;

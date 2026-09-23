@@ -444,7 +444,10 @@ function getGroupedValueControlFacts(plan: GenericAdapterPlan): AdapterGroupedVa
       value: getStaticAttributeName(plan, rootPart, "data-value"),
     },
     behavior: {
-      acceptedChangeNotification: valueEvent.acceptanceNotification,
+      acceptedChangeNotification:
+        valueEvent.acceptanceNotification === "detail-on-accepted"
+          ? valueEvent.acceptanceNotification
+          : undefined,
       callbackArguments: isCheckboxLike ? "details" : "value-details",
       canCancelChange: valueEvent.cancelable === true,
       contextProvider: isCheckboxLike || isRadioLike || isToggleLike,

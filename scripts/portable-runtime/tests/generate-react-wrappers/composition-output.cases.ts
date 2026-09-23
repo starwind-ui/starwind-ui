@@ -1,3 +1,4 @@
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -31,9 +32,11 @@ export function defineReactCompositionOutputTests(getTempRoot: GetTempRoot): voi
     const buttonVariants = await readGeneratedFile(outputRoot, "button/variants.ts");
     const button = await readGeneratedFile(outputRoot, "button/Button.tsx");
 
-    expect(buttonVariants).toContain("react-contract-driven-button-class");
-    expect(button).toContain("<a");
-    expect(button).toContain("<ButtonPrimitive.Root");
+    expect(compactCode(buttonVariants)).toContain(
+      compactCode("react-contract-driven-button-class"),
+    );
+    expect(compactCode(button)).toContain(compactCode("<a"));
+    expect(compactCode(button)).toContain(compactCode("<ButtonPrimitive.Root"));
   });
 
   it("supports composing other generated Starwind components in React styled output", async () => {
@@ -101,12 +104,14 @@ export function defineReactCompositionOutputTests(getTempRoot: GetTempRoot): voi
       "synthetic/SyntheticAction.tsx",
     );
 
-    expect(synthetic).toContain('import { Button } from "../button";');
-    expect(synthetic).toContain('Omit<React.ComponentProps<typeof Button>, "size">');
-    expect(synthetic).toContain("VariantProps<typeof syntheticAction>");
-    expect(synthetic).toContain("<Button");
-    expect(synthetic).toContain("syntheticAction({ class: className })");
-    expect(synthetic).toContain('data-slot="synthetic-action"');
+    expect(compactCode(synthetic)).toContain(compactCode('import { Button } from "../button";'));
+    expect(compactCode(synthetic)).toContain(
+      compactCode('Omit<React.ComponentProps<typeof Button>, "size">'),
+    );
+    expect(compactCode(synthetic)).toContain(compactCode("VariantProps<typeof syntheticAction>"));
+    expect(compactCode(synthetic)).toContain(compactCode("<Button"));
+    expect(compactCode(synthetic)).toContain(compactCode("syntheticAction({ class: className })"));
+    expect(compactCode(synthetic)).toContain(compactCode('data-slot="synthetic-action"'));
   });
 
   it("uses sibling imports for same-package composed React styled components", async () => {
@@ -174,11 +179,15 @@ export function defineReactCompositionOutputTests(getTempRoot: GetTempRoot): voi
       "synthetic/SyntheticRoot.tsx",
     );
 
-    expect(syntheticRoot).toContain('import RenamedSyntheticItem from "./SyntheticItem";');
-    expect(syntheticRoot).not.toContain('from "./"');
-    expect(syntheticRoot).toContain("React.ComponentProps<typeof RenamedSyntheticItem>");
-    expect(syntheticRoot).toContain("<RenamedSyntheticItem");
-    expect(syntheticRoot).toContain('data-slot="synthetic-root-item"');
+    expect(compactCode(syntheticRoot)).toContain(
+      compactCode('import RenamedSyntheticItem from "./SyntheticItem";'),
+    );
+    expect(compactCode(syntheticRoot)).not.toContain(compactCode('from "./"'));
+    expect(compactCode(syntheticRoot)).toContain(
+      compactCode("React.ComponentProps<typeof RenamedSyntheticItem>"),
+    );
+    expect(compactCode(syntheticRoot)).toContain(compactCode("<RenamedSyntheticItem"));
+    expect(compactCode(syntheticRoot)).toContain(compactCode('data-slot="synthetic-root-item"'));
   });
 
   it("wraps long React prop aliases without requiring custom fields", async () => {
@@ -239,9 +248,13 @@ export function defineReactCompositionOutputTests(getTempRoot: GetTempRoot): voi
       "synthetic/Synthetic.tsx",
     );
 
-    expect(synthetic).toContain('React.ComponentPropsWithoutRef<"button"> &');
-    expect(synthetic).toContain('Omit<React.ComponentPropsWithoutRef<"a">, "type"> &');
-    expect(synthetic).toContain("VariantProps<typeof synthetic>;");
+    expect(compactCode(synthetic)).toContain(
+      compactCode('React.ComponentPropsWithoutRef<"button"> &'),
+    );
+    expect(compactCode(synthetic)).toContain(
+      compactCode('Omit<React.ComponentPropsWithoutRef<"a">, "type"> &'),
+    );
+    expect(compactCode(synthetic)).toContain(compactCode("VariantProps<typeof synthetic>;"));
   });
 
   it("keeps checked-in React primitive outputs in sync outside deferred Form facades", async () => {
@@ -288,47 +301,69 @@ export function defineReactCompositionOutputTests(getTempRoot: GetTempRoot): voi
     const selectTrigger = await readGeneratedFile(generatedOutputRoot, "select/SelectTrigger.tsx");
     const childFirstTriggerSources = [navigationMenuTrigger, menuTrigger, selectTrigger];
 
-    expect(helper).toContain("export function useComposedRefs");
-    expect(helper).toContain("export function setRef");
-    expect(helper).toContain("export function getAsChildElement");
-    expect(helper).toContain("export function mergeAsChildProps");
-    expect(helper).toContain('const { eventOrder = "child-first", protectedProps } = options;');
-    expect(helper).toContain(
-      "const mergedProps: AsChildProps = { ...parentProps, ...childProps };",
+    expect(compactCode(helper)).toContain(compactCode("export function useComposedRefs"));
+    expect(compactCode(helper)).toContain(compactCode("export function setRef"));
+    expect(compactCode(helper)).toContain(compactCode("export function getAsChildElement"));
+    expect(compactCode(helper)).toContain(compactCode("export function mergeAsChildProps"));
+    expect(compactCode(helper)).toContain(
+      compactCode('const { eventOrder = "child-first", protectedProps } = options;'),
     );
-    expect(helper).toContain("mergeAsChildClassName(parentProps.className, childProps.className)");
-    expect(helper).toContain("function mergeAsChildStyle");
-    expect(helper).toContain("mergeAsChildStyle(parentProps.style, childProps.style)");
-    expect(helper).toContain("composeAsChildEventHandlers(");
-    expect(helper).toContain("parentHandler,\n      childHandler,\n      eventOrder,");
-    expect(helper).toContain("Object.assign(mergedProps, protectedProps)");
-    expect(helper).toContain("event.defaultPrevented");
-    expect(helper).toContain('eventOrder === "parent-first"');
-    expect(helper).toContain("React.useCallback");
-    expect(helper).toContain('if (typeof ref === "function")');
-    expect(helper).toContain("const cleanup = ref(value);");
-    expect(helper).toContain('typeof cleanup === "function" ? cleanup : () => ref(null)');
-    expect(helper).toContain("cleanups.reverse().forEach((cleanup) => cleanup())");
-    expect(helper).toContain("ref.current = value;");
-    expect(helper).toContain("[outerRef, innerRef]");
-    expect(navigationMenuTrigger).toContain(
-      'import { getAsChildElement, getElementRef, mergeAsChildProps, useComposedRefs } from "../internal/compose-refs";',
+    expect(compactCode(helper)).toContain(
+      compactCode("const mergedProps: AsChildProps = { ...parentProps, ...childProps };"),
     );
-    expect(navigationMenuTrigger).toContain("const composedRef = useComposedRefs(");
-    expect(navigationMenuTrigger).toContain("ref: composedRef");
-    expect(menuTrigger).toContain("const composedRef = useComposedRefs(");
-    expect(selectTrigger).toContain("const composedRef = useComposedRefs(");
+    expect(compactCode(helper)).toContain(
+      compactCode("mergeAsChildClassName(parentProps.className, childProps.className)"),
+    );
+    expect(compactCode(helper)).toContain(compactCode("function mergeAsChildStyle"));
+    expect(compactCode(helper)).toContain(
+      compactCode("mergeAsChildStyle(parentProps.style, childProps.style)"),
+    );
+    expect(compactCode(helper)).toContain(compactCode("composeAsChildEventHandlers("));
+    expect(compactCode(helper)).toContain(
+      compactCode("parentHandler,\n      childHandler,\n      eventOrder,"),
+    );
+    expect(compactCode(helper)).toContain(
+      compactCode("Object.assign(mergedProps, protectedProps)"),
+    );
+    expect(compactCode(helper)).toContain(compactCode("event.defaultPrevented"));
+    expect(compactCode(helper)).toContain(compactCode('eventOrder === "parent-first"'));
+    expect(compactCode(helper)).toContain(compactCode("React.useCallback"));
+    expect(compactCode(helper)).toContain(compactCode('if (typeof ref === "function")'));
+    expect(compactCode(helper)).toContain(compactCode("const cleanup = ref(value);"));
+    expect(compactCode(helper)).toContain(
+      compactCode('typeof cleanup === "function" ? cleanup : () => ref(null)'),
+    );
+    expect(compactCode(helper)).toContain(
+      compactCode("cleanups.reverse().forEach((cleanup) => cleanup())"),
+    );
+    expect(compactCode(helper)).toContain(compactCode("ref.current = value;"));
+    expect(compactCode(helper)).toContain(compactCode("[outerRef, innerRef]"));
+    expect(compactCode(navigationMenuTrigger)).toContain(
+      compactCode(
+        'import { getAsChildElement, getElementRef, mergeAsChildProps, useComposedRefs } from "../internal/compose-refs";',
+      ),
+    );
+    expect(compactCode(navigationMenuTrigger)).toContain(
+      compactCode("const composedRef = useComposedRefs("),
+    );
+    expect(compactCode(navigationMenuTrigger)).toContain(compactCode("ref: composedRef"));
+    expect(compactCode(menuTrigger)).toContain(compactCode("const composedRef = useComposedRefs("));
+    expect(compactCode(selectTrigger)).toContain(
+      compactCode("const composedRef = useComposedRefs("),
+    );
     childFirstTriggerSources.forEach((source) => {
-      expect(source).toContain("const childProps = child.props;");
-      expect(source).toContain("mergeAsChildProps({ ...triggerProps, className }, childProps, {");
-      expect(source).toContain("protectedProps: protectedTriggerProps");
-      expect(source).toContain("ref: composedRef");
-      expect(source).not.toContain('eventOrder: "parent-first"');
+      expect(compactCode(source)).toContain(compactCode("const childProps = child.props;"));
+      expect(compactCode(source)).toContain(
+        compactCode("mergeAsChildProps({ ...triggerProps, className }, childProps, {"),
+      );
+      expect(compactCode(source)).toContain(compactCode("protectedProps: protectedTriggerProps"));
+      expect(compactCode(source)).toContain(compactCode("ref: composedRef"));
+      expect(compactCode(source)).not.toContain(compactCode('eventOrder: "parent-first"'));
     });
-    expect(navigationMenuTrigger).not.toContain("function mergeRefs");
-    expect(navigationMenuTrigger).not.toContain("mergeRefs(forwardedRef");
-    expect(menuTrigger).not.toContain("function mergeRefs");
-    expect(selectTrigger).not.toContain("function mergeRefs");
+    expect(compactCode(navigationMenuTrigger)).not.toContain(compactCode("function mergeRefs"));
+    expect(compactCode(navigationMenuTrigger)).not.toContain(compactCode("mergeRefs(forwardedRef"));
+    expect(compactCode(menuTrigger)).not.toContain(compactCode("function mergeRefs"));
+    expect(compactCode(selectTrigger)).not.toContain(compactCode("function mergeRefs"));
     expect(
       Object.entries(generatedTree)
         .filter(([, contents]) => contents.includes("function mergeRefs"))

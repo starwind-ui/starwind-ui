@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Island from "../../Island.svelte";
+---
+
+<Layout>
+  <h1>Packed Astro Svelte island</h1>
+  <!-- Only a serialized string crosses Astro. Compound parts and snippets stay in Svelte. -->
+  <Island client:load navigationHref="/away" />
+</Layout>

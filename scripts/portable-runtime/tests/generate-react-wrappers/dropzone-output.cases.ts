@@ -1,3 +1,4 @@
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -33,34 +34,42 @@ export function defineReactDropzoneOutputTests(getTempRoot: GetTempRoot): void {
     const index = await readGeneratedFile(outputRoot, "dropzone/index.ts");
 
     expect(generatedPrimitiveEntries).toContain("dropzone");
-    expect(root).toContain(
-      'import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";',
+      ),
     );
-    expect(root).toContain("onFilesChange?:");
-    expect(root).toContain("instanceRef.current?.setDisabled(disabled)");
-    expect(root).toContain("instanceRef.current?.setUploading(isUploading)");
-    expect(root).toContain("data-sw-dropzone");
-    expect(root).toContain("data-drag-active");
-    expect(root).toContain("data-has-files");
-    expect(root).toContain("data-is-uploading");
-    expect(input).toContain("data-sw-dropzone-input");
-    expect(input).toContain('type="file"');
-    expect(input).toContain('"sr-only"');
-    expect(uploadIndicator).toContain("data-sw-dropzone-upload-indicator");
-    expect(uploadIndicator).toContain("isUploading = false");
-    expect(uploadIndicator).toContain('data-is-uploading={isUploading ? "true" : "false"}');
-    expect(uploadIndicator).toContain("hidden = isUploading");
-    expect(uploadIndicator).toContain("hidden={hidden}");
-    expect(loadingIndicator).toContain("data-sw-dropzone-loading-indicator");
-    expect(loadingIndicator).toContain("isUploading = false");
-    expect(loadingIndicator).toContain("hidden = !isUploading");
-    expect(loadingIndicator).toContain("hidden={hidden}");
-    expect(filesList).toContain("data-sw-dropzone-files-list");
-    expect(index).toContain("Root: DropzoneRoot");
-    expect(index).toContain("Input: DropzoneInput");
-    expect(index).toContain("FilesList: DropzoneFilesList");
-    expect(index).toContain(
-      'export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime"',
+    expect(compactCode(root)).toContain(compactCode("onFilesChange?:"));
+    expect(compactCode(root)).toContain(compactCode("instance.setDisabled(next.disabled)"));
+    expect(compactCode(root)).toContain(compactCode("instance.setUploading(next.isUploading)"));
+    expect(compactCode(root)).toContain(compactCode("data-sw-dropzone"));
+    expect(compactCode(root)).toContain(compactCode("data-drag-active"));
+    expect(compactCode(root)).toContain(compactCode("data-has-files"));
+    expect(compactCode(root)).toContain(compactCode("data-is-uploading"));
+    expect(compactCode(input)).toContain(compactCode("data-sw-dropzone-input"));
+    expect(compactCode(input)).toContain(compactCode('type="file"'));
+    expect(compactCode(input)).toContain(compactCode('"sr-only"'));
+    expect(compactCode(uploadIndicator)).toContain(
+      compactCode("data-sw-dropzone-upload-indicator"),
+    );
+    expect(compactCode(uploadIndicator)).toContain(compactCode("isUploading = false"));
+    expect(compactCode(uploadIndicator)).toContain(
+      compactCode('data-is-uploading={isUploading ? "true" : "false"}'),
+    );
+    expect(compactCode(uploadIndicator)).toContain(compactCode("hidden = isUploading"));
+    expect(compactCode(uploadIndicator)).toContain(compactCode("hidden={hidden}"));
+    expect(compactCode(loadingIndicator)).toContain(
+      compactCode("data-sw-dropzone-loading-indicator"),
+    );
+    expect(compactCode(loadingIndicator)).toContain(compactCode("isUploading = false"));
+    expect(compactCode(loadingIndicator)).toContain(compactCode("hidden = !isUploading"));
+    expect(compactCode(loadingIndicator)).toContain(compactCode("hidden={hidden}"));
+    expect(compactCode(filesList)).toContain(compactCode("data-sw-dropzone-files-list"));
+    expect(compactCode(index)).toContain(compactCode("Root: DropzoneRoot"));
+    expect(compactCode(index)).toContain(compactCode("Input: DropzoneInput"));
+    expect(compactCode(index)).toContain(compactCode("FilesList: DropzoneFilesList"));
+    expect(compactCode(index)).toContain(
+      compactCode('export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime"'),
     );
   });
 
@@ -86,26 +95,28 @@ export function defineReactDropzoneOutputTests(getTempRoot: GetTempRoot): void {
     const variants = await readGeneratedFile(outputRoot, "dropzone/variants.ts");
     const index = await readGeneratedFile(outputRoot, "dropzone/index.ts");
 
-    expect(root).toContain('DropzonePrimitive from "../primitives/react/dropzone"');
-    expect(root).toContain("<DropzonePrimitive.Root");
-    expect(root).toContain("isUploading={isUploading}");
-    expect(root).toContain("<DropzoneLoadingIndicator");
-    expect(root).toContain("<DropzoneFilesList />");
-    expect(root).toContain("<DropzonePrimitive.Input");
-    expect(root).toContain('data-slot="dropzone"');
-    expect(uploadIndicator).toContain("IconCloudUpload as CloudUpload");
-    expect(uploadIndicator).toContain("Click to upload or drag and drop");
-    expect(loadingIndicator).toContain("IconLoader2 as Loader2");
-    expect(loadingIndicator).toContain("Uploading file(s)...");
-    expect(filesList).toContain('aria-live="polite"');
-    expect(filesList).toContain('aria-label="Uploaded files"');
-    expect(variants).not.toContain("starwind-dropzone");
-    expect(variants).not.toContain("starwind-files-list");
-    expect(variants).not.toContain("starwind-loading-indicator");
-    expect(variants).not.toContain("starwind-upload-indicator");
-    expect(variants).toContain("relative flex w-full flex-col");
-    expect(variants).toContain("mt-1 -mb-8 min-h-8");
-    expect(index).toContain("Root: Dropzone");
-    expect(index).toContain("FilesList: DropzoneFilesList");
+    expect(compactCode(root)).toContain(
+      compactCode('DropzonePrimitive from "../primitives/react/dropzone"'),
+    );
+    expect(compactCode(root)).toContain(compactCode("<DropzonePrimitive.Root"));
+    expect(compactCode(root)).toContain(compactCode("isUploading={isUploading}"));
+    expect(compactCode(root)).toContain(compactCode("<DropzoneLoadingIndicator"));
+    expect(compactCode(root)).toContain(compactCode("<DropzoneFilesList />"));
+    expect(compactCode(root)).toContain(compactCode("<DropzonePrimitive.Input"));
+    expect(compactCode(root)).toContain(compactCode('data-slot="dropzone"'));
+    expect(compactCode(uploadIndicator)).toContain(compactCode("IconCloudUpload as CloudUpload"));
+    expect(compactCode(uploadIndicator)).toContain(compactCode("Click to upload or drag and drop"));
+    expect(compactCode(loadingIndicator)).toContain(compactCode("IconLoader2 as Loader2"));
+    expect(compactCode(loadingIndicator)).toContain(compactCode("Uploading file(s)..."));
+    expect(compactCode(filesList)).toContain(compactCode('aria-live="polite"'));
+    expect(compactCode(filesList)).toContain(compactCode('aria-label="Uploaded files"'));
+    expect(compactCode(variants)).not.toContain(compactCode("starwind-dropzone"));
+    expect(compactCode(variants)).not.toContain(compactCode("starwind-files-list"));
+    expect(compactCode(variants)).not.toContain(compactCode("starwind-loading-indicator"));
+    expect(compactCode(variants)).not.toContain(compactCode("starwind-upload-indicator"));
+    expect(compactCode(variants)).toContain(compactCode("relative flex w-full flex-col"));
+    expect(compactCode(variants)).toContain(compactCode("mt-1 -mb-8 min-h-8"));
+    expect(compactCode(index)).toContain(compactCode("Root: Dropzone"));
+    expect(compactCode(index)).toContain(compactCode("FilesList: DropzoneFilesList"));
   });
 }

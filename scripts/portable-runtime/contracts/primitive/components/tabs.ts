@@ -9,6 +9,7 @@ export const tabsRuntimeAdapterContract = {
     importSource: "@starwind-ui/runtime/tabs",
     rootPart: "root",
     optionProps: ["defaultValue", "orientation", "syncKey", "value"],
+    optionPropLifecycles: { syncKey: "constructor-only" },
     destroys: true,
   },
   parts: [
@@ -132,6 +133,7 @@ export const tabsRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      acceptanceNotification: "controller-subscription",
       stateModel: "value",
       callbackTiming: "before-state-commit",
       cancelable: true,

@@ -1,3 +1,16 @@
+import {
+  comboboxFragments,
+  comboboxModelObservers,
+  comboboxOptionObservers,
+  comboboxPlan,
+  comboboxResetSettlement,
+} from "../../shared-recipes/structured/combobox.js";
+import {
+  comboboxInheritedBoolean,
+  comboboxSelection,
+  comboboxSelectionAttributes,
+  comboboxValueFallback,
+} from "../../shared-recipes/structured/combobox-parts.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -182,59 +195,24 @@ let lifecycleGeneration = 0;
 provide(${f.context.rootContext}, { disabled, element: rootRef, inputValue: renderedInputValue, mounted, open: renderedOpen, readOnly, registerPortal(owner, element) { if (element) { portalOwner = owner; portalReference = element; } else if (portalOwner === owner) { portalOwner = undefined; portalReference = null; } }, required, value: renderedValue });
 defineExpose({ element: rootRef, close: () => instance?.close(), open: () => { if (!props.disabled) instance?.open(); }, updatePosition: () => instance?.updatePosition() });
 
-function handleInputValueChange(inputValue: string, detail: ${f.events.inputValueChange.detailsType}): void {
-  const connection = instance;
-  emit("${f.events.inputValueChange.name}", inputValue, detail);
-  if (detail.event?.type !== "input") return;
-  const input = detail.event.target;
-  queueMicrotask(() => {
-    if (!connection || instance !== connection || !detail.isCanceled) return;
-    if (!(input instanceof HTMLInputElement) || input !== rootRef.value?.querySelector("[${f.attrs.input}]")) return;
-    const accepted = connection.${f.states.inputValue.getter}();
-    if (input.value !== accepted) connection.${f.setters.inputValue.method}(accepted, { emit: false, filter: false });
-  });
-}
-function handleOpenChange(open: boolean, detail: ${f.events.openChange.detailsType}): void { emit("${f.events.openChange.name}", open, detail); if (detail.isCanceled) return; }
-function handleValueChange(value: string | null, detail: ${f.events.valueChange.detailsType}): void { emit("${f.events.valueChange.name}", value, detail); if (detail.isCanceled) return; }
-function acceptInputValue(detail: ${f.events.inputValueChange.detailsType}): void { const value = detail.${f.events.inputValueChange.valueProperty}; if (props.inputValue === undefined) uncontrolledInputValue.value = value; emit("${inputModel.updateEvent}", value); }
-function acceptOpen(detail: ${f.events.openChange.detailsType}): void { const value = detail.${f.events.openChange.valueProperty}; if (props.open === undefined) uncontrolledOpen.value = value; emit("${openModel.updateEvent}", value); }
-function acceptValue(detail: ${f.events.valueChange.detailsType}): void { const value = detail.${f.events.valueChange.valueProperty}; if (props.modelValue === undefined) uncontrolledValue.value = value; emit("${valueModel.updateEvent}", value); }
 function unbindReset(): void { if (resetTimer !== undefined) window.clearTimeout(resetTimer); resetTimer = undefined; resetForm?.removeEventListener("reset", handleReset); resetForm = null; }
-function handleReset(): void {
-  const connection = instance;
-  if (!connection) return;
-  if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-  resetTimer = window.setTimeout(() => {
-    resetTimer = undefined;
-    if (instance !== connection) return;
-    if (props.modelValue !== undefined && instance.${f.states.value.getter}() !== props.modelValue) instance.${f.setters.value.method}(props.modelValue, { emit: false });
-    if (props.inputValue !== undefined && instance.${f.states.inputValue.getter}() !== props.inputValue) instance.${f.setters.inputValue.method}(props.inputValue, { emit: false, filter: false });
-    if (props.modelValue === undefined) uncontrolledValue.value = instance.${f.states.value.getter}();
-    if (props.inputValue === undefined) uncontrolledInputValue.value = instance.${f.states.inputValue.getter}();
-  }, 0);
-}
+function handleReset(event: Event): void { ${comboboxResetSettlement("vue")} }
 function bindReset(): void { const next = hiddenInputRef.value?.form ?? null; if (next === resetForm) return; unbindReset(); resetForm = next; resetForm?.addEventListener("reset", handleReset); }
 function destroyOwnedInstance(): void { unbindReset(); unsubscribeAccepted.splice(0).forEach((unsubscribe) => unsubscribe()); const ownedInstance = instance; instance = undefined; ownedInstance?.destroy(); }
 function setupRuntime(): void {
-  const preservedInputValue = props.inputValue ?? uncontrolledInputValue.value;
   destroyOwnedInstance(); if (!rootRef.value) return;
-  const created = ${f.runtime.factory}(rootRef.value, { autoComplete: props.autoComplete, defaultInputValue: preservedInputValue, defaultOpen: props.disabled ? false : uncontrolledOpen.value, defaultValue: uncontrolledValue.value, disabled: props.disabled, filterMode: props.filterMode, form: props.form, highlightItemOnHover: props.highlightItemOnHover, locale: props.locale, modal: props.modal, name: props.name, onInputValueChange: handleInputValueChange, onOpenChange: handleOpenChange, onValueChange: handleValueChange, portalReference: portalReference ?? undefined, readOnly: props.readOnly, required: props.required, ...(props.inputValue === undefined ? {} : { inputValue: props.inputValue }), ...(props.open === undefined ? {} : { open: props.open }), ...(props.modelValue === undefined ? {} : { value: props.modelValue }) });
-  instance = created;
-  unsubscribeAccepted = [created.subscribe("inputValueChange", acceptInputValue), created.subscribe("openChange", acceptOpen), created.subscribe("valueChange", acceptValue)];
-  if (props.inputValue === undefined) uncontrolledInputValue.value = created.${f.states.inputValue.getter}();
-  if (props.open === undefined) uncontrolledOpen.value = created.${f.states.open.getter}();
-  if (props.modelValue === undefined) uncontrolledValue.value = created.${f.states.value.getter}();
+  ${comboboxFragments("vue").construction}
+  ${comboboxFragments("vue").subscriptions}
+  ${comboboxFragments("vue").readback}
   bindReset();
 }
 async function recreate(): Promise<void> { const generation = ++lifecycleGeneration; mounted.value = false; await nextTick(); if (generation !== lifecycleGeneration || !rootRef.value) return; setupRuntime(); mounted.value = true; }
 useVueAsChildRuntimeOwner(rootRef, recreate);
 onMounted(() => { setupRuntime(); mounted.value = true; });
-watch(() => props.inputValue, (value, previous) => { if ((value === undefined) !== (previous === undefined)) { if (value === undefined && instance) uncontrolledInputValue.value = instance.${f.states.inputValue.getter}(); void recreate(); return; } if (value === undefined || !instance || Object.is(instance.${f.states.inputValue.getter}(), value)) return; instance.${f.setters.inputValue.method}(value, { emit: false, filter: false }); }, { flush: "post" });
-watch(() => props.open, (value, previous) => { if ((value === undefined) !== (previous === undefined)) { if (value === undefined && instance) uncontrolledOpen.value = instance.${f.states.open.getter}(); void recreate(); return; } if (value === undefined || props.disabled || !instance || Object.is(instance.${f.states.open.getter}(), value)) return; instance.${f.setters.open.method}(value, { emit: false }); }, { flush: "post" });
-watch(() => props.modelValue, (value, previous) => { if ((value === undefined) !== (previous === undefined)) { if (value === undefined && instance) uncontrolledValue.value = instance.${f.states.value.getter}(); void recreate(); return; } if (value === undefined || !instance || Object.is(instance.${f.states.value.getter}(), value)) return; instance.${f.setters.value.method}(value, { emit: false }); if (props.inputValue === undefined) uncontrolledInputValue.value = instance.${f.states.inputValue.getter}(); }, { flush: "post" });
-watch(() => props.disabled, (value) => { if (!instance) return; instance.${f.setters.disabled.method}(value); if (value) { if (props.open === undefined) uncontrolledOpen.value = false; return; } const nextOpen = props.open ?? uncontrolledOpen.value; if (!Object.is(instance.${f.states.open.getter}(), nextOpen)) instance.${f.setters.open.method}(nextOpen, { emit: false }); });
-watch(() => [props.readOnly, props.filterMode, props.locale, props.modal, props.highlightItemOnHover] as const, () => { void recreate(); }, { flush: "post" });
-watch(() => [props.autoComplete, props.form, props.name, props.required] as const, ([autoComplete, form, name, required]) => { instance?.${f.formSetter.method}({ autoComplete, form, name, required }); bindReset(); }, { flush: "post" });
+${comboboxModelObservers("vue")}
+${comboboxOptionObservers("vue")}
+watch([${comboboxPlan.constructorOnlyInputs.map((name) => `() => props.${name}`).join(",")}], () => { void recreate(); }, {flush:"post"});
+
 onBeforeUnmount(() => { lifecycleGeneration += 1; mounted.value = false; destroyOwnedInstance(); });
 </script>
 <template>
@@ -344,9 +322,9 @@ function printItem(f: AdapterEditableCollectionOverlayFacts): string {
 import { computed, provide, ref } from "vue"; import { ${f.context.itemContext}, ${f.context.useRootContext} } from "./${f.exports.root}.vue";
 
 defineOptions({ inheritAttrs:false }); const props=withDefaults(defineProps<{ disabled?: boolean; value: string }>(), { disabled:false }); defineSlots<{default?:()=>unknown}>();
-const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("Item"); const value=computed(()=>props.value); const disabled=computed(()=>props.disabled); const selected=computed(()=>combobox.value.value===value.value); provide(${f.context.itemContext},{disabled,value}); defineExpose({element});
+const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("Item"); const value=computed(()=>props.value); const disabled=computed(()=>props.disabled); const selected=computed(()=>${comboboxSelection("combobox.value.value", "value.value")}); provide(${f.context.itemContext},{disabled,value}); defineExpose({element});
 </script>
-<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.item} data-sw-part="${p.name}" :${f.attrs.valueData}="props.value" role="${f.collection.item.role}" :aria-selected="selected" :aria-disabled="props.disabled ? 'true' : undefined" :${f.attrs.disabled}="props.disabled ? '' : undefined" :data-selected="selected ? '' : undefined" tabindex="${f.collection.item.initialProjection.tabIndex}"><slot /></${p.defaultElement}></template>
+<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.item} data-sw-part="${p.name}" :${f.attrs.valueData}="props.value" role="${f.collection.item.role}" ${comboboxSelectionAttributes("vue", "item")} :aria-disabled="props.disabled ? 'true' : undefined" :${f.attrs.disabled}="props.disabled ? '' : undefined" tabindex="${f.collection.item.initialProjection.tabIndex}"><slot /></${p.defaultElement}></template>
 `;
 }
 
@@ -356,9 +334,9 @@ function printItemIndicator(f: AdapterEditableCollectionOverlayFacts): string {
 import { computed, ref } from "vue"; import { ${f.context.useRootContext}, ${f.context.useItemContext} } from "./${f.exports.root}.vue";
 
 defineOptions({inheritAttrs:false}); defineSlots<{default?:()=>unknown}>();
-const element=ref<HTMLSpanElement|null>(null); const combobox=${f.context.useRootContext}("ItemIndicator"); const item=${f.context.useItemContext}("ItemIndicator"); const selected=computed(()=>combobox.value.value===item.value.value); defineExpose({element});
+const element=ref<HTMLSpanElement|null>(null); const combobox=${f.context.useRootContext}("ItemIndicator"); const item=${f.context.useItemContext}("ItemIndicator"); const selected=computed(()=>${comboboxSelection("combobox.value.value", "item.value.value")}); defineExpose({element});
 </script>
-<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.itemIndicator} data-sw-part="${p.name}" aria-hidden="true" :${f.collection.itemIndicator.selectedStateAttribute}="selected ? 'checked' : 'unchecked'" :${f.collection.itemIndicator.dataHiddenAttribute}="selected ? undefined : ''" :hidden="!selected"><slot /></${p.defaultElement}></template>
+<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.itemIndicator} data-sw-part="${p.name}" aria-hidden="true" ${comboboxSelectionAttributes("vue", "indicator")}><slot /></${p.defaultElement}></template>
 `;
 }
 

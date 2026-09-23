@@ -1,7 +1,20 @@
+import { requireColorPickerModelOwnership } from "../../primitive-output-model/color-picker.js";
 import type {
   AdapterColorPickerFacts,
   AdapterColorPickerPartName,
 } from "../../primitive-output-model/index.js";
+import {
+  colorPickerLiveOptions,
+  printColorPickerConnection,
+} from "../../shared-recipes/color-picker/connection.js";
+import {
+  type ColorPickerPartAccess,
+  colorPickerPartAttributes,
+  colorPickerPartProps,
+  colorPickerPartRequest,
+  printColorPickerStructure,
+} from "../../shared-recipes/color-picker/parts.js";
+import { colorPickerSeeds } from "../../shared-recipes/color-picker/seeds.js";
 
 export type ReactColorPickerComponentProjection = {
   facts: AdapterColorPickerFacts;
@@ -68,6 +81,7 @@ export { ${runtimeValues} } from "${facts.exports.runtimeFacades.importSource}";
 }
 
 function assertReactColorPickerProjectionFacts(facts: AdapterColorPickerFacts): void {
+  requireColorPickerModelOwnership(Object.values(facts.controlledness.states));
   const formatControl = facts.initialStateProjection.compositionDependencies.find(
     (entry) => entry.part === "formatControl",
   );
@@ -89,17 +103,19 @@ function assertReactColorPickerProjectionFacts(facts: AdapterColorPickerFacts): 
 }
 
 function printRoot(facts: AdapterColorPickerFacts): string {
+  const seeds = colorPickerSeeds(facts, (name) => name, {
+    authority: "parent-prop",
+    seed: "seedRef.current",
+  });
   const root = facts.parts.root;
   const rootExport = facts.exports.parts.root;
   const createInitialState = facts.initialStateProjection.createFunction;
   const projectInitialPart = facts.initialStateProjection.projectFunction;
   const ownershipAttribute = facts.initialStateProjection.ownershipAttribute;
-  const partSelector = Object.values(facts.parts)
-    .map((part) => `[${part.discoveryAttribute}]`)
-    .join(", ");
   return `import * as React from "react";
 import {
   ${facts.runtime.factory},
+  parseColor,
   ${createInitialState},
   ${projectInitialPart},
   type ColorPickerColor,
@@ -140,20 +156,6 @@ export const ColorPickerAreaContext = React.createContext<ColorPickerAreaContext
 export const ColorPickerChannelSliderContext =
   React.createContext<ColorPickerChannelSliderContextValue | null>(null);
 
-const COLOR_PICKER_PART_SELECTOR = ${JSON.stringify(partSelector)};
-const COLOR_PICKER_CONFIGURATION_ATTRIBUTES = [
-  "data-axis",
-  "data-channel",
-  "data-disabled",
-  "data-orientation",
-  "data-step",
-  "data-value",
-  "data-x-channel",
-  "data-y-channel",
-  "aria-label",
-  "aria-labelledby",
-  "aria-roledescription",
-] as const;
 const COLOR_PICKER_AUTHORED_ARIA_ATTRIBUTES = [
   "aria-label",
   "aria-labelledby",
@@ -277,50 +279,21 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(undefined);
-  const ownershipSeedsRef = React.useRef(new Map<Element, string>());
-  const structuralFingerprintRef = React.useRef("");
-  const structuralElementIdsRef = React.useRef(new WeakMap<Element, number>());
-  const nextStructuralElementIdRef = React.useRef(1);
+  const connectionRef = React.useRef<ReturnType<typeof connectColorPicker> | undefined>(undefined);
+  const seedRef = React.useRef(${seeds.constructor});
+  const incomingRef = React.useRef<ColorPickerOptions>({});
+  incomingRef.current = { value, format, ${colorPickerLiveOptions(facts).join(", ")}, onValueChange, onValueCommitted, onFormatChange };
+  const structureRef = React.useRef<ReturnType<typeof colorPickerStructure> | undefined>(undefined);
   const rootOwnershipPendingRef = React.useRef(true);
-  const isValueControlledRef = React.useRef(value !== undefined);
-  const isFormatControlledRef = React.useRef(format !== undefined);
-  const valueRef = React.useRef(value);
-  const formatRef = React.useRef(format);
-  const defaultValueRef = React.useRef(defaultValue);
-  const onValueChangeRef = React.useRef(onValueChange);
-  const onValueCommittedRef = React.useRef(onValueCommitted);
-  const onFormatChangeRef = React.useRef(onFormatChange);
-  const initialUncontrolledStateRef = React.useRef(
-    ${createInitialState}({
-      defaultValue: defaultValueRef.current,
-      format: formatRef.current,
-      alpha,
-      allowEmpty,
-    }),
-  );
-  const [uncontrolledValue, setUncontrolledValue] = React.useState<ColorPickerColor | null>(
-    initialUncontrolledStateRef.current.value,
-  );
-  const [uncontrolledFormat, setUncontrolledFormat] = React.useState<ColorPickerFormat>(
-    initialUncontrolledStateRef.current.format,
-  );
-
-  if (isValueControlledRef.current && value !== undefined) valueRef.current = value;
-  if (isFormatControlledRef.current && format !== undefined) formatRef.current = format;
-  onValueChangeRef.current = onValueChange;
-  onValueCommittedRef.current = onValueCommitted;
-  onFormatChangeRef.current = onFormatChange;
-
-  const renderedValue = isValueControlledRef.current ? valueRef.current : uncontrolledValue;
-  const renderedFormat = isFormatControlledRef.current
-    ? (formatRef.current ?? uncontrolledFormat)
-    : uncontrolledFormat;
+  const initialModelRef = React.useRef<ColorPickerInitialState | undefined>(undefined);
+  initialModelRef.current ??= ${createInitialState}(${seeds.projection});
+  const [acceptedValue, setAcceptedValue] = React.useState<ColorPickerColor | null>(initialModelRef.current.value);
+  const [acceptedFormat, setAcceptedFormat] = React.useState<ColorPickerFormat>(initialModelRef.current.format);
   const initialState = React.useMemo(
     () =>
       ${createInitialState}({
-        value: renderedValue,
-        format: renderedFormat,
+        value: acceptedValue,
+        format: acceptedFormat,
         alpha,
         allowEmpty,
         disabled,
@@ -335,8 +308,8 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
         getColorDescription,
       }),
     [
-      renderedValue,
-      renderedFormat,
+      acceptedValue,
+      acceptedFormat,
       alpha,
       allowEmpty,
       disabled,
@@ -365,146 +338,29 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
     const root = rootRef.current;
     if (!root) return;
 
-    replayColorPickerOwnership(root, ownershipSeedsRef.current);
-    captureColorPickerOwnership(root, ownershipSeedsRef.current);
-    const instance = ${facts.runtime.factory}(root, {
-      ...(isValueControlledRef.current
-        ? { value: valueRef.current }
-        : { defaultValue: defaultValueRef.current }),
-      format: formatRef.current ?? uncontrolledFormat,
-      alpha,
-      allowEmpty,
-      disabled,
-      readOnly,
-      name,
-      form,
-      required,
-      locale,
-      dir,
-      getAriaValueText,
-      getAreaRoleDescription,
-      getColorDescription,
-      onValueChange: (nextValue, details) => {
-        onValueChangeRef.current?.(nextValue, details);
+    const structure = structureRef.current ??= colorPickerStructure(root);
+    const connection = connectColorPicker(root, {
+      seed: seedRef.current,
+      read: () => incomingRef.current,
+      restoreAuthoredOwnership: structure.restoreOwnership,
+      captureAuthoredOwnership: structure.captureOwnership,
+      observe: (nextValue, nextFormat) => {
+        setAcceptedValue(nextValue);
+        setAcceptedFormat(nextFormat);
       },
-      onValueCommitted: (nextValue, details) => {
-        onValueCommittedRef.current?.(nextValue, details);
-      },
-      onFormatChange: (nextFormat, details) => {
-        onFormatChangeRef.current?.(nextFormat, details);
-        if (isFormatControlledRef.current) {
-          const controlledFormat = formatRef.current;
-          if (controlledFormat !== undefined && controlledFormat !== nextFormat) {
-            instanceRef.current?.setFormat(controlledFormat, { emit: false });
-          }
-          return;
-        }
-        setUncontrolledFormat(() => nextFormat);
-      },
+      afterUpdate: (run) => queueMicrotask(run),
     });
-    instanceRef.current = instance;
-    const unsubscribeValueChange = instance.subscribe("valueChange", (details) => {
-      if (!isValueControlledRef.current) {
-        setUncontrolledValue(() => details.value);
-      }
-    });
+    connectionRef.current = connection;
     rootOwnershipPendingRef.current = false;
-    instance.refresh();
-    structuralFingerprintRef.current = colorPickerStructuralFingerprint(
-      root,
-      structuralElementIdsRef.current,
-      nextStructuralElementIdRef,
-    );
-
     return () => {
-      unsubscribeValueChange();
-      instance.destroy();
-      if (instanceRef.current === instance) instanceRef.current = undefined;
+      connectionRef.current = undefined;
+      connection.destroy();
     };
   }, []);
 
-  useIsomorphicLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root || typeof MutationObserver === "undefined") return;
-    let refreshScheduled = false;
-    let disposed = false;
-    const refreshStructure = () => {
-      refreshScheduled = false;
-      if (disposed) return;
-      const nextFingerprint = colorPickerStructuralFingerprint(
-        root,
-        structuralElementIdsRef.current,
-        nextStructuralElementIdRef,
-      );
-      if (nextFingerprint === structuralFingerprintRef.current) return;
-      structuralFingerprintRef.current = nextFingerprint;
-      captureColorPickerOwnership(root, ownershipSeedsRef.current);
-      instanceRef.current?.refresh({ preserveState: true });
-      structuralFingerprintRef.current = colorPickerStructuralFingerprint(
-        root,
-        structuralElementIdsRef.current,
-        nextStructuralElementIdRef,
-      );
-    };
-    const observer = new MutationObserver((records) => {
-      if (!records.some((record) => isColorPickerConfigurationMutation(root, record))) return;
-      if (refreshScheduled) return;
-      refreshScheduled = true;
-      Promise.resolve().then(refreshStructure);
-    });
-    observer.observe(root, {
-      attributes: true,
-      attributeFilter: [...COLOR_PICKER_CONFIGURATION_ATTRIBUTES],
-      childList: true,
-      subtree: true,
-    });
-    return () => {
-      disposed = true;
-      observer.disconnect();
-    };
-  }, []);
+  useIsomorphicLayoutEffect(() => structureRef.current?.observe(() => connectionRef.current?.update()), []);
 
-  useIsomorphicLayoutEffect(() => {
-    if (!isValueControlledRef.current || value === undefined) return;
-    instanceRef.current?.setValue(value, { emit: false });
-  }, [value]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (!isFormatControlledRef.current || format === undefined) return;
-    instanceRef.current?.setFormat(format, { emit: false });
-  }, [format]);
-
-  useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-    instance.setDisabled(disabled);
-    instance.setReadOnly(readOnly);
-    instance.setName(name ?? null);
-    instance.setOptions({
-      alpha,
-      allowEmpty,
-      dir: dir ?? null,
-      form: form ?? null,
-      getAreaRoleDescription,
-      getAriaValueText,
-      getColorDescription,
-      locale: locale ?? null,
-      required,
-    });
-  }, [
-    alpha,
-    allowEmpty,
-    dir,
-    disabled,
-    form,
-    getAreaRoleDescription,
-    getAriaValueText,
-    getColorDescription,
-    locale,
-    name,
-    readOnly,
-    required,
-  ]);
+  useIsomorphicLayoutEffect(() => { connectionRef.current?.update(); }, [value, format, ${colorPickerLiveOptions(facts).join(", ")}]);
 
   const initialRootProjectionRef = React.useRef<ColorPickerInitialPartProjection | undefined>(
     undefined,
@@ -529,6 +385,7 @@ ${rootExport}.displayName = "${facts.exports.namespace}.Root";
 
 export default ${rootExport};
 
+${printColorPickerConnection(facts)}
 function translateColorPickerProjection(
   projection: ColorPickerInitialPartProjection,
   authoredProps: ColorPickerProjectedProps,
@@ -583,84 +440,7 @@ function toReactStyleName(name: string): string {
   return name.startsWith("--") ? name : name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
-function ownedColorPickerParts(root: HTMLElement): Element[] {
-  return [root, ...root.querySelectorAll(COLOR_PICKER_PART_SELECTOR)].filter(
-    (element) => element.closest("[data-sw-color-picker]") === root,
-  );
-}
-
-function captureColorPickerOwnership(root: HTMLElement, seeds: Map<Element, string>): void {
-  for (const element of ownedColorPickerParts(root)) {
-    const marker = element.getAttribute("${ownershipAttribute}");
-    if (marker) seeds.set(element, marker);
-  }
-}
-
-function replayColorPickerOwnership(root: HTMLElement, seeds: Map<Element, string>): void {
-  for (const [element, marker] of seeds) {
-    if (!element.isConnected || element.closest("[data-sw-color-picker]") !== root) {
-      seeds.delete(element);
-      continue;
-    }
-    element.setAttribute("${ownershipAttribute}", marker);
-  }
-}
-
-function isColorPickerConfigurationMutation(root: HTMLElement, record: MutationRecord): boolean {
-  const target = record.target instanceof Element ? record.target : null;
-  if (!target || target.closest("[data-sw-color-picker]") !== root) return false;
-  if (record.type === "childList") return true;
-  if (record.type !== "attributes" || !record.attributeName) return false;
-  if (record.attributeName === "data-value" || record.attributeName === "data-disabled") {
-    return target.hasAttribute("data-sw-color-picker-swatch");
-  }
-  return true;
-}
-
-function colorPickerStructuralFingerprint(
-  root: HTMLElement,
-  ids: WeakMap<Element, number>,
-  nextIdRef: React.MutableRefObject<number>,
-): string {
-  return ownedColorPickerParts(root)
-    .map((element) => {
-      let id = ids.get(element);
-      if (id === undefined) {
-        id = nextIdRef.current;
-        nextIdRef.current += 1;
-        ids.set(element, id);
-      }
-      const attributes = colorPickerConfigurationAttributes(element)
-        .map((name) => \`\${name}=\${element.getAttribute(name) ?? ""}\`)
-        .join(";");
-      return \`\${id}:\${element.tagName}:\${attributes}\`;
-    })
-    .join("|");
-}
-
-function colorPickerConfigurationAttributes(element: Element): readonly string[] {
-  if (element.hasAttribute("data-sw-color-picker-area")) {
-    return ["data-x-channel", "data-y-channel"];
-  }
-  if (element.hasAttribute("data-sw-color-picker-area-input")) {
-    return [
-      "data-axis",
-      "data-step",
-      "aria-label",
-      "aria-labelledby",
-      "aria-roledescription",
-    ];
-  }
-  if (element.hasAttribute("data-sw-color-picker-channel-slider")) {
-    return ["data-channel", "data-orientation"];
-  }
-  if (element.hasAttribute("data-sw-color-picker-channel-input")) return ["data-step"];
-  if (element.hasAttribute("data-sw-color-picker-channel-field")) return ["data-channel"];
-  if (element.hasAttribute("data-sw-color-picker-swatch")) {
-    return ["data-value", "data-disabled"];
-  }
-  return [];
-}
+${printColorPickerStructure(facts)}
 `;
 }
 
@@ -711,87 +491,27 @@ export default ${exportName};
 `;
 }
 
+const partAccess: ColorPickerPartAccess = {
+  prop: (name) => name,
+  area: (name) => `areaContext.${name}`,
+  slider: (name) => `sliderContext.${name}`,
+  aria: (name) => `props[${JSON.stringify(name)}] ?? undefined`,
+};
 function renderCustomProps(part: AdapterColorPickerPartName): string {
-  switch (part) {
-    case "area":
-      return "\n  xChannel?: ColorPickerInitialChannel;\n  yChannel?: ColorPickerInitialChannel;\n  xStep?: number;\n  yStep?: number;";
-    case "areaInput":
-      return '\n  axis?: "x" | "y";\n  step?: number;';
-    case "channelSlider":
-      return '\n  channel?: ColorPickerInitialChannel;\n  orientation?: "horizontal" | "vertical";\n  step?: number;';
-    case "channelSliderInput":
-      return "\n  step?: number;";
-    case "channelInput":
-      return "\n  channel?: ColorPickerInitialChannel;";
-    case "swatch":
-      return "\n  swatchValue: ColorPickerValue;\n  swatchDisabled?: boolean;";
-    default:
-      return "";
-  }
+  return (colorPickerPartProps[part] ?? [])
+    .map((prop) => `\n  ${prop.name}${prop.required ? "" : "?"}: ${prop.type};`)
+    .join("");
 }
-
 function renderDestructuredProps(part: AdapterColorPickerPartName): string {
-  switch (part) {
-    case "area":
-      return 'xChannel = "saturation", yChannel = "brightness", xStep, yStep';
-    case "areaInput":
-      return 'axis = "x", step';
-    case "channelSlider":
-      return 'channel = "hue", orientation = "horizontal", step';
-    case "channelSliderInput":
-      return "step";
-    case "channelInput":
-      return 'channel = "hue"';
-    case "swatch":
-      return "swatchValue, swatchDisabled = false";
-    default:
-      return "";
-  }
+  return (colorPickerPartProps[part] ?? [])
+    .map((prop) => `${prop.name}${prop.default === undefined ? "" : ` = ${prop.default}`}`)
+    .join(", ");
 }
-
 function renderProjectionRequest(part: AdapterColorPickerPartName): string {
-  switch (part) {
-    case "area":
-      return '{ part: "area", ...areaContextValue }';
-    case "areaBackground":
-    case "areaThumb":
-      return `{ part: "${part}", ...areaContext }`;
-    case "areaInput":
-      return '{ part: "areaInput", ...areaContext, axis, ...(axis === "x" ? { xStep: step ?? areaContext.xStep } : { yStep: step ?? areaContext.yStep }) }';
-    case "channelSlider":
-      return '{ part: "channelSlider", ...sliderContextValue }';
-    case "channelSliderTrack":
-    case "channelSliderThumb":
-      return `{ part: "${part}", ...sliderContext }`;
-    case "channelSliderInput":
-      return '{ part: "channelSliderInput", ...sliderContext, step: step ?? sliderContext.step }';
-    case "channelInput":
-      return '{ part: "channelInput", channel }';
-    case "swatch":
-      return '{ part: "swatch", value: swatchValue, disabled: swatchDisabled }';
-    default:
-      return `{ part: "${part}" }`;
-  }
+  return colorPickerPartRequest(part, partAccess);
 }
-
-function renderAuthoredProps(part: AdapterColorPickerPartName, discoveryAttribute: string): string {
-  const discovery = `${JSON.stringify(discoveryAttribute)}: ""`;
-  switch (part) {
-    case "area":
-      return `{ ...props, ${discovery}, "data-x-channel": xChannel, "data-y-channel": yChannel }`;
-    case "areaInput":
-      return `{ ...props, ${discovery}, "data-axis": axis, "data-step": step ?? (axis === "x" ? areaContext.xStep : areaContext.yStep) }`;
-    case "channelSlider":
-      return `{ ...props, ${discovery}, "data-channel": channel, "data-orientation": orientation }`;
-    case "channelSliderInput":
-      return `{ ...props, ${discovery}, "data-step": step ?? sliderContext.step }`;
-    case "channelInput":
-      return `{ ...props, ${discovery}, "data-channel": channel }`;
-    case "swatch":
-      return `{ ...props, ${discovery}, "data-value": typeof swatchValue === "string" ? swatchValue : (swatchValue?.toString() ?? undefined), "data-disabled": swatchDisabled ? "" : undefined }`;
-    default:
-      return `{ ...props, ${discovery} }`;
-  }
+function renderAuthoredProps(part: AdapterColorPickerPartName, discovery: string): string {
+  return `{ ...props, ${[`${JSON.stringify(discovery)}: ""`, ...colorPickerPartAttributes(part, partAccess)].join(", ")} }`;
 }
 
 function renderContextImports(part: AdapterColorPickerPartName): string {

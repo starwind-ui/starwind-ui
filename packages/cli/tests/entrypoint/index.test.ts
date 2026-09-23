@@ -466,27 +466,43 @@ describe("starwind CLI parser", () => {
     );
   });
 
-  it("labels Vue as beta and exposes it in every public framework option", () => {
+  it("labels Vue and Svelte as beta and exposes them in every public framework option", () => {
     const program = createProgram();
     expect(program.description()).toContain("Vue (beta)");
+    expect(program.description()).toContain("Svelte 5 (beta)");
     const primitivesCommand = getCommand(program, "primitives");
     const frameworkOptions: Array<[Command, string[]]> = [
-      [getCommand(program, "init"), ["astro", "react", "vue"]],
-      [getCommand(program, "add"), ["astro", "react", "vue"]],
-      [getCommand(program, "search"), ["astro", "react", "vue", "all"]],
-      [getCommand(program, "update"), ["astro", "react", "vue", "all"]],
-      [getCommand(program, "remove"), ["astro", "react", "vue", "all"]],
-      [getCommand(primitivesCommand, "add"), ["astro", "react", "vue"]],
-      [getCommand(primitivesCommand, "update"), ["astro", "react", "vue"]],
-      [getCommand(primitivesCommand, "list"), ["astro", "react", "vue", "all"]],
+      [getCommand(program, "init"), ["astro", "react", "vue", "svelte"]],
+      [getCommand(program, "add"), ["astro", "react", "vue", "svelte"]],
+      [getCommand(program, "search"), ["astro", "react", "vue", "svelte", "all"]],
+      [getCommand(program, "update"), ["astro", "react", "vue", "svelte", "all"]],
+      [getCommand(program, "remove"), ["astro", "react", "vue", "svelte", "all"]],
+      [getCommand(primitivesCommand, "add"), ["astro", "react", "vue", "svelte"]],
+      [getCommand(primitivesCommand, "update"), ["astro", "react", "vue", "svelte"]],
+      [getCommand(primitivesCommand, "list"), ["astro", "react", "vue", "svelte", "all"]],
     ];
 
     for (const [command, expectedChoices] of frameworkOptions) {
       const option = command.options.find((entry) => entry.long === "--framework");
       expect(option?.argChoices).toEqual(expectedChoices);
       expect(option?.argChoices).toContain("vue");
-      expect(command.helpInformation()).toContain("Vue is beta");
+      expect(option?.argChoices).toContain("svelte");
+      expect(option?.description).toContain("Vue and Svelte 5 are beta");
     }
+  });
+
+  it.each([
+    ["init", "--framework", "svelte"],
+    ["add", "button", "--framework", "svelte"],
+    ["search", "button", "--framework", "svelte"],
+    ["update", "--all", "--framework", "svelte"],
+    ["remove", "button", "--framework", "svelte"],
+    ["primitives", "add", "select", "--framework", "svelte"],
+    ["primitives", "update", "select", "--framework", "svelte"],
+    ["primitives", "list", "--framework", "svelte"],
+  ])("accepts public Svelte through Commander: %j", async (...args) => {
+    const program = createTestProgram();
+    await expect(program.parseAsync(args, { from: "user" })).resolves.toBe(program);
   });
 
   it("keeps command construction importable without running the bin entrypoint", () => {

@@ -666,7 +666,7 @@ export const buildFrameworkAvailability = (
       framework,
       {
         status: supportedFrameworks.has(framework) ? "available" : "not-yet-ported",
-        ...(framework === "vue"
+        ...(framework === "vue" || framework === "svelte"
           ? supportedFrameworks.has(framework)
             ? {}
             : {

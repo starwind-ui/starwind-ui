@@ -1,3 +1,4 @@
+import type { PrimitiveRefreshContract } from "../../contracts/primitive/types.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import type {
   AdapterColorPickerComponentProjection,
@@ -150,6 +151,7 @@ export type FrameworkAdapterTargetCliRegistryMetadata = {
     forbiddenContent: readonly string[];
     includeLocalImportGraph?: boolean;
     outputDir: string;
+    formatContent?(content: string, sourcePath: string): Promise<string>;
     projectContent(content: string): string;
     sourceRoot: string;
   };
@@ -249,7 +251,14 @@ export type AdapterTypeFacadeFile = {
   typeFacades: AdapterTypeFacade[];
 };
 
+export type AdapterAcceptedModelPublication = {
+  event: string;
+  state: string;
+  notification: "controller-subscription";
+};
+
 export type AdapterComponentModel = {
+  acceptedModelPublications?: AdapterAcceptedModelPublication[];
   defaults: AdapterDefaultValue[];
   displayName?: string;
   events: AdapterEventBridge[];
@@ -488,6 +497,7 @@ export type AdapterNativeInputValueFacts = {
     value: AdapterFamilyProp;
   };
   runtime: {
+    refresh: PrimitiveRefreshContract;
     disabledSetter: {
       method: string;
       options?: Record<string, boolean | number | string>;
@@ -692,6 +702,7 @@ export type AdapterSharedViewportNavigationFacts = {
     string
   >;
   content: {
+    runtimeOwnership: "moves-active-content-into-shared-viewport";
     hiddenAttribute: string;
     stateAttribute: string;
     stateValue: string;
@@ -1777,6 +1788,8 @@ export type AdapterBooleanFormControlFacts = {
     acceptedChangeNotification?: "detail-on-accepted";
     canCancelChange: boolean;
     formResetSync: boolean;
+    resetBaseline?: "mount";
+    groupStateOwnership?: "group-membership";
     groupStrategy?: "array-includes" | "value-equals";
     hasIndeterminate: boolean;
     inputIdStrategy: "always-prop" | "omit-when-native" | "suffixed-when-native";
@@ -2552,6 +2565,7 @@ export type AdapterFileDropControlFacts = {
     required: AdapterFamilyProp;
   };
   runtime: {
+    refresh: PrimitiveRefreshContract;
     factory: string;
     importSource: string;
     setupFunction: string;
@@ -2782,6 +2796,7 @@ export type AdapterNativeOverlayFacts = {
   };
   popupRoleValue?: string;
   props: {
+    asChild: AdapterFamilyProp;
     closeOnEscape: AdapterFamilyProp;
     closeOnOutsideInteract: AdapterFamilyProp;
     defaultOpen: AdapterFamilyProp;
@@ -2791,6 +2806,7 @@ export type AdapterNativeOverlayFacts = {
     targetId: AdapterFamilyProp;
   };
   runtime: {
+    refresh: PrimitiveRefreshContract;
     factory: string;
     importSource: string;
     setupFunction: string;
@@ -3132,6 +3148,11 @@ export type AdapterSidebarStateControl = {
 };
 
 export type AdapterSidebarFacts = {
+  connection: {
+    contextState: "controller-readback";
+    mobileSheetOwner: "nearest-provider";
+    mobileSheetState: "accepted-after-dispatch";
+  };
   attrs: {
     defaultMobileOpen: string;
     defaultOpen: string;
@@ -3427,6 +3448,7 @@ export type AdapterMediaStatusFacts = {
     src: AdapterFamilyProp;
   };
   runtime: {
+    refresh: PrimitiveRefreshContract;
     factory: string;
     importSource: string;
     setupFunction: string;

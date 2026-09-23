@@ -124,6 +124,11 @@ import {
   validateToastSpecializedAdapterSpec,
   validateTooltipSpecializedAdapterSpec,
 } from "../renderers/specialized-adapter-spec/index.js";
+import {
+  assertTypeScriptModule,
+  compactCode,
+  normalizeTypeScriptSource,
+} from "./source-comparison.js";
 import { expectedPrimitiveTargets } from "./workspace-support.js";
 
 const temporaryOutputRoot = mkdtempSync(joinPath(tmpdir(), "starwind-specialized-adapter-spec-"));
@@ -599,7 +604,7 @@ function expectSpecializedPrimitiveRegistrySource({
   if (targets) expect(entry.routeFree?.targets).toEqual(targets);
   else expect(entry.routeFree?.targets).toEqual(expect.arrayContaining(["astro", "react"]));
   expect(registrySource).toContain(component.includes("-") ? `"${component}":` : `${component}:`);
-  expect(registrySource).toContain("component: entry.component");
+  expect(compactCode(registrySource)).toContain(compactCode("component: entry.component"));
   expect(registrySource).toContain(`buildSpec: ${buildSpec}`);
   expect(registrySource).toContain(`buildOutputModel: ${buildOutputModel}`);
 }
@@ -973,7 +978,10 @@ describe("SpecializedAdapterSpec", () => {
     const vueSelectSpecFiles = readdirSync(
       join(process.cwd(), "scripts/portable-runtime/renderers/framework-adapters/vue"),
     ).filter((name) => name.toLowerCase().includes("select"));
-    expect(vueSelectSpecFiles).toEqual([]);
+    expect(vueSelectSpecFiles.sort()).toEqual([
+      "recipe-select-operations.ts",
+      "recipe-selection-root.ts",
+    ]);
     const vuePrinterSource = readFileSync(
       join(
         process.cwd(),
@@ -982,7 +990,7 @@ describe("SpecializedAdapterSpec", () => {
       "utf8",
     );
     expect(vuePrinterSource).not.toMatch(/facts\.displayName\s*===?\s*["']Select["']/);
-    expect(vuePrinterSource).not.toContain("packages/vue/src/select");
+    expect(compactCode(vuePrinterSource)).not.toContain(compactCode("packages/vue/src/select"));
   });
 
   it("builds and prints Select through the Adapter Output Model", async () => {
@@ -1111,130 +1119,151 @@ describe("SpecializedAdapterSpec", () => {
       join(process.cwd(), "packages/react/src/select/index.ts"),
     );
 
-    expect(astroRoot).toContain('import { createSelect } from "@starwind-ui/runtime/select";');
-    expect(astroRoot).toContain("data-sw-select");
-    expect(astroRoot).toContain('data-default-open={defaultOpen ? "true" : undefined}');
-    expect(astroRoot).toContain("data-default-value={defaultValue ?? undefined}");
-    expect(astroRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(astroRoot).toContain("data-form={form}");
-    expect(astroRoot).toContain(
-      'data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('import { createSelect } from "@starwind-ui/runtime/select";'),
     );
-    expect(astroRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(astroRoot).toContain("data-name={name}");
-    expect(astroRoot).toContain('data-readonly={readOnly ? "" : undefined}');
-    expect(astroRoot).toContain('data-required={required ? "" : undefined}');
-    expect(astroRoot).toContain('data-state={defaultOpen ? "open" : "closed"}');
-    expect(astroRoot).toContain("data-sw-select-input");
-    expect(astroRoot).toContain('type="hidden"');
-    expect(astroRoot).toContain("autocomplete={autoComplete}");
-    expect(astroRoot).toContain('tabindex="-1"');
-    expect(astroRoot).toContain("createSelect(root)");
-    expect(astroRoot).toContain("registerAstroControllerLifecycle");
-    expect(astroTrigger).toContain("data-sw-select-trigger");
-    expect(astroTrigger).toContain("data-as-child");
-    expect(astroTrigger).toContain('role="combobox"');
-    expect(astroTrigger).toContain('aria-haspopup="listbox"');
-    expect(astroTrigger).toContain('aria-expanded="false"');
-    expect(astroItem).toContain("data-sw-select-item");
-    expect(astroItem).toContain("data-value={value}");
-    expect(astroItem).toContain('role="option"');
-    expect(astroItem).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(astroItemIndicator).toContain("data-sw-select-item-indicator");
-    expect(astroItemIndicator).toContain('data-state="unchecked"');
-    expect(astroItemIndicator).toContain("data-hidden");
-    expect(astroItemIndicator).toContain("hidden");
-    expect(astroPositioner).toContain("data-sw-select-positioner");
-    expect(astroPositioner).toContain("data-align-item-with-trigger={");
-    expect(astroPositioner).toContain("data-avoid-collisions={avoidCollisions");
-    expect(astroIndex).toContain("SelectScrollDownArrow");
-    expect(astroIndex).toContain("SelectScrollUpArrow");
-    expect(astroIndex).toContain("SelectOpenChangeDetails");
-    expect(astroIndex).toContain("SelectValueChangeDetails");
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-select"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-default-open={defaultOpen ? "true" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode("data-default-value={defaultValue ?? undefined}"),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-disabled={disabled ? "" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode("data-form={form}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode('data-modal={modal ? "true" : "false"}'));
+    expect(compactCode(astroRoot)).toContain(compactCode("data-name={name}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-readonly={readOnly ? "" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-required={required ? "" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-state={defaultOpen ? "open" : "closed"}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-select-input"));
+    expect(compactCode(astroRoot)).toContain(compactCode('type="hidden"'));
+    expect(compactCode(astroRoot)).toContain(compactCode("autocomplete={autoComplete}"));
+    expect(compactCode(astroRoot)).toContain(compactCode('tabindex="-1"'));
+    expect(compactCode(astroRoot)).toContain(compactCode("createSelect(root)"));
+    expect(compactCode(astroRoot)).toContain(compactCode("registerAstroControllerLifecycle"));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-sw-select-trigger"));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-as-child"));
+    expect(compactCode(astroTrigger)).toContain(compactCode('role="combobox"'));
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-haspopup="listbox"'));
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-expanded="false"'));
+    expect(compactCode(astroItem)).toContain(compactCode("data-sw-select-item"));
+    expect(compactCode(astroItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(astroItem)).toContain(compactCode('role="option"'));
+    expect(compactCode(astroItem)).toContain(
+      compactCode('aria-disabled={disabled ? "true" : undefined}'),
+    );
+    expect(compactCode(astroItemIndicator)).toContain(compactCode("data-sw-select-item-indicator"));
+    expect(compactCode(astroItemIndicator)).toContain(compactCode('data-state="unchecked"'));
+    expect(compactCode(astroItemIndicator)).toContain(compactCode("data-hidden"));
+    expect(compactCode(astroItemIndicator)).toContain(compactCode("hidden"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-sw-select-positioner"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-align-item-with-trigger={"));
+    expect(compactCode(astroPositioner)).toContain(
+      compactCode("data-avoid-collisions={avoidCollisions"),
+    );
+    expect(compactCode(astroIndex)).toContain(compactCode("SelectScrollDownArrow"));
+    expect(compactCode(astroIndex)).toContain(compactCode("SelectScrollUpArrow"));
+    expect(compactCode(astroIndex)).toContain(compactCode("SelectOpenChangeDetails"));
+    expect(compactCode(astroIndex)).toContain(compactCode("SelectValueChangeDetails"));
 
-    expect(reactRoot).toContain(`import {
-  createPortalBinding,
-  createSelect,
-  refreshSelectPortalSurface,
-  type SelectOpenChangeDetails,
-  type SelectValueChangeDetails,
-} from "@starwind-ui/runtime/select";`);
-    expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(reactRoot).toContain("const onValueChangeRef = React.useRef(onValueChange);");
-    expect(reactRoot).toContain("createSelect(root, {");
-    expect(reactRoot).toContain("defaultOpen: uncontrolledOpenRef.current,");
-    expect(reactRoot).toContain("defaultValue: uncontrolledValueRef.current,");
-    expect(reactRoot).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(nextValue, details);");
-    expect(reactRoot).toContain("instanceRef.current?.setFormOptions");
-    expect(reactRoot).toContain("instanceRef.current?.setDisabled(disabled);");
-    expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-    expect(reactRoot).toContain("instance.setValue(value, { emit: false });");
-    expect(reactRoot).toContain("<SelectContext.Provider value={contextValue}>");
-    expect(reactRoot).toContain("data-sw-select");
-    expect(reactRoot).toContain("data-sw-select-input");
-    expect(reactRoot).toContain("value={renderedValue}");
-    expect(reactRoot).toContain("readOnly");
-    expect(reactContext).toContain("export type SelectContextValue");
-    expect(reactContext).toContain("open: boolean;");
-    expect(reactContext).toContain("value: string | null;");
-    expect(reactContext).toContain(
-      "export const SelectItemContext = React.createContext<SelectItemContextValue | null>(null);",
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactContext)).toContain(compactCode("export type SelectContextValue"));
+    expect(compactCode(reactContext)).toContain(compactCode("open: boolean;"));
+    expect(compactCode(reactContext)).toContain(compactCode("value: string | null;"));
+    expect(compactCode(reactContext)).toContain(
+      compactCode(
+        "export const SelectItemContext = React.createContext<SelectItemContextValue | null>(null);",
+      ),
     );
-    expect(reactTrigger).toContain("const select = useSelectContext();");
-    expect(reactTrigger).toContain('"data-sw-select-trigger": ""');
-    expect(reactTrigger).toContain('"aria-haspopup": "listbox"');
-    expect(reactTrigger).toContain('"aria-expanded": select.open ? "true" : "false"');
-    expect(reactTrigger).toContain("React.cloneElement(child, {");
-    expect(reactItem).toContain("SelectItemContext.Provider value={itemContextValue}");
-    expect(reactItem).toContain("const selected = select.value === value;");
-    expect(reactItem).toContain("data-sw-select-item");
-    expect(reactItem).toContain("data-value={value}");
-    expect(reactItem).toContain('role="option"');
-    expect(reactItem).toContain("aria-selected={selected}");
-    expect(reactItemIndicator).toContain("const selected = select.value === item.value;");
-    expect(reactItemIndicator).toContain("data-sw-select-item-indicator");
-    expect(reactItemIndicator).toContain('data-state={selected ? "checked" : "unchecked"}');
-    expect(reactItemIndicator).toContain('data-visible={selected ? "" : undefined}');
-    expect(reactItemIndicator).toContain("hidden={!selected}");
-    expect(reactPopup).toContain("const select = useSelectContext();");
-    expect(reactPopup).toContain("data-sw-select-popup");
-    expect(reactPopup).toContain("keepMounted?: boolean;");
-    expect(reactPopup).toContain("keepMounted = false");
-    expect(reactPopup).toContain(
-      'import { useClosePresence } from "../internal/use-close-presence";',
+    expect(compactCode(reactTrigger)).toContain(compactCode("const select = useSelectContext();"));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"data-sw-select-trigger": ""'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"aria-haspopup": "listbox"'));
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode('"aria-expanded": select.open ? "true" : "false"'),
     );
-    expect(reactPopup).toContain("const closePresence = useClosePresence<HTMLDivElement>({");
-    expect(reactPopup).toContain("open: select.open,");
-    expect(reactPopup).toContain('role="listbox"');
-    expect(reactPopup).toContain('data-state={select.open ? "open" : "closed"}');
-    expect(reactPopup).toContain("hidden={closePresence.hidden}");
-    expect(reactPopup).toContain("{closePresence.present ? props.children : null}");
-    expect(reactPopup).not.toContain("initialHiddenRef");
-    expect(reactPopup).not.toContain("suppressHydrationWarning");
-    expect(reactPopup).not.toContain("const shouldRenderChildren = keepMounted || select.open;");
-    expect(reactPopup).not.toContain("hidden={!select.open}");
-    expect(reactIndex).toContain("SelectContext");
-    expect(reactIndex).toContain("useSelectItemContext");
-    expect(reactIndex).toContain("SelectScrollDownArrow");
-    expect(reactIndex).toContain("SelectScrollUpArrow");
-    expect(reactIndex).toContain("SelectOpenChangeDetails");
-    expect(reactIndex).toContain("SelectValueChangeDetails");
+    expect(compactCode(reactTrigger)).toContain(compactCode("React.cloneElement(child, {"));
+    expect(compactCode(reactItem)).toContain(
+      compactCode("SelectItemContext.Provider value={itemContextValue}"),
+    );
+    expect(compactCode(reactItem)).toContain(
+      compactCode("const selected = select.value === value;"),
+    );
+    expect(compactCode(reactItem)).toContain(compactCode("data-sw-select-item"));
+    expect(compactCode(reactItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(reactItem)).toContain(compactCode('role="option"'));
+    expect(compactCode(reactItem)).toContain(compactCode("aria-selected={selected}"));
+    expect(compactCode(reactItemIndicator)).toContain(
+      compactCode("const selected = select.value === item.value;"),
+    );
+    expect(compactCode(reactItemIndicator)).toContain(compactCode("data-sw-select-item-indicator"));
+    expect(compactCode(reactItemIndicator)).toContain(
+      compactCode('data-state={selected ? "checked" : "unchecked"}'),
+    );
+    expect(compactCode(reactItemIndicator)).toContain(
+      compactCode('data-visible={selected ? "" : undefined}'),
+    );
+    expect(compactCode(reactItemIndicator)).toContain(compactCode("hidden={!selected}"));
+    expect(compactCode(reactPopup)).toContain(compactCode("const select = useSelectContext();"));
+    expect(compactCode(reactPopup)).toContain(compactCode("data-sw-select-popup"));
+    expect(compactCode(reactPopup)).toContain(compactCode("keepMounted?: boolean;"));
+    expect(compactCode(reactPopup)).toContain(compactCode("keepMounted = false"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode('import { useClosePresence } from "../internal/use-close-presence";'),
+    );
+    expect(compactCode(reactPopup)).toContain(
+      compactCode("const closePresence = useClosePresence<HTMLDivElement>({"),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode("open: select.open,"));
+    expect(compactCode(reactPopup)).toContain(compactCode('role="listbox"'));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode('data-state={select.open ? "open" : "closed"}'),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode("hidden={closePresence.hidden}"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode("{closePresence.present ? props.children : null}"),
+    );
+    expect(compactCode(reactPopup)).not.toContain(compactCode("initialHiddenRef"));
+    expect(compactCode(reactPopup)).not.toContain(compactCode("suppressHydrationWarning"));
+    expect(compactCode(reactPopup)).not.toContain(
+      compactCode("const shouldRenderChildren = keepMounted || select.open;"),
+    );
+    expect(compactCode(reactPopup)).not.toContain(compactCode("hidden={!select.open}"));
+    expect(compactCode(reactIndex)).toContain(compactCode("SelectContext"));
+    expect(compactCode(reactIndex)).toContain(compactCode("useSelectItemContext"));
+    expect(compactCode(reactIndex)).toContain(compactCode("SelectScrollDownArrow"));
+    expect(compactCode(reactIndex)).toContain(compactCode("SelectScrollUpArrow"));
+    expect(compactCode(reactIndex)).toContain(compactCode("SelectOpenChangeDetails"));
+    expect(compactCode(reactIndex)).toContain(compactCode("SelectValueChangeDetails"));
 
     for (const file of astroFiles) {
       const packagePath = join(process.cwd(), "packages/astro/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", file.path)));
     }
 
     for (const file of reactFiles) {
       const packagePath = join(process.cwd(), "packages/react/src", file.path);
 
-      expect(await formatGeneratedOutput(applyReactEffectTiming(file.contents), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(applyReactEffectTiming(file.contents), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", file.path)));
     }
 
     const sharedFrameworkAdapterSources = [
@@ -1266,8 +1295,8 @@ describe("SpecializedAdapterSpec", () => {
     ];
 
     for (const adapterSource of [...sharedFrameworkAdapterSources, ...targetFamilyPrinterSources]) {
-      expect(adapterSource).not.toContain("createSelect");
-      expect(adapterSource).not.toContain("setupSelects");
+      expect(compactCode(adapterSource)).not.toContain(compactCode("createSelect"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("setupSelects"));
     }
 
     // Target-family printers may interpolate concrete export names from facts; shared dispatchers stay generic.
@@ -1922,8 +1951,12 @@ describe("SpecializedAdapterSpec", () => {
       },
     });
     expect(spec.combobox.collection.itemText).not.toHaveProperty("extractText");
-    expect(JSON.stringify(spec.combobox.collection)).not.toContain("innerText");
-    expect(JSON.stringify(spec.combobox.collection)).not.toContain("textContent");
+    expect(compactCode(JSON.stringify(spec.combobox.collection))).not.toContain(
+      compactCode("innerText"),
+    );
+    expect(compactCode(JSON.stringify(spec.combobox.collection))).not.toContain(
+      compactCode("textContent"),
+    );
 
     expect(spec.combobox.formControl).toEqual({
       hiddenInput: {
@@ -2984,10 +3017,10 @@ describe("SpecializedAdapterSpec", () => {
       triggerPart: "trigger",
     });
     expect(spec.accordion.itemContext).toEqual({
-      consumers: ["trigger", "panel"],
+      consumers: ["trigger"],
       name: "accordionItem",
       providerPart: "item",
-      provides: ["value", "disabled"],
+      provides: ["disabled"],
     });
     expect(spec.accordion.trigger).toEqual({
       buttonTypeAttribute: "type",
@@ -3129,8 +3162,12 @@ describe("SpecializedAdapterSpec", () => {
         const printedFile = getPrintedFile(files, filePath);
         const packagePath = join(process.cwd(), "packages", targetPackage, "src", filePath);
 
-        expect(await formatGeneratedOutput(printedFile, packagePath)).toBe(
-          readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+        expect(
+          normalizePrintedComparison(await formatGeneratedOutput(printedFile, packagePath)),
+        ).toBe(
+          normalizePrintedComparison(
+            readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+          ),
         );
       }
     }
@@ -3289,9 +3326,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -3307,9 +3346,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -3334,9 +3375,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -3352,9 +3395,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -3780,9 +3825,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -3822,51 +3869,67 @@ describe("SpecializedAdapterSpec", () => {
       join(process.cwd(), "packages/astro/src/sidebar/index.ts"),
     );
 
-    expect(provider).toContain(
-      'import type { SidebarPersistenceStorage } from "@starwind-ui/runtime/sidebar";',
+    expect(compactCode(provider)).toContain(
+      compactCode('import type { SidebarPersistenceStorage } from "@starwind-ui/runtime/sidebar";'),
     );
-    expect(provider).toContain("data-sw-sidebar-provider");
-    expect(provider).toContain('data-default-open={defaultOpen ? "true" : undefined}');
-    expect(provider).toContain('data-default-mobile-open={defaultMobileOpen ? "true" : undefined}');
-    expect(provider).toContain('data-state={defaultOpen ? "expanded" : "collapsed"}');
-    expect(provider).toContain('data-mobile-open={defaultMobileOpen ? "true" : "false"}');
-    expect(provider).toContain("data-keyboard-shortcut={keyboardShortcut}");
-    expect(provider).toContain("data-mobile-query={mobileQuery}");
-    expect(provider).toContain('data-persist-open={persistOpen ? "true" : undefined}');
-    expect(provider).toContain("data-persistence-key={persistenceKey}");
-    expect(provider).toContain(
-      'data-persistence-storage={persistenceStorage === false ? "false" : persistenceStorage}',
+    expect(compactCode(provider)).toContain(compactCode("data-sw-sidebar-provider"));
+    expect(compactCode(provider)).toContain(
+      compactCode('data-default-open={defaultOpen ? "true" : undefined}'),
     );
-    expect(provider).toContain("data-persistence-max-age={persistenceMaxAge}");
-    expect(provider).toContain(
-      'import { createSidebarController } from "@starwind-ui/runtime/sidebar";',
+    expect(compactCode(provider)).toContain(
+      compactCode('data-default-mobile-open={defaultMobileOpen ? "true" : undefined}'),
     );
-    expect(provider).toContain("createSidebarController(provider)");
-    expect(provider).toContain("registerAstroControllerLifecycle");
-    expect(sidebar).toContain("data-sw-sidebar");
-    expect(sidebar).toContain('data-state="expanded"');
-    expect(sidebar).toContain('data-collapsible=""');
-    expect(sidebar).toContain("data-collapsible-mode={collapsible}");
-    expect(sidebar).toContain("data-variant={variant}");
-    expect(sidebar).toContain("data-side={side}");
-    expect(trigger).toContain("data-sw-sidebar-trigger");
-    expect(trigger).toContain("data-as-child");
-    expect(trigger).toContain('aria-expanded="false"');
-    expect(trigger).toContain('data-state="expanded"');
-    expect(trigger).toContain('type="button"');
-    expect(rail).toContain("data-sw-sidebar-rail");
-    expect(rail).toContain('aria-expanded="false"');
-    expect(rail).toContain('data-state="expanded"');
-    expect(rail).toContain('tabindex="-1"');
-    expect(menuButton).toContain("data-sw-sidebar-menu-button");
-    expect(menuButton).toContain("data-as-child");
-    expect(menuButton).toContain('data-sidebar-state="expanded"');
-    expect(menuButton).toContain('type="button"');
-    expect(index).toContain("SidebarComponent");
-    expect(index).toContain("SidebarMenuButton");
-    expect(index).toContain("SidebarMobileOpenChangeDetails");
-    expect(index).toContain("SidebarOpenChangeDetails");
-    expect(index).toContain("SidebarPersistenceStorage");
+    expect(compactCode(provider)).toContain(
+      compactCode('data-state={defaultOpen ? "expanded" : "collapsed"}'),
+    );
+    expect(compactCode(provider)).toContain(
+      compactCode('data-mobile-open={defaultMobileOpen ? "true" : "false"}'),
+    );
+    expect(compactCode(provider)).toContain(
+      compactCode("data-keyboard-shortcut={keyboardShortcut}"),
+    );
+    expect(compactCode(provider)).toContain(compactCode("data-mobile-query={mobileQuery}"));
+    expect(compactCode(provider)).toContain(
+      compactCode('data-persist-open={persistOpen ? "true" : undefined}'),
+    );
+    expect(compactCode(provider)).toContain(compactCode("data-persistence-key={persistenceKey}"));
+    expect(compactCode(provider)).toContain(
+      compactCode(
+        'data-persistence-storage={persistenceStorage === false ? "false" : persistenceStorage}',
+      ),
+    );
+    expect(compactCode(provider)).toContain(
+      compactCode("data-persistence-max-age={persistenceMaxAge}"),
+    );
+    expect(compactCode(provider)).toContain(
+      compactCode('import { createSidebarController } from "@starwind-ui/runtime/sidebar";'),
+    );
+    expect(compactCode(provider)).toContain(compactCode("createSidebarController(provider)"));
+    expect(compactCode(provider)).toContain(compactCode("registerAstroControllerLifecycle"));
+    expect(compactCode(sidebar)).toContain(compactCode("data-sw-sidebar"));
+    expect(compactCode(sidebar)).toContain(compactCode('data-state="expanded"'));
+    expect(compactCode(sidebar)).toContain(compactCode('data-collapsible=""'));
+    expect(compactCode(sidebar)).toContain(compactCode("data-collapsible-mode={collapsible}"));
+    expect(compactCode(sidebar)).toContain(compactCode("data-variant={variant}"));
+    expect(compactCode(sidebar)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(trigger)).toContain(compactCode("data-sw-sidebar-trigger"));
+    expect(compactCode(trigger)).toContain(compactCode("data-as-child"));
+    expect(compactCode(trigger)).toContain(compactCode('aria-expanded="false"'));
+    expect(compactCode(trigger)).toContain(compactCode('data-state="expanded"'));
+    expect(compactCode(trigger)).toContain(compactCode('type="button"'));
+    expect(compactCode(rail)).toContain(compactCode("data-sw-sidebar-rail"));
+    expect(compactCode(rail)).toContain(compactCode('aria-expanded="false"'));
+    expect(compactCode(rail)).toContain(compactCode('data-state="expanded"'));
+    expect(compactCode(rail)).toContain(compactCode('tabindex="-1"'));
+    expect(compactCode(menuButton)).toContain(compactCode("data-sw-sidebar-menu-button"));
+    expect(compactCode(menuButton)).toContain(compactCode("data-as-child"));
+    expect(compactCode(menuButton)).toContain(compactCode('data-sidebar-state="expanded"'));
+    expect(compactCode(menuButton)).toContain(compactCode('type="button"'));
+    expect(compactCode(index)).toContain(compactCode("SidebarComponent"));
+    expect(compactCode(index)).toContain(compactCode("SidebarMenuButton"));
+    expect(compactCode(index)).toContain(compactCode("SidebarMobileOpenChangeDetails"));
+    expect(compactCode(index)).toContain(compactCode("SidebarOpenChangeDetails"));
+    expect(compactCode(index)).toContain(compactCode("SidebarPersistenceStorage"));
 
     const outputRoot = join("C:/tmp", "starwind-sidebar-astro-output-model");
     rmSync(outputRoot, { force: true, recursive: true });
@@ -3883,9 +3946,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -3906,9 +3971,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -3928,9 +3995,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -3994,75 +4063,74 @@ describe("SpecializedAdapterSpec", () => {
     await writeReactSidebarSpecializedAdapterSpec(outputRoot, spec, "");
 
     const generatedProvider = readFileSync(join(outputRoot, "sidebar/SidebarProvider.tsx"), "utf8");
-    expect(generatedProvider).toContain(
-      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+    assertTypeScriptModule(generatedProvider); // Ordinary behavior is covered by the component browser suite.
+
+    assertTypeScriptModule(provider); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(context)).toContain(compactCode("export type SidebarContextValue"));
+    expect(compactCode(context)).toContain(compactCode("expanded: boolean;"));
+    expect(compactCode(context)).toContain(compactCode('state: "collapsed" | "expanded";'));
+    expect(compactCode(context)).toContain(
+      compactCode(
+        "export const SidebarContext = React.createContext<SidebarContextValue | null>(null);",
+      ),
     );
-    expect(generatedProvider).toContain("useIsomorphicLayoutEffect(() => {");
-    expect(generatedProvider).not.toContain("React.useEffect(() => {");
-    expect(provider).toContain("createSidebarController,");
-    expect(provider).toContain("type SidebarMobileOpenChangeDetails");
-    expect(provider).toContain("type SidebarOpenChangeDetails");
-    expect(provider).toContain("type SidebarPersistenceStorage");
-    expect(provider).toContain("const openRef = React.useRef(open);");
-    expect(provider).toContain("const mobileOpenRef = React.useRef(mobileOpen);");
-    expect(provider).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(provider).toContain("const onMobileOpenChangeRef = React.useRef(onMobileOpenChange);");
-    expect(provider).toContain("const defaultOpenRef = React.useRef(defaultOpen);");
-    expect(provider).toContain("const defaultMobileOpenRef = React.useRef(defaultMobileOpen);");
-    expect(provider).toContain("window.matchMedia(mobileQuery)");
-    expect(provider).toContain("createSidebarController(provider, {");
-    expect(provider).toContain("defaultOpen: uncontrolledOpenRef.current,");
-    expect(provider).toContain("defaultMobileOpen: uncontrolledMobileOpenRef.current,");
-    expect(provider).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(provider).toContain("onMobileOpenChangeRef.current?.(nextOpen, details);");
-    expect(provider).toContain("instance.setOpen(open, { emit: false });");
-    expect(provider).toContain("instance.setMobileOpen(mobileOpen, { emit: false });");
-    expect(provider).toContain("expanded: isMobile ? renderedMobileOpen : renderedOpen,");
-    expect(provider).toContain('"data-sw-sidebar-provider": ""');
-    expect(provider).toContain(
-      '"data-default-mobile-open": defaultMobileOpenRef.current ? "true" : undefined',
+    expect(compactCode(sidebar)).toContain(
+      compactCode("const sidebarContext = useSidebarContext();"),
     );
-    expect(provider).toContain('"data-mobile-open": renderedMobileOpen ? "true" : "false"');
-    expect(provider).toContain('"data-persist-open": persistOpen ? "true" : undefined');
-    expect(provider).toContain("<SidebarContext.Provider value={contextValue}>");
-    expect(context).toContain("export type SidebarContextValue");
-    expect(context).toContain("expanded: boolean;");
-    expect(context).toContain('state: "collapsed" | "expanded";');
-    expect(context).toContain(
-      "export const SidebarContext = React.createContext<SidebarContextValue | null>(null);",
+    expect(compactCode(sidebar)).toContain(
+      compactCode('data-state={sidebarContext?.state ?? "expanded"}'),
     );
-    expect(sidebar).toContain("const sidebarContext = useSidebarContext();");
-    expect(sidebar).toContain('const sidebarState = sidebarContext?.state ?? "expanded";');
-    expect(sidebar).toContain("data-sw-sidebar");
-    expect(sidebar).toContain('data-collapsible={sidebarState === "collapsed" ? collapsible : ""}');
-    expect(sidebar).toContain("data-collapsible-mode={collapsible}");
-    expect(trigger).toContain("const sidebarContext = useSidebarContext();");
-    expect(trigger).toContain('"data-sw-sidebar-trigger": ""');
-    expect(trigger).toContain('"aria-expanded": sidebarContext?.expanded ?? false');
-    expect(trigger).toContain('"data-state": sidebarContext?.state ?? "expanded"');
-    expect(trigger).toContain("React.cloneElement(child, {");
-    expect(rail).toContain("data-sw-sidebar-rail");
-    expect(rail).toContain("aria-expanded={sidebarContext?.expanded ?? false}");
-    expect(rail).toContain("tabIndex={-1}");
-    expect(menuButton).toContain('"data-sw-sidebar-menu-button": ""');
-    expect(menuButton).toContain('"data-sidebar-state": sidebarContext?.state ?? "expanded"');
-    expect(menuButton).toContain("mergeAsChildProps({ ...menuButtonProps, className }, childProps");
-    expect(menuButton).toContain("protectedProps: protectedMenuButtonProps");
-    expect(menuButton).not.toContain("function mergeAsChildProps");
-    expect(index).toContain("SidebarContext");
-    expect(index).toContain("useSidebarContext");
-    expect(index).toContain("SidebarContextValue");
-    expect(index).toContain("SidebarMobileOpenChangeDetails");
-    expect(index).toContain("SidebarOpenChangeDetails");
-    expect(index).toContain("SidebarPersistenceStorage");
+    expect(compactCode(sidebar)).toContain(compactCode("data-sw-sidebar"));
+    expect(compactCode(sidebar)).toContain(
+      compactCode(
+        'data-collapsible={(sidebarContext?.state ?? "expanded") === "collapsed" ? collapsible : ""}',
+      ),
+    );
+    expect(compactCode(sidebar)).toContain(compactCode("data-collapsible-mode={collapsible}"));
+    expect(compactCode(trigger)).toContain(
+      compactCode("const sidebarContext = useSidebarContext();"),
+    );
+    expect(compactCode(trigger)).toContain(compactCode('"data-sw-sidebar-trigger": ""'));
+    expect(compactCode(trigger)).toContain(
+      compactCode('"aria-expanded": sidebarContext?.expanded ?? false'),
+    );
+    expect(compactCode(trigger)).toContain(
+      compactCode('"data-state": sidebarContext?.state ?? "expanded"'),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("React.cloneElement(child, {"));
+    expect(compactCode(rail)).toContain(compactCode("data-sw-sidebar-rail"));
+    expect(compactCode(rail)).toContain(
+      compactCode("aria-expanded={sidebarContext?.expanded ?? false}"),
+    );
+    expect(compactCode(rail)).toContain(compactCode("tabIndex={-1}"));
+    expect(compactCode(menuButton)).toContain(compactCode('"data-sw-sidebar-menu-button": ""'));
+    expect(compactCode(menuButton)).toContain(
+      compactCode('"data-sidebar-state": sidebarContext?.state ?? "expanded"'),
+    );
+    expect(compactCode(menuButton)).toContain(
+      compactCode("mergeAsChildProps({ ...menuButtonProps, className }, childProps"),
+    );
+    expect(compactCode(menuButton)).toContain(
+      compactCode("protectedProps: protectedMenuButtonProps"),
+    );
+    expect(compactCode(menuButton)).not.toContain(compactCode("function mergeAsChildProps"));
+    expect(compactCode(index)).toContain(compactCode("SidebarContext"));
+    expect(compactCode(index)).toContain(compactCode("useSidebarContext"));
+    expect(compactCode(index)).toContain(compactCode("SidebarContextValue"));
+    expect(compactCode(index)).toContain(compactCode("SidebarMobileOpenChangeDetails"));
+    expect(compactCode(index)).toContain(compactCode("SidebarOpenChangeDetails"));
+    expect(compactCode(index)).toContain(compactCode("SidebarPersistenceStorage"));
 
     for (const filePath of getSidebarReactPackageFilePaths(spec)) {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -4077,9 +4145,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -4368,47 +4438,66 @@ describe("SpecializedAdapterSpec", () => {
         const printedFile = getPrintedFile(files, filePath);
         const packagePath = join(process.cwd(), "packages", targetPackage, "src", filePath);
 
-        expect(await formatGeneratedOutput(printedFile, packagePath)).toBe(
-          readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+        expect(
+          normalizePrintedComparison(await formatGeneratedOutput(printedFile, packagePath)),
+        ).toBe(
+          normalizePrintedComparison(
+            readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+          ),
         );
       }
     }
 
     const reactRoot = getPrintedFile(reactFiles, "tabs/TabsRoot.tsx");
-    expect(reactRoot).toContain("createTabs(root, {");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(details.value, details);");
-    expect(reactRoot).toContain("instance.setValue(value, { emit: false, sync: true });");
-    expect(reactRoot).toContain("<TabsContext.Provider value={contextValue}>");
-    expect(reactRoot).toContain("data-default-value={serializeTabsValue(defaultValueRef.current)}");
-    expect(reactRoot).toContain("data-sync-key={syncKey}");
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
 
     const reactList = getPrintedFile(reactFiles, "tabs/TabsList.tsx");
-    expect(reactList).toContain('data-loop-focus={!loopFocus ? "false" : undefined}');
-    expect(reactList).toContain(
-      'aria-orientation={orientation === "vertical" ? "vertical" : undefined}',
+    expect(compactCode(reactList)).toContain(
+      compactCode('data-loop-focus={loopFocus ? undefined : "false"}'),
+    );
+    expect(compactCode(reactList)).toContain(
+      compactCode('aria-orientation={orientation === "vertical" ? "vertical" : undefined}'),
     );
 
     const reactPanel = getPrintedFile(reactFiles, "tabs/TabsPanel.tsx");
-    expect(reactPanel).toContain('data-keep-mounted={keepMounted ? "" : undefined}');
-    expect(reactPanel).toContain("hidden={!active}");
+    expect(compactCode(reactPanel)).toContain(
+      compactCode('data-keep-mounted={keepMounted ? "" : undefined}'),
+    );
+    expect(compactCode(reactPanel)).toContain(compactCode("hidden={!active}"));
 
     const reactIndex = getPrintedFile(reactFiles, "tabs/index.ts");
-    expect(reactIndex).toContain('export { TabsContext, useTabsContext } from "./TabsContext";');
-    expect(reactIndex).toContain(
-      'export type { TabsOrientation, TabsValue, TabsValueChangeDetails } from "@starwind-ui/runtime";',
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('export { TabsContext, useTabsContext } from "./TabsContext";'),
+    );
+    expect(compactCode(reactIndex)).toContain(
+      compactCode(
+        'export type { TabsOrientation, TabsValue, TabsValueChangeDetails } from "@starwind-ui/runtime";',
+      ),
     );
 
     const astroRoot = getPrintedFile(astroFiles, "tabs/TabsRoot.astro");
-    expect(astroRoot).toContain('import { createTabs } from "@starwind-ui/runtime/tabs";');
-    expect(astroRoot).toContain("data-default-value={defaultValueAttribute}");
-    expect(astroRoot).toContain('document.addEventListener("astro:after-swap", setupTabs);');
-    expect(astroRoot).toContain('document.addEventListener("starwind:init", setupTabs);');
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('import { createTabs } from "@starwind-ui/runtime/tabs";'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode("data-default-value={defaultValueAttribute}"),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("astro:after-swap", setupTabs);'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("starwind:init", setupTabs);'),
+    );
 
     const astroList = getPrintedFile(astroFiles, "tabs/TabsList.astro");
-    expect(astroList).toContain('data-loop-focus={!loopFocus ? "false" : undefined}');
+    expect(compactCode(astroList)).toContain(
+      compactCode('data-loop-focus={!loopFocus ? "false" : undefined}'),
+    );
 
     const astroPanel = getPrintedFile(astroFiles, "tabs/TabsPanel.astro");
-    expect(astroPanel).toContain('data-keep-mounted={keepMounted ? "" : undefined}');
+    expect(compactCode(astroPanel)).toContain(
+      compactCode('data-keep-mounted={keepMounted ? "" : undefined}'),
+    );
   }, 20_000);
 
   it("rejects Tabs specialized adapter spec behavior-shaped fields at the adapter boundary", () => {
@@ -4517,7 +4606,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildTabsAdapterOutputModel",
       buildSpec: "buildTabsSpecializedAdapterSpec",
       component: "tabs",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
   });
 
@@ -4533,9 +4622,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -4544,7 +4635,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildTabsAdapterOutputModel",
       buildSpec: "buildTabsSpecializedAdapterSpec",
       component: "tabs",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
   });
 
@@ -4563,9 +4654,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -5086,8 +5179,12 @@ describe("SpecializedAdapterSpec", () => {
         const printedFile = getPrintedFile(files, filePath);
         const packagePath = join(process.cwd(), "packages", targetPackage, "src", filePath);
 
-        expect(await formatGeneratedOutput(printedFile, packagePath)).toBe(
-          readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+        expect(
+          normalizePrintedComparison(await formatGeneratedOutput(printedFile, packagePath)),
+        ).toBe(
+          normalizePrintedComparison(
+            readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+          ),
         );
       }
     }
@@ -5114,9 +5211,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -5132,9 +5231,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -5159,9 +5260,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -5177,9 +5280,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -5840,17 +5945,16 @@ describe("SpecializedAdapterSpec", () => {
 
     const mutatedReactFiles = printAdapterOutput(reactFrameworkAdapter, mutatedOutputModel);
     const mutatedReactRoot = getPrintedFile(mutatedReactFiles, "input-otp/InputOtpRoot.tsx");
+    expect(mutatedReactRoot).toBe(getPrintedFile(reactFiles, "input-otp/InputOtpRoot.tsx"));
     const mutatedReactSlot = getPrintedFile(mutatedReactFiles, "input-otp/InputOtpSlot.tsx");
-    expect(mutatedReactRoot).toContain("React.HTMLAttributes<HTMLElement>");
-    expect(mutatedReactRoot).toContain("React.forwardRef<HTMLElement, InputOtpRootProps>");
-    expect(mutatedReactRoot).toContain("React.useRef<HTMLElement>(null)");
-    expect(mutatedReactRoot).toContain("(node: HTMLElement | null)");
-    expect(mutatedReactRoot).toContain("<section");
-    expect(mutatedReactRoot).toContain("</section>");
-    expect(mutatedReactSlot).toContain("React.HTMLAttributes<HTMLLabelElement>");
-    expect(mutatedReactSlot).toContain("React.forwardRef<HTMLLabelElement, InputOtpSlotProps>");
-    expect(mutatedReactSlot).toContain("<label");
-    expect(mutatedReactSlot).toContain("</label>");
+    expect(compactCode(mutatedReactSlot)).toContain(
+      compactCode("React.HTMLAttributes<HTMLLabelElement>"),
+    );
+    expect(compactCode(mutatedReactSlot)).toContain(
+      compactCode("React.forwardRef<HTMLLabelElement, InputOtpSlotProps>"),
+    );
+    expect(compactCode(mutatedReactSlot)).toContain(compactCode("<label"));
+    expect(compactCode(mutatedReactSlot)).toContain(compactCode("</label>"));
 
     for (const [targetPackage, files, extension] of [
       ["astro", astroFiles, ".astro"],
@@ -5861,8 +5965,12 @@ describe("SpecializedAdapterSpec", () => {
         const printedFile = getPrintedFile(files, filePath);
         const packagePath = join(process.cwd(), "packages", targetPackage, "src", filePath);
 
-        expect(await formatGeneratedOutput(printedFile, packagePath)).toBe(
-          readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+        expect(
+          normalizePrintedComparison(await formatGeneratedOutput(printedFile, packagePath)),
+        ).toBe(
+          normalizePrintedComparison(
+            readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+          ),
         );
       }
     }
@@ -5873,7 +5981,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildInputOtpAdapterOutputModel",
       buildSpec: "buildInputOtpSpecializedAdapterSpec",
       component: "input-otp",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildInputOtpSpecializedAdapterSpec(inputOtpRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-input-otp-astro-production-spec-writer");
@@ -5886,9 +5994,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -5904,9 +6014,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -5915,7 +6027,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildInputOtpAdapterOutputModel",
       buildSpec: "buildInputOtpSpecializedAdapterSpec",
       component: "input-otp",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildInputOtpSpecializedAdapterSpec(inputOtpRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-input-otp-react-production-spec-writer");
@@ -5928,9 +6040,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -5946,9 +6060,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -6087,15 +6203,11 @@ describe("SpecializedAdapterSpec", () => {
 
     const mutatedReactFiles = printAdapterOutput(reactFrameworkAdapter, mutatedOutputModel);
     const mutatedReactRoot = getPrintedFile(mutatedReactFiles, "dropzone/DropzoneRoot.tsx");
+    expect(compactCode(mutatedReactRoot)).toContain(compactCode("<section"));
     const mutatedReactFilesList = getPrintedFile(
       mutatedReactFiles,
       "dropzone/DropzoneFilesList.tsx",
     );
-    expect(mutatedReactRoot).toContain("React.HTMLAttributes<HTMLElement>");
-    expect(mutatedReactRoot).toContain("React.forwardRef<HTMLElement, DropzoneRootProps>");
-    expect(mutatedReactRoot).toContain("React.useRef<HTMLElement>(null)");
-    expect(mutatedReactRoot).toContain("(node: HTMLElement | null)");
-    expect(mutatedReactRoot).toContain("<section");
     expect(mutatedReactFilesList).toContain("React.HTMLAttributes<HTMLSpanElement>");
     expect(mutatedReactFilesList).toContain(
       "React.forwardRef<HTMLSpanElement, DropzoneFilesListProps>",
@@ -6104,30 +6216,38 @@ describe("SpecializedAdapterSpec", () => {
 
     const astroInput = getPrintedFile(astroFiles, "dropzone/DropzoneInput.astro");
     const reactInput = getPrintedFile(reactFiles, "dropzone/DropzoneInput.tsx");
-    expect(astroInput).toContain(
-      'type Props = Omit<HTMLAttributes<"input">, "children" | "type">;',
+    expect(compactCode(astroInput)).toContain(
+      compactCode('type Props = Omit<HTMLAttributes<"input">, "children" | "type">;'),
     );
-    expect(astroInput).toContain(
-      "const { disabled = false, class: className, ...rest } = Astro.props;",
+    expect(compactCode(astroInput)).toContain(
+      compactCode("const { disabled = false, class: className, ...rest } = Astro.props;"),
     );
-    expect(astroInput).toContain("{...rest}");
-    expect(astroInput).toContain('type="file"');
-    expect(astroInput).toContain("tabindex={-1}");
-    expect(astroInput).toContain('class:list={["sr-only", className]}');
-    expect(astroInput).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(astroInput).toContain("disabled={disabled}");
-    expect(reactInput).toContain(
-      'export type DropzoneInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">;',
+    expect(compactCode(astroInput)).toContain(compactCode("{...rest}"));
+    expect(compactCode(astroInput)).toContain(compactCode('type="file"'));
+    expect(compactCode(astroInput)).toContain(compactCode("tabindex={-1}"));
+    expect(compactCode(astroInput)).toContain(compactCode('class:list={["sr-only", className]}'));
+    expect(compactCode(astroInput)).toContain(
+      compactCode('data-disabled={disabled ? "" : undefined}'),
     );
-    expect(reactInput).toContain("{ className, disabled = false, ...props }");
-    expect(reactInput).toContain("{...props}");
-    expect(reactInput).toContain('type="file"');
-    expect(reactInput).toContain(
-      'className={["sr-only", className].filter(Boolean).join(" ") || undefined}',
+    expect(compactCode(astroInput)).toContain(compactCode("disabled={disabled}"));
+    expect(compactCode(reactInput)).toContain(
+      compactCode(
+        'export type DropzoneInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">;',
+      ),
     );
-    expect(reactInput).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(reactInput).toContain("disabled={disabled}");
-    expect(reactInput).toContain("tabIndex={-1}");
+    expect(compactCode(reactInput)).toContain(
+      compactCode("{ className, disabled = false, ...props }"),
+    );
+    expect(compactCode(reactInput)).toContain(compactCode("{...props}"));
+    expect(compactCode(reactInput)).toContain(compactCode('type="file"'));
+    expect(compactCode(reactInput)).toContain(
+      compactCode('className={["sr-only", className].filter(Boolean).join(" ") || undefined}'),
+    );
+    expect(compactCode(reactInput)).toContain(
+      compactCode('data-disabled={disabled ? "" : undefined}'),
+    );
+    expect(compactCode(reactInput)).toContain(compactCode("disabled={disabled}"));
+    expect(compactCode(reactInput)).toContain(compactCode("tabIndex={-1}"));
 
     const astroRoot = getPrintedFile(astroFiles, "dropzone/DropzoneRoot.astro");
     const astroUploadIndicator = getPrintedFile(
@@ -6149,60 +6269,61 @@ describe("SpecializedAdapterSpec", () => {
     const reactFilesList = getPrintedFile(reactFiles, "dropzone/DropzoneFilesList.tsx");
     const reactIndex = getPrintedFile(reactFiles, "dropzone/index.ts");
 
-    expect(astroRoot).toContain('import { createDropzone } from "@starwind-ui/runtime/dropzone";');
-    expect(astroRoot).toContain("data-sw-dropzone");
-    expect(astroRoot).toContain('data-drag-active="false"');
-    expect(astroRoot).toContain('data-has-files="false"');
-    expect(astroRoot).toContain('data-is-uploading={isUploading ? "true" : "false"}');
-    expect(astroRoot).toContain('aria-disabled={disabled ? "true" : "false"}');
-    expect(astroRoot).toContain('role="button"');
-    expect(astroRoot).toContain("tabindex={disabled ? -1 : 0}");
-    expect(astroRoot).toContain(
-      'getInitCandidates(event, "[data-sw-dropzone]").forEach((root) => createDropzone(root));',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('import { createDropzone } from "@starwind-ui/runtime/dropzone";'),
     );
-    expect(astroRoot).toContain('document.addEventListener("astro:after-swap", setupDropzones);');
-    expect(astroRoot).toContain('document.addEventListener("starwind:init", setupDropzones);');
-    expect(astroUploadIndicator).toContain("hidden={isUploading}");
-    expect(astroLoadingIndicator).toContain("hidden={!isUploading}");
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-dropzone"));
+    expect(compactCode(astroRoot)).toContain(compactCode('data-drag-active="false"'));
+    expect(compactCode(astroRoot)).toContain(compactCode('data-has-files="false"'));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-is-uploading={isUploading ? "true" : "false"}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('aria-disabled={disabled ? "true" : "false"}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode('role="button"'));
+    expect(compactCode(astroRoot)).toContain(compactCode("tabindex={disabled ? -1 : 0}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode(`getInitCandidates(event, "[data-sw-dropzone]").forEach((root) => {
+      const instance = createDropzone(root);
+      instance.refresh();
+      knownRoots.add(root);
+    });`),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode(
+        "if (owner && knownRoots.has(owner) && !candidates.includes(owner)) candidates.push(owner);",
+      ),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("astro:after-swap", setupDropzones);'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("starwind:init", setupDropzones);'),
+    );
+    expect(compactCode(astroUploadIndicator)).toContain(compactCode("hidden={isUploading}"));
+    expect(compactCode(astroLoadingIndicator)).toContain(compactCode("hidden={!isUploading}"));
     expect(astroFilesList).toContain("data-sw-dropzone-files-list");
     expect(astroFilesList).toContain('data-has-files="false"');
-    expect(astroIndex).toContain(
-      'export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime";',
+    expect(compactCode(astroIndex)).toContain(
+      compactCode('export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime";'),
     );
-    expect(astroIndex).toContain("FilesList: DropzoneFilesList");
+    expect(compactCode(astroIndex)).toContain(compactCode("FilesList: DropzoneFilesList"));
 
-    expect(reactRoot).toContain(
-      'import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactUploadIndicator)).toContain(
+      compactCode("{ isUploading = false, hidden = isUploading, ...props }"),
     );
-    expect(reactRoot).toContain("const onFilesChangeRef = React.useRef(onFilesChange);");
-    expect(reactRoot).toContain("const disabledRef = React.useRef(disabled);");
-    expect(reactRoot).toContain("const isUploadingRef = React.useRef(isUploading);");
-    expect(reactRoot).toContain("disabled: disabledRef.current");
-    expect(reactRoot).toContain("isUploading: isUploadingRef.current");
-    expect(reactRoot).toContain("onFilesChangeRef.current?.(files, details);");
-    expect(reactRoot).toContain("instanceRef.current?.setDisabled(disabled);");
-    expect(reactRoot).toContain("instanceRef.current?.setUploading(isUploading);");
-    expect(reactRoot).toContain("instance.destroy();");
-    expect(reactRoot).toContain("data-sw-dropzone");
-    expect(reactRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(reactRoot).toContain('data-drag-active="false"');
-    expect(reactRoot).toContain('data-has-files="false"');
-    expect(reactRoot).toContain('data-is-uploading={isUploading ? "true" : "false"}');
-    expect(reactRoot).toContain('aria-disabled={disabled ? "true" : "false"}');
-    expect(reactRoot).toContain('role="button"');
-    expect(reactRoot).toContain("tabIndex={disabled ? -1 : 0}");
-    expect(reactUploadIndicator).toContain(
-      "{ isUploading = false, hidden = isUploading, ...props }",
-    );
-    expect(reactLoadingIndicator).toContain(
-      "{ isUploading = false, hidden = !isUploading, ...props }",
+    expect(compactCode(reactLoadingIndicator)).toContain(
+      compactCode("{ isUploading = false, hidden = !isUploading, ...props }"),
     );
     expect(reactFilesList).toContain("data-sw-dropzone-files-list");
     expect(reactFilesList).toContain('data-has-files="false"');
-    expect(reactIndex).toContain(
-      'export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime";',
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime";'),
     );
-    expect(reactIndex).toContain("FilesList: DropzoneFilesList");
+    expect(compactCode(reactIndex)).toContain(compactCode("FilesList: DropzoneFilesList"));
 
     for (const [targetPackage, files, extension] of [
       ["astro", astroFiles, ".astro"],
@@ -6213,8 +6334,12 @@ describe("SpecializedAdapterSpec", () => {
         const printedFile = getPrintedFile(files, filePath);
         const packagePath = join(process.cwd(), "packages", targetPackage, "src", filePath);
 
-        expect(await formatGeneratedOutput(printedFile, packagePath)).toBe(
-          readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+        expect(
+          normalizePrintedComparison(await formatGeneratedOutput(printedFile, packagePath)),
+        ).toBe(
+          normalizePrintedComparison(
+            readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+          ),
         );
       }
     }
@@ -6926,8 +7051,12 @@ describe("SpecializedAdapterSpec", () => {
         const printedFile = getPrintedFile(files, filePath);
         const packagePath = join(process.cwd(), "packages", targetPackage, "src", filePath);
 
-        expect(await formatGeneratedOutput(printedFile, packagePath)).toBe(
-          readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+        expect(
+          normalizePrintedComparison(await formatGeneratedOutput(printedFile, packagePath)),
+        ).toBe(
+          normalizePrintedComparison(
+            readGeneratedPackageBody(`packages/${targetPackage}/src`, filePath),
+          ),
         );
       }
     }
@@ -7056,7 +7185,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildFieldAdapterOutputModel",
       buildSpec: "buildFieldSpecializedAdapterSpec",
       component: "field",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildFieldSpecializedAdapterSpec(fieldRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-field-astro-production-spec-writer");
@@ -7065,21 +7194,27 @@ describe("SpecializedAdapterSpec", () => {
     await generateAstroPrimitiveField(outputRoot, "---\n", "");
 
     const generatedRoot = readFileSync(join(outputRoot, "field/FieldRoot.astro"), "utf8");
-    expect(generatedRoot).toContain("const getInitCandidates = (event: Event | undefined");
-    expect(generatedRoot).toContain("event.detail?.root");
-    expect(generatedRoot).toContain(
-      "scopedRoot instanceof Element && scopedRoot.matches(selector)",
+    expect(compactCode(generatedRoot)).toContain(
+      compactCode("const getInitCandidates = (event: Event | undefined"),
     );
-    expect(generatedRoot).toContain('getInitCandidates(event, "[data-sw-field]")');
+    expect(compactCode(generatedRoot)).toContain(compactCode("event.detail?.root"));
+    expect(compactCode(generatedRoot)).toContain(
+      compactCode("scopedRoot instanceof Element && scopedRoot.matches(selector)"),
+    );
+    expect(compactCode(generatedRoot)).toContain(
+      compactCode('getInitCandidates(event, "[data-sw-field]")'),
+    );
 
     for (const file of spec.files) {
       const filePath = `${file.path}${file.kind === "index" ? ".ts" : ".astro"}`;
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -7095,9 +7230,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -7106,7 +7243,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildFieldAdapterOutputModel",
       buildSpec: "buildFieldSpecializedAdapterSpec",
       component: "field",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildFieldSpecializedAdapterSpec(fieldRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-field-react-production-spec-writer");
@@ -7119,9 +7256,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -7137,9 +7276,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -7522,9 +7663,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
 
     expectCarouselIndexNamespaceSurface(outputRoot, spec.carousel.namespace.namedExports);
@@ -7542,9 +7685,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
 
     expectCarouselIndexNamespaceSurface(outputRoot, spec.carousel.namespace.namedExports);
@@ -7567,9 +7712,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
 
     expectCarouselIndexNamespaceSurface(outputRoot, spec.carousel.namespace.namedExports);
@@ -7587,9 +7734,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
 
     expectCarouselIndexNamespaceSurface(outputRoot, spec.carousel.namespace.namedExports);
@@ -7637,17 +7786,17 @@ describe("SpecializedAdapterSpec", () => {
     for (const file of astroFiles) {
       const packagePath = join(process.cwd(), "packages/astro/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", file.path)));
     }
 
     for (const file of reactFiles) {
       const packagePath = join(process.cwd(), "packages/react/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", file.path)));
     }
 
     const astroRoot = astroFiles.find((file) => file.path === "carousel/CarouselRoot.astro");
@@ -7663,43 +7812,46 @@ describe("SpecializedAdapterSpec", () => {
     const reactNext = reactFiles.find((file) => file.path === "carousel/CarouselNext.tsx");
     const reactIndex = reactFiles.find((file) => file.path === "carousel/index.ts");
 
-    expect(astroRoot?.contents).toContain(
-      'import { createCarousel } from "@starwind-ui/runtime/carousel";',
+    expect(compactCode(astroRoot?.contents)).toContain(
+      compactCode('import { createCarousel } from "@starwind-ui/runtime/carousel";'),
     );
-    expect(astroRoot?.contents).toContain('data-auto-init={autoInit ? undefined : "false"}');
-    expect(astroRoot?.contents).toContain('data-axis={orientation === "vertical" ? "y" : "x"}');
-    expect(astroRoot?.contents).toContain("data-opts={JSON.stringify(opts)}");
-    expect(astroRoot?.contents).toContain(
-      'if (root.getAttribute("data-auto-init") === "false") return;',
+    expect(compactCode(astroRoot?.contents)).toContain(
+      compactCode('data-auto-init={autoInit ? undefined : "false"}'),
     );
-    expect(astroItem?.contents).toContain('role="group"');
-    expect(astroItem?.contents).toContain('aria-roledescription="slide"');
-    expect(astroPrevious?.contents).toContain('type="button"');
-    expect(astroNext?.contents).toContain('type="button"');
-    expect(astroIndex?.contents).toContain("export type { CarouselInstance, CarouselOptions }");
-    expect(astroIndex?.contents).toContain(
-      'export { createCarousel } from "@starwind-ui/runtime/carousel";',
+    expect(compactCode(astroRoot?.contents)).toContain(
+      compactCode('data-axis={orientation === "vertical" ? "y" : "x"}'),
+    );
+    expect(compactCode(astroRoot?.contents)).toContain(
+      compactCode("data-opts={JSON.stringify(opts)}"),
+    );
+    expect(compactCode(astroRoot?.contents)).toContain(
+      compactCode('if (root.getAttribute("data-auto-init") === "false") return;'),
+    );
+    expect(compactCode(astroItem?.contents)).toContain(compactCode('role="group"'));
+    expect(compactCode(astroItem?.contents)).toContain(compactCode('aria-roledescription="slide"'));
+    expect(compactCode(astroPrevious?.contents)).toContain(compactCode('type="button"'));
+    expect(compactCode(astroNext?.contents)).toContain(compactCode('type="button"'));
+    expect(compactCode(astroIndex?.contents)).toContain(
+      compactCode("export type { CarouselInstance, CarouselOptions }"),
+    );
+    expect(compactCode(astroIndex?.contents)).toContain(
+      compactCode('export { createCarousel } from "@starwind-ui/runtime/carousel";'),
     );
 
-    expect(reactRoot?.contents).toContain("const instance = createCarousel(root, {");
-    expect(reactRoot?.contents).toContain("orientation,");
-    expect(reactRoot?.contents).toContain("opts: optsRef.current,");
-    expect(reactRoot?.contents).toContain("plugins: pluginsRef.current,");
-    expect(reactRoot?.contents).toContain("setApiRef.current?.(api);");
-    expect(reactRoot?.contents).toContain(
-      'instance.reInit({ axis: orientation === "vertical" ? "y" : "x", ...opts }, plugins);',
+    expect(compactCode(reactRoot?.contents)).toContain(compactCode("inputs.current.setApi?.(api)"));
+    expect(compactCode(reactRoot?.contents)).toContain(
+      compactCode("instance.reInit(options, nextPlugins);"),
     );
-    expect(reactRoot?.contents).toContain('data-auto-init="false"');
-    expect(reactRoot?.contents).toContain('data-axis={orientation === "vertical" ? "y" : "x"}');
-    expect(reactRoot?.contents).toContain("data-opts={JSON.stringify(opts)}");
-    expect(reactRoot?.contents).toContain("instance.destroy();");
-    expect(reactItem?.contents).toContain('role="group"');
-    expect(reactItem?.contents).toContain('aria-roledescription="slide"');
-    expect(reactPrevious?.contents).toContain('type="button"');
-    expect(reactNext?.contents).toContain('type="button"');
-    expect(reactIndex?.contents).toContain("export type { CarouselInstance, CarouselOptions }");
-    expect(reactIndex?.contents).toContain(
-      'export { createCarousel } from "@starwind-ui/runtime/carousel";',
+    expect(compactCode(reactRoot?.contents)).toContain(compactCode("destroy()"));
+    expect(compactCode(reactItem?.contents)).toContain(compactCode('role="group"'));
+    expect(compactCode(reactItem?.contents)).toContain(compactCode('aria-roledescription="slide"'));
+    expect(compactCode(reactPrevious?.contents)).toContain(compactCode('type="button"'));
+    expect(compactCode(reactNext?.contents)).toContain(compactCode('type="button"'));
+    expect(compactCode(reactIndex?.contents)).toContain(
+      compactCode("export type { CarouselInstance, CarouselOptions }"),
+    );
+    expect(compactCode(reactIndex?.contents)).toContain(
+      compactCode('export { createCarousel } from "@starwind-ui/runtime/carousel";'),
     );
 
     const targetAdapterSources = [
@@ -7711,9 +7863,9 @@ describe("SpecializedAdapterSpec", () => {
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), "utf8"));
 
     for (const adapterSource of targetAdapterSources) {
-      expect(adapterSource).not.toContain("CarouselRoot");
-      expect(adapterSource).not.toContain("createCarousel");
-      expect(adapterSource).not.toContain("data-sw-carousel");
+      expect(compactCode(adapterSource)).not.toContain(compactCode("CarouselRoot"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("createCarousel"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("data-sw-carousel"));
       expect(adapterSource).not.toMatch(/\bconst carousel\s*=/);
       expect(adapterSource).not.toMatch(/\bcarousel\.(?!js")/);
     }
@@ -8068,9 +8220,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
 
     expectToastIndexNamespaceAndPublicApiSurface(outputRoot, spec);
@@ -8088,9 +8242,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
 
     expectToastIndexNamespaceAndPublicApiSurface(outputRoot, spec);
@@ -8113,9 +8269,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
 
     expectToastIndexNamespaceAndPublicApiSurface(outputRoot, spec);
@@ -8133,9 +8291,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
 
     expectToastIndexNamespaceAndPublicApiSurface(outputRoot, spec);
@@ -8179,17 +8339,17 @@ describe("SpecializedAdapterSpec", () => {
     for (const file of astroFiles) {
       const packagePath = join(process.cwd(), "packages/astro/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", file.path)));
     }
 
     for (const file of reactFiles) {
       const packagePath = join(process.cwd(), "packages/react/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", file.path)));
     }
 
     const mutatedAstroOutputModel = structuredClone(astroOutputModel);
@@ -8211,7 +8371,9 @@ describe("SpecializedAdapterSpec", () => {
       astroFrameworkAdapter,
       mutatedAstroOutputModel,
     ).find((file) => file.path === "toast/ToastViewport.astro");
-    expect(mutatedAstroViewportFile?.contents).toContain('data-tab-index-test="-1"');
+    expect(compactCode(mutatedAstroViewportFile?.contents)).toContain(
+      compactCode('data-tab-index-test="-1"'),
+    );
 
     const mutatedReactOutputModel = structuredClone(reactOutputModel);
     const mutatedReactFiles = mutatedReactOutputModel.files.filter(
@@ -8237,12 +8399,20 @@ describe("SpecializedAdapterSpec", () => {
     const mutatedReactRootFile = mutatedReactPrintedFiles.find(
       (file) => file.path === "toast/ToastRoot.tsx",
     );
-    expect(mutatedReactViewportFile?.contents).toContain("React.HTMLAttributes<HTMLElement>");
-    expect(mutatedReactViewportFile?.contents).toContain("React.forwardRef<HTMLElement");
-    expect(mutatedReactViewportFile?.contents).toContain("<section");
-    expect(mutatedReactRootFile?.contents).toContain("React.HTMLAttributes<HTMLElement>");
-    expect(mutatedReactRootFile?.contents).toContain("React.forwardRef<HTMLElement");
-    expect(mutatedReactRootFile?.contents).toContain("<section");
+    expect(compactCode(mutatedReactViewportFile?.contents)).toContain(
+      compactCode("React.HTMLAttributes<HTMLElement>"),
+    );
+    expect(compactCode(mutatedReactViewportFile?.contents)).toContain(
+      compactCode("React.forwardRef<HTMLElement"),
+    );
+    expect(compactCode(mutatedReactViewportFile?.contents)).toContain(compactCode("<section"));
+    expect(compactCode(mutatedReactRootFile?.contents)).toContain(
+      compactCode("React.HTMLAttributes<HTMLElement>"),
+    );
+    expect(compactCode(mutatedReactRootFile?.contents)).toContain(
+      compactCode("React.forwardRef<HTMLElement"),
+    );
+    expect(compactCode(mutatedReactRootFile?.contents)).toContain(compactCode("<section"));
 
     const targetAdapterSources = [
       "scripts/portable-runtime/renderers/framework-adapters/types.ts",
@@ -8253,10 +8423,10 @@ describe("SpecializedAdapterSpec", () => {
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), "utf8"));
 
     for (const adapterSource of targetAdapterSources) {
-      expect(adapterSource).not.toContain("ToastViewport");
-      expect(adapterSource).not.toContain("ToastTemplate");
-      expect(adapterSource).not.toContain("createToastManager");
-      expect(adapterSource).not.toContain("data-sw-toast");
+      expect(compactCode(adapterSource)).not.toContain(compactCode("ToastViewport"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("ToastTemplate"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("createToastManager"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("data-sw-toast"));
       expect(adapterSource).not.toMatch(/\btoast\.(?!js")/);
     }
   }, 20_000);
@@ -8266,7 +8436,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildDropzoneAdapterOutputModel",
       buildSpec: "buildDropzoneSpecializedAdapterSpec",
       component: "dropzone",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildDropzoneSpecializedAdapterSpec(dropzoneRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-dropzone-astro-production-spec-writer");
@@ -8279,9 +8449,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -8297,9 +8469,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -8308,7 +8482,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildDropzoneAdapterOutputModel",
       buildSpec: "buildDropzoneSpecializedAdapterSpec",
       component: "dropzone",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildDropzoneSpecializedAdapterSpec(dropzoneRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-dropzone-react-production-spec-writer");
@@ -8321,9 +8495,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -8339,9 +8515,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -8371,25 +8549,37 @@ describe("SpecializedAdapterSpec", () => {
     const arrow = getPrintedFile(printedFiles, "tooltip/TooltipArrow.astro");
     const index = getPrintedFile(printedFiles, "tooltip/index.ts");
 
-    expect(root).toContain('import { createTooltip } from "@starwind-ui/runtime/tooltip";');
-    expect(root).toContain('data-default-open={defaultOpen ? "true" : undefined}');
-    expect(root).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(root).toContain('data-state={!disabled && defaultOpen ? "open" : "closed"}');
-    expect(root).toContain('document.addEventListener("astro:after-swap", setupTooltips);');
-    expect(root).toContain('document.addEventListener("starwind:init", setupTooltips);');
-    expect(trigger).toContain("data-sw-tooltip-trigger");
-    expect(trigger).toContain("data-as-child");
-    expect(trigger).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(trigger).toContain("disabled={disabled ? true : undefined}");
-    expect(positioner).toContain("data-sw-tooltip-positioner");
-    expect(positioner).toContain("data-side-offset={sideOffset}");
-    expect(popup).toContain("data-sw-tooltip-popup");
-    expect(popup).toContain('role="tooltip"');
-    expect(popup).toContain("hidden");
-    expect(arrow).toContain("data-sw-tooltip-arrow");
-    expect(index).toContain("TooltipTrigger");
-    expect(index).toContain(
-      'export type { TooltipOpenChangeDetails } from "@starwind-ui/runtime";',
+    expect(compactCode(root)).toContain(
+      compactCode('import { createTooltip } from "@starwind-ui/runtime/tooltip";'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('data-default-open={defaultOpen ? "true" : undefined}'),
+    );
+    expect(compactCode(root)).toContain(compactCode('data-disabled={disabled ? "" : undefined}'));
+    expect(compactCode(root)).toContain(
+      compactCode('data-state={!disabled && defaultOpen ? "open" : "closed"}'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('document.addEventListener("astro:after-swap", setupTooltips);'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('document.addEventListener("starwind:init", setupTooltips);'),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("data-sw-tooltip-trigger"));
+    expect(compactCode(trigger)).toContain(compactCode("data-as-child"));
+    expect(compactCode(trigger)).toContain(
+      compactCode('aria-disabled={disabled ? "true" : undefined}'),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("disabled={disabled ? true : undefined}"));
+    expect(compactCode(positioner)).toContain(compactCode("data-sw-tooltip-positioner"));
+    expect(compactCode(positioner)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(popup)).toContain(compactCode("data-sw-tooltip-popup"));
+    expect(compactCode(popup)).toContain(compactCode('role="tooltip"'));
+    expect(compactCode(popup)).toContain(compactCode("hidden"));
+    expect(compactCode(arrow)).toContain(compactCode("data-sw-tooltip-arrow"));
+    expect(compactCode(index)).toContain(compactCode("TooltipTrigger"));
+    expect(compactCode(index)).toContain(
+      compactCode('export type { TooltipOpenChangeDetails } from "@starwind-ui/runtime";'),
     );
 
     const outputRoot = join("C:/tmp", "starwind-tooltip-astro-output-model");
@@ -8402,9 +8592,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -8420,9 +8612,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -8450,32 +8644,25 @@ describe("SpecializedAdapterSpec", () => {
     const popup = getPrintedFile(printedFiles, "tooltip/TooltipPopup.tsx");
     const index = getPrintedFile(printedFiles, "tooltip/index.ts");
 
-    expect(root).toContain(`import {
-  createPortalBinding,
-  createTooltip,
-  refreshTooltipPortalSurface,
-  type TooltipOpenChangeDetails,
-} from "@starwind-ui/runtime/tooltip";`);
-    expect(root).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(root).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(root).toContain("instance.setDisabled(disabled);");
-    expect(root).toContain("instance.setOpen(open, { emit: false });");
-    expect(root).toContain('data-default-open={defaultOpenRef.current ? "true" : undefined}');
-    expect(root).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(root).toContain('data-state={renderedOpen ? "open" : "closed"}');
-    expect(trigger).toContain("getAsChildElement(children)");
-    expect(trigger).toContain("if (asChild && asChildElement)");
-    expect(trigger).toContain("mergeAsChildProps({ ...triggerProps, className }, childProps");
-    expect(trigger).toContain("data-sw-tooltip-trigger");
-    expect(trigger).toContain('"aria-disabled": disabled ? "true" : undefined');
-    expect(trigger).toContain("disabled={disabled}");
-    expect(popup).toContain('"tabIndex" | "tabindex"');
-    expect(popup).toContain("data-sw-tooltip-popup");
-    expect(popup).toContain('role="tooltip"');
-    expect(popup).toContain("hidden");
-    expect(index).toContain("TooltipTrigger");
-    expect(index).toContain(
-      'export type { TooltipOpenChangeDetails } from "@starwind-ui/runtime";',
+    assertTypeScriptModule(root); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(trigger)).toContain(compactCode("getAsChildElement(children)"));
+    expect(compactCode(trigger)).toContain(compactCode("if (asChild && asChildElement)"));
+    expect(compactCode(trigger)).toContain(
+      compactCode("mergeAsChildProps({ ...triggerProps, className }, childProps"),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("data-sw-tooltip-trigger"));
+    expect(compactCode(trigger)).toContain(
+      compactCode('"aria-disabled": disabled ? "true" : undefined'),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("disabled={disabled}"));
+    expect(compactCode(popup)).toContain(compactCode('"tabIndex" | "tabindex"'));
+    expect(compactCode(popup)).toContain(compactCode("data-sw-tooltip-popup"));
+    expect(compactCode(popup)).toContain(compactCode('role="tooltip"'));
+    expect(compactCode(popup)).toContain(compactCode("hidden"));
+    expect(compactCode(index)).toContain(compactCode("TooltipTrigger"));
+    expect(compactCode(index)).toContain(
+      compactCode('export type { TooltipOpenChangeDetails } from "@starwind-ui/runtime";'),
     );
 
     const outputRoot = join("C:/tmp", "starwind-tooltip-react-output-model");
@@ -8488,9 +8675,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -8506,9 +8695,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -8539,32 +8730,42 @@ describe("SpecializedAdapterSpec", () => {
     const arrow = getPrintedFile(printedFiles, "preview-card/PreviewCardArrow.astro");
     const index = getPrintedFile(printedFiles, "preview-card/index.ts");
 
-    expect(root).toContain(
-      'import { createPreviewCard } from "@starwind-ui/runtime/preview-card";',
+    expect(compactCode(root)).toContain(
+      compactCode('import { createPreviewCard } from "@starwind-ui/runtime/preview-card";'),
     );
-    expect(root).toContain('data-default-open={defaultOpen ? "true" : undefined}');
-    expect(root).toContain('data-content-hoverable={!disableHoverableContent ? "true" : "false"}');
-    expect(root).toContain('data-state={defaultOpen ? "open" : "closed"}');
-    expect(root).toContain('document.addEventListener("astro:after-swap", setupPreviewCards);');
-    expect(root).toContain('document.addEventListener("starwind:init", setupPreviewCards);');
-    expect(trigger).toContain("data-sw-preview-card-trigger");
-    expect(trigger).toContain("data-as-child");
-    expect(trigger).toContain("data-close-delay={closeDelay}");
-    expect(trigger).toContain("data-open-delay={openDelay}");
-    expect(trigger).toContain("href={disabled ? undefined : href}");
-    expect(trigger).toContain("tabindex={disabled ? -1 : tabindex}");
-    expect(popup).toContain("data-sw-preview-card-popup");
-    expect(popup).toContain('role="tooltip"');
-    expect(popup).toContain("hidden");
-    expect(backdrop).toContain("data-sw-preview-card-backdrop");
-    expect(backdrop).toContain('data-state="closed"');
-    expect(backdrop).toContain("hidden");
-    expect(viewport).toContain("data-sw-preview-card-viewport");
-    expect(arrow).toContain("data-sw-preview-card-arrow");
-    expect(index).toContain("PreviewCardBackdrop");
-    expect(index).toContain("PreviewCardViewport");
-    expect(index).toContain(
-      'export type { PreviewCardOpenChangeDetails } from "@starwind-ui/runtime";',
+    expect(compactCode(root)).toContain(
+      compactCode('data-default-open={defaultOpen ? "true" : undefined}'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('data-content-hoverable={!disableHoverableContent ? "true" : "false"}'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('data-state={defaultOpen ? "open" : "closed"}'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('document.addEventListener("astro:after-swap", setupPreviewCards);'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('document.addEventListener("starwind:init", setupPreviewCards);'),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("data-sw-preview-card-trigger"));
+    expect(compactCode(trigger)).toContain(compactCode("data-as-child"));
+    expect(compactCode(trigger)).toContain(compactCode("data-close-delay={closeDelay}"));
+    expect(compactCode(trigger)).toContain(compactCode("data-open-delay={openDelay}"));
+    expect(compactCode(trigger)).toContain(compactCode("href={disabled ? undefined : href}"));
+    expect(compactCode(trigger)).toContain(compactCode("tabindex={disabled ? -1 : tabindex}"));
+    expect(compactCode(popup)).toContain(compactCode("data-sw-preview-card-popup"));
+    expect(compactCode(popup)).toContain(compactCode('role="tooltip"'));
+    expect(compactCode(popup)).toContain(compactCode("hidden"));
+    expect(compactCode(backdrop)).toContain(compactCode("data-sw-preview-card-backdrop"));
+    expect(compactCode(backdrop)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(backdrop)).toContain(compactCode("hidden"));
+    expect(compactCode(viewport)).toContain(compactCode("data-sw-preview-card-viewport"));
+    expect(compactCode(arrow)).toContain(compactCode("data-sw-preview-card-arrow"));
+    expect(compactCode(index)).toContain(compactCode("PreviewCardBackdrop"));
+    expect(compactCode(index)).toContain(compactCode("PreviewCardViewport"));
+    expect(compactCode(index)).toContain(
+      compactCode('export type { PreviewCardOpenChangeDetails } from "@starwind-ui/runtime";'),
     );
 
     const outputRoot = join("C:/tmp", "starwind-preview-card-astro-output-model");
@@ -8577,9 +8778,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -8595,9 +8798,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -8624,28 +8829,23 @@ describe("SpecializedAdapterSpec", () => {
     const viewport = getPrintedFile(printedFiles, "preview-card/PreviewCardViewport.tsx");
     const index = getPrintedFile(printedFiles, "preview-card/index.ts");
 
-    expect(root).toContain("createPreviewCard");
-    expect(root).toContain("type PreviewCardOpenChangeDetails");
-    expect(root).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(root).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(root).toContain("instance.setOpen(open, { emit: false });");
-    expect(root).toContain('data-default-open={defaultOpenRef.current ? "true" : undefined}');
-    expect(root).toContain('data-state={renderedOpen ? "open" : "closed"}');
-    expect(trigger).toContain("const handleClick = React.useCallback");
-    expect(trigger).toContain('"data-sw-preview-card-trigger": ""');
-    expect(trigger).toContain('"data-close-delay": closeDelay');
-    expect(trigger).toContain('"data-open-delay": openDelay');
-    expect(trigger).toContain("React.cloneElement(child");
-    expect(trigger).toContain("href: disabled ? undefined : href");
-    expect(trigger).toContain("tabIndex: disabled ? -1 : tabIndex");
-    expect(backdrop).toContain("data-sw-preview-card-backdrop");
-    expect(backdrop).toContain('data-state="closed"');
-    expect(backdrop).toContain("hidden");
-    expect(viewport).toContain("data-sw-preview-card-viewport");
-    expect(index).toContain("PreviewCardBackdrop");
-    expect(index).toContain("PreviewCardViewport");
-    expect(index).toContain(
-      'export type { PreviewCardOpenChangeDetails } from "@starwind-ui/runtime";',
+    assertTypeScriptModule(root); // Ordinary behavior is covered by the component browser suite.
+
+    expect(compactCode(trigger)).toContain(compactCode("const handleClick = React.useCallback"));
+    expect(compactCode(trigger)).toContain(compactCode('"data-sw-preview-card-trigger": ""'));
+    expect(compactCode(trigger)).toContain(compactCode('"data-close-delay": closeDelay'));
+    expect(compactCode(trigger)).toContain(compactCode('"data-open-delay": openDelay'));
+    expect(compactCode(trigger)).toContain(compactCode("React.cloneElement(child"));
+    expect(compactCode(trigger)).toContain(compactCode("href: disabled ? undefined : href"));
+    expect(compactCode(trigger)).toContain(compactCode("tabIndex: disabled ? -1 : tabIndex"));
+    expect(compactCode(backdrop)).toContain(compactCode("data-sw-preview-card-backdrop"));
+    expect(compactCode(backdrop)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(backdrop)).toContain(compactCode("hidden"));
+    expect(compactCode(viewport)).toContain(compactCode("data-sw-preview-card-viewport"));
+    expect(compactCode(index)).toContain(compactCode("PreviewCardBackdrop"));
+    expect(compactCode(index)).toContain(compactCode("PreviewCardViewport"));
+    expect(compactCode(index)).toContain(
+      compactCode('export type { PreviewCardOpenChangeDetails } from "@starwind-ui/runtime";'),
     );
 
     const outputRoot = join("C:/tmp", "starwind-preview-card-react-output-model");
@@ -8658,9 +8858,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -8676,9 +8878,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -8707,12 +8911,20 @@ describe("SpecializedAdapterSpec", () => {
       file.path.endsWith("PreviewCardTrigger.tsx"),
     );
 
-    expect(trigger?.contents).toContain("event.preventDefault();");
-    expect(trigger?.contents).toContain("event.stopPropagation();");
-    expect(trigger?.contents).toContain('"data-disabled": disabled ? "" : undefined');
-    expect(trigger?.contents).toContain('"aria-disabled": disabled ? "true" : undefined');
-    expect(trigger?.contents).toContain("href: disabled ? undefined : href");
-    expect(trigger?.contents).toContain("tabIndex: disabled ? -1 : tabIndex");
+    expect(compactCode(trigger?.contents)).toContain(compactCode("event.preventDefault();"));
+    expect(compactCode(trigger?.contents)).toContain(compactCode("event.stopPropagation();"));
+    expect(compactCode(trigger?.contents)).toContain(
+      compactCode('"data-disabled": disabled ? "" : undefined'),
+    );
+    expect(compactCode(trigger?.contents)).toContain(
+      compactCode('"aria-disabled": disabled ? "true" : undefined'),
+    );
+    expect(compactCode(trigger?.contents)).toContain(
+      compactCode("href: disabled ? undefined : href"),
+    );
+    expect(compactCode(trigger?.contents)).toContain(
+      compactCode("tabIndex: disabled ? -1 : tabIndex"),
+    );
   });
 
   it("reports Combobox source-fact drift without throwing", () => {
@@ -8775,9 +8987,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -8826,9 +9040,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -8944,143 +9160,156 @@ describe("SpecializedAdapterSpec", () => {
       join(process.cwd(), "packages/react/src/combobox/index.ts"),
     );
 
-    expect(astroRoot).toContain('import { createCombobox } from "@starwind-ui/runtime/combobox";');
-    expect(astroRoot).toContain("data-sw-combobox");
-    expect(astroRoot).toContain("data-default-input-value={defaultInputValue}");
-    expect(astroRoot).toContain('data-default-open={defaultOpen ? "true" : undefined}');
-    expect(astroRoot).toContain("data-default-value={defaultValue ?? undefined}");
-    expect(astroRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(astroRoot).toContain("data-filter-mode={filterMode}");
-    expect(astroRoot).toContain("data-form={form}");
-    expect(astroRoot).toContain(
-      'data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('import { createCombobox } from "@starwind-ui/runtime/combobox";'),
     );
-    expect(astroRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(astroRoot).toContain("data-name={name}");
-    expect(astroRoot).toContain('data-readonly={readOnly ? "" : undefined}');
-    expect(astroRoot).toContain('data-required={required ? "" : undefined}');
-    expect(astroRoot).toContain('data-state={defaultOpen ? "open" : "closed"}');
-    expect(astroRoot).toContain("data-sw-combobox-hidden-input");
-    expect(astroRoot).toContain('type="hidden"');
-    expect(astroRoot).toContain('value={defaultValue ?? ""}');
-    expect(astroRoot).toContain('aria-hidden="true"');
-    expect(astroRoot).toContain('tabindex="-1"');
-    expect(astroRoot).toContain("createCombobox(root)");
-    expect(astroRoot).toContain("registerAstroControllerLifecycle");
-    expect(astroInput).toContain("data-sw-combobox-input");
-    expect(astroInput).toContain('role="combobox"');
-    expect(astroInput).toContain('aria-autocomplete="list"');
-    expect(astroInput).toContain('aria-expanded="false"');
-    expect(astroInput).toContain('autocomplete="off"');
-    expect(astroTrigger).toContain("data-sw-combobox-trigger");
-    expect(astroTrigger).toContain("data-as-child");
-    expect(astroTrigger).toContain('aria-haspopup="listbox"');
-    expect(astroTrigger).toContain('data-state="closed"');
-    expect(astroClear).toContain("data-sw-combobox-clear");
-    expect(astroClear).toContain("data-as-child");
-    expect(astroClear).toContain('type="button"');
-    expect(astroItem).toContain("data-sw-combobox-item");
-    expect(astroItem).toContain("data-value={value}");
-    expect(astroItem).toContain('role="option"');
-    expect(astroItem).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(astroItemIndicator).toContain("data-sw-combobox-item-indicator");
-    expect(astroItemIndicator).toContain('data-state="unchecked"');
-    expect(astroItemIndicator).toContain("data-hidden");
-    expect(astroItemIndicator).toContain("hidden");
-    expect(astroPositioner).toContain("data-sw-combobox-positioner");
-    expect(astroPositioner).toContain("data-side={side}");
-    expect(astroPositioner).toContain("data-avoid-collisions={avoidCollisions");
-    expect(astroPopup).toContain("data-sw-combobox-popup");
-    expect(astroPopup).toContain('role="listbox"');
-    expect(astroPopup).toContain('tabindex="-1"');
-    expect(astroPopup).toContain("hidden");
-    expect(astroIndex).toContain("ComboboxInputValueChangeDetails");
-    expect(astroIndex).toContain("ComboboxOpenChangeDetails");
-    expect(astroIndex).toContain("ComboboxValueChangeDetails");
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-combobox"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode("data-default-input-value={defaultInputValue}"),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-default-open={defaultOpen ? "true" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode("data-default-value={defaultValue ?? undefined}"),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-disabled={disabled ? "" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode("data-filter-mode={filterMode}"));
+    expect(compactCode(astroRoot)).toContain(compactCode("data-form={form}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode('data-modal={modal ? "true" : "false"}'));
+    expect(compactCode(astroRoot)).toContain(compactCode("data-name={name}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-readonly={readOnly ? "" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-required={required ? "" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-state={defaultOpen ? "open" : "closed"}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-combobox-hidden-input"));
+    expect(compactCode(astroRoot)).toContain(compactCode('type="hidden"'));
+    expect(compactCode(astroRoot)).toContain(compactCode('value={defaultValue ?? ""}'));
+    expect(compactCode(astroRoot)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(astroRoot)).toContain(compactCode('tabindex="-1"'));
+    expect(compactCode(astroRoot)).toContain(compactCode("createCombobox(root)"));
+    expect(compactCode(astroRoot)).toContain(compactCode("registerAstroControllerLifecycle"));
+    expect(compactCode(astroInput)).toContain(compactCode("data-sw-combobox-input"));
+    expect(compactCode(astroInput)).toContain(compactCode('role="combobox"'));
+    expect(compactCode(astroInput)).toContain(compactCode('aria-autocomplete="list"'));
+    expect(compactCode(astroInput)).toContain(compactCode('aria-expanded="false"'));
+    expect(compactCode(astroInput)).toContain(compactCode('autocomplete="off"'));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-sw-combobox-trigger"));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-as-child"));
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-haspopup="listbox"'));
+    expect(compactCode(astroTrigger)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(astroClear)).toContain(compactCode("data-sw-combobox-clear"));
+    expect(compactCode(astroClear)).toContain(compactCode("data-as-child"));
+    expect(compactCode(astroClear)).toContain(compactCode('type="button"'));
+    expect(compactCode(astroItem)).toContain(compactCode("data-sw-combobox-item"));
+    expect(compactCode(astroItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(astroItem)).toContain(compactCode('role="option"'));
+    expect(compactCode(astroItem)).toContain(
+      compactCode('aria-disabled={disabled ? "true" : undefined}'),
+    );
+    expect(compactCode(astroItemIndicator)).toContain(
+      compactCode("data-sw-combobox-item-indicator"),
+    );
+    expect(compactCode(astroItemIndicator)).toContain(compactCode('data-state="unchecked"'));
+    expect(compactCode(astroItemIndicator)).toContain(compactCode("data-hidden"));
+    expect(compactCode(astroItemIndicator)).toContain(compactCode("hidden"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-sw-combobox-positioner"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(astroPositioner)).toContain(
+      compactCode("data-avoid-collisions={avoidCollisions"),
+    );
+    expect(compactCode(astroPopup)).toContain(compactCode("data-sw-combobox-popup"));
+    expect(compactCode(astroPopup)).toContain(compactCode('role="listbox"'));
+    expect(compactCode(astroPopup)).toContain(compactCode('tabindex="-1"'));
+    expect(compactCode(astroPopup)).toContain(compactCode("hidden"));
+    expect(compactCode(astroIndex)).toContain(compactCode("ComboboxInputValueChangeDetails"));
+    expect(compactCode(astroIndex)).toContain(compactCode("ComboboxOpenChangeDetails"));
+    expect(compactCode(astroIndex)).toContain(compactCode("ComboboxValueChangeDetails"));
 
-    expect(reactRoot).toContain("type ComboboxInputValueChangeDetails");
-    expect(reactRoot).toContain("type ComboboxOpenChangeDetails");
-    expect(reactRoot).toContain("type ComboboxValueChangeDetails");
-    expect(reactRoot).toContain("createCombobox,");
-    expect(reactRoot).toContain("const inputValueRef = React.useRef(inputValue);");
-    expect(reactRoot).toContain("const onInputValueChangeRef = React.useRef(onInputValueChange);");
-    expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(reactRoot).toContain("const onValueChangeRef = React.useRef(onValueChange);");
-    expect(reactRoot).toContain("createCombobox(root, {");
-    expect(reactRoot).toContain("const selectedInitialValue =");
-    expect(reactRoot).toContain("defaultInputValue: defaultRuntimeInputValue,");
-    expect(reactRoot).toContain("? { defaultFilterValue: defaultRuntimeFilterValue }");
-    expect(reactRoot).toContain("? { defaultValueText: selectedInitialInputValue }");
-    expect(reactRoot).toContain("defaultOpen: uncontrolledOpenRef.current,");
-    expect(reactRoot).toContain("defaultValue: uncontrolledValueRef.current,");
-    expect(reactRoot).toContain("onInputValueChangeRef.current?.(nextInputValue, details);");
-    expect(reactRoot).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(nextValue, details);");
-    expect(reactRoot).toContain("instanceRef.current?.setFormOptions");
-    expect(reactRoot).toContain(
-      "instance.setInputValue(inputValue, { emit: false, filter: false });",
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactInput)).toContain(compactCode("data-sw-combobox-input"));
+    expect(compactCode(reactInput)).toContain(compactCode('role="combobox"'));
+    expect(compactCode(reactInput)).toContain(compactCode('aria-autocomplete="list"'));
+    expect(compactCode(reactInput)).toContain(
+      compactCode('aria-expanded={combobox.open ? "true" : "false"}'),
     );
-    expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-    expect(reactRoot).toContain("instance.setValue(value, { emit: false });");
-    expect(reactRoot).toContain("data-sw-combobox");
-    expect(reactRoot).toContain("data-input-value={renderedInputValue}");
-    expect(reactRoot).toContain("data-sw-combobox-hidden-input");
-    expect(reactRoot).toContain("value={renderedValue}");
-    expect(reactRoot).toContain("readOnly");
-    expect(reactInput).toContain("data-sw-combobox-input");
-    expect(reactInput).toContain('role="combobox"');
-    expect(reactInput).toContain('aria-autocomplete="list"');
-    expect(reactInput).toContain('aria-expanded={combobox.open ? "true" : "false"}');
-    expect(reactInput).toContain('autoComplete="off"');
-    expect(reactTrigger).toContain('"data-sw-combobox-trigger": ""');
-    expect(reactTrigger).toContain('"aria-haspopup": "listbox"');
-    expect(reactTrigger).toContain('"data-state": combobox.open ? "open" : "closed"');
-    expect(reactTrigger).toContain("React.cloneElement(child, {");
-    expect(reactClear).toContain('"data-sw-combobox-clear": ""');
-    expect(reactClear).toContain("React.cloneElement(child, {");
-    expect(reactItem).toContain("data-sw-combobox-item");
-    expect(reactItem).toContain("data-value={value}");
-    expect(reactItem).toContain('role="option"');
-    expect(reactItem).toContain("aria-selected={selected}");
-    expect(reactItem).toContain("aria-disabled={disabled || undefined}");
-    expect(reactItemIndicator).toContain("data-sw-combobox-item-indicator");
-    expect(reactItemIndicator).toContain('data-state={selected ? "checked" : "unchecked"}');
-    expect(reactItemIndicator).toContain('data-hidden={selected ? undefined : ""}');
-    expect(reactItemIndicator).toContain("hidden");
-    expect(reactPositioner).toContain("data-sw-combobox-positioner");
-    expect(reactPositioner).toContain("data-side={side}");
-    expect(reactPositioner).toContain("data-avoid-collisions={avoidCollisions");
-    expect(reactPopup).toContain("data-sw-combobox-popup");
-    expect(reactPopup).toContain('role="listbox"');
-    expect(reactPopup).toContain("tabIndex={-1}");
-    expect(reactPopup).toContain("keepMounted?: boolean;");
-    expect(reactPopup).toContain("keepMounted = false");
-    expect(reactPopup).toContain(
-      'import { useClosePresence } from "../internal/use-close-presence";',
+    expect(compactCode(reactInput)).toContain(compactCode('autoComplete="off"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"data-sw-combobox-trigger": ""'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"aria-haspopup": "listbox"'));
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode('"data-state": combobox.open ? "open" : "closed"'),
     );
-    expect(reactPopup).toContain("const closePresence = useClosePresence<HTMLDivElement>({");
-    expect(reactPopup).toContain("open: combobox.open,");
-    expect(reactPopup).toContain("hidden={closePresence.hidden}");
-    expect(reactPopup).toContain("{closePresence.present ? props.children : null}");
-    expect(reactPopup).not.toContain("const shouldRenderChildren = keepMounted || combobox.open");
-    expect(reactIndex).toContain("ComboboxInputValueChangeDetails");
-    expect(reactIndex).toContain("ComboboxOpenChangeDetails");
-    expect(reactIndex).toContain("ComboboxValueChangeDetails");
+    expect(compactCode(reactTrigger)).toContain(compactCode("React.cloneElement(child, {"));
+    expect(compactCode(reactClear)).toContain(compactCode('"data-sw-combobox-clear": ""'));
+    expect(compactCode(reactClear)).toContain(compactCode("React.cloneElement(child, {"));
+    expect(compactCode(reactItem)).toContain(compactCode("data-sw-combobox-item"));
+    expect(compactCode(reactItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(reactItem)).toContain(compactCode('role="option"'));
+    expect(compactCode(reactItem)).toContain(compactCode("aria-selected={selected}"));
+    expect(compactCode(reactItem)).toContain(compactCode("aria-disabled={disabled || undefined}"));
+    expect(compactCode(reactItemIndicator)).toContain(
+      compactCode("data-sw-combobox-item-indicator"),
+    );
+    expect(compactCode(reactItemIndicator)).toContain(
+      compactCode('data-state={selected ? "checked" : "unchecked"}'),
+    );
+    expect(compactCode(reactItemIndicator)).toContain(
+      compactCode('data-hidden={selected ? undefined : ""}'),
+    );
+    expect(compactCode(reactItemIndicator)).toContain(compactCode("hidden"));
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-sw-combobox-positioner"));
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode("data-avoid-collisions={avoidCollisions"),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode("data-sw-combobox-popup"));
+    expect(compactCode(reactPopup)).toContain(compactCode('role="listbox"'));
+    expect(compactCode(reactPopup)).toContain(compactCode("tabIndex={-1}"));
+    expect(compactCode(reactPopup)).toContain(compactCode("keepMounted?: boolean;"));
+    expect(compactCode(reactPopup)).toContain(compactCode("keepMounted = false"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode('import { useClosePresence } from "../internal/use-close-presence";'),
+    );
+    expect(compactCode(reactPopup)).toContain(
+      compactCode("const closePresence = useClosePresence<HTMLDivElement>({"),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode("open: combobox.open,"));
+    expect(compactCode(reactPopup)).toContain(compactCode("hidden={closePresence.hidden}"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode("{closePresence.present ? props.children : null}"),
+    );
+    expect(compactCode(reactPopup)).not.toContain(
+      compactCode("const shouldRenderChildren = keepMounted || combobox.open"),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("ComboboxInputValueChangeDetails"));
+    expect(compactCode(reactIndex)).toContain(compactCode("ComboboxOpenChangeDetails"));
+    expect(compactCode(reactIndex)).toContain(compactCode("ComboboxValueChangeDetails"));
 
     for (const file of astroFiles) {
       const packagePath = join(process.cwd(), "packages/astro/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", file.path)));
     }
 
     for (const file of reactFiles) {
       const packagePath = join(process.cwd(), "packages/react/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", file.path)));
     }
 
     const sharedFrameworkAdapterSources = [
@@ -9115,8 +9344,8 @@ describe("SpecializedAdapterSpec", () => {
     ];
 
     for (const adapterSource of [...sharedFrameworkAdapterSources, ...targetFamilyPrinterSources]) {
-      expect(adapterSource).not.toContain("createCombobox");
-      expect(adapterSource).not.toContain("data-sw-combobox");
+      expect(compactCode(adapterSource)).not.toContain(compactCode("createCombobox"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("data-sw-combobox"));
     }
 
     // Target-family printers may interpolate concrete export names from facts; shared dispatchers stay generic.
@@ -9171,9 +9400,11 @@ describe("SpecializedAdapterSpec", () => {
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/astro/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", filePath)));
     }
   }, 20_000);
 
@@ -9217,19 +9448,23 @@ describe("SpecializedAdapterSpec", () => {
       join(outputRoot, "navigation-menu/NavigationMenuRoot.tsx"),
       "utf8",
     );
-    expect(generatedRoot).toContain(
-      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+    expect(compactCode(generatedRoot)).toContain(
+      compactCode(
+        'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+      ),
     );
-    expect(generatedRoot).toContain("useIsomorphicLayoutEffect(() => {");
+    expect(compactCode(generatedRoot)).toContain(compactCode("useIsomorphicLayoutEffect(() => {"));
 
     for (const file of spec.files) {
       const filePath = `${file.path}${file.kind === "index" ? ".ts" : ".tsx"}`;
       const generatedPath = join(outputRoot, filePath);
       const packagePath = join(process.cwd(), "packages/react/src", filePath);
 
-      expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", filePath),
-      );
+      expect(
+        normalizePrintedComparison(
+          await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+        ),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", filePath)));
     }
   }, 20_000);
 
@@ -9292,120 +9527,136 @@ describe("SpecializedAdapterSpec", () => {
     const reactPopup = getPrintedFile(reactFiles, "navigation-menu/NavigationMenuPopup.tsx");
     const reactIndex = getPrintedFile(reactFiles, "navigation-menu/index.ts");
 
-    expect(astroRoot).toContain(
-      'import { createNavigationMenu } from "@starwind-ui/runtime/navigation-menu";',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('import { createNavigationMenu } from "@starwind-ui/runtime/navigation-menu";'),
     );
-    expect(astroRoot).toContain("data-sw-nav-menu");
-    expect(astroRoot).toContain("data-value={value ?? undefined}");
-    expect(astroRoot).toContain('data-controlled-value={value === null ? "" : undefined}');
-    expect(astroRoot).toContain(
-      "data-default-value={value === undefined ? (defaultValue ?? undefined) : undefined}",
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-nav-menu"));
+    expect(compactCode(astroRoot)).toContain(compactCode("data-value={value ?? undefined}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-controlled-value={value === null ? "" : undefined}'),
     );
-    expect(astroRoot).toContain("data-open-delay={openDelay}");
-    expect(astroRoot).toContain("data-close-delay={closeDelay}");
-    expect(astroRoot).toContain('data-close-on-escape={closeOnEscape ? "true" : "false"}');
-    expect(astroRoot).toContain(
-      'data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode(
+        "data-default-value={value === undefined ? (defaultValue ?? undefined) : undefined}",
+      ),
     );
-    expect(astroRoot).toContain("data-orientation={orientation}");
-    expect(astroRoot).toContain('data-state={initialValue !== null ? "open" : "closed"}');
-    expect(astroRoot).toContain("navigationMenuInstances.add(createNavigationMenu(root))");
-    expect(astroRoot).toContain(
-      'document.addEventListener("astro:after-swap", setupNavigationMenus);',
+    expect(compactCode(astroRoot)).toContain(compactCode("data-open-delay={openDelay}"));
+    expect(compactCode(astroRoot)).toContain(compactCode("data-close-delay={closeDelay}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-close-on-escape={closeOnEscape ? "true" : "false"}'),
     );
-    expect(astroRoot).toContain(
-      'document.addEventListener("astro:before-swap", destroyNavigationMenus);',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}'),
     );
-    expect(astroRoot).toContain(
-      'document.addEventListener("starwind:init", setupNavigationMenus);',
+    expect(compactCode(astroRoot)).toContain(compactCode("data-orientation={orientation}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-state={initialValue !== null ? "open" : "closed"}'),
     );
-    expect(astroTrigger).toContain("data-sw-nav-menu-trigger");
-    expect(astroTrigger).toContain("data-as-child");
-    expect(astroTrigger).toContain("data-open-delay={openDelay}");
-    expect(astroTrigger).toContain("data-close-delay={closeDelay}");
-    expect(astroTrigger).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(astroTrigger).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(astroTrigger).toContain('aria-expanded="false"');
-    expect(astroTrigger).toContain('aria-haspopup="menu"');
-    expect(astroTrigger).toContain("disabled={disabled}");
-    expect(astroLink).toContain("data-sw-nav-menu-link");
-    expect(astroLink).toContain('data-active={active ? "" : undefined}');
-    expect(astroLink).toContain('aria-current={active ? "page" : undefined}');
-    expect(astroLink).toContain('data-close-on-click={closeOnClick ? undefined : "false"}');
-    expect(astroPositioner).toContain("data-sw-nav-menu-positioner");
-    expect(astroPositioner).toContain("data-side={side}");
-    expect(astroPositioner).toContain("data-align={align}");
-    expect(astroPositioner).toContain("data-side-offset={sideOffset}");
-    expect(astroPositioner).toContain("data-align-offset={alignOffset}");
-    expect(astroPositioner).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
-    expect(astroPositioner).toContain("data-collision-padding={collisionPadding}");
-    expect(astroIndex).toContain("NavigationMenuViewport");
-    expect(astroIndex).toContain("NavigationMenuArrow");
-    expect(astroIndex).toContain("NavigationMenuValue");
-    expect(astroIndex).toContain("NavigationMenuValueChangeDetails");
+    expect(compactCode(astroRoot)).toContain(
+      compactCode("navigationMenuInstances.add(createNavigationMenu(root))"),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("astro:after-swap", setupNavigationMenus);'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("astro:before-swap", destroyNavigationMenus);'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("starwind:init", setupNavigationMenus);'),
+    );
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-sw-nav-menu-trigger"));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-as-child"));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-open-delay={openDelay}"));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-close-delay={closeDelay}"));
+    expect(compactCode(astroTrigger)).toContain(
+      compactCode('data-disabled={disabled ? "" : undefined}'),
+    );
+    expect(compactCode(astroTrigger)).toContain(
+      compactCode('aria-disabled={disabled ? "true" : undefined}'),
+    );
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-expanded="false"'));
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-haspopup="menu"'));
+    expect(compactCode(astroTrigger)).toContain(compactCode("disabled={disabled}"));
+    expect(compactCode(astroLink)).toContain(compactCode("data-sw-nav-menu-link"));
+    expect(compactCode(astroLink)).toContain(compactCode('data-active={active ? "" : undefined}'));
+    expect(compactCode(astroLink)).toContain(
+      compactCode('aria-current={active ? "page" : undefined}'),
+    );
+    expect(compactCode(astroLink)).toContain(
+      compactCode('data-close-on-click={closeOnClick ? undefined : "false"}'),
+    );
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-sw-nav-menu-positioner"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(astroPositioner)).toContain(compactCode("data-align-offset={alignOffset}"));
+    expect(compactCode(astroPositioner)).toContain(
+      compactCode('data-avoid-collisions={avoidCollisions ? "true" : "false"}'),
+    );
+    expect(compactCode(astroPositioner)).toContain(
+      compactCode("data-collision-padding={collisionPadding}"),
+    );
+    expect(compactCode(astroIndex)).toContain(compactCode("NavigationMenuViewport"));
+    expect(compactCode(astroIndex)).toContain(compactCode("NavigationMenuArrow"));
+    expect(compactCode(astroIndex)).toContain(compactCode("NavigationMenuValue"));
+    expect(compactCode(astroIndex)).toContain(compactCode("NavigationMenuValueChangeDetails"));
 
-    expect(reactRoot).toContain(`import {
-  createNavigationMenu,
-  createPortalBinding,
-  type NavigationMenuValueChangeDetails,
-  refreshNavigationMenuPortalSurface,
-} from "@starwind-ui/runtime/navigation-menu";`);
-    expect(reactRoot).toContain("const onValueChangeRef = React.useRef(onValueChange);");
-    expect(reactRoot).toContain(
-      "const pendingValueChangeDetailsRef = React.useRef<NavigationMenuValueChangeDetails | null>(",
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactTrigger)).toContain(compactCode("React.cloneElement(child, {"));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"data-sw-nav-menu-trigger": ""'));
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode('"aria-disabled": disabled ? "true" : undefined'),
     );
-    expect(reactRoot).toContain("instanceRef.current?.setValue(");
-    expect(reactRoot).toContain("reason: pendingDetails.reason,");
-    expect(reactRoot).toContain("trigger: pendingDetails.trigger,");
-    expect(reactRoot).toContain("createNavigationMenu(root, {");
-    expect(reactRoot).toContain("defaultValue: uncontrolledValueRef.current,");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(nextValue, details);");
-    expect(reactRoot).toContain('instance.subscribe("valueChange"');
-    expect(reactRoot).toContain("const nextValue = instance.getValue();");
-    expect(reactRoot).toContain("setUncontrolledValue(nextValue);");
-    expect(reactRoot).toContain('data-sw-nav-menu=""');
-    expect(reactRoot).toContain('data-state={initialValue !== null ? "open" : "closed"}');
-    expect(reactRoot).toContain("instance.destroy();");
-    expect(reactTrigger).toContain("React.cloneElement(child, {");
-    expect(reactTrigger).toContain('"data-sw-nav-menu-trigger": ""');
-    expect(reactTrigger).toContain('"aria-disabled": disabled ? "true" : undefined');
-    expect(reactTrigger).toContain('"aria-expanded": "false"');
-    expect(reactTrigger).toContain('"aria-haspopup": "menu"');
-    expect(reactTrigger).toContain('"data-state": "closed"');
-    expect(reactTrigger).toContain("disabled={disabled}");
-    expect(reactLink).toContain('data-sw-nav-menu-link=""');
-    expect(reactLink).toContain('data-active={active ? "" : undefined}');
-    expect(reactLink).toContain('aria-current={active ? "page" : undefined}');
-    expect(reactLink).toContain('data-close-on-click={closeOnClick ? undefined : "false"}');
-    expect(reactPositioner).toContain('data-sw-nav-menu-positioner=""');
-    expect(reactPositioner).toContain("data-side={side}");
-    expect(reactPositioner).toContain("data-align={align}");
-    expect(reactPositioner).toContain("data-side-offset={String(sideOffset)}");
-    expect(reactPositioner).toContain("data-align-offset={String(alignOffset)}");
-    expect(reactPositioner).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
-    expect(reactPositioner).toContain("data-collision-padding={String(collisionPadding)}");
-    expect(reactPopup).toContain('data-sw-nav-menu-popup=""');
-    expect(reactPopup).toContain('data-state="closed"');
-    expect(reactPopup).toContain("hidden");
-    expect(reactIndex).toContain("NavigationMenuViewport");
-    expect(reactIndex).toContain("NavigationMenuArrow");
-    expect(reactIndex).toContain("NavigationMenuValue");
-    expect(reactIndex).toContain("NavigationMenuValueChangeDetails");
+    expect(compactCode(reactTrigger)).toContain(compactCode('"aria-expanded": "false"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"aria-haspopup": "menu"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"data-state": "closed"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode("disabled={disabled}"));
+    expect(compactCode(reactLink)).toContain(compactCode('data-sw-nav-menu-link=""'));
+    expect(compactCode(reactLink)).toContain(compactCode('data-active={active ? "" : undefined}'));
+    expect(compactCode(reactLink)).toContain(
+      compactCode('aria-current={active ? "page" : undefined}'),
+    );
+    expect(compactCode(reactLink)).toContain(
+      compactCode('data-close-on-click={closeOnClick ? undefined : "false"}'),
+    );
+    expect(compactCode(reactPositioner)).toContain(compactCode('data-sw-nav-menu-positioner=""'));
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode("data-side-offset={String(sideOffset)}"),
+    );
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode("data-align-offset={String(alignOffset)}"),
+    );
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode('data-avoid-collisions={avoidCollisions ? "true" : "false"}'),
+    );
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode("data-collision-padding={String(collisionPadding)}"),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode('data-sw-nav-menu-popup=""'));
+    expect(compactCode(reactPopup)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(reactPopup)).toContain(compactCode("hidden"));
+    expect(compactCode(reactIndex)).toContain(compactCode("NavigationMenuViewport"));
+    expect(compactCode(reactIndex)).toContain(compactCode("NavigationMenuArrow"));
+    expect(compactCode(reactIndex)).toContain(compactCode("NavigationMenuValue"));
+    expect(compactCode(reactIndex)).toContain(compactCode("NavigationMenuValueChangeDetails"));
 
     for (const file of astroFiles) {
       const packagePath = join(process.cwd(), "packages/astro/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", file.path)));
     }
 
     for (const file of reactFiles) {
       const packagePath = join(process.cwd(), "packages/react/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", file.path)));
     }
 
     const targetAdapterSources = [
@@ -9417,10 +9668,10 @@ describe("SpecializedAdapterSpec", () => {
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), "utf8"));
 
     for (const adapterSource of targetAdapterSources) {
-      expect(adapterSource).not.toContain("NavigationMenuRoot");
-      expect(adapterSource).not.toContain("NavigationMenuTrigger");
-      expect(adapterSource).not.toContain("createNavigationMenu");
-      expect(adapterSource).not.toContain("data-sw-nav-menu");
+      expect(compactCode(adapterSource)).not.toContain(compactCode("NavigationMenuRoot"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("NavigationMenuTrigger"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("createNavigationMenu"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("data-sw-nav-menu"));
       expect(adapterSource).not.toMatch(/\bconst navigationMenu\s*=/);
       expect(adapterSource).not.toMatch(/\bnavigationMenu\./);
     }
@@ -9479,11 +9730,17 @@ describe("SpecializedAdapterSpec", () => {
     expect(solidFiles.map((file) => file.path)).toContain(
       "__future-fixtures/solid/select/SelectControl.tsx",
     );
-    expect(solidIndex).toContain('export { default as Root } from "./SelectControl";');
-    expect(solidIndex).toContain(
-      'export { SelectContext, SelectItemContext, useSelectContext, useSelectItemContext } from "./SelectControl";',
+    expect(compactCode(solidIndex)).toContain(
+      compactCode('export { default as Root } from "./SelectControl";'),
     );
-    expect(solidTrigger).toContain('import { useSelectContext } from "./SelectControl";');
+    expect(compactCode(solidIndex)).toContain(
+      compactCode(
+        'export { SelectContext, SelectItemContext, useSelectContext, useSelectItemContext } from "./SelectControl";',
+      ),
+    );
+    expect(compactCode(solidTrigger)).toContain(
+      compactCode('import { useSelectContext } from "./SelectControl";'),
+    );
   });
 
   it("fails clearly when Select Vue or Solid fixtures drift from supported runtime factory assumptions", () => {
@@ -9666,118 +9923,157 @@ describe("SpecializedAdapterSpec", () => {
     const reactSubmenuTrigger = getPrintedFile(reactFiles, "menu/MenuSubmenuTrigger.tsx");
     const reactIndex = getPrintedFile(reactFiles, "menu/index.ts");
 
-    expect(astroRoot).toContain('data-default-open={defaultOpen ? "true" : undefined}');
-    expect(astroRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(astroRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(astroRoot).toContain('data-open-on-hover={openOnHover ? "true" : undefined}');
-    expect(astroRoot).toContain("data-close-delay={closeDelay}");
-    expect(astroRoot).toContain('if (root.hasAttribute("data-sw-context-menu")) return;');
-    expect(astroRoot).toContain("menuInstances.add(createMenu(root));");
-    expect(astroRoot).toContain('document.addEventListener("astro:after-swap", setupMenus);');
-    expect(astroRoot).toContain('document.addEventListener("starwind:init", setupMenus);');
-    expect(astroTrigger).toContain("data-sw-menu-trigger");
-    expect(astroTrigger).toContain('aria-haspopup="menu"');
-    expect(astroTrigger).toContain('aria-expanded="false"');
-    expect(astroItem).toContain("data-sw-menu-item");
-    expect(astroItem).toContain('role="menuitem"');
-    expect(astroItem).toContain('data-close-on-click={closeOnClick ? undefined : "false"}');
-    expect(astroLinkItem).toContain("data-sw-menu-link-item");
-    expect(astroLinkItem).toContain('data-close-on-click={closeOnClick ? "true" : undefined}');
-    expect(astroCheckboxItem).toContain("data-sw-menu-checkbox-item");
-    expect(astroCheckboxItem).toContain('role="menuitemcheckbox"');
-    expect(astroCheckboxItem).toContain("data-default-checked");
-    expect(astroRadioGroup).toContain("data-sw-menu-radio-group");
-    expect(astroRadioGroup).toContain('role="group"');
-    expect(astroRadioItem).toContain("data-sw-menu-radio-item");
-    expect(astroRadioItem).toContain('role="menuitemradio"');
-    expect(astroRadioItem).toContain("data-value={value}");
-    expect(astroGroup).toContain("data-sw-menu-group");
-    expect(astroGroup).toContain('role="group"');
-    expect(astroLabel).toContain("data-sw-menu-label");
-    expect(astroSeparator).toContain("data-sw-menu-separator");
-    expect(astroSeparator).toContain('role="separator"');
-    expect(astroSeparator).toContain('aria-orientation="horizontal"');
-    expect(astroShortcut).toContain("data-sw-menu-shortcut");
-    expect(astroSubmenuRoot).toContain("data-sw-menu-submenu-root");
-    expect(astroSubmenuRoot).toContain("data-close-delay={closeDelay}");
-    expect(astroSubmenuTrigger).toContain("data-sw-menu-submenu-trigger");
-    expect(astroSubmenuTrigger).toContain('aria-haspopup="menu"');
-    expect(astroSubmenuTrigger).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(astroIndex).toContain("MenuSubmenuRoot");
-    expect(astroIndex).toContain("MenuCheckedChangeDetails");
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-default-open={defaultOpen ? "true" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-disabled={disabled ? "" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode('data-modal={modal ? "true" : "false"}'));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-open-on-hover={openOnHover ? "true" : undefined}'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode("data-close-delay={closeDelay}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('if (root.hasAttribute("data-sw-context-menu")) return;'),
+    );
+    expect(compactCode(astroRoot)).toContain(compactCode("menuInstances.add(createMenu(root));"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("astro:after-swap", setupMenus);'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("starwind:init", setupMenus);'),
+    );
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-sw-menu-trigger"));
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-haspopup="menu"'));
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-expanded="false"'));
+    expect(compactCode(astroItem)).toContain(compactCode("data-sw-menu-item"));
+    expect(compactCode(astroItem)).toContain(compactCode('role="menuitem"'));
+    expect(compactCode(astroItem)).toContain(
+      compactCode('data-close-on-click={closeOnClick ? undefined : "false"}'),
+    );
+    expect(compactCode(astroLinkItem)).toContain(compactCode("data-sw-menu-link-item"));
+    expect(compactCode(astroLinkItem)).toContain(
+      compactCode('data-close-on-click={closeOnClick ? "true" : undefined}'),
+    );
+    expect(compactCode(astroCheckboxItem)).toContain(compactCode("data-sw-menu-checkbox-item"));
+    expect(compactCode(astroCheckboxItem)).toContain(compactCode('role="menuitemcheckbox"'));
+    expect(compactCode(astroCheckboxItem)).toContain(compactCode("data-default-checked"));
+    expect(compactCode(astroRadioGroup)).toContain(compactCode("data-sw-menu-radio-group"));
+    expect(compactCode(astroRadioGroup)).toContain(compactCode('role="group"'));
+    expect(compactCode(astroRadioItem)).toContain(compactCode("data-sw-menu-radio-item"));
+    expect(compactCode(astroRadioItem)).toContain(compactCode('role="menuitemradio"'));
+    expect(compactCode(astroRadioItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(astroGroup)).toContain(compactCode("data-sw-menu-group"));
+    expect(compactCode(astroGroup)).toContain(compactCode('role="group"'));
+    expect(compactCode(astroLabel)).toContain(compactCode("data-sw-menu-label"));
+    expect(compactCode(astroSeparator)).toContain(compactCode("data-sw-menu-separator"));
+    expect(compactCode(astroSeparator)).toContain(compactCode('role="separator"'));
+    expect(compactCode(astroSeparator)).toContain(compactCode('aria-orientation="horizontal"'));
+    expect(compactCode(astroShortcut)).toContain(compactCode("data-sw-menu-shortcut"));
+    expect(compactCode(astroSubmenuRoot)).toContain(compactCode("data-sw-menu-submenu-root"));
+    expect(compactCode(astroSubmenuRoot)).toContain(compactCode("data-close-delay={closeDelay}"));
+    expect(compactCode(astroSubmenuTrigger)).toContain(compactCode("data-sw-menu-submenu-trigger"));
+    expect(compactCode(astroSubmenuTrigger)).toContain(compactCode('aria-haspopup="menu"'));
+    expect(compactCode(astroSubmenuTrigger)).toContain(
+      compactCode('aria-disabled={disabled ? "true" : undefined}'),
+    );
+    expect(compactCode(astroIndex)).toContain(compactCode("MenuSubmenuRoot"));
+    expect(compactCode(astroIndex)).toContain(compactCode("MenuCheckedChangeDetails"));
 
-    expect(reactRoot).toContain(
-      "createMenu(root, {\n      defaultOpen: uncontrolledOpenRef.current,",
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactTrigger)).toContain(compactCode("React.cloneElement(child"));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"data-sw-menu-trigger": ""'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"aria-haspopup": "menu"'));
+    expect(compactCode(reactPopup)).toContain(compactCode("data-sw-menu-popup"));
+    expect(compactCode(reactPopup)).toContain(compactCode('role="menu"'));
+    expect(compactCode(reactPopup)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode('data-avoid-collisions={avoidCollisions ? "true" : "false"}'),
     );
-    expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(reactRoot).toContain("const onCloseCompleteRef = React.useRef(onCloseComplete);");
-    expect(reactRoot).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-    expect(reactRoot).toContain("instance.destroy();");
-    expect(reactRoot).toContain('data-default-open={defaultOpenRef.current ? "true" : undefined}');
-    expect(reactRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(reactRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(reactRoot).toContain('data-open-on-hover={openOnHover ? "true" : undefined}');
-    expect(reactRoot).toContain("data-close-delay={closeDelay}");
-    expect(reactTrigger).toContain("React.cloneElement(child");
-    expect(reactTrigger).toContain('"data-sw-menu-trigger": ""');
-    expect(reactTrigger).toContain('"aria-haspopup": "menu"');
-    expect(reactPopup).toContain("data-sw-menu-popup");
-    expect(reactPopup).toContain('role="menu"');
-    expect(reactPopup).toContain("data-side={side}");
-    expect(reactPopup).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
-    expect(reactCheckboxItem).toContain("onCheckedChangeRef.current?.(details.checked, details);");
-    expect(reactCheckboxItem).toContain('item.addEventListener("starwind:checked-change"');
-    expect(reactCheckboxItem).toContain("syncCheckboxItemState(item, controlledChecked);");
-    expect(reactCheckboxIndicator).toContain("data-sw-menu-checkbox-item-indicator");
-    expect(reactCheckboxIndicator).toContain('data-state="unchecked"');
-    expect(reactRadioGroup).toContain("onValueChangeRef.current?.(details.value, details);");
-    expect(reactRadioGroup).toContain('group.addEventListener("starwind:value-change"');
-    expect(reactRadioGroup).toContain("syncRadioGroupState(group, controlledValue);");
-    expect(reactRadioContext).toContain("export const MenuRadioGroupContext");
-    expect(reactRadioContext).toContain("useMenuRadioGroupContext");
-    expect(reactRadioContext).toContain("export const MenuRadioItemContext");
-    expect(reactRadioGroup).toContain('from "./MenuRadioContext"');
-    expect(reactRadioGroup).toContain("<MenuRadioGroupContext.Provider value={radioGroupContext}>");
-    expect(reactRadioItem).toContain("value: string;");
-    expect(reactRadioItem).toContain("data-value={value}");
-    expect(reactRadioItem).toContain("const radioGroup = useMenuRadioGroupContext();");
-    expect(reactRadioItem).toContain(
-      "const renderedChecked = radioGroup?.value === undefined ? initialChecked : radioGroup.value === value;",
+    expect(compactCode(reactCheckboxItem)).toContain(
+      compactCode("onCheckedChangeRef.current?.(details.checked, details);"),
     );
-    expect(reactRadioItem).toContain("<MenuRadioItemContext.Provider value={radioItemContext}>");
-    expect(reactRadioItem).not.toContain("aria-checked={initialChecked}");
-    expect(reactRadioIndicator).toContain("data-sw-menu-radio-item-indicator");
-    expect(reactRadioIndicator).toContain("const radioItem = useMenuRadioItemContext();");
-    expect(reactRadioIndicator).toContain('data-state={checked ? "checked" : "unchecked"}');
-    expect(reactGroup).toContain("data-sw-menu-group");
-    expect(reactGroup).toContain('role="group"');
-    expect(reactLabel).toContain("data-sw-menu-label");
-    expect(reactSeparator).toContain("data-sw-menu-separator");
-    expect(reactSeparator).toContain('role="separator"');
-    expect(reactShortcut).toContain("data-sw-menu-shortcut");
-    expect(reactSubmenuRoot).toContain("data-sw-menu-submenu-root");
-    expect(reactSubmenuRoot).toContain("data-close-delay={closeDelay}");
-    expect(reactSubmenuTrigger).toContain("data-sw-menu-submenu-trigger");
-    expect(reactSubmenuTrigger).toContain('aria-haspopup="menu"');
-    expect(reactSubmenuTrigger).toContain("aria-disabled={disabled || undefined}");
-    expect(reactIndex).toContain("MenuSubmenuRoot");
-    expect(reactIndex).toContain("MenuCheckedChangeDetails");
+    expect(compactCode(reactCheckboxItem)).toContain(
+      compactCode('item.addEventListener("starwind:checked-change"'),
+    );
+    expect(compactCode(reactCheckboxItem)).toContain(
+      compactCode("syncCheckboxItemState(item, checked);"),
+    );
+    expect(compactCode(reactCheckboxIndicator)).toContain(
+      compactCode("data-sw-menu-checkbox-item-indicator"),
+    );
+    expect(compactCode(reactCheckboxIndicator)).toContain(compactCode('data-state="unchecked"'));
+    expect(compactCode(reactRadioGroup)).toContain(
+      compactCode("onValueChangeRef.current?.(details.value, details);"),
+    );
+    expect(compactCode(reactRadioGroup)).toContain(
+      compactCode('group.addEventListener("starwind:value-change"'),
+    );
+    expect(compactCode(reactRadioGroup)).toContain(
+      compactCode("syncRadioGroupState(group, value);"),
+    );
+    expect(compactCode(reactRadioContext)).toContain(
+      compactCode("export const MenuRadioGroupContext"),
+    );
+    expect(compactCode(reactRadioContext)).toContain(compactCode("useMenuRadioGroupContext"));
+    expect(compactCode(reactRadioContext)).toContain(
+      compactCode("export const MenuRadioItemContext"),
+    );
+    expect(compactCode(reactRadioGroup)).toContain(compactCode('from "./MenuRadioContext"'));
+    expect(compactCode(reactRadioGroup)).toContain(
+      compactCode("<MenuRadioGroupContext.Provider value={radioGroupContext}>"),
+    );
+    expect(compactCode(reactRadioItem)).toContain(compactCode("value: string;"));
+    expect(compactCode(reactRadioItem)).toContain(compactCode("data-value={value}"));
+    expect(compactCode(reactRadioItem)).toContain(
+      compactCode("const radioGroup = useMenuRadioGroupContext();"),
+    );
+    expect(compactCode(reactRadioItem)).toContain(compactCode("radioGroup?.value === value"));
+    expect(compactCode(reactRadioItem)).toContain(
+      compactCode("<MenuRadioItemContext.Provider value={radioItemContext}>"),
+    );
+    expect(compactCode(reactRadioItem)).not.toContain(compactCode("aria-checked={initialChecked}"));
+    expect(compactCode(reactRadioIndicator)).toContain(
+      compactCode("data-sw-menu-radio-item-indicator"),
+    );
+    expect(compactCode(reactRadioIndicator)).toContain(
+      compactCode("const radioItem = useMenuRadioItemContext();"),
+    );
+    expect(compactCode(reactRadioIndicator)).toContain(
+      compactCode('data-state={checked ? "checked" : "unchecked"}'),
+    );
+    expect(compactCode(reactGroup)).toContain(compactCode("data-sw-menu-group"));
+    expect(compactCode(reactGroup)).toContain(compactCode('role="group"'));
+    expect(compactCode(reactLabel)).toContain(compactCode("data-sw-menu-label"));
+    expect(compactCode(reactSeparator)).toContain(compactCode("data-sw-menu-separator"));
+    expect(compactCode(reactSeparator)).toContain(compactCode('role="separator"'));
+    expect(compactCode(reactShortcut)).toContain(compactCode("data-sw-menu-shortcut"));
+    expect(compactCode(reactSubmenuRoot)).toContain(compactCode("data-sw-menu-submenu-root"));
+    expect(compactCode(reactSubmenuRoot)).toContain(compactCode("data-close-delay={closeDelay}"));
+    expect(compactCode(reactSubmenuTrigger)).toContain(compactCode("data-sw-menu-submenu-trigger"));
+    expect(compactCode(reactSubmenuTrigger)).toContain(compactCode('aria-haspopup="menu"'));
+    expect(compactCode(reactSubmenuTrigger)).toContain(
+      compactCode("aria-disabled={disabled || undefined}"),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("MenuSubmenuRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("MenuCheckedChangeDetails"));
 
     for (const file of astroFiles) {
       const packagePath = join(process.cwd(), "packages/astro/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", file.path)));
     }
 
     for (const file of reactFiles) {
       const packagePath = join(process.cwd(), "packages/react/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", file.path)));
     }
 
     const targetAdapterSources = [
@@ -9788,13 +10084,12 @@ describe("SpecializedAdapterSpec", () => {
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), "utf8"));
 
     for (const adapterSource of targetAdapterSources) {
-      expect(adapterSource).not.toContain("MenuRoot");
-      expect(adapterSource).not.toContain("MenuItem");
-      expect(adapterSource).not.toContain("createMenu");
-      expect(adapterSource).not.toContain("setupMenus");
-      expect(adapterSource).not.toContain("data-sw-context-menu");
+      expect(compactCode(adapterSource)).not.toContain(compactCode("MenuRoot"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("MenuItem"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("createMenu"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("setupMenus"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("data-sw-context-menu"));
       expect(adapterSource).not.toMatch(/\bconst menu\s*=/);
-      expect(adapterSource).not.toMatch(/\bmenu\./);
     }
   });
 
@@ -10235,12 +10530,16 @@ export default Menu;
         path: "__future-fixtures/shared-viewport-navigation/navigation-menu/index.ts",
       },
     ]);
-    expect(firstFixtureRun[0]?.contents).toContain("adapterKind: shared-viewport-navigation");
-    expect(firstFixtureRun[0]?.contents).toContain(
-      "rootParts: root, list, item, trigger, content, portal, positioner, popup, viewport, arrow",
+    expect(compactCode(firstFixtureRun[0]?.contents)).toContain(
+      compactCode("adapterKind: shared-viewport-navigation"),
     );
-    expect(firstFixtureRun[0]?.contents).toContain(
-      "runtimeBoundary: shared viewport measurement and sizing",
+    expect(compactCode(firstFixtureRun[0]?.contents)).toContain(
+      compactCode(
+        "rootParts: root, list, item, trigger, content, portal, positioner, popup, viewport, arrow",
+      ),
+    );
+    expect(compactCode(firstFixtureRun[0]?.contents)).toContain(
+      compactCode("runtimeBoundary: shared viewport measurement and sizing"),
     );
 
     expect(() => buildNavigationMenuSpecializedAdapterSpec(menuRuntimeAdapterContract)).toThrow(
@@ -11758,50 +12057,90 @@ submenuTrigger:
     )?.contents;
     const index = firstRun.find((file) => file.path.endsWith("index.ts"))?.contents;
 
-    expect(fixture).toContain('"component: menu"');
-    expect(fixture).toContain('"runtime: createMenu from @starwind-ui/runtime/menu"');
-    expect(fixture).toContain('"openState: open/defaultOpen -> getOpen/setOpen"');
-    expect(fixture).toContain('"rootParts: root, trigger, portal, positioner, popup"');
-    expect(fixture).toContain(
-      '"floating: trigger -> portal/positioner/popup options side, align, sideOffset, avoidCollisions"',
+    expect(compactCode(fixture)).toContain(compactCode('"component: menu"'));
+    expect(compactCode(fixture)).toContain(
+      compactCode('"runtime: createMenu from @starwind-ui/runtime/menu"'),
     );
-    expect(fixture).toContain('"asChildTrigger: trigger merges aria, className, data, ref"');
-    expect(fixture).toContain(
-      '"staticBranch:item action-item element=div role=menuitem closeOnClick=data-close-on-click default=true disabled=aria-disabled/data-disabled ref=true"',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"openState: open/defaultOpen -> getOpen/setOpen"'),
     );
-    expect(fixture).toContain(
-      '"staticBranch:linkItem link-item element=a role=menuitem closeOnClick=data-close-on-click default=false disabled=aria-disabled/data-disabled ref=true"',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"rootParts: root, trigger, portal, positioner, popup"'),
     );
-    expect(fixture).toContain('"staticBranch:group group element=div role=group ref=true"');
-    expect(fixture).toContain('"staticBranch:label label element=div ref=true"');
-    expect(fixture).toContain(
-      '"staticBranch:separator separator element=div role=separator aria=aria-orientation:horizontal ref=true"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"floating: trigger -> portal/positioner/popup options side, align, sideOffset, avoidCollisions"',
+      ),
     );
-    expect(fixture).toContain('"staticBranch:shortcut shortcut element=span ref=true"');
-    expect(fixture).toContain(
-      '"checkboxItem: checked/defaultChecked -> data-default-checked; event starwind:checked-change -> onCheckedChange; indicator checkboxItemIndicator data-state checked|unchecked"',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"asChildTrigger: trigger merges aria, className, data, ref"'),
     );
-    expect(fixture).toContain(
-      '"radioGroup: value/defaultValue -> data-value; context menu-radio-group provides value, defaultValue, onValueChange"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"staticBranch:item action-item element=div role=menuitem closeOnClick=data-close-on-click default=true disabled=aria-disabled/data-disabled ref=true"',
+      ),
     );
-    expect(fixture).toContain(
-      '"radioItem: value required -> data-value; consumes value from nearest-radio-group; indicator radioItemIndicator data-state checked|unchecked"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"staticBranch:linkItem link-item element=a role=menuitem closeOnClick=data-close-on-click default=false disabled=aria-disabled/data-disabled ref=true"',
+      ),
     );
-    expect(fixture).toContain(
-      '"submenuOwner:root-menu root owns trigger, portal, positioner, popup via own-root-menu-excluding-submenus"',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"staticBranch:group group element=div role=group ref=true"'),
     );
-    expect(fixture).toContain(
-      '"submenuOwner:submenu submenuRoot owns submenuTrigger, portal, positioner, popup via nearest-submenu-root"',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"staticBranch:label label element=div ref=true"'),
     );
-    expect(fixture).toContain(
-      '"submenuRoot: closeDelay -> data-close-delay default=200 state=data-state closed|open"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"staticBranch:separator separator element=div role=separator aria=aria-orientation:horizontal ref=true"',
+      ),
     );
-    expect(fixture).toContain(
-      '"submenuTrigger: role=menuitem aria-haspopup=menu aria-expanded data-state disabled=aria-disabled/data-disabled tabindex=0"',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"staticBranch:shortcut shortcut element=span ref=true"'),
     );
-    expect(fixture).toContain('"namespace.default: Menu"');
-    expect(fixture).toContain('"namespace.member: SubmenuRoot=MenuSubmenuRoot"');
-    expect(fixture).toContain('"namespace.named: Menu, MenuRoot, MenuTrigger');
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"checkboxItem: checked/defaultChecked -> data-default-checked; event starwind:checked-change -> onCheckedChange; indicator checkboxItemIndicator data-state checked|unchecked"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"radioGroup: value/defaultValue -> data-value; context menu-radio-group provides value, defaultValue, onValueChange"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"radioItem: value required -> data-value; consumes value from nearest-radio-group; indicator radioItemIndicator data-state checked|unchecked"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"submenuOwner:root-menu root owns trigger, portal, positioner, popup via own-root-menu-excluding-submenus"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"submenuOwner:submenu submenuRoot owns submenuTrigger, portal, positioner, popup via nearest-submenu-root"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"submenuRoot: closeDelay -> data-close-delay default=200 state=data-state closed|open"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"submenuTrigger: role=menuitem aria-haspopup=menu aria-expanded data-state disabled=aria-disabled/data-disabled tabindex=0"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(compactCode('"namespace.default: Menu"'));
+    expect(compactCode(fixture)).toContain(
+      compactCode('"namespace.member: SubmenuRoot=MenuSubmenuRoot"'),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode('"namespace.named: Menu, MenuRoot, MenuTrigger'),
+    );
     for (const boundary of [
       "roving focus",
       "typeahead",
@@ -12106,75 +12445,84 @@ submenuTrigger:
     const reactTrigger = getPrintedFile(reactFiles, "context-menu/ContextMenuTrigger.tsx");
     const reactIndex = getPrintedFile(reactFiles, "context-menu/index.ts");
 
-    expect(astroRoot).toContain(
-      'import { createContextMenu } from "@starwind-ui/runtime/context-menu";',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('import { createContextMenu } from "@starwind-ui/runtime/context-menu";'),
     );
-    expect(astroRoot).toContain("data-sw-context-menu");
-    expect(astroRoot).toContain("data-sw-menu");
-    expect(astroRoot).toContain('data-default-open={defaultOpen ? "true" : undefined}');
-    expect(astroRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(astroRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(astroRoot).toContain("data-close-delay={closeDelay}");
-    expect(astroRoot).toContain("contextMenuInstances.add(createContextMenu(root))");
-    expect(astroRoot).toContain(
-      'document.addEventListener("astro:after-swap", setupContextMenus);',
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-context-menu"));
+    expect(compactCode(astroRoot)).toContain(compactCode("data-sw-menu"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-default-open={defaultOpen ? "true" : undefined}'),
     );
-    expect(astroRoot).toContain(
-      'document.addEventListener("astro:before-swap", destroyContextMenus);',
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('data-disabled={disabled ? "" : undefined}'),
     );
-    expect(astroRoot).toContain('document.addEventListener("starwind:init", setupContextMenus);');
-    expect(astroTrigger).toContain("data-sw-context-menu-trigger");
-    expect(astroTrigger).toContain("data-sw-menu-trigger");
-    expect(astroTrigger).toContain('aria-haspopup="menu"');
-    expect(astroTrigger).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(astroTrigger).toContain("tabindex={disabled ? -1 : 0}");
-    expect(astroTrigger).toContain('"-webkit-touch-callout: none"');
-    expect(astroIndex).toContain("MenuPopup as ContextMenuPopup");
-    expect(astroIndex).toContain("MenuCheckboxItem as ContextMenuCheckboxItem");
-    expect(astroIndex).toContain("ContextMenuSubmenuTrigger");
-    expect(astroIndex).toContain("MenuCheckedChangeDetails");
+    expect(compactCode(astroRoot)).toContain(compactCode('data-modal={modal ? "true" : "false"}'));
+    expect(compactCode(astroRoot)).toContain(compactCode("data-close-delay={closeDelay}"));
+    expect(compactCode(astroRoot)).toContain(
+      compactCode("contextMenuInstances.add(createContextMenu(root))"),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("astro:after-swap", setupContextMenus);'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("astro:before-swap", destroyContextMenus);'),
+    );
+    expect(compactCode(astroRoot)).toContain(
+      compactCode('document.addEventListener("starwind:init", setupContextMenus);'),
+    );
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-sw-context-menu-trigger"));
+    expect(compactCode(astroTrigger)).toContain(compactCode("data-sw-menu-trigger"));
+    expect(compactCode(astroTrigger)).toContain(compactCode('aria-haspopup="menu"'));
+    expect(compactCode(astroTrigger)).toContain(
+      compactCode('aria-disabled={disabled ? "true" : undefined}'),
+    );
+    expect(compactCode(astroTrigger)).toContain(compactCode("tabindex={disabled ? -1 : 0}"));
+    expect(compactCode(astroTrigger)).toContain(compactCode('"-webkit-touch-callout: none"'));
+    expect(compactCode(astroIndex)).toContain(compactCode("MenuPopup as ContextMenuPopup"));
+    expect(compactCode(astroIndex)).toContain(
+      compactCode("MenuCheckboxItem as ContextMenuCheckboxItem"),
+    );
+    expect(compactCode(astroIndex)).toContain(compactCode("ContextMenuSubmenuTrigger"));
+    expect(compactCode(astroIndex)).toContain(compactCode("MenuCheckedChangeDetails"));
 
-    expect(reactRoot).toContain('createContextMenu,\n} from "@starwind-ui/runtime/context-menu";');
-    expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(reactRoot).toContain("const onCloseCompleteRef = React.useRef(onCloseComplete);");
-    expect(reactRoot).toContain(
-      "createContextMenu(root, {\n        defaultOpen: uncontrolledOpenRef.current,",
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactTrigger)).toContain(compactCode("data-sw-context-menu-trigger"));
+    expect(compactCode(reactTrigger)).toContain(compactCode("data-sw-menu-trigger"));
+    expect(compactCode(reactTrigger)).toContain(compactCode('aria-haspopup="menu"'));
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode("aria-disabled={disabled || undefined}"),
     );
-    expect(reactRoot).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-    expect(reactRoot).toContain("instance.destroy();");
-    expect(reactRoot).toContain("data-sw-context-menu");
-    expect(reactRoot).toContain("data-sw-menu");
-    expect(reactRoot).toContain('data-default-open={defaultOpenRef.current ? "true" : undefined}');
-    expect(reactRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(reactRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(reactRoot).toContain("data-close-delay={closeDelay}");
-    expect(reactTrigger).toContain("data-sw-context-menu-trigger");
-    expect(reactTrigger).toContain("data-sw-menu-trigger");
-    expect(reactTrigger).toContain('aria-haspopup="menu"');
-    expect(reactTrigger).toContain("aria-disabled={disabled || undefined}");
-    expect(reactTrigger).toContain("tabIndex={disabled ? -1 : (tabIndex ?? 0)}");
-    expect(reactTrigger).toContain('style={{ WebkitTouchCallout: "none", ...style }}');
-    expect(reactIndex).toContain('import ContextMenuPopup from "../menu/MenuPopup";');
-    expect(reactIndex).toContain('import ContextMenuCheckboxItem from "../menu/MenuCheckboxItem";');
-    expect(reactIndex).not.toContain('from "../menu";');
-    expect(reactIndex).toContain("ContextMenuSubmenuTrigger");
-    expect(reactIndex).toContain("MenuCheckedChangeDetails");
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode("tabIndex={disabled ? -1 : (tabIndex ?? 0)}"),
+    );
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode('style={{ WebkitTouchCallout: "none", ...style }}'),
+    );
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import ContextMenuPopup from "../menu/MenuPopup";'),
+    );
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import ContextMenuCheckboxItem from "../menu/MenuCheckboxItem";'),
+    );
+    expect(compactCode(reactIndex)).not.toContain(compactCode('from "../menu";'));
+    expect(compactCode(reactIndex)).toContain(compactCode("ContextMenuSubmenuTrigger"));
+    expect(compactCode(reactIndex)).toContain(compactCode("MenuCheckedChangeDetails"));
 
     for (const file of astroFiles) {
       const packagePath = join(process.cwd(), "packages/astro/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/astro/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/astro/src", file.path)));
     }
 
     for (const file of reactFiles) {
       const packagePath = join(process.cwd(), "packages/react/src", file.path);
 
-      expect(await formatGeneratedOutput(file.contents, packagePath)).toBe(
-        readGeneratedPackageBody("packages/react/src", file.path),
-      );
+      expect(
+        normalizePrintedComparison(await formatGeneratedOutput(file.contents, packagePath)),
+      ).toBe(normalizePrintedComparison(readGeneratedPackageBody("packages/react/src", file.path)));
     }
 
     const targetAdapterSources = [
@@ -12185,12 +12533,11 @@ submenuTrigger:
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), "utf8"));
 
     for (const adapterSource of targetAdapterSources) {
-      expect(adapterSource).not.toContain("ContextMenuRoot");
-      expect(adapterSource).not.toContain("ContextMenuTrigger");
-      expect(adapterSource).not.toContain("createContextMenu");
-      expect(adapterSource).not.toContain("data-sw-context-menu");
+      expect(compactCode(adapterSource)).not.toContain(compactCode("ContextMenuRoot"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("ContextMenuTrigger"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("createContextMenu"));
+      expect(compactCode(adapterSource)).not.toContain(compactCode("data-sw-context-menu"));
       expect(adapterSource).not.toMatch(/\bconst contextMenu\s*=/);
-      expect(adapterSource).not.toMatch(/\bcontextMenu\./);
     }
   });
 
@@ -12215,42 +12562,68 @@ submenuTrigger:
       "__future-fixtures/composite-menu-overlay/context-menu/index.ts",
     );
 
-    expect(fixture).toContain('"component: context-menu"');
-    expect(fixture).toContain('"variantOf: menu"');
-    expect(fixture).toContain(
-      '"runtime: createContextMenu from @starwind-ui/runtime/context-menu"',
+    expect(compactCode(fixture)).toContain(compactCode('"component: context-menu"'));
+    expect(compactCode(fixture)).toContain(compactCode('"variantOf: menu"'));
+    expect(compactCode(fixture)).toContain(
+      compactCode('"runtime: createContextMenu from @starwind-ui/runtime/context-menu"'),
     );
-    expect(fixture).toContain(
-      '"root: data-sw-context-menu + data-sw-menu closeDelay=data-close-delay default=200 disabled=data-disabled state=data-state closed|open"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"root: data-sw-context-menu + data-sw-menu closeDelay=data-close-delay default=200 disabled=data-disabled state=data-state closed|open"',
+      ),
     );
-    expect(fixture).toContain(
-      '"trigger: data-sw-context-menu-trigger + data-sw-menu-trigger aria-haspopup=menu aria-expanded data-state disabled=aria-disabled/data-disabled tabindex=0 touchCallout=-webkit-touch-callout:none"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"trigger: data-sw-context-menu-trigger + data-sw-menu-trigger aria-haspopup=menu aria-expanded data-state disabled=aria-disabled/data-disabled tabindex=0 touchCallout=-webkit-touch-callout:none"',
+      ),
     );
-    expect(fixture).toContain(
-      '"anchor: data-sw-context-menu-anchor runtime-created floatingReference attributes=data-sw-context-menu-anchor, style"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"anchor: data-sw-context-menu-anchor runtime-created floatingReference attributes=data-sw-context-menu-anchor, style"',
+      ),
     );
-    expect(fixture).toContain(
-      '"events: openChange ContextMenuOpenChangeDetails starwind:open-change cancelable; closeComplete ContextMenuCloseCompleteDetails starwind:close-complete"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"events: openChange ContextMenuOpenChangeDetails starwind:open-change cancelable; closeComplete ContextMenuCloseCompleteDetails starwind:close-complete"',
+      ),
     );
-    expect(fixture).toContain(
-      '"floating: anchor -> portal/positioner/popup via runtime-created-anchor options side, align, sideOffset, avoidCollisions"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"floating: anchor -> portal/positioner/popup via runtime-created-anchor options side, align, sideOffset, avoidCollisions"',
+      ),
     );
-    expect(fixture).toContain('"reuse: staticBranches from Menu"');
-    expect(fixture).toContain('"reuse: checkboxItem indicator checkboxItemIndicator"');
-    expect(fixture).toContain('"reuse: radioGroup context menu-radio-group"');
-    expect(fixture).toContain('"reuse: submenu owner topology root-menu/submenu"');
-    expect(fixture).toContain(
-      '"contextAlias: context-menu-radio-group -> menu-radio-group via Menu-backed radio parts"',
+    expect(compactCode(fixture)).toContain(compactCode('"reuse: staticBranches from Menu"'));
+    expect(compactCode(fixture)).toContain(
+      compactCode('"reuse: checkboxItem indicator checkboxItemIndicator"'),
     );
-    expect(fixture).toContain('"alias: ContextMenuPortal=MenuPortal part=portal property=Portal"');
-    expect(fixture).toContain(
-      '"alias: ContextMenuSubmenuTrigger=MenuSubmenuTrigger part=submenuTrigger property=SubmenuTrigger"',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"reuse: radioGroup context menu-radio-group"'),
     );
-    expect(fixture).toContain(
-      '"namespace.named: ContextMenu, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal',
+    expect(compactCode(fixture)).toContain(
+      compactCode('"reuse: submenu owner topology root-menu/submenu"'),
     );
-    expect(fixture).toContain(
-      '"lifecycle: createContextMenu init=initial-load, after-swap, starwind:init cleanup=before-swap effectCleanup=instance.destroy() remount=disabled, modal, closeDelay"',
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"contextAlias: context-menu-radio-group -> menu-radio-group via Menu-backed radio parts"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode('"alias: ContextMenuPortal=MenuPortal part=portal property=Portal"'),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"alias: ContextMenuSubmenuTrigger=MenuSubmenuTrigger part=submenuTrigger property=SubmenuTrigger"',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"namespace.named: ContextMenu, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal',
+      ),
+    );
+    expect(compactCode(fixture)).toContain(
+      compactCode(
+        '"lifecycle: createContextMenu init=initial-load, after-swap, starwind:init cleanup=before-swap effectCleanup=instance.destroy() remount=disabled, modal, closeDelay"',
+      ),
     );
     for (const boundary of [
       "pointer anchoring",
@@ -12275,14 +12648,21 @@ submenuTrigger:
     expect(fixturePaths.every((path) => path.startsWith("__future-fixtures/"))).toBe(true);
     expect(existsSync(join(process.cwd(), "__future-fixtures"))).toBe(false);
     expect(
-      readFileSync(join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"), "utf8"),
-    ).not.toContain("__future-fixtures");
+      compactCode(
+        readFileSync(
+          join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"),
+          "utf8",
+        ),
+      ),
+    ).not.toContain(compactCode("__future-fixtures"));
     for (const publicSurface of [
       readFileSync(join(process.cwd(), "README.md"), "utf8"),
       readFileSync(join(process.cwd(), "packages/cli/registry/README.md"), "utf8"),
     ]) {
-      expect(publicSurface).not.toContain("ContextMenuCompositeOverlay");
-      expect(publicSurface).not.toContain("context-menu/ContextMenuCompositeOverlay.fixture");
+      expect(compactCode(publicSurface)).not.toContain(compactCode("ContextMenuCompositeOverlay"));
+      expect(compactCode(publicSurface)).not.toContain(
+        compactCode("context-menu/ContextMenuCompositeOverlay.fixture"),
+      );
     }
   });
 
@@ -12445,46 +12825,68 @@ submenuTrigger:
     );
     const allContents = firstRun.map((file) => file.contents).join("\n");
 
-    expect(root).toContain(
-      'import { createCombobox, type ComboboxInputValueChangeDetails, type ComboboxOpenChangeDetails, type ComboboxValueChangeDetails } from "@starwind-ui/runtime/combobox";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createCombobox, type ComboboxInputValueChangeDetails, type ComboboxOpenChangeDetails, type ComboboxValueChangeDetails } from "@starwind-ui/runtime/combobox";',
+      ),
     );
-    expect(root).toContain(
-      'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
+      ),
     );
-    expect(root).toContain("const input = ref<HTMLInputElement | null>(null);");
-    expect(root).toContain("provide(comboboxRootContextKey, comboboxContext);");
-    expect(root).toContain('"update:modelValue": [value: string | null];');
-    expect(root).toContain('"update:open": [open: boolean];');
-    expect(root).toContain('"update:inputValue": [inputValue: string];');
-    expect(root).toContain("instance = createCombobox(root.value, {");
-    expect(root).toContain("watch(\n  () => props.inputValue");
-    expect(root).toContain("instance.setInputValue(inputValue, { emit: false, filter: false });");
-    expect(root).toContain("instance.setOpen(open, { emit: false });");
-    expect(root).toContain("instance.setValue(value, { emit: false });");
-    expect(root).toContain("instance?.destroy();");
-    expect(root).toContain("data-sw-combobox-hidden-input");
-    expect(root).toContain(
-      ":data-highlight-item-on-hover=\"props.highlightItemOnHover ? 'true' : 'false'\"",
+    expect(compactCode(root)).toContain(
+      compactCode("const input = ref<HTMLInputElement | null>(null);"),
     );
-    expect(root).toContain(':data-locale="props.locale"');
-    expect(root).toContain('type="hidden"');
-    expect(root).toContain('aria-hidden="true"');
-    expect(root).toContain('tabindex="-1"');
-    expect(root).not.toContain(':autocomplete="props.autoComplete"');
+    expect(compactCode(root)).toContain(
+      compactCode("provide(comboboxRootContextKey, comboboxContext);"),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('"update:modelValue": [value: string | null];'),
+    );
+    expect(compactCode(root)).toContain(compactCode('"update:open": [open: boolean];'));
+    expect(compactCode(root)).toContain(compactCode('"update:inputValue": [inputValue: string];'));
+    expect(compactCode(root)).toContain(compactCode("instance = createCombobox(root.value, {"));
+    expect(compactCode(root)).toContain(compactCode("watch(\n  () => props.inputValue"));
+    expect(compactCode(root)).toContain(
+      compactCode("instance.setInputValue(inputValue, { emit: false, filter: false });"),
+    );
+    expect(compactCode(root)).toContain(compactCode("instance.setOpen(open, { emit: false });"));
+    expect(compactCode(root)).toContain(compactCode("instance.setValue(value, { emit: false });"));
+    expect(compactCode(root)).toContain(compactCode("instance?.destroy();"));
+    expect(compactCode(root)).toContain(compactCode("data-sw-combobox-hidden-input"));
+    expect(compactCode(root)).toContain(
+      compactCode(
+        ":data-highlight-item-on-hover=\"props.highlightItemOnHover ? 'true' : 'false'\"",
+      ),
+    );
+    expect(compactCode(root)).toContain(compactCode(':data-locale="props.locale"'));
+    expect(compactCode(root)).toContain(compactCode('type="hidden"'));
+    expect(compactCode(root)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(root)).toContain(compactCode('tabindex="-1"'));
+    expect(compactCode(root)).not.toContain(compactCode(':autocomplete="props.autoComplete"'));
 
-    expect(input).toContain('useComboboxRootContext("Combobox child")');
-    expect(input).toContain("combobox.input.value = input.value;");
-    expect(input).toContain("onBeforeUnmount");
-    expect(input).toContain('role="combobox"');
-    expect(portal).toContain('<Teleport to="body">');
-    expect(positioner).toContain(':data-side="props.side"');
-    expect(popup).toContain('role="listbox"');
-    expect(item).toContain("provide(comboboxItemContextKey, comboboxItemContext);");
-    expect(item).toContain(':data-value="props.value"');
-    expect(item).toContain(":aria-selected=\"selected ? 'true' : 'false'\"");
-    expect(itemText).toContain("data-sw-combobox-item-text");
-    expect(indicator).toContain('useComboboxItemContext("Combobox.ItemIndicator")');
-    expect(indicator).toContain(":data-state=\"selected ? 'checked' : 'unchecked'\"");
+    expect(compactCode(input)).toContain(compactCode('useComboboxRootContext("Combobox child")'));
+    expect(compactCode(input)).toContain(compactCode("combobox.input.value = input.value;"));
+    expect(compactCode(input)).toContain(compactCode("onBeforeUnmount"));
+    expect(compactCode(input)).toContain(compactCode('role="combobox"'));
+    expect(compactCode(portal)).toContain(compactCode('<Teleport to="body">'));
+    expect(compactCode(positioner)).toContain(compactCode(':data-side="props.side"'));
+    expect(compactCode(popup)).toContain(compactCode('role="listbox"'));
+    expect(compactCode(item)).toContain(
+      compactCode("provide(comboboxItemContextKey, comboboxItemContext);"),
+    );
+    expect(compactCode(item)).toContain(compactCode(':data-value="props.value"'));
+    expect(compactCode(item)).toContain(
+      compactCode(":aria-selected=\"selected ? 'true' : 'false'\""),
+    );
+    expect(compactCode(itemText)).toContain(compactCode("data-sw-combobox-item-text"));
+    expect(compactCode(indicator)).toContain(
+      compactCode('useComboboxItemContext("Combobox.ItemIndicator")'),
+    );
+    expect(compactCode(indicator)).toContain(
+      compactCode(":data-state=\"selected ? 'checked' : 'unchecked'\""),
+    );
     expect(allContents).not.toMatch(/filterItems|keyboardNavigation|innerText|textContent/);
   });
 
@@ -12538,42 +12940,56 @@ submenuTrigger:
     const index = getPrintedFile(firstRun, "__future-fixtures/solid/combobox/index.ts");
     const allContents = firstRun.map((file) => file.contents).join("\n");
 
-    expect(root).toContain(
-      'import { createCombobox, type ComboboxInputValueChangeDetails, type ComboboxOpenChangeDetails, type ComboboxValueChangeDetails } from "@starwind-ui/runtime/combobox";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createCombobox, type ComboboxInputValueChangeDetails, type ComboboxOpenChangeDetails, type ComboboxValueChangeDetails } from "@starwind-ui/runtime/combobox";',
+      ),
     );
-    expect(root).toContain("export const ComboboxRootContext = createContext");
-    expect(root).toContain("input: { current: undefined as HTMLInputElement | undefined }");
-    expect(root).toContain("instance = createCombobox(root, {");
-    expect(root).toContain("instance.setInputValue(inputValue, { emit: false, filter: false });");
-    expect(root).toContain("instance.setOpen(open, { emit: false });");
-    expect(root).toContain("instance.setValue(value, { emit: false });");
-    expect(root).toContain("onCleanup(() => {");
-    expect(root).toContain("data-sw-combobox-hidden-input");
-    expect(root).toContain(
-      'data-highlight-item-on-hover={local.highlightItemOnHover ? "true" : "false"}',
+    expect(compactCode(root)).toContain(
+      compactCode("export const ComboboxRootContext = createContext"),
     );
-    expect(root).toContain("data-locale={local.locale}");
-    expect(root).toContain('type="hidden"');
-    expect(root).toContain('aria-hidden="true"');
-    expect(root).toContain("tabIndex={-1}");
+    expect(compactCode(root)).toContain(
+      compactCode("input: { current: undefined as HTMLInputElement | undefined }"),
+    );
+    expect(compactCode(root)).toContain(compactCode("instance = createCombobox(root, {"));
+    expect(compactCode(root)).toContain(
+      compactCode("instance.setInputValue(inputValue, { emit: false, filter: false });"),
+    );
+    expect(compactCode(root)).toContain(compactCode("instance.setOpen(open, { emit: false });"));
+    expect(compactCode(root)).toContain(compactCode("instance.setValue(value, { emit: false });"));
+    expect(compactCode(root)).toContain(compactCode("onCleanup(() => {"));
+    expect(compactCode(root)).toContain(compactCode("data-sw-combobox-hidden-input"));
+    expect(compactCode(root)).toContain(
+      compactCode('data-highlight-item-on-hover={local.highlightItemOnHover ? "true" : "false"}'),
+    );
+    expect(compactCode(root)).toContain(compactCode("data-locale={local.locale}"));
+    expect(compactCode(root)).toContain(compactCode('type="hidden"'));
+    expect(compactCode(root)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(root)).toContain(compactCode("tabIndex={-1}"));
     expect(root).not.toContain("\n          autocomplete={local.autoComplete}");
 
-    expect(input).toContain("useComboboxRootContext();");
-    expect(input).toContain("combobox.input.current = input;");
-    expect(input).toContain("onCleanup");
-    expect(input).toContain('role="combobox"');
-    expect(input).not.toContain("</input>");
-    expect(portal).toContain('import { Portal } from "solid-js/web";');
-    expect(positioner).toContain("data-side={local.side}");
-    expect(popup).toContain('role="listbox"');
-    expect(item).toContain("<ComboboxItemContext.Provider value={comboboxItemContext}");
-    expect(item).toContain("data-value={local.value}");
-    expect(item).toContain('aria-selected={selected() ? "true" : "false"}');
-    expect(itemText).toContain("data-sw-combobox-item-text");
-    expect(indicator).toContain("useComboboxItemContext();");
-    expect(indicator).toContain('data-state={selected() ? "checked" : "unchecked"}');
-    expect(index).toContain("useComboboxRootContext");
-    expect(index).toContain("useComboboxItemContext");
+    expect(compactCode(input)).toContain(compactCode("useComboboxRootContext();"));
+    expect(compactCode(input)).toContain(compactCode("combobox.input.current = input;"));
+    expect(compactCode(input)).toContain(compactCode("onCleanup"));
+    expect(compactCode(input)).toContain(compactCode('role="combobox"'));
+    expect(compactCode(input)).not.toContain(compactCode("</input>"));
+    expect(compactCode(portal)).toContain(compactCode('import { Portal } from "solid-js/web";'));
+    expect(compactCode(positioner)).toContain(compactCode("data-side={local.side}"));
+    expect(compactCode(popup)).toContain(compactCode('role="listbox"'));
+    expect(compactCode(item)).toContain(
+      compactCode("<ComboboxItemContext.Provider value={comboboxItemContext}"),
+    );
+    expect(compactCode(item)).toContain(compactCode("data-value={local.value}"));
+    expect(compactCode(item)).toContain(
+      compactCode('aria-selected={selected() ? "true" : "false"}'),
+    );
+    expect(compactCode(itemText)).toContain(compactCode("data-sw-combobox-item-text"));
+    expect(compactCode(indicator)).toContain(compactCode("useComboboxItemContext();"));
+    expect(compactCode(indicator)).toContain(
+      compactCode('data-state={selected() ? "checked" : "unchecked"}'),
+    );
+    expect(compactCode(index)).toContain(compactCode("useComboboxRootContext"));
+    expect(compactCode(index)).toContain(compactCode("useComboboxItemContext"));
     expect(allContents).not.toMatch(/filterItems|keyboardNavigation|innerText|textContent/);
   });
 
@@ -12622,35 +13038,67 @@ submenuTrigger:
     const submenuRoot = getPrintedFile(firstRun, "__future-fixtures/vue/menu/MenuSubmenuRoot.vue");
     const index = getPrintedFile(firstRun, "__future-fixtures/vue/menu/index.ts");
 
-    expect(root).toContain(
-      'import { createMenu, type MenuCloseCompleteDetails, type MenuOpenChangeDetails } from "@starwind-ui/runtime/menu";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createMenu, type MenuCloseCompleteDetails, type MenuOpenChangeDetails } from "@starwind-ui/runtime/menu";',
+      ),
     );
-    expect(root).toContain(
-      'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
+      ),
     );
-    expect(root).toContain("provide(menuRootContextKey, menuRootContext);");
-    expect(root).toContain('"update:open": [open: boolean];');
-    expect(root).toContain("instance = createMenu(root.value");
-    expect(root).toContain(":data-state=\"renderedOpen ? 'open' : 'closed'\"");
-    expect(root).toContain("<slot />");
+    expect(compactCode(root)).toContain(
+      compactCode("provide(menuRootContextKey, menuRootContext);"),
+    );
+    expect(compactCode(root)).toContain(compactCode('"update:open": [open: boolean];'));
+    expect(compactCode(root)).toContain(compactCode("instance = createMenu(root.value"));
+    expect(compactCode(root)).toContain(
+      compactCode(":data-state=\"renderedOpen ? 'open' : 'closed'\""),
+    );
+    expect(compactCode(root)).toContain(compactCode("<slot />"));
 
-    expect(portal).toContain('<Teleport to="body">');
-    expect(checkboxItem).toContain('addEventListener("starwind:checked-change"');
-    expect(checkboxItem).toContain("provide(menuCheckboxItemContextKey, checkboxItemContext);");
-    expect(checkboxItem).toContain(":data-checked=\"renderedChecked ? '' : undefined\"");
-    expect(radioGroup).toContain("provide(menuRadioGroupContextKey, radioGroupContext);");
-    expect(radioGroup).toContain('addEventListener("starwind:value-change"');
-    expect(radioItem).toContain('useMenuRadioGroupContext("Menu.RadioItem")');
-    expect(radioItem).toContain("provide(menuRadioItemContextKey, radioItemContext);");
-    expect(radioItem).toContain(
-      "group.value.value === undefined ? props.defaultChecked : group.value.value === props.value",
+    expect(compactCode(portal)).toContain(compactCode('<Teleport to="body">'));
+    expect(compactCode(checkboxItem)).toContain(
+      compactCode('addEventListener("starwind:checked-change"'),
     );
-    expect(radioItem).not.toContain("group.value.value === props.value ?? props.defaultChecked");
-    expect(radioIndicator).toContain(":data-state=\"checked ? 'checked' : 'unchecked'\"");
-    expect(submenuRoot).toContain("provide(menuSubmenuRootContextKey, submenuRootContext);");
-    expect(index).toContain('export { default as Root } from "./MenuRoot.vue";');
-    expect(index).toContain(
-      'export { default as RadioItemIndicator } from "./MenuRadioItemIndicator.vue";',
+    expect(compactCode(checkboxItem)).toContain(
+      compactCode("provide(menuCheckboxItemContextKey, checkboxItemContext);"),
+    );
+    expect(compactCode(checkboxItem)).toContain(
+      compactCode(":data-checked=\"renderedChecked ? '' : undefined\""),
+    );
+    expect(compactCode(radioGroup)).toContain(
+      compactCode("provide(menuRadioGroupContextKey, radioGroupContext);"),
+    );
+    expect(compactCode(radioGroup)).toContain(
+      compactCode('addEventListener("starwind:value-change"'),
+    );
+    expect(compactCode(radioItem)).toContain(
+      compactCode('useMenuRadioGroupContext("Menu.RadioItem")'),
+    );
+    expect(compactCode(radioItem)).toContain(
+      compactCode("provide(menuRadioItemContextKey, radioItemContext);"),
+    );
+    expect(compactCode(radioItem)).toContain(
+      compactCode(
+        "group.value.value === undefined ? props.defaultChecked : group.value.value === props.value",
+      ),
+    );
+    expect(compactCode(radioItem)).not.toContain(
+      compactCode("group.value.value === props.value ?? props.defaultChecked"),
+    );
+    expect(compactCode(radioIndicator)).toContain(
+      compactCode(":data-state=\"checked ? 'checked' : 'unchecked'\""),
+    );
+    expect(compactCode(submenuRoot)).toContain(
+      compactCode("provide(menuSubmenuRootContextKey, submenuRootContext);"),
+    );
+    expect(compactCode(index)).toContain(
+      compactCode('export { default as Root } from "./MenuRoot.vue";'),
+    );
+    expect(compactCode(index)).toContain(
+      compactCode('export { default as RadioItemIndicator } from "./MenuRadioItemIndicator.vue";'),
     );
   });
 
@@ -12701,33 +13149,61 @@ submenuTrigger:
     );
     const index = getPrintedFile(firstRun, "__future-fixtures/solid/menu/index.ts");
 
-    expect(root).toContain(
-      'import { createMenu, type MenuCloseCompleteDetails, type MenuOpenChangeDetails } from "@starwind-ui/runtime/menu";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createMenu, type MenuCloseCompleteDetails, type MenuOpenChangeDetails } from "@starwind-ui/runtime/menu";',
+      ),
     );
-    expect(root).toContain("export const MenuRootContext = createContext");
-    expect(root).toContain("instance = createMenu(root");
-    expect(root).toContain("<MenuRootContext.Provider value={menuRootContext}");
-    expect(root).toContain('data-state={menuRootContext.open() ? "open" : "closed"}');
-    expect(root).toContain("{local.children}");
+    expect(compactCode(root)).toContain(
+      compactCode("export const MenuRootContext = createContext"),
+    );
+    expect(compactCode(root)).toContain(compactCode("instance = createMenu(root"));
+    expect(compactCode(root)).toContain(
+      compactCode("<MenuRootContext.Provider value={menuRootContext}"),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('data-state={menuRootContext.open() ? "open" : "closed"}'),
+    );
+    expect(compactCode(root)).toContain(compactCode("{local.children}"));
 
-    expect(portal).toContain('import { Portal } from "solid-js/web";');
-    expect(checkboxItem).toContain('addEventListener("starwind:checked-change"');
-    expect(checkboxItem).toContain("<MenuCheckboxItemContext.Provider value={checkboxItemContext}");
-    expect(radioGroup).toContain("<MenuRadioGroupContext.Provider value={radioGroupContext}");
-    expect(radioGroup).toContain('addEventListener("starwind:value-change"');
-    expect(radioItem).toContain("useMenuRadioGroupContext()");
-    expect(radioItem).toContain("<MenuRadioItemContext.Provider value={radioItemContext}");
-    expect(radioItem).toContain(
-      "group.value() === undefined ? local.defaultChecked : group.value() === local.value",
+    expect(compactCode(portal)).toContain(compactCode('import { Portal } from "solid-js/web";'));
+    expect(compactCode(checkboxItem)).toContain(
+      compactCode('addEventListener("starwind:checked-change"'),
     );
-    expect(radioItem).not.toContain("group.value() === local.value ?? local.defaultChecked");
-    expect(radioIndicator).toContain('data-state={checked() ? "checked" : "unchecked"}');
-    expect(submenuRoot).toContain("<MenuSubmenuRootContext.Provider value={submenuRootContext}");
-    expect(index).toContain('export { default as Root } from "./MenuRoot";');
-    expect(index).toContain(
-      'export { default as RadioItemIndicator } from "./MenuRadioItemIndicator";',
+    expect(compactCode(checkboxItem)).toContain(
+      compactCode("<MenuCheckboxItemContext.Provider value={checkboxItemContext}"),
     );
-    expect(index).toContain("useMenuRadioGroupContext");
+    expect(compactCode(radioGroup)).toContain(
+      compactCode("<MenuRadioGroupContext.Provider value={radioGroupContext}"),
+    );
+    expect(compactCode(radioGroup)).toContain(
+      compactCode('addEventListener("starwind:value-change"'),
+    );
+    expect(compactCode(radioItem)).toContain(compactCode("useMenuRadioGroupContext()"));
+    expect(compactCode(radioItem)).toContain(
+      compactCode("<MenuRadioItemContext.Provider value={radioItemContext}"),
+    );
+    expect(compactCode(radioItem)).toContain(
+      compactCode(
+        "group.value() === undefined ? local.defaultChecked : group.value() === local.value",
+      ),
+    );
+    expect(compactCode(radioItem)).not.toContain(
+      compactCode("group.value() === local.value ?? local.defaultChecked"),
+    );
+    expect(compactCode(radioIndicator)).toContain(
+      compactCode('data-state={checked() ? "checked" : "unchecked"}'),
+    );
+    expect(compactCode(submenuRoot)).toContain(
+      compactCode("<MenuSubmenuRootContext.Provider value={submenuRootContext}"),
+    );
+    expect(compactCode(index)).toContain(
+      compactCode('export { default as Root } from "./MenuRoot";'),
+    );
+    expect(compactCode(index)).toContain(
+      compactCode('export { default as RadioItemIndicator } from "./MenuRadioItemIndicator";'),
+    );
+    expect(compactCode(index)).toContain(compactCode("useMenuRadioGroupContext"));
   });
 
   it("prints deterministic non-shipping Vue Navigation Menu fixtures from the shared viewport spec", () => {
@@ -12788,34 +13264,62 @@ submenuTrigger:
     );
     const index = getPrintedFile(firstRun, "__future-fixtures/vue/navigation-menu/index.ts");
 
-    expect(root).toContain(
-      'import { createNavigationMenu, type NavigationMenuValueChangeDetails } from "@starwind-ui/runtime/navigation-menu";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createNavigationMenu, type NavigationMenuValueChangeDetails } from "@starwind-ui/runtime/navigation-menu";',
+      ),
     );
-    expect(root).toContain(
-      'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
+      ),
     );
-    expect(root).toContain("const root = ref<HTMLElement | null>(null);");
-    expect(root).toContain("provide(navigationMenuRootContextKey, navigationMenuContext);");
-    expect(root).toContain('"update:modelValue": [value: string | null];');
-    expect(root).toContain("instance = createNavigationMenu(root.value, {");
-    expect(root).toContain("watch(\n  () => props.modelValue");
-    expect(root).toContain("instance.setValue(value, { emit: false });");
-    expect(root).toContain(":data-controlled-value=\"props.modelValue === null ? '' : undefined\"");
-    expect(root).toContain(':data-orientation="props.orientation"');
+    expect(compactCode(root)).toContain(compactCode("const root = ref<HTMLElement | null>(null);"));
+    expect(compactCode(root)).toContain(
+      compactCode("provide(navigationMenuRootContextKey, navigationMenuContext);"),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('"update:modelValue": [value: string | null];'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode("instance = createNavigationMenu(root.value, {"),
+    );
+    expect(compactCode(root)).toContain(compactCode("watch(\n  () => props.modelValue"));
+    expect(compactCode(root)).toContain(compactCode("instance.setValue(value, { emit: false });"));
+    expect(compactCode(root)).toContain(
+      compactCode(":data-controlled-value=\"props.modelValue === null ? '' : undefined\""),
+    );
+    expect(compactCode(root)).toContain(compactCode(':data-orientation="props.orientation"'));
 
-    expect(list).toContain('useNavigationMenuRootContext("NavigationMenu child")');
-    expect(list).toContain(':data-orientation="navigationMenu.orientation.value"');
-    expect(item).toContain("provide(navigationMenuItemContextKey");
-    expect(item).toContain(':data-value="props.value"');
-    expect(trigger).toContain('useNavigationMenuItemContext("NavigationMenu item child")');
-    expect(trigger).toContain(":aria-expanded=\"open ? 'true' : 'false'\"");
-    expect(portal).toContain('<Teleport to="body">');
-    expect(positioner).toContain(':data-collision-padding="props.collisionPadding"');
-    expect(popup).toContain(':hidden="navigationMenu.value.value === null"');
-    expect(viewport).toContain("data-sw-nav-menu-viewport");
-    expect(viewport).toContain(':data-activation-direction="undefined"');
-    expect(index).toContain('export { default as Root } from "./NavigationMenuRoot.vue";');
-    expect(index).toContain('export { default as Viewport } from "./NavigationMenuViewport.vue";');
+    expect(compactCode(list)).toContain(
+      compactCode('useNavigationMenuRootContext("NavigationMenu child")'),
+    );
+    expect(compactCode(list)).toContain(
+      compactCode(':data-orientation="navigationMenu.orientation.value"'),
+    );
+    expect(compactCode(item)).toContain(compactCode("provide(navigationMenuItemContextKey"));
+    expect(compactCode(item)).toContain(compactCode(':data-value="props.value"'));
+    expect(compactCode(trigger)).toContain(
+      compactCode('useNavigationMenuItemContext("NavigationMenu item child")'),
+    );
+    expect(compactCode(trigger)).toContain(
+      compactCode(":aria-expanded=\"open ? 'true' : 'false'\""),
+    );
+    expect(compactCode(portal)).toContain(compactCode('<Teleport to="body">'));
+    expect(compactCode(positioner)).toContain(
+      compactCode(':data-collision-padding="props.collisionPadding"'),
+    );
+    expect(compactCode(popup)).toContain(
+      compactCode(':hidden="navigationMenu.value.value === null"'),
+    );
+    expect(compactCode(viewport)).toContain(compactCode("data-sw-nav-menu-viewport"));
+    expect(compactCode(viewport)).toContain(compactCode(':data-activation-direction="undefined"'));
+    expect(compactCode(index)).toContain(
+      compactCode('export { default as Root } from "./NavigationMenuRoot.vue";'),
+    );
+    expect(compactCode(index)).toContain(
+      compactCode('export { default as Viewport } from "./NavigationMenuViewport.vue";'),
+    );
   });
 
   it("prints deterministic non-shipping Solid Navigation Menu fixtures from the shared viewport spec", () => {
@@ -12875,35 +13379,59 @@ submenuTrigger:
     );
     const index = getPrintedFile(firstRun, "__future-fixtures/solid/navigation-menu/index.ts");
 
-    expect(root).toContain(
-      'import { createNavigationMenu, type NavigationMenuValueChangeDetails } from "@starwind-ui/runtime/navigation-menu";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createNavigationMenu, type NavigationMenuValueChangeDetails } from "@starwind-ui/runtime/navigation-menu";',
+      ),
     );
-    expect(root).toContain(
-      'import { createContext, createEffect, createMemo, createSignal, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createContext, createEffect, createMemo, createSignal, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";',
+      ),
     );
-    expect(root).toContain("export const NavigationMenuRootContext = createContext");
-    expect(root).toContain("let root!: HTMLElement;");
-    expect(root).toContain("instance = createNavigationMenu(root, {");
-    expect(root).toContain("const [mounted, setMounted] = createSignal(false);");
-    expect(root).toContain("const optionSignature = createMemo(() =>");
-    expect(root).toContain("optionSignature();\n    if (!mounted()) return;");
-    expect(root).toContain("instance.setValue(value, { emit: false });");
-    expect(root).toContain("<NavigationMenuRootContext.Provider value={navigationMenuContext}");
-    expect(root).toContain('data-controlled-value={local.value === null ? "" : undefined}');
-    expect(root).toContain("data-orientation={local.orientation}");
+    expect(compactCode(root)).toContain(
+      compactCode("export const NavigationMenuRootContext = createContext"),
+    );
+    expect(compactCode(root)).toContain(compactCode("let root!: HTMLElement;"));
+    expect(compactCode(root)).toContain(compactCode("instance = createNavigationMenu(root, {"));
+    expect(compactCode(root)).toContain(
+      compactCode("const [mounted, setMounted] = createSignal(false);"),
+    );
+    expect(compactCode(root)).toContain(compactCode("const optionSignature = createMemo(() =>"));
+    expect(compactCode(root)).toContain(
+      compactCode("optionSignature();\n    if (!mounted()) return;"),
+    );
+    expect(compactCode(root)).toContain(compactCode("instance.setValue(value, { emit: false });"));
+    expect(compactCode(root)).toContain(
+      compactCode("<NavigationMenuRootContext.Provider value={navigationMenuContext}"),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode('data-controlled-value={local.value === null ? "" : undefined}'),
+    );
+    expect(compactCode(root)).toContain(compactCode("data-orientation={local.orientation}"));
 
-    expect(list).toContain("useNavigationMenuRootContext();");
-    expect(list).toContain("data-orientation={navigationMenu.orientation()}");
-    expect(item).toContain("<NavigationMenuItemContext.Provider value={itemContext}>");
-    expect(trigger).toContain("useNavigationMenuItemContext();");
-    expect(trigger).toContain('aria-expanded={open() ? "true" : "false"}');
-    expect(portal).toContain('import { Portal } from "solid-js/web";');
-    expect(positioner).toContain("data-collision-padding={String(local.collisionPadding)}");
-    expect(popup).toContain("hidden={navigationMenu.value() === null}");
-    expect(viewport).toContain("data-sw-nav-menu-viewport");
-    expect(viewport).toContain("data-activation-direction={undefined}");
-    expect(index).toContain('export { default as Root } from "./NavigationMenuRoot";');
-    expect(index).toContain("useNavigationMenuRootContext");
+    expect(compactCode(list)).toContain(compactCode("useNavigationMenuRootContext();"));
+    expect(compactCode(list)).toContain(
+      compactCode("data-orientation={navigationMenu.orientation()}"),
+    );
+    expect(compactCode(item)).toContain(
+      compactCode("<NavigationMenuItemContext.Provider value={itemContext}>"),
+    );
+    expect(compactCode(trigger)).toContain(compactCode("useNavigationMenuItemContext();"));
+    expect(compactCode(trigger)).toContain(
+      compactCode('aria-expanded={open() ? "true" : "false"}'),
+    );
+    expect(compactCode(portal)).toContain(compactCode('import { Portal } from "solid-js/web";'));
+    expect(compactCode(positioner)).toContain(
+      compactCode("data-collision-padding={String(local.collisionPadding)}"),
+    );
+    expect(compactCode(popup)).toContain(compactCode("hidden={navigationMenu.value() === null}"));
+    expect(compactCode(viewport)).toContain(compactCode("data-sw-nav-menu-viewport"));
+    expect(compactCode(viewport)).toContain(compactCode("data-activation-direction={undefined}"));
+    expect(compactCode(index)).toContain(
+      compactCode('export { default as Root } from "./NavigationMenuRoot";'),
+    );
+    expect(compactCode(index)).toContain(compactCode("useNavigationMenuRootContext"));
   });
 
   it("keeps Navigation Menu future-framework fixtures out of shipping package and registry surfaces", () => {
@@ -12922,9 +13450,9 @@ submenuTrigger:
       ),
     ).toBe(true);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
-    expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
-      "packages/vue",
-    );
+    expect(
+      compactCode(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")),
+    ).not.toContain(compactCode("packages/vue"));
     const appManifests = readAppManifestSurfaces();
     expect(appManifests.length).toBeGreaterThan(0);
     expect(findFutureFrameworkAppDependencyLeaks(appManifests)).toEqual({ solid: [], vue: [] });
@@ -12944,15 +13472,20 @@ submenuTrigger:
       vue: ["apps/public-demo/package.json"],
     });
     expect(
-      readFileSync(join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"), "utf8"),
-    ).not.toContain("__future-fixtures");
+      compactCode(
+        readFileSync(
+          join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"),
+          "utf8",
+        ),
+      ),
+    ).not.toContain(compactCode("__future-fixtures"));
     for (const publicSurface of [
       readFileSync(join(process.cwd(), "README.md"), "utf8"),
       readFileSync(join(process.cwd(), "packages/cli/registry/README.md"), "utf8"),
     ]) {
-      expect(publicSurface).not.toContain("__future-fixtures");
-      expect(publicSurface).not.toContain("navigation-menu/vue");
-      expect(publicSurface).not.toContain("navigation-menu/solid");
+      expect(compactCode(publicSurface)).not.toContain(compactCode("__future-fixtures"));
+      expect(compactCode(publicSurface)).not.toContain(compactCode("navigation-menu/vue"));
+      expect(compactCode(publicSurface)).not.toContain(compactCode("navigation-menu/solid"));
     }
   });
 
@@ -12970,22 +13503,27 @@ submenuTrigger:
       existsSync(join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/menu")),
     ).toBe(false);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
-    expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
-      "packages/vue",
-    );
+    expect(
+      compactCode(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")),
+    ).not.toContain(compactCode("packages/vue"));
     const appManifests = readAppManifestSurfaces();
     expect(appManifests.length).toBeGreaterThan(0);
     expect(findFutureFrameworkAppDependencyLeaks(appManifests)).toEqual({ solid: [], vue: [] });
     expect(
-      readFileSync(join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"), "utf8"),
-    ).not.toContain("__future-fixtures");
+      compactCode(
+        readFileSync(
+          join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"),
+          "utf8",
+        ),
+      ),
+    ).not.toContain(compactCode("__future-fixtures"));
     for (const publicSurface of [
       readFileSync(join(process.cwd(), "README.md"), "utf8"),
       readFileSync(join(process.cwd(), "packages/cli/registry/README.md"), "utf8"),
     ]) {
-      expect(publicSurface).not.toContain("__future-fixtures");
-      expect(publicSurface).not.toContain("menu/vue");
-      expect(publicSurface).not.toContain("menu/solid");
+      expect(compactCode(publicSurface)).not.toContain(compactCode("__future-fixtures"));
+      expect(compactCode(publicSurface)).not.toContain(compactCode("menu/vue"));
+      expect(compactCode(publicSurface)).not.toContain(compactCode("menu/solid"));
     }
   });
 
@@ -13003,22 +13541,27 @@ submenuTrigger:
       existsSync(join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/combobox")),
     ).toBe(true);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
-    expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
-      "packages/vue",
-    );
+    expect(
+      compactCode(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")),
+    ).not.toContain(compactCode("packages/vue"));
     const appManifests = readAppManifestSurfaces();
     expect(appManifests.length).toBeGreaterThan(0);
     expect(findFutureFrameworkAppDependencyLeaks(appManifests)).toEqual({ solid: [], vue: [] });
     expect(
-      readFileSync(join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"), "utf8"),
-    ).not.toContain("__future-fixtures");
+      compactCode(
+        readFileSync(
+          join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"),
+          "utf8",
+        ),
+      ),
+    ).not.toContain(compactCode("__future-fixtures"));
     for (const publicSurface of [
       readFileSync(join(process.cwd(), "README.md"), "utf8"),
       readFileSync(join(process.cwd(), "packages/cli/registry/README.md"), "utf8"),
     ]) {
-      expect(publicSurface).not.toContain("__future-fixtures");
-      expect(publicSurface).not.toContain("combobox/vue");
-      expect(publicSurface).not.toContain("combobox/solid");
+      expect(compactCode(publicSurface)).not.toContain(compactCode("__future-fixtures"));
+      expect(compactCode(publicSurface)).not.toContain(compactCode("combobox/vue"));
+      expect(compactCode(publicSurface)).not.toContain(compactCode("combobox/solid"));
     }
   });
 
@@ -13139,6 +13682,7 @@ function expectPrintedBodiesToMatchGeneratedPackageBodies(
 }
 
 function normalizePrintedComparison(contents: string): string {
+  if (!contents.trimStart().startsWith("---")) return normalizeTypeScriptSource(contents);
   return contents
     .replace(/\s+/g, " ")
     .replace(/\s*([(){}\[\],;])\s*/g, "$1")

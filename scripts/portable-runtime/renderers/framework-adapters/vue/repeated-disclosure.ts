@@ -1,3 +1,9 @@
+import { renderAccordionRoot as renderSharedAccordionRoot } from "../../shared-recipes/structured/accordion-root.js";
+import {
+  accordionDisabled,
+  accordionPartPolicy,
+  partAttributes,
+} from "../../shared-recipes/structured/part-policy.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -64,7 +70,6 @@ export function printVueRepeatedDisclosureContext(facts: AdapterRepeatedDisclosu
   return `import { inject, type InjectionKey } from "vue";
 
 export type ${context.type} = Readonly<{
-  value: string | undefined;
   disabled: boolean;
 }>;
 
@@ -82,120 +87,8 @@ export function ${context.hook}(componentName: string): ${context.type} {
 `;
 }
 
-function printRoot(facts: AdapterRepeatedDisclosureFacts): string {
-  const model = projectVueModel(facts.state.name);
-  const event = projectVueDetailedEvent(facts.events.valueChange.callbackProp);
-  const part = facts.parts.root;
-  return `<script setup lang="ts">
-import {
-  type ${facts.state.type},
-  type ${facts.events.valueChange.detailsType},
-  ${facts.runtime.factory},
-} from "${facts.runtime.importSource}";
-import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
-
-defineOptions({ inheritAttrs: false });
-const props = withDefaults(
-  defineProps<{
-    type?: ${facts.props.type.type};
-    defaultValue?: ${facts.state.type};
-    ${model.modelProp}?: ${facts.state.type};
-    collapsible?: boolean;
-  }>(),
-  {
-    type: ${facts.props.type.defaultValue},
-    defaultValue: undefined,
-    ${model.modelProp}: undefined,
-    collapsible: ${facts.props.collapsible.defaultValue},
-  },
-);
-const emit = defineEmits<{
-  ${event.emit}: [value: ${facts.state.type}, detail: ${facts.events.valueChange.detailsType}];
-  "${model.updateEvent}": [value: ${facts.state.type}];
-}>();
-defineSlots<{ default?: (props: { value: ${facts.state.type} }) => unknown }>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLDivElement | null>(null);
-const initialDefaultValue = props.defaultValue;
-const uncontrolledValue = ref<${facts.state.type}>(initialDefaultValue ?? null);
-const renderedValue = computed(() =>
-  props.${model.modelProp} !== undefined ? props.${model.modelProp} : uncontrolledValue.value,
-);
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-defineExpose({ element: rootRef });
-
-function handleValueChange(detail: ${facts.events.valueChange.detailsType}): void {
-  const nextValue = detail.${facts.events.valueChange.valueProperty};
-  const eventWasControlled = props.${model.modelProp} !== undefined;
-  emit("${event.emit}", nextValue, detail);
-  if (detail.isCanceled) return;
-  if (!eventWasControlled) uncontrolledValue.value = nextValue;
-  emit("${model.updateEvent}", nextValue);
-}
-
-function destroyOwnedInstance(): void {
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-  instance = ${facts.runtime.factory}(element, {
-    type: props.type,
-    defaultValue: uncontrolledValue.value,
-    collapsible: props.collapsible,
-    ...(props.${model.modelProp} === undefined ? {} : { value: props.${model.modelProp} }),
-    ${facts.events.valueChange.callbackProp}: handleValueChange,
-  });
-}
-
-onMounted(setupRuntime);
-watch(
-  () => props.${model.modelProp},
-  (nextValue, previousValue) => {
-    const controllednessChanged = (nextValue === undefined) !== (previousValue === undefined);
-    if (controllednessChanged) {
-      if (nextValue === undefined && instance) uncontrolledValue.value = instance.${facts.state.getter}();
-      setupRuntime();
-      return;
-    }
-    if (nextValue === undefined || !instance || ${facts.valueEqualityHelper}(instance.${facts.state.getter}(), nextValue)) return;
-    instance.${facts.setter.method}(nextValue, ${facts.setter.options?.emit === false ? "{ emit: false }" : "{}"});
-  },
-  { flush: "post" },
-);
-watch([() => props.type, () => props.collapsible], setupRuntime, { flush: "post" });
-onBeforeUnmount(destroyOwnedInstance);
-
-function ${facts.valueEqualityHelper}(left: ${facts.state.type}, right: ${facts.state.type}): boolean {
-  if (Array.isArray(left) || Array.isArray(right)) return JSON.stringify(left) === JSON.stringify(right);
-  return left === right;
-}
-
-const defaultValueAttribute = Array.isArray(initialDefaultValue)
-  ? JSON.stringify(initialDefaultValue)
-  : initialDefaultValue;
-</script>
-
-<template>
-  <${part.defaultElement}
-    ref="rootRef"
-    v-bind="attrs"
-    ${facts.attrs.root}
-    data-sw-part="${part.name}"
-    :${facts.attrs.type}="props.type"
-    :${facts.attrs.defaultValue}="defaultValueAttribute"
-    :${facts.attrs.collapsible}="String(props.collapsible)"
-    ${facts.attrs.rootState}="closed"
-  >
-    <slot :value="renderedValue" />
-  </${part.defaultElement}>
-</template>
-`;
+function printRoot(_facts: AdapterRepeatedDisclosureFacts): string {
+  return renderSharedAccordionRoot("vue");
 }
 
 function printItem(facts: AdapterRepeatedDisclosureFacts): string {
@@ -213,7 +106,6 @@ const props = withDefaults(defineProps<{ value?: string; disabled?: boolean }>()
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null);
 const itemContext: ${context.type} = {
-  get value() { return props.value; },
   get disabled() { return props.disabled; },
 };
 provide(${context.key}, itemContext);
@@ -226,9 +118,7 @@ defineExpose({ element });
     v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.item}
     data-sw-part="${part.name}"
-    :${facts.attrs.itemValue}="props.value"
-    :${facts.attrs.disabled}="props.disabled ? '' : undefined"
-    ${facts.attrs.itemState}="closed"
+    ${partAttributes("vue", accordionPartPolicy(facts, "item"))}
   >
     <slot />
   </${part.defaultElement}>
@@ -263,7 +153,8 @@ import { ${context.hook} } from "./${context.file}";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLButtonElement | null>(null);
-${context.hook}("${facts.exports.trigger}");
+const item = ${context.hook}("${facts.exports.trigger}");
+const props = withDefaults(defineProps<{ disabled?: boolean }>(), { disabled: false });
 defineExpose({ element });
 </script>
 
@@ -271,11 +162,9 @@ defineExpose({ element });
   <${part.defaultElement}
     ref="element"
     v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
-    ${facts.attrs.trigger}
+    ${partAttributes("vue", accordionPartPolicy(facts, "trigger"))}
     data-sw-part="${part.name}"
-    ${facts.attrs.triggerType}="button"
-    ${facts.attrs.triggerExpanded}="false"
-    ${facts.attrs.triggerState}="closed"
+    :disabled='${accordionDisabled("item.disabled", "props.disabled", '$attrs["aria-disabled"]')}'
   >
     <slot />
   </${part.defaultElement}>
@@ -285,14 +174,11 @@ defineExpose({ element });
 
 function printPanel(facts: AdapterRepeatedDisclosureFacts): string {
   const part = facts.parts.panel;
-  const context = getContextNames(facts);
   return `<script setup lang="ts">
 import { ref } from "vue";
-import { ${context.hook} } from "./${context.file}";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null);
-${context.hook}("${facts.exports.panel}");
 defineExpose({ element });
 </script>
 
@@ -300,11 +186,9 @@ defineExpose({ element });
   <${part.defaultElement}
     ref="element"
     v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
-    ${facts.attrs.panel}
+    ${partAttributes("vue", accordionPartPolicy(facts, "panel"))}
     data-sw-part="${part.name}"
-    ${facts.panelVisibility.stateAttribute}="closed"
-    ${facts.panelVisibility.hiddenAttribute}
-    style="animation: none"
+    style="animation: ${accordionPartPolicy(facts, "panel").initialAnimation}"
   >
     <slot />
   </${part.defaultElement}>

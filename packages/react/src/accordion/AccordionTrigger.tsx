@@ -6,19 +6,27 @@
 "use client";
 
 import * as React from "react";
+import { AccordionItemContext } from "./AccordionItem";
 
 export type AccordionTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const AccordionTrigger = React.forwardRef<HTMLButtonElement, AccordionTriggerProps>(
-  function AccordionTrigger(props, forwardedRef) {
+  function AccordionTrigger({ disabled = false, ...props }, forwardedRef) {
+    const itemDisabled = React.useContext(AccordionItemContext);
     return (
       <button
+        {...props}
+        data-sw-accordion-trigger=""
         type="button"
-        data-sw-accordion-trigger
         aria-expanded="false"
         data-state="closed"
+        disabled={
+          itemDisabled ||
+          Boolean(disabled) ||
+          props["aria-disabled"] === true ||
+          props["aria-disabled"] === "true"
+        }
         ref={forwardedRef}
-        {...props}
       />
     );
   },

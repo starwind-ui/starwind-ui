@@ -1,14 +1,13 @@
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -69,12 +68,13 @@ describe("generated Vue Color Picker Primitive", () => {
     const index = output.get("index.ts")!;
     const all = [...output.values()].join("\n");
 
-    expect(root).toContain("createColorPicker");
-    expect(root).toContain('"update:modelValue"');
-    expect(root).toContain('"update:format"');
-    expect(root).toContain("details.isCanceled");
-    expect(root).toContain("MutationObserver");
-    expect(root).toContain("owned?.destroy()");
+    expect(compactCode(root)).toContain(compactCode("createColorPicker"));
+    expect(compactCode(root)).toContain(compactCode('"update:modelValue"'));
+    expect(compactCode(root)).toContain(compactCode('"update:format"'));
+    expect(compactCode(root)).toContain(compactCode('owner.subscribe("valueChange"'));
+    expect(compactCode(root)).toContain(compactCode("if (!active) return;"));
+    expect(compactCode(root)).toContain(compactCode("MutationObserver"));
+    expect(compactCode(root)).toContain(compactCode("owner.destroy()"));
     expect(context).toContain("InjectionKey<ColorPickerRootContextValue>");
     expect(context).toContain("projectColorPickerInitialPart");
     expect(index).toContain("parseColor");

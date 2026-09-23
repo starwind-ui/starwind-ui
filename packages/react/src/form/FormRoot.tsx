@@ -5,12 +5,21 @@
 
 "use client";
 
-import { createForm, type FormValidationTiming } from "@starwind-ui/runtime/form";
+import {
+  createForm,
+  type FormExternalErrorOptions,
+  type FormExternalErrors,
+  type FormOptions,
+  type FormValidationTiming,
+} from "@starwind-ui/runtime/form";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type FormRootProps = React.ComponentPropsWithoutRef<"form"> & {
+  options?: FormOptions;
+  errors?: FormExternalErrors;
+  errorOptions?: FormExternalErrorOptions;
   "data-error-visibility"?: FormValidationTiming;
   "data-revalidation-timing"?: FormValidationTiming;
   "data-validation-timing"?: FormValidationTiming;
@@ -22,6 +31,9 @@ export type FormRootProps = React.ComponentPropsWithoutRef<"form"> & {
 const FormRoot = React.forwardRef<HTMLFormElement, FormRootProps>(function FormRoot(
   {
     children,
+    options,
+    errors,
+    errorOptions,
     "data-error-visibility": dataErrorVisibility,
     "data-revalidation-timing": dataRevalidationTiming,
     "data-validation-timing": dataValidationTiming,
@@ -32,6 +44,7 @@ const FormRoot = React.forwardRef<HTMLFormElement, FormRootProps>(function FormR
   },
   forwardedRef,
 ) {
+  const configured = React.useRef({ options: false, errors: false }).current;
   const rootRef = React.useRef<HTMLFormElement>(null);
   const instanceRef = React.useRef<ReturnType<typeof createForm> | undefined>(undefined);
 
@@ -51,12 +64,38 @@ const FormRoot = React.forwardRef<HTMLFormElement, FormRootProps>(function FormR
     instanceRef.current = instance;
 
     return () => {
+      if (instanceRef.current === instance) instanceRef.current = undefined;
       instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
     };
   }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    const instance = instanceRef.current;
+    if (instance) {
+      if (options !== undefined || configured.options) {
+        configured.options = options !== undefined;
+        instance.setOptions({
+          fieldValidators: undefined,
+          formValidators: undefined,
+          asyncFieldValidators: undefined,
+          asyncFormValidators: undefined,
+          asyncValidationDebounceMs: undefined,
+          externalErrorsOnReset: undefined,
+          onSubmit: undefined,
+          ...options,
+        } satisfies Record<keyof FormOptions, unknown>);
+      }
+    }
+  }, [options]);
+  useIsomorphicLayoutEffect(() => {
+    const instance = instanceRef.current;
+    if (instance) {
+      if (errors !== undefined || configured.errors) {
+        configured.errors = errors !== undefined;
+        instance.setExternalErrors(errors ?? {}, errorOptions);
+      }
+    }
+  }, [errors, errorOptions]);
 
   return (
     <form

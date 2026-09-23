@@ -10,6 +10,7 @@ export function releaseSourceFiles(root) {
       execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
         cwd: root,
         encoding: "utf8",
+        maxBuffer: 64 * 1024 * 1024,
       })
         .split("\0")
         .filter(Boolean),
@@ -70,10 +71,12 @@ export function releaseOutputFingerprint(root, packsDirectory) {
     "packages/runtime/dist",
     "packages/react/dist",
     "packages/vue/dist",
+    "packages/svelte/dist",
     "packages/cli/dist",
     "apps/demo/dist",
     "apps/react-demo/dist",
     "apps/vue-demo/dist",
+    "apps/svelte-demo/dist",
     path.relative(root, packsDirectory),
   ])
     visit(directory);
