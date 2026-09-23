@@ -38,7 +38,7 @@
         "familySubpaths": 37,
         "namespaceParts": 242,
         "renderedPrimitivePaths": 227,
-        "styledNormalizedPaths": 393,
+        "styledNormalizedPaths": 395,
         "styledRoots": 55
       },
       "familySubpaths": [
@@ -4554,6 +4554,8 @@
           "aspect-ratio/variants.ts",
           "avatar/Avatar.component",
           "avatar/AvatarFallback.component",
+          "avatar/AvatarGroup.component",
+          "avatar/AvatarGroupCount.component",
           "avatar/AvatarImage.component",
           "avatar/index.ts",
           "avatar/variants.ts",
@@ -4973,7 +4975,7 @@
         "familySubpaths": 37,
         "namespaceParts": 242,
         "renderedPrimitivePaths": 226,
-        "styledNormalizedPaths": 390,
+        "styledNormalizedPaths": 392,
         "styledRoots": 54
       },
       "familySubpaths": [
@@ -9642,6 +9644,8 @@
           "aspect-ratio/variants.ts",
           "avatar/Avatar.component",
           "avatar/AvatarFallback.component",
+          "avatar/AvatarGroup.component",
+          "avatar/AvatarGroupCount.component",
           "avatar/AvatarImage.component",
           "avatar/index.ts",
           "avatar/variants.ts",
@@ -10058,7 +10062,7 @@
         "familySubpaths": 37,
         "namespaceParts": 242,
         "renderedPrimitivePaths": 226,
-        "styledNormalizedPaths": 390,
+        "styledNormalizedPaths": 392,
         "styledRoots": 54
       },
       "familySubpaths": [
@@ -14702,6 +14706,8 @@
           "aspect-ratio/variants.ts",
           "avatar/Avatar.component",
           "avatar/AvatarFallback.component",
+          "avatar/AvatarGroup.component",
+          "avatar/AvatarGroupCount.component",
           "avatar/AvatarImage.component",
           "avatar/index.ts",
           "avatar/variants.ts",

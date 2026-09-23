@@ -101,6 +101,8 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     const errorFallback = errorRoot?.querySelector('[data-slot="avatar-fallback"]');
     const delayedRoot = document.querySelector("#react-runtime-avatar-delayed");
     const delayedFallback = delayedRoot?.querySelector('[data-slot="avatar-fallback"]');
+    const groupRoot = document.querySelector("#react-runtime-avatar-group");
+    const groupCount = document.querySelector("#react-runtime-avatar-group-count");
 
     loadedImage?.dispatchEvent(new Event("load"));
     errorImage?.dispatchEvent(new Event("error"));
@@ -114,6 +116,20 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
         width: rect.width,
       };
     };
+    const readGroupLayout = () => {
+      if (!(groupRoot instanceof HTMLElement)) return null;
+      const avatars = Array.from(groupRoot.querySelectorAll(':scope > [data-slot="avatar"]'));
+      return {
+        avatarDataSizes: avatars.map((avatar) => avatar.getAttribute("data-size")),
+        avatarLefts: avatars.map((avatar) => avatar.getBoundingClientRect().left),
+        countGeometry: readRootGeometry(groupCount),
+      };
+    };
+    groupRoot?.setAttribute("dir", "ltr");
+    const ltrGroupLayout = readGroupLayout();
+    groupRoot?.setAttribute("dir", "rtl");
+    const rtlGroupLayout = readGroupLayout();
+    groupRoot?.removeAttribute("dir");
     const readVisuals = () => {
       if (!(errorRoot instanceof HTMLElement) || !(errorFallback instanceof HTMLElement)) {
         return null;
@@ -157,6 +173,13 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
         errorImage instanceof HTMLElement ? errorImage.style.visibility : undefined,
       errorRootClassName: errorRoot?.getAttribute("class"),
       errorStatus: errorRoot?.getAttribute("data-image-loading-status"),
+      groupClassName: groupRoot?.getAttribute("class"),
+      groupCountClassName: groupCount?.getAttribute("class"),
+      groupCountDataSlot: groupCount?.getAttribute("data-slot"),
+      groupCountText: groupCount?.textContent?.trim(),
+      groupDataSlot: groupRoot?.getAttribute("data-slot"),
+      groupRole: groupRoot?.getAttribute("role"),
+      groupTagName: groupRoot?.tagName,
       lightVisuals,
       loadedFallbackClassName: loadedFallback?.getAttribute("class"),
       loadedFallbackHidden:
@@ -171,7 +194,9 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
       loadedRootHasDataSw: loadedRoot?.hasAttribute("data-sw-avatar"),
       loadedRootTagName: loadedRoot?.tagName,
       loadedStatus: loadedRoot?.getAttribute("data-image-loading-status"),
+      ltrGroupLayout,
       rootCount: document.querySelectorAll('[data-slot="avatar"][data-sw-avatar]').length,
+      rtlGroupLayout,
     };
   });
   await expectText(page.locator("[data-runtime-avatar-ref]"), "avatar");
@@ -191,7 +216,7 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
   });
 
   if (
-    avatarState.rootCount !== 3 ||
+    avatarState.rootCount !== 6 ||
     avatarState.loadedRootTagName !== "SPAN" ||
     avatarState.loadedRootDataSlot !== "avatar" ||
     avatarState.loadedRootHasDataSw !== true ||
@@ -229,6 +254,22 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     avatarState.delayedGeometry?.width !== 32 ||
     avatarState.delayedFallbackDelay !== "1000" ||
     avatarState.delayedFallbackHidden !== true ||
+    avatarState.groupTagName !== "DIV" ||
+    avatarState.groupDataSlot !== "avatar-group" ||
+    avatarState.groupRole !== null ||
+    avatarState.groupClassName?.includes("runtime-avatar-group-custom") !== true ||
+    avatarState.groupClassName?.includes("-space-x-2") !== true ||
+    avatarState.groupCountDataSlot !== "avatar-group-count" ||
+    avatarState.groupCountText !== "+3" ||
+    avatarState.groupCountClassName?.includes("runtime-avatar-count-custom") !== true ||
+    avatarState.groupCountClassName?.includes("size-10") !== true ||
+    avatarState.ltrGroupLayout?.avatarDataSizes.join(",") !== "sm,sm,sm" ||
+    avatarState.ltrGroupLayout?.countGeometry?.height !== 32 ||
+    avatarState.ltrGroupLayout?.countGeometry?.width !== 32 ||
+    avatarState.ltrGroupLayout?.avatarLefts[1] - avatarState.ltrGroupLayout?.avatarLefts[0] !==
+      24 ||
+    avatarState.rtlGroupLayout?.avatarLefts[1] - avatarState.rtlGroupLayout?.avatarLefts[0] !==
+      -24 ||
     avatarState.lightVisuals?.fallbackDisplay !== "flex" ||
     avatarState.lightVisuals?.fallbackAlignItems !== "center" ||
     avatarState.lightVisuals?.fallbackJustifyContent !== "center" ||
