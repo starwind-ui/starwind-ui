@@ -73,6 +73,7 @@ describe("root verification scripts", () => {
       "pnpm runtime:test",
       "pnpm react:test",
       "pnpm vue:test",
+      "pnpm test:form-parity",
     ]);
   });
 

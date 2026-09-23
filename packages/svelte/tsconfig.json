@@ -11,6 +11,7 @@
     "noEmit": true,
     "paths": {
       "@starwind-ui/runtime": ["../runtime/src/index.ts"],
+      "@starwind-ui/runtime/theme": ["../runtime/src/theme/theme.ts"],
       "@starwind-ui/runtime/*": ["../runtime/src/components/*/index.ts"],
       "@starwind-ui/svelte": ["src/index.ts"],
       "@starwind-ui/svelte/*": ["src/*/index.ts"]
