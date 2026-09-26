@@ -6,4 +6,6 @@
 "starwind": patch
 ---
 
-Add a silent Color Picker stateSync subscription after native form reset settlement. Preserve canceled resets and newer color or format changes, including active slider input. React and Vue synchronize through Runtime settlement without separate reset timers. Deliver the corrected Color Picker Primitive and Styled behavior through the CLI registry.
+Fixed Color Picker form resets in React and Vue. Canceling a reset now keeps the selected color and format, and a pending reset no longer overwrites a newer selection or slider change.
+
+For custom Runtime integrations, the new `stateSync` subscription lets you update your UI after a form reset finishes without firing a user-change event.

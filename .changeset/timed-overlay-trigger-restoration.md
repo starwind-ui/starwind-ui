@@ -5,4 +5,6 @@
 "starwind": patch
 ---
 
-Add an optional trigger to the Tooltip and Preview Card Runtime `setOpen` methods so callers can restore an open overlay at a connected trigger owned by its root. React preserves the accepted trigger when its controller is recreated, which keeps Tooltip and Hover Card content anchored during supported updates. Canceled changes preserve the accepted anchor, and silent restoration preserves event behavior. Tooltip also clears pending opens when disabled and restores trigger interaction when enabled again.
+Fixed open React tooltips and hover cards losing their position when the component updates. Tooltip also cancels a scheduled opening when disabled and responds to its trigger again when re-enabled.
+
+For custom Runtime integrations, Tooltip and Preview Card `setOpen` methods now accept an optional trigger element. Use it to restore an open overlay at its trigger.

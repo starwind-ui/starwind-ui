@@ -5,6 +5,6 @@
 "starwind": patch
 ---
 
-Generate reactive component lifecycle steps from shared recipes to align accepted state, reset defaults, controller cleanup, and portal connection order across React, Vue, and Svelte. Keep framework syntax and scheduling in each adapter.
+Made component setup and cleanup consistent across React, Vue, and Svelte. This covers form-reset defaults, state updates, and opening nested overlays.
 
-Include compact generated imports when collecting vendored files and package requirements, so copied components include their complete dependency graph.
+Fixed the CLI missing dependencies in some generated imports. Installed components now include all required files and packages.

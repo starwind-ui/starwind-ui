@@ -5,4 +5,6 @@
 "starwind": patch
 ---
 
-Deliver component-scoped Input OTP caret dimensions and blinking styles in Astro, React, Vue, and Svelte. Let Popover shift along its trigger to stay inside the viewport while preserving separation from the trigger.
+Input OTP now shows a visible, blinking caret when focused in Astro, React, Vue, and Svelte. Its caret styles are included with the component.
+
+Popovers now shift to stay within the viewport near an edge, while keeping space between the popup and its trigger.

@@ -3,4 +3,4 @@
 "starwind": patch
 ---
 
-Share document observation across mounted Vue portals to reduce duplicate mutation tracking. Preserve live target changes and disabled placement, and disconnect the observer when its final portal unsubscribes. Vendored Vue primitives receive the same helper update.
+Reduced repeated DOM observation in Vue pages with multiple portaled components, such as menus and tooltips. Portals now share one observer, which reduces the work needed to track changes to the page.

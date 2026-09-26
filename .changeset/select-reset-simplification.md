@@ -5,4 +5,6 @@
 "starwind": patch
 ---
 
-Simplify React Select reset settlement and timer cleanup. Remove special handling for changing form ownership during a pending reset while preserving ordinary form binding, canceled resets, newer value changes, and unmount cleanup. Deliver the updated React Select source through the CLI registry.
+Simplified React Select form-reset handling and timer cleanup. Canceled resets keep the current selection, and pending resets cannot overwrite a newer value.
+
+Moving a Select to another form while a reset is pending no longer has special handling. Keep it attached to the same form until that reset finishes.

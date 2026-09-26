@@ -4,6 +4,6 @@
 "starwind": patch
 ---
 
-Correct Vue and Svelte nested overlay placement by removing implicit floating-host markers from ordinary portal wrappers. Default destinations now follow the shared portal policy used by Astro and React. Color Picker roots and native Dialog floating hosts remain supported.
+Fixed nested overlays in Vue and Svelte, including Select menus appearing behind a Color Picker.
 
-Nested portals outside Dialog can now share the document body instead of nesting inside a parent portal wrapper. Applications that require that containment for custom CSS or DOM queries can pass `data-floating-root` explicitly to the intended host or select a portal container.
+Nested overlays can now render directly under the document body. If your custom CSS selectors or DOM queries depend on an overlay staying inside its parent, set a portal container or add `data-floating-root` to the element that should contain it. Overlays inside Dialog still use its floating container.

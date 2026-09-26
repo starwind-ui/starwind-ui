@@ -6,4 +6,6 @@
 "starwind": patch
 ---
 
-Refresh owned Avatar parts and late Dialog controls while retaining their Runtime instances. Correct framework model publication, form reset state, initial native state, controlled overlay commands, fixed Tabs synchronization keys, and Vue Toaster spacing. Deliver the affected Primitive and Styled component patches through the CLI registry.
+Fixed component state getting out of sync with app updates, form resets, and initial input values. This includes opening and closing overlays from code and keeping Tabs selection in sync.
+
+Avatar now handles changes to its image and fallback elements. Dialog recognizes controls added after it opens, and Vue toasts use the correct spacing.

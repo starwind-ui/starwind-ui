@@ -5,4 +5,4 @@
 "starwind": patch
 ---
 
-Keep an open Context Menu at its invocation point when its Runtime controller is recreated for the same root element. Preserve the last document-coordinate rectangle while removing the retired anchor and interaction work. This also retains the point for an imperative opening after same-element reuse; the next activation replaces it, and a fresh root starts at zero.
+Fixed an open Context Menu jumping away from where it was opened when the component updates. It now keeps its position until the next time you open it at another location.
