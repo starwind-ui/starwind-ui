@@ -2,4 +2,4 @@
 "starwind": patch
 ---
 
-Correct the Vue Spinner, Dropzone, and Toast loading icons to match the standard Tabler loader used by Astro and React.
+Updated the loading icons in Vue Spinner, Dropzone, and Toast to match Astro and React.

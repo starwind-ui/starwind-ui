@@ -6,4 +6,6 @@
 "starwind": patch
 ---
 
-Preserve connected Combobox state when native form reset is canceled or superseded by later input or value work. Reconcile React and Vue controlled values after reset, restore React text after Escape, and restore Vue input text when a native input proposal is canceled.
+Fixed Combobox values and input text after form resets. Canceling a reset keeps the current value, and a pending reset no longer overwrites newer input.
+
+In React, pressing Escape restores the expected input text. In Vue, canceling an input change restores the previous text.

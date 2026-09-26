@@ -7,6 +7,6 @@
 "starwind": patch
 ---
 
-Support Tabs panel entrance and exit motion through `data-starting-style` and `data-ending-style`. Outgoing panels become inert immediately and stay visible until their finite CSS motion completes. Preserve Runtime visibility through framework renders and keep existing panel state retention.
+Tabs now supports CSS entrance and exit animations. Panels stay visible until their exit animation finishes, while inactive content stops accepting keyboard focus and clicks. Use `data-starting-style` and `data-ending-style` to style the animations.
 
-Update the enabled keyboard entry tab after external selection while preserving keyboard position when focus is inside the tablist.
+When your code changes the selected tab, pressing Tab to enter the tab list now focuses that tab. Focus stays in place while someone is already navigating the list.

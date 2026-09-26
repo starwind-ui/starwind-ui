@@ -3,4 +3,4 @@
 "starwind": minor
 ---
 
-Publish the Svelte 5 adapter package as a public beta and expose it through the Starwind CLI.
+Added Svelte 5 support as a public beta. Install the `@starwind-ui/svelte` package or use the Starwind CLI to add Svelte components. Supports Svelte 5.29 and newer versions before Svelte 6, with setup for Vite, SvelteKit, and Astro projects.

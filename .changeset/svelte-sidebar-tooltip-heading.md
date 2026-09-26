@@ -2,4 +2,4 @@
 "starwind": patch
 ---
 
-Keep Svelte Sidebar navigation headings enabled when they also act as Collapsible triggers. Hide expanded and mobile tooltips through the existing Sidebar visibility rule.
+Fixed Svelte Sidebar headings appearing disabled when they also open a collapsible section. Their tooltips remain available when the sidebar is collapsed and stay hidden in expanded or mobile views.

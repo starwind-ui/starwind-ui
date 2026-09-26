@@ -3,4 +3,4 @@
 "starwind": patch
 ---
 
-Preserve authored parent-before-child order when Svelte portals move to a shared floating host. Nested overlays inside a native Dialog remain above their parent and receive pointer input.
+Fixed nested overlays in Svelte dialogs appearing behind their parent or failing to receive clicks. Child overlays now stay above the overlay that opened them.

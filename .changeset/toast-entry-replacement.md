@@ -5,4 +5,4 @@
 "starwind": patch
 ---
 
-Prevent immediate Toast updates and resolved promises from skipping entry motion or using an incorrect stack height. Track queued entry frames for the current toast element and cancel them when the toast closes or its manager is destroyed.
+Fixed toasts skipping their entrance animation or leaving incorrect spacing when updated immediately, including when a promise resolves. Closing a toast also cancels any remaining entrance animation work.

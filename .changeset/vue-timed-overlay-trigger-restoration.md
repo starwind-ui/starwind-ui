@@ -2,4 +2,4 @@
 "@starwind-ui/vue": patch
 ---
 
-Preserve the accepted Tooltip and Preview Card trigger when Vue recreates their controllers, so open Tooltip and Hover Card content stays anchored during supported updates. Restore the current open state silently and honor newer parent commands during reconnection.
+Fixed open Vue tooltips and hover cards losing their position when the component updates. They stay attached to their trigger and respect newer open or close requests from your app.

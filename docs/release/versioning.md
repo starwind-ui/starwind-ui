@@ -9,6 +9,30 @@ Version each public surface from the contract that changed. Starwind has three r
 Runtime, Astro, and React form a separate fixed package group. ADR 0007 owns their lockstep release
 policy.
 
+## Release Note Writing
+
+Write Changeset summaries and component changelogs for a web developer using Starwind.
+The changelog generator copies Changeset summaries into the published package notes.
+
+- Lead with the visible fix or new capability and name the affected component and framework.
+- For a bug, explain when it happened and what works after the update. Prefer a concrete example.
+- Use short sentences and familiar terms. Explain an internal term if the reader needs it.
+- Include API names, code, and configuration only when they help users use a feature or update
+  their code. Put required migration steps in a separate paragraph with an explicit action.
+- Keep implementation details, ticket history, package grouping, and release-policy explanations
+  in engineering docs. A performance note should say what work was reduced without claiming
+  an unmeasured speed improvement.
+- Keep matching package and docs notes consistent. Edit pending release entries; preserve
+  previously published history. Wording edits must retain package selections, version bumps,
+  component intents, supported scope, and any required migration guidance.
+
+For example: "Fixed nested overlays in Vue and Svelte, including Select menus appearing behind
+a Color Picker." Follow with portal configuration details only for users whose custom CSS or
+DOM queries depend on where the overlay is rendered.
+
+Before committing, read each note as someone who has not seen the implementation. They should
+be able to identify what changed and whether they need to do anything.
+
 ## CLI Version Policy
 
 | Change                                                                               | Component version               | `starwind` version              |
