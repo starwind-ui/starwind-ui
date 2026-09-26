@@ -7,4 +7,4 @@
 
 Made component setup and cleanup consistent across React, Vue, and Svelte. This covers form-reset defaults, state updates, and opening nested overlays.
 
-Fixed the CLI missing dependencies in some generated imports. Installed components now include all required files and packages.
+Fixed the CLI overlooking dependencies in some generated imports. Installed components now include all required files and packages.
