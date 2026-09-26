@@ -1,5 +1,59 @@
 # @starwind-ui/astro
 
+## 1.3.0
+
+### Minor Changes
+
+- Fixed Color Picker form resets in React and Vue. Canceling a reset now keeps the selected color and format, and a pending reset no longer overwrites a newer selection or slider change.
+
+  For custom Runtime integrations, the new `stateSync` subscription lets you update your UI after a form reset finishes without firing a user-change event.
+
+- React, Vue, and Svelte Form components now support validation settings, server errors, and options for when errors appear. You can use synchronous or asynchronous validators and configure submission and reset behavior through component props.
+- Fixed component updates and form resets across frameworks:
+  - Vue bindings now reflect changes accepted by the component. Checkboxes and switches keep their original reset values, and Checkbox Group manages the correct child controls.
+  - React Navigation Menu handles content being removed from its shared viewport. Sidebar stays in sync with saved state and handles nested mobile sheets correctly.
+  - Color Picker keeps values supplied by your app when the form resets.
+  - Input and Dropzone keep working when their input elements or associated forms change. Custom Runtime integrations can use their new `refresh` methods to reconnect those elements.
+
+  Components installed through the CLI include these fixes. Installing the Field Primitive also includes its required Input files.
+
+- Fixed component state getting out of sync with app updates, form resets, and initial input values. This includes opening and closing overlays from code and keeping Tabs selection in sync.
+
+  Avatar now handles changes to its image and fallback elements. Dialog recognizes controls added after it opens, and Vue toasts use the correct spacing.
+
+- Tabs now supports CSS entrance and exit animations. Panels stay visible until their exit animation finishes, while inactive content stops accepting keyboard focus and clicks. Use `data-starting-style` and `data-ending-style` to style the animations.
+
+  When your code changes the selected tab, pressing Tab to enter the tab list now focuses that tab. Focus stays in place while someone is already navigating the list.
+
+- Fixed open React tooltips and hover cards losing their position when the component updates. Tooltip also cancels a scheduled opening when disabled and responds to its trigger again when re-enabled.
+
+  For custom Runtime integrations, Tooltip and Preview Card `setOpen` methods now accept an optional trigger element. Use it to restore an open overlay at its trigger.
+
+- React Tooltip now reports a clear error if its Primitive markup is missing `Tooltip.Portal`.
+
+  If you used the previous Primitive example, wrap `Tooltip.Positioner` and `Tooltip.Popup` in `Tooltip.Portal`. For inline rendering, keep the wrapper and set its `disabled` prop. Styled Tooltip already includes this wrapper and needs no change.
+
+### Patch Changes
+
+- Fixed Combobox values and input text after form resets. Canceling a reset keeps the current value, and a pending reset no longer overwrites newer input.
+
+  In React, pressing Escape restores the expected input text. In Vue, canceling an input change restores the previous text.
+
+- Fixed an open Context Menu jumping away from where it was opened when the component updates. It now keeps its position until the next time you open it at another location.
+- Input OTP now shows a visible, blinking caret when focused in Astro, React, Vue, and Svelte. Its caret styles are included with the component.
+
+  Popovers now shift to stay within the viewport near an edge, while keeping space between the popup and its trigger.
+
+- Fixed Navigation Menu links after content moves into the shared viewport. Links still follow your close-on-select settings, canceled actions stay canceled, and links in nested menus affect the correct menu.
+- Reduced repeated DOM observation in React pages with multiple portaled components, such as menus and tooltips. Portals now share one observer, which reduces the work needed to track changes to the page.
+- Simplified React Select form-reset handling and timer cleanup. Canceled resets keep the current selection, and pending resets cannot overwrite a newer value.
+
+  Moving a Select to another form while a reset is pending no longer has special handling. Keep it attached to the same form until that reset finishes.
+
+- Fixed toasts skipping their entrance animation or leaving incorrect spacing when updated immediately, including when a promise resolves. Closing a toast also cancels any remaining entrance animation work.
+- Updated dependencies
+  - @starwind-ui/runtime@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes

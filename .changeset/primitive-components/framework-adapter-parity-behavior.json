@@ -1,7 +1,0 @@
-{
-  "primitives": {
-    "fieldset": "patch",
-    "toggle-group": "patch"
-  },
-  "impact": "behavior"
-}
