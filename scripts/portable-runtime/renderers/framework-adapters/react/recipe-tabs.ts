@@ -43,6 +43,6 @@ export const tabsOperations: TabsOperations = {
       .join(" ");
     return `import * as React from 'react';import {useTabsContext} from './TabsContext';
  export type ${name}Props=Omit<React.ComponentPropsWithoutRef<'${plan.tag}'>,${plan.props.length ? plan.props.map((p) => JSON.stringify(p.name)).join("|") : "never"}> & {${fields}};
- const ${name}=React.forwardRef<${element},${name}Props>(function ${name}({children,${plan.props.map((p) => p.name + (p.default !== undefined ? "=" + p.default : "")).join(",")}${plan.props.length ? "," : ""}...rest},ref){const {orientation,value:selected}=useTabsContext();${plan.active ? "const active=selected===value;" : ""}return <${plan.tag} {...rest} ${attrs} ref={ref}>{children}</${plan.tag}>;});export default ${name};`;
+ const ${name}=React.forwardRef<${element},${name}Props>(function ${name}({children,${plan.props.map((p) => p.name + (p.default !== undefined ? "=" + p.default : "")).join(",")}${plan.props.length ? "," : ""}...rest},ref){const {orientation,value:selected}=useTabsContext();${plan.active ? "const active=selected===value;" : ""}${plan.initial.map((item) => `const [${item.name}]=React.useState(()=>${item.expression});`).join("\n")}return <${plan.tag} {...rest} ${attrs} ref={ref}>{children}</${plan.tag}>;});export default ${name};`;
   },
 };

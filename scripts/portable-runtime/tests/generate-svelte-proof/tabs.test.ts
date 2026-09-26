@@ -32,6 +32,10 @@ it("generates the five Tabs parts with a private target context", async () => {
       "tabs/index.ts",
     ]);
     expect(first.get("tabs/index.ts")).not.toContain("TabsContext");
+    expect(first.get("tabs/TabsPanel.svelte")).toContain("hidden={initialHidden}");
+    expect(first.get("tabs/TabsPanel.svelte")).toContain(
+      "const initialHidden=untrack(()=>!active)",
+    );
     const root = first.get("tabs/TabsRoot.svelte")!;
     expect(root).toContain("initialSyncKey=untrack(()=>syncKey)");
     expect(root).toContain("syncKey:initialSyncKey");

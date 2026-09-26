@@ -2,6 +2,7 @@ import {
   autoUpdate,
   computePosition,
   flip,
+  limitShift,
   offset,
   type Placement,
   type ReferenceElement,
@@ -11,10 +12,10 @@ import {
 } from "@floating-ui/dom";
 
 export {
+  type ResolveFloatingPortalTargetOptions,
   resolveFloatingPortalOwner,
   resolveFloatingPortalTarget,
   resolveFloatingPortalTargetOwner,
-  type ResolveFloatingPortalTargetOptions,
 } from "./portal-target-policy";
 
 export type FloatingAlign = "center" | "end" | "start";
@@ -26,7 +27,8 @@ export type FloatingOptions = {
   alignOffset?: number;
   avoidCollisions?: boolean;
   collisionStrategy?: FloatingCollisionStrategy;
-  preserveAnchor?: boolean;
+  /** True locks alignment; "side" permits limited alignment-axis shifting. */
+  preserveAnchor?: boolean | "side";
   side: FloatingSide;
   sideOffset?: number;
   strategy?: Strategy;
@@ -220,12 +222,21 @@ async function updateFloatingPosition({
     collisionStrategy === "best-fit"
       ? [flipMiddleware, sizeMiddleware]
       : [sizeMiddleware, flipMiddleware];
+  const shiftMiddleware =
+    avoidCollisions && preserveAnchor !== true
+      ? shift({
+          crossAxis: !preserveAnchor,
+          limiter: preserveAnchor === "side" ? limitShift() : undefined,
+          padding: viewportPadding,
+        })
+      : null;
+  // Correct centered alignment before deciding whether the requested side must flip.
+  const shiftBeforeFlip = preserveAnchor === "side" && align === "center";
   const middleware = [
     offset({ alignmentAxis: alignOffset, mainAxis: sideOffset }),
-    ...collisionMiddleware,
-    avoidCollisions && !preserveAnchor
-      ? shift({ crossAxis: true, padding: viewportPadding })
-      : null,
+    ...(shiftBeforeFlip
+      ? [shiftMiddleware, ...collisionMiddleware]
+      : [...collisionMiddleware, shiftMiddleware]),
   ].filter(Boolean);
 
   if (canApply()) floating.style.position = strategy;

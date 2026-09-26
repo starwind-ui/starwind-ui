@@ -4,7 +4,6 @@
   import { cx } from "tailwind-variants";
   import { sidebar, sidebarContent, sidebarFooter, sidebarGap, sidebarContainer, sidebarGroup, sidebarGroupAction, sidebarGroupContent, sidebarGroupLabel, sidebarHeader, sidebarInner, sidebarInput, sidebarInset, sidebarMenu, sidebarMenuAction, sidebarMenuBadge, sidebarMenuButton, sidebarMenuItem, sidebarMenuSkeleton, sidebarMenuSub, sidebarMenuSubButton, sidebarMenuSubItem, sidebarMobileContent, sidebarProvider, sidebarRail, sidebarSeparator, sidebarTrigger } from "./variants.js";
   import { SidebarMenuButton } from "@starwind-ui/svelte/sidebar";
-  import { useSidebarContext } from "@starwind-ui/svelte/sidebar";
   import { Tooltip } from "../tooltip/index.js";
   import { TooltipContent } from "../tooltip/index.js";
   import "./styles.css";
@@ -27,8 +26,6 @@
   let buttonClassName = $derived(sidebarMenuButton({ "variant": variant, "size": size, "class": cx(className) }));
 
   let menuProps = $derived(({ "class": buttonClassName, "data-sidebar": "menu-button", "data-size": size, "data-active": isActive, "data-tooltip": tooltip, "href": href, "data-slot": "sidebar-menu-button", ...rest, "data-sw-tooltip-trigger": tooltip ? "" : undefined }) as ComponentProps<typeof SidebarMenuButton>);
-
-  const context = useSidebarContext();
 </script>
 
 {#if Boolean(tooltip)}
@@ -36,7 +33,6 @@
     openDelay={0}
     closeDelay={0}
     class={"w-full"}
-    disabled={context.open || context.isMobile}
   >
     <SidebarMenuButton
       {...menuProps}

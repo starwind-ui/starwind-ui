@@ -665,7 +665,7 @@ class PopoverController implements PopoverInstance {
         collisionStrategy: readCollisionStrategyAttribute(
           placementElement.getAttribute(POPOVER_COLLISION_STRATEGY_ATTRIBUTE),
         ),
-        preserveAnchor: true,
+        preserveAnchor: "side",
         side: readSideAttribute(placementElement.getAttribute(POPOVER_SIDE_ATTRIBUTE)),
         sideOffset: readNumberAttribute(placementElement, POPOVER_SIDE_OFFSET_ATTRIBUTE, 4),
       }),

@@ -294,7 +294,7 @@ const APP_SOURCE = String.raw`<script lang="ts">
   {#if mounted}
     <SelectRoot bind:open bind:value name="choice" modal={false} onOpenChange={handleOpen} onValueChange={handleValue} data-case="controlled" ref={trackRef}>
       <SelectTrigger data-case="controlled-trigger" ref={trackRef}>Choose <SelectValue placeholder="None" /></SelectTrigger>
-      <SelectPortal container={portalTarget} data-case="controlled-portal" ref={trackRef}>
+      <SelectPortal data-floating-root container={portalTarget} data-case="controlled-portal" ref={trackRef}>
         <SelectPositioner>
           <SelectPopup>
             <SelectList>

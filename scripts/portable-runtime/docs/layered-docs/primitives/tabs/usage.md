@@ -1,0 +1,5 @@
+## Usage Guidelines
+
+- **Animate panel changes with CSS.** Apply transitions or keyframe animations to the panel. Use `data-starting-style` for its entrance and `data-ending-style` for its exit. Initial panels appear without an entrance animation. The [animated Styled Tabs example](/docs/components/tabs/#animated-panels) shows a crossfade with reduced-motion support.
+- **Keep visibility under Runtime control.** An outgoing panel becomes `inert` immediately, then receives `hidden` when its own finite motion finishes. Its controls cannot receive input during the exit. Descendant motion and infinite animations do not delay hiding. Panel DOM and local state remain mounted; `keepMounted` preserves its existing behavior.
+- **Keep keyboard entry aligned with selection.** When code changes the selected tab while focus is outside the tab list, the selected enabled trigger becomes the next keyboard entry target. Browser focus stays where it is. While focus is inside the list, Tabs preserves the user's keyboard position.

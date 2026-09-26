@@ -136,11 +136,6 @@ export function specializeSvelteStyledSidebar(
           node.attrs = [{ name: "spread", value: { type: "variable", name: "menuProps" } }];
           node.children = element.children;
         }
-        if (node.type === "component" && node.exportName === "Tooltip")
-          node.attrs.push({
-            name: "disabled",
-            value: { type: "raw", code: "context.open || context.isMobile" },
-          });
         if ("children" in node) node.children = replace(node.children);
         if (node.type === "condition") {
           node.then = replace(node.then);
@@ -220,7 +215,6 @@ export function specializeSvelteStyledSidebar(
       ...(part ? [{ source, names: [`Sidebar${part}`] }] : []),
       ...(dependency ? [{ source: `../${dependency[0]}/index.js`, names: [dependency[1]] }] : []),
       ...(trigger ? [{ source: "../button/variants.js", names: ["button"] }] : []),
-      ...(menu ? [{ source, names: ["useSidebarContext"] }] : []),
       ...(native || sidebar
         ? [{ source: "svelte/elements", names: ["SvelteHTMLElements"], typeOnly: true }]
         : []),
@@ -230,7 +224,6 @@ export function specializeSvelteStyledSidebar(
     rest: component.destructure?.rest,
     setup: [
       ...(native || sidebar ? svelteNativeSetup("rest", native?.[1] ?? "HTMLDivElement") : []),
-      ...(menu ? ["const context = useSidebarContext();"] : []),
     ],
   };
 }

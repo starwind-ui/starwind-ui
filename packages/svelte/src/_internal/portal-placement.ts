@@ -21,6 +21,9 @@ type PortalRuntime = {
   ): void;
 };
 
+// Keep authored ancestry when independently mounted portals converge on one host.
+const authoredPortalParents = new WeakMap<HTMLElement, Node>();
+
 export function createPortalPlacement(
   element: HTMLDivElement,
   reference: Element,
@@ -30,6 +33,7 @@ export function createPortalPlacement(
 ) {
   const authoredParent = element.parentNode;
   const authoredNextSibling = element.nextSibling;
+  if (authoredParent) authoredPortalParents.set(element, authoredParent);
   let stopDocumentObservation: (() => void) | undefined;
   let placedTarget: HTMLElement | null = null;
 
@@ -71,7 +75,11 @@ export function createPortalPlacement(
     const target = resolveTarget(container);
     if (placedTarget === target && element.parentElement === target) return;
     runtime.reportPortalPlacement(element, { ready: false, target });
-    move(target);
+    const firstDescendant = Array.from(target.children).find((child) => {
+      const parent = authoredPortalParents.get(child as HTMLElement);
+      return parent && element.contains(parent);
+    });
+    move(target, firstDescendant ?? null);
     placedTarget = target;
     if (element.parentElement === target)
       runtime.reportPortalPlacement(element, { ready: true, target });

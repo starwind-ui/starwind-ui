@@ -5,6 +5,7 @@
   import { InputOtpSlot as PrimitivePart } from "@starwind-ui/svelte/input-otp";
   import { inputOtp, inputOtpGroup, inputOtpSeparator, inputOtpSlot } from "./variants.js";
   import { InputOtpSlot } from "@starwind-ui/svelte/input-otp";
+  import "./styles.css";
 
   export type InputOtpSlotProps = Omit<ComponentProps<typeof PrimitivePart>, "caret">;
 </script>

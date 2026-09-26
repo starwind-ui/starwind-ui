@@ -126,7 +126,6 @@ defineExpose({ element });
       :data-disabled="props.disabled ? '' : undefined"
       :data-placement="placement.ready.value ? 'ready' : 'pending'"
       data-sw-portal-placement="framework"
-      data-floating-root
       data-sw-part="${part.name}"
     >
       <slot />

@@ -41,7 +41,7 @@ describe("generated Vue framework-owned Portal placement", () => {
         compactCode('import { useVuePortalPlacement } from "../_internal/portal";'),
       );
       expect(compactCode(source)).toContain(compactCode('data-sw-portal-placement="framework"'));
-      expect(compactCode(source)).toContain(compactCode("data-floating-root"));
+      expect(compactCode(source)).not.toContain(compactCode("data-floating-root"));
       expect(compactCode(source)).toContain(
         compactCode(":data-disabled=\"props.disabled ? '' : undefined\""),
       );

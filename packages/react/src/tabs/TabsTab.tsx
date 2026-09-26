@@ -17,6 +17,7 @@ const TabsTab = React.forwardRef<HTMLButtonElement, TabsTabProps>(function TabsT
 ) {
   const { orientation, value: selected } = useTabsContext();
   const active = selected === value;
+  const [initialTabIndex] = React.useState(() => (active && !disabled ? 0 : -1));
   return (
     <button
       {...rest}
@@ -29,7 +30,7 @@ const TabsTab = React.forwardRef<HTMLButtonElement, TabsTabProps>(function TabsT
       data-disabled={disabled ? "" : undefined}
       disabled={disabled}
       aria-selected={active}
-      tabIndex={active && !disabled ? 0 : -1}
+      tabIndex={initialTabIndex}
       role={"tab"}
       type={"button"}
       ref={ref}

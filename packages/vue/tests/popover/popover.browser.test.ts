@@ -289,79 +289,88 @@ describe("Vue Popover browser contract", () => {
     expect(wrapper().contains(positioner())).toBe(true);
   });
 
-  it("teleports directly to the nearest ancestor floating root on first placement", async () => {
-    const overlays = document.createElement("section");
-    document.body.append(overlays);
-    const host = mount(
-      h(
-        PopoverRoot,
-        { defaultOpen: true },
-        {
-          default: () => [
-            h(PopoverTrigger, { id: "nested-parent-trigger" }, { default: () => "Parent" }),
-            h(
-              PopoverPortal,
-              { container: overlays, id: "nested-parent-portal" },
-              {
-                default: () =>
-                  h(PopoverPositioner, null, {
-                    default: () =>
-                      h(
-                        PopoverPopup,
-                        { id: "nested-parent-popup" },
-                        {
-                          default: () =>
-                            h(PopoverRoot, null, {
-                              default: () => [
-                                h(
-                                  PopoverTrigger,
-                                  { id: "nested-child-trigger" },
-                                  { default: () => "Child" },
-                                ),
-                                h(
-                                  PopoverPortal,
-                                  { id: "nested-child-portal" },
-                                  {
-                                    default: () =>
-                                      h(PopoverPositioner, null, {
-                                        default: () =>
-                                          h(PopoverPopup, { id: "nested-child-popup" }),
-                                      }),
-                                  },
-                                ),
-                              ],
-                            }),
-                        },
-                      ),
-                  }),
-              },
-            ),
-          ],
-        },
-      ),
-    );
-    await waitForFloating();
+  it.each([false, true])(
+    "uses only explicit ancestor floating roots (host=%s)",
+    async (explicitHost) => {
+      const overlays = document.createElement("section");
+      document.body.append(overlays);
+      const host = mount(
+        h(
+          PopoverRoot,
+          { defaultOpen: true },
+          {
+            default: () => [
+              h(PopoverTrigger, { id: "nested-parent-trigger" }, { default: () => "Parent" }),
+              h(
+                PopoverPortal,
+                {
+                  container: overlays,
+                  id: "nested-parent-portal",
+                  "data-floating-root": explicitHost ? "" : undefined,
+                },
+                {
+                  default: () =>
+                    h(PopoverPositioner, null, {
+                      default: () =>
+                        h(
+                          PopoverPopup,
+                          { id: "nested-parent-popup" },
+                          {
+                            default: () =>
+                              h(PopoverRoot, null, {
+                                default: () => [
+                                  h(
+                                    PopoverTrigger,
+                                    { id: "nested-child-trigger" },
+                                    { default: () => "Child" },
+                                  ),
+                                  h(
+                                    PopoverPortal,
+                                    { id: "nested-child-portal" },
+                                    {
+                                      default: () =>
+                                        h(PopoverPositioner, null, {
+                                          default: () =>
+                                            h(PopoverPopup, { id: "nested-child-popup" }),
+                                        }),
+                                    },
+                                  ),
+                                ],
+                              }),
+                          },
+                        ),
+                    }),
+                },
+              ),
+            ],
+          },
+        ),
+      );
+      await waitForFloating();
 
-    const parentPortal = overlays.querySelector<HTMLElement>("#nested-parent-portal")!;
-    const childPortal = document.querySelector<HTMLElement>("#nested-child-portal")!;
-    const childPositioner = childPortal.querySelector<HTMLElement>("[data-sw-popover-positioner]")!;
-    expect(childPortal.parentElement).toBe(parentPortal);
-    expect(childPortal.dataset.container).toBeUndefined();
-    expect(childPortal.dataset.placement).toBe("ready");
-    expect(childPortal.contains(childPositioner)).toBe(true);
+      const parentPortal = overlays.querySelector<HTMLElement>("#nested-parent-portal")!;
+      const childPortal = document.querySelector<HTMLElement>("#nested-child-portal")!;
+      const childPositioner = childPortal.querySelector<HTMLElement>(
+        "[data-sw-popover-positioner]",
+      )!;
+      expect(childPortal.parentElement).toBe(explicitHost ? parentPortal : document.body);
+      expect(childPortal.dataset.container).toBeUndefined();
+      expect(childPortal.dataset.placement).toBe("ready");
+      expect(childPortal.contains(childPositioner)).toBe(true);
 
-    host.ownerDocument.querySelector<HTMLButtonElement>("#nested-child-trigger")!.click();
-    await waitForFloating();
-    expect(childPositioner.style.left).not.toBe("");
-    expect(childPositioner.style.top).not.toBe("");
+      host.ownerDocument.querySelector<HTMLButtonElement>("#nested-child-trigger")!.click();
+      await waitForFloating();
+      expect(childPositioner.style.left).not.toBe("");
+      expect(childPositioner.style.top).not.toBe("");
 
-    document.dispatchEvent(
-      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
-    );
-    await nextTick();
-    expect(document.querySelector<HTMLElement>("#nested-child-popup")!.hidden).toBe(true);
-    expect(overlays.querySelector<HTMLElement>("#nested-parent-popup")!.hidden).toBe(false);
-  });
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+      await nextTick();
+      expect(document.querySelector<HTMLElement>("#nested-child-popup")!.hidden).toBe(true);
+      expect(overlays.querySelector<HTMLElement>("#nested-parent-popup")!.hidden).toBe(false);
+    },
+  );
 
   it("completes inline readiness and resumes placement across live disabled toggles", async () => {
     const state = reactive({ disabled: false });

@@ -130,7 +130,7 @@ describe("Vue Alert Dialog public behavior", () => {
     await nextTick();
     const popup = portal.querySelector<HTMLDialogElement>("[data-sw-alert-dialog-popup]")!;
     expect(portal.dataset.placement).toBe("ready");
-    expect(portal.hasAttribute("data-floating-root")).toBe(true);
+    expect(portal.hasAttribute("data-floating-root")).toBe(false);
     expect(portal.contains(popup)).toBe(true);
     expect(popup.open).toBe(true);
     expect(popup.getAttribute("role")).toBe("alertdialog");

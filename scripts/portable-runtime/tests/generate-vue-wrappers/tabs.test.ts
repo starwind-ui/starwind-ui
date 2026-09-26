@@ -37,7 +37,7 @@ describe("generated Vue Tabs", () => {
     expect(first.context).toContain("Readonly<Ref<TabsOrientation>>");
     expect(first.list).toContain("useTabsContext");
     expect(compactCode(first.tab)).toContain(compactCode(':data-value="props.value"'));
-    expect(compactCode(first.panel)).toContain(compactCode(':hidden="!active"'));
+    expect(compactCode(first.panel)).toContain(compactCode(':hidden="initialHidden"'));
     expect(first.indicator).toContain("data-sw-tabs-indicator");
     expect(first.index).toContain("const Tabs =");
     expect(first.index).toContain("TabsValueChangeDetails");

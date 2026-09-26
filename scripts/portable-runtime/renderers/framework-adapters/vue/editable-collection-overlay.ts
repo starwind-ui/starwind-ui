@@ -295,7 +295,7 @@ const placement = useVuePortalPlacement({ active: () => combobox.mounted.value, 
 onMounted(() => { combobox.registerPortal(owner, portalRef.value); });
 onBeforeUnmount(() => { combobox.registerPortal(owner, null); });
 </script>
-<template><Teleport :to="placement.target.value" :disabled="placement.disabled.value"><div ref="portalRef" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.portal} :data-container="typeof props.container === 'string' ? props.container : undefined" :data-disabled="props.disabled ? '' : undefined" :data-placement="placement.ready.value ? 'ready' : 'pending'" data-sw-portal-placement="framework" data-sw-part="${f.parts.portal.name}" data-floating-root><slot /></div></Teleport></template>
+<template><Teleport :to="placement.target.value" :disabled="placement.disabled.value"><div ref="portalRef" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.portal} :data-container="typeof props.container === 'string' ? props.container : undefined" :data-disabled="props.disabled ? '' : undefined" :data-placement="placement.ready.value ? 'ready' : 'pending'" data-sw-portal-placement="framework" data-sw-part="${f.parts.portal.name}"><slot /></div></Teleport></template>
 `;
 }
 

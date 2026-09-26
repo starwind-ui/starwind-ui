@@ -1,4 +1,5 @@
 export async function verifyAstroTabsCases({ page }) {
+  await verifyAstroTabsMotion({ page });
   const tabsState = await page.evaluate(() => {
     const readTabs = (id) => {
       const root = document.querySelector(`#${id}[data-sw-tabs]`);
@@ -210,7 +211,7 @@ export async function verifyAstroTabsCases({ page }) {
     };
   });
   if (
-    tabsState.rootCount !== 6 ||
+    tabsState.rootCount !== 7 ||
     tabsState.initial.hasDataSw !== true ||
     tabsState.initial.dataSlot !== "tabs" ||
     tabsState.initial.className?.includes("starwind-tabs") === true ||
@@ -290,5 +291,51 @@ export async function verifyAstroTabsCases({ page }) {
         tabsState,
       )}.`,
     );
+  }
+}
+
+async function verifyAstroTabsMotion({ page }) {
+  const root = page.locator("#runtime-tabs-animated");
+  await root.waitFor();
+  const result = await root.evaluate(async (element) => {
+    const panel = (value) => element.querySelector(`[data-sw-tabs-panel][data-value="${value}"]`);
+    const trigger = (value) => element.querySelector(`[data-sw-tabs-tab][data-value="${value}"]`);
+    const outgoing = panel("overview");
+    const incoming = panel("activity");
+    const initial =
+      !outgoing.hidden && incoming.hidden && !outgoing.hasAttribute("data-starting-style");
+    getComputedStyle(outgoing).opacity;
+    trigger("activity").click();
+    const overlap =
+      !outgoing.hidden &&
+      !incoming.hidden &&
+      outgoing.inert &&
+      !incoming.inert &&
+      outgoing.hasAttribute("data-ending-style");
+    const link = outgoing.querySelector("a");
+    link.focus();
+    const inertLink = document.activeElement !== link;
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    const completed =
+      outgoing.hidden && !incoming.hidden && !outgoing.hasAttribute("data-ending-style");
+    trigger("overview").click();
+    trigger("activity").click();
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    const reversed = outgoing.hidden && !incoming.hidden && !incoming.inert;
+    return { initial, overlap, inertLink, completed, reversed };
+  });
+  if (Object.values(result).some((value) => value !== true)) {
+    throw new Error(`Expected Astro Tabs crossfade lifecycle, got ${JSON.stringify(result)}.`);
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  try {
+    const hidden = await root.evaluate((element) => {
+      element.querySelector('[data-sw-tabs-tab][data-value="overview"]').click();
+      return element.querySelector('[data-sw-tabs-panel][data-value="activity"]').hidden;
+    });
+    if (!hidden)
+      throw new Error("Expected reduced-motion Tabs to hide the outgoing panel immediately.");
+  } finally {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
   }
 }

@@ -241,6 +241,7 @@ const EXPECTED_REQUESTED_ROOT_FILES = {
     "InputOtpSeparator.vue",
     "InputOtpSlot.vue",
     "index.ts",
+    "styles.css",
     "variants.ts",
   ],
   item: [

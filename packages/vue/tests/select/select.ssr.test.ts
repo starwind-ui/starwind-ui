@@ -84,7 +84,7 @@ describe("Vue Select SSR", () => {
     expect(first).toContain('name="fruit"');
     expect(first).toContain("data-sw-select-input");
     expect(first).toContain("data-sw-select-portal");
-    expect(first).toContain("data-floating-root");
+    expect(first).not.toContain("data-floating-root");
     expect(first).toContain("data-sw-select-popup");
     expect(first).toContain(" hidden");
     expect(first).toContain('aria-selected="true"');
