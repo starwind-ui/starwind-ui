@@ -1,4 +1,4 @@
 {
   "components": { "sidebar": "patch" },
-  "impact": "behavior"
+  "impact": "source"
 }
