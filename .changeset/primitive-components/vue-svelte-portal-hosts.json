@@ -2,6 +2,7 @@
   "primitives": {
     "alert-dialog": "patch",
     "combobox": "patch",
+    "context-menu": "patch",
     "drawer": "patch",
     "menu": "patch",
     "navigation-menu": "patch",
