@@ -1,4 +1,0 @@
-{
-  "components": { "spinner": "patch", "dropzone": "patch", "toast": "patch" },
-  "impact": "source"
-}

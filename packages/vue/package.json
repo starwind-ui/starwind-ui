@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/vue",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Public-beta Vue 3.5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",
@@ -208,7 +208,7 @@
     "test:all:built": "pnpm test:run && pnpm test:browser && pnpm test:hydration:built && pnpm test:release:built"
   },
   "dependencies": {
-    "@starwind-ui/runtime": "1.2.1"
+    "@starwind-ui/runtime": "1.3.0"
   },
   "peerDependencies": {
     "vue": ">=3.5"
