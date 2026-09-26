@@ -60,7 +60,7 @@ describe("generated Vue Navigation Menu Primitive", () => {
     expect(item).toContain(':data-value="props.value"');
     expect(compactCode(trigger)).toContain(compactCode("useNavigationMenuItemContext"));
     expect(portal).toContain("<Teleport");
-    expect(portal).toContain("data-floating-root");
+    expect(portal).not.toContain("data-floating-root");
     expect(portal).toContain("useVuePortalPlacement");
     expect(portal).toContain(':disabled="placement.disabled.value"');
     expect(list).toContain("useNavigationMenuRootContext");

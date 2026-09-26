@@ -11807,7 +11807,46 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             selector: "group-data-[size=sm]/input-otp:text-sm",
             source: "variant-class",
           },
+          {
+            attribute: "data-slot",
+            value: "input-otp-slot",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
+            value: "input-otp-slot",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] > .animate-caret-blink {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
+            value: "input-otp-slot",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret][hidden] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-input-otp-caret",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-input-otp-caret",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] > .animate-caret-blink {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-input-otp-caret",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret][hidden] {",
+            source: "local-style",
+          },
         ],
+        localStyles: {
+          importFrom: [
+            "InputOtpSlot",
+          ],
+          selectorCount: 4,
+        },
       },
       {
         id: "item",
@@ -88380,6 +88419,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               name: "hidden",
               source: "state",
             },
+            {
+              name: "inert",
+              source: "state",
+            },
           ],
         },
         {
@@ -88692,7 +88735,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "data-keep-mounted",
             "data-value",
           ],
-          reason: "Panels start from stable value and keep-mounted markers; the runtime links ids and active visibility during refresh.",
+          reason: "Panels retain their DOM and state. Frameworks snapshot initial hidden markup; Runtime owns live visibility, inert state, and starting/ending markers through finite panel motion.",
         },
         {
           part: "indicator",
@@ -88713,7 +88756,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "Runtime treats an empty string as a valid TabsValue and reserves literal \"null\" as the nullable serialization marker.",
         ],
         react: [
-          "Bridge controlled value through setValue with sync propagation and provide context so child parts can render initial orientation/value state.",
+          "Bridge controlled value through setValue with sync propagation. Snapshot panel hidden and tab tabindex from initial context so rerenders preserve Runtime presence and keyboard position.",
           "Runtime treats an empty string as a valid TabsValue and reserves literal \"null\" as the nullable serialization marker.",
         ],
       },
@@ -88729,7 +88772,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "vue",
         ],
         behaviorNotes: [],
-        usageGuidelines: [],
+        usageGuidelines: [
+          {
+            title: "Animate panel changes with CSS.",
+            description: "Apply transitions or keyframe animations to the panel. Use `data-starting-style` for its entrance and `data-ending-style` for its exit. Initial panels appear without an entrance animation. The [animated Styled Tabs example](/docs/components/tabs/#animated-panels) shows a crossfade with reduced-motion support.",
+          },
+          {
+            title: "Keep visibility under Runtime control.",
+            description: "An outgoing panel becomes `inert` immediately, then receives `hidden` when its own finite motion finishes. Its controls cannot receive input during the exit. Descendant motion and infinite animations do not delay hiding. Panel DOM and local state remain mounted; `keepMounted` preserves its existing behavior.",
+          },
+          {
+            title: "Keep keyboard entry aligned with selection.",
+            description: "When code changes the selected tab while focus is outside the tab list, the selected enabled trigger becomes the next keyboard entry target. Browser focus stays where it is. While focus is inside the list, Tabs preserves the user's keyboard position.",
+          },
+        ],
         sections: [],
         examples: [
           {
@@ -89623,7 +89679,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "data-keep-mounted",
                     "data-value",
                   ],
-                  reason: "Panels start from stable value and keep-mounted markers; the runtime links ids and active visibility during refresh.",
+                  reason: "Panels retain their DOM and state. Frameworks snapshot initial hidden markup; Runtime owns live visibility, inert state, and starting/ending markers through finite panel motion.",
                 },
               ],
               presence: {

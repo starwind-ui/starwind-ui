@@ -193,7 +193,7 @@ describe("Vue Navigation Menu", () => {
     });
     const { app, host } = mountMenu(state, { container: () => state.portalContainer });
     await frame();
-    expect(first.querySelector("[data-sw-nav-menu-portal][data-floating-root]")).toBeTruthy();
+    expect(first.querySelector("[data-sw-nav-menu-portal]:not([data-floating-root])")).toBeTruthy();
 
     clickTrigger(host, "products");
     await frame();
@@ -210,7 +210,9 @@ describe("Vue Navigation Menu", () => {
     await frame();
     clickTrigger(host, "products");
     await frame();
-    expect(second.querySelector("[data-sw-nav-menu-portal][data-floating-root]")).toBeTruthy();
+    expect(
+      second.querySelector("[data-sw-nav-menu-portal]:not([data-floating-root])"),
+    ).toBeTruthy();
     expect(second.querySelector("[data-sw-nav-menu-positioner]")).toBeTruthy();
     clickTrigger(host, "products");
     await frame();

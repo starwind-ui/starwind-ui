@@ -169,7 +169,7 @@ defineExpose({ element });
 </script>
 <template>
   <Teleport :to="placement.target.value" :disabled="placement.disabled.value">
-    <${facts.parts.portal.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.portal} :data-container="typeof props.container === 'string' ? props.container : undefined" :data-disabled="props.disabled ? '' : undefined" :data-placement="placement.ready.value ? 'ready' : 'pending'" data-sw-portal-placement="framework" data-floating-root data-sw-part="${facts.parts.portal.name}"><slot /></${facts.parts.portal.defaultElement}>
+    <${facts.parts.portal.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.portal} :data-container="typeof props.container === 'string' ? props.container : undefined" :data-disabled="props.disabled ? '' : undefined" :data-placement="placement.ready.value ? 'ready' : 'pending'" data-sw-portal-placement="framework" data-sw-part="${facts.parts.portal.name}"><slot /></${facts.parts.portal.defaultElement}>
   </Teleport>
 </template>
 `;

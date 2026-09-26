@@ -38,7 +38,7 @@
         "familySubpaths": 37,
         "namespaceParts": 242,
         "renderedPrimitivePaths": 227,
-        "styledNormalizedPaths": 393,
+        "styledNormalizedPaths": 394,
         "styledRoots": 55
       },
       "familySubpaths": [
@@ -4732,6 +4732,7 @@
           "input-otp/InputOtpSeparator.component",
           "input-otp/InputOtpSlot.component",
           "input-otp/index.ts",
+          "input-otp/styles.css",
           "input-otp/variants.ts",
           "input/Input.component",
           "input/index.ts",
@@ -4973,7 +4974,7 @@
         "familySubpaths": 37,
         "namespaceParts": 242,
         "renderedPrimitivePaths": 226,
-        "styledNormalizedPaths": 390,
+        "styledNormalizedPaths": 391,
         "styledRoots": 54
       },
       "familySubpaths": [
@@ -9817,6 +9818,7 @@
           "input-otp/InputOtpSeparator.component",
           "input-otp/InputOtpSlot.component",
           "input-otp/index.ts",
+          "input-otp/styles.css",
           "input-otp/variants.ts",
           "input/Input.component",
           "input/index.ts",
@@ -10058,7 +10060,7 @@
         "familySubpaths": 37,
         "namespaceParts": 242,
         "renderedPrimitivePaths": 226,
-        "styledNormalizedPaths": 390,
+        "styledNormalizedPaths": 391,
         "styledRoots": 54
       },
       "familySubpaths": [
@@ -14877,6 +14879,7 @@
           "input-otp/InputOtpSeparator.component",
           "input-otp/InputOtpSlot.component",
           "input-otp/index.ts",
+          "input-otp/styles.css",
           "input-otp/variants.ts",
           "input/Input.component",
           "input/index.ts",

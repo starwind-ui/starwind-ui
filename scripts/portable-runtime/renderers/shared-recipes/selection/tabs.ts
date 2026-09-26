@@ -9,6 +9,7 @@ export interface PartRecipe {
   tag: string;
   props: { name: string; type: string; default?: string }[];
   attrs: [string, string][];
+  initial: { name: string; expression: string }[];
   active: boolean;
   refreshInputs: string[];
   children: "plain" | "active";
@@ -98,14 +99,15 @@ export function partRecipe(
       ["data-disabled", 'disabled ? "" : undefined'],
       ["disabled", "disabled"],
       ["aria-selected", "active"],
-      ["tabindex", "active && !disabled ? 0 : -1"],
+      ["tabindex", "initialTabIndex"],
       ["role", '"tab"'],
       ["type", '"button"'],
     );
   if (part === "panel")
     attrs.push(
       ["data-keep-mounted", 'keepMounted ? "" : undefined'],
-      ["hidden", "!active"],
+      ["hidden", "initialHidden"],
+      ["inert", "!active"],
       ["tabindex", "active ? 0 : -1"],
       ["role", '"tabpanel"'],
     );
@@ -122,6 +124,12 @@ export function partRecipe(
     tag: facts.parts[part].defaultElement,
     props,
     attrs,
+    initial:
+      part === "panel"
+        ? [{ name: "initialHidden", expression: "!active" }]
+        : part === "tab"
+          ? [{ name: "initialTabIndex", expression: "active && !disabled ? 0 : -1" }]
+          : [],
     active: selected,
     refreshInputs: props.map((p) => p.name),
     children: selected ? "active" : "plain",

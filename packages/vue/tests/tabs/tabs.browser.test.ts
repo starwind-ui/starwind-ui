@@ -31,6 +31,43 @@ afterEach(() => {
 });
 
 describe("Vue Tabs public behavior", () => {
+  it("preserves hydrated panel transitions through controlled rerenders", async () => {
+    const value = ref("account");
+    const tree = () => h(TabsRoot, { modelValue: value.value }, () => tabsTree());
+    const host = appendHost();
+    host.innerHTML = await renderToString(createSSRApp({ render: tree }));
+    const initialPanel = getPanel(host, "account");
+    const style = document.createElement("style");
+    style.textContent = `[data-sw-tabs-panel] { opacity: 1; transition: opacity 180ms linear; }
+      [data-starting-style], [data-ending-style] { opacity: 0; }`;
+    host.before(style);
+    const warnings: string[] = [];
+    const app = createSSRApp({ render: tree });
+    app.config.warnHandler = (message) => warnings.push(message);
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await settle();
+    expect(getPanel(host, "account")).toBe(initialPanel);
+    expect(initialPanel.hasAttribute("data-starting-style")).toBe(false);
+    expect(getComputedStyle(initialPanel).opacity).toBe("1");
+    value.value = "password";
+    await settle();
+    expect(initialPanel.hidden).toBe(false);
+    expect(initialPanel.inert).toBe(true);
+    expect(getPanel(host, "password").hidden).toBe(false);
+    expect(getTab(host, "password").tabIndex).toBe(0);
+    await expect.poll(() => initialPanel.hidden).toBe(true);
+    getTab(host, "account").focus();
+    value.value = "account";
+    await settle();
+    value.value = "password";
+    await settle();
+    expect(document.activeElement).toBe(getTab(host, "account"));
+    expect(getTab(host, "account").tabIndex).toBe(0);
+    expect(getTab(host, "password").tabIndex).toBe(-1);
+    expect(warnings).toEqual([]);
+  });
+
   it.each([undefined, "mount-key"])(
     "freezes syncKey %s through changes and unrelated reconstruction",
     async (initialKey) => {

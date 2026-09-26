@@ -622,7 +622,6 @@ defineExpose({ element: portalRef });
       :data-placement="placement.ready.value ? 'ready' : 'pending'"
       data-sw-portal-placement="framework"
       data-sw-part="${part.name}"
-      data-floating-root
     >
       <slot />
     </div>

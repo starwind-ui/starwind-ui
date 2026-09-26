@@ -15,6 +15,7 @@ const { orientation, value: selected } = context;
 watch([() => props.value, () => props.keepMounted], context.refresh, { flush: "post" });
 onUnmounted(context.refresh);
 const active = computed(() => selected.value === props.value);
+const initialHidden = !active.value;
 </script>
 <template>
   <div
@@ -27,7 +28,8 @@ const active = computed(() => selected.value === props.value);
     :data-active="active ? '' : undefined"
     :data-state="active ? 'active' : 'inactive'"
     :data-keep-mounted="props.keepMounted ? '' : undefined"
-    :hidden="!active"
+    :hidden="initialHidden"
+    :inert="!active"
     :tabindex="active ? 0 : -1"
     :role="'tabpanel'"
   >

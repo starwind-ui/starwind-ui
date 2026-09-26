@@ -1614,9 +1614,9 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(compactCode(tabsList)).toContain(compactCode('role={"tablist"}'));
     expect(compactCode(tabsTab)).toContain(compactCode("data-sw-tabs-tab"));
     expect(compactCode(tabsTab)).toContain(compactCode("aria-selected={active}"));
-    expect(compactCode(tabsTab)).toContain(compactCode("tabIndex={active && !disabled ? 0 : -1}"));
+    expect(compactCode(tabsTab)).toContain(compactCode("tabIndex={initialTabIndex}"));
     expect(compactCode(tabsPanel)).toContain(compactCode("data-sw-tabs-panel"));
-    expect(compactCode(tabsPanel)).toContain(compactCode("hidden={!active}"));
+    expect(compactCode(tabsPanel)).toContain(compactCode("hidden={initialHidden}"));
     expect(compactCode(tabsPanel)).toContain(compactCode('role={"tabpanel"}'));
     expect(compactCode(tabsIndicator)).toContain(compactCode("data-sw-tabs-indicator"));
     expect(compactCode(tabsIndicator)).not.toContain(compactCode("hidden={value === null}"));

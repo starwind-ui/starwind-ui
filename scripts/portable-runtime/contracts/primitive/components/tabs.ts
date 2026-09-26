@@ -68,6 +68,7 @@ export const tabsRuntimeAdapterContract = {
         { name: "data-state", source: "state" },
         { name: "data-value", source: "prop" },
         { name: "hidden", source: "state" },
+        { name: "inert", source: "state" },
       ],
     },
     {
@@ -201,7 +202,7 @@ export const tabsRuntimeAdapterContract = {
       part: "panel",
       attributes: ["data-sw-tabs-panel", "data-keep-mounted", "data-value"],
       reason:
-        "Panels start from stable value and keep-mounted markers; the runtime links ids and active visibility during refresh.",
+        "Panels retain their DOM and state. Frameworks snapshot initial hidden markup; Runtime owns live visibility, inert state, and starting/ending markers through finite panel motion.",
     },
     {
       part: "indicator",
@@ -216,7 +217,7 @@ export const tabsRuntimeAdapterContract = {
       'Runtime treats an empty string as a valid TabsValue and reserves literal "null" as the nullable serialization marker.',
     ],
     react: [
-      "Bridge controlled value through setValue with sync propagation and provide context so child parts can render initial orientation/value state.",
+      "Bridge controlled value through setValue with sync propagation. Snapshot panel hidden and tab tabindex from initial context so rerenders preserve Runtime presence and keyboard position.",
       'Runtime treats an empty string as a valid TabsValue and reserves literal "null" as the nullable serialization marker.',
     ],
   },

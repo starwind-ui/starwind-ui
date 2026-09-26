@@ -15,6 +15,7 @@ const { orientation, value: selected } = context;
 watch([() => props.value, () => props.disabled], context.refresh, { flush: "post" });
 onUnmounted(context.refresh);
 const active = computed(() => selected.value === props.value);
+const initialTabIndex = active.value && !props.disabled ? 0 : -1;
 </script>
 <template>
   <button
@@ -29,7 +30,7 @@ const active = computed(() => selected.value === props.value);
     :data-disabled="props.disabled ? '' : undefined"
     :disabled="props.disabled"
     :aria-selected="active"
-    :tabindex="active && !props.disabled ? 0 : -1"
+    :tabindex="initialTabIndex"
     :role="'tab'"
     :type="'button'"
   >

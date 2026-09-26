@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createDialog } from "../../../src/components/dialog/dialog";
 import { createPopover } from "../../../src/components/popover/popover";
 import { createSelect } from "../../../src/components/select/select";
+import { initStarwind } from "../../../src/init-starwind";
 
 describe("createPopover", () => {
   beforeEach(() => {
@@ -227,6 +226,88 @@ describe("createPopover", () => {
     expect(getPopup().style.position).toBe("fixed");
     expect(getPopup().style.left).not.toBe("");
     expect(getPopup().style.top).not.toBe("");
+  });
+
+  it.each(["left", "right"] as const)(
+    "shifts centered content inside the %s viewport edge without crossing its trigger",
+    async (edge) => {
+      const root = renderPopover();
+      const trigger = getTrigger();
+      const popup = getPopup();
+      Object.assign(trigger.style, {
+        position: "fixed",
+        [edge]: "24px",
+        top: "40px",
+        width: "80px",
+        height: "32px",
+      });
+      Object.assign(popup.style, { width: "320px", height: "120px" });
+      popup.setAttribute("data-align", "center");
+      const popover = createPopover(root);
+      trigger.click();
+      await waitForFloatingPosition();
+      const rect = popup.getBoundingClientRect();
+      expect(rect.left).toBeGreaterThanOrEqual(8);
+      expect(rect.right).toBeLessThanOrEqual(window.innerWidth - 8);
+      expect(rect.top).toBeGreaterThanOrEqual(trigger.getBoundingClientRect().bottom + 4);
+      expect(popup.getAttribute("data-side")).toBe("bottom");
+      popover.destroy();
+    },
+  );
+
+  it.each(["left", "right", "top", "bottom"] as const)(
+    "shifts %s placements along the anchor in LTR and RTL",
+    async (side) => {
+      for (const dir of ["ltr", "rtl"]) {
+        const root = renderPopover();
+        const trigger = getTrigger();
+        const popup = getPopup();
+        root.dir = dir;
+        popup.dir = dir;
+        const horizontal = side === "left" || side === "right";
+        Object.assign(trigger.style, {
+          position: "fixed",
+          left: horizontal ? "50vw" : "8px",
+          top: horizontal ? "8px" : "50vh",
+          width: "32px",
+          height: "32px",
+        });
+        Object.assign(popup.style, { width: "120px", height: "120px" });
+        popup.setAttribute("data-align", "center");
+        popup.setAttribute("data-side", side);
+        const popover = createPopover(root);
+        trigger.click();
+        await waitForFloatingPosition();
+        const rect = popup.getBoundingClientRect();
+        const anchor = trigger.getBoundingClientRect();
+        expect(rect.left).toBeGreaterThanOrEqual(8);
+        expect(rect.top).toBeGreaterThanOrEqual(8);
+        expect(rect.right).toBeLessThanOrEqual(window.innerWidth - 8);
+        expect(rect.bottom).toBeLessThanOrEqual(window.innerHeight - 8);
+        expect(
+          horizontal
+            ? rect.right <= anchor.left || rect.left >= anchor.right
+            : rect.bottom <= anchor.top || rect.top >= anchor.bottom,
+        ).toBe(true);
+        popover.destroy();
+        document.body.innerHTML = "";
+      }
+    },
+  );
+
+  it("keeps explicit collision avoidance opt-out", async () => {
+    const root = renderPopover();
+    const trigger = getTrigger();
+    const popup = getPopup();
+    Object.assign(trigger.style, { position: "fixed", left: "8px", top: "40px", width: "32px" });
+    Object.assign(popup.style, { width: "320px", height: "120px" });
+    popup.setAttribute("data-align", "center");
+    popup.setAttribute("data-avoid-collisions", "false");
+    const popover = createPopover(root);
+    trigger.click();
+    await waitForFloatingPosition();
+    expect(popup.getBoundingClientRect().left).toBeLessThan(0);
+    popover.destroy();
   });
 
   it("keeps collision-aware content from shifting across its trigger", async () => {

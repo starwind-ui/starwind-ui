@@ -1,7 +1,8 @@
 import { createTabs } from "@starwind-ui/runtime/tabs";
 import * as React from "react";
 import { flushSync } from "react-dom";
-import { createRoot, type Root } from "react-dom/client";
+import { createRoot, hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 import { TabsList, TabsPanel, TabsRoot, TabsTab } from "../src/tabs";
 
@@ -96,3 +97,63 @@ describe("React Tabs fixed syncKey", () => {
     },
   );
 });
+
+it.each([false, true])(
+  "preserves hydrated panel motion and keyboard position (controlled: %s)",
+  async (controlled) => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const style = document.createElement("style");
+    style.textContent = `[data-sw-tabs-panel] { opacity: 1; transition: opacity 180ms linear; }
+    [data-starting-style], [data-ending-style] { opacity: 0; }`;
+    host.before(style);
+    const errors: unknown[] = [];
+    const tree = (value: string) => (
+      <TabsRoot defaultValue="a" value={controlled ? value : undefined}>
+        <TabsList>
+          <TabsTab value="a">A</TabsTab>
+          <TabsTab value="b">B</TabsTab>
+        </TabsList>
+        <TabsPanel value="a">Account content</TabsPanel>
+        <TabsPanel value="b" keepMounted>
+          Password content
+        </TabsPanel>
+      </TabsRoot>
+    );
+    host.innerHTML = renderToString(tree("a"));
+    const original = host.querySelector("[data-sw-tabs-panel]");
+    const owner = hydrateRoot(host, tree("a"), {
+      onRecoverableError: (error) => errors.push(error),
+    });
+    owners.push(owner);
+    await expect
+      .poll(() => host.querySelector("[data-sw-tabs-tab]")?.getAttribute("aria-controls"))
+      .toBeTruthy();
+    expect(host.querySelector("[data-sw-tabs-panel]")).toBe(original);
+    const root = host.querySelector<HTMLElement>("[data-sw-tabs]")!;
+    const a = root.querySelector<HTMLElement>('[data-sw-tabs-panel][data-value="a"]')!;
+    const b = root.querySelector<HTMLElement>('[data-sw-tabs-panel][data-value="b"]')!;
+    const tabA = root.querySelector<HTMLButtonElement>('[data-sw-tabs-tab][data-value="a"]')!;
+    const tabB = root.querySelector<HTMLButtonElement>('[data-sw-tabs-tab][data-value="b"]')!;
+    expect(a.hasAttribute("data-starting-style")).toBe(false);
+    expect(b.hidden).toBe(true);
+    expect(getComputedStyle(a).opacity).toBe("1");
+    const select = (value: string) =>
+      flushSync(() => (controlled ? owner.render(tree(value)) : createTabs(root).setValue(value)));
+    select("b");
+    expect(a.hidden).toBe(false);
+    expect(a.inert).toBe(true);
+    expect(b.hidden).toBe(false);
+    expect(tabB.tabIndex).toBe(0);
+    flushSync(() => owner.render(tree("b")));
+    expect(a.hidden).toBe(false);
+    await expect.poll(() => a.hidden).toBe(true);
+    tabA.focus();
+    select("a");
+    select("b");
+    expect(document.activeElement).toBe(tabA);
+    expect(tabA.tabIndex).toBe(0);
+    expect(tabB.tabIndex).toBe(-1);
+    expect(errors).toEqual([]);
+  },
+);

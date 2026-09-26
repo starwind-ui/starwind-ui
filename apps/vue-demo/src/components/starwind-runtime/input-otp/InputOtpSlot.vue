@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import * as InputOtpPrimitive from "@starwind-ui/vue/input-otp";
 import type { ClassValue } from "tailwind-variants";
 import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
+import "./styles.css";
+import * as InputOtpPrimitive from "@starwind-ui/vue/input-otp";
 import { inputOtpSlot } from "./variants";
 
 defineOptions({ inheritAttrs: false });

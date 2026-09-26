@@ -4212,6 +4212,7 @@ describe("SpecializedAdapterSpec", () => {
           "data-state",
           "data-value",
           "hidden",
+          "inert",
         ],
         part: "panel",
         publicRef: true,
@@ -4463,7 +4464,8 @@ describe("SpecializedAdapterSpec", () => {
     expect(compactCode(reactPanel)).toContain(
       compactCode('data-keep-mounted={keepMounted ? "" : undefined}'),
     );
-    expect(compactCode(reactPanel)).toContain(compactCode("hidden={!active}"));
+    expect(compactCode(reactPanel)).toContain(compactCode("hidden={initialHidden}"));
+    expect(compactCode(reactPanel)).toContain(compactCode("inert={!active}"));
 
     const reactIndex = getPrintedFile(reactFiles, "tabs/index.ts");
     expect(compactCode(reactIndex)).toContain(

@@ -27,4 +27,4 @@
     };
   };
 </script>
-<div {...rest} data-sw-select-portal="" data-sw-part="portal" data-floating-root data-placement="pending" data-sw-portal-placement="framework" data-disabled={disabled ? "" : undefined} {@attach attachPortal}>{@render children?.()}</div>
+<div {...rest} data-sw-select-portal="" data-sw-part="portal" data-placement="pending" data-sw-portal-placement="framework" data-disabled={disabled ? "" : undefined} {@attach attachPortal}>{@render children?.()}</div>

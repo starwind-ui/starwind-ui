@@ -17,6 +17,7 @@ const TabsPanel = React.forwardRef<HTMLDivElement, TabsPanelProps>(function Tabs
 ) {
   const { orientation, value: selected } = useTabsContext();
   const active = selected === value;
+  const [initialHidden] = React.useState(() => !active);
   return (
     <div
       {...rest}
@@ -27,7 +28,8 @@ const TabsPanel = React.forwardRef<HTMLDivElement, TabsPanelProps>(function Tabs
       data-active={active ? "" : undefined}
       data-state={active ? "active" : "inactive"}
       data-keep-mounted={keepMounted ? "" : undefined}
-      hidden={!active}
+      hidden={initialHidden}
+      inert={!active}
       tabIndex={active ? 0 : -1}
       role={"tabpanel"}
       ref={ref}

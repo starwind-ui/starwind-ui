@@ -366,7 +366,7 @@ describe("Vue Tooltip browser contract", () => {
     expect(popup().dataset.align).toBe("end");
     const portal = document.body.querySelector<HTMLElement>("[data-sw-tooltip-portal]")!;
     expect(portal.dataset.placement).toBe("ready");
-    expect(portal.hasAttribute("data-floating-root")).toBe(true);
+    expect(portal.hasAttribute("data-floating-root")).toBe(false);
     expect(portal.contains(popup())).toBe(true);
     expect(portal.contains(document.body.querySelector("[data-sw-tooltip-positioner]"))).toBe(true);
 

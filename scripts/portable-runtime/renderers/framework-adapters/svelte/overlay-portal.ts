@@ -44,6 +44,6 @@ ${printSvelteRefAttachment("HTMLDivElement")}
     };
   };
 </script>
-<div {...rest} ${facts.attrs.portal}="" data-sw-part="${part.name}" data-floating-root data-placement="pending" data-sw-portal-placement="framework" data-disabled={disabled ? "" : undefined} {@attach attachPortal}>{@render children?.()}</div>
+<div {...rest} ${facts.attrs.portal}="" data-sw-part="${part.name}" data-placement="pending" data-sw-portal-placement="framework" data-disabled={disabled ? "" : undefined} {@attach attachPortal}>{@render children?.()}</div>
 `;
 }

@@ -116,7 +116,7 @@ describe("Vue Drawer browser contract", () => {
     await nextTick();
     const remotePortal = target.querySelector<HTMLElement>("[data-sw-drawer-portal]")!;
     expect(remotePortal.dataset.placement).toBe("ready");
-    expect(remotePortal.hasAttribute("data-floating-root")).toBe(true);
+    expect(remotePortal.hasAttribute("data-floating-root")).toBe(false);
     expect(remotePortal.contains(remotePortal.querySelector("[data-sw-drawer-popup]"))).toBe(true);
     show.value = false;
     await nextTick();

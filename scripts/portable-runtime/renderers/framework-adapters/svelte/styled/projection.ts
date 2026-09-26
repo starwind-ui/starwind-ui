@@ -93,9 +93,16 @@ export function projectSvelteStyledGroup(
   }
   if (
     group.styles &&
-    !["checkbox", "dialog", "prose", "scroll-area", "toast", "color-picker", "sidebar"].includes(
-      group.component,
-    )
+    ![
+      "checkbox",
+      "dialog",
+      "input-otp",
+      "prose",
+      "scroll-area",
+      "toast",
+      "color-picker",
+      "sidebar",
+    ].includes(group.component)
   ) {
     throw new TypeError(
       `Svelte Styled ${group.component}: unsupported style, facade, or variant alias output.`,

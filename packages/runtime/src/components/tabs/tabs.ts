@@ -1,12 +1,14 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import { getTabsIndicatorGeometry } from "../../internal/tabs-indicator-geometry";
+
+import { createPanelPresence } from "./panel-presence";
 
 export type TabsValue = string | null;
 export type TabsOrientation = "horizontal" | "vertical";
@@ -130,6 +132,7 @@ class TabsController implements TabsInstance {
   private readonly storageKey: string | null;
   private readonly syncEventName: string | null;
   private readonly syncKey: string | null;
+  private readonly panelPresence = new Map<HTMLElement, ReturnType<typeof createPanelPresence>>();
   private destroyed = false;
   private elements: TabsElements = { indicators: [], list: null, panels: [], tabs: [] };
   private activationDirection: TabsActivationDirection = "none";
@@ -165,6 +168,8 @@ class TabsController implements TabsInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.panelPresence.forEach((presence) => presence.destroy());
+    this.panelPresence.clear();
     this.subscribers.clear();
     instances.delete(this.root);
     this.destroyed = true;
@@ -175,9 +180,16 @@ class TabsController implements TabsInstance {
   }
 
   refresh(): void {
+    if (this.destroyed) return;
     this.orientation =
       readOrientation(this.root.getAttribute(TABS_ORIENTATION_ATTRIBUTE)) ?? this.orientation;
     this.elements = getTabsElements(this.root);
+    const panels = new Set(this.elements.panels.map((panel) => panel.element));
+    this.panelPresence.forEach((presence, element) => {
+      if (panels.has(element)) return;
+      presence.destroy();
+      this.panelPresence.delete(element);
+    });
     let fallbackDetails: TabsValueChangeDetailsImpl | undefined;
 
     if (!this.controlled) {
@@ -207,6 +219,7 @@ class TabsController implements TabsInstance {
   }
 
   setValue(value: TabsValue, options: TabsSetValueOptions = {}): void {
+    if (this.destroyed) return;
     const previousValue = this.value;
     const nextValue = normalizeTabsValue(value);
     const activationDirection = this.getActivationDirection(previousValue, nextValue);
@@ -427,8 +440,15 @@ class TabsController implements TabsInstance {
       panel.element.setAttribute(TABS_ACTIVATION_DIRECTION_ATTRIBUTE, this.activationDirection);
       panel.element.setAttribute(TABS_STATE_ATTRIBUTE, state);
       panel.element.setAttribute("tabindex", active ? "0" : "-1");
-      panel.element.hidden = !active;
+      panel.element.inert = !active;
       setBooleanAttribute(panel.element, "data-active", active);
+      let presence = this.panelPresence.get(panel.element);
+      if (!presence) {
+        presence = createPanelPresence(panel.element, active);
+        this.panelPresence.set(panel.element, presence);
+      } else {
+        presence.update(active);
+      }
       setBooleanAttribute(
         panel.element,
         TABS_KEEP_MOUNTED_ATTRIBUTE,
@@ -485,6 +505,14 @@ class TabsController implements TabsInstance {
   }
 
   private getResolvedFocusValue(): TabsValue {
+    const focusedElement = this.root.ownerDocument.activeElement;
+    const focusInside =
+      focusedElement instanceof Element &&
+      this.elements.list?.contains(focusedElement) &&
+      focusedElement.closest(`[${TABS_ROOT_ATTRIBUTE}]`) === this.root;
+    const selectedTab = this.getTabByValue(this.value);
+    if (!focusInside && selectedTab && !selectedTab.disabled) return selectedTab.value;
+
     const focusedTab = this.getTabByValue(this.focusValue);
     if (focusedTab && !focusedTab.disabled) return focusedTab.value;
 

@@ -1,7 +1,8 @@
 "use client";
 
-import InputOtpPrimitive from "@starwind-ui/react/input-otp";
 import type * as React from "react";
+import "./styles.css";
+import InputOtpPrimitive from "@starwind-ui/react/input-otp";
 import { inputOtpSlot } from "./variants";
 
 export type InputOtpSlotProps = React.ComponentPropsWithoutRef<"div"> & {

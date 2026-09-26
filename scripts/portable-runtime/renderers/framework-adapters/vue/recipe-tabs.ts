@@ -42,6 +42,6 @@ export const tabsOperations: TabsOperations = {
       .map((p) => p.name + ":" + p.default)
       .join(
         ",",
-      )}});defineSlots<{default?:${plan.children === "active" ? "(props:{active:boolean})" : "()"}=>unknown}>();const element=ref<${element}|null>(null);defineExpose({element});const context=useTabsContext('${name}');const {orientation,value:selected}=context;watch([${plan.refreshInputs.map((n) => "()=>props." + n).join(",")}],context.refresh,{flush:'post'});onUnmounted(context.refresh);${plan.active ? "const active=computed(()=>selected.value===props.value);" : ""}</script><template><${plan.tag} v-bind="$attrs" ref="element" ${attrs}><slot ${plan.children === "active" ? ':active="active"' : ""}/></${plan.tag}></template>`;
+      )}});defineSlots<{default?:${plan.children === "active" ? "(props:{active:boolean})" : "()"}=>unknown}>();const element=ref<${element}|null>(null);defineExpose({element});const context=useTabsContext('${name}');const {orientation,value:selected}=context;watch([${plan.refreshInputs.map((n) => "()=>props." + n).join(",")}],context.refresh,{flush:'post'});onUnmounted(context.refresh);${plan.active ? "const active=computed(()=>selected.value===props.value);" : ""}${plan.initial.map((item) => `const ${item.name}=${item.expression.replace(/\bactive\b/g, "active.value").replace(/\bdisabled\b/g, "props.disabled")};`).join("\n")}</script><template><${plan.tag} v-bind="$attrs" ref="element" ${attrs}><slot ${plan.children === "active" ? ':active="active"' : ""}/></${plan.tag}></template>`;
   },
 };
