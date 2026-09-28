@@ -5,8 +5,8 @@
 "starwind": patch
 ---
 
-Reduced the JavaScript needed by standalone form controls such as Checkbox and Select. Field continues to discover and connect controls when it is used.
+Reduced the JavaScript loaded by form controls used without Field, including Checkbox and Select. Controls still connect to Field when it is used.
 
-Fixed React 18 cleanup when a Portal is removed while its parent component stays mounted. Removed content is now cleared from the component's registered parts.
+In React 18, removing a Portal now releases references to its removed popup elements while the parent component stays mounted.
 
-Color Picker in React reuses its controls when a value change leaves their structure unchanged. Controls added or changed by your app still refresh before controlled values are applied.
+React Color Picker now avoids rebuilding its controls when only the selected color changes. It still connects controls that your app adds or replaces.

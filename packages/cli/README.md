@@ -8,116 +8,100 @@
   <a href="https://x.com/boston343builds"><img alt="follow" src="https://shieldcn.dev/x/follow/boston343builds.svg?split=true" /></a>
 </p>
 
-**Astro-first, framework-portable UI components you can own.**
+**Build beautiful interfaces in the framework you love.**
 
-Starwind UI gives you accessible, Tailwind CSS components with Starwind/shadcn-style ergonomics,
-backed by a portable Runtime that powers Astro and React adapters today.
+Starwind UI gives you polished, accessible components for **Astro, React, Vue, Svelte, and plain HTML**.
+Get your next project moving with ready-to-use Tailwind CSS designs, then shape them into something
+that feels like yours.
 
-The Starwind CLI is the main way to get started. Initialize a project, add only the components you
-need, and keep the resulting source in your own codebase.
+The CLI puts component source in your project, so you can change a few styles or build your own
+component library. Keyboard navigation and focus management come built in. You get the same familiar
+components across frameworks, with code that fits the way you already work.
 
-**[Get Started →](https://starwind.dev/docs/getting-started/installation/)** &nbsp;|&nbsp;
-**[Explore Components](https://starwind.dev/docs/components/)**
+**[Get started →](https://starwind.dev/docs/getting-started/installation/)** &nbsp;|&nbsp;
+**[Find your next component](https://starwind.dev/docs/components/)**
 
-## Why Starwind?
+## Add your first component
 
-- **🎯 Own Your Code** — Components are added to your project so you can customize and extend them.
-- **🌌 Astro First** — A first-class Astro experience with React support from the same behavior foundation.
-- **♿ Accessible** — Keyboard, focus, form, and screen reader behavior are built into the Runtime-backed components.
-- **🚀 Portable Runtime** — Shared DOM behavior powers generated Astro and React adapters.
-- **🛠️ CLI-Powered** — Initialize projects and add only what you need with a simple command-line workflow.
+From your app's folder, run:
 
-## Quick Start
+```bash
+npx starwind@latest init
+npx starwind@latest add button
+```
 
-Initialize an Astro project and add a component:
+The CLI guides you through setup and installs what you need. Open the button's source to make it
+fit your design, or run `add` again to browse the rest of the collection.
+
+You'll need Node.js 22.12 or newer.
+
+## Choose your framework
+
+Starwind started with Astro. Today you can bring the same components to your React, Vue, and Svelte
+projects too. The CLI detects your framework during setup, or you can choose it yourself:
 
 ```bash
 npx starwind@latest init --framework astro
-npx starwind@latest add button
-```
-
-For React projects, use `--framework react`:
-
-```bash
 npx starwind@latest init --framework react
-npx starwind@latest add button
+npx starwind@latest init --framework vue
+npx starwind@latest init --framework svelte
 ```
 
-You can omit the framework flag to select it interactively.
+Vue 3.5 and Svelte 5 support are in public beta. The
+[framework guides](https://starwind.dev/docs/getting-started/installation/#choose-your-framework)
+walk you through setup for your app.
 
-## What the CLI can do
+For plain HTML, use [Starwind Runtime](https://starwind.dev/docs/runtime/) to add the same
+interactive behavior to your markup. Install it with `npm install @starwind-ui/runtime` and follow the
+guide to connect your HTML.
 
-### Add components
+## Keep building
+
+Add a few more components as your app grows:
 
 ```bash
-npx starwind@latest add button dialog
+npx starwind@latest add dialog select tabs
 ```
 
-Run `add` without component names to browse the available components. The CLI installs required
-dependencies and records the installed components in your Starwind configuration.
-
-### Update and remove components
+When an update arrives, preview it before applying it:
 
 ```bash
-npx starwind@latest update --all --dry-run
-npx starwind@latest remove button
+npx starwind@latest update button --diff
+npx starwind@latest update button
 ```
 
-Use `--dry-run`, `--diff`, and `--view` to inspect updates before changing files.
+Some fixes update the installed packages and keep your component files as they are. Others replace
+component source, so review the diff for any edits you want to keep.
 
-An update can have source delivery or behavior delivery. Source delivery writes the latest canonical
-component files. Behavior delivery installs required packages and records the latest component
-version without writing component files, so local component changes remain in place. The CLI stores
-only the delivered `version` in `starwind.config.json`; it does not need a `sourceVersion` field.
+Use `npx starwind@latest` with any of these commands:
 
-Old or third-party registry entries that omit `sourceVersion` use their `version` as the source
-version. They retain the established source-update behavior. A behavior update that needs packages
-completes after package installation. If required package installation is declined, the CLI keeps the
-recorded component version unchanged.
+| Command                  | What it does                                  |
+| ------------------------ | --------------------------------------------- |
+| `search button`          | Find components and Pro blocks.               |
+| `docs button`            | Open the component docs.                      |
+| `update --all --dry-run` | Preview updates for all installed components. |
+| `remove button`          | Remove an installed component.                |
+| `migrate`                | Upgrade a legacy Starwind project.            |
+| `setup`                  | Set up Starwind Pro for Astro, React, or Vue. |
 
-### Find components and documentation
+Add `--help` to any command for more options. For control over the unstyled component source, see
+[Primitives](https://starwind.dev/docs/primitives/) and the `primitives add`, `primitives update`, and
+`primitives list` commands.
 
-```bash
-npx starwind@latest search button
-npx starwind@latest docs button
-```
+## Bring your AI coding tools
 
-Search can also discover primitive source with `--primitives` and emit JSON with `--json`.
-
-### Migrate legacy projects
-
-```bash
-npx starwind@latest migrate
-```
-
-This moves legacy Starwind projects to the current Runtime setup.
-
-### Work with primitive source
-
-Primitive source is available through the advanced `primitives add`, `primitives update`, and
-`primitives list` commands when you need direct control over framework adapter source.
-
-### Starwind Pro
-
-Use `npx starwind@latest setup` to configure Starwind Pro before adding Pro components or blocks.
-
-## AI integration
-
-Resources for AI:
+Give your coding tools the Starwind docs so they can help you build with the right components:
 
 - [Starwind Skills](https://starwind.dev/docs/getting-started/skills/)
 - [MCP server](https://starwind.dev/docs/getting-started/mcp/)
-- [llms.txt](https://starwind.dev/llms.txt)
-- [llms-full.txt](https://starwind.dev/llms-full.txt)
-
-## Documentation
-
-Read the [Starwind documentation](https://starwind.dev/docs/).
+- [llms.txt](https://starwind.dev/llms.txt) and [llms-full.txt](https://starwind.dev/llms-full.txt)
 
 ## Contributing
 
-Please read the [contributing guide](https://github.com/starwind-ui/starwind-ui/blob/main/CONTRIBUTING.md).
+Help improve Starwind with a bug fix or an idea for a component. The
+[contributing guide](https://github.com/starwind-ui/starwind-ui/blob/main/CONTRIBUTING.md) explains how
+to get involved.
 
 ## License
 
-Licensed under the [MIT license](https://github.com/starwind-ui/starwind-ui/blob/main/LICENSE).
+Free and open source under the [MIT license](https://github.com/starwind-ui/starwind-ui/blob/main/LICENSE).

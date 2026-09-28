@@ -5,6 +5,10 @@
 "starwind": patch
 ---
 
-Scroll Area supports `autoViewport` in every framework, with the existing automatic viewport as the default. Color Picker channel sliders share a `step` prop, and submenu triggers share an optional icon slot.
+Scroll Area now supports `autoViewport` in every framework. It defaults to `true`; set it to `false` to supply your own viewport and content parts. Color Picker channel sliders support `step` to set the amount each keyboard action changes the value. Menu and Context Menu submenu triggers accept an optional icon slot.
 
-Fixed Svelte Color Picker popup styling and interaction inside native dialogs. Color Picker controls stay inside their root so changes reach the picker. Custom portal targets for those controls must remain inside that root. Popover wrappers now preserve the `data-slot` supplied by a component that uses them.
+Fixed Svelte Color Picker popup styling and clicks inside native dialogs.
+
+Keep custom portal targets for Color Picker controls inside the picker root so input changes reach the picker.
+
+Popover now preserves the `data-slot` set by components such as Color Picker, so their styles continue to apply.

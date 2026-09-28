@@ -14,6 +14,9 @@ policy.
 Write Changeset summaries and component changelogs for a web developer using Starwind.
 The changelog generator copies Changeset summaries into the published package notes.
 
+Agents must apply the `write-changeset` skill when it is available. This section remains the writing
+policy in checkouts that do not include agent skills.
+
 - Lead with the visible fix or new capability and name the affected component and framework.
 - For a bug, explain when it happened and what works after the update. Prefer a concrete example.
 - Use short sentences and familiar terms. Explain an internal term if the reader needs it.
@@ -22,6 +25,11 @@ The changelog generator copies Changeset summaries into the published package no
 - Keep implementation details, ticket history, package grouping, and release-policy explanations
   in engineering docs. A performance note should say what work was reduced without claiming
   an unmeasured speed improvement.
+- Describe each component's actual fix. Avoid repeating generic claims such as "fixed state getting
+  out of sync" across unrelated entries. For a maintenance-only update, say that the public API is
+  unchanged instead of inventing a user-visible bug.
+- Keep framework scope explicit. Choose a new Changeset's package recipients by the changes that
+  affect their users; fixed-group versioning alone does not require the same prose in every package.
 - Keep matching package and docs notes consistent. Edit pending release entries; preserve
   previously published history. Wording edits must retain package selections, version bumps,
   component intents, supported scope, and any required migration guidance.
@@ -32,6 +40,11 @@ DOM queries depend on where the overlay is rendered.
 
 Before committing, read each note as someone who has not seen the implementation. They should
 be able to identify what changed and whether they need to do anything.
+
+When updating component docs, keep the pending release plan, Primitive changelog data, and Styled
+page entries consistent. Check current component intents for missing recent fixes. Validate note
+coverage and preserved release metadata with the narrow docs and release checks. Prose-only edits
+do not require browser tests or new performance captures.
 
 ## CLI Version Policy
 
