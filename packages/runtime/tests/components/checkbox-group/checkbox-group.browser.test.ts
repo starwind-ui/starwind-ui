@@ -534,3 +534,39 @@ async function waitForMutationObserver(): Promise<void> {
 async function waitForReset(): Promise<void> {
   await new Promise((resolve) => window.setTimeout(resolve, 10));
 }
+
+it("makes initialized group membership authoritative over conflicting child defaults and control", async () => {
+  const form = document.createElement("form");
+  const root = renderCheckboxGroup({ defaultValue: ["red"] });
+  form.append(root);
+  document.body.append(form);
+  const [red, green, blue] = getCheckboxes(root) as [HTMLElement, HTMLElement, HTMLElement];
+  // Astro emits each child's own initial attributes before group initialization.
+  green.setAttribute("data-default-checked", "true");
+  green.setAttribute("aria-checked", "true");
+  red.setAttribute("aria-checked", "false");
+  const redControl = createCheckbox(red, { checked: false, defaultChecked: false });
+  const greenControl = createCheckbox(green, { checked: true, defaultChecked: true });
+  const blueControl = createCheckbox(blue);
+  const group = createCheckboxGroup(root);
+  try {
+    const check = (expected: string[]) => {
+      expect(
+        [redControl, greenControl, blueControl].map((control) => control.getChecked()),
+      ).toEqual(["red", "green", "blue"].map((value) => expected.includes(value)));
+      expect(new FormData(form).getAll("colors")).toEqual(expected);
+    };
+    check(["red"]);
+    group.setValue(["green"], { emit: false });
+    check(["green"]);
+    form.reset();
+    await waitForReset();
+    check(["red"]);
+  } finally {
+    group.destroy();
+    redControl.destroy();
+    greenControl.destroy();
+    blueControl.destroy();
+    form.remove();
+  }
+});

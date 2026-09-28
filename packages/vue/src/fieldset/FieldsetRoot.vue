@@ -4,59 +4,41 @@ import { createFieldset } from "@starwind-ui/runtime/fieldset";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
-
-const props = withDefaults(
-  defineProps<{
-    disabled?: boolean;
-  }>(),
-  {
-    disabled: false,
-  },
-);
-defineSlots<{
-  default?: () => unknown;
-}>();
+const props = withDefaults(defineProps<{ disabled?: boolean }>(), { disabled: false });
+defineSlots<{ default?: () => unknown }>();
 const rootRef = ref<HTMLFieldSetElement | null>(null);
-let instance: ReturnType<typeof createFieldset> | undefined;
-
-defineExpose({
-  element: rootRef,
-});
-
-function destroyOwnedInstance(): void {
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
+defineExpose({ element: rootRef });
+const initialDisabled = props["disabled"];
+let owned: ReturnType<typeof createFieldset> | undefined;
+function dispose() {
+  const previous = owned;
+  owned = undefined;
+  previous?.destroy();
 }
-
-onMounted(() => {
+function connect() {
+  dispose();
   const element = rootRef.value;
-  if (!element) throw new Error("Fieldset requires its native root before Runtime setup.");
-
-  instance = createFieldset(element, {
-    disabled: props.disabled,
-  });
-});
+  if (!element) return;
+  owned = createFieldset(element, { disabled: props["disabled"] });
+}
+onMounted(connect);
+onBeforeUnmount(dispose);
 
 watch(
-  () => props.disabled,
-  (nextDisabled) => {
-    instance?.setDisabled(nextDisabled);
+  [() => props["disabled"]],
+  () => {
+    owned?.setDisabled(props["disabled"]);
   },
+  { flush: "post" },
 );
-
-onBeforeUnmount(destroyOwnedInstance);
 </script>
-
 <template>
   <fieldset
-    ref="rootRef"
     v-bind="$attrs"
-    data-sw-fieldset
-    :data-disabled="props.disabled ? '' : undefined"
-    :disabled="props.disabled"
+    :data-sw-fieldset="''"
+    :disabled="initialDisabled"
+    :data-disabled="initialDisabled ? '' : undefined"
+    ref="rootRef"
   >
     <slot />
   </fieldset>

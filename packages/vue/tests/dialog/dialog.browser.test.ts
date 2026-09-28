@@ -1,19 +1,5 @@
-import {
-  Comment,
-  Fragment,
-  Text,
-  createApp,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-  type VNode,
-} from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { DialogOpenChangeDetails } from "@starwind-ui/runtime/dialog";
+import { createDialog } from "@starwind-ui/runtime/dialog";
 import {
   DialogBackdrop,
   DialogClose,
@@ -23,6 +9,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@starwind-ui/vue/dialog";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  Comment,
+  type ComponentPublicInstance,
+  createApp,
+  createVNode,
+  defineComponent,
+  Fragment,
+  h,
+  nextTick,
+  reactive,
+  ref,
+  Text,
+  type VNode,
+} from "vue";
 import {
   Dialog as StyledDialog,
   DialogClose as StyledDialogClose,
@@ -30,6 +31,8 @@ import {
   DialogTitle as StyledDialogTitle,
   DialogTrigger as StyledDialogTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/dialog";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
+import { testControlRefresh } from "../dialog/control-refresh.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -259,6 +262,7 @@ describe("Vue Dialog public behavior", () => {
   it("composes Styled Trigger and Close asChild onto native buttons with merged refs and behavior", async () => {
     type ExposedElement = ComponentPublicInstance & { element: HTMLElement | null };
     const showParts = ref(true);
+    const replacement = ref(false);
     const triggerComponent = ref<ExposedElement | null>(null);
     const closeComponent = ref<ExposedElement | null>(null);
     let triggerChild: Element | null = null;
@@ -285,9 +289,11 @@ describe("Vue Dialog public behavior", () => {
                     {
                       default: () =>
                         h(
-                          "button",
+                          replacement.value ? "a" : "button",
                           {
                             class: "trigger-child",
+                            href: replacement.value ? "#dialog" : undefined,
+                            key: replacement.value ? "new-trigger" : "old-trigger",
                             onClick: () => calls.push("trigger-child"),
                             ref: (value: Element | null) => {
                               triggerChild = value;
@@ -314,9 +320,11 @@ describe("Vue Dialog public behavior", () => {
                         {
                           default: () =>
                             h(
-                              "button",
+                              replacement.value ? "a" : "button",
                               {
                                 class: "close-child",
+                                href: replacement.value ? "#dialog" : undefined,
+                                key: replacement.value ? "new-close" : "old-close",
                                 onClick: () => calls.push("close-child"),
                                 ref: (value: Element | null) => {
                                   closeChild = value;
@@ -371,12 +379,99 @@ describe("Vue Dialog public behavior", () => {
     await waitForDialogClosed(composedPopup);
     expect(composedPopup.open).toBe(false);
 
+    replacement.value = true;
+    await nextTick();
+    await nextTick();
+    const replacedTrigger = host.querySelector<HTMLElement>("[data-sw-dialog-trigger]")!;
+    const replacedClose = host.querySelector<HTMLElement>("[data-sw-dialog-close]")!;
+    expect(replacedTrigger.tagName).toBe("A");
+    expect(replacedClose.tagName).toBe("A");
+    expect(triggerExposed.element).toBe(replacedTrigger);
+    expect(closeExposed.element).toBe(replacedClose);
+
     showParts.value = false;
     await nextTick();
     expect(triggerChild).toBeNull();
     expect(closeChild).toBeNull();
     expect(triggerExposed.element).toBeNull();
     expect(closeExposed.element).toBeNull();
+  });
+
+  it("rebinds direct Primitive composed controls when their native children are replaced", async () => {
+    type ExposedElement = ComponentPublicInstance & { element: HTMLElement | null };
+    const replacement = ref(false);
+    const triggerRef = ref<ExposedElement | null>(null);
+    const closeRef = ref<ExposedElement | null>(null);
+    const triggerSequence: Array<Element | null> = [];
+    const closeSequence: Array<Element | null> = [];
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(DialogRoot, null, {
+          default: () => [
+            h(
+              DialogTrigger,
+              { asChild: true, ref: triggerRef },
+              {
+                default: () =>
+                  h(
+                    replacement.value ? "a" : "button",
+                    {
+                      href: replacement.value ? "#dialog" : undefined,
+                      key: replacement.value ? "new-trigger" : "old-trigger",
+                      ref: (value: Element | null) => triggerSequence.push(value),
+                    },
+                    "Open",
+                  ),
+              },
+            ),
+            h(DialogPopup, null, {
+              default: () =>
+                h(
+                  DialogClose,
+                  { asChild: true, ref: closeRef },
+                  {
+                    default: () =>
+                      h(
+                        replacement.value ? "a" : "button",
+                        {
+                          href: replacement.value ? "#dialog" : undefined,
+                          key: replacement.value ? "new-close" : "old-close",
+                          ref: (value: Element | null) => closeSequence.push(value),
+                        },
+                        "Close",
+                      ),
+                  },
+                ),
+            }),
+          ],
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    const oldTrigger = host.querySelector<HTMLElement>("[data-sw-dialog-trigger]")!;
+    oldTrigger.click();
+    await nextTick();
+    expect(host.querySelector<HTMLDialogElement>("dialog")!.open).toBe(true);
+
+    replacement.value = true;
+    await nextTick();
+    await nextTick();
+    const newTrigger = host.querySelector<HTMLElement>("[data-sw-dialog-trigger]")!;
+    const newClose = host.querySelector<HTMLElement>("[data-sw-dialog-close]")!;
+    expect(newTrigger.tagName).toBe("A");
+    expect(newClose.tagName).toBe("A");
+    expect(triggerRef.value!.element).toBe(newTrigger);
+    expect(closeRef.value!.element).toBe(newClose);
+    expect(triggerSequence).toEqual([oldTrigger, null, newTrigger]);
+    expect(closeSequence.at(-1)).toBe(newClose);
+
+    newClose.click();
+    await nextTick();
+    await waitForDialogClosed(host.querySelector<HTMLDialogElement>("dialog")!);
+    expect(host.querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
   });
 
   it.each(["Trigger", "Close"] as const)(
@@ -393,6 +488,7 @@ describe("Vue Dialog public behavior", () => {
       ];
 
       for (const { label, slot } of invalidSlots) {
+        if (part === "Trigger" && ["component"].includes(label)) continue;
         const host = appendHost();
         const app = createApp({
           render: () =>
@@ -409,12 +505,30 @@ describe("Vue Dialog public behavior", () => {
         };
         app.config.warnHandler = () => {};
         expect(() => app.mount(host), `${part} should reject ${label}`).toThrowError(
-          `Dialog${part} asChild requires exactly one native element VNode.`,
+          new RegExp(`Dialog${part} asChild`),
         );
         host.remove();
       }
     },
   );
+
+  it("rejects a compiler-marked Fragment at the native control composition boundary", () => {
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(
+          DialogTrigger,
+          { asChild: true },
+          { default: () => createVNode(Fragment, null, [h("button")], 64) },
+        ),
+    });
+    app.config.errorHandler = (error) => {
+      throw error;
+    };
+    app.config.warnHandler = () => {};
+
+    expect(() => app.mount(host)).toThrowError(/DialogTrigger asChild/);
+  });
 });
 
 function dialogTree({
@@ -477,3 +591,39 @@ async function waitForDialogClosed(dialog: HTMLDialogElement): Promise<void> {
 
   throw new Error("Dialog did not reach its closed native state.");
 }
+
+testAcceptedModelPublication({
+  name: "dialog",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => dialogTree(),
+  root: "[data-sw-dialog]",
+  act: (root) => root.querySelector<HTMLElement>("[data-sw-dialog-trigger]")!.click(),
+  read: (root) => root.getAttribute("data-state") === "open",
+});
+
+testControlRefresh(
+  {
+    Root: DialogRoot,
+    Trigger: DialogTrigger,
+    Close: DialogClose,
+    Popup: DialogPopup,
+    Title: DialogTitle,
+  },
+  createDialog,
+  cleanups,
+);
+
+import StyledControlParts from "../../../../apps/vue-demo/src/components/starwind-runtime/dialog";
+import { testStyledControlRefresh } from "../dialog/styled-control-refresh.js";
+
+testStyledControlRefresh("dialog", { ...StyledControlParts, Close: StyledControlParts.Close });
+
+import { testComponentTrigger } from "../dialog/component-trigger.js";
+testComponentTrigger(
+  { Root: DialogRoot, Trigger: DialogTrigger, Popup: DialogPopup, Title: DialogTitle },
+  cleanups,
+);

@@ -1,0 +1,41 @@
+export const providers = ["starwind", "base-ui", "ark-ui"];
+export const scenarios = [
+  { id: "menu-20", family: "menu", items: 20, disabled: 3, chosen: 8 },
+  { id: "select-100", family: "select", items: 100, disabled: 3, chosen: 4 },
+  { id: "combobox-500", family: "combobox", items: 500, chosen: 42 },
+  { id: "submenu-8x8", family: "submenu", parentItems: 8, childItems: 8, chosen: 4 },
+  {
+    id: "select-page-1",
+    family: "select-page",
+    controls: 1,
+    items: 20,
+    target: 1,
+    disabled: 3,
+    chosen: 4,
+  },
+  {
+    id: "select-page-20",
+    family: "select-page",
+    controls: 20,
+    items: 20,
+    target: 10,
+    disabled: 3,
+    chosen: 4,
+  },
+];
+export const visualContract = {
+  viewport: { width: 1280, height: 900 },
+  deviceScaleFactor: 1,
+  rowHeight: 32,
+  visibleRows: 8,
+  listWidth: 320,
+  popupOffset: 8,
+  movementCommands: 60,
+  movementDurationMs: 1000,
+  dwellMs: 200,
+  submenuPathOrigin: "8 CSS pixels inside the submenu trigger right edge, at its vertical center",
+  submenuPathTarget: "center of child action 4",
+  submenuMovementCommands: 18,
+  submenuMovementDurationMs: 300,
+  endpointTimeoutMs: 5000,
+};

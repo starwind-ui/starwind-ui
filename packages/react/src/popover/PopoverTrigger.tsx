@@ -29,8 +29,8 @@ const PopoverTrigger = React.forwardRef<HTMLElement, PopoverTriggerProps>(functi
     "data-state": "closed",
   } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
   const triggerProps = {
-    ...protectedTriggerProps,
     ...props,
+    ...protectedTriggerProps,
   } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
 
   const asChildElement = getAsChildElement(children);

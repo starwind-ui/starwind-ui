@@ -1,11 +1,154 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createDropzone } from "../../../src/components/dropzone/dropzone";
+import { initStarwind } from "../../../src/init-starwind";
 
 describe("createDropzone", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+  });
+
+  it("refreshes replacement parts and forms while retaining accepted files and retiring old work", async () => {
+    const root = renderDropzone({ multiple: true });
+    const first = document.createElement("form");
+    const second = document.createElement("form");
+    first.id = "first-dropzone-form";
+    second.id = "second-dropzone-form";
+    document.body.append(first, second);
+    const retired = getInput();
+    retired.setAttribute("form", first.id);
+    const instance = createDropzone(root);
+    const notify = vi.fn();
+    instance.subscribe("filesChange", notify);
+    const file = new File(["retained"], "retained.txt");
+    instance.setFiles([file], { emit: false });
+    instance.setUploading(true);
+    first.reset();
+    const replacement = retired.cloneNode() as HTMLInputElement;
+    replacement.setAttribute("form", second.id);
+    replacement.name = "uploads";
+    retired.replaceWith(replacement);
+    const list = document.createElement("div");
+    list.setAttribute("data-sw-dropzone-files-list", "");
+    getFilesList().replaceWith(list);
+    instance.refresh();
+    expect(createDropzone(root)).toBe(instance);
+    expect(instance.input).toBe(replacement);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getFiles()).toEqual([file]);
+    expect(list.textContent).toContain(file.name);
+    expect(instance.getUploading()).toBe(true);
+    expect((new FormData(second).get("uploads") as File).name).toBe(file.name);
+    retired.dispatchEvent(new Event("change"));
+    first.reset();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getFiles()).toEqual([file]);
+    expect(notify).not.toHaveBeenCalled();
+    replacement.remove();
+    instance.refresh();
+    instance.setDisabled(true);
+    instance.setFiles([file], { emit: false });
+    expect(root.querySelector("[data-sw-dropzone-input]")).toBeNull();
+    root.append(replacement);
+    instance.refresh();
+    expect(replacement.disabled).toBe(true);
+    instance.setDisabled(false);
+    expect((new FormData(second).get("uploads") as File).name).toBe(file.name);
+    replacement.dispatchEvent(new Event("change"));
+    expect(notify).not.toHaveBeenCalled();
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(["new"], "new.txt"));
+    replacement.files = transfer.files;
+    replacement.dispatchEvent(new Event("change"));
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(instance.getFiles()[0]?.name).toBe("new.txt");
+    second.reset();
+    await vi.waitFor(() => expect(instance.getFiles()).toEqual([]));
+    instance.destroy();
+    replacement.remove();
+    instance.refresh();
+    expect(root.querySelector("[data-sw-dropzone-input]")).toBeNull();
+  });
+
+  it("refreshes nearest-owned parts and native form id changes without touching nested inputs", async () => {
+    const root = renderDropzone();
+    const input = getInput();
+    const first = document.createElement("form");
+    const second = document.createElement("form");
+    first.id = "drop-owner";
+    input.setAttribute("form", "drop-owner");
+    document.body.append(first, second);
+    const instance = createDropzone(root);
+    const file = new File(["outer"], "outer.txt");
+    instance.setFiles([file], { emit: false });
+    const nested = document.createElement("div");
+    nested.setAttribute("data-sw-dropzone", "");
+    nested.innerHTML =
+      '<input type="file" data-sw-dropzone-input><div data-sw-dropzone-files-list>nested</div>';
+    root.prepend(nested);
+    first.id = "retired-owner";
+    second.id = "drop-owner";
+    instance.refresh();
+    expect(instance.input).toBe(input);
+    expect(nested.querySelector<HTMLInputElement>("input")!.files).toHaveLength(0);
+    expect(nested.textContent).toBe("nested");
+    first.reset();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getFiles()).toEqual([file]);
+    second.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+    second.reset();
+    instance.refresh();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getFiles()).toEqual([file]);
+    input.remove();
+    first.append(input);
+    instance.refresh();
+    expect(instance.input).toBe(input);
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    root.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(true);
+    const replacement = document.createElement("input");
+    replacement.type = "file";
+    replacement.name = "uploads";
+    replacement.setAttribute("form", "drop-owner");
+    root.append(replacement);
+    instance.refresh();
+    expect(instance.input).toBe(replacement);
+    expect((new FormData(second).get("uploads") as File).name).toBe(file.name);
+    second.reset();
+    instance.refresh();
+    await vi.waitFor(() => expect(instance.getFiles()).toEqual([]));
+    instance.destroy();
+  });
+
+  it("retains constructor fallback when an authored input marker is not an input", () => {
+    const root = document.createElement("div");
+    root.innerHTML = "<span data-sw-dropzone-input></span>";
+    document.body.append(root);
+    const instance = createDropzone(root);
+    expect(instance.input).toBeInstanceOf(HTMLInputElement);
+    const file = new File(["fallback"], "fallback.txt");
+    instance.setFiles([file], { emit: false });
+    expect(instance.input.files?.[0]?.name).toBe(file.name);
+    instance.refresh();
+    expect(instance.input.files?.[0]?.name).toBe(file.name);
+    instance.destroy();
+  });
+
+  it("settles repeated refresh when a real Field observes its file-list children", async () => {
+    const root = renderDropzone();
+    const field = document.createElement("div");
+    field.setAttribute("data-sw-field", "");
+    root.replaceWith(field);
+    field.append(root);
+    const cleanup = initStarwind(document);
+    const instance = createDropzone(root);
+    instance.setFiles([new File(["field"], "field.txt")]);
+    instance.refresh();
+    instance.refresh();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getFiles()[0]?.name).toBe("field.txt");
+    expect(getFilesList().textContent).toBe("field.txt");
+    cleanup.destroy();
   });
 
   it("initializes the root, hidden file input, indicators, and empty files list", () => {

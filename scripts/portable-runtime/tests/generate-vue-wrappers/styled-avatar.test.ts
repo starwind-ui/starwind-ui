@@ -1,11 +1,10 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { avatarStyledContract } from "../../contracts/styled/components/avatar.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 describe("generated Vue Styled Avatar", () => {
@@ -43,9 +42,9 @@ describe("generated Vue Styled Avatar", () => {
     const variants = await readFile(path.join(root, "styled/avatar/variants.ts"), "utf8");
     for (const [file, source] of Object.entries(sources)) {
       expect(() => assertVueSfcCompiles(source, file)).not.toThrow();
-      expect(source).toContain("defineExpose({ element });");
+      expect(compactCode(source)).toContain(compactCode("defineExpose({ element });"));
       expect(source).toContain(file === "AvatarImage.vue" ? 'v-bind="attrs"' : 'v-bind="$attrs"');
-      expect(source).not.toContain("createAvatar");
+      expect(compactCode(source)).not.toContain(compactCode("createAvatar"));
     }
 
     expect(sources["Avatar.vue"]).toContain("<AvatarPrimitive.AvatarRoot");
@@ -65,10 +64,10 @@ describe("generated Vue Styled Avatar", () => {
       expect(sources[file]).not.toContain("AvatarPrimitive");
     }
     expect(avatarStyledContract.variants?.avatar?.base).toBe(
-      "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2",
+      "text-foreground bg-muted relative inline-flex shrink-0 overflow-hidden rounded-full border-2",
     );
     expect(variants).toContain(
-      'base: "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2"',
+      'base: "text-foreground bg-muted relative inline-flex shrink-0 overflow-hidden rounded-full border-2"',
     );
     expect(variants).toContain('sm: "h-8 w-8 text-xs"');
     expect(variants).toContain('md: "h-10 w-10 text-sm"');

@@ -13,7 +13,7 @@ defineExpose({ element });
   <div
     ref="element"
     v-bind="$attrs"
-    data-sw-preview-card-backdrop
+    data-sw-preview-card-backdrop=""
     data-sw-part="backdrop"
     data-state="closed"
     hidden

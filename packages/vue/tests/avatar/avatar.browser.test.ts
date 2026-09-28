@@ -1,16 +1,16 @@
+import { createAvatar } from "@starwind-ui/runtime/avatar";
+import { AvatarFallback, AvatarImage, AvatarRoot } from "@starwind-ui/vue/avatar";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type ComponentPublicInstance,
   createApp,
   createSSRApp,
   defineComponent,
   h,
   nextTick,
   ref,
-  type ComponentPublicInstance,
 } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import { AvatarFallback, AvatarImage, AvatarRoot } from "@starwind-ui/vue/avatar";
 
 type ExposedElement<T extends HTMLElement> = ComponentPublicInstance & { element: T | null };
 
@@ -23,6 +23,67 @@ afterEach(() => {
 });
 
 describe("Vue Avatar public behavior", () => {
+  it("refreshes conditional parts under one owner and skips unrelated renders", async () => {
+    const imageKey = ref<number | null>(null);
+    const fallbackKey = ref(0);
+    const title = ref("first");
+    const statuses = vi.fn();
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () =>
+        h(
+          AvatarRoot,
+          { title: title.value },
+          {
+            default: () => [
+              imageKey.value === null
+                ? null
+                : h(AvatarImage, {
+                    key: imageKey.value,
+                    alt: "Profile",
+                    onLoadingStatusChange: statuses,
+                  }),
+              h(AvatarFallback, { key: `fallback-${fallbackKey.value}` }, { default: () => "AB" }),
+            ],
+          },
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    const root = host.querySelector<HTMLElement>("[data-sw-avatar]")!;
+    const instance = createAvatar(root);
+    const refresh = vi.spyOn(instance, "refresh");
+    imageKey.value = 0;
+    await nextTick();
+    expect(refresh).toHaveBeenCalledTimes(1);
+    const oldImage = root.querySelector<HTMLImageElement>("img")!;
+    oldImage.dispatchEvent(new Event("load"));
+    fallbackKey.value++;
+    await nextTick();
+    expect(instance.getImageLoadingStatus()).toBe("loaded");
+    expect(root.querySelector<HTMLElement>("[data-sw-avatar-fallback]")!.hidden).toBe(true);
+    refresh.mockClear();
+    title.value = "unrelated";
+    await nextTick();
+    expect(refresh).not.toHaveBeenCalled();
+    imageKey.value++;
+    await nextTick();
+    expect(createAvatar(root)).toBe(instance);
+    expect(instance.getImageLoadingStatus()).toBe("error");
+    const count = statuses.mock.calls.length;
+    oldImage.dispatchEvent(new Event("load"));
+    expect(statuses).toHaveBeenCalledTimes(count);
+    const next = root.querySelector<HTMLImageElement>("img")!;
+    next.dispatchEvent(new Event("load"));
+    imageKey.value = null;
+    await nextTick();
+    expect(instance.getImageLoadingStatus()).toBe("error");
+    expect(root.querySelector<HTMLElement>("[data-sw-avatar-fallback]")!.hidden).toBe(false);
+    next.dispatchEvent(new Event("load"));
+    expect(instance.getImageLoadingStatus()).toBe("error");
+  });
+
   it("forwards semantic attrs, slots, refs, native listeners, and detailed Runtime status events", async () => {
     const rootRef = ref<ExposedElement<HTMLSpanElement> | null>(null);
     const imageRef = ref<ExposedElement<HTMLImageElement> | null>(null);

@@ -1,0 +1,22 @@
+{
+  "primitives": {
+    "alert-dialog": "patch",
+    "checkbox": "patch",
+    "color-picker": "patch",
+    "context-menu": "patch",
+    "dialog": "patch",
+    "drawer": "patch",
+    "dropzone": "patch",
+    "field": "patch",
+    "input": "patch",
+    "menu": "patch",
+    "navigation-menu": "patch",
+    "popover": "patch",
+    "preview-card": "patch",
+    "select": "patch",
+    "sidebar": "patch",
+    "switch": "patch",
+    "tooltip": "patch"
+  },
+  "impact": "source"
+}

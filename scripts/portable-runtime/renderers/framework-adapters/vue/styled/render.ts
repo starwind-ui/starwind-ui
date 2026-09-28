@@ -77,8 +77,8 @@ function projectAlertDialogAsChildSfc(projection: VueStyledComponentProjection):
 
   const isTrigger = part === "Trigger";
   const primitiveSource = projection.imports.primitiveSources["alert-dialog"];
-  if (isTrigger && !primitiveSource) {
-    throw new TypeError("Alert Dialog Trigger requires its Primitive import.");
+  if (!primitiveSource) {
+    throw new TypeError(`Alert Dialog ${part} requires its Primitive import.`);
   }
   const baseImports = renderVueImports(projection.imports, { includeFramework: false });
   const componentName = `AlertDialog${part}`;
@@ -94,28 +94,35 @@ function projectAlertDialogAsChildSfc(projection: VueStyledComponentProjection):
   size = "md",
   class: className,
 } = defineProps<${projection.props.declared.name}>();`;
-  const imports = `import {
-${isTrigger ? "  type ButtonHTMLAttributes,\n" : ""}  type ComponentPublicInstance,
-  cloneVNode,
+  const imports = isTrigger
+    ? `import {
+  type ButtonHTMLAttributes,
+  type ComponentPublicInstance,
   computed,
   defineComponent,
-  isVNode,
+  h,
   mergeProps,
   nextTick,
   ref,
+  shallowRef,
+  useAttrs,
+  type VNode,
+  watch,
+} from "vue";
+${baseImports}`
+    : `import {
+  computed,
+  defineComponent,
+  mergeProps,
   useAttrs,
   type VNode,
 } from "vue";
+import { __useAlertDialogControl } from ${JSON.stringify(primitiveSource)};
 ${baseImports}`;
   const classExpression = isTrigger
     ? "className"
     : `alertDialog${part}AsChild({ variant: variant as never, size: size as never, class: className })`;
-  const protectedProps = isTrigger
-    ? `        "data-slot": "alert-dialog-trigger",
-        "data-sw-alert-dialog-target-id": targetId,
-        "data-sw-alert-dialog-trigger": "",
-        "data-sw-part": "trigger",`
-    : `        "data-slot": "alert-dialog-${part.toLowerCase()}",
+  const protectedProps = `        "data-slot": "alert-dialog-${part.toLowerCase()}",
         "data-sw-alert-dialog-close": "",
         "data-sw-part": "close",`;
   const normalTemplate = isTrigger
@@ -141,53 +148,86 @@ ${baseImports}`;
   >
     <slot />
   </Button>`;
-  const setup = `${props}
+  const setup = isTrigger
+    ? `${props}
 const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
-const forwardedAttrs = computed(() => ({ ...attrs, class: undefined }));
 const element = ref<HTMLElement | null>(null);
 const mergedClass = computed(() => ${classExpression});
-let pendingComponentRef: ({ element?: HTMLElement | null } & ComponentPublicInstance) | null = null;
+const pendingPrimitiveRef = shallowRef<({ element?: HTMLElement | null } & ComponentPublicInstance) | null>(null);
+
+watch(
+  () => {
+    const owner = pendingPrimitiveRef.value;
+    return [owner, owner?.element] as const;
+  },
+  ([owner, value]) => {
+    if (pendingPrimitiveRef.value !== owner) return;
+    element.value = value instanceof HTMLElement ? value : null;
+  },
+  { flush: "post" },
+);
 
 ${projection.setup.join("\n")}
 
 function setElement(value: Element | ComponentPublicInstance | null): void {
   if (value instanceof HTMLElement) {
-    pendingComponentRef = null;
+    pendingPrimitiveRef.value = null;
     element.value = value;
     return;
   }
   const exposed = value as ({ element?: HTMLElement | null } & ComponentPublicInstance) | null;
-  pendingComponentRef = exposed;
+  pendingPrimitiveRef.value = exposed;
   element.value = exposed?.element instanceof HTMLElement ? exposed.element : null;
   if (!exposed || element.value) return;
 
   void nextTick(() => {
-    if (pendingComponentRef !== exposed) return;
+    if (pendingPrimitiveRef.value !== exposed) return;
     element.value = exposed.element instanceof HTMLElement ? exposed.element : null;
   });
 }
+
+const AsChildTrigger = defineComponent({
+  inheritAttrs: false,
+  setup() {
+    return () => h(
+      AlertDialogPrimitive.AlertDialogTrigger,
+      mergeProps(attrs, {
+        asChild: true,
+        class: mergedClass.value,
+        "data-slot": "alert-dialog-trigger",
+        ref: setElement,
+        targetId,
+      }),
+      { default: slots.default },
+    );
+  },
+});`
+    : `${props}
+const slots = defineSlots<{ default?: () => VNode[] }>();
+const attrs = useAttrs();
+const forwardedAttrs = computed(() => ({ ...attrs, class: undefined }));
+const mergedClass = computed(() => ${classExpression});
+const { element, render: renderAsChild, setElement } =
+  __useAlertDialogControl("${componentName}");
+
+${projection.setup.join("\n")}
 
 const AsChild${part} = defineComponent({
   inheritAttrs: false,
   setup() {
     return () => {
       const children = slots.default?.() ?? [];
-      const child = children[0];
-      if (children.length !== 1 || !isVNode(child) || typeof child.type !== "string") {
-        throw new TypeError(
-          "${componentName} asChild requires exactly one native element VNode.",
-        );
-      }
-
-      const defaultedProps =
-        child.type === "button" && child.props?.type === undefined ? { type: "button" } : {};
       const consumerProps = mergeProps(attrs, { class: mergedClass.value });
       const protectedProps = {
 ${protectedProps}
-        ref: setElement,
       };
-      return cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true);
+      return renderAsChild({
+        children,
+        consumerProps,
+        defaultNativeButtonType: "button",
+        protectedProps,
+      });
     };
   },
 });`;
@@ -197,7 +237,19 @@ ${protectedProps}
     options: "defineOptions({ inheritAttrs: false });\n\n",
     props: renderProps(projection.props),
     setup,
-    template: `  <AsChild${part} v-if="asChild" />
+    template: isTrigger
+      ? `  <AsChildTrigger v-if="asChild" />
+  <AlertDialogPrimitive.AlertDialogTrigger
+    v-else
+    :ref="setElement"
+    :class="mergedClass as import('vue').ClassValue"
+    :target-id="targetId"
+    v-bind="attrs"
+    data-slot="alert-dialog-trigger"
+  >
+    <slot />
+  </AlertDialogPrimitive.AlertDialogTrigger>`
+      : `  <AsChild${part} v-if="asChild" />
   ${normalTemplate}`,
   };
 }
@@ -208,7 +260,6 @@ function projectDialogAsChildSfc(projection: VueStyledComponentProjection): VueS
   }
   const { family, part } = projection.specialization;
   const primitiveComponent = family === "Dialog" ? "dialog" : "drawer";
-  const dataPrefix = family === "Dialog" ? "dialog" : "drawer";
   const slotPrefix = family.toLowerCase();
   const exposedRef = projection.exposedRefs[0];
   if (exposedRef?.bridge !== "specialized" || !exposedRef.elementTypes[0]) {
@@ -221,7 +272,6 @@ function projectDialogAsChildSfc(projection: VueStyledComponentProjection): VueS
   if (!primitiveSource) throw new TypeError(`${family} ${part} requires its Primitive import.`);
 
   const baseImports = renderVueImports(projection.imports, { includeFramework: false });
-  const componentName = `${family}${part}`;
   const primitivePartName = `${family === "Dialog" ? "Dialog" : "Drawer"}${part}`;
   const props =
     part === "Trigger"
@@ -232,23 +282,22 @@ function projectDialogAsChildSfc(projection: VueStyledComponentProjection): VueS
 } = defineProps<${projection.props.declared.name}>();`
       : `const { asChild = false, class: className } =
   defineProps<${projection.props.declared.name}>();`;
-  const targetProp =
-    part === "Trigger" ? `\n        "data-sw-${dataPrefix}-target-id": targetId,` : "";
-  const primitiveTarget = part === "Trigger" ? `\n    :target-id="targetId"` : "";
+  const primitiveTarget = part === "Trigger" ? `\n        targetId,` : "";
   const fallback = part === "Close" ? " Close " : "";
 
   const imports = `import {
   type ButtonHTMLAttributes,
   type ComponentPublicInstance,
-  cloneVNode,
   computed,
   defineComponent,
-  isVNode,
+  h,
   mergeProps,
+  shallowRef,
   nextTick,
   ref,
   useAttrs,
   type VNode,
+  watch,
 } from "vue";
 ${baseImports}`;
   const setup = `${props}
@@ -256,23 +305,35 @@ const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
 const mergedClass = computed(() => className);
-let pendingPrimitiveRef: ({ element?: HTMLElement | null } & ComponentPublicInstance) | null = null;
+const pendingPrimitiveRef = shallowRef<({ element?: HTMLElement | null } & ComponentPublicInstance) | null>(null);
+
+watch(
+  () => {
+    const owner = pendingPrimitiveRef.value;
+    return [owner, owner?.element] as const;
+  },
+  ([owner, value]) => {
+    if (pendingPrimitiveRef.value !== owner) return;
+    element.value = value instanceof HTMLElement ? value : null;
+  },
+  { flush: "post" },
+);
 
 ${projection.setup.join("\n")}
 
 function setElement(value: Element | ComponentPublicInstance | null): void {
   if (value instanceof HTMLElement) {
-    pendingPrimitiveRef = null;
+    pendingPrimitiveRef.value = null;
     element.value = value;
     return;
   }
   const exposed = value as ({ element?: HTMLElement | null } & ComponentPublicInstance) | null;
-  pendingPrimitiveRef = exposed;
+  pendingPrimitiveRef.value = exposed;
   element.value = exposed?.element instanceof HTMLElement ? exposed.element : null;
   if (!exposed || element.value) return;
 
   void nextTick(() => {
-    if (pendingPrimitiveRef !== exposed) return;
+    if (pendingPrimitiveRef.value !== exposed) return;
     element.value = exposed.element instanceof HTMLElement ? exposed.element : null;
   });
 }
@@ -280,33 +341,23 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
 const AsChild${part} = defineComponent({
   inheritAttrs: false,
   setup() {
-    return () => {
-      const children = slots.default?.() ?? [];
-      const child = children[0];
-      if (children.length !== 1 || !isVNode(child) || typeof child.type !== "string") {
-        throw new TypeError(
-          "${componentName} asChild requires exactly one native element VNode.",
-        );
-      }
-
-      const defaultedProps =
-        child.type === "button" && child.props?.type === undefined ? { type: "button" } : {};
-      const consumerProps = mergeProps(attrs, { class: mergedClass.value });
-      const protectedProps = {
+    return () => h(
+      ${family}Primitive.${primitivePartName},
+      mergeProps(attrs, {
+        asChild: true,
+        class: mergedClass.value,
         "data-slot": "${slotPrefix}-${part.toLowerCase()}",
-        "data-sw-${dataPrefix}-${part.toLowerCase()}": "",${targetProp}
-        "data-sw-part": "${part.toLowerCase()}",
-        ref: setElement,
-      };
-      return cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true);
-    };
+        ref: setElement,${primitiveTarget}
+      }),
+      { default: slots.default },
+    );
   },
 });`;
   const template = `  <AsChild${part} v-if="asChild" />
   <${family}Primitive.${primitivePartName}
     v-else
     :ref="setElement"
-    :class="mergedClass as import('vue').ClassValue"${primitiveTarget}
+    :class="mergedClass as import('vue').ClassValue"${part === "Trigger" ? `\n    :target-id="targetId"` : ""}
     v-bind="attrs"
     data-slot="${slotPrefix}-${part.toLowerCase()}"
   >
@@ -705,17 +756,18 @@ function projectSelectTriggerSfc(projection: VueStyledComponentProjection): VueS
 
   const imports = `import {
   type ButtonHTMLAttributes,
-  cloneVNode,
   computed,
   defineComponent,
-  isVNode,
+  h,
   mergeProps,
+  nextTick,
   ref,
+  shallowRef,
   useAttrs,
   type ComponentPublicInstance,
   type VNode,
+  watch,
 } from "vue";
-import { useSelectContext } from ${JSON.stringify(primitiveSource)};
 ${baseImports}`;
   const setup = `const {
   asChild = false,
@@ -726,57 +778,56 @@ ${baseImports}`;
   size = "md",
   valueClass: valueClassName,
 } = defineProps<${projection.props.declared.name}>();
-const slots = defineSlots<{ ${projection.slots
-    .map((slot) => `${slot.name}?: ${slot.signature};`)
-    .join(" ")} }>();
+const slots = defineSlots<{ ${projection.slots.map((slot) => `${slot.name}?: ${slot.signature};`).join(" ")} }>();
 const attrs = useAttrs();
-const select = useSelectContext(${JSON.stringify(projection.specialization.contextName)});
 const element = ref<${elementType} | null>(null);
 const triggerClass = computed(() => selectTrigger({ size, class: className }));
+const pendingPrimitiveRef = shallowRef<({ element?: HTMLElement | null } & ComponentPublicInstance) | null>(null);
+
+watch(
+  () => {
+    const owner = pendingPrimitiveRef.value;
+    return [owner, owner?.element] as const;
+  },
+  ([owner, value]) => {
+    if (pendingPrimitiveRef.value !== owner) return;
+    element.value = value instanceof ${elementType} ? value : null;
+  },
+  { flush: "post" },
+);
 
 ${projection.setup.join("\n")}
 
 function setElement(value: Element | ComponentPublicInstance | null): void {
   if (value instanceof ${elementType}) {
+    pendingPrimitiveRef.value = null;
     element.value = value;
     return;
   }
-  const exposed = (value as { element?: HTMLElement | null } | null)?.element;
-  element.value = exposed instanceof ${elementType} ? exposed : null;
+  const exposed = value as ({ element?: HTMLElement | null } & ComponentPublicInstance) | null;
+  pendingPrimitiveRef.value = exposed;
+  element.value = exposed?.element instanceof ${elementType} ? exposed.element : null;
+  if (!exposed || element.value) return;
+
+  void nextTick(() => {
+    if (pendingPrimitiveRef.value !== exposed) return;
+    element.value = exposed.element instanceof ${elementType} ? exposed.element : null;
+  });
 }
 
 const AsChildTrigger = defineComponent({
   inheritAttrs: false,
   setup() {
-    return () => {
-      const children = slots.default?.() ?? [];
-      const child = children[0];
-      if (children.length !== 1 || !isVNode(child) || typeof child.type !== "string") {
-        throw new TypeError(
-          "SelectTrigger asChild requires exactly one native element VNode.",
-        );
-      }
-
-      const defaultedProps =
-        child.type === "button" && child.props?.type === undefined ? { type: "button" } : {};
-      const consumerProps = mergeProps(attrs, { class: triggerClass.value });
-      const protectedProps = {
-        "aria-disabled": select.disabled.value ? "true" : undefined,
-        "aria-expanded": select.open.value,
-        "aria-haspopup": "listbox",
-        "aria-readonly": select.readOnly.value,
-        "aria-required": select.required.value,
-        "data-disabled": select.disabled.value ? "" : undefined,
+    return () => h(
+      SelectPrimitive.SelectTrigger,
+      mergeProps(attrs, {
+        asChild: true,
+        class: triggerClass.value,
         "data-slot": "select-trigger",
-        "data-state": select.open.value ? "open" : "closed",
-        "data-sw-part": "trigger",
-        "data-sw-select-trigger": "",
-        disabled: child.type === "button" && select.disabled.value ? true : undefined,
         ref: setElement,
-        role: "combobox",
-      };
-      return cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true);
-    };
+      }),
+      { default: slots.default },
+    );
   },
 });`;
   const template = `  <AsChildTrigger v-if="asChild" />

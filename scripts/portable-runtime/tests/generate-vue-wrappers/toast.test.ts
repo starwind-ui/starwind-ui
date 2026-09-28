@@ -1,14 +1,15 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
+
+import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 const PARTS = [
@@ -30,6 +31,22 @@ describe("generated Vue Toast Primitive", () => {
     await Promise.all(
       temporaryRoots.splice(0).map((root) => rm(root, { force: true, recursive: true })),
     );
+  });
+
+  it("forwards Styled Toaster spacing through the existing Primitive props", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-styled-toast-"));
+    temporaryRoots.push(root);
+    await generateSelectedVueStyledGroups({
+      groups: ["toast"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
+    const source = await readFile(path.join(root, "styled/toast/Toaster.vue"), "utf8");
+    expect(compactCode(source)).toContain(compactCode(':gap="gap"'));
+    expect(compactCode(source)).toContain(compactCode(':peek="peek"'));
+    expect(compactCode(source)).toContain(compactCode('gap = "0.5rem"'));
+    expect(compactCode(source)).toContain(compactCode('peek = "1rem"'));
+    expect(() => assertVueSfcCompiles(source, "Toaster.vue")).not.toThrow();
   });
 
   it("generates the complete deterministic compiler-valid notification family", async () => {
@@ -65,7 +82,7 @@ describe("generated Vue Toast Primitive", () => {
     expect(template).toContain("data-sw-toast-template");
     expect(template).toContain("forwardedAttributeNames");
     expect(template).toContain("template.removeAttribute(attributeName)");
-    expect(root).toContain('role="dialog"');
+    expect(compactCode(root)).toContain(compactCode('role="dialog"'));
     expect(close.indexOf('aria-label="Close notification"')).toBeLessThan(
       close.indexOf('v-bind="$attrs"'),
     );

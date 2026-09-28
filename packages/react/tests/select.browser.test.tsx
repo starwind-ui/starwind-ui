@@ -2,7 +2,7 @@ import { Select } from "@starwind-ui/react/select";
 import * as React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -323,5 +323,287 @@ async function waitForMacrotask(): Promise<void> {
 async function click(element: HTMLElement): Promise<void> {
   await act(() => {
     element.click();
+  });
+}
+
+describe("React Select native reset", () => {
+  it("keeps one lazy form listener through Strict Mode and removes all reset listeners on teardown", async () => {
+    const active = new Map<EventTarget, Set<EventListenerOrEventListenerObject>>();
+    const originalAdd = EventTarget.prototype.addEventListener;
+    const originalRemove = EventTarget.prototype.removeEventListener;
+    let additions = 0;
+    const add = vi.spyOn(EventTarget.prototype, "addEventListener").mockImplementation(function (
+      this: EventTarget,
+      type,
+      listener,
+      options,
+    ) {
+      if (type === "reset" && this instanceof HTMLFormElement && listener) {
+        const listeners = active.get(this) ?? new Set<EventListenerOrEventListenerObject>();
+        listeners.add(listener);
+        active.set(this, listeners);
+        additions += 1;
+      }
+      originalAdd.call(this, type, listener, options);
+    });
+    const remove = vi
+      .spyOn(EventTarget.prototype, "removeEventListener")
+      .mockImplementation(function (this: EventTarget, type, listener, options) {
+        if (type === "reset" && listener) active.get(this)?.delete(listener);
+        originalRemove.call(this, type, listener, options);
+      });
+    try {
+      const harness = await mountResetSelect();
+      expect(active.get(harness.form)?.size).toBe(1);
+      const mountedAdditions = additions;
+      await act(() => harness.rerender());
+      await harness.reset();
+      expect(additions).toBe(mountedAdditions);
+      expect(active.get(harness.form)?.size).toBe(1);
+      await harness.activate();
+      expect(active.get(harness.form)?.size).toBe(2);
+      await act(() => {
+        harness.form.reset();
+        reactRoot!.unmount();
+      });
+      reactRoot = undefined;
+      await settleReset();
+      expect(active.get(harness.form)?.size).toBe(0);
+    } finally {
+      add.mockRestore();
+      remove.mockRestore();
+    }
+  });
+
+  for (const controlled of [false, true]) {
+    for (const activated of [false, true]) {
+      it(`${controlled ? "controlled" : "uncontrolled"} reset keeps value, label, and form data aligned ${activated ? "after" : "before"} activation`, async () => {
+        const harness = await mountResetSelect({ controlled, activated });
+        if (!controlled && activated) await harness.select("b");
+        await act(() => harness.setDefault("c"));
+        await harness.reset();
+        harness.expectValue(controlled ? "b" : "a");
+        await act(() => harness.rerender());
+        harness.expectValue(controlled ? "b" : "a");
+        expect(harness.proposals).toEqual(!controlled && activated ? ["b"] : []);
+        if (!activated) {
+          expect(harness.trigger.hasAttribute("aria-controls")).toBe(false);
+          expect(document.querySelector("[data-sw-select-item]")).toBeNull();
+          await harness.activate();
+          await harness.reset();
+          harness.expectValue(controlled ? "b" : "a");
+        }
+      });
+    }
+
+    it(`${controlled ? "controlled" : "uncontrolled"} restores accepted state after a later canceled reset`, async () => {
+      const harness = await mountResetSelect({ controlled, activated: true });
+      if (!controlled) await harness.select("b");
+      harness.form.addEventListener("reset", (event) => event.preventDefault());
+      await harness.reset();
+      harness.expectValue("b");
+      await act(() => harness.rerender());
+      harness.expectValue("b");
+      expect(harness.proposals).toEqual(controlled ? [] : ["b"]);
+    });
+  }
+
+  it("keeps newer controlled commands after reset dispatch", async () => {
+    const harness = await mountResetSelect({ controlled: true, activated: true });
+    await act(() => {
+      harness.form.reset();
+      harness.setValue("c");
+    });
+    await settleReset();
+    harness.expectValue("c");
+    expect(harness.proposals).toEqual([]);
+  });
+
+  it("keeps a newer accepted interaction after reset dispatch", async () => {
+    const harness = await mountResetSelect({ activated: true });
+    await act(() => {
+      harness.form.reset();
+      document.querySelector<HTMLElement>('[data-sw-select-item][data-value="c"]')!.click();
+    });
+    await settleReset();
+    harness.expectValue("c");
+    expect(harness.proposals).toEqual(["c"]);
+  });
+
+  it("keeps a newer silent value command after reset dispatch", async () => {
+    const harness = await mountResetSelect({ activated: true });
+    await act(() => {
+      harness.form.reset();
+      harness.root.dispatchEvent(
+        new CustomEvent("starwind:set-value", { detail: { value: "c", emit: false } }),
+      );
+    });
+    await settleReset();
+    harness.expectValue("c");
+    expect(harness.proposals).toEqual([]);
+  });
+
+  it("retains the original seed when activation occurs between reset dispatch and settlement", async () => {
+    const harness = await mountResetSelect();
+    await act(() => harness.setDefault("c"));
+    await act(() => {
+      harness.form.reset();
+      harness.trigger.click();
+    });
+    await settleReset();
+    harness.expectValue("a");
+    await harness.select("b");
+    await harness.reset();
+    harness.expectValue("a");
+    expect(harness.proposals).toEqual(["b"]);
+  });
+
+  it("binds the actual external form and follows form ownership changes", async () => {
+    const harness = await mountResetSelect({ activated: true, external: true });
+    await harness.select("b");
+    const nextForm = document.querySelector<HTMLFormElement>("#select-reset-next")!;
+    await act(() => harness.setForm("select-reset-next"));
+    harness.expectValue("b", nextForm);
+    await act(() => harness.form.reset());
+    await settleReset();
+    harness.expectValue("b", nextForm);
+    await act(() => nextForm.reset());
+    await settleReset();
+    harness.expectValue("a", nextForm);
+    expect(harness.proposals).toEqual(["b"]);
+  });
+
+  it("cancels pending work on Strict Mode unmount and leaves replacement owners intact", async () => {
+    const harness = await mountResetSelect({ activated: true });
+    await harness.select("b");
+    const oldInput = harness.root.querySelector<HTMLInputElement>("input")!;
+    await act(() => {
+      harness.form.reset();
+      reactRoot!.unmount();
+    });
+    reactRoot = undefined;
+    const detachedValue = oldInput.value;
+    await settleReset();
+    expect(oldInput.value).toBe(detachedValue);
+    expect(harness.proposals).toEqual(["b"]);
+    container?.remove();
+    const replacement = await mountResetSelect({ controlled: true });
+    await replacement.reset();
+    replacement.expectValue("b");
+    expect(replacement.proposals).toEqual([]);
+  });
+
+  it("normalizes an empty original reset seed to the placeholder", async () => {
+    const harness = await mountResetSelect({ activated: true, seed: "" });
+    await harness.select("b");
+    await harness.reset();
+    harness.expectValue(null);
+    expect(harness.proposals).toEqual(["b"]);
+  });
+});
+
+async function mountResetSelect(
+  options: { controlled?: boolean; activated?: boolean; external?: boolean; seed?: string } = {},
+) {
+  let setValue!: React.Dispatch<React.SetStateAction<string>>;
+  let setDefault!: React.Dispatch<React.SetStateAction<string>>;
+  let setForm!: React.Dispatch<React.SetStateAction<string | undefined>>;
+  let rerender!: React.DispatchWithoutAction;
+  const proposals: Array<string | null> = [];
+  function Harness() {
+    const [value, updateValue] = React.useState("b");
+    const [seed, updateDefault] = React.useState(options.seed ?? "a");
+    const [form, updateForm] = React.useState(options.external ? "select-reset-owner" : undefined);
+    const [tick, updateTick] = React.useReducer((value) => value + 1, 0);
+    setValue = updateValue;
+    setDefault = updateDefault;
+    setForm = updateForm;
+    rerender = updateTick;
+    const select = (
+      <Select.Root
+        defaultValue={seed}
+        value={options.controlled ? value : undefined}
+        name="choice"
+        form={form}
+        modal={false}
+        data-tick={tick}
+        onValueChange={(next) => proposals.push(next)}
+      >
+        <Select.Trigger>
+          <Select.Value placeholder="Choose" />
+        </Select.Trigger>
+        <Select.Portal disabled>
+          <Select.Positioner>
+            <Select.Popup>
+              <Select.Item value="a">
+                <Select.ItemText>Alpha</Select.ItemText>
+              </Select.Item>
+              <Select.Item value="b">
+                <Select.ItemText>Beta</Select.ItemText>
+              </Select.Item>
+              <Select.Item value="c">
+                <Select.ItemText>Gamma</Select.ItemText>
+              </Select.Item>
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>
+    );
+    return (
+      <React.StrictMode>
+        <form id="select-reset-owner">{options.external ? null : select}</form>
+        <form id="select-reset-next" />
+        {options.external ? select : null}
+      </React.StrictMode>
+    );
+  }
+  await mount(<Harness />);
+  await settleReset();
+  const form = container!.querySelector<HTMLFormElement>("#select-reset-owner")!;
+  const root = container!.querySelector<HTMLElement>("[data-sw-select]")!;
+  const trigger = root.querySelector<HTMLElement>("[data-sw-select-trigger]")!;
+  const activate = async () => {
+    await click(trigger);
+    await settleReset();
+  };
+  if (options.activated) await activate();
+  return {
+    root,
+    form,
+    trigger,
+    proposals,
+    setValue,
+    setDefault,
+    setForm,
+    rerender,
+    activate,
+    async select(value: string) {
+      if (trigger.getAttribute("aria-expanded") !== "true") await activate();
+      await click(
+        document.querySelector<HTMLElement>(`[data-sw-select-item][data-value="${value}"]`)!,
+      );
+      await settleReset();
+    },
+    async reset() {
+      await act(() => form.reset());
+      await settleReset();
+    },
+    expectValue(value: string | null, owner = form) {
+      const native = root.querySelector<HTMLInputElement>("[data-sw-select-input]")!;
+      expect(native.form).toBe(owner);
+      expect(native.value).toBe(value ?? "");
+      expect(new FormData(owner).get("choice")).toBe(value ?? "");
+      expect(root.getAttribute("data-value")).toBe(value);
+      expect(root.querySelector("[data-sw-select-value]")?.textContent).toBe(
+        value === "a" ? "Alpha" : value === "b" ? "Beta" : value === "c" ? "Gamma" : "Choose",
+      );
+      expect(trigger.hasAttribute("data-placeholder")).toBe(value === null);
+    },
+  };
+}
+
+async function settleReset(): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => window.setTimeout(resolve, 30));
   });
 }

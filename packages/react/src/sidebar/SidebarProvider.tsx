@@ -14,146 +14,187 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-import type { SidebarContextValue } from "./SidebarContext";
-import { SidebarContext } from "./SidebarContext";
-
+import { SidebarContext, type SidebarContextValue } from "./SidebarContext";
 export type SidebarProviderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
-  defaultOpen?: boolean;
   open?: boolean;
-  onOpenChange?: (open: boolean, details: SidebarOpenChangeDetails) => void;
-  defaultMobileOpen?: boolean;
+  defaultOpen?: boolean;
   mobileOpen?: boolean;
-  onMobileOpenChange?: (open: boolean, details: SidebarMobileOpenChangeDetails) => void;
+  defaultMobileOpen?: boolean;
   keyboardShortcut?: string;
   mobileQuery?: string;
   persistOpen?: boolean;
   persistenceKey?: string;
   persistenceStorage?: SidebarPersistenceStorage;
   persistenceMaxAge?: number;
+  onOpenChange?: (next: boolean, detail: SidebarOpenChangeDetails) => void;
+  onMobileOpenChange?: (next: boolean, detail: SidebarMobileOpenChangeDetails) => void;
 };
-
 const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
   function SidebarProvider(
     {
-      defaultOpen = true,
       open,
-      onOpenChange,
-      defaultMobileOpen = false,
+      defaultOpen = true,
       mobileOpen,
-      onMobileOpenChange,
+      defaultMobileOpen = false,
       keyboardShortcut = "b",
       mobileQuery = "(max-width: 767.98px)",
       persistOpen = false,
       persistenceKey,
       persistenceStorage,
       persistenceMaxAge = 604800,
+      onOpenChange,
+      onMobileOpenChange,
       ...props
     },
     forwardedRef,
   ) {
-    const providerRef = React.useRef<HTMLDivElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createSidebarController> | undefined>(
-      undefined,
-    );
-    const openRef = React.useRef(open);
-    const mobileOpenRef = React.useRef(mobileOpen);
-    const onOpenChangeRef = React.useRef(onOpenChange);
-    const onMobileOpenChangeRef = React.useRef(onMobileOpenChange);
-    const defaultOpenRef = React.useRef(defaultOpen);
-    const defaultMobileOpenRef = React.useRef(defaultMobileOpen);
-    const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
-    const [uncontrolledMobileOpen, setUncontrolledMobileOpenState] = React.useState(
-      defaultMobileOpenRef.current,
-    );
-    const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
-    const uncontrolledMobileOpenRef = React.useRef(uncontrolledMobileOpen);
-    const [isMobile, setIsMobile] = React.useState(false);
-
-    const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
-      uncontrolledOpenRef.current = nextOpen;
-      setUncontrolledOpenState(nextOpen);
-    }, []);
-
-    const setUncontrolledMobileOpen = React.useCallback((nextOpen: boolean) => {
-      uncontrolledMobileOpenRef.current = nextOpen;
-      setUncontrolledMobileOpenState(nextOpen);
-    }, []);
-
+    const rootRef = React.useRef<HTMLDivElement>(null);
+    const inputs = React.useRef({
+      open,
+      mobileOpen,
+      keyboardShortcut,
+      mobileQuery,
+      persistOpen,
+      persistenceKey,
+      persistenceStorage,
+      persistenceMaxAge,
+      onOpenChange,
+      onMobileOpenChange,
+    });
     useIsomorphicLayoutEffect(() => {
-      openRef.current = open;
-    }, [open]);
-
-    useIsomorphicLayoutEffect(() => {
-      mobileOpenRef.current = mobileOpen;
-    }, [mobileOpen]);
-
-    useIsomorphicLayoutEffect(() => {
-      onOpenChangeRef.current = onOpenChange;
-    }, [onOpenChange]);
-
-    useIsomorphicLayoutEffect(() => {
-      onMobileOpenChangeRef.current = onMobileOpenChange;
-    }, [onMobileOpenChange]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-
-      const mediaQueryList = window.matchMedia(mobileQuery);
-      const syncIsMobile = () => setIsMobile(mediaQueryList.matches);
-      syncIsMobile();
-      mediaQueryList.addEventListener?.("change", syncIsMobile);
-      mediaQueryList.addListener?.(syncIsMobile);
-
-      return () => {
-        mediaQueryList.removeEventListener?.("change", syncIsMobile);
-        mediaQueryList.removeListener?.(syncIsMobile);
-      };
-    }, [mobileQuery]);
-
-    const composedRef = React.useCallback(
-      (node: HTMLDivElement | null) => {
-        providerRef.current = node;
-        return setRef(forwardedRef, node);
-      },
-      [forwardedRef],
-    );
-
-    useIsomorphicLayoutEffect(() => {
-      const provider = providerRef.current;
-      if (!provider) return;
-
-      const instance = createSidebarController(provider, {
-        defaultOpen: uncontrolledOpenRef.current,
-        defaultMobileOpen: uncontrolledMobileOpenRef.current,
+      inputs.current = {
+        open,
+        mobileOpen,
         keyboardShortcut,
         mobileQuery,
         persistOpen,
         persistenceKey,
         persistenceStorage,
         persistenceMaxAge,
-        onOpenChange: (nextOpen, details) => {
-          onOpenChangeRef.current?.(nextOpen, details);
-          if (openRef.current === undefined) {
-            setUncontrolledOpen(nextOpen);
-          }
-        },
-        onMobileOpenChange: (nextOpen, details) => {
-          onMobileOpenChangeRef.current?.(nextOpen, details);
-          if (mobileOpenRef.current === undefined) {
-            setUncontrolledMobileOpen(nextOpen);
-          }
-        },
-        ...(openRef.current !== undefined ? { open: openRef.current } : {}),
-        ...(mobileOpenRef.current !== undefined ? { mobileOpen: mobileOpenRef.current } : {}),
-      });
-      instanceRef.current = instance;
-
-      return () => {
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
+        onOpenChange,
+        onMobileOpenChange,
       };
+    });
+    const seedOpen = React.useRef(defaultOpen).current;
+    const initialOpen = React.useRef(open ?? seedOpen).current;
+    const seedMobileOpen = React.useRef(defaultMobileOpen).current;
+    const initialMobileOpen = React.useRef(mobileOpen ?? seedMobileOpen).current;
+    const [acceptedOpen, setAcceptedOpen] = React.useState(initialOpen);
+    const [acceptedMobileOpen, setAcceptedMobileOpen] = React.useState(initialMobileOpen);
+    const [acceptedIsMobile, setAcceptedIsMobile] = React.useState(false);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createSidebarController>;
+      accepted: { open: boolean; mobileOpen: boolean };
+      initialized: boolean;
+      unsubscribe?: (() => void)[];
+    }>({
+      accepted: { open: initialOpen, mobileOpen: initialMobileOpen },
+      initialized: false,
+    }).current;
+    function readContext(owned: ReturnType<typeof createSidebarController>): void {
+      connection.accepted.open = owned.getOpen();
+      setAcceptedOpen(connection.accepted.open);
+      connection.accepted.mobileOpen = owned.getMobileOpen();
+      setAcceptedMobileOpen(connection.accepted.mobileOpen);
+    }
+    function connectRuntime(root: HTMLDivElement): void {
+      disconnectRuntime();
+      const owned = createSidebarController(root, {
+        defaultOpen: seedOpen,
+        ...(inputs.current.open !== undefined ? { open: inputs.current.open } : {}),
+        defaultMobileOpen: seedMobileOpen,
+        ...(inputs.current.mobileOpen !== undefined
+          ? { mobileOpen: inputs.current.mobileOpen }
+          : {}),
+        keyboardShortcut: inputs.current.keyboardShortcut,
+        mobileQuery: inputs.current.mobileQuery,
+        persistOpen: inputs.current.persistOpen,
+        persistenceKey: inputs.current.persistenceKey,
+        persistenceStorage: inputs.current.persistenceStorage,
+        persistenceMaxAge: inputs.current.persistenceMaxAge,
+        onOpenChange: (next, detail) => {
+          inputs.current.onOpenChange?.(next, detail);
+        },
+        onMobileOpenChange: (next, detail) => {
+          inputs.current.onMobileOpenChange?.(next, detail);
+        },
+      });
+      connection.instance = owned;
+      connection.unsubscribe = [
+        owned.subscribe("openChange", (detail) => {
+          if (connection.instance !== owned) return;
+          readContext(owned);
+        }),
+        owned.subscribe("mobileOpenChange", (detail) => {
+          if (connection.instance !== owned) return;
+          readContext(owned);
+        }),
+      ];
+      {
+        const supplied = inputs.current.open;
+        const reload =
+          connection.initialized &&
+          inputs.current.persistOpen &&
+          !(inputs.current.open !== undefined);
+        const next = reload
+          ? undefined
+          : (supplied ?? (connection.initialized ? connection.accepted.open : undefined));
+        if (next !== undefined && owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+      }
+      {
+        const supplied = inputs.current.mobileOpen;
+        const next =
+          supplied ?? (connection.initialized ? connection.accepted.mobileOpen : undefined);
+        if (next !== undefined && owned.getMobileOpen() !== next)
+          owned.setMobileOpen(next, { emit: false });
+      }
+      readContext(owned);
+      connection.initialized = true;
+    }
+    function applyParentCommand(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      {
+        const next = inputs.current.open;
+        if (next !== undefined && owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+      }
+      {
+        const next = inputs.current.mobileOpen;
+        if (next !== undefined && owned.getMobileOpen() !== next)
+          owned.setMobileOpen(next, { emit: false });
+      }
+      readContext(owned);
+    }
+    function disconnectRuntime(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      connection.accepted.open = owned.getOpen();
+      connection.accepted.mobileOpen = owned.getMobileOpen();
+      connection.unsubscribe?.forEach((stop) => stop());
+      connection.unsubscribe = undefined;
+      connection.instance = undefined;
+      owned.destroy();
+    }
+
+    function connectMedia(query: string): () => void {
+      const media = typeof window.matchMedia === "function" ? window.matchMedia(query) : undefined;
+      const sync = () => {
+        setAcceptedIsMobile(media?.matches ?? false);
+      };
+      sync();
+      if (media?.addEventListener) media.addEventListener("change", sync);
+      else media?.addListener(sync);
+      return () => {
+        if (media?.removeEventListener) media.removeEventListener("change", sync);
+        else media?.removeListener(sync);
+      };
+    }
+    useIsomorphicLayoutEffect(() => connectMedia(mobileQuery), [mobileQuery]);
+    useIsomorphicLayoutEffect(() => {
+      const root = rootRef.current;
+      if (!root) return;
+      connectRuntime(root);
+      return disconnectRuntime;
     }, [
       keyboardShortcut,
       mobileQuery,
@@ -161,65 +202,53 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
       persistenceKey,
       persistenceStorage,
       persistenceMaxAge,
+      open !== undefined,
+      mobileOpen !== undefined,
     ]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (open === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getOpen() === open) return;
-
-      instance.setOpen(open, { emit: false });
-    }, [open]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (mobileOpen === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getMobileOpen() === mobileOpen) return;
-
-      instance.setMobileOpen(mobileOpen, { emit: false });
-    }, [mobileOpen]);
-
-    const renderedOpen = open ?? uncontrolledOpen;
-    const renderedMobileOpen = mobileOpen ?? uncontrolledMobileOpen;
-    const contextValue = React.useMemo<SidebarContextValue>(
-      () => ({
-        expanded: isMobile ? renderedMobileOpen : renderedOpen,
-        mobileOpen: renderedMobileOpen,
-        open: renderedOpen,
-        state: renderedOpen ? "expanded" : "collapsed",
-      }),
-      [isMobile, renderedMobileOpen, renderedOpen],
+    useIsomorphicLayoutEffect(applyParentCommand, [open, mobileOpen]);
+    const composedRef = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        rootRef.current = node;
+        return setRef(forwardedRef, node);
+      },
+      [forwardedRef],
     );
-    const providerAttributes = {
-      "data-sw-sidebar-provider": "",
-      "data-default-open": defaultOpenRef.current ? "true" : undefined,
-      "data-default-mobile-open": defaultMobileOpenRef.current ? "true" : undefined,
-      "data-state": renderedOpen ? "expanded" : "collapsed",
-      "data-mobile-open": renderedMobileOpen ? "true" : "false",
-      "data-keyboard-shortcut": keyboardShortcut,
-      "data-mobile-query": mobileQuery,
-      "data-persist-open": persistOpen ? "true" : undefined,
-      "data-persistence-key": persistenceKey,
-      "data-persistence-storage":
-        typeof persistenceStorage === "string"
-          ? persistenceStorage
-          : persistenceStorage === false
-            ? "false"
-            : undefined,
-      "data-persistence-max-age": persistenceMaxAge,
-    } satisfies React.HTMLAttributes<HTMLDivElement> &
-      Record<`data-${string}`, string | number | undefined>;
-
+    const context = React.useMemo<SidebarContextValue>(
+      () => ({
+        open: acceptedOpen,
+        mobileOpen: acceptedMobileOpen,
+        state: acceptedOpen ? ("expanded" as const) : ("collapsed" as const),
+        expanded: acceptedIsMobile ? acceptedMobileOpen : acceptedOpen,
+      }),
+      [acceptedOpen, acceptedMobileOpen, acceptedIsMobile],
+    );
     return (
-      <SidebarContext.Provider value={contextValue}>
-        <div {...providerAttributes} ref={composedRef} {...props} />
+      <SidebarContext.Provider value={context}>
+        <div
+          {...props}
+          data-sw-sidebar-provider={""}
+          data-sw-part={"provider"}
+          data-default-open={seedOpen ? "true" : undefined}
+          data-default-mobile-open={seedMobileOpen ? "true" : undefined}
+          data-state={acceptedOpen ? ("expanded" as const) : ("collapsed" as const)}
+          data-mobile-open={String(acceptedMobileOpen)}
+          data-keyboard-shortcut={keyboardShortcut}
+          data-mobile-query={mobileQuery}
+          data-persist-open={persistOpen ? "true" : undefined}
+          data-persistence-key={persistenceKey}
+          data-persistence-storage={
+            typeof persistenceStorage === "string"
+              ? persistenceStorage
+              : persistenceStorage === false
+                ? "false"
+                : undefined
+          }
+          data-persistence-max-age={persistenceMaxAge}
+          ref={composedRef}
+        />
       </SidebarContext.Provider>
     );
   },
 );
-
 SidebarProvider.displayName = "Sidebar.Provider";
-
 export default SidebarProvider;

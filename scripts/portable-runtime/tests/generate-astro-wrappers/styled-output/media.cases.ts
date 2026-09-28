@@ -10,7 +10,7 @@ export async function assertAstroStyledMediaOutput(outputRoot: string): Promise<
   const videoIndex = await readGeneratedFile(outputRoot, "video/index.ts");
 
   expect(avatarVariants).toContain(
-    'base: "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2"',
+    'base: "text-foreground bg-muted relative inline-flex shrink-0 overflow-hidden rounded-full border-2"',
   );
   expect(avatarVariants).toContain('sm: "h-8 w-8 text-xs"');
   expect(avatarVariants).toContain('md: "h-10 w-10 text-sm"');
@@ -18,7 +18,7 @@ export async function assertAstroStyledMediaOutput(outputRoot: string): Promise<
   expect(avatarVariants).toContain(
     'base: "absolute inset-0.5 flex items-center justify-center rounded-full font-medium"',
   );
-  expect(avatarVariants).toContain('base: "relative z-1 h-full w-full object-cover"');
+  expect(avatarVariants).toContain('base: "relative h-full w-full object-cover"');
 
   expect(image).not.toContain("../primitives");
   expect(image).toContain('import { Image as AstroImage } from "astro:assets";');

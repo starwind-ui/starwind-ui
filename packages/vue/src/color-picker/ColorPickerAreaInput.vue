@@ -30,10 +30,12 @@ const { props: projectedProps, text } = useColorPickerPartProjection(
     part: "areaInput",
     xChannel: area.xChannel.value,
     yChannel: area.yChannel.value,
+    xStep: props.axis === "x" ? (props.step ?? area.xStep.value) : area.xStep.value,
+    yStep: props.axis === "y" ? (props.step ?? area.yStep.value) : area.yStep.value,
     axis: props.axis,
-    ...(props.axis === "x"
-      ? { xStep: props.step ?? area.xStep.value }
-      : { yStep: props.step ?? area.yStep.value }),
+    ariaLabel: attrs["aria-label"] as string | undefined,
+    ariaLabelledBy: attrs["aria-labelledby"] as string | undefined,
+    ariaRoleDescription: attrs["aria-roledescription"] as string | undefined,
   }),
   attrs,
   () => ({

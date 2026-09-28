@@ -1,11 +1,10 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { progressStyledContract } from "../../contracts/styled/components/progress.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 describe("generated Vue Styled Progress", () => {
@@ -29,35 +28,49 @@ describe("generated Vue Styled Progress", () => {
     const variants = await readFile(path.join(root, "styled/progress/variants.ts"), "utf8");
 
     expect(() => assertVueSfcCompiles(source, "Progress.vue")).not.toThrow();
-    expect(source).toContain('import * as ProgressPrimitive from "@starwind-ui/vue/progress";');
-    expect(source).toContain("const progressValue = computed(() =>");
-    expect(source).toContain(
-      "const isIndeterminate = computed(() => progressValue.value === null);",
+    expect(compactCode(source)).toContain(
+      compactCode('import * as ProgressPrimitive from "@starwind-ui/vue/progress";'),
     );
-    expect(source).toContain("value == null || !Number.isFinite(Number(value))");
-    expect(source).toContain(
-      "Math.min(Math.max(Number(value), normalizedMin.value), normalizedMax.value)",
+    expect(compactCode(source)).toContain(compactCode("const progressValue = computed(() =>"));
+    expect(compactCode(source)).toContain(
+      compactCode("const isIndeterminate = computed(() => progressValue.value === null);"),
     );
-    expect(source).toContain(
-      "const normalizedMin = computed(() => Math.min(boundedMin.value, boundedMax.value));",
+    expect(compactCode(source)).toContain(
+      compactCode("value == null || !Number.isFinite(Number(value))"),
     );
-    expect(source).toContain(
-      "const normalizedMax = computed(() => Math.max(boundedMin.value, boundedMax.value));",
+    expect(compactCode(source)).toContain(
+      compactCode("Math.min(Math.max(Number(value), normalizedMin.value), normalizedMax.value)"),
     );
-    expect(source).toContain("normalizedMax.value === normalizedMin.value");
-    expect(source).toContain("progressValue.value! >= normalizedMax.value");
-    expect(source).toContain(':max="normalizedMax"');
-    expect(source).toContain(':min="normalizedMin"');
-    expect(source).toContain("100 - progressPercent.value");
-    expect(source).toContain("defineExpose({ element });");
-    expect(source).toContain(':ref="setElement"');
-    expect(source).toContain(`v-bind="{ ...attrs, 'aria-label': ariaLabel }"`);
-    expect(source).toContain('data-slot="progress"');
-    expect(source).toContain('data-slot="progress-track"');
-    expect(source).toContain('data-slot="progress-indicator"');
-    expect(source).toContain(':style="indicatorStyle"');
-    expect(source).not.toContain("createProgress");
-    expect(source).not.toContain("watch(");
+    expect(compactCode(source)).toContain(
+      compactCode(
+        "const normalizedMin = computed(() => Math.min(boundedMin.value, boundedMax.value));",
+      ),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode(
+        "const normalizedMax = computed(() => Math.max(boundedMin.value, boundedMax.value));",
+      ),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode("normalizedMax.value === normalizedMin.value"),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode("progressValue.value! >= normalizedMax.value"),
+    );
+    expect(compactCode(source)).toContain(compactCode(':max="normalizedMax"'));
+    expect(compactCode(source)).toContain(compactCode(':min="normalizedMin"'));
+    expect(compactCode(source)).toContain(compactCode("100 - progressPercent.value"));
+    expect(compactCode(source)).toContain(compactCode("defineExpose({ element });"));
+    expect(compactCode(source)).toContain(compactCode(':ref="setElement"'));
+    expect(compactCode(source)).toContain(
+      compactCode(`v-bind="{ ...attrs, 'aria-label': ariaLabel }"`),
+    );
+    expect(compactCode(source)).toContain(compactCode('data-slot="progress"'));
+    expect(compactCode(source)).toContain(compactCode('data-slot="progress-track"'));
+    expect(compactCode(source)).toContain(compactCode('data-slot="progress-indicator"'));
+    expect(compactCode(source)).toContain(compactCode(':style="indicatorStyle"'));
+    expect(compactCode(source)).not.toContain(compactCode("createProgress"));
+    expect(compactCode(source)).not.toContain(compactCode("watch("));
     expect(index).toContain(
       "const ProgressVariants = { progress, progressIndicator, progressTrack };",
     );

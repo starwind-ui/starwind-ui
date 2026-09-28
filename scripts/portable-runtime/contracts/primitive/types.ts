@@ -57,7 +57,15 @@ export type PrimitiveCssVariableContract = {
   source: "runtime" | "styled-adapter";
 };
 
+export type PrimitiveRefreshContract = {
+  method: "refresh";
+  formOwner?: "native-input";
+  parts: "root" | "owned-descendants" | "owned-controls";
+  state: "preserve";
+};
+
 export type RuntimeBridgeContract = {
+  refresh?: PrimitiveRefreshContract;
   factory: string;
   importSource: "@starwind-ui/runtime" | `@starwind-ui/runtime/${string}`;
   rootPart: string;
@@ -100,11 +108,21 @@ export type PrimitivePropContract = {
   type: string;
 };
 
+export type PrimitiveFixedModelOwnership = {
+  controlledWhen: "initial-defined";
+  lifetime: "mount";
+  laterUndefined: "retain-controlled-value";
+  laterDefined: "ignore-when-uncontrolled";
+};
+
 export type PrimitiveStateModelContract = {
+  ownership?: PrimitiveFixedModelOwnership;
   name: string;
   controlledProp?: string;
   defaultProp?: string;
   initialAttribute?: string;
+  /** Retain the first mount reset baseline when an adapter recreates its controller. */
+  resetBaseline?: "mount";
   valueType: string;
   runtimeGetter?: string;
   runtimeSyncEvent?: string;
@@ -113,7 +131,8 @@ export type PrimitiveStateModelContract = {
 };
 
 export type PrimitiveEventContract = {
-  acceptanceNotification?: "detail-on-accepted";
+  /** Accepted publication follows the named Runtime or completed DOM dispatch seam. */
+  acceptanceNotification?: "detail-on-accepted" | "controller-subscription" | "after-dom-dispatch";
   callbackTiming?: "after-state-commit" | "before-state-commit";
   cancelable?: boolean;
   name: string;
@@ -153,6 +172,7 @@ export type PrimitiveSetterContract =
     };
 
 export type PrimitiveContextContract = {
+  stateOwnership?: "group-membership";
   name: string;
   values: string[];
 } & (

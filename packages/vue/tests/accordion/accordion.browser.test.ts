@@ -1,16 +1,3 @@
-import {
-  createApp,
-  createSSRApp,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-} from "vue";
-import { renderToString } from "vue/server-renderer";
-import { userEvent } from "vitest/browser";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { AccordionValue, AccordionValueChangeDetails } from "@starwind-ui/runtime/accordion";
 import {
   AccordionHeader,
@@ -19,12 +6,25 @@ import {
   AccordionRoot,
   AccordionTrigger,
 } from "@starwind-ui/vue/accordion";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  createSSRApp,
+  h,
+  nextTick,
+  reactive,
+  ref,
+} from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Accordion as StyledAccordion,
   AccordionContent as StyledAccordionContent,
   AccordionItem as StyledAccordionItem,
   AccordionTrigger as StyledAccordionTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/accordion";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 type ElementExpose = ComponentPublicInstance & { element: HTMLElement | null };
 const cleanups: Array<() => void> = [];
@@ -263,3 +263,23 @@ function appendHost(): HTMLDivElement {
   document.body.append(host);
   return host;
 }
+
+testAcceptedModelPublication({
+  name: "AccordionRoot",
+  model: "modelValue",
+  proposal: "onValueChange",
+  domEvent: "starwind:value-change",
+  initial: "alpha",
+  accepted: "beta",
+  tree: () =>
+    h(AccordionRoot, { defaultValue: "alpha" }, () => [disclosure("alpha"), disclosure("beta")]),
+  root: "[data-sw-accordion]",
+  act: (root) =>
+    root
+      .querySelector<HTMLButtonElement>(
+        '[data-sw-accordion-item][data-value="beta"] [data-sw-accordion-trigger]',
+      )!
+      .click(),
+  read: (root) =>
+    root.querySelector('[data-sw-accordion-item][data-state="open"]')?.getAttribute("data-value"),
+});

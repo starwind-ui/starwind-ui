@@ -1,0 +1,24 @@
+[data-slot="input-otp-slot"] > [data-sw-input-otp-caret] {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-slot="input-otp-slot"] > [data-sw-input-otp-caret][hidden] {
+  display: none;
+}
+
+[data-slot="input-otp-slot"] > [data-sw-input-otp-caret] > .animate-caret-blink {
+  width: 1px;
+  height: 1rem;
+  background-color: currentColor;
+  animation: sw-input-otp-caret-blink 1.25s ease-out infinite;
+}
+
+@keyframes sw-input-otp-caret-blink {
+  0%, 70%, 100% { opacity: 1; }
+  20%, 50% { opacity: 0; }
+}

@@ -63,12 +63,15 @@ function getPackageManagerCommand({
   name: string;
   packageManagerArgs: string[];
 }): FormatGeneratedOutputCommand {
-  const command =
-    npmExecPath && !isWindowsCommandScript(npmExecPath)
+  const command = npmExecPath
+    ? isJavaScriptFile(npmExecPath)
       ? process.execPath
-      : (npmExecPath ?? (platform === "win32" ? "pnpm.cmd" : "pnpm"));
+      : npmExecPath
+    : platform === "win32"
+      ? "pnpm.cmd"
+      : "pnpm";
   const args =
-    npmExecPath && !isWindowsCommandScript(npmExecPath)
+    npmExecPath && isJavaScriptFile(npmExecPath)
       ? [npmExecPath, ...packageManagerArgs]
       : packageManagerArgs;
 
@@ -130,6 +133,12 @@ function isWindowsCommandScript(command: string): boolean {
   const extension = path.extname(command).toLowerCase();
 
   return extension === ".cmd" || extension === ".bat";
+}
+
+function isJavaScriptFile(command: string): boolean {
+  const extension = path.extname(command).toLowerCase();
+
+  return extension === ".cjs" || extension === ".js" || extension === ".mjs";
 }
 
 function needsStandaloneBiomeConfig(paths: string[], cwd: string): boolean {

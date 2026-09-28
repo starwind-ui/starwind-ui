@@ -33,7 +33,7 @@ const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 
 function serializeMatch(value: FieldErrorMatch): string {
-  return typeof value === "boolean" ? String(value) : value;
+  return String(value);
 }
 </script>
 

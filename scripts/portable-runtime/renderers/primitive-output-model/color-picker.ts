@@ -2,6 +2,7 @@ import type {
   PrimitiveAttributeContract,
   PrimitiveCssVariableContract,
   PrimitiveEscapeHatchContract,
+  PrimitiveFixedModelOwnership,
   PrimitiveInitialMarkupContract,
   PrimitiveInitialStateProjectionContract,
   PrimitivePropContract,
@@ -45,12 +46,14 @@ export type AdapterColorPickerPart = {
 };
 
 export type AdapterColorPickerState = {
+  ownership?: PrimitiveFixedModelOwnership;
   controlledProp?: string;
   controlledStateSync?: "custom-event" | "imperative" | "unsupported";
   defaultProp?: string;
   initialAttribute?: string;
   name: "format" | "value";
   runtimeGetter?: string;
+  runtimeSyncEvent?: string;
   runtimeSetter?: string;
   valueType: string;
 };
@@ -172,4 +175,22 @@ function getComponentFamilyKind(value: unknown): unknown {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+export function requireColorPickerModelOwnership(
+  states: readonly { name: string; ownership?: PrimitiveFixedModelOwnership }[],
+): void {
+  for (const name of ["value", "format"]) {
+    const policy = states.find((state) => state.name === name)?.ownership;
+    if (
+      policy?.controlledWhen !== "initial-defined" ||
+      policy.lifetime !== "mount" ||
+      policy.laterUndefined !== "retain-controlled-value" ||
+      policy.laterDefined !== "ignore-when-uncontrolled"
+    ) {
+      throw new Error(
+        `Color Picker ${name} requires fixed initial-defined model ownership until unmount.`,
+      );
+    }
+  }
 }

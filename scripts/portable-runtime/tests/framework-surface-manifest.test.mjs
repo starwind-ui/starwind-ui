@@ -123,15 +123,15 @@ describe("framework surface manifest", () => {
       familySubpaths: 37,
       namespaceParts: 242,
       renderedPrimitivePaths: 227,
-      styledNormalizedPaths: 395,
+      styledNormalizedPaths: 396,
       styledRoots: 55,
     });
-    for (const target of ["react", "vue"]) {
+    for (const target of ["react", "vue", "svelte"]) {
       expect(manifest.targets[target].counts).toEqual({
         familySubpaths: 37,
         namespaceParts: 242,
         renderedPrimitivePaths: 226,
-        styledNormalizedPaths: 392,
+        styledNormalizedPaths: 393,
         styledRoots: 54,
       });
     }
@@ -141,7 +141,7 @@ describe("framework surface manifest", () => {
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 
     expect(manifest.schemaVersion).toBe(3);
-    for (const target of ["astro", "react", "vue"]) {
+    for (const target of ["astro", "react", "vue", "svelte"]) {
       expect(manifest.targets[target].primitive.portalAnatomy).toEqual(
         expectedPortalAnatomy(target),
       );
@@ -176,7 +176,7 @@ describe("framework surface manifest", () => {
     }
   });
 
-  it.each(["astro", "react", "vue"])(
+  it.each(["astro", "react", "vue", "svelte"])(
     "rejects %s Portal output when its rendered public wrapper loses a required hook",
     async (target) => {
       const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), `starwind-surface-${target}-`));
@@ -184,7 +184,7 @@ describe("framework surface manifest", () => {
       const portalPath = path.join(
         primitiveRoot,
         "combobox",
-        `ComboboxPortal.${target === "astro" ? "astro" : target === "react" ? "tsx" : "vue"}`,
+        `ComboboxPortal.${target === "astro" ? "astro" : target === "react" ? "tsx" : target}`,
       );
 
       try {
@@ -209,7 +209,7 @@ describe("framework surface manifest", () => {
     30_000,
   );
 
-  it.each(["astro", "react", "vue"])(
+  it.each(["astro", "react", "vue", "svelte"])(
     "rejects %s Portal output when its rendered public wrapper uses the wrong element",
     async (target) => {
       const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), `starwind-surface-${target}-`));
@@ -217,11 +217,7 @@ describe("framework surface manifest", () => {
       const portalPath =
         target === "react"
           ? path.join(primitiveRoot, "internal", "portal.tsx")
-          : path.join(
-              primitiveRoot,
-              "combobox",
-              `ComboboxPortal.${target === "astro" ? "astro" : "vue"}`,
-            );
+          : path.join(primitiveRoot, "combobox", `ComboboxPortal.${target}`);
 
       try {
         await generateFrameworkPrimitiveWrappers(target, {
@@ -232,9 +228,11 @@ describe("framework surface manifest", () => {
         const mutated =
           target === "react"
             ? source.replace(/(const\s+wrapper\s*=\s*\(\s*)<div\b/, "$1<span")
-            : target === "vue"
-              ? source.replace(/(<template>[\s\S]*?)<div\b/, "$1<span")
-              : source.replace(/(---\s*)<div\b/, "$1<span");
+            : target === "svelte"
+              ? source.replace(/(<\/script>\s*)<div\b/, "$1<span")
+              : target === "vue"
+                ? source.replace(/(<template>[\s\S]*?)<div\b/, "$1<span")
+                : source.replace(/(---\s*)<div\b/, "$1<span");
         expect(mutated).not.toBe(source);
         await writeFile(portalPath, mutated, "utf8");
 
@@ -253,7 +251,7 @@ describe("framework surface manifest", () => {
   it("records exact namespace defaults and no Theme facade default", async () => {
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 
-    for (const target of ["astro", "react", "vue"]) {
+    for (const target of ["astro", "react", "vue", "svelte"]) {
       expect(
         manifest.targets[target].primitive.exports.avatar.filter(
           (entry) => entry.kind === "default",
@@ -279,8 +277,10 @@ describe("framework surface manifest", () => {
     const expectedAvatar = ["Root", "Image", "Fallback"];
     const expectedScrollArea = ["Root", "Viewport", "Content", "Scrollbar", "Thumb", "Corner"];
 
-    for (const target of ["astro", "react", "vue"]) {
-      expect(manifest.targets[target].primitive.namespaces.avatar).toEqual(expectedAvatar);
+    for (const target of ["astro", "react", "vue", "svelte"]) {
+      expect(manifest.targets[target].primitive.namespaces.avatar).toEqual(
+        target === "svelte" ? ["Fallback", "Image", "Root"] : expectedAvatar,
+      );
       expect(manifest.targets[target].primitive.namespaces["scroll-area"]).toEqual(
         expectedScrollArea,
       );
@@ -335,6 +335,17 @@ export default Example;
   });
 
   it.each([
+    [
+      "missing Svelte target",
+      (value) => {
+        delete value.targets.svelte;
+      },
+    ],
+    ["missing Svelte part", (value) => value.targets.svelte.primitive.renderedPaths.pop()],
+    [
+      "missing Svelte namespace member",
+      (value) => value.targets.svelte.primitive.namespaces.avatar.pop(),
+    ],
     ["added", (value) => value.targets.react.primitive.renderedPaths.push("button/Extra")],
     ["removed", (value) => value.targets.react.primitive.renderedPaths.pop()],
     [

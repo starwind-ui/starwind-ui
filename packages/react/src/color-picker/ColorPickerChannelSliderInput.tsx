@@ -21,7 +21,13 @@ const ColorPickerChannelSliderInput = React.forwardRef<
 >(function ColorPickerChannelSliderInput({ step, ...props }, forwardedRef) {
   const sliderContext = useColorPickerChannelSliderContext();
   const { props: projectedProps } = useColorPickerPartProjection(
-    { part: "channelSliderInput", ...sliderContext, step: step ?? sliderContext.step },
+    {
+      part: "channelSliderInput",
+      channel: sliderContext.channel,
+      orientation: sliderContext.orientation,
+      step: step ?? sliderContext.step,
+      ariaLabel: props["aria-label"] ?? undefined,
+    },
     { ...props, "data-sw-color-picker-channel-input": "", "data-step": step ?? sliderContext.step },
   );
   return <input {...projectedProps} ref={forwardedRef} />;

@@ -1,9 +1,8 @@
-import { createApp, createSSRApp, h, nextTick, ref } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import { FieldsetLegend, FieldsetRoot } from "@starwind-ui/vue/fieldset";
 import { InputRoot } from "@starwind-ui/vue/input";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, createSSRApp, h, nextTick, ref } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 const cleanups: Array<() => void> = [];
 
@@ -14,9 +13,42 @@ afterEach(() => {
 });
 
 describe("Vue Fieldset public behavior", () => {
+  it("tracks reactive legend IDs through the single Runtime observer and preserves explicit labels", async () => {
+    const id = ref("first");
+    const label = ref<string | undefined>();
+    const observe = vi.spyOn(MutationObserver.prototype, "observe");
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(
+          FieldsetRoot,
+          { "aria-label": label.value },
+          {
+            default: () => h(FieldsetLegend, { id: id.value }, () => "Settings"),
+          },
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    const root = host.querySelector("fieldset")!;
+    expect(observe.mock.calls.filter(([target]) => target === root)).toHaveLength(1);
+    expect(root.getAttribute("aria-labelledby")).toBe("first");
+    id.value = "second";
+    await nextTick();
+    await macrotask();
+    expect(root.getAttribute("aria-labelledby")).toBe("second");
+    label.value = "Explicit";
+    id.value = "third";
+    await nextTick();
+    await macrotask();
+    expect(root.getAttribute("aria-label")).toBe("Explicit");
+    expect(root.hasAttribute("aria-labelledby")).toBe(false);
+  });
+
   it("owns native disabled submission, dynamic discovery, legend state, and cleanup", async () => {
     const disabled = ref(true);
     const showSecond = ref(false);
+    const observe = vi.spyOn(MutationObserver.prototype, "observe");
     const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
     const host = appendHost();
     const app = createApp({
@@ -40,6 +72,10 @@ describe("Vue Fieldset public behavior", () => {
     const form = host.querySelector("form")!;
     const fieldset = host.querySelector("fieldset")!;
     const legend = host.querySelector<HTMLElement>("[data-sw-fieldset-legend]")!;
+    const fieldsetObservers = observe.mock.calls.flatMap(([target], index) =>
+      target === fieldset ? [observe.mock.contexts[index]] : [],
+    );
+    expect(fieldsetObservers).toHaveLength(1);
 
     expect(fieldset.disabled).toBe(true);
     expect(legend).toHaveAttribute("data-disabled");
@@ -64,7 +100,9 @@ describe("Vue Fieldset public behavior", () => {
 
     app.unmount();
     cleanups.pop();
-    expect(disconnect).toHaveBeenCalledTimes(1);
+    expect(disconnect.mock.contexts.filter((owner) => owner === fieldsetObservers[0])).toHaveLength(
+      1,
+    );
   });
 
   it("hydrates one isolated native fieldset without warnings", async () => {

@@ -47,16 +47,16 @@ describe("Vue performance row evidence", () => {
     );
   });
 
-  it("pins zero warmups and exactly five samples for every row", () => {
+  it("pins one excluded warmup and exactly five samples for every row", () => {
     expect(VUE_PERFORMANCE_MOUNT_SAMPLING_CONTROL).toEqual({
       browserLifecycle: "one context, page, CDP session, and navigation per mount row",
       iterations: 5,
-      warmupCount: 0,
+      warmupCount: 1,
     });
     expect(VUE_PERFORMANCE_BASELINE_CONTROLS.rows).toHaveLength(63);
     expect(
       VUE_PERFORMANCE_BASELINE_CONTROLS.rows.every(
-        ({ warmupCount, withinRunSampleCount }) => warmupCount === 0 && withinRunSampleCount === 5,
+        ({ warmupCount, withinRunSampleCount }) => warmupCount === 1 && withinRunSampleCount === 5,
       ),
     ).toBe(true);
   });
@@ -70,6 +70,22 @@ describe("Vue performance row evidence", () => {
     expect(record.candidate).toEqual(
       expect.objectContaining({ blocking: false, reason: null, status: "ceiling-available" }),
     );
+    expect(validateVuePerformanceRowRecord(record, { requireBaselinePlatform: false })).toEqual(
+      record,
+    );
+  });
+
+  it("validates a historical schema-v2 row with its recorded zero-warmup policy", () => {
+    const id = "dialog-open:starwind-vue";
+    const historical = flags(id);
+    historical.controls.mountSampling = {
+      ...historical.controls.mountSampling,
+      warmupCount: 0,
+    };
+    historical.controls.rows[0].warmupCount = 0;
+    const record = makeRecord({ flags: historical });
+    expect(record.schemaVersion).toBe(2);
+    expect(record.flags.controls.rows[0].warmupCount).toBe(0);
     expect(validateVuePerformanceRowRecord(record, { requireBaselinePlatform: false })).toEqual(
       record,
     );
@@ -336,7 +352,7 @@ function flags(id, controlOverrides = {}) {
     controls: {
       ...VUE_PERFORMANCE_BASELINE_CONTROLS,
       ...controlOverrides,
-      rows: [{ cpuThrottle: row.cpuThrottle, id: row.id, warmupCount: 0, withinRunSampleCount: 5 }],
+      rows: [{ cpuThrottle: row.cpuThrottle, id: row.id, warmupCount: 1, withinRunSampleCount: 5 }],
     },
     focused: true,
     mode: "baseline",

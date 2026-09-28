@@ -182,6 +182,7 @@ describe.sequential("add command integration", () => {
   let previousCwd = "";
   let previousFetch: typeof globalThis.fetch;
   let mockExit: ReturnType<typeof vi.spyOn>;
+  const originalExitCode = process.exitCode;
 
   beforeAll(() => {
     vueRegistryFixture = JSON.parse(
@@ -237,6 +238,7 @@ describe.sequential("add command integration", () => {
   });
 
   afterEach(async () => {
+    process.exitCode = originalExitCode;
     process.chdir(previousCwd);
     globalThis.fetch = previousFetch;
     mockExit.mockRestore();
@@ -928,6 +930,27 @@ describe.sequential("add command integration", () => {
 
     expect(globalThis.fetch).not.toHaveBeenCalled();
     expect(mockPromptLog.error).toHaveBeenCalledWith(expect.stringContaining("Runtime V3 project"));
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects Pro blocks for Svelte before config or component writes", async () => {
+    const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    config.framework = "svelte";
+    await writeFile("starwind.config.json", JSON.stringify(config, null, 2) + "\n", "utf-8");
+    const savedConfig = await readFile("starwind.config.json", "utf-8");
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    await expect(
+      add(["@starwind-pro/hero-01"], { packageManager: "pnpm", yes: true }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      "Svelte 5 beta does not support Starwind Pro setup.",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    await expect(readFile("starwind.config.json", "utf-8")).resolves.toBe(savedConfig);
     await expect(
       readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
     ).rejects.toMatchObject({ code: "ENOENT" });

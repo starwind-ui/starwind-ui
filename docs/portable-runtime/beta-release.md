@@ -18,9 +18,9 @@ Use numbered SemVer prereleases and publish them with the matching npm dist-tag.
 prerelease state is the source for the active channel: `beta`, `rc`, or another prerelease tag.
 Stable package versions publish with `latest` only after prerelease state has been fully consumed.
 
-Runtime, Astro, and React are versioned in lockstep. Vue has its own beta channel and always
-publishes on `beta`, including versions without a SemVer prerelease suffix. The saved plan preserves
-Vue `latest` until an approved promotion changes it. Release the CLI alongside Runtime changes so generated
+Runtime, Astro, and React are versioned in lockstep. Vue and Svelte have independent beta channels
+and always publish on `beta`, including versions without a SemVer prerelease suffix. The saved plan
+preserves each beta package's `latest` until an approved promotion changes it. Release the CLI alongside Runtime changes so generated
 styled components and vendored Primitive sources request compatible package versions. Use
 `pnpm release:version` to consolidate deferred styled component intent, regenerate registry
 artifacts, and advance package versions; do not hand-edit prerelease versions. Before a release,
@@ -128,18 +128,18 @@ pnpm publish:release
 ```
 
 The publisher derives the normal plan from final manifests. It includes changed Runtime, Astro,
-React, Vue, and CLI packages, then omits exact versions already on npm. Before its first npm
+React, Vue, Svelte, and CLI packages, then omits exact versions already on npm. Before its first npm
 publication, the user-run command saves this immutable plan under
-`node_modules/.cache/starwind-release/publication-plans/<head>.json`. Vue uses `beta` and preserves
-its saved `latest` baseline. Other tags derive from the release state. A real publish refuses to run unless the checkout belongs to
+`node_modules/.cache/starwind-release/publication-plans/<head>.json`. Vue and Svelte use `beta` and
+preserve their saved `latest` baselines. Other tags derive from the release state. A real publish refuses to run unless the checkout belongs to
 `starwind-ui/starwind-ui`, the working tree is clean, the current branch is `main`, and `HEAD`
 exactly matches the locally fetched `origin/main`.
 
 After all planned exact versions and their npm dist-tags are visible, the publisher automatically
 finalizes from the saved plan. It creates and pushes one annotated product tag, then creates a
 GitHub Release with generated notes. A plan with CLI uses `v<cli-version>`. A plan with Runtime and no CLI uses
-`runtime-v<runtime-version>`. A Vue-only plan uses `vue-v<vue-version>`, creates a GitHub
-prerelease, and sets `latest=false`. A SemVer prerelease also creates a GitHub prerelease.
+`runtime-v<runtime-version>`. Vue-only and Svelte-only plans use framework-prefixed tags, create a
+GitHub prerelease, and set `latest=false`. A SemVer prerelease also creates a GitHub prerelease.
 
 Finalization checks local and remote tag targets plus existing GitHub Release metadata before it
 writes anything. A retry succeeds when the tag target and release classification already match.
@@ -151,7 +151,7 @@ differs.
 After publishing, query npm for every exact version in the saved plan and verify:
 
 - the expected dist-tag points to each intended version
-- Vue `latest` matches its captured baseline
+- Vue and Svelte `latest` match their captured baselines
 - repository metadata and packed file lists are correct
 - Astro and React declare the intended Runtime version
 - the CLI declares compatible adapter and Runtime requirements

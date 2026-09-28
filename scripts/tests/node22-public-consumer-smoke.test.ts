@@ -52,20 +52,48 @@ describe("Node 22 public consumer smoke", () => {
       await expect(loadArtifactManifest(packagesDirectory)).resolves.toMatchObject({
         schemaVersion: 1,
       });
+      for (const [key, name] of [["vue", "@starwind-ui/vue"]]) {
+        const file = `${key}.tgz`;
+        const bytes = Buffer.from(`${name} archive fixture`);
+        await writeFile(path.join(packagesDirectory, file), bytes);
+        packages[key] = {
+          file,
+          name,
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+          version: key === "svelte" ? "0.1.0" : "0.1.1",
+        };
+      }
       await save(2);
+      expect(Object.keys(packages).sort()).toEqual(
+        createPackPlan({ outputDirectory: packagesDirectory, vueBeta: true })
+          .packages.map(({ key }) => key)
+          .sort(),
+      );
       await expect(loadArtifactManifest(packagesDirectory)).resolves.toMatchObject({
         schemaVersion: 2,
       });
-      packages.vue = {
-        file: "missing-vue.tgz",
-        name: "@starwind-ui/vue",
-        sha256: "not-used-by-the-stable-matrix",
-        version: "0.1.1",
+      const svelteBytes = Buffer.from("@starwind-ui/svelte archive fixture");
+      await writeFile(path.join(packagesDirectory, "svelte.tgz"), svelteBytes);
+      packages.svelte = {
+        file: "svelte.tgz",
+        name: "@starwind-ui/svelte",
+        sha256: createHash("sha256").update(svelteBytes).digest("hex"),
+        version: "0.1.0",
       };
       await save(2);
+      expect(Object.keys(packages).sort()).toEqual(
+        createPackPlan({ outputDirectory: packagesDirectory })
+          .packages.map(({ key }) => key)
+          .sort(),
+      );
       await expect(loadArtifactManifest(packagesDirectory)).resolves.toMatchObject({
         schemaVersion: 2,
       });
+      await writeFile(path.join(packagesDirectory, "svelte.tgz"), "corrupted Svelte archive");
+      await expect(loadArtifactManifest(packagesDirectory)).rejects.toThrow(
+        "@starwind-ui/svelte archive SHA-256 does not match",
+      );
+      await writeFile(path.join(packagesDirectory, "svelte.tgz"), svelteBytes);
 
       await writeFile(path.join(packagesDirectory, packages.react.file), "corrupted archive");
       await expect(loadArtifactManifest(packagesDirectory)).rejects.toThrow(
@@ -81,16 +109,17 @@ describe("Node 22 public consumer smoke", () => {
     }
   });
 
-  it("packs the four public packages in publication order", () => {
+  it("packs the routine public packages in publication order", () => {
     const outputDirectory = path.resolve("release-packs");
 
     expect(createPackPlan({ outputDirectory }).packages).toEqual([
       expect.objectContaining({ key: "runtime", name: "@starwind-ui/runtime" }),
       expect.objectContaining({ key: "astro", name: "@starwind-ui/astro" }),
       expect.objectContaining({ key: "react", name: "@starwind-ui/react" }),
+      expect.objectContaining({ key: "vue", name: "@starwind-ui/vue" }),
+      expect.objectContaining({ key: "svelte", name: "@starwind-ui/svelte" }),
       expect.objectContaining({ key: "cli", name: "starwind" }),
     ]);
-    expect(createPackPlan({ outputDirectory }).packages.map(({ key }) => key)).not.toContain("vue");
     expect(
       createPackPlan({ outputDirectory, vueBeta: true }).packages.map(({ key }) => key),
     ).toEqual(["runtime", "astro", "react", "vue", "cli"]);

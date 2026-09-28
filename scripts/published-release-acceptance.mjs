@@ -26,6 +26,7 @@ export function getAcceptanceWorkspacePolicy() {
   - astro
   - react
   - vue
+  - svelte
 minimumReleaseAge: 0
 minimumReleaseAgeStrict: false
 allowBuilds:
@@ -211,11 +212,29 @@ import {
 </template>
 `;
 
+const SVELTE_FIXTURE = `<script lang="ts">
+  import { Button } from "./components/starwind/button/index.js";
+  import Dialog from "./components/starwind/dialog/index.js";
+</script>
+
+<main class="mx-auto flex min-h-screen max-w-xl flex-col gap-10 p-10">
+  <h1 class="text-2xl font-semibold">Starwind Svelte published release acceptance</h1>
+  <Dialog.Root>
+    <Dialog.Trigger>{#snippet child({ props })}<Button {...props}>Open Svelte dialog</Button>{/snippet}</Dialog.Trigger>
+    <Dialog.Content>
+      <Dialog.Title>Published Svelte package dialog</Dialog.Title>
+      <p>Published Svelte Runtime panel</p>
+    </Dialog.Content>
+  </Dialog.Root>
+</main>
+`;
+
 export function parseArgs(argv) {
   let artifacts;
   let keepTemp = false;
   let version;
   let vueVersion;
+  let svelteVersion;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -238,6 +257,15 @@ export function parseArgs(argv) {
       index += 1;
     } else if (argument.startsWith("--vue-version=")) {
       vueVersion = argument.slice("--vue-version=".length);
+    } else if (argument === "--svelte-version") {
+      const value = argv[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("Expected a value after --svelte-version.");
+      }
+      svelteVersion = value;
+      index += 1;
+    } else if (argument.startsWith("--svelte-version=")) {
+      svelteVersion = argument.slice("--svelte-version=".length);
     } else if (argument === "--artifacts") {
       const value = argv[index + 1];
       if (!value || value.startsWith("--")) throw new Error("Expected a path after --artifacts.");
@@ -260,10 +288,14 @@ export function parseArgs(argv) {
   if (!EXACT_VERSION_PATTERN.test(vueVersion)) {
     throw new Error(`Expected an exact Vue SemVer version, received: ${vueVersion}`);
   }
-  return { artifacts, keepTemp, version, vueVersion };
+  if (!svelteVersion) throw new Error("Pass --svelte-version <version>.");
+  if (!EXACT_VERSION_PATTERN.test(svelteVersion)) {
+    throw new Error(`Expected an exact Svelte SemVer version, received: ${svelteVersion}`);
+  }
+  return { artifacts, keepTemp, svelteVersion, version, vueVersion };
 }
 
-export function createAcceptancePlan({ root, version, vueVersion }) {
+export function createAcceptancePlan({ root, svelteVersion, version, vueVersion }) {
   const cliSpecifier = `starwind@${version}`;
   const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
   const components = ["button", "dialog", "context-menu", "color-picker"];
@@ -326,6 +358,17 @@ export function createAcceptancePlan({ root, version, vueVersion }) {
         ]),
         expectedAdapterVersion: vueVersion,
       },
+      {
+        ...createProject("svelte", [
+          "create",
+          `vite@${VITE_SCAFFOLD_VERSION}`,
+          "svelte",
+          "--template",
+          "svelte-ts",
+          "--no-interactive",
+        ]),
+        expectedAdapterVersion: svelteVersion,
+      },
     ],
     root,
     version,
@@ -341,6 +384,9 @@ export function getFixtureFiles(framework) {
   }
   if (framework === "vue") {
     return [{ content: VUE_FIXTURE, path: "src/App.vue" }];
+  }
+  if (framework === "svelte") {
+    return [{ content: SVELTE_FIXTURE, path: "src/App.svelte" }];
   }
 
   throw new Error(`Unsupported acceptance framework: ${framework}`);
@@ -665,11 +711,12 @@ export async function verifyBrowserProject({ artifacts, browser, project }) {
       );
     }
 
-    if (project.framework === "vue") {
-      const trigger = page.getByRole("button", { name: "Open Vue dialog" });
-      await trigger.click();
+    if (project.framework === "vue" || project.framework === "svelte") {
+      const label = project.framework === "vue" ? "Vue" : "Svelte";
+      const frameworkTrigger = page.getByRole("button", { name: `Open ${label} dialog` });
+      await frameworkTrigger.click();
       await page
-        .getByRole("dialog", { name: "Published Vue package dialog" })
+        .getByRole("dialog", { name: `Published ${label} package dialog` })
         .waitFor({ state: "visible" });
       assert.deepEqual(browserErrors, [], `${project.framework} browser errors`);
       console.log(`[acceptance] ${project.framework} browser behavior passed at ${url}`);
@@ -731,6 +778,7 @@ export async function runPublishedReleaseAcceptance(options) {
     : await mkdtemp(path.join(os.tmpdir(), "starwind-published-release-artifacts-"));
   const plan = createAcceptancePlan({
     root,
+    svelteVersion: options.svelteVersion,
     version: options.version,
     vueVersion: options.vueVersion,
   });
@@ -794,7 +842,7 @@ export async function runPublishedReleaseAcceptance(options) {
       "utf8",
     );
     console.log(
-      `[acceptance] published release ${options.version} passed in Astro, React, and Vue`,
+      `[acceptance] published release ${options.version} passed in Astro, React, Vue, and Svelte`,
     );
   } catch (error) {
     acceptanceError = error;

@@ -1,15 +1,14 @@
 import { spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-
 import { compileScript, parse } from "@vue/compiler-sfc";
 import { afterEach, describe, expect, it } from "vitest";
-
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { generateFrameworkStyledWrappers } from "../../renderers/framework-wrapper-generator.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const VUE_TSC_TIMEOUT_MS = 30_000;
@@ -176,7 +175,9 @@ describe("generic Vue Styled class and attribute forwarding", () => {
       "utf8",
     );
 
-    expect(source).toContain(`:class="className as import('vue').ClassValue"`);
+    expect(compactCode(source)).toContain(
+      compactCode(`:class="className as import('vue').ClassValue"`),
+    );
 
     const fixturePath = path.join(root, "native-class.fixture.vue");
     await writeFile(
@@ -204,8 +205,10 @@ const permissiveClass: ClassValue = 0;
       "utf8",
     );
 
-    expect(source).toContain(
-      `v-bind="omitForwardedAttrs(attrs, ['class', 'style', 'title', 'data-slot']) as Omit<InstanceType<typeof GenericClassChild>['$props'], 'class' | 'style' | 'title' | 'data-slot'>"`,
+    expect(compactCode(source)).toContain(
+      compactCode(
+        `v-bind="omitForwardedAttrs(attrs, ['class', 'style', 'title', 'data-slot']) as Omit<InstanceType<typeof GenericClassChild>['$props'], 'class' | 'style' | 'title' | 'data-slot'>"`,
+      ),
     );
     expect(source).toMatch(
       /Object\.fromEntries\(\s*Object\.entries\(source\)\.filter\(\(\[name\]\) => !ownedNames\.includes\(name\)\),\s*\)/,

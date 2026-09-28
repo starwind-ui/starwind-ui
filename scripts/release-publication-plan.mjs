@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const ROOT_DIR = fileURLToPath(new URL("..", import.meta.url));
 const PLAN_DIRECTORY = "node_modules/.cache/starwind-release/publication-plans";
 const VUE_PACKAGE = "@starwind-ui/vue";
+const SVELTE_PACKAGE = "@starwind-ui/svelte";
 
 function planFile(repoRoot, head) {
   if (typeof head !== "string" || !head || head === "." || head === "..") {
@@ -27,6 +28,17 @@ function validatePlan(plan, head, snapshot) {
   }
   if (plan.vueLatest !== null && typeof plan.vueLatest !== "string") {
     throw new Error("The publication plan contains an invalid Vue latest baseline.");
+  }
+  const snapshotHasSvelte = snapshot.some(({ name }) => name === SVELTE_PACKAGE);
+  if (snapshotHasSvelte && !Object.hasOwn(plan, "svelteLatest")) {
+    throw new Error("The publication plan is missing its Svelte latest baseline.");
+  }
+  if (
+    plan.svelteLatest !== undefined &&
+    plan.svelteLatest !== null &&
+    typeof plan.svelteLatest !== "string"
+  ) {
+    throw new Error("The publication plan contains an invalid Svelte latest baseline.");
   }
   let previousIndex = -1;
   if (!Array.isArray(plan.packages)) {
@@ -80,17 +92,19 @@ async function exactVersionExists(entry, registry) {
   return true;
 }
 
-async function readVueLatest(registry) {
-  const result = await registry.capture("npm", ["view", VUE_PACKAGE, "dist-tags", "--json"]);
+async function readBetaLatest(registry, packageName, label) {
+  const result = await registry.capture("npm", ["view", packageName, "dist-tags", "--json"]);
   if (result.code !== 0) {
     if (isMissing(result)) return null;
-    throw new Error(`Vue latest could not be checked on npm: ${result.stderr || result.stdout}`);
+    throw new Error(
+      `${label} latest could not be checked on npm: ${result.stderr || result.stdout}`,
+    );
   }
   let tags;
   try {
     tags = JSON.parse(result.stdout);
   } catch {
-    throw new Error("Vue dist-tags returned invalid JSON.");
+    throw new Error(`${label} dist-tags returned invalid JSON.`);
   }
   if (
     !tags ||
@@ -98,7 +112,7 @@ async function readVueLatest(registry) {
     Array.isArray(tags) ||
     (tags.latest !== undefined && typeof tags.latest !== "string")
   ) {
-    throw new Error("Vue dist-tags returned an invalid latest baseline.");
+    throw new Error(`${label} dist-tags returned an invalid latest baseline.`);
   }
   return tags.latest ?? null;
 }
@@ -160,9 +174,12 @@ export async function preparePublicationPlan({
     if (!(await exactVersionExists(entry, registry))) packages.push(entry);
   }
   const vueLatest = packages.some(({ name }) => name === VUE_PACKAGE)
-    ? await readVueLatest(registry)
+    ? await readBetaLatest(registry, VUE_PACKAGE, "Vue")
     : null;
-  const plan = { head, snapshot, packages, vueLatest };
+  const svelteLatest = packages.some(({ name }) => name === SVELTE_PACKAGE)
+    ? await readBetaLatest(registry, SVELTE_PACKAGE, "Svelte")
+    : null;
+  const plan = { head, snapshot, packages, vueLatest, svelteLatest };
   if (!dryRun) {
     await mkdir(path.dirname(file), { recursive: true });
     await writeFile(file, `${JSON.stringify(plan, null, 2)}\n`, { encoding: "utf8", flag: "wx" });

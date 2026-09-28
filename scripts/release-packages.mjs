@@ -450,27 +450,31 @@ export function validateRoutineReleaseMetadata({ packageManifests, preState, con
     errors.push("Routine releases must include the complete ordered public package inventory.");
   }
   if (JSON.stringify(config?.fixed) !== JSON.stringify([RUNTIME_FIXED_GROUP])) {
-    errors.push("Vue must remain outside the Runtime, Astro, and React Changesets fixed group.");
+    errors.push(
+      "Beta adapters must remain outside the Runtime, Astro, and React Changesets fixed group.",
+    );
   }
-  const vue = packageManifests.find(({ entry }) => entry.name === "@starwind-ui/vue");
   const runtime = baseManifests.find(({ entry }) => entry.name === "@starwind-ui/runtime");
-  if (vue?.manifest.name !== "@starwind-ui/vue" || vue?.manifest.private === true) {
-    errors.push("@starwind-ui/vue must be a public package for routine publication.");
-  }
-  if (
-    !parseVersion(vue?.manifest.version) ||
-    validSemver(vue?.manifest.version) !== vue?.manifest.version
-  ) {
-    errors.push("@starwind-ui/vue must use an exact SemVer version.");
-  }
-  if (
-    vue?.entry.tag !==
-    ROUTINE_RELEASE_PACKAGE_SET.find(({ name }) => name === "@starwind-ui/vue").tag
-  ) {
-    errors.push("@starwind-ui/vue must use its explicit release-policy tag.");
-  }
-  if (vue?.manifest.dependencies?.["@starwind-ui/runtime"] !== runtime?.manifest.version) {
-    errors.push("@starwind-ui/vue must depend on the exact current @starwind-ui/runtime version.");
+  for (const packageName of ["@starwind-ui/vue", "@starwind-ui/svelte"]) {
+    const adapter = packageManifests.find(({ entry }) => entry.name === packageName);
+    if (adapter?.manifest.name !== packageName || adapter?.manifest.private === true) {
+      errors.push(`${packageName} must be a public package for routine publication.`);
+    }
+    if (
+      !parseVersion(adapter?.manifest.version) ||
+      validSemver(adapter?.manifest.version) !== adapter?.manifest.version
+    ) {
+      errors.push(`${packageName} must use an exact SemVer version.`);
+    }
+    if (
+      adapter?.entry.tag !==
+      ROUTINE_RELEASE_PACKAGE_SET.find(({ name }) => name === packageName)?.tag
+    ) {
+      errors.push(`${packageName} must use its explicit release-policy tag.`);
+    }
+    if (adapter?.manifest.dependencies?.["@starwind-ui/runtime"] !== runtime?.manifest.version) {
+      errors.push(`${packageName} must depend on the exact current @starwind-ui/runtime version.`);
+    }
   }
   return { errors, ok: errors.length === 0, tag: baseResult.tag };
 }

@@ -237,6 +237,7 @@ export const contextMenuRuntimeAdapterContract = {
     {
       name: "openChange",
       stateModel: "open",
+      acceptanceNotification: "controller-subscription",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onOpenChange",
@@ -259,6 +260,7 @@ export const contextMenuRuntimeAdapterContract = {
     },
     {
       name: "checkedChange",
+      acceptanceNotification: "after-dom-dispatch",
       stateModel: "checked",
       callbackTiming: "before-state-commit",
       cancelable: true,
@@ -271,6 +273,7 @@ export const contextMenuRuntimeAdapterContract = {
     },
     {
       name: "valueChange",
+      acceptanceNotification: "after-dom-dispatch",
       stateModel: "radioValue",
       callbackTiming: "before-state-commit",
       cancelable: true,

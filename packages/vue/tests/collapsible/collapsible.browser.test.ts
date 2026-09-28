@@ -1,30 +1,30 @@
-import {
-  createApp,
-  createSSRApp,
-  createCommentVNode,
-  defineComponent,
-  Fragment,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-} from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { userEvent } from "vitest/browser";
-
 import type { CollapsibleOpenChangeDetails } from "@starwind-ui/runtime/collapsible";
 import {
   CollapsiblePanel,
   CollapsibleRoot,
   CollapsibleTrigger,
 } from "@starwind-ui/vue/collapsible";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  createCommentVNode,
+  createSSRApp,
+  defineComponent,
+  Fragment,
+  h,
+  nextTick,
+  reactive,
+  ref,
+} from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Collapsible as StyledCollapsible,
   CollapsibleContent as StyledCollapsibleContent,
   CollapsibleTrigger as StyledCollapsibleTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/collapsible";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 type ElementExpose = ComponentPublicInstance & { element: HTMLElement | null };
 
@@ -442,3 +442,20 @@ function appendHost(): HTMLDivElement {
   document.body.append(host);
   return host;
 }
+
+testAcceptedModelPublication({
+  name: "CollapsibleRoot",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () =>
+    h(CollapsibleRoot, null, () => [
+      h(CollapsibleTrigger, null, () => "Toggle"),
+      h(CollapsiblePanel, null, () => "Panel"),
+    ]),
+  root: "[data-sw-collapsible]",
+  act: (root) => root.querySelector<HTMLButtonElement>("[data-sw-collapsible-trigger]")!.click(),
+  read: (root) => root.getAttribute("data-state") === "open",
+});

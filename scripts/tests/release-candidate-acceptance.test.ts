@@ -24,6 +24,7 @@ const packages = {
   cli: path.join(root, "packs", "starwind.tgz"),
   react: path.join(root, "packs", "react.tgz"),
   runtime: path.join(root, "packs", "runtime.tgz"),
+  svelte: path.join(root, "packs", "svelte.tgz"),
   vue: path.join(root, "packs", "vue.tgz"),
 };
 const vueAdapterVersion = "0.2.0";
@@ -79,7 +80,7 @@ describe("release candidate acceptance", () => {
 
   it("reuses validated prepared packs and their packed registry metadata", async () => {
     const entries = Object.fromEntries(
-      ["runtime", "astro", "react", "vue", "cli"].map((key) => [
+      ["runtime", "astro", "react", "vue", "svelte", "cli"].map((key) => [
         key,
         {
           file: `${key}.tgz`,
@@ -102,6 +103,7 @@ describe("release candidate acceptance", () => {
       },
     );
     expect(loaded.packages.vue).toBe(path.resolve("/tmp/shared-packs/vue.tgz"));
+    expect(loaded.packages.svelte).toBe(path.resolve("/tmp/shared-packs/svelte.tgz"));
     expect(loaded.registryPackages.vue.manifest).toEqual(entries.vue.manifest);
     await expect(
       prepareCandidatePackages(
@@ -187,6 +189,9 @@ describe("release candidate acceptance", () => {
       `"@starwind-ui/runtime": "file:${packages.runtime.replaceAll("\\", "/")}"`,
     );
     expect(workspace).toContain(`"@starwind-ui/vue": "file:${packages.vue.replaceAll("\\", "/")}"`);
+    expect(workspace).toContain(
+      `"@starwind-ui/svelte": "file:${packages.svelte.replaceAll("\\", "/")}"`,
+    );
     expect(workspace).toContain("unrs-resolver: true");
   });
 
@@ -195,9 +200,11 @@ describe("release candidate acceptance", () => {
     const tarball = path.join(directory, "runtime.tgz");
     const adapterTarball = path.join(directory, "astro.tgz");
     const vueTarball = path.join(directory, "vue.tgz");
+    const svelteTarball = path.join(directory, "svelte.tgz");
     await writeFile(tarball, "packed runtime");
     await writeFile(adapterTarball, "packed astro adapter");
     await writeFile(vueTarball, "packed vue adapter");
+    await writeFile(svelteTarball, "packed svelte adapter");
     const registry = await startCandidateRegistry({
       astro: {
         file: adapterTarball,
@@ -209,6 +216,11 @@ describe("release candidate acceptance", () => {
         file: tarball,
         name: "@starwind-ui/runtime",
         version: "0.1.0-beta.7",
+      },
+      svelte: {
+        file: svelteTarball,
+        name: "@starwind-ui/svelte",
+        version: "0.1.0",
       },
       vue: {
         file: vueTarball,
@@ -236,6 +248,8 @@ describe("release candidate acceptance", () => {
       const vueMetadata = await (await fetch(`${registry.url}/@starwind-ui%2Fvue`)).json();
       expect(vueMetadata["dist-tags"].beta).toBe("0.2.0");
       expect(vueMetadata.versions["0.2.0"].version).toBe("0.2.0");
+      const svelteMetadata = await (await fetch(`${registry.url}/@starwind-ui%2Fsvelte`)).json();
+      expect(svelteMetadata["dist-tags"].beta).toBe("0.1.0");
     } finally {
       await registry.close();
       await rm(directory, { force: true, recursive: true });

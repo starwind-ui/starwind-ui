@@ -3,6 +3,7 @@ import type {
   AdapterComponentFile,
   AdapterOutputModel,
 } from "../../framework-adapters/types.js";
+import { withAcceptedModelPublications } from "../../primitive-output-model/accepted-model-publication.js";
 import type { AdapterOutputFamilyPlan } from "../adapter-family-plans.js";
 import type { GenericAdapterPlan } from "../types.js";
 import {
@@ -63,7 +64,7 @@ function buildBooleanFormControlOutputModel(plan: GenericAdapterPlan): AdapterOu
     typeFacades: [],
   });
 
-  return { files };
+  return withAcceptedModelPublications({ files }, plan.events, plan.runtime.rootPart);
 }
 
 function createBooleanFormControlComponentFile(
@@ -293,6 +294,20 @@ export function getBooleanFormControlFacts(
   const disabledSetter = getSetterForProp(plan, disabledPropName);
   const readOnlyPropName = getOptionalRuntimeOptionProp(plan, "readOnly");
   const groupContext = getBooleanFormControlGroupContext(plan);
+  if (plan.form?.hiddenInput?.type === "checkbox" && stateModel.resetBaseline !== "mount") {
+    throw new TypeError(
+      `${plan.displayName} boolean form-control requires the mount reset baseline.`,
+    );
+  }
+  if (
+    groupContext &&
+    !groupContext.values.includes("form") &&
+    groupContext.stateOwnership !== "group-membership"
+  ) {
+    throw new TypeError(
+      `${plan.displayName} boolean form-control requires group-membership state ownership.`,
+    );
+  }
   const stateIndicatorExport = getOptionalPartExportName(plan, stateIndicatorPart.name);
   const keepMountedPropName = plan.presence?.keepMountedProp;
   const keepMountedProp = keepMountedPropName
@@ -357,9 +372,14 @@ export function getBooleanFormControlFacts(
       value: getOptionalStaticAttributeName(plan, rootPart, "data-value"),
     },
     behavior: {
-      acceptedChangeNotification: stateEvent.acceptanceNotification,
+      acceptedChangeNotification:
+        stateEvent.acceptanceNotification === "detail-on-accepted"
+          ? stateEvent.acceptanceNotification
+          : undefined,
       canCancelChange: stateEvent.cancelable !== false,
       formResetSync: plan.form?.fieldIntegration === true,
+      resetBaseline: stateModel.resetBaseline,
+      groupStateOwnership: groupContext?.stateOwnership,
       groupStrategy:
         groupContext === undefined
           ? undefined

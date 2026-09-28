@@ -9,114 +9,86 @@ import { createProgress, type ProgressValue } from "@starwind-ui/runtime/progres
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
-export type ProgressRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "value"> & {
-  format?: Intl.NumberFormatOptions;
-  getAriaValueText?: (formattedValue: string | null, value: ProgressValue) => string;
-  locale?: Intl.LocalesArgument;
-  max?: number;
-  min?: number;
+export type ProgressRootProps = Omit<
+  React.ComponentPropsWithoutRef<"div">,
+  "value" | "min" | "max" | "format" | "locale" | "getAriaValueText" | "aria-valuetext"
+> & {
   value?: ProgressValue;
+  min?: number;
+  max?: number;
+  format?: Intl.NumberFormatOptions;
+  locale?: Intl.LocalesArgument;
+  getAriaValueText?: (formattedValue: string | null, value: ProgressValue) => string;
+  "aria-valuetext"?: string;
 };
-
 const ProgressRoot = React.forwardRef<HTMLDivElement, ProgressRootProps>(function ProgressRoot(
   {
-    "aria-valuetext": ariaValueText,
-    format,
-    getAriaValueText,
-    locale,
-    max = 100,
-    min = 0,
+    children,
     value = null,
-    ...props
+    min = 0,
+    max = 100,
+    format,
+    locale,
+    getAriaValueText,
+    "aria-valuetext": ariaValueText,
+    ...rest
   },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createProgress> | undefined>(undefined);
-  const ariaValueTextRef = React.useRef(ariaValueText);
-  const formatRef = React.useRef(format);
-  const getAriaValueTextRef = React.useRef(getAriaValueText);
-  const localeRef = React.useRef(locale);
-  const maxRef = React.useRef(max);
-  const minRef = React.useRef(min);
-  const valueRef = React.useRef(value);
-
-  useIsomorphicLayoutEffect(() => {
-    ariaValueTextRef.current = ariaValueText;
-  }, [ariaValueText]);
-
-  useIsomorphicLayoutEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-
   const composedRef = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      rootRef.current = node;
-      return setRef(forwardedRef, node);
+    (element: HTMLDivElement | null) => {
+      rootRef.current = element;
+      return setRef(forwardedRef, element);
     },
     [forwardedRef],
   );
 
+  const owned = React.useRef<ReturnType<typeof createProgress> | undefined>(undefined);
   useIsomorphicLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const instance = createProgress(root, {
-      ariaValueText: ariaValueTextRef.current,
-      format: formatRef.current,
-      getAriaValueText: getAriaValueTextRef.current,
-      locale: localeRef.current,
-      max: maxRef.current,
-      min: minRef.current,
-      value: valueRef.current,
+    const element = rootRef.current;
+    if (!element) return;
+    owned.current = createProgress(element, {
+      value: value,
+      min: min,
+      max: max,
+      format: format,
+      locale: locale,
+      getAriaValueText: getAriaValueText,
+      ariaValueText: ariaValueText,
     });
-    instanceRef.current = instance;
-
     return () => {
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
+      const previous = owned.current;
+      owned.current = undefined;
+      previous?.destroy();
     };
   }, []);
-
   useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setFormatOptions({
-      ariaValueText,
-      format,
-      getAriaValueText,
-      locale,
+    owned.current?.setFormatOptions({
+      ariaValueText: ariaValueText,
+      format: format,
+      locale: locale,
+      getAriaValueText: getAriaValueText,
     });
-  }, [ariaValueText, format, getAriaValueText, locale]);
-
+  }, [ariaValueText, format, locale, getAriaValueText]);
   useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setValue(value, { max, min });
-  }, [max, min, value]);
-
-  const isIndeterminate = value == null;
-
+    owned.current?.setValue(value, { min: min, max: max });
+  }, [value, min, max]);
   return (
     <div
-      {...props}
-      data-sw-progress
-      data-value={isIndeterminate ? undefined : value}
+      {...rest}
+      data-sw-progress={""}
+      data-value={value == null ? undefined : value}
       data-min={min}
       data-max={max}
-      data-indeterminate={isIndeterminate ? "" : undefined}
+      data-indeterminate={value == null ? "" : undefined}
+      role={"progressbar"}
       aria-valuetext={ariaValueText}
       ref={composedRef}
-      role="progressbar"
-    />
+    >
+      {children}
+    </div>
   );
 });
-
 ProgressRoot.displayName = "Progress.Root";
-
 export default ProgressRoot;

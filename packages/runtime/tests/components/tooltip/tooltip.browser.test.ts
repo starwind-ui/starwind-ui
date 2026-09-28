@@ -1,12 +1,209 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createTooltip } from "../../../src/components/tooltip/tooltip";
+import { initStarwind } from "../../../src/init-starwind";
 
 describe("createTooltip", () => {
   beforeEach(() => {
     vi.useRealTimers();
     document.body.innerHTML = "";
+  });
+
+  it.each(["data-disabled", "disabled", "aria-disabled"])(
+    "preserves authored %s through root disable and recreation",
+    async (attribute) => {
+      const root = renderTooltip({ openDelay: 0 });
+      const first = getTrigger(root);
+      first.style.cssText = "position:fixed;left:100px;top:200px;width:40px";
+      first.setAttribute(attribute, attribute === "aria-disabled" ? "true" : "");
+      const second = document.createElement("button");
+      second.setAttribute("data-sw-tooltip-trigger", "");
+      second.style.cssText = "position:fixed;left:400px;top:200px;width:40px";
+      first.after(second);
+      const popup = getPopup(root);
+      popup.querySelector("[data-sw-tooltip-arrow]")?.remove();
+      popup.setAttribute("data-avoid-collisions", "false");
+      popup.setAttribute("data-side", "bottom");
+      popup.setAttribute("data-align", "start");
+      const original = createTooltip(root, { disabled: true });
+      original.destroy();
+      const controller = createTooltip(root, { disabled: true });
+      controller.setDisabled(false);
+      expect(first.getAttribute(attribute)).toBe(attribute === "aria-disabled" ? "true" : "");
+      controller.setOpen(true, { emit: false, trigger: second });
+      await waitForFloatingPosition();
+      expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+      controller.setOpen(true, { emit: false, trigger: first });
+      await waitForFloatingPosition();
+      expect(Math.round(popup.getBoundingClientRect().left)).toBe(100);
+      controller.destroy();
+    },
+  );
+
+  it.each(["default", "setter", "restoration"])(
+    "preserves omitted-trigger geometry for an authored-disabled sole trigger (%s)",
+    async (mode) => {
+      const root = document.createElement("div");
+      root.setAttribute("data-sw-tooltip", "");
+      root.innerHTML = `<button data-sw-tooltip-trigger disabled style="position:fixed;left:400px;top:200px;width:40px">A</button>
+      <div data-sw-tooltip-popup data-side="bottom" data-align="start" data-avoid-collisions="false">Popup</div>`;
+      document.body.append(root);
+      const popup = getPopup(root);
+      const controller = createTooltip(root, { defaultOpen: mode === "default" });
+      if (mode === "setter") controller.setOpen(true);
+      if (mode === "restoration") controller.setOpen(true, { trigger: getTrigger(root) });
+      await waitForFloatingPosition();
+      expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+      controller.destroy();
+    },
+  );
+
+  it("publishes accepted handoffs while open and preserves the anchor on cancellation", async () => {
+    const root = renderTooltip({ openDelay: 0 });
+    const first = getTrigger(root);
+    const second = first.cloneNode(true) as HTMLElement;
+    first.after(second);
+    first.style.cssText = "position:fixed;left:100px;top:200px;width:40px";
+    second.style.cssText = "position:fixed;left:400px;top:200px;width:40px";
+    const popup = getPopup(root);
+    popup.setAttribute("data-side", "bottom");
+    popup.setAttribute("data-align", "start");
+    popup.setAttribute("data-avoid-collisions", "false");
+    const accepted = vi.fn();
+    const controller = createTooltip(root);
+    controller.subscribe("openChange", accepted);
+    dispatchPointer(first, "pointerenter");
+    expect(accepted).toHaveBeenCalledTimes(1);
+    root.addEventListener("starwind:open-change", (event) => event.preventDefault(), {
+      once: true,
+    });
+    dispatchPointer(second, "pointerenter");
+    controller.setOpen(true, { emit: false });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(100);
+    expect(accepted).toHaveBeenCalledTimes(1);
+    dispatchPointer(second, "pointerenter");
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+    expect(accepted).toHaveBeenCalledTimes(2);
+    expect(accepted).toHaveBeenLastCalledWith(
+      expect.objectContaining({ open: true, trigger: second }),
+    );
+    dispatchPointer(second, "pointerenter");
+    expect(accepted).toHaveBeenCalledTimes(2);
+    controller.destroy();
+  });
+
+  it("restores a captured semantic child or host and retires pending open work", async () => {
+    vi.useFakeTimers();
+    const root = renderTooltipWithNestedAstroAsChildTrigger();
+    const host = getTrigger(root);
+    const target = root.querySelector<HTMLElement>("#nested-as-child-trigger")!;
+    const proposal = vi.fn();
+    const controller = createTooltip(root, { openDelay: 30, onOpenChange: proposal });
+    const accepted = vi.fn();
+    controller.subscribe("openChange", accepted);
+    controller.setOpen(true, { trigger: target });
+    expect(accepted).toHaveBeenLastCalledWith(expect.objectContaining({ trigger: target }));
+    controller.setOpen(false, { emit: false });
+    controller.setOpen(true, { trigger: host });
+    expect(accepted).toHaveBeenLastCalledWith(expect.objectContaining({ trigger: target }));
+    controller.setOpen(false, { emit: false });
+    host.setAttribute("data-open-delay", "30");
+    dispatchPointer(target, "pointerenter");
+    await vi.advanceTimersByTimeAsync(29);
+    expect(controller.getOpen()).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(controller.getOpen()).toBe(true);
+    controller.setOpen(false, { emit: false });
+    dispatchPointer(target, "pointerenter");
+    controller.setOpen(false, { emit: false, trigger: target });
+    await vi.advanceTimersByTimeAsync(40);
+    expect(controller.getOpen()).toBe(false);
+    expect(proposal).toHaveBeenCalledTimes(3);
+    dispatchPointer(target, "pointerenter");
+    controller.setDisabled(true);
+    controller.setOpen(true, { emit: false, trigger: target });
+    expect(controller.getOpen()).toBe(false);
+    controller.setDisabled(false);
+    dispatchPointer(target, "pointerenter");
+    controller.setDisabled(true);
+    controller.setDisabled(false);
+    await vi.advanceTimersByTimeAsync(40);
+    expect(controller.getOpen()).toBe(false);
+    expect(proposal).toHaveBeenCalledTimes(3);
+    controller.destroy();
+  });
+
+  it("restores an owned second trigger silently and keeps canceled candidates transactional", async () => {
+    const root = document.createElement("div");
+    root.setAttribute("data-sw-tooltip", "");
+    root.innerHTML = `
+      <button data-sw-tooltip-trigger style="position:fixed;left:100px;top:200px;width:40px;height:30px">A</button>
+      <button data-sw-tooltip-trigger style="position:fixed;left:400px;top:200px;width:40px;height:30px">B</button>
+      <div data-sw-tooltip-popup data-side="bottom" data-align="start" data-avoid-collisions="false">Popup</div>`;
+    document.body.append(root);
+    const [first, second] = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-tooltip-trigger]"),
+    );
+    const popup = root.querySelector<HTMLElement>("[data-sw-tooltip-popup]")!;
+    const proposal = vi.fn();
+    const accepted = vi.fn();
+    const controller = createTooltip(root, { onOpenChange: proposal });
+    controller.subscribe("openChange", accepted);
+    controller.setOpen(true, { emit: false, trigger: second });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+    controller.setOpen(true, { emit: false, trigger: first });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(100);
+    expect(proposal).not.toHaveBeenCalled();
+    expect(accepted).not.toHaveBeenCalled();
+    root.addEventListener("starwind:open-change", (event) => event.preventDefault(), {
+      once: true,
+    });
+    controller.setOpen(true, { trigger: second });
+    controller.setOpen(true, { emit: false });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(100);
+    expect(accepted).not.toHaveBeenCalled();
+    controller.setOpen(true, { trigger: second });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
+    expect(accepted).toHaveBeenCalledWith(expect.objectContaining({ trigger: second }));
+    controller.destroy();
+  });
+
+  it.each(["removed", "foreign", "nested"])("falls back from a %s trigger", async (kind) => {
+    const root = document.createElement("div");
+    root.setAttribute("data-sw-tooltip", "");
+    root.innerHTML = `<button data-sw-tooltip-trigger style="position:fixed;left:100px;top:200px">A</button>
+      <button data-sw-tooltip-trigger style="position:fixed;left:400px;top:200px">B</button>
+      <div data-sw-tooltip-popup data-side="bottom" data-align="start" data-avoid-collisions="false">Popup</div>`;
+    document.body.append(root);
+    const [first, second] = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-tooltip-trigger]"),
+    );
+    const popup = root.querySelector<HTMLElement>("[data-sw-tooltip-popup]")!;
+    const controller = createTooltip(root);
+    controller.setOpen(true, { emit: false, trigger: second });
+    if (kind === "removed") second.remove();
+    if (kind === "foreign") document.body.append(second);
+    if (kind === "nested") {
+      const nested = document.createElement("div");
+      nested.setAttribute("data-sw-tooltip", "");
+      root.append(nested);
+      nested.append(second);
+    }
+    controller.setOpen(true, { emit: false, trigger: second });
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(
+      Math.round(first.getBoundingClientRect().left),
+    );
+    const accepted = vi.fn();
+    controller.subscribe("openChange", accepted);
+    controller.setOpen(true, { trigger: second });
+    expect(accepted).toHaveBeenCalledWith(expect.objectContaining({ trigger: first }));
+    controller.destroy();
   });
 
   it("initializes closed with ARIA wiring and opens from hover after the configured delay", async () => {
@@ -276,8 +473,15 @@ describe("createTooltip", () => {
     expect(getPopup().hidden).toBe(true);
   });
 
-  it("closes an open tooltip when disabled and allows opening after re-enabled", () => {
+  it("closes an open tooltip when disabled and allows opening after re-enabled", async () => {
     const root = renderTooltip();
+    const trigger = getTrigger(root);
+    trigger.style.cssText = "position:fixed;left:400px;top:200px;width:40px";
+    const popup = getPopup(root);
+    popup.querySelector("[data-sw-tooltip-arrow]")?.remove();
+    popup.setAttribute("data-avoid-collisions", "false");
+    popup.setAttribute("data-side", "bottom");
+    popup.setAttribute("data-align", "start");
     const tooltip = createTooltip(root);
 
     tooltip.setOpen(true, { emit: false });
@@ -301,6 +505,8 @@ describe("createTooltip", () => {
     expect(tooltip.getOpen()).toBe(true);
     expect(getRoot().hasAttribute("data-disabled")).toBe(false);
     expect(getPopup().hidden).toBe(false);
+    await waitForFloatingPosition();
+    expect(Math.round(popup.getBoundingClientRect().left)).toBe(400);
   });
 
   it("closes from outside pointer interactions while preserving inside interactions and cancellation", () => {

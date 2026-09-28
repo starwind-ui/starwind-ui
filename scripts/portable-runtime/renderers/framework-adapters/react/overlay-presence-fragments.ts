@@ -1,7 +1,15 @@
+import {
+  floatingInputs,
+  type PartPolicy,
+  type PopoverPart,
+  partAttributes,
+  popoverPartPolicy,
+} from "../../shared-recipes/structured/part-policy.js";
 import type {
   AdapterPresenceFloatingOverlayFacts,
   AdapterTimedFloatingOverlayFacts,
 } from "../types.js";
+import { printReactTimedPlacement } from "./timed-recipe.js";
 
 type FloatingPlacementProps = {
   align: { defaultValue?: string; name: string; type: string };
@@ -25,6 +33,8 @@ type FloatingPlacementAttributes = {
 };
 
 type ReactFloatingPlacementFragmentOptions = {
+  partPolicy?: PartPolicy;
+  placementInputs?: [string, string][];
   attrs: FloatingPlacementAttributes;
   defaultElement: string;
   displayName: string;
@@ -41,7 +51,7 @@ export function printReactPresenceFloatingOverlaySimplePart(
   exportName: string,
   discoveryAttribute: string,
 ): string {
-  const jsx = `<${part.defaultElement} ${discoveryAttribute} ref={forwardedRef} {...props} />`;
+  const jsx = `<${part.defaultElement} {...props} ${partAttributes("react", popoverPartPolicy(facts, part.name as PopoverPart))} ref={forwardedRef} />`;
   const jsxReturn =
     part.name === "backdrop" ? `return (\n      ${jsx}\n    );` : renderReactJsxReturn(jsx);
 
@@ -52,6 +62,8 @@ export function printReactPresenceFloatingOverlayPositioner(
   facts: AdapterPresenceFloatingOverlayFacts,
 ): string {
   return renderReactFloatingPlacementPart({
+    partPolicy: popoverPartPolicy(facts, "positioner"),
+    placementInputs: floatingInputs(facts),
     attrs: {
       align: facts.attrs.floatingAlign,
       avoidCollisions: facts.attrs.floatingAvoidCollisions,
@@ -74,6 +86,8 @@ export function printReactPresenceFloatingOverlayPopup(
   facts: AdapterPresenceFloatingOverlayFacts,
 ): string {
   return renderReactFloatingPlacementPart({
+    partPolicy: popoverPartPolicy(facts, "popup"),
+    placementInputs: floatingInputs(facts),
     attrs: {
       align: facts.attrs.floatingAlign,
       avoidCollisions: facts.attrs.floatingAvoidCollisions,
@@ -99,50 +113,12 @@ export function printReactPresenceFloatingOverlayPopup(
 export function printReactTimedFloatingOverlayPositioner(
   facts: AdapterTimedFloatingOverlayFacts,
 ): string {
-  return renderReactFloatingPlacementPart({
-    attrs: {
-      align: facts.attrs.align,
-      avoidCollisions: facts.attrs.avoidCollisions,
-      discovery: facts.attrs.positioner,
-      side: facts.attrs.side,
-      sideOffset: facts.attrs.sideOffset,
-      state: facts.attrs.positionerState,
-    },
-    defaultElement: facts.parts.positioner.defaultElement,
-    displayName: `${facts.displayName}.Positioner`,
-    exportName: facts.exports.positioner,
-    forwardRefStyle: "wrapped",
-    props: facts.props,
-    propsBaseType: "React.HTMLAttributes<HTMLDivElement>",
-  });
+  return printReactTimedPlacement(facts, "positioner");
 }
-
 export function printReactTimedFloatingOverlayPopup(
   facts: AdapterTimedFloatingOverlayFacts,
 ): string {
-  const propsBaseType = facts.popup.omitTabIndexProps
-    ? 'Omit<React.HTMLAttributes<HTMLDivElement>, "tabIndex" | "tabindex">'
-    : "React.HTMLAttributes<HTMLDivElement>";
-
-  return renderReactFloatingPlacementPart({
-    attrs: {
-      align: facts.attrs.align,
-      avoidCollisions: facts.attrs.avoidCollisions,
-      discovery: facts.attrs.popup,
-      hidden: facts.attrs.popupHidden,
-      role: "role",
-      side: facts.attrs.side,
-      sideOffset: facts.attrs.sideOffset,
-      state: facts.attrs.popupState,
-    },
-    defaultElement: facts.parts.popup.defaultElement,
-    displayName: `${facts.displayName}.Popup`,
-    exportName: facts.exports.popup,
-    forwardRefStyle: "wrapped",
-    props: facts.props,
-    propsBaseType,
-    roleValue: facts.popupRole,
-  });
+  return printReactTimedPlacement(facts, "popup");
 }
 
 function renderReactFloatingPlacementPart(options: ReactFloatingPlacementFragmentOptions): string {
@@ -161,13 +137,16 @@ function renderWrappedReactFloatingPlacementPart({
   props,
   propsBaseType,
   roleValue,
+  partPolicy,
+  placementInputs,
 }: ReactFloatingPlacementFragmentOptions): string {
-  return `import * as React from "react";\n\n${renderReactFloatingPlacementPropsType(exportName, propsBaseType, props)}\n\nconst ${exportName} = React.forwardRef<HTMLDivElement, ${exportName}Props>(\n  function ${exportName}(\n    ${renderReactFloatingPlacementDestructure(props)},\n    forwardedRef,\n  ) {\n    return (\n      ${renderReactFloatingPlacementElement(
+  return `import * as React from "react";\n${placementInputs ? placementImports : ""}\n${renderReactFloatingPlacementPropsType(exportName, propsBaseType, props)}\n\nconst ${exportName} = React.forwardRef<HTMLDivElement, ${exportName}Props>(\n  function ${exportName}(\n    ${renderReactFloatingPlacementDestructure(props)},\n    forwardedRef,\n  ) {\n    ${placementInputs ? registerAuthoredPlacement(placementInputs) : ""}\n    return (\n      ${renderReactFloatingPlacementElement(
     {
       attrs,
       defaultElement,
       indent: "        ",
       roleValue,
+      partPolicy,
     },
   )}\n    );\n  },\n);\n\n${exportName}.displayName = "${displayName}";\n\nexport default ${exportName};\n`;
 }
@@ -180,13 +159,16 @@ function renderInlineReactFloatingPlacementPart({
   props,
   propsBaseType,
   roleValue,
+  partPolicy,
+  placementInputs,
 }: ReactFloatingPlacementFragmentOptions): string {
-  return `import * as React from "react";\n\n${renderReactFloatingPlacementPropsType(exportName, propsBaseType, props)}\n\nconst ${exportName} = React.forwardRef<HTMLDivElement, ${exportName}Props>(function ${exportName}(\n  ${renderReactFloatingPlacementDestructure(props)},\n  forwardedRef,\n) {\n  return (\n    ${renderReactFloatingPlacementElement(
+  return `import * as React from "react";\n${placementInputs ? placementImports : ""}\n${renderReactFloatingPlacementPropsType(exportName, propsBaseType, props)}\n\nconst ${exportName} = React.forwardRef<HTMLDivElement, ${exportName}Props>(function ${exportName}(\n  ${renderReactFloatingPlacementDestructure(props)},\n  forwardedRef,\n) {\n  ${placementInputs ? registerAuthoredPlacement(placementInputs) : ""}\n  return (\n    ${renderReactFloatingPlacementElement(
     {
       attrs,
       defaultElement,
       indent: "      ",
       roleValue,
+      partPolicy,
     },
   )}\n  );\n});\n\n${exportName}.displayName = "${displayName}";\n\nexport default ${exportName};\n`;
 }
@@ -214,13 +196,15 @@ function renderReactFloatingPlacementElement({
   defaultElement,
   indent,
   roleValue,
+  partPolicy,
 }: {
+  partPolicy?: PartPolicy;
   attrs: FloatingPlacementAttributes;
   defaultElement: string;
   indent: string;
   roleValue?: string;
 }): string {
-  return `<${defaultElement}\n${renderReactFloatingPlacementAttributes(attrs, indent, roleValue)}\n${indent.slice(2)}/>`;
+  return `<${defaultElement}\n${partPolicy ? `{...props}\n${partAttributes("react", partPolicy)}\nref={composedRef}` : renderReactFloatingPlacementAttributes(attrs, indent, roleValue)}\n${indent.slice(2)}/>`;
 }
 
 function renderReactFloatingPlacementAttributes(
@@ -251,4 +235,19 @@ function renderReactFloatingPlacementAttributes(
 
 function renderReactJsxReturn(jsx: string): string {
   return `return ${jsx};`;
+}
+
+const placementImports = `import { PopoverPartContext } from "./PopoverRoot";
+import { useComposedRefs } from "../internal/compose-refs";
+import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";`;
+function registerAuthoredPlacement(inputs: [string, string][]): string {
+  return `const owner = React.useContext(PopoverPartContext);
+const element = React.useRef<HTMLDivElement>(null);
+const composedRef = useComposedRefs(forwardedRef, element);
+useIsomorphicLayoutEffect(() => {
+  const node = element.current;
+  if (!node) return;
+  owner?.registerPlacement(node, { ${inputs.map(([name, input]) => `${JSON.stringify(name)}: String(${input})`).join(", ")} });
+  return () => owner?.registerPlacement(node, null);
+}, [owner, ${inputs.map(([, input]) => input).join(", ")}]);`;
 }

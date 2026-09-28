@@ -49,19 +49,29 @@ const MenuRadioGroup = React.forwardRef<HTMLDivElement, MenuRadioGroupProps>(
       if (!group) return;
 
       const handleValueChange = (event: Event) => {
+        if (event.target !== groupRef.current) return;
+        const ownerElement = groupRef.current;
+        if (!ownerElement) return;
         const details = (event as CustomEvent<MenuValueChangeDetails>).detail;
+        const inputAtDispatch = valueRef.current;
         onValueChangeRef.current?.(details.value, details);
         queueMicrotask(() => {
-          if (details.isCanceled) return;
-
+          if (
+            !(groupRef.current === ownerElement && ownerElement.isConnected) ||
+            details.isCanceled ||
+            valueRef.current !== inputAtDispatch
+          )
+            return;
           if (valueRef.current === undefined) {
             setUncontrolledValue(details.value);
-            return;
           }
 
-          const controlledValue = valueRef.current;
-          if (controlledValue !== undefined && group.isConnected) {
-            syncRadioGroupState(group, controlledValue);
+          if (
+            groupRef.current === ownerElement &&
+            ownerElement.isConnected &&
+            valueRef.current !== undefined
+          ) {
+            syncRadioGroupState(ownerElement, valueRef.current);
           }
         });
       };
@@ -103,22 +113,20 @@ export default MenuRadioGroup;
 
 function syncRadioGroupState(group: HTMLElement, value: string): void {
   group.setAttribute("data-value", value);
-
-  group.querySelectorAll<HTMLElement>("[data-sw-menu-radio-item]").forEach((item) => {
-    if (item.closest("[data-sw-menu-radio-group]") !== group) return;
-
+  for (const item of group.querySelectorAll<HTMLElement>("[data-sw-menu-radio-item]")) {
+    if (item.closest("[data-sw-menu-radio-group]") !== group) continue;
     const checked = item.getAttribute("data-value") === value;
     item.setAttribute("aria-checked", String(checked));
     item.toggleAttribute("data-checked", checked);
     item.toggleAttribute("data-unchecked", !checked);
-
-    item
-      .querySelectorAll<HTMLElement>("[data-sw-menu-radio-item-indicator]")
-      .forEach((indicator) => {
-        indicator.setAttribute("aria-hidden", "true");
-        indicator.setAttribute("data-state", checked ? "checked" : "unchecked");
-        indicator.toggleAttribute("data-visible", checked);
-        indicator.toggleAttribute("data-hidden", !checked);
-      });
-  });
+    for (const indicator of item.querySelectorAll<HTMLElement>(
+      "[data-sw-menu-radio-item-indicator]",
+    )) {
+      if (indicator.closest("[data-sw-menu-radio-item]") !== item) continue;
+      indicator.setAttribute("aria-hidden", "true");
+      indicator.setAttribute("data-state", checked ? "checked" : "unchecked");
+      indicator.toggleAttribute("data-visible", checked);
+      indicator.toggleAttribute("data-hidden", !checked);
+    }
+  }
 }

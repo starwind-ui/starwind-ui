@@ -7,6 +7,9 @@ import { form } from "./variants";
 
 export type FormProps = React.ComponentPropsWithoutRef<"form"> &
   VariantProps<typeof form> & {
+    options?: import("@starwind-ui/react/form").FormOptions;
+    errors?: import("@starwind-ui/react/form").FormExternalErrors;
+    errorOptions?: import("@starwind-ui/react/form").FormExternalErrorOptions;
     errorVisibility?: import("@starwind-ui/react/form").FormValidationTiming;
     revalidationTiming?: import("@starwind-ui/react/form").FormValidationTiming;
     ref?: React.Ref<HTMLFormElement>;
@@ -15,6 +18,9 @@ export type FormProps = React.ComponentPropsWithoutRef<"form"> &
 
 function Form(props: FormProps) {
   const {
+    options,
+    errors,
+    errorOptions,
     errorVisibility,
     revalidationTiming,
     ref,
@@ -26,6 +32,9 @@ function Form(props: FormProps) {
 
   return (
     <FormPrimitive.Root
+      options={options}
+      errors={errors}
+      errorOptions={errorOptions}
       className={form({ class: className })}
       errorVisibility={errorVisibility}
       ref={ref}

@@ -1,65 +1,75 @@
-# Runtime Performance Comparison
+# Runtime performance comparison
 
-Generated: 2026-07-13
+Each provider and workload has one excluded warmup context and five measured fresh contexts. Each context mounts once and performs one complete task flow.
 
-## Method
+Values are average milliseconds; lower is faster.
 
-- A temporary React/Vite app is generated, built in production mode, served as static files, and driven with Playwright Chromium.
-- Starwind rows use local `packages/runtime/dist` and `packages/react/dist`, matching the package-size comparison's local-dist approach.
-- Base UI and Zag rows use npm packages from a temporary measurement project under the operating system's temporary directory.
-- CPU throttling is applied with Chrome DevTools Protocol `Emulation.setCPUThrottlingRate`.
-- Open rows collect 5 samples. The browser focuses the configured trigger, marks the start immediately before pressing the configured key, waits for benchmark content to become visible, advances animation frames, forces layout, and reports event-to-visible duration. Most rows use Enter; Combobox uses ArrowDown from the input.
-- Mount rows run 5 groups of 20 scripted React renders. Each iteration unmounts, `flushSync` renders the fixture, and forces layout by reading geometry.
-- Highlight rows open the popup first, then measure a scripted pointermove sweep across 1000 mounted items. Raw samples separate pointer-event dispatch from the forced-layout read while preserving the existing total sweep metric. This is an interaction-handler comparison, not a literal hand-moved cursor trace.
-- Filter rows open the combobox first, then measure a scripted input value change plus layout.
-- Submenu open rows open the parent menu as setup, then measure submenu trigger activation-to-visible timing for a 1000-item submenu.
-- Navigation switch rows open the first content panel as setup, then measure the second trigger's click-to-visible timing for large content.
-- Collection click rows measure a scripted click activation/toggle plus visible panel layout for high-count non-floating controls.
-- Radio sweep rows measure a scripted click sweep across 1000 radio items, forcing layout after each change.
-- All fixtures use primitive APIs, minimal CSS, no React StrictMode, and no styled Starwind wrapper code.
-- Starwind's `Portal` parts are runtime-owned DOM markers; Base UI and Zag use React portals. That difference is part of the implementation being measured.
+## Mounting
 
-## Package Versions
+Time from React render to ready DOM.
 
-| Library   | Version | Source                                 |
-| --------- | ------: | -------------------------------------- |
-| Starwind  |   local | `packages/*/dist`                      |
-| Base UI   |   1.6.0 | `@base-ui/react`                       |
-| Zag React |  1.42.0 | `@zag-js/react` and component packages |
-| React     |  19.2.7 | `react`                                |
+| Workload | Starwind React | Base UI React | Ark UI React |
+| --- | ---: | ---: | ---: |
+| Menu | 15.1 | 22.1 | 18.8 |
+| Select | 15.1 | 15.6 | 31.9 |
+| Combobox | 11.6 | 31.4 | 33.4 |
+| Submenu | 12.2 | 17.8 | 23.4 |
+| Select page (1 control) | 19.7 | 7.8 | 21.3 |
+| Select page (20 controls) | 34.6 | 33.9 | 40.7 |
 
-## Results
+## Interactions
 
-| Category                          | Scenario                       | Details                                                            | CPU | Metric                 | Starwind |    Base UI | Zag React |
-| --------------------------------- | ------------------------------ | ------------------------------------------------------------------ | --: | ---------------------- | -------: | ---------: | --------: |
-| baseline-open                     | Dialog open                    | 10k outside nodes, Enter-to-visible                                | 20x | event-to-visible       | 821.6 ms |   634.6 ms |  780.3 ms |
-| baseline-open                     | Select open                    | 1000 items, Enter-to-visible                                       |  6x | event-to-visible       | 312.7 ms |   724.3 ms |  359.5 ms |
-| baseline-hover                    | Select item highlight          | Open select, scripted pointermove sweep across 1000 items          |  1x | pointermove-sweep      |  42.6 ms |    16.1 ms |   20.5 ms |
-| baseline-open                     | Menu open                      | 1000 items, Enter-to-visible                                       |  6x | event-to-visible       | 101.8 ms |   688.0 ms |  222.9 ms |
-| baseline-mount                    | Tooltip trigger mount          | 1000 tooltip triggers, render + layout                             |  1x | render-layout          |  68.5 ms |    51.1 ms |   39.9 ms |
-| closed-overlay-candidate          | Dialog trigger mount           | 1000 closed dialog triggers with content, render + layout          |  1x | render-layout          |  53.7 ms |   284.1 ms |   44.4 ms |
-| closed-overlay-candidate          | Popover trigger mount          | 1000 closed popover triggers with content, render + layout         |  1x | render-layout          |  55.7 ms |   512.5 ms |   46.2 ms |
-| closed-overlay-candidate          | Preview card trigger mount     | 1000 closed preview card triggers with content, render + layout    |  1x | render-layout          |  48.2 ms |   261.9 ms |   36.2 ms |
-| baseline-mount                    | Select trigger mount           | 1000 select triggers, 10 items each, render + layout               |  1x | render-layout          |  48.4 ms |   273.4 ms |  212.5 ms |
-| baseline-hover                    | Menu item highlight            | Open menu, scripted pointermove sweep across 1000 items            |  1x | pointermove-sweep      |  44.2 ms |    14.9 ms |   21.6 ms |
-| combobox-candidate                | Combobox open                  | 1000 items, ArrowDown-to-visible                                   |  6x | event-to-visible       | 199.3 ms |   442.4 ms |  355.2 ms |
-| combobox-candidate                | Combobox trigger mount         | 1000 combobox triggers, 10 items each, render + layout             |  1x | render-layout          |  56.7 ms |   437.8 ms |   66.6 ms |
-| combobox-candidate                | Combobox item highlight        | Open combobox, scripted pointermove sweep across 1000 items        |  1x | pointermove-sweep      |  18.5 ms |    19.2 ms |   29.8 ms |
-| combobox-candidate                | Combobox filter input          | Open combobox, type filter query, input-to-layout                  |  1x | input-to-layout        |  32.5 ms |    32.5 ms |   29.9 ms |
-| nested-menu-candidate             | Menu submenu open              | Parent menu plus 1000-item submenu, activation-to-visible          |  6x | activation-to-visible  |  67.4 ms |   613.0 ms |  186.0 ms |
-| nested-menu-candidate             | Menu submenu item highlight    | Open submenu, scripted pointermove sweep across 1000 submenu items |  1x | pointermove-sweep      |  42.8 ms |    17.0 ms |   19.7 ms |
-| navigation-menu-candidate         | Navigation menu content switch | Large navigation content switch, click-to-visible                  |  1x | content-switch-visible |  32.3 ms |    32.9 ms |   50.1 ms |
-| non-floating-collection-candidate | Tabs high-count mount          | 1000 tabs and 1000 keep-mounted panels, render + layout            |  1x | render-layout          |  24.9 ms |   102.9 ms |   22.0 ms |
-| non-floating-collection-candidate | Tabs activation click          | 1000 tabs and panels, last tab click-to-panel                      |  1x | tab-click-to-panel     |  33.0 ms |   100.1 ms |   40.5 ms |
-| non-floating-collection-candidate | Accordion high-count mount     | 1000 closed accordion items with mounted panels, render + layout   |  1x | render-layout          |  35.9 ms |    97.3 ms |   22.5 ms |
-| non-floating-collection-candidate | Accordion toggle click         | 1000 closed accordion items, last trigger click-to-panel           |  1x | toggle-click-to-panel  |  33.1 ms |    66.9 ms |   45.7 ms |
-| non-floating-collection-candidate | Radio Group high-count mount   | 1000 radio items in one group, render + layout                     |  1x | render-layout          |  60.5 ms |   575.4 ms |   54.9 ms |
-| non-floating-collection-candidate | Radio Group change sweep       | Scripted click sweep across 1000 radio items                       |  1x | radio-click-sweep      | 186.2 ms | 49772.7 ms | 1062.0 ms |
+Input to resulting DOM update.
 
-## Reading The Numbers
+| Workload | Action | Starwind React | Base UI React | Ark UI React |
+| --- | --- | ---: | ---: | ---: |
+| Menu | Open | 1.7 | 14.7 | 6.1 |
+| Menu | Choose item | 3.9 | 8.7 | 5.1 |
+| Menu | Reopen | 1.3 | 14.6 | 4.3 |
+| Menu | Close with Escape | 0.6 | 7.5 | 1.1 |
+| Select | Open | 7.9 | 9.4 | 5.5 |
+| Select | Move highlight (per key) | 0.5 | 1.2 | 1.4 |
+| Select | Choose item | 2.8 | 9.2 | 2.1 |
+| Select | Submit form | 1.0 | 2.5 | 2.7 |
+| Combobox | Filter results (per character) | 5.7 | 6.4 | 6.7 |
+| Combobox | Move highlight (per key) | 0.3 | 1.3 | 1.2 |
+| Combobox | Choose item | 9.8 | 4.1 | 2.3 |
+| Combobox | Submit form | 1.2 | 1.2 | 1.5 |
+| Submenu | Open parent menu | 1.9 | 14.1 | 6.3 |
+| Submenu | Choose item | 3.9 | 9.7 | 5.6 |
+| Select page (1 control) | Open | 5.5 | 9.5 | 4.0 |
+| Select page (1 control) | Close with Escape | 0.9 | 6.6 | 3.4 |
+| Select page (1 control) | Reopen | 5.6 | 10.9 | 4.5 |
+| Select page (1 control) | Move highlight (per key) | 0.4 | 1.2 | 0.8 |
+| Select page (1 control) | Choose item | 1.7 | 5.5 | 1.3 |
+| Select page (1 control) | Submit form | 1.0 | 1.8 | 1.8 |
+| Select page (20 controls) | Open | 5.5 | 13.1 | 4.6 |
+| Select page (20 controls) | Close with Escape | 1.0 | 5.9 | 3.0 |
+| Select page (20 controls) | Reopen | 2.7 | 10.6 | 1.8 |
+| Select page (20 controls) | Move highlight (per key) | 0.4 | 1.2 | 0.8 |
+| Select page (20 controls) | Choose item | 2.7 | 7.4 | 7.0 |
+| Select page (20 controls) | Submit form | 1.7 | 3.1 | 5.9 |
 
-- Treat this as a local comparator and regression tracker, not a universal benchmark claim.
-- Prefer relative comparisons within the same run; CPU, browser, power mode, and background work can move absolute timings.
-- The open-row metric is an automated event-to-visible marker measurement. For a stricter public benchmark, the next iteration should parse DevTools trace events and identify the exact visible paint after the input event.
-- The mount rows intentionally include render and forced layout, but not network or initial bundle parse.
-- The highlight row intentionally dispatches pointer events over mounted items. A separate manual UX trace could measure real cursor movement and scroll behavior.
+## Large workloads
+
+| Workload | Measure | Starwind React | Base UI React | Ark UI React |
+| --- | --- | ---: | ---: | ---: |
+| Dialog | Open | 4.7 | 9.6 | 11.8 |
+| Navigation Menu | Switch panel (pointer) | 2.7 | 7.1 | 8.1 |
+| Tabs | Mount | 44.6 | 71.7 | 40.0 |
+| Tabs | Select last | 2.1 | 28.6 | 37.0 |
+| Accordion | Mount | 42.9 | 72.2 | 48.8 |
+| Accordion | Expand last | 2.5 | 18.5 | 21.4 |
+| Radio Group | Mount | 62.4 | 55.9 | 41.5 |
+| Radio Group | Select last | 1.1 | 34.3 | 31.7 |
+
+## Notes
+
+- Each value uses five measured passes. Filter and move-highlight values first average the seven characters or actual navigation keys within each pass, then give each pass equal weight. Navigation key counts can differ by provider.
+- Workloads: Menu has 20 actions; Select has 100 options; Combobox has 500 items; Submenu has eight parents with eight children each; each Select page control has 20 options.
+- Input-to-DOM includes observer checks and ends at a DOM condition. It does not measure painted pixels. Mount starts after module loading and excludes network and forced layout. Closed popup presence differs by provider.
+- Captured 2026-09-13 with Chromium 151.0.7922.34 on Apple M5 Pro. React 19.3.0, Base UI 1.8.0, Ark UI React 5.39.1, and local Starwind source. Power source: unknown; display refresh rate: unknown.
+- Captured source revision: `1cd7f81c4c4ac9fe20ace6867e9d366213a6fd09`; source inventory SHA-256: `7410f1ea08c33039ab294502aa7ceee0228c4515c90a7647e25d026637ba3070`. Current source differs from the capture. Saved run: `2026-09-13T14-04-39.100Z-capture-15216c25`.
+- Large workloads use one excluded warmup and five fresh measured contexts per provider. Dialog opens beside 10,000 outside nodes; Navigation Menu switches between two 500-link panels; Tabs, Accordion, and Radio Group each contain 1,000 items, with all Tabs and Accordion panels retained. Navigation Menu uses trusted pointer entry; the other actions use trusted clicks. Each action ends at a checked DOM state. Mount rows run from React render to checked ready DOM. These values use native CPU and do not measure paint.
+- Large workload capture dates: Dialog 2026-09-13; Navigation Menu 2026-09-13; Tabs 2026-09-13; Accordion 2026-09-13; Radio Group 2026-09-13.
+- [Measurements and capture details](./performance-evidence/2026-09-13T14-04-39.100Z-capture-15216c25/README.md) contain the samples behind every comparison and the calculation method.

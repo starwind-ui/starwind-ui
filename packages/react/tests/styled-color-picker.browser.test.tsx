@@ -123,10 +123,11 @@ describe("React styled Color Picker root", () => {
       expect(container!.querySelector("[data-sw-popover]")).toBeNull();
       expect(root).not.toHaveAttribute("data-floating-root");
 
-      await act(() => {
+      await act(async () => {
         input.value = "rgb(0, 255, 0)";
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
       });
 
       expect(root.getAttribute("data-value")).toBe("#00ff00");
@@ -230,7 +231,7 @@ describe("React styled Color Picker root", () => {
     expect(root).toHaveAttribute("data-format", "rgb");
     expect(formatChanged).toHaveBeenCalledWith("rgb", expect.anything());
     expect(popoverTrigger).toHaveAttribute("aria-expanded", "true");
-    expect(document.querySelector('[data-slot="popover-content"]')).not.toBeNull();
+    expect(document.querySelector('[data-slot="color-picker-content"]')).not.toBeNull();
   });
 
   it("renders the canonical generated footer, icon, compact controls, and framed surfaces", async () => {
@@ -246,7 +247,7 @@ describe("React styled Color Picker root", () => {
     await act(async () => userEvent.click(query("[data-sw-popover-trigger]")));
     await settle();
 
-    const content = query<HTMLElement>('[data-slot="popover-content"]');
+    const content = query<HTMLElement>('[data-slot="color-picker-content"]');
     const eyeDropper = query<HTMLButtonElement>('[data-slot="color-picker-eye-dropper"]');
     const area = query<HTMLElement>('[data-slot="color-picker-area"]');
     const areaThumb = query<HTMLElement>('[data-slot="color-picker-area-thumb"]');
@@ -496,7 +497,7 @@ async function mount(node: React.ReactNode) {
 async function settle() {
   await act(async () => {
     await Promise.resolve();
-    await Promise.resolve();
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
   });
 }
 

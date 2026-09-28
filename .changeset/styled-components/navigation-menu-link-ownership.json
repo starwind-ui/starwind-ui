@@ -1,0 +1,4 @@
+{
+  "components": { "navigation-menu": "patch" },
+  "impact": "behavior"
+}

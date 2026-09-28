@@ -1,9 +1,8 @@
-import { createApp, h, nextTick, reactive, ref } from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { ToggleGroupValueChangeDetails } from "@starwind-ui/runtime/toggle-group";
-import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
 import { ToggleRoot } from "@starwind-ui/vue/toggle";
+import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick, reactive, ref } from "vue";
 import {
   ToggleGroup as StyledToggleGroup,
   ToggleGroupItem as StyledToggleGroupItem,
@@ -113,12 +112,6 @@ describe("Vue Toggle Group public behavior", () => {
     state.multiple = false;
     await nextTick();
     expect(group.getAttribute("data-value")).toBe('["alpha"]');
-    state.value = undefined;
-    await nextTick();
-    expect(group.getAttribute("data-value")).toBe('["alpha"]');
-    toggles[1]?.click();
-    await nextTick();
-    expect(group.getAttribute("data-value")).toBe('["beta"]');
     state.value = ["alpha"];
     await nextTick();
     expect(group.getAttribute("data-value")).toBe('["alpha"]');

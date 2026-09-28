@@ -55,6 +55,7 @@ const PreviewCardTrigger = React.forwardRef<HTMLElement, PreviewCardTriggerProps
 
     const protectedTriggerProps = {
       "data-sw-preview-card-trigger": "",
+      "data-sw-part": "trigger",
       "data-close-delay": closeDelay,
       "data-disabled": disabled ? "" : undefined,
       "data-open-delay": openDelay,

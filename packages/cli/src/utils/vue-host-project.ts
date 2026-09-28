@@ -4,7 +4,7 @@ import {
   inspectAstroVueConfig,
   prepareAstroVueIntegration,
 } from "./astro-vue-integration.js";
-import { setupLayoutCssImport } from "./layout.js";
+import type { HostProjectPlanBase, HostProjectPreparation } from "./host-project.js";
 import {
   getLaravelInertiaVueProjectPlan,
   hasLaravelInertiaVueProjectEvidence,
@@ -13,13 +13,13 @@ import {
   setupLaravelInertiaVueProject,
   validateLaravelInertiaVueProjectSetup,
 } from "./laravel-inertia-vue-project.js";
+import { type CssImportResult, setupLayoutCssImport } from "./layout.js";
 import {
   getNuxtProjectPlan,
   NUXT_PROJECT_CANDIDATE_PATHS,
   setupNuxtProject,
   validateNuxtProjectSetup,
 } from "./nuxt-project.js";
-import type { PackageManager } from "./package-manager.js";
 import {
   getQuasarProjectPlan,
   hasQuasarProjectEvidence,
@@ -33,8 +33,8 @@ import {
   getVueProjectPlan,
   meetsVueVersionFloor,
   setupVueProject,
-  validateVueProjectSetup,
   VUE_PROJECT_CANDIDATE_PATHS,
+  validateVueProjectSetup,
 } from "./vue-project.js";
 
 export type VueHostProjectPackage = {
@@ -58,42 +58,8 @@ export type VueHostEvidenceRequest = Readonly<{
   readContent: boolean;
 }>;
 
-export type VueHostProjectPreparation =
-  | Readonly<{ status: "cancelled" | "declined" }>
-  | (Readonly<{ status: "prepared" }> &
-      (
-        | Readonly<{
-            applyIntegration: () => Promise<void>;
-            integrationLabel: string;
-            integrationResult: string;
-          }>
-        | Readonly<{
-            applyIntegration?: undefined;
-            integrationLabel?: undefined;
-            integrationResult?: undefined;
-          }>
-      ));
-
-type VueHostProjectPlanBase = {
-  componentDir: string;
-  cssFile: string;
-  hostLabel: string;
-  prepare: (options: {
-    packageManager: PackageManager;
-    projectPackage: VueHostProjectPackage;
-    skipPrompts?: boolean;
-  }) => Promise<VueHostProjectPreparation>;
-  prepareStylesheet: (content: string) => string;
-  requirements: (requirements: string[]) => string[];
-  lockCssFile?: true;
-  setup: (cssFile: string) => Promise<void>;
-  setupLabel: string;
-  setupResult: string;
-  setupTypeScript: () => Promise<boolean>;
-  utilsDir: string;
-  validate: () => Promise<void>;
-  vueUpgradeRequired: boolean;
-};
+export type VueHostProjectPreparation = HostProjectPreparation;
+type VueHostProjectPlanBase = HostProjectPlanBase & { vueUpgradeRequired: boolean };
 
 type VueHostProjectIdentity =
   | Readonly<{
@@ -124,7 +90,7 @@ type VueHostProjectIdentity =
 
 type VueHostCssSetup =
   | Readonly<{
-      setupCss: (cssFile: string) => Promise<boolean>;
+      setupCss: (cssFile: string) => Promise<boolean | CssImportResult>;
       setupCssLabel: string;
       setupCssResult: string;
     }>
@@ -441,8 +407,8 @@ function createAstroVueHostProjectPlan(
       if (!success) throw new Error("Failed to setup Astro config");
     },
     setupCss: setupLayoutCssImport,
-    setupCssLabel: "Adding CSS import to layout",
-    setupCssResult: "CSS import added to layout",
+    setupCssLabel: "Connecting Starwind CSS",
+    setupCssResult: "Starwind CSS connected",
     setupLabel: "Setup Astro config file",
     setupResult: "Astro config setup completed",
     setupTypeScript: async () => setupTsConfig("astro"),

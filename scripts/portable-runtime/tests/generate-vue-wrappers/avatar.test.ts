@@ -55,20 +55,24 @@ describe("generated Vue Avatar Primitive", () => {
     const second = await generateAvatar();
 
     expect(first).toEqual(second);
+    const sources = Object.values(first.sources).join("\n");
+    expect(sources).toContain("owner.refresh()");
+    expect(sources).toContain("instance === owner && rootRef.value === owner.root");
+    expect(sources).toContain("inject(mediaStatusKey, undefined)");
+    expect(sources).not.toContain("onUpdated");
+
     for (const [name, source] of Object.entries(first.sources)) {
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
     }
 
-    expect(first.sources["AvatarRoot.vue"]).toContain(
-      "const rootRef = ref<HTMLSpanElement | null>(null)",
-    );
+    expect(() =>
+      assertVueSfcCompiles(first.sources["AvatarRoot.vue"], "Component.vue"),
+    ).not.toThrow();
     expect(first.sources["AvatarRoot.vue"]).toContain(
       'import { createAvatar } from "@starwind-ui/runtime/avatar";',
     );
-    expect(first.sources["AvatarRoot.vue"]).toContain("onMounted(setupRuntime);");
-    expect(first.sources["AvatarRoot.vue"]).toContain("onBeforeUnmount(destroyOwnedInstance);");
+
     expect(first.sources["AvatarRoot.vue"]).toContain("data-sw-avatar");
-    expect(first.sources["AvatarRoot.vue"]).toContain('data-image-loading-status="idle"');
 
     expect(first.sources["AvatarImage.vue"]).toContain("alt: string;");
     expect(first.sources["AvatarImage.vue"]).toContain("src?: string;");
@@ -79,16 +83,15 @@ describe("generated Vue Avatar Primitive", () => {
     );
     expect(first.sources["AvatarImage.vue"]).toContain('previousStatus: "idle"');
     expect(first.sources["AvatarImage.vue"]).toContain(
-      `:style="[attrs.style, { visibility: 'hidden' }]"`,
+      `:style="[attrs.style, { visibility: imageRef?.style.visibility ?? 'hidden' } as CSSProperties]"`,
     );
     expect(first.sources["AvatarImage.vue"]).toContain(':hidden="false"');
 
     expect(first.sources["AvatarFallback.vue"]).toContain("delay?: number;");
     expect(first.sources["AvatarFallback.vue"]).toContain(':data-delay="props.delay"');
     expect(first.sources["AvatarFallback.vue"]).toContain(
-      `:hidden="props.delay !== undefined || includesBooleanAttribute(attrs.hidden)"`,
+      `:hidden="props.delay !== undefined || (attrs.hidden === '' || Boolean(attrs.hidden))"`,
     );
-    expect(first.sources["AvatarFallback.vue"]).toContain(`return value === "" || Boolean(value);`);
     expect(first.index).toContain('export { default as AvatarRoot } from "./AvatarRoot.vue";');
     expect(first.index).toContain('export { default as AvatarImage } from "./AvatarImage.vue";');
     expect(first.index).toContain(

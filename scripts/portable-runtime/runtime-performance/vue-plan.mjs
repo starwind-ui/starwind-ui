@@ -995,7 +995,7 @@ function row(scenario, component, overrides) {
     visibleEndpoint: "The declared endpoint is visible after layout.",
     teardown: "Unmount; the Vue root and Teleport target are empty.",
     metric: "",
-    warmupCount: 0,
+    warmupCount: 1,
     withinRunSampleCount: 5,
     ...overrides,
   };
@@ -1281,8 +1281,8 @@ function validateProviderRows(rows, topology, decisions) {
 }
 
 function validateVueSamplingFacts(entry, label) {
-  if (entry.warmupCount !== 0) {
-    throw new Error(`${label} must use zero Vue warmups`);
+  if (entry.warmupCount !== 1) {
+    throw new Error(`${label} must use one excluded Vue warmup`);
   }
   if (entry.withinRunSampleCount !== 5) {
     throw new Error(`${label} must use exactly five measured Vue samples`);

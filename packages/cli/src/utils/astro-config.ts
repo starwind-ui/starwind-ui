@@ -7,18 +7,20 @@ import { highlighter } from "@/utils/highlighter.js";
 
 import { fileExists } from "./fs.js";
 import {
+  type AstArrayExpression,
+  type AstObjectExpression,
   asAstArrayExpression,
   asAstObjectExpression,
   getAstDefaultExportCallObject,
+  getAstDefaultExportObject,
   getAstDefaultImportBinding,
+  getAstNamedImportBinding,
   getAstNodeRange,
   getAstObjectProperty,
   getAvailableIdentifier,
   hasAstDirectCall,
-  parseSourceModule,
-  type AstArrayExpression,
-  type AstObjectExpression,
   type ParsedSourceModule,
+  parseSourceModule,
 } from "./source-shape.js";
 
 const CONFIG_EXTENSIONS = ["ts", "js", "mjs", "cjs"] as const;
@@ -210,10 +212,22 @@ export async function setupAstroConfig(): Promise<boolean> {
   }
 }
 
-export function updateAstroTailwindConfig(content: string, includeSvg: boolean): string | null {
+export function updateAstroTailwindConfig(
+  content: string,
+  includeSvg: boolean,
+  options: { configuredObjectExport?: boolean } = {},
+): string | null {
   const module = parseSourceModule(content);
   if (!module) return null;
-  const config = getAstDefaultExportCallObject(module, "defineConfig");
+  const configBinding = options.configuredObjectExport
+    ? getAstNamedImportBinding(module, "astro/config", "defineConfig")
+    : undefined;
+  const config = options.configuredObjectExport
+    ? getAstDefaultExportObject(
+        module,
+        configBinding?.status === "found" ? configBinding.localName : undefined,
+      )
+    : getAstDefaultExportCallObject(module, "defineConfig");
   if (!config) return null;
   const tailwindImport = getAstDefaultImportBinding(module, "@tailwindcss/vite");
   if (tailwindImport.status === "unsafe") return null;

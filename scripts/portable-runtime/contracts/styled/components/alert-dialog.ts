@@ -182,14 +182,6 @@ export const alertDialogStyledContract: StyledAdapterContract = {
             code: "className",
           },
         },
-        {
-          frameworks: ["react"],
-          name: "asChildRest",
-          value: {
-            type: "raw",
-            code: "rest as unknown as React.HTMLAttributes<HTMLDivElement>",
-          },
-        },
       ],
       render: [
         {
@@ -210,11 +202,6 @@ export const alertDialogStyledContract: StyledAdapterContract = {
                   name: "spread",
                   value: { type: "variable", name: "rest" },
                   frameworks: ["astro"],
-                },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "asChildRest" },
-                  frameworks: ["react"],
                 },
                 { name: "data-slot", value: { type: "literal", value: "alert-dialog-trigger" } },
                 { name: "data-sw-alert-dialog-trigger" },
@@ -424,16 +411,6 @@ export const alertDialogStyledContract: StyledAdapterContract = {
         ],
         rest: "rest",
       },
-      variables: [
-        {
-          frameworks: ["react"],
-          name: "asChildRest",
-          value: {
-            type: "raw",
-            code: "rest as unknown as React.HTMLAttributes<HTMLDivElement>",
-          },
-        },
-      ],
       render: [
         {
           type: "conditional",
@@ -456,11 +433,6 @@ export const alertDialogStyledContract: StyledAdapterContract = {
                   name: "spread",
                   value: { type: "variable", name: "rest" },
                   frameworks: ["astro"],
-                },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "asChildRest" },
-                  frameworks: ["react"],
                 },
                 { name: "data-slot", value: { type: "literal", value: "alert-dialog-action" } },
                 { name: "data-sw-alert-dialog-close" },
@@ -509,16 +481,6 @@ export const alertDialogStyledContract: StyledAdapterContract = {
         ],
         rest: "rest",
       },
-      variables: [
-        {
-          frameworks: ["react"],
-          name: "asChildRest",
-          value: {
-            type: "raw",
-            code: "rest as unknown as React.HTMLAttributes<HTMLDivElement>",
-          },
-        },
-      ],
       render: [
         {
           type: "conditional",
@@ -541,11 +503,6 @@ export const alertDialogStyledContract: StyledAdapterContract = {
                   name: "spread",
                   value: { type: "variable", name: "rest" },
                   frameworks: ["astro"],
-                },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "asChildRest" },
-                  frameworks: ["react"],
                 },
                 { name: "data-slot", value: { type: "literal", value: "alert-dialog-cancel" } },
                 { name: "data-sw-alert-dialog-close" },

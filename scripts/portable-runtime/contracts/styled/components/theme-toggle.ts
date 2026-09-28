@@ -1,3 +1,7 @@
+import {
+  initializeThemeControl,
+  themeToggleNativePolicy,
+} from "../../../renderers/shared-recipes/passive/theme-toggle.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const themeToggleStyledContract: StyledAdapterContract = {
@@ -60,14 +64,14 @@ export const themeToggleStyledContract: StyledAdapterContract = {
           '  import { initThemeController } from "@starwind-ui/runtime/theme";',
           "",
           "  const setupThemeController = () => {",
-          "    initThemeController();",
+          "    " + initializeThemeControl(),
           "  };",
           "",
           "  setupThemeController();",
           '  document.addEventListener("astro:after-swap", setupThemeController);',
           '  document.addEventListener("starwind:init", setupThemeController);',
         ],
-        reactEffect: ["initThemeController();"],
+        reactEffect: [initializeThemeControl()],
       },
       props: {
         extends: [
@@ -105,7 +109,11 @@ export const themeToggleStyledContract: StyledAdapterContract = {
           { name: "ref", frameworks: ["react"] },
           { name: "syncGroup", defaultValue: '"starwind-theme"' },
           { name: "value" },
-          { name: "data-slot", alias: "dataSlot", defaultValue: '"theme-toggle"' },
+          {
+            name: "data-slot",
+            alias: "dataSlot",
+            defaultValue: JSON.stringify(themeToggleNativePolicy.slot),
+          },
           { name: "class", alias: "className" },
         ],
         rest: "rest",
@@ -129,7 +137,7 @@ export const themeToggleStyledContract: StyledAdapterContract = {
                 args: { variant: "variant", size: "size", class: "className" },
               },
             },
-            { name: "type", value: { type: "literal", value: "button" } },
+            { name: "type", value: { type: "literal", value: themeToggleNativePolicy.type } },
             { name: "disabled", value: { type: "variable", name: "disabled" } },
             { name: "aria-label", value: { type: "variable", name: "ariaLabel" } },
             {

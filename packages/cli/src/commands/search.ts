@@ -1,35 +1,35 @@
 import * as p from "@clack/prompts";
-
-import type { StarwindFramework } from "@/utils/config.js";
-
-import { PATHS } from "@/utils/constants.js";
 import {
   sortComponentPresentation,
   sortComponentPresentationByName,
 } from "@/utils/component-presentation.js";
+import type { StarwindFramework } from "@/utils/config.js";
+import { PATHS } from "@/utils/constants.js";
 import {
   type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { highlighter } from "@/utils/highlighter.js";
-import {
-  getPrimitiveDiscoveryResults,
-  getPrimitiveInstallCommand,
-  resolvePrimitiveDiscoveryFramework,
-  toPrimitiveDiscoveryMetadata,
-  type PrimitiveDiscoveryFramework,
-} from "@/utils/primitive-discovery.js";
 import type {
   PrimitiveVendoringArtifact,
   PrimitiveVendoringArtifactSet,
 } from "@/utils/primitive-component.js";
+import {
+  getPrimitiveDiscoveryResults,
+  getPrimitiveInstallCommand,
+  type PrimitiveDiscoveryFramework,
+  resolvePrimitiveDiscoveryFramework,
+  toPrimitiveDiscoveryMetadata,
+} from "@/utils/primitive-discovery.js";
 import { type ManifestBlock, searchProBlocks } from "@/utils/pro-manifest.js";
 import {
-  type Component,
+  type ComponentFor,
   loadRegistry,
   parseRegistrySource,
   type RegistrySource,
+  type StarwindRegistryFor,
 } from "@/utils/registry.js";
 import { hasStarwindProRegistry } from "@/utils/shadcn-config.js";
 
@@ -49,8 +49,11 @@ type PrivateSearchOptions = Omit<SearchOptions, "framework"> & {
 };
 
 export type PrivateSearchDependencies = {
+  registry?: StarwindRegistryFor<CliFrameworkTarget>;
   artifacts: PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
-  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
+  targetPolicy:
+    | FrameworkTargetPolicy<CliFrameworkTarget>
+    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
 };
 
 /**
@@ -85,7 +88,7 @@ export async function search(
     const registrySource = parseRegistrySource(options?.registry) ?? { type: "bundled" as const };
 
     let proBlocks: ManifestBlock[] = [];
-    let matchedComponents: Component[] = [];
+    let matchedComponents: ComponentFor<CliFrameworkTarget>[] = [];
 
     if (options?.json) {
       proBlocks = await searchProBlocks({
@@ -269,7 +272,7 @@ async function searchPrimitives(
 ): Promise<void> {
   const targetPolicy = getTargetPolicy(dependencies);
   const framework = await resolvePrimitiveDiscoveryFramework(options.framework, {
-    targetPolicy: dependencies?.targetPolicy,
+    targetPolicy: getTargetPolicy(dependencies),
   });
   let matchedPrimitives: PrimitiveVendoringArtifact<CliFrameworkTarget>[] = [];
 
@@ -305,7 +308,7 @@ async function searchPrimitives(
       framework,
       query,
       ...(dependencies
-        ? { artifacts: dependencies.artifacts, targetPolicy: dependencies.targetPolicy }
+        ? { artifacts: dependencies.artifacts, targetPolicy: getTargetPolicy(dependencies) }
         : {}),
     });
   } else {
@@ -317,7 +320,7 @@ async function searchPrimitives(
             framework,
             query,
             ...(dependencies
-              ? { artifacts: dependencies.artifacts, targetPolicy: dependencies.targetPolicy }
+              ? { artifacts: dependencies.artifacts, targetPolicy: getTargetPolicy(dependencies) }
               : {}),
           });
           return `Found ${matchedPrimitives.length} ${framework} primitive${matchedPrimitives.length === 1 ? "" : "s"}`;
@@ -393,14 +396,14 @@ function formatFrameworkLabel(
 function getTargetPolicy(
   dependencies?: PrivateSearchDependencies,
 ): FrameworkTargetPolicy<CliFrameworkTarget> {
-  return (
-    dependencies?.targetPolicy ??
-    (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<CliFrameworkTarget>)
-  );
+  return (dependencies?.targetPolicy ??
+    PUBLIC_FRAMEWORK_TARGET_POLICY) as FrameworkTargetPolicy<CliFrameworkTarget>;
 }
 
 function loadRegistryForSearch(source: RegistrySource, dependencies?: PrivateSearchDependencies) {
+  if (source.type === "bundled" && dependencies?.registry)
+    return Promise.resolve(dependencies.registry);
   return dependencies
-    ? loadRegistry(source, { targetPolicy: dependencies.targetPolicy })
+    ? loadRegistry(source, { targetPolicy: getTargetPolicy(dependencies) })
     : loadRegistry(source);
 }

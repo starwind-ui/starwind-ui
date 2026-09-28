@@ -6,137 +6,129 @@ import {
   createCheckboxGroup,
 } from "@starwind-ui/runtime/checkbox-group";
 import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
-
 import { CheckboxGroupContext } from "./CheckboxGroupContext";
 
 defineOptions({ inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
     defaultValue?: CheckboxGroupValue;
     disabled?: boolean;
     modelValue?: CheckboxGroupValue;
   }>(),
-  {
-    disabled: false,
-    modelValue: undefined,
-  },
+  { disabled: false, modelValue: undefined, defaultValue: undefined },
 );
 const emit = defineEmits<{
   valueChange: [value: CheckboxGroupValue, detail: CheckboxGroupValueChangeDetails];
   "update:modelValue": [value: CheckboxGroupValue];
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLElement | null>(null);
-const initialDefaultValue = props.defaultValue ?? [];
-const uncontrolledValue = ref<CheckboxGroupValue>(initialDefaultValue);
-const renderedValue = computed(() => props.modelValue ?? uncontrolledValue.value);
-const renderedDisabled = computed(() => props.disabled);
-let instance: ReturnType<typeof createCheckboxGroup> | undefined;
-let observer: MutationObserver | undefined;
-
-provide(CheckboxGroupContext, {
-  disabled: renderedDisabled,
-  value: renderedValue,
-});
-
+const attrs = useAttrs(),
+  rootRef = ref<HTMLDivElement | null>(null);
 defineExpose({ element: rootRef });
-
-function setUncontrolledValue(nextValue: CheckboxGroupValue): void {
-  if (areValuesEqual(uncontrolledValue.value, nextValue)) return;
-  uncontrolledValue.value = nextValue;
+const resetSeed = copyModel(props.defaultValue ?? props.modelValue ?? []);
+const initialValue = copyModel(props.modelValue ?? resetSeed);
+const renderedValue = ref<CheckboxGroupValue>(initialValue);
+const connection: {
+  instance?: ReturnType<typeof createCheckboxGroup>;
+  accepted: CheckboxGroupValue;
+  unsubscribe?: () => void;
+  unsubscribeSync?: () => void;
+  observer?: MutationObserver;
+} = { accepted: initialValue };
+const selected = computed(() => props.modelValue ?? renderedValue.value);
+function isModelEqual(left: string[] | undefined, right: string[] | undefined) {
+  return (
+    left === right ||
+    (left !== undefined &&
+      right !== undefined &&
+      left.length === right.length &&
+      left.every((value, index) => value === right[index]))
+  );
 }
-
-function handleValueChangeProposal(detail: CheckboxGroupValueChangeDetails): void {
-  emit("valueChange", detail.value, detail);
+function copyModel(value: string[]) {
+  return [...value];
 }
-
-function handleAcceptedValueChange(detail: CheckboxGroupValueChangeDetails): void {
-  if (props.modelValue === undefined) {
-    setUncontrolledValue(detail.value);
+function disconnect() {
+  const owned = connection.instance;
+  connection.unsubscribe?.();
+  connection.unsubscribeSync?.();
+  connection.observer?.disconnect();
+  connection.instance = undefined;
+  owned?.destroy();
+}
+function publishRuntime(owned: ReturnType<typeof createCheckboxGroup>) {
+  if (connection.instance !== owned) return;
+  const next = owned.getValue();
+  if (!isModelEqual(connection.accepted, next)) {
+    connection.accepted = copyModel(next);
+    renderedValue.value = next;
   }
-  emit("update:modelValue", detail.value);
 }
-
-function destroyOwnedInstance(): void {
-  observer?.disconnect();
-  observer = undefined;
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  instance = undefined;
-  ownedInstance.destroy();
-}
-
-onMounted(() => {
-  const element = rootRef.value;
-  if (!element) return;
-
-  instance = createCheckboxGroup(element, {
-    defaultValue: initialDefaultValue,
+function connect(root: HTMLDivElement) {
+  disconnect();
+  const desired = props.modelValue ?? initialValue;
+  const owned = createCheckboxGroup(root, {
+    defaultValue: copyModel(resetSeed),
     disabled: props.disabled,
-    onValueChange: handleValueChangeProposal,
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
+    ...(props.modelValue !== undefined ? { value: desired } : {}),
+    onValueChange: (detail) => {
+      emit("valueChange", copyModel(detail.value), detail);
+    },
   });
-  instance.subscribe("valueChange", handleAcceptedValueChange);
-
-  observer = new MutationObserver(() => {
-    if (props.modelValue !== undefined) return;
-    setUncontrolledValue(parseCheckboxGroupValueAttribute(element.getAttribute("data-value")));
+  connection.instance = owned;
+  if (!isModelEqual(owned.getValue(), desired)) owned.setValue(desired, { emit: false });
+  connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+    if (connection.instance !== owned || detail.isCanceled) return;
+    publishRuntime(owned);
+    emit("update:modelValue", detail.value);
   });
-  observer.observe(element, {
-    attributes: true,
-    attributeFilter: ["data-value"],
+  connection.observer = new MutationObserver(() => {
+    publishRuntime(owned);
   });
-  if (props.modelValue === undefined) {
-    setUncontrolledValue(parseCheckboxGroupValueAttribute(element.getAttribute("data-value")));
-  }
+  connection.observer.observe(root, { attributes: true, attributeFilter: ["data-value"] });
+  publishRuntime(owned);
+}
+function applyParent() {
+  const owned = connection.instance,
+    next = props.modelValue;
+  if (!owned || next === undefined || isModelEqual(owned.getValue(), next)) return;
+  owned.setValue(next, { emit: false });
+  publishRuntime(owned);
+}
+function applyOptions() {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.refresh();
+  owned.setDisabled(props.disabled);
+  applyParent();
+  publishRuntime(owned);
+}
+provide(CheckboxGroupContext, { disabled: computed(() => props.disabled), value: selected });
+onMounted(() => {
+  if (rootRef.value) connect(rootRef.value);
 });
-
+onBeforeUnmount(disconnect);
 watch(
-  () => props.modelValue,
-  (value) => {
-    if (value === undefined || !instance || areValuesEqual(instance.getValue(), value)) {
-      return;
-    }
-    instance.setValue(value, { emit: false });
-  },
+  () => [props.disabled],
+  () => queueMicrotask(applyOptions),
+  { flush: "post" },
 );
 watch(
-  () => props.disabled,
-  (disabled) => instance?.setDisabled(disabled),
+  () => [props.modelValue],
+  () => queueMicrotask(applyParent),
+  { flush: "post" },
 );
-
-onBeforeUnmount(destroyOwnedInstance);
-
-function areValuesEqual(left: CheckboxGroupValue, right: CheckboxGroupValue): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function parseCheckboxGroupValueAttribute(value: string | null): CheckboxGroupValue {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
 </script>
-
 <template>
   <div
     ref="rootRef"
     v-bind="attrs"
-    data-sw-checkbox-group
-    :data-default-value="
-      initialDefaultValue.length ? JSON.stringify(initialDefaultValue) : undefined
-    "
-    :data-value="JSON.stringify(renderedValue)"
-    :data-disabled="props.disabled ? '' : undefined"
+    data-sw-checkbox-group=""
+    data-sw-part="root"
     role="group"
+    :data-default-value="JSON.stringify(resetSeed)"
+    :data-value="JSON.stringify(selected)"
+    :data-disabled="props.disabled ? '' : undefined"
   >
     <slot />
   </div>

@@ -38,11 +38,17 @@ import {
   getPrimitiveFrameworkAdapterTarget,
   reactFrameworkAdapterTarget,
 } from "../renderers/framework-adapters/index.js";
+import { svelteFrameworkAdapterTarget } from "../renderers/framework-adapters/svelte/index.js";
+import {
+  SVELTE_PRIMITIVE_COMPONENTS,
+  SVELTE_STYLED_ROOTS,
+} from "../renderers/framework-adapters/svelte/inventory.js";
 import { vueFrameworkAdapterTarget } from "../renderers/framework-adapters/vue/index.js";
 import {
   vueRuntimePrimitiveComponents,
   vueStyledComponents,
 } from "../renderers/framework-adapters/vue/inventory.js";
+import { normalizeTypeScriptSource } from "./source-comparison.js";
 
 const runtimePackage = JSON.parse(
   await readFile(new URL("../../../packages/runtime/package.json", import.meta.url), "utf8"),
@@ -50,8 +56,12 @@ const runtimePackage = JSON.parse(
 const vuePackage = JSON.parse(
   await readFile(new URL("../../../packages/vue/package.json", import.meta.url), "utf8"),
 ) as { version: string };
+const sveltePackage = JSON.parse(
+  await readFile(new URL("../../../packages/svelte/package.json", import.meta.url), "utf8"),
+) as { version: string };
 const CURRENT_BETA_PACKAGE_RANGE = `^${runtimePackage.version}`;
 const CURRENT_VUE_PACKAGE_VERSION = vuePackage.version;
+const CURRENT_SVELTE_PACKAGE_VERSION = sveltePackage.version;
 const STABLE_TARGET_POLICY = createCliRegistryBuildPolicy([
   astroFrameworkAdapterTarget,
   reactFrameworkAdapterTarget,
@@ -67,6 +77,102 @@ describe("generateCliRegistry", () => {
   afterEach(async () => {
     await rm(tempRoot, { force: true, recursive: true });
   });
+
+  it("generates the complete deterministic public Svelte delivery data", async () => {
+    const targetPolicy = createCliRegistryBuildPolicy([svelteFrameworkAdapterTarget]);
+    const firstRegistry = await buildRuntimeRegistry({ targetPolicy });
+    const firstPrimitives = await buildPrimitiveVendoringArtifacts({ targetPolicy });
+    expect(await buildRuntimeRegistry({ targetPolicy })).toEqual(firstRegistry);
+    expect(await buildPrimitiveVendoringArtifacts({ targetPolicy })).toEqual(firstPrimitives);
+    const styledManifest = await loadRegistryVersionManifest();
+    const primitiveManifest = await loadPrimitiveVersionManifest();
+    const ranges = await loadPackageRanges(process.cwd(), [svelteFrameworkAdapterTarget]);
+    const styled = firstRegistry.components.filter((component) => component.targets?.svelte);
+    expect(styled).toHaveLength(54);
+    expect(styled.map(({ name }) => name).sort()).toEqual([...SVELTE_STYLED_ROOTS].sort());
+    expect(
+      firstRegistry.components.find(({ name }) => name === "image")?.targets?.svelte,
+    ).toBeUndefined();
+    expect(firstRegistry.setup).toEqual({
+      svelte: {
+        adapterPackage: {
+          name: "@starwind-ui/svelte",
+          range: CURRENT_SVELTE_PACKAGE_VERSION,
+        },
+        packageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
+      },
+    });
+    for (const component of styled) {
+      expect(component.version).toBe(styledManifest.components[component.name]);
+      expect(component.sourceVersion).toBe(styledManifest.sourceVersions[component.name]);
+      const target = component.targets!.svelte!;
+      expect(target.files.length).toBeGreaterThan(0);
+      for (const requirement of target.packageRequirements) {
+        expect(requirement.range).toBe(ranges.get(requirement.name));
+        expect(requirement.name).not.toMatch(/astro|react|vue/);
+      }
+      assertSafeInstallPaths(target.files, DEFAULT_COMPONENT_INSTALL_ROOT);
+      assertInstallGraphSourceClosure({
+        files: target.files,
+        componentDependencies: target.componentDependencies,
+        generatedImportCandidateExtensions:
+          svelteFrameworkAdapterTarget.cliRegistry.generatedImportCandidateExtensions,
+        installRoot: DEFAULT_COMPONENT_INSTALL_ROOT,
+      });
+      assertNoMonorepoOnlyImports(target.files);
+      expect(target.packageRequirements.map(({ name }) => name)).toEqual(
+        expect.arrayContaining(
+          packageNamesFromImportSources(
+            target.files.flatMap(({ content }) => collectTestImportSources(content)),
+          ),
+        ),
+      );
+    }
+
+    expect(firstPrimitives.primitives).toHaveLength(36);
+    expect(firstPrimitives.primitives.map(({ component }) => component).sort()).toEqual(
+      [...SVELTE_PRIMITIVE_COMPONENTS].sort(),
+    );
+    expect(firstPrimitives.integrity).toBeUndefined();
+    expect(firstPrimitives.validation).toBeUndefined();
+    for (const artifact of firstPrimitives.primitives) {
+      expect(artifact.version).toBe(primitiveManifest.primitives[artifact.component]);
+      expect(artifact.sourceVersion).toBe(primitiveManifest.sourceVersions[artifact.component]);
+      expect(artifact.packageRequirements).toEqual([
+        { name: "@starwind-ui/runtime", range: ranges.get("@starwind-ui/runtime") },
+        { name: "svelte", range: ">=5.29.0 <6" },
+      ]);
+      assertSafeInstallPaths(artifact.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
+      assertInstallGraphSourceClosure({
+        files: artifact.files,
+        generatedImportCandidateExtensions:
+          svelteFrameworkAdapterTarget.cliRegistry.generatedImportCandidateExtensions,
+        installRoot: DEFAULT_PRIMITIVE_INSTALL_ROOT,
+      });
+      assertNoMonorepoOnlyImports(artifact.files);
+      expect(artifact.packageRequirements.map(({ name }) => name)).toEqual(
+        packageNamesFromImportSources(
+          artifact.files.flatMap(({ content }) => collectTestImportSources(content)),
+        ),
+      );
+      for (const requirement of artifact.packageRequirements)
+        expect(requirement.range).toBe(ranges.get(requirement.name));
+      for (const file of artifact.files) {
+        expect(file.content).toContain("Vendored by the Starwind CLI");
+        expect(file.content).not.toMatch(/Do not edit by hand|Svelte 5 public beta adapter output/);
+        expect(file.sourceHash).toBe(
+          `sha256:${createHash("sha256").update(file.content).digest("hex")}`,
+        );
+      }
+    }
+    const select = firstPrimitives.primitives.find(({ component }) => component === "select")!;
+    expect(
+      getLocalGeneratedImportCandidates("context.svelte.js", [".svelte", ".ts", ".js"]),
+    ).toContain("context.svelte.ts");
+    expect(select.files.some(({ sourcePath }) => sourcePath.includes("/button/"))).toBe(true);
+    const canonical = await readFile("packages/svelte/src/select/SelectRoot.svelte", "utf8");
+    expect(canonical).toContain("Svelte 5 public beta adapter output.");
+  }, 60_000);
 
   it("rejects malformed setup package names", () => {
     expect(isValidRegistryPackageName("@tabler/icons-react")).toBe(true);
@@ -433,6 +539,13 @@ describe("generateCliRegistry", () => {
           { name: "tailwindcss", range: "^4" },
           { name: "tw-animate-css", range: "^1" },
         ],
+      },
+      svelte: {
+        adapterPackage: {
+          name: "@starwind-ui/svelte",
+          range: CURRENT_SVELTE_PACKAGE_VERSION,
+        },
+        packageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
       },
       vue: {
         adapterPackage: { name: "@starwind-ui/vue", range: CURRENT_VUE_PACKAGE_VERSION },
@@ -1449,18 +1562,21 @@ describe("generateCliRegistry", () => {
     assertRegistryTriggerTargetId({
       registry: runtimeBundledRegistry,
       component: "dialog",
+      reactPrimitive: "DialogPrimitive",
       triggerFile: `${DEFAULT_COMPONENT_INSTALL_ROOT}/dialog/DialogTrigger`,
       targetAttribute: "data-sw-dialog-target-id",
     });
     assertRegistryTriggerTargetId({
       registry: runtimeBundledRegistry,
       component: "sheet",
+      reactPrimitive: "SheetPrimitive",
       triggerFile: `${DEFAULT_COMPONENT_INSTALL_ROOT}/sheet/SheetTrigger`,
       targetAttribute: "data-sw-drawer-target-id",
     });
     assertRegistryTriggerTargetId({
       registry: runtimeBundledRegistry,
       component: "alert-dialog",
+      reactPrimitive: "AlertDialogPrimitive",
       triggerFile: `${DEFAULT_COMPONENT_INSTALL_ROOT}/alert-dialog/AlertDialogTrigger`,
       targetAttribute: "data-sw-alert-dialog-target-id",
     });
@@ -1633,7 +1749,7 @@ describe("generateCliRegistry", () => {
           sourcePath: "packages/react/src/toggle-group/ToggleGroupContext.tsx",
         }),
         expect.objectContaining({
-          content: expect.stringContaining("<ToggleGroupContext.Provider value={contextValue}>"),
+          content: expect.stringContaining("<ToggleGroupContext.Provider value={context}>"),
           path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/toggle-group/ToggleGroupRoot.tsx`,
           sourcePath: "packages/react/src/toggle-group/ToggleGroupRoot.tsx",
         }),
@@ -1687,9 +1803,11 @@ describe("generateCliRegistry", () => {
       const artifactFile = getPrimitiveVendoringFileBySourcePath(artifactSet, comparison);
       const packageSource = await readFile(path.join(process.cwd(), comparison.sourcePath), "utf8");
 
-      expect(artifactFile.content, comparison.sourcePath).toBe(
-        normalizeGeneratedPackageContentForVendoring(packageSource),
-      );
+      const normalize =
+        comparison.framework === "react"
+          ? normalizeTypeScriptSource
+          : normalizeGeneratedPackageContentForVendoring;
+      expect(normalize(artifactFile.content), comparison.sourcePath).toBe(normalize(packageSource));
     }
   });
 
@@ -2294,7 +2412,7 @@ function assertNoMonorepoOnlyImports(files: readonly InstallGraphFile[]): void {
 function collectTestImportSources(source: string): string[] {
   const importSources = new Set<string>();
   const staticImportPattern =
-    /(?:import|export)\s+(?:type\s+)?(?:[^"';]*?\s+from\s+)?["']([^"']+)["']/g;
+    /\b(?:import|export)\s*(?:type\s+)?(?:[^"';]*?\bfrom\s*)?["']([^"']+)["']/g;
   const dynamicImportPattern = /import\(["']([^"']+)["']\)/g;
 
   for (const match of source.matchAll(staticImportPattern)) {
@@ -2464,6 +2582,7 @@ async function writePrimitiveVersionManifest(
 
 function assertRegistryTriggerTargetId(options: {
   component: string;
+  reactPrimitive: string;
   registry: RuntimeRegistry;
   targetAttribute: string;
   triggerFile: string;
@@ -2482,7 +2601,13 @@ function assertRegistryTriggerTargetId(options: {
 
     expect(file, `${options.component} ${framework} trigger`).toBeDefined();
     expect(file?.content).toContain("targetId?: string");
-    expect(file?.content).toContain(options.targetAttribute);
+    if (framework === "astro") {
+      expect(file?.content).toContain(options.targetAttribute);
+    } else {
+      expect(file?.content).toContain(`<${options.reactPrimitive}.Trigger`);
+      expect(file?.content).toContain("targetId={targetId}");
+      expect(file?.content).not.toContain(options.targetAttribute);
+    }
     expect(file?.content).not.toContain("data-dialog-for");
     expect(file?.content).not.toContain("dialogFor");
     expect(file?.content).not.toContain("for?: string");

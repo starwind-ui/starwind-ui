@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -9,7 +9,6 @@ import { valid as validSemver } from "semver";
 import { describe, expect, it } from "vitest";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
-import { hasPrivateSvelte } from "../portable-runtime/tests/workspace-support.js";
 import {
   createCommandSystem,
   createGitHubReleaseArgs,
@@ -87,44 +86,24 @@ function manifests(versions: { cli: string; runtime: string }) {
   }));
 }
 
-const CHANGESET_BUMPS = new Set<unknown>(["major", "minor", "patch"]);
-const PRIVATE_ADAPTER_PACKAGE_NAMES = new Set(["@starwind-ui/svelte"]);
-
-function parseChangesetReleasePackageNames(file: string, source: string): string[] {
-  const frontmatter = source.match(/^---[ \t]*\r?\n([\s\S]*?)^---[ \t]*$/m);
-  if (!frontmatter) throw new Error(`Invalid Changeset frontmatter: ${file}`);
-
-  const parsed: unknown = parseYaml(frontmatter[1]);
-  if (parsed === null) return [];
-  if (typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error(`Invalid Changeset release entries: ${file}`);
-  }
-
-  return Object.entries(parsed).map(([packageName, bump]) => {
-    if (!CHANGESET_BUMPS.has(bump)) {
-      throw new Error(`Invalid Changeset bump for ${packageName} in ${file}.`);
-    }
-    return packageName;
-  });
-}
-
-function assertNoPrivateAdapterChangesetReleases(file: string, source: string): void {
-  for (const packageName of parseChangesetReleasePackageNames(file, source)) {
-    if (PRIVATE_ADAPTER_PACKAGE_NAMES.has(packageName)) {
-      throw new Error(`Private package ${packageName} appears in ${file}.`);
-    }
-  }
-}
-
 function routineManifests() {
   return ROUTINE_RELEASE_PACKAGE_SET.map((entry) => ({
     entry: { ...entry },
     manifest: {
       name: entry.name,
       version:
-        entry.name === "starwind" ? "3.4.0" : entry.name === "@starwind-ui/vue" ? "0.2.0" : "1.3.0",
+        entry.name === "starwind"
+          ? "3.4.0"
+          : entry.name === "@starwind-ui/vue"
+            ? "0.2.0"
+            : entry.name === "@starwind-ui/svelte"
+              ? "0.1.0"
+              : "1.3.0",
       private: false,
-      dependencies: entry.name === "@starwind-ui/vue" ? { "@starwind-ui/runtime": "1.3.0" } : {},
+      dependencies:
+        entry.name === "@starwind-ui/vue" || entry.name === "@starwind-ui/svelte"
+          ? { "@starwind-ui/runtime": "1.3.0" }
+          : {},
     },
   }));
 }
@@ -154,7 +133,7 @@ describe("release package tooling", () => {
     );
   });
 
-  it("publishes routine Vue versions on explicit beta policy outside the fixed train", () => {
+  it("publishes routine beta adapters on explicit policy outside the fixed train", () => {
     const packageManifests = routineManifests();
     expect(
       validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }),
@@ -168,10 +147,12 @@ describe("release package tooling", () => {
       "@starwind-ui/astro",
       "@starwind-ui/react",
       "@starwind-ui/vue",
+      "@starwind-ui/svelte",
       "starwind",
     ]);
     expect(commands[3].args).toEqual(expect.arrayContaining(["--tag", "beta"]));
-    expect(commands[4].args).toEqual(expect.arrayContaining(["--tag", "latest"]));
+    expect(commands[4].args).toEqual(expect.arrayContaining(["--tag", "beta"]));
+    expect(commands[5].args).toEqual(expect.arrayContaining(["--tag", "latest"]));
     packageManifests[3].manifest.version = "1.0.0";
     expect(validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }).ok).toBe(
       true,
@@ -179,16 +160,19 @@ describe("release package tooling", () => {
     expect(packageManifests[3].entry.tag).toBe("beta");
   });
 
-  it.each(["^1.3.0", "workspace:*", "1.2.0", "*"])(
-    "rejects an inexact or stale Vue Runtime dependency %s",
-    (range) => {
-      const packageManifests = routineManifests();
-      packageManifests[3].manifest.dependencies["@starwind-ui/runtime"] = range;
-      expect(
-        validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }).errors.join(
-          "\n",
-        ),
-      ).toContain("exact current");
+  it.each(["@starwind-ui/vue", "@starwind-ui/svelte"])(
+    "rejects inexact or stale Runtime dependencies for %s",
+    (packageName) => {
+      for (const range of ["^1.3.0", "workspace:*", "1.2.0", "*"]) {
+        const packageManifests = routineManifests();
+        const adapter = packageManifests.find(({ entry }) => entry.name === packageName);
+        adapter!.manifest.dependencies["@starwind-ui/runtime"] = range;
+        expect(
+          validateRoutineReleaseMetadata({ packageManifests, config: routineConfig() }).errors.join(
+            "\n",
+          ),
+        ).toContain("exact current");
+      }
     },
   );
 
@@ -248,13 +232,8 @@ describe("release package tooling", () => {
     expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).not.toContain("@starwind-ui/svelte");
   });
 
-  it("keeps Vue out of the fixed-group release and keeps Svelte quarantined", async () => {
-    expect(CHANGESET_IGNORED_PACKAGES).toEqual([
-      "demo",
-      "react-demo",
-      "vue-demo",
-      ...(hasPrivateSvelte ? ["@starwind-ui/svelte"] : []),
-    ]);
+  it("keeps beta adapters out of the fixed-group release", async () => {
+    expect(CHANGESET_IGNORED_PACKAGES).toEqual(["demo", "react-demo", "vue-demo"]);
     expect(RUNTIME_FIXED_GROUP).toEqual([
       "@starwind-ui/runtime",
       "@starwind-ui/astro",
@@ -267,42 +246,34 @@ describe("release package tooling", () => {
       createPublishCommands({ dryRun: true }).map((command) => command.packageName),
     ).not.toContain("@starwind-ui/svelte");
 
-    const [vuePackage, sveltePackage] = await Promise.all([
+    const [runtimePackage, vuePackage, sveltePackage] = await Promise.all([
+      readJson<PackageJson>("packages/runtime/package.json"),
       readJson<PackageJson>("packages/vue/package.json"),
-      hasPrivateSvelte ? readJson<PackageJson>("packages/svelte/package.json") : undefined,
+      readJson<PackageJson>("packages/svelte/package.json"),
     ]);
     expect(vuePackage.name).toBe("@starwind-ui/vue");
     expect(vuePackage.private).not.toBe(true);
     expect(validSemver(vuePackage.version)).toBe(vuePackage.version);
-    if (sveltePackage) {
-      expect(sveltePackage).toMatchObject({
-        dependencies: { "@starwind-ui/runtime": "workspace:*" },
-        name: "@starwind-ui/svelte",
-        peerDependencies: { svelte: ">=5.29.0" },
-        private: true,
-        sideEffects: false,
-        version: "0.0.0",
+    expect(sveltePackage).toMatchObject({
+      dependencies: { "@starwind-ui/runtime": runtimePackage.version },
+      name: "@starwind-ui/svelte",
+      peerDependencies: { svelte: ">=5.29.0 <6" },
+      sideEffects: false,
+    });
+    expect(sveltePackage.private).not.toBe(true);
+    expect(validSemver(sveltePackage.version)).toBe(sveltePackage.version);
+    expect(Object.keys(sveltePackage.exports ?? {})).toHaveLength(38);
+    expect(Object.keys(sveltePackage.exports ?? {})).toEqual(
+      expect.arrayContaining([".", "./button", "./dialog", "./theme", "./combobox"]),
+    );
+    // Changesets consumes this intent when it materializes the first public version.
+    if (sveltePackage.version === "0.0.0") {
+      const intent = await readFile(".changeset/svelte-public-beta.md", "utf8");
+      const [, frontmatter] = /^---\r?\n([\s\S]*?)\r?\n---/.exec(intent) ?? [];
+      expect(parseYaml(frontmatter ?? "")).toEqual({
+        "@starwind-ui/svelte": "minor",
+        starwind: "minor",
       });
-      expect(Object.keys(sveltePackage.exports ?? {})).toEqual([
-        ".",
-        "./button",
-        "./carousel",
-        "./checkbox",
-        "./select",
-        "./accordion",
-        "./dialog",
-        "./slider",
-        "./toast",
-      ]);
-      expect(
-        Object.keys(sveltePackage.scripts ?? {}).filter((script) => script.startsWith("publish")),
-      ).toEqual([]);
-    }
-    const changesetFiles = (await readdir(".changeset", { withFileTypes: true }))
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md")
-      .map((entry) => entry.name);
-    for (const file of changesetFiles) {
-      assertNoPrivateAdapterChangesetReleases(file, await readFile(`.changeset/${file}`, "utf8"));
     }
   });
 
@@ -412,20 +383,6 @@ describe("release package tooling", () => {
       "@starwind-ui/runtime": "1.0.0",
       starwind: "3.0.0",
     });
-    expect(
-      plan.releases
-        .filter(({ name }) => PRIVATE_ADAPTER_PACKAGE_NAMES.has(name))
-        .every(({ newVersion, type }) => newVersion === "0.0.0" && type === "none"),
-    ).toBe(true);
-  });
-
-  it("rejects single-quoted private package releases in Changeset frontmatter", () => {
-    expect(() =>
-      assertNoPrivateAdapterChangesetReleases(
-        "private-svelte.md",
-        "---\n'@starwind-ui/svelte': patch\n---\n\nPrivate Svelte release.\n",
-      ),
-    ).toThrow(/@starwind-ui\/svelte/);
   });
 
   it("refreshes exact local release dependencies before a clean frozen install", async () => {

@@ -3,13 +3,14 @@ import { readFile, realpath, readdir, rm, mkdir, mkdtemp, stat, writeFile } from
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createSpawnCommand, getPackageManagerCommand } from "../../../scripts/command-process.mjs";
 
-export const MAX_TARBALL_BYTES = 512_000;
-export const MAX_UNPACKED_BYTES = 3_932_160;
+// Four bundled framework targets: 768 KiB packed and 5.5 MiB unpacked.
+export const MAX_TARBALL_BYTES = 786_432;
+export const MAX_UNPACKED_BYTES = 5_767_168;
 export const INSTALLED_CLI_COMMAND = Object.freeze(["exec", "starwind", "--help"]);
 
 const PACKAGE_DIRECTORY = fileURLToPath(new URL("..", import.meta.url));
-const PNPM_EXECUTABLE = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 export function validatePackMetadata(packInfo) {
   const errors = [];
@@ -153,11 +154,8 @@ async function measureRegularPackageFiles(directory) {
 }
 
 function runPnpm(args, cwd) {
-  if (process.env.npm_execpath) {
-    return runCommand(process.execPath, [process.env.npm_execpath, ...args], cwd);
-  }
-
-  return runCommand(PNPM_EXECUTABLE, args, cwd);
+  const command = createSpawnCommand(getPackageManagerCommand("pnpm"), args);
+  return runCommand(command.command, command.args, cwd);
 }
 
 function runCommand(command, args, cwd) {

@@ -5,7 +5,7 @@ import {
   type CarouselOptions,
   createCarousel,
 } from "@starwind-ui/runtime/carousel";
-import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { CarouselRootProps } from "./CarouselTypes.js";
 
 defineOptions({ inheritAttrs: false });
@@ -24,57 +24,79 @@ const rawProps = withDefaults(
 );
 const props = rawProps as CarouselRootProps;
 const element = ref<HTMLDivElement | null>(null);
-let instance: CarouselInstance | undefined;
+const connection: {
+  instance?: CarouselInstance;
+  inputs?: CarouselOptions;
+  callback?: CarouselOptions["setApi"];
+} = {};
 let refreshRevision = 0;
-
-function currentOptions(): CarouselOptions["opts"] {
-  return {
-    axis: props.orientation === "vertical" ? "y" : "x",
-    ...props.opts,
+function readCarouselInputs(): CarouselOptions {
+  return { orientation: props.orientation, opts: props.opts, plugins: props.plugins };
+}
+function connectCarousel(root: HTMLElement): void {
+  disconnectCarousel();
+  const initial = readCarouselInputs();
+  connection.inputs = initial;
+  connection.callback = props.setApi;
+  connection.instance = createCarousel(root, {
+    ...initial,
+    setApi: (api) => props.setApi?.(api),
+  });
+}
+function syncCarouselOptions(): void {
+  const instance = connection.instance;
+  const previous = connection.inputs;
+  if (!instance || !previous) return;
+  const next = readCarouselInputs();
+  if (
+    next.orientation === previous.orientation &&
+    next.opts === previous.opts &&
+    next.plugins === previous.plugins
+  )
+    return;
+  connection.inputs = next;
+  const options: CarouselOptions["opts"] = {
+    axis: next.orientation === "vertical" ? "y" : "x",
+    ...next.opts,
   };
+  const nextPlugins = next.plugins;
+  instance.reInit(options, nextPlugins);
+}
+function publishCarouselApi(): void {
+  const instance = connection.instance;
+  const callback = props.setApi;
+  if (!instance || callback === connection.callback) return;
+  connection.callback = callback;
+  callback?.(instance.api);
+}
+function disconnectCarousel(): void {
+  const instance = connection.instance;
+  connection.instance = undefined;
+  connection.inputs = undefined;
+  connection.callback = undefined;
+  instance?.destroy();
 }
 
 async function refreshAfterVueFlush(): Promise<void> {
   const revision = ++refreshRevision;
   await nextTick();
-  if (revision !== refreshRevision || !instance) return;
-  instance.reInit(currentOptions(), props.plugins);
+  if (revision !== refreshRevision) return;
+  syncCarouselOptions();
 }
 
 defineExpose({ element });
-
 onMounted(() => {
-  if (!element.value) return;
-  instance = createCarousel(element.value, {
-    orientation: props.orientation,
-    opts: props.opts,
-    plugins: props.plugins,
-    setApi: (api) => props.setApi?.(api),
-  });
+  if (element.value) connectCarousel(element.value);
 });
-
-onUpdated(() => {
-  void refreshAfterVueFlush();
-});
-
 watch(
   () => [props.orientation, props.opts, props.plugins] as const,
   () => void refreshAfterVueFlush(),
   { flush: "post" },
 );
-
-watch(
-  () => props.setApi,
-  (setApi) => {
-    if (setApi && instance) setApi(instance.api);
-  },
-);
-
+watch(() => props.setApi, publishCarouselApi);
 onBeforeUnmount(() => {
   refreshRevision += 1;
-  const owned = instance;
-  instance = undefined;
-  owned?.destroy();
+  disconnectCarousel();
 });
 </script>
 

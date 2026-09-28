@@ -13,7 +13,7 @@ defineExpose({ element });
 </script>
 
 <template>
-  <p ref="element" v-bind="$attrs" data-sw-popover-description data-sw-part="description">
+  <p ref="element" v-bind="$attrs" data-sw-popover-description="" data-sw-part="description">
     <slot />
   </p>
 </template>

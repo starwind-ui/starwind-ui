@@ -93,7 +93,6 @@ const value = computed(() =>
 const orientation = computed(() => props.orientation);
 let instance: ReturnType<typeof createNavigationMenu> | undefined;
 let generation = 0;
-let pendingDetail: NavigationMenuValueChangeDetails | undefined;
 let acceptedDetail: NavigationMenuValueChangeDetails | undefined;
 let unsubscribeValueChange: (() => void) | undefined;
 provide(NavigationMenuRootContext, { element, mounted, orientation, value });
@@ -102,19 +101,6 @@ defineExpose({
   getValue: () => instance?.getValue(),
   setValue: (next: string | null) => instance?.setValue(next),
 });
-function handleValueChange(next: string | null, detail: NavigationMenuValueChangeDetails) {
-  pendingDetail = detail;
-  emit("valueChange", next, detail);
-}
-function handleAcceptedValueChange(detail: NavigationMenuValueChangeDetails) {
-  if (pendingDetail === detail) pendingDetail = undefined;
-  if (props.modelValue === undefined) uncontrolledValue.value = detail.value;
-  emit("update:modelValue", detail.value);
-  if (props.modelValue !== undefined) {
-    acceptedDetail = detail;
-    void resyncControlled(detail);
-  }
-}
 async function resyncControlled(detail: NavigationMenuValueChangeDetails) {
   await nextTick();
   if (acceptedDetail !== detail || props.modelValue === undefined || !instance) return;
@@ -133,25 +119,40 @@ function syncUncontrolledFromRuntime() {
 }
 function destroyOwnedInstance() {
   const owned = instance;
-  instance = undefined;
+  if (!owned) return;
   unsubscribeValueChange?.();
   unsubscribeValueChange = undefined;
-  pendingDetail = undefined;
   acceptedDetail = undefined;
-  owned?.destroy();
+  if (instance === owned) {
+    instance = undefined;
+  }
+  owned.destroy();
 }
 function setupRuntime() {
   if (!element.value) return;
-  instance = createNavigationMenu(element.value, {
+  const owned = createNavigationMenu(element.value, {
     defaultValue: uncontrolledValue.value,
     openDelay: props.openDelay,
     closeDelay: props.closeDelay,
     closeOnEscape: props.closeOnEscape,
     closeOnOutsideInteract: props.closeOnOutsideInteract,
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
-    onValueChange: handleValueChange,
+    ...(props.modelValue !== undefined ? { value: props.modelValue } : {}),
+    onValueChange: (nextValue, details) => {
+      emit("valueChange", nextValue, details);
+    },
   });
-  unsubscribeValueChange = instance.subscribe("valueChange", handleAcceptedValueChange);
+  instance = owned;
+  unsubscribeValueChange = owned.subscribe("valueChange", (details) => {
+    if (instance !== owned || details.isCanceled) return;
+    if (props.modelValue === undefined) {
+      uncontrolledValue.value = owned.getValue();
+    }
+    emit("update:modelValue", details.value);
+    if (props.modelValue !== undefined) {
+      acceptedDetail = details;
+      void resyncControlled(details);
+    }
+  });
 }
 async function recreateRuntime() {
   const current = instance?.getValue();
@@ -177,8 +178,12 @@ watch(
       void recreateRuntime();
       return;
     }
-    if (next === undefined || !instance || Object.is(instance.getValue(), next)) return;
-    instance.setValue(next, { emit: false });
+    {
+      const owned = instance;
+      const next = props.modelValue;
+      if (!owned || next === undefined) return;
+      if (owned.getValue() !== next) owned.setValue(next, { emit: false });
+    }
   },
   { flush: "post" },
 );

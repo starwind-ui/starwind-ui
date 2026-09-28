@@ -151,6 +151,8 @@ class SidebarController implements SidebarControllerInstance {
   private mediaQueryList: MediaQueryList | null = null;
   private destroyed = false;
   private mobileOpenState: boolean;
+  private mobileCommandRevision = 0;
+  private mobileSheetRevision = 0;
   private openState: boolean;
   private wasMobile = false;
 
@@ -233,8 +235,14 @@ class SidebarController implements SidebarControllerInstance {
   }
 
   setMobileOpen(open: boolean, options: SidebarSetMobileOpenOptions = {}): void {
+    if (this.destroyed) return;
+    this.mobileCommandRevision += 1;
     if (options.emit === false) {
       this.commitMobileOpen(open, options);
+      return;
+    }
+    if (open === this.mobileOpenState) {
+      this.dispatchMobileSheetEvent(open);
       return;
     }
 
@@ -392,11 +400,17 @@ class SidebarController implements SidebarControllerInstance {
     const mobileSheet = this.getMobileSheet();
     if (!mobileSheet || event.target !== mobileSheet) return;
     if (!event.detail || typeof event.detail.open !== "boolean") return;
-    if (event.detail.open === this.mobileOpenState && !this.mobileOpenControlled) return;
-
-    this.setMobileOpen(event.detail.open, {
-      reason: "mobile-sheet",
-      trigger: mobileSheet,
+    this.mobileSheetRevision += 1;
+    queueMicrotask(() => {
+      if (this.destroyed || !this.provider.isConnected || this.getMobileSheet() !== mobileSheet)
+        return;
+      if (event.defaultPrevented || event.detail.isCanceled) return;
+      const acceptedOpen = mobileSheet.getAttribute("data-state") === "open";
+      if (acceptedOpen !== event.detail.open) return;
+      this.requestMobileOpen(acceptedOpen, {
+        reason: "mobile-sheet",
+        trigger: mobileSheet,
+      });
     });
   };
 
@@ -421,19 +435,27 @@ class SidebarController implements SidebarControllerInstance {
   private requestMobileOpen(open: boolean, options: SidebarSetMobileOpenOptions): void {
     const previousOpen = this.mobileOpenState;
     if (open === previousOpen) return;
-
-    const details = createMobileOpenChangeDetails({
-      open,
-      previousOpen,
-      reason: options.reason ?? "imperative-action",
-      trigger: options.trigger,
-    });
+    const commandRevision = this.mobileCommandRevision;
 
     if (!this.mobileOpenControlled) {
       this.commitMobileOpen(open, { ...options, emit: false });
+      if (
+        this.destroyed ||
+        commandRevision !== this.mobileCommandRevision ||
+        this.mobileOpenState === previousOpen
+      )
+        return;
+      open = this.mobileOpenState;
     }
 
-    this.notifyMobileOpenChange(details);
+    this.notifyMobileOpenChange(
+      createMobileOpenChangeDetails({
+        open,
+        previousOpen,
+        reason: options.reason ?? "imperative-action",
+        trigger: options.trigger,
+      }),
+    );
   }
 
   private commitOpen(open: boolean, options: SidebarSetOpenOptions = {}): void {
@@ -459,9 +481,18 @@ class SidebarController implements SidebarControllerInstance {
 
   private commitMobileOpen(open: boolean, options: SidebarSetMobileOpenOptions = {}): void {
     const previousOpen = this.mobileOpenState;
+    const commandRevision = this.mobileCommandRevision;
+    const sheetRevision = this.mobileSheetRevision;
+    const mobileSheet = this.getMobileSheet();
+    if (options.reason !== "mobile-sheet") this.dispatchMobileSheetEvent(open);
+    if (this.destroyed || commandRevision !== this.mobileCommandRevision) return;
+    // A real Sheet proposal settles synchronously before its command returns.
+    // Framework-owned Sheets can instead consume the command through their model bridge.
+    if (sheetRevision !== this.mobileSheetRevision && mobileSheet === this.getMobileSheet()) {
+      open = mobileSheet?.getAttribute("data-state") === "open";
+    }
     this.mobileOpenState = open;
     this.provider.setAttribute(SIDEBAR_MOBILE_OPEN_ATTRIBUTE, String(open));
-    this.dispatchMobileSheetEvent(open);
     this.renderControls();
 
     if (previousOpen === open || options.emit === false) return;
@@ -527,8 +558,10 @@ class SidebarController implements SidebarControllerInstance {
   }
 
   private getMobileSheet(): HTMLElement | null {
-    return this.provider.querySelector<HTMLElement>(
-      '[data-slot="sidebar-mobile"], [data-sidebar="mobile"]',
+    return (
+      this.getOwnedElements<HTMLElement>(
+        '[data-slot="sidebar-mobile"], [data-sidebar="mobile"]',
+      )[0] ?? null
     );
   }
 

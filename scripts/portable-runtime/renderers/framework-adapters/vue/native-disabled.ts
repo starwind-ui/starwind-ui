@@ -1,3 +1,4 @@
+import { renderSimpleRoot } from "../../shared-recipes/simple/frame.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -9,7 +10,7 @@ import type {
   AdapterNativeDisabledPart,
   AdapterPrintedFile,
 } from "../types.js";
-import { printVueFamilyIndex, printVueOwnedInstanceDestroy } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueNativeDisabledIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "native-disabled");
@@ -39,69 +40,7 @@ function printRoot(
   file: AdapterComponentFile,
   facts: AdapterNativeDisabledFacts,
 ): AdapterPrintedFile {
-  const disabled = facts.props.disabled.name;
-  const part = facts.parts.root;
-
-  return {
-    contents: `<script setup lang="ts">
-import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
-
-defineOptions({ inheritAttrs: false });
-
-const props = withDefaults(
-  defineProps<{
-    ${disabled}?: ${facts.props.disabled.type};
-  }>(),
-  {
-    ${disabled}: ${getDefaultValue(facts.props.disabled.defaultValue, facts.displayName, disabled)},
-  },
-);
-defineSlots<{
-  default?: () => unknown;
-}>();
-const rootRef = ref<${getElementType(part)} | null>(null);
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-
-defineExpose({
-  element: rootRef,
-});
-
-${printVueOwnedInstanceDestroy()}
-
-onMounted(() => {
-  const element = rootRef.value;
-  if (!element) throw new Error("${facts.displayName} requires its native root before Runtime setup.");
-
-  instance = ${facts.runtime.factory}(element, {
-    ${disabled}: props.${disabled},
-  });
-});
-
-watch(
-  () => props.${disabled},
-  (nextDisabled) => {
-    instance?.${facts.runtime.disabledSetter.method}(nextDisabled);
-  },
-);
-
-onBeforeUnmount(destroyOwnedInstance);
-</script>
-
-<template>
-  <${part.defaultElement}
-    ref="rootRef"
-    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
-    ${part.discoveryAttribute}
-    :${facts.attrs.stateDisabled}="props.${disabled} ? '' : undefined"
-    :${facts.attrs.disabled}="props.${disabled}"
-  >
-    <slot />
-  </${part.defaultElement}>
-</template>
-`,
-    path: `${file.path}.vue`,
-  };
+  return { path: file.path + ".vue", contents: renderSimpleRoot("vue", "fieldset", facts) };
 }
 
 function printSlotPart(
@@ -142,15 +81,4 @@ function getElementType(part: AdapterNativeDisabledPart): string {
   if (part.defaultElement === "fieldset") return "HTMLFieldSetElement";
   if (part.defaultElement === "div") return "HTMLDivElement";
   return "HTMLElement";
-}
-
-function getDefaultValue(
-  defaultValue: string | undefined,
-  displayName: string,
-  propName: string,
-): string {
-  if (defaultValue === undefined) {
-    throw new TypeError(`${displayName} ${propName} prop is missing a default value.`);
-  }
-  return defaultValue;
 }

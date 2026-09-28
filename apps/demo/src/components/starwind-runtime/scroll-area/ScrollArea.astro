@@ -14,10 +14,17 @@ import {
 
 type Props = HTMLAttributes<"div"> & {
   overflowEdgeThreshold?: number;
+  autoViewport?: boolean;
   viewportClass?: string;
 };
 
-const { overflowEdgeThreshold, viewportClass, class: className, ...rest } = Astro.props;
+const {
+  overflowEdgeThreshold,
+  autoViewport = true,
+  viewportClass,
+  class: className,
+  ...rest
+} = Astro.props;
 ---
 
 <ScrollAreaPrimitive.Root
@@ -26,14 +33,20 @@ const { overflowEdgeThreshold, viewportClass, class: className, ...rest } = Astr
   {...rest}
   data-slot="scroll-area"
 >
-  <ScrollAreaPrimitive.Viewport
-    class={scrollAreaViewport({ class: viewportClass })}
-    data-slot="scroll-area-viewport"
-  >
-    <ScrollAreaPrimitive.Content class={scrollAreaContent()} data-slot="scroll-area-content">
+  {
+    autoViewport ? (
+      <ScrollAreaPrimitive.Viewport
+        class={scrollAreaViewport({ class: viewportClass })}
+        data-slot="scroll-area-viewport"
+      >
+        <ScrollAreaPrimitive.Content class={scrollAreaContent()} data-slot="scroll-area-content">
+          <slot />
+        </ScrollAreaPrimitive.Content>
+      </ScrollAreaPrimitive.Viewport>
+    ) : (
       <slot />
-    </ScrollAreaPrimitive.Content>
-  </ScrollAreaPrimitive.Viewport>
+    )
+  }
 
   <slot name="scrollbar">
     <ScrollAreaPrimitive.Scrollbar class={scrollAreaScrollbar()} data-slot="scroll-area-scrollbar">

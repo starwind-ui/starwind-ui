@@ -1,3 +1,4 @@
+import { formReactiveProps } from "../../../contracts/primitive/components/form.js";
 import type {
   AdapterComponentFile,
   AdapterFormFieldCoordinatorFacts,
@@ -138,7 +139,9 @@ function isFormFieldCoordinatorOutputModelPlan(plan: GenericAdapterPlan): boolea
   const partNames = plan.parts.map((part) => part.name);
   const rootPart = plan.parts.find((part) => part.name === "root");
   const errorSummaryPart = plan.parts.find((part) => part.name === "error-summary");
-  const propNames = plan.props.map((prop) => prop.name);
+  const propNames = plan.props
+    .map((prop) => prop.name)
+    .filter((name) => !formReactiveProps.some((prop) => prop.name === name));
 
   return (
     hasExactNames(partNames, ["root", "error-summary"]) &&

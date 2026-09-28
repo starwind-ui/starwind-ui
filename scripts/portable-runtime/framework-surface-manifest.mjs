@@ -18,7 +18,7 @@ import {
   generateFrameworkStyledWrappers,
 } from "./renderers/framework-wrapper-generator.js";
 
-const TARGETS = ["astro", "react", "vue"];
+const TARGETS = ["astro", "react", "vue", "svelte"];
 const PORTAL_FAMILIES = [
   "alert-dialog",
   "combobox",
@@ -64,27 +64,34 @@ const EXPECTED_RENDERED_STYLED_PORTAL_SLOTS = {
 };
 // Follow-up: move rendered extensions and helper-file classification into target registration
 // metadata. Current registrations do not expose these output anatomy facts.
-const RENDERED_EXTENSIONS = { astro: ".astro", react: ".tsx", vue: ".vue" };
+const RENDERED_EXTENSIONS = { astro: ".astro", react: ".tsx", vue: ".vue", svelte: ".svelte" };
 const EXPECTED_COUNTS = {
   astro: {
     familySubpaths: 37,
     namespaceParts: 242,
     renderedPrimitivePaths: 227,
-    styledNormalizedPaths: 395,
+    styledNormalizedPaths: 396,
     styledRoots: 55,
   },
   react: {
     familySubpaths: 37,
     namespaceParts: 242,
     renderedPrimitivePaths: 226,
-    styledNormalizedPaths: 392,
+    styledNormalizedPaths: 393,
     styledRoots: 54,
   },
   vue: {
     familySubpaths: 37,
     namespaceParts: 242,
     renderedPrimitivePaths: 226,
-    styledNormalizedPaths: 392,
+    styledNormalizedPaths: 393,
+    styledRoots: 54,
+  },
+  svelte: {
+    familySubpaths: 37,
+    namespaceParts: 242,
+    renderedPrimitivePaths: 226,
+    styledNormalizedPaths: 393,
     styledRoots: 54,
   },
 };
@@ -108,11 +115,18 @@ export const approvedFrameworkSurfaceExceptions = Object.freeze([
 
 const plannedCorrections = Object.freeze([]);
 
+// Let every writer settle before cleanup when one target rejects its contract.
+async function finishGeneration(tasks) {
+  const results = await Promise.allSettled(tasks);
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure) throw failure.reason;
+}
+
 export async function buildFrameworkSurfaceManifest({ repoRoot = process.cwd() } = {}) {
   const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-framework-surface-"));
 
   try {
-    await Promise.all(
+    await finishGeneration(
       TARGETS.map((target) =>
         generateFrameworkPrimitiveWrappers(target, {
           generatedBy: "scripts/portable-runtime/framework-surface-manifest.mjs",
@@ -121,7 +135,7 @@ export async function buildFrameworkSurfaceManifest({ repoRoot = process.cwd() }
       ),
     );
 
-    await Promise.all(
+    await finishGeneration(
       TARGETS.map((target) =>
         generateFrameworkStyledWrappers(target, {
           contracts: starwindStyledContracts,
@@ -461,6 +475,11 @@ export function assertFrameworkSurfaceManifest(manifest) {
     "React and Vue rendered Primitive paths",
   );
   assertDeepEqual(
+    manifest.targets.react.primitive.renderedPaths,
+    manifest.targets.svelte.primitive.renderedPaths,
+    "React and Svelte rendered Primitive paths",
+  );
+  assertDeepEqual(
     manifest.targets.astro.familySubpaths,
     manifest.targets.react.familySubpaths,
     "Astro and React family subpaths",
@@ -471,14 +490,29 @@ export function assertFrameworkSurfaceManifest(manifest) {
     "React and Vue family subpaths",
   );
   assertDeepEqual(
+    manifest.targets.react.familySubpaths,
+    manifest.targets.svelte.familySubpaths,
+    "React and Svelte family subpaths",
+  );
+  assertDeepEqual(
     manifest.targets.react.styled.roots,
     manifest.targets.vue.styled.roots,
     "React and Vue Styled roots",
   );
   assertDeepEqual(
+    manifest.targets.react.styled.roots,
+    manifest.targets.svelte.styled.roots,
+    "React and Svelte Styled roots",
+  );
+  assertDeepEqual(
     manifest.targets.react.styled.normalizedPaths,
     manifest.targets.vue.styled.normalizedPaths,
     "React and Vue normalized Styled paths",
+  );
+  assertDeepEqual(
+    manifest.targets.react.styled.normalizedPaths,
+    manifest.targets.svelte.styled.normalizedPaths,
+    "React and Svelte normalized Styled paths",
   );
   assertDeepEqual(
     manifest.targets.astro.styled.roots.filter((root) => root !== "image"),
@@ -498,6 +532,12 @@ export function assertFrameworkSurfaceManifest(manifest) {
     const vue = manifest.targets.vue.primitive.namespaces[component];
     assertDeepEqual(astro, react, `Astro and React ${component} namespace order`);
     assertDeepEqual(vue, react, `React and Vue ${component} namespace order`);
+    // Svelte namespace property order differs; named part availability must match.
+    assertDeepEqual(
+      [...manifest.targets.svelte.primitive.namespaces[component]].sort(),
+      [...react].sort(),
+      `React and Svelte ${component} namespace members`,
+    );
   }
 
   for (const component of ["menu", "navigation-menu"]) {
@@ -518,6 +558,11 @@ export function assertFrameworkSurfaceManifest(manifest) {
     manifest.targets.vue.primitive.parts,
     "React and Vue part contracts",
   );
+  assertDeepEqual(
+    manifest.targets.react.primitive.parts,
+    manifest.targets.svelte.primitive.parts,
+    "React and Svelte part contracts",
+  );
   const portablePortalAnatomy = (target) =>
     manifest.targets[target].primitive.portalAnatomy.map(
       ({
@@ -532,11 +577,13 @@ export function assertFrameworkSurfaceManifest(manifest) {
     portablePortalAnatomy("react"),
     "Astro and React portable Portal anatomy",
   );
-  assertDeepEqual(
-    portablePortalAnatomy("react"),
-    portablePortalAnatomy("vue"),
-    "React and Vue portable Portal anatomy",
-  );
+  for (const target of ["vue", "svelte"]) {
+    assertDeepEqual(
+      portablePortalAnatomy("react"),
+      portablePortalAnatomy(target),
+      `React and ${target} portable Portal anatomy`,
+    );
+  }
   assertDeepEqual(
     manifest.targets.astro.styled.portalControls,
     manifest.targets.react.styled.portalControls,
@@ -546,6 +593,11 @@ export function assertFrameworkSurfaceManifest(manifest) {
     manifest.targets.react.styled.portalControls,
     manifest.targets.vue.styled.portalControls,
     "React and Vue Styled portal controls",
+  );
+  assertDeepEqual(
+    manifest.targets.react.styled.portalControls,
+    manifest.targets.svelte.styled.portalControls,
+    "React and Svelte Styled portal controls",
   );
 }
 
@@ -578,9 +630,9 @@ function collectDifferences(expected, actual, location, differences) {
 }
 
 function parseNamespace(source) {
-  const match = source.match(/const\s+([A-Za-z0-9_$]+)\s*=\s*\{([\s\S]*?)\n\};/);
+  const match = source.match(/const\s+([A-Za-z0-9_$]+)\s*=\s*\{([\s\S]*?)\};/);
   if (!match) return undefined;
-  const entries = [...match[2].matchAll(/^\s*([A-Za-z0-9_$]+)\s*:\s*([A-Za-z0-9_$]+)/gm)];
+  const entries = [...match[2].matchAll(/(?:^|,)\s*([A-Za-z0-9_$]+)\s*:\s*([A-Za-z0-9_$]+)/g)];
   return {
     name: match[1],
     members: entries.map((entry) => entry[1]),
@@ -655,14 +707,14 @@ function parsePublicExports(source) {
     }
   }
   for (const match of source.matchAll(
-    /^export\s+(?:async\s+)?(?:function|const|class)\s+([A-Za-z0-9_$]+)/gm,
+    /\bexport\s+(?:async\s+)?(?:function|const|class)\s+([A-Za-z0-9_$]+)/gm,
   )) {
     values.push(match[1]);
   }
-  for (const match of source.matchAll(/^export\s+(?:interface|type)\s+([A-Za-z0-9_$]+)/gm)) {
+  for (const match of source.matchAll(/\bexport\s+(?:interface|type)\s+([A-Za-z0-9_$]+)/gm)) {
     types.push(match[1]);
   }
-  for (const match of source.matchAll(/^export\s+default\s+([A-Za-z0-9_$]+)\s*;/gm)) {
+  for (const match of source.matchAll(/\bexport\s+default\s+([A-Za-z0-9_$]+)\s*;/gm)) {
     defaults.push(match[1]);
   }
   return {
@@ -687,28 +739,28 @@ function isRenderedPrimitivePath(target, file, runtimeEntries) {
 }
 
 function normalizeRenderedPath(file) {
-  return file.replace(/\.(?:astro|tsx|vue)$/, "");
+  return file.replace(/\.(?:astro|tsx|vue|svelte)$/, "");
 }
 
 function normalizeStyledPath(file) {
-  return file.replace(/\.(?:astro|tsx|vue)$/, ".component");
+  return file.replace(/\.(?:astro|tsx|vue|svelte)$/, ".component");
 }
 
 async function inspectStyledPortalControls(styledRoot, styledFiles) {
   const directOwners = [];
   const composedOwners = [];
   const renderedPortalSlots = {};
-  const primitivePortalPattern = /<[A-Za-z]+Primitive\.(?:[A-Za-z]+)?Portal\b/;
+  const primitivePortalPattern = /<(?:[A-Za-z]+Primitive\.(?:[A-Za-z]+)?Portal|[A-Za-z]+Portal)\b/;
 
   for (const file of styledFiles) {
-    if (!/\.(?:astro|tsx|vue)$/.test(file)) continue;
+    if (!/\.(?:astro|tsx|vue|svelte)$/.test(file)) continue;
     const source = await readFile(path.join(styledRoot, file), "utf8");
     if (!PORTABLE_STYLED_PORTAL_PROPS.every((prop) => source.includes(prop))) continue;
     const owner = normalizeStyledPath(file);
     if (primitivePortalPattern.test(source)) {
       directOwners.push(owner);
       renderedPortalSlots[owner] = unique(
-        [...source.matchAll(/data-slot="([^"]*-portal)"/g)].map((match) => match[1]),
+        [...source.matchAll(/data-slot=\{?"([^"]*-portal)"\}?/g)].map((match) => match[1]),
       ).sort();
     } else {
       composedOwners.push(owner);

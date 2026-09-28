@@ -1,3 +1,4 @@
+import { verifyAvatarGroupCases } from "../shared/avatar-group.mjs";
 import {
   verifyTooltipCompositionCases,
   verifyTooltipPlacements,
@@ -199,7 +200,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     };
   });
   if (
-    avatarState.rootCount !== 7 ||
+    avatarState.rootCount !== 16 ||
     avatarState.loadedRootTagName !== "SPAN" ||
     avatarState.loadedRootDataSlot !== "avatar" ||
     avatarState.loadedRootHasDataSw !== true ||
@@ -268,6 +269,8 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
       )}.`,
     );
   }
+
+  await verifyAvatarGroupCases({ page });
 
   const kbdCount = await page.locator('kbd[data-slot="kbd"][data-sw-kbd]').count();
   const kbdGroupCount = await page.locator('kbd[data-slot="kbd-group"][data-sw-kbd-group]').count();

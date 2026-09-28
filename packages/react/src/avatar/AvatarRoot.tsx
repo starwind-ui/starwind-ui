@@ -10,11 +10,24 @@ import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
+export const MediaStatusContext = React.createContext<(() => void) | undefined>(undefined);
+
 export type AvatarRootProps = React.HTMLAttributes<HTMLSpanElement>;
 
 const AvatarRoot = React.forwardRef<HTMLSpanElement, AvatarRootProps>(
   function AvatarRoot(props, forwardedRef) {
     const rootRef = React.useRef<HTMLSpanElement>(null);
+    const instanceRef = React.useRef<ReturnType<typeof createAvatar> | undefined>(undefined);
+    const refreshPending = React.useRef(false);
+    const requestRefresh = React.useCallback(() => {
+      const owner = instanceRef.current;
+      if (!owner || refreshPending.current) return;
+      refreshPending.current = true;
+      queueMicrotask(() => {
+        refreshPending.current = false;
+        if (instanceRef.current === owner && rootRef.current === owner.root) owner.refresh();
+      });
+    }, []);
 
     const composedRef = React.useCallback(
       (node: HTMLSpanElement | null) => {
@@ -29,13 +42,19 @@ const AvatarRoot = React.forwardRef<HTMLSpanElement, AvatarRootProps>(
       if (!root) return;
 
       const instance = createAvatar(root);
+      instanceRef.current = instance;
 
       return () => {
+        instanceRef.current = undefined;
         instance.destroy();
       };
     }, []);
 
-    return <span data-sw-avatar data-image-loading-status="idle" ref={composedRef} {...props} />;
+    return (
+      <MediaStatusContext.Provider value={requestRefresh}>
+        <span data-sw-avatar data-image-loading-status="idle" ref={composedRef} {...props} />
+      </MediaStatusContext.Provider>
+    );
   },
 );
 

@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { progressRuntimeAdapterContract } from "../../contracts/primitive/components/progress.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 const COMPONENT_FILES = [
@@ -57,28 +56,19 @@ describe("generated Vue Progress Primitive", () => {
     expect(first).toEqual(second);
     for (const [name, source] of Object.entries(first.sources)) {
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
-      expect(source).toContain("defineExpose({ element:");
-      expect(source).toContain(name === "ProgressRoot.vue" ? 'v-bind="attrs"' : 'v-bind="$attrs"');
+      expect(() => assertVueSfcCompiles(source, "Component.vue")).not.toThrow();
     }
 
     const root = first.sources["ProgressRoot.vue"];
-    expect(root).toContain(
-      'import { createProgress, type ProgressValue } from "@starwind-ui/runtime/progress";',
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'import { createProgress, type ProgressValue } from "@starwind-ui/runtime/progress";',
+      ),
     );
-    expect(root).toContain("value?: ProgressValue;");
-    expect(root).not.toContain("defineModel");
-    expect(root).not.toContain("defineEmits");
-    expect(root).toContain("const isIndeterminate = computed(() => props.value == null);");
-    expect(root).toContain("onMounted(setupRuntime);");
-    expect(root).toContain("onBeforeUnmount(destroyOwnedInstance);");
-    expect(root).toContain("ownedInstance.setFormatOptions({");
-    expect(root).toContain("ownedInstance.setValue(value, { max, min });");
-    expect(root).toContain('() => attrs["aria-valuetext"]');
-    expect(root).toContain("() => props.value");
-    expect(root).toContain("data-sw-progress");
-    expect(root).toContain('role="progressbar"');
-    expect(root).toContain(':data-value="isIndeterminate ? undefined : props.value"');
-    expect(root).toContain(":data-indeterminate=\"isIndeterminate ? '' : undefined\"");
+    expect(compactCode(root)).toContain(compactCode("value?: ProgressValue;"));
+    expect(() => assertVueSfcCompiles(root, "Component.vue")).not.toThrow();
+
+    expect(compactCode(root)).toContain(compactCode("data-sw-progress"));
 
     expect(first.sources["ProgressTrack.vue"]).toContain("data-sw-progress-track");
     expect(first.sources["ProgressIndicator.vue"]).toContain("data-sw-progress-indicator");

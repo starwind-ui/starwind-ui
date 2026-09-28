@@ -26,12 +26,13 @@ const SidebarTrigger = React.forwardRef<HTMLElement, SidebarTriggerProps>(functi
   const sidebarContext = useSidebarContext();
   const protectedTriggerProps = {
     "data-sw-sidebar-trigger": "",
-    "aria-expanded": sidebarContext?.expanded ?? false,
+    "data-sw-part": "trigger",
     "data-state": sidebarContext?.state ?? "expanded",
+    "aria-expanded": sidebarContext?.expanded ?? false,
   } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
   const triggerProps = {
-    ...protectedTriggerProps,
     ...props,
+    ...protectedTriggerProps,
   } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
 
   const asChildElement = getAsChildElement(children);

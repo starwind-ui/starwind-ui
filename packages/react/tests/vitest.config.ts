@@ -1,8 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { defineConfig } from "vitest/config";
 import { playwright } from "@vitest/browser-playwright";
+import { defineConfig } from "vitest/config";
 
 import { createSourceBackedRuntimeAliases } from "./source-backed-runtime-aliases";
 
@@ -10,6 +9,10 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const resolve = {
   alias: [
     ...createSourceBackedRuntimeAliases(repoRoot),
+    ...["alert-dialog", "button", "dialog", "drawer", "sidebar"].map((component) => ({
+      find: `@starwind-ui/react/${component}`,
+      replacement: path.join(repoRoot, `packages/react/src/${component}/index.ts`),
+    })),
     {
       find: "@starwind-ui/react/color-picker",
       replacement: path.join(repoRoot, "packages/react/src/color-picker/index.ts"),

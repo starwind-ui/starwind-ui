@@ -1,6 +1,4 @@
-import { createApp, h, nextTick, reactive, ref } from "vue";
-import { afterEach, describe, expect, it } from "vitest";
-
+import { createPopover } from "@starwind-ui/runtime/popover";
 import {
   PopoverBackdrop,
   PopoverClose,
@@ -12,6 +10,17 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@starwind-ui/vue/popover";
+import {
+  TooltipPopup,
+  TooltipPortal,
+  TooltipPositioner,
+  TooltipRoot,
+  TooltipTrigger,
+} from "@starwind-ui/vue/tooltip";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick, reactive, ref } from "vue";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
+import { testOverlayCommandAuthority } from "../popover/command-authority.js";
 
 const cleanups: Array<() => void> = [];
 
@@ -19,9 +28,107 @@ afterEach(() => {
   for (const cleanup of cleanups.splice(0)) cleanup();
   document.body.innerHTML = "";
   document.body.removeAttribute("data-sw-scroll-locked");
+  vi.restoreAllMocks();
 });
 
 describe("Vue Popover browser contract", () => {
+  it("shares document observation across portal families and releases unused subscriptions", async () => {
+    const observers = trackPortalDocumentObservers();
+    const state = reactive({ count: 3, disabled: false, tooltip: true });
+    mount(
+      h({
+        render: () =>
+          h("div", [
+            ...Array.from({ length: state.count }, (_, key) =>
+              tree({ key }, { container: "#shared-vue-target", disabled: state.disabled }),
+            ),
+            state.tooltip
+              ? h(TooltipRoot, null, {
+                  default: () => [
+                    h(TooltipTrigger, null, { default: () => "Tooltip" }),
+                    h(
+                      TooltipPortal,
+                      { container: "#shared-vue-target" },
+                      {
+                        default: () =>
+                          h(TooltipPositioner, null, {
+                            default: () => h(TooltipPopup, null, { default: () => "Details" }),
+                          }),
+                      },
+                    ),
+                  ],
+                })
+              : null,
+          ]),
+      }),
+    );
+    await waitForFloating();
+    expect(document.querySelectorAll('[data-sw-portal-placement="framework"]')).toHaveLength(4);
+    expect(observers.size).toBe(1);
+    const sharedObserver = [...observers.keys()][0];
+
+    state.count = 1;
+    await waitForFloating();
+    expect([...observers.keys()]).toEqual([sharedObserver]);
+
+    const target = document.createElement("section");
+    target.id = "shared-vue-target";
+    document.body.append(target);
+    await waitForFloating();
+    expect(target.querySelectorAll('[data-sw-portal-placement="framework"]')).toHaveLength(2);
+    expect(observers.size).toBe(1);
+
+    target.remove();
+    await waitForFloating();
+    expect(
+      document.body.querySelectorAll(':scope > [data-sw-portal-placement="framework"]'),
+    ).toHaveLength(2);
+
+    state.disabled = true;
+    state.tooltip = false;
+    await waitForFloating();
+    expect(observers.size).toBe(0);
+
+    state.disabled = false;
+    await waitForFloating();
+    expect(observers.size).toBe(1);
+    state.count = 0;
+    await waitForFloating();
+    expect(observers.size).toBe(0);
+  });
+
+  it("keeps shared portal observation separate for each owner document", async () => {
+    const observers = trackPortalDocumentObservers();
+    const showFirst = ref(true);
+    mount(h({ render: () => (showFirst.value ? tree() : null) }));
+
+    const otherDocument = document.implementation.createHTMLDocument("Vue portal owner");
+    const otherHost = otherDocument.createElement("div");
+    otherDocument.body.append(otherHost);
+    const showOther = ref(true);
+    const otherApp = createApp({
+      render: () => (showOther.value ? tree({}, { container: "#other-vue-target" }) : null),
+    });
+    otherApp.mount(otherHost);
+    cleanups.push(() => otherApp.unmount());
+    await waitForFloating();
+    expect(observers.size).toBe(2);
+    expect([...observers.values()]).toEqual(expect.arrayContaining([document, otherDocument]));
+
+    showFirst.value = false;
+    await waitForFloating();
+    expect([...observers.values()]).toEqual([otherDocument]);
+
+    const target = otherDocument.createElement("section");
+    target.id = "other-vue-target";
+    otherDocument.body.append(target);
+    await waitForFloating();
+    expect(target.querySelector("[data-sw-popover-portal]")).not.toBeNull();
+    showOther.value = false;
+    await waitForFloating();
+    expect(observers.size).toBe(0);
+  });
+
   it("orders cancelable details before the named model and supports default open", async () => {
     const events: string[] = [];
     let cancel = true;
@@ -182,79 +289,88 @@ describe("Vue Popover browser contract", () => {
     expect(wrapper().contains(positioner())).toBe(true);
   });
 
-  it("teleports directly to the nearest ancestor floating root on first placement", async () => {
-    const overlays = document.createElement("section");
-    document.body.append(overlays);
-    const host = mount(
-      h(
-        PopoverRoot,
-        { defaultOpen: true },
-        {
-          default: () => [
-            h(PopoverTrigger, { id: "nested-parent-trigger" }, { default: () => "Parent" }),
-            h(
-              PopoverPortal,
-              { container: overlays, id: "nested-parent-portal" },
-              {
-                default: () =>
-                  h(PopoverPositioner, null, {
-                    default: () =>
-                      h(
-                        PopoverPopup,
-                        { id: "nested-parent-popup" },
-                        {
-                          default: () =>
-                            h(PopoverRoot, null, {
-                              default: () => [
-                                h(
-                                  PopoverTrigger,
-                                  { id: "nested-child-trigger" },
-                                  { default: () => "Child" },
-                                ),
-                                h(
-                                  PopoverPortal,
-                                  { id: "nested-child-portal" },
-                                  {
-                                    default: () =>
-                                      h(PopoverPositioner, null, {
-                                        default: () =>
-                                          h(PopoverPopup, { id: "nested-child-popup" }),
-                                      }),
-                                  },
-                                ),
-                              ],
-                            }),
-                        },
-                      ),
-                  }),
-              },
-            ),
-          ],
-        },
-      ),
-    );
-    await waitForFloating();
+  it.each([false, true])(
+    "uses only explicit ancestor floating roots (host=%s)",
+    async (explicitHost) => {
+      const overlays = document.createElement("section");
+      document.body.append(overlays);
+      const host = mount(
+        h(
+          PopoverRoot,
+          { defaultOpen: true },
+          {
+            default: () => [
+              h(PopoverTrigger, { id: "nested-parent-trigger" }, { default: () => "Parent" }),
+              h(
+                PopoverPortal,
+                {
+                  container: overlays,
+                  id: "nested-parent-portal",
+                  "data-floating-root": explicitHost ? "" : undefined,
+                },
+                {
+                  default: () =>
+                    h(PopoverPositioner, null, {
+                      default: () =>
+                        h(
+                          PopoverPopup,
+                          { id: "nested-parent-popup" },
+                          {
+                            default: () =>
+                              h(PopoverRoot, null, {
+                                default: () => [
+                                  h(
+                                    PopoverTrigger,
+                                    { id: "nested-child-trigger" },
+                                    { default: () => "Child" },
+                                  ),
+                                  h(
+                                    PopoverPortal,
+                                    { id: "nested-child-portal" },
+                                    {
+                                      default: () =>
+                                        h(PopoverPositioner, null, {
+                                          default: () =>
+                                            h(PopoverPopup, { id: "nested-child-popup" }),
+                                        }),
+                                    },
+                                  ),
+                                ],
+                              }),
+                          },
+                        ),
+                    }),
+                },
+              ),
+            ],
+          },
+        ),
+      );
+      await waitForFloating();
 
-    const parentPortal = overlays.querySelector<HTMLElement>("#nested-parent-portal")!;
-    const childPortal = document.querySelector<HTMLElement>("#nested-child-portal")!;
-    const childPositioner = childPortal.querySelector<HTMLElement>("[data-sw-popover-positioner]")!;
-    expect(childPortal.parentElement).toBe(parentPortal);
-    expect(childPortal.dataset.container).toBeUndefined();
-    expect(childPortal.dataset.placement).toBe("ready");
-    expect(childPortal.contains(childPositioner)).toBe(true);
+      const parentPortal = overlays.querySelector<HTMLElement>("#nested-parent-portal")!;
+      const childPortal = document.querySelector<HTMLElement>("#nested-child-portal")!;
+      const childPositioner = childPortal.querySelector<HTMLElement>(
+        "[data-sw-popover-positioner]",
+      )!;
+      expect(childPortal.parentElement).toBe(explicitHost ? parentPortal : document.body);
+      expect(childPortal.dataset.container).toBeUndefined();
+      expect(childPortal.dataset.placement).toBe("ready");
+      expect(childPortal.contains(childPositioner)).toBe(true);
 
-    host.ownerDocument.querySelector<HTMLButtonElement>("#nested-child-trigger")!.click();
-    await waitForFloating();
-    expect(childPositioner.style.left).not.toBe("");
-    expect(childPositioner.style.top).not.toBe("");
+      host.ownerDocument.querySelector<HTMLButtonElement>("#nested-child-trigger")!.click();
+      await waitForFloating();
+      expect(childPositioner.style.left).not.toBe("");
+      expect(childPositioner.style.top).not.toBe("");
 
-    document.dispatchEvent(
-      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
-    );
-    await nextTick();
-    expect(document.querySelector<HTMLElement>("#nested-child-popup")!.hidden).toBe(true);
-    expect(overlays.querySelector<HTMLElement>("#nested-parent-popup")!.hidden).toBe(false);
-  });
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+      await nextTick();
+      expect(document.querySelector<HTMLElement>("#nested-child-popup")!.hidden).toBe(true);
+      expect(overlays.querySelector<HTMLElement>("#nested-parent-popup")!.hidden).toBe(false);
+    },
+  );
 
   it("completes inline readiness and resumes placement across live disabled toggles", async () => {
     const state = reactive({ disabled: false });
@@ -484,3 +600,39 @@ async function waitForFloating(): Promise<void> {
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   await nextTick();
 }
+
+function trackPortalDocumentObservers(): Map<MutationObserver, Document> {
+  const observers = new Map<MutationObserver, Document>();
+  const nativeObserve = MutationObserver.prototype.observe;
+  const nativeDisconnect = MutationObserver.prototype.disconnect;
+  vi.spyOn(MutationObserver.prototype, "observe").mockImplementation(function (
+    this: MutationObserver,
+    target,
+    options,
+  ) {
+    if (target.nodeType === Node.DOCUMENT_NODE) observers.set(this, target as Document);
+    nativeObserve.call(this, target, options);
+  });
+  vi.spyOn(MutationObserver.prototype, "disconnect").mockImplementation(function (
+    this: MutationObserver,
+  ) {
+    observers.delete(this);
+    nativeDisconnect.call(this);
+  });
+  return observers;
+}
+
+testAcceptedModelPublication({
+  name: "popover",
+  model: "open",
+  proposal: "onOpenChange",
+  domEvent: "starwind:open-change",
+  initial: false,
+  accepted: true,
+  tree: () => tree({}, { disabled: true }),
+  root: "[data-sw-popover]",
+  act: (root) => root.querySelector<HTMLElement>("[data-sw-popover-trigger]")!.click(),
+  read: (root) => root.getAttribute("data-state") === "open",
+});
+
+testOverlayCommandAuthority({ name: "popover", tree: tree, controller: createPopover, cleanups });

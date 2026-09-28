@@ -9,18 +9,21 @@ defineOptions({ inheritAttrs: false });
 
 export type ColorPickerChannelSliderProps = Omit<
   HTMLAttributes,
-  "channel" | "class" | "orientation"
+  "channel" | "class" | "orientation" | "step"
 > & {
+  step?: number;
   channel: import("@starwind-ui/runtime/color-picker").ColorPickerChannel;
   orientation?: "horizontal" | "vertical";
   class?: ClassValue;
 };
 type ColorPickerChannelSliderDeclaredProps = {
+  step?: number;
   channel: import("@starwind-ui/runtime/color-picker").ColorPickerChannel;
   orientation?: "horizontal" | "vertical";
   class?: ClassValue;
 } & /* @vue-ignore */ ColorPickerChannelSliderProps;
 const {
+  step,
   channel,
   orientation = "horizontal",
   class: className,
@@ -31,6 +34,7 @@ defineSlots<{}>();
 <template>
   <ColorPickerPrimitive.ColorPickerChannelSlider
     :channel="channel"
+    :step="step"
     :orientation="orientation"
     :class="colorPickerChannelSlider({ class: className })"
     v-bind="$attrs"

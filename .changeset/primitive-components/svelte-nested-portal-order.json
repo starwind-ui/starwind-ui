@@ -1,0 +1,14 @@
+{
+  "primitives": {
+    "alert-dialog": "patch",
+    "combobox": "patch",
+    "drawer": "patch",
+    "menu": "patch",
+    "navigation-menu": "patch",
+    "popover": "patch",
+    "preview-card": "patch",
+    "select": "patch",
+    "tooltip": "patch"
+  },
+  "impact": "behavior"
+}

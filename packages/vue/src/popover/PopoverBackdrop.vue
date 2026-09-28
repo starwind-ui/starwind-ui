@@ -16,10 +16,10 @@ defineExpose({ element });
   <div
     ref="element"
     v-bind="$attrs"
-    data-sw-popover-backdrop
-    data-sw-part="backdrop"
+    data-sw-popover-backdrop=""
     data-state="closed"
     hidden
+    data-sw-part="backdrop"
   >
     <slot />
   </div>

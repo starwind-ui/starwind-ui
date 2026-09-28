@@ -5,6 +5,7 @@ import AlertDialogPortal from "../src/alert-dialog/AlertDialogPortal";
 import ComboboxPortal from "../src/combobox/ComboboxPortal";
 import DrawerPortal from "../src/drawer/DrawerPortal";
 import MenuPortal from "../src/menu/MenuPortal";
+import NavigationMenuContent from "../src/navigation-menu/NavigationMenuContent";
 import NavigationMenuPortal from "../src/navigation-menu/NavigationMenuPortal";
 import PopoverPortal from "../src/popover/PopoverPortal";
 import PreviewCardPortal from "../src/preview-card/PreviewCardPortal";
@@ -24,6 +25,17 @@ const portalParts = [
 ] as const;
 
 describe("React Portal server projection", () => {
+  it("renders Navigation Menu Content inside a deterministic layout-neutral owner", () => {
+    const html = renderToString(
+      <NavigationMenuContent id="content" data-slot="navigation-content" aria-label="Products">
+        <a href="#products">Products</a>
+      </NavigationMenuContent>,
+    );
+    expect(html).toBe(
+      '<div style="display:contents"><div data-sw-nav-menu-content="" data-state="closed" hidden="" id="content" data-slot="navigation-content" aria-label="Products"><a href="#products">Products</a></div></div>',
+    );
+  });
+
   it("renders all nine public wrappers inline with deterministic pending placement", () => {
     const html = renderToString(
       <main data-ticket08-ssr-root>

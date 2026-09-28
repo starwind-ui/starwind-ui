@@ -14,6 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@starwind-ui/vue/select";
+import {
+  Select as StyledSelect,
+  SelectTrigger as StyledSelectTrigger,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/select";
 
 describe("Vue Select SSR", () => {
   it("server-renders deterministic local portal, form, collection and presence markup", async () => {
@@ -80,12 +84,52 @@ describe("Vue Select SSR", () => {
     expect(first).toContain('name="fruit"');
     expect(first).toContain("data-sw-select-input");
     expect(first).toContain("data-sw-select-portal");
-    expect(first).toContain("data-floating-root");
+    expect(first).not.toContain("data-floating-root");
     expect(first).toContain("data-sw-select-popup");
     expect(first).toContain(" hidden");
     expect(first).toContain('aria-selected="true"');
     expect(first).toContain("data-sw-select-item-indicator");
     expect(first).toContain("teleport start");
     expect(first).toContain("teleport end");
+  });
+
+  it("server-renders direct Primitive and Styled composed triggers without wrappers", async () => {
+    const primitive = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(SelectRoot, null, {
+            default: () =>
+              h(
+                SelectTrigger,
+                { asChild: true, class: "primitive-adapter" },
+                {
+                  default: () => h("a", { class: "primitive-child", href: "#fruit" }, "Choose"),
+                },
+              ),
+          }),
+      }),
+    );
+    const styled = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(StyledSelect, null, {
+            default: () =>
+              h(
+                StyledSelectTrigger,
+                { asChild: true, class: "styled-adapter" },
+                {
+                  default: () => h("a", { class: "styled-child", href: "#fruit" }, "Choose"),
+                },
+              ),
+          }),
+      }),
+    );
+
+    expect(primitive).toMatch(/<a[^>]*data-sw-select-trigger[^>]*>Choose<\/a>/);
+    expect(primitive).toContain("primitive-adapter");
+    expect(primitive).toContain("primitive-child");
+    expect(styled).toMatch(/<a[^>]*data-slot="select-trigger"[^>]*>Choose<\/a>/);
+    expect(styled).toContain("styled-adapter");
+    expect(styled).toContain("styled-child");
   });
 });

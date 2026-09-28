@@ -6,37 +6,23 @@
 "use client";
 
 import * as React from "react";
-import { setRef } from "../internal/compose-refs";
-
-export type RadioIndicatorProps = React.HTMLAttributes<HTMLSpanElement> & {
-  keepMounted?: boolean;
-};
-
+export type RadioIndicatorProps = React.HTMLAttributes<HTMLSpanElement> & { keepMounted?: boolean };
 const RadioIndicator = React.forwardRef<HTMLSpanElement, RadioIndicatorProps>(
-  function RadioIndicator({ hidden, keepMounted = false, ...props }, forwardedRef) {
-    const composedRef = React.useCallback(
-      (node: HTMLSpanElement | null) => {
-        if (node) {
-          node.hidden = hidden ?? !keepMounted;
-        }
-
-        return setRef(forwardedRef, node);
-      },
-      [forwardedRef, hidden, keepMounted],
-    );
-
+  function RadioIndicator({ children, keepMounted = false, ...rest }, ref) {
     return (
       <span
-        data-sw-radio-indicator
-        data-keep-mounted={keepMounted ? "true" : undefined}
-        data-unchecked
-        ref={composedRef}
-        {...props}
-      />
+        {...rest}
+        ref={ref}
+        data-sw-radio-indicator=""
+        data-sw-part="indicator"
+        data-keep-mounted={keepMounted ? "" : undefined}
+        data-unchecked=""
+        hidden={!keepMounted}
+      >
+        {children}
+      </span>
     );
   },
 );
-
 RadioIndicator.displayName = "Radio.Indicator";
-
 export default RadioIndicator;

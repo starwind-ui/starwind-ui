@@ -55,6 +55,7 @@ export type PreviewCardOptions = {
 
 export type PreviewCardSetOpenOptions = {
   emit?: boolean;
+  trigger?: HTMLElement;
 };
 
 export type PreviewCardInstance = {
@@ -231,16 +232,20 @@ class PreviewCardController implements PreviewCardInstance {
   }
 
   setOpen(open: boolean, options: PreviewCardSetOpenOptions = {}): void {
+    const trigger = this.isInternalTrigger(options.trigger)
+      ? options.trigger
+      : this.getConnectedActiveTrigger();
     if (options.emit !== false) {
-      this.requestOpen(open, { forceApply: true, reason: "imperative-action" });
+      this.requestOpen(open, {
+        forceApply: true,
+        reason: "imperative-action",
+        trigger: trigger ?? undefined,
+      });
       return;
     }
 
-    const previousOpen = this.openState;
     this.openState = open;
-    if (open && !this.activeTrigger) {
-      this.activeTrigger = this.elements.triggers[0] ?? null;
-    }
+    if (open) this.activeTrigger = trigger;
     this.applyOpenState(open);
   }
 
@@ -414,7 +419,10 @@ class PreviewCardController implements PreviewCardInstance {
       root: this.root,
       controlled: this.controlled && !request.forceApply,
       createDetails: createOpenChangeDetails,
-      getTrigger: (request) => request.trigger ?? this.activeTrigger ?? undefined,
+      getTrigger: (request) =>
+        open
+          ? (nextActiveTrigger ?? undefined)
+          : (request.trigger ?? this.activeTrigger ?? undefined),
       open,
       previousOpen,
       request,
@@ -649,13 +657,18 @@ class PreviewCardController implements PreviewCardInstance {
   }
 
   private isInternalTrigger(trigger: Element | undefined): trigger is HTMLElement {
-    return trigger instanceof HTMLElement && this.elements.triggers.includes(trigger);
+    return (
+      trigger instanceof HTMLElement &&
+      this.elements.triggers.includes(trigger) &&
+      trigger.isConnected &&
+      isRuntimePartOwned(this.root, trigger, `[${PREVIEW_CARD_ROOT_ATTRIBUTE}]`)
+    );
   }
 
   private getConnectedActiveTrigger(): HTMLElement | null {
-    if (this.activeTrigger?.isConnected) return this.activeTrigger;
+    if (this.isInternalTrigger(this.activeTrigger ?? undefined)) return this.activeTrigger;
 
-    return this.elements.triggers.find((trigger) => trigger.isConnected) ?? null;
+    return this.elements.triggers.find((trigger) => this.isInternalTrigger(trigger)) ?? null;
   }
 }
 

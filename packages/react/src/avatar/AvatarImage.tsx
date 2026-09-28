@@ -11,6 +11,7 @@ import type {
 } from "@starwind-ui/runtime/avatar";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import { MediaStatusContext } from "./AvatarRoot";
 
 export type AvatarImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
   alt: string;
@@ -24,6 +25,11 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(functio
   { onLoadingStatusChange, style, ...props },
   forwardedRef,
 ) {
+  const requestRefresh = React.useContext(MediaStatusContext);
+  React.useEffect(() => {
+    requestRefresh?.();
+    return () => requestRefresh?.();
+  }, [requestRefresh]);
   const imageRef = React.useRef<HTMLImageElement>(null);
   const onLoadingStatusChangeRef = React.useRef(onLoadingStatusChange);
   const hasLoadingStatusChangeCallback = onLoadingStatusChange !== undefined;
@@ -44,21 +50,18 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(functio
     if (!root) return;
 
     const handleLoadingStatusChange = (event: Event) => {
+      if (event.target !== root) return;
       const details = (event as CustomEvent<AvatarLoadingStatusChangeDetails>).detail;
       onLoadingStatusChangeRef.current?.(details.status, details);
     };
 
-    const notifyCurrentLoadingStatus = () => {
-      const status = root.getAttribute(
-        "data-image-loading-status",
-      ) as AvatarImageLoadingStatus | null;
-      if (!status || status === "idle") return;
-
-      onLoadingStatusChangeRef.current?.(status, { previousStatus: "idle", status });
-    };
-
     root.addEventListener("starwind:loading-status-change", handleLoadingStatusChange);
-    notifyCurrentLoadingStatus();
+    const status = root.getAttribute(
+      "data-image-loading-status",
+    ) as AvatarImageLoadingStatus | null;
+    if (status && status !== "idle") {
+      onLoadingStatusChangeRef.current?.(status, { previousStatus: "idle", status });
+    }
 
     return () => {
       root.removeEventListener("starwind:loading-status-change", handleLoadingStatusChange);

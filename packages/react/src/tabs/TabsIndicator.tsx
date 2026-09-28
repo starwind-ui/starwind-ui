@@ -6,27 +6,24 @@
 "use client";
 
 import * as React from "react";
-
 import { useTabsContext } from "./TabsContext";
-
-export type TabsIndicatorProps = React.HTMLAttributes<HTMLSpanElement>;
-
-const TabsIndicator = React.forwardRef<HTMLSpanElement, TabsIndicatorProps>(
-  function TabsIndicator(props, forwardedRef) {
-    const { orientation } = useTabsContext();
-
-    return (
-      <span
-        data-sw-tabs-indicator
-        data-orientation={orientation}
-        ref={forwardedRef}
-        role="presentation"
-        {...props}
-      />
-    );
-  },
-);
-
-TabsIndicator.displayName = "Tabs.Indicator";
-
+export type TabsIndicatorProps = Omit<React.ComponentPropsWithoutRef<"span">, never> & {};
+const TabsIndicator = React.forwardRef<HTMLSpanElement, TabsIndicatorProps>(function TabsIndicator(
+  { children, ...rest },
+  ref,
+) {
+  const { orientation, value: selected } = useTabsContext();
+  return (
+    <span
+      {...rest}
+      data-sw-tabs-indicator={""}
+      data-sw-part={"indicator"}
+      data-orientation={orientation}
+      role={"presentation"}
+      ref={ref}
+    >
+      {children}
+    </span>
+  );
+});
 export default TabsIndicator;

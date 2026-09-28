@@ -18,7 +18,7 @@
     "@tabler/icons": "^3.37.1",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.2.0",
-    "astro": "^7.0.0",
+    "astro": "7.2.8",
     "embla-carousel": "^8.6.0",
     "embla-carousel-autoplay": "^8.6.0",
     "tailwind-merge": "^3.5.0",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@playform/compress": "^0.2.1",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.4",
     "typescript": "^5.9.3"
   }
 }

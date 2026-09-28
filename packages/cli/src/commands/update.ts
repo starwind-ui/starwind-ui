@@ -1,13 +1,13 @@
 import * as p from "@clack/prompts";
-
-import { getConfigState, type StarwindConfigFor, type StarwindFramework } from "@/utils/config.js";
 import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
+import { getConfigState, type StarwindConfigFor, type StarwindFramework } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import {
+  type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   isConfigTarget,
-  type PrivateVueCliFrameworkTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -19,8 +19,8 @@ import {
 import {
   planRuntimeComponentUpdates,
   type RuntimeUpdateDelivery,
-  updateRuntimeComponents,
   type UpdateRuntimeComponentsOptions,
+  updateRuntimeComponents,
 } from "@/utils/runtime-component.js";
 import { sleep } from "@/utils/sleep.js";
 import { formatUpdatePreview, getPreviewMode } from "@/utils/update-preview.js";
@@ -37,18 +37,20 @@ interface UpdateOptions {
 }
 
 export type PrivateVueUpdateOptions = Omit<UpdateOptions, "framework"> & {
-  framework?: PrivateVueCliFrameworkTarget | "all";
+  framework?: CliFrameworkTarget | "all";
 };
 
 export type PrivateVueUpdateDependencies = {
-  registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+  registry: StarwindRegistryFor<CliFrameworkTarget>;
+  targetPolicy:
+    | FrameworkTargetPolicy<CliFrameworkTarget>
+    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
 };
 
 type UpdateResult = {
   delivery?: RuntimeUpdateDelivery;
   error?: string;
-  framework?: PrivateVueCliFrameworkTarget;
+  framework?: CliFrameworkTarget;
   name: string;
   newVersion?: string;
   oldVersion?: string;
@@ -73,9 +75,8 @@ export async function update(
 ): Promise<void> {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
-    const targetPolicy =
-      dependencies?.targetPolicy ??
-      (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
+    const targetPolicy = (dependencies?.targetPolicy ??
+      PUBLIC_FRAMEWORK_TARGET_POLICY) as FrameworkTargetPolicy<CliFrameworkTarget>;
     if (
       options?.framework &&
       options.framework !== "all" &&
@@ -304,10 +305,10 @@ export async function update(
 }
 
 function getInstalledComponentsForUpdate(
-  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
-  frameworkScope: PrivateVueCliFrameworkTarget | "all" | undefined,
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
-): StarwindConfigFor<PrivateVueCliFrameworkTarget>["components"] {
+  config: StarwindConfigFor<CliFrameworkTarget>,
+  frameworkScope: CliFrameworkTarget | "all" | undefined,
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>,
+): StarwindConfigFor<CliFrameworkTarget>["components"] {
   return config.components.filter((component) => {
     if (component.source === "legacy") return false;
 
@@ -322,15 +323,15 @@ function getInstalledComponentsForUpdate(
 }
 
 function getUniqueComponentNames(
-  components: StarwindConfigFor<PrivateVueCliFrameworkTarget>["components"],
+  components: StarwindConfigFor<CliFrameworkTarget>["components"],
 ): string[] {
   return [...new Set(components.map((component) => component.name))];
 }
 
 function hasMultipleInstalledFrameworks(
-  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  config: StarwindConfigFor<CliFrameworkTarget>,
   name: string,
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>,
 ): boolean {
   const frameworks = new Set(
     config.components

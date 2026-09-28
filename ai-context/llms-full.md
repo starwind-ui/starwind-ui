@@ -4,12 +4,12 @@
 
 ## Current public support
 
-The stable release supports Astro and React. Use `starwind@latest` in CLI commands. Vue 3.5 is a
-public beta, and its adapter uses the `beta` npm channel.
+The stable release supports Astro and React. Use `starwind@latest` in CLI commands. Vue 3.5 and
+Svelte 5 are public betas, and their adapters use the `beta` npm channel.
 
 The Vue beta supports Vite Vue, Astro Vue, Nuxt 3/4, Laravel with Inertia Vue, and Quasar Vite
-SPA/SSR hosts. Svelte remains a private adapter verification surface. Do not generate instructions
-that use `--framework svelte`.
+SPA/SSR hosts. The Svelte beta supports Vite with Svelte, SvelteKit, and Astro with Svelte. Svelte
+Pro setup is unavailable.
 
 Astro remains the product center. React uses the same Runtime behavior foundation. The styled Image component is Astro-only because it wraps `astro:assets`.
 
@@ -47,6 +47,14 @@ npx starwind@latest init --framework vue
 npx starwind@latest add button dialog form
 ```
 
+Svelte 5 beta:
+
+```bash
+npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
+npx starwind@latest init --framework svelte
+npx starwind@latest add button dialog form
+```
+
 Omit `--framework` to choose an available framework interactively.
 
 The main commands are:
@@ -76,6 +84,7 @@ Applications normally install an adapter, which brings the compatible Runtime ve
 npm install @starwind-ui/astro@latest
 npm install @starwind-ui/react@latest
 npm install @starwind-ui/vue@beta vue@^3.5
+npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
 ```
 
 Framework authors and raw HTML integrations can install Runtime directly:
@@ -150,7 +159,7 @@ Preserve Runtime-managed focus, keyboard, dismissal, portal, and cleanup behavio
 
 Dynamic collections support items added, removed, disabled, or reordered after initialization.
 Overlay components share consistent focus, dismissal, nesting, and lifecycle behavior across Astro,
-React, and the Vue beta.
+React, the Vue beta, and the Svelte beta.
 
 ## Ownership and customization
 
@@ -165,7 +174,8 @@ Primitive packages are appropriate when a project needs unstyled parts. Vendored
 - Astro adapters: Astro 5 or newer.
 - React adapters: React and React DOM 18 or newer.
 - Vue adapters: Vue 3.5 or newer, in public beta.
-- Public framework choices: stable Astro and React, plus the Vue 3.5 beta.
+- Svelte adapters: Svelte 5.29.0 or newer before Svelte 6, in public beta.
+- Public framework choices: stable Astro and React, plus the Vue 3.5 and Svelte 5 betas.
 
 The Styled Image component remains Astro-only because it wraps `astro:assets`. Report Vue beta
 feedback through the

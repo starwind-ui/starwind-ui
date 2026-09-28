@@ -43,7 +43,7 @@ describe("formatGeneratedOutput", () => {
     expect(biome.options).toMatchObject({ cwd: "/repo", shell: false, stdio: "inherit" });
   });
 
-  it("runs non-cmd npm exec paths through node", () => {
+  it("runs JavaScript npm exec paths through node", () => {
     const [prettier, biome] = getFormatGeneratedOutputCommands({
       cwd: "C:/repo",
       npmExecPath: "C:/pnpm/bin/pnpm.cjs",
@@ -67,6 +67,47 @@ describe("formatGeneratedOutput", () => {
       "generated",
     ]);
     expect(biome.options).toMatchObject({ cwd: "C:/repo", shell: false, stdio: "inherit" });
+  });
+
+  it.each([
+    ["linux", "/usr/local/bin/pnpm"],
+    ["win32", "C:/pnpm/bin/pnpm.exe"],
+  ] as const)("runs a native npm exec path directly on %s", (platform, npmExecPath) => {
+    const [prettier, biome] = getFormatGeneratedOutputCommands({
+      cwd: platform === "win32" ? "C:/repo" : "/repo",
+      npmExecPath,
+      paths: ["generated"],
+      platform,
+    });
+
+    expect(prettier.command).toBe(npmExecPath);
+    expect(prettier.args).toEqual(["exec", "prettier", "-w", "generated"]);
+    expect(prettier.options.shell).toBe(false);
+    expect(biome.command).toBe(npmExecPath);
+    expect(biome.args).toEqual([
+      "exec",
+      "biome",
+      "check",
+      "--write",
+      "--formatter-enabled=false",
+      "--linter-enabled=false",
+      "--diagnostic-level=info",
+      "generated",
+    ]);
+    expect(biome.options.shell).toBe(false);
+  });
+
+  it("runs an explicit pnpm.cmd npm exec path through a shell", () => {
+    const [prettier] = getFormatGeneratedOutputCommands({
+      cwd: "C:/repo",
+      npmExecPath: "C:/pnpm/bin/pnpm.cmd",
+      paths: ["generated"],
+      platform: "win32",
+    });
+
+    expect(prettier.command).toBe("C:/pnpm/bin/pnpm.cmd");
+    expect(prettier.args).toEqual(["exec", "prettier", "-w", "generated"]);
+    expect(prettier.options.shell).toBe(true);
   });
 
   it("can pass a standalone Biome config for generated paths outside the repo", () => {

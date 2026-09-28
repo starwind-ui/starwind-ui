@@ -34,7 +34,7 @@ export const VUE_PERFORMANCE_BASELINE_COMMAND = Object.freeze({
 export const VUE_PERFORMANCE_MOUNT_SAMPLING_CONTROL = Object.freeze({
   browserLifecycle: "one context, page, CDP session, and navigation per mount row",
   iterations: 5,
-  warmupCount: 0,
+  warmupCount: 1,
 });
 export const VUE_PERFORMANCE_BASELINE_CONTROLS = deepFreeze({
   garbageCollectionPolicy: "collect-before-each-sample-if-available",
@@ -552,7 +552,12 @@ function assertBaselineFlags(flags, rowId) {
   const controls = {
     garbageCollectionPolicy: VUE_PERFORMANCE_BASELINE_CONTROLS.garbageCollectionPolicy,
     mountSampling: VUE_PERFORMANCE_MOUNT_SAMPLING_CONTROL,
-    rows: [{ cpuThrottle: row.cpuThrottle, id: row.id, warmupCount: 0, withinRunSampleCount: 5 }],
+    rows: [{ cpuThrottle: row.cpuThrottle, id: row.id, warmupCount: 1, withinRunSampleCount: 5 }],
+  };
+  const historicalControls = {
+    ...controls,
+    mountSampling: { ...controls.mountSampling, warmupCount: 0 },
+    rows: [{ ...controls.rows[0], warmupCount: 0 }],
   };
   if (
     normalized.mode !== "baseline" ||
@@ -562,8 +567,11 @@ function assertBaselineFlags(flags, rowId) {
       serializeVuePerformanceEvidence([row.provider]) ||
     serializeVuePerformanceEvidence(normalized.scenarios) !==
       serializeVuePerformanceEvidence([row.scenario]) ||
-    serializeVuePerformanceEvidence(normalized.controls) !==
-      serializeVuePerformanceEvidence(controls)
+    ![controls, historicalControls].some(
+      (policy) =>
+        serializeVuePerformanceEvidence(normalized.controls) ===
+        serializeVuePerformanceEvidence(policy),
+    )
   )
     throw new Error("Vue performance baseline flags differ");
 }

@@ -44,13 +44,22 @@ export async function setup(options?: SetupOptions) {
       }
 
       if (shouldInit) {
-        await init(true, { defaults: options?.yes, packageManager: options?.packageManager });
+        await init(true, {
+          defaults: options?.yes,
+          packageManager: options?.packageManager,
+          pro: true,
+        });
       } else {
         p.log.error(
           `Please initialize starwind with ${highlighter.info("starwind init")} before running setup`,
         );
         process.exit(1);
       }
+    }
+
+    const config = await getConfig().catch(() => undefined);
+    if (config?.framework === "svelte") {
+      throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
     }
 
     // 2. Define available setup tasks

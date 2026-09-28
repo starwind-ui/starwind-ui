@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";
 import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { observeFormDiscovery } from "../_internal/form-discovery";
 
 defineOptions({ inheritAttrs: false });
 
@@ -20,32 +21,44 @@ const emit = defineEmits<{
 }>();
 const attrs = useAttrs();
 const element = ref<HTMLLabelElement | null>(null);
-let instance: ReturnType<typeof createDropzone> | undefined;
+const readInputs = () => ({ disabled: props.disabled, isUploading: props.isUploading });
+function connectDropzone(root: HTMLElement) {
+  let previous = readInputs();
+  const instance = createDropzone(root, {
+    disabled: previous.disabled,
+    isUploading: previous.isUploading,
+  });
+  const unsubscribe = instance.subscribe("filesChange", (detail) => {
+    emit("filesChange", detail.files, detail);
+  });
+  const stopDiscovery = observeFormDiscovery(root.ownerDocument, () => {
+    instance.refresh();
+  });
+  return {
+    update(): void {
+      const next = readInputs();
+      if (next.disabled !== previous.disabled) instance.setDisabled(next.disabled);
+      if (next.isUploading !== previous.isUploading) instance.setUploading(next.isUploading);
+      previous = next;
+    },
+    destroy(): void {
+      stopDiscovery();
+      unsubscribe();
+      instance.destroy();
+    },
+  };
+}
+let connection: ReturnType<typeof connectDropzone> | undefined;
 
 defineExpose({ element });
 
 onMounted(() => {
-  if (!element.value) return;
-  instance = createDropzone(element.value, {
-    disabled: props.disabled,
-    isUploading: props.isUploading,
-    onFilesChange: (files, detail) => emit("filesChange", files, detail),
-  });
+  if (element.value) connection = connectDropzone(element.value);
 });
-
-watch(
-  () => props.disabled,
-  (value) => instance?.setDisabled(value),
-);
-
-watch(
-  () => props.isUploading,
-  (value) => instance?.setUploading(value),
-);
-
+watch(readInputs, () => connection?.update());
 onBeforeUnmount(() => {
-  instance?.destroy();
-  instance = undefined;
+  connection?.destroy();
+  connection = undefined;
 });
 </script>
 

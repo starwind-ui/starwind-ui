@@ -69,7 +69,7 @@ describe("Vue runtime performance topology", () => {
           triggerCount: expect.any(Number),
           type: expect.any(String),
           visibleEndpoint: expect.any(String),
-          warmupCount: 0,
+          warmupCount: 1,
           withinRunSampleCount: 5,
         }),
       );
@@ -167,7 +167,7 @@ describe("Vue runtime performance topology", () => {
     expect(vuePerformanceTopology).toHaveLength(22);
     expect(vuePerformanceProviderRows).toHaveLength(63);
     for (const row of [...vuePerformanceTopology, ...vuePerformanceProviderRows]) {
-      expect(row.warmupCount, row.scenario).toBe(0);
+      expect(row.warmupCount, row.scenario).toBe(1);
       expect(row.withinRunSampleCount, row.scenario).toBe(5);
     }
 
@@ -177,7 +177,7 @@ describe("Vue runtime performance topology", () => {
     ]) {
       expect(vuePerformanceTopology.find((row) => row.scenario === scenario)).toMatchObject({
         type,
-        warmupCount: 0,
+        warmupCount: 1,
         withinRunSampleCount: 5,
       });
       expect(scenarioRows.find(({ key }) => key === scenario)).toMatchObject({ sampleCount: 5 });
@@ -185,12 +185,12 @@ describe("Vue runtime performance topology", () => {
     for (const scenario of ["dialog-trigger-mount", "tabs-high-count-mount"]) {
       expect(vuePerformanceTopology.find((row) => row.scenario === scenario)).toMatchObject({
         type: "mount",
-        warmupCount: 0,
+        warmupCount: 1,
         withinRunSampleCount: 5,
       });
       expect(scenarioRows.find(({ key }) => key === scenario)).toMatchObject({
         groupCount: 5,
-        iterationsPerGroup: 20,
+        iterationsPerGroup: 1,
       });
     }
   });
@@ -877,8 +877,8 @@ describe("Vue runtime performance plan selection and validation", () => {
   it("rejects Vue sampling drift at topology and provider level", () => {
     for (const scenario of ["dialog-open", "tabs-high-count-mount"]) {
       const warmupDrift = clonePlan();
-      warmupDrift.topology.find((row) => row.scenario === scenario).warmupCount = 1;
-      expect(() => validateVuePerformancePlan(warmupDrift)).toThrow(/zero Vue warmups/);
+      warmupDrift.topology.find((row) => row.scenario === scenario).warmupCount = 0;
+      expect(() => validateVuePerformancePlan(warmupDrift)).toThrow(/one excluded Vue warmup/);
 
       const sampleDrift = clonePlan();
       sampleDrift.topology.find((row) => row.scenario === scenario).withinRunSampleCount = 6;
@@ -896,9 +896,9 @@ describe("Vue runtime performance plan selection and validation", () => {
     );
 
     const providerWarmupDrift = clonePlan();
-    providerWarmupDrift.rows.find(({ id }) => id === "dialog-open:starwind-vue").warmupCount = 1;
+    providerWarmupDrift.rows.find(({ id }) => id === "dialog-open:starwind-vue").warmupCount = 0;
     expect(() => validateVuePerformancePlan(providerWarmupDrift)).toThrow(
-      /Provider row dialog-open:starwind-vue must use zero Vue warmups/,
+      /Provider row dialog-open:starwind-vue must use one excluded Vue warmup/,
     );
 
     const providerSampleDrift = clonePlan();

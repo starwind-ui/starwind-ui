@@ -19,6 +19,7 @@ defineExpose({ element });
     data-sw-part="itemIndicator"
     aria-hidden="true"
     :data-state="selected ? 'checked' : 'unchecked'"
+    :data-visible="selected ? '' : undefined"
     :data-hidden="selected ? undefined : ''"
     :hidden="!selected"
     ><slot

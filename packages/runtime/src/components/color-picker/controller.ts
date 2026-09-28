@@ -145,6 +145,8 @@ export type ColorPickerInstance = {
   setReadOnly(readOnly: boolean): void;
   setName(name?: string | null): void;
   setOptions(options: ColorPickerSetOptions): void;
+  /** Read settled form-reset state without emitting a user change proposal. */
+  subscribe(event: "stateSync", callback: () => void): () => void;
   subscribe(
     event: "valueChange",
     callback: (details: ColorPickerValueChangeDetails) => void,
@@ -228,6 +230,7 @@ class ColorPickerController implements ColorPickerInstance {
   private reflectedDir?: ColorPickerDirection;
   private options: ColorPickerOptions;
   private ambientRevision = 0;
+  private formatRevision = 0;
   private proposalSequence = 0;
   private destroyed = false;
   private pointer?: PointerSession;
@@ -250,6 +253,7 @@ class ColorPickerController implements ColorPickerInstance {
   private runtimeAreaRoleDescriptions = new Map<HTMLInputElement, string>();
   private initialProjectionOwnership = new WeakMap<HTMLElement, Set<string>>();
   private subscribers = {
+    stateSync: new Set<() => void>(),
     valueChange: new Set<(d: ColorPickerValueChangeDetails) => void>(),
     valueCommitted: new Set<(d: ColorPickerValueCommitDetails) => void>(),
     formatChange: new Set<(d: ColorPickerFormatChangeDetails) => void>(),
@@ -355,6 +359,7 @@ class ColorPickerController implements ColorPickerInstance {
   ) {
     if (this.destroyed) return;
     if (!validFormat(format)) return;
+    this.formatRevision++;
     if (format === this.format) return;
     this.invalidateEyeDropper();
     this.cancelInteractions();
@@ -1474,25 +1479,36 @@ class ColorPickerController implements ColorPickerInstance {
     this.resetForm?.removeEventListener("reset", this.handleFormReset);
     this.resetForm = null;
   }
-  private readonly handleFormReset = () => {
-    this.cancelInteractions();
+  private readonly handleFormReset = (event: Event) => {
     this.invalidateEyeDropper();
-    this.clearDrafts();
-    this.format = this.initialFormat;
-    this.replaceAmbient(
-      normalizeColorPickerCapabilityValue(this.initialValue, {
-        alpha: this.alpha,
-        allowEmpty: this.allowEmpty,
-      }),
-    );
     this.clearResetTimer();
+    const valueRevision = this.ambientRevision,
+      formatRevision = this.formatRevision;
+    const form = this.resetForm;
     const ownerWindow = this.root.ownerDocument.defaultView;
     if (!ownerWindow) return;
     this.resetTimer = ownerWindow.setTimeout(() => {
       this.resetTimer = undefined;
-      if (!this.destroyed) this.render();
+      if (this.destroyed || this.resetForm !== form) return;
+      if (!event.defaultPrevented) {
+        const resetValue = valueRevision === this.ambientRevision;
+        if (resetValue) this.cancelInteractions();
+        this.clearDrafts();
+        if (formatRevision === this.formatRevision) this.format = this.initialFormat;
+        if (resetValue) {
+          this.replaceAmbient(
+            normalizeColorPickerCapabilityValue(this.initialValue, {
+              alpha: this.alpha,
+              allowEmpty: this.allowEmpty,
+            }),
+          );
+        }
+      }
+      this.render();
+      this.subscribers.stateSync.forEach((fn) => fn());
     }, 0);
   };
+
   private clearResetTimer() {
     if (this.resetTimer === undefined) return;
     this.root.ownerDocument.defaultView?.clearTimeout(this.resetTimer);

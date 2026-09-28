@@ -6,13 +6,43 @@
 "use client";
 
 import * as React from "react";
+import { useNativeOverlayControl } from "../internal/native-overlay-control";
+import { NativeOverlayControlContext } from "./DrawerRoot";
 
 export type DrawerTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  asChild?: boolean;
   targetId?: string;
 };
 
 const DrawerTrigger = React.forwardRef<HTMLButtonElement, DrawerTriggerProps>(
-  function DrawerTrigger({ targetId, ...props }, forwardedRef) {
+  function DrawerTrigger(
+    { asChild = false, children, className, targetId, ...props },
+    forwardedRef,
+  ) {
+    const requestRefresh = React.useContext(NativeOverlayControlContext);
+    const { controlKey, setControlElement } = useNativeOverlayControl({
+      asChild,
+      children,
+      forwardedRef,
+      requestRefresh,
+    });
+
+    if (asChild) {
+      return (
+        <div
+          className={className}
+          data-as-child
+          data-sw-drawer-target-id={targetId}
+          {...(props as React.HTMLAttributes<HTMLDivElement>)}
+          data-sw-drawer-trigger
+          key={controlKey}
+          ref={setControlElement}
+        >
+          {children}
+        </div>
+      );
+    }
+
     return (
       <button
         type="button"
@@ -20,9 +50,12 @@ const DrawerTrigger = React.forwardRef<HTMLButtonElement, DrawerTriggerProps>(
         aria-haspopup="dialog"
         data-sw-drawer-target-id={targetId}
         data-state="closed"
-        ref={forwardedRef}
+        className={className}
+        ref={setControlElement as React.Ref<HTMLButtonElement>}
         {...props}
-      />
+      >
+        {children}
+      </button>
     );
   },
 );

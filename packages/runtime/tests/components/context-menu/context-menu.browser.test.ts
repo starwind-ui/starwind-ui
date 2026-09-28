@@ -116,6 +116,247 @@ describe("createContextMenu", () => {
     expect(document.querySelector("[data-sw-context-menu-anchor]")).toBeNull();
   });
 
+  it.each(["Popup replacement", "closeDelay change"])(
+    "retains the invocation rectangle across same-root %s and scrolling",
+    async (change) => {
+      document.body.style.minHeight = "2000px";
+      const root = renderContextMenu({ modal: false });
+      const onOpenChange = vi.fn();
+      const domListener = vi.fn();
+      root.addEventListener("starwind:open-change", domListener);
+      const original = createContextMenu(root, { modal: false, onOpenChange });
+      await scrollAndWait(80);
+      openFromPointer(root, 280, 200);
+      await waitForFloatingPosition();
+
+      const oldAnchor = getContextMenuAnchor();
+      const oldPopup = getPopup();
+      const before = oldPopup.getBoundingClientRect();
+      expect(oldAnchor.style.left).toBe("280px");
+      expect(oldAnchor.style.top).toBe("280px");
+      onOpenChange.mockClear();
+      domListener.mockClear();
+
+      original.destroy();
+      expect(oldAnchor.isConnected).toBe(false);
+      expect(document.querySelector("[data-sw-context-menu-anchor]")).toBeNull();
+      if (change === "Popup replacement") oldPopup.replaceWith(oldPopup.cloneNode(true));
+      await scrollAndWait(140);
+
+      const recreated = createContextMenu(root, {
+        closeDelay: change === "closeDelay change" ? 340 : 200,
+        defaultOpen: change === "Popup replacement",
+        modal: false,
+        onOpenChange,
+      });
+      const anchor = getContextMenuAnchor();
+      expect(anchor).not.toBe(oldAnchor);
+      expect(anchor.style.left).toBe("280px");
+      expect(anchor.style.top).toBe("280px");
+      const subscriber = vi.fn();
+      recreated.subscribe("openChange", subscriber);
+      if (change === "closeDelay change") recreated.setOpen(true, { emit: false });
+      await waitForFloatingPosition();
+
+      expect(recreated.getOpen()).toBe(true);
+      expect(getPopup().hidden).toBe(false);
+      expect(getPopup().getBoundingClientRect().left).toBeCloseTo(before.left);
+      expect(getPopup().getBoundingClientRect().top).toBeCloseTo(before.top - 60);
+      expect(document.querySelectorAll("[data-sw-context-menu-anchor]")).toHaveLength(1);
+      expect(onOpenChange).not.toHaveBeenCalled();
+      expect(domListener).not.toHaveBeenCalled();
+      expect(subscriber).not.toHaveBeenCalled();
+      recreated.destroy();
+    },
+  );
+
+  it("keeps roots independent and retains the latest point during repeated closed-root reuse", () => {
+    const root = renderContextMenu({ modal: false });
+    root.id = "reused-context-root";
+    let menu = createContextMenu(root);
+    let anchor = getContextMenuAnchor();
+    expect(readAnchorRectangle(anchor)).toEqual(["0px", "0px", "0px", "0px"]);
+    openFromPointer(root, 180, 160);
+
+    const otherRoot = renderContextMenu({ modal: false });
+    const otherMenu = createContextMenu(otherRoot);
+    const otherAnchor = document.querySelectorAll<HTMLElement>("[data-sw-context-menu-anchor]")[1];
+    expect(readAnchorRectangle(otherAnchor)).toEqual(["0px", "0px", "0px", "0px"]);
+    openFromPointer(otherRoot, 420, 260);
+
+    for (const point of [220, 280, 340]) {
+      openFromPointer(root, point, 200);
+      menu.setOpen(false, { emit: false });
+      menu.destroy();
+      expect(anchor.isConnected).toBe(false);
+      menu = createContextMenu(root);
+      anchor = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-sw-context-menu-anchor]"),
+      ).find((element) => element !== otherAnchor)!;
+      expect(menu.getOpen()).toBe(false);
+      expect(readAnchorRectangle(anchor)).toEqual([`${point}px`, "200px", "0px", "0px"]);
+      expect(readAnchorRectangle(otherAnchor)).toEqual(["420px", "260px", "0px", "0px"]);
+      expect(document.querySelectorAll("[data-sw-context-menu-anchor]")).toHaveLength(2);
+      menu.open();
+      expect(menu.getOpen()).toBe(true);
+      expect(readAnchorRectangle(anchor)).toEqual([`${point}px`, "200px", "0px", "0px"]);
+    }
+
+    menu.destroy();
+    otherMenu.destroy();
+    root.remove();
+    const freshRoot = renderContextMenu({ modal: false });
+    freshRoot.id = "reused-context-root";
+    const freshMenu = createContextMenu(freshRoot, { defaultOpen: true });
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["0px", "0px", "0px", "0px"]);
+    freshMenu.destroy();
+  });
+
+  it.each([
+    ["ContextMenu", { key: "ContextMenu" }],
+    ["Shift+F10", { key: "F10", shiftKey: true }],
+  ])("retains the %s point and zero-size rectangle on same-root recreation", async (_, init) => {
+    const root = renderContextMenu({ modal: false });
+    const trigger = getTrigger(root);
+    const onOpenChange = vi.fn();
+    const menu = createContextMenu(root, { onOpenChange });
+    mockRect(trigger, { height: 30, width: 180, x: 80, y: 160 });
+    trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, ...init }));
+    await waitForFloatingPosition();
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["80px", "190px", "0px", "0px"]);
+
+    menu.destroy();
+    onOpenChange.mockClear();
+    const recreated = createContextMenu(root, { defaultOpen: true, onOpenChange });
+    await waitForFloatingPosition();
+    expect(recreated.getOpen()).toBe(true);
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["80px", "190px", "0px", "0px"]);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    openFromPointer(root, 260, 220);
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["260px", "220px", "0px", "0px"]);
+    recreated.destroy();
+  });
+
+  it("retains a long-press rectangle during recreation and replaces its size on pointer activation", async () => {
+    vi.useFakeTimers();
+    const root = renderContextMenu({ modal: false });
+    const onOpenChange = vi.fn();
+    const menu = createContextMenu(root, { onOpenChange });
+    dispatchTouchEvent(getTrigger(root), "touchstart", [{ clientX: 240, clientY: 180 }]);
+    await vi.advanceTimersByTimeAsync(500);
+    dispatchTouchEvent(getTrigger(root), "touchend", []);
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["240px", "180px", "10px", "10px"]);
+
+    menu.destroy();
+    onOpenChange.mockClear();
+    const recreated = createContextMenu(root, { onOpenChange });
+    const subscriber = vi.fn();
+    recreated.subscribe("openChange", subscriber);
+    recreated.setOpen(true, { emit: false });
+    expect(recreated.getOpen()).toBe(true);
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["240px", "180px", "10px", "10px"]);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(subscriber).not.toHaveBeenCalled();
+
+    openFromPointer(root, 360, 260);
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["360px", "260px", "0px", "0px"]);
+    recreated.destroy();
+    vi.useRealTimers();
+  });
+
+  it.each(["callback", "DOM event"])(
+    "retains a canceled invocation point across silent reconstruction after %s cancellation",
+    (cancellation) => {
+      const root = renderContextMenu({ modal: false });
+      const onOpenChange = vi.fn((_open, details) => {
+        if (cancellation === "callback") details.cancel();
+      });
+      const domListener = vi.fn((event: Event) => {
+        if (cancellation === "DOM event") event.preventDefault();
+      });
+      root.addEventListener("starwind:open-change", domListener);
+      const menu = createContextMenu(root, { onOpenChange });
+      const subscriber = vi.fn();
+      menu.subscribe("openChange", subscriber);
+      openFromPointer(root, 320, 240);
+      expect(menu.getOpen()).toBe(false);
+      expect(subscriber).not.toHaveBeenCalled();
+      expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["320px", "240px", "0px", "0px"]);
+
+      menu.destroy();
+      onOpenChange.mockClear();
+      domListener.mockClear();
+      const recreated = createContextMenu(root, { defaultOpen: true, onOpenChange });
+      expect(recreated.getOpen()).toBe(true);
+      expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["320px", "240px", "0px", "0px"]);
+      expect(onOpenChange).not.toHaveBeenCalled();
+      expect(domListener).not.toHaveBeenCalled();
+      expect(subscriber).not.toHaveBeenCalled();
+      recreated.destroy();
+    },
+  );
+
+  it("retires pending long press, listeners, subscriptions, and frame work before same-root reuse", async () => {
+    vi.useFakeTimers();
+    const root = renderContextMenu({ modal: false });
+    const onOpenChange = vi.fn();
+    const menu = createContextMenu(root, { onOpenChange });
+    const subscriber = vi.fn();
+    menu.subscribe("openChange", subscriber);
+    openFromPointer(root, 220, 160);
+    const oldAnchor = getContextMenuAnchor();
+    const oldTrigger = getTrigger(root);
+    const oldPopup = getPopup();
+    dispatchTouchEvent(oldTrigger, "touchstart", [{ clientX: 480, clientY: 300 }]);
+    menu.destroy();
+    const retiredStyle = oldPopup.getAttribute("style");
+    onOpenChange.mockClear();
+    subscriber.mockClear();
+
+    oldTrigger.replaceWith(oldTrigger.cloneNode(true));
+    oldPopup.replaceWith(oldPopup.cloneNode(true));
+    const currentOnOpenChange = vi.fn();
+    const recreated = createContextMenu(root, { onOpenChange: currentOnOpenChange });
+    const anchor = getContextMenuAnchor();
+    expect(anchor).not.toBe(oldAnchor);
+    expect(oldAnchor.isConnected).toBe(false);
+    expect(readAnchorRectangle(anchor)).toEqual(["220px", "160px", "0px", "0px"]);
+
+    const retiredPointer = new MouseEvent("contextmenu", {
+      cancelable: true,
+      clientX: 500,
+      clientY: 320,
+    });
+    const retiredKey = new KeyboardEvent("keydown", { cancelable: true, key: "ContextMenu" });
+    oldTrigger.dispatchEvent(retiredPointer);
+    oldTrigger.dispatchEvent(retiredKey);
+    dispatchTouchEvent(oldTrigger, "touchstart", [{ clientX: 520, clientY: 340 }]);
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(retiredPointer.defaultPrevented).toBe(false);
+    expect(retiredKey.defaultPrevented).toBe(false);
+    expect(oldPopup.getAttribute("style")).toBe(retiredStyle);
+    expect(recreated.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+    expect(readAnchorRectangle(anchor)).toEqual(["220px", "160px", "0px", "0px"]);
+    expect(document.querySelectorAll("[data-sw-context-menu-anchor]")).toHaveLength(1);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(subscriber).not.toHaveBeenCalled();
+    expect(currentOnOpenChange).not.toHaveBeenCalled();
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+
+    openFromPointer(root, 380, 260);
+    await vi.advanceTimersByTimeAsync(32);
+    expect(recreated.getOpen()).toBe(true);
+    expect(readAnchorRectangle(anchor)).toEqual(["380px", "260px", "0px", "0px"]);
+    expect(currentOnOpenChange).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(subscriber).not.toHaveBeenCalled();
+    recreated.destroy();
+    expect(document.querySelector("[data-sw-context-menu-anchor]")).toBeNull();
+    vi.useRealTimers();
+  });
+
   it("keeps an existing document lock active after a default modal context menu closes", async () => {
     const externalRoot = renderContextMenu();
     const contextRoot = renderContextMenu();
@@ -795,6 +1036,10 @@ function getPositioner(): HTMLElement {
 
 function getContextMenuAnchor(): HTMLElement {
   return document.querySelector<HTMLElement>("[data-sw-context-menu-anchor]")!;
+}
+
+function readAnchorRectangle(anchor: HTMLElement): string[] {
+  return [anchor.style.left, anchor.style.top, anchor.style.width, anchor.style.height];
 }
 
 function getRootSurface(): HTMLElement {

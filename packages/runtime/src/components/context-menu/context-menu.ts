@@ -50,6 +50,10 @@ const MENU_POSITIONER_ATTRIBUTE = "data-sw-menu-positioner";
 const LONG_PRESS_DELAY = 500;
 const TOUCH_MOVE_THRESHOLD = 10;
 
+type AnchorRectangle = Readonly<{ left: number; top: number; width: number; height: number }>;
+
+// Same-root recreation retains the invocation point without retaining the retired DOM anchor.
+const anchorRectangles = new WeakMap<HTMLElement, AnchorRectangle>();
 const instances = new WeakMap<HTMLElement, ContextMenuController>();
 
 export function createContextMenu(
@@ -87,7 +91,7 @@ class ContextMenuController implements ContextMenuInstance {
     this.elements.triggers.forEach((trigger) => {
       trigger.setAttribute(MENU_TRIGGER_ATTRIBUTE, "");
     });
-    this.anchor = createAnchorElement(this.root.ownerDocument);
+    this.anchor = createAnchorElement(this.root.ownerDocument, anchorRectangles.get(this.root));
     this.root.ownerDocument.body.append(this.anchor);
     this.menu = createMenu(root, {
       ...options,
@@ -253,7 +257,10 @@ class ContextMenuController implements ContextMenuInstance {
       width?: number;
     },
   ): void {
-    positionAnchor(this.anchor, x, y, options.width ?? 0, options.height ?? 0);
+    anchorRectangles.set(
+      this.root,
+      positionAnchor(this.anchor, x, y, options.width ?? 0, options.height ?? 0),
+    );
     this.menu.open({
       event: options.event,
       ...(options.focusFirstItem ? { focusFirstItem: true } : {}),
@@ -301,14 +308,17 @@ function queryContextMenuElements(root: HTMLElement, selector: string): HTMLElem
   });
 }
 
-function createAnchorElement(ownerDocument: Document): HTMLElement {
+function createAnchorElement(
+  ownerDocument: Document,
+  rectangle: AnchorRectangle = { left: 0, top: 0, width: 0, height: 0 },
+): HTMLElement {
   const anchor = ownerDocument.createElement("span");
   anchor.setAttribute("data-sw-context-menu-anchor", "");
   anchor.style.position = "absolute";
-  anchor.style.left = "0px";
-  anchor.style.top = "0px";
-  anchor.style.width = "0px";
-  anchor.style.height = "0px";
+  anchor.style.left = `${rectangle.left}px`;
+  anchor.style.top = `${rectangle.top}px`;
+  anchor.style.width = `${rectangle.width}px`;
+  anchor.style.height = `${rectangle.height}px`;
   anchor.style.pointerEvents = "none";
   anchor.style.visibility = "hidden";
   return anchor;
@@ -320,15 +330,17 @@ function positionAnchor(
   y: number,
   width: number,
   height: number,
-): void {
+): AnchorRectangle {
   const view = anchor.ownerDocument.defaultView;
   const scrollX = view?.scrollX ?? anchor.ownerDocument.documentElement.scrollLeft;
   const scrollY = view?.scrollY ?? anchor.ownerDocument.documentElement.scrollTop;
 
-  anchor.style.left = `${x + scrollX}px`;
-  anchor.style.top = `${y + scrollY}px`;
-  anchor.style.width = `${width}px`;
-  anchor.style.height = `${height}px`;
+  const rectangle = { left: x + scrollX, top: y + scrollY, width, height };
+  anchor.style.left = `${rectangle.left}px`;
+  anchor.style.top = `${rectangle.top}px`;
+  anchor.style.width = `${rectangle.width}px`;
+  anchor.style.height = `${rectangle.height}px`;
+  return rectangle;
 }
 
 function isDisabledTrigger(trigger: HTMLElement): boolean {

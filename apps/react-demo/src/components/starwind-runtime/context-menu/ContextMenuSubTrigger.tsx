@@ -8,10 +8,11 @@ import { contextMenuItem } from "./variants";
 export type ContextMenuSubTriggerProps = React.ComponentPropsWithoutRef<"div"> & {
   inset?: boolean;
   disabled?: boolean;
+  icon?: React.ReactNode;
 };
 
 function ContextMenuSubTrigger(props: ContextMenuSubTriggerProps) {
-  const { className, inset = false, disabled = false, children, ...rest } = props;
+  const { className, inset = false, disabled = false, children, icon, ...rest } = props;
 
   const subTriggerClassName = className;
 
@@ -24,7 +25,7 @@ function ContextMenuSubTrigger(props: ContextMenuSubTriggerProps) {
     >
       {children}
 
-      <ChevronRight className="ml-auto size-4" />
+      {icon ?? <ChevronRight className="ml-auto size-4" />}
     </ContextMenuPrimitive.SubmenuTrigger>
   );
 }

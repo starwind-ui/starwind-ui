@@ -26,7 +26,7 @@ const MenuRadioItem = React.forwardRef<HTMLDivElement, MenuRadioItemProps>(funct
   const radioGroup = useMenuRadioGroupContext();
   const initialChecked = checked ?? defaultChecked;
   const renderedChecked =
-    radioGroup?.value === undefined ? initialChecked : radioGroup.value === value;
+    radioGroup?.value === undefined ? initialChecked : radioGroup?.value === value;
   const radioItemContext = React.useMemo(
     () => ({ checked: renderedChecked, disabled: disabled }),
     [renderedChecked, disabled],

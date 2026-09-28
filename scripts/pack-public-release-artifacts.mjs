@@ -12,7 +12,7 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const DEFAULT_OUTPUT_DIRECTORY = ".release-packs";
 
-const PUBLIC_PACKAGES = [
+const STABLE_PACKAGES = [
   {
     directory: "packages/runtime",
     fileName: "starwind-runtime.tgz",
@@ -35,14 +35,25 @@ const PUBLIC_PACKAGES = [
 ];
 
 const VUE_BETA_PACKAGES = [
-  ...PUBLIC_PACKAGES.slice(0, -1),
+  ...STABLE_PACKAGES.slice(0, -1),
   {
     directory: "packages/vue",
     fileName: "starwind-vue.tgz",
     key: "vue",
     name: "@starwind-ui/vue",
   },
-  PUBLIC_PACKAGES.at(-1),
+  STABLE_PACKAGES.at(-1),
+];
+
+const PUBLIC_PACKAGES = [
+  ...VUE_BETA_PACKAGES.slice(0, -1),
+  {
+    directory: "packages/svelte",
+    fileName: "starwind-svelte.tgz",
+    key: "svelte",
+    name: "@starwind-ui/svelte",
+  },
+  STABLE_PACKAGES.at(-1),
 ];
 
 function getPnpmCommand() {
@@ -157,6 +168,7 @@ export async function loadPublicReleaseArtifacts({
   outputDirectory,
   repoRoot = REPO_ROOT,
   requireVue = false,
+  requireSvelte = false,
 }) {
   const manifest = JSON.parse(await readFile(path.join(outputDirectory, "manifest.json"), "utf8"));
   assert.equal(
@@ -173,15 +185,20 @@ export async function loadPublicReleaseArtifacts({
     manifest.packages && typeof manifest.packages === "object",
     "Missing release archive inventory.",
   );
+  const hasSvelte = Object.hasOwn(manifest.packages, "svelte");
   const expectedPackages =
-    requireVue || Object.hasOwn(manifest.packages, "vue") ? VUE_BETA_PACKAGES : PUBLIC_PACKAGES;
+    hasSvelte || requireSvelte
+      ? PUBLIC_PACKAGES
+      : requireVue || Object.hasOwn(manifest.packages, "vue")
+        ? VUE_BETA_PACKAGES
+        : STABLE_PACKAGES;
   assert.deepEqual(
     Object.keys(manifest.packages).sort(),
     expectedPackages.map(({ key }) => key).sort(),
     "Release archive inventory is incomplete or unexpected.",
   );
   for (const [key, entry] of Object.entries(manifest.packages)) {
-    const expected = VUE_BETA_PACKAGES.find((candidate) => candidate.key === key);
+    const expected = PUBLIC_PACKAGES.find((candidate) => candidate.key === key);
     assert(
       expected && entry.name === expected.name && entry.file === expected.fileName,
       `Unexpected release archive: ${key}`,

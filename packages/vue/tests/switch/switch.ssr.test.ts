@@ -1,10 +1,20 @@
+import { SwitchRoot, SwitchThumb } from "@starwind-ui/vue/switch";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { SwitchRoot, SwitchThumb } from "@starwind-ui/vue/switch";
 
 describe("Vue Switch SSR", () => {
+  it.each([true, false])("projects controlled %s to the initial native input", async (checked) => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(SwitchRoot, { checked, defaultChecked: !checked, name: "setting", value: "yes" }),
+      }),
+    );
+    expect(html).toContain(`aria-checked="${checked}"`);
+    expect(/\schecked(?:=|\s|>)/.test(html.match(/<input\b[^>]*>/)![0])).toBe(checked);
+    expect(html.includes('data-default-checked="true"')).toBe(!checked);
+  });
   it("renders deterministic initial state, external input, attrs, and thumb markup", async () => {
     const render = () =>
       renderToString(

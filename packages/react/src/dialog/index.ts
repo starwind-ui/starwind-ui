@@ -37,3 +37,4 @@ export {
 export default Dialog;
 
 export type { DialogCloseCompleteDetails, DialogOpenChangeDetails } from "@starwind-ui/runtime";
+export { NativeOverlayControlContext as DialogControlContext } from "./DialogRoot";

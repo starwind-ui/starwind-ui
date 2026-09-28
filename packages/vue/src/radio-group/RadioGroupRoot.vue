@@ -6,169 +6,147 @@ import {
   type RadioGroupValueChangeDetails,
 } from "@starwind-ui/runtime/radio-group";
 import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
-
 import { RadioGroupContext } from "./RadioGroupContext";
 
 defineOptions({ inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
     defaultValue?: RadioGroupValue;
     disabled?: boolean;
     form?: string;
-    modelValue?: RadioGroupValue;
     name?: string;
     orientation?: "horizontal" | "vertical";
     readOnly?: boolean;
     required?: boolean;
+    modelValue?: RadioGroupValue;
   }>(),
   {
     disabled: false,
-    modelValue: undefined,
     orientation: "vertical",
     readOnly: false,
     required: false,
+    modelValue: undefined,
+    defaultValue: undefined,
   },
 );
 const emit = defineEmits<{
   valueChange: [value: string, detail: RadioGroupValueChangeDetails];
-  "update:modelValue": [value: string];
+  "update:modelValue": [value: RadioGroupValue];
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLElement | null>(null);
-const initialDefaultValue = props.defaultValue;
-const uncontrolledValue = ref<RadioGroupValue>(initialDefaultValue);
-const renderedValue = computed(() => props.modelValue ?? uncontrolledValue.value);
-const renderedDisabled = computed(() => props.disabled);
-const renderedForm = computed(() => props.form);
-const renderedName = computed(() => props.name);
-const renderedReadOnly = computed(() => props.readOnly);
-const renderedRequired = computed(() => props.required);
-let instance: ReturnType<typeof createRadioGroup> | undefined;
-let unsubscribeStateSync: (() => void) | undefined;
-let instanceGeneration = 0;
-let mounted = false;
-
-provide(RadioGroupContext, {
-  disabled: renderedDisabled,
-  form: renderedForm,
-  name: renderedName,
-  readOnly: renderedReadOnly,
-  required: renderedRequired,
-  value: renderedValue,
-});
-
+const attrs = useAttrs(),
+  rootRef = ref<HTMLDivElement | null>(null);
 defineExpose({ element: rootRef });
-
-function handleValueChange(_value: string, detail: RadioGroupValueChangeDetails): void {
-  const eventInstance = instance;
-  const eventGeneration = instanceGeneration;
-  const eventWasControlled = props.modelValue !== undefined;
-  emit("valueChange", detail.value, detail);
-  detail.onAccepted(() => {
-    if (!mounted || instance !== eventInstance || instanceGeneration !== eventGeneration) {
-      return;
-    }
-    if (!eventWasControlled) {
-      uncontrolledValue.value = detail.value;
-    }
-    emit("update:modelValue", detail.value);
-  });
+const resetSeed = props.defaultValue ?? props.modelValue;
+const initialValue = props.modelValue ?? resetSeed;
+const renderedValue = ref<RadioGroupValue>(initialValue);
+const connection: {
+  instance?: ReturnType<typeof createRadioGroup>;
+  accepted: RadioGroupValue;
+  unsubscribe?: () => void;
+  unsubscribeSync?: () => void;
+  observer?: MutationObserver;
+} = { accepted: initialValue };
+const selected = computed(() => props.modelValue ?? renderedValue.value);
+function isModelEqual(left: string | undefined, right: string | undefined) {
+  return left === right;
 }
-
-function handleStateSync(): void {
-  if (props.modelValue === undefined && instance) {
-    uncontrolledValue.value = instance.getValue();
+function disconnect() {
+  const owned = connection.instance;
+  connection.unsubscribe?.();
+  connection.unsubscribeSync?.();
+  connection.observer?.disconnect();
+  connection.instance = undefined;
+  owned?.destroy();
+}
+function publishRuntime(owned: ReturnType<typeof createRadioGroup>) {
+  if (connection.instance !== owned) return;
+  const next = owned.getValue();
+  if (!isModelEqual(connection.accepted, next)) {
+    connection.accepted = next;
+    renderedValue.value = next;
   }
 }
-
-function destroyOwnedInstance(): void {
-  instanceGeneration += 1;
-  unsubscribeStateSync?.();
-  unsubscribeStateSync = undefined;
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-  const createdInstance = createRadioGroup(element, {
-    defaultValue: renderedValue.value,
+function connect(root: HTMLDivElement) {
+  disconnect();
+  const desired = props.modelValue ?? initialValue;
+  const owned = createRadioGroup(root, {
+    defaultValue: resetSeed,
     disabled: props.disabled,
     form: props.form,
     name: props.name,
     orientation: props.orientation,
     readOnly: props.readOnly,
     required: props.required,
-    onValueChange: handleValueChange,
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
+    ...(props.modelValue !== undefined ? { value: desired } : {}),
+    onValueChange: (_next, detail) => {
+      emit("valueChange", detail.value, detail);
+    },
   });
-  instance = createdInstance;
-  unsubscribeStateSync = createdInstance.subscribe("stateSync", handleStateSync);
-}
-
-onMounted(() => {
-  mounted = true;
-  setupRuntime();
-});
-
-watch(
-  () => props.modelValue,
-  (value, previousValue) => {
-    const controllednessChanged = (value === undefined) !== (previousValue === undefined);
-    if (controllednessChanged) {
-      if (value === undefined && instance) {
-        uncontrolledValue.value = instance.getValue();
-      }
-      setupRuntime();
-      return;
-    }
-    if (value === undefined || !instance || Object.is(instance.getValue(), value)) return;
-    instance.setValue(value, { emit: false });
-  },
-  { flush: "post" },
-);
-watch(
-  () => props.disabled,
-  (value) => instance?.setDisabled(value),
-);
-watch(
-  () => [props.form, props.name, props.required] as const,
-  ([nextForm, nextName, nextRequired]) =>
-    instance?.setFormOptions({
-      form: nextForm,
-      name: nextName,
-      required: nextRequired,
+  connection.instance = owned;
+  if (!isModelEqual(owned.getValue(), desired)) owned.setValue(desired, { emit: false });
+  connection.unsubscribe = owned.subscribe("valueChange", (detail) =>
+    detail.onAccepted(() => {
+      if (connection.instance !== owned || detail.isCanceled) return;
+      publishRuntime(owned);
+      emit("update:modelValue", detail.value);
     }),
+  );
+  connection.unsubscribeSync = owned.subscribe("stateSync", () => {
+    publishRuntime(owned);
+  });
+  publishRuntime(owned);
+}
+function applyParent() {
+  const owned = connection.instance,
+    next = props.modelValue;
+  if (!owned || next === undefined || isModelEqual(owned.getValue(), next)) return;
+  owned.setValue(next, { emit: false });
+  publishRuntime(owned);
+}
+function applyOptions() {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.refresh();
+  owned.setDisabled(props.disabled);
+  owned.setFormOptions({ form: props.form, name: props.name, required: props.required });
+  owned.setReadOnly(props.readOnly);
+  owned.setOrientation(props.orientation);
+  applyParent();
+  publishRuntime(owned);
+}
+provide(RadioGroupContext, {
+  disabled: computed(() => props.disabled),
+  form: computed(() => props.form),
+  name: computed(() => props.name),
+  readOnly: computed(() => props.readOnly),
+  required: computed(() => props.required),
+  value: selected,
+});
+onMounted(() => {
+  if (rootRef.value) connect(rootRef.value);
+});
+onBeforeUnmount(disconnect);
+watch(
+  () => [props.disabled, props.form, props.name, props.orientation, props.readOnly, props.required],
+  () => queueMicrotask(applyOptions),
   { flush: "post" },
 );
 watch(
-  () => props.orientation,
-  (value) => instance?.setOrientation(value),
+  () => [props.modelValue],
+  () => queueMicrotask(applyParent),
+  { flush: "post" },
 );
-watch(
-  () => props.readOnly,
-  (value) => instance?.setReadOnly(value),
-);
-
-onBeforeUnmount(() => {
-  mounted = false;
-  destroyOwnedInstance();
-});
 </script>
-
 <template>
   <div
     ref="rootRef"
     v-bind="attrs"
-    data-sw-radio-group
-    :data-default-value="initialDefaultValue"
-    :data-value="renderedValue"
+    data-sw-radio-group=""
+    data-sw-part="root"
+    role="radiogroup"
+    :data-default-value="resetSeed"
+    :data-value="selected"
     :data-disabled="props.disabled ? '' : undefined"
     :data-form="props.form"
     :data-name="props.name"
@@ -176,10 +154,9 @@ onBeforeUnmount(() => {
     :data-readonly="props.readOnly ? '' : undefined"
     :data-required="props.required ? '' : undefined"
     :aria-disabled="props.disabled ? 'true' : undefined"
-    :aria-orientation="props.orientation"
     :aria-readonly="props.readOnly ? 'true' : undefined"
     :aria-required="props.required ? 'true' : undefined"
-    role="radiogroup"
+    :aria-orientation="props.orientation"
   >
     <slot />
   </div>

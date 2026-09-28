@@ -43,3 +43,4 @@ export {
 export default Drawer;
 
 export type { DrawerCloseCompleteDetails, DrawerOpenChangeDetails } from "@starwind-ui/runtime";
+export { NativeOverlayControlContext as DrawerControlContext } from "./DrawerRoot";

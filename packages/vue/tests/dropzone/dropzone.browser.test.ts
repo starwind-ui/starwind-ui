@@ -1,8 +1,4 @@
-import { createApp, createSSRApp, h, nextTick, ref, type ComponentPublicInstance } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";
+import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";
 import {
   DropzoneFilesList,
   DropzoneInput,
@@ -10,6 +6,9 @@ import {
   DropzoneRoot,
   DropzoneUploadIndicator,
 } from "@starwind-ui/vue/dropzone";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { type ComponentPublicInstance, createApp, createSSRApp, h, nextTick, ref } from "vue";
+import { renderToString } from "vue/server-renderer";
 import { Dropzone as StyledDropzone } from "../../../../apps/vue-demo/src/components/starwind-runtime/dropzone";
 
 type ElementExpose<T extends HTMLElement> = ComponentPublicInstance & { element: T | null };
@@ -160,7 +159,7 @@ describe("Vue Dropzone public behavior", () => {
     showSecond.value = false;
     await settle();
     expect(host.querySelectorAll("[data-sw-dropzone]")).toHaveLength(1);
-    expect(abort).toHaveBeenCalledTimes(1);
+    expect(abort).toHaveBeenCalledTimes(2);
     expect(disconnect).toHaveBeenCalledTimes(1);
   });
 
@@ -250,3 +249,63 @@ async function settle(): Promise<void> {
   await new Promise((resolve) => window.setTimeout(resolve, 0));
   await nextTick();
 }
+
+it("refreshes keyed and returning native inputs with stable files, state, and form ownership", async () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const key = ref<number | null>(0);
+  const changes = vi.fn();
+  const app = createApp({
+    render: () =>
+      h("div", [
+        h("form", { id: "drop-external" }),
+        h(DropzoneRoot, { isUploading: true, onFilesChange: changes }, () => [
+          key.value === null
+            ? null
+            : h(DropzoneInput, { key: key.value, form: "drop-external", name: "files" }),
+          h(DropzoneFilesList),
+        ]),
+      ]),
+  });
+  app.mount(host);
+  cleanups.push(() => app.unmount());
+  const element = host.querySelector<HTMLElement>("[data-sw-dropzone]")!;
+  const instance = createDropzone(element);
+  const retired = instance.input;
+  instance.setFiles([new File(["saved"], "saved.txt")]);
+  key.value = 1;
+  await nextTick();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  const input = host.querySelector<HTMLInputElement>("input")!;
+  expect(input).not.toBe(retired);
+  expect(input.files?.[0]?.name).toBe("saved.txt");
+  expect(instance.input).toBe(input);
+  expect(createDropzone(element)).toBe(instance);
+  expect(instance.getUploading()).toBe(true);
+  retired.dispatchEvent(new Event("change", { bubbles: true }));
+  expect(changes).toHaveBeenCalledTimes(1);
+  key.value = null;
+  await nextTick();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  key.value = 2;
+  await nextTick();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(host.querySelector<HTMLInputElement>("input")!.files?.[0]?.name).toBe("saved.txt");
+  const oldForm = host.querySelector("form")!;
+  oldForm.reset();
+  oldForm.id = "retired-drop-form";
+  const form = document.createElement("form");
+  form.id = "drop-external";
+  host.append(form);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(instance.getFiles()[0]?.name).toBe("saved.txt");
+  expect((new FormData(form).get("files") as File).name).toBe("saved.txt");
+  oldForm.reset();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(instance.getFiles()[0]?.name).toBe("saved.txt");
+  form.reset();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(instance.getFiles()).toEqual([]);
+  expect(changes).toHaveBeenCalledTimes(1);
+  form.remove();
+});

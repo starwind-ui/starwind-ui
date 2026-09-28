@@ -1,8 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-
 import { describe, expect, it } from "vitest";
-
 import { progressStyledContract } from "../../contracts/styled/components/progress.js";
 import { selectStyledContract } from "../../contracts/styled/components/select.js";
 import {
@@ -12,6 +10,7 @@ import {
 } from "../../renderers/framework-adapters/vue/styled/expressions.js";
 import { projectVueStyledComponent } from "../../renderers/framework-adapters/vue/styled/projection.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { compactCode } from "../source-comparison.js";
 
 const STYLED_RENDERER_ROOT = path.join(
   process.cwd(),
@@ -90,9 +89,9 @@ describe("Vue Styled renderer structure", () => {
     ).join("\n");
 
     expect(source).not.toMatch(/\.replace(?:All)?\s*\(/);
-    expect(source).not.toContain("renderComputedDependencies");
-    expect(source).not.toContain("renderCodeIdentifiers");
-    expect(source).not.toContain("new RegExp");
+    expect(compactCode(source)).not.toContain(compactCode("renderComputedDependencies"));
+    expect(compactCode(source)).not.toContain(compactCode("renderCodeIdentifiers"));
+    expect(compactCode(source)).not.toContain(compactCode("new RegExp"));
   });
 
   it("renders explicit computed references without touching adversarial raw syntax", () => {

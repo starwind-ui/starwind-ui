@@ -41,40 +41,52 @@ function destroyOwnedInstance(): void {
 onMounted(() => {
   const element = rootRef.value;
   if (!element) throw new Error("FieldRoot requires its root before Runtime setup.");
-  instance = createField(element, {
+  const connected = createField(element, {
     dirty: props.dirty,
     disabled: props.disabled,
     invalid: props.invalid,
     name: props.name,
     touched: props.touched,
   });
+  instance = connected;
 });
 
 watch(
   () => props.dirty,
-  (value) => instance?.setDirty(value),
+  () => {
+    instance?.setDirty(props.dirty);
+  },
   { flush: "post" },
 );
 watch(
   () => props.disabled,
-  (value) => instance?.setDisabled(value),
+  () => {
+    instance?.setDisabled(props.disabled);
+  },
   { flush: "post" },
 );
 watch(
   () => props.invalid,
-  (value) => instance?.setInvalid(value),
+  () => {
+    instance?.setInvalid(props.invalid);
+  },
   { flush: "post" },
 );
 watch(
   () => props.name,
-  (value) => instance?.setName(value),
+  () => {
+    instance?.setName(props.name);
+  },
   { flush: "post" },
 );
 watch(
   () => props.touched,
-  (value) => instance?.setTouched(value),
+  () => {
+    instance?.setTouched(props.touched);
+  },
   { flush: "post" },
 );
+
 onBeforeUnmount(destroyOwnedInstance);
 </script>
 

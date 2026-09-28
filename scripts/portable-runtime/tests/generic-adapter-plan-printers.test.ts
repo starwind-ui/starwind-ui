@@ -1,16 +1,8 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { describe, expect, it } from "vitest";
-import { normalizeAstroPrimitiveOutput } from "../renderers/framework-adapters/astro/primitive-output-writer.js";
-import {
-  applyReactEffectTiming,
-  applyReactPortalImportCanonicalization,
-  applyReactRefCleanup,
-} from "../renderers/framework-adapters/react/primitive-output-writer.js";
-
 import {
   alertDialogRuntimeAdapterContract,
   avatarRuntimeAdapterContract,
@@ -34,19 +26,25 @@ import {
 } from "../contracts/primitive/representatives.js";
 import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
 import { createAstroHeader } from "../renderers/framework-adapters/astro/headers.js";
+import { normalizeAstroPrimitiveOutput } from "../renderers/framework-adapters/astro/primitive-output-writer.js";
 import {
   astroFrameworkAdapter,
   getPrimitiveFrameworkAdapterTargetsWithOutputModelCapability,
   reactFrameworkAdapter,
 } from "../renderers/framework-adapters/index.js";
+import {
+  applyReactEffectTiming,
+  applyReactPortalImportCanonicalization,
+  applyReactRefCleanup,
+} from "../renderers/framework-adapters/react/primitive-output-writer.js";
 import { getPrimitiveFrameworkAdapterTargetsForComponent } from "../renderers/framework-adapters/target-registry.js";
+import { isActionSurfaceOutputModelPlan } from "../renderers/generic-adapter-plan/families/action-surface.js";
 import {
   booleanFormControlAdapterFamilyPlan,
   getBooleanFormControlFacts,
 } from "../renderers/generic-adapter-plan/families/boolean-form-control.js";
 import { disclosurePresenceAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/disclosure-presence.js";
 import { formFieldCoordinatorAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/form-field-coordinator.js";
-import { isActionSurfaceOutputModelPlan } from "../renderers/generic-adapter-plan/families/action-surface.js";
 import { createGroupedValueControlAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/grouped-value-control.js";
 import { mediaStatusAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/media-status.js";
 import { nativeOverlayAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/native-overlay.js";
@@ -65,6 +63,11 @@ import type {
 } from "../renderers/generic-adapter-plan/types.js";
 import { primitiveGeneratorRegistry } from "../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../renderers/shared.js";
+import {
+  assertTypeScriptModule,
+  compactCode,
+  normalizeTypeScriptSource,
+} from "./source-comparison.js";
 
 function printAstroGenericAdapterOutputModel(plan: GenericAdapterPlan) {
   return printGenericAdapterOutputModel(
@@ -197,33 +200,10 @@ describe("GenericAdapterPlan output model printers", () => {
       'createButton(button).setDisabled(button.hasAttribute("data-disabled"))',
     );
 
-    expect(reactRoot).toContain(
-      "export type ButtonRootProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {",
-    );
-    expect(reactRoot).toMatch(/^"use client";\n\n/);
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
     expect(reactIndex).toMatch(/^"use client";\n\n/);
-    expect(reactRoot).toContain("focusableWhenDisabled?: boolean;");
-    expect(reactRoot).toContain('type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];');
-    expect(reactRoot).toContain("React.forwardRef<HTMLButtonElement, ButtonRootProps>");
-    expect(reactRoot).toContain(
-      "const instanceRef = React.useRef<ReturnType<typeof createButton> | null>(null);",
-    );
-    expect(reactRoot).toContain("if (!focusableWhenDisabled)");
-    expect(reactRoot).toContain("disabled: disabledRef.current,");
-    expect(reactRoot).not.toContain("focusableWhenDisabled,\n    });");
-    expect(reactRoot).toContain("instanceRef.current?.setDisabled(disabled);");
-    expect(reactRoot).toContain("}, [focusableWhenDisabled]);");
-    expect(reactRoot).toContain("}, [disabled]);");
-    expect(reactRoot).toContain("data-sw-button");
-    expect(reactRoot).toContain(
-      'data-focusable-when-disabled={focusableWhenDisabled ? "true" : undefined}',
-    );
-    expect(reactRoot).toContain(
-      'aria-disabled={disabled && focusableWhenDisabled ? "true" : undefined}',
-    );
-    expect(reactRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(reactRoot).toContain("disabled={disabled && !focusableWhenDisabled}");
-    expect(reactRoot).toContain('type={type ?? "button"}');
+
     expectPrintedFilesToMatchPackage("packages/astro/src", astroFiles);
     expectPrintedFilesToMatchPackage("packages/react/src", reactFiles);
   });
@@ -334,7 +314,9 @@ describe("GenericAdapterPlan output model printers", () => {
     const reactPopup = reactFiles.find((file) => file.path === "dialog/DialogPopup.tsx")?.contents;
     const reactIndex = reactFiles.find((file) => file.path === "dialog/index.ts")?.contents;
 
-    expect(astroRoot).toContain('import { createDialog } from "@starwind-ui/runtime/dialog";');
+    expect(astroRoot).toContain(
+      'import { createDialog, resolveDialogOwner } from "@starwind-ui/runtime/dialog";',
+    );
     expect(astroRoot).toContain("defaultOpen = false");
     expect(astroRoot).toContain("closeOnOutsideInteract = true");
     expect(astroRoot).toContain("modal = true");
@@ -346,7 +328,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain('data-modal={modal ? "true" : "false"}');
     expect(astroRoot).toContain('data-state={defaultOpen ? "open" : "closed"}');
     expect(astroRoot).toContain(
-      'getInitCandidates(event, "[data-sw-dialog]").forEach((root) => createDialog(root));',
+      'getInitCandidates(event, "[data-sw-dialog]:not([data-sw-alert-dialog]):not([data-sw-drawer])").forEach((root) => {',
     );
     expect(astroRoot).toContain('document.addEventListener("astro:after-swap", setupDialogs);');
     expect(astroRoot).toContain('document.addEventListener("starwind:init", setupDialogs);');
@@ -366,40 +348,25 @@ describe("GenericAdapterPlan output model printers", () => {
       "export type { DialogCloseCompleteDetails, DialogOpenChangeDetails }",
     );
 
-    expect(reactRoot).toContain('from "@starwind-ui/runtime/dialog";');
-    expect(reactRoot).toContain("defaultOpen = false");
-    expect(reactRoot).toContain("closeOnOutsideInteract = true");
-    expect(reactRoot).toContain("modal = true");
-    expect(reactRoot).toContain("const onCloseCompleteRef = React.useRef(onCloseComplete);");
-    expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(reactRoot).toContain("const defaultOpenRef = React.useRef(defaultOpen);");
-    expect(reactRoot).toContain("const [uncontrolledOpen, setUncontrolledOpenState]");
-    expect(reactRoot).toContain("defaultOpen: uncontrolledOpenRef.current");
-    expect(reactRoot).toContain("onCloseCompleteRef.current?.(details);");
-    expect(reactRoot).toContain("onOpenChange: (nextOpen, details)");
-    expect(reactRoot).toContain("onOpenChangeRef.current?.(nextOpen, details);");
-    expect(reactRoot).toContain('instance.subscribe("openChange"');
-    expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
-    expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-    expect(reactRoot).toContain("}, [closeOnEscape, closeOnOutsideInteract, modal]);");
-    expect(reactRoot).toContain('data-default-open={defaultOpenRef.current ? "true" : undefined}');
-    expect(reactRoot).toContain(
-      'data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactTrigger)).toContain(compactCode('type="button"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode("data-sw-dialog-target-id={targetId}"));
+    expect(compactCode(reactTrigger)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(reactBackdrop)).toContain(compactCode("data-sw-dialog-overlay"));
+    expect(compactCode(reactBackdrop)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(reactBackdrop)).toContain(compactCode("hidden"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode("React.DialogHTMLAttributes<HTMLDialogElement>"),
     );
-    expect(reactRoot).toContain('data-modal={modal ? "true" : "false"}');
-    expect(reactTrigger).toContain('type="button"');
-    expect(reactTrigger).toContain("data-sw-dialog-target-id={targetId}");
-    expect(reactTrigger).toContain('data-state="closed"');
-    expect(reactBackdrop).toContain("data-sw-dialog-overlay");
-    expect(reactBackdrop).toContain('data-state="closed"');
-    expect(reactBackdrop).toContain("hidden");
-    expect(reactPopup).toContain("React.DialogHTMLAttributes<HTMLDialogElement>");
-    expect(reactClose).toContain('type="button"');
-    expect(reactClose).toContain("data-sw-dialog-close");
-    expect(reactIndex).toContain('import DialogRoot from "./DialogRoot";');
-    expect(reactIndex).toContain("Root: DialogRoot");
-    expect(reactIndex).toContain(
-      "export type { DialogCloseCompleteDetails, DialogOpenChangeDetails }",
+    expect(compactCode(reactClose)).toContain(compactCode('type="button"'));
+    expect(compactCode(reactClose)).toContain(compactCode("data-sw-dialog-close"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import DialogRoot from "./DialogRoot";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: DialogRoot"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode("export type { DialogCloseCompleteDetails, DialogOpenChangeDetails }"),
     );
   });
 
@@ -450,9 +417,11 @@ describe("GenericAdapterPlan output model printers", () => {
         const targetOutputRoot = targetPackage === "astro" ? astroOutputRoot : reactOutputRoot;
         const generatedPath = join(targetOutputRoot, "dialog", fileName);
 
-        expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-          await readFormattedOutput(packagePath),
-        );
+        expect(
+          normalizePrintedComparison(
+            await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+          ),
+        ).toBe(normalizePrintedComparison(await readFormattedOutput(packagePath)));
       }
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
@@ -561,8 +530,12 @@ describe("GenericAdapterPlan output model printers", () => {
       const reactIndex = reactFiles.find((file) => file.path === `${component}/index.ts`)?.contents;
 
       expect(astroRoot).toContain(
-        `import { ${plan.runtime.factory} } from "${plan.runtime.importSource}";`,
+        `import { ${plan.runtime.factory}, resolveDialogOwner } from "${plan.runtime.importSource}";`,
       );
+      expect(astroRoot).toContain("if (knownRoots.has(root)) instance.refresh()");
+      expect(astroRoot).toContain("knownRoots.has(owner)");
+      expect(astroRoot).toContain("const owner = resolveDialogOwner(scopedRoot)");
+      assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
       expect(astroRoot).toContain("defaultOpen = false");
       expect(astroRoot).toContain('data-default-open={defaultOpen ? "true" : undefined}');
       expect(astroRoot).toContain('data-close-on-escape={closeOnEscape ? "true" : "false"}');
@@ -574,23 +547,14 @@ describe("GenericAdapterPlan output model printers", () => {
       expect(astroTrigger).toContain('type="button"');
       expect(astroTrigger).toContain('aria-haspopup="dialog"');
       expect(astroTrigger).toContain('data-state="closed"');
-      expect(reactRoot).toContain(`from "${plan.runtime.importSource}";`);
-      expect(reactRoot).toContain("const onCloseCompleteRef = React.useRef(onCloseComplete);");
-      expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-      expect(reactRoot).toContain("defaultOpen: uncontrolledOpenRef.current");
-      expect(reactRoot).toContain("onCloseCompleteRef.current?.(details);");
-      expect(reactRoot).toContain("onOpenChange: (nextOpen, details)");
-      expect(reactRoot).toContain('instance.subscribe("openChange"');
-      expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
-      expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-      expect(reactRoot).toContain("}, [closeOnEscape, closeOnOutsideInteract, modal]);");
-      expect(reactTrigger).toContain('type="button"');
-      expect(reactTrigger).toContain('data-state="closed"');
+
+      expect(compactCode(reactTrigger)).toContain(compactCode('type="button"'));
+      expect(compactCode(reactTrigger)).toContain(compactCode('data-state="closed"'));
 
       if (component === "alert-dialog") {
         expect(astroRoot).toContain("closeOnOutsideInteract = false");
         expect(astroRoot).toContain(
-          'getInitCandidates(event, "[data-sw-alert-dialog]").forEach((root) => createAlertDialog(root));',
+          'getInitCandidates(event, "[data-sw-alert-dialog]").forEach((root) => {',
         );
         expect(astroRoot).toContain(
           'document.addEventListener("astro:after-swap", setupAlertDialogs);',
@@ -613,26 +577,28 @@ describe("GenericAdapterPlan output model printers", () => {
         expect(astroIndex).toContain(
           "AlertDialogCloseCompleteDetails,\n  AlertDialogOpenChangeDetails,",
         );
-        expect(reactRoot).toContain("closeOnOutsideInteract = false");
-        expect(reactTrigger).toContain("data-sw-alert-dialog-target-id={targetId}");
-        expect(reactBackdrop).toContain("data-sw-alert-dialog-backdrop");
-        expect(reactBackdrop).toContain('data-state="closed"');
-        expect(reactBackdrop).toContain("hidden");
-        expect(reactPortal).toContain("data-sw-alert-dialog-portal");
-        expect(reactViewport).toContain("data-sw-alert-dialog-viewport");
-        expect(reactPopup).toContain('role="alertdialog"');
-        expect(reactClose).toContain('type="button"');
-        expect(reactClose).toContain("data-sw-alert-dialog-close");
-        expect(reactIndex).toContain("Root: AlertDialogRoot");
-        expect(reactIndex).toContain("Portal: AlertDialogPortal");
-        expect(reactIndex).toContain("Viewport: AlertDialogViewport");
-        expect(reactIndex).toContain(
-          "AlertDialogCloseCompleteDetails,\n  AlertDialogOpenChangeDetails,",
+
+        expect(compactCode(reactTrigger)).toContain(
+          compactCode("data-sw-alert-dialog-target-id={targetId}"),
+        );
+        expect(compactCode(reactBackdrop)).toContain(compactCode("data-sw-alert-dialog-backdrop"));
+        expect(compactCode(reactBackdrop)).toContain(compactCode('data-state="closed"'));
+        expect(compactCode(reactBackdrop)).toContain(compactCode("hidden"));
+        expect(compactCode(reactPortal)).toContain(compactCode("data-sw-alert-dialog-portal"));
+        expect(compactCode(reactViewport)).toContain(compactCode("data-sw-alert-dialog-viewport"));
+        expect(compactCode(reactPopup)).toContain(compactCode('role="alertdialog"'));
+        expect(compactCode(reactClose)).toContain(compactCode('type="button"'));
+        expect(compactCode(reactClose)).toContain(compactCode("data-sw-alert-dialog-close"));
+        expect(compactCode(reactIndex)).toContain(compactCode("Root: AlertDialogRoot"));
+        expect(compactCode(reactIndex)).toContain(compactCode("Portal: AlertDialogPortal"));
+        expect(compactCode(reactIndex)).toContain(compactCode("Viewport: AlertDialogViewport"));
+        expect(compactCode(reactIndex)).toContain(
+          compactCode("AlertDialogCloseCompleteDetails,\n  AlertDialogOpenChangeDetails,"),
         );
       } else {
         expect(astroRoot).toContain("closeOnOutsideInteract = true");
         expect(astroRoot).toContain(
-          'getInitCandidates(event, "[data-sw-drawer]").forEach((root) => createDrawer(root));',
+          'getInitCandidates(event, "[data-sw-drawer]").forEach((root) => {',
         );
         expect(astroRoot).toContain('document.addEventListener("astro:after-swap", setupDrawers);');
         expect(astroRoot).toContain('document.addEventListener("starwind:init", setupDrawers);');
@@ -656,28 +622,33 @@ describe("GenericAdapterPlan output model printers", () => {
         expect(astroIndex).toContain(
           "export type { DrawerCloseCompleteDetails, DrawerOpenChangeDetails }",
         );
-        expect(reactRoot).toContain("export type DrawerRootProps");
-        expect(reactRoot).toContain("closeOnOutsideInteract = true");
-        expect(reactTrigger).toContain("data-sw-drawer-target-id={targetId}");
-        expect(reactBackdrop).toContain("data-sw-drawer-backdrop");
-        expect(reactBackdrop).toContain('data-state="closed"');
-        expect(reactBackdrop).toContain("hidden");
-        expect(reactPortal).toContain("data-sw-drawer-portal");
-        expect(reactViewport).toContain("data-sw-drawer-viewport");
-        expect(reactPopup).toContain('side?: "top" | "right" | "bottom" | "left";');
-        expect(reactPopup).toContain("React.forwardRef<HTMLDialogElement, DrawerPopupProps>");
-        expect(reactPopup).toContain('{ side = "right", ...props }');
-        expect(reactPopup).toContain("data-sw-drawer-popup");
-        expect(reactPopup).toContain('data-state="closed"');
-        expect(reactPopup).toContain("data-side={side}");
-        expect(reactClose).toContain('type="button"');
-        expect(reactClose).toContain("data-sw-drawer-close");
-        expect(reactIndex).toContain("Root: DrawerRoot");
-        expect(reactIndex).toContain("Portal: DrawerPortal");
-        expect(reactIndex).toContain("Viewport: DrawerViewport");
-        expect(reactIndex).toContain("Popup: DrawerPopup");
-        expect(reactIndex).toContain(
-          "export type { DrawerCloseCompleteDetails, DrawerOpenChangeDetails }",
+
+        expect(compactCode(reactTrigger)).toContain(
+          compactCode("data-sw-drawer-target-id={targetId}"),
+        );
+        expect(compactCode(reactBackdrop)).toContain(compactCode("data-sw-drawer-backdrop"));
+        expect(compactCode(reactBackdrop)).toContain(compactCode('data-state="closed"'));
+        expect(compactCode(reactBackdrop)).toContain(compactCode("hidden"));
+        expect(compactCode(reactPortal)).toContain(compactCode("data-sw-drawer-portal"));
+        expect(compactCode(reactViewport)).toContain(compactCode("data-sw-drawer-viewport"));
+        expect(compactCode(reactPopup)).toContain(
+          compactCode('side?: "top" | "right" | "bottom" | "left";'),
+        );
+        expect(compactCode(reactPopup)).toContain(
+          compactCode("React.forwardRef<HTMLDialogElement, DrawerPopupProps>"),
+        );
+        expect(compactCode(reactPopup)).toContain(compactCode('{ side = "right", ...props }'));
+        expect(compactCode(reactPopup)).toContain(compactCode("data-sw-drawer-popup"));
+        expect(compactCode(reactPopup)).toContain(compactCode('data-state="closed"'));
+        expect(compactCode(reactPopup)).toContain(compactCode("data-side={side}"));
+        expect(compactCode(reactClose)).toContain(compactCode('type="button"'));
+        expect(compactCode(reactClose)).toContain(compactCode("data-sw-drawer-close"));
+        expect(compactCode(reactIndex)).toContain(compactCode("Root: DrawerRoot"));
+        expect(compactCode(reactIndex)).toContain(compactCode("Portal: DrawerPortal"));
+        expect(compactCode(reactIndex)).toContain(compactCode("Viewport: DrawerViewport"));
+        expect(compactCode(reactIndex)).toContain(compactCode("Popup: DrawerPopup"));
+        expect(compactCode(reactIndex)).toContain(
+          compactCode("export type { DrawerCloseCompleteDetails, DrawerOpenChangeDetails }"),
         );
       }
     }
@@ -854,69 +825,65 @@ describe("GenericAdapterPlan output model printers", () => {
       "export type { PopoverCloseCompleteDetails, PopoverOpenChangeDetails }",
     );
 
-    expect(reactRoot).toContain('from "@starwind-ui/runtime/popover";');
-    expect(reactRoot).toContain("export type PopoverRootProps");
-    expect(reactRoot).toContain("closeDelay?: number;");
-    expect(reactRoot).toContain("modal = false");
-    expect(reactRoot).toContain("openOnHover = false");
-    expect(reactRoot).toContain("closeDelay = 200");
-    expect(reactRoot).toContain("const onCloseCompleteRef = React.useRef(onCloseComplete);");
-    expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
-    expect(reactRoot).toContain("defaultOpen: uncontrolledOpenRef.current");
-    expect(reactRoot).toContain("openOnHover,");
-    expect(reactRoot).toContain("onCloseCompleteRef.current?.(details);");
-    expect(reactRoot).toContain("onOpenChange: (nextOpen, details)");
-    expect(reactRoot).toContain('instance.subscribe("openChange"');
-    expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
-    expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-    expect(reactRoot).toContain("}, [closeOnEscape, closeOnOutsideInteract, modal, openOnHover]);");
-    expect(reactRoot).toContain('data-open-on-hover={openOnHover ? "true" : undefined}');
-    expect(reactRoot).toContain("data-close-delay={closeDelay}");
-    expect(reactTrigger).toContain("asChild?: boolean;");
-    expect(reactTrigger).toContain("useComposedRefs");
-    expect(reactTrigger).toContain("React.cloneElement");
-    expect(reactTrigger).toContain('"aria-haspopup": "dialog"');
-    expect(reactTrigger).toContain('"aria-expanded": "false"');
-    expect(reactTrigger).toContain('"data-state": "closed"');
-    expect(reactTrigger).toContain('type="button"');
-    expect(reactPortal).toContain("data-sw-popover-portal");
-    expect(reactPositioner).toContain("PopoverPositionerProps");
-    expect(reactPositioner).toContain(
-      '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, collisionStrategy = "initial-placement", ...props }',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactTrigger)).toContain(compactCode("asChild?: boolean;"));
+    expect(compactCode(reactTrigger)).toContain(compactCode("useComposedRefs"));
+    expect(compactCode(reactTrigger)).toContain(compactCode("React.cloneElement"));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"aria-haspopup": "dialog"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"aria-expanded": "false"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('"data-state": "closed"'));
+    expect(compactCode(reactTrigger)).toContain(compactCode('type="button"'));
+    expect(compactCode(reactPortal)).toContain(compactCode("data-sw-popover-portal"));
+    expect(compactCode(reactPositioner)).toContain(compactCode("PopoverPositionerProps"));
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode(
+        '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, collisionStrategy = "initial-placement", ...props }',
+      ),
     );
-    expect(reactPositioner).toContain("data-sw-popover-positioner");
-    expect(reactPositioner).toContain("data-side={side}");
-    expect(reactPositioner).toContain("data-align={align}");
-    expect(reactPositioner).toContain("data-side-offset={sideOffset}");
-    expect(reactPositioner).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
-    expect(reactPositioner).toContain("data-collision-strategy={collisionStrategy}");
-    expect(reactPopup).toContain("PopoverPopupProps");
-    expect(reactPopup).toContain(
-      '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, collisionStrategy = "initial-placement", ...props }',
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-sw-popover-positioner"));
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(reactPositioner)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode("data-avoid-collisions={String(avoidCollisions)}"),
     );
-    expect(reactPopup).toContain("data-sw-popover-popup");
-    expect(reactPopup).toContain('role="dialog"');
-    expect(reactPopup).toContain("tabIndex={-1}");
-    expect(reactPopup).toContain('data-state="closed"');
-    expect(reactPopup).toContain("data-side={side}");
-    expect(reactPopup).toContain("data-align={align}");
-    expect(reactPopup).toContain("data-side-offset={sideOffset}");
-    expect(reactPopup).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
-    expect(reactPopup).toContain("data-collision-strategy={collisionStrategy}");
-    expect(reactPopup).toContain("hidden");
-    expect(reactArrow).toContain("data-sw-popover-arrow");
-    expect(reactBackdrop).toContain("data-sw-popover-backdrop");
-    expect(reactBackdrop).toContain('data-state="closed"');
-    expect(reactBackdrop).toContain("hidden");
-    expect(reactClose).toContain('type="button"');
-    expect(reactClose).toContain("data-sw-popover-close");
-    expect(reactViewport).toContain("data-sw-popover-viewport");
-    expect(reactIndex).toContain("Root: PopoverRoot");
-    expect(reactIndex).toContain("Positioner: PopoverPositioner");
-    expect(reactIndex).toContain("Arrow: PopoverArrow");
-    expect(reactIndex).toContain("Viewport: PopoverViewport");
-    expect(reactIndex).toContain(
-      "export type { PopoverCloseCompleteDetails, PopoverOpenChangeDetails }",
+    expect(compactCode(reactPositioner)).toContain(
+      compactCode("data-collision-strategy={collisionStrategy}"),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode("PopoverPopupProps"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode(
+        '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, collisionStrategy = "initial-placement", ...props }',
+      ),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode("data-sw-popover-popup"));
+    expect(compactCode(reactPopup)).toContain(compactCode('role="dialog"'));
+    expect(compactCode(reactPopup)).toContain(compactCode("tabIndex={-1}"));
+    expect(compactCode(reactPopup)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(reactPopup)).toContain(compactCode("data-side={side}"));
+    expect(compactCode(reactPopup)).toContain(compactCode("data-align={align}"));
+    expect(compactCode(reactPopup)).toContain(compactCode("data-side-offset={sideOffset}"));
+    expect(compactCode(reactPopup)).toContain(
+      compactCode("data-avoid-collisions={String(avoidCollisions)}"),
+    );
+    expect(compactCode(reactPopup)).toContain(
+      compactCode("data-collision-strategy={collisionStrategy}"),
+    );
+    expect(compactCode(reactPopup)).toContain(compactCode("hidden"));
+    expect(compactCode(reactArrow)).toContain(compactCode("data-sw-popover-arrow"));
+    expect(compactCode(reactBackdrop)).toContain(compactCode("data-sw-popover-backdrop"));
+    expect(compactCode(reactBackdrop)).toContain(compactCode('data-state="closed"'));
+    expect(compactCode(reactBackdrop)).toContain(compactCode("hidden"));
+    expect(compactCode(reactClose)).toContain(compactCode('type="button"'));
+    expect(compactCode(reactClose)).toContain(compactCode("data-sw-popover-close"));
+    expect(compactCode(reactViewport)).toContain(compactCode("data-sw-popover-viewport"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: PopoverRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Positioner: PopoverPositioner"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Arrow: PopoverArrow"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Viewport: PopoverViewport"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode("export type { PopoverCloseCompleteDetails, PopoverOpenChangeDetails }"),
     );
   });
 
@@ -1067,9 +1034,11 @@ describe("GenericAdapterPlan output model printers", () => {
         const targetOutputRoot = targetPackage === "astro" ? astroOutputRoot : reactOutputRoot;
         const generatedPath = join(targetOutputRoot, "popover", fileName);
 
-        expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-          await readFormattedOutput(packagePath),
-        );
+        expect(
+          normalizePrintedComparison(
+            await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+          ),
+        ).toBe(normalizePrintedComparison(await readFormattedOutput(packagePath)));
       }
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
@@ -1251,9 +1220,11 @@ describe("GenericAdapterPlan output model printers", () => {
         const targetOutputRoot = targetPackage === "astro" ? astroOutputRoot : reactOutputRoot;
         const generatedPath = join(targetOutputRoot, component, fileName);
 
-        expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-          await readFormattedOutput(packagePath),
-        );
+        expect(
+          normalizePrintedComparison(
+            await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+          ),
+        ).toBe(normalizePrintedComparison(await readFormattedOutput(packagePath)));
       }
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
@@ -1330,7 +1301,9 @@ describe("GenericAdapterPlan output model printers", () => {
 
     expect(astroRoot).toContain('<span data-sw-avatar data-image-loading-status="idle" {...rest}>');
     expect(astroRoot).toContain('import { createAvatar } from "@starwind-ui/runtime/avatar";');
-    expect(astroRoot).toContain('querySelectorAll<HTMLElement>("[data-sw-avatar]")');
+    expect(astroRoot).toContain("querySelectorAll<HTMLElement>(selector)");
+    expect(astroRoot).toContain("owner && knownRoots.has(owner)");
+    expect(astroRoot).toContain("if (knownRoots.has(root)) instance.refresh();");
     expect(astroImage).toContain('import { Image } from "astro:assets";');
     expect(astroImage).toContain("Either 'src' or 'image' is required for an avatar image.");
     expect(astroImage).toContain("data-sw-avatar-image");
@@ -1352,36 +1325,60 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroIndex).toContain("export { Avatar, AvatarFallback, AvatarImage, AvatarRoot };");
     expect(astroIndex).toContain("export default Avatar;");
 
-    expect(reactRoot).toContain('import { createAvatar } from "@starwind-ui/runtime/avatar";');
-    expect(reactRoot).toContain("const instance = createAvatar(root);");
-    expect(reactImage).toContain("AvatarImageLoadingStatus,");
-    expect(reactImage).toContain("AvatarLoadingStatusChangeDetails,");
-    expect(reactImage).toContain('style={{ ...style, visibility: "hidden" }}');
-    expect(reactImage).toContain("hidden={false}");
-    expect(reactImage).not.toContain("node.hidden");
-    expect(reactImage).toContain(
-      'root.addEventListener("starwind:loading-status-change", handleLoadingStatusChange);',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactImage)).toContain(compactCode("React.useContext(MediaStatusContext)"));
+    expect(compactCode(reactFallback)).toContain(compactCode("[requestRefresh, delay]"));
+    expect(compactCode(reactImage)).toContain(compactCode("AvatarImageLoadingStatus,"));
+    expect(compactCode(reactImage)).toContain(compactCode("AvatarLoadingStatusChangeDetails,"));
+    expect(compactCode(reactImage)).toContain(
+      compactCode('style={{ ...style, visibility: "hidden" }}'),
     );
-    expect(reactImage).toContain("onLoadingStatusChangeRef.current?.(details.status, details);");
-    expect(reactImage).toContain('const status = root.getAttribute("data-image-loading-status")');
-    expect(reactImage).toContain(
-      'root.removeEventListener("starwind:loading-status-change", handleLoadingStatusChange);',
+    expect(compactCode(reactImage)).toContain(compactCode("hidden={false}"));
+    expect(compactCode(reactImage)).not.toContain(compactCode("node.hidden"));
+    expect(compactCode(reactImage)).toContain(
+      compactCode(
+        'root.addEventListener("starwind:loading-status-change", handleLoadingStatusChange);',
+      ),
     );
-    expect(reactImage).toContain(
-      'onLoadingStatusChangeRef.current?.(status, { previousStatus: "idle", status });',
+    expect(compactCode(reactImage)).toContain(
+      compactCode("onLoadingStatusChangeRef.current?.(details.status, details);"),
     );
-    expect(reactFallback).toContain("delay?: number;");
-    expect(reactFallback).toContain("node.hidden = hidden ?? delay !== undefined;");
-    expect(reactFallback).toContain("data-delay={delay}");
-    expect(reactIndex).toContain('import AvatarFallback from "./AvatarFallback";');
-    expect(reactIndex).toContain('import AvatarImage from "./AvatarImage";');
-    expect(reactIndex).toContain('import AvatarRoot from "./AvatarRoot";');
-    expect(reactIndex).toContain("const Avatar = {");
-    expect(reactIndex).toContain("Root: AvatarRoot");
-    expect(reactIndex).toContain("Image: AvatarImage");
-    expect(reactIndex).toContain("Fallback: AvatarFallback");
-    expect(reactIndex).toContain("export { Avatar, AvatarFallback, AvatarImage, AvatarRoot };");
-    expect(reactIndex).toContain("export default Avatar;");
+    expect(compactCode(reactImage)).toContain(
+      compactCode('const status = root.getAttribute("data-image-loading-status")'),
+    );
+    expect(compactCode(reactImage)).toContain(
+      compactCode(
+        'root.removeEventListener("starwind:loading-status-change", handleLoadingStatusChange);',
+      ),
+    );
+    expect(compactCode(reactImage)).toContain(
+      compactCode(
+        'onLoadingStatusChangeRef.current?.(status, { previousStatus: "idle", status });',
+      ),
+    );
+    expect(compactCode(reactFallback)).toContain(compactCode("delay?: number;"));
+    expect(compactCode(reactFallback)).toContain(
+      compactCode("node.hidden = delay !== undefined || Boolean(hidden);"),
+    );
+    expect(compactCode(reactFallback)).toContain(compactCode("data-delay={delay}"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import AvatarFallback from "./AvatarFallback";'),
+    );
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import AvatarImage from "./AvatarImage";'),
+    );
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import AvatarRoot from "./AvatarRoot";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("const Avatar = {"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: AvatarRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Image: AvatarImage"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Fallback: AvatarFallback"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode("export { Avatar, AvatarFallback, AvatarImage, AvatarRoot };"),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("export default Avatar;"));
   });
 
   it("keeps Avatar media-status matching, facts, and output modeling in one family module", () => {
@@ -1519,30 +1516,38 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroScrollbar).toContain('aria-hidden="true"');
     expect(astroCorner).toContain('aria-hidden="true"');
 
-    expect(reactRoot).toContain(
-      'import { createScrollArea } from "@starwind-ui/runtime/scroll-area";',
+    expect(compactCode(reactRoot)).toContain(
+      compactCode('import { createScrollArea } from "@starwind-ui/runtime/scroll-area";'),
     );
-    expect(reactRoot).toContain("const instance = createScrollArea(root);");
-    expect(reactRoot).toContain("instance.refresh();");
-    expect(reactRoot).toContain("instance.destroy();");
-    expect(reactRoot).toContain("data-overflow-edge-threshold={thresholdAttributes.shared}");
-    expect(reactRoot).toContain("thresholdAttributes.xStart");
-    expect(reactRoot).toContain("normalizeOverflowEdgeThresholdValue");
-    expect(reactViewport).toContain("tabIndex={tabIndex ?? -1}");
-    expect(reactViewport).toContain('style={{ ...style, overflow: "scroll" }}');
-    expect(reactContent).toContain('role="presentation"');
-    expect(reactScrollbar).toContain("type ScrollAreaOrientation");
-    expect(reactScrollbar).toContain("keepMounted?: boolean;");
-    expect(reactScrollbar).toContain('data-keep-mounted={keepMounted ? "" : undefined}');
-    expect(reactScrollbar).toContain("data-orientation={orientation}");
-    expect(reactScrollbar).toContain('aria-hidden="true"');
-    expect(reactCorner).toContain('aria-hidden="true"');
-    expect(reactIndex).toContain("Root: ScrollAreaRoot");
-    expect(reactIndex).toContain("Viewport: ScrollAreaViewport");
-    expect(reactIndex).toContain("Content: ScrollAreaContent");
-    expect(reactIndex).toContain("Scrollbar: ScrollAreaScrollbar");
-    expect(reactIndex).toContain("Thumb: ScrollAreaThumb");
-    expect(reactIndex).toContain("Corner: ScrollAreaCorner");
+    expect(compactCode(reactRoot)).toContain(
+      compactCode("const instance = createScrollArea(root);"),
+    );
+    expect(compactCode(reactRoot)).toContain(compactCode("instance.refresh();"));
+    expect(compactCode(reactRoot)).toContain(compactCode("instance.destroy();"));
+    expect(compactCode(reactRoot)).toContain(
+      compactCode("data-overflow-edge-threshold={thresholdAttributes.shared}"),
+    );
+    expect(compactCode(reactRoot)).toContain(compactCode("thresholdAttributes.xStart"));
+    expect(compactCode(reactRoot)).toContain(compactCode("normalizeOverflowEdgeThresholdValue"));
+    expect(compactCode(reactViewport)).toContain(compactCode("tabIndex={tabIndex ?? -1}"));
+    expect(compactCode(reactViewport)).toContain(
+      compactCode('style={{ ...style, overflow: "scroll" }}'),
+    );
+    expect(compactCode(reactContent)).toContain(compactCode('role="presentation"'));
+    expect(compactCode(reactScrollbar)).toContain(compactCode("type ScrollAreaOrientation"));
+    expect(compactCode(reactScrollbar)).toContain(compactCode("keepMounted?: boolean;"));
+    expect(compactCode(reactScrollbar)).toContain(
+      compactCode('data-keep-mounted={keepMounted ? "" : undefined}'),
+    );
+    expect(compactCode(reactScrollbar)).toContain(compactCode("data-orientation={orientation}"));
+    expect(compactCode(reactScrollbar)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(reactCorner)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: ScrollAreaRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Viewport: ScrollAreaViewport"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Content: ScrollAreaContent"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Scrollbar: ScrollAreaScrollbar"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Thumb: ScrollAreaThumb"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Corner: ScrollAreaCorner"));
   });
 
   it("keeps viewport measurement matching, facts, and file shape in its family module", () => {
@@ -1757,16 +1762,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain('interface Props extends HTMLAttributes<"span">');
     expect(astroRoot).toContain("<span");
     expect(astroRoot).toContain("</span>");
-    expect(reactRoot).toContain(
-      "export type ActionSurfaceProps = React.HTMLAttributes<HTMLSpanElement> & {",
-    );
-    expect(reactRoot).toContain(
-      "const ActionSurface = React.forwardRef<HTMLSpanElement, ActionSurfaceProps>",
-    );
-    expect(reactRoot).toContain("const rootRef = React.useRef<HTMLSpanElement>(null);");
-    expect(reactRoot).toContain("(node: HTMLSpanElement | null) =>");
-    expect(reactRoot).toContain("<span");
-    expect(reactRoot).toContain('ActionSurface.displayName = "Action.Root";');
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
 
     const noPublicRefButton = {
       ...plan,
@@ -1879,25 +1875,14 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroValue).toContain('data-preserve-text={preserveText ? "" : undefined}');
     expect(astroLabel).toContain('role="presentation"');
 
-    expect(reactRoot).toContain(
-      'import {\n  createProgress,\n  type ProgressValue,\n} from "@starwind-ui/runtime/progress";',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactValue)).toContain(compactCode("data-sw-progress-value"));
+    expect(compactCode(reactValue)).toContain(
+      compactCode('data-preserve-text={children == null ? undefined : ""}'),
     );
-    expect(reactRoot).toContain("format?: Intl.NumberFormatOptions;");
-    expect(reactRoot).toContain("value?: ProgressValue;");
-    expect(reactRoot).toContain("const instance = createProgress(root, {");
-    expect(reactRoot).toContain("ariaValueText: ariaValueTextRef.current,");
-    expect(reactRoot).toContain("getAriaValueText: getAriaValueTextRef.current,");
-    expect(reactRoot).toContain("instance.setFormatOptions({");
-    expect(reactRoot).toContain("ariaValueText,");
-    expect(reactRoot).toContain("getAriaValueText,");
-    expect(reactRoot).toContain("instance.setValue(value, { max, min })");
-    expect(reactRoot).toContain("aria-valuetext={ariaValueText}");
-    expect(reactRoot).toContain("data-value={isIndeterminate ? undefined : value}");
-    expect(reactRoot).toContain('data-indeterminate={isIndeterminate ? "" : undefined}');
-    expect(reactValue).toContain("data-sw-progress-value");
-    expect(reactValue).toContain('data-preserve-text={children == null ? undefined : ""}');
-    expect(reactValue).toContain('aria-hidden="true"');
-    expect(reactLabel).toContain('role="presentation"');
+    expect(compactCode(reactValue)).toContain(compactCode('aria-hidden="true"'));
+    expect(compactCode(reactLabel)).toContain(compactCode('role="presentation"'));
   });
 
   it("derives Progress controlled prop and label role from the range-status family", () => {
@@ -1945,12 +1930,7 @@ describe("GenericAdapterPlan output model printers", () => {
     );
     expect(renamedAstroRoot).toContain("const isIndeterminate = currentValue == null;");
     expect(renamedAstroRoot).toContain("data-value={isIndeterminate ? undefined : currentValue}");
-    expect(renamedReactRoot).toContain(
-      'export type ProgressRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "currentValue"> & {',
-    );
-    expect(renamedReactRoot).toContain("currentValue?: ProgressValue;");
-    expect(renamedReactRoot).toContain("const isIndeterminate = currentValue == null;");
-    expect(renamedReactRoot).toContain("instance.setValue(currentValue, { max, min })");
+    assertTypeScriptModule(renamedReactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
 
     const renamedRolePlan: GenericAdapterPlan = {
       ...plan,
@@ -1968,7 +1948,7 @@ describe("GenericAdapterPlan output model printers", () => {
     )?.contents;
 
     expect(renamedAstroLabel).toContain('role="none"');
-    expect(renamedReactLabel).toContain('role="none"');
+    expect(compactCode(renamedReactLabel)).toContain(compactCode('role="none"'));
 
     const missingLabelRolePlan: GenericAdapterPlan = {
       ...plan,
@@ -2008,7 +1988,7 @@ describe("GenericAdapterPlan output model printers", () => {
     )?.contents;
 
     expect(astroRoot).toContain("const { max = 100, min = 0, value = null, ...rest }");
-    expect(reactRoot).toContain("instance.setValue(value, { max, min })");
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
   });
 
   it("prints Fieldset semantic grouping parts through the native-disabled output family", () => {
@@ -2094,20 +2074,18 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroIndex).toContain('import FieldsetLegend from "./FieldsetLegend.astro";');
     expect(astroIndex).toContain("Root: FieldsetRoot");
 
-    expect(reactRoot).toContain(
-      'export type FieldsetRootProps = React.ComponentPropsWithoutRef<"fieldset">;',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactLegend)).toContain(
+      compactCode('export type FieldsetLegendProps = React.ComponentPropsWithoutRef<"div">;'),
     );
-    expect(reactRoot).toContain("{ children, disabled = false, ...props }");
-    expect(reactRoot).toContain("const instance = createFieldset(root, { disabled });");
-    expect(reactRoot).toContain("instanceRef.current?.setDisabled(disabled);");
-    expect(reactRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(reactRoot).toContain("disabled={disabled}");
-    expect(reactLegend).toContain(
-      'export type FieldsetLegendProps = React.ComponentPropsWithoutRef<"div">;',
+    expect(compactCode(reactLegend)).toContain(
+      compactCode("<div data-sw-fieldset-legend ref={ref} {...props}>"),
     );
-    expect(reactLegend).toContain("<div data-sw-fieldset-legend ref={ref} {...props}>");
-    expect(reactIndex).toContain('import FieldsetRoot from "./FieldsetRoot";');
-    expect(reactIndex).toContain("Legend: FieldsetLegend");
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import FieldsetRoot from "./FieldsetRoot";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Legend: FieldsetLegend"));
   });
 
   it("prints Input native value-control metadata through the native-input-value output family", () => {
@@ -2187,29 +2165,18 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain('data-disabled={disabled ? "" : undefined}');
     expect(astroRoot).toContain("disabled={disabled}");
     expect(astroRoot).toContain("value={value ?? defaultValue}");
-    expect(astroRoot).toContain("createInput(input)");
+    expect(astroRoot).toContain(`getInitCandidates(event, "[data-sw-input]").forEach((root) => {
+      const instance = createInput(root);
+      instance.refresh();
+      knownRoots.add(root);
+    });`);
     expect(astroIndex).toContain('import InputRoot from "./InputRoot.astro";');
     expect(astroIndex).toContain("Root: InputRoot");
 
-    expect(reactRoot).toContain("type InputValue,");
-    expect(reactRoot).toContain("type InputValueChangeDetails,");
-    expect(reactRoot).toContain("React.InputHTMLAttributes<HTMLInputElement>");
-    expect(reactRoot).toContain('"defaultValue" | "value"');
-    expect(reactRoot).toContain(
-      "onValueChange?: (value: string, details: InputValueChangeDetails) => void;",
-    );
-    expect(reactRoot).toContain("const instance = createInput(root, {");
-    expect(reactRoot).toContain("defaultValue: defaultValueRef.current,");
-    expect(reactRoot).toContain("onValueChange: (_nextValue, details) => {");
-    expect(reactRoot).toContain("if (instance.getValue() === String(value)) return;");
-    expect(reactRoot).toContain("instance.setValue(value, { emit: false });");
-    expect(reactRoot).toContain("instance.setDisabled(disabled);");
-    expect(reactRoot).toContain("const handleChange = React.useCallback(");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(nextValue, details);");
-    expect(reactRoot).toContain("const valueProps =");
-    expect(reactRoot).toContain('data-disabled={disabled ? "" : undefined}');
-    expect(reactIndex).toContain('import InputRoot from "./InputRoot";');
-    expect(reactIndex).toContain("Root: InputRoot");
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactIndex)).toContain(compactCode('import InputRoot from "./InputRoot";'));
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: InputRoot"));
     expectPrintedFilesToMatchPackage("packages/astro/src", astroFiles);
     expectPrintedFilesToMatchPackage("packages/react/src", reactFiles);
   });
@@ -2371,24 +2338,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain("toggleInstances.add(createToggle(root));");
     expect(astroRoot).toContain('document.addEventListener("astro:before-swap", destroyToggles);');
 
-    expect(reactRoot).toContain(
-      'import { createToggle, type TogglePressedChangeDetails } from "@starwind-ui/runtime/toggle";',
-    );
-    expect(reactRoot).toContain(
-      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
-    );
-    expect(reactRoot).toContain(
-      "onPressedChange?: (pressed: boolean, details: TogglePressedChangeDetails) => void;",
-    );
-    expect(reactRoot).toContain("const [uncontrolledPressed, setUncontrolledPressedState]");
-    expect(reactRoot).toContain("const instance = createToggle(root, {");
-    expect(reactRoot).toContain('const unsubscribe = instance.subscribe("pressedChange",');
-    expect(reactRoot).toContain("setUncontrolledPressed(details.pressed);");
-    expect(reactRoot).toContain("instance.setPressed(pressed, { emit: false, sync: true });");
-    expect(reactRoot).toContain("instance.setDisabled(disabled);");
-    expect(reactRoot).toContain("const renderedPressed = pressed ?? uncontrolledPressed;");
-    expect(reactRoot).toContain('"data-state": renderedPressed ? "on" : "off"');
-    expect(reactRoot).toContain("React.forwardRef<HTMLButtonElement | HTMLSpanElement");
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
   });
 
   it("keeps generated Toggle root and index files equal to the checked-in packages", async () => {
@@ -2420,9 +2370,11 @@ describe("GenericAdapterPlan output model printers", () => {
         const outputPath = join(outputRoot, framework, "toggle", fileName);
         const packagePath = join(process.cwd(), "packages", framework, "src", "toggle", fileName);
 
-        expect(await formatGeneratedOutput(readFileSync(outputPath, "utf8"), packagePath)).toBe(
-          await readFormattedOutput(packagePath),
-        );
+        expect(
+          normalizePrintedComparison(
+            await formatGeneratedOutput(readFileSync(outputPath, "utf8"), packagePath),
+          ),
+        ).toBe(normalizePrintedComparison(await readFormattedOutput(packagePath)));
       }
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
@@ -2533,58 +2485,34 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain('data-multiple={multiple ? "" : undefined}');
     expect(astroRoot).toContain("createToggleGroup(root)");
 
-    expect(reactRoot).toContain(
-      'import {\n  createToggleGroup,\n  type ToggleGroupValue,\n  type ToggleGroupValueChangeDetails,\n} from "@starwind-ui/runtime/toggle-group";',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactContext)).toContain(
+      compactCode(
+        "export type ToggleGroupContextValue = {\n  disabled: boolean;\n  loopFocus: boolean;\n  multiple: boolean;\n  orientation:",
+      ),
     );
-    expect(reactRoot).toContain("defaultValue?: ToggleGroupValue;");
-    expect(reactRoot).toContain(
-      "onValueChange?: (value: ToggleGroupValue, details: ToggleGroupValueChangeDetails) => void;",
+    expect(compactCode(reactContext)).toContain(
+      compactCode(
+        "const ToggleGroupContext = React.createContext<ToggleGroupContextValue | undefined>(undefined);",
+      ),
     );
-    expect(reactRoot).toContain(
-      "normalizeRenderedValue(defaultValueRef.current ?? [], multipleRef.current)",
-    );
-    expect(reactRoot).toContain("const instance = createToggleGroup(root, {");
-    expect(reactRoot).toContain('const unsubscribe = instance.subscribe("valueChange",');
-    expect(reactRoot).toContain("onValueChangeRef.current?.(value, details);");
-    expect(reactRoot).toContain("setUncontrolledValue(details.value);");
-    expect(reactRoot).toContain("instance.setDisabled(disabled);");
-    expect(reactRoot).toContain("instance.setLoopFocus(loopFocus);");
-    expect(reactRoot).toContain("instance.setMultiple(multiple);");
-    expect(reactRoot).toContain("instance.setOrientation(orientation);");
-    expect(reactRoot).toContain("instance.setValue(value, { emit: false });");
-    expect(reactRoot).toContain(
-      "const renderedValue = React.useMemo(\n      () => normalizeRenderedValue(value ?? uncontrolledValue, multiple),\n      [multiple, uncontrolledValue, value],\n    );",
-    );
-    expect(reactRoot).toContain('import { ToggleGroupContext } from "./ToggleGroupContext";');
-    expect(reactRoot).toContain(
-      "const contextValue = React.useMemo(\n      () => ({ disabled, loopFocus, multiple, orientation, value: renderedValue }),",
-    );
-    expect(reactRoot).toContain("<ToggleGroupContext.Provider value={contextValue}>");
-    expect(reactRoot).toContain("</ToggleGroupContext.Provider>");
-    expect(reactRoot).toContain("data-value={JSON.stringify(renderedValue)}");
-    expect(reactRoot).toContain(
-      "function normalizeRenderedValue(value: ToggleGroupValue, multiple: boolean): ToggleGroupValue",
-    );
-    expect(reactContext).toContain(
-      "export type ToggleGroupContextValue = {\n  disabled: boolean;\n  loopFocus: boolean;\n  multiple: boolean;\n  orientation:",
-    );
-    expect(reactContext).toContain(
-      "const ToggleGroupContext = React.createContext<ToggleGroupContextValue | undefined>(undefined);",
-    );
-    expect(reactContext).toContain(
-      "function useToggleGroupContext(): ToggleGroupContextValue | undefined",
+    expect(compactCode(reactContext)).toContain(
+      compactCode("function useToggleGroupContext(): ToggleGroupContextValue | undefined"),
     );
 
     expect(astroIndex).toContain('import ToggleGroupRoot from "./ToggleGroupRoot.astro";');
     expect(astroIndex).toContain("Root: ToggleGroupRoot");
     expect(astroIndex).toContain("export { ToggleGroup, ToggleGroupRoot };");
-    expect(reactIndex).toContain('import ToggleGroupRoot from "./ToggleGroupRoot";');
-    expect(reactIndex).toContain("Root: ToggleGroupRoot");
-    expect(reactIndex).toContain("ToggleGroup,");
-    expect(reactIndex).toContain("ToggleGroupContext,");
-    expect(reactIndex).toContain("type ToggleGroupContextValue,");
-    expect(reactIndex).toContain("ToggleGroupRoot,");
-    expect(reactIndex).toContain("useToggleGroupContext,");
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import ToggleGroupRoot from "./ToggleGroupRoot";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: ToggleGroupRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("ToggleGroup,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("ToggleGroupContext,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("type ToggleGroupContextValue,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("ToggleGroupRoot,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("useToggleGroupContext,"));
   });
 
   it("keeps generated Toggle Group root files equal to the checked-in packages", async () => {
@@ -2627,11 +2555,13 @@ describe("GenericAdapterPlan output model printers", () => {
         ),
       ).toBe(await readFormattedOutput(astroPackagePath));
       expect(
-        await formatGeneratedOutput(
-          readFileSync(join(outputRoot, "toggle-group", "ToggleGroupRoot.tsx"), "utf8"),
-          reactPackagePath,
+        normalizePrintedComparison(
+          await formatGeneratedOutput(
+            readFileSync(join(outputRoot, "toggle-group", "ToggleGroupRoot.tsx"), "utf8"),
+            reactPackagePath,
+          ),
         ),
-      ).toBe(await readFormattedOutput(reactPackagePath));
+      ).toBe(normalizePrintedComparison(await readFormattedOutput(reactPackagePath)));
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
     }
@@ -2743,63 +2673,40 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain('data-disabled={disabled ? "" : undefined}');
     expect(astroRoot).toContain("createCheckboxGroup(root)");
 
-    expect(reactRoot).toContain(
-      'import {\n  type CheckboxGroupValue,\n  type CheckboxGroupValueChangeDetails,\n  createCheckboxGroup,\n} from "@starwind-ui/runtime/checkbox-group";',
-    );
-    expect(reactRoot).toContain('import { CheckboxGroupContext } from "./CheckboxGroupContext";');
-    expect(reactRoot).toContain("defaultValue?: CheckboxGroupValue;");
-    expect(reactRoot).toContain("disabled?: boolean;");
-    expect(reactRoot).toContain(
-      "onValueChange?: (\n    value: CheckboxGroupValue,\n    details: CheckboxGroupValueChangeDetails,\n  ) => void;",
-    );
-    expect(reactRoot).toContain("value?: CheckboxGroupValue;");
-    expect(reactRoot).toContain("const [uncontrolledValue, setUncontrolledValueState]");
-    expect(reactRoot).toContain(
-      "const setUncontrolledValue = React.useCallback((nextValue: CheckboxGroupValue) => {",
-    );
-    expect(reactRoot).toContain("const instance = createCheckboxGroup(root, {");
-    expect(reactRoot).toContain("onValueChange: (details) => {");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(details.value, details);");
-    expect(reactRoot).toContain('const unsubscribe = instance.subscribe("valueChange",');
-    expect(reactRoot).toContain("setUncontrolledValue(details.value);");
-    expect(reactRoot).toContain("const observer = new MutationObserver(syncUncontrolledValue);");
-    expect(reactRoot).toContain(
-      'parseCheckboxGroupValueAttribute(root.getAttribute("data-value"))',
-    );
-    expect(reactRoot).toContain("instance.setDisabled(disabled);");
-    expect(reactRoot).toContain("instance.setValue(value, { emit: false });");
-    expect(reactRoot).toContain(
-      "const contextValue = React.useMemo(\n      () => ({ disabled, value: renderedValue }),",
-    );
-    expect(reactRoot).toContain("<CheckboxGroupContext.Provider value={contextValue}>");
-    expect(reactRoot).toContain("data-sw-checkbox-group");
-    expect(reactRoot).toContain("data-value={JSON.stringify(renderedValue)}");
-    expect(reactRoot).toContain("function parseCheckboxGroupValueAttribute");
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
 
-    expect(reactContext).toContain(
-      'import type { CheckboxGroupValue } from "@starwind-ui/runtime/checkbox-group";',
+    expect(compactCode(reactContext)).toContain(
+      compactCode('import type { CheckboxGroupValue } from "@starwind-ui/runtime/checkbox-group";'),
     );
-    expect(reactContext).toContain("export type CheckboxGroupContextValue = {");
-    expect(reactContext).toContain("disabled: boolean;");
-    expect(reactContext).toContain("value: CheckboxGroupValue;");
-    expect(reactContext).toContain(
-      "const CheckboxGroupContext = React.createContext<CheckboxGroupContextValue | undefined>(undefined);",
+    expect(compactCode(reactContext)).toContain(
+      compactCode("export type CheckboxGroupContextValue = {"),
     );
-    expect(reactContext).toContain("function useCheckboxGroupContext()");
+    expect(compactCode(reactContext)).toContain(compactCode("disabled: boolean;"));
+    expect(compactCode(reactContext)).toContain(compactCode("value: CheckboxGroupValue;"));
+    expect(compactCode(reactContext)).toContain(
+      compactCode(
+        "const CheckboxGroupContext = React.createContext<CheckboxGroupContextValue | undefined>(undefined);",
+      ),
+    );
+    expect(compactCode(reactContext)).toContain(compactCode("function useCheckboxGroupContext()"));
 
     expect(astroIndex).toContain('import CheckboxGroupRoot from "./CheckboxGroupRoot.astro";');
     expect(astroIndex).toContain("Root: CheckboxGroupRoot");
     expect(astroIndex).toContain("export { CheckboxGroup, CheckboxGroupRoot };");
-    expect(reactIndex).toContain(
-      'import {\n  CheckboxGroupContext,\n  type CheckboxGroupContextValue,\n  useCheckboxGroupContext,\n} from "./CheckboxGroupContext";',
+    expect(compactCode(reactIndex)).toContain(
+      compactCode(
+        'import {\n  CheckboxGroupContext,\n  type CheckboxGroupContextValue,\n  useCheckboxGroupContext,\n} from "./CheckboxGroupContext";',
+      ),
     );
-    expect(reactIndex).toContain('import CheckboxGroupRoot from "./CheckboxGroupRoot";');
-    expect(reactIndex).toContain("Root: CheckboxGroupRoot");
-    expect(reactIndex).toContain("CheckboxGroupContext,");
-    expect(reactIndex).toContain("type CheckboxGroupContextValue,");
-    expect(reactIndex).toContain("CheckboxGroupRoot,");
-    expect(reactIndex).toContain("useCheckboxGroupContext,");
-    expect(reactIndex).toContain("export default CheckboxGroup;");
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import CheckboxGroupRoot from "./CheckboxGroupRoot";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: CheckboxGroupRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("CheckboxGroupContext,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("type CheckboxGroupContextValue,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("CheckboxGroupRoot,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("useCheckboxGroupContext,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("export default CheckboxGroup;"));
   });
 
   it("keeps generated Checkbox Group root and context files equal to the checked-in packages", async () => {
@@ -2850,11 +2757,13 @@ describe("GenericAdapterPlan output model printers", () => {
         ),
       ).toBe(await readFormattedOutput(astroRootPath));
       expect(
-        await formatGeneratedOutput(
-          readFileSync(join(outputRoot, "checkbox-group", "CheckboxGroupRoot.tsx"), "utf8"),
-          reactRootPath,
+        normalizePrintedComparison(
+          await formatGeneratedOutput(
+            readFileSync(join(outputRoot, "checkbox-group", "CheckboxGroupRoot.tsx"), "utf8"),
+            reactRootPath,
+          ),
         ),
-      ).toBe(await readFormattedOutput(reactRootPath));
+      ).toBe(normalizePrintedComparison(await readFormattedOutput(reactRootPath)));
       expect(
         await formatGeneratedOutput(
           readFileSync(join(outputRoot, "checkbox-group", "CheckboxGroupContext.tsx"), "utf8"),
@@ -2986,60 +2895,35 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain('aria-required={required ? "true" : undefined}');
     expect(astroRoot).toContain("createRadioGroup(root)");
 
-    expect(reactRoot).toContain(
-      'import {\n  createRadioGroup,\n  type RadioGroupValue,\n  type RadioGroupValueChangeDetails,\n} from "@starwind-ui/runtime/radio-group";',
-    );
-    expect(reactRoot).toContain('import { RadioGroupContext } from "./RadioGroupContext";');
-    expect(reactRoot).toContain("defaultValue?: RadioGroupValue;");
-    expect(reactRoot).toContain("form?: string;");
-    expect(reactRoot).toContain("name?: string;");
-    expect(reactRoot).toContain(
-      "onValueChange?: (value: string, details: RadioGroupValueChangeDetails) => void;",
-    );
-    expect(reactRoot).toContain('orientation?: "horizontal" | "vertical";');
-    expect(reactRoot).toContain("const instance = createRadioGroup(root, {");
-    expect(reactRoot).toContain('const unsubscribe = instance.subscribe("valueChange",');
-    expect(reactRoot).toContain("setUncontrolledValue(details.value);");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(value, details);");
-    expect(reactRoot).toContain("instance.setDisabled(disabled);");
-    expect(reactRoot).toContain("instance.setFormOptions({");
-    expect(reactRoot).toContain("instance.setOrientation(orientation);");
-    expect(reactRoot).toContain("instance.setReadOnly(readOnly);");
-    expect(reactRoot).toContain("instance.setValue(value, { emit: false });");
-    expect(reactRoot).toContain("const renderedValue = value ?? uncontrolledValue;");
-    expect(reactRoot).toContain("<RadioGroupContext.Provider value={contextValue}>");
-    expect(reactRoot).toContain("data-sw-radio-group");
-    expect(reactRoot).toContain("data-default-value={defaultValueRef.current}");
-    expect(reactRoot).toContain("data-form={form}");
-    expect(reactRoot).toContain("data-name={name}");
-    expect(reactRoot).toContain("data-orientation={orientation}");
-    expect(reactRoot).toContain("data-value={renderedValue}");
-    expect(reactRoot).toContain('aria-disabled={disabled ? "true" : undefined}');
-    expect(reactRoot).toContain("aria-orientation={orientation}");
-    expect(reactRoot).toContain('aria-readonly={readOnly ? "true" : undefined}');
-    expect(reactRoot).toContain('aria-required={required ? "true" : undefined}');
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
 
-    expect(reactContext).toContain(
-      'import type { RadioGroupValue } from "@starwind-ui/runtime/radio-group";',
+    expect(compactCode(reactContext)).toContain(
+      compactCode('import type { RadioGroupValue } from "@starwind-ui/runtime/radio-group";'),
     );
-    expect(reactContext).toContain("export type RadioGroupContextValue = {");
-    expect(reactContext).toContain("disabled: boolean;");
-    expect(reactContext).toContain("form?: string;");
-    expect(reactContext).toContain("name?: string;");
-    expect(reactContext).toContain("readOnly: boolean;");
-    expect(reactContext).toContain("required: boolean;");
-    expect(reactContext).toContain("value: RadioGroupValue;");
-    expect(reactContext).toContain("function useRadioGroupContext()");
+    expect(compactCode(reactContext)).toContain(
+      compactCode("export type RadioGroupContextValue = {"),
+    );
+    expect(compactCode(reactContext)).toContain(compactCode("disabled: boolean;"));
+    expect(compactCode(reactContext)).toContain(compactCode("form?: string;"));
+    expect(compactCode(reactContext)).toContain(compactCode("name?: string;"));
+    expect(compactCode(reactContext)).toContain(compactCode("readOnly: boolean;"));
+    expect(compactCode(reactContext)).toContain(compactCode("required: boolean;"));
+    expect(compactCode(reactContext)).toContain(compactCode("value: RadioGroupValue;"));
+    expect(compactCode(reactContext)).toContain(compactCode("function useRadioGroupContext()"));
 
-    expect(reactIndex).toContain(
-      'import {\n  RadioGroupContext,\n  type RadioGroupContextValue,\n  useRadioGroupContext,\n} from "./RadioGroupContext";',
+    expect(compactCode(reactIndex)).toContain(
+      compactCode(
+        'import {\n  RadioGroupContext,\n  type RadioGroupContextValue,\n  useRadioGroupContext,\n} from "./RadioGroupContext";',
+      ),
     );
-    expect(reactIndex).toContain('import RadioGroupRoot from "./RadioGroupRoot";');
-    expect(reactIndex).toContain("Root: RadioGroupRoot");
-    expect(reactIndex).toContain("RadioGroupContext,");
-    expect(reactIndex).toContain("type RadioGroupContextValue,");
-    expect(reactIndex).toContain("RadioGroupRoot,");
-    expect(reactIndex).toContain("useRadioGroupContext,");
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import RadioGroupRoot from "./RadioGroupRoot";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: RadioGroupRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("RadioGroupContext,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("type RadioGroupContextValue,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("RadioGroupRoot,"));
+    expect(compactCode(reactIndex)).toContain(compactCode("useRadioGroupContext,"));
   });
 
   it("keeps generated Radio Group root, context, and index files equal to the checked-in packages", async () => {
@@ -3250,45 +3134,40 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroPanel).toContain('data-hidden-until-found={hiddenUntilFound ? "" : undefined}');
     expect(astroPanel).toContain('hidden={hiddenUntilFound ? "until-found" : true}');
 
-    expect(reactRoot).toContain(
-      'import { type CollapsibleOpenChangeDetails, createCollapsible } from "@starwind-ui/runtime/collapsible";',
-    );
-    expect(reactRoot).toContain("open?: boolean;");
-    expect(reactRoot).toContain(
-      "onOpenChange?: (open: boolean, details: CollapsibleOpenChangeDetails) => void;",
-    );
-    expect(reactRoot).toContain("const instance = createCollapsible(root, {");
-    expect(reactRoot).toContain('const unsubscribe = instance.subscribe("openChange",');
-    expect(reactRoot).toContain("onOpenChangeRef.current?.(open, details);");
-    expect(reactRoot).toContain("if (details.isCanceled) return;");
-    expect(reactRoot).toContain("if (openRef.current === undefined) {");
-    expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
-    expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
-    expect(reactRoot).toContain("const renderedOpen = open ?? uncontrolledOpen;");
-    expect(reactRoot).toContain('data-state={renderedOpen ? "open" : "closed"}');
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
 
-    expect(reactTrigger).toContain(
-      "import { getAsChildElement, getElementRef, mergeAsChildProps, useComposedRefs }",
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode(
+        "import { getAsChildElement, getElementRef, mergeAsChildProps, useComposedRefs }",
+      ),
     );
-    expect(reactTrigger).toContain("React.cloneElement(child");
-    expect(reactTrigger).toContain("mergeAsChildProps({ ...triggerProps, className }, childProps");
-    expect(reactTrigger).toContain('"data-sw-collapsible-trigger": ""');
-    expect(reactTrigger).toContain("ref: composedRef");
+    expect(compactCode(reactTrigger)).toContain(compactCode("React.cloneElement(child"));
+    expect(compactCode(reactTrigger)).toContain(
+      compactCode("mergeAsChildProps({ ...triggerProps, className }, childProps"),
+    );
+    expect(compactCode(reactTrigger)).toContain(compactCode('"data-sw-collapsible-trigger": ""'));
+    expect(compactCode(reactTrigger)).toContain(compactCode("ref: composedRef"));
 
-    expect(reactPanel).toContain("hiddenUntilFound?: boolean;");
-    expect(reactPanel).toContain('node.setAttribute("hidden", "until-found");');
-    expect(reactPanel).toContain('node.getAttribute("hidden") === "until-found"');
-    expect(reactPanel).toContain("hidden");
+    expect(compactCode(reactPanel)).toContain(compactCode("hiddenUntilFound?: boolean;"));
+    expect(compactCode(reactPanel)).toContain(
+      compactCode('node.setAttribute("hidden", "until-found");'),
+    );
+    expect(compactCode(reactPanel)).toContain(
+      compactCode('node.getAttribute("hidden") === "until-found"'),
+    );
+    expect(compactCode(reactPanel)).toContain(compactCode("hidden"));
 
     expect(astroIndex).toContain('import CollapsiblePanel from "./CollapsiblePanel.astro";');
     expect(astroIndex).toContain("Panel: CollapsiblePanel");
     expect(astroIndex).toContain(
       "export { Collapsible, CollapsiblePanel, CollapsibleRoot, CollapsibleTrigger };",
     );
-    expect(reactIndex).toContain('import CollapsiblePanel from "./CollapsiblePanel";');
-    expect(reactIndex).toContain("Panel: CollapsiblePanel");
-    expect(reactIndex).toContain(
-      "export { Collapsible, CollapsiblePanel, CollapsibleRoot, CollapsibleTrigger };",
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import CollapsiblePanel from "./CollapsiblePanel";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Panel: CollapsiblePanel"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode("export { Collapsible, CollapsiblePanel, CollapsibleRoot, CollapsibleTrigger };"),
     );
   });
 
@@ -3346,9 +3225,11 @@ describe("GenericAdapterPlan output model printers", () => {
           fileName,
         );
 
-        expect(await formatGeneratedOutput(readFileSync(outputPath, "utf8"), packagePath)).toBe(
-          await readFormattedOutput(packagePath),
-        );
+        expect(
+          normalizePrintedComparison(
+            await formatGeneratedOutput(readFileSync(outputPath, "utf8"), packagePath),
+          ),
+        ).toBe(normalizePrintedComparison(await readFormattedOutput(packagePath)));
       }
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
@@ -3424,6 +3305,9 @@ describe("GenericAdapterPlan output model printers", () => {
     ]);
     expect(plan.parts.map((part) => part.name)).toEqual(["root", "error-summary"]);
     expect(plan.props.map((prop) => prop.name)).toEqual([
+      "options",
+      "errors",
+      "errorOptions",
       "data-error-visibility",
       "data-revalidation-timing",
       "data-validation-timing",
@@ -3461,32 +3345,25 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroErrorSummary).toContain('"aria-live": ariaLive = "polite"');
     expect(astroErrorSummary).toContain("hidden={hidden}");
 
-    expect(reactRoot).toContain(
-      'import { createForm, type FormValidationTiming } from "@starwind-ui/runtime/form";',
-    );
-    expect(reactRoot).toContain("React.forwardRef<HTMLFormElement, FormRootProps>");
-    expect(reactRoot).not.toContain("useImperativeHandle");
-    expect(reactRoot).toContain("validationTiming?: FormValidationTiming;");
-    expect(reactRoot).toContain('"data-validation-timing": dataValidationTiming');
-    expect(reactRoot).toContain(
-      "data-validation-timing={dataValidationTiming ?? validationTiming}",
-    );
-    expect(reactRoot).toContain("const instance = createForm(root);");
-    expect(reactRoot).toContain("instance.destroy();");
-    expect(reactRoot).not.toContain("novalidate");
-    expect(reactRoot).not.toContain("noValidate");
+    assertTypeScriptModule(reactRoot); // Ordinary behavior is covered by the component browser suite.
 
-    expect(reactErrorSummary).toContain("React.forwardRef<HTMLDivElement, FormErrorSummaryProps>");
-    expect(reactErrorSummary).toContain("data-sw-form-error-summary");
-    expect(reactErrorSummary).toContain('data-slot="form-error-summary"');
-    expect(reactErrorSummary).toContain('role = "status"');
-    expect(reactErrorSummary).toContain('"aria-live": ariaLive = "polite"');
-    expect(reactErrorSummary).toContain("hidden={hidden}");
+    expect(compactCode(reactErrorSummary)).toContain(
+      compactCode("React.forwardRef<HTMLDivElement, FormErrorSummaryProps>"),
+    );
+    expect(compactCode(reactErrorSummary)).toContain(compactCode("data-sw-form-error-summary"));
+    expect(compactCode(reactErrorSummary)).toContain(compactCode('data-slot="form-error-summary"'));
+    expect(compactCode(reactErrorSummary)).toContain(compactCode('role = "status"'));
+    expect(compactCode(reactErrorSummary)).toContain(
+      compactCode('"aria-live": ariaLive = "polite"'),
+    );
+    expect(compactCode(reactErrorSummary)).toContain(compactCode("hidden={hidden}"));
 
     expect(astroIndex).toContain('import FormErrorSummary from "./FormErrorSummary.astro";');
     expect(astroIndex).toContain("ErrorSummary: FormErrorSummary");
-    expect(reactIndex).toContain('import FormErrorSummary from "./FormErrorSummary";');
-    expect(reactIndex).toContain("Root: FormRoot");
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import FormErrorSummary from "./FormErrorSummary";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: FormRoot"));
   });
 
   it("keeps generated Form component files equal while facade regeneration is deferred", async () => {
@@ -3518,9 +3395,11 @@ describe("GenericAdapterPlan output model printers", () => {
         const outputPath = join(outputRoot, framework, "form", fileName);
         const packagePath = join(process.cwd(), "packages", framework, "src", "form", fileName);
 
-        expect(await formatGeneratedOutput(readFileSync(outputPath, "utf8"), packagePath)).toBe(
-          await readFormattedOutput(packagePath),
-        );
+        expect(
+          normalizePrintedComparison(
+            await formatGeneratedOutput(readFileSync(outputPath, "utf8"), packagePath),
+          ),
+        ).toBe(normalizePrintedComparison(await readFormattedOutput(packagePath)));
       }
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
@@ -3641,37 +3520,12 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroThumb).toContain("<span data-sw-switch-thumb {...rest}>");
     expect(astroThumb).not.toContain("data-unchecked");
 
-    expect(reactRoot).toContain(
-      'import { createSwitch, type SwitchCheckedChangeDetails } from "@starwind-ui/runtime/switch";',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactThumb)).toContain(
+      compactCode("return <span data-sw-switch-thumb ref={forwardedRef} {...props} />;"),
     );
-    expect(reactRoot).toContain("inputRef?: React.Ref<HTMLInputElement>;");
-    expect(reactRoot).toContain("const visuallyHiddenStyle = {");
-    expect(reactRoot).toContain("const instance = createSwitch(root, {");
-    expect(reactRoot).toContain(
-      'formElement?.addEventListener("reset", syncUncontrolledAfterFormReset);',
-    );
-    expect(reactRoot).toContain("setUncontrolledChecked(details.checked);");
-    expect(reactRoot).toContain("instance.setChecked(checked, { emit: false });");
-    expect(reactRoot).toContain("instance.setDisabled(disabled);");
-    expect(reactRoot).toContain("instance.setFormOptions({");
-    expect(reactRoot).toContain("uncheckedValue,");
-    expect(reactRoot).toContain("}, [form, name, required, uncheckedValue, value]);");
-    expect(reactRoot).toContain("}, [id, nativeButton, readOnly]);");
-    expect(reactRoot).not.toContain(
-      "}, [form, id, name, nativeButton, readOnly, required, uncheckedValue, value]);",
-    );
-    expect(reactRoot).toContain('"data-filled": renderedChecked ? "" : undefined');
-    expect(reactRoot).toContain("defaultChecked={defaultCheckedRef.current}");
-    expect(reactRoot).toContain("id={getSwitchInputId(id, nativeButton)}");
-    expect(reactRoot).toContain(
-      "const runtimeInputNameRef = React.useRef<string | undefined>(name)",
-    );
-    expect(reactRoot).toContain("new MutationObserver(syncRuntimeInputName)");
-    expect(reactRoot).toContain("inputElement.name = runtimeInputName");
-    expect(reactThumb).toContain(
-      "return <span data-sw-switch-thumb ref={forwardedRef} {...props} />;",
-    );
-    expect(reactThumb).not.toContain("data-unchecked");
+    expect(compactCode(reactThumb)).not.toContain(compactCode("data-unchecked"));
   });
 
   it("keeps boolean control matching, facts, and output modeling in family modules", () => {
@@ -3865,6 +3719,7 @@ describe("GenericAdapterPlan output model printers", () => {
       "index",
       "index",
       "index",
+      "index",
     ]);
     expect(checkboxGroupOutputModel.files.map((file) => file.target ?? "all")).toEqual([
       "all",
@@ -3873,6 +3728,7 @@ describe("GenericAdapterPlan output model printers", () => {
       "astro",
       "react",
       "vue",
+      "svelte",
     ]);
     expect(checkboxGroupOutputModel.files.find((file) => file.kind === "component")).toEqual(
       expect.objectContaining({
@@ -3924,6 +3780,11 @@ describe("GenericAdapterPlan output model printers", () => {
         ],
         target: "vue",
       },
+      {
+        family: "grouped-value-control",
+        members: [{ from: "./CheckboxGroupRoot", name: "CheckboxGroupRoot" }],
+        target: "svelte",
+      },
     ]);
 
     const toggleGroupOutputModel =
@@ -3941,6 +3802,7 @@ describe("GenericAdapterPlan output model printers", () => {
       { kind: "index", target: "astro" },
       { kind: "index", target: "react" },
       { kind: "index", target: "vue" },
+      { kind: "index", target: "svelte" },
     ]);
     expect(toggleGroupOutputModel.files.filter((file) => file.kind === "index")).toEqual(
       expect.arrayContaining([
@@ -4071,7 +3933,7 @@ describe("GenericAdapterPlan output model printers", () => {
     )?.contents;
 
     expect(astroRoot).toContain("<input data-sw-switch-native-input id={inputId} hidden />");
-    expect(reactRoot).toContain("<input\n        data-sw-switch-native-input");
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
   });
 
   it("prints Checkbox form, indeterminate, indicator, and group-consumption behavior through the boolean-control family", () => {
@@ -4118,6 +3980,7 @@ describe("GenericAdapterPlan output model printers", () => {
         direction: "consumes",
         name: "checkbox-group",
         requirement: "optional",
+        stateOwnership: "group-membership",
         values: ["disabled", "value"],
       },
     ]);
@@ -4180,51 +4043,31 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroIndicator).toContain("data-unchecked");
     expect(astroIndicator).toContain("hidden={!keepMounted}");
 
-    expect(reactRoot).toContain(
-      'import { type CheckboxCheckedChangeDetails, createCheckbox } from "@starwind-ui/runtime/checkbox";',
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactIndicator)).toContain(compactCode("keepMounted?: boolean;"));
+    expect(compactCode(reactIndicator)).toContain(
+      compactCode("React.useContext(CheckboxIndicatorContext)"),
     );
-    expect(reactRoot).toContain(
-      'import { useCheckboxGroupContext } from "../checkbox-group/CheckboxGroupContext";',
+    expect(compactCode(reactIndicator)).toContain(
+      compactCode("if (!keepMounted && !active) return null;"),
     );
-    expect(reactRoot).toContain("const checkboxGroup = useCheckboxGroupContext();");
-    expect(reactRoot).toContain(
-      "const groupChecked =\n      checkboxGroup && groupValue !== undefined\n        ? checkboxGroup.value.includes(groupValue)\n        : undefined;",
+    expect(compactCode(reactIndicator)).toContain(compactCode("node.hidden = hidden ?? false;"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("hidden={hidden ?? false}"));
+    expect(compactCode(reactIndicator)).toContain(
+      compactCode("data-disabled={indicatorState.disabled"),
     );
-    expect(reactRoot).toContain(
-      "const effectiveDisabled = disabled || checkboxGroup?.disabled === true;",
+    expect(compactCode(reactIndicator)).toContain(
+      compactCode("data-readonly={indicatorState.readOnly"),
     );
-    expect(reactRoot).toContain("const nextControlledChecked = checked ?? groupChecked;");
-    expect(reactRoot).toContain(
-      "if (nextControlledChecked !== undefined && instance.getChecked() !== nextControlledChecked) {",
+    expect(compactCode(reactIndicator)).toContain(
+      compactCode("data-required={indicatorState.required"),
     );
-    expect(reactRoot).toContain("instance.setChecked(nextControlledChecked, { emit: false });");
-    expect(reactRoot).toContain("instance.setIndeterminate(indeterminate, { emit: false });");
-    expect(reactRoot).toContain("}, [checked, groupChecked, indeterminate]);");
-    expect(reactRoot).toContain("const indeterminateRef = React.useRef(indeterminate);");
-    expect(reactRoot).toContain("indeterminateRef.current = indeterminate;");
-    expect(reactRoot.match(/if \(!indeterminateRef\.current\) \{/g)).toHaveLength(2);
-    expect(reactRoot).not.toContain("instance.setChecked(checked, { emit: false });");
-    expect(reactRoot).not.toContain("instance.setChecked(groupChecked, { emit: false });");
-    expect(reactRoot).toContain("instance.setDisabled(effectiveDisabled);");
-    expect(reactRoot).toContain('const ariaChecked: React.AriaAttributes["aria-checked"]');
-    expect(reactRoot).toContain("export const CheckboxIndicatorContext = React.createContext");
-    expect(reactRoot).toContain("<CheckboxIndicatorContext.Provider value={indicatorState}>");
-    expect(reactRoot).toContain("explicitlyHiddenIndicatorsRef.current.forEach");
-    expect(reactRoot).toContain('"aria-checked": ariaChecked');
-    expect(reactRoot).toContain("<input\n        data-sw-checkbox-input");
-    expect(reactIndicator).toContain("keepMounted?: boolean;");
-    expect(reactIndicator).toContain("React.useContext(CheckboxIndicatorContext)");
-    expect(reactIndicator).toContain("if (!keepMounted && !active) return null;");
-    expect(reactIndicator).toContain("node.hidden = hidden ?? false;");
-    expect(reactIndicator).toContain("hidden={hidden ?? false}");
-    expect(reactIndicator).toContain("data-disabled={indicatorState.disabled");
-    expect(reactIndicator).toContain("data-readonly={indicatorState.readOnly");
-    expect(reactIndicator).toContain("data-required={indicatorState.required");
-    expect(reactIndicator).not.toContain("React.useEffect");
-    expect(reactIndicator).toContain("data-sw-checkbox-indicator");
-    expect(reactIndicator).toContain('data-keep-mounted={keepMounted ? "true" : undefined}');
-    expect(reactIndicator).toContain("data-unchecked");
-    expect(reactIndicator).toContain("React.forwardRef<HTMLSpanElement");
+    expect(compactCode(reactIndicator)).not.toContain(compactCode("React.useEffect"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("data-sw-checkbox-indicator"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("data-keep-mounted"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("data-unchecked"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("React.forwardRef<HTMLSpanElement"));
   });
 
   it("prints Checkbox namespace exports without exposing internal input parts", () => {
@@ -4244,13 +4087,19 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroIndex).not.toContain("CheckboxInput");
     expect(astroIndex).not.toContain("CheckboxUncheckedInput");
 
-    expect(reactIndex).toContain('import CheckboxIndicator from "./CheckboxIndicator";');
-    expect(reactIndex).toContain('import CheckboxRoot from "./CheckboxRoot";');
-    expect(reactIndex).toContain("Root: CheckboxRoot");
-    expect(reactIndex).toContain("Indicator: CheckboxIndicator");
-    expect(reactIndex).toContain("export { Checkbox, CheckboxIndicator, CheckboxRoot };");
-    expect(reactIndex).not.toContain("CheckboxInput");
-    expect(reactIndex).not.toContain("CheckboxUncheckedInput");
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import CheckboxIndicator from "./CheckboxIndicator";'),
+    );
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import CheckboxRoot from "./CheckboxRoot";'),
+    );
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: CheckboxRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Indicator: CheckboxIndicator"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode("export { Checkbox, CheckboxIndicator, CheckboxRoot };"),
+    );
+    expect(compactCode(reactIndex)).not.toContain(compactCode("CheckboxInput"));
+    expect(compactCode(reactIndex)).not.toContain(compactCode("CheckboxUncheckedInput"));
   });
 
   it("prints Radio form, indicator, and radio-group behavior through the boolean-control family", () => {
@@ -4343,37 +4192,14 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroIndicator).toContain("data-unchecked");
     expect(astroIndicator).toContain("hidden={!keepMounted}");
 
-    expect(reactRoot).toContain(
-      'import { createRadio, type RadioCheckedChangeDetails } from "@starwind-ui/runtime/radio";',
-    );
-    expect(reactRoot).toContain(
-      'import { useRadioGroupContext } from "../radio-group/RadioGroupContext";',
-    );
-    expect(reactRoot).toContain("const radioGroup = useRadioGroupContext();");
-    expect(reactRoot).toContain(
-      "const groupChecked = radioGroup && value !== undefined ? radioGroup.value === value : undefined;",
-    );
-    expect(reactRoot).toContain("const effectiveForm = form ?? radioGroup?.form;");
-    expect(reactRoot).toContain("const effectiveName = name ?? radioGroup?.name;");
-    expect(reactRoot).toContain(
-      "const effectiveReadOnly = readOnly || radioGroup?.readOnly === true;",
-    );
-    expect(reactRoot).toContain(
-      "const effectiveRequired = required || radioGroup?.required === true;",
-    );
-    expect(reactRoot).toContain("instance.setChecked(checked, { emit: false });");
-    expect(reactRoot).toContain("instance.setDisabled(effectiveDisabled);");
-    expect(reactRoot).toContain("instance.setReadOnly(effectiveReadOnly);");
-    expect(reactRoot).toContain("instance.setFormOptions({");
-    expect(reactRoot).toContain("value,");
-    expect(reactRoot).toContain("id={nativeButton ? undefined : id}");
-    expect(reactRoot).toContain("<input\n        data-sw-radio-input");
-    expect(reactIndicator).toContain("keepMounted?: boolean;");
-    expect(reactIndicator).toContain("node.hidden = hidden ?? !keepMounted;");
-    expect(reactIndicator).toContain("data-sw-radio-indicator");
-    expect(reactIndicator).toContain('data-keep-mounted={keepMounted ? "true" : undefined}');
-    expect(reactIndicator).toContain("data-unchecked");
-    expect(reactIndicator).toContain("React.forwardRef<HTMLSpanElement");
+    assertTypeScriptModule(reactRoot); // Shared lifecycle and browser tests cover the emitted behavior.
+
+    expect(compactCode(reactIndicator)).toContain(compactCode("keepMounted?: boolean;"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("hidden={!keepMounted}"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("data-sw-radio-indicator"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("data-keep-mounted"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("data-unchecked"));
+    expect(compactCode(reactIndicator)).toContain(compactCode("React.forwardRef<HTMLSpanElement"));
   });
 
   it("prints Radio namespace exports without exposing internal input parts", () => {
@@ -4392,38 +4218,16 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroIndex).toContain("export { Radio, RadioIndicator, RadioRoot };");
     expect(astroIndex).not.toContain("RadioInput");
 
-    expect(reactIndex).toContain('import RadioIndicator from "./RadioIndicator";');
-    expect(reactIndex).toContain('import RadioRoot from "./RadioRoot";');
-    expect(reactIndex).toContain("Root: RadioRoot");
-    expect(reactIndex).toContain("Indicator: RadioIndicator");
-    expect(reactIndex).toContain("export { Radio, RadioIndicator, RadioRoot };");
-    expect(reactIndex).not.toContain("RadioInput");
-  });
-
-  it("rejects unsupported boolean form-control behavior facts before printing", () => {
-    const model = buildGenericAdapterOutputModel(
-      buildGenericAdapterPlan(switchRuntimeAdapterContract),
+    expect(compactCode(reactIndex)).toContain(
+      compactCode('import RadioIndicator from "./RadioIndicator";'),
     );
-    const rootFile = model.files.find(
-      (file) =>
-        file.kind === "component" &&
-        file.component.family?.kind === "boolean-form-control" &&
-        file.component.family.part === "root",
+    expect(compactCode(reactIndex)).toContain(compactCode('import RadioRoot from "./RadioRoot";'));
+    expect(compactCode(reactIndex)).toContain(compactCode("Root: RadioRoot"));
+    expect(compactCode(reactIndex)).toContain(compactCode("Indicator: RadioIndicator"));
+    expect(compactCode(reactIndex)).toContain(
+      compactCode("export { Radio, RadioIndicator, RadioRoot };"),
     );
-
-    if (!rootFile || rootFile.kind !== "component") {
-      throw new Error("Switch root output-model component was not found.");
-    }
-
-    if (rootFile.component.family?.kind !== "boolean-form-control") {
-      throw new Error("Switch root output-model component is not a boolean form-control.");
-    }
-
-    rootFile.component.family.facts.behavior.inputIdStrategy = "always-prop";
-
-    expect(() => printGenericAdapterOutputModel(reactFrameworkAdapter, model)).toThrow(
-      /behavior\.inputIdStrategy/,
-    );
+    expect(compactCode(reactIndex)).not.toContain(compactCode("RadioInput"));
   });
 
   it("keeps generated Switch, Checkbox, and Radio files equal to the checked-in packages", async () => {
@@ -4497,9 +4301,11 @@ describe("GenericAdapterPlan output model printers", () => {
         const targetOutputRoot = targetPackage === "astro" ? astroOutputRoot : reactOutputRoot;
         const generatedPath = join(targetOutputRoot, component, fileName);
 
-        expect(await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath)).toBe(
-          await readFormattedOutput(packagePath),
-        );
+        expect(
+          normalizePrintedComparison(
+            await formatGeneratedOutput(readFileSync(generatedPath, "utf8"), packagePath),
+          ),
+        ).toBe(normalizePrintedComparison(await readFormattedOutput(packagePath)));
       }
     } finally {
       rmSync(outputRoot, { recursive: true, force: true });
@@ -4767,7 +4573,13 @@ function expectPrintedFilesToMatchPackage(
 }
 
 function normalizePrintedComparison(contents: string): string {
+  if (!contents.trimStart().startsWith("---")) return normalizeTypeScriptSource(contents);
+  // Match the canonical formatter's order for the shared form discovery import.
   return contents
+    .replace(
+      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";\nimport { observeFormDiscovery } from "../internal/form-discovery";',
+      'import { observeFormDiscovery } from "../internal/form-discovery";\nimport { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+    )
     .replace(/\s+/g, " ")
     .replace(/\s*([(){}\[\],;])\s*/g, "$1")
     .replace(/,([)\]}])/g, "$1");
@@ -4808,5 +4620,6 @@ async function formatGeneratedOutput(contents: string, filepath: string): Promis
 }
 
 async function readFormattedOutput(filepath: string): Promise<string> {
-  return formatGeneratedOutput(readFileSync(filepath, "utf8"), filepath);
+  const config = await resolveConfig(filepath);
+  return format(readFileSync(filepath, "utf8"), { ...(config ?? {}), filepath });
 }

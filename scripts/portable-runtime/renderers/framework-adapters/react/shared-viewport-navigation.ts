@@ -1,3 +1,9 @@
+import {
+  navigationInitialProjection,
+  navigationMenuConnection,
+  navigationMenuFragments,
+  navigationMenuPlan,
+} from "../../shared-recipes/structured/navigation-menu.js";
 import type {
   AdapterSharedViewportNavigationComponentProjection,
   AdapterSharedViewportNavigationFacts,
@@ -63,16 +69,19 @@ export function printReactSharedViewportNavigationIndex(
 function printRoot(facts: AdapterSharedViewportNavigationFacts): string {
   const root = facts.exports.root;
   const props = facts.props;
+  const initial = navigationInitialProjection("react", {
+    readModel: props.value.name,
+    readDefault: props.defaultValue.name,
+    readDefaultCell: `${props.defaultValue.name}Ref.current`,
+    readAccepted: "uncontrolledValue",
+    fallback: props.defaultValue.defaultValue ?? "null",
+  });
   const event = facts.valueControl.event;
-  const resync = facts.valueControl.controlledResync;
   const state = facts.valueControl.state;
   const stateRef = REACT_CONTROLLED_VALUE_REF;
   const pendingDetailsRef = REACT_PENDING_VALUE_CHANGE_DETAILS_REF;
-  const preservedDetailFields = resync.preserveDetailFields
-    .map((field) => `${field}: pendingDetails.${field},`)
-    .join("\n");
 
-  return `import { ${facts.runtime.factory}, type ${event.detailsType} } from "${facts.runtime.importSource}";\nimport * as React from "react";\n\nexport type ${root}Props = Omit<React.HTMLAttributes<HTMLElement>, "defaultValue" | "onChange"> & {\n  ${props.defaultValue.name}?: ${props.defaultValue.type};\n  ${props.value.name}?: ${props.value.type};\n  ${props.openDelay.name}?: ${props.openDelay.type};\n  ${props.closeDelay.name}?: ${props.closeDelay.type};\n  ${props.closeOnEscape.name}?: ${props.closeOnEscape.type};\n  ${props.closeOnOutsideInteract.name}?: ${props.closeOnOutsideInteract.type};\n  ${props.orientation.name}?: ${props.orientation.type};\n  ${event.callbackProp}?: (${event.valueProperty}: ${event.valueType}, details: ${event.detailsType}) => void;\n};\n\nconst ${root} = React.forwardRef<HTMLElement, ${root}Props>(\n  function ${root}(\n    {\n      ${props.defaultValue.name} = ${getDefault(props.defaultValue, "null")},\n      ${props.value.name},\n      ${props.openDelay.name} = ${getDefault(props.openDelay, "50")},\n      ${props.closeDelay.name} = ${getDefault(props.closeDelay, "50")},\n      ${props.closeOnEscape.name} = ${getDefault(props.closeOnEscape, "true")},\n      ${props.closeOnOutsideInteract.name} = ${getDefault(props.closeOnOutsideInteract, "true")},\n      ${props.orientation.name} = ${getDefault(props.orientation, '"horizontal"')},\n      ${event.callbackProp},\n      ...props\n    },\n    forwardedRef,\n  ) {\n    const rootRef = React.useRef<HTMLElement>(null);\n    const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(\n      undefined,\n    );\n    const ${stateRef} = React.useRef(${props.value.name});\n    const ${event.callbackProp}Ref = React.useRef(${event.callbackProp});\n    const ${pendingDetailsRef} = React.useRef<${event.detailsType} | null>(\n      null,\n    );\n    const ${props.defaultValue.name}Ref = React.useRef(${props.defaultValue.name});\n    const [uncontrolledValue, setUncontrolledValue] = React.useState<${props.value.type}>(\n      ${props.defaultValue.name}Ref.current,\n    );\n    const uncontrolledValueRef = React.useRef(uncontrolledValue);\n\n    React.useEffect(() => {\n      ${event.callbackProp}Ref.current = ${event.callbackProp};\n    }, [${event.callbackProp}]);\n\n    React.useEffect(() => {\n      ${stateRef}.current = ${props.value.name};\n      if (${props.value.name} !== undefined) {\n        const pendingDetails = ${pendingDetailsRef}.current;\n        ${pendingDetailsRef}.current = null;\n        instanceRef.current?.${resync.setter}(\n          ${props.value.name},\n          pendingDetails?.${resync.detailsValueProperty} === ${props.value.name}\n            ? {\n                emit: false,\n                ${preservedDetailFields}\n              }\n            : { emit: false },\n        );\n      }\n    }, [${props.value.name}]);\n\n    const composedRef = React.useCallback(\n      (node: HTMLElement | null) => {\n        rootRef.current = node;\n        setRef(forwardedRef, node);\n      },\n      [forwardedRef],\n    );\n\n    React.useEffect(() => {\n      const root = rootRef.current;\n      if (!root) return;\n\n      const instance = ${facts.runtime.factory}(root, {\n        ${props.defaultValue.name}: uncontrolledValueRef.current,\n        ${props.openDelay.name},\n        ${props.closeDelay.name},\n        ${props.closeOnEscape.name},\n        ${props.closeOnOutsideInteract.name},\n        ...(${props.value.name} !== undefined ? { ${props.value.name} } : {}),\n        ${event.callbackProp}: (nextValue, details) => {\n          ${pendingDetailsRef}.current = details;\n          window.setTimeout(() => {\n            if (${pendingDetailsRef}.current === details) {\n              ${pendingDetailsRef}.current = null;\n            }\n          }, 0);\n          ${event.callbackProp}Ref.current?.(nextValue, details);\n        },\n      });\n      instanceRef.current = instance;\n      const unsubscribe = instance.subscribe("${event.name}", (details) => {\n        queueMicrotask(() => {\n          if (details.isCanceled) return;\n          if (${stateRef}.current === undefined) {\n            const nextValue = instance.${state.getter}();\n            uncontrolledValueRef.current = nextValue;\n            setUncontrolledValue(nextValue);\n          }\n        });\n      });\n\n      return () => {\n        unsubscribe();\n        instance.${facts.runtime.destroyMethod}();\n        if (instanceRef.current === instance) {\n          instanceRef.current = undefined;\n        }\n      };\n    }, [${props.openDelay.name}, ${props.closeDelay.name}, ${props.closeOnEscape.name}, ${props.closeOnOutsideInteract.name}]);\n\n    const initialValue = ${props.value.name} !== undefined ? ${props.value.name} : uncontrolledValue;\n\n    return (\n      <${facts.parts.root.defaultElement}\n        ${facts.attrs.root}=""\n        ${facts.attrs.defaultValue}={${props.value.name} === undefined ? (${props.defaultValue.name}Ref.current ?? undefined) : undefined}\n        ${facts.attrs.openDelay}={String(${props.openDelay.name})}\n        ${facts.attrs.closeDelay}={String(${props.closeDelay.name})}\n        ${facts.attrs.closeOnEscape}={${props.closeOnEscape.name} ? "true" : "false"}\n        ${facts.attrs.closeOnOutsideInteract}={${props.closeOnOutsideInteract.name} ? "true" : "false"}\n        ${facts.attrs.orientation}={${props.orientation.name}}\n        ${state.renderedStateAttribute}={initialValue !== null ? "open" : "closed"}\n        ref={composedRef}\n        {...props}\n      />\n    );\n  },\n);\n\n${root}.displayName = "${facts.displayName}.Root";\n\nexport default ${root};\n\n${printSetRef()}\n`;
+  return `import { ${facts.runtime.factory}, type ${event.detailsType} } from "${facts.runtime.importSource}";\nimport * as React from "react";\n\nexport type ${root}Props = Omit<React.HTMLAttributes<HTMLElement>, "defaultValue" | "onChange"> & {\n  ${props.defaultValue.name}?: ${props.defaultValue.type};\n  ${props.value.name}?: ${props.value.type};\n  ${props.openDelay.name}?: ${props.openDelay.type};\n  ${props.closeDelay.name}?: ${props.closeDelay.type};\n  ${props.closeOnEscape.name}?: ${props.closeOnEscape.type};\n  ${props.closeOnOutsideInteract.name}?: ${props.closeOnOutsideInteract.type};\n  ${props.orientation.name}?: ${props.orientation.type};\n  ${event.callbackProp}?: (${event.valueProperty}: ${event.valueType}, details: ${event.detailsType}) => void;\n};\n\nconst ${root} = React.forwardRef<HTMLElement, ${root}Props>(\n  function ${root}(\n    {\n      ${props.defaultValue.name} = ${getDefault(props.defaultValue, "null")},\n      ${props.value.name},\n      ${props.openDelay.name} = ${getDefault(props.openDelay, "50")},\n      ${props.closeDelay.name} = ${getDefault(props.closeDelay, "50")},\n      ${props.closeOnEscape.name} = ${getDefault(props.closeOnEscape, "true")},\n      ${props.closeOnOutsideInteract.name} = ${getDefault(props.closeOnOutsideInteract, "true")},\n      ${props.orientation.name} = ${getDefault(props.orientation, '"horizontal"')},\n      ${event.callbackProp},\n      ...props\n    },\n    forwardedRef,\n  ) {\n    const rootRef = React.useRef<HTMLElement>(null);\n    const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(\n      undefined,\n    );\n    const ${stateRef} = React.useRef(${props.value.name});\n    const ${event.callbackProp}Ref = React.useRef(${event.callbackProp});\n    const ${pendingDetailsRef} = React.useRef<${event.detailsType} | null>(\n      null,\n    );\n    const ${props.defaultValue.name}Ref = React.useRef(${initial.defaultSeed});\n    const [uncontrolledValue, setUncontrolledValue] = React.useState<${props.value.type}>(\n      ${initial.acceptedSeed},\n    );\n    const uncontrolledValueRef = React.useRef(uncontrolledValue);\n\n    React.useEffect(() => {\n      ${event.callbackProp}Ref.current = ${event.callbackProp};\n    }, [${event.callbackProp}]);\n\n    React.useEffect(() => {\n      ${stateRef}.current = ${props.value.name};\n      ${navigationMenuFragments("react", facts).commitRequest}\n    }, [${props.value.name}]);\n\n    const composedRef = React.useCallback(\n      (node: HTMLElement | null) => {\n        rootRef.current = node;\n        setRef(forwardedRef, node);\n      },\n      [forwardedRef],\n    );\n\n    React.useEffect(() => {\n      const root = rootRef.current;\n      if (!root) return;\n\n      ${navigationMenuConnection("react", facts).replace(/\bowned\b/g, "instance")}\n\n      return () => { ${navigationMenuFragments("react", facts).cleanup.replace(/\bowned\b/g, "instance")}\n      };\n    }, [${navigationMenuPlan.options.join(", ")}]);\n\n    const initialValue = ${initial.rendered};\n\n    return (\n      <${facts.parts.root.defaultElement}\n        ${facts.attrs.root}=""\n        ${facts.attrs.defaultValue}={${props.value.name} === undefined ? (${props.defaultValue.name}Ref.current ?? undefined) : undefined}\n        ${facts.attrs.openDelay}={String(${props.openDelay.name})}\n        ${facts.attrs.closeDelay}={String(${props.closeDelay.name})}\n        ${facts.attrs.closeOnEscape}={${props.closeOnEscape.name} ? "true" : "false"}\n        ${facts.attrs.closeOnOutsideInteract}={${props.closeOnOutsideInteract.name} ? "true" : "false"}\n        ${facts.attrs.orientation}={${props.orientation.name}}\n        ${state.renderedStateAttribute}={initialValue !== null ? "open" : "closed"}\n        ref={composedRef}\n        {...props}\n      />\n    );\n  },\n);\n\n${root}.displayName = "${facts.displayName}.Root";\n\nexport default ${root};\n\n${printSetRef()}\n`;
 }
 
 function printItem(facts: AdapterSharedViewportNavigationFacts): string {
@@ -98,8 +107,49 @@ function printTrigger(facts: AdapterSharedViewportNavigationFacts): string {
 
 function printContent(facts: AdapterSharedViewportNavigationFacts): string {
   const content = facts.exports.content;
+  if (facts.content.runtimeOwnership !== "moves-active-content-into-shared-viewport") {
+    throw new TypeError(
+      "React Navigation Menu requires Runtime-moved Content ownership for its lifetime bridge.",
+    );
+  }
 
-  return `import * as React from "react";\n\nexport type ${content}Props = React.HTMLAttributes<HTMLDivElement>;\n\nconst ${content} = React.forwardRef<HTMLDivElement, ${content}Props>(\n  function ${content}(props, forwardedRef) {\n    return (\n      <${facts.parts.content.defaultElement}\n        ${facts.attrs.content}=""\n        ${facts.content.stateAttribute}="${facts.content.stateValue}"\n        ${facts.content.hiddenAttribute}\n        ref={forwardedRef}\n        {...props}\n      />\n    );\n  },\n);\n\n${content}.displayName = "${facts.displayName}.Content";\n\nexport default ${content};\n`;
+  return `import * as React from "react";
+
+export type ${content}Props = React.HTMLAttributes<HTMLDivElement>;
+
+const ${content} = React.forwardRef<HTMLDivElement, ${content}Props>(
+  function ${content}(props, forwardedRef) {
+    const ownershipRef = React.useRef<{ carrier: HTMLDivElement; content: Element } | null>(null);
+    const registerCarrier = React.useCallback((carrier: HTMLDivElement | null) => {
+      const previous = ownershipRef.current;
+      ownershipRef.current = null;
+      // Return Runtime-moved Content before React removes its stationary owner.
+      if (previous && previous.content.parentNode !== previous.carrier) {
+        previous.carrier.append(previous.content);
+      }
+      if (carrier?.firstElementChild) {
+        ownershipRef.current = { carrier, content: carrier.firstElementChild };
+      }
+    }, []);
+
+    return (
+      <div style={{ display: "contents" }} ref={registerCarrier}>
+        <${facts.parts.content.defaultElement}
+          ${facts.attrs.content}=""
+          ${facts.content.stateAttribute}="${facts.content.stateValue}"
+          ${facts.content.hiddenAttribute}
+          ref={forwardedRef}
+          {...props}
+        />
+      </div>
+    );
+  },
+);
+
+${content}.displayName = "${facts.displayName}.Content";
+
+export default ${content};
+`;
 }
 
 function printLink(facts: AdapterSharedViewportNavigationFacts): string {

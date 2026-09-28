@@ -21,31 +21,36 @@ const { ...rest } = Astro.props;
     trackAstroController,
   } from "../internal/controller-lifecycle";
 
-  const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
+  let knownRoots = new WeakSet<HTMLElement>();
+  const setupAvatars = (event?: Event) => {
     const initRoot =
       event?.type === "starwind:init" && event instanceof CustomEvent
         ? event.detail?.root
         : undefined;
-    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)
-      ? initRoot
-      : document;
-    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
-
-    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
-      candidates.unshift(scopedRoot as HTMLElement);
+    const scope =
+      initRoot instanceof Document ||
+      initRoot instanceof DocumentFragment ||
+      initRoot instanceof Element
+        ? initRoot
+        : document;
+    const selector = "[data-sw-avatar]";
+    const candidates = Array.from(scope.querySelectorAll<HTMLElement>(selector));
+    if (scope instanceof HTMLElement) {
+      if (scope.matches(selector)) candidates.unshift(scope);
+      else {
+        const owner = scope.parentElement?.closest<HTMLElement>(selector);
+        if (owner && knownRoots.has(owner) && !candidates.includes(owner)) candidates.push(owner);
+      }
     }
-
-    return candidates;
+    candidates.forEach((root) => {
+      const instance = trackAstroController("AvatarRoot", root, createAvatar(root));
+      if (knownRoots.has(root)) instance.refresh();
+      knownRoots.add(root);
+    });
   };
-
-  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
-    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
-
-  const setupAvatars = (event?: Event) => {
-    getInitCandidates(event, "[data-sw-avatar]").forEach((root) =>
-      trackAstroController("AvatarRoot", root, createAvatar(root)),
-    );
-  };
+  document.addEventListener("astro:before-swap", () => {
+    knownRoots = new WeakSet();
+  });
 
   registerAstroControllerLifecycle("AvatarRoot", setupAvatars);
 </script>

@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { scrollAreaRuntimeAdapterContract } from "../../contracts/primitive/components/scroll-area.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 const COMPONENT_FILES = [
@@ -60,29 +59,33 @@ describe("generated Vue Scroll Area Primitive", () => {
     expect(first).toEqual(second);
     for (const [name, source] of Object.entries(first.sources)) {
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
-      expect(source).toContain("defineExpose({ element:");
+      expect(compactCode(source)).toContain(compactCode("defineExpose({ element:"));
       expect(source).toContain(
         name === "ScrollAreaViewport.vue" ? 'v-bind="attrs"' : 'v-bind="$attrs"',
       );
-      expect(source).toContain("<slot />");
+      expect(compactCode(source)).toContain(compactCode("<slot />"));
     }
 
     const root = first.sources["ScrollAreaRoot.vue"];
-    expect(root).toContain('import { createScrollArea } from "@starwind-ui/runtime/scroll-area";');
-    expect(root).toContain("type ScrollAreaOverflowEdgeThreshold =");
-    expect(root).toContain("const thresholdAttributes = computed(() =>");
-    expect(root).toContain("instance = createScrollArea(element);");
-    expect(root).toContain("onUpdated(scheduleRefresh);");
-    expect(root).toContain("onBeforeUnmount(destroyOwnedInstance);");
-    expect(root).toContain("ownedInstance.refresh();");
-    expect(root).toContain('{ flush: "post" }');
-    expect(root).toContain("normalizeOverflowEdgeThresholdValue");
-    expect(root).toContain("data-sw-scroll-area");
-    expect(root).toContain(':data-overflow-edge-threshold="thresholdAttributes.shared"');
-    expect(root).toContain('role="presentation"');
-    expect(root).not.toContain("ResizeObserver");
-    expect(root).not.toContain("MutationObserver");
-    expect(root).not.toContain("scrollHeight");
+    expect(compactCode(root)).toContain(
+      compactCode('import { createScrollArea } from "@starwind-ui/runtime/scroll-area";'),
+    );
+    expect(compactCode(root)).toContain(compactCode("type ScrollAreaOverflowEdgeThreshold ="));
+    expect(compactCode(root)).toContain(compactCode("const thresholdAttributes = computed(() =>"));
+    expect(compactCode(root)).toContain(compactCode("instance = createScrollArea(element);"));
+    expect(compactCode(root)).toContain(compactCode("onUpdated(scheduleRefresh);"));
+    expect(compactCode(root)).toContain(compactCode("onBeforeUnmount(destroyOwnedInstance);"));
+    expect(compactCode(root)).toContain(compactCode("ownedInstance.refresh();"));
+    expect(compactCode(root)).toContain(compactCode('{ flush: "post" }'));
+    expect(compactCode(root)).toContain(compactCode("normalizeOverflowEdgeThresholdValue"));
+    expect(compactCode(root)).toContain(compactCode("data-sw-scroll-area"));
+    expect(compactCode(root)).toContain(
+      compactCode(':data-overflow-edge-threshold="thresholdAttributes.shared"'),
+    );
+    expect(compactCode(root)).toContain(compactCode('role="presentation"'));
+    expect(compactCode(root)).not.toContain(compactCode("ResizeObserver"));
+    expect(compactCode(root)).not.toContain(compactCode("MutationObserver"));
+    expect(compactCode(root)).not.toContain(compactCode("scrollHeight"));
 
     for (const name of COMPONENT_FILES.filter((name) => name !== "ScrollAreaRoot.vue")) {
       expect(first.sources[name]).not.toContain("createScrollArea");

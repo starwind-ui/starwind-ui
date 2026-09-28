@@ -364,6 +364,75 @@ describe("Color Picker editing behaviors", () => {
     expect(formatChanged).toHaveBeenCalledOnce();
   });
 
+  it("settles canceled resets silently and preserves newer independent model writes", async () => {
+    const form = document.createElement("form");
+    document.body.append(form);
+    const root = render();
+    form.append(root);
+    const picker = createColorPicker(root, { defaultValue: "#ff0000", name: "accent" });
+    picker.setValue("#00ff00", { emit: false });
+    picker.setFormat("hsl", { emit: false });
+    const settled = vi.fn();
+    const changed = vi.fn();
+    const formatChanged = vi.fn();
+    const unsubscribe = picker.subscribe("stateSync", settled);
+    root.addEventListener("starwind:value-change", changed);
+    root.addEventListener("starwind:format-change", formatChanged);
+    form.addEventListener("reset", (event) => event.preventDefault());
+
+    form.reset();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(picker.getValue()!.toString("hex")).toBe("#00ff00");
+    expect(picker.getFormat()).toBe("hsl");
+    expect(new FormData(form).get("accent")).toBe("hsl(120, 100%, 50%)");
+    expect(settled).toHaveBeenCalledOnce();
+
+    form.reset();
+    picker.setValue("#0000ff", { emit: false });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(picker.getValue()!.toString("hex")).toBe("#0000ff");
+    expect(picker.getFormat()).toBe("hsl");
+    form.reset();
+    picker.setFormat("rgb", { emit: false });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(picker.getValue()!.toString("hex")).toBe("#0000ff");
+    expect(new FormData(form).get("accent")).toBe("rgb(0, 0, 255)");
+    expect(changed).not.toHaveBeenCalled();
+    expect(formatChanged).not.toHaveBeenCalled();
+
+    unsubscribe();
+    form.reset();
+    picker.destroy();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(settled).toHaveBeenCalledTimes(3);
+  });
+
+  it("preserves a live slider change made after reset dispatch", async () => {
+    const form = document.createElement("form");
+    document.body.append(form);
+    const root = render();
+    form.append(root);
+    const picker = createColorPicker(root, { defaultValue: "#ff0000", name: "accent" });
+    picker.setValue("#00ff00", { emit: false });
+    picker.setFormat("hsl", { emit: false });
+    const hue = get<HTMLInputElement>(root, "[data-sw-color-picker-channel-input]");
+    const settled = vi.fn();
+    picker.subscribe("stateSync", settled);
+
+    form.reset();
+    hue.value = "240";
+    hue.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(picker.getValue()!.toString("hex")).toBe("#0000ff");
+    expect(picker.getFormat()).toBe("hex");
+    expect(new FormData(form).get("accent")).toBe("#0000ff");
+    expect(settled).toHaveBeenCalledOnce();
+    hue.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(picker.getValue()!.toString("hex")).toBe("#0000ff");
+    picker.destroy();
+  });
+
   it("keeps coordinateful black HSB state through controlled updates and form reset", async () => {
     const form = document.createElement("form");
     document.body.append(form);

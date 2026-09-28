@@ -8,21 +8,36 @@ defineOptions({ inheritAttrs: false });
 
 export type FormProps = Omit<
   FormHTMLAttributes,
-  "class" | "errorVisibility" | "revalidationTiming" | "validationTiming"
+  | "class"
+  | "errorOptions"
+  | "errorVisibility"
+  | "errors"
+  | "options"
+  | "revalidationTiming"
+  | "validationTiming"
 > &
   VariantProps<typeof form> & {
+    options?: import("@starwind-ui/runtime/form").FormOptions;
+    errors?: import("@starwind-ui/runtime/form").FormExternalErrors;
+    errorOptions?: import("@starwind-ui/runtime/form").FormExternalErrorOptions;
     errorVisibility?: import("@starwind-ui/runtime/form").FormValidationTiming;
     revalidationTiming?: import("@starwind-ui/runtime/form").FormValidationTiming;
     validationTiming?: import("@starwind-ui/runtime/form").FormValidationTiming;
     class?: ClassValue;
   };
 type FormDeclaredProps = {
+  options?: import("@starwind-ui/runtime/form").FormOptions;
+  errors?: import("@starwind-ui/runtime/form").FormExternalErrors;
+  errorOptions?: import("@starwind-ui/runtime/form").FormExternalErrorOptions;
   errorVisibility?: import("@starwind-ui/runtime/form").FormValidationTiming;
   revalidationTiming?: import("@starwind-ui/runtime/form").FormValidationTiming;
   validationTiming?: import("@starwind-ui/runtime/form").FormValidationTiming;
   class?: ClassValue;
 } & /* @vue-ignore */ FormProps;
 const {
+  options,
+  errors,
+  errorOptions,
   errorVisibility,
   revalidationTiming,
   validationTiming,
@@ -35,6 +50,9 @@ defineSlots<{
 
 <template>
   <FormPrimitive.FormRoot
+    :options="options"
+    :errors="errors"
+    :error-options="errorOptions"
     :class="form({ class: className })"
     :error-visibility="errorVisibility"
     :revalidation-timing="revalidationTiming"

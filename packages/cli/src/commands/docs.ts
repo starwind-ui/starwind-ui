@@ -1,8 +1,9 @@
 import * as p from "@clack/prompts";
 
 import {
+  type CliFrameworkTarget,
   type FrameworkTargetPolicy,
-  type PrivateVueCliFrameworkTarget,
+  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { loadRegistry, parseRegistrySource, type StarwindRegistryFor } from "@/utils/registry.js";
@@ -13,8 +14,10 @@ interface DocsOptions {
 }
 
 export type PrivateVueDocsDependencies = {
-  registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
-  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+  registry: StarwindRegistryFor<CliFrameworkTarget>;
+  targetPolicy:
+    | FrameworkTargetPolicy<CliFrameworkTarget>
+    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
 };
 
 const DOCS_BASE_URL = "https://starwind.dev/docs/components";
@@ -45,7 +48,9 @@ export async function docs(
     const registrySource = explicitRegistrySource ?? { type: "bundled" as const };
     const registry = dependencies
       ? explicitRegistrySource
-        ? await loadRegistry(registrySource, { targetPolicy: dependencies.targetPolicy })
+        ? await loadRegistry(registrySource, {
+            targetPolicy: dependencies.targetPolicy as FrameworkTargetPolicy<CliFrameworkTarget>,
+          })
         : dependencies.registry
       : await loadRegistry(registrySource);
     const results: { component: string; url: string }[] = [];

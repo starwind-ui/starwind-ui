@@ -1,6 +1,8 @@
 import { createAccordion } from "./components/accordion";
 import { createAlertDialog } from "./components/alert-dialog";
+import { refreshExistingAlertDialog } from "./components/alert-dialog/alert-dialog";
 import { createAvatar } from "./components/avatar";
+import { refreshExistingAvatar } from "./components/avatar/avatar";
 import { createButton } from "./components/button";
 import { createCarousel } from "./components/carousel";
 import { createCheckbox } from "./components/checkbox";
@@ -10,12 +12,16 @@ import { createColorPicker } from "./components/color-picker";
 import { createCombobox } from "./components/combobox";
 import { createContextMenu } from "./components/context-menu";
 import { createDialog } from "./components/dialog";
+import { refreshExistingDialog, resolveDialogOwner } from "./components/dialog/dialog";
 import { createDrawer } from "./components/drawer";
+import { refreshExistingDrawer } from "./components/drawer/drawer";
 import { createDropzone } from "./components/dropzone";
+import { refreshExistingDropzone } from "./components/dropzone/dropzone";
 import { createField } from "./components/field";
 import { createFieldset } from "./components/fieldset";
 import { createForm } from "./components/form";
 import { createInput } from "./components/input";
+import { refreshExistingInput } from "./components/input/input";
 import { createInputOtp } from "./components/input-otp";
 import { createMenu } from "./components/menu";
 import { createNavigationMenu } from "./components/navigation-menu";
@@ -134,7 +140,7 @@ const initializerEntries = [
   },
   {
     cleanupOrder: 9,
-    create: (avatarRoot) => createAvatar(avatarRoot),
+    create: (avatarRoot) => refreshExistingAvatar(avatarRoot) ?? createAvatar(avatarRoot),
     selector: "[data-sw-avatar]",
   },
   {
@@ -184,17 +190,18 @@ const initializerEntries = [
   },
   {
     cleanupOrder: 20,
-    create: (dialogRoot) => createDialog(dialogRoot),
-    selector: "[data-sw-dialog]",
+    create: (dialogRoot) => refreshExistingDialog(dialogRoot) ?? createDialog(dialogRoot),
+    selector: "[data-sw-dialog]:not([data-sw-alert-dialog]):not([data-sw-drawer])",
   },
   {
     cleanupOrder: 21,
-    create: (alertDialogRoot) => createAlertDialog(alertDialogRoot),
+    create: (alertDialogRoot) =>
+      refreshExistingAlertDialog(alertDialogRoot) ?? createAlertDialog(alertDialogRoot),
     selector: "[data-sw-alert-dialog]",
   },
   {
     cleanupOrder: 22,
-    create: (drawerRoot) => createDrawer(drawerRoot),
+    create: (drawerRoot) => refreshExistingDrawer(drawerRoot) ?? createDrawer(drawerRoot),
     selector: "[data-sw-drawer]",
   },
   {
@@ -269,6 +276,60 @@ function initializeRuntimeControllers(root: ParentNode): InitializedRuntimeContr
   const initializedControllers: InitializedRuntimeController[] = [];
   const initializedOnceEntries = new Set<StarwindInitializerEntry>();
   const candidates = Array.from(root.querySelectorAll<HTMLElement>(initializerSelector));
+  if (root instanceof HTMLElement) {
+    if (
+      root.matches(
+        "[data-sw-input], [data-sw-dropzone], [data-sw-avatar], [data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]",
+      )
+    )
+      candidates.unshift(root);
+    let owner = root.parentElement?.closest<HTMLElement>(
+      "[data-sw-input], [data-sw-dropzone], [data-sw-avatar], [data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]",
+    );
+    const overlayOwner = resolveDialogOwner(root);
+    if (
+      overlayOwner &&
+      (!owner || owner.matches("[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]"))
+    )
+      owner = overlayOwner;
+    if (
+      owner &&
+      !(
+        (root.matches("[data-sw-avatar]") && owner.matches("[data-sw-avatar]")) ||
+        (root.matches("[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]") &&
+          owner.matches("[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]"))
+      ) &&
+      !candidates.includes(owner)
+    ) {
+      const instance = owner.matches("[data-sw-input]")
+        ? refreshExistingInput(owner)
+        : owner.matches("[data-sw-avatar]")
+          ? refreshExistingAvatar(owner)
+          : owner.matches("[data-sw-alert-dialog]")
+            ? refreshExistingAlertDialog(owner)
+            : owner.matches("[data-sw-drawer]")
+              ? refreshExistingDrawer(owner)
+              : owner.matches("[data-sw-dialog]")
+                ? refreshExistingDialog(owner)
+                : refreshExistingDropzone(owner);
+      if (instance)
+        initializedControllers.push({
+          cleanupOrder: owner.matches("[data-sw-input]")
+            ? 3
+            : owner.matches("[data-sw-avatar]")
+              ? 9
+              : owner.matches("[data-sw-alert-dialog]")
+                ? 21
+                : owner.matches("[data-sw-drawer]")
+                  ? 22
+                  : owner.matches("[data-sw-dialog]")
+                    ? 20
+                    : 23,
+          instance,
+          sequence: initializedControllers.length,
+        });
+    }
+  }
 
   initializerEntries.forEach((entry) => {
     candidates.forEach((candidate) => {

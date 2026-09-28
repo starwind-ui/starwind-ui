@@ -105,6 +105,12 @@ In source, the target styled flow is `targetRegistration.styled.project(...)` fo
 `targetRegistration.styled.write(...)`. The project step creates target-scoped Styled Output Model
 groups; the write step sends those groups to target-local styled writer modules.
 
+Primitive adapters own the functional composition that connects alternate control children to a
+Runtime controller. This includes wrapper selection, ref cleanup, control observation, and Runtime
+refresh after the composed control structure changes. Styled facades delegate that work to the
+Primitive part. They retain public names, defaults, variants, class ownership, slots, and ordinary
+prop forwarding.
+
 The Framework Adapter layer translates the Adapter Output Model into framework syntax: file format,
 props, refs, lifecycle setup/cleanup, events, slots/children, context, portals/teleports, attribute
 names, package exports, and type facades. It must not implement Runtime behavior such as focus
@@ -267,3 +273,11 @@ The vocabulary rename must preserve the accepted Runtime boundary. Runtime keeps
 
 Adapter generator layers may describe the facts needed to connect those behaviors to a framework,
 but they must not reimplement the behavior.
+
+## Shared component recipe
+
+A generation-time function or typed plan that consumes Runtime Adapter Contract facts and owns
+adapter connection order, accepted-state policy, silent synchronization, and cleanup. Recipes live
+in `scripts/portable-runtime/renderers/shared-recipes`; framework operations supply syntax and
+framework lifecycle integration from each target home. A recipe may cover one component or a
+small family with the same behavior. It adds no interpreter to the shipping package.

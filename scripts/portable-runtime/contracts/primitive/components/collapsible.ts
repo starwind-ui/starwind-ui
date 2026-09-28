@@ -81,6 +81,7 @@ export const collapsibleRuntimeAdapterContract = {
   events: [
     {
       name: "openChange",
+      acceptanceNotification: "controller-subscription",
       stateModel: "open",
       callbackProp: "onOpenChange",
       detailsType: "CollapsibleOpenChangeDetails",

@@ -1,35 +1,35 @@
 import * as p from "@clack/prompts";
-
-import { getConfigState, type StarwindConfigFor, type StarwindFramework } from "@/utils/config.js";
-import { PATHS } from "@/utils/constants.js";
 import {
   sortComponentNames,
   sortComponentPresentationByName,
 } from "@/utils/component-presentation.js";
+import { getConfigState, type StarwindConfigFor, type StarwindFramework } from "@/utils/config.js";
+import { PATHS } from "@/utils/constants.js";
 import {
   type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   isConfigTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
   getPrimitiveComponents,
   installPrimitiveComponents,
-  planPrimitiveComponentUpdates,
   type PrimitiveInstallSummary,
-  updatePrimitiveComponents,
+  type PrimitiveUpdateSummary,
   type PrimitiveVendoringArtifact,
   type PrimitiveVendoringArtifactSet,
-  type PrimitiveUpdateSummary,
+  planPrimitiveComponentUpdates,
+  updatePrimitiveComponents,
 } from "@/utils/primitive-component.js";
 import {
   getPrimitiveDiscoveryResults,
   getPrimitiveInstallCommand,
+  type PrimitiveDiscoveryFramework,
   resolvePrimitiveDiscoveryFramework,
   toPrimitiveDiscoveryMetadata,
-  type PrimitiveDiscoveryFramework,
 } from "@/utils/primitive-discovery.js";
 import { sleep } from "@/utils/sleep.js";
 import { formatUpdatePreview, getPreviewMode } from "@/utils/update-preview.js";
@@ -39,7 +39,9 @@ import { migrate } from "./migrate.js";
 
 export type PrivatePrimitiveCommandDependencies = {
   artifacts: PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
-  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
+  targetPolicy:
+    | FrameworkTargetPolicy<CliFrameworkTarget>
+    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
 };
 
 interface PrimitiveAddOptions {
@@ -299,7 +301,7 @@ export async function primitivesList(
 
     const targetPolicy = getTargetPolicy(dependencies);
     const framework = await resolvePrimitiveDiscoveryFramework(options?.framework, {
-      targetPolicy: dependencies?.targetPolicy,
+      targetPolicy: getTargetPolicy(dependencies),
     });
 
     if (!framework) {
@@ -331,7 +333,7 @@ export async function primitivesList(
     const primitives = getPrimitiveDiscoveryResults({
       framework,
       ...(dependencies
-        ? { artifacts: dependencies.artifacts, targetPolicy: dependencies.targetPolicy }
+        ? { artifacts: dependencies.artifacts, targetPolicy: getTargetPolicy(dependencies) }
         : {}),
     });
 
@@ -513,7 +515,7 @@ function getAvailablePrimitives(
     ? getPrimitiveComponents({
         artifacts: dependencies.artifacts,
         framework,
-        targetPolicy: dependencies.targetPolicy,
+        targetPolicy: getTargetPolicy(dependencies),
       })
     : getPrimitiveComponents({ framework });
 }
@@ -566,7 +568,7 @@ async function getCurrentConfigForPrimitivePreview(
   dependencies?: PrivatePrimitiveCommandDependencies,
 ): Promise<StarwindConfigFor<CliFrameworkTarget> | undefined> {
   const configState = dependencies
-    ? await getConfigState(dependencies.targetPolicy)
+    ? await getConfigState(getTargetPolicy(dependencies))
     : await getConfigState();
 
   if (configState.status === "missing") {
@@ -616,7 +618,7 @@ async function getCurrentConfigForPrimitiveCommand(
   }
 
   let detectedConfigState = dependencies
-    ? await getConfigState(dependencies.targetPolicy)
+    ? await getConfigState(getTargetPolicy(dependencies))
     : await getConfigState();
   let configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
 
@@ -655,7 +657,7 @@ async function getCurrentConfigForPrimitiveCommand(
     });
 
     detectedConfigState = dependencies
-      ? await getConfigState(dependencies.targetPolicy)
+      ? await getConfigState(getTargetPolicy(dependencies))
       : await getConfigState();
     configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
 
@@ -761,8 +763,6 @@ function formatFrameworkLabel(
 function getTargetPolicy(
   dependencies?: PrivatePrimitiveCommandDependencies,
 ): FrameworkTargetPolicy<CliFrameworkTarget> {
-  return (
-    dependencies?.targetPolicy ??
-    (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<CliFrameworkTarget>)
-  );
+  return (dependencies?.targetPolicy ??
+    PUBLIC_FRAMEWORK_TARGET_POLICY) as FrameworkTargetPolicy<CliFrameworkTarget>;
 }

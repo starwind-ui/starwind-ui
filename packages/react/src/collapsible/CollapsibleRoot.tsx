@@ -12,40 +12,32 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
+export const DisclosureDisabledContext = React.createContext(false);
 export type CollapsibleRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
+  open?: boolean;
   defaultOpen?: boolean;
   disabled?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean, details: CollapsibleOpenChangeDetails) => void;
+  onOpenChange?: (open: boolean, detail: CollapsibleOpenChangeDetails) => void;
 };
-
 const CollapsibleRoot = React.forwardRef<HTMLDivElement, CollapsibleRootProps>(
   function CollapsibleRoot(
-    { defaultOpen = false, disabled = false, open, onOpenChange, ...props },
+    { defaultOpen, disabled = false, open, onOpenChange, ...props },
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLDivElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createCollapsible> | undefined>(undefined);
-    const onOpenChangeRef = React.useRef(onOpenChange);
-    const openRef = React.useRef(open);
-    const defaultOpenRef = React.useRef(defaultOpen);
-    const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
-    const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
-
-    const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
-      uncontrolledOpenRef.current = nextOpen;
-      setUncontrolledOpenState(nextOpen);
-    }, []);
-
+    const inputs = React.useRef({ open, disabled, onOpenChange });
     useIsomorphicLayoutEffect(() => {
-      onOpenChangeRef.current = onOpenChange;
-    }, [onOpenChange]);
-
-    useIsomorphicLayoutEffect(() => {
-      openRef.current = open;
-    }, [open]);
-
+      inputs.current = { open, disabled, onOpenChange };
+    });
+    const initialDefaultOpen = React.useRef(defaultOpen ?? false).current;
+    const initialOpen = React.useRef(open ?? initialDefaultOpen).current;
+    const [renderedState, setRenderedOpen] = React.useState<boolean>(initialOpen);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createCollapsible>;
+      unsubscribe?: () => void;
+      accepted: boolean;
+      initialized: boolean;
+    }>({ accepted: initialOpen, initialized: false }).current;
     const composedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
         rootRef.current = node;
@@ -54,60 +46,68 @@ const CollapsibleRoot = React.forwardRef<HTMLDivElement, CollapsibleRootProps>(
       [forwardedRef],
     );
 
+    function disconnectRuntime(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      connection.accepted = owned.getOpen();
+      connection.unsubscribe?.();
+      connection.unsubscribe = undefined;
+      connection.instance = undefined;
+      owned.destroy();
+    }
+    function connectRuntime(root: HTMLDivElement): void {
+      disconnectRuntime();
+      const desired = inputs.current.open ?? connection.accepted;
+      const owned = createCollapsible(root, {
+        defaultOpen: desired,
+        ...(inputs.current.open !== undefined ? { open: desired } : {}),
+        disabled: inputs.current.disabled,
+        onOpenChange: (next, detail) => {
+          inputs.current.onOpenChange?.(next, detail);
+        },
+      });
+      connection.instance = owned;
+      connection.initialized = true;
+      connection.unsubscribe = owned.subscribe("openChange", (detail) => {
+        if (connection.instance !== owned) return;
+        connection.accepted = detail.open;
+        if (inputs.current.open === undefined) setRenderedOpen(detail.open);
+      });
+      if (owned.getOpen() !== desired) owned.setOpen(desired, { emit: false });
+      connection.accepted = owned.getOpen();
+      if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+    }
+    function applyParentCommand(): void {
+      const next = inputs.current.open;
+      const owned = connection.instance;
+      if (next === undefined || !owned) return;
+      if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+      connection.accepted = owned.getOpen();
+      if (inputs.current.open === undefined) setRenderedOpen(connection.accepted);
+    }
+
     useIsomorphicLayoutEffect(() => {
       const root = rootRef.current;
       if (!root) return;
-
-      const instance = createCollapsible(root, {
-        defaultOpen: uncontrolledOpenRef.current,
-        disabled,
-        onOpenChange: (open, details) => {
-          onOpenChangeRef.current?.(open, details);
-        },
-        ...(openRef.current !== undefined ? { open: openRef.current } : {}),
-      });
-      instanceRef.current = instance;
-      const unsubscribe = instance.subscribe("openChange", (details) => {
-        if (details.isCanceled) return;
-
-        if (openRef.current === undefined) {
-          setUncontrolledOpen(details.open);
-        }
-      });
-
-      return () => {
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
+      connectRuntime(root);
+      return disconnectRuntime;
     }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (open === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getOpen() === open) return;
-
-      instance.setOpen(open, { emit: false });
-    }, [open]);
-
-    const renderedOpen = open ?? uncontrolledOpen;
-
+    useIsomorphicLayoutEffect(applyParentCommand, [open]);
+    const renderedOpen = open ?? renderedState;
     return (
-      <div
-        data-sw-collapsible
-        data-default-open={defaultOpenRef.current ? "true" : undefined}
-        data-disabled={disabled ? "" : undefined}
-        data-state={renderedOpen ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-      />
+      <DisclosureDisabledContext.Provider value={disabled}>
+        <div
+          {...props}
+          data-sw-collapsible
+          data-sw-part={"root"}
+          data-default-open={initialDefaultOpen ? "true" : undefined}
+          data-disabled={disabled ? "" : undefined}
+          data-state={renderedOpen ? "open" : "closed"}
+          ref={composedRef}
+        />
+      </DisclosureDisabledContext.Provider>
     );
   },
 );
-
 CollapsibleRoot.displayName = "Collapsible.Root";
-
 export default CollapsibleRoot;

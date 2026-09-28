@@ -23,6 +23,7 @@ export const PRIMITIVE_DOCS_FRAMEWORK_TARGETS = [
 export const PRIMITIVE_ANATOMY_FRAMEWORK_ORDER = [
   "astro",
   "react",
+  "vue",
   "raw-html",
 ] as const satisfies readonly PrimitiveDocsFrameworkTarget[];
 

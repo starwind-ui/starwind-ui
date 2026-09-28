@@ -82,13 +82,13 @@ export const carouselStyledContract: StyledAdapterContract = {
             name: "plugins",
             optional: true,
             type: 'import("@starwind-ui/runtime").CarouselOptions["plugins"]',
-            frameworks: ["react", "vue"],
+            frameworks: ["react", "vue", "svelte"],
           },
           {
             name: "setApi",
             optional: true,
             type: '(api: import("@starwind-ui/runtime").CarouselInstance["api"]) => void',
-            frameworks: ["react", "vue"],
+            frameworks: ["react", "vue", "svelte"],
           },
           {
             name: "autoInit",
@@ -102,8 +102,8 @@ export const carouselStyledContract: StyledAdapterContract = {
         props: [
           { name: "orientation", defaultValue: '"horizontal"' },
           { name: "opts" },
-          { name: "plugins", frameworks: ["react", "vue"] },
-          { name: "setApi", frameworks: ["react", "vue"] },
+          { name: "plugins", frameworks: ["react", "vue", "svelte"] },
+          { name: "setApi", frameworks: ["react", "vue", "svelte"] },
           { name: "autoInit", frameworks: ["astro"] },
           { name: "class", alias: "className" },
         ],
@@ -120,12 +120,12 @@ export const carouselStyledContract: StyledAdapterContract = {
             {
               name: "plugins",
               value: { type: "variable", name: "plugins" },
-              frameworks: ["react", "vue"],
+              frameworks: ["react", "vue", "svelte"],
             },
             {
               name: "setApi",
               value: { type: "variable", name: "setApi" },
-              frameworks: ["react", "vue"],
+              frameworks: ["react", "vue", "svelte"],
             },
             {
               name: "autoInit",

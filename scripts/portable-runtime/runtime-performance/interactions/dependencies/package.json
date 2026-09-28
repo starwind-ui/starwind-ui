@@ -1,0 +1,12 @@
+{
+  "name": "starwind-react-interaction-fixtures",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "dependencies": {
+    "@ark-ui/react": "5.39.1",
+    "@base-ui/react": "1.8.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}

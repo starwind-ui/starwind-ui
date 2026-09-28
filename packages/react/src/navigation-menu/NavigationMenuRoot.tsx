@@ -72,17 +72,18 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
 
     useIsomorphicLayoutEffect(() => {
       valueRef.current = value;
-      if (value !== undefined) {
-        const pendingDetails = pendingValueChangeDetailsRef.current;
+
+      if (valueRef.current !== undefined) {
+        const details = pendingValueChangeDetailsRef.current;
         pendingValueChangeDetailsRef.current = null;
         instanceRef.current?.setValue(
-          value,
-          pendingDetails?.value === value
+          valueRef.current,
+          details?.value === valueRef.current
             ? {
                 emit: false,
-                event: pendingDetails.event,
-                reason: pendingDetails.reason,
-                trigger: pendingDetails.trigger,
+                event: details.event,
+                reason: details.reason,
+                trigger: details.trigger,
               }
             : { emit: false },
         );
@@ -103,11 +104,11 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
 
       const instance = createNavigationMenu(root, {
         defaultValue: uncontrolledValueRef.current,
-        openDelay,
-        closeDelay,
-        closeOnEscape,
-        closeOnOutsideInteract,
-        ...(value !== undefined ? { value } : {}),
+        openDelay: openDelay,
+        closeDelay: closeDelay,
+        closeOnEscape: closeOnEscape,
+        closeOnOutsideInteract: closeOnOutsideInteract,
+        ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
         onValueChange: (nextValue, details) => {
           pendingValueChangeDetailsRef.current = details;
           window.setTimeout(() => {
@@ -121,21 +122,20 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("valueChange", (details) => {
         queueMicrotask(() => {
-          if (details.isCanceled) return;
+          if (instanceRef.current !== instance || details.isCanceled) return;
           if (valueRef.current === undefined) {
-            const nextValue = instance.getValue();
-            uncontrolledValueRef.current = nextValue;
-            setUncontrolledValue(nextValue);
+            uncontrolledValueRef.current = instance.getValue();
+            setUncontrolledValue(instance.getValue());
           }
         });
       });
 
       return () => {
         unsubscribe();
-        instance.destroy();
         if (instanceRef.current === instance) {
           instanceRef.current = undefined;
         }
+        instance.destroy();
       };
     }, [openDelay, closeDelay, closeOnEscape, closeOnOutsideInteract]);
 

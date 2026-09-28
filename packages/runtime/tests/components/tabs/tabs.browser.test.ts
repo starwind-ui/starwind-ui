@@ -1,12 +1,160 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createTabs, type TabsValueChangeDetails } from "../../../src/components/tabs/tabs";
+import { initStarwind } from "../../../src/init-starwind";
 
 describe("createTabs", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     localStorage.clear();
+  });
+
+  it.each(["[data-ending-style]", ":not([data-active])"])(
+    "keeps exiting panels visible and inert through their own CSS transition (%s)",
+    async (exitSelector) => {
+      const root = renderTabs({ defaultValue: "account" });
+      const style = document.createElement("style");
+      style.textContent = `[data-sw-tabs-panel] { opacity: 1; transition: opacity 160ms linear; }
+      [data-sw-tabs-panel][data-starting-style], [data-sw-tabs-panel]${exitSelector} { opacity: 0; }`;
+      root.append(style);
+      const tabs = createTabs(root);
+      const account = getPanel(root, "account");
+      const password = getPanel(root, "password");
+      expect(account.hasAttribute("data-starting-style")).toBe(false);
+      expect(password.hasAttribute("data-ending-style")).toBe(false);
+      const link = document.createElement("a");
+      link.href = "#account";
+      account.append(link);
+      expect(getComputedStyle(account).opacity).toBe("1");
+      tabs.setValue("password");
+      expect(account.hidden).toBe(false);
+      expect(account.inert).toBe(true);
+      link.focus();
+      expect(document.activeElement).not.toBe(link);
+      expect(account.hasAttribute("data-ending-style")).toBe(true);
+      expect(password.hidden).toBe(false);
+      expect(password.inert).toBe(false);
+      expect(password.hasAttribute("data-starting-style")).toBe(true);
+      tabs.refresh();
+      expect(account.hidden).toBe(false);
+      await expect.poll(() => account.hidden).toBe(true);
+      expect(account.hasAttribute("data-ending-style")).toBe(false);
+      await expect.poll(() => getComputedStyle(password).opacity).toBe("1");
+      expect(password.hasAttribute("data-starting-style")).toBe(false);
+      tabs.destroy();
+    },
+  );
+
+  it.each(["reverse", "cancel", "remove", "destroy"])(
+    "settles panel motion safely on %s",
+    async (action) => {
+      const root = renderTabs({ defaultValue: "account" });
+      const account = getPanel(root, "account");
+      const password = getPanel(root, "password");
+      const style = document.createElement("style");
+      style.textContent = `@keyframes tabs-exit { from { opacity: 1; } to { opacity: 0; } }
+      [data-sw-tabs-panel][data-ending-style] { animation: tabs-exit 120ms linear; }`;
+      root.append(style);
+      const tabs = createTabs(root);
+      tabs.setValue("password");
+      expect(account.hidden).toBe(false);
+      const animations = account.getAnimations();
+      expect(animations.length).toBeGreaterThan(0);
+      if (action === "reverse") {
+        tabs.setValue("account");
+        expect(account.inert).toBe(false);
+        await new Promise((resolve) => setTimeout(resolve, 180));
+        expect(account.hidden).toBe(false);
+        expect(password.hidden).toBe(true);
+      } else if (action === "cancel") {
+        animations.forEach((animation) => animation.cancel());
+        await expect.poll(() => account.hidden).toBe(true);
+      } else if (action === "remove") {
+        account.remove();
+        tabs.refresh();
+        expect(account.hasAttribute("data-ending-style")).toBe(false);
+        root.append(account);
+        tabs.refresh();
+        tabs.setValue("account");
+        await new Promise((resolve) => setTimeout(resolve, 180));
+        expect(account.hidden).toBe(false);
+      } else {
+        tabs.destroy();
+        expect(account.hidden).toBe(true);
+        expect(password.hasAttribute("data-starting-style")).toBe(false);
+        const next = createTabs(root, { value: "account" });
+        await new Promise((resolve) => setTimeout(resolve, 180));
+        expect(account.hidden).toBe(false);
+        next.destroy();
+      }
+      tabs.destroy();
+    },
+  );
+
+  it("ignores infinite panel motion and descendant motion when hiding", () => {
+    const root = renderTabs({ defaultValue: "account" });
+    const panel = getPanel(root, "account");
+    const child = document.createElement("span");
+    panel.append(child);
+    const tabs = createTabs(root);
+    const own = panel.animate([{ opacity: 1 }, { opacity: 0.5 }], {
+      duration: 100,
+      iterations: Infinity,
+    });
+    const nested = child.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 10000 });
+    tabs.setValue("password");
+    expect(panel.hidden).toBe(true);
+    expect(panel.inert).toBe(true);
+    own.cancel();
+    nested.cancel();
+    tabs.destroy();
+  });
+
+  it("keeps disabled/null fallback and canceled selection safe outside the list", () => {
+    const root = renderTabs({ defaultValue: "account" });
+    const tabs = createTabs(root);
+    tabs.setValue("password");
+    tabs.setValue("disabled");
+    expect(getTab(root, "disabled").tabIndex).toBe(-1);
+    expect(getTab(root, "password").tabIndex).toBe(0);
+    tabs.setValue(null);
+    expect(getTab(root, "password").tabIndex).toBe(0);
+    root.addEventListener("starwind:value-change", (event) => event.preventDefault());
+    tabs.setValue("account");
+    expect(getTab(root, "password").tabIndex).toBe(0);
+    expect(tabs.getValue()).toBe(null);
+    tabs.destroy();
+  });
+
+  it("treats focus in a nested tablist as external to the outer owner", () => {
+    const root = renderTabs({ defaultValue: "account" });
+    const nested = renderTabs({ defaultValue: "account" });
+    getList(root).append(nested);
+    const outer = createTabs(root);
+    const inner = createTabs(nested);
+    getTab(nested, "account").focus();
+    outer.setValue("password");
+    expect(getTab(root, "password").tabIndex).toBe(0);
+    expect(document.activeElement).toBe(getTab(nested, "account"));
+    expect(inner.getValue()).toBe("account");
+    outer.destroy();
+    inner.destroy();
+  });
+
+  it("updates external keyboard entry while preserving focus inside the tablist", () => {
+    const root = renderTabs({ defaultValue: "account" });
+    const tabs = createTabs(root);
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    outside.focus();
+    tabs.setValue("password");
+    expect(getTab(root, "password").tabIndex).toBe(0);
+    expect(document.activeElement).toBe(outside);
+    getTab(root, "account").focus();
+    tabs.setValue("account", { emit: false });
+    tabs.setValue("password", { emit: false });
+    expect(document.activeElement).toBe(getTab(root, "account"));
+    expect(getTab(root, "account").tabIndex).toBe(0);
+    tabs.destroy();
   });
 
   it("initializes default state and activates a tab from a click", () => {

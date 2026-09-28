@@ -4,6 +4,7 @@ import type {
   AdapterPresenceFloatingOverlayComponentProjection,
   AdapterPresenceFloatingOverlayFacts,
 } from "../../framework-adapters/types.js";
+import { withAcceptedModelPublications } from "../../primitive-output-model/accepted-model-publication.js";
 import type { AdapterOutputFamilyPlan } from "../adapter-family-plans.js";
 import type { GenericAdapterPlan } from "../types.js";
 import {
@@ -46,25 +47,29 @@ function buildPresenceFloatingOverlayOutputModel(plan: GenericAdapterPlan): Adap
     "viewport",
   ];
 
-  return {
-    files: [
-      ...partNames.map((partName) =>
-        createPresenceFloatingOverlayComponentFile(plan, partName, facts),
-      ),
-      {
-        exports: {
-          kind: "namespace",
-          members: facts.index.importMembers,
-          namespace: facts.exports.namespace,
+  return withAcceptedModelPublications(
+    {
+      files: [
+        ...partNames.map((partName) =>
+          createPresenceFloatingOverlayComponentFile(plan, partName, facts),
+        ),
+        {
+          exports: {
+            kind: "namespace",
+            members: facts.index.importMembers,
+            namespace: facts.exports.namespace,
+          },
+          family: { facts, kind: "presence-floating-overlay" },
+          imports: [],
+          kind: "index",
+          path: `${plan.outputDirectory}/index.ts`,
+          typeFacades: [],
         },
-        family: { facts, kind: "presence-floating-overlay" },
-        imports: [],
-        kind: "index",
-        path: `${plan.outputDirectory}/index.ts`,
-        typeFacades: [],
-      },
-    ],
-  };
+      ],
+    },
+    plan.events,
+    plan.runtime.rootPart,
+  );
 }
 
 function createPresenceFloatingOverlayComponentFile(

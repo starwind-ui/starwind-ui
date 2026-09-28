@@ -98,7 +98,7 @@ export const styledSvgAssets: Readonly<Record<string, SvgAsset>> = {
     path("M4 4m-2 0a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v16a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z"),
     path("M9 4l0 16"),
   ),
-  "@tabler/icons/outline/loader-2.svg": outline(path("M12 3a9 9 0 1 0 9 9"), path("M12 7v5l3 3")),
+  "@tabler/icons/outline/loader-2.svg": outline(path("M12 3a9 9 0 1 0 9 9")),
   "@tabler/icons/outline/minus.svg": outline(path("M5 12h14")),
   "@tabler/icons/outline/moon.svg": theme(
     path("M12 3c.132 0 .263 0 .393 .008a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"),

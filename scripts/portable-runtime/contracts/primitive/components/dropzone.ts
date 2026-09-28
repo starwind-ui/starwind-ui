@@ -5,6 +5,12 @@ export const dropzoneRuntimeAdapterContract = {
   category: "form-value-control",
   displayName: "Dropzone",
   runtime: {
+    refresh: {
+      method: "refresh",
+      formOwner: "native-input",
+      parts: "owned-descendants",
+      state: "preserve",
+    },
     factory: "createDropzone",
     importSource: "@starwind-ui/runtime/dropzone",
     rootPart: "root",

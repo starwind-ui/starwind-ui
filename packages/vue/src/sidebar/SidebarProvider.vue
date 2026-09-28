@@ -6,17 +6,16 @@ import {
   type SidebarOpenChangeDetails,
   type SidebarPersistenceStorage,
 } from "@starwind-ui/runtime/sidebar";
-import { computed, onBeforeUnmount, onMounted, provide, readonly, ref, useAttrs, watch } from "vue";
-
+import { computed, onBeforeUnmount, onMounted, provide, readonly, ref, watch } from "vue";
 import { SidebarContext } from "./SidebarContext.js";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
   defineProps<{
-    defaultOpen?: boolean;
     open?: boolean;
-    defaultMobileOpen?: boolean;
+    defaultOpen?: boolean;
     mobileOpen?: boolean;
+    defaultMobileOpen?: boolean;
     keyboardShortcut?: string;
     mobileQuery?: string;
     persistOpen?: boolean;
@@ -25,161 +24,207 @@ const props = withDefaults(
     persistenceMaxAge?: number;
   }>(),
   {
-    defaultOpen: true,
     open: undefined,
-    defaultMobileOpen: false,
+    defaultOpen: true,
     mobileOpen: undefined,
+    defaultMobileOpen: false,
     keyboardShortcut: "b",
     mobileQuery: "(max-width: 767.98px)",
     persistOpen: false,
+    persistenceKey: undefined,
+    persistenceStorage: undefined,
     persistenceMaxAge: 604800,
   },
 );
 const emit = defineEmits<{
-  openChange: [open: boolean, detail: SidebarOpenChangeDetails];
-  mobileOpenChange: [open: boolean, detail: SidebarMobileOpenChangeDetails];
-  "update:open": [open: boolean];
-  "update:mobileOpen": [open: boolean];
+  openChange: [next: boolean, detail: SidebarOpenChangeDetails];
+  "update:open": [next: boolean];
+  mobileOpenChange: [next: boolean, detail: SidebarMobileOpenChangeDetails];
+  "update:mobileOpen": [next: boolean];
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
-const initialDefaultOpen = props.defaultOpen;
-const initialDefaultMobileOpen = props.defaultMobileOpen;
-const uncontrolledOpen = ref(initialDefaultOpen);
-const uncontrolledMobileOpen = ref(initialDefaultMobileOpen);
-const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
-const renderedMobileOpen = computed(() => props.mobileOpen ?? uncontrolledMobileOpen.value);
-const isMobile = ref(false);
-const expanded = computed(() => (isMobile.value ? renderedMobileOpen.value : renderedOpen.value));
-const state = computed(() => (renderedOpen.value ? ("expanded" as const) : ("collapsed" as const)));
-let instance: ReturnType<typeof createSidebarController> | undefined;
-let unsubscribeOpen: (() => void) | undefined;
-let unsubscribeMobileOpen: (() => void) | undefined;
-let mediaQueryList: MediaQueryList | undefined;
-
-provide(SidebarContext, {
-  expanded: readonly(expanded),
-  mobileOpen: readonly(renderedMobileOpen),
-  open: readonly(renderedOpen),
-  state: readonly(state),
-});
 defineExpose({ element });
-
-function handleOpenChange(detail: SidebarOpenChangeDetails): void {
-  emit("openChange", detail.open, detail);
-  if (props.open === undefined) uncontrolledOpen.value = detail.open;
-  emit("update:open", detail.open);
+const seedOpen = props.defaultOpen;
+const initialOpen = props.open ?? seedOpen;
+const seedMobileOpen = props.defaultMobileOpen;
+const initialMobileOpen = props.mobileOpen ?? seedMobileOpen;
+const acceptedOpen = ref(initialOpen);
+const acceptedMobileOpen = ref(initialMobileOpen);
+const acceptedIsMobile = ref(false);
+const connection: {
+  instance?: ReturnType<typeof createSidebarController>;
+  accepted: { open: boolean; mobileOpen: boolean };
+  initialized: boolean;
+  unsubscribe?: (() => void)[];
+} = { accepted: { open: initialOpen, mobileOpen: initialMobileOpen }, initialized: false };
+function readContext(owned: ReturnType<typeof createSidebarController>): void {
+  connection.accepted.open = owned.getOpen();
+  acceptedOpen.value = connection.accepted.open;
+  connection.accepted.mobileOpen = owned.getMobileOpen();
+  acceptedMobileOpen.value = connection.accepted.mobileOpen;
 }
-function handleMobileOpenChange(detail: SidebarMobileOpenChangeDetails): void {
-  emit("mobileOpenChange", detail.open, detail);
-  if (props.mobileOpen === undefined) uncontrolledMobileOpen.value = detail.open;
-  emit("update:mobileOpen", detail.open);
-}
-function destroyOwnedInstance(): void {
-  unsubscribeOpen?.();
-  unsubscribeOpen = undefined;
-  unsubscribeMobileOpen?.();
-  unsubscribeMobileOpen = undefined;
-  const owned = instance;
-  instance = undefined;
-  owned?.destroy();
-}
-function setupRuntime(): void {
-  const acceptedOpen = instance?.getOpen() ?? renderedOpen.value;
-  const acceptedMobileOpen = instance?.getMobileOpen() ?? renderedMobileOpen.value;
-  destroyOwnedInstance();
-  if (!element.value) return;
-  if (props.open === undefined) uncontrolledOpen.value = acceptedOpen;
-  if (props.mobileOpen === undefined) uncontrolledMobileOpen.value = acceptedMobileOpen;
-  instance = createSidebarController(element.value, {
-    defaultOpen: acceptedOpen,
-    defaultMobileOpen: acceptedMobileOpen,
+function connectRuntime(root: HTMLDivElement): void {
+  disconnectRuntime();
+  const owned = createSidebarController(root, {
+    defaultOpen: seedOpen,
+    ...(props.open !== undefined ? { open: props.open } : {}),
+    defaultMobileOpen: seedMobileOpen,
+    ...(props.mobileOpen !== undefined ? { mobileOpen: props.mobileOpen } : {}),
     keyboardShortcut: props.keyboardShortcut,
     mobileQuery: props.mobileQuery,
     persistOpen: props.persistOpen,
     persistenceKey: props.persistenceKey,
     persistenceStorage: props.persistenceStorage,
     persistenceMaxAge: props.persistenceMaxAge,
-    ...(props.open === undefined ? {} : { open: props.open }),
-    ...(props.mobileOpen === undefined ? {} : { mobileOpen: props.mobileOpen }),
+    onOpenChange: (next, detail) => {
+      emit("openChange", next, detail);
+    },
+    onMobileOpenChange: (next, detail) => {
+      emit("mobileOpenChange", next, detail);
+    },
   });
-  unsubscribeOpen = instance.subscribe("openChange", handleOpenChange);
-  unsubscribeMobileOpen = instance.subscribe("mobileOpenChange", handleMobileOpenChange);
-  if (props.open === undefined) uncontrolledOpen.value = instance.getOpen();
-  if (props.mobileOpen === undefined) uncontrolledMobileOpen.value = instance.getMobileOpen();
+  connection.instance = owned;
+  connection.unsubscribe = [
+    owned.subscribe("openChange", (detail) => {
+      if (connection.instance !== owned) return;
+      readContext(owned);
+      emit("update:open", detail.open);
+    }),
+    owned.subscribe("mobileOpenChange", (detail) => {
+      if (connection.instance !== owned) return;
+      readContext(owned);
+      emit("update:mobileOpen", detail.open);
+    }),
+  ];
+  {
+    const supplied = props.open;
+    const reload = connection.initialized && props.persistOpen && !(props.open !== undefined);
+    const next = reload
+      ? undefined
+      : (supplied ?? (connection.initialized ? connection.accepted.open : undefined));
+    if (next !== undefined && owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+  }
+  {
+    const supplied = props.mobileOpen;
+    const next = supplied ?? (connection.initialized ? connection.accepted.mobileOpen : undefined);
+    if (next !== undefined && owned.getMobileOpen() !== next)
+      owned.setMobileOpen(next, { emit: false });
+  }
+  readContext(owned);
+  connection.initialized = true;
 }
-function syncMedia(): void {
-  isMobile.value = mediaQueryList?.matches ?? false;
+function applyParentCommand(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  {
+    const next = props.open;
+    if (next !== undefined && owned.getOpen() !== next) owned.setOpen(next, { emit: false });
+  }
+  {
+    const next = props.mobileOpen;
+    if (next !== undefined && owned.getMobileOpen() !== next)
+      owned.setMobileOpen(next, { emit: false });
+  }
+  readContext(owned);
 }
-function setupMediaQuery(): void {
-  mediaQueryList?.removeEventListener?.("change", syncMedia);
-  mediaQueryList?.removeListener?.(syncMedia);
-  mediaQueryList =
-    typeof window.matchMedia === "function" ? window.matchMedia(props.mobileQuery) : undefined;
-  syncMedia();
-  mediaQueryList?.addEventListener?.("change", syncMedia);
-  mediaQueryList?.addListener?.(syncMedia);
+function disconnectRuntime(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  connection.accepted.open = owned.getOpen();
+  connection.accepted.mobileOpen = owned.getMobileOpen();
+  connection.unsubscribe?.forEach((stop) => stop());
+  connection.unsubscribe = undefined;
+  connection.instance = undefined;
+  owned.destroy();
 }
 
+function connectMedia(query: string): () => void {
+  const media = typeof window.matchMedia === "function" ? window.matchMedia(query) : undefined;
+  const sync = () => {
+    acceptedIsMobile.value = media?.matches ?? false;
+  };
+  sync();
+  if (media?.addEventListener) media.addEventListener("change", sync);
+  else media?.addListener(sync);
+  return () => {
+    if (media?.removeEventListener) media.removeEventListener("change", sync);
+    else media?.removeListener(sync);
+  };
+}
+provide(SidebarContext, {
+  open: readonly(computed(() => acceptedOpen.value)),
+  mobileOpen: readonly(computed(() => acceptedMobileOpen.value)),
+  state: readonly(
+    computed(() => (acceptedOpen.value ? ("expanded" as const) : ("collapsed" as const))),
+  ),
+  expanded: readonly(
+    computed(() => (acceptedIsMobile.value ? acceptedMobileOpen.value : acceptedOpen.value)),
+  ),
+});
+let mounted = false,
+  stopMedia: (() => void) | undefined;
+function reconnect() {
+  if (element.value && mounted) connectRuntime(element.value);
+}
 onMounted(() => {
-  setupMediaQuery();
-  setupRuntime();
+  mounted = true;
+  stopMedia = connectMedia(props.mobileQuery);
+  reconnect();
 });
 watch(
-  () => props.open,
-  (value, previous) => {
-    if ((value === undefined) !== (previous === undefined)) return setupRuntime();
-    if (value === undefined || !instance || instance.getOpen() === value) return;
-    instance.setOpen(value, { emit: false });
-  },
-  { flush: "post" },
-);
-watch(
-  () => props.mobileOpen,
-  (value, previous) => {
-    if ((value === undefined) !== (previous === undefined)) return setupRuntime();
-    if (value === undefined || !instance || instance.getMobileOpen() === value) return;
-    instance.setMobileOpen(value, { emit: false });
+  () => props.mobileQuery,
+  () => {
+    if (!mounted) return;
+    stopMedia?.();
+    stopMedia = connectMedia(props.mobileQuery);
   },
   { flush: "post" },
 );
 watch(
   [
     () => props.keyboardShortcut,
+    () => props.mobileQuery,
     () => props.persistOpen,
     () => props.persistenceKey,
     () => props.persistenceStorage,
     () => props.persistenceMaxAge,
   ],
-  setupRuntime,
+  reconnect,
   { flush: "post" },
 );
 watch(
-  () => props.mobileQuery,
-  () => {
-    setupMediaQuery();
-    setupRuntime();
+  () => props.open,
+  (next, previous) => {
+    if ((next === undefined) !== (previous === undefined)) reconnect();
+    else applyParentCommand();
+  },
+  { flush: "post" },
+);
+watch(
+  () => props.mobileOpen,
+  (next, previous) => {
+    if ((next === undefined) !== (previous === undefined)) reconnect();
+    else applyParentCommand();
   },
   { flush: "post" },
 );
 onBeforeUnmount(() => {
-  mediaQueryList?.removeEventListener?.("change", syncMedia);
-  mediaQueryList?.removeListener?.(syncMedia);
-  mediaQueryList = undefined;
-  destroyOwnedInstance();
+  mounted = false;
+  stopMedia?.();
+  disconnectRuntime();
 });
 </script>
-
 <template>
   <div
     ref="element"
-    v-bind="attrs"
-    data-sw-sidebar-provider
-    :data-default-open="initialDefaultOpen ? 'true' : undefined"
-    :data-default-mobile-open="initialDefaultMobileOpen ? 'true' : undefined"
-    :data-state="state"
-    :data-mobile-open="renderedMobileOpen ? 'true' : 'false'"
+    v-bind="$attrs"
+    :data-sw-sidebar-provider="''"
+    :data-sw-part="'provider'"
+    :data-default-open="seedOpen ? 'true' : undefined"
+    :data-default-mobile-open="seedMobileOpen ? 'true' : undefined"
+    :data-state="acceptedOpen ? ('expanded' as const) : ('collapsed' as const)"
+    :data-mobile-open="String(acceptedMobileOpen)"
     :data-keyboard-shortcut="props.keyboardShortcut"
     :data-mobile-query="props.mobileQuery"
     :data-persist-open="props.persistOpen ? 'true' : undefined"

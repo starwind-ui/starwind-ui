@@ -1,3 +1,4 @@
+import { verifyAvatarGroupCases } from "../shared/avatar-group.mjs";
 import { expectText } from "../shared/text.mjs";
 import {
   verifyTooltipCompositionCases,
@@ -216,7 +217,7 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
   });
 
   if (
-    avatarState.rootCount !== 6 ||
+    avatarState.rootCount !== 15 ||
     avatarState.loadedRootTagName !== "SPAN" ||
     avatarState.loadedRootDataSlot !== "avatar" ||
     avatarState.loadedRootHasDataSw !== true ||
@@ -297,6 +298,8 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
       )}.`,
     );
   }
+
+  await verifyAvatarGroupCases({ page });
 
   const kbdCount = await page.locator('kbd[data-slot="kbd"][data-sw-kbd]').count();
   const kbdGroupCount = await page.locator('kbd[data-slot="kbd-group"][data-sw-kbd-group]').count();

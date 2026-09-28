@@ -149,8 +149,8 @@ function visitRuntimeSubscriptions(
 function findRuntimeConstructionCallback(
   sourceFile: ts.SourceFile,
   callbackProp: string,
-): ts.Expression | undefined {
-  let callback: ts.Expression | undefined;
+): ts.Expression | ts.MethodDeclaration | undefined {
+  let callback: ts.Expression | ts.MethodDeclaration | undefined;
 
   const visit = (node: ts.Node): void => {
     if (callback) return;
@@ -161,10 +161,11 @@ function findRuntimeConstructionCallback(
       ts.isObjectLiteralExpression(node.arguments[1])
     ) {
       const property = node.arguments[1].properties.find(
-        (candidate): candidate is ts.PropertyAssignment =>
-          ts.isPropertyAssignment(candidate) && getPropertyName(candidate.name) === callbackProp,
+        (candidate): candidate is ts.PropertyAssignment | ts.MethodDeclaration =>
+          (ts.isPropertyAssignment(candidate) || ts.isMethodDeclaration(candidate)) &&
+          getPropertyName(candidate.name) === callbackProp,
       );
-      if (property) callback = property.initializer;
+      if (property) callback = ts.isPropertyAssignment(property) ? property.initializer : property;
     }
 
     ts.forEachChild(node, visit);

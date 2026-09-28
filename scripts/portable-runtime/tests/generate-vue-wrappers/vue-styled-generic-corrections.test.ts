@@ -1,10 +1,8 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { describe, expect, it } from "vitest";
-
 import { alertStyledContract } from "../../contracts/styled/components/alert.js";
 import { separatorStyledContract } from "../../contracts/styled/components/separator.js";
 import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
@@ -18,6 +16,7 @@ import {
 import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
 import { generateFrameworkStyledWrappers } from "../../renderers/framework-wrapper-generator.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { compactCode } from "../source-comparison.js";
 import { GENERIC_VUE_STYLED_FIXTURE } from "../styled-contracts/vue-styled-generic-corrections.test.js";
 
 const options = {
@@ -32,9 +31,13 @@ describe("generic Vue Styled corrections", () => {
   it("projects prop-only and earlier-computed expressions from binding facts", () => {
     const source = render("GenericBindingRoot");
 
-    expect(source).toContain('const resolvedTone = computed(() => tone ?? "neutral");');
-    expect(source).toContain(
-      'const active = computed(() => resolvedTone.value === "accent" && Boolean(enabled));',
+    expect(compactCode(source)).toContain(
+      compactCode('const resolvedTone = computed(() => tone ?? "neutral");'),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode(
+        'const active = computed(() => resolvedTone.value === "accent" && Boolean(enabled));',
+      ),
     );
     expect(() => assertVueSfcCompiles(source, "GenericBindingRoot.vue")).not.toThrow();
   });
@@ -45,8 +48,10 @@ describe("generic Vue Styled corrections", () => {
     if (!alert) throw new TypeError("Missing Alert component.");
     const source = renderVueComponent(alertGroup, alert, options);
 
-    expect(source).toContain(
-      'const inferredRole = computed(() => role ?? (variant === "error" || variant === "warning" ? "alert" : "status"));',
+    expect(compactCode(source)).toContain(
+      compactCode(
+        'const inferredRole = computed(() => role ?? (variant === "error" || variant === "warning" ? "alert" : "status"));',
+      ),
     );
     expect(() => assertVueSfcCompiles(source, "Alert.vue")).not.toThrow();
   });
@@ -255,16 +260,18 @@ describe("generic Vue Styled corrections", () => {
   it("exposes one native root from forwardRef facts", () => {
     const source = render("GenericBindingRoot");
 
-    expect(source).toContain("const element = ref<HTMLDivElement | null>(null);");
-    expect(source).toContain("defineExpose({ element });");
+    expect(compactCode(source)).toContain(
+      compactCode("const element = ref<HTMLDivElement | null>(null);"),
+    );
+    expect(compactCode(source)).toContain(compactCode("defineExpose({ element });"));
     expect(source.match(/ref="element"/g)).toHaveLength(1);
   });
 
   it("binds conditional union roots without duplicate setup", () => {
     const source = render("GenericConditionalRoot");
 
-    expect(source).toContain(
-      "const element = ref<HTMLButtonElement | HTMLAnchorElement | null>(null);",
+    expect(compactCode(source)).toContain(
+      compactCode("const element = ref<HTMLButtonElement | HTMLAnchorElement | null>(null);"),
     );
     expect(source.match(/ref="element"/g)).toHaveLength(2);
     expect(source.match(/defineExpose\(\{ element \}\);/g)).toHaveLength(1);
@@ -273,7 +280,7 @@ describe("generic Vue Styled corrections", () => {
   it("keeps a ref-less composed root free of an invented element bridge", () => {
     const source = render("GenericComposedRoot");
 
-    expect(source).not.toContain("defineExpose({ element });");
+    expect(compactCode(source)).not.toContain(compactCode("defineExpose({ element });"));
     expect(source).not.toMatch(/\bref="element"/);
   });
 

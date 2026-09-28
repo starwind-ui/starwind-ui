@@ -5,6 +5,7 @@ export const dialogRuntimeAdapterContract = {
   category: "dialog-native-overlay",
   displayName: "Dialog",
   runtime: {
+    refresh: { method: "refresh", parts: "owned-controls", state: "preserve" },
     factory: "createDialog",
     importSource: "@starwind-ui/runtime/dialog",
     rootPart: "root",
@@ -94,6 +95,13 @@ export const dialogRuntimeAdapterContract = {
     },
   ],
   props: [
+    {
+      defaultValue: "false",
+      name: "asChild",
+      kind: "rendering",
+      targets: ["trigger", "close"],
+      type: "boolean",
+    },
     { name: "open", kind: "control", targets: ["root"], type: "boolean" },
     {
       defaultValue: "false",
@@ -130,6 +138,7 @@ export const dialogRuntimeAdapterContract = {
     {
       name: "openChange",
       stateModel: "open",
+      acceptanceNotification: "controller-subscription",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onOpenChange",

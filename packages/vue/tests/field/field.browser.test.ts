@@ -1,15 +1,3 @@
-import {
-  createApp,
-  createSSRApp,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-} from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
 import {
   FieldControl,
@@ -21,6 +9,17 @@ import {
   FieldValidity,
 } from "@starwind-ui/vue/field";
 import { FormRoot } from "@starwind-ui/vue/form";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  createSSRApp,
+  h,
+  nextTick,
+  reactive,
+  ref,
+} from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Field as StyledField,
   FieldControl as StyledFieldControl,
@@ -218,6 +217,7 @@ describe("Vue Field public behavior", () => {
   it("composes registered controls, propagates state, isolates instances, and cleans up once", async () => {
     const showCheckbox = ref(true);
     const checkboxDisabled = ref(false);
+    const observe = vi.spyOn(MutationObserver.prototype, "observe");
     const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
     const host = appendHost();
     const app = createApp({
@@ -245,6 +245,13 @@ describe("Vue Field public behavior", () => {
     const checkbox = host.querySelector<HTMLElement>("[data-sw-checkbox]")!;
     const checkboxInput = host.querySelector<HTMLInputElement>("[data-sw-checkbox-input]")!;
     expect(fields()).toHaveLength(2);
+    const fieldObservers = [...fields()].map((field) => {
+      const owners = observe.mock.calls.flatMap(([target], index) =>
+        target === field ? [observe.mock.contexts[index]] : [],
+      );
+      expect(owners).toHaveLength(1);
+      return owners[0];
+    });
     expect(checkboxInput.name).toBe("terms");
     expect(Object.fromEntries(new FormData(form))).toEqual({ nickname: "Ada" });
 
@@ -264,12 +271,19 @@ describe("Vue Field public behavior", () => {
     showCheckbox.value = false;
     await waitFor(() => {
       expect(fields()).toHaveLength(1);
-      expect(disconnect).toHaveBeenCalledTimes(1);
+      expect(disconnect.mock.contexts.filter((owner) => owner === fieldObservers[1])).toHaveLength(
+        1,
+      );
+      expect(disconnect.mock.contexts.filter((owner) => owner === fieldObservers[0])).toHaveLength(
+        0,
+      );
     });
 
     app.unmount();
     cleanups.pop();
-    expect(disconnect).toHaveBeenCalledTimes(2);
+    for (const fieldObserver of fieldObservers) {
+      expect(disconnect.mock.contexts.filter((owner) => owner === fieldObserver)).toHaveLength(1);
+    }
   });
 
   it("hydrates Styled Field with attrs, slots, semantic refs, and one Runtime owner", async () => {

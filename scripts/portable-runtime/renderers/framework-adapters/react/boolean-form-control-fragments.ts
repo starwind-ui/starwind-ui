@@ -41,7 +41,7 @@ export function renderReactBooleanIndeterminateControlledSetters(
   const indeterminateSetter = requireSetter(facts.setters.indeterminate, "indeterminate");
   const nextControlledState = `nextControlled${facts.state.pascalName}`;
 
-  return `    useIsomorphicLayoutEffect(() => {\n      const instance = instanceRef.current;\n      if (!instance) return;\n\n      const ${nextControlledState} = ${stateProp} ?? ${groupState};\n      if (${nextControlledState} !== undefined && instance.${facts.state.getter}() !== ${nextControlledState}) {\n        instance.${facts.setters.state.method}(${nextControlledState}, ${setterOptions});\n      }\n\n      instance.${indeterminateSetter.method}(${indeterminateProp}, ${formatOptions(indeterminateSetter.options)});\n      setRenderedIndeterminate(${indeterminateProp});\n    }, [${stateProp}, ${groupState}, ${indeterminateProp}]);\n\n${renderReactBooleanDisabledSetter(facts, disabledValue)}`;
+  return `    useIsomorphicLayoutEffect(() => {\n      const instance = instanceRef.current;\n      if (!instance) return;\n\n      const ${nextControlledState} = ${groupState} ?? ${stateProp};\n      if (${nextControlledState} !== undefined && instance.${facts.state.getter}() !== ${nextControlledState}) {\n        instance.${facts.setters.state.method}(${nextControlledState}, ${setterOptions});\n      }\n\n      instance.${indeterminateSetter.method}(${indeterminateProp}, ${formatOptions(indeterminateSetter.options)});\n      setRenderedIndeterminate(${indeterminateProp});\n    }, [${stateProp}, ${groupState}, ${indeterminateProp}]);\n\n${renderReactBooleanDisabledSetter(facts, disabledValue)}`;
 }
 
 export function requireGroupFacts(

@@ -13,9 +13,7 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 import { ToggleGroupContext } from "./ToggleGroupContext";
-
 export type ToggleGroupRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "onChange"
@@ -24,62 +22,55 @@ export type ToggleGroupRootProps = Omit<
   disabled?: boolean;
   loopFocus?: boolean;
   multiple?: boolean;
-  onValueChange?: (value: ToggleGroupValue, details: ToggleGroupValueChangeDetails) => void;
   orientation?: "horizontal" | "vertical";
   value?: ToggleGroupValue;
+  onValueChange?: (value: ToggleGroupValue, detail: ToggleGroupValueChangeDetails) => void;
 };
-
 const ToggleGroupRoot = React.forwardRef<HTMLDivElement, ToggleGroupRootProps>(
   function ToggleGroupRoot(
     {
+      children,
       defaultValue,
       disabled = false,
       loopFocus = true,
       multiple = false,
-      onValueChange,
       orientation = "horizontal",
       value,
-      ...props
+      onValueChange,
+      ...rest
     },
     forwardedRef,
   ) {
-    const rootRef = React.useRef<HTMLDivElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createToggleGroup> | undefined>(undefined);
-    const defaultValueRef = React.useRef(defaultValue);
-    const disabledRef = React.useRef(disabled);
-    const loopFocusRef = React.useRef(loopFocus);
-    const multipleRef = React.useRef(multiple);
-    const onValueChangeRef = React.useRef(onValueChange);
-    const orientationRef = React.useRef(orientation);
-    const valueRef = React.useRef(value);
-    const [uncontrolledValue, setUncontrolledValue] = React.useState<ToggleGroupValue>(() =>
-      normalizeRenderedValue(defaultValueRef.current ?? [], multipleRef.current),
-    );
-
-    useIsomorphicLayoutEffect(() => {
-      disabledRef.current = disabled;
-    }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      loopFocusRef.current = loopFocus;
-    }, [loopFocus]);
-
-    useIsomorphicLayoutEffect(() => {
-      multipleRef.current = multiple;
-    }, [multiple]);
-
-    useIsomorphicLayoutEffect(() => {
-      onValueChangeRef.current = onValueChange;
-    }, [onValueChange]);
-
-    useIsomorphicLayoutEffect(() => {
-      orientationRef.current = orientation;
-    }, [orientation]);
-
-    useIsomorphicLayoutEffect(() => {
-      valueRef.current = value;
-    }, [value]);
-
+    const inputs = React.useRef({
+      defaultValue,
+      disabled,
+      loopFocus,
+      multiple,
+      orientation,
+      value,
+      onValueChange,
+    });
+    inputs.current = {
+      defaultValue,
+      disabled,
+      loopFocus,
+      multiple,
+      orientation,
+      value,
+      onValueChange,
+    };
+    const initialDefault = React.useRef(
+      normalizeValue(inputs.current.defaultValue ?? [], inputs.current.multiple),
+    ).current;
+    const [renderedValue, setRenderedValue] = React.useState<ToggleGroupValue>(initialDefault);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createToggleGroup>;
+      unsubscribe?: () => void;
+      observer?: MutationObserver;
+      ownDisabled?: boolean;
+      accepted: ToggleGroupValue;
+    }>({ accepted: initialDefault }).current;
+    const rootRef = React.useRef<HTMLDivElement | null>(null);
     const composedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
         rootRef.current = node;
@@ -88,120 +79,126 @@ const ToggleGroupRoot = React.forwardRef<HTMLDivElement, ToggleGroupRootProps>(
       [forwardedRef],
     );
 
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root) return;
-
-      const instance = createToggleGroup(root, {
-        defaultValue: defaultValueRef.current,
-        disabled: disabledRef.current,
-        loopFocus: loopFocusRef.current,
-        multiple: multipleRef.current,
-        orientation: orientationRef.current,
-        onValueChange: (value, details) => {
-          onValueChangeRef.current?.(value, details);
-        },
-        ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
-      });
-      instanceRef.current = instance;
-      const unsubscribe = instance.subscribe("valueChange", (details) => {
-        if (details.isCanceled) return;
-
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(details.value);
-        }
-      });
-
-      return () => {
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setDisabled(disabled);
-    }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setLoopFocus(loopFocus);
-    }, [loopFocus]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setMultiple(multiple);
-      if (valueRef.current === undefined) {
-        setUncontrolledValue(instance.getValue());
+    const effectiveDisabled = inputs.current.disabled;
+    const selected = React.useMemo(
+      () => normalizeValue(inputs.current.value ?? renderedValue, inputs.current.multiple),
+      [value, multiple, renderedValue],
+    );
+    function normalizeValue(value: string[], multiple: boolean) {
+      const next = Array.from(new Set(value.filter((item) => item.length > 0)));
+      return multiple ? next : next.slice(0, 1);
+    }
+    function isModelEqual(left: string[] | undefined, right: string[] | undefined) {
+      return (
+        left === right ||
+        (left !== undefined &&
+          right !== undefined &&
+          left.length === right.length &&
+          left.every((entry, index) => entry === right[index]))
+      );
+    }
+    function copyModel(value: string[]) {
+      return [...value];
+    }
+    function disconnect() {
+      const owned = connection.instance;
+      connection.observer?.disconnect();
+      connection.observer = undefined;
+      connection.unsubscribe?.();
+      connection.unsubscribe = undefined;
+      connection.instance = undefined;
+      owned?.destroy();
+    }
+    function publishReadback(owned: ReturnType<typeof createToggleGroup>) {
+      if (connection.instance !== owned) return;
+      const next = owned.getValue();
+      if (!isModelEqual(connection.accepted, next)) {
+        connection.accepted = next;
+        if (inputs.current.value === undefined) setRenderedValue(next);
       }
-    }, [multiple]);
-
+    }
+    function connect(root: HTMLDivElement) {
+      disconnect();
+      const desired = normalizeValue(
+        inputs.current.value ?? initialDefault,
+        inputs.current.multiple,
+      );
+      const owned = createToggleGroup(root, {
+        defaultValue: desired,
+        disabled: inputs.current.disabled,
+        loopFocus: inputs.current.loopFocus,
+        multiple: inputs.current.multiple,
+        orientation: inputs.current.orientation,
+        ...(inputs.current.value !== undefined ? { value: desired } : {}),
+        onValueChange: (next, detail) => {
+          inputs.current.onValueChange?.(next, detail);
+        },
+      });
+      connection.instance = owned;
+      connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+        if (connection.instance !== owned || detail.isCanceled) return;
+        publishReadback(owned);
+      });
+      connection.observer = new MutationObserver(() => {
+        publishReadback(owned);
+      });
+      connection.observer.observe(root, { attributes: true, attributeFilter: ["data-value"] });
+      publishReadback(owned);
+    }
+    function applyParent() {
+      const owned = connection.instance,
+        input = inputs.current.value;
+      if (!owned || input === undefined) return;
+      const next = normalizeValue(input, inputs.current.multiple);
+      if (isModelEqual(owned.getValue(), next)) return;
+      owned.setValue(next, { emit: false });
+      publishReadback(owned);
+    }
+    function applyOptions() {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.refresh();
+      owned.setDisabled(inputs.current.disabled);
+      owned.setLoopFocus(inputs.current.loopFocus);
+      owned.setMultiple(inputs.current.multiple);
+      owned.setOrientation(inputs.current.orientation);
+      applyParent();
+      publishReadback(owned);
+    }
     useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setOrientation(orientation);
-    }, [orientation]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (value === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (areValuesEqual(instance.getValue(), value)) return;
-
-      instance.setValue(value, { emit: false });
-    }, [multiple, value]);
-
-    const renderedValue = React.useMemo(
-      () => normalizeRenderedValue(value ?? uncontrolledValue, multiple),
-      [multiple, uncontrolledValue, value],
+      if (rootRef.current) connect(rootRef.current);
+      return disconnect;
+    }, []);
+    useIsomorphicLayoutEffect(applyOptions, [disabled, loopFocus, multiple, orientation]);
+    useIsomorphicLayoutEffect(applyParent, [value, multiple]);
+    const context = React.useMemo(
+      () => ({ disabled, loopFocus, multiple, orientation, value: selected }),
+      [disabled, loopFocus, multiple, orientation, selected],
     );
-    const contextValue = React.useMemo(
-      () => ({ disabled, loopFocus, multiple, orientation, value: renderedValue }),
-      [disabled, loopFocus, multiple, orientation, renderedValue],
-    );
-
     return (
-      <ToggleGroupContext.Provider value={contextValue}>
+      <ToggleGroupContext.Provider value={context}>
         <div
-          data-sw-toggle-group
-          data-default-value={
-            defaultValueRef.current
-              ? JSON.stringify(normalizeRenderedValue(defaultValueRef.current, multipleRef.current))
-              : undefined
-          }
-          data-disabled={disabled ? "" : undefined}
-          data-loop-focus={!loopFocus ? "false" : undefined}
-          data-multiple={multiple ? "" : undefined}
-          data-orientation={orientation}
-          data-value={JSON.stringify(renderedValue)}
+          {...rest}
+          {...{
+            "data-sw-toggle-group": "",
+            "data-sw-part": "root",
+            "data-default-value": initialDefault.length
+              ? JSON.stringify(initialDefault)
+              : undefined,
+            "data-value": JSON.stringify(selected),
+            "data-disabled": effectiveDisabled ? "" : undefined,
+            "data-loop-focus": inputs.current.loopFocus ? undefined : "false",
+            "data-multiple": inputs.current.multiple ? "" : undefined,
+            "data-orientation": inputs.current.orientation,
+            role: "group",
+          }}
           ref={composedRef}
-          role="group"
-          {...props}
-        />
+        >
+          {children}
+        </div>
       </ToggleGroupContext.Provider>
     );
   },
 );
-
 ToggleGroupRoot.displayName = "ToggleGroup.Root";
-
 export default ToggleGroupRoot;
-
-function areValuesEqual(left: ToggleGroupValue, right: ToggleGroupValue): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function normalizeRenderedValue(value: ToggleGroupValue, multiple: boolean): ToggleGroupValue {
-  const values = Array.from(new Set(value.filter((item) => item.length > 0)));
-  return multiple ? values : values.slice(0, 1);
-}

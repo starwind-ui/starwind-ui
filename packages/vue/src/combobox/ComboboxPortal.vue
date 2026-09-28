@@ -41,7 +41,6 @@ onBeforeUnmount(() => {
       :data-placement="placement.ready.value ? 'ready' : 'pending'"
       data-sw-portal-placement="framework"
       data-sw-part="portal"
-      data-floating-root
     >
       <slot /></div
   ></Teleport>

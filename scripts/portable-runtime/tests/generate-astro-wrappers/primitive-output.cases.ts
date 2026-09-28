@@ -617,8 +617,12 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(dialogIndex).toContain("Backdrop: DialogBackdrop");
     expect(dialogIndex).toContain("Popup: DialogPopup");
 
+    for (const root of [dialogRoot, alertDialogRoot, drawerRoot]) {
+      expect(root).toContain("resolveDialogOwner(scopedRoot)");
+      expect(root).toContain("knownRoots.has(owner)");
+    }
     expect(alertDialogRoot).toContain(
-      'import { createAlertDialog } from "@starwind-ui/runtime/alert-dialog"',
+      'import { createAlertDialog, resolveDialogOwner } from "@starwind-ui/runtime/alert-dialog"',
     );
     expect(alertDialogRoot).toContain("data-sw-alert-dialog");
     expect(alertDialogRoot).toContain("closeOnOutsideInteract = false");
@@ -638,7 +642,9 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(alertDialogIndex).toContain("Root: AlertDialogRoot");
     expect(alertDialogIndex).toContain("Popup: AlertDialogPopup");
 
-    expect(drawerRoot).toContain('import { createDrawer } from "@starwind-ui/runtime/drawer"');
+    expect(drawerRoot).toContain(
+      'import { createDrawer, resolveDialogOwner } from "@starwind-ui/runtime/drawer"',
+    );
     expect(drawerRoot).toContain("data-sw-drawer");
     expect(drawerRoot).toContain("closeOnOutsideInteract = true");
     expect(drawerTrigger).toContain("data-sw-drawer-trigger");
@@ -920,7 +926,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(inputRoot).toContain("data-sw-input");
     expect(inputRoot).toContain("value={value ?? defaultValue}");
     expect(inputRoot).toContain("disabled={disabled}");
-    expect(inputRoot).toContain("createInput(input)");
+    expect(inputRoot).toContain("createInput(root)");
     expect(inputIndex).toContain("const Input =");
     expect(inputIndex).toContain("Root: InputRoot");
 

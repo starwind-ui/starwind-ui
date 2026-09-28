@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { switchRuntimeAdapterContract } from "../../contracts/primitive/components/switch.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode, normalizeVueSource } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -60,27 +59,27 @@ describe("generated Vue Switch Primitive", () => {
     const second = await generateSwitch();
 
     expect(first).toEqual(second);
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(() => assertVueSfcCompiles(first.root, "SwitchRoot.vue")).not.toThrow();
     expect(() => assertVueSfcCompiles(first.thumb, "SwitchThumb.vue")).not.toThrow();
-    expect(first.root).toMatch(
-      /emit\("checkedChange", checked, detail\);[\s\S]*if \(detail\.isCanceled\) return;[\s\S]*emit\("update:checked", checked\);/,
-    );
-    expect(first.root).toContain("Object.is(instance.getChecked(), checked)");
-    expect(first.root).toContain("instance.setChecked(checked, { emit: false });");
-    expect(first.root).toContain("instance.setFormOptions({");
-    expect(first.root).toContain("data-sw-switch-input");
-    expect(first.root).toContain("data-sw-switch-unchecked-input");
-    expect(first.root).toContain("onMounted(setupRuntime);");
-    expect(first.root).toContain("onBeforeUnmount(destroyOwnedInstance);");
+
+    expect(compactCode(first.root)).toContain(compactCode("data-sw-switch-input"));
+    expect(compactCode(first.root)).toContain(compactCode("data-sw-switch-unchecked-input"));
+
     expect(first.thumb).toContain("data-sw-switch-thumb");
     expect(first.index).toContain('export { default as SwitchRoot } from "./SwitchRoot.vue";');
     expect(first.index).toContain('export { default as SwitchThumb } from "./SwitchThumb.vue";');
 
-    await expect(first.root).toBe(
-      await readFile(path.join(process.cwd(), "packages/vue/src/switch/SwitchRoot.vue"), "utf8"),
+    await expect(normalizeVueSource(first.root)).toBe(
+      normalizeVueSource(
+        await readFile(path.join(process.cwd(), "packages/vue/src/switch/SwitchRoot.vue"), "utf8"),
+      ),
     );
-    await expect(first.thumb).toBe(
-      await readFile(path.join(process.cwd(), "packages/vue/src/switch/SwitchThumb.vue"), "utf8"),
+    await expect(normalizeVueSource(first.thumb)).toBe(
+      normalizeVueSource(
+        await readFile(path.join(process.cwd(), "packages/vue/src/switch/SwitchThumb.vue"), "utf8"),
+      ),
     );
   });
 

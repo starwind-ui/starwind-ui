@@ -1,3 +1,8 @@
+import { renderCollapsibleRoot } from "../../shared-recipes/structured/disclosure/frame.js";
+import {
+  collapsibleParts,
+  disclosureDisabled,
+} from "../../shared-recipes/structured/disclosure/recipe.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -31,127 +36,12 @@ export function printVueDisclosurePresenceComponent(
 }
 
 function printRoot(
-  facts: Extract<
+  _facts: Extract<
     NonNullable<AdapterComponentFile["component"]["family"]>,
     { kind: "disclosure-presence" }
   >["facts"],
 ): string {
-  const defaultOpen = facts.props.defaultOpen.name;
-  const disabled = facts.props.disabled.name;
-  const open = facts.props.open.name;
-  const setterOptions = printOptions(facts.setter.options);
-
-  return `<script setup lang="ts">
-import {
-  type ${facts.event.detailsType},
-  ${facts.runtime.factory},
-} from "${facts.runtime.importSource}";
-import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
-import { useVueAsChildRuntimeOwner } from "../_internal/as-child";
-
-defineOptions({ inheritAttrs: false });
-
-const props = withDefaults(
-  defineProps<{
-    ${defaultOpen}?: boolean;
-    ${disabled}?: boolean;
-    ${open}?: boolean;
-  }>(),
-  {
-    ${defaultOpen}: false,
-    ${disabled}: false,
-    ${open}: undefined,
-  },
-);
-const emit = defineEmits<{
-  ${facts.event.name}: [open: boolean, detail: ${facts.event.detailsType}];
-  "update:${open}": [open: boolean];
-}>();
-defineSlots<{
-  default?: () => unknown;
-}>();
-const attrs = useAttrs();
-const rootRef = ref<HTMLDivElement | null>(null);
-const initialDefaultOpen = props.${defaultOpen};
-const uncontrolledOpen = ref(initialDefaultOpen);
-const renderedOpen = computed(() => props.${open} ?? uncontrolledOpen.value);
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-
-defineExpose({
-  element: rootRef,
-});
-
-function handleOpenChange(nextOpen: boolean, detail: ${facts.event.detailsType}): void {
-  const eventWasControlled = props.${open} !== undefined;
-  emit("${facts.event.name}", nextOpen, detail);
-  if (detail.isCanceled) return;
-
-  if (!eventWasControlled) uncontrolledOpen.value = nextOpen;
-  emit("update:${open}", nextOpen);
-}
-
-function destroyOwnedInstance(): void {
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  instance = ${facts.runtime.factory}(element, {
-    ${defaultOpen}: uncontrolledOpen.value,
-    ${disabled}: props.${disabled},
-    ${facts.event.callbackProp}: handleOpenChange,
-    ...(props.${open} === undefined ? {} : { ${open}: props.${open} }),
-  });
-}
-
-useVueAsChildRuntimeOwner(rootRef, setupRuntime);
-onMounted(setupRuntime);
-
-watch(
-  () => props.${open},
-  (nextOpen, previousOpen) => {
-    const controllednessChanged = (nextOpen === undefined) !== (previousOpen === undefined);
-    if (controllednessChanged) {
-      if (nextOpen === undefined && instance) {
-        uncontrolledOpen.value = instance.${facts.openGetter}();
-      }
-      setupRuntime();
-      return;
-    }
-    if (nextOpen === undefined || !instance || Object.is(instance.${facts.openGetter}(), nextOpen)) {
-      return;
-    }
-
-    instance.${facts.setter.method}(nextOpen${setterOptions});
-  },
-  { flush: "post" },
-);
-watch(() => props.${disabled}, setupRuntime, { flush: "post" });
-
-onBeforeUnmount(destroyOwnedInstance);
-</script>
-
-<template>
-  <div
-    ref="rootRef"
-    v-bind="attrs"
-    ${facts.attrs.root}
-    data-sw-part="${facts.parts.root.name}"
-    :${facts.attrs.defaultOpen}="initialDefaultOpen ? 'true' : undefined"
-    :${facts.attrs.disabled}="props.${disabled} ? '' : undefined"
-    :${facts.attrs.rootState}="renderedOpen ? 'open' : 'closed'"
-  >
-    <slot />
-  </div>
-</template>
-`;
+  return renderCollapsibleRoot("vue");
 }
 
 function printTrigger(
@@ -161,8 +51,9 @@ function printTrigger(
   >["facts"],
 ): string {
   return `<script setup lang="ts">
-import { defineComponent, ref, useAttrs, type VNode } from "vue";
+import { defineComponent, inject, ref, useAttrs, type VNode } from "vue";
 import { createVueAsChild } from "../_internal/as-child";
+import { DisclosureDisabledContext } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -171,6 +62,7 @@ const props = withDefaults(defineProps<{ ${facts.props.asChild.name}?: boolean }
 });
 const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
+const disclosure = inject(DisclosureDisabledContext, undefined);
 const element = ref<HTMLElement | null>(null);
 const asChild = createVueAsChild("${facts.exports.trigger}", element);
 const { setElement } = asChild;
@@ -182,10 +74,13 @@ const AsChildTrigger = defineComponent({
   setup() {
     return () => {
       const children = slots.default?.() ?? [];
+      const disabled = ${disclosureDisabled("disclosure?.disabled", "attrs.disabled", "children[0]?.props?.disabled")};
       const protectedProps = {
+        disabled,
+        "data-disabled": disabled ? "" : undefined,
         "${facts.attrs.trigger}": "",
-        "${facts.attrs.triggerExpanded}": "false",
-        "${facts.attrs.triggerState}": "closed",
+        "${facts.attrs.triggerExpanded}": "${collapsibleParts.trigger.expanded}",
+        "${facts.attrs.triggerState}": "${collapsibleParts.trigger.state}",
         "data-sw-part": "${facts.parts.trigger.name}",
       };
       return asChild.render({
@@ -208,8 +103,10 @@ const AsChildTrigger = defineComponent({
     ${facts.attrs.trigger}
     data-sw-part="${facts.parts.trigger.name}"
     type="button"
-    ${facts.attrs.triggerExpanded}="false"
-    ${facts.attrs.triggerState}="closed"
+    :disabled="${disclosureDisabled("disclosure?.disabled", "attrs.disabled")}"
+    :data-disabled="(${disclosureDisabled("disclosure?.disabled", "attrs.disabled")}) ? '' : undefined"
+    ${facts.attrs.triggerExpanded}="${collapsibleParts.trigger.expanded}"
+    ${facts.attrs.triggerState}="${collapsibleParts.trigger.state}"
   >
     <slot />
   </button>
@@ -245,8 +142,8 @@ defineExpose({ element });
     ${facts.attrs.panel}
     data-sw-part="${facts.parts.panel.name}"
     :${facts.attrs.panelHiddenUntilFound}="props.${facts.props.hiddenUntilFound.name} ? '' : undefined"
-    ${facts.attrs.panelState}="closed"
-    :${facts.attrs.panelHidden}="props.${facts.props.hiddenUntilFound.name} ? 'until-found' : true"
+    ${facts.attrs.panelState}="${collapsibleParts.panel.state}"
+    :${facts.attrs.panelHidden}="props.${facts.props.hiddenUntilFound.name} ? '${collapsibleParts.panel.hiddenUntilFound}' : ${collapsibleParts.panel.hidden}"
   >
     <slot />
   </div>

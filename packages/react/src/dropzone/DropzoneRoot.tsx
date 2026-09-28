@@ -8,36 +8,49 @@
 import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import { observeFormDiscovery } from "../internal/form-discovery";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 export type DropzoneRootProps = Omit<React.LabelHTMLAttributes<HTMLLabelElement>, "onChange"> & {
   disabled?: boolean;
   isUploading?: boolean;
   onFilesChange?: (files: File[], details: DropzoneFilesChangeDetails) => void;
 };
-
 const DropzoneRoot = React.forwardRef<HTMLLabelElement, DropzoneRootProps>(function DropzoneRoot(
   { disabled = false, isUploading = false, onFilesChange, ...props },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLLabelElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createDropzone> | undefined>(undefined);
-  const onFilesChangeRef = React.useRef(onFilesChange);
-  const disabledRef = React.useRef(disabled);
-  const isUploadingRef = React.useRef(isUploading);
-
+  const inputs = React.useRef({ disabled, isUploading, onFilesChange });
   useIsomorphicLayoutEffect(() => {
-    onFilesChangeRef.current = onFilesChange;
-  }, [onFilesChange]);
-
-  useIsomorphicLayoutEffect(() => {
-    disabledRef.current = disabled;
-  }, [disabled]);
-
-  useIsomorphicLayoutEffect(() => {
-    isUploadingRef.current = isUploading;
-  }, [isUploading]);
-
+    inputs.current = { disabled, isUploading, onFilesChange };
+  });
+  function connectDropzone(root: HTMLElement) {
+    let previous = inputs.current;
+    const instance = createDropzone(root, {
+      disabled: previous.disabled,
+      isUploading: previous.isUploading,
+    });
+    const unsubscribe = instance.subscribe("filesChange", (detail) => {
+      inputs.current.onFilesChange?.(detail.files, detail);
+    });
+    const stopDiscovery = observeFormDiscovery(root.ownerDocument, () => {
+      instance.refresh();
+    });
+    return {
+      update(): void {
+        const next = inputs.current;
+        if (next.disabled !== previous.disabled) instance.setDisabled(next.disabled);
+        if (next.isUploading !== previous.isUploading) instance.setUploading(next.isUploading);
+        previous = next;
+      },
+      destroy(): void {
+        stopDiscovery();
+        unsubscribe();
+        instance.destroy();
+      },
+    };
+  }
+  const connectionRef = React.useRef<ReturnType<typeof connectDropzone> | undefined>(undefined);
   const composedRef = React.useCallback(
     (node: HTMLLabelElement | null) => {
       rootRef.current = node;
@@ -45,36 +58,19 @@ const DropzoneRoot = React.forwardRef<HTMLLabelElement, DropzoneRootProps>(funct
     },
     [forwardedRef],
   );
-
   useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-
-    const instance = createDropzone(root, {
-      disabled: disabledRef.current,
-      isUploading: isUploadingRef.current,
-      onFilesChange: (files, details) => {
-        onFilesChangeRef.current?.(files, details);
-      },
-    });
-    instanceRef.current = instance;
-
+    const owned = connectDropzone(root);
+    connectionRef.current = owned;
     return () => {
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
+      connectionRef.current = undefined;
+      owned.destroy();
     };
   }, []);
-
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setDisabled(disabled);
-  }, [disabled]);
-
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setUploading(isUploading);
-  }, [isUploading]);
-
+    connectionRef.current?.update();
+  }, [disabled, isUploading]);
   return (
     <label
       data-sw-dropzone
@@ -90,7 +86,5 @@ const DropzoneRoot = React.forwardRef<HTMLLabelElement, DropzoneRootProps>(funct
     />
   );
 });
-
 DropzoneRoot.displayName = "Dropzone.Root";
-
 export default DropzoneRoot;

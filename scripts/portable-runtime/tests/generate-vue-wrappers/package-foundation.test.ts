@@ -10,6 +10,10 @@ import {
   createVueEntryPoints,
   vueEntryPoints,
 } from "../../../../packages/vue/tsup.config.js";
+import {
+  SVELTE_PRIMITIVE_COMPONENTS,
+  SVELTE_STYLED_ROOTS,
+} from "../../renderers/framework-adapters/svelte/inventory.js";
 import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
 import {
   assertVueInventorySnapshot,
@@ -21,7 +25,6 @@ import {
   vuePrimitiveComponents,
   vueStyledComponents,
 } from "../../renderers/framework-adapters/vue/inventory.js";
-import { hasPrivateSvelte } from "../workspace-support.js";
 
 describe("Vue package foundation", () => {
   it("derives every executable Vue projection from one typed inventory", async () => {
@@ -388,18 +391,16 @@ describe("Vue package foundation", () => {
       ["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"],
     ]);
     expect(changesetConfig.ignore).toContain("vue-demo");
-    expect(changesetConfig.ignore.includes("@starwind-ui/svelte")).toBe(hasPrivateSvelte);
+    expect(changesetConfig.ignore).not.toContain("@starwind-ui/svelte");
     expect(changesetConfig.ignore).not.toContain("@starwind-ui/vue");
 
     const vueDemoPackage = JSON.parse(await readFile("apps/vue-demo/package.json", "utf8"));
     expect(vueDemoPackage.private).toBe(true);
-    if (hasPrivateSvelte) {
-      const sveltePackage = JSON.parse(await readFile("packages/svelte/package.json", "utf8"));
-      expect(sveltePackage.private).toBe(true);
-    }
-    expect(rootPackage.scripts["runtime:generate:all"]).not.toContain("svelte");
-    expect(rootPackage.scripts["build:public"]).not.toContain("svelte");
-    expect(rootPackage.scripts["typecheck:public"]).not.toContain("svelte");
+    const sveltePackage = JSON.parse(await readFile("packages/svelte/package.json", "utf8"));
+    expect(sveltePackage.private).not.toBe(true);
+    expect(rootPackage.scripts["runtime:generate:all"]).toContain("svelte");
+    expect(rootPackage.scripts["build:public"]).toContain("@starwind-ui/svelte");
+    expect(rootPackage.scripts["typecheck:public"]).toContain("@starwind-ui/svelte");
 
     const bundledRegistry = JSON.parse(
       await readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
@@ -418,8 +419,13 @@ describe("Vue package foundation", () => {
       expect(component.targets.vue.packageRequirements).toEqual(
         expect.arrayContaining([{ name: "@starwind-ui/vue", range: vuePackageJson.version }]),
       );
-      expect(component.targets.svelte).toBeUndefined();
     }
+    const svelteRegistryComponents = bundledRegistry.components.filter(
+      (component: { targets: Record<string, unknown> }) => component.targets.svelte,
+    );
+    expect(svelteRegistryComponents.map(({ name }: { name: string }) => name).sort()).toEqual(
+      [...SVELTE_STYLED_ROOTS].sort(),
+    );
 
     const primitiveRegistry = JSON.parse(
       await readFile("packages/cli/src/registry/primitive-vendoring-artifacts.json", "utf8"),
@@ -430,11 +436,12 @@ describe("Vue package foundation", () => {
     expect(
       vueRegistryPrimitives.map(({ component }: { component: string }) => component).sort(),
     ).toEqual(vueAdapterInventory.runtimePrimitives.map(({ component }) => component).sort());
+    const svelteRegistryPrimitives = primitiveRegistry.primitives.filter(
+      (primitive: { framework: string }) => primitive.framework === "svelte",
+    );
     expect(
-      primitiveRegistry.primitives.some(
-        (primitive: { framework: string }) => primitive.framework === "svelte",
-      ),
-    ).toBe(false);
+      svelteRegistryPrimitives.map(({ component }: { component: string }) => component).sort(),
+    ).toEqual([...SVELTE_PRIMITIVE_COMPONENTS].sort());
   });
 });
 

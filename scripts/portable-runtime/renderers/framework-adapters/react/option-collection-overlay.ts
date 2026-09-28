@@ -1,3 +1,14 @@
+import {
+  selectFragments,
+  selectOptionObservers,
+  selectParentCommand,
+  selectResetSettlement,
+} from "../../shared-recipes/structured/select.js";
+import {
+  selectSelection,
+  selectSelectionAttributes,
+  selectValueFallback,
+} from "../../shared-recipes/structured/select-parts.js";
 import type {
   AdapterOptionCollectionOverlayComponentProjection,
   AdapterOptionCollectionOverlayFacts,
@@ -134,6 +145,16 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const childrenRef = React.useRef(children);
+  const valueRevisionRef = React.useRef(0);
+  const resetRef = React.useRef<{
+    form: HTMLFormElement | null;
+    listener?: (event: Event) => void;
+    timer?: number;
+    generation: number;
+    needsRender?: boolean;
+  }>({ form: null, generation: 0 });
   const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(undefined);
   const ${openEvent.callbackProp}Ref = React.useRef(${openEvent.callbackProp});
   const ${valueEvent.callbackProp}Ref = React.useRef(${valueEvent.callbackProp});
@@ -156,6 +177,7 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
   }, []);
 
   const setUncontrolledValue = React.useCallback((nextValue: ${props.value.type}) => {
+    valueRevisionRef.current += 1;
     uncontrolledValueRef.current = nextValue;
     setUncontrolledValueState(nextValue);
   }, []);
@@ -173,8 +195,13 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
   }, [${props.open.name}]);
 
   useIsomorphicLayoutEffect(() => {
+    valueRevisionRef.current += 1;
     ${props.value.name}Ref.current = ${props.value.name};
   }, [${props.value.name}]);
+
+  useIsomorphicLayoutEffect(() => {
+    childrenRef.current = children;
+  }, [children]);
 
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
@@ -191,45 +218,7 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
     const root = rootRef.current;
     if (!root) return undefined;
 
-    const instance = ${facts.runtime.factory}(root, {
-      ${props.defaultOpen.name}: uncontrolledOpenRef.current,
-      ${props.defaultValue.name}: uncontrolledValueRef.current,
-      ${props.disabled.name},
-      ${props.autoComplete.name},
-      ${props.form.name},
-      ${props.highlightItemOnHover.name},
-      ${props.modal.name},
-      ${openEvent.callbackProp}: (nextOpen, details) => {
-        ${openEvent.callbackProp}Ref.current?.(nextOpen, details);
-      },
-      ${valueEvent.callbackProp}: (nextValue, details) => {
-        ${valueEvent.callbackProp}Ref.current?.(nextValue, details);
-      },
-      ${props.name.name},
-      ${props.readOnly.name},
-      ${props.required.name},
-      ...(${props.open.name}Ref.current !== undefined ? { ${props.open.name}: ${props.open.name}Ref.current } : {}),
-      ...(${props.value.name}Ref.current !== undefined ? { ${props.value.name}: ${props.value.name}Ref.current } : {}),
-    });
-    instanceRef.current = instance;
-    instance.subscribe("${openEvent.name}", (details) => {
-      if (${props.open.name}Ref.current === undefined) {
-        setUncontrolledOpen(details.${openEvent.valueProperty});
-      }
-    });
-    instance.subscribe("${valueEvent.name}", (details) => {
-        const nextSelectedLabel = getTextFromSelectItem(details.item);
-        if (nextSelectedLabel !== null || details.${valueEvent.valueProperty} === null) {
-          setSelectedLabel({
-            label: nextSelectedLabel,
-            value: details.${valueEvent.valueProperty},
-          });
-        }
-
-        if (${props.value.name}Ref.current === undefined) {
-          setUncontrolledValue(details.${valueEvent.valueProperty});
-        }
-    });
+    ${selectFragments("react").connection}
     return instance;
   }, [
     ${props.autoComplete.name},
@@ -304,6 +293,12 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
 
   useIsomorphicLayoutEffect(() => {
     return () => {
+      const reset = resetRef.current;
+      reset.generation += 1;
+      window.clearTimeout(reset.timer);
+      if (reset.listener) reset.form?.removeEventListener("reset", reset.listener);
+      reset.form = null;
+      reset.needsRender = false;
       instanceRef.current?.destroy();
       instanceRef.current = undefined;
     };
@@ -315,42 +310,20 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
     ensureInstance();
   }, [ensureInstance, ${props.open.name}, uncontrolledOpen]);
 
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setFormOptions({ ${props.autoComplete.name}, ${props.form.name}, ${props.name.name}, ${props.required.name} });
-  }, [${props.autoComplete.name}, ${props.form.name}, ${props.name.name}, ${props.required.name}]);
 
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setDisabled(${props.disabled.name});
-  }, [${props.disabled.name}]);
-
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setReadOnly(${props.readOnly.name});
-  }, [${props.readOnly.name}]);
-
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setModal(${props.modal.name});
-  }, [${props.modal.name}]);
-
-  useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setHighlightItemOnHover(${props.highlightItemOnHover.name});
-  }, [${props.highlightItemOnHover.name}]);
-
+${selectOptionObservers("react")}
   useIsomorphicLayoutEffect(() => {
     if (${props.open.name} === undefined) return;
     const instance = ${props.open.name} ? ensureInstance() : instanceRef.current;
     if (!instance) return;
-    if (instance.${facts.state.open.getter}() === ${props.open.name}) return;
-
-    instance.${facts.state.open.setter}(${props.open.name}, { emit: false });
+    ${selectParentCommand("react", "open", props.open.name)}
   }, [ensureInstance, ${props.open.name}]);
 
   useIsomorphicLayoutEffect(() => {
     if (${props.value.name} === undefined) return;
     const instance = instanceRef.current;
     if (!instance) return;
-    if (instance.${facts.state.value.getter}() === ${props.value.name}) return;
-
-    instance.${facts.state.value.setter}(${props.value.name}, { emit: false });
+    ${selectParentCommand("react", "value", props.value.name)}
   }, [${props.value.name}]);
 
   const renderedOpen = ${props.open.name} ?? uncontrolledOpen;
@@ -370,6 +343,28 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
 
     return () => window.clearTimeout(timer);
   }, [children, selectedValue]);
+  useIsomorphicLayoutEffect(() => {
+    const input = inputRef.current;
+    const root = rootRef.current;
+    const reset = resetRef.current;
+    if (reset.needsRender) {
+      reset.needsRender = false;
+      // The committed label cache lets Runtime render a closed popup's selected value.
+      instanceRef.current?.${facts.state.value.setter}(selectedValue, { emit: false });
+    }
+    const formElement = input?.form ?? null;
+    if (reset.form === formElement) return;
+    if (reset.listener) reset.form?.removeEventListener("reset", reset.listener);
+    reset.form = formElement;
+    if (!input || !root || !formElement) return;
+
+    const handleReset = (event: Event) => {
+      ${selectResetSettlement("react")}
+    };
+    reset.listener = handleReset;
+    formElement.addEventListener("reset", handleReset);
+  });
+
   const renderedSelectedLabel =
     selectedLabel.value === selectedValue ? selectedLabel.label : null;
   const initializeFromTriggerEvent = React.useCallback(
@@ -441,6 +436,7 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
         }}
       >
         <input
+          ref={inputRef}
           ${facts.attrs.input}
           type="hidden"
           autoComplete={${props.autoComplete.name}}
@@ -591,13 +587,7 @@ function getTextFromReactNode(node: React.ReactNode): string {
 }
 
 function getTextFromSelectItem(item: HTMLElement | undefined): string | null {
-  if (!item) return null;
-
-  const textElement = item.querySelector<HTMLElement>("[${facts.attrs.itemText}]");
-  if (textElement) return textElement.textContent?.trim() ?? "";
-
-  const text = item.textContent?.trim() ?? "";
-  return text.length > 0 ? text : null;
+  ${selectFragments("react").labelReader}
 }
 `;
 }
@@ -688,9 +678,7 @@ const ${exportName} = React.forwardRef<HTMLSpanElement, ${exportName}Props>(
   function ${exportName}({ children, placeholder, ...props }, forwardedRef) {
     const ${contextLocalName} = ${facts.context.useRootContext}();
     const fallback =
-      ${contextLocalName}.value !== null && ${contextLocalName}.selectedLabel !== null
-        ? ${contextLocalName}.selectedLabel
-        : placeholder;
+      ${selectValueFallback(`${contextLocalName}.selectedLabel`, "placeholder")};
 
     return (
       <${part.defaultElement}
@@ -815,14 +803,14 @@ function printItem(facts: AdapterOptionCollectionOverlayFacts): string {
   const exportName = facts.exports.item;
   const contextLocalName = getContextLocalName(facts);
 
-  return `import * as React from "react";\n\nimport { ${facts.context.itemContext}, ${facts.context.useRootContext} } from "./${facts.context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${exportName}Props = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {\n  ${props.disabled.name}?: ${props.disabled.type};\n  ${props.value.name}: string;\n};\n\nconst ${exportName} = React.forwardRef<HTMLDivElement, ${exportName}Props>(\n  function ${exportName}({ ${props.disabled.name} = ${getDefault(props.disabled, "false")}, ${props.value.name}, ...props }, forwardedRef) {\n    const ${contextLocalName} = ${facts.context.useRootContext}();\n    const selected = ${contextLocalName}.value === ${props.value.name};\n    const itemContextValue = React.useMemo(() => ({ value }), [value]);\n\n    return (\n      <${facts.context.itemContext}.Provider value={itemContextValue}>\n        <${facts.parts.item.defaultElement}\n          ${facts.attrs.item}\n          ${facts.attrs.valueData}={${props.value.name}}\n          role="${facts.parts.item.role}"\n          aria-selected={selected}\n          aria-disabled={${props.disabled.name} || undefined}\n          ${facts.attrs.disabled}={${props.disabled.name} ? "" : undefined}\n          data-selected={selected ? "" : undefined}\n          tabIndex={-1}\n          ref={forwardedRef}\n          {...props}\n        />\n      </${facts.context.itemContext}.Provider>\n    );\n  },\n);\n\n${exportName}.displayName = "${facts.displayName}.Item";\n\nexport default ${exportName};\n`;
+  return `import * as React from "react";\n\nimport { ${facts.context.itemContext}, ${facts.context.useRootContext} } from "./${facts.context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${exportName}Props = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {\n  ${props.disabled.name}?: ${props.disabled.type};\n  ${props.value.name}: string;\n};\n\nconst ${exportName} = React.forwardRef<HTMLDivElement, ${exportName}Props>(\n  function ${exportName}({ ${props.disabled.name} = ${getDefault(props.disabled, "false")}, ${props.value.name}, ...props }, forwardedRef) {\n    const ${contextLocalName} = ${facts.context.useRootContext}();\n    const selected = ${selectSelection(`${contextLocalName}.value`, props.value.name)};\n    const itemContextValue = React.useMemo(() => ({ value }), [value]);\n\n    return (\n      <${facts.context.itemContext}.Provider value={itemContextValue}>\n        <${facts.parts.item.defaultElement}\n          ${facts.attrs.item}\n          ${facts.attrs.valueData}={${props.value.name}}\n          role="${facts.parts.item.role}"\n          ${selectSelectionAttributes("react", "item")}\n          aria-disabled={${props.disabled.name} || undefined}\n          ${facts.attrs.disabled}={${props.disabled.name} ? "" : undefined}\n          tabIndex={-1}\n          ref={forwardedRef}\n          {...props}\n        />\n      </${facts.context.itemContext}.Provider>\n    );\n  },\n);\n\n${exportName}.displayName = "${facts.displayName}.Item";\n\nexport default ${exportName};\n`;
 }
 
 function printItemIndicator(facts: AdapterOptionCollectionOverlayFacts): string {
   const exportName = facts.exports.itemIndicator;
   const contextLocalName = getContextLocalName(facts);
 
-  return `import * as React from "react";\n\nimport { ${facts.context.useRootContext}, ${facts.context.useItemContext} } from "./${facts.context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${exportName}Props = React.HTMLAttributes<HTMLSpanElement>;\n\nconst ${exportName} = React.forwardRef<HTMLSpanElement, ${exportName}Props>(\n  function ${exportName}(props, forwardedRef) {\n    const ${contextLocalName} = ${facts.context.useRootContext}();\n    const item = ${facts.context.useItemContext}();\n    const selected = ${contextLocalName}.value === item.value;\n\n    return (\n      <${facts.parts.itemIndicator.defaultElement}\n        ${facts.attrs.itemIndicator}\n        aria-hidden="true"\n        data-state={selected ? "checked" : "unchecked"}\n        data-visible={selected ? "" : undefined}\n        data-hidden={selected ? undefined : ""}\n        hidden={!selected}\n        ref={forwardedRef}\n        {...props}\n      />\n    );\n  },\n);\n\n${exportName}.displayName = "${facts.displayName}.ItemIndicator";\n\nexport default ${exportName};\n`;
+  return `import * as React from "react";\n\nimport { ${facts.context.useRootContext}, ${facts.context.useItemContext} } from "./${facts.context.rootContext.replace(/Context$/, "Context")}";\n\nexport type ${exportName}Props = React.HTMLAttributes<HTMLSpanElement>;\n\nconst ${exportName} = React.forwardRef<HTMLSpanElement, ${exportName}Props>(\n  function ${exportName}(props, forwardedRef) {\n    const ${contextLocalName} = ${facts.context.useRootContext}();\n    const item = ${facts.context.useItemContext}();\n    const selected = ${selectSelection(`${contextLocalName}.value`, "item.value")};\n\n    return (\n      <${facts.parts.itemIndicator.defaultElement}\n        ${facts.attrs.itemIndicator}\n        aria-hidden="true"\n        ${selectSelectionAttributes("react", "indicator")}\n        ref={forwardedRef}\n        {...props}\n      />\n    );\n  },\n);\n\n${exportName}.displayName = "${facts.displayName}.ItemIndicator";\n\nexport default ${exportName};\n`;
 }
 
 function printSeparator(facts: AdapterOptionCollectionOverlayFacts): string {

@@ -1,17 +1,17 @@
+import { createInput, type InputValueChangeDetails } from "@starwind-ui/runtime/input";
+import { DropzoneInput, DropzoneRoot } from "@starwind-ui/vue/dropzone";
+import { InputRoot } from "@starwind-ui/vue/input";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type ComponentPublicInstance,
   createApp,
   createSSRApp,
   h,
   nextTick,
   reactive,
   ref,
-  type ComponentPublicInstance,
 } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import type { InputValueChangeDetails } from "@starwind-ui/runtime/input";
-import { InputRoot } from "@starwind-ui/vue/input";
 
 type InputExposed = ComponentPublicInstance & { element: HTMLInputElement | null };
 const cleanups: Array<() => void> = [];
@@ -233,3 +233,80 @@ function appendHost(): HTMLDivElement {
   document.body.append(host);
   return host;
 }
+
+for (const controlled of [false, true]) {
+  it(`refreshes external form ownership with a stable ${controlled ? "controlled" : "uncontrolled"} Input`, async () => {
+    const host = appendHost();
+    const changes = vi.fn();
+    const app = createApp({
+      render: () =>
+        h("div", [
+          h("form", { id: "input-external" }),
+          h(InputRoot, {
+            form: "input-external",
+            defaultValue: "seed",
+            ...(controlled ? { modelValue: "accepted" } : {}),
+            onValueChange: changes,
+          }),
+        ]),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    const input = host.querySelector("input")!;
+    const instance = createInput(input);
+    if (!controlled) instance.setValue("accepted", { emit: false });
+    const retired = host.querySelector("form")!;
+    retired.reset();
+    retired.id = "retired";
+    const form = document.createElement("form");
+    form.id = "input-external";
+    host.append(form);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getValue()).toBe("accepted");
+    expect(input.value).toBe("accepted");
+    retired.reset();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(instance.getValue()).toBe("accepted");
+    form.reset();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(input.value).toBe(controlled ? "accepted" : "seed");
+    expect(instance.getValue()).toBe(input.value);
+    expect(createInput(input)).toBe(instance);
+    expect(changes).not.toHaveBeenCalled();
+    form.remove();
+  });
+}
+
+it("shares discovery between Input and Dropzone until the last owner unmounts", async () => {
+  const observe = vi.spyOn(MutationObserver.prototype, "observe");
+  const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
+  const showInput = ref(true);
+  const host = appendHost();
+  const app = createApp({
+    render: () =>
+      h("div", [
+        showInput.value ? h(InputRoot) : null,
+        h(DropzoneRoot, null, () => h(DropzoneInput)),
+      ]),
+  });
+  app.mount(host);
+  cleanups.push(() => app.unmount());
+  const discovery = observe.mock.calls.flatMap(([node, options], index) =>
+    node === document && options?.attributeFilter?.includes("form")
+      ? [observe.mock.contexts[index]]
+      : [],
+  );
+  expect(discovery).toHaveLength(1);
+  const instance = createInput(host.querySelector<HTMLInputElement>("[data-sw-input]")!);
+  const refresh = vi.spyOn(instance, "refresh");
+  showInput.value = false;
+  await nextTick();
+  refresh.mockClear();
+  host.id = "discovery-survivor";
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(refresh).not.toHaveBeenCalled();
+  expect(disconnect.mock.contexts).not.toContain(discovery[0]);
+  app.unmount();
+  cleanups.pop();
+  expect(disconnect.mock.contexts.filter((observer) => observer === discovery[0])).toHaveLength(1);
+});

@@ -67,8 +67,8 @@ defineSlots<{
       :side-offset="sideOffset"
       :avoid-collisions="avoidCollisions"
       :collision-strategy="collisionStrategy"
-      v-bind="$attrs"
       data-slot="popover-content"
+      v-bind="$attrs"
     >
       <slot />
     </PopoverPrimitive.PopoverPopup>

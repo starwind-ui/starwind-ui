@@ -13,9 +13,7 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 import { RadioGroupContext } from "./RadioGroupContext";
-
 export type RadioGroupRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "onChange"
@@ -24,82 +22,62 @@ export type RadioGroupRootProps = Omit<
   disabled?: boolean;
   form?: string;
   name?: string;
-  onValueChange?: (value: string, details: RadioGroupValueChangeDetails) => void;
   orientation?: "horizontal" | "vertical";
   readOnly?: boolean;
   required?: boolean;
   value?: RadioGroupValue;
+  onValueChange?: (value: string, detail: RadioGroupValueChangeDetails) => void;
 };
-
 const RadioGroupRoot = React.forwardRef<HTMLDivElement, RadioGroupRootProps>(
   function RadioGroupRoot(
     {
+      children,
       defaultValue,
       disabled = false,
       form,
       name,
-      onValueChange,
       orientation = "vertical",
       readOnly = false,
       required = false,
       value,
-      ...props
+      onValueChange,
+      ...rest
     },
     forwardedRef,
   ) {
-    const rootRef = React.useRef<HTMLDivElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createRadioGroup> | undefined>(undefined);
-    const defaultValueRef = React.useRef(defaultValue);
-    const disabledRef = React.useRef(disabled);
-    const formRef = React.useRef(form);
-    const nameRef = React.useRef(name);
-    const orientationRef = React.useRef(orientation);
-    const readOnlyRef = React.useRef(readOnly);
-    const requiredRef = React.useRef(required);
-    const valueRef = React.useRef(value);
-    const onValueChangeRef = React.useRef(onValueChange);
-    const [uncontrolledValue, setUncontrolledValueState] = React.useState<RadioGroupValue>(
-      () => defaultValueRef.current,
-    );
-    const uncontrolledValueRef = React.useRef(uncontrolledValue);
-
-    const setUncontrolledValue = React.useCallback((nextValue: RadioGroupValue) => {
-      uncontrolledValueRef.current = nextValue;
-      setUncontrolledValueState(nextValue);
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      disabledRef.current = disabled;
-    }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      formRef.current = form;
-    }, [form]);
-
-    useIsomorphicLayoutEffect(() => {
-      nameRef.current = name;
-    }, [name]);
-
-    useIsomorphicLayoutEffect(() => {
-      orientationRef.current = orientation;
-    }, [orientation]);
-
-    useIsomorphicLayoutEffect(() => {
-      readOnlyRef.current = readOnly;
-    }, [readOnly]);
-
-    useIsomorphicLayoutEffect(() => {
-      requiredRef.current = required;
-    }, [required]);
-
-    useIsomorphicLayoutEffect(() => {
-      valueRef.current = value;
-    }, [value]);
-
-    useIsomorphicLayoutEffect(() => {
-      onValueChangeRef.current = onValueChange;
-    }, [onValueChange]);
-
+    const inputs = React.useRef({
+      defaultValue,
+      disabled,
+      form,
+      name,
+      orientation,
+      readOnly,
+      required,
+      value,
+      onValueChange,
+    });
+    inputs.current = {
+      defaultValue,
+      disabled,
+      form,
+      name,
+      orientation,
+      readOnly,
+      required,
+      value,
+      onValueChange,
+    };
+    const resetSeed = React.useRef(inputs.current.defaultValue ?? inputs.current.value).current;
+    const initialValue = React.useRef(inputs.current.value ?? resetSeed).current;
+    const [renderedValue, setRenderedValue] = React.useState<RadioGroupValue>(initialValue);
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createRadioGroup>;
+      accepted: RadioGroupValue;
+      unsubscribe?: () => void;
+      unsubscribeSync?: () => void;
+      observer?: MutationObserver;
+    }>({ accepted: initialValue }).current;
+    const rootRef = React.useRef<HTMLDivElement | null>(null);
     const composedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
         rootRef.current = node;
@@ -107,127 +85,129 @@ const RadioGroupRoot = React.forwardRef<HTMLDivElement, RadioGroupRootProps>(
       },
       [forwardedRef],
     );
-
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root) return;
-
-      const instance = createRadioGroup(root, {
-        defaultValue: uncontrolledValueRef.current,
-        disabled: disabledRef.current,
-        form: formRef.current,
-        name: nameRef.current,
-        orientation: orientationRef.current,
-        readOnly: readOnlyRef.current,
-        required: requiredRef.current,
-        onValueChange: (value, details) => {
-          onValueChangeRef.current?.(value, details);
+    const selected = inputs.current.value ?? renderedValue;
+    function isModelEqual(left: string | undefined, right: string | undefined) {
+      return left === right;
+    }
+    function disconnect() {
+      const owned = connection.instance;
+      connection.unsubscribe?.();
+      connection.unsubscribeSync?.();
+      connection.observer?.disconnect();
+      connection.instance = undefined;
+      owned?.destroy();
+    }
+    function publishRuntime(owned: ReturnType<typeof createRadioGroup>) {
+      if (connection.instance !== owned) return;
+      const next = owned.getValue();
+      if (!isModelEqual(connection.accepted, next)) {
+        connection.accepted = next;
+        if (inputs.current.value === undefined) setRenderedValue(next);
+      }
+    }
+    function connect(root: HTMLDivElement) {
+      disconnect();
+      const desired = inputs.current.value ?? initialValue;
+      const owned = createRadioGroup(root, {
+        defaultValue: resetSeed,
+        disabled: inputs.current.disabled,
+        form: inputs.current.form,
+        name: inputs.current.name,
+        orientation: inputs.current.orientation,
+        readOnly: inputs.current.readOnly,
+        required: inputs.current.required,
+        ...(inputs.current.value !== undefined ? { value: desired } : {}),
+        onValueChange: (_next, detail) => {
+          inputs.current.onValueChange?.(detail.value, detail);
         },
-        ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
       });
-      instanceRef.current = instance;
-      const unsubscribe = instance.subscribe("valueChange", (details) => {
-        details.onAccepted(() => {
-          if (valueRef.current === undefined) {
-            setUncontrolledValue(details.value);
-          }
-        });
+      connection.instance = owned;
+      if (!isModelEqual(owned.getValue(), desired)) owned.setValue(desired, { emit: false });
+      connection.unsubscribe = owned.subscribe("valueChange", (detail) =>
+        detail.onAccepted(() => {
+          if (connection.instance !== owned || detail.isCanceled) return;
+          publishRuntime(owned);
+        }),
+      );
+      connection.unsubscribeSync = owned.subscribe("stateSync", () => {
+        publishRuntime(owned);
       });
-      const unsubscribeStateSync = instance.subscribe("stateSync", () => {
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(instance.getValue());
-        }
+      publishRuntime(owned);
+    }
+    function applyParent() {
+      const owned = connection.instance,
+        next = inputs.current.value;
+      if (!owned || next === undefined || isModelEqual(owned.getValue(), next)) return;
+      owned.setValue(next, { emit: false });
+      publishRuntime(owned);
+    }
+    function applyOptions() {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.refresh();
+      owned.setDisabled(inputs.current.disabled);
+      owned.setFormOptions({
+        form: inputs.current.form,
+        name: inputs.current.name,
+        required: inputs.current.required,
       });
-
-      return () => {
-        unsubscribeStateSync();
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
+      owned.setReadOnly(inputs.current.readOnly);
+      owned.setOrientation(inputs.current.orientation);
+      applyParent();
+      publishRuntime(owned);
+    }
+    useIsomorphicLayoutEffect(() => {
+      if (rootRef.current) connect(rootRef.current);
+      return disconnect;
     }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setDisabled(disabled);
-    }, [disabled]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setFormOptions({
-        form,
-        name,
-        required,
-      });
-    }, [form, name, required]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setOrientation(orientation);
-    }, [orientation]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setReadOnly(readOnly);
-    }, [readOnly]);
-
-    useIsomorphicLayoutEffect(() => {
-      if (value === undefined) return;
-      const instance = instanceRef.current;
-      if (!instance) return;
-      if (instance.getValue() === value) return;
-
-      instance.setValue(value, { emit: false });
-    }, [value]);
-
-    const renderedValue = value ?? uncontrolledValue;
-    const contextValue = React.useMemo(
+    useIsomorphicLayoutEffect(applyOptions, [
+      disabled,
+      form,
+      name,
+      orientation,
+      readOnly,
+      required,
+    ]);
+    useIsomorphicLayoutEffect(applyParent, [value]);
+    const context = React.useMemo(
       () => ({
-        disabled,
-        form,
-        name,
-        readOnly,
-        required,
-        value: renderedValue,
+        disabled: inputs.current.disabled,
+        form: inputs.current.form,
+        name: inputs.current.name,
+        readOnly: inputs.current.readOnly,
+        required: inputs.current.required,
+        value: selected,
       }),
-      [disabled, form, name, readOnly, renderedValue, required],
+      [disabled, form, name, readOnly, required, selected],
     );
-
     return (
-      <RadioGroupContext.Provider value={contextValue}>
+      <RadioGroupContext.Provider value={context}>
         <div
-          data-sw-radio-group
-          data-default-value={defaultValueRef.current}
-          data-form={form}
-          data-name={name}
-          data-orientation={orientation}
-          data-value={renderedValue}
-          aria-disabled={disabled ? "true" : undefined}
-          aria-orientation={orientation}
-          aria-readonly={readOnly ? "true" : undefined}
-          aria-required={required ? "true" : undefined}
-          data-disabled={disabled ? "" : undefined}
-          data-readonly={readOnly ? "" : undefined}
-          data-required={required ? "" : undefined}
+          {...rest}
+          {...{
+            "data-sw-radio-group": "",
+            "data-sw-part": "root",
+            role: "radiogroup",
+            "data-default-value": resetSeed,
+            "data-value": selected,
+            "data-disabled": inputs.current.disabled ? "" : undefined,
+            "data-form": inputs.current.form,
+            "data-name": inputs.current.name,
+            "data-orientation": inputs.current.orientation,
+            "data-readonly": inputs.current.readOnly ? "" : undefined,
+            "data-required": inputs.current.required ? "" : undefined,
+            "aria-disabled": inputs.current.disabled ? "true" : undefined,
+            "aria-readonly": inputs.current.readOnly ? "true" : undefined,
+            "aria-required": inputs.current.required ? "true" : undefined,
+            "aria-orientation": inputs.current.orientation,
+          }}
           ref={composedRef}
-          role="radiogroup"
-          {...props}
-        />
+        >
+          {children}
+        </div>
       </RadioGroupContext.Provider>
     );
   },
 );
-
 RadioGroupRoot.displayName = "RadioGroup.Root";
-
 export default RadioGroupRoot;

@@ -45,12 +45,12 @@ const AsChildTrigger = defineComponent({
     v-else
     :ref="setElement"
     v-bind="attrs"
-    data-sw-popover-trigger
-    data-sw-part="trigger"
+    data-sw-popover-trigger=""
     type="button"
     aria-haspopup="dialog"
     aria-expanded="false"
     data-state="closed"
+    data-sw-part="trigger"
   >
     <slot />
   </button>

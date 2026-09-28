@@ -10,7 +10,13 @@ const element = ref<HTMLElement | null>(null);
 defineExpose({ element });
 </script>
 <template>
-  <div ref="element" v-bind="$attrs" data-sw-tooltip-arrow data-sw-part="arrow" data-state="closed">
+  <div
+    ref="element"
+    v-bind="$attrs"
+    data-sw-tooltip-arrow=""
+    data-sw-part="arrow"
+    data-state="closed"
+  >
     <slot />
   </div>
 </template>

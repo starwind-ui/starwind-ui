@@ -40,6 +40,46 @@ describe("generated Vue component-rooted asChild support", () => {
     expect(helper).toContain("!componentDeclaresProp(child.type, key)");
     expect(helper).toContain("normalized[key] = undefined");
 
+    const nativeControl = await readFile(
+      path.join(outputRoot, "_internal/native-control.ts"),
+      "utf8",
+    );
+    expect(nativeControl).toContain("export function useVueNativeControl");
+    expect(nativeControl).toContain("cloneVNode");
+    expect(nativeControl).toContain("mergeProps");
+    expect(nativeControl).not.toContain('from "./as-child"');
+    expect(nativeControl).toContain('typeof child.type !== "string"');
+    expect(nativeControl).not.toContain("Fragment");
+    expect(nativeControl).not.toContain("patchFlag");
+    expect(nativeControl).toContain('child.type === "button"');
+    expect(nativeControl).toContain("consumerProps.type === undefined");
+    expect(nativeControl).toContain(
+      "mergeProps(defaultedProps, nativeButtonDefault, consumerProps, protectedProps",
+    );
+    expect(nativeControl).toContain("exposedElement = isRef(component.element)");
+    expect(nativeControl).toContain("publicRoot = component.$el");
+    expect(nativeControl).toContain("value instanceof HTMLElement");
+    expect(nativeControl).toContain("watch(element, () => requestRefresh?.()");
+    expect(nativeControl).toContain("onBeforeUnmount(() => requestRefresh?.())");
+
+    const nativeControls = [
+      "alert-dialog/AlertDialogClose.vue",
+      "alert-dialog/AlertDialogTrigger.vue",
+      "dialog/DialogClose.vue",
+      "dialog/DialogTrigger.vue",
+      "drawer/DrawerClose.vue",
+      "drawer/DrawerTrigger.vue",
+      "select/SelectTrigger.vue",
+    ];
+    for (const relativePath of nativeControls) {
+      const source = await readFile(path.join(outputRoot, relativePath), "utf8");
+      expect(source, relativePath).toContain(
+        'import { useVueNativeControl } from "../_internal/native-control";',
+      );
+      expect(source, relativePath).toContain("asChild?: boolean");
+      expect(source, relativePath).not.toContain("cloneVNode");
+    }
+
     const asChildParts = [
       "collapsible/CollapsibleTrigger.vue",
       "combobox/ComboboxClear.vue",
@@ -55,6 +95,7 @@ describe("generated Vue component-rooted asChild support", () => {
       expect(source, relativePath).toContain(
         'import { createVueAsChild } from "../_internal/as-child";',
       );
+      expect(source, relativePath).not.toContain("useVueNativeControl");
       expect(source, relativePath).not.toMatch(/\b(?:cloneVNode|isVNode|mergeProps)\b/);
       expect(source, relativePath).not.toContain("typeof child.type");
       expect(source, relativePath).not.toContain("isNativeElementVNode");
@@ -72,8 +113,8 @@ describe("generated Vue component-rooted asChild support", () => {
     ];
     for (const relativePath of owningRoots) {
       const source = await readFile(path.join(outputRoot, relativePath), "utf8");
-      expect(source, relativePath).toContain(
-        'import { useVueAsChildRuntimeOwner } from "../_internal/as-child";',
+      expect(source, relativePath).toMatch(
+        /import\s*\{\s*useVueAsChildRuntimeOwner\s*\}\s*from[\s\x22\x27]+\.\.\/_internal\/as-child/,
       );
       expect(source, relativePath).toContain("useVueAsChildRuntimeOwner(");
     }

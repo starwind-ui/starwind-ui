@@ -422,7 +422,7 @@ function getCandidatePreview(entry) {
 }
 
 export function getCandidateWorkspacePolicy(_projects, packages) {
-  return `packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\noverrides:\n  "@starwind-ui/astro": "${fileSpecifier(packages.astro)}"\n  "@starwind-ui/react": "${fileSpecifier(packages.react)}"\n  "@starwind-ui/runtime": "${fileSpecifier(packages.runtime)}"\n  "@starwind-ui/vue": "${fileSpecifier(packages.vue)}"\n  starwind: "${fileSpecifier(packages.cli)}"\n`;
+  return `packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\noverrides:\n  "@starwind-ui/astro": "${fileSpecifier(packages.astro)}"\n  "@starwind-ui/react": "${fileSpecifier(packages.react)}"\n  "@starwind-ui/runtime": "${fileSpecifier(packages.runtime)}"\n  "@starwind-ui/svelte": "${fileSpecifier(packages.svelte)}"\n  "@starwind-ui/vue": "${fileSpecifier(packages.vue)}"\n  starwind: "${fileSpecifier(packages.cli)}"\n`;
 }
 
 async function prepareProjectManifest(project) {
@@ -604,6 +604,7 @@ async function packWorkspacePackages(packDirectory) {
     cli: path.join(packDirectory, "starwind-cli.tgz"),
     react: path.join(packDirectory, "starwind-react.tgz"),
     runtime: path.join(packDirectory, "starwind-runtime.tgz"),
+    svelte: path.join(packDirectory, "starwind-svelte.tgz"),
     vue: path.join(packDirectory, "starwind-vue.tgz"),
   };
   const packageDirectories = {
@@ -611,10 +612,11 @@ async function packWorkspacePackages(packDirectory) {
     cli: "packages/cli",
     react: "packages/react",
     runtime: "packages/runtime",
+    svelte: "packages/svelte",
     vue: "packages/vue",
   };
 
-  for (const name of ["runtime", "astro", "react", "vue", "cli"]) {
+  for (const name of ["runtime", "astro", "react", "vue", "svelte", "cli"]) {
     await runCommand({
       args: ["pack", "--out", packages[name]],
       cwd: path.join(REPO_ROOT, packageDirectories[name]),
@@ -628,6 +630,7 @@ async function getCandidateRegistryPackages(packages) {
     astro: "packages/astro",
     react: "packages/react",
     runtime: "packages/runtime",
+    svelte: "packages/svelte",
     vue: "packages/vue",
   };
   const entries = {};
@@ -768,7 +771,7 @@ export async function prepareCandidatePackages(
   const artifacts = await loadArtifacts({ outputDirectory: path.resolve(packsDirectory) });
   const packages = {};
   const registryPackages = {};
-  for (const key of ["runtime", "astro", "react", "vue", "cli"]) {
+  for (const key of ["runtime", "astro", "react", "vue", "svelte", "cli"]) {
     const entry = artifacts.packages[key];
     assert(entry, `Prepared release packs are missing ${key}.`);
     packages[key] = path.resolve(packsDirectory, entry.file);

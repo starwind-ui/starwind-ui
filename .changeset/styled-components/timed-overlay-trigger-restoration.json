@@ -1,0 +1,4 @@
+{
+  "components": { "tooltip": "patch", "hover-card": "patch" },
+  "impact": "behavior"
+}

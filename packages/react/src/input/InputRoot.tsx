@@ -12,6 +12,7 @@ import {
 } from "@starwind-ui/runtime/input";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import { observeFormDiscovery } from "../internal/form-discovery";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type InputRootProps = Omit<
@@ -28,11 +29,9 @@ const InputRoot = React.forwardRef<HTMLInputElement, InputRootProps>(function In
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLInputElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createInput> | undefined>(undefined);
+  const connectionRef = React.useRef<ReturnType<typeof connectInput> | undefined>(undefined);
   const valueRef = React.useRef(value);
   const onValueChangeRef = React.useRef(onValueChange);
-  const valueChangeDetailsRef = React.useRef<InputValueChangeDetails | undefined>(undefined);
-  const controlledSyncTimerRef = React.useRef<number | undefined>(undefined);
   const defaultValueRef = React.useRef(defaultValue);
 
   useIsomorphicLayoutEffect(() => {
@@ -51,79 +50,110 @@ const InputRoot = React.forwardRef<HTMLInputElement, InputRootProps>(function In
     [forwardedRef],
   );
 
-  useIsomorphicLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
+  function connectInput(element: HTMLInputElement) {
+    const initialModel = valueRef.current;
+    const controlled = initialModel !== undefined;
+    let disposed = false;
+    let associated: HTMLFormElement | null = null;
+    let resetTimer: number | undefined;
+    let pendingDetail: InputValueChangeDetails | undefined;
+    let nativeTimer: number | undefined;
+    function synchronize(next: InputValue | undefined): void {
+      if (next === undefined || disposed) return;
+      const normalized = String(next);
+      if (instance.getValue() === normalized && element.value === normalized) return;
+      instance.setValue(next, { emit: false });
+    }
+    function clearReset(): void {
+      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+      resetTimer = undefined;
+    }
+    function reset(event: Event): void {
+      clearReset();
+      resetTimer = window.setTimeout(() => {
+        resetTimer = undefined;
+        if (disposed || event.defaultPrevented) return;
+        synchronize(valueRef.current);
+      }, 0);
+    }
+    function bindReset(): void {
+      if (!controlled) return;
+      const form = element.form;
+      if (associated === form) return;
+      clearReset();
+      associated?.removeEventListener("reset", reset);
+      associated = form;
+      associated?.addEventListener("reset", reset);
+    }
 
-    const instance = createInput(root, {
+    const instance = createInput(element, {
       defaultValue: defaultValueRef.current,
-      disabled,
-      onValueChange: (_nextValue, details) => {
-        valueChangeDetailsRef.current = details;
+      disabled: disabled,
+      onValueChange(_next, detail) {
+        pendingDetail = detail;
       },
-      ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
+      ...(initialModel === undefined ? {} : { value: initialModel }),
     });
-    instanceRef.current = instance;
 
+    bindReset();
+    const stopDiscovery = observeFormDiscovery(element.ownerDocument, () => {
+      instance.refresh();
+      bindReset();
+    });
+    return {
+      instance,
+      synchronize,
+      change(next: string, forwardNative: () => void): void {
+        const detail = pendingDetail;
+        forwardNative();
+        if (detail?.value === next) {
+          pendingDetail = undefined;
+          onValueChangeRef.current?.(next, detail);
+        }
+        if (valueRef.current === undefined) return;
+        if (nativeTimer !== undefined) window.clearTimeout(nativeTimer);
+        nativeTimer = window.setTimeout(() => {
+          nativeTimer = undefined;
+          if (!disposed) synchronize(element.value);
+        }, 0);
+      },
+      destroy(): void {
+        disposed = true;
+        stopDiscovery();
+        clearReset();
+        associated?.removeEventListener("reset", reset);
+        if (nativeTimer !== undefined) window.clearTimeout(nativeTimer);
+        instance.destroy();
+      },
+    };
+  }
+
+  useIsomorphicLayoutEffect(() => {
+    const element = rootRef.current;
+    if (!element) return;
+    const owned = connectInput(element);
+    connectionRef.current = owned;
     return () => {
-      if (controlledSyncTimerRef.current !== undefined) {
-        window.clearTimeout(controlledSyncTimerRef.current);
-        controlledSyncTimerRef.current = undefined;
-      }
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
+      if (connectionRef.current === owned) connectionRef.current = undefined;
+      owned.destroy();
     };
   }, []);
 
   useIsomorphicLayoutEffect(() => {
-    if (value === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    if (instance.getValue() === String(value)) return;
-
-    instance.setValue(value, { emit: false });
+    connectionRef.current?.synchronize(value);
   }, [value]);
 
   useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setDisabled(disabled);
+    connectionRef.current?.instance.setDisabled(disabled);
   }, [disabled]);
-
-  const scheduleControlledSync = React.useCallback(() => {
-    if (valueRef.current === undefined) return;
-
-    if (controlledSyncTimerRef.current !== undefined) {
-      window.clearTimeout(controlledSyncTimerRef.current);
-    }
-
-    controlledSyncTimerRef.current = window.setTimeout(() => {
-      controlledSyncTimerRef.current = undefined;
-      const root = rootRef.current;
-      const instance = instanceRef.current;
-      if (!root || !instance) return;
-
-      instance.setValue(root.value, { emit: false });
-    }, 0);
-  }, []);
 
   const handleChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const nextValue = event.currentTarget.value;
-      const details = valueChangeDetailsRef.current;
-
-      onChange?.(event);
-
-      if (details?.value === nextValue) {
-        valueChangeDetailsRef.current = undefined;
-        onValueChangeRef.current?.(nextValue, details);
-      }
-      scheduleControlledSync();
+      const connection = connectionRef.current;
+      if (connection) connection.change(event.currentTarget.value, () => onChange?.(event));
+      else onChange?.(event);
     },
-    [onChange, scheduleControlledSync],
+    [onChange],
   );
   const valueProps = value !== undefined ? { value } : { defaultValue: defaultValueRef.current };
 

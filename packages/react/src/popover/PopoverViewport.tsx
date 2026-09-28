@@ -11,7 +11,7 @@ export type PopoverViewportProps = React.HTMLAttributes<HTMLDivElement>;
 
 const PopoverViewport = React.forwardRef<HTMLDivElement, PopoverViewportProps>(
   function PopoverViewport(props, forwardedRef) {
-    return <div data-sw-popover-viewport ref={forwardedRef} {...props} />;
+    return <div {...props} data-sw-popover-viewport="" ref={forwardedRef} />;
   },
 );
 

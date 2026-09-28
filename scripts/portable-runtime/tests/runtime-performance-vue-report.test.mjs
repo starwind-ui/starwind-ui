@@ -59,7 +59,7 @@ describe("private Vue performance reports", () => {
     expect(markdown).toContain("Private order-14 evidence");
     expect(markdown).toContain("Comparator results are advisory");
     expect(markdown).toContain("CPU: Test CPU (8 logical cores)");
-    expect(markdown).toContain("Warmups per row: 0");
+    expect(markdown).toContain("Warmups per row: 1");
     expect(markdown).toContain("Measured samples per row: 5");
     expect(markdown).toContain(
       "one loaded context, page, CDP session, and navigation for five in-page cycles",
@@ -127,7 +127,7 @@ describe("private Vue performance reports", () => {
     expect(markdown).not.toContain("| ceiling available | unavailable |");
   });
 
-  it("labels focused run output as diagnostic with zero warmups and five samples", () => {
+  it("labels focused run output as diagnostic with one excluded warmup and five samples", () => {
     const record = makeEvidence().rows[0];
     const markdown = renderVuePerformanceRunMarkdown({
       environment,
@@ -137,7 +137,7 @@ describe("private Vue performance reports", () => {
     });
     expect(markdown).toContain("Private Focused Vue Runtime Performance Run");
     expect(markdown).toContain("Diagnostic output only");
-    expect(markdown).toContain("Warmups: 0");
+    expect(markdown).toContain("Warmups: 1");
     expect(markdown).toContain("Measured samples: 5");
   });
 });
@@ -148,7 +148,7 @@ function makeEvidence() {
       controls: {
         ...VUE_PERFORMANCE_BASELINE_CONTROLS,
         rows: [
-          { cpuThrottle: row.cpuThrottle, id: row.id, warmupCount: 0, withinRunSampleCount: 5 },
+          { cpuThrottle: row.cpuThrottle, id: row.id, warmupCount: 1, withinRunSampleCount: 5 },
         ],
       },
       focused: true,

@@ -1,3 +1,4 @@
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import { expect, generateReactPrimitiveWrappers, it, path, readGeneratedTree } from "./shared.js";
 
@@ -17,34 +18,24 @@ export function defineReactUncontrolledDefaultOutputTests(getTempRoot: GetTempRo
     const inputOtpRoot = tree["input-otp/InputOtpRoot.tsx"];
     const toggleRoot = tree["toggle/ToggleRoot.tsx"];
 
-    expect(collapsibleRoot).toContain("const defaultOpenRef = React.useRef(defaultOpen);");
-    expect(collapsibleRoot).toContain("defaultOpen: uncontrolledOpenRef.current");
-    expect(collapsibleRoot).not.toContain("}, [defaultOpen, disabled]);");
-    expect(collapsibleRoot).toContain("}, [disabled]);");
-
-    expect(inputRoot).toContain("const defaultValueRef = React.useRef(defaultValue);");
-    expect(inputRoot).toMatch(/createInput\(root, \{\s+defaultValue: defaultValueRef\.current,/);
-    expect(inputRoot).toContain("const valueProps =");
-    expect(inputRoot).toContain("value !== undefined");
-    expect(inputRoot).toContain("? { value }");
-    expect(inputRoot).toContain(": { defaultValue: defaultValueRef.current };");
-    expect(inputRoot).not.toContain("}, [defaultValue");
-
-    expect(inputOtpRoot).toContain("const defaultValueRef = React.useRef(defaultValue);");
-    expect(inputOtpRoot).toContain("const uncontrolledValueRef = React.useRef(uncontrolledValue);");
-    expect(inputOtpRoot).toMatch(
-      /createInputOtp\(root, \{\s+defaultValue: uncontrolledValueRef\.current,/,
+    expect(compactCode(collapsibleRoot)).toContain(
+      compactCode("const initialDefaultOpen = React.useRef(defaultOpen ?? false).current"),
     );
-    expect(inputOtpRoot).not.toContain("}, [defaultValue");
-    expect(inputOtpRoot).toContain("}, [maxLength, patternText, readOnly]);");
-    expect(inputOtpRoot).not.toContain(
-      "}, [form, id, maxLength, name, pattern, readOnly, required]);",
+    expect(compactCode(inputRoot)).toContain(
+      compactCode("const defaultValueRef = React.useRef(defaultValue)"),
     );
-
-    expect(toggleRoot).toContain("const defaultPressedRef = React.useRef(defaultPressed);");
-    expect(toggleRoot).toContain("defaultPressed: uncontrolledPressedRef.current");
-    expect(toggleRoot).not.toContain("}, [defaultPressed, nativeButton, syncGroup, value]);");
-    expect(toggleRoot).toContain("}, [nativeButton, syncGroup, value]);");
+    expect(compactCode(inputRoot)).toContain(compactCode("defaultValue: defaultValueRef.current"));
+    expect(compactCode(inputOtpRoot)).toContain(
+      compactCode('const seed = React.useRef(defaultValue ?? "")'),
+    );
+    expect(compactCode(inputOtpRoot)).toContain(
+      compactCode("const [current, setCurrent] = React.useState(seed.current)"),
+    );
+    expect(compactCode(toggleRoot)).toContain(
+      compactCode(
+        "const initialDefault = React.useRef(inputs.current.defaultPressed ?? false).current",
+      ),
+    );
   });
 
   it("keeps uncontrolled default props out of React runtime construction dependencies", async () => {
@@ -106,7 +97,7 @@ export function defineReactUncontrolledDefaultOutputTests(getTempRoot: GetTempRo
     expect(failures).toEqual([]);
   });
 
-  it("recreates React runtime instances from current uncontrolled state instead of initial defaults", async () => {
+  it("preserves React uncontrolled state separately from boolean reset defaults", async () => {
     const tempRoot = getTempRoot();
 
     await generateReactPrimitiveWrappers({
@@ -117,35 +108,49 @@ export function defineReactUncontrolledDefaultOutputTests(getTempRoot: GetTempRo
     const outputRoot = path.join(tempRoot, "generated/primitives/react");
     const tree = await readGeneratedTree(outputRoot);
 
-    expect(tree["select/SelectRoot.tsx"]).toContain("const uncontrolledOpenRef = React.useRef");
-    expect(tree["select/SelectRoot.tsx"]).toContain("const uncontrolledValueRef = React.useRef");
-    expect(tree["select/SelectRoot.tsx"]).toContain("defaultOpen: uncontrolledOpenRef.current");
-    expect(tree["select/SelectRoot.tsx"]).toContain("defaultValue: uncontrolledValueRef.current");
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode("const uncontrolledOpenRef = React.useRef"),
+    );
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode("const uncontrolledValueRef = React.useRef"),
+    );
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode("defaultOpen: disabled ? false : (uncontrolledOpenRef.current)"),
+    );
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode("defaultValue: defaultValueRef.current"),
+    );
+    const selectRoot = tree["select/SelectRoot.tsx"]!;
+    expect(compactCode(selectRoot)).toContain(
+      compactCode("const formElement = input?.form ?? null;"),
+    );
+    expect(compactCode(selectRoot)).toContain(compactCode("ref={inputRef}"));
+    expect(selectRoot).toMatch(/queueMicrotask\(\(\) => \{[\s\S]*window\.setTimeout/);
+    expect(compactCode(selectRoot)).toContain(compactCode("event.defaultPrevented || superseded"));
+    expect(compactCode(selectRoot)).toContain(compactCode("revision !== valueRevisionRef.current"));
+    expect(compactCode(selectRoot)).toContain(
+      compactCode('reset.form?.removeEventListener("reset", reset.listener)'),
+    );
+    expect(compactCode(selectRoot)).toContain(compactCode("window.clearTimeout(reset.timer)"));
+    expect(compactCode(selectRoot)).toContain(
+      compactCode("findSelectedOptionText(childrenRef.current, acceptedValue)"),
+    );
+    expect(compactCode(selectRoot)).not.toContain(compactCode("MutationObserver"));
 
-    expect(tree["sidebar/SidebarProvider.tsx"]).toContain(
-      "const uncontrolledOpenRef = React.useRef",
+    expect(compactCode(tree["sidebar/SidebarProvider.tsx"])).toContain(
+      compactCode("const seedOpen = React.useRef(defaultOpen).current"),
     );
-    expect(tree["sidebar/SidebarProvider.tsx"]).toContain(
-      "const uncontrolledMobileOpenRef = React.useRef",
+    expect(compactCode(tree["sidebar/SidebarProvider.tsx"])).toContain(
+      compactCode("const seedMobileOpen = React.useRef(defaultMobileOpen).current"),
     );
-    expect(tree["sidebar/SidebarProvider.tsx"]).toContain(
-      "defaultOpen: uncontrolledOpenRef.current",
+    expect(compactCode(tree["radio-group/RadioGroupRoot.tsx"])).toContain(
+      compactCode("defaultValue: resetSeed"),
     );
-    expect(tree["sidebar/SidebarProvider.tsx"]).toContain(
-      "defaultMobileOpen: uncontrolledMobileOpenRef.current",
+    expect(compactCode(tree["switch/SwitchRoot.tsx"])).toContain(
+      compactCode("defaultChecked: resetSeed"),
     );
-
-    expect(tree["radio-group/RadioGroupRoot.tsx"]).toContain(
-      "const uncontrolledValueRef = React.useRef",
-    );
-    expect(tree["radio-group/RadioGroupRoot.tsx"]).toContain(
-      "defaultValue: uncontrolledValueRef.current",
-    );
-    expect(tree["switch/SwitchRoot.tsx"]).toContain(
-      "defaultChecked: uncontrolledCheckedRef.current",
-    );
-    expect(tree["toggle/ToggleRoot.tsx"]).toContain(
-      "defaultPressed: uncontrolledPressedRef.current",
+    expect(compactCode(tree["toggle/ToggleRoot.tsx"])).toContain(
+      compactCode("defaultPressed: desired"),
     );
   });
 
@@ -160,13 +165,21 @@ export function defineReactUncontrolledDefaultOutputTests(getTempRoot: GetTempRo
     const outputRoot = path.join(tempRoot, "generated/primitives/react");
     const tree = await readGeneratedTree(outputRoot);
 
-    expect(tree["select/SelectRoot.tsx"]).toContain(
-      "const selectedValue = value !== undefined ? value : (uncontrolledValue ?? null);",
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode(
+        "const selectedValue = value !== undefined ? value : (uncontrolledValue ?? null);",
+      ),
     );
-    expect(tree["select/SelectRoot.tsx"]).toContain('const renderedValue = selectedValue ?? "";');
-    expect(tree["combobox/ComboboxRoot.tsx"]).toContain(
-      "const selectedValue = value !== undefined ? value : (uncontrolledValue ?? null);",
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode('const renderedValue = selectedValue ?? "";'),
     );
-    expect(tree["combobox/ComboboxRoot.tsx"]).toContain('const renderedValue = selectedValue ?? "";');
+    expect(compactCode(tree["combobox/ComboboxRoot.tsx"])).toContain(
+      compactCode(
+        "const selectedValue = value !== undefined ? value : (uncontrolledValue ?? null);",
+      ),
+    );
+    expect(compactCode(tree["combobox/ComboboxRoot.tsx"])).toContain(
+      compactCode('const renderedValue = selectedValue ?? "";'),
+    );
   });
 }

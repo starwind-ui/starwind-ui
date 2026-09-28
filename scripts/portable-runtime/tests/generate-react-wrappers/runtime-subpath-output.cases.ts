@@ -1,3 +1,4 @@
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import { expect, generateReactPrimitiveWrappers, it, path, readGeneratedTree } from "./shared.js";
 
@@ -18,15 +19,17 @@ export function defineReactRuntimeSubpathOutputTests(getTempRoot: GetTempRoot): 
       .map(([relativePath]) => relativePath);
 
     expect(nonIndexRootImports).toEqual([]);
-    expect(tree["button/ButtonRoot.tsx"]).toContain(
-      'import { createButton } from "@starwind-ui/runtime/button";',
+    expect(compactCode(tree["button/ButtonRoot.tsx"])).toContain(
+      compactCode("@starwind-ui/runtime/button"),
     );
-    expect(tree["select/SelectRoot.tsx"]).toContain('from "@starwind-ui/runtime/select";');
-    expect(tree["context-menu/ContextMenuRoot.tsx"]).toContain(
-      'from "@starwind-ui/runtime/context-menu";',
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode('from "@starwind-ui/runtime/select";'),
     );
-    expect(tree["toast/ToastViewport.tsx"]).toContain(
-      'import { createToastManager } from "@starwind-ui/runtime/toast";',
+    expect(compactCode(tree["context-menu/ContextMenuRoot.tsx"])).toContain(
+      compactCode('from "@starwind-ui/runtime/context-menu";'),
+    );
+    expect(compactCode(tree["toast/ToastViewport.tsx"])).toContain(
+      compactCode('import { createToastManager } from "@starwind-ui/runtime/toast";'),
     );
   });
 
@@ -41,11 +44,15 @@ export function defineReactRuntimeSubpathOutputTests(getTempRoot: GetTempRoot): 
     const outputRoot = path.join(tempRoot, "generated/primitives/react");
     const tree = await readGeneratedTree(outputRoot);
 
-    expect(tree["carousel/index.ts"]).toContain(
-      'export { createCarousel } from "@starwind-ui/runtime/carousel";',
+    expect(compactCode(tree["carousel/index.ts"])).toContain(
+      compactCode('export { createCarousel } from "@starwind-ui/runtime/carousel";'),
     );
-    expect(tree["form/index.ts"]).toContain('from "@starwind-ui/runtime/form";');
-    expect(tree["form/index.ts"]).toContain('from "@starwind-ui/runtime";');
+    expect(compactCode(tree["form/index.ts"])).toContain(
+      compactCode('from "@starwind-ui/runtime/form";'),
+    );
+    expect(compactCode(tree["form/index.ts"])).toContain(
+      compactCode('from "@starwind-ui/runtime";'),
+    );
     const formFacadeIdentifiers = [
       "createForm",
       "createFormSchemaValidator",
@@ -65,11 +72,17 @@ export function defineReactRuntimeSubpathOutputTests(getTempRoot: GetTempRoot): 
     for (const identifier of formFacadeIdentifiers) {
       expect(countIdentifierOccurrences(tree["form/index.ts"], identifier)).toBe(1);
     }
-    expect(tree["index.ts"]).toContain('export * from "./form";');
-    expect(tree["toast/index.ts"]).toContain('export { toast } from "@starwind-ui/runtime/toast";');
-    expect(tree["toast/index.ts"]).toContain("ToastApi, ToastOptions, ToastPromiseOptions");
-    expect(tree["theme/index.ts"]).toContain(
-      'export { getThemeInitScript, initThemeController } from "@starwind-ui/runtime/theme";',
+    expect(compactCode(tree["index.ts"])).toContain(compactCode('export * from "./form";'));
+    expect(compactCode(tree["toast/index.ts"])).toContain(
+      compactCode('export { toast } from "@starwind-ui/runtime/toast";'),
+    );
+    expect(compactCode(tree["toast/index.ts"])).toContain(
+      compactCode("ToastApi, ToastOptions, ToastPromiseOptions"),
+    );
+    expect(compactCode(tree["theme/index.ts"])).toContain(
+      compactCode(
+        'export { getThemeInitScript, initThemeController } from "@starwind-ui/runtime/theme";',
+      ),
     );
   });
 }

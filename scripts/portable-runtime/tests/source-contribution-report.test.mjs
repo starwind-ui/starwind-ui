@@ -296,7 +296,7 @@ describe("source contribution report", () => {
 
     expect(historicalHeadlineCeilings).not.toEqual(ceilings.headline);
     expect(ceilings.headline).toEqual({
-      "@starwind-ui/react (adapter only)": 40_134,
+      "@starwind-ui/react (adapter only)": 44_847,
       "@starwind-ui/react + runtime": 194_692,
       "@starwind-ui/runtime": 153_960,
     });

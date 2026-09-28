@@ -1,10 +1,9 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
+import { compactCode } from "../source-comparison.js";
 import "../styled-contracts/vue-portable-styled-foundation.test.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
@@ -68,8 +67,8 @@ describe("Vue portable foundational Styled generation", () => {
       for (const file of componentFiles) {
         const source = await readFile(path.join(outputRoot, group, file), "utf8");
         expect(() => assertVueSfcCompiles(source, `${group}/${file}`)).not.toThrow();
-        expect(source).toContain('<script setup lang="ts">');
-        expect(source).toContain("data-slot");
+        expect(compactCode(source)).toContain(compactCode('<script setup lang="ts">'));
+        expect(compactCode(source)).toContain(compactCode("data-slot"));
       }
     }
     const read = (group: string, file: string) =>
@@ -96,11 +95,16 @@ describe("Vue portable foundational Styled generation", () => {
       /<svg[\s\S]+aria-label=\"Loading\"/,
     );
 
+    const spinnerSource = await read("spinner", "Spinner.vue");
+    expect(
+      [...spinnerSource.matchAll(/<path[^>]*\bd="([^"]+)"/g)].map((match) => match[1]),
+    ).toEqual(["M0 0h24v24H0z", "M12 3a9 9 0 1 0 9 9"]);
+
     for (const { file, group, targetType } of EXPECTED_NATIVE_REFS) {
       const source = await read(group, file);
       expect(source).toContain(`const element = ref<${targetType} | null>(null);`);
-      expect(source).toContain("defineExpose({ element });");
-      expect(source).toContain('ref="element"');
+      expect(compactCode(source)).toContain(compactCode("defineExpose({ element });"));
+      expect(compactCode(source)).toContain(compactCode('ref="element"'));
     }
   });
 });

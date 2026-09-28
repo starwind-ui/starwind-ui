@@ -1,0 +1,102 @@
+<script lang="ts">
+import type { InjectionKey, Ref } from "vue";
+
+export type PopoverContextValue = {
+  element: Readonly<Ref<HTMLElement | null>>;
+  mounted: Readonly<Ref<boolean>>;
+  registerPlacement(element: HTMLElement, attributes: Record<string, string> | null): void;
+};
+
+export const PopoverContext: InjectionKey<PopoverContextValue> = Symbol("PopoverContext");
+</script>
+
+<script setup lang="ts">
+import {
+  type PopoverCloseCompleteDetails,
+  type PopoverOpenChangeDetails,
+  createPopover,
+} from "@starwind-ui/runtime/popover";
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
+import { useVueAsChildRuntimeOwner } from "../_internal/as-child";
+
+defineOptions({ inheritAttrs: false });
+
+const props = withDefaults(
+  defineProps<{
+    defaultOpen?: boolean;
+    open?: boolean;
+    closeOnEscape?: boolean;
+    closeOnOutsideInteract?: boolean;
+    modal?: boolean;
+    openOnHover?: boolean;
+    closeDelay?: number;
+  }>(),
+  {
+    defaultOpen: false,
+    open: undefined,
+    closeOnEscape: true,
+    closeOnOutsideInteract: true,
+    modal: false,
+    openOnHover: false,
+    closeDelay: 200,
+  },
+);
+const emit = defineEmits<{
+  closeComplete: [detail: PopoverCloseCompleteDetails];
+  openChange: [open: boolean, detail: PopoverOpenChangeDetails];
+  "update:open": [open: boolean];
+}>();
+defineSlots<{ default?: () => unknown }>();
+const attrs = useAttrs();
+const rootRef = ref<HTMLDivElement | null>(null);
+const initialDefaultOpen = props.defaultOpen;
+__ACCEPTED_CELL__
+const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
+const mounted = ref(false);
+__CONTROLLER_CELL__
+__AUTHORED_PLACEMENT__
+let runtimeGeneration = 0;
+provide(PopoverContext, { element: rootRef, mounted, registerPlacement });
+defineExpose({ element: rootRef });
+__LIFECYCLE__
+__CONNECT_SURFACE__
+async function reconnectAfterDom(): Promise<void> {
+  const generation = ++runtimeGeneration;
+  disconnectRuntime();
+  mounted.value = false;
+  await nextTick();
+  if (generation !== runtimeGeneration || !rootRef.value) return;
+  connectSurface(rootRef.value);
+  mounted.value = true;
+}
+useVueAsChildRuntimeOwner(rootRef, reconnectAfterDom);
+onMounted(() => {
+  if (rootRef.value) connectSurface(rootRef.value);
+  mounted.value = true;
+});
+__OBSERVE_MODEL__
+watch([__CONSTRUCTOR_INPUTS__], () => { void reconnectAfterDom(); }, { flush: "post" });
+onBeforeUnmount(() => {
+  runtimeGeneration++;
+  mounted.value = false;
+  disconnectRuntime();
+});
+</script>
+
+<template>
+  <div
+    ref="rootRef"
+    v-bind="attrs"
+    data-sw-popover
+    data-sw-part="root"
+    :data-default-open="initialDefaultOpen ? 'true' : undefined"
+    :data-close-on-escape="props.closeOnEscape ? 'true' : 'false'"
+    :data-close-on-outside-interact="props.closeOnOutsideInteract ? 'true' : 'false'"
+    :data-modal="props.modal ? 'true' : 'false'"
+    :data-open-on-hover="props.openOnHover ? 'true' : undefined"
+    :data-close-delay="props.closeDelay"
+    :data-state="renderedOpen ? 'open' : 'closed'"
+  >
+    <slot />
+  </div>
+</template>

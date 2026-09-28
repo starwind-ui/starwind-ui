@@ -1,0 +1,4 @@
+{
+  "components": { "input-otp": "patch" },
+  "impact": "source"
+}

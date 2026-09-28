@@ -22,7 +22,10 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 const MEASUREMENT_TMP_ROOT = process.env.STARWIND_MEASUREMENT_TMP_ROOT ?? os.tmpdir();
 const SHARED_SIZE_TMP_ROOT = path.join(MEASUREMENT_TMP_ROOT, "starwind-package-size-comparison");
 const PERF_TMP_ROOT = path.join(MEASUREMENT_TMP_ROOT, "starwind-runtime-performance-comparison");
-const REPORT_PATH = path.join(REPO_ROOT, "docs/portable-runtime/runtime-performance-comparison.md");
+const REPORT_PATH = path.join(
+  REPO_ROOT,
+  "docs/portable-runtime/diagnostics/runtime-performance-stress-comparison.md",
+);
 const DIAGNOSTICS_REPORT_PATH = path.join(
   REPO_ROOT,
   "docs/portable-runtime/diagnostics/runtime-performance-diagnostics.md",
@@ -303,7 +306,7 @@ function formatRuntimePerformanceList() {
 }
 
 function formatRuntimePerformanceCommand({ filters, focusedRun }) {
-  if (!focusedRun) return "pnpm runtime:perf";
+  if (!focusedRun) return "pnpm runtime:perf:stress";
 
   const args = [
     ...filters.scenarios.flatMap((scenario) => ["--scenario", scenario]),
@@ -311,7 +314,7 @@ function formatRuntimePerformanceCommand({ filters, focusedRun }) {
     ...filters.libraries.flatMap((library) => ["--library", library]),
   ];
 
-  return `pnpm runtime:perf -- ${args.map(quotePowerShellArgument).join(" ")}`;
+  return `pnpm runtime:perf:stress -- ${args.map(quotePowerShellArgument).join(" ")}`;
 }
 
 function quotePowerShellArgument(value) {
@@ -386,7 +389,7 @@ function assertStarwindDist() {
   throw new Error(
     [
       "Starwind dist output is required before running runtime performance comparison.",
-      "Run `pnpm runtime:build && pnpm react:build`, then rerun `pnpm runtime:perf`.",
+      "Run `pnpm runtime:build && pnpm react:build`, then rerun `pnpm runtime:perf:stress`.",
       "",
       ...missingFiles.map((file) => `Missing: ${path.relative(REPO_ROOT, file)}`),
     ].join("\n"),
@@ -572,11 +575,11 @@ async function runBrowserMeasurements({
   }
 }
 
-async function measureOpenRow({ page, scenario, url }) {
+export async function measureOpenRow({ page, scenario, url }) {
   const samples = [];
   const eventDurations = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     await page.evaluate(({ target }) => window.__runtimePerf.prepareOpenSample({ target }), {
@@ -584,6 +587,7 @@ async function measureOpenRow({ page, scenario, url }) {
     });
     await page.keyboard.press(scenario.openKey ?? "Enter");
     const sample = await page.evaluate(() => window.__runtimePerf.finishOpenSample());
+    if (index < 0) continue;
     samples.push(sample.visibleMs);
     if (sample.eventDurationMs != null) {
       eventDurations.push(sample.eventDurationMs);
@@ -601,7 +605,7 @@ async function measureOpenRow({ page, scenario, url }) {
 async function measureFilterRow({ page, scenario, url }) {
   const samples = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     await page.evaluate(() =>
@@ -610,6 +614,7 @@ async function measureFilterRow({ page, scenario, url }) {
     await page.keyboard.press("ArrowDown");
     await page.evaluate(() => window.__runtimePerf.finishOpenSample());
     const sample = await page.evaluate(() => window.__runtimePerf.runFilterSample());
+    if (index < 0) continue;
     samples.push(sample.durationMs);
   }
 
@@ -639,23 +644,30 @@ async function measureMountRow({ page, scenario, url }) {
 async function measureHoverRow({ page, scenario, url }) {
   const samples = [];
   const dispatchDurationSamples = [];
+  const updateDurationSamples = [];
+  const verifiedItemCounts = [];
   const forcedLayoutDurationSamples = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     const sample = await page.evaluate(() => window.__runtimePerf.runHoverSample());
+    if (index < 0) continue;
     samples.push(sample.durationMs);
     dispatchDurationSamples.push(sample.dispatchDurationMs);
+    updateDurationSamples.push(sample.updateDurationMs);
+    verifiedItemCounts.push(sample.verifiedItemCount);
     forcedLayoutDurationSamples.push(sample.forcedLayoutDurationMs);
   }
 
   return {
     samples,
     dispatchDurationSamples,
+    updateDurationSamples,
+    verifiedItemCounts,
     forcedLayoutDurationSamples,
     averageMs: average(samples),
-    metric: "pointermove-sweep",
+    metric: "verified-highlight-sweep",
   };
 }
 
@@ -663,10 +675,11 @@ async function measureSubmenuOpenRow({ page, scenario, url }) {
   const samples = [];
   const eventDurations = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     const sample = await page.evaluate(() => window.__runtimePerf.runSubmenuOpenSample());
+    if (index < 0) continue;
     samples.push(sample.visibleMs);
     if (sample.eventDurationMs != null) {
       eventDurations.push(sample.eventDurationMs);
@@ -684,33 +697,41 @@ async function measureSubmenuOpenRow({ page, scenario, url }) {
 async function measureSubmenuHoverRow({ page, scenario, url }) {
   const samples = [];
   const dispatchDurationSamples = [];
+  const updateDurationSamples = [];
+  const verifiedItemCounts = [];
   const forcedLayoutDurationSamples = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     const sample = await page.evaluate(() => window.__runtimePerf.runSubmenuHoverSample());
+    if (index < 0) continue;
     samples.push(sample.durationMs);
     dispatchDurationSamples.push(sample.dispatchDurationMs);
+    updateDurationSamples.push(sample.updateDurationMs);
+    verifiedItemCounts.push(sample.verifiedItemCount);
     forcedLayoutDurationSamples.push(sample.forcedLayoutDurationMs);
   }
 
   return {
     samples,
     dispatchDurationSamples,
+    updateDurationSamples,
+    verifiedItemCounts,
     forcedLayoutDurationSamples,
     averageMs: average(samples),
-    metric: "pointermove-sweep",
+    metric: "verified-highlight-sweep",
   };
 }
 
 async function measureNavigationSwitchRow({ page, scenario, url }) {
   const samples = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     const sample = await page.evaluate(() => window.__runtimePerf.runNavigationSwitchSample());
+    if (index < 0) continue;
     samples.push(sample.durationMs);
   }
 
@@ -724,10 +745,11 @@ async function measureNavigationSwitchRow({ page, scenario, url }) {
 async function measureTabsActivationRow({ page, scenario, url }) {
   const samples = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     const sample = await page.evaluate(() => window.__runtimePerf.runTabsActivationSample());
+    if (index < 0) continue;
     samples.push(sample.durationMs);
   }
 
@@ -741,10 +763,11 @@ async function measureTabsActivationRow({ page, scenario, url }) {
 async function measureAccordionToggleRow({ page, scenario, url }) {
   const samples = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     const sample = await page.evaluate(() => window.__runtimePerf.runAccordionToggleSample());
+    if (index < 0) continue;
     samples.push(sample.durationMs);
   }
 
@@ -758,10 +781,11 @@ async function measureAccordionToggleRow({ page, scenario, url }) {
 async function measureRadioSweepRow({ page, scenario, url }) {
   const samples = [];
 
-  for (let index = 0; index < scenario.sampleCount; index += 1) {
+  for (let index = -1; index < scenario.sampleCount; index += 1) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__runtimePerf?.ready === true);
     const sample = await page.evaluate(() => window.__runtimePerf.runRadioSweepSample());
+    if (index < 0) continue;
     samples.push(sample.durationMs);
   }
 
@@ -811,9 +835,9 @@ function writeRuntimePerformanceReportSet({ input, repoRoot = REPO_ROOT, snapsho
     repoRoot,
     snapshot,
   }).map((reportPath) => ({
-    content: reportPath.includes(`${path.sep}diagnostics${path.sep}`)
-      ? diagnosticContent
-      : publicContent,
+    content: path.basename(reportPath).startsWith("runtime-performance-stress-comparison")
+      ? publicContent
+      : diagnosticContent,
     path: reportPath,
   }));
   writeStagedReports(outputs);
@@ -858,16 +882,16 @@ function formatRuntimePerformanceReport({
     "- Starwind rows use local `packages/runtime/dist` and `packages/react/dist`, matching the package-size comparison's local-dist approach.",
     "- Base UI and Zag rows use npm packages from a temporary measurement project under the operating system's temporary directory.",
     "- CPU throttling is applied with Chrome DevTools Protocol `Emulation.setCPUThrottlingRate`.",
-    "- Open rows collect 5 samples. The browser focuses the configured trigger, marks the start immediately before pressing the configured key, waits for benchmark content to become visible, advances animation frames, forces layout, and reports event-to-visible duration. Most rows use Enter; Combobox uses ArrowDown from the input.",
-    "- Mount rows run 5 groups of 20 scripted React renders. Each iteration unmounts, `flushSync` renders the fixture, and forces layout by reading geometry.",
-    "- Highlight rows open the popup first, then measure a scripted pointermove sweep across 1000 mounted items. Raw samples separate pointer-event dispatch from the forced-layout read while preserving the existing total sweep metric. This is an interaction-handler comparison, not a literal hand-moved cursor trace.",
+    "- Active non-mount rows run one excluded warmup and retain five measured samples. Open rows focus the configured trigger, mark the start immediately before pressing the configured key, wait for benchmark content to become visible, advance animation frames, force layout, and report event-to-visible duration. Most rows use Enter; Combobox uses ArrowDown from the input.",
+    "- Active mount rows run one excluded warmup and five measured React renders, with one measured render per group. Each iteration unmounts, `flushSync` renders the fixture, and forces layout by reading geometry. Historical artifacts retain their recorded sampling, including 20 renders per group in the original comparison.",
+    "- Highlight rows open the popup first, then dispatch pointer and mouse boundary/movement events across 1000 mounted items. Every step flushes React event updates, waits for the current highlight and previous-item clear to commit, forces layout, and asserts that the current item is highlighted and the previous item is cleared. The total includes handler, queued action, React commit, layout, and assertion work. Raw samples separate dispatch, the remaining update completion, and layout costs, and record verified item counts.",
     "- Filter rows open the combobox first, then measure a scripted input value change plus layout.",
     "- Submenu open rows open the parent menu as setup, then measure submenu trigger activation-to-visible timing for a 1000-item submenu.",
     "- Navigation switch rows open the first content panel as setup, then measure the second trigger's click-to-visible timing for large content.",
     "- Collection click rows measure a scripted click activation/toggle plus visible panel layout for high-count non-floating controls.",
     "- Radio sweep rows measure a scripted click sweep across 1000 radio items, forcing layout after each change.",
     "- All fixtures use primitive APIs, minimal CSS, no React StrictMode, and no styled Starwind wrapper code.",
-    "- Starwind's `Portal` parts are runtime-owned DOM markers; Base UI and Zag use React portals. That difference is part of the implementation being measured.",
+    "- These React fixtures use framework-owned portals. Starwind first renders its portal subtree inline, then places it through a React portal and publishes a binding for Runtime discovery.",
     "",
     ...(focusedRun || diagnostic
       ? [
@@ -927,8 +951,8 @@ function formatRuntimePerformanceReport({
           "",
           "<!-- prettier-ignore-start -->",
           "",
-          "| Category | Scenario | Library | Samples | Group averages | Event duration samples | Dispatch samples | Forced-layout samples |",
-          "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+          "| Category | Scenario | Library | Samples | Group averages | Event duration samples | Dispatch samples | Update-completion samples | Forced-layout samples | Verified items |",
+          "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
           ...results.map((row) =>
             [
               row.scenarioCategory,
@@ -938,7 +962,9 @@ function formatRuntimePerformanceReport({
               formatSampleList(row.groupAverages),
               formatSampleList(row.eventDurationSamples),
               formatSampleList(row.dispatchDurationSamples),
+              formatSampleList(row.updateDurationSamples),
               formatSampleList(row.forcedLayoutDurationSamples),
+              row.verifiedItemCounts?.join(", ") ?? "",
             ]
               .join(" | ")
               .replace(/^/, "| ")
@@ -955,7 +981,7 @@ function formatRuntimePerformanceReport({
     "- Prefer relative comparisons within the same run; CPU, browser, power mode, and background work can move absolute timings.",
     "- The open-row metric is an automated event-to-visible marker measurement. For a stricter public benchmark, the next iteration should parse DevTools trace events and identify the exact visible paint after the input event.",
     "- The mount rows intentionally include render and forced layout, but not network or initial bundle parse.",
-    "- The highlight row intentionally dispatches pointer events over mounted items. A separate manual UX trace could measure real cursor movement and scroll behavior.",
+    "- The verified-highlight-sweep metric measures 1000 completed updates. It supersedes the pointer-only sweep and cannot be compared directly with its historical values. It does not measure input-to-paint latency or natural cursor movement; React flushing and an observed DOM completion checkpoint are explicit so every library completes each item update. A missing endpoint fails the row after one second; successful steps have no fixed timer or frame delay.",
   ];
 }
 
@@ -975,7 +1001,7 @@ function buildRuntimePerformanceReportPaths({
   const docsDir = path.join(repoRoot, "docs/portable-runtime");
   const diagnosticsDir = path.join(docsDir, "diagnostics");
   const paths = [
-    path.join(docsDir, "runtime-performance-comparison.md"),
+    path.join(diagnosticsDir, "runtime-performance-stress-comparison.md"),
     path.join(diagnosticsDir, "runtime-performance-diagnostics.md"),
   ];
   if (!snapshot) return paths;
@@ -983,7 +1009,7 @@ function buildRuntimePerformanceReportPaths({
   const utcDate = generatedAt.toISOString().slice(0, 10);
   return [
     ...paths,
-    path.join(docsDir, `runtime-performance-comparison-${utcDate}.md`),
+    path.join(diagnosticsDir, `runtime-performance-stress-comparison-${utcDate}.md`),
     path.join(diagnosticsDir, `runtime-performance-diagnostics-${utcDate}.md`),
   ];
 }
@@ -991,7 +1017,7 @@ function buildRuntimePerformanceReportPaths({
 function migrateExistingRuntimePerformanceReports({ repoRoot = REPO_ROOT } = {}) {
   const docsDir = path.join(repoRoot, "docs/portable-runtime");
   const publicNames = readdirSync(docsDir)
-    .filter((name) => /^runtime-performance-comparison(?:-\d{4}-\d{2}-\d{2})?\.md$/.test(name))
+    .filter((name) => /^runtime-performance-comparison-\d{4}-\d{2}-\d{2}\.md$/.test(name))
     .sort();
   const outputs = [];
 
@@ -1005,8 +1031,18 @@ function migrateExistingRuntimePerformanceReports({ repoRoot = REPO_ROOT } = {})
     const sourcePath = existsSync(diagnosticPath) ? diagnosticPath : publicPath;
     const model = parseLegacyRuntimePerformanceReport(readFileSync(sourcePath, "utf8"));
     outputs.push(
-      { content: renderMigratedRuntimePerformanceReport(model, false), path: publicPath },
-      { content: renderMigratedRuntimePerformanceReport(model, true), path: diagnosticPath },
+      {
+        content: renderMigratedRuntimePerformanceReport(model, false),
+        path: path.join(docsDir, "diagnostics", `runtime-performance-stress-migrated-${suffix}.md`),
+      },
+      {
+        content: renderMigratedRuntimePerformanceReport(model, true),
+        path: path.join(
+          docsDir,
+          "diagnostics",
+          `runtime-performance-stress-migrated-diagnostics-${suffix}.md`,
+        ),
+      },
     );
   }
 
@@ -1095,6 +1131,10 @@ function writeFixtureApp({ appDir }) {
   mkdirSync(path.join(appDir, "src"), { recursive: true });
   writeFileSync(path.join(appDir, "index.html"), fixtureHtml());
   writeFileSync(path.join(appDir, "src/main.jsx"), fixtureSource());
+  writeFileSync(
+    path.join(appDir, "src/highlight-sweep.mjs"),
+    readFileSync(path.join(__dirname, "runtime-performance/highlight-sweep.mjs"), "utf8"),
+  );
   writeFileSync(path.join(appDir, "src/styles.css"), fixtureStyles());
 }
 
@@ -1160,6 +1200,7 @@ import * as zagTabs from "@zag-js/tabs";
 import * as zagTooltip from "@zag-js/tooltip";
 
 import "./styles.css";
+import { runHighlightSweep } from "./highlight-sweep.mjs";
 
 const OPEN_ITEM_COUNT = 1000;
 const OUTSIDE_NODE_COUNT = 10000;
@@ -2833,22 +2874,26 @@ async function runMountSamples({ groupCount, iterationsPerGroup }) {
   const groupAverages = [];
   const samples = [];
 
+  const measure = () => {
+    flushSync(() => {
+      measureReactRoot.render(null);
+    });
+    forceLayout(measureRoot);
+    const start = performance.now();
+    flushSync(() => {
+      measureReactRoot.render(renderMountFixture());
+    });
+    forceLayout(measureRoot);
+    return performance.now() - start;
+  };
+
+  measure(); // Excluded warmup; preserve only the five measured renders below.
+
   for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
     const groupSamples = [];
 
     for (let iteration = 0; iteration < iterationsPerGroup; iteration += 1) {
-      flushSync(() => {
-        measureReactRoot.render(null);
-      });
-
-      forceLayout(measureRoot);
-
-      const start = performance.now();
-      flushSync(() => {
-        measureReactRoot.render(renderMountFixture());
-      });
-      forceLayout(measureRoot);
-      const duration = performance.now() - start;
+      const duration = measure();
 
       groupSamples.push(duration);
       samples.push(duration);
@@ -2872,78 +2917,22 @@ async function runHoverSample() {
   document.querySelector("[data-benchmark-trigger]").click();
   await waitForVisibleMarker();
   await nextFrame();
-
-  const items = Array.from(document.querySelectorAll("[data-benchmark-item]"));
-  if (items.length === 0) {
-    throw new Error("Missing benchmark items");
-  }
-
-  const start = performance.now();
-  let dispatchDurationMs = 0;
-  let forcedLayoutDurationMs = 0;
-
-  for (const item of items) {
-    const dispatchStart = performance.now();
-    item.dispatchEvent(
-      new PointerEvent("pointermove", {
-        bubbles: true,
-        clientX: 8,
-        clientY: 8,
-        pointerType: "mouse",
-      }),
-    );
-    dispatchDurationMs += performance.now() - dispatchStart;
-
-    const forcedLayoutStart = performance.now();
-    forceLayout(item);
-    forcedLayoutDurationMs += performance.now() - forcedLayoutStart;
-  }
-
-  await nextFrame();
-  return {
-    dispatchDurationMs,
-    durationMs: performance.now() - start,
-    forcedLayoutDurationMs,
-  };
+  return runHighlightSweep({
+    items: Array.from(document.querySelectorAll("[data-benchmark-item]")),
+    flushUpdates: flushSync,
+    forceLayout,
+  });
 }
 
 async function runSubmenuHoverSample() {
   await openParentMenuForSetup();
   await openSubmenuForSetup();
   await nextFrame();
-
-  const items = Array.from(document.querySelectorAll("[data-benchmark-item]"));
-  if (items.length === 0) {
-    throw new Error("Missing benchmark submenu items");
-  }
-
-  const start = performance.now();
-  let dispatchDurationMs = 0;
-  let forcedLayoutDurationMs = 0;
-
-  for (const item of items) {
-    const dispatchStart = performance.now();
-    item.dispatchEvent(
-      new PointerEvent("pointermove", {
-        bubbles: true,
-        clientX: 8,
-        clientY: 8,
-        pointerType: "mouse",
-      }),
-    );
-    dispatchDurationMs += performance.now() - dispatchStart;
-
-    const forcedLayoutStart = performance.now();
-    forceLayout(item);
-    forcedLayoutDurationMs += performance.now() - forcedLayoutStart;
-  }
-
-  await nextFrame();
-  return {
-    dispatchDurationMs,
-    durationMs: performance.now() - start,
-    forcedLayoutDurationMs,
-  };
+  return runHighlightSweep({
+    items: Array.from(document.querySelectorAll("[data-benchmark-item]")),
+    flushUpdates: flushSync,
+    forceLayout,
+  });
 }
 
 async function runNavigationSwitchSample() {
@@ -3454,11 +3443,10 @@ function slash(value) {
 }
 
 export {
+  buildRuntimePerformanceReportPaths,
+  buildRuntimePerformanceRunConfig,
   DIAGNOSTICS_REPORT_PATH,
   FOCUSED_REPORT_DIR,
-  REPORT_PATH,
-  buildRuntimePerformanceRunConfig,
-  buildRuntimePerformanceReportPaths,
   formatRuntimePerformanceDiagnosticReport,
   formatRuntimePerformanceList,
   formatRuntimePerformancePublicReport,
@@ -3467,9 +3455,10 @@ export {
   main,
   migrateExistingRuntimePerformanceReports,
   parseRuntimePerformanceArgs,
+  REPORT_PATH,
   scenarioRows,
   selectLibraryRows,
   selectScenarioRows,
-  writeStagedReports,
   writeRuntimePerformanceReportSet,
+  writeStagedReports,
 };

@@ -16,7 +16,13 @@ const ColorPickerAreaThumb = React.forwardRef<HTMLSpanElement, ColorPickerAreaTh
   function ColorPickerAreaThumb({ children, ...props }, forwardedRef) {
     const areaContext = useColorPickerAreaContext();
     const { props: projectedProps } = useColorPickerPartProjection(
-      { part: "areaThumb", ...areaContext },
+      {
+        part: "areaThumb",
+        xChannel: areaContext.xChannel,
+        yChannel: areaContext.yChannel,
+        xStep: areaContext.xStep,
+        yStep: areaContext.yStep,
+      },
       { ...props, "data-sw-color-picker-area-thumb": "" },
     );
     return (

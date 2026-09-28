@@ -24,11 +24,12 @@ const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
     const sidebarContext = useSidebarContext();
     const protectedMenuButtonProps = {
       "data-sw-sidebar-menu-button": "",
+      "data-sw-part": "menuButton",
       "data-sidebar-state": sidebarContext?.state ?? "expanded",
     } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
     const menuButtonProps = {
-      ...protectedMenuButtonProps,
       ...props,
+      ...protectedMenuButtonProps,
     } satisfies React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, string>;
 
     const asChildElement = getAsChildElement(children);

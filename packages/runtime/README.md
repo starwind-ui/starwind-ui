@@ -59,6 +59,13 @@ const cleanup = initStarwind(document);
 cleanup.destroy();
 ```
 
+### Connected Combobox reset
+
+Runtime observes native reset in the associated form's capture phase. It checks cancellation
+after dispatch and restores the defaults after native reset work. A later value or text action
+takes priority. Open changes remain independent. Commands from capture listeners that run before
+Runtime observes reset precede that reset.
+
 ## What Runtime provides
 
 - Framework-neutral DOM behavior and state.

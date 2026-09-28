@@ -122,6 +122,7 @@ const registryFixture: registry.NormalizedStarwindRegistry = {
 
 describe("add command", () => {
   let mockExit: ReturnType<typeof vi.spyOn>;
+  const originalExitCode = process.exitCode;
 
   beforeAll(() => {
     vueRegistryFixture = JSON.parse(
@@ -176,6 +177,7 @@ describe("add command", () => {
   });
 
   afterEach(() => {
+    process.exitCode = originalExitCode;
     mockExit.mockRestore();
   });
 

@@ -27,18 +27,18 @@ describe("primitive discovery", () => {
           },
         ];
       }
-      if (framework === "vue") {
+      if (framework === "vue" || framework === "svelte") {
         return [
           {
             component: "button",
-            framework: "vue",
+            framework,
             version: "1.0.0",
             files: [],
             packageRequirements: [],
           },
           {
             component: "zebra",
-            framework: "vue",
+            framework,
             version: "1.0.0",
             files: [],
             packageRequirements: [],
@@ -73,8 +73,10 @@ describe("primitive discovery", () => {
       ["Alpha", "react"],
       ["button", "astro"],
       ["button", "react"],
+      ["button", "svelte"],
       ["button", "vue"],
       ["zebra", "astro"],
+      ["zebra", "svelte"],
       ["zebra", "vue"],
     ]);
   });
@@ -103,7 +105,7 @@ describe("primitive discovery", () => {
       targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
     });
 
-    expect(results.map(({ framework }) => framework)).toEqual(["astro", "react", "vue"]);
+    expect(results.map(({ framework }) => framework)).toEqual(["astro", "react", "svelte", "vue"]);
     expect(primitives.getPrimitiveComponents).toHaveBeenCalledWith(
       expect.objectContaining({
         framework: "vue",

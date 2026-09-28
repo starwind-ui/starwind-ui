@@ -84,4 +84,72 @@ export async function verifyAstroAvatarLazyImageCase({ page, baseUrl, serverMode
   ) {
     throw new Error(`Imported lazy Avatar did not become visible: ${JSON.stringify(loadedState)}.`);
   }
+  await verifyAstroAvatarOwnedPartsCase({ page });
+}
+
+export async function verifyAstroAvatarOwnedPartsCase({ page }) {
+  const result = await page.evaluate(async () => {
+    const root = document.querySelector("#avatar-error");
+    const oldImage = root.querySelector("[data-sw-avatar-image]");
+    const next = oldImage.cloneNode();
+    next.removeAttribute("src");
+    next.removeAttribute("srcset");
+    oldImage.replaceWith(next);
+    const init = (scope) =>
+      document.dispatchEvent(new CustomEvent("starwind:init", { detail: { root: scope } }));
+    init(next);
+    next.dispatchEvent(new Event("load"));
+    const bound = root.dataset.imageLoadingStatus === "loaded";
+    oldImage.dispatchEvent(new Event("error"));
+    const retired = root.dataset.imageLoadingStatus === "loaded";
+    next.remove();
+    const fallback = root.querySelector("[data-sw-avatar-fallback]");
+    const replacement = fallback.cloneNode(true);
+    replacement.hidden = true;
+    fallback.replaceWith(replacement);
+    init(replacement);
+    const removed = root.dataset.imageLoadingStatus === "error" && !replacement.hidden;
+    const nested = document.createElement("span");
+    nested.setAttribute("data-sw-avatar", "");
+    nested.innerHTML = "<span data-sw-avatar-fallback>Nested</span>";
+    root.append(nested);
+    init(nested);
+    let outerRefreshes = 0;
+    let nestedRefreshes = 0;
+    const observer = new MutationObserver((records) => {
+      outerRefreshes += records.filter((record) => record.target === root).length;
+      nestedRefreshes += records.filter((record) => record.target === nested).length;
+    });
+    observer.observe(root, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["data-image-loading-status"],
+    });
+    init(nested.firstElementChild);
+    init(nested);
+    await Promise.resolve();
+    observer.disconnect();
+    const active = document.createElement("img");
+    active.setAttribute("data-sw-avatar-image", "");
+    nested.append(active);
+    init(active);
+    active.dispatchEvent(new Event("load"));
+    document.dispatchEvent(new Event("astro:before-swap"));
+    oldImage.dispatchEvent(new Event("load"));
+    next.dispatchEvent(new Event("load"));
+    active.dispatchEvent(new Event("error"));
+    const destroyed =
+      root.dataset.imageLoadingStatus === "error" && nested.dataset.imageLoadingStatus === "loaded";
+    return { bound, retired, removed, outerRefreshes, nestedRefreshes, destroyed };
+  });
+  if (
+    !result.bound ||
+    !result.retired ||
+    !result.removed ||
+    result.outerRefreshes !== 0 ||
+    result.nestedRefreshes !== 2 ||
+    !result.destroyed
+  ) {
+    throw new Error(`Avatar scoped part refresh drifted: ${JSON.stringify(result)}`);
+  }
 }

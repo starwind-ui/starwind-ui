@@ -28,12 +28,14 @@ export type DropzoneSetFilesOptions = {
 };
 
 export type DropzoneInstance = {
+  /** Last connected input; retained while refresh has no active input part. */
   readonly input: HTMLInputElement;
   readonly root: HTMLElement;
   clearFiles(options?: DropzoneSetFilesOptions): void;
   destroy(): void;
   getFiles(): File[];
   getUploading(): boolean;
+  refresh(): void;
   setDisabled(disabled: boolean): void;
   setFiles(files: File[] | FileList, options?: DropzoneSetFilesOptions): void;
   setUploading(isUploading: boolean): void;
@@ -45,7 +47,7 @@ export type DropzoneInstance = {
 
 type DropzoneElements = {
   filesList: HTMLElement | null;
-  input: HTMLInputElement;
+  input: HTMLInputElement | null;
   loadingIndicator: HTMLElement | null;
   uploadIndicator: HTMLElement | null;
 };
@@ -86,19 +88,32 @@ export function createDropzone(root: HTMLElement, options: DropzoneOptions = {})
   assertHTMLElement(root, "createDropzone root");
 
   const existing = instances.get(root);
-  if (existing) return existing;
+  if (existing) {
+    existing.refresh();
+    return existing;
+  }
 
   const instance = new DropzoneController(root, options);
   instances.set(root, instance);
   return instance;
 }
 
+/** Internal scoped-initialization hook; only reconnects an existing owner. */
+export function refreshExistingDropzone(root: HTMLElement): DropzoneInstance | null {
+  const instance = instances.get(root);
+  instance?.refresh();
+  return instance ?? null;
+}
+
 class DropzoneController implements DropzoneInstance {
-  readonly input: HTMLInputElement;
+  private currentInput: HTMLInputElement;
   readonly root: HTMLElement;
 
   private readonly abortController = new AbortController();
-  private readonly elements: DropzoneElements;
+  private elements: DropzoneElements;
+  private partAbortController = new AbortController();
+  private form: HTMLFormElement | null = null;
+  private resetTimer: number | undefined;
   private readonly managesTabIndex: boolean;
   private readonly onFilesChange?: (files: File[], details: DropzoneFilesChangeDetails) => void;
   private readonly subscribers = new Set<(details: DropzoneFilesChangeDetails) => void>();
@@ -113,8 +128,8 @@ class DropzoneController implements DropzoneInstance {
   constructor(root: HTMLElement, options: DropzoneOptions) {
     this.root = root;
     this.root.setAttribute(DROPZONE_ROOT_ATTRIBUTE, "");
-    this.elements = getDropzoneElements(root);
-    this.input = this.elements.input;
+    this.currentInput = getOrCreateInput(root);
+    this.elements = { ...getDropzoneElements(root), input: this.currentInput };
     this.disabled = options.disabled ?? readBooleanAttribute(root, DROPZONE_DISABLED_ATTRIBUTE);
     this.isUploading =
       options.isUploading ?? readBooleanAttribute(root, DROPZONE_IS_UPLOADING_ATTRIBUTE, false);
@@ -124,6 +139,7 @@ class DropzoneController implements DropzoneInstance {
 
     this.setupInput();
     this.bindEvents();
+    this.bindInputEvents();
     this.observeAttributes();
     this.render();
   }
@@ -136,10 +152,44 @@ class DropzoneController implements DropzoneInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.partAbortController.abort();
+    this.clearResetTimer();
     this.mutationObserver?.disconnect();
     this.subscribers.clear();
     instances.delete(this.root);
     this.destroyed = true;
+  }
+
+  get input(): HTMLInputElement {
+    return this.currentInput;
+  }
+
+  refresh(): void {
+    if (this.destroyed) return;
+    const elements = getDropzoneElements(this.root);
+    const form = elements.input?.form ?? null;
+    const reconnect = elements.input !== this.elements.input || form !== this.form;
+    if (
+      !reconnect &&
+      elements.filesList === this.elements.filesList &&
+      elements.loadingIndicator === this.elements.loadingIndicator &&
+      elements.uploadIndicator === this.elements.uploadIndicator
+    )
+      return;
+    this.elements = elements;
+    if (reconnect) {
+      this.partAbortController.abort();
+      this.clearResetTimer();
+      this.partAbortController = new AbortController();
+      this.suppressNextInputChange = false;
+      if (elements.input) {
+        this.currentInput = elements.input;
+        this.setupInput();
+        this.writeInputFiles(this.files);
+      }
+      this.bindInputEvents();
+    }
+    this.render();
   }
 
   getFiles(): File[] {
@@ -217,10 +267,13 @@ class DropzoneController implements DropzoneInstance {
     this.root.addEventListener("dragleave", this.handleDragLeave, { signal });
     this.root.addEventListener("drop", this.handleDrop, { signal });
     this.root.addEventListener("keydown", this.handleKeyDown, { signal });
-    this.input.addEventListener("change", this.handleInputChange, { signal });
+  }
 
-    const form = this.input.form ?? this.root.closest("form");
-    form?.addEventListener("reset", this.handleFormReset, { signal });
+  private bindInputEvents(): void {
+    const { signal } = this.partAbortController;
+    this.elements.input?.addEventListener("change", this.handleInputChange, { signal });
+    this.form = this.elements.input?.form ?? null;
+    this.form?.addEventListener("reset", this.handleFormReset, { signal });
   }
 
   private observeAttributes(): void {
@@ -295,8 +348,10 @@ class DropzoneController implements DropzoneInstance {
 
     setBooleanAttribute(this.root, DROPZONE_DISABLED_ATTRIBUTE, this.disabled);
 
-    this.input.disabled = this.disabled;
-    this.input.setAttribute(DROPZONE_INPUT_ATTRIBUTE, "");
+    if (this.elements.input) {
+      this.elements.input.disabled = this.disabled;
+      this.elements.input.setAttribute(DROPZONE_INPUT_ATTRIBUTE, "");
+    }
 
     this.renderIndicators();
     this.renderFilesList();
@@ -340,6 +395,7 @@ class DropzoneController implements DropzoneInstance {
   }
 
   private writeInputFiles(files: File[]): void {
+    if (!this.elements.input) return;
     try {
       const transfer = new DataTransfer();
       files.forEach((file) => transfer.items.add(file));
@@ -352,6 +408,10 @@ class DropzoneController implements DropzoneInstance {
   }
 
   private readonly handleRootClick = (event: MouseEvent): void => {
+    if (!this.elements.input) {
+      event.preventDefault();
+      return;
+    }
     if (event.target === this.input) return;
 
     if (this.disabled) {
@@ -394,7 +454,7 @@ class DropzoneController implements DropzoneInstance {
     event.preventDefault();
     this.dragActive = false;
 
-    if (this.disabled) {
+    if (this.disabled || !this.elements.input) {
       this.render();
       return;
     }
@@ -419,6 +479,7 @@ class DropzoneController implements DropzoneInstance {
   };
 
   private readonly handleInputChange = (event: Event): void => {
+    if (event.target !== this.elements.input) return;
     if (this.suppressNextInputChange) {
       this.suppressNextInputChange = false;
       return;
@@ -437,42 +498,58 @@ class DropzoneController implements DropzoneInstance {
     if (event.key !== "Enter" && event.key !== " ") return;
 
     event.preventDefault();
-    if (this.disabled) return;
+    if (this.disabled || !this.elements.input) return;
 
     this.input.click();
   };
 
-  private readonly handleFormReset = (): void => {
-    setTimeout(() => {
-      if (this.destroyed) return;
+  private readonly handleFormReset = (event: Event): void => {
+    this.clearResetTimer();
+    const input = this.elements.input;
+    const form = this.form;
+    this.resetTimer = window.setTimeout(() => {
+      this.resetTimer = undefined;
+      if (
+        this.destroyed ||
+        event.defaultPrevented ||
+        input !== this.elements.input ||
+        input?.form !== form
+      )
+        return;
       this.clearFiles({ emit: false });
     }, 0);
   };
+
+  private clearResetTimer(): void {
+    if (this.resetTimer === undefined) return;
+    window.clearTimeout(this.resetTimer);
+    this.resetTimer = undefined;
+  }
 }
 
 function getDropzoneElements(root: HTMLElement): DropzoneElements {
   return {
     filesList: queryOwnedElement(root, `[${DROPZONE_FILES_LIST_ATTRIBUTE}]`),
-    input: getOrCreateInput(root),
+    input: findInput(root),
     loadingIndicator: queryOwnedElement(root, `[${DROPZONE_LOADING_INDICATOR_ATTRIBUTE}]`),
     uploadIndicator: queryOwnedElement(root, `[${DROPZONE_UPLOAD_INDICATOR_ATTRIBUTE}]`),
   };
 }
 
 function getOrCreateInput(root: HTMLElement): HTMLInputElement {
-  const existing = queryOwnedElement(root, `[${DROPZONE_INPUT_ATTRIBUTE}]`);
-  if (existing instanceof HTMLInputElement) return existing;
-
-  const fallback = root.querySelector<HTMLInputElement>('input[type="file"]');
-  if (fallback && isOwnedByRoot(fallback, root)) {
-    fallback.setAttribute(DROPZONE_INPUT_ATTRIBUTE, "");
-    return fallback;
-  }
+  const existing = findInput(root);
+  if (existing) return existing;
 
   const input = document.createElement("input");
   input.setAttribute(DROPZONE_INPUT_ATTRIBUTE, "");
   root.append(input);
   return input;
+}
+
+function findInput(root: HTMLElement): HTMLInputElement | null {
+  const marked = queryOwnedElement(root, `[${DROPZONE_INPUT_ATTRIBUTE}]`);
+  if (marked instanceof HTMLInputElement) return marked;
+  return queryOwnedElement(root, 'input[type="file"]') as HTMLInputElement | null;
 }
 
 function queryOwnedElement(root: HTMLElement, selector: string): HTMLElement | null {

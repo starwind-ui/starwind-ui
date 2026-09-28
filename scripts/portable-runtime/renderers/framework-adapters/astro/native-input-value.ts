@@ -1,9 +1,10 @@
+import { initialModelValue } from "../../shared-recipes/initial-state.js";
 import type {
   AdapterNativeInputValueComponentProjection,
   AdapterNativeInputValueFacts,
   AdapterNativeInputValueIndexProjection,
 } from "../types.js";
-import { astroLifecycleProjection } from "./lifecycle-projection.js";
+import { printAstroRefreshSetup } from "./refresh-connection.js";
 
 export function printAstroNativeInputValueComponent(
   family: AdapterNativeInputValueComponentProjection,
@@ -36,15 +37,16 @@ function printAstroNativeInputValueRoot(facts: AdapterNativeInputValueFacts): st
   const defaultValue = facts.props.defaultValue.name;
   const disabled = facts.props.disabled.name;
   const value = facts.props.value.name;
-  const runtimeScript = astroLifecycleProjection.printRuntimeSetup({
-    elementName: "input",
+  const runtimeScript = printAstroRefreshSetup({
+    refresh: facts.runtime.refresh,
+    parts: "root",
     factory: facts.runtime.factory,
     importSource: facts.runtime.importSource,
     selectorAttribute: part.discoveryAttribute,
     setupFunction: facts.runtime.setupFunction,
   });
 
-  return `---\nimport type { ${facts.props.value.type} } from "${facts.runtime.importSource}";\nimport type { HTMLAttributes } from "astro/types";\n\ninterface Props extends Omit<HTMLAttributes<"${part.defaultElement}">, "children" | "${defaultValue}" | "${value}"> {\n  ${defaultValue}?: ${facts.props.defaultValue.type};\n  ${value}?: ${facts.props.value.type};\n}\n\nconst { ${defaultValue}, ${disabled} = ${getPropDefault(facts, facts.props.disabled)}, ${value}, ...rest } = Astro.props;\n---\n\n<${part.defaultElement}\n  ${part.discoveryAttribute}\n  ${facts.attrs.stateDisabled}={${disabled} ? "" : undefined}\n  ${facts.attrs.disabled}={${disabled}}\n  ${facts.attrs.value}={${value} ?? ${defaultValue}}\n  {...rest}\n/>\n${runtimeScript}`;
+  return `---\nimport type { ${facts.props.value.type} } from "${facts.runtime.importSource}";\nimport type { HTMLAttributes } from "astro/types";\n\ninterface Props extends Omit<HTMLAttributes<"${part.defaultElement}">, "children" | "${defaultValue}" | "${value}"> {\n  ${defaultValue}?: ${facts.props.defaultValue.type};\n  ${value}?: ${facts.props.value.type};\n}\n\nconst { ${defaultValue}, ${disabled} = ${getPropDefault(facts, facts.props.disabled)}, ${value}, ...rest } = Astro.props;\n---\n\n<${part.defaultElement}\n  ${part.discoveryAttribute}\n  ${facts.attrs.stateDisabled}={${disabled} ? "" : undefined}\n  ${facts.attrs.disabled}={${disabled}}\n  ${facts.attrs.value}={${initialModelValue(value, defaultValue)}}\n  {...rest}\n/>\n${runtimeScript}`;
 }
 
 function getPropDefault(

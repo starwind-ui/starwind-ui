@@ -1,0 +1,88 @@
+* {
+  box-sizing: border-box;
+  animation: none !important;
+  transition: none !important;
+}
+body {
+  margin: 0;
+  background: #f4f4f5;
+  color: #18181b;
+  font:
+    14px Arial,
+    sans-serif;
+}
+#fixture {
+  padding: 120px;
+}
+h1 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+p {
+  margin: 0 0 24px;
+  color: #52525b;
+}
+.trigger {
+  width: 160px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #a1a1aa;
+  border-radius: 4px;
+  background: white;
+  color: inherit;
+  font: inherit;
+}
+.popup {
+  width: 320px;
+  max-height: 258px;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid #a1a1aa;
+  border-radius: 4px;
+  background: white;
+  color: inherit;
+  outline: none;
+}
+.item {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font: inherit;
+  cursor: default;
+  outline: none;
+}
+.item[hidden] {
+  display: none;
+}
+.item[data-highlighted],
+.item:focus {
+  background: #dbeafe;
+}
+.item[aria-disabled="true"],
+.item[data-disabled] {
+  color: #a1a1aa;
+}
+output {
+  display: block;
+  margin-top: 20px;
+}
+
+.select-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 208px);
+  gap: 20px 24px;
+}
+.select-cell {
+  min-height: 72px;
+}
+.select-cell label {
+  display: block;
+  margin-bottom: 8px;
+}
+.select-cell form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

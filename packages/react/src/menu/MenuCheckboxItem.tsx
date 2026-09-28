@@ -61,19 +61,29 @@ const MenuCheckboxItem = React.forwardRef<HTMLDivElement, MenuCheckboxItemProps>
       if (!item) return;
 
       const handleCheckedChange = (event: Event) => {
+        if (event.target !== itemRef.current) return;
+        const ownerElement = itemRef.current;
+        if (!ownerElement) return;
         const details = (event as CustomEvent<MenuCheckedChangeDetails>).detail;
+        const inputAtDispatch = checkedRef.current;
         onCheckedChangeRef.current?.(details.checked, details);
         queueMicrotask(() => {
-          if (details.isCanceled) return;
-
+          if (
+            !(itemRef.current === ownerElement && ownerElement.isConnected) ||
+            details.isCanceled ||
+            checkedRef.current !== inputAtDispatch
+          )
+            return;
           if (checkedRef.current === undefined) {
             setUncontrolledChecked(details.checked);
-            return;
           }
 
-          const controlledChecked = checkedRef.current;
-          if (controlledChecked !== undefined && item.isConnected) {
-            syncCheckboxItemState(item, controlledChecked);
+          if (
+            itemRef.current === ownerElement &&
+            ownerElement.isConnected &&
+            checkedRef.current !== undefined
+          ) {
+            syncCheckboxItemState(ownerElement, checkedRef.current);
           }
         });
       };
@@ -121,13 +131,13 @@ function syncCheckboxItemState(item: HTMLElement, checked: boolean): void {
   item.setAttribute("aria-checked", String(checked));
   item.toggleAttribute("data-checked", checked);
   item.toggleAttribute("data-unchecked", !checked);
-
-  item
-    .querySelectorAll<HTMLElement>("[data-sw-menu-checkbox-item-indicator]")
-    .forEach((indicator) => {
-      indicator.setAttribute("aria-hidden", "true");
-      indicator.setAttribute("data-state", checked ? "checked" : "unchecked");
-      indicator.toggleAttribute("data-visible", checked);
-      indicator.toggleAttribute("data-hidden", !checked);
-    });
+  for (const indicator of item.querySelectorAll<HTMLElement>(
+    "[data-sw-menu-checkbox-item-indicator]",
+  )) {
+    if (indicator.closest("[data-sw-menu-checkbox-item]") !== item) continue;
+    indicator.setAttribute("aria-hidden", "true");
+    indicator.setAttribute("data-state", checked ? "checked" : "unchecked");
+    indicator.toggleAttribute("data-visible", checked);
+    indicator.toggleAttribute("data-hidden", !checked);
+  }
 }

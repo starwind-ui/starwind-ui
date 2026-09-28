@@ -29,9 +29,9 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(function Se
         data-value={value}
         role="option"
         aria-selected={selected}
+        data-selected={selected ? "" : undefined}
         aria-disabled={disabled || undefined}
         data-disabled={disabled ? "" : undefined}
-        data-selected={selected ? "" : undefined}
         tabIndex={-1}
         ref={forwardedRef}
         {...props}

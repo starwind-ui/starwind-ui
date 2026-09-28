@@ -2,13 +2,13 @@ import { assertHTMLElement, readBooleanAttribute } from "../../internal/dom";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import {
   createDialog,
-  refreshDialogPortalSurface,
   type DialogCloseCompleteDetails,
   type DialogInstance,
   type DialogOpenChangeDetails,
   type DialogOpenChangeReason,
   type DialogOptions,
   type DialogSetOpenOptions,
+  refreshDialogPortalSurface,
 } from "../dialog";
 
 export type AlertDialogCloseCompleteDetails = DialogCloseCompleteDetails;
@@ -52,6 +52,7 @@ export function createAlertDialog(
   if (existing) return existing;
 
   normalizeAlertDialogMarkup(root);
+  const portal = queryAlertDialogElements(root, "[data-sw-alert-dialog-portal]")[0];
 
   const { closeOnEscape, closeOnOutsideInteract, modal, ...dialogOptions } = options;
 
@@ -63,18 +64,44 @@ export function createAlertDialog(
     ...dialogOptions,
     role: "alertdialog",
   });
-  const wrappedInstance = wrapAlertDialogInstance(root, instance);
+  const wrappedInstance = wrapAlertDialogInstance(root, instance, portal);
   instances.set(root, wrappedInstance);
 
   return wrappedInstance;
 }
 
+export function refreshExistingAlertDialog(root: HTMLElement): AlertDialogInstance | undefined {
+  const instance = instances.get(root);
+  instance?.refresh();
+  return instance;
+}
+
+function normalizeAlertDialogControls(root: HTMLElement, portal?: HTMLElement | null): void {
+  const controls = (selector: string) => [
+    ...new Set([
+      ...queryAlertDialogElements(root, selector),
+      ...(portal?.isConnected
+        ? Array.from(portal.querySelectorAll<HTMLElement>(selector)).filter(
+            (element) =>
+              !portal.contains(
+                element.closest("[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]"),
+              ),
+          )
+        : []),
+    ]),
+  ];
+  controls(`[${ALERT_DIALOG_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
+    trigger.setAttribute(DIALOG_TRIGGER_ATTRIBUTE, "");
+  });
+  controls(`[${ALERT_DIALOG_CLOSE_ATTRIBUTE}]`).forEach((close) => {
+    close.setAttribute(DIALOG_CLOSE_ATTRIBUTE, "");
+  });
+}
+
 function normalizeAlertDialogMarkup(root: HTMLElement): void {
   root.setAttribute(ALERT_DIALOG_ROOT_ATTRIBUTE, "");
 
-  queryAlertDialogElements(root, `[${ALERT_DIALOG_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
-    trigger.setAttribute(DIALOG_TRIGGER_ATTRIBUTE, "");
-  });
+  normalizeAlertDialogControls(root);
   normalizeExternalAlertDialogTriggers(root);
 
   queryAlertDialogElements(root, `[${ALERT_DIALOG_BACKDROP_ATTRIBUTE}]`).forEach((backdrop) => {
@@ -84,10 +111,6 @@ function normalizeAlertDialogMarkup(root: HTMLElement): void {
   queryAlertDialogElements(root, `[${ALERT_DIALOG_POPUP_ATTRIBUTE}]`).forEach((popup) => {
     popup.setAttribute(DIALOG_POPUP_ATTRIBUTE, "");
     popup.setAttribute("role", "alertdialog");
-  });
-
-  queryAlertDialogElements(root, `[${ALERT_DIALOG_CLOSE_ATTRIBUTE}]`).forEach((close) => {
-    close.setAttribute(DIALOG_CLOSE_ATTRIBUTE, "");
   });
 
   queryAlertDialogElements(root, `[${ALERT_DIALOG_TITLE_ATTRIBUTE}]`).forEach((title) => {
@@ -128,7 +151,11 @@ function normalizeExternalAlertDialogTriggers(root: HTMLElement): void {
     });
 }
 
-function wrapAlertDialogInstance(root: HTMLElement, instance: DialogInstance): AlertDialogInstance {
+function wrapAlertDialogInstance(
+  root: HTMLElement,
+  instance: DialogInstance,
+  portal?: HTMLElement,
+): AlertDialogInstance {
   const originalDestroy = instance.destroy.bind(instance);
 
   return {
@@ -138,6 +165,10 @@ function wrapAlertDialogInstance(root: HTMLElement, instance: DialogInstance): A
     toggle: instance.toggle.bind(instance),
     setOpen: instance.setOpen.bind(instance),
     getOpen: instance.getOpen.bind(instance),
+    refresh() {
+      normalizeAlertDialogControls(root, portal);
+      instance.refresh();
+    },
     subscribe: instance.subscribe.bind(instance),
     destroy() {
       originalDestroy();

@@ -5,7 +5,6 @@ import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue"
 import { useCheckboxGroupContext } from "../checkbox-group/CheckboxGroupContext";
 
 defineOptions({ inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
     checked?: boolean;
@@ -24,119 +23,81 @@ const props = withDefaults(
   {
     checked: undefined,
     disabled: false,
+    form: undefined,
+    id: undefined,
     indeterminate: false,
+    name: undefined,
     nativeButton: false,
     readOnly: false,
     required: false,
+    uncheckedValue: undefined,
+    value: undefined,
   },
 );
 const emit = defineEmits<{
-  checkedChange: [value: boolean, detail: CheckboxCheckedChangeDetails];
-  "update:checked": [value: boolean];
+  checkedChange: [checked: boolean, detail: CheckboxCheckedChangeDetails];
+  "update:checked": [checked: boolean];
 }>();
-defineSlots<{
-  default?: () => unknown;
-}>();
+defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
 const rootRef = ref<HTMLElement | null>(null);
-const inputRef = ref<HTMLInputElement | null>(null);
-const checkboxGroup = useCheckboxGroupContext();
-const groupItemValue = computed(() => props.value ?? props.name);
+const inputElement = ref<HTMLInputElement | null>(null);
+const group = useCheckboxGroupContext();
 const groupChecked = computed(() => {
-  const itemValue = groupItemValue.value;
-  return checkboxGroup && itemValue !== undefined
-    ? checkboxGroup.value.value.includes(itemValue)
-    : undefined;
+  const item = props.value ?? props.name;
+  return group && item !== undefined ? group.value.value.includes(item) : undefined;
 });
-const effectiveDisabled = computed(() => props.disabled || checkboxGroup?.disabled.value === true);
-const initialDefaultChecked = props.defaultChecked ?? false;
-const initialChecked = props.checked ?? groupChecked.value ?? initialDefaultChecked;
-const uncontrolledChecked = ref(groupChecked.value ?? initialDefaultChecked);
-const renderedChecked = computed(
-  () => props.checked ?? groupChecked.value ?? uncontrolledChecked.value,
-);
+const effectiveDisabledValue = computed(() => props.disabled || group?.disabled.value === true);
+function groupCheckedValue(): boolean | undefined {
+  return groupChecked.value;
+}
+function effectiveChecked(): boolean | undefined {
+  return groupCheckedValue() ?? props.checked;
+}
+function effectiveDisabled(): boolean {
+  return effectiveDisabledValue.value;
+}
+const initialChecked = groupCheckedValue() ?? props.checked ?? props.defaultChecked ?? false;
+const resetSeed = props.defaultChecked ?? initialChecked;
+const uncontrolledChecked = ref<boolean>(initialChecked);
+const renderedChecked = computed(() => effectiveChecked() ?? uncontrolledChecked.value);
 const renderedIndeterminate = ref(props.indeterminate);
-let instance: ReturnType<typeof createCheckbox> | undefined;
-let resetForm: HTMLFormElement | null = null;
-let resetTimer: number | undefined;
+const connection: {
+  instance?: ReturnType<typeof createCheckbox>;
+  input?: HTMLInputElement;
+  accepted: boolean;
+  unsubscribe?: () => void;
+  form?: HTMLFormElement;
+  resetTimer?: number;
+} = { accepted: initialChecked };
+defineExpose({ element: rootRef });
 
-defineExpose({
-  element: rootRef,
-});
-
-function handleCheckedChange(checked: boolean, detail: CheckboxCheckedChangeDetails): void {
-  emit("checkedChange", checked, detail);
-  if (detail.isCanceled) return;
-
-  if (props.checked === undefined) {
-    uncontrolledChecked.value = checked;
-  }
-  if (!props.indeterminate) renderedIndeterminate.value = false;
-  emit("update:checked", checked);
-}
-
-function clearResetTimer(): void {
-  if (resetTimer === undefined) return;
-
-  window.clearTimeout(resetTimer);
-  resetTimer = undefined;
-}
-
-function unbindFormReset(): void {
-  clearResetTimer();
-  resetForm?.removeEventListener("reset", handleFormReset);
-  resetForm = null;
-}
-
-function handleFormReset(): void {
-  clearResetTimer();
-  resetTimer = window.setTimeout(() => {
-    const ownedInstance = instance;
-    if (ownedInstance && props.checked === undefined) {
-      uncontrolledChecked.value = ownedInstance.getChecked();
-      if (!props.indeterminate) renderedIndeterminate.value = false;
-    }
-    resetTimer = undefined;
-  }, 0);
-}
-
-function bindFormReset(): void {
-  const formElement = inputRef.value?.form ?? null;
-  if (resetForm === formElement) return;
-
+function disconnectRuntime(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  connection.accepted = owned.getChecked();
+  connection.unsubscribe?.();
+  connection.unsubscribe = undefined;
   unbindFormReset();
-  resetForm = formElement;
-  resetForm?.addEventListener("reset", handleFormReset);
-}
-
-function destroyOwnedInstance(): void {
-  unbindFormReset();
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
-  removeRuntimeOwnedUncheckedInput();
-}
-
-function removeRuntimeOwnedUncheckedInput(): void {
-  const candidate = inputRef.value?.nextElementSibling;
+  connection.instance = undefined;
+  owned.destroy();
+  const unchecked = connection.input?.nextElementSibling;
   if (
-    candidate instanceof HTMLInputElement &&
-    candidate.hasAttribute("data-sw-checkbox-unchecked-input")
-  ) {
-    candidate.remove();
-  }
+    unchecked instanceof HTMLInputElement &&
+    unchecked.hasAttribute("data-sw-checkbox-unchecked-input")
+  )
+    unchecked.remove();
+  connection.input = undefined;
 }
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-
-  const options = {
-    defaultChecked: renderedChecked.value,
-    disabled: effectiveDisabled.value,
+function connectRuntime(root: HTMLElement, input: HTMLInputElement): void {
+  disconnectRuntime();
+  const desired = effectiveChecked() ?? connection.accepted;
+  const owned = createCheckbox(root, {
+    defaultChecked: resetSeed,
+    ...(props.checked !== undefined || groupCheckedValue() !== undefined
+      ? { checked: desired }
+      : {}),
+    disabled: effectiveDisabled(),
     form: props.form,
     id: props.id,
     indeterminate: props.indeterminate,
@@ -145,107 +106,173 @@ function setupRuntime(): void {
     required: props.required,
     uncheckedValue: props.uncheckedValue,
     value: props.value,
-    onCheckedChange: handleCheckedChange,
-    ...(props.checked !== undefined
-      ? { checked: props.checked }
-      : groupChecked.value !== undefined
-        ? { checked: groupChecked.value }
-        : {}),
-  };
-  instance = createCheckbox(element, options);
+    onCheckedChange: (next, detail) => {
+      emit("checkedChange", next, detail);
+    },
+  });
+  connection.instance = owned;
+  connection.input = input;
+
+  if (owned.getChecked() !== desired) owned.setChecked(desired, { emit: false });
+  connection.unsubscribe = owned.subscribe("checkedChange", (detail) => {
+    if (connection.instance !== owned || detail.isCanceled) return;
+    if (props.indeterminate && connection.input && !connection.input.indeterminate)
+      owned.setIndeterminate(true, { emit: false });
+    renderRuntimeState(detail.checked);
+    if (groupCheckedValue() === undefined) {
+      emit("update:checked", connection.accepted);
+    }
+  });
+  bindFormReset();
+  renderRuntimeState();
+}
+
+function renderRuntimeState(next = connection.instance?.getChecked()): void {
+  if (next === undefined) return;
+  connection.accepted = next;
+
+  uncontrolledChecked.value = connection.accepted;
+  renderedIndeterminate.value = connection.input?.indeterminate ?? false;
+}
+function applyParentCommand(): void {
+  const owned = connection.instance;
+  const next = effectiveChecked();
+  if (!owned || next === undefined) return;
+  if (owned.getChecked() !== next || connection.input?.checked !== next)
+    owned.setChecked(next, { emit: false });
+  if (props.indeterminate && connection.input && !connection.input.indeterminate)
+    owned.setIndeterminate(true, { emit: false });
+  renderRuntimeState();
+}
+function clearResetTask(): void {
+  if (connection.resetTimer !== undefined) window.clearTimeout(connection.resetTimer);
+  connection.resetTimer = undefined;
+}
+function unbindFormReset(): void {
+  clearResetTask();
+  connection.form?.removeEventListener("reset", handleFormReset);
+  connection.form = undefined;
+}
+function handleFormReset(event: Event): void {
+  clearResetTask();
+  const owned = connection.instance;
+  // Runtime registers its reset task first. Read public state after it settles.
+  connection.resetTimer = window.setTimeout(() => {
+    connection.resetTimer = undefined;
+    if (
+      event.defaultPrevented ||
+      !owned ||
+      connection.instance !== owned ||
+      props.checked !== undefined ||
+      groupCheckedValue() !== undefined
+    )
+      return;
+    if (props.indeterminate && connection.input && !connection.input.indeterminate)
+      owned.setIndeterminate(true, { emit: false });
+    renderRuntimeState(owned.getChecked());
+    if (groupCheckedValue() === undefined) {
+      emit("update:checked", connection.accepted);
+    }
+  }, 0);
+}
+function bindFormReset(): void {
+  const next = connection.input?.form ?? undefined;
+  if (next === connection.form) return;
+  unbindFormReset();
+  connection.form = next;
+  next?.addEventListener("reset", handleFormReset);
+}
+function applyLive0(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.setDisabled(effectiveDisabled());
+}
+function applyLive1(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.setIndeterminate(props.indeterminate, { emit: false });
+  renderRuntimeState();
+}
+function applyLive2(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  owned.setFormOptions({
+    form: props.form,
+    name: props.name,
+    required: props.required,
+    uncheckedValue: props.uncheckedValue,
+    value: props.value,
+  });
   bindFormReset();
 }
 
-onMounted(setupRuntime);
-
+function reconnectRuntime(): void {
+  if (rootRef.value && inputElement.value) connectRuntime(rootRef.value, inputElement.value);
+}
+onMounted(reconnectRuntime);
 watch(
   () => props.checked,
-  (checked, previousChecked) => {
-    const controllednessChanged = (checked === undefined) !== (previousChecked === undefined);
-    if (controllednessChanged) {
-      if (checked === undefined && instance) {
-        uncontrolledChecked.value = instance.getChecked();
-      }
-      setupRuntime();
-      return;
-    }
-    if (checked === undefined || !instance || Object.is(instance.getChecked(), checked)) {
-      return;
-    }
-
-    instance.setChecked(checked, { emit: false });
+  (next, previous) => {
+    if ((next === undefined) !== (previous === undefined)) void reconnectRuntime();
+    else applyParentCommand();
   },
   { flush: "post" },
 );
-watch(groupChecked, (checked) => {
-  if (checked === undefined || props.checked !== undefined || !instance) return;
-  if (Object.is(instance.getChecked(), checked)) return;
-  instance.setChecked(checked, { emit: false });
+watch(groupChecked, applyParentCommand, { flush: "post" });
+watch([() => props.id, () => props.readOnly, () => props.nativeButton], reconnectRuntime, {
+  flush: "post",
 });
-watch(effectiveDisabled, (value) => instance?.setDisabled(value));
+watch([effectiveDisabledValue], applyLive0, { flush: "post" });
+watch([() => props.indeterminate], applyLive1, { flush: "post" });
 watch(
-  () => props.indeterminate,
-  (value) => {
-    renderedIndeterminate.value = value;
-    instance?.setIndeterminate(value, { emit: false });
-  },
-);
-watch(
-  () => [
-    props.form,
-    props.id,
-    props.name,
-    props.nativeButton,
-    props.readOnly,
-    props.required,
-    props.uncheckedValue,
-    props.value,
+  [
+    () => props.form,
+    () => props.name,
+    () => props.required,
+    () => props.uncheckedValue,
+    () => props.value,
   ],
-  setupRuntime,
+  applyLive2,
   { flush: "post" },
 );
-
-onBeforeUnmount(destroyOwnedInstance);
+onBeforeUnmount(disconnectRuntime);
 </script>
-
 <template>
   <component
     :is="props.nativeButton ? 'button' : 'span'"
     ref="rootRef"
     v-bind="attrs"
-    data-sw-checkbox
-    data-sw-part="root"
-    :type="props.nativeButton ? 'button' : undefined"
-    role="checkbox"
+    :data-sw-checkbox="''"
+    :data-sw-part="'root'"
+    :role="'checkbox'"
     :aria-checked="renderedIndeterminate ? 'mixed' : String(renderedChecked)"
-    :aria-disabled="effectiveDisabled ? 'true' : undefined"
+    :aria-disabled="effectiveDisabledValue ? 'true' : undefined"
     :aria-readonly="String(props.readOnly)"
     :aria-required="String(props.required)"
-    :data-default-checked="initialDefaultChecked ? 'true' : undefined"
+    :data-default-checked="resetSeed ? 'true' : undefined"
     :data-checked="renderedChecked ? '' : undefined"
     :data-unchecked="renderedChecked ? undefined : ''"
-    :data-disabled="effectiveDisabled ? '' : undefined"
-    :data-form="props.form"
-    :data-id="props.id"
-    :data-indeterminate="renderedIndeterminate ? '' : undefined"
-    :data-name="props.name"
+    :data-disabled="effectiveDisabledValue ? '' : undefined"
     :data-readonly="props.readOnly ? '' : undefined"
     :data-required="props.required ? '' : undefined"
+    :data-indeterminate="renderedIndeterminate ? '' : undefined"
+    :data-form="props.form"
+    :data-id="props.id"
+    :data-name="props.name"
     :data-unchecked-value="props.uncheckedValue"
     :data-value="props.value"
-    :tabindex="effectiveDisabled ? -1 : 0"
-    :disabled="props.nativeButton ? effectiveDisabled : undefined"
-  >
-    <slot />
-    <input
+    :tabindex="effectiveDisabledValue ? -1 : 0"
+    :type="props.nativeButton ? 'button' : undefined"
+    :disabled="props.nativeButton ? effectiveDisabledValue : undefined"
+    ><slot /><input
       v-if="!props.nativeButton"
-      ref="inputRef"
       data-sw-checkbox-input
       aria-hidden="true"
-      tabindex="-1"
       type="checkbox"
+      tabindex="-1"
+      ref="inputElement"
       :checked="initialChecked"
-      :disabled="effectiveDisabled"
+      :disabled="effectiveDisabledValue"
       :form="props.form"
       :id="props.id"
       :name="props.name"
@@ -260,18 +287,16 @@ onBeforeUnmount(destroyOwnedInstance);
         clip: rect(0 0 0 0);
         white-space: nowrap;
         border: 0;
-      "
-    />
-  </component>
-  <input
+      " /></component
+  ><input
     v-if="props.nativeButton"
-    ref="inputRef"
     data-sw-checkbox-input
     aria-hidden="true"
-    tabindex="-1"
     type="checkbox"
+    tabindex="-1"
+    ref="inputElement"
     :checked="initialChecked"
-    :disabled="effectiveDisabled"
+    :disabled="effectiveDisabledValue"
     :form="props.form"
     :id="props.id"
     :name="props.name"

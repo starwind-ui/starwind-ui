@@ -29,6 +29,7 @@ const { defaultValue, disabled = false, value, ...rest } = Astro.props;
     trackAstroController,
   } from "../internal/controller-lifecycle";
 
+  let knownRoots = new WeakSet<HTMLElement>();
   const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
     const initRoot =
       event?.type === "starwind:init" && event instanceof CustomEvent
@@ -38,22 +39,26 @@ const { defaultValue, disabled = false, value, ...rest } = Astro.props;
       ? initRoot
       : document;
     const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
-
     if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
       candidates.unshift(scopedRoot as HTMLElement);
     }
-
+    if (scopedRoot instanceof Element) {
+      const owner = scopedRoot.parentElement?.closest<HTMLElement>(selector);
+      if (owner && knownRoots.has(owner) && !candidates.includes(owner)) candidates.push(owner);
+    }
     return candidates;
   };
-
   const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
     value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
-
   const setupInputs = (event?: Event) => {
-    getInitCandidates(event, "[data-sw-input]").forEach((input) =>
-      trackAstroController("InputRoot", input, createInput(input)),
-    );
+    getInitCandidates(event, "[data-sw-input]").forEach((root) => {
+      const instance = trackAstroController("InputRoot", root, createInput(root));
+      instance.refresh();
+      knownRoots.add(root);
+    });
   };
-
+  document.addEventListener("astro:before-swap", () => {
+    knownRoots = new WeakSet();
+  });
   registerAstroControllerLifecycle("InputRoot", setupInputs);
 </script>

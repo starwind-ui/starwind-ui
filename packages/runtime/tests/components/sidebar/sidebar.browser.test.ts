@@ -1,13 +1,297 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { initStarwind } from "../../../src/init-starwind";
 import { createDrawer } from "../../../src/components/drawer";
 import {
   createSidebarController,
   initSidebarController,
   type SidebarOpenChangeDetails,
 } from "../../../src/components/sidebar/sidebar";
+import { initStarwind } from "../../../src/init-starwind";
 
 describe("createSidebarController", () => {
+  it("commands and accepts only the nearest provider's Sheet with the inner Sheet first", async () => {
+    mockMatchMedia(true);
+    const outer = renderSidebar();
+    const inner = outer.cloneNode(true) as HTMLElement;
+    outer.prepend(inner);
+    const innerSheet = inner.querySelector<HTMLElement>('[data-slot="sidebar-mobile"]')!;
+    const outerSheet = outer.querySelectorAll<HTMLElement>('[data-slot="sidebar-mobile"]')[1]!;
+    const innerDrawer = createDrawer(innerSheet);
+    const outerDrawer = createDrawer(outerSheet);
+    const innerController = createSidebarController(inner);
+    const outerController = createSidebarController(outer);
+    outerController.setMobileOpen(true);
+    await Promise.resolve();
+    expect(outerDrawer.getOpen()).toBe(true);
+    expect(innerDrawer.getOpen()).toBe(false);
+    outerController.setMobileOpen(false);
+    innerDrawer.open();
+    await Promise.resolve();
+    expect(innerController.getMobileOpen()).toBe(true);
+    expect(outerController.getMobileOpen()).toBe(false);
+    outerController.destroy();
+    innerController.destroy();
+    outerDrawer.destroy();
+    innerDrawer.destroy();
+  });
+
+  for (const open of [false, true]) {
+    it(`waits for a late DOM veto of Sheet ${open ? "open" : "close"}`, async () => {
+      mockMatchMedia(true);
+      const provider = renderSidebar();
+      const sheet = getMobileSheet();
+      const drawer = createDrawer(sheet);
+      const notification = vi.fn();
+      const controller = createSidebarController(provider, { onMobileOpenChange: notification });
+      controller.setMobileOpen(!open, { emit: false });
+      const veto = (event: Event) => {
+        if (event.target === sheet) event.preventDefault();
+      };
+      document.addEventListener("starwind:open-change", veto);
+      drawer.setOpen(open);
+      await Promise.resolve();
+      expect(drawer.getOpen()).toBe(!open);
+      expect(controller.getMobileOpen()).toBe(!open);
+      expect(notification).not.toHaveBeenCalled();
+      document.removeEventListener("starwind:open-change", veto);
+      drawer.setOpen(open);
+      await Promise.resolve();
+      expect(controller.getMobileOpen()).toBe(open);
+      expect(notification).toHaveBeenCalledTimes(1);
+      controller.destroy();
+      drawer.destroy();
+    });
+  }
+
+  it("keeps a newer Provider command issued during a Sheet proposal", async () => {
+    mockMatchMedia(true);
+    const provider = renderSidebar();
+    const sheet = getMobileSheet();
+    const drawer = createDrawer(sheet);
+    const controller = createSidebarController(provider);
+    controller.setMobileOpen(true, { emit: false });
+    document.addEventListener(
+      "starwind:open-change",
+      () => controller.setMobileOpen(true, { emit: false }),
+      { once: true },
+    );
+    drawer.close();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(controller.getMobileOpen()).toBe(true);
+    expect(drawer.getOpen()).toBe(true);
+    controller.destroy();
+    drawer.destroy();
+  });
+
+  it("keeps a newer Provider command issued during the Sheet callback", async () => {
+    mockMatchMedia(true);
+    const provider = renderSidebar();
+    const sheet = getMobileSheet();
+    const controller = createSidebarController(provider);
+    const drawer = createDrawer(sheet, {
+      onOpenChange: (open) => {
+        if (!open) controller.setMobileOpen(true, { emit: false });
+      },
+    });
+    controller.setMobileOpen(true, { emit: false });
+    drawer.close();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(controller.getMobileOpen()).toBe(true);
+    expect(drawer.getOpen()).toBe(true);
+    controller.destroy();
+    drawer.destroy();
+  });
+
+  for (const open of [false, true]) {
+    for (const veto of ["callback", "late-dom"] as const) {
+      it(`keeps Provider state when its Sheet ${open ? "open" : "close"} command is canceled by ${veto}`, async () => {
+        mockMatchMedia(true);
+        const provider = renderSidebar();
+        const sheet = getMobileSheet();
+        let cancel = false;
+        const drawer = createDrawer(sheet, {
+          onOpenChange: (_next, details) => {
+            if (cancel && veto === "callback") details.cancel();
+          },
+        });
+        const notify = vi.fn();
+        const controller = createSidebarController(provider, { onMobileOpenChange: notify });
+        controller.setMobileOpen(!open, { emit: false });
+        cancel = true;
+        const listener = (event: Event) => {
+          if (event.target === sheet && cancel && veto === "late-dom") event.preventDefault();
+        };
+        document.addEventListener("starwind:open-change", listener);
+        controller.setMobileOpen(open);
+        expect(controller.getMobileOpen()).toBe(!open);
+        expect(drawer.getOpen()).toBe(!open);
+        expect(notify).not.toHaveBeenCalled();
+        cancel = false;
+        controller.setMobileOpen(open);
+        expect(controller.getMobileOpen()).toBe(open);
+        expect(drawer.getOpen()).toBe(open);
+        expect(notify).toHaveBeenCalledTimes(1);
+        document.removeEventListener("starwind:open-change", listener);
+        controller.destroy();
+        drawer.destroy();
+      });
+    }
+  }
+
+  for (const initialOpen of [false, true]) {
+    for (const veto of ["callback", "late-dom"] as const) {
+      it(`retains accepted Sheet state after a ${veto} veto from ${initialOpen}`, async () => {
+        mockMatchMedia(true);
+        const provider = renderSidebar();
+        const sheet = getMobileSheet();
+        let cancel = false;
+        const drawer = createDrawer(sheet, {
+          onOpenChange: (_open, details) => {
+            if (cancel && veto === "callback") details.cancel();
+          },
+        });
+        const notify = vi.fn();
+        const controller = createSidebarController(provider, { onMobileOpenChange: notify });
+        const listener = (event: Event) => {
+          if (event.target === sheet && cancel && veto === "late-dom") event.preventDefault();
+        };
+        document.addEventListener("starwind:open-change", listener);
+        try {
+          controller.setMobileOpen(initialOpen, { emit: false });
+          await Promise.resolve();
+          drawer.setOpen(!initialOpen);
+          cancel = true;
+          drawer.setOpen(initialOpen);
+          await Promise.resolve();
+          expect(drawer.getOpen()).toBe(!initialOpen);
+          expect(controller.getMobileOpen()).toBe(!initialOpen);
+          expect(provider.dataset.mobileOpen).toBe(String(!initialOpen));
+          expect(sheet.dataset.state).toBe(initialOpen ? "closed" : "open");
+          await vi.waitFor(() => expect(getMobilePopup().open).toBe(!initialOpen));
+          expect(notify).toHaveBeenCalledTimes(1);
+          expect(notify.mock.calls[0]![0]).toBe(!initialOpen);
+        } finally {
+          document.removeEventListener("starwind:open-change", listener);
+          controller.destroy();
+          drawer.destroy();
+        }
+      });
+    }
+    for (const command of ["setter", "event"] as const) {
+      it(`keeps a newer ${command} Provider command during the Sheet callback from ${initialOpen}`, async () => {
+        mockMatchMedia(true);
+        const provider = renderSidebar();
+        const sheet = getMobileSheet();
+        const notify = vi.fn();
+        const controller = createSidebarController(provider, { onMobileOpenChange: notify });
+        let supersede = false;
+        const drawer = createDrawer(sheet, {
+          onOpenChange: () => {
+            if (!supersede) return;
+            if (command === "setter") controller.setMobileOpen(initialOpen);
+            else
+              provider.dispatchEvent(
+                new CustomEvent(initialOpen ? "sidebar:open-mobile" : "sidebar:close-mobile"),
+              );
+          },
+        });
+        try {
+          controller.setMobileOpen(initialOpen, { emit: false });
+          await Promise.resolve();
+          supersede = true;
+          drawer.setOpen(!initialOpen);
+          await Promise.resolve();
+          await Promise.resolve();
+          expect(controller.getMobileOpen()).toBe(initialOpen);
+          expect(drawer.getOpen()).toBe(initialOpen);
+          expect(provider.dataset.mobileOpen).toBe(String(initialOpen));
+          expect(sheet.dataset.state).toBe(initialOpen ? "open" : "closed");
+          await vi.waitFor(() => expect(getMobilePopup().open).toBe(initialOpen));
+          expect(notify).not.toHaveBeenCalled();
+        } finally {
+          controller.destroy();
+          drawer.destroy();
+        }
+      });
+    }
+  }
+
+  for (const initialOpen of [false, true]) {
+    for (const controlled of [false, true]) {
+      for (const veto of ["callback", "late-dom"] as const) {
+        it(`publishes accepted Sheet state when a newer same-value command is ${veto} canceled from ${initialOpen}, controlled=${controlled}`, async () => {
+          mockMatchMedia(true);
+          const provider = renderSidebar();
+          const sheet = getMobileSheet();
+          let cancel = false;
+          const drawer = createDrawer(sheet, {
+            onOpenChange: (_open, details) => {
+              if (cancel && veto === "callback") details.cancel();
+            },
+          });
+          const notify = vi.fn();
+          const controller = createSidebarController(provider, {
+            ...(controlled ? { mobileOpen: initialOpen } : {}),
+            onMobileOpenChange: notify,
+          });
+          const listener = (event: Event) => {
+            if (event.target === sheet && cancel && veto === "late-dom") event.preventDefault();
+          };
+          document.addEventListener("starwind:open-change", listener);
+          try {
+            controller.setMobileOpen(initialOpen, { emit: false });
+            await Promise.resolve();
+            drawer.setOpen(!initialOpen);
+            cancel = true;
+            controller.setMobileOpen(initialOpen);
+            await Promise.resolve();
+            await Promise.resolve();
+            expect(controller.getMobileOpen()).toBe(controlled ? initialOpen : !initialOpen);
+            expect(drawer.getOpen()).toBe(!initialOpen);
+            expect(notify).toHaveBeenCalledTimes(1);
+            expect(notify.mock.calls[0]![0]).toBe(!initialOpen);
+            await vi.waitFor(() => expect(getMobilePopup().open).toBe(!initialOpen));
+          } finally {
+            document.removeEventListener("starwind:open-change", listener);
+            controller.destroy();
+            drawer.destroy();
+          }
+        });
+      }
+    }
+  }
+
+  it("retires pending Sheet reflection across Provider removal and recreation", async () => {
+    mockMatchMedia(true);
+    const provider = renderSidebar();
+    const drawer = createDrawer(getMobileSheet());
+    const retiredNotify = vi.fn();
+    const controller = createSidebarController(provider, { onMobileOpenChange: retiredNotify });
+    drawer.open();
+    controller.destroy();
+    provider.remove();
+    const replacementNotify = vi.fn();
+    const replacement = createSidebarController(provider, {
+      onMobileOpenChange: replacementNotify,
+    });
+    document.body.append(provider);
+    await Promise.resolve();
+    expect(replacement.getMobileOpen()).toBe(false);
+    expect(retiredNotify).not.toHaveBeenCalled();
+    expect(replacementNotify).not.toHaveBeenCalled();
+    replacement.setMobileOpen(true);
+    drawer.close();
+    replacement.setMobileOpen(true, { emit: false });
+    await Promise.resolve();
+    getMobilePopup().dispatchEvent(new Event("transitionend"));
+    await Promise.resolve();
+    expect(replacement.getMobileOpen()).toBe(true);
+    expect(drawer.getOpen()).toBe(true);
+    replacement.destroy();
+    drawer.destroy();
+  });
+
   beforeEach(() => {
     document.body.innerHTML = "";
     document.documentElement.removeAttribute("data-starwind-sidebar-tooltips");
@@ -266,7 +550,7 @@ describe("createSidebarController", () => {
     expect(mobilePopup.getAttribute("data-state")).toBe("closed");
   });
 
-  it("requests mobile state changes without committing controlled mobile open state", () => {
+  it("requests mobile state changes without committing controlled mobile open state", async () => {
     mockMatchMedia(true);
     const provider = renderSidebar();
     const mobileSheet = getMobileSheet();
@@ -298,6 +582,7 @@ describe("createSidebarController", () => {
     expect(mobileDrawer.getOpen()).toBe(true);
 
     getMobileCloseButton().click();
+    await Promise.resolve();
 
     expect(onMobileOpenChange).toHaveBeenLastCalledWith(
       false,
@@ -354,7 +639,7 @@ describe("createSidebarController", () => {
     expect(onMobileOpenChange).not.toHaveBeenCalled();
   });
 
-  it("synchronizes uncontrolled mobile state when the drawer closes itself", () => {
+  it("synchronizes uncontrolled mobile state when the drawer closes itself", async () => {
     mockMatchMedia(true);
     const provider = renderSidebar();
     const mobileDrawer = createDrawer(getMobileSheet());
@@ -362,6 +647,7 @@ describe("createSidebarController", () => {
 
     getTrigger().click();
     getMobileCloseButton().click();
+    await Promise.resolve();
 
     expect(mobileDrawer.getOpen()).toBe(false);
     expect(controller.isMobileOpen()).toBe(false);

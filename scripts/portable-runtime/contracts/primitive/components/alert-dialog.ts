@@ -5,6 +5,7 @@ export const alertDialogRuntimeAdapterContract = {
   category: "dialog-native-overlay",
   displayName: "AlertDialog",
   runtime: {
+    refresh: { method: "refresh", parts: "owned-controls", state: "preserve" },
     factory: "createAlertDialog",
     importSource: "@starwind-ui/runtime/alert-dialog",
     rootPart: "root",
@@ -115,6 +116,13 @@ export const alertDialogRuntimeAdapterContract = {
     },
   ],
   props: [
+    {
+      defaultValue: "false",
+      name: "asChild",
+      kind: "rendering",
+      targets: ["trigger", "close"],
+      type: "boolean",
+    },
     { name: "open", kind: "control", targets: ["root"], type: "boolean" },
     {
       defaultValue: "false",
@@ -162,6 +170,7 @@ export const alertDialogRuntimeAdapterContract = {
     {
       name: "openChange",
       stateModel: "open",
+      acceptanceNotification: "controller-subscription",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onOpenChange",

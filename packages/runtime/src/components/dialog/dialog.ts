@@ -1,5 +1,9 @@
 import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
+  createDialogTopLayerHost,
+  type DialogTopLayerHost,
+} from "../../internal/dialog-top-layer-host";
+import {
   ensureId,
   readBooleanAttribute,
   resolveAsChildControl,
@@ -18,10 +22,6 @@ import {
   requestDialogOwnedFloatingPortalClose,
   resolvePortalPlacement,
 } from "../../internal/floating-portal";
-import {
-  createDialogTopLayerHost,
-  type DialogTopLayerHost,
-} from "../../internal/dialog-top-layer-host";
 import { focusFirstElement, trapTabKey } from "../../internal/focus";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
@@ -80,6 +80,7 @@ export type DialogInstance = {
   toggle(): void;
   setOpen(open: boolean, options?: DialogSetOpenOptions): void;
   getOpen(): boolean;
+  refresh(): void;
   subscribe(event: "openChange", callback: (details: DialogOpenChangeDetails) => void): () => void;
   subscribe(
     event: "closeComplete",
@@ -111,6 +112,7 @@ const DIALOG_TARGET_ID_ATTRIBUTE = "data-sw-dialog-target-id";
 const DIALOG_ROOT_SELECTOR = "[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]";
 
 const instances = new WeakMap<HTMLElement, DialogController>();
+const retainedSurfaceOwners = new WeakMap<Element, HTMLElement>();
 const openDialogStack: DialogController[] = [];
 const handledEscapeEvents = new WeakSet<Event>();
 type DialogInitializationTransaction = {
@@ -130,6 +132,24 @@ export function createDialog(root: HTMLElement, options: DialogOptions = {}): Di
   return createDialogInternal(root, options, null);
 }
 
+/** Resolves native-overlay ownership for scoped initialization through retained surfaces. */
+export function resolveDialogOwner(element: Element): HTMLElement | undefined {
+  let current: Element | null = element;
+  while (current) {
+    if (current.matches(DIALOG_ROOT_SELECTOR)) return current as HTMLElement;
+    const owner = retainedSurfaceOwners.get(current);
+    if (owner?.isConnected && instances.has(owner)) return owner;
+    current = current.parentElement;
+  }
+  return undefined;
+}
+
+export function refreshExistingDialog(root: HTMLElement): DialogInstance | undefined {
+  const instance = instances.get(root);
+  instance?.refresh();
+  return instance;
+}
+
 export function refreshDialogPortalSurface(root: HTMLElement): void {
   const controller = instances.get(root);
   if (!controller) return;
@@ -143,8 +163,11 @@ export function refreshDialogPortalSurface(root: HTMLElement): void {
   controller["topLayerHost"].destroy();
   controller["portalSurfaceAbortController"]?.abort();
   controller["portalSurfaceAbortController"] = new AbortController();
+  controller["unregisterOwnedSurfaces"]();
   Object.assign(controller["elements"], nextElements);
+  controller["registerOwnedSurfaces"]();
   controller["topLayerHost"] = createDialogTopLayerHost(controller["elements"].content);
+  controller["reconcileControlBindings"]();
   controller["setupAccessibility"]();
   controller["bindPortalSurfaceEvents"]();
   controller["portalSession"]?.mount();
@@ -181,7 +204,16 @@ function createDialogInternal(
 class DialogController implements DialogInstance {
   readonly root: HTMLElement;
 
+  private pendingOpenChange: {
+    details?: DialogOpenChangeDetails;
+    open: boolean;
+    superseded: boolean;
+  } | null = null;
+
   private readonly abortController = new AbortController();
+  private readonly triggerBindings = new Map<HTMLElement, AbortController>();
+  private readonly closeBindings = new Map<HTMLElement, AbortController>();
+  private readonly externalTriggers: HTMLElement[];
   private readonly openChangeSubscribers = new Set<(details: DialogOpenChangeDetails) => void>();
   private readonly closeCompleteSubscribers = new Set<
     (details: DialogCloseCompleteDetails) => void
@@ -213,6 +245,9 @@ class DialogController implements DialogInstance {
   constructor(root: HTMLElement, options: DialogOptions) {
     this.root = root;
     this.elements = getDialogElements(root);
+    this.externalTriggers = this.elements.triggers.filter(
+      (trigger) => !isRuntimePartOwned(root, trigger, DIALOG_ROOT_SELECTOR),
+    );
     this.controlled = Object.hasOwn(options, "open");
     this.closeOnEscape =
       options.closeOnEscape ?? readBooleanAttribute(root, "data-close-on-escape", true);
@@ -240,6 +275,7 @@ class DialogController implements DialogInstance {
           root,
         })
       : null;
+    this.registerOwnedSurfaces();
   }
 
   initialize(initializationTransaction: DialogInitializationTransaction | null): void {
@@ -269,6 +305,7 @@ class DialogController implements DialogInstance {
   }
 
   setOpen(open: boolean, options: DialogSetOpenOptions = {}): void {
+    this.supersedePendingOpenChange(open);
     if (open === this.openState && options.emit !== false) {
       this.setOpen(open, { ...options, emit: false });
       return;
@@ -292,6 +329,27 @@ class DialogController implements DialogInstance {
 
   getOpen(): boolean {
     return this.openState;
+  }
+
+  refresh(): void {
+    if (this.destroyed) return;
+    this.elements.triggers = uniqueElements([
+      ...getResolvedDialogControls(this.root, DIALOG_TRIGGER_ATTRIBUTE, this.elements.portal),
+      ...this.externalTriggers.filter((trigger) => trigger.isConnected),
+    ]);
+    this.elements.closeButtons = getResolvedDialogControls(
+      this.root,
+      DIALOG_CLOSE_ATTRIBUTE,
+      this.elements.portal,
+    );
+    this.reconcileControlBindings();
+    const contentId = ensureId(this.elements.content, "sw-dialog-content");
+    this.elements.triggers.forEach((trigger) => {
+      trigger.setAttribute("aria-haspopup", "dialog");
+      trigger.setAttribute("aria-controls", contentId);
+      trigger.setAttribute("aria-expanded", String(this.openState));
+      trigger.setAttribute("data-state", this.openState ? "open" : "closed");
+    });
   }
 
   subscribe(event: "openChange", callback: (details: DialogOpenChangeDetails) => void): () => void;
@@ -328,10 +386,15 @@ class DialogController implements DialogInstance {
 
   destroy(): void {
     if (this.destroyed) return;
+    this.unregisterOwnedSurfaces();
 
     requestDialogOwnedFloatingPortalClose(this.elements.content);
     demoteDialogOwnedFloatingPortals(this.elements.content);
     this.abortController.abort();
+    this.triggerBindings.forEach((binding) => binding.abort());
+    this.triggerBindings.clear();
+    this.closeBindings.forEach((binding) => binding.abort());
+    this.closeBindings.clear();
     this.portalSurfaceAbortController?.abort();
     this.closeAbortController?.abort();
     this.cancelScheduledInit();
@@ -376,17 +439,7 @@ class DialogController implements DialogInstance {
 
   private bindEvents(): void {
     const { signal } = this.abortController;
-    const { triggers } = this.elements;
-
-    triggers.forEach((trigger) => {
-      trigger.addEventListener(
-        "click",
-        (event) => {
-          this.requestOpen(true, { reason: "trigger-press", event, trigger });
-        },
-        { signal },
-      );
-    });
+    this.reconcileControlBindings();
 
     this.bindPortalSurfaceEvents();
 
@@ -451,20 +504,54 @@ class DialogController implements DialogInstance {
     );
   }
 
-  private bindPortalSurfaceEvents(): void {
-    const { content, closeButtons, overlay } = this.elements;
-    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
+  private registerOwnedSurfaces(): void {
+    retainedSurfaceOwners.set(this.elements.content, this.root);
+    if (this.elements.portal) retainedSurfaceOwners.set(this.elements.portal, this.root);
+  }
 
-    closeButtons.forEach((button) => {
-      button.addEventListener(
-        "click",
-        (event) => {
-          if (!this.isTopmostOpenLayer()) return;
-          this.requestOpen(false, { reason: "close-press", event, trigger: button });
-        },
-        { signal },
-      );
-    });
+  private unregisterOwnedSurfaces(): void {
+    for (const surface of [this.elements.content, this.elements.portal]) {
+      if (surface && retainedSurfaceOwners.get(surface) === this.root)
+        retainedSurfaceOwners.delete(surface);
+    }
+  }
+
+  private reconcileControlBindings(): void {
+    const reconcile = (
+      elements: HTMLElement[],
+      bindings: Map<HTMLElement, AbortController>,
+      open: boolean,
+    ) => {
+      bindings.forEach((binding, element) => {
+        if (elements.includes(element)) return;
+        binding.abort();
+        bindings.delete(element);
+      });
+      elements.forEach((element) => {
+        if (bindings.has(element)) return;
+        const binding = new AbortController();
+        bindings.set(element, binding);
+        element.addEventListener(
+          "click",
+          (event) => {
+            if (!element.isConnected || (!open && !this.isTopmostOpenLayer())) return;
+            this.requestOpen(open, {
+              reason: open ? "trigger-press" : "close-press",
+              event,
+              trigger: element,
+            });
+          },
+          { signal: binding.signal },
+        );
+      });
+    };
+    reconcile(this.elements.triggers, this.triggerBindings, true);
+    reconcile(this.elements.closeButtons, this.closeBindings, false);
+  }
+
+  private bindPortalSurfaceEvents(): void {
+    const { content, overlay } = this.elements;
+    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
 
     overlay?.addEventListener(
       "click",
@@ -522,9 +609,16 @@ class DialogController implements DialogInstance {
   }
 
   private requestOpen(open: boolean, request: OpenRequest): void {
+    this.supersedePendingOpenChange(open);
     if (open === this.openState && !this.controlled && !request.forceApply) return;
 
     const previousOpen = this.openState;
+    const previousProposal = this.pendingOpenChange;
+    const proposal: NonNullable<DialogController["pendingOpenChange"]> = {
+      open,
+      superseded: false,
+    };
+    this.pendingOpenChange = proposal;
     const transaction =
       open && (!this.controlled || request.forceApply)
         ? createInitializationTransaction(this.root.ownerDocument)
@@ -557,18 +651,21 @@ class DialogController implements DialogInstance {
         },
         onBeforeOpenChange: () => this.dispatchOpenChangeIntent(open, request),
         onCanceledOpenChange: () => {
+          if (proposal.superseded) return;
           if (this.openState === open && previousOpen !== open) {
             this.setOpen(previousOpen, { emit: false, reason: request.reason });
           }
         },
         onNotifyOpenChangeSubscribers: (details) => this.notifyOpenChange(details),
         onOpenChange: (nextOpen, details) => {
+          proposal.details = details;
+          if (proposal.superseded) details.cancel();
           this.onOpenChange?.(nextOpen, details);
         },
       });
 
       if (transaction) {
-        if (result.status === "applied") {
+        if (result.status === "applied" || (proposal.superseded && this.openState)) {
           commitInitializationTransaction(transaction);
         } else {
           rollbackInitializationTransaction(transaction);
@@ -584,7 +681,15 @@ class DialogController implements DialogInstance {
         this.restoreFailedOpen(previousOpen);
       }
       throw error;
+    } finally {
+      this.pendingOpenChange = previousProposal;
     }
+  }
+
+  private supersedePendingOpenChange(open: boolean): void {
+    if (!this.pendingOpenChange || this.pendingOpenChange.open === open) return;
+    this.pendingOpenChange.superseded = true;
+    this.pendingOpenChange.details?.cancel();
   }
 
   private dispatchOpenChangeIntent(open: boolean, request: OpenRequest): boolean {
@@ -1100,10 +1205,21 @@ function getDialogTriggers(root: HTMLElement): HTMLElement[] {
   return uniqueElements([...internalTriggers, ...externalTriggers]);
 }
 
-function getResolvedDialogControls(root: HTMLElement, attribute: string): HTMLElement[] {
+function getResolvedDialogControls(
+  root: HTMLElement,
+  attribute: string,
+  portal?: HTMLElement | null,
+): HTMLElement[] {
   return uniqueElements(
-    queryRuntimePartElements(root, `[${attribute}]`)
-      .filter((element) => isRuntimePartOwned(root, element, DIALOG_ROOT_SELECTOR))
+    [
+      ...queryRuntimePartElements(root, `[${attribute}]`),
+      ...(portal?.isConnected ? portal.querySelectorAll<HTMLElement>(`[${attribute}]`) : []),
+    ]
+      .filter(
+        (element) =>
+          isRuntimePartOwned(root, element, DIALOG_ROOT_SELECTOR) ||
+          (portal?.contains(element) && !portal.contains(element.closest(DIALOG_ROOT_SELECTOR))),
+      )
       .map(resolveAsChildControl),
   );
 }

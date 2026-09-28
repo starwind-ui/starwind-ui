@@ -1,16 +1,283 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createAlertDialog } from "../../../src/components/alert-dialog/alert-dialog";
-import { createDialog } from "../../../src/components/dialog/dialog";
+import {
+  createDialog,
+  refreshDialogPortalSurface,
+  resolveDialogOwner,
+} from "../../../src/components/dialog/dialog";
 import { createDrawer } from "../../../src/components/drawer/drawer";
 import { createPopover } from "../../../src/components/popover/popover";
-import { registerOverlayDismissal } from "../../../src/internal/overlay-dismissal";
 import {
   createFloatingPortalSession,
   type FloatingPortalSession,
+  reportPortalPlacement,
 } from "../../../src/internal/floating-portal";
+import { registerOverlayDismissal } from "../../../src/internal/overlay-dismissal";
 
 describe("createDialog", () => {
+  it.each([
+    { name: "dialog", factory: createDialog, popupAttribute: "data-sw-dialog-content" },
+    {
+      name: "alert-dialog",
+      factory: createAlertDialog,
+      popupAttribute: "data-sw-alert-dialog-popup",
+    },
+    { name: "drawer", factory: createDrawer, popupAttribute: "data-sw-drawer-popup" },
+  ])(
+    "refreshes late $name controls while retaining cancellation, focus, locks, and close completion",
+    async ({ name, factory, popupAttribute }) => {
+      document.body.innerHTML = `<div data-sw-${name}><dialog ${popupAttribute}><input aria-label="Focus target"></dialog></div>`;
+      const root = document.body.firstElementChild as HTMLElement;
+      const popup = root.querySelector("dialog")!;
+      let veto = true;
+      const instance = factory(root, {
+        onOpenChange: (_open, detail) => {
+          if (veto) detail.cancel();
+        },
+      });
+      const accepted = vi.fn();
+      const completed = vi.fn();
+      instance.subscribe("openChange", accepted);
+      instance.subscribe("closeComplete", completed);
+      const trigger = document.createElement("button");
+      trigger.setAttribute(`data-sw-${name}-trigger`, "");
+      root.prepend(trigger);
+      instance.refresh();
+      instance.refresh();
+      expect(trigger.getAttribute("aria-controls")).toBe(popup.id);
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+      trigger.click();
+      expect(instance.getOpen()).toBe(false);
+      veto = false;
+      const cancel = (event: Event) => event.preventDefault();
+      root.addEventListener("starwind:open-change", cancel);
+      trigger.click();
+      expect(instance.getOpen()).toBe(false);
+      expect(accepted).not.toHaveBeenCalled();
+      root.removeEventListener("starwind:open-change", cancel);
+      trigger.focus();
+      trigger.click();
+      expect(accepted).toHaveBeenCalledTimes(1);
+      const focused = document.activeElement;
+      expect(popup.open).toBe(true);
+      const close = document.createElement("button");
+      close.setAttribute(`data-sw-${name}-close`, "");
+      popup.append(close);
+      instance.refresh();
+      instance.refresh();
+      expect(factory(root)).toBe(instance);
+      expect(root.querySelector("dialog")).toBe(popup);
+      expect(document.activeElement).toBe(focused);
+      expect(document.body.style.overflow).toBe("hidden");
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      const replacement = close.cloneNode() as HTMLButtonElement;
+      close.replaceWith(replacement);
+      instance.refresh();
+      close.click();
+      expect(instance.getOpen()).toBe(true);
+      const animation = createDeferred();
+      Object.defineProperty(popup, "getAnimations", {
+        configurable: true,
+        value: () => [{ finished: animation.promise }],
+      });
+      replacement.click();
+      expect(accepted).toHaveBeenCalledTimes(2);
+      expect(instance.getOpen()).toBe(false);
+      await waitForPresenceFrame();
+      expect(popup.open).toBe(true);
+      instance.refresh();
+      expect(popup.open).toBe(true);
+      expect(document.body.style.overflow).toBe("hidden");
+      expect(completed).not.toHaveBeenCalled();
+      animation.resolve();
+      await waitForMicrotasks();
+      expect(popup.open).toBe(false);
+      expect(document.activeElement).toBe(trigger);
+      expect(document.body.style.overflow).toBe("");
+      expect(completed).toHaveBeenCalledTimes(1);
+      const newTrigger = trigger.cloneNode() as HTMLButtonElement;
+      trigger.replaceWith(newTrigger);
+      instance.refresh();
+      trigger.click();
+      expect(instance.getOpen()).toBe(false);
+      newTrigger.click();
+      expect(instance.getOpen()).toBe(true);
+      instance.refresh();
+      popup.dispatchEvent(new Event("cancel", { cancelable: true }));
+      expect(instance.getOpen()).toBe(false);
+      await waitForPresenceFrame();
+      instance.destroy();
+      newTrigger.click();
+      expect(instance.getOpen()).toBe(false);
+    },
+  );
+
+  it.each([
+    { name: "alert-dialog", factory: createAlertDialog },
+    { name: "drawer", factory: createDrawer },
+  ])(
+    "refreshes $name controls in its retained moved portal with nested isolation",
+    async ({ name, factory }) => {
+      const root = document.createElement("div");
+      root.setAttribute(`data-sw-${name}`, "");
+      root.innerHTML = `<button data-sw-${name}-trigger>Open</button><div data-sw-${name}-portal data-sw-portal-placement="framework"><dialog data-sw-${name}-popup><h2 data-sw-${name}-title>Outer</h2><div data-sw-${name} data-inner><dialog data-sw-${name}-popup><h2 data-sw-${name}-title>Inner</h2></dialog></div></dialog></div>`;
+      document.body.append(root);
+      const instance = factory(root);
+      const portal = root.querySelector<HTMLElement>(`[data-sw-${name}-portal]`)!;
+      const popup = portal.querySelector<HTMLDialogElement>("dialog")!;
+      const target = document.createElement("div");
+      target.setAttribute("data-sw-dialog", "");
+      document.body.append(target);
+      target.append(portal);
+      reportPortalPlacement(portal, { ready: true, target });
+      instance.setOpen(true, { emit: false });
+      const inner = portal.querySelector<HTMLElement>("[data-inner]")!;
+      const innerClose = document.createElement("button");
+      innerClose.setAttribute(`data-sw-${name}-close`, "");
+      inner.append(innerClose);
+      const close = document.createElement("button");
+      close.setAttribute(`data-sw-${name}-close`, "");
+      popup.append(close);
+      instance.refresh();
+      instance.refresh();
+      expect(resolveDialogOwner(close)).toBe(root);
+      expect(resolveDialogOwner(innerClose)).toBe(inner);
+      expect(innerClose.hasAttribute("data-sw-dialog-close")).toBe(false);
+      innerClose.click();
+      expect(instance.getOpen()).toBe(true);
+      close.click();
+      expect(instance.getOpen()).toBe(false);
+      await waitForPresenceFrame();
+      expect(popup.open).toBe(false);
+      instance.destroy();
+      target.remove();
+    },
+  );
+
+  it.each([
+    { name: "alert-dialog", factory: createAlertDialog },
+    { name: "drawer", factory: createDrawer },
+  ])("retains the initial $name portal when construction opens it", async ({ name, factory }) => {
+    const root = document.createElement("div");
+    root.setAttribute(`data-sw-${name}`, "");
+    root.innerHTML = `<div data-sw-${name}-portal><dialog data-sw-${name}-popup><h2 data-sw-${name}-title>Open</h2></dialog></div>`;
+    document.body.append(root);
+    const popup = root.querySelector<HTMLDialogElement>("dialog")!;
+    const instance = factory(root, { defaultOpen: true });
+    expect(popup.open).toBe(true);
+    const close = document.createElement("button");
+    close.setAttribute(`data-sw-${name}-close`, "");
+    popup.append(close);
+    instance.refresh();
+    close.click();
+    expect(instance.getOpen()).toBe(false);
+    await waitForPresenceFrame();
+    instance.destroy();
+  });
+
+  it("updates and clears scoped ownership through the existing popup surface lifecycle", () => {
+    const root = renderDialog();
+    const instance = createDialog(root);
+    const retired = getContent();
+    const current = retired.cloneNode(true) as HTMLDialogElement;
+    retired.replaceWith(current);
+    refreshDialogPortalSurface(root);
+    document.body.append(retired, current);
+    const oldClose = retired.querySelector<HTMLElement>("[data-sw-dialog-close]")!;
+    const newClose = current.querySelector<HTMLElement>("[data-sw-dialog-close]")!;
+    expect(resolveDialogOwner(oldClose)).toBeUndefined();
+    expect(resolveDialogOwner(newClose)).toBe(root);
+    instance.destroy();
+    expect(resolveDialogOwner(newClose)).toBeUndefined();
+    retired.remove();
+    current.remove();
+  });
+
+  it("refreshes only owned controls and retains existing external triggers", () => {
+    document.body.innerHTML = `<button data-sw-dialog-trigger data-sw-dialog-target-id="outer">External</button><div data-sw-dialog id="outer"><dialog data-sw-dialog-content><div data-sw-dialog id="inner"><dialog data-sw-dialog-content></dialog></div></dialog></div>`;
+    const outerRoot = document.querySelector<HTMLElement>("#outer")!;
+    const innerRoot = document.querySelector<HTMLElement>("#inner")!;
+    const outer = createDialog(outerRoot);
+    const inner = createDialog(innerRoot);
+    const trigger = document.createElement("button");
+    trigger.setAttribute("data-sw-dialog-trigger", "");
+    innerRoot.prepend(trigger);
+    outer.refresh();
+    expect(trigger.hasAttribute("aria-controls")).toBe(false);
+    document.querySelector<HTMLButtonElement>("[data-sw-dialog-target-id]")!.click();
+    expect(outer.getOpen()).toBe(true);
+    trigger.click();
+    expect(inner.getOpen()).toBe(false);
+    inner.refresh();
+    trigger.click();
+    expect(inner.getOpen()).toBe(true);
+    expect(trigger.getAttribute("aria-controls")).toBe(innerRoot.querySelector("dialog")!.id);
+    inner.destroy();
+    outer.destroy();
+  });
+
+  for (const initial of [false, true]) {
+    for (const command of ["silent", "public", "dom"] as const) {
+      it(`keeps a newer ${command} command over a conflicting ${initial ? "close" : "open"} callback proposal`, () => {
+        const root = renderDialog({ defaultOpen: initial });
+        const instance = createDialog(root, {
+          onOpenChange: () => {
+            if (command === "silent") instance.setOpen(initial, { emit: false });
+            else if (command === "public") {
+              if (initial) instance.open();
+              else instance.close();
+            } else root.dispatchEvent(new CustomEvent(initial ? "dialog:open" : "dialog:close"));
+          },
+        });
+        const accepted = vi.fn();
+        instance.subscribe("openChange", accepted);
+        instance.setOpen(!initial);
+        expect(instance.getOpen()).toBe(initial);
+        expect(getContent().open).toBe(initial);
+        expect(accepted).not.toHaveBeenCalled();
+        instance.destroy();
+      });
+    }
+  }
+
+  it("retains matching controlled parent acceptance and its accepted notification", () => {
+    const root = renderDialog();
+    const instance = createDialog(root, {
+      open: false,
+      onOpenChange: (open) => instance.setOpen(open, { emit: false }),
+    });
+    const accepted = vi.fn();
+    instance.subscribe("openChange", accepted);
+    instance.open();
+    expect(instance.getOpen()).toBe(true);
+    expect(getContent().open).toBe(true);
+    expect(accepted).toHaveBeenLastCalledWith(
+      expect.objectContaining({ open: true, isCanceled: false }),
+    );
+    instance.close();
+    expect(instance.getOpen()).toBe(false);
+    expect(accepted).toHaveBeenCalledTimes(2);
+    instance.destroy();
+  });
+
+  it("does not roll back the latest command after an intervening conflicting command", () => {
+    const root = renderDialog();
+    const instance = createDialog(root, {
+      onOpenChange: (open) => {
+        instance.setOpen(!open, { emit: false });
+        instance.setOpen(open, { emit: false });
+      },
+    });
+    const accepted = vi.fn();
+    instance.subscribe("openChange", accepted);
+    instance.open();
+    expect(instance.getOpen()).toBe(true);
+    expect(getContent().open).toBe(true);
+    expect(accepted).not.toHaveBeenCalled();
+    instance.destroy();
+  });
+
   beforeEach(() => {
     document.body.innerHTML = "";
     document.body.style.overflow = "";

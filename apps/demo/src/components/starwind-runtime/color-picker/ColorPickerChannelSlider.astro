@@ -6,9 +6,9 @@ import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
 import { colorPickerChannelSlider, colorPickerChannelSliderThumb } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
+  step?: number;
   channel: import("@starwind-ui/astro/color-picker").ColorPickerChannel;
   orientation?: "horizontal" | "vertical";
-  step?: number;
   initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
 };
 
@@ -25,6 +25,7 @@ const {
 <ColorPickerPrimitive.ChannelSlider
   initial={initial?.channelSlider({ channel, orientation, step }).root.initial}
   channel={channel}
+  step={step}
   orientation={orientation}
   class={colorPickerChannelSlider({ class: className })}
   {...rest}

@@ -25,9 +25,9 @@ defineExpose({ element });
     :data-value="props.value"
     role="option"
     :aria-selected="selected"
+    :data-selected="selected ? '' : undefined"
     :aria-disabled="props.disabled ? 'true' : undefined"
     :data-disabled="props.disabled ? '' : undefined"
-    :data-selected="selected ? '' : undefined"
     tabindex="-1"
   >
     <slot />

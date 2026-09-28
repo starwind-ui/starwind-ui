@@ -46,3 +46,5 @@ export type {
   AlertDialogCloseCompleteDetails,
   AlertDialogOpenChangeDetails,
 } from "@starwind-ui/runtime";
+export { __useAlertDialogControl } from "./AlertDialogClose";
+export { NativeOverlayControlContext as AlertDialogControlContext } from "./AlertDialogRoot";

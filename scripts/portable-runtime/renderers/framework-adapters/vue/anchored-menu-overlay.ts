@@ -1,3 +1,9 @@
+import {
+  menuConnection,
+  menuFragments,
+  menuInitialProjection,
+  menuPlan,
+} from "../../shared-recipes/structured/menu.js";
 import type {
   AdapterAnchoredMenuOverlayFacts,
   AdapterComponentFile,
@@ -5,6 +11,7 @@ import type {
   AdapterOutputModel,
   AdapterPrintedFile,
 } from "../types.js";
+import { getVueAcceptedModelEvent } from "./accepted-model-publication.js";
 
 export function isVueAnchoredMenuOverlayOutput(model: AdapterOutputModel): boolean {
   return model.files.some(
@@ -45,13 +52,23 @@ function printComponent(
   }
 
   return {
-    contents: family.part === "root" ? printRoot(facts) : printTrigger(facts),
+    contents:
+      family.part === "root"
+        ? printRoot(facts, getVueAcceptedModelEvent(file, "open"))
+        : printTrigger(facts),
     path: `${file.path}.vue`,
   };
 }
 
-function printRoot(facts: AdapterAnchoredMenuOverlayFacts): string {
+function printRoot(facts: AdapterAnchoredMenuOverlayFacts, acceptedEvent: string): string {
   const { attrs, events, props, runtime, state } = facts;
+  const initial = menuInitialProjection("vue", {
+    readModel: `props.${props.open.name}`,
+    readDefault: `props.${props.defaultOpen.name}`,
+    readDefaultCell: "initialDefaultOpen",
+    readAccepted: "uncontrolledOpen.value",
+    fallback: props.defaultOpen.defaultValue ?? "false",
+  });
   return `<script setup lang="ts">
 import { type ${events.closeComplete.detailsType}, type ${events.openChange.detailsType}, ${runtime.factory} } from "${runtime.importSource}";
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
@@ -80,10 +97,11 @@ const emit = defineEmits<{
 const publicAttrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 const mounted = ref(false);
-const initialDefaultOpen = props.${props.defaultOpen.name};
-const uncontrolledOpen = ref(initialDefaultOpen);
-const renderedOpen = computed(() => props.${props.open.name} ?? uncontrolledOpen.value);
+const initialDefaultOpen = ${initial.defaultSeed};
+const uncontrolledOpen = ref(${initial.acceptedSeed});
+const renderedOpen = computed(() => ${initial.rendered});
 let instance: ReturnType<typeof ${runtime.factory}> | undefined;
+let unsubscribeOpenChange: (() => void) | undefined;
 let generation = 0;
 
 provide(MenuRootContext, {
@@ -100,33 +118,17 @@ defineExpose({
   open: () => instance?.open(),
 });
 
-function handleOpenChange(open: boolean, detail: ${events.openChange.detailsType}): void {
-  emit("${events.openChange.name}", open, detail);
-  if (detail.isCanceled) return;
-  if (props.${props.open.name} === undefined) uncontrolledOpen.value = open;
-  emit("update:open", open);
-}
 function destroyOwnedInstance(): void {
-  const owned = instance;
-  instance = undefined;
-  owned?.${runtime.destroyMethod}();
+  const owned = instance; if (!owned) return;
+  ${menuFragments("vue", "contextMenu").cleanup}
 }
 function setupRuntime(): void {
   const element = rootRef.value;
   if (!element) return;
-  instance = ${runtime.factory}(element, {
-    ${props.defaultOpen.name}: uncontrolledOpen.value,
-    ${props.disabled.name}: props.${props.disabled.name},
-    ${props.modal.name}: props.${props.modal.name},
-    ${props.closeDelay.name}: props.${props.closeDelay.name},
-    ${events.openChange.callbackProp}: handleOpenChange,
-    ${events.closeComplete.callbackProp}: (detail) => emit("${events.closeComplete.name}", detail),
-    ...(props.${props.open.name} === undefined ? {} : { ${props.open.name}: props.${props.open.name} }),
-  });
+  ${menuConnection("vue", "contextMenu")}
 }
 async function recreateRuntime(): Promise<void> {
-  const current = instance?.${state.open.getter}();
-  if (props.${props.open.name} === undefined && current !== undefined) uncontrolledOpen.value = current;
+  ${menuFragments("vue", "contextMenu").retainBeforeReconnect}
   const ownGeneration = ++generation;
   mounted.value = false;
   destroyOwnedInstance();
@@ -138,14 +140,9 @@ async function recreateRuntime(): Promise<void> {
 onMounted(() => { setupRuntime(); mounted.value = true; });
 watch(() => props.${props.open.name}, (open, previous) => {
   if ((open === undefined) !== (previous === undefined)) { void recreateRuntime(); return; }
-  if (open === undefined || !instance || Object.is(instance.${state.open.getter}(), open)) return;
-  instance.${facts.setters.open.method}(open, ${formatOptions(facts.setters.open.options)});
+  ${menuFragments("vue", "contextMenu").parentCommand}
 }, { flush: "post" });
-watch([
-  () => props.${props.disabled.name},
-  () => props.${props.modal.name},
-  () => props.${props.closeDelay.name},
-], () => { void recreateRuntime(); }, { flush: "post" });
+watch([${menuPlan.contextMenu.options.map((name) => `() => props.${name}`).join(", ")}], () => { void recreateRuntime(); }, { flush: "post" });
 onBeforeUnmount(() => { generation += 1; mounted.value = false; destroyOwnedInstance(); });
 </script>
 

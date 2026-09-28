@@ -19,6 +19,42 @@ export function validateGenericAdapterPlan(plan: GenericAdapterPlan): GenericAda
     issues.push(issue(component, "outputDirectory", "Missing output directory."));
   }
 
+  if (plan.component === "avatar" || plan.component === "fieldset") {
+    const refresh = plan.runtime.refresh;
+    if (
+      refresh?.method !== "refresh" ||
+      refresh.parts !== "owned-descendants" ||
+      refresh.state !== "preserve" ||
+      refresh.formOwner !== undefined
+    ) {
+      issues.push(
+        issue(
+          component,
+          "runtime.refresh",
+          "Owned DOM parts require state-preserving refresh without form ownership.",
+        ),
+      );
+    }
+  }
+
+  if (["dialog", "alert-dialog", "drawer"].includes(plan.component)) {
+    const refresh = plan.runtime.refresh;
+    if (
+      refresh?.method !== "refresh" ||
+      refresh.parts !== "owned-controls" ||
+      refresh.state !== "preserve" ||
+      refresh.formOwner !== undefined
+    ) {
+      issues.push(
+        issue(
+          component,
+          "runtime.refresh",
+          "Owned overlay controls require state-preserving refresh without form ownership.",
+        ),
+      );
+    }
+  }
+
   const parts = collectParts(plan, issues);
   const files = collectFiles(plan, issues);
 

@@ -8,6 +8,36 @@ import type { LayeredDocsMetadata } from "../types.js";
 
 export const layeredDocsMetadata: LayeredDocsMetadata = {
   version: 1,
+  frameworks: [
+    {
+      target: "astro",
+      label: "Astro",
+      maturity: "stable",
+      packageName: "@starwind-ui/astro",
+      installSpecifier: "@starwind-ui/astro",
+    },
+    {
+      target: "react",
+      label: "React",
+      maturity: "stable",
+      packageName: "@starwind-ui/react",
+      installSpecifier: "@starwind-ui/react",
+    },
+    {
+      target: "vue",
+      label: "Vue",
+      maturity: "beta",
+      packageName: "@starwind-ui/vue",
+      installSpecifier: "@starwind-ui/vue@beta",
+    },
+    {
+      target: "svelte",
+      label: "Svelte",
+      maturity: "beta",
+      packageName: "@starwind-ui/svelte",
+      installSpecifier: "@starwind-ui/svelte@beta",
+    },
+  ],
   runtime: {
     packageName: "@starwind-ui/runtime",
     docsPage: {
@@ -238,7 +268,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           factory: "createDialog",
           primitiveId: "dialog",
           rootDiscoveryAttribute: "data-sw-dialog",
-          selector: "[data-sw-dialog]",
+          selector: "[data-sw-dialog]:not([data-sw-alert-dialog]):not([data-sw-drawer])",
           once: false,
           notes: [],
         },
@@ -5769,6 +5799,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "syncKey",
           "value",
         ],
+        optionPropLifecycles: {
+          syncKey: "constructor-only",
+        },
         destroys: true,
         docsPath: "/docs/runtime/#create-tabs",
         stateModels: [
@@ -7131,6 +7164,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7212,6 +7251,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7280,6 +7325,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -7490,6 +7541,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7534,12 +7591,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
             name: "avatar",
             exportName: "AvatarVariants",
-            baseClassCount: 7,
+            baseClassCount: 8,
             options: [
               {
                 name: "variant",
@@ -7576,7 +7639,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "avatarGroup",
             exportName: "AvatarVariants",
-            baseClassCount: 5,
+            baseClassCount: 7,
             options: [],
             compoundVariantCount: 0,
           },
@@ -7590,7 +7653,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "avatarImage",
             exportName: "AvatarVariants",
-            baseClassCount: 5,
+            baseClassCount: 4,
             options: [],
             compoundVariantCount: 0,
           },
@@ -7622,6 +7685,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-size",
+            value: "lg",
+            selector: "has-data-[size=lg]:-space-x-3",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
             value: "sm",
             selector: "group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
             source: "variant-class",
@@ -7630,6 +7699,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-size",
             value: "sm",
             selector: "group-has-data-[size=sm]/avatar-group:size-8",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
+            value: "sm",
+            selector: "has-data-[size=sm]:-space-x-2",
             source: "variant-class",
           },
           {
@@ -7659,6 +7734,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -7762,6 +7843,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -7833,6 +7920,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -7909,6 +8002,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8194,6 +8293,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -8321,6 +8426,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8478,6 +8589,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8794,6 +8911,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -8826,6 +8949,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -8885,6 +9014,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -9570,6 +9705,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -9932,6 +10073,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -10226,6 +10373,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -10406,6 +10559,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -10699,6 +10858,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -10801,6 +10966,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11040,6 +11211,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11111,6 +11288,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11218,6 +11401,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "framework-native",
             reason: "React projects should use the framework or app router image primitive instead.",
           },
+          vue: {
+            status: "unsupported",
+            reason: "This component requires its native framework integration.",
+          },
+          svelte: {
+            status: "unsupported",
+            reason: "This component requires its native framework integration.",
+          },
         },
         variantCollections: [
           {
@@ -11248,6 +11439,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11304,6 +11501,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11535,6 +11738,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11670,7 +11879,46 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             selector: "group-data-[size=sm]/input-otp:text-sm",
             source: "variant-class",
           },
+          {
+            attribute: "data-slot",
+            value: "input-otp-slot",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
+            value: "input-otp-slot",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] > .animate-caret-blink {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
+            value: "input-otp-slot",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret][hidden] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-input-otp-caret",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-input-otp-caret",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret] > .animate-caret-blink {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-input-otp-caret",
+            selector: "[data-slot=\"input-otp-slot\"] > [data-sw-input-otp-caret][hidden] {",
+            source: "local-style",
+          },
         ],
+        localStyles: {
+          importFrom: [
+            "InputOtpSlot",
+          ],
+          selectorCount: 4,
+        },
       },
       {
         id: "item",
@@ -11694,6 +11942,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -11851,6 +12105,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11908,6 +12168,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -11948,6 +12214,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -12046,6 +12318,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -12434,6 +12712,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -12499,6 +12783,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -12650,6 +12940,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -12729,6 +13025,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -12767,6 +13069,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -12969,6 +13277,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -13145,6 +13459,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -13485,6 +13805,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -13537,6 +13863,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -13710,6 +14042,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -14541,6 +14879,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -14571,6 +14915,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -14767,6 +15117,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -14797,6 +15153,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -14905,6 +15267,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15004,6 +15372,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15089,6 +15463,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15138,6 +15518,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -15276,6 +15662,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -15769,6 +16161,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -15832,6 +16230,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             status: "available",
           },
           react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
             status: "available",
           },
         },
@@ -16212,6 +16616,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -16419,6 +16829,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           react: {
             status: "available",
           },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
         },
         variantCollections: [
           {
@@ -16547,6 +16963,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -16814,6 +17236,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -17001,6 +17429,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -17456,6 +17890,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -17581,6 +18021,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -17923,6 +18369,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -18189,6 +18641,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -18491,6 +18949,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "button",
@@ -18722,6 +19186,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -18902,6 +19372,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -19208,6 +19684,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -19657,6 +20139,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "checkbox",
@@ -19888,6 +20376,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "checkbox-group",
@@ -20044,6 +20538,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -20250,6 +20750,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -20723,6 +21229,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "catalog",
                 },
                 {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "portalContainer",
                   type: "string",
                   required: false,
@@ -20744,6 +21259,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "ColorPickerTrigger",
               props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "showValueText",
                   type: "boolean",
@@ -20791,6 +21315,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     },
                   ],
                   description: "Restricts and orders the available color formats.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -20846,7 +21379,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerArea",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerAreaProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerAreaProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -20879,6 +21422,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   ],
                   description: "Selects the channel rendered by this slider.",
                   descriptionSource: "annotation",
+                },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "step",
+                  type: "number",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the smallest allowed value increment.",
+                  descriptionSource: "catalog",
                 },
               ],
               inheritance: [
@@ -20914,6 +21474,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Selects the channel edited by this input.",
                   descriptionSource: "annotation",
                 },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -20927,7 +21496,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerValueSwatch",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:span",
@@ -20940,7 +21519,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerSwatchGroup",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -20961,6 +21550,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   classification: "wrapper",
                   defaultValue: "false",
                   description: "Disables interaction with the component.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -20993,7 +21591,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerEyeDropper",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:button",
@@ -21006,7 +21614,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerClear",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:button",
@@ -21594,6 +22212,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Selects the channel rendered by this slider.",
                   descriptionSource: "annotation",
                 },
+                {
+                  name: "step",
+                  type: "number",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the smallest allowed value increment.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -21752,6 +22378,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -22856,6 +23488,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "context-menu",
@@ -23834,6 +24472,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "dialog",
@@ -24225,6 +24869,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -25306,6 +25956,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "dropzone",
@@ -25517,6 +26173,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -26331,6 +26993,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "form",
@@ -26456,6 +27124,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "Form",
               props: [
                 {
+                  name: "errorOptions",
+                  type: "FormExternalErrorOptions",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "form",
+                    part: "Root",
+                    propName: "errorOptions",
+                  },
+                  description: "Controls the visibility of supplied errors and whether editing a field clears them.",
+                  descriptionSource: "annotation",
+                },
+                {
+                  name: "errors",
+                  type: "FormExternalErrors",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "form",
+                    part: "Root",
+                    propName: "errors",
+                  },
+                  description: "Supplies external field and form errors, including server validation results. Replace the value to update errors or clear it to remove previously supplied errors.",
+                  descriptionSource: "annotation",
+                },
+                {
                   name: "errorVisibility",
                   type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
@@ -26467,6 +27161,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   },
                   defaultValue: "\"submit\"",
                   description: "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+                  descriptionSource: "annotation",
+                },
+                {
+                  name: "options",
+                  type: "FormOptions",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "form",
+                    part: "Root",
+                    propName: "options",
+                  },
+                  description: "Configures custom field and form validators, asynchronous validation, debounce, managed submission, and external-error reset behavior.",
                   descriptionSource: "annotation",
                 },
                 {
@@ -26543,6 +27250,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -26892,6 +27605,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "framework-native",
           reason: "React projects should use the framework or app router image primitive instead.",
         },
+        vue: {
+          status: "unsupported",
+          reason: "This component requires its native framework integration.",
+        },
+        svelte: {
+          status: "unsupported",
+          reason: "This component requires its native framework integration.",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -26974,6 +27695,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -27177,6 +27904,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -27494,6 +28227,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "input-otp",
@@ -27730,6 +28469,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -28230,6 +28975,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -28348,6 +29099,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -28463,6 +29220,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -28651,6 +29414,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -29399,6 +30168,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -29841,6 +30616,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "popover",
@@ -30220,6 +31001,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "progress",
@@ -30413,6 +31200,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -30498,6 +31291,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -30872,6 +31671,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "scroll-area",
@@ -30946,6 +31751,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "ScrollArea",
               props: [
+                {
+                  name: "autoViewport",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "true",
+                  description: "Automatically renders the viewport and content wrappers. Set false to compose those parts yourself.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "overflowEdgeThreshold",
                   type: "number",
@@ -31051,6 +31865,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "ScrollArea",
               props: [
+                {
+                  name: "autoViewport",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "true",
+                  description: "Automatically renders the viewport and content wrappers. Set false to compose those parts yourself.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "overflowEdgeThreshold",
                   type: "number",
@@ -31169,6 +31992,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -32073,6 +32902,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -32192,6 +33027,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -32587,6 +33428,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -33769,6 +34616,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -33858,6 +34711,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -34121,6 +34980,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -34214,6 +35079,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -34491,6 +35362,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -34802,6 +35679,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -35222,6 +36105,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -35341,6 +36230,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -35600,6 +36495,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -36049,6 +36950,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "toggle",
@@ -36279,6 +37186,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           status: "available",
         },
         react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
           status: "available",
         },
       },
@@ -36657,6 +37570,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [
         "tooltip",
@@ -36925,6 +37844,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         react: {
           status: "available",
         },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
       },
       primitiveIds: [],
       runtimeFactories: [],
@@ -37137,6 +38062,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Accordion",
       category: "controlled-value-group",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/accordion",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/accordion",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/accordion",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/accordion",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "accordion",
         factory: "createAccordion",
@@ -37507,7 +38458,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Accordion is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -37547,6 +38498,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Accordion } from \"@starwind-ui/react/accordion\";\n\nexport function Example() {\n  return (\n    <Accordion.Root>\n      <Accordion.Item value=\"details\">\n        <Accordion.Header>\n          <Accordion.Trigger>Toggle details</Accordion.Trigger>\n        </Accordion.Header>\n        <Accordion.Panel>Accordion panel content</Accordion.Panel>\n      </Accordion.Item>\n    </Accordion.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#accordion-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Accordion.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Accordion from \"@starwind-ui/vue/accordion\";\n</script>\n\n<template>\n  <Accordion.Root>\n    <Accordion.Item value=\"details\">\n      <Accordion.Header>\n        <Accordion.Trigger>Toggle details</Accordion.Trigger>\n      </Accordion.Header>\n      <Accordion.Panel>Accordion panel content</Accordion.Panel>\n    </Accordion.Item>\n  </Accordion.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#accordion-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -37554,6 +38514,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -38363,6 +39324,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Alert Dialog",
       category: "dialog-native-overlay",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/alert-dialog",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/alert-dialog",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/alert-dialog",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/alert-dialog",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "alert-dialog",
         factory: "createAlertDialog",
@@ -38536,6 +39523,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          defaultValue: "false",
+          name: "asChild",
+          kind: "rendering",
+          targets: [
+            "trigger",
+            "close",
+          ],
+          type: "boolean",
+        },
         {
           name: "open",
           kind: "control",
@@ -38845,7 +39842,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Alert Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -38885,6 +39882,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { AlertDialog } from \"@starwind-ui/react/alert-dialog\";\n\nexport function Example() {\n  return (\n    <AlertDialog.Root>\n      <AlertDialog.Trigger>Delete item</AlertDialog.Trigger>\n      <AlertDialog.Backdrop />\n      <AlertDialog.Viewport>\n        <AlertDialog.Popup>\n          <AlertDialog.Title>Delete item?</AlertDialog.Title>\n          <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>\n          <AlertDialog.Close>Cancel</AlertDialog.Close>\n        </AlertDialog.Popup>\n      </AlertDialog.Viewport>\n    </AlertDialog.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#alert-dialog-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build AlertDialog.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport AlertDialog from \"@starwind-ui/vue/alert-dialog\";\n</script>\n\n<template>\n  <AlertDialog.Root>\n    <AlertDialog.Trigger>Delete item</AlertDialog.Trigger>\n    <AlertDialog.Backdrop />\n    <AlertDialog.Viewport>\n      <AlertDialog.Popup>\n        <AlertDialog.Title>Delete item?</AlertDialog.Title>\n        <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>\n        <AlertDialog.Close>Cancel</AlertDialog.Close>\n      </AlertDialog.Popup>\n    </AlertDialog.Viewport>\n  </AlertDialog.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#alert-dialog-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -38892,6 +39898,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -39399,6 +40406,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               discoveryAttribute: "data-sw-alert-dialog-trigger",
               props: [
                 {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Trigger element.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "targetId",
                   kind: "attribute",
                   targets: [
@@ -39690,7 +40709,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-alert-dialog-close",
-              props: [],
+              props: [
+                {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Close element.",
+                  descriptionSource: "authored",
+                },
+              ],
               dataAttributes: [
                 {
                   name: "data-sw-alert-dialog-close",
@@ -39836,6 +40868,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Avatar",
       category: "static-semantic",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/avatar",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/avatar",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/avatar",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/avatar",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "avatar",
         factory: "createAvatar",
@@ -40100,7 +41158,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Avatar is a Starwind Runtime primitive in the static-semantic contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -40140,6 +41198,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Avatar } from \"@starwind-ui/react/avatar\";\n\nexport function Example() {\n  return (\n    <Avatar.Root>\n      <Avatar.Image alt=\"Starwind UI\" src=\"/avatar.png\" />\n      <Avatar.Fallback>SW</Avatar.Fallback>\n    </Avatar.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#avatar-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Avatar.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Avatar from \"@starwind-ui/vue/avatar\";\n</script>\n\n<template>\n  <Avatar.Root>\n    <Avatar.Image alt=\"Starwind UI\" src=\"/avatar.png\" />\n    <Avatar.Fallback>SW</Avatar.Fallback>\n  </Avatar.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#avatar-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -40147,6 +41214,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -40685,6 +41753,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Button",
       category: "static-semantic",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/button",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/button",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/button",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/button",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "button",
         factory: "createButton",
@@ -40788,7 +41882,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Button uses native button semantics by default and adds Runtime behavior only for focusable-disabled state.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -40832,6 +41926,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Button } from \"@starwind-ui/react/button\";\n\nexport function Example() {\n  return (\n    <Button.Root type=\"button\" focusableWhenDisabled={true}>Button</Button.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#button-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Button.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Button from \"@starwind-ui/vue/button\";\n</script>\n\n<template>\n  <Button.Root type=\"button\" :focusableWhenDisabled=\"true\">Button</Button.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#button-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -40839,6 +41942,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -41011,6 +42115,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Carousel",
       category: "viewport-measurement",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/carousel",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/carousel",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/carousel",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/carousel",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "carousel",
         factory: "createCarousel",
@@ -41289,7 +42419,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Carousel is a Starwind Runtime primitive in the viewport-measurement contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -41329,6 +42459,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Carousel } from \"@starwind-ui/react/carousel\";\n\nexport function Example() {\n  return (\n    <Carousel.Root>\n      <Carousel.Viewport>\n        <Carousel.Container>\n          <Carousel.Item>Slide 1</Carousel.Item>\n        </Carousel.Container>\n      </Carousel.Viewport>\n      <Carousel.Previous>Previous</Carousel.Previous>\n      <Carousel.Next>Next</Carousel.Next>\n    </Carousel.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#carousel-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Carousel.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Carousel from \"@starwind-ui/vue/carousel\";\n</script>\n\n<template>\n  <Carousel.Root>\n    <Carousel.Viewport>\n      <Carousel.Container>\n        <Carousel.Item>Slide 1</Carousel.Item>\n      </Carousel.Container>\n    </Carousel.Viewport>\n    <Carousel.Previous>Previous</Carousel.Previous>\n    <Carousel.Next>Next</Carousel.Next>\n  </Carousel.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#carousel-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -41336,6 +42475,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -41782,6 +42922,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Checkbox",
       category: "single-boolean-control",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/checkbox",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/checkbox",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/checkbox",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/checkbox",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "checkbox",
         factory: "createCheckbox",
@@ -42289,7 +43455,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Checkbox coordinates a visible boolean control, indicator presence, and hidden form inputs for boolean form state.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -42341,6 +43507,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Checkbox } from \"@starwind-ui/react/checkbox\";\n\nexport function Example() {\n  return (\n    <Checkbox.Root>\n      <Checkbox.Indicator />\n    </Checkbox.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Checkbox.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Checkbox from \"@starwind-ui/vue/checkbox\";\n</script>\n\n<template>\n  <Checkbox.Root>\n    <Checkbox.Indicator />\n  </Checkbox.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -42348,6 +43523,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -43242,6 +44418,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Checkbox Group",
       category: "controlled-value-group",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/checkbox-group",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/checkbox-group",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/checkbox-group",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/checkbox-group",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "checkbox-group",
         factory: "createCheckboxGroup",
@@ -43482,7 +44684,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Checkbox Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -43522,6 +44724,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { CheckboxGroup } from \"@starwind-ui/react/checkbox-group\";\n\nexport function Example() {\n  return (\n    <CheckboxGroup.Root />\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-group-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build CheckboxGroup.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport CheckboxGroup from \"@starwind-ui/vue/checkbox-group\";\n</script>\n\n<template>\n  <CheckboxGroup.Root />\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-group-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -43529,6 +44740,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -44042,6 +45254,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Collapsible",
       category: "presence-disclosure-control",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/collapsible",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/collapsible",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/collapsible",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/collapsible",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "collapsible",
         factory: "createCollapsible",
@@ -44363,7 +45601,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Collapsible is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -44403,6 +45641,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Collapsible } from \"@starwind-ui/react/collapsible\";\n\nexport function Example() {\n  return (\n    <Collapsible.Root>\n      <Collapsible.Trigger>Toggle details</Collapsible.Trigger>\n      <Collapsible.Panel>Collapsible content</Collapsible.Panel>\n    </Collapsible.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#collapsible-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Collapsible.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Collapsible from \"@starwind-ui/vue/collapsible\";\n</script>\n\n<template>\n  <Collapsible.Root>\n    <Collapsible.Trigger>Toggle details</Collapsible.Trigger>\n    <Collapsible.Panel>Collapsible content</Collapsible.Panel>\n  </Collapsible.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#collapsible-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -44410,6 +45657,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -45057,6 +46305,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Color Picker",
       category: "form-value-control",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/color-picker",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/color-picker",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/color-picker",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/color-picker",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "color-picker",
         factory: "createColorPicker",
@@ -46312,7 +47586,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Color Picker coordinates color parsing, two-dimensional area input, channel controls, editable values, presets, and native form submission.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -46395,6 +47669,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { ColorPicker } from \"@starwind-ui/react/color-picker\";\n\nexport function Example() {\n  return (\n    <ColorPicker.Root>\n      <ColorPicker.Label>Color</ColorPicker.Label>\n      <ColorPicker.Control>\n        <ColorPicker.ValueSwatch />\n        <ColorPicker.ValueInput />\n        <ColorPicker.ValueText />\n      </ColorPicker.Control>\n      <ColorPicker.Area xChannel=\"saturation\" yChannel=\"brightness\">\n        <ColorPicker.AreaBackground />\n        <ColorPicker.AreaThumb />\n        <ColorPicker.AreaInput axis=\"x\" />\n        <ColorPicker.AreaInput axis=\"y\" />\n      </ColorPicker.Area>\n      <ColorPicker.ChannelSlider channel=\"hue\">\n        <ColorPicker.ChannelSliderTrack />\n        <ColorPicker.ChannelSliderThumb />\n        <ColorPicker.ChannelSliderInput />\n      </ColorPicker.ChannelSlider>\n      <ColorPicker.ChannelInput channel=\"hue\" />\n      <ColorPicker.FormatSelect />\n      <ColorPicker.FormatControl />\n      <ColorPicker.TransparencyGrid />\n      <ColorPicker.SwatchGroup>\n        <ColorPicker.Swatch swatchValue=\"#3b82f6\" />\n      </ColorPicker.SwatchGroup>\n      <ColorPicker.EyeDropperTrigger>Pick from screen</ColorPicker.EyeDropperTrigger>\n      <ColorPicker.Clear>Clear</ColorPicker.Clear>\n      <ColorPicker.HiddenInput />\n    </ColorPicker.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Color Picker.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport ColorPicker from \"@starwind-ui/vue/color-picker\";\n</script>\n\n<template>\n  <ColorPicker.Root>\n    <ColorPicker.Label>Color</ColorPicker.Label>\n    <ColorPicker.Control>\n      <ColorPicker.ValueSwatch />\n      <ColorPicker.ValueInput />\n      <ColorPicker.ValueText />\n    </ColorPicker.Control>\n    <ColorPicker.Area xChannel=\"saturation\" yChannel=\"brightness\">\n      <ColorPicker.AreaBackground />\n      <ColorPicker.AreaThumb />\n      <ColorPicker.AreaInput axis=\"x\" />\n      <ColorPicker.AreaInput axis=\"y\" />\n    </ColorPicker.Area>\n    <ColorPicker.ChannelSlider channel=\"hue\">\n      <ColorPicker.ChannelSliderTrack />\n      <ColorPicker.ChannelSliderThumb />\n      <ColorPicker.ChannelSliderInput />\n    </ColorPicker.ChannelSlider>\n    <ColorPicker.ChannelInput channel=\"hue\" />\n    <ColorPicker.FormatSelect />\n    <ColorPicker.FormatControl />\n    <ColorPicker.TransparencyGrid />\n    <ColorPicker.SwatchGroup>\n      <ColorPicker.Swatch swatchValue=\"#3b82f6\" />\n    </ColorPicker.SwatchGroup>\n    <ColorPicker.EyeDropperTrigger>Pick from screen</ColorPicker.EyeDropperTrigger>\n    <ColorPicker.Clear>Clear</ColorPicker.Clear>\n    <ColorPicker.HiddenInput />\n  </ColorPicker.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-basic-vue",
+          },
         ],
         authoredExamples: [
           {
@@ -46407,6 +47690,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 language: "astro",
                 source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-composite-format-control-astro",
                 code: "---\nimport { ColorPicker } from \"@starwind-ui/astro/color-picker\";\nimport { Select } from \"@starwind-ui/astro/select\";\n---\n\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatControl>\n    <Select.Root defaultValue=\"hex\">\n      <Select.Trigger aria-label=\"Color format\">\n        <Select.Value>HEX</Select.Value>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup>\n          <Select.List>\n            <Select.Item value=\"hex\"><Select.ItemText>HEX</Select.ItemText></Select.Item>\n            <Select.Item value=\"rgb\"><Select.ItemText>RGB</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsl\"><Select.ItemText>HSL</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsb\"><Select.ItemText>HSB</Select.ItemText></Select.Item>\n          </Select.List>\n        </Select.Popup>\n      </Select.Positioner>\n    </Select.Root>\n  </ColorPicker.FormatControl>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>",
+              },
+              {
+                framework: "vue",
+                language: "vue",
+                source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-composite-format-control-vue",
+                code: "<script setup lang=\"ts\">\nimport { ColorPicker } from \"@starwind-ui/vue/color-picker\";\nimport { Select } from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatControl>\n    <Select.Root defaultValue=\"hex\">\n      <Select.Trigger aria-label=\"Color format\">\n        <Select.Value>HEX</Select.Value>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup>\n          <Select.List>\n            <Select.Item value=\"hex\"><Select.ItemText>HEX</Select.ItemText></Select.Item>\n            <Select.Item value=\"rgb\"><Select.ItemText>RGB</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsl\"><Select.ItemText>HSL</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsb\"><Select.ItemText>HSB</Select.ItemText></Select.Item>\n          </Select.List>\n        </Select.Popup>\n      </Select.Positioner>\n    </Select.Root>\n  </ColorPicker.FormatControl>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>\n</template>",
               },
               {
                 framework: "react",
@@ -46434,6 +47723,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 code: "---\nimport { ColorPicker } from \"@starwind-ui/astro/color-picker\";\n---\n\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatSelect aria-label=\"Color format\">\n    <option value=\"hex\">HEX</option>\n    <option value=\"rgb\">RGB</option>\n    <option value=\"hsl\">HSL</option>\n    <option value=\"hsb\">HSB</option>\n  </ColorPicker.FormatSelect>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>",
               },
               {
+                framework: "vue",
+                language: "vue",
+                source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-native-format-select-vue",
+                code: "<script setup lang=\"ts\">\nimport { ColorPicker } from \"@starwind-ui/vue/color-picker\";\n</script>\n\n<template>\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatSelect aria-label=\"Color format\">\n    <option value=\"hex\">HEX</option>\n    <option value=\"rgb\">RGB</option>\n    <option value=\"hsl\">HSL</option>\n    <option value=\"hsb\">HSB</option>\n  </ColorPicker.FormatSelect>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>\n</template>",
+              },
+              {
                 framework: "react",
                 language: "tsx",
                 source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-native-format-select-react",
@@ -46453,6 +47748,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -48659,6 +49955,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Combobox",
       category: "floating-value-control",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/combobox",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/combobox",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/combobox",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/combobox",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "combobox",
         factory: "createCombobox",
@@ -49777,7 +51099,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Combobox is a Starwind Runtime primitive in the floating-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -49817,6 +51139,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Combobox } from \"@starwind-ui/react/combobox\";\n\nexport function Example() {\n  return (\n    <Combobox.Root>\n      <Combobox.Label>Choose a framework</Combobox.Label>\n      <Combobox.InputGroup>\n        <Combobox.Input placeholder=\"Search frameworks\" />\n        <Combobox.Trigger>Open</Combobox.Trigger>\n        <Combobox.Clear>Clear</Combobox.Clear>\n      </Combobox.InputGroup>\n      <Combobox.Positioner>\n        <Combobox.Popup>\n          <Combobox.Empty>No results</Combobox.Empty>\n        </Combobox.Popup>\n      </Combobox.Positioner>\n    </Combobox.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Combobox.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Combobox from \"@starwind-ui/vue/combobox\";\n</script>\n\n<template>\n  <Combobox.Root>\n    <Combobox.Label>Choose a framework</Combobox.Label>\n    <Combobox.InputGroup>\n      <Combobox.Input placeholder=\"Search frameworks\" />\n      <Combobox.Trigger>Open</Combobox.Trigger>\n      <Combobox.Clear>Clear</Combobox.Clear>\n    </Combobox.InputGroup>\n    <Combobox.Positioner>\n      <Combobox.Popup>\n        <Combobox.Empty>No results</Combobox.Empty>\n      </Combobox.Popup>\n    </Combobox.Positioner>\n  </Combobox.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -49824,6 +51155,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -52077,6 +53409,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Context Menu",
       category: "composite-menu-overlay",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/context-menu",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/context-menu",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/context-menu",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/context-menu",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "context-menu",
         factory: "createContextMenu",
@@ -53340,7 +54698,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Context Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -53380,6 +54738,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { ContextMenu } from \"@starwind-ui/react/context-menu\";\n\nexport function Example() {\n  return (\n    <ContextMenu.Root>\n      <ContextMenu.Trigger>Right click</ContextMenu.Trigger>\n      <ContextMenu.Positioner>\n        <ContextMenu.Popup>\n          <ContextMenu.Item>Copy</ContextMenu.Item>\n        </ContextMenu.Popup>\n      </ContextMenu.Positioner>\n    </ContextMenu.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#context-menu-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build ContextMenu.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport ContextMenu from \"@starwind-ui/vue/context-menu\";\n</script>\n\n<template>\n  <ContextMenu.Root>\n    <ContextMenu.Trigger>Right click</ContextMenu.Trigger>\n    <ContextMenu.Positioner>\n      <ContextMenu.Popup>\n        <ContextMenu.Item>Copy</ContextMenu.Item>\n      </ContextMenu.Popup>\n    </ContextMenu.Positioner>\n  </ContextMenu.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#context-menu-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -53387,6 +54754,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -56248,6 +57616,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Dialog",
       category: "dialog-native-overlay",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/dialog",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/dialog",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/dialog",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/dialog",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "dialog",
         factory: "createDialog",
@@ -56385,6 +57779,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          defaultValue: "false",
+          name: "asChild",
+          kind: "rendering",
+          targets: [
+            "trigger",
+            "close",
+          ],
+          type: "boolean",
+        },
         {
           name: "open",
           kind: "control",
@@ -56685,7 +58089,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -56725,6 +58129,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Dialog } from \"@starwind-ui/react/dialog\";\n\nexport function Example() {\n  return (\n    <Dialog.Root>\n      <Dialog.Trigger>Open dialog</Dialog.Trigger>\n      <Dialog.Backdrop />\n      <Dialog.Popup>\n        <Dialog.Title>Dialog title</Dialog.Title>\n        <Dialog.Description>Dialog description</Dialog.Description>\n        <Dialog.Close>Close</Dialog.Close>\n      </Dialog.Popup>\n    </Dialog.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Dialog.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Dialog from \"@starwind-ui/vue/dialog\";\n</script>\n\n<template>\n  <Dialog.Root>\n    <Dialog.Trigger>Open dialog</Dialog.Trigger>\n    <Dialog.Backdrop />\n    <Dialog.Popup>\n      <Dialog.Title>Dialog title</Dialog.Title>\n      <Dialog.Description>Dialog description</Dialog.Description>\n      <Dialog.Close>Close</Dialog.Close>\n    </Dialog.Popup>\n  </Dialog.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -56732,6 +58145,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -57237,6 +58651,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               discoveryAttribute: "data-sw-dialog-trigger",
               props: [
                 {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Trigger element.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "targetId",
                   kind: "attribute",
                   targets: [
@@ -57446,7 +58872,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-dialog-close",
-              props: [],
+              props: [
+                {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Close element.",
+                  descriptionSource: "authored",
+                },
+              ],
               dataAttributes: [
                 {
                   name: "data-sw-dialog-close",
@@ -57579,6 +59018,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Drawer",
       category: "dialog-native-overlay",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/drawer",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/drawer",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/drawer",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/drawer",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "drawer",
         factory: "createDrawer",
@@ -57751,6 +59216,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          defaultValue: "false",
+          name: "asChild",
+          kind: "rendering",
+          targets: [
+            "trigger",
+            "close",
+          ],
+          type: "boolean",
+        },
         {
           name: "open",
           kind: "control",
@@ -58069,7 +59544,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Drawer is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -58109,6 +59584,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Drawer } from \"@starwind-ui/react/drawer\";\n\nexport function Example() {\n  return (\n    <Drawer.Root>\n      <Drawer.Trigger>Open drawer</Drawer.Trigger>\n      <Drawer.Backdrop />\n      <Drawer.Viewport>\n        <Drawer.Popup>\n          <Drawer.Title>Drawer title</Drawer.Title>\n          <Drawer.Description>Drawer description</Drawer.Description>\n          <Drawer.Close>Close</Drawer.Close>\n        </Drawer.Popup>\n      </Drawer.Viewport>\n    </Drawer.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#drawer-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Drawer.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Drawer from \"@starwind-ui/vue/drawer\";\n</script>\n\n<template>\n  <Drawer.Root>\n    <Drawer.Trigger>Open drawer</Drawer.Trigger>\n    <Drawer.Backdrop />\n    <Drawer.Viewport>\n      <Drawer.Popup>\n        <Drawer.Title>Drawer title</Drawer.Title>\n        <Drawer.Description>Drawer description</Drawer.Description>\n        <Drawer.Close>Close</Drawer.Close>\n      </Drawer.Popup>\n    </Drawer.Viewport>\n  </Drawer.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#drawer-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -58116,6 +59600,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -58623,6 +60108,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               discoveryAttribute: "data-sw-drawer-trigger",
               props: [
                 {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Trigger element.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "targetId",
                   kind: "attribute",
                   targets: [
@@ -58932,7 +60429,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-drawer-close",
-              props: [],
+              props: [
+                {
+                  defaultValue: "false",
+                  name: "asChild",
+                  kind: "rendering",
+                  targets: [
+                    "trigger",
+                    "close",
+                  ],
+                  type: "boolean",
+                  description: "Merges behavior onto your child element instead of rendering the default Close element.",
+                  descriptionSource: "authored",
+                },
+              ],
               dataAttributes: [
                 {
                   name: "data-sw-drawer-close",
@@ -59077,6 +60587,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Dropzone",
       category: "form-value-control",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/dropzone",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/dropzone",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/dropzone",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/dropzone",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "dropzone",
         factory: "createDropzone",
@@ -59444,7 +60980,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Dropzone is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -59484,6 +61020,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Dropzone } from \"@starwind-ui/react/dropzone\";\n\nexport function Example() {\n  return (\n    <Dropzone.Root>\n      <Dropzone.Input />\n      <Dropzone.UploadIndicator>Drop files here</Dropzone.UploadIndicator>\n      <Dropzone.LoadingIndicator>Uploading...</Dropzone.LoadingIndicator>\n      <Dropzone.FilesList />\n    </Dropzone.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dropzone-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Dropzone.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Dropzone from \"@starwind-ui/vue/dropzone\";\n</script>\n\n<template>\n  <Dropzone.Root>\n    <Dropzone.Input />\n    <Dropzone.UploadIndicator>Drop files here</Dropzone.UploadIndicator>\n    <Dropzone.LoadingIndicator>Uploading...</Dropzone.LoadingIndicator>\n    <Dropzone.FilesList />\n  </Dropzone.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dropzone-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -59491,6 +61036,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -60292,6 +61838,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Field",
       category: "field-control-coordinator",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/field",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/field",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/field",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/field",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "field",
         factory: "createField",
@@ -60737,7 +62309,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Field is a Starwind Runtime primitive in the field-control-coordinator contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -60784,6 +62356,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Field } from \"@starwind-ui/react/field\";\n\nexport function Example() {\n  return (\n    <Field.Root>\n      <Field.Label>Email</Field.Label>\n      <Field.Control />\n      <Field.Description>Use your work email.</Field.Description>\n      <Field.Error>Enter a valid email.</Field.Error>\n    </Field.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#field-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Field.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Field from \"@starwind-ui/vue/field\";\n</script>\n\n<template>\n  <Field.Root>\n    <Field.Label>Email</Field.Label>\n    <Field.Control />\n    <Field.Description>Use your work email.</Field.Description>\n    <Field.Error>Enter a valid email.</Field.Error>\n  </Field.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#field-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -60791,6 +62372,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -61579,6 +63161,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Fieldset",
       category: "field-control-coordinator",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/fieldset",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/fieldset",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/fieldset",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/fieldset",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "fieldset",
         factory: "createFieldset",
@@ -61670,7 +63278,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Fieldset is a Starwind Runtime primitive in the field-control-coordinator contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -61710,6 +63318,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Fieldset } from \"@starwind-ui/react/fieldset\";\n\nexport function Example() {\n  return (\n    <Fieldset.Root>\n      <Fieldset.Legend>Preferences</Fieldset.Legend>\n    </Fieldset.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#fieldset-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Fieldset.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Fieldset from \"@starwind-ui/vue/fieldset\";\n</script>\n\n<template>\n  <Fieldset.Root>\n    <Fieldset.Legend>Preferences</Fieldset.Legend>\n  </Fieldset.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#fieldset-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -61717,6 +63334,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -61905,6 +63523,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Form",
       category: "field-control-coordinator",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/form",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/form",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/form",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/form",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "form",
         factory: "createForm",
@@ -61974,6 +63618,39 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
       ],
       props: [
+        {
+          unsupportedTargets: [
+            "astro",
+          ],
+          name: "options",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormOptions",
+        },
+        {
+          unsupportedTargets: [
+            "astro",
+          ],
+          name: "errors",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormExternalErrors",
+        },
+        {
+          unsupportedTargets: [
+            "astro",
+          ],
+          name: "errorOptions",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormExternalErrorOptions",
+        },
         {
           name: "data-error-visibility",
           kind: "option",
@@ -62072,13 +63749,24 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "Retrieve the idempotent imperative controller with createForm(element); the component does not expose a controller ref.",
         ],
         react: [
-          "Create the Form runtime once for the real form element and clean it up on unmount.",
-          "Keep the public ref on the HTMLFormElement; retrieve the idempotent imperative controller with createForm(element).",
+          "Create one controller for the native form. Apply options before errors after connection. Watch prop replacement without deep traversal; each input has its own update lifetime.",
+          "Replacing options resets omitted keys to Runtime defaults. Replacing errors replaces the complete error map; removing a previously supplied input clears it. Omitted inputs preserve imperative setup.",
+          "Keep the public ref on HTMLFormElement; retrieve the imperative controller with createForm(element). Runtime owns all validation and submission behavior.",
+        ],
+        vue: [
+          "Create one controller for the native form. Apply options before errors after connection. Watch prop replacement without deep traversal; each input has its own update lifetime.",
+          "Replacing options resets omitted keys to Runtime defaults. Replacing errors replaces the complete error map; removing a previously supplied input clears it. Omitted inputs preserve imperative setup.",
+          "Keep the public ref on HTMLFormElement; retrieve the imperative controller with createForm(element). Runtime owns all validation and submission behavior.",
+        ],
+        svelte: [
+          "Create one controller for the native form. Apply options before errors after connection. Watch prop replacement without deep traversal; each input has its own update lifetime.",
+          "Replacing options resets omitted keys to Runtime defaults. Replacing errors replaces the complete error map; removing a previously supplied input clears it. Omitted inputs preserve imperative setup.",
+          "Keep the public ref on HTMLFormElement; retrieve the imperative controller with createForm(element). Runtime owns all validation and submission behavior.",
         ],
       },
       docsReference: {
         summary: "Form coordinates native constraints, custom and asynchronous validators, schema results, error visibility, and submission across its Fields.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -62128,6 +63816,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Form } from \"@starwind-ui/react/form\";\n\nexport function Example() {\n  return (\n    <Form.Root>\n      <Form.ErrorSummary>Please fix the highlighted fields.</Form.ErrorSummary>\n    </Form.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#form-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Form.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Form from \"@starwind-ui/vue/form\";\n</script>\n\n<template>\n  <Form.Root>\n    <Form.ErrorSummary>Please fix the highlighted fields.</Form.ErrorSummary>\n  </Form.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#form-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -62135,6 +63832,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -62163,6 +63861,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               defaultElement: "form",
               discoveryAttribute: "data-sw-form",
               props: [
+                {
+                  unsupportedTargets: [
+                    "astro",
+                  ],
+                  name: "options",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormOptions",
+                  description: "Configures the options option for the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "astro",
+                  ],
+                  name: "errors",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormExternalErrors",
+                  description: "Configures the errors option for the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "astro",
+                  ],
+                  name: "errorOptions",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormExternalErrorOptions",
+                  description: "Configures the error options option for the Root part.",
+                  descriptionSource: "authored",
+                },
                 {
                   name: "data-error-visibility",
                   kind: "option",
@@ -62411,6 +64148,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Input",
       category: "form-value-control",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/input",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/input",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/input",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/input",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "input",
         factory: "createInput",
@@ -62628,7 +64391,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Input is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -62668,6 +64431,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Input } from \"@starwind-ui/react/input\";\n\nexport function Example() {\n  return (\n    <Input.Root placeholder=\"Email\" />\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Input.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Input from \"@starwind-ui/vue/input\";\n</script>\n\n<template>\n  <Input.Root placeholder=\"Email\" />\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -62675,6 +64447,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -63142,6 +64915,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Input OTP",
       category: "form-value-control",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/input-otp",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/input-otp",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/input-otp",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/input-otp",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "input-otp",
         factory: "createInputOtp",
@@ -63722,7 +65521,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Input OTP is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -63762,6 +65561,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { InputOtp } from \"@starwind-ui/react/input-otp\";\n\nexport function Example() {\n  return (\n    <InputOtp.Root>\n      <InputOtp.Group>\n        <InputOtp.Slot index={0} />\n        <InputOtp.Separator />\n        <InputOtp.Slot index={1} />\n      </InputOtp.Group>\n    </InputOtp.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-otp-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build InputOtp.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport InputOtp from \"@starwind-ui/vue/input-otp\";\n</script>\n\n<template>\n  <InputOtp.Root>\n    <InputOtp.Group>\n      <InputOtp.Slot :index=\"0\" />\n      <InputOtp.Separator />\n      <InputOtp.Slot :index=\"1\" />\n    </InputOtp.Group>\n  </InputOtp.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-otp-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -63769,6 +65577,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -64668,6 +66477,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Menu",
       category: "composite-menu-overlay",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/menu",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/menu",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/menu",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/menu",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "menu",
         factory: "createMenu",
@@ -66009,7 +67844,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -66054,6 +67889,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Menu } from \"@starwind-ui/react/menu\";\n\nexport function Example() {\n  return (\n    <Menu.Root>\n      <Menu.Trigger>Open menu</Menu.Trigger>\n      <Menu.Positioner>\n        <Menu.Popup>\n          <Menu.Item>Edit</Menu.Item>\n        </Menu.Popup>\n      </Menu.Positioner>\n    </Menu.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#menu-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Menu.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Menu from \"@starwind-ui/vue/menu\";\n</script>\n\n<template>\n  <Menu.Root>\n    <Menu.Trigger>Open menu</Menu.Trigger>\n    <Menu.Positioner>\n      <Menu.Popup>\n        <Menu.Item>Edit</Menu.Item>\n      </Menu.Popup>\n    </Menu.Positioner>\n  </Menu.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#menu-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -66061,6 +67905,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -68974,6 +70819,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Navigation Menu",
       category: "floating-value-control",
       registryVersion: "1.1.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/navigation-menu",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/navigation-menu",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/navigation-menu",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/navigation-menu",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "navigation-menu",
         factory: "createNavigationMenu",
@@ -69759,7 +71630,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Navigation Menu coordinates a single active top-level item, shared viewport content, hover timing, keyboard movement, and link close behavior for site navigation.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -69817,6 +71688,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { NavigationMenu } from \"@starwind-ui/react/navigation-menu\";\n\nexport function Example() {\n  return (\n    <NavigationMenu.Root>\n      <NavigationMenu.List>\n        <NavigationMenu.Item value=\"products\">\n          <NavigationMenu.Trigger>\n            <NavigationMenu.Icon>v</NavigationMenu.Icon>\n          </NavigationMenu.Trigger>\n          <NavigationMenu.Content>\n            <NavigationMenu.Link href=\"/docs\">Docs</NavigationMenu.Link>\n          </NavigationMenu.Content>\n        </NavigationMenu.Item>\n      </NavigationMenu.List>\n      <NavigationMenu.Portal>\n        <NavigationMenu.Positioner>\n          <NavigationMenu.Popup>\n            <NavigationMenu.Viewport />\n            <NavigationMenu.Arrow />\n          </NavigationMenu.Popup>\n        </NavigationMenu.Positioner>\n      </NavigationMenu.Portal>\n    </NavigationMenu.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#navigation-menu-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build NavigationMenu.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport NavigationMenu from \"@starwind-ui/vue/navigation-menu\";\n</script>\n\n<template>\n  <NavigationMenu.Root>\n    <NavigationMenu.List>\n      <NavigationMenu.Item value=\"products\">\n        <NavigationMenu.Trigger>\n          <NavigationMenu.Icon>v</NavigationMenu.Icon>\n        </NavigationMenu.Trigger>\n        <NavigationMenu.Content>\n          <NavigationMenu.Link href=\"/docs\">Docs</NavigationMenu.Link>\n        </NavigationMenu.Content>\n      </NavigationMenu.Item>\n    </NavigationMenu.List>\n    <NavigationMenu.Portal>\n      <NavigationMenu.Positioner>\n        <NavigationMenu.Popup>\n          <NavigationMenu.Viewport />\n          <NavigationMenu.Arrow />\n        </NavigationMenu.Popup>\n      </NavigationMenu.Positioner>\n    </NavigationMenu.Portal>\n  </NavigationMenu.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#navigation-menu-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -69824,6 +71704,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -71293,6 +73174,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Popover",
       category: "presence-floating-overlay",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/popover",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/popover",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/popover",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/popover",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "popover",
         factory: "createPopover",
@@ -71980,7 +73887,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Popover is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -72020,6 +73927,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Popover } from \"@starwind-ui/react/popover\";\n\nexport function Example() {\n  return (\n    <Popover.Root>\n      <Popover.Trigger>Open popover</Popover.Trigger>\n      <Popover.Backdrop />\n      <Popover.Positioner>\n        <Popover.Popup>\n          <Popover.Title>Popover title</Popover.Title>\n          <Popover.Description>Popover description</Popover.Description>\n          <Popover.Close>Close</Popover.Close>\n          <Popover.Arrow />\n        </Popover.Popup>\n      </Popover.Positioner>\n    </Popover.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#popover-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Popover.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Popover from \"@starwind-ui/vue/popover\";\n</script>\n\n<template>\n  <Popover.Root>\n    <Popover.Trigger>Open popover</Popover.Trigger>\n    <Popover.Backdrop />\n    <Popover.Positioner>\n      <Popover.Popup>\n        <Popover.Title>Popover title</Popover.Title>\n        <Popover.Description>Popover description</Popover.Description>\n        <Popover.Close>Close</Popover.Close>\n        <Popover.Arrow />\n      </Popover.Popup>\n    </Popover.Positioner>\n  </Popover.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#popover-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -72027,6 +73943,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -73296,6 +75213,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Preview Card",
       category: "presence-floating-overlay",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/preview-card",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/preview-card",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/preview-card",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/preview-card",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "preview-card",
         factory: "createPreviewCard",
@@ -73940,7 +75883,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Preview Card is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -73980,6 +75923,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { PreviewCard } from \"@starwind-ui/react/preview-card\";\n\nexport function Example() {\n  return (\n    <PreviewCard.Root>\n      <PreviewCard.Trigger>Preview profile</PreviewCard.Trigger>\n      <PreviewCard.Positioner>\n        <PreviewCard.Popup>\n          <PreviewCard.Arrow />\n        </PreviewCard.Popup>\n      </PreviewCard.Positioner>\n    </PreviewCard.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#preview-card-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build PreviewCard.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport PreviewCard from \"@starwind-ui/vue/preview-card\";\n</script>\n\n<template>\n  <PreviewCard.Root>\n    <PreviewCard.Trigger>Preview profile</PreviewCard.Trigger>\n    <PreviewCard.Positioner>\n      <PreviewCard.Popup>\n        <PreviewCard.Arrow />\n      </PreviewCard.Popup>\n    </PreviewCard.Positioner>\n  </PreviewCard.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#preview-card-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -73987,6 +75939,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -75146,6 +77099,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Progress",
       category: "static-semantic",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/progress",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/progress",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/progress",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/progress",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "progress",
         factory: "createProgress",
@@ -75442,7 +77421,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Progress is a Starwind Runtime primitive in the static-semantic contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -75482,6 +77461,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Progress } from \"@starwind-ui/react/progress\";\n\nexport function Example() {\n  return (\n    <Progress.Root>\n      <Progress.Label>Upload progress</Progress.Label>\n      <Progress.Track>\n        <Progress.Indicator />\n      </Progress.Track>\n      <Progress.Value>Selected value</Progress.Value>\n    </Progress.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#progress-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Progress.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Progress from \"@starwind-ui/vue/progress\";\n</script>\n\n<template>\n  <Progress.Root>\n    <Progress.Label>Upload progress</Progress.Label>\n    <Progress.Track>\n      <Progress.Indicator />\n    </Progress.Track>\n    <Progress.Value>Selected value</Progress.Value>\n  </Progress.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#progress-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -75489,6 +77477,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -75997,6 +77986,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Radio",
       category: "single-boolean-control",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/radio",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/radio",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/radio",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/radio",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "radio",
         factory: "createRadio",
@@ -76420,7 +78435,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Radio is a Starwind Runtime primitive in the single-boolean-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -76460,6 +78475,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Radio } from \"@starwind-ui/react/radio\";\n\nexport function Example() {\n  return (\n    <Radio.Root value=\"option-one\">\n      <Radio.Indicator />\n    </Radio.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Radio.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Radio from \"@starwind-ui/vue/radio\";\n</script>\n\n<template>\n  <Radio.Root value=\"option-one\">\n    <Radio.Indicator />\n  </Radio.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -76467,6 +78491,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -77223,6 +79248,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Radio Group",
       category: "controlled-value-group",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/radio-group",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/radio-group",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/radio-group",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/radio-group",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "radio-group",
         factory: "createRadioGroup",
@@ -77588,7 +79639,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Radio Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -77628,6 +79679,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { RadioGroup } from \"@starwind-ui/react/radio-group\";\n\nexport function Example() {\n  return (\n    <RadioGroup.Root />\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-group-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build RadioGroup.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport RadioGroup from \"@starwind-ui/vue/radio-group\";\n</script>\n\n<template>\n  <RadioGroup.Root />\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-group-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -77635,6 +79695,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -78271,6 +80332,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Scroll Area",
       category: "viewport-measurement",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/scroll-area",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/scroll-area",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/scroll-area",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/scroll-area",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "scroll-area",
         factory: "createScrollArea",
@@ -78499,7 +80586,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Scroll Area is a Starwind Runtime primitive in the viewport-measurement contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -78539,6 +80626,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { ScrollArea } from \"@starwind-ui/react/scroll-area\";\n\nexport function Example() {\n  return (\n    <ScrollArea.Root>\n      <ScrollArea.Viewport>\n        <ScrollArea.Content>Scrollable content</ScrollArea.Content>\n      </ScrollArea.Viewport>\n      <ScrollArea.Scrollbar>\n        <ScrollArea.Thumb />\n      </ScrollArea.Scrollbar>\n      <ScrollArea.Corner />\n    </ScrollArea.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#scroll-area-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build ScrollArea.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport ScrollArea from \"@starwind-ui/vue/scroll-area\";\n</script>\n\n<template>\n  <ScrollArea.Root>\n    <ScrollArea.Viewport>\n      <ScrollArea.Content>Scrollable content</ScrollArea.Content>\n    </ScrollArea.Viewport>\n    <ScrollArea.Scrollbar>\n      <ScrollArea.Thumb />\n    </ScrollArea.Scrollbar>\n    <ScrollArea.Corner />\n  </ScrollArea.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#scroll-area-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -78546,6 +80642,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -78954,6 +81051,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Select",
       category: "floating-value-control",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/select",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/select",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/select",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/select",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "select",
         factory: "createSelect",
@@ -79834,7 +81957,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Select is a Starwind Runtime primitive in the floating-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -79883,12 +82006,21 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Select } from \"@starwind-ui/react/select\";\n\nexport function Example() {\n  return (\n    <Select.Root>\n      <Select.Label>Choose a framework</Select.Label>\n      <Select.Trigger>\n        <Select.Value>Astro</Select.Value>\n        <Select.Icon>v</Select.Icon>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup />\n      </Select.Positioner>\n    </Select.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Select.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Select from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n  <Select.Root>\n    <Select.Label>Choose a framework</Select.Label>\n    <Select.Trigger>\n      <Select.Value>Astro</Select.Value>\n      <Select.Icon>v</Select.Icon>\n    </Select.Trigger>\n    <Select.Positioner>\n      <Select.Popup />\n    </Select.Positioner>\n  </Select.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-vue",
+          },
         ],
         authoredExamples: [
           {
             id: "positioned-select",
             title: "Positioned Select",
-            summary: "Render Select with a positioned popup across Astro, React, and HTML surfaces.",
+            summary: "Render Select with a positioned popup across Astro, React, Vue, and HTML surfaces.",
             frameworks: [
               {
                 framework: "astro",
@@ -79901,6 +82033,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 language: "tsx",
                 source: "scripts/portable-runtime/docs/layered-docs/primitives/select/examples/positioned-select.tsx",
                 code: "import { Select } from \"@starwind-ui/react/select\";\n\nexport function Example() {\n  return (\n    <Select.Root defaultValue=\"astro\">\n      <Select.Label>Framework</Select.Label>\n      <Select.Trigger>\n        <Select.Value>Astro</Select.Value>\n        <Select.Icon>v</Select.Icon>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup>\n          <Select.List>\n            <Select.Item value=\"astro\">\n              <Select.ItemText>Astro</Select.ItemText>\n              <Select.ItemIndicator />\n            </Select.Item>\n            <Select.Item value=\"react\">\n              <Select.ItemText>React</Select.ItemText>\n              <Select.ItemIndicator />\n            </Select.Item>\n          </Select.List>\n        </Select.Popup>\n      </Select.Positioner>\n    </Select.Root>\n  );\n}\n",
+              },
+              {
+                framework: "vue",
+                language: "vue",
+                source: "scripts/portable-runtime/docs/layered-docs/primitives/select/examples/positioned-select.vue",
+                code: "<script setup lang=\"ts\">\nimport { Select } from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n  <Select.Root defaultValue=\"astro\">\n    <Select.Label>Framework</Select.Label>\n    <Select.Trigger>\n      <Select.Value>Astro</Select.Value>\n      <Select.Icon>v</Select.Icon>\n    </Select.Trigger>\n    <Select.Positioner>\n      <Select.Popup>\n        <Select.List>\n          <Select.Item value=\"astro\">\n            <Select.ItemText>Astro</Select.ItemText>\n            <Select.ItemIndicator />\n          </Select.Item>\n          <Select.Item value=\"react\">\n            <Select.ItemText>React</Select.ItemText>\n            <Select.ItemIndicator />\n          </Select.Item>\n        </Select.List>\n      </Select.Popup>\n    </Select.Positioner>\n  </Select.Root>\n</template>\n",
               },
               {
                 framework: "raw-html",
@@ -79916,6 +82054,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -81703,6 +83842,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Sidebar",
       category: "presence-disclosure-control",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/sidebar",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/sidebar",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/sidebar",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/sidebar",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "sidebar",
         factory: "createSidebarController",
@@ -82353,7 +84518,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Sidebar is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -82393,6 +84558,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Sidebar } from \"@starwind-ui/react/sidebar\";\n\nexport function Example() {\n  return (\n    <Sidebar.Provider>\n      <Sidebar.Sidebar>\n        <Sidebar.MenuButton>Dashboard</Sidebar.MenuButton>\n      </Sidebar.Sidebar>\n      <Sidebar.Trigger>Toggle sidebar</Sidebar.Trigger>\n      <Sidebar.Rail />\n    </Sidebar.Provider>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#sidebar-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Sidebar.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Sidebar from \"@starwind-ui/vue/sidebar\";\n</script>\n\n<template>\n  <Sidebar.Provider>\n    <Sidebar.Sidebar>\n      <Sidebar.MenuButton>Dashboard</Sidebar.MenuButton>\n    </Sidebar.Sidebar>\n    <Sidebar.Trigger>Toggle sidebar</Sidebar.Trigger>\n    <Sidebar.Rail />\n  </Sidebar.Provider>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#sidebar-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -82400,6 +84574,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -83612,6 +85787,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Slider",
       category: "form-value-control",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/slider",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/slider",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/slider",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/slider",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "slider",
         factory: "createSlider",
@@ -84100,7 +86301,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Slider is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -84140,6 +86341,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Slider } from \"@starwind-ui/react/slider\";\n\nexport function Example() {\n  return (\n    <Slider.Root>\n      <Slider.Label>Volume</Slider.Label>\n      <Slider.Control>\n        <Slider.Track>\n          <Slider.Indicator />\n          <Slider.Thumb />\n        </Slider.Track>\n      </Slider.Control>\n    </Slider.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#slider-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Slider.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Slider from \"@starwind-ui/vue/slider\";\n</script>\n\n<template>\n  <Slider.Root>\n    <Slider.Label>Volume</Slider.Label>\n    <Slider.Control>\n      <Slider.Track>\n        <Slider.Indicator />\n        <Slider.Thumb />\n      </Slider.Track>\n    </Slider.Control>\n  </Slider.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#slider-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -84147,6 +86357,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -85062,6 +87273,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Switch",
       category: "single-boolean-control",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/switch",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/switch",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/switch",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/switch",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "switch",
         factory: "createSwitch",
@@ -85479,7 +87716,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Switch is a Starwind Runtime primitive in the single-boolean-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -85519,6 +87756,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Switch } from \"@starwind-ui/react/switch\";\n\nexport function Example() {\n  return (\n    <Switch.Root>\n      <Switch.Thumb />\n    </Switch.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#switch-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Switch.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Switch from \"@starwind-ui/vue/switch\";\n</script>\n\n<template>\n  <Switch.Root>\n    <Switch.Thumb />\n  </Switch.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#switch-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -85526,6 +87772,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -86284,6 +88531,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Tabs",
       category: "controlled-value-group",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/tabs",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/tabs",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/tabs",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/tabs",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "tabs",
         factory: "createTabs",
@@ -86295,6 +88568,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "syncKey",
           "value",
         ],
+        optionPropLifecycles: {
+          syncKey: "constructor-only",
+        },
         destroys: true,
       },
       parts: [
@@ -86415,6 +88691,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               name: "hidden",
+              source: "state",
+            },
+            {
+              name: "inert",
               source: "state",
             },
           ],
@@ -86729,7 +89009,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "data-keep-mounted",
             "data-value",
           ],
-          reason: "Panels start from stable value and keep-mounted markers; the runtime links ids and active visibility during refresh.",
+          reason: "Panels retain their DOM and state. Frameworks snapshot initial hidden markup; Runtime owns live visibility, inert state, and starting/ending markers through finite panel motion.",
         },
         {
           part: "indicator",
@@ -86750,13 +89030,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "Runtime treats an empty string as a valid TabsValue and reserves literal \"null\" as the nullable serialization marker.",
         ],
         react: [
-          "Bridge controlled value through setValue with sync propagation and provide context so child parts can render initial orientation/value state.",
+          "Bridge controlled value through setValue with sync propagation. Snapshot panel hidden and tab tabindex from initial context so rerenders preserve Runtime presence and keyboard position.",
           "Runtime treats an empty string as a valid TabsValue and reserves literal \"null\" as the nullable serialization marker.",
         ],
       },
       docsReference: {
         summary: "Tabs is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -86766,7 +89046,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "vue",
         ],
         behaviorNotes: [],
-        usageGuidelines: [],
+        usageGuidelines: [
+          {
+            title: "Animate panel changes with CSS.",
+            description: "Apply transitions or keyframe animations to the panel. Use `data-starting-style` for its entrance and `data-ending-style` for its exit. Initial panels appear without an entrance animation. The [animated Styled Tabs example](/docs/components/tabs/#animated-panels) shows a crossfade with reduced-motion support.",
+          },
+          {
+            title: "Keep visibility under Runtime control.",
+            description: "An outgoing panel becomes `inert` immediately, then receives `hidden` when its own finite motion finishes. Its controls cannot receive input during the exit. Descendant motion and infinite animations do not delay hiding. Panel DOM and local state remain mounted; `keepMounted` preserves its existing behavior.",
+          },
+          {
+            title: "Keep keyboard entry aligned with selection.",
+            description: "When code changes the selected tab while focus is outside the tab list, the selected enabled trigger becomes the next keyboard entry target. Browser focus stays where it is. While focus is inside the list, Tabs preserves the user's keyboard position.",
+          },
+        ],
         sections: [],
         examples: [
           {
@@ -86796,6 +89089,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Tabs } from \"@starwind-ui/react/tabs\";\n\nexport function Example() {\n  return (\n    <Tabs.Root defaultValue=\"account\">\n      <Tabs.List>\n        <Tabs.Tab value=\"account\">Account</Tabs.Tab>\n      </Tabs.List>\n      <Tabs.Panel value=\"account\">Account settings</Tabs.Panel>\n    </Tabs.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tabs-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Tabs.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Tabs from \"@starwind-ui/vue/tabs\";\n</script>\n\n<template>\n  <Tabs.Root defaultValue=\"account\">\n    <Tabs.List>\n      <Tabs.Tab value=\"account\">Account</Tabs.Tab>\n    </Tabs.List>\n    <Tabs.Panel value=\"account\">Account settings</Tabs.Panel>\n  </Tabs.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tabs-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -86803,6 +89105,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -87650,7 +89953,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "data-keep-mounted",
                     "data-value",
                   ],
-                  reason: "Panels start from stable value and keep-mounted markers; the runtime links ids and active visibility during refresh.",
+                  reason: "Panels retain their DOM and state. Frameworks snapshot initial hidden markup; Runtime owns live visibility, inert state, and starting/ending markers through finite panel motion.",
                 },
               ],
               presence: {
@@ -87792,6 +90095,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Toast",
       category: "notification-system",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/toast",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/toast",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/toast",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/toast",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "toast",
         factory: "createToastManager",
@@ -88046,7 +90375,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toast is a Starwind Runtime primitive in the notification-system contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -88086,6 +90415,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Toast } from \"@starwind-ui/react/toast\";\n\nexport function Example() {\n  return (\n    <Toast.Viewport>\n      <Toast.Root>\n        <Toast.Content>\n          <Toast.Title>Saved</Toast.Title>\n          <Toast.Description>Your changes were saved.</Toast.Description>\n        </Toast.Content>\n        <Toast.Close>Dismiss</Toast.Close>\n      </Toast.Root>\n    </Toast.Viewport>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toast-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Toast.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Toast from \"@starwind-ui/vue/toast\";\n</script>\n\n<template>\n  <Toast.Viewport>\n    <Toast.Root>\n      <Toast.Content>\n        <Toast.Title>Saved</Toast.Title>\n        <Toast.Description>Your changes were saved.</Toast.Description>\n      </Toast.Content>\n      <Toast.Close>Dismiss</Toast.Close>\n    </Toast.Root>\n  </Toast.Viewport>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toast-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -88093,6 +90431,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -88609,6 +90948,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Toggle",
       category: "single-boolean-control",
       registryVersion: "1.0.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/toggle",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/toggle",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/toggle",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/toggle",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "toggle",
         factory: "createToggle",
@@ -88900,7 +91265,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toggle is a Starwind Runtime primitive in the single-boolean-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -88940,6 +91305,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { Toggle } from \"@starwind-ui/react/toggle\";\n\nexport function Example() {\n  return (\n    <Toggle.Root>Toggle</Toggle.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Toggle.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Toggle from \"@starwind-ui/vue/toggle\";\n</script>\n\n<template>\n  <Toggle.Root>Toggle</Toggle.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -88947,6 +91321,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -89521,6 +91896,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Toggle Group",
       category: "controlled-value-group",
       registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/toggle-group",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/toggle-group",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/toggle-group",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/toggle-group",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "toggle-group",
         factory: "createToggleGroup",
@@ -89818,7 +92219,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toggle Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -89858,6 +92259,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             code: "import { ToggleGroup } from \"@starwind-ui/react/toggle-group\";\n\nexport function Example() {\n  return (\n    <ToggleGroup.Root />\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-group-basic-react",
           },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build ToggleGroup.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport ToggleGroup from \"@starwind-ui/vue/toggle-group\";\n</script>\n\n<template>\n  <ToggleGroup.Root />\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-group-basic-vue",
+          },
         ],
         authoredExamples: [],
         exampleCoverage: {
@@ -89865,6 +92275,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -90444,6 +92855,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       displayName: "Tooltip",
       category: "presence-floating-overlay",
       registryVersion: "1.1.1",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/tooltip",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/tooltip",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/tooltip",
+          installSpecifier: "@starwind-ui/vue@beta",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/tooltip",
+          installSpecifier: "@starwind-ui/svelte@beta",
+        },
+      ],
       runtime: {
         primitiveId: "tooltip",
         factory: "createTooltip",
@@ -91032,7 +93469,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Tooltip is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -91051,7 +93488,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Raw HTML",
             summary: "Render the Tooltip data-sw-* contract yourself, then initialize createTooltip.",
             language: "html",
-            code: "<div data-sw-tooltip>\n  <button data-sw-tooltip-trigger type=\"button\">Hover me</button>\n  <div data-sw-tooltip-positioner>\n    <div data-sw-tooltip-popup role=\"tooltip\" hidden>\n      <div data-sw-tooltip-arrow></div>\n    </div>\n  </div>\n</div>\n\n<script type=\"module\">\n  import { createTooltip } from \"@starwind-ui/runtime/tooltip\";\n\n  const root = document.querySelector(\"[data-sw-tooltip]\");\n  if (root) {\n    createTooltip(root);\n  }\n</script>",
+            code: "<div data-sw-tooltip>\n  <button data-sw-tooltip-trigger type=\"button\">Hover me</button>\n  <div data-sw-tooltip-portal data-sw-portal-placement=\"runtime\">\n    <div data-sw-tooltip-positioner>\n      <div data-sw-tooltip-popup role=\"tooltip\" hidden>\n        <div data-sw-tooltip-arrow></div>\n      </div>\n    </div>\n  </div>\n</div>\n\n<script type=\"module\">\n  import { createTooltip } from \"@starwind-ui/runtime/tooltip\";\n\n  const root = document.querySelector(\"[data-sw-tooltip]\");\n  if (root) {\n    createTooltip(root);\n  }\n</script>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tooltip-basic-raw-html",
           },
           {
@@ -91060,7 +93497,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Astro",
             summary: "Use the Astro primitive adapter to render Tooltip anatomy with the Runtime wiring included.",
             language: "astro",
-            code: "---\nimport { Tooltip } from \"@starwind-ui/astro/tooltip\";\n---\n\n<Tooltip.Root>\n  <Tooltip.Trigger>Hover me</Tooltip.Trigger>\n  <Tooltip.Positioner>\n    <Tooltip.Popup>\n      <Tooltip.Arrow />\n    </Tooltip.Popup>\n  </Tooltip.Positioner>\n</Tooltip.Root>",
+            code: "---\nimport { Tooltip } from \"@starwind-ui/astro/tooltip\";\n---\n\n<Tooltip.Root>\n  <Tooltip.Trigger>Hover me</Tooltip.Trigger>\n  <Tooltip.Portal>\n    <Tooltip.Positioner>\n      <Tooltip.Popup>\n        <Tooltip.Arrow />\n      </Tooltip.Popup>\n    </Tooltip.Positioner>\n  </Tooltip.Portal>\n</Tooltip.Root>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tooltip-basic-astro",
           },
           {
@@ -91069,8 +93506,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "React",
             summary: "Use the React primitive adapter when Tooltip state participates in React rendering.",
             language: "tsx",
-            code: "import { Tooltip } from \"@starwind-ui/react/tooltip\";\n\nexport function Example() {\n  return (\n    <Tooltip.Root>\n      <Tooltip.Trigger>Hover me</Tooltip.Trigger>\n      <Tooltip.Positioner>\n        <Tooltip.Popup>\n          <Tooltip.Arrow />\n        </Tooltip.Popup>\n      </Tooltip.Positioner>\n    </Tooltip.Root>\n  );\n}",
+            code: "import { Tooltip } from \"@starwind-ui/react/tooltip\";\n\nexport function Example() {\n  return (\n    <Tooltip.Root>\n      <Tooltip.Trigger>Hover me</Tooltip.Trigger>\n      <Tooltip.Portal>\n        <Tooltip.Positioner>\n          <Tooltip.Popup>\n            <Tooltip.Arrow />\n          </Tooltip.Popup>\n        </Tooltip.Positioner>\n      </Tooltip.Portal>\n    </Tooltip.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tooltip-basic-react",
+          },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Tooltip.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport Tooltip from \"@starwind-ui/vue/tooltip\";\n</script>\n\n<template>\n  <Tooltip.Root>\n    <Tooltip.Trigger>Hover me</Tooltip.Trigger>\n    <Tooltip.Portal>\n      <Tooltip.Positioner>\n        <Tooltip.Popup>\n          <Tooltip.Arrow />\n        </Tooltip.Popup>\n      </Tooltip.Positioner>\n    </Tooltip.Portal>\n  </Tooltip.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tooltip-basic-vue",
           },
         ],
         authoredExamples: [],
@@ -91079,6 +93525,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "raw-html",
             "astro",
             "react",
+            "vue",
           ],
           missingTargets: [],
           allowedMissingTargets: [],

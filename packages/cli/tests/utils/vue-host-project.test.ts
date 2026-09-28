@@ -85,7 +85,11 @@ describe("private Vue host-project interface", () => {
     mocks.projectLaravelStarwindStylesheet.mockImplementation((content) => `fragment:${content}`);
     mocks.prepareAstroVueIntegration.mockResolvedValue({ status: "ready" });
     mocks.setupAstroConfig.mockResolvedValue(true);
-    mocks.setupLayoutCssImport.mockResolvedValue(true);
+    mocks.setupLayoutCssImport.mockResolvedValue({
+      status: "added",
+      path: "src/pages/index.astro",
+      message: "Added Starwind CSS import to src/pages/index.astro",
+    });
     mocks.setupTsConfig.mockResolvedValue(true);
     mocks.setupVueTsConfig.mockResolvedValue(true);
   });

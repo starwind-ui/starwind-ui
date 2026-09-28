@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
-import { getRuntimeSetupPlan } from "../../src/utils/runtime-setup.js";
 import type { StarwindRegistry, StarwindRegistryFor } from "../../src/utils/registry.js";
+import { getRuntimeSetupPlan } from "../../src/utils/runtime-setup.js";
 
 const registry: StarwindRegistry = {
   version: "2.1.0",
@@ -37,6 +37,23 @@ describe("Runtime setup plan", () => {
     );
   });
 
+  it("returns Svelte beta setup through the production policy", () => {
+    const svelteRegistry: StarwindRegistryFor<"astro" | "react" | "vue" | "svelte"> = {
+      version: "2.1.0",
+      setup: {
+        svelte: {
+          adapterPackage: { name: "@starwind-ui/svelte", range: "0.0.0" },
+          packageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
+        },
+      },
+      components: [],
+    };
+
+    expect(getRuntimeSetupPlan("svelte", svelteRegistry)).toEqual({
+      adapterPackage: "@starwind-ui/svelte@0.0.0",
+      packageRequirements: ["svelte@>=5.29.0 <6"],
+    });
+  });
   it("returns exact Vue beta setup through the production policy", () => {
     const vueRegistry: StarwindRegistryFor<"astro" | "react" | "vue"> = {
       version: "2.1.0",

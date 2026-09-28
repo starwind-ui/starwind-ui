@@ -11,9 +11,9 @@ import { starwindStyledContracts } from "../contracts/styled/components/index.js
 import type { StyledAdapterContract } from "../contracts/styled/types.js";
 import { styledDocsAnnotations } from "../docs/layered-docs/annotations.js";
 import { colorPickerPrimitiveDocsAuthoredExamples } from "../docs/layered-docs/examples.js";
+import { buildStyledApiMetadata } from "../docs/layered-docs/generator/build-styled-api.js";
 import type { LayeredDocsMetadata, PrimitiveDocsEnrichment } from "../docs/layered-docs/types.js";
 import * as layeredDocsGenerator from "../generate-layered-docs-metadata.js";
-import { buildStyledApiMetadata } from "../docs/layered-docs/generator/build-styled-api.js";
 import {
   buildLayeredDocsMetadata,
   checkLayeredDocsMetadata,
@@ -305,6 +305,62 @@ const auditedAsChildVisualOwnership = [
 ] as const;
 
 describe("generateLayeredDocsMetadata", () => {
+  it("reports public beta availability separately from API and example coverage", () => {
+    const metadata = buildLayeredDocsMetadata();
+    expect(metadata.frameworks).toEqual([
+      {
+        target: "astro",
+        label: "Astro",
+        maturity: "stable",
+        packageName: "@starwind-ui/astro",
+        installSpecifier: "@starwind-ui/astro",
+      },
+      {
+        target: "react",
+        label: "React",
+        maturity: "stable",
+        packageName: "@starwind-ui/react",
+        installSpecifier: "@starwind-ui/react",
+      },
+      {
+        target: "vue",
+        label: "Vue",
+        maturity: "beta",
+        packageName: "@starwind-ui/vue",
+        installSpecifier: "@starwind-ui/vue@beta",
+      },
+      {
+        target: "svelte",
+        label: "Svelte",
+        maturity: "beta",
+        packageName: "@starwind-ui/svelte",
+        installSpecifier: "@starwind-ui/svelte@beta",
+      },
+    ]);
+    for (const component of metadata.styledComponents) {
+      expect(component.frameworkAvailability.vue.status).toBe(
+        component.id === "image" ? "unsupported" : "available",
+      );
+      expect(component.frameworkAvailability.svelte.status).toBe(
+        component.id === "image" ? "unsupported" : "available",
+      );
+      expect(Object.keys(component.styledApi)).toEqual(["astro", "react"]);
+    }
+    for (const primitive of metadata.primitives) {
+      expect(primitive.packages).toContainEqual({
+        framework: "vue",
+        packageName: "@starwind-ui/vue",
+        importSource: `@starwind-ui/vue/${primitive.id}`,
+        installSpecifier: "@starwind-ui/vue@beta",
+      });
+      expect(primitive.packages).toContainEqual({
+        framework: "svelte",
+        packageName: "@starwind-ui/svelte",
+        importSource: `@starwind-ui/svelte/${primitive.id}`,
+        installSpecifier: "@starwind-ui/svelte@beta",
+      });
+    }
+  });
   it("keeps the compatibility entrypoint public runtime exports stable", () => {
     expect(Object.keys(layeredDocsGenerator).sort()).toEqual([
       "buildLayeredDocsMetadata",
@@ -1052,9 +1108,9 @@ describe("generateLayeredDocsMetadata", () => {
     expect(defaultCheckedProp?.frameworkBehavior).toEqual(checkedState?.frameworkBehavior);
     expect(checkedChangeProp?.frameworkBehavior).toEqual(checkedState?.frameworkBehavior);
     expect(checkboxRoot?.props.some((prop) => prop.name === "defaultCheck")).toBe(false);
-    expect(checkbox?.docsReference.frameworkCoordination).toContain(
-      "share one semantic component API",
-    );
+    for (const framework of ["Astro", "React", "Vue", "Svelte"]) {
+      expect(checkbox?.docsReference.frameworkCoordination).toContain(framework);
+    }
     expect(checkedChangeEvent?.stateModel).toBe("checked");
     expect(checkedChangeEvent?.cancellationSequence).toEqual([
       { step: 1, action: "Check internal eligibility and intent." },
@@ -1749,6 +1805,7 @@ describe("generateLayeredDocsMetadata", () => {
     for (const example of colorPicker?.docsReference.authoredExamples ?? []) {
       expect(example.frameworks.map((framework) => framework.framework)).toEqual([
         "astro",
+        "vue",
         "react",
         "raw-html",
       ]);
@@ -1976,7 +2033,7 @@ describe("generateLayeredDocsMetadata", () => {
     });
   });
 
-  it("generates source-backed raw HTML, Astro, and React examples for every primitive", () => {
+  it("generates source-backed raw HTML, Astro, React, and Vue examples for every primitive", () => {
     const metadata = buildLayeredDocsMetadata();
     const report = validateLayeredDocsMetadata(metadata);
     const button = metadata.primitives.find((primitive) => primitive.id === "button");
@@ -2011,7 +2068,7 @@ describe("generateLayeredDocsMetadata", () => {
       );
 
       expect(primitive?.docsReference.exampleCoverage).toEqual({
-        requiredTargets: ["raw-html", "astro", "react"],
+        requiredTargets: ["raw-html", "astro", "react", "vue"],
         missingTargets: [],
         allowedMissingTargets: [],
       });
@@ -2019,6 +2076,19 @@ describe("generateLayeredDocsMetadata", () => {
       const rawHtmlExample = examplesByFramework.get("raw-html");
       const astroExample = examplesByFramework.get("astro");
       const reactExample = examplesByFramework.get("react");
+      const vueExample = examplesByFramework.get("vue");
+      expect(vueExample).toMatchObject({
+        id: "basic",
+        language: "vue",
+        title: "Vue",
+        source: `scripts/portable-runtime/docs/layered-docs/examples.ts#${contract.component}-basic-vue`,
+      });
+      expect(vueExample?.code).toContain(
+        `import ${namespace} from "@starwind-ui/vue/${contract.component}";`,
+      );
+      expect(vueExample?.code).toContain(`<${rootNamespaceName}`);
+      expect(vueExample?.code).toContain('<script setup lang="ts">');
+      expect(vueExample?.code).not.toMatch(/=\{(?:true|false|\d+)\}/);
 
       expect(rawHtmlExample).toMatchObject({
         id: "basic",
@@ -3282,6 +3352,16 @@ describe("generateLayeredDocsMetadata", () => {
         path.join(docsRoot, "src/docs/data/docs/en/primitives/index.mdx"),
         "utf8",
       );
+      const buttonPrimitiveSource = await readFile(
+        path.join(docsRoot, "src/docs/data/docs/en/primitives/button.mdx"),
+        "utf8",
+      );
+      expect(buttonPrimitiveSource).not.toContain(
+        "This Primitive supports the Vue 3.5 public beta.",
+      );
+      expect(buttonPrimitiveSource).toContain(
+        '<DocsTabsTrigger value="vue">Vue</DocsTabsTrigger>',
+      );
       const drawerPrimitiveSource = await readFile(
         path.join(docsRoot, "src/docs/data/docs/en/primitives/drawer.mdx"),
         "utf8",
@@ -3334,11 +3414,11 @@ describe("generateLayeredDocsMetadata", () => {
       expect(primitiveIndexSource).toContain("title: Runtime Primitives");
       expect(primitiveIndexSource).toContain("<PrimitiveInventory />");
       expectSubstringsInOrder(primitiveIndexSource, [
-        "Starwind currently exposes 36 Runtime-backed primitives for Astro and React.",
         "<PrimitiveInventory />",
         "## Installation",
         "npm install @starwind-ui/astro",
         "npm install @starwind-ui/react",
+        "npm install @starwind-ui/svelte@beta",
         "[Getting Started Primitives guide](/docs/getting-started/primitives/)",
         "## Import Pattern",
         'import { Accordion } from "@starwind-ui/astro/accordion";',
@@ -3467,7 +3547,7 @@ describe("generateLayeredDocsMetadata", () => {
         "Select positions its popup from the trigger.",
         "## Examples",
         "### Positioned Select",
-        "Render Select with a positioned popup across Astro, React, and HTML surfaces.",
+        "Render Select with a positioned popup across Astro, React, Vue, and HTML surfaces.",
         "## API Reference",
       ]);
       const selectAuthoredExampleSlice = selectPrimitiveSource.slice(
@@ -3489,7 +3569,7 @@ describe("generateLayeredDocsMetadata", () => {
       expect(selectPrimitiveSource).not.toContain('::example{id="positioned-select"}');
       expect(checkboxPrimitiveSource).not.toContain("## Demo");
       expect(checkboxPrimitiveSource).toContain(
-        "Astro and React share one semantic component API.",
+        "Astro, React, Vue, and Svelte components use the same underlying interactions.",
       );
       const colorPicker = metadata.primitives.find((primitive) => primitive.id === "color-picker");
       expect(colorPicker?.cssVariables).toContainEqual({

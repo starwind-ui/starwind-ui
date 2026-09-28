@@ -1,3 +1,13 @@
+import {
+  connectDocumentOwner,
+  disposeDocumentOwner,
+  formReactivePropTypes,
+  formReactiveTypeImports,
+  formSummaryDefaults,
+  formTimingValue,
+  updateFormErrors,
+  updateFormOptions,
+} from "../../shared-recipes/structured/document-controls/form-policy.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -8,7 +18,7 @@ import type {
   AdapterIndexFile,
   AdapterPrintedFile,
 } from "../types.js";
-import { printVueFamilyIndex, printVueOwnedInstanceDestroy } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueFormFieldCoordinatorIndex(file: AdapterIndexFile): AdapterPrintedFile {
   const family = file.family;
@@ -60,12 +70,13 @@ function printRoot(
 
   return {
     contents: `<script setup lang="ts">
-import { ${facts.runtime.factory}, type ${facts.runtime.validationTimingType} } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { ${facts.runtime.factory}, type ${facts.runtime.validationTimingType}, ${formReactiveTypeImports} } from "${facts.runtime.importSource}";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{
+  ${formReactivePropTypes}
   ${dataErrorVisibility}?: ${facts.runtime.validationTimingType};
   ${dataRevalidationTiming}?: ${facts.runtime.validationTimingType};
   ${dataValidationTiming}?: ${facts.runtime.validationTimingType};
@@ -76,6 +87,7 @@ const props = defineProps<{
 defineSlots<{
   default?: () => unknown;
 }>();
+const configured = { options: false, errors: false };
 const rootRef = ref<HTMLFormElement | null>(null);
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 
@@ -83,13 +95,23 @@ defineExpose({
   element: rootRef,
 });
 
-${printVueOwnedInstanceDestroy()}
+function destroyOwnedInstance(): void {
+  const ownedInstance = instance;
+  if (!ownedInstance) return;
+  ${disposeDocumentOwner("instance", "ownedInstance")}
+}
 
 onMounted(() => {
   const element = rootRef.value;
   if (!element) throw new Error("${facts.displayName} requires its native form before Runtime setup.");
 
-  instance = ${facts.runtime.factory}(element);
+  ${connectDocumentOwner(facts.runtime.factory, "element", "instance")}
+  watch(() => props.options, (options) => {
+    if (instance) { ${updateFormOptions("instance", "options")} }
+  }, { immediate: true, flush: "post" });
+  watch(() => [props.errors, props.errorOptions] as const, ([errors, errorOptions]) => {
+    if (instance) { ${updateFormErrors("instance", "errors", "errorOptions")} }
+  }, { immediate: true, flush: "post" });
 });
 
 onBeforeUnmount(destroyOwnedInstance);
@@ -101,9 +123,9 @@ onBeforeUnmount(destroyOwnedInstance);
     v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.root}
     ${facts.attrs.rootSlot}="${part.slotValue}"
-    :${facts.attrs.errorVisibility}="props.${dataErrorVisibility} ?? props.${errorVisibility}"
-    :${facts.attrs.revalidationTiming}="props.${dataRevalidationTiming} ?? props.${revalidationTiming}"
-    :${facts.attrs.validationTiming}="props.${dataValidationTiming} ?? props.${validationTiming}"
+    :${facts.attrs.errorVisibility}="${formTimingValue(`props.${dataErrorVisibility}`, `props.${errorVisibility}`)}"
+    :${facts.attrs.revalidationTiming}="${formTimingValue(`props.${dataRevalidationTiming}`, `props.${revalidationTiming}`)}"
+    :${facts.attrs.validationTiming}="${formTimingValue(`props.${dataValidationTiming}`, `props.${validationTiming}`)}"
   >
     <slot />
   </${part.defaultElement}>
@@ -137,10 +159,10 @@ const props = withDefaults(
     role?: string;
   }>(),
   {
-    ariaAtomic: "true",
-    ariaLive: "polite",
-    hidden: true,
-    role: "status",
+    ariaAtomic: ${formSummaryDefaults.ariaAtomic},
+    ariaLive: ${formSummaryDefaults.ariaLive},
+    hidden: ${formSummaryDefaults.hidden},
+    role: ${formSummaryDefaults.role},
   },
 );
 defineSlots<{

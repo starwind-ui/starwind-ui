@@ -109,6 +109,7 @@ export const checkboxRuntimeAdapterContract = {
       name: "checked",
       controlledProp: "checked",
       defaultProp: "defaultChecked",
+      resetBaseline: "mount",
       initialAttribute: "data-default-checked",
       runtimeGetter: "getChecked",
       runtimeSetter: "setChecked",
@@ -134,6 +135,7 @@ export const checkboxRuntimeAdapterContract = {
       emitsFrom: "root",
       valueProperty: "checked",
       valueType: "boolean",
+      acceptanceNotification: "controller-subscription",
       callbackTiming: "before-state-commit",
       cancelable: true,
     },
@@ -151,6 +153,7 @@ export const checkboxRuntimeAdapterContract = {
   context: [
     {
       name: "checkbox-group",
+      stateOwnership: "group-membership",
       direction: "consumes",
       requirement: "optional",
       values: ["disabled", "value"],

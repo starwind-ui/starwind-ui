@@ -96,6 +96,7 @@ export function buildGenericAdapterPlan(contract: RuntimeAdapterContract): Gener
     })),
     refs: [...(contract.refs ?? [])],
     runtime: {
+      ...(contract.runtime.refresh ? { refresh: { ...contract.runtime.refresh } } : {}),
       destroys: contract.runtime.destroys,
       factory: contract.runtime.factory,
       importSource: contract.runtime.importSource,

@@ -2,7 +2,7 @@
 
 This Framework Adapter home generates the Vue 3.5 public beta. The `@starwind-ui/vue` package
 uses the `beta` npm channel and stays outside the stable Runtime, Astro, and React fixed package
-group. Its current package version is `0.1.0`. All four public-support flags are enabled.
+group. Read `packages/vue/package.json` for its current version. All four public-support flags are enabled.
 
 `inventory.ts` is the authoritative inventory. The current Primitive surface contains Accordion,
 Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Color Picker,

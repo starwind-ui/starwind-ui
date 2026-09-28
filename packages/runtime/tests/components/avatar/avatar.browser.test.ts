@@ -12,6 +12,83 @@ describe("createAvatar", () => {
     vi.useRealTimers();
   });
 
+  it("refreshes owned image and fallback replacements without restarting retained delays", () => {
+    vi.useFakeTimers();
+    const root = renderAvatar({ fallbackDelay: 100 });
+    const instance = createAvatar(root);
+    const oldImage = getImage();
+    const fallback = getFallback();
+    vi.advanceTimersByTime(60);
+    const replacement = oldImage.cloneNode() as HTMLImageElement;
+    Object.defineProperty(replacement, "complete", { value: false });
+    oldImage.replaceWith(replacement);
+    const added = document.createElement("span");
+    added.setAttribute("data-sw-avatar-fallback", "");
+    root.append(added);
+    instance.refresh();
+    expect(createAvatar(root)).toBe(instance);
+    expect(added.hidden).toBe(false);
+    expect(added.getAttribute("data-image-loading-status")).toBe("loading");
+    vi.advanceTimersByTime(40);
+    expect(fallback.hidden).toBe(false);
+    oldImage.dispatchEvent(new Event("load"));
+    expect(instance.getImageLoadingStatus()).toBe("loading");
+    replacement.dispatchEvent(new Event("load"));
+    expect(fallback.hidden).toBe(true);
+    instance.refresh();
+    expect(instance.getImageLoadingStatus()).toBe("loaded");
+    replacement.remove();
+    instance.refresh();
+    expect(instance.getImageLoadingStatus()).toBe("error");
+    replacement.dispatchEvent(new Event("load"));
+    expect(instance.getImageLoadingStatus()).toBe("error");
+    vi.advanceTimersByTime(100);
+    expect(fallback.hidden).toBe(false);
+    instance.destroy();
+  });
+
+  it("settles a pending source mutation when part refresh reconnects the image observer", () => {
+    const root = renderAvatar();
+    const image = getImage();
+    Object.defineProperty(image, "complete", { value: false });
+    const instance = createAvatar(root);
+    image.dispatchEvent(new Event("load"));
+    image.src = "/changed.png";
+    const extra = document.createElement("img");
+    extra.setAttribute("data-sw-avatar-image", "");
+    root.append(extra);
+    instance.refresh();
+    expect(instance.getImageLoadingStatus()).toBe("loading");
+    expect(image.style.visibility).toBe("hidden");
+    instance.destroy();
+  });
+
+  it("clears removed fallback timers and leaves nested owners untouched", () => {
+    vi.useFakeTimers();
+    const root = renderAvatar({ fallbackDelay: 100 });
+    const instance = createAvatar(root);
+    const removed = getFallback();
+    removed.remove();
+    root.insertAdjacentHTML(
+      "beforeend",
+      "<span data-sw-avatar><img data-sw-avatar-image><span data-sw-avatar-fallback hidden>Nested</span></span>",
+    );
+    const nestedFallback = root.querySelector<HTMLElement>(
+      "[data-sw-avatar] [data-sw-avatar-fallback]",
+    )!;
+    instance.refresh();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(nestedFallback.hidden).toBe(true);
+    vi.advanceTimersByTime(100);
+    expect(removed.hidden).toBe(true);
+    instance.destroy();
+    const late = document.createElement("span");
+    late.setAttribute("data-sw-avatar-fallback", "");
+    root.append(late);
+    instance.refresh();
+    expect(late.hasAttribute("data-image-loading-status")).toBe(false);
+  });
+
   it("shows fallback while the image is loading", () => {
     const root = renderAvatar();
 

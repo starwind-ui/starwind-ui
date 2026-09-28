@@ -48,7 +48,7 @@ export type StyledVariantAliasContract = {
   source: string;
 };
 
-export type FrameworkTarget = "astro" | "react" | "vue";
+export type FrameworkTarget = "astro" | "react" | "vue" | "svelte";
 
 export type ClassVariantDefinition = {
   base?: string | string[];

@@ -1,8 +1,9 @@
+import { ToastTemplate, toast } from "@starwind-ui/vue/toast";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, createSSRApp, h, nextTick, ref } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ToastTemplate, toast } from "@starwind-ui/vue/toast";
+import Toaster from "../../../../apps/vue-demo/src/components/starwind-runtime/toast/Toaster.vue";
 
 import { toastProvider } from "./tree.js";
 
@@ -22,6 +23,56 @@ afterEach(() => {
 });
 
 describe("Vue Toast public behavior", () => {
+  it.each([
+    { props: { gap: "2rem", peek: "3rem" }, gap: "2rem", peek: "3rem", gapRem: 2, peekRem: 3 },
+    { props: {}, gap: "0.5rem", peek: "1rem", gapRem: 0.5, peekRem: 1 },
+  ])(
+    "uses Styled Toaster spacing $gap / $peek in computed layout",
+    async ({ props, gap, peek, gapRem, peekRem }) => {
+      const host = document.createElement("div");
+      document.body.append(host);
+      const app = createApp({
+        render: () =>
+          h(
+            Toaster,
+            {
+              ...props,
+              style: {
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--gap)",
+                "--gap": "9rem",
+                "--peek": "8rem",
+              },
+            },
+            {
+              default: () => [
+                h("div", { id: "spacing-first", style: { height: "10px" } }),
+                h("div", {
+                  id: "spacing-second",
+                  style: { height: "10px", paddingTop: "var(--peek)" },
+                }),
+              ],
+            },
+          ),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await nextTick();
+      const viewport = host.querySelector<HTMLElement>("[data-sw-toast-viewport]")!;
+      const computed = getComputedStyle(viewport);
+      expect(computed.getPropertyValue("--gap")).toBe(gap);
+      expect(computed.getPropertyValue("--peek")).toBe(peek);
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const first = host.querySelector<HTMLElement>("#spacing-first")!;
+      const second = host.querySelector<HTMLElement>("#spacing-second")!;
+      expect(second.getBoundingClientRect().top - first.getBoundingClientRect().bottom).toBeCloseTo(
+        gapRem * rem,
+      );
+      expect(parseFloat(getComputedStyle(second).paddingTop)).toBeCloseTo(peekRem * rem);
+    },
+  );
+
   it("removes forwarded template attributes after a reactive update", async () => {
     const host = document.createElement("div");
     document.body.append(host);

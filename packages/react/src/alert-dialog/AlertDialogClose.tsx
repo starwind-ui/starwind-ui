@@ -6,12 +6,57 @@
 "use client";
 
 import * as React from "react";
+import {
+  type NativeOverlayControlOptions,
+  useNativeOverlayControl,
+} from "../internal/native-overlay-control";
+import { NativeOverlayControlContext } from "./AlertDialogRoot";
 
-export type AlertDialogCloseProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+export type AlertDialogCloseProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  asChild?: boolean;
+};
+
+export function __useAlertDialogControl(
+  options: Omit<NativeOverlayControlOptions, "requestRefresh">,
+) {
+  const requestRefresh = React.useContext(NativeOverlayControlContext);
+  return useNativeOverlayControl({ ...options, requestRefresh });
+}
 
 const AlertDialogClose = React.forwardRef<HTMLButtonElement, AlertDialogCloseProps>(
-  function AlertDialogClose(props, forwardedRef) {
-    return <button type="button" data-sw-alert-dialog-close ref={forwardedRef} {...props} />;
+  function AlertDialogClose({ asChild = false, children, className, ...props }, forwardedRef) {
+    const { controlKey, setControlElement } = __useAlertDialogControl({
+      asChild,
+      children,
+      forwardedRef,
+    });
+
+    if (asChild) {
+      return (
+        <div
+          className={className}
+          data-as-child
+          {...(props as React.HTMLAttributes<HTMLDivElement>)}
+          data-sw-alert-dialog-close
+          key={controlKey}
+          ref={setControlElement}
+        >
+          {children}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        data-sw-alert-dialog-close
+        className={className}
+        ref={setControlElement as React.Ref<HTMLButtonElement>}
+        {...props}
+      >
+        {children}
+      </button>
+    );
   },
 );
 

@@ -6,7 +6,9 @@
 "use client";
 
 import * as React from "react";
-
+import { useComposedRefs } from "../internal/compose-refs";
+import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
+import { PopoverPartContext } from "./PopoverRoot";
 export type PopoverPopupProps = React.HTMLAttributes<HTMLDivElement> & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
@@ -26,20 +28,35 @@ const PopoverPopup = React.forwardRef<HTMLDivElement, PopoverPopupProps>(functio
   },
   forwardedRef,
 ) {
+  const owner = React.useContext(PopoverPartContext);
+  const element = React.useRef<HTMLDivElement>(null);
+  const composedRef = useComposedRefs(forwardedRef, element);
+  useIsomorphicLayoutEffect(() => {
+    const node = element.current;
+    if (!node) return;
+    owner?.registerPlacement(node, {
+      "data-side": String(side),
+      "data-align": String(align),
+      "data-side-offset": String(sideOffset),
+      "data-avoid-collisions": String(avoidCollisions),
+      "data-collision-strategy": String(collisionStrategy),
+    });
+    return () => owner?.registerPlacement(node, null);
+  }, [owner, side, align, sideOffset, avoidCollisions, collisionStrategy]);
   return (
     <div
-      data-sw-popover-popup
-      role="dialog"
-      tabIndex={-1}
+      {...props}
+      data-sw-popover-popup=""
       data-state="closed"
       data-side={side}
       data-align={align}
       data-side-offset={sideOffset}
-      data-avoid-collisions={avoidCollisions ? "true" : "false"}
+      data-avoid-collisions={String(avoidCollisions)}
       data-collision-strategy={collisionStrategy}
+      role="dialog"
+      tabIndex={-1}
       hidden
-      ref={forwardedRef}
-      {...props}
+      ref={composedRef}
     />
   );
 });

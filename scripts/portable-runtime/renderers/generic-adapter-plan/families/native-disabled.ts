@@ -132,6 +132,17 @@ export function getNativeDisabledFacts(plan: GenericAdapterPlan): AdapterNativeD
     throw new Error(`${plan.displayName} generic adapter plan is not a native-disabled plan.`);
   }
 
+  const refresh = plan.runtime.refresh;
+  if (
+    refresh?.method !== "refresh" ||
+    refresh.parts !== "owned-descendants" ||
+    refresh.state !== "preserve" ||
+    refresh.formOwner !== undefined
+  ) {
+    throw new Error(
+      "Fieldset requires state-preserving owned-part refresh without form ownership.",
+    );
+  }
   const rootPart = getPart(plan, "root");
   const publicRootRef = plan.refs.some((ref) => ref.part === rootPart.name && ref.public);
   if (!rootPart.forwardsRef || !publicRootRef) {

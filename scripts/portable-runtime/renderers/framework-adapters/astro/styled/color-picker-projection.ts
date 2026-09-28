@@ -4,60 +4,10 @@ import type {
   StyledOutputRenderNode,
 } from "../../../styled-output-model/index.js";
 
-const projectionTypes: Record<string, string> = {
-  ColorPickerDefaultEditor: "ColorPickerRenderProjection",
-  ColorPickerInput: "ColorPickerRenderProjection",
-  ColorPickerTrigger: "ColorPickerRenderProjection",
-  ColorPickerContent: "ColorPickerRenderProjection",
-  ColorPickerArea: "ColorPickerAreaProjection",
-  ColorPickerChannelSlider: "ColorPickerRenderProjection",
-  ColorPickerChannelInput: "ColorPickerInitialPartProjection",
-  ColorPickerValueSwatch: "ColorPickerRenderProjection",
-  ColorPickerSwatchGroup: "ColorPickerInitialPartProjection",
-  ColorPickerSwatch: "ColorPickerRenderProjection",
-  ColorPickerEyeDropper: "ColorPickerInitialPartProjection",
-  ColorPickerClear: "ColorPickerInitialPartProjection",
-};
-
 export function projectAstroColorPickerComponent(
   component: StyledOutputComponent,
 ): StyledOutputComponent {
-  if (component.exportName === "ColorPicker") {
-    return { ...component, render: projectNodes(component.exportName, component.render) };
-  }
-
-  const projectionType = projectionTypes[component.exportName];
-  if (!projectionType) return component;
-
-  return {
-    ...component,
-    props: component.props && {
-      ...component.props,
-      fields: [
-        ...component.props.fields,
-        ...(component.exportName === "ColorPickerChannelSlider"
-          ? [{ name: "step", optional: true, type: "number" }]
-          : []),
-        {
-          name: "initial",
-          optional: true,
-          type:
-            projectionType === "ColorPickerInitialPartProjection"
-              ? `import("@starwind-ui/runtime/color-picker").${projectionType}`
-              : `import("@starwind-ui/astro/color-picker").${projectionType}`,
-        },
-      ],
-    },
-    destructure: component.destructure && {
-      ...component.destructure,
-      props: [
-        { name: "initial" },
-        ...(component.exportName === "ColorPickerChannelSlider" ? [{ name: "step" }] : []),
-        ...component.destructure.props,
-      ],
-    },
-    render: projectNodes(component.exportName, component.render),
-  };
+  return { ...component, render: projectNodes(component.exportName, component.render) };
 }
 
 function projectNodes(

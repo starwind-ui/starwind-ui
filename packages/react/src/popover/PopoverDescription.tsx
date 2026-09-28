@@ -11,7 +11,7 @@ export type PopoverDescriptionProps = React.HTMLAttributes<HTMLParagraphElement>
 
 const PopoverDescription = React.forwardRef<HTMLParagraphElement, PopoverDescriptionProps>(
   function PopoverDescription(props, forwardedRef) {
-    return <p data-sw-popover-description ref={forwardedRef} {...props} />;
+    return <p {...props} data-sw-popover-description="" ref={forwardedRef} />;
   },
 );
 

@@ -247,7 +247,12 @@ export async function loadArtifactManifest(packagesDirectory) {
     cli: "starwind",
     react: "@starwind-ui/react",
     runtime: "@starwind-ui/runtime",
+    ...(Object.hasOwn(manifest.packages ?? {}, "vue") ? { vue: "@starwind-ui/vue" } : {}),
+    ...(Object.hasOwn(manifest.packages ?? {}, "svelte") ? { svelte: "@starwind-ui/svelte" } : {}),
   };
+  if (Object.hasOwn(manifest.packages ?? {}, "svelte")) {
+    assert(Object.hasOwn(manifest.packages, "vue"), "Svelte release artifacts require Vue.");
+  }
   for (const [key, name] of Object.entries(expectedNames)) {
     const entry = manifest.packages?.[key];
     assert.equal(entry?.name, name);

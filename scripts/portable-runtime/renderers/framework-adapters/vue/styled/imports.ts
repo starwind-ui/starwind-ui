@@ -87,6 +87,21 @@ export function projectVueImports(
       source,
     });
   }
+  const controlFamily = /^(Dialog|Sheet)(Trigger|Close)$/.test(component.exportName)
+    ? component.exportName.startsWith("Dialog")
+      ? "Dialog"
+      : "Drawer"
+    : /^AlertDialog(Trigger|Action|Cancel)$/.test(component.exportName)
+      ? "AlertDialog"
+      : undefined;
+  if (controlFamily) {
+    const primitive =
+      controlFamily === "AlertDialog" ? "alert-dialog" : controlFamily.toLowerCase();
+    const source = options.primitiveImportBase
+      ? `${options.primitiveImportBase}/${primitive}`
+      : getRelativeImportPath(options.directory, path.join(options.primitiveOutputRoot, primitive));
+    primitiveSources[primitive] ??= source;
+  }
   for (const reference of collectStyledOutputComposedComponentReferences(component, {
     target: "vue",
   })) {

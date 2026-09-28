@@ -65,6 +65,42 @@ type ReactPortalImplementationProps = ReactPortalProps & {
 };
 
 const ReactPortalScopeContext = React.createContext<ReactPortalScopeValue | null>(null);
+const portalDocumentObservers = new WeakMap<
+  Document,
+  { observer: MutationObserver; subscribers: Set<() => void> }
+>();
+
+function observePortalDocument(ownerDocument: Document, refreshPlacement: () => void): () => void {
+  let shared = portalDocumentObservers.get(ownerDocument);
+  if (!shared) {
+    const subscribers = new Set<() => void>();
+    const observer = new MutationObserver(() => {
+      for (const subscriber of [...subscribers]) {
+        if (!subscribers.has(subscriber)) continue;
+        try {
+          subscriber();
+        } catch (error) {
+          // Keep other portals responsive when one placement callback fails.
+          queueMicrotask(() => {
+            throw error;
+          });
+        }
+      }
+    });
+    observer.observe(ownerDocument.documentElement, { childList: true, subtree: true });
+    shared = { observer, subscribers };
+    portalDocumentObservers.set(ownerDocument, shared);
+  }
+
+  const subscription = () => refreshPlacement();
+  shared.subscribers.add(subscription);
+  const { observer, subscribers } = shared;
+  return () => {
+    if (!subscribers.delete(subscription) || subscribers.size > 0) return;
+    observer.disconnect();
+    portalDocumentObservers.delete(ownerDocument);
+  };
+}
 
 export function useReactPortalScope<T extends HTMLElement>(
   rootRef: React.RefObject<T | null>,
@@ -270,11 +306,8 @@ export const ReactPortal = React.forwardRef<HTMLDivElement, ReactPortalImplement
 
     React.useEffect(() => {
       const wrapper = wrapperRef.current;
-      const mutationRoot = wrapper?.ownerDocument.documentElement;
-      if (disabled || !mutationRoot) return;
-      const observer = new MutationObserver(refreshPlacement);
-      observer.observe(mutationRoot, { childList: true, subtree: true });
-      return () => observer.disconnect();
+      if (disabled || !wrapper) return;
+      return observePortalDocument(wrapper.ownerDocument, refreshPlacement);
     }, [disabled, refreshPlacement]);
 
     const wrapper = (

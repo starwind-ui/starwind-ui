@@ -1,12 +1,17 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
 import { collectPreflightFailures, rehearseRelease } from "../release-preflight.mjs";
+import {
+  createChangesetStatusCommand,
+  runChangesetStatus,
+} from "../portable-runtime/changeset-status.ts";
 
 const roots = [];
 
@@ -30,6 +35,45 @@ afterEach(async () => {
 });
 
 describe("release preflight", () => {
+  it("executes Changesets through the package manager instead of parsing pnpm as JavaScript", () => {
+    const command = createChangesetStatusCommand();
+    expect(command).toEqual(
+      createSpawnCommand(getPackageManagerCommand("pnpm"), [
+        "exec",
+        "changeset",
+        "status",
+        "--verbose",
+      ]),
+    );
+    expect(command.command).not.toBe(process.execPath);
+  });
+
+  it.each(["success", "failure"])(
+    "restores pending component intents after Changesets %s",
+    async (outcome) => {
+      const root = await mkdtemp(path.join(os.tmpdir(), "changeset-status-test-"));
+      roots.push(root);
+      for (const directory of ["styled-components", "primitive-components"]) {
+        const pending = path.join(root, ".changeset", directory);
+        await mkdir(pending, { recursive: true });
+        await writeFile(path.join(pending, "changes.md"), `${directory}\n`);
+      }
+      const execution = runChangesetStatus({
+        repoRoot: root,
+        run: async () => {
+          if (outcome === "failure") throw new Error("changeset status failed");
+          return { stdout: "status output\n", stderr: "" };
+        },
+      });
+      if (outcome === "failure") await expect(execution).rejects.toThrow("changeset status failed");
+      else await expect(execution).resolves.toBe("status output\n");
+
+      expect(existsSync(path.join(root, ".changeset/styled-components/changes.md"))).toBe(true);
+      expect(existsSync(path.join(root, ".changeset/primitive-components/changes.md"))).toBe(true);
+      expect(existsSync(path.join(root, ".styled-component-intents"))).toBe(false);
+      expect(existsSync(path.join(root, ".primitive-component-intents"))).toBe(false);
+    },
+  );
   it("reports every independent preflight failure", async () => {
     const calls = [];
 

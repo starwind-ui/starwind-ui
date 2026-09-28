@@ -15,7 +15,6 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 export type SliderRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "onChange"
@@ -28,16 +27,12 @@ export type SliderRootProps = Omit<
   min?: number;
   minStepsBetweenValues?: number;
   name?: string;
-  onValueChange?: (value: SliderValue, details: SliderValueChangeDetails) => void;
-  onValueCommitted?: (value: SliderValue, details: SliderValueCommitDetails) => void;
   orientation?: SliderOrientation;
   step?: number;
-  /**
-   * Controlled value. Slider controlledness is fixed when the Runtime is created; do not switch between controlled and uncontrolled after mount.
-   */
   value?: SliderValue;
+  onValueChange?: (value: SliderValue, detail: SliderValueChangeDetails) => void;
+  onValueCommitted?: (value: SliderValue, detail: SliderValueCommitDetails) => void;
 };
-
 const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function SliderRoot(
   {
     defaultValue = 0,
@@ -48,51 +43,54 @@ const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function Sl
     min = 0,
     minStepsBetweenValues = 0,
     name,
-    onValueChange,
-    onValueCommitted,
     orientation = "horizontal",
     step = 1,
     value,
-    ...props
+    onValueChange,
+    onValueCommitted,
+    ...rest
   },
   forwardedRef,
 ) {
-  const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createSlider> | undefined>(undefined);
-  const defaultValueRef = React.useRef(defaultValue);
-  const disabledRef = React.useRef(disabled);
-  const formRef = React.useRef(form);
-  const largeStepRef = React.useRef(largeStep);
-  const maxRef = React.useRef(max);
-  const minRef = React.useRef(min);
-  const minStepsBetweenValuesRef = React.useRef(minStepsBetweenValues);
-  const nameRef = React.useRef(name);
-  const onValueChangeRef = React.useRef(onValueChange);
-  const onValueCommittedRef = React.useRef(onValueCommitted);
-  const orientationRef = React.useRef(orientation);
-  const stepRef = React.useRef(step);
-  const valueRef = React.useRef(value);
-  const [uncontrolledValue, setUncontrolledValue] = React.useState<SliderValue>(
-    () => defaultValueRef.current,
+  const inputs = React.useRef({
+    defaultValue,
+    disabled,
+    form,
+    largeStep,
+    max,
+    min,
+    minStepsBetweenValues,
+    name,
+    orientation,
+    step,
+    value,
+    onValueChange,
+    onValueCommitted,
+  });
+  useIsomorphicLayoutEffect(() => {
+    inputs.current = {
+      defaultValue,
+      disabled,
+      form,
+      largeStep,
+      max,
+      min,
+      minStepsBetweenValues,
+      name,
+      orientation,
+      step,
+      value,
+      onValueChange,
+      onValueCommitted,
+    };
+  });
+  const initialDefaultValue = React.useRef(copyValue(defaultValue ?? 0)).current;
+  const [localValue, setLocalValue] = React.useState<SliderValue>(() =>
+    copyValue(value ?? initialDefaultValue),
   );
-  const uncontrolledValueRef = React.useRef(uncontrolledValue);
-
-  useIsomorphicLayoutEffect(() => {
-    disabledRef.current = disabled;
-  }, [disabled]);
-
-  useIsomorphicLayoutEffect(() => {
-    onValueChangeRef.current = onValueChange;
-  }, [onValueChange]);
-
-  useIsomorphicLayoutEffect(() => {
-    onValueCommittedRef.current = onValueCommitted;
-  }, [onValueCommitted]);
-
-  useIsomorphicLayoutEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-
+  const renderedValue = value ?? localValue;
+  const rootRef = React.useRef<HTMLDivElement | null>(null),
+    connection = React.useRef<ReturnType<typeof connectSlider> | undefined>(undefined);
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
@@ -100,107 +98,167 @@ const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function Sl
     },
     [forwardedRef],
   );
-
-  useIsomorphicLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
+  function copyValue<T extends SliderValue | undefined>(value: T): T {
+    return (Array.isArray(value) ? [...value] : value) as T;
+  }
+  function valuesEqual(left: SliderValue | undefined, right: SliderValue | undefined): boolean {
+    const a = Array.isArray(left) ? left : [left],
+      b = Array.isArray(right) ? right : [right];
+    return a.length === b.length && a.every((value, index) => value === b[index]);
+  }
+  function serializeValue(value: SliderValue): string {
+    return Array.isArray(value) ? JSON.stringify(value) : String(value);
+  }
+  function connectSlider(root: HTMLDivElement) {
+    const initialModel = copyValue(inputs.current.value);
+    const controlled = initialModel !== undefined;
+    let disposed = false,
+      synchronizing = false;
+    let rendered = copyValue(initialModel ?? initialDefaultValue);
+    const readOptions = () => ({
+      disabled: inputs.current.disabled,
+      form: inputs.current.form,
+      largeStep: inputs.current.largeStep,
+      max: inputs.current.max,
+      min: inputs.current.min,
+      minStepsBetweenValues: inputs.current.minStepsBetweenValues,
+      name: inputs.current.name,
+      orientation: inputs.current.orientation,
+      step: inputs.current.step,
+    });
+    let applied = readOptions();
     const instance = createSlider(root, {
-      defaultValue: defaultValueRef.current,
-      disabled: disabledRef.current,
-      form: formRef.current,
-      largeStep: largeStepRef.current,
-      max: maxRef.current,
-      min: minRef.current,
-      minStepsBetweenValues: minStepsBetweenValuesRef.current,
-      name: nameRef.current,
-      orientation: orientationRef.current,
-      step: stepRef.current,
-      onValueChange: (value, details) => {
-        onValueChangeRef.current?.(value, details);
+      defaultValue: copyValue(initialDefaultValue),
+      ...applied,
+      ...(controlled ? { value: initialModel } : {}),
+      onValueChange: (next, detail) => {
+        inputs.current.onValueChange?.(copyValue(next), detail);
       },
-      ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
-    instanceRef.current = instance;
-    const unsubscribeChange = instance.subscribe("valueChange", (details) => {
-      if (details.isCanceled) return;
-
-      if (valueRef.current === undefined) {
-        uncontrolledValueRef.current = details.value;
-        setUncontrolledValue(details.value);
+    function render(next: SliderValue): void {
+      if (controlled || valuesEqual(rendered, next)) return;
+      rendered = copyValue(next);
+      setLocalValue(copyValue(next));
+    }
+    function publishReadback(): void {
+      if (disposed || controlled) return;
+      const next = instance.getValue();
+      render(next);
+    }
+    function synchronize(next: SliderValue): void {
+      if (disposed) return;
+      synchronizing = true;
+      try {
+        instance.refresh();
+        if (!valuesEqual(instance.getValue(), next))
+          instance.setValue(copyValue(next), { emit: false });
+      } finally {
+        synchronizing = false;
       }
+      render(instance.getValue());
+    }
+    function syncModel(): void {
+      if (disposed || !controlled) return;
+      const next = inputs.current.value;
+      if (next === undefined) return;
+      synchronize(next);
+    }
+    function syncOptions(): void {
+      if (disposed) return;
+      const next = readOptions();
+      if (
+        Object.is(next.disabled, applied.disabled) &&
+        Object.is(next.form, applied.form) &&
+        Object.is(next.largeStep, applied.largeStep) &&
+        Object.is(next.max, applied.max) &&
+        Object.is(next.min, applied.min) &&
+        Object.is(next.minStepsBetweenValues, applied.minStepsBetweenValues) &&
+        Object.is(next.name, applied.name) &&
+        Object.is(next.orientation, applied.orientation) &&
+        Object.is(next.step, applied.step)
+      )
+        return;
+      synchronizing = true;
+      try {
+        if (next.disabled !== applied.disabled) instance.setDisabled(next.disabled);
+        if (next.name !== applied.name) instance.setName(next.name);
+        instance.setOptions({
+          form: next.form,
+          largeStep: next.largeStep,
+          max: next.max,
+          min: next.min,
+          minStepsBetweenValues: next.minStepsBetweenValues,
+          orientation: next.orientation,
+          step: next.step,
+        });
+        applied = next;
+      } finally {
+        synchronizing = false;
+      }
+      syncModel();
+      publishReadback();
+    }
+    const stopChange = instance.subscribe("valueChange", (detail) => {
+      if (disposed || detail.isCanceled) return;
+      render(detail.value);
     });
-    const unsubscribeCommitted = instance.subscribe("valueCommitted", (details) => {
-      onValueCommittedRef.current?.(details.value, details);
+    const stopCommit = instance.subscribe("valueCommitted", (detail) => {
+      if (disposed) return;
+      inputs.current.onValueCommitted?.(copyValue(detail.value), detail);
     });
-
+    const stopState = instance.subscribe("stateSync", () => {
+      if (disposed || synchronizing) return;
+      publishReadback();
+    });
+    render(instance.getValue());
+    return {
+      instance,
+      syncModel,
+      syncOptions,
+      refresh() {
+        if (disposed) return;
+        synchronizing = true;
+        try {
+          instance.refresh();
+        } finally {
+          synchronizing = false;
+        }
+        syncModel();
+        publishReadback();
+      },
+      destroy() {
+        disposed = true;
+        stopState();
+        stopChange();
+        stopCommit();
+        instance.destroy();
+      },
+    };
+  }
+  useIsomorphicLayoutEffect(() => {
+    const node = rootRef.current;
+    if (!node) return;
+    const owned = connectSlider(node);
+    connection.current = owned;
     return () => {
-      unsubscribeChange();
-      unsubscribeCommitted();
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
+      connection.current = undefined;
+      owned.destroy();
     };
   }, []);
-
   useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setDisabled(disabled);
-  }, [disabled]);
-
+    connection.current?.syncOptions();
+  }, [disabled, form, largeStep, max, min, minStepsBetweenValues, name, orientation, step]);
   useIsomorphicLayoutEffect(() => {
-    nameRef.current = name;
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setName(name);
-  }, [name]);
-
-  useIsomorphicLayoutEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    instance.setOptions({
-      form,
-      largeStep,
-      max,
-      min,
-      minStepsBetweenValues,
-      orientation,
-      step,
-    });
-
-    if (valueRef.current === undefined) {
-      const nextUncontrolledValue = instance.getValue();
-      if (!areSliderValuesEqual(uncontrolledValueRef.current, nextUncontrolledValue)) {
-        uncontrolledValueRef.current = nextUncontrolledValue;
-        setUncontrolledValue(nextUncontrolledValue);
-      }
-    }
-  }, [form, largeStep, max, min, minStepsBetweenValues, orientation, step]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (value === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    instance.refresh();
-    if (areSliderValuesEqual(instance.getValue(), value)) return;
-
-    instance.setValue(value, { emit: false });
+    connection.current?.syncModel();
   }, [value]);
-
-  const renderedValue = value ?? uncontrolledValue;
-  const valueAttribute = serializeSliderValue(renderedValue);
-  const defaultValueAttribute = serializeSliderValue(defaultValueRef.current);
-
   return (
     <div
-      {...props}
-      data-sw-slider
-      data-default-value={defaultValueAttribute}
+      {...rest}
+      data-sw-slider={""}
+      data-sw-part={"root"}
+      role={"group"}
+      data-default-value={serializeValue(initialDefaultValue)}
+      data-value={serializeValue(renderedValue)}
       data-disabled={disabled ? "" : undefined}
       data-form={form}
       data-large-step={largeStep}
@@ -210,27 +268,9 @@ const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function Sl
       data-name={name}
       data-orientation={orientation}
       data-step={step}
-      data-value={valueAttribute}
       ref={composedRef}
-      role="group"
     />
   );
 });
-
 SliderRoot.displayName = "Slider.Root";
-
 export default SliderRoot;
-
-function areSliderValuesEqual(left: SliderValue, right: SliderValue): boolean {
-  const leftValues = Array.isArray(left) ? left : [left];
-  const rightValues = Array.isArray(right) ? right : [right];
-
-  return (
-    leftValues.length === rightValues.length &&
-    leftValues.every((item, index) => item === rightValues[index])
-  );
-}
-
-function serializeSliderValue(value: SliderValue): string {
-  return Array.isArray(value) ? JSON.stringify(value) : String(value);
-}

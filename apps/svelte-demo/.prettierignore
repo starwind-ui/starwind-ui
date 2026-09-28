@@ -1,0 +1,4 @@
+.svelte-kit/
+build/
+test-results/
+src/lib/starwind-runtime/

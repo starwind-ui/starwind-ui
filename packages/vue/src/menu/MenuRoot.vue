@@ -41,6 +41,7 @@ const initialDefaultOpen = props.defaultOpen;
 const uncontrolledOpen = ref(initialDefaultOpen);
 const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
 let instance: ReturnType<typeof createMenu> | undefined;
+let unsubscribeOpenChange: (() => void) | undefined;
 let portalOwner: symbol | undefined;
 let portalReference: HTMLElement | null = null;
 let generation = 0;
@@ -68,30 +69,42 @@ defineExpose({
   updatePosition: () => instance?.updatePosition(),
 });
 
-function handleOpenChange(open: boolean, detail: MenuOpenChangeDetails): void {
-  emit("openChange", open, detail);
-  if (detail.isCanceled) return;
-  if (props.open === undefined) uncontrolledOpen.value = open;
-  emit("update:open", open);
-}
 function destroyOwnedInstance(): void {
   const owned = instance;
-  instance = undefined;
-  owned?.destroy();
+  if (!owned) return;
+  unsubscribeOpenChange?.();
+  unsubscribeOpenChange = undefined;
+  if (instance === owned) {
+    instance = undefined;
+  }
+  owned.destroy();
 }
 function setupRuntime(): void {
   const element = rootRef.value;
   if (!element) return;
-  instance = createMenu(element, {
+  const owned = createMenu(element, {
     defaultOpen: uncontrolledOpen.value,
     disabled: props.disabled,
     modal: props.modal,
     openOnHover: props.openOnHover,
     closeDelay: props.closeDelay,
+    onOpenChange: (next, details) => {
+      emit("openChange", next, details);
+    },
+    onCloseComplete: (details) => {
+      if (instance !== owned) return;
+      emit("closeComplete", details);
+    },
     portalReference: portalReference ?? undefined,
-    onOpenChange: handleOpenChange,
-    onCloseComplete: (detail) => emit("closeComplete", detail),
-    ...(props.open === undefined ? {} : { open: props.open }),
+    ...(props.open !== undefined ? { open: props.open } : {}),
+  });
+  instance = owned;
+  unsubscribeOpenChange = owned.subscribe("openChange", (details) => {
+    if (instance !== owned) return;
+    if (props.open === undefined) {
+      uncontrolledOpen.value = details.open;
+    }
+    emit("update:open", details.open);
   });
 }
 async function recreateRuntime(): Promise<void> {
@@ -117,8 +130,10 @@ watch(
       void recreateRuntime();
       return;
     }
-    if (open === undefined || !instance || Object.is(instance.getOpen(), open)) return;
-    instance.setOpen(open, { emit: false });
+    const owned = instance;
+    if (!owned || props.open === undefined) return;
+    const next = props.open;
+    if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
   },
   { flush: "post" },
 );

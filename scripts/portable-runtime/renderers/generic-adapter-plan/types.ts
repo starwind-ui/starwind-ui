@@ -31,7 +31,7 @@ export type GenericAdapterPlan = {
   refs: GenericAdapterPlanRef[];
   runtime: Pick<
     RuntimeBridgeContract,
-    "destroys" | "factory" | "importSource" | "optionProps" | "rootPart"
+    "destroys" | "factory" | "importSource" | "optionProps" | "rootPart" | "refresh"
   >;
   sourceContract: RuntimeAdapterContract["component"];
   staticAttributes: GenericAdapterPlanStaticAttribute[];

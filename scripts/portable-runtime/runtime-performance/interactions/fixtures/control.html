@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Input calibration</title>
+  </head>
+  <body>
+    <button id="empty" style="width: 160px; height: 40px">Empty click</button>
+    <button id="slow" style="width: 160px; height: 40px">Slow click</button>
+    <input id="typing" aria-label="Typing calibration" />
+    <script>
+      window.control = { empty: 0, slow: 0 };
+      document.querySelector("#empty").addEventListener("click", () => window.control.empty++);
+      document.querySelector("#slow").addEventListener("click", () => {
+        const started = performance.now();
+        while (performance.now() - started < 96) {
+          /* Deliberate observer calibration, outside comparative samples. */
+        }
+        window.control.slow++;
+      });
+    </script>
+  </body>
+</html>

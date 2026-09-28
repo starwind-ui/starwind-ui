@@ -1,3 +1,7 @@
+import { execFileSync } from "node:child_process";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,9 +9,40 @@ import {
   findTestOwnershipViolations,
   findTestSuiteOwners,
   isTestFilePath,
+  listRepositoryFiles,
 } from "../check-test-homes.mjs";
 
 describe("test file home guardrail", () => {
+  it("checks the complete inventory when Git output exceeds its default buffer", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "test-homes-large-list-"));
+    try {
+      execFileSync("git", ["init", "--quiet"], { cwd: root });
+      await mkdir(path.join(root, "scripts/tests"), { recursive: true });
+      const expected: string[] = [];
+      for (let batch = 0; batch < 40; batch += 1) {
+        const writes = [];
+        for (let index = 0; index < 200; index += 1) {
+          const id = String(batch * 200 + index).padStart(5, "0");
+          const file = `scripts/tests/${id}-${"inventory-".repeat(13)}.test.ts`;
+          expected.push(file);
+          writes.push(writeFile(path.join(root, file), ""));
+        }
+        await Promise.all(writes);
+      }
+      const violation = "zz-colocated.test.ts";
+      expected.push(violation);
+      await writeFile(path.join(root, violation), "");
+
+      expect(Buffer.byteLength(`${expected.join("\0")}\0`)).toBeGreaterThan(1024 * 1024);
+      const files = listRepositoryFiles(root);
+      expect(files.sort()).toEqual(expected.sort());
+      expect(findTestHomeViolations(files)).toEqual([violation]);
+      expect(findTestOwnershipViolations(files)).toEqual([violation]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("allows approved tests homes", () => {
     expect(
       findTestHomeViolations([
@@ -110,6 +145,34 @@ describe("test file home guardrail", () => {
     expect(findTestSuiteOwners("packages/svelte/tests/package-build.ssr.test.ts")).toEqual([
       "svelte",
     ]);
+  });
+
+  it("assigns the private Svelte demo and Styled tests to their dedicated suites", () => {
+    const files = [
+      "apps/svelte-demo/tests/review.test.mjs",
+      "scripts/portable-runtime/tests/generate-svelte-styled/button.test.ts",
+    ];
+    expect(findTestHomeViolations(files)).toEqual([]);
+    expect(findTestOwnershipViolations(files)).toEqual([]);
+    expect(files.map(findTestSuiteOwners)).toEqual([["svelte-demo"], ["portable-svelte-styled"]]);
+    expect(
+      findTestSuiteOwners(
+        "scripts/portable-runtime/tests/generate-svelte-styled-extra/example.test.ts",
+      ),
+    ).toEqual(["portable-runtime"]);
+  });
+
+  it("rejects neighboring demo test homes and colocated Svelte source tests", () => {
+    const files = [
+      "apps/svelte-demo-next/tests/review.test.mjs",
+      "apps/svelte-demo/src/lib/review/example.test.ts",
+      "apps/svelte-demo/tests-extra/review.test.mjs",
+      "apps/svelte-demo/tests.test.mjs",
+      "scripts/portable-runtime/renderers/framework-adapters/svelte/example.test.ts",
+    ];
+    expect(findTestHomeViolations(files)).toEqual(files);
+    expect(findTestOwnershipViolations(files)).toEqual(files);
+    for (const file of files) expect(findTestSuiteOwners(file)).toEqual([]);
   });
 
   it("rejects tests without exactly one suite owner", () => {

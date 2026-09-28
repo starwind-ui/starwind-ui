@@ -10,13 +10,24 @@ const names = [
   "@starwind-ui/astro",
   "@starwind-ui/react",
   "@starwind-ui/vue",
+  "@starwind-ui/svelte",
   "starwind",
 ];
 const packageManifests = names.map((name) => ({
-  entry: { name, ...(name === "@starwind-ui/vue" ? { tag: "beta" } : {}) },
+  entry: {
+    name,
+    ...(name === "@starwind-ui/vue" || name === "@starwind-ui/svelte" ? { tag: "beta" } : {}),
+  },
   manifest: {
     name,
-    version: name === "starwind" ? "3.4.0" : name === "@starwind-ui/vue" ? "0.2.0" : "1.3.0",
+    version:
+      name === "starwind"
+        ? "3.4.0"
+        : name === "@starwind-ui/vue"
+          ? "0.2.0"
+          : name === "@starwind-ui/svelte"
+            ? "0.1.0"
+            : "1.3.0",
   },
 }));
 const head = "1234567890abcdef1234567890abcdef12345678";
@@ -51,7 +62,13 @@ describe("routine publication planning", () => {
   it("keeps mixed tags and skips existing versions in dependency order", async () => {
     const input = await fixture(names.slice(0, 3));
     const result = await preparePublicationPlan(input);
-    expect(result).toEqual({ head, snapshot, packages: snapshot.slice(3), vueLatest: "0.1.0" });
+    expect(result).toEqual({
+      head,
+      snapshot,
+      packages: snapshot.slice(3),
+      svelteLatest: "0.1.0",
+      vueLatest: "0.1.0",
+    });
     expect(await loadPublicationPlan(input)).toEqual(result);
   });
 
@@ -70,6 +87,7 @@ describe("routine publication planning", () => {
     const input = await fixture(names.slice(0, 3));
     const first = await preparePublicationPlan(input);
     input.published.add("@starwind-ui/vue");
+    input.published.add("@starwind-ui/svelte");
     expect(await preparePublicationPlan({ ...input, resumeFrom: "starwind" })).toEqual(first);
     await expect(preparePublicationPlan(input)).rejects.toThrow(/resume-from/);
     await expect(
@@ -137,5 +155,30 @@ describe("routine publication planning", () => {
     input.published.add("@starwind-ui/runtime");
     await preparePublicationPlan({ ...input, dryRun: true });
     expect(await loadPublicationPlan(input)).toEqual(saved);
+  });
+
+  it("loads an older Vue-only snapshot without a Svelte baseline", async () => {
+    const input = await fixture();
+    const oldManifests = packageManifests.filter(
+      ({ entry }) => entry.name !== "@starwind-ui/svelte",
+    );
+    const oldSnapshot = snapshot.filter(({ name }) => name !== "@starwind-ui/svelte");
+    const directory = path.join(
+      input.repoRoot,
+      "node_modules/.cache/starwind-release/publication-plans",
+    );
+    await import("node:fs/promises").then(({ mkdir }) => mkdir(directory, { recursive: true }));
+    await writeFile(
+      path.join(directory, `${head}.json`),
+      JSON.stringify({
+        head,
+        packages: oldSnapshot.slice(3),
+        snapshot: oldSnapshot,
+        vueLatest: null,
+      }),
+    );
+    await expect(
+      loadPublicationPlan({ ...input, packageManifests: oldManifests }),
+    ).resolves.toMatchObject({ vueLatest: null });
   });
 });

@@ -552,7 +552,6 @@ export function buildNavigationMenuSpecializedAdapterSpec(
   };
 }
 
-
 const NAVIGATION_MENU_OUTPUT_MODEL_PARTS = [
   "arrow",
   "content",
@@ -706,6 +705,7 @@ function getNavigationMenuSharedViewportFacts(
       viewport: getPartRecipe(spec, "viewport").discoveryAttribute,
     },
     content: {
+      runtimeOwnership: spec.navigationMenu.viewportProjection.activeContent.runtimeOwnership,
       hiddenAttribute: recipes.content.hiddenAttribute,
       stateAttribute: recipes.content.stateAttribute,
       stateValue: recipes.content.initialState,
@@ -938,9 +938,7 @@ function getNavigationMenuFileExportName(
 
   const expectedPath = `${spec.component}/${file.exportName}`;
   if (file.path !== expectedPath) {
-    throw new Error(
-      `Navigation Menu output model requires ${partName} file path ${expectedPath}.`,
-    );
+    throw new Error(`Navigation Menu output model requires ${partName} file path ${expectedPath}.`);
   }
 
   return file.exportName;
@@ -1632,11 +1630,7 @@ function validateControlledResync(value: unknown): string[] {
       "Navigation Menu specialized adapter spec controlled resync must preserve event, reason, and trigger details.",
     );
   }
-  for (const field of [
-    "detailsValueProperty",
-    "runtimeBoundary",
-    "setter",
-  ] as const) {
+  for (const field of ["detailsValueProperty", "runtimeBoundary", "setter"] as const) {
     if (!recordsEqual(value[field], expected[field])) {
       errors.push(
         `Navigation Menu specialized adapter spec controlled resync ${field} must match Runtime value-control facts.`,

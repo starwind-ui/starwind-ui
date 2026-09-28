@@ -52,7 +52,6 @@ class FieldsetController implements FieldsetInstance {
   private readonly appliedFieldsetDisabled = new WeakSet<HTMLElement>();
   private readonly fieldOwnDisabled = new WeakMap<HTMLElement, boolean>();
   private readonly fieldsetOwnDisabled = new WeakMap<HTMLElement, boolean>();
-  private readonly initialAriaLabelledby: string | null;
   private readonly mutationObserver: MutationObserver;
   private readonly pendingAppliedDisabledAttributes = new WeakMap<
     HTMLElement,
@@ -66,7 +65,6 @@ class FieldsetController implements FieldsetInstance {
 
   constructor(root: HTMLElement, options: FieldsetOptions) {
     this.root = root;
-    this.initialAriaLabelledby = root.getAttribute("aria-labelledby");
     this.disabled = options.disabled ?? readFieldsetDisabled(root);
     this.elements = getFieldsetElements(root);
     this.mutationObserver = new MutationObserver(this.handleMutations);
@@ -179,6 +177,15 @@ class FieldsetController implements FieldsetInstance {
   }
 
   private renderLegendAssociation(): void {
+    const current = this.root.getAttribute("aria-labelledby");
+    if (current !== null && current !== this.managedAriaLabelledby) {
+      this.managedAriaLabelledby = undefined;
+      return;
+    }
+    if (this.root.hasAttribute("aria-label")) {
+      this.restoreLegendAssociation();
+      return;
+    }
     const legendIds = this.elements.legends.map((legend) => ensureId(legend, "sw-fieldset-legend"));
 
     if (legendIds.length === 0) {
@@ -187,7 +194,7 @@ class FieldsetController implements FieldsetInstance {
     }
 
     const labelledby = Array.from(new Set(legendIds)).join(" ");
-    this.root.setAttribute("aria-labelledby", labelledby);
+    if (current !== labelledby) this.root.setAttribute("aria-labelledby", labelledby);
     this.managedAriaLabelledby = labelledby;
   }
 
@@ -198,11 +205,7 @@ class FieldsetController implements FieldsetInstance {
       return;
     }
 
-    if (this.initialAriaLabelledby === null) {
-      this.root.removeAttribute("aria-labelledby");
-    } else {
-      this.root.setAttribute("aria-labelledby", this.initialAriaLabelledby);
-    }
+    this.root.removeAttribute("aria-labelledby");
 
     this.managedAriaLabelledby = undefined;
   }
@@ -253,6 +256,19 @@ class FieldsetController implements FieldsetInstance {
 
   private readonly handleMutations = (mutations: MutationRecord[]): void => {
     if (this.destroyed) return;
+
+    if (
+      mutations.some(
+        (mutation) =>
+          (mutation.attributeName === "id" &&
+            this.elements.legends.includes(mutation.target as HTMLElement) &&
+            (mutation.target as Element).closest(`[${FIELDSET_ROOT_ATTRIBUTE}]`) === this.root) ||
+          (mutation.target === this.root &&
+            (mutation.attributeName === "aria-label" ||
+              mutation.attributeName === "aria-labelledby")),
+      )
+    )
+      this.renderLegendAssociation();
 
     const rootDisabledMutated = mutations.some(
       (mutation) =>

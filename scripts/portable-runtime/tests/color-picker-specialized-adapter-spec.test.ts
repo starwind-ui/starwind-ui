@@ -51,6 +51,20 @@ describe("Color Picker specialized adapter model", () => {
     ]);
   });
 
+  it("requires both models to use the Runtime reset settlement notification", () => {
+    for (const name of ["value", "format"]) {
+      const contract = {
+        ...colorPickerRuntimeAdapterContract,
+        stateModels: colorPickerRuntimeAdapterContract.stateModels.map((state) =>
+          state.name === name ? { ...state, runtimeSyncEvent: undefined } : state,
+        ),
+      };
+      expect(() => buildColorPickerSpecializedAdapterSpec(contract)).toThrow(
+        "Color Picker models require Runtime stateSync after form reset.",
+      );
+    }
+  });
+
   it("carries controlledness, form, facade, CSS, and escape-hatch facts without Runtime behavior", () => {
     const facts = buildColorPickerSpecializedAdapterSpec(
       colorPickerRuntimeAdapterContract,
@@ -63,6 +77,7 @@ describe("Color Picker specialized adapter model", () => {
       expect.objectContaining({
         controlledStateSync: "imperative",
         runtimeSetter: "setValue",
+        runtimeSyncEvent: "stateSync",
       }),
     );
     expect(facts.form).toEqual(

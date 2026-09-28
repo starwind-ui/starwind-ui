@@ -534,9 +534,11 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(avatarGroupCount).toContain("avatarGroupCount({ class: className })");
   expect(avatarGroupCount).toContain('data-slot="avatar-group-count"');
   expect(avatar).not.toContain("@starwind-ui/runtime");
-  expect(avatarVariants).toContain("text-foreground bg-muted relative inline-flex overflow-hidden");
+  expect(avatarVariants).toContain(
+    "text-foreground bg-muted relative inline-flex shrink-0 overflow-hidden",
+  );
   expect(avatarVariants).toContain("border-warning");
-  expect(avatarVariants).toContain("group/avatar-group flex -space-x-2");
+  expect(avatarVariants).toContain("group/avatar-group flex -space-x-2.5");
   expect(avatarVariants).toContain("*:data-[slot=avatar]:ring-2");
   expect(avatarVariants).toContain("group-has-data-[size=sm]/avatar-group:size-8");
   expect(avatarIndex).toContain("Root: Avatar");

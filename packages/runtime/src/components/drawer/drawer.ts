@@ -2,13 +2,13 @@ import { assertHTMLElement, readBooleanAttribute } from "../../internal/dom";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import {
   createDialog,
-  refreshDialogPortalSurface,
   type DialogCloseCompleteDetails,
   type DialogInstance,
   type DialogOpenChangeDetails,
   type DialogOpenChangeReason,
   type DialogOptions,
   type DialogSetOpenOptions,
+  refreshDialogPortalSurface,
 } from "../dialog";
 
 export type DrawerCloseCompleteDetails = DialogCloseCompleteDetails;
@@ -49,6 +49,7 @@ export function createDrawer(root: HTMLElement, options: DrawerOptions = {}): Dr
   if (existing) return existing;
 
   normalizeDrawerMarkup(root);
+  const portal = queryDrawerElements(root, "[data-sw-drawer-portal]")[0];
 
   const { closeOnEscape, closeOnOutsideInteract, modal, ...dialogOptions } = options;
 
@@ -60,18 +61,44 @@ export function createDrawer(root: HTMLElement, options: DrawerOptions = {}): Dr
     ...dialogOptions,
     role: "dialog",
   });
-  const wrappedInstance = wrapDrawerInstance(root, instance);
+  const wrappedInstance = wrapDrawerInstance(root, instance, portal);
   instances.set(root, wrappedInstance);
 
   return wrappedInstance;
 }
 
+export function refreshExistingDrawer(root: HTMLElement): DrawerInstance | undefined {
+  const instance = instances.get(root);
+  instance?.refresh();
+  return instance;
+}
+
+function normalizeDrawerControls(root: HTMLElement, portal?: HTMLElement | null): void {
+  const controls = (selector: string) => [
+    ...new Set([
+      ...queryDrawerElements(root, selector),
+      ...(portal?.isConnected
+        ? Array.from(portal.querySelectorAll<HTMLElement>(selector)).filter(
+            (element) =>
+              !portal.contains(
+                element.closest("[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]"),
+              ),
+          )
+        : []),
+    ]),
+  ];
+  controls(`[${DRAWER_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
+    trigger.setAttribute(DIALOG_TRIGGER_ATTRIBUTE, "");
+  });
+  controls(`[${DRAWER_CLOSE_ATTRIBUTE}]`).forEach((close) => {
+    close.setAttribute(DIALOG_CLOSE_ATTRIBUTE, "");
+  });
+}
+
 function normalizeDrawerMarkup(root: HTMLElement): void {
   root.setAttribute(DRAWER_ROOT_ATTRIBUTE, "");
 
-  queryDrawerElements(root, `[${DRAWER_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
-    trigger.setAttribute(DIALOG_TRIGGER_ATTRIBUTE, "");
-  });
+  normalizeDrawerControls(root);
   normalizeExternalDrawerTriggers(root);
 
   queryDrawerElements(root, `[${DRAWER_BACKDROP_ATTRIBUTE}]`).forEach((backdrop) => {
@@ -81,10 +108,6 @@ function normalizeDrawerMarkup(root: HTMLElement): void {
   queryDrawerElements(root, `[${DRAWER_POPUP_ATTRIBUTE}]`).forEach((popup) => {
     popup.setAttribute(DIALOG_POPUP_ATTRIBUTE, "");
     popup.setAttribute("role", "dialog");
-  });
-
-  queryDrawerElements(root, `[${DRAWER_CLOSE_ATTRIBUTE}]`).forEach((close) => {
-    close.setAttribute(DIALOG_CLOSE_ATTRIBUTE, "");
   });
 
   queryDrawerElements(root, `[${DRAWER_TITLE_ATTRIBUTE}]`).forEach((title) => {
@@ -118,7 +141,11 @@ function normalizeExternalDrawerTriggers(root: HTMLElement): void {
     });
 }
 
-function wrapDrawerInstance(root: HTMLElement, instance: DialogInstance): DrawerInstance {
+function wrapDrawerInstance(
+  root: HTMLElement,
+  instance: DialogInstance,
+  portal?: HTMLElement,
+): DrawerInstance {
   const originalDestroy = instance.destroy.bind(instance);
 
   return {
@@ -128,6 +155,10 @@ function wrapDrawerInstance(root: HTMLElement, instance: DialogInstance): Drawer
     toggle: instance.toggle.bind(instance),
     setOpen: instance.setOpen.bind(instance),
     getOpen: instance.getOpen.bind(instance),
+    refresh() {
+      normalizeDrawerControls(root, portal);
+      instance.refresh();
+    },
     subscribe: instance.subscribe.bind(instance),
     destroy() {
       originalDestroy();

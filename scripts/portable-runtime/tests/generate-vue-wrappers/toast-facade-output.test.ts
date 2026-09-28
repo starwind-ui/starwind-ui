@@ -1,11 +1,10 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
 import { toastStyledContract } from "../../contracts/styled/components/toast.js";
 import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
+import { compactCode } from "../source-comparison.js";
 
 describe("Vue Styled Toast facade output", () => {
   let tempRoot: string;
@@ -64,8 +63,10 @@ function assertVueToastFacade(source: string, primitiveSource: string): void {
   expect(source).toContain(
     `export type { ToastApi, ToastOptions, ToastPromiseOptions } from "${primitiveSource}";`,
   );
-  expect(source).toContain(
-    "const ToastParts = { Viewport: Toaster, Template: ToastTemplate, Item: ToastItem, Content: ToastContent, Title: ToastTitle, Description: ToastDescription, Action: ToastAction, Close: ToastClose };",
+  expect(compactCode(source)).toContain(
+    compactCode(
+      "const ToastParts = { Viewport: Toaster, Template: ToastTemplate, Item: ToastItem, Content: ToastContent, Title: ToastTitle, Description: ToastDescription, Action: ToastAction, Close: ToastClose };",
+    ),
   );
   expect(source).not.toMatch(/const ToastParts = \{[^}]*\b(?:Manager|toast)\b/);
 }

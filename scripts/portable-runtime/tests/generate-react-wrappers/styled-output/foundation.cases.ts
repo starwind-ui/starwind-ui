@@ -570,9 +570,11 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(avatarGroupCount).toContain("ref={ref}");
   expect(avatarGroupCount).toContain('data-slot="avatar-group-count"');
   expect(avatar).not.toContain('from "@starwind-ui/runtime"');
-  expect(avatarVariants).toContain("text-foreground bg-muted relative inline-flex overflow-hidden");
+  expect(avatarVariants).toContain(
+    "text-foreground bg-muted relative inline-flex shrink-0 overflow-hidden",
+  );
   expect(avatarVariants).toContain("border-warning");
-  expect(avatarVariants).toContain("group/avatar-group flex -space-x-2");
+  expect(avatarVariants).toContain("group/avatar-group flex -space-x-2.5");
   expect(avatarVariants).toContain("*:data-[slot=avatar]:ring-2");
   expect(avatarVariants).toContain("group-has-data-[size=sm]/avatar-group:size-8");
   expect(avatarIndex).toContain("Root: Avatar");

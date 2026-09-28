@@ -18,8 +18,8 @@ function PopoverTrigger(props: PopoverTriggerProps) {
     <PopoverPrimitive.Trigger
       className={triggerClassName}
       asChild={asChild}
-      {...rest}
       data-slot="popover-trigger"
+      {...rest}
     >
       {children}
     </PopoverPrimitive.Trigger>

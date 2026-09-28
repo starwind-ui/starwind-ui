@@ -1,10 +1,8 @@
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { dialogRuntimeAdapterContract } from "../../contracts/primitive/components/dialog.js";
 import { formatGeneratedOutput } from "../../format-generated-output.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
@@ -15,6 +13,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -84,12 +83,17 @@ describe("generated Vue Dialog", () => {
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
     }
     const root = files["DialogRoot.vue"]!;
-    expect(root).toMatch(
-      /emit\("openChange", nextOpen, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open", nextOpen\);/,
-    );
-    expect(root).toContain("instance.setOpen(nextOpen, { emit: false });");
-    expect(root).toContain("onCloseComplete: handleCloseComplete");
-    expect(root).toContain("ownedInstance.destroy()");
+    expect(() => assertVueSfcCompiles(root, "Component.vue")).not.toThrow();
+
+    for (const control of [files["DialogTrigger.vue"]!, files["DialogClose.vue"]!]) {
+      expect(control).toContain(
+        'import { useVueNativeControl } from "../_internal/native-control"',
+      );
+      expect(control).toContain("asChild?: boolean");
+      expect(control).toContain("root?.requestRefresh()");
+      expect(control).not.toContain("cloneVNode");
+    }
+
     expect(files["index.ts"]).not.toMatch(/Portal|Viewport/);
   });
 
@@ -104,10 +108,19 @@ describe("generated Vue Dialog", () => {
     const close = await readFile(path.join(repoRoot, "styled/dialog/DialogClose.vue"), "utf8");
     const styles = await readFile(path.join(repoRoot, "styled/dialog/styles.css"), "utf8");
 
-    expect(root).toContain(':open="open"');
-    expect(root).toContain('@update:open="emit(&quot;update:open&quot;, $event)"');
-    expect(root).toContain('@open-change="handleOpenChange"');
-    expect(root).toContain('@close-complete="handleCloseComplete"');
+    for (const control of [trigger, close]) {
+      expect(control).toContain("defineComponent");
+      expect(control).toContain("{ default: slots.default }");
+      expect(control).toContain("watch(");
+      expect(control).not.toContain("cloneVNode");
+      expect(control).not.toContain("requestRefresh");
+    }
+    expect(compactCode(root)).toContain(compactCode(':open="open"'));
+    expect(compactCode(root)).toContain(
+      compactCode('@update:open="emit(&quot;update:open&quot;, $event)"'),
+    );
+    expect(compactCode(root)).toContain(compactCode('@open-change="handleOpenChange"'));
+    expect(compactCode(root)).toContain(compactCode('@close-complete="handleCloseComplete"'));
     expect(content).toContain('<slot name="backdrop">');
     expect(content).toContain("<DialogPrimitive.DialogBackdrop");
     expect(content).toContain("<DialogPrimitive.DialogPopup");
@@ -120,16 +133,14 @@ describe("generated Vue Dialog", () => {
       ["DialogTrigger", trigger],
       ["DialogClose", close],
     ] as const) {
-      expect(source).toContain(`const AsChild${name.slice("Dialog".length)} = defineComponent`);
-      expect(source).toContain("cloneVNode(child, mergeProps(");
-      expect(source).toContain('typeof child.type !== "string"');
-      expect(source).toContain("ref: setElement");
-      expect(source).not.toContain("<div\n      :class=");
+      expect(source).toContain(`<DialogPrimitive.${name}`);
+      expect(compactCode(source)).toContain(compactCode(':ref="setElement"'));
+      expect(compactCode(source)).not.toContain(compactCode("<div\n      :class="));
       expect(() => assertVueSfcCompiles(source, `${name}.vue`)).not.toThrow();
     }
-    expect(trigger).toContain('"data-sw-dialog-trigger": ""');
-    expect(trigger).toContain('"data-sw-dialog-target-id": targetId');
-    expect(close).toContain('"data-sw-dialog-close": ""');
+    expect(compactCode(trigger)).toContain(compactCode(':target-id="targetId"'));
+    expect(compactCode(trigger)).toContain(compactCode('data-slot="dialog-trigger"'));
+    expect(close).toContain('data-slot="dialog-close"');
     expect(styles).toContain("--nested-offset");
   });
 });

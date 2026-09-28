@@ -1,3 +1,4 @@
+import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import { expect, generateReactPrimitiveWrappers, it, path, readGeneratedTree } from "./shared.js";
 
@@ -19,14 +20,24 @@ export function defineReactLayoutEffectOutputTests(getTempRoot: GetTempRoot): vo
         source.includes(".destroy()"),
     );
 
-    expect(tree["internal/use-isomorphic-layout-effect.ts"]).toContain("React.useLayoutEffect");
-    expect(runtimeControllerSetupFiles).toHaveLength(0);
-    expect(tree["select/SelectRoot.tsx"]).toContain(
-      'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+    expect(compactCode(tree["internal/use-isomorphic-layout-effect.ts"])).toContain(
+      compactCode("React.useLayoutEffect"),
     );
-    expect(tree["select/SelectRoot.tsx"]).toContain("useIsomorphicLayoutEffect(() => {");
-    expect(tree["select/SelectRoot.tsx"]).toContain("React.useEffect(() => {");
-    expect(tree["select/SelectRoot.tsx"]).toContain("setSelectedLabel(");
-    expect(tree["combobox/ComboboxRoot.tsx"]).toContain("useIsomorphicLayoutEffect(() => {");
+    expect(runtimeControllerSetupFiles).toHaveLength(0);
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode(
+        'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
+      ),
+    );
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode("useIsomorphicLayoutEffect(() => {"),
+    );
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(
+      compactCode("React.useEffect(() => {"),
+    );
+    expect(compactCode(tree["select/SelectRoot.tsx"])).toContain(compactCode("setSelectedLabel("));
+    expect(compactCode(tree["combobox/ComboboxRoot.tsx"])).toContain(
+      compactCode("useIsomorphicLayoutEffect(() => {"),
+    );
   });
 }

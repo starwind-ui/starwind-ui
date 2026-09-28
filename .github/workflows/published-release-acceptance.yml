@@ -11,17 +11,21 @@ on:
         description: Exact published @starwind-ui/vue beta version
         required: true
         type: string
+      svelte_version:
+        description: Exact published @starwind-ui/svelte beta version
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: published-release-${{ inputs.version }}-${{ inputs.vue_version }}
+  group: published-release-${{ inputs.version }}-${{ inputs.vue_version }}-${{ inputs.svelte_version }}
   cancel-in-progress: false
 
 jobs:
   acceptance:
-    name: Astro, React, and Vue published-package acceptance
+    name: Astro, React, Vue, and Svelte published-package acceptance
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -49,7 +53,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Test Published Release
-        run: pnpm test:published-release -- --version "${{ inputs.version }}" --vue-version "${{ inputs.vue_version }}" --artifacts .artifacts/published-release
+        run: pnpm test:published-release -- --version "${{ inputs.version }}" --vue-version "${{ inputs.vue_version }}" --svelte-version "${{ inputs.svelte_version }}" --artifacts .artifacts/published-release
 
       - name: Upload Acceptance Diagnostics
         if: always()

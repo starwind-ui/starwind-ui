@@ -13,37 +13,48 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 export type AccordionRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "onChange"
 > & {
-  type?: "single" | "multiple";
-  defaultValue?: AccordionValue;
   value?: AccordionValue;
+  defaultValue?: AccordionValue;
+  type?: "single" | "multiple";
   collapsible?: boolean;
-  onValueChange?: (details: AccordionValueChangeDetails) => void;
+  onValueChange?: (detail: AccordionValueChangeDetails) => void;
 };
-
 const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(function AccordionRoot(
-  { type = "single", defaultValue, value, collapsible = true, onValueChange, ...props },
+  { value, defaultValue, type = "single", collapsible = true, onValueChange, ...props },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createAccordion> | undefined>(undefined);
-  const onValueChangeRef = React.useRef(onValueChange);
-  const valueRef = React.useRef(value);
-  const defaultValueRef = React.useRef(defaultValue);
-  const uncontrolledValueRef = React.useRef<AccordionValue | undefined>(defaultValueRef.current);
-
+  const inputs = React.useRef({ value, type, collapsible, onValueChange });
   useIsomorphicLayoutEffect(() => {
-    onValueChangeRef.current = onValueChange;
-  }, [onValueChange]);
+    inputs.current = { value, type, collapsible, onValueChange };
+  });
+  const initial = React.useRef<AccordionValue | undefined>(undefined);
+  if (initial.current === undefined) {
+    const initialModel = copyModel(value);
+    const initialDefault = copyModel(defaultValue);
+    const initialValue =
+      initialModel !== undefined
+        ? initialModel
+        : initialDefault !== undefined
+          ? initialDefault
+          : null;
+    initial.current = copyModel(initialValue);
+  }
+  const initialValue = initial.current;
+  const defaultValueAttribute = Array.isArray(initialValue)
+    ? JSON.stringify(initialValue)
+    : initialValue;
 
-  useIsomorphicLayoutEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-
+  const connection = React.useRef<{
+    instance?: ReturnType<typeof createAccordion>;
+    unsubscribe?: () => void;
+    accepted: AccordionValue;
+    initialized: boolean;
+  }>({ accepted: copyModel(initialValue), initialized: false }).current;
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
@@ -52,53 +63,59 @@ const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(funct
     [forwardedRef],
   );
 
+  function disconnectRuntime(): void {
+    const owned = connection.instance;
+    if (!owned) return;
+    connection.accepted = copyModel(owned.getValue());
+    connection.unsubscribe?.();
+    connection.unsubscribe = undefined;
+    connection.instance = undefined;
+    owned.destroy();
+  }
+  function connectRuntime(root: HTMLDivElement): void {
+    disconnectRuntime();
+    const desired =
+      inputs.current.value !== undefined
+        ? copyModel(inputs.current.value)
+        : copyModel(connection.accepted);
+    const owned = createAccordion(root, {
+      defaultValue: copyModel(desired),
+      ...(inputs.current.value !== undefined ? { value: copyModel(desired) } : {}),
+      type: inputs.current.type,
+      collapsible: inputs.current.collapsible,
+      onValueChange: (detail) => {
+        inputs.current.onValueChange?.(detail);
+      },
+    });
+    connection.instance = owned;
+    connection.initialized = true;
+    connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+      if (connection.instance !== owned) return;
+      connection.accepted = copyModel(detail.value);
+    });
+    if (!isModelEqual(owned.getValue(), desired))
+      owned.setValue(copyModel(desired), { emit: false });
+    connection.accepted = copyModel(owned.getValue());
+  }
+  function applyParentCommand(): void {
+    const next = inputs.current.value;
+    const owned = connection.instance;
+    if (next === undefined || !owned) return;
+    if (!isModelEqual(owned.getValue(), next)) owned.setValue(copyModel(next), { emit: false });
+    connection.accepted = copyModel(owned.getValue());
+  }
+
   useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-
-    const instance = createAccordion(root, {
-      type,
-      defaultValue: uncontrolledValueRef.current,
-      collapsible,
-      onValueChange: (details) => {
-        onValueChangeRef.current?.(details);
-      },
-      ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
-    });
-    instanceRef.current = instance;
-    const unsubscribe = instance.subscribe("valueChange", (details) => {
-      if (details.isCanceled) return;
-
-      if (valueRef.current === undefined) {
-        uncontrolledValueRef.current = details.value;
-      }
-    });
-
-    return () => {
-      unsubscribe();
-      instance.destroy();
-      if (instanceRef.current === instance) {
-        instanceRef.current = undefined;
-      }
-    };
+    connectRuntime(root);
+    return disconnectRuntime;
   }, [type, collapsible]);
-
-  useIsomorphicLayoutEffect(() => {
-    if (value === undefined) return;
-    const instance = instanceRef.current;
-    if (!instance) return;
-    if (isAccordionValueEqual(instance.getValue(), value)) return;
-
-    instance.setValue(value, { emit: false });
-  }, [value]);
-
-  const defaultValueAttribute = Array.isArray(defaultValueRef.current)
-    ? JSON.stringify(defaultValueRef.current)
-    : defaultValueRef.current;
-
+  useIsomorphicLayoutEffect(applyParentCommand, [value]);
   return (
     <div
       data-sw-accordion
+      data-sw-part="root"
       data-type={type}
       data-default-value={defaultValueAttribute}
       data-collapsible={String(collapsible)}
@@ -108,15 +125,18 @@ const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(funct
     />
   );
 });
-
 AccordionRoot.displayName = "Accordion.Root";
-
 export default AccordionRoot;
-
-function isAccordionValueEqual(left: AccordionValue, right: AccordionValue): boolean {
-  if (Array.isArray(left) || Array.isArray(right)) {
-    return JSON.stringify(left) === JSON.stringify(right);
-  }
-
-  return left === right;
+function copyModel(value: AccordionValue): AccordionValue;
+function copyModel(value: AccordionValue | undefined): AccordionValue | undefined;
+function copyModel(value: AccordionValue | undefined): AccordionValue | undefined {
+  return Array.isArray(value) ? [...value] : value;
+}
+function isModelEqual(
+  left: AccordionValue | undefined,
+  right: AccordionValue | undefined,
+): boolean {
+  return Array.isArray(left) && Array.isArray(right)
+    ? left.length === right.length && left.every((entry, index) => entry === right[index])
+    : left === right;
 }

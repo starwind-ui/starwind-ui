@@ -11,6 +11,7 @@ import {
 } from "../renderers/framework-adapters/target-registry.js";
 import { appendRuntimeTypeFacades, renderPrimitiveIndex } from "../renderers/primitive-index.js";
 import { getPrimitivePackageExportNames } from "../renderers/primitive-inventory.js";
+import { hasPrivateSvelte } from "./workspace-support.js";
 
 describe("partial Primitive Framework Adapter target generation", () => {
   const temporaryRoots: string[] = [];
@@ -30,6 +31,7 @@ describe("partial Primitive Framework Adapter target generation", () => {
       "astro",
       "react",
       "vue",
+      ...(hasPrivateSvelte ? ["svelte"] : []),
     ]);
   });
 

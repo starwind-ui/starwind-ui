@@ -6,6 +6,7 @@ import {
   type InputValueChangeDetails,
 } from "@starwind-ui/runtime/input";
 import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { observeFormDiscovery } from "../_internal/form-discovery";
 
 defineOptions({ inheritAttrs: false });
 
@@ -27,100 +28,99 @@ const isControlled = modelValue.value !== undefined;
 const rootRef = ref<HTMLInputElement | null>(null);
 const initialDefaultValue = props.defaultValue;
 const initialRenderedValue = modelValue.value ?? initialDefaultValue;
-let instance: ReturnType<typeof createInput> | undefined;
-let resetForm: HTMLFormElement | null = null;
-let resetReconciliationTimer: number | undefined;
+let connection: ReturnType<typeof connectInput> | undefined;
+defineExpose({ element: rootRef });
+function connectInput(element: HTMLInputElement) {
+  const initialModel = modelValue.value;
+  const controlled = initialModel !== undefined;
+  let disposed = false;
+  let associated: HTMLFormElement | null = null;
+  let resetTimer: number | undefined;
 
-defineExpose({
-  element: rootRef,
-});
-
-function destroyOwnedInstance(): void {
-  unbindControlledFormReset();
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
-}
-
-function clearResetReconciliationTimer(): void {
-  if (resetReconciliationTimer === undefined) return;
-
-  window.clearTimeout(resetReconciliationTimer);
-  resetReconciliationTimer = undefined;
-}
-
-function unbindControlledFormReset(): void {
-  clearResetReconciliationTimer();
-  resetForm?.removeEventListener("reset", handleControlledFormReset);
-  resetForm = null;
-}
-
-function handleControlledFormReset(): void {
-  clearResetReconciliationTimer();
-  resetReconciliationTimer = window.setTimeout(() => {
-    resetReconciliationTimer = undefined;
-    syncRuntimeValue(modelValue.value);
-  }, 0);
-}
-
-function bindControlledFormReset(): void {
-  if (!isControlled) return;
-  const form = rootRef.value?.form ?? null;
-  if (resetForm === form) return;
-
-  unbindControlledFormReset();
-  resetForm = form;
-  resetForm?.addEventListener("reset", handleControlledFormReset);
-}
-
-function handleValueChange(nextValue: string, detail: InputValueChangeDetails): void {
-  const controlledValue = modelValue.value;
-  emit("valueChange", nextValue, detail);
-  modelValue.value = nextValue;
-  if (isControlled) syncRuntimeValue(controlledValue);
-}
-
-function syncRuntimeValue(nextValue: InputValue | undefined): void {
-  const ownedInstance = instance;
-  if (nextValue === undefined || !ownedInstance) return;
-  const normalizedValue = String(nextValue);
-  if (ownedInstance.getValue() === normalizedValue && rootRef.value?.value === normalizedValue) {
-    return;
+  function synchronize(next: InputValue | undefined): void {
+    if (next === undefined || disposed) return;
+    const normalized = String(next);
+    if (instance.getValue() === normalized && element.value === normalized) return;
+    instance.setValue(next, { emit: false });
+  }
+  function clearReset(): void {
+    if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+    resetTimer = undefined;
+  }
+  function reset(event: Event): void {
+    clearReset();
+    resetTimer = window.setTimeout(() => {
+      resetTimer = undefined;
+      if (disposed || event.defaultPrevented) return;
+      synchronize(modelValue.value);
+    }, 0);
+  }
+  function bindReset(): void {
+    if (!controlled) return;
+    const form = element.form;
+    if (associated === form) return;
+    clearReset();
+    associated?.removeEventListener("reset", reset);
+    associated = form;
+    associated?.addEventListener("reset", reset);
   }
 
-  ownedInstance.setValue(nextValue, { emit: false });
-}
+  const instance = createInput(element, {
+    defaultValue: initialDefaultValue,
+    disabled: props.disabled,
+    onValueChange(next, detail) {
+      const previous = modelValue.value;
+      emit("valueChange", next, detail);
+      modelValue.value = next;
+      if (controlled) synchronize(previous);
+    },
+    ...(initialModel === undefined ? {} : { value: initialModel }),
+  });
 
+  bindReset();
+  const stopDiscovery = observeFormDiscovery(element.ownerDocument, () => {
+    instance.refresh();
+    bindReset();
+  });
+  return {
+    instance,
+    synchronize,
+
+    destroy(): void {
+      disposed = true;
+      stopDiscovery();
+      clearReset();
+      associated?.removeEventListener("reset", reset);
+
+      instance.destroy();
+    },
+  };
+}
 onMounted(() => {
   const element = rootRef.value;
   if (!element) throw new Error("Input requires its native input before Runtime setup.");
-
-  instance = createInput(element, {
-    defaultValue: initialDefaultValue,
-    disabled: props.disabled,
-    onValueChange: handleValueChange,
-    ...(modelValue.value === undefined ? {} : { value: modelValue.value }),
-  });
-  bindControlledFormReset();
+  connection = connectInput(element);
 });
 
 watch(
   modelValue,
   (nextValue) => {
-    if (isControlled) syncRuntimeValue(nextValue);
+    if (isControlled) connection?.synchronize(nextValue);
   },
   { flush: "post" },
 );
 watch(
   () => props.disabled,
   (nextDisabled) => {
-    instance?.setDisabled(nextDisabled);
+    connection?.instance.setDisabled(nextDisabled);
   },
 );
 
-onBeforeUnmount(destroyOwnedInstance);
+onBeforeUnmount(() => {
+  const owned = connection;
+  connection = undefined;
+  owned?.destroy();
+});
 </script>
 
 <template>
@@ -131,6 +131,6 @@ onBeforeUnmount(destroyOwnedInstance);
     data-sw-part="root"
     :data-disabled="props.disabled ? '' : undefined"
     :disabled="props.disabled"
-    :value="initialRenderedValue"
+    :value.attr="initialRenderedValue"
   />
 </template>

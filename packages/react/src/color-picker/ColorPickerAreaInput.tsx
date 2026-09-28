@@ -19,11 +19,14 @@ const ColorPickerAreaInput = React.forwardRef<HTMLInputElement, ColorPickerAreaI
     const { props: projectedProps } = useColorPickerPartProjection(
       {
         part: "areaInput",
-        ...areaContext,
-        axis,
-        ...(axis === "x"
-          ? { xStep: step ?? areaContext.xStep }
-          : { yStep: step ?? areaContext.yStep }),
+        xChannel: areaContext.xChannel,
+        yChannel: areaContext.yChannel,
+        xStep: axis === "x" ? (step ?? areaContext.xStep) : areaContext.xStep,
+        yStep: axis === "y" ? (step ?? areaContext.yStep) : areaContext.yStep,
+        axis: axis,
+        ariaLabel: props["aria-label"] ?? undefined,
+        ariaLabelledBy: props["aria-labelledby"] ?? undefined,
+        ariaRoleDescription: props["aria-roledescription"] ?? undefined,
       },
       {
         ...props,

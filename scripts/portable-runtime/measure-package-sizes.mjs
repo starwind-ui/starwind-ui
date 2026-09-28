@@ -9,6 +9,7 @@ import { gzipSync } from "node:zlib";
 import {
   aggregateBaselineProvenance,
   evaluatePackageSizeBudgets,
+  reactAdapterOnlyBaselineProvenance,
 } from "./package-size-budget-checks.mjs";
 import {
   buildRawGzipDiagnostics,
@@ -1548,7 +1549,7 @@ export function formatDiagnosticPackageSizeReport({
         ]
       : []),
     "`pnpm runtime:size` treats aggregate package and support-set sizes as regression guards: they fail only after more than 10% or 15 KiB of gzip growth from the committed baseline, whichever comes first. Field and Runtime Color Picker cold imports retain strict absolute budgets. Competitor comparisons are informational.",
-    `The aggregate baselines were refreshed from public commit \`${aggregateBaselineProvenance.publicCommit}\` on ${aggregateBaselineProvenance.date} for Runtime ${aggregateBaselineProvenance.release.runtime}, Astro ${aggregateBaselineProvenance.release.astro}, React ${aggregateBaselineProvenance.release.react}, and CLI ${aggregateBaselineProvenance.release.cli}. Targeted cold-import budgets were not rebaselined.`,
+    `The shared aggregate baselines were refreshed from public commit \`${aggregateBaselineProvenance.publicCommit}\` on ${aggregateBaselineProvenance.date} for Runtime ${aggregateBaselineProvenance.release.runtime}, Astro ${aggregateBaselineProvenance.release.astro}, React ${aggregateBaselineProvenance.release.react}, and CLI ${aggregateBaselineProvenance.release.cli}. The React adapter-only row was measured at ${formatBytes(reactAdapterOnlyBaselineProvenance.measuredGzipBytes)} from the ${reactAdapterOnlyBaselineProvenance.context} on ${reactAdapterOnlyBaselineProvenance.date} with \`${reactAdapterOnlyBaselineProvenance.command}\`. Targeted cold-import budgets were not rebaselined.`,
     "",
     ...formatColorPickerRebaselineMarkdown(),
     "",

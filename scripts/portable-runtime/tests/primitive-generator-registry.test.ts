@@ -26,7 +26,7 @@ describe("primitive generator registry", () => {
         routeFree: {
           kind: "adapter-output-model",
           strategy: "specialized-adapter-spec",
-          targets: ["astro", "react", "vue"],
+          targets: ["astro", "react", "vue", "svelte"],
         },
         source: "specialized-adapter-spec",
       }),

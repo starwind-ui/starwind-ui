@@ -12,7 +12,7 @@ export type PopoverBackdropProps = React.HTMLAttributes<HTMLDivElement>;
 const PopoverBackdrop = React.forwardRef<HTMLDivElement, PopoverBackdropProps>(
   function PopoverBackdrop(props, forwardedRef) {
     return (
-      <div data-sw-popover-backdrop data-state="closed" hidden ref={forwardedRef} {...props} />
+      <div {...props} data-sw-popover-backdrop="" data-state="closed" hidden ref={forwardedRef} />
     );
   },
 );

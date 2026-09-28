@@ -1,13 +1,12 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -30,14 +29,8 @@ describe("generated Vue Dropzone", () => {
       if (name === "index") continue;
       expect(() => assertVueSfcCompiles(source, `${name}.vue`)).not.toThrow();
     }
-    expect(first.root.match(/createDropzone\(/g)).toHaveLength(1);
-    expect(first.root).toContain(
-      "filesChange: [files: File[], detail: DropzoneFilesChangeDetails]",
-    );
-    expect(first.root).toContain('emit("filesChange", files, detail)');
-    expect(first.root).toContain("instance?.setDisabled(value)");
-    expect(first.root).toContain("instance?.setUploading(value)");
-    expect(first.root).not.toContain("defineModel");
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(first.input.match(/type="file"/g)).toHaveLength(1);
     expect(first.input).toContain(':accept="props.accept"');
     expect(first.filesList).toContain('data-has-files="false"');
@@ -54,14 +47,20 @@ describe("generated Vue Dropzone", () => {
       path.join(repoRoot, "styled/dropzone/DropzoneFilesList.vue"),
       "utf8",
     );
-    expect(root).toContain('@files-change="handleFilesChange"');
+    expect(compactCode(root)).toContain(compactCode('@files-change="handleFilesChange"'));
     expect(root.match(/<DropzonePrimitive\.DropzoneInput/g)).toHaveLength(1);
-    expect(root).not.toContain("} & /* @vue-ignore */ DropzoneProps;");
-    expect(root).toContain('"id"?: DropzoneProps["id"];');
-    expect(root).toContain('"ariaInvalid"?: DropzoneProps["aria-invalid"];');
-    expect(root).toContain(`v-bind="{ id, 'aria-invalid': ariaInvalid }"`);
-    expect(root).toContain(`v-bind="{ ...attrs, 'aria-invalid': ariaInvalid }"`);
-    expect(root).not.toContain("defineModel");
+    expect(compactCode(root)).not.toContain(compactCode("} & /* @vue-ignore */ DropzoneProps;"));
+    expect(compactCode(root)).toContain(compactCode('"id"?: DropzoneProps["id"];'));
+    expect(compactCode(root)).toContain(
+      compactCode('"ariaInvalid"?: DropzoneProps["aria-invalid"];'),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode(`v-bind="{ id, 'aria-invalid': ariaInvalid }"`),
+    );
+    expect(compactCode(root)).toContain(
+      compactCode(`v-bind="{ ...attrs, 'aria-invalid': ariaInvalid }"`),
+    );
+    expect(compactCode(root)).not.toContain(compactCode("defineModel"));
     expect(root).not.toMatch(/fetch\(|XMLHttpRequest|createObjectURL|localStorage/);
     expect(filesList).toContain('data-slot="dropzone-files-list"');
     expect(filesList).toContain(

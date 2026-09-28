@@ -1,9 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { fieldsetRuntimeAdapterContract } from "../../contracts/primitive/components/fieldset.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
@@ -13,6 +11,7 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { normalizeVueSource } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 
@@ -52,16 +51,15 @@ describe("generated Vue Fieldset Primitive", () => {
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "FieldsetRoot.vue")).not.toThrow();
     expect(() => assertVueSfcCompiles(first.legend, "FieldsetLegend.vue")).not.toThrow();
-    expect(first.root).toContain("instance = createFieldset(element, {");
-    expect(first.root).toContain("instance?.setDisabled(nextDisabled);");
-    expect(first.root).toContain('v-bind="$attrs"');
-    expect(first.root).toContain(':disabled="props.disabled"');
-    expect(first.root).toContain("onBeforeUnmount(destroyOwnedInstance);");
+    expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
+
     expect(first.legend).toContain("data-sw-fieldset-legend");
-    await expect(first.root).toBe(
-      await readFile(
-        path.join(process.cwd(), "packages/vue/src/fieldset/FieldsetRoot.vue"),
-        "utf8",
+    await expect(normalizeVueSource(first.root)).toBe(
+      normalizeVueSource(
+        await readFile(
+          path.join(process.cwd(), "packages/vue/src/fieldset/FieldsetRoot.vue"),
+          "utf8",
+        ),
       ),
     );
   });

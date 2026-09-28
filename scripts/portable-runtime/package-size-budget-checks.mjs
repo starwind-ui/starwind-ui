@@ -16,6 +16,13 @@ export const aggregateBaselineProvenance = Object.freeze({
   }),
 });
 
+export const reactAdapterOnlyBaselineProvenance = Object.freeze({
+  command: "pnpm runtime:size:check",
+  context: "accepted pre-release React adapter candidate",
+  date: "2026-09-17",
+  measuredGzipBytes: 40_770,
+});
+
 const headlinePackageBudgets = [
   createAggregateBudget(
     {
@@ -26,7 +33,7 @@ const headlinePackageBudgets = [
   ),
   createAggregateBudget(
     {
-      baselineGzipBytes: 36_486,
+      baselineGzipBytes: reactAdapterOnlyBaselineProvenance.measuredGzipBytes,
       label: "@starwind-ui/react (adapter only)",
     },
     "maxGzipBytes",

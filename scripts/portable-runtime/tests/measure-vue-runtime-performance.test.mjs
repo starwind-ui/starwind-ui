@@ -83,13 +83,13 @@ describe("Vue runtime performance runner", () => {
     );
   });
 
-  it("records five-sample zero-warmup mount controls", () => {
+  it("records one excluded warmup and five measured mount samples", () => {
     expect(
       createVuePerformanceFlags(buildVuePerformanceRunConfig([])).controls.mountSampling,
     ).toEqual({
       browserLifecycle: "one context, page, CDP session, and navigation per mount row",
       iterations: 5,
-      warmupCount: 0,
+      warmupCount: 1,
     });
     expect(
       createVuePerformanceFlags(buildVuePerformanceRunConfig(["--smoke"])).controls.mountSampling,
@@ -381,7 +381,7 @@ describe("Vue runtime performance runner", () => {
     );
   });
 
-  it("reuses one browser lifecycle for five mount samples with zero warmups", async () => {
+  it("reuses one browser lifecycle for one warmup and five mount samples", async () => {
     const harness = createBrowserHarness();
     const progress = vi.fn();
     const row = vuePerformanceProviderRows.find(
@@ -406,7 +406,7 @@ describe("Vue runtime performance runner", () => {
       harness.session.send.mock.calls.filter(
         ([command]) => command === "HeapProfiler.collectGarbage",
       ),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
     expect(progress).toHaveBeenCalledWith(`[vue:perf] row 1/1 ${row.id} complete`);
 
     const evaluatedOperations = harness.page.evaluate.mock.calls.map(([operation]) =>
@@ -414,20 +414,20 @@ describe("Vue runtime performance runner", () => {
     );
     expect(
       evaluatedOperations.filter((source) => source.includes("__runtimePerf.setup")),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
     expect(
       evaluatedOperations.filter((source) => source.includes("__runtimePerf.measure")),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
     expect(
       evaluatedOperations.filter((source) => source.includes("assertVisibleEndpoint")),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
     expect(
       evaluatedOperations.filter((source) => source.includes("__runtimePerf.teardown")),
-    ).toHaveLength(5);
-    expect(evaluatedOperations.filter((source) => source.includes("overlayEmpty"))).toHaveLength(5);
+    ).toHaveLength(6);
+    expect(evaluatedOperations.filter((source) => source.includes("overlayEmpty"))).toHaveLength(6);
   });
 
-  it("keeps five interaction samples in isolated browser lifecycles", async () => {
+  it("keeps five interaction samples after one excluded warmup lifecycle", async () => {
     const harness = createBrowserHarness();
     const row = vuePerformanceProviderRows.find(({ id }) => id === "dialog-open:starwind-vue");
     const result = await runVuePerformanceBrowser({
@@ -438,10 +438,10 @@ describe("Vue runtime performance runner", () => {
 
     expect(result.errors).toEqual([]);
     expect(result.rows[0].result.samples).toHaveLength(5);
-    expect(harness.browser.newContext).toHaveBeenCalledTimes(5);
-    expect(harness.context.newPage).toHaveBeenCalledTimes(5);
-    expect(harness.context.newCDPSession).toHaveBeenCalledTimes(5);
-    expect(harness.page.goto).toHaveBeenCalledTimes(5);
+    expect(harness.browser.newContext).toHaveBeenCalledTimes(6);
+    expect(harness.context.newPage).toHaveBeenCalledTimes(6);
+    expect(harness.context.newCDPSession).toHaveBeenCalledTimes(6);
+    expect(harness.page.goto).toHaveBeenCalledTimes(6);
   });
 
   it("pins aggregate browser lifecycle and sample counts for all 63 rows", async () => {
@@ -458,7 +458,7 @@ describe("Vue runtime performance runner", () => {
     expect(result.rows).toHaveLength(63);
     expect(result.rows.flatMap(({ result: rowResult }) => rowResult.samples)).toHaveLength(315);
     const mountRows = vuePerformanceProviderRows.filter(({ type }) => type === "mount").length;
-    const expectedLifecycles = mountRows + (63 - mountRows) * 5;
+    const expectedLifecycles = mountRows + (63 - mountRows) * 6;
     expect(harness.browser.newContext).toHaveBeenCalledTimes(expectedLifecycles);
     expect(harness.context.newPage).toHaveBeenCalledTimes(expectedLifecycles);
     expect(harness.context.newCDPSession).toHaveBeenCalledTimes(expectedLifecycles);
@@ -467,12 +467,12 @@ describe("Vue runtime performance runner", () => {
       harness.session.send.mock.calls.filter(
         ([command]) => command === "HeapProfiler.collectGarbage",
       ),
-    ).toHaveLength(315);
+    ).toHaveLength(378);
     expect(
       harness.page.evaluate.mock.calls.filter(([operation]) =>
         operation.toString().includes("overlayEmpty"),
       ),
-    ).toHaveLength(315);
+    ).toHaveLength(378);
     expect(progress).toHaveBeenCalledTimes(63);
     expect(progress).toHaveBeenLastCalledWith(
       "[vue:perf] row 63/63 radio-group-change-sweep:reka-ui complete",
@@ -522,7 +522,7 @@ describe("Vue runtime performance runner", () => {
       /async function measureMountRow[\s\S]+page\.goto\([\s\S]+runMountSamples\(\{ groupCount, iterationsPerGroup \}\)/,
     );
     expect(reactSource).toMatch(
-      /async function runMountSamples[\s\S]+groupIndex < groupCount[\s\S]+iteration < iterationsPerGroup[\s\S]+measureReactRoot\.render\(renderMountFixture\(\)\)/,
+      /async function runMountSamples[\s\S]+measureReactRoot\.render\(renderMountFixture\(\)\)[\s\S]+groupIndex < groupCount[\s\S]+iteration < iterationsPerGroup[\s\S]+const duration = measure\(\)/,
     );
 
     const vueSource = runVuePerformanceBrowser.toString();
@@ -833,7 +833,7 @@ describe("Vue runtime performance runner", () => {
   it("adds private Vue commands without changing the public React command surface", () => {
     const packageJson = JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8"));
     expect(packageJson.scripts["runtime:perf"]).toBe(
-      "node scripts/portable-runtime/measure-runtime-performance.mjs",
+      "node scripts/portable-runtime/measure-performance.mjs",
     );
     expect(packageJson.scripts["runtime:perf:snapshot"]).toContain(
       "measure-runtime-performance.mjs --snapshot",
@@ -980,7 +980,7 @@ function makeRowRun(row, samples = [10, 10, 10, 10, 10]) {
         {
           cpuThrottle: row.cpuThrottle,
           id: row.id,
-          warmupCount: 0,
+          warmupCount: 1,
           withinRunSampleCount: 5,
         },
       ],

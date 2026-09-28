@@ -13,7 +13,7 @@ defineExpose({ element });
   <div
     ref="element"
     v-bind="$attrs"
-    data-sw-preview-card-viewport
+    data-sw-preview-card-viewport=""
     data-sw-part="viewport"
     data-state="closed"
   >

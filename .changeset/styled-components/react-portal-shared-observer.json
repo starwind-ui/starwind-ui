@@ -1,0 +1,15 @@
+{
+  "components": {
+    "alert-dialog": "patch",
+    "combobox": "patch",
+    "context-menu": "patch",
+    "dropdown": "patch",
+    "hover-card": "patch",
+    "navigation-menu": "patch",
+    "popover": "patch",
+    "select": "patch",
+    "sheet": "patch",
+    "tooltip": "patch"
+  },
+  "impact": "behavior"
+}

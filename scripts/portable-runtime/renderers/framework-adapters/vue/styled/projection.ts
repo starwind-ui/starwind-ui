@@ -1,3 +1,4 @@
+import { assertStyledSidebarConnection } from "../../../primitive-output-model/sidebar-connection.js";
 import {
   collectStyledOutputNamedSlots,
   type StyledOutputComponent,
@@ -31,6 +32,7 @@ export function projectVueStyledComponent(
   sourceComponent: StyledOutputComponent,
   options: RenderVueComponentOptions,
 ): VueStyledComponentProjection {
+  assertStyledSidebarConnection(group);
   const component = structuredClone(sourceComponent);
   const specialization = specializeVueStyledComponent(group.component, component);
   applyGenericNativeElementRef(component, specialization);

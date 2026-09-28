@@ -138,6 +138,24 @@ export async function verifySidebarCases({ page, ids, label, expectations = {} }
     { demoId: ids.demo },
   );
   const openedMobileSheet = await page.evaluate(readSidebarState, ids);
+  await page.evaluate(async ({ demo }) => {
+    const provider = document.getElementById(demo)?.querySelector("[data-sw-sidebar-provider]");
+    const sheet = [...provider.querySelectorAll('[data-sidebar="mobile"]')].find(
+      (node) => node.closest("[data-sw-sidebar-provider]") === provider,
+    );
+    const veto = (event) => {
+      if (event.target === sheet) event.preventDefault();
+    };
+    document.addEventListener("starwind:open-change", veto);
+    sheet.dispatchEvent(new CustomEvent("dialog:close"));
+    await Promise.resolve();
+    document.removeEventListener("starwind:open-change", veto);
+    if (
+      provider.getAttribute("data-mobile-open") !== "true" ||
+      sheet.getAttribute("data-state") !== "open"
+    )
+      throw new Error("Sidebar committed a canceled mobile Sheet proposal");
+  }, ids);
   await page.setViewportSize({ height: 900, width: 1280 });
   await page.waitForFunction(
     ({ demoId }) => {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { compactCode } from "../source-comparison.js";
 
 const NATIVE_ELEMENT_FIXTURE: StyledAdapterContract = {
   component: "generic-native-elements",
@@ -50,17 +50,19 @@ describe("generic Vue Styled native element semantics", () => {
   it("uses Vue's native optgroup attributes", () => {
     const source = render("GenericOptGroup");
 
-    expect(source).toContain("type GenericOptGroupProps = OptgroupHTMLAttributes;");
-    expect(source).toContain("type OptgroupHTMLAttributes");
+    expect(compactCode(source)).toContain(
+      compactCode("type GenericOptGroupProps = OptgroupHTMLAttributes;"),
+    );
+    expect(compactCode(source)).toContain(compactCode("type OptgroupHTMLAttributes"));
   });
 
   it("uses Vue's native textarea attributes with contract omissions", () => {
     const source = render("GenericTextarea");
 
-    expect(source).toContain(
-      'type GenericTextareaProps = Omit<TextareaHTMLAttributes, "children">;',
+    expect(compactCode(source)).toContain(
+      compactCode('type GenericTextareaProps = Omit<TextareaHTMLAttributes, "children">;'),
     );
-    expect(source).toContain("type TextareaHTMLAttributes");
+    expect(compactCode(source)).toContain(compactCode("type TextareaHTMLAttributes"));
     expect(() => assertVueSfcCompiles(source, "GenericTextarea.vue")).not.toThrow();
   });
 });

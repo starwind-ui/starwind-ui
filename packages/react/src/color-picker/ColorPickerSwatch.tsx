@@ -25,8 +25,7 @@ const ColorPickerSwatch = React.forwardRef<HTMLButtonElement, ColorPickerSwatchP
       {
         ...props,
         "data-sw-color-picker-swatch": "",
-        "data-value":
-          typeof swatchValue === "string" ? swatchValue : (swatchValue?.toString() ?? undefined),
+        "data-value": typeof swatchValue === "string" ? swatchValue : swatchValue?.toString(),
         "data-disabled": swatchDisabled ? "" : undefined,
       },
     );

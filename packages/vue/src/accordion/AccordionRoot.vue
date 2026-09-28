@@ -10,17 +10,12 @@ import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue"
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
   defineProps<{
-    type?: "single" | "multiple";
-    defaultValue?: AccordionValue;
     modelValue?: AccordionValue;
+    defaultValue?: AccordionValue;
+    type?: "single" | "multiple";
     collapsible?: boolean;
   }>(),
-  {
-    type: "single",
-    defaultValue: undefined,
-    modelValue: undefined,
-    collapsible: true,
-  },
+  { modelValue: undefined, defaultValue: undefined, type: "single", collapsible: true },
 );
 const emit = defineEmits<{
   valueChange: [value: AccordionValue, detail: AccordionValueChangeDetails];
@@ -29,77 +24,96 @@ const emit = defineEmits<{
 defineSlots<{ default?: (props: { value: AccordionValue }) => unknown }>();
 const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
-const initialDefaultValue = props.defaultValue;
-const uncontrolledValue = ref<AccordionValue>(initialDefaultValue ?? null);
+const initialModel = copyModel(props.modelValue);
+const initialDefault = copyModel(props.defaultValue);
+const initialValue =
+  initialModel !== undefined ? initialModel : initialDefault !== undefined ? initialDefault : null;
+const defaultValueAttribute = Array.isArray(initialValue)
+  ? JSON.stringify(initialValue)
+  : initialValue;
+const uncontrolledValue = ref<AccordionValue>(copyModel(initialValue));
 const renderedValue = computed(() =>
   props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value,
 );
-let instance: ReturnType<typeof createAccordion> | undefined;
+const connection: {
+  instance?: ReturnType<typeof createAccordion>;
+  unsubscribe?: () => void;
+  accepted: AccordionValue;
+  initialized: boolean;
+} = { accepted: copyModel(initialValue), initialized: false };
 defineExpose({ element: rootRef });
 
-function handleValueChange(detail: AccordionValueChangeDetails): void {
-  const nextValue = detail.value;
-  const eventWasControlled = props.modelValue !== undefined;
-  emit("valueChange", nextValue, detail);
-  if (detail.isCanceled) return;
-  if (!eventWasControlled) uncontrolledValue.value = nextValue;
-  emit("update:modelValue", nextValue);
+function disconnectRuntime(): void {
+  const owned = connection.instance;
+  if (!owned) return;
+  connection.accepted = copyModel(owned.getValue());
+  connection.unsubscribe?.();
+  connection.unsubscribe = undefined;
+  connection.instance = undefined;
+  owned.destroy();
 }
-
-function destroyOwnedInstance(): void {
-  const ownedInstance = instance;
-  if (!ownedInstance) return;
-  if (instance === ownedInstance) instance = undefined;
-  ownedInstance.destroy();
-}
-
-function setupRuntime(): void {
-  destroyOwnedInstance();
-  const element = rootRef.value;
-  if (!element) return;
-  instance = createAccordion(element, {
+function connectRuntime(root: HTMLDivElement): void {
+  disconnectRuntime();
+  const desired =
+    props.modelValue !== undefined ? copyModel(props.modelValue) : copyModel(connection.accepted);
+  const owned = createAccordion(root, {
+    defaultValue: copyModel(desired),
+    ...(props.modelValue !== undefined ? { value: copyModel(desired) } : {}),
     type: props.type,
-    defaultValue: uncontrolledValue.value,
     collapsible: props.collapsible,
-    ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
-    onValueChange: handleValueChange,
+    onValueChange: (detail) => {
+      emit("valueChange", copyModel(detail.value), detail);
+    },
   });
+  connection.instance = owned;
+  connection.initialized = true;
+  connection.unsubscribe = owned.subscribe("valueChange", (detail) => {
+    if (connection.instance !== owned) return;
+    connection.accepted = copyModel(detail.value);
+    uncontrolledValue.value = copyModel(detail.value);
+    emit("update:modelValue", copyModel(detail.value));
+  });
+  if (!isModelEqual(owned.getValue(), desired)) owned.setValue(copyModel(desired), { emit: false });
+  connection.accepted = copyModel(owned.getValue());
+  uncontrolledValue.value = copyModel(connection.accepted);
+}
+function applyParentCommand(): void {
+  const next = props.modelValue;
+  const owned = connection.instance;
+  if (next === undefined || !owned) return;
+  if (!isModelEqual(owned.getValue(), next)) owned.setValue(copyModel(next), { emit: false });
+  connection.accepted = copyModel(owned.getValue());
+  uncontrolledValue.value = copyModel(connection.accepted);
 }
 
-onMounted(setupRuntime);
+function reconnectRuntime(): void {
+  if (rootRef.value) connectRuntime(rootRef.value);
+}
+onMounted(reconnectRuntime);
 watch(
   () => props.modelValue,
-  (nextValue, previousValue) => {
-    const controllednessChanged = (nextValue === undefined) !== (previousValue === undefined);
-    if (controllednessChanged) {
-      if (nextValue === undefined && instance) uncontrolledValue.value = instance.getValue();
-      setupRuntime();
-      return;
-    }
-    if (
-      nextValue === undefined ||
-      !instance ||
-      isAccordionValueEqual(instance.getValue(), nextValue)
-    )
-      return;
-    instance.setValue(nextValue, { emit: false });
+  (next, previous) => {
+    if ((next === undefined) !== (previous === undefined)) void reconnectRuntime();
+    else applyParentCommand();
   },
   { flush: "post" },
 );
-watch([() => props.type, () => props.collapsible], setupRuntime, { flush: "post" });
-onBeforeUnmount(destroyOwnedInstance);
-
-function isAccordionValueEqual(left: AccordionValue, right: AccordionValue): boolean {
-  if (Array.isArray(left) || Array.isArray(right))
-    return JSON.stringify(left) === JSON.stringify(right);
-  return left === right;
+watch([() => props.type, () => props.collapsible], reconnectRuntime, { flush: "post" });
+onBeforeUnmount(disconnectRuntime);
+function copyModel(value: AccordionValue): AccordionValue;
+function copyModel(value: AccordionValue | undefined): AccordionValue | undefined;
+function copyModel(value: AccordionValue | undefined): AccordionValue | undefined {
+  return Array.isArray(value) ? [...value] : value;
 }
-
-const defaultValueAttribute = Array.isArray(initialDefaultValue)
-  ? JSON.stringify(initialDefaultValue)
-  : initialDefaultValue;
+function isModelEqual(
+  left: AccordionValue | undefined,
+  right: AccordionValue | undefined,
+): boolean {
+  return Array.isArray(left) && Array.isArray(right)
+    ? left.length === right.length && left.every((entry, index) => entry === right[index])
+    : left === right;
+}
 </script>
-
 <template>
   <div
     ref="rootRef"

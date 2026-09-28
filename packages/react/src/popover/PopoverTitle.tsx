@@ -11,7 +11,7 @@ export type PopoverTitleProps = React.HTMLAttributes<HTMLHeadingElement>;
 
 const PopoverTitle = React.forwardRef<HTMLHeadingElement, PopoverTitleProps>(
   function PopoverTitle(props, forwardedRef) {
-    return <h2 data-sw-popover-title ref={forwardedRef} {...props} />;
+    return <h2 {...props} data-sw-popover-title="" ref={forwardedRef} />;
   },
 );
 

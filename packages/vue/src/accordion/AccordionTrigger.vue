@@ -6,7 +6,8 @@ import { useAccordionItemContext } from "./AccordionItemContext";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLButtonElement | null>(null);
-useAccordionItemContext("AccordionTrigger");
+const item = useAccordionItemContext("AccordionTrigger");
+const props = withDefaults(defineProps<{ disabled?: boolean }>(), { disabled: false });
 defineExpose({ element });
 </script>
 
@@ -14,11 +15,17 @@ defineExpose({ element });
   <button
     ref="element"
     v-bind="$attrs"
-    data-sw-accordion-trigger
-    data-sw-part="trigger"
+    data-sw-accordion-trigger=""
     type="button"
     aria-expanded="false"
     data-state="closed"
+    data-sw-part="trigger"
+    :disabled="
+      item.disabled ||
+      Boolean(props.disabled) ||
+      $attrs['aria-disabled'] === true ||
+      $attrs['aria-disabled'] === 'true'
+    "
   >
     <slot />
   </button>

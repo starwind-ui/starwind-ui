@@ -10,7 +10,6 @@ import * as React from "react";
 import { useCheckboxGroupContext } from "../checkbox-group/CheckboxGroupContext";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
 export type CheckboxRootProps = Omit<
   React.HTMLAttributes<HTMLSpanElement>,
   "defaultChecked" | "onChange"
@@ -24,112 +23,103 @@ export type CheckboxRootProps = Omit<
     indeterminate?: boolean;
     name?: string;
     nativeButton?: boolean;
-    onCheckedChange?: (checked: boolean, details: CheckboxCheckedChangeDetails) => void;
     readOnly?: boolean;
     required?: boolean;
     uncheckedValue?: string;
     value?: string;
+    onCheckedChange?: (checked: boolean, details: CheckboxCheckedChangeDetails) => void;
   };
-
 const visuallyHiddenStyle = {
-  border: 0,
-  clip: "rect(0 0 0 0)",
+  position: "absolute",
+  width: "1px",
   height: "1px",
   margin: "-1px",
   overflow: "hidden",
-  position: "absolute",
+  clip: "rect(0 0 0 0)",
   whiteSpace: "nowrap",
-  width: "1px",
+  border: 0,
 } satisfies React.CSSProperties;
-
-type CheckboxIndicatorState = {
+type IndicatorState = {
   checked: boolean;
   disabled: boolean;
   indeterminate: boolean;
   readOnly: boolean;
-  registerIndicatorVisibility(node: HTMLElement, explicitlyHidden: boolean): void;
   required: boolean;
+  registerIndicatorVisibility(node: HTMLElement, hidden: boolean): void;
 };
-
-export const CheckboxIndicatorContext = React.createContext<CheckboxIndicatorState>({
+export const CheckboxIndicatorContext = React.createContext<IndicatorState>({
   checked: false,
   disabled: false,
   indeterminate: false,
   readOnly: false,
-  registerIndicatorVisibility: () => {},
   required: false,
+  registerIndicatorVisibility() {},
 });
-
 const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, CheckboxRootProps>(
   function CheckboxRoot(
     {
-      checked,
       children,
-      defaultChecked = false,
+      checked,
+      defaultChecked,
       disabled = false,
       form,
       id,
       indeterminate = false,
       name,
       nativeButton = false,
-      onCheckedChange,
       readOnly = false,
       required = false,
       uncheckedValue,
       value,
+      onCheckedChange,
       ...props
     },
     forwardedRef,
   ) {
-    const explicitlyHiddenIndicatorsRef = React.useRef(new Set<HTMLElement>());
-    const registerIndicatorVisibility = React.useCallback(
-      (node: HTMLElement, explicitlyHidden: boolean) => {
-        if (explicitlyHidden) {
-          explicitlyHiddenIndicatorsRef.current.add(node);
-        } else {
-          explicitlyHiddenIndicatorsRef.current.delete(node);
-        }
-      },
-      [],
-    );
     const rootRef = React.useRef<HTMLSpanElement | HTMLButtonElement>(null);
-    const inputElementRef = React.useRef<HTMLInputElement>(null);
-    const instanceRef = React.useRef<ReturnType<typeof createCheckbox> | undefined>(undefined);
-    const checkedRef = React.useRef(checked);
-    const indeterminateRef = React.useRef(indeterminate);
-    const onCheckedChangeRef = React.useRef(onCheckedChange);
-    const resetSyncTimerRef = React.useRef<number | undefined>(undefined);
-    const defaultCheckedRef = React.useRef(defaultChecked);
-    const checkboxGroup = useCheckboxGroupContext();
-    const groupValue = value ?? name;
+    const inputElement = React.useRef<HTMLInputElement>(null);
+    const group = useCheckboxGroupContext();
+    const itemValue = value ?? name;
     const groupChecked =
-      checkboxGroup && groupValue !== undefined
-        ? checkboxGroup.value.includes(groupValue)
-        : undefined;
-    const effectiveDisabled = disabled || checkboxGroup?.disabled === true;
-    const [uncontrolledChecked, setUncontrolledCheckedState] = React.useState(
-      groupChecked ?? defaultCheckedRef.current,
-    );
-    const uncontrolledCheckedRef = React.useRef(uncontrolledChecked);
+      group && itemValue !== undefined ? group.value.includes(itemValue) : undefined;
+    const groupCheckedRef = React.useRef(groupChecked);
+    useIsomorphicLayoutEffect(() => {
+      groupCheckedRef.current = groupChecked;
+    });
+    const effectiveDisabledValue = disabled || group?.disabled === true;
+    const inputs = React.useRef({ checked, onCheckedChange, indeterminate });
+    useIsomorphicLayoutEffect(() => {
+      inputs.current = { checked, onCheckedChange, indeterminate };
+    });
+    function groupCheckedValue(): boolean | undefined {
+      return groupCheckedRef.current;
+    }
+    function effectiveChecked(): boolean | undefined {
+      return groupCheckedValue() ?? inputs.current.checked;
+    }
+    function effectiveDisabled(): boolean {
+      return effectiveDisabledValue;
+    }
+    const initial = React.useRef<{ checked: boolean; reset: boolean } | undefined>(undefined);
+    if (!initial.current) {
+      const initialChecked = groupCheckedValue() ?? checked ?? defaultChecked ?? false;
+      const resetSeed = defaultChecked ?? initialChecked;
+      initial.current = { checked: initialChecked, reset: resetSeed };
+    }
+    const initialChecked = initial.current.checked;
+    const resetSeed = initial.current.reset;
+    const [renderedState, setRenderedChecked] = React.useState<boolean>(initialChecked);
     const [renderedIndeterminate, setRenderedIndeterminate] = React.useState(indeterminate);
-
-    const setUncontrolledChecked = React.useCallback((nextChecked: boolean) => {
-      uncontrolledCheckedRef.current = nextChecked;
-      setUncontrolledCheckedState(nextChecked);
-    }, []);
-
-    useIsomorphicLayoutEffect(() => {
-      checkedRef.current = checked;
-    }, [checked]);
-
-    useIsomorphicLayoutEffect(() => {
-      indeterminateRef.current = indeterminate;
-    }, [indeterminate]);
-
-    useIsomorphicLayoutEffect(() => {
-      onCheckedChangeRef.current = onCheckedChange;
-    }, [onCheckedChange]);
-
+    const connection = React.useRef<{
+      instance?: ReturnType<typeof createCheckbox>;
+      input?: HTMLInputElement;
+      accepted: boolean;
+      unsubscribe?: () => void;
+      form?: HTMLFormElement;
+      resetTimer?: number;
+      runtimeInputName?: string;
+      nameObserver?: MutationObserver;
+    }>({ accepted: initialChecked }).current;
     const composedRef = React.useCallback(
       (node: HTMLSpanElement | HTMLButtonElement | null) => {
         rootRef.current = node;
@@ -137,200 +127,238 @@ const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, Check
       },
       [forwardedRef],
     );
+    const composedInputRef = React.useCallback((node: HTMLInputElement | null) => {
+      inputElement.current = node;
+    }, []);
 
-    useIsomorphicLayoutEffect(() => {
-      const root = rootRef.current;
-      if (!root) return;
-
-      const instance = createCheckbox(root, {
-        defaultChecked: uncontrolledCheckedRef.current,
-        disabled: effectiveDisabled,
-        form,
-        id,
-        indeterminate,
-        name,
-        readOnly,
-        required,
-        uncheckedValue,
-        value,
-        onCheckedChange: (checked, details) => {
-          onCheckedChangeRef.current?.(checked, details);
-        },
-        ...(checkedRef.current !== undefined
-          ? { checked: checkedRef.current }
-          : groupChecked !== undefined
-            ? { checked: groupChecked }
-            : {}),
-      });
-      instanceRef.current = instance;
-      const formElement = inputElementRef.current?.form ?? null;
-      const syncUncontrolledAfterFormReset = () => {
-        if (checkedRef.current !== undefined) return;
-
-        if (resetSyncTimerRef.current !== undefined) {
-          window.clearTimeout(resetSyncTimerRef.current);
-        }
-
-        resetSyncTimerRef.current = window.setTimeout(() => {
-          resetSyncTimerRef.current = undefined;
-          const currentInstance = instanceRef.current;
-          if (!currentInstance) return;
-
-          setUncontrolledChecked(currentInstance.getChecked());
-          if (!indeterminateRef.current) {
-            setRenderedIndeterminate(false);
-          }
-        }, 0);
-      };
-      const unsubscribe = instance.subscribe("checkedChange", (details) => {
-        if (details.isCanceled) return;
-
-        if (checkedRef.current === undefined) {
-          setUncontrolledChecked(details.checked);
-        }
-
-        if (!indeterminateRef.current) {
-          setRenderedIndeterminate(false);
-        }
-      });
-      formElement?.addEventListener("reset", syncUncontrolledAfterFormReset);
-
-      return () => {
-        formElement?.removeEventListener("reset", syncUncontrolledAfterFormReset);
-        if (resetSyncTimerRef.current !== undefined) {
-          window.clearTimeout(resetSyncTimerRef.current);
-          resetSyncTimerRef.current = undefined;
-        }
-        unsubscribe();
-        instance.destroy();
-        if (instanceRef.current === instance) {
-          instanceRef.current = undefined;
-        }
-      };
-    }, [form, id, name, nativeButton, readOnly, required, uncheckedValue, value]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      const nextControlledChecked = checked ?? groupChecked;
-      if (nextControlledChecked !== undefined && instance.getChecked() !== nextControlledChecked) {
-        instance.setChecked(nextControlledChecked, { emit: false });
-      }
-
-      instance.setIndeterminate(indeterminate, { emit: false });
-      setRenderedIndeterminate(indeterminate);
-    }, [checked, groupChecked, indeterminate]);
-
-    useIsomorphicLayoutEffect(() => {
-      const instance = instanceRef.current;
-      if (!instance) return;
-
-      instance.setDisabled(effectiveDisabled);
-    }, [effectiveDisabled]);
-
-    const renderedChecked = checked ?? groupChecked ?? uncontrolledChecked;
-    const indicatorState = React.useMemo(
-      () => ({
-        checked: renderedChecked,
-        disabled: effectiveDisabled,
-        indeterminate: renderedIndeterminate,
+    function disconnectRuntime(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      connection.accepted = owned.getChecked();
+      connection.unsubscribe?.();
+      connection.unsubscribe = undefined;
+      connection.nameObserver?.disconnect();
+      connection.nameObserver = undefined;
+      unbindFormReset();
+      connection.instance = undefined;
+      owned.destroy();
+      const unchecked = connection.input?.nextElementSibling;
+      if (
+        unchecked instanceof HTMLInputElement &&
+        unchecked.hasAttribute("data-sw-checkbox-unchecked-input")
+      )
+        unchecked.remove();
+      connection.input = undefined;
+    }
+    function connectRuntime(root: HTMLElement, input: HTMLInputElement): void {
+      disconnectRuntime();
+      const desired = effectiveChecked() ?? connection.accepted;
+      const owned = createCheckbox(root, {
+        defaultChecked: resetSeed,
+        ...(inputs.current.checked !== undefined || groupCheckedValue() !== undefined
+          ? { checked: desired }
+          : {}),
+        disabled: effectiveDisabled(),
+        form: form,
+        id: id,
+        indeterminate: inputs.current.indeterminate,
+        name: name,
         readOnly: readOnly,
-        registerIndicatorVisibility,
         required: required,
-      }),
-      [
-        effectiveDisabled,
-        readOnly,
-        registerIndicatorVisibility,
-        renderedChecked,
-        renderedIndeterminate,
-        required,
-      ],
-    );
+        uncheckedValue: uncheckedValue,
+        value: value,
+        onCheckedChange: (next, detail) => {
+          inputs.current.onCheckedChange?.(next, detail);
+        },
+      });
+      connection.instance = owned;
+      connection.input = input;
+      connection.nameObserver = new MutationObserver(captureNativeInputAttributes);
+      connection.nameObserver.observe(input, { attributes: true, attributeFilter: ["name"] });
+      if (owned.getChecked() !== desired) owned.setChecked(desired, { emit: false });
+      connection.unsubscribe = owned.subscribe("checkedChange", (detail) => {
+        if (connection.instance !== owned || detail.isCanceled) return;
+        if (inputs.current.indeterminate && connection.input && !connection.input.indeterminate)
+          owned.setIndeterminate(true, { emit: false });
+        renderRuntimeState(detail.checked);
+      });
+      bindFormReset();
+      renderRuntimeState();
+    }
+    function captureNativeInputAttributes(): void {
+      connection.runtimeInputName = connection.input?.name;
+    }
+    function restoreNativeInputAttributes(): void {
+      const input = connection.input;
+      if (
+        name === undefined &&
+        input &&
+        connection.runtimeInputName !== undefined &&
+        input.name !== connection.runtimeInputName
+      )
+        input.name = connection.runtimeInputName;
+    }
+    function renderRuntimeState(next = connection.instance?.getChecked()): void {
+      if (next === undefined) return;
+      connection.accepted = next;
+      captureNativeInputAttributes();
+      if (inputs.current.checked === undefined) setRenderedChecked(connection.accepted);
+      setRenderedIndeterminate(connection.input?.indeterminate ?? false);
+    }
+    function applyParentCommand(): void {
+      const owned = connection.instance;
+      const next = effectiveChecked();
+      if (!owned || next === undefined) return;
+      if (owned.getChecked() !== next || connection.input?.checked !== next)
+        owned.setChecked(next, { emit: false });
+      if (inputs.current.indeterminate && connection.input && !connection.input.indeterminate)
+        owned.setIndeterminate(true, { emit: false });
+      renderRuntimeState();
+    }
+    function clearResetTask(): void {
+      if (connection.resetTimer !== undefined) window.clearTimeout(connection.resetTimer);
+      connection.resetTimer = undefined;
+    }
+    function unbindFormReset(): void {
+      clearResetTask();
+      connection.form?.removeEventListener("reset", handleFormReset);
+      connection.form = undefined;
+    }
+    function handleFormReset(event: Event): void {
+      clearResetTask();
+      const owned = connection.instance;
+      // Runtime registers its reset task first. Read public state after it settles.
+      connection.resetTimer = window.setTimeout(() => {
+        connection.resetTimer = undefined;
+        if (
+          event.defaultPrevented ||
+          !owned ||
+          connection.instance !== owned ||
+          inputs.current.checked !== undefined ||
+          groupCheckedValue() !== undefined
+        )
+          return;
+        if (inputs.current.indeterminate && connection.input && !connection.input.indeterminate)
+          owned.setIndeterminate(true, { emit: false });
+        renderRuntimeState(owned.getChecked());
+      }, 0);
+    }
+    function bindFormReset(): void {
+      const next = connection.input?.form ?? undefined;
+      if (next === connection.form) return;
+      unbindFormReset();
+      connection.form = next;
+      next?.addEventListener("reset", handleFormReset);
+    }
+    function applyLive0(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.setDisabled(effectiveDisabled());
+    }
+    function applyLive1(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.setIndeterminate(inputs.current.indeterminate, { emit: false });
+      renderRuntimeState();
+    }
+    function applyLive2(): void {
+      const owned = connection.instance;
+      if (!owned) return;
+      owned.setFormOptions({
+        form: form,
+        name: name,
+        required: required,
+        uncheckedValue: uncheckedValue,
+        value: value,
+      });
+      bindFormReset();
+      captureNativeInputAttributes();
+    }
 
     useIsomorphicLayoutEffect(() => {
-      explicitlyHiddenIndicatorsRef.current.forEach((indicator) => {
-        indicator.hidden = true;
+      if (rootRef.current && inputElement.current)
+        connectRuntime(rootRef.current, inputElement.current);
+      return disconnectRuntime;
+    }, [id, readOnly, nativeButton]);
+    useIsomorphicLayoutEffect(restoreNativeInputAttributes);
+    useIsomorphicLayoutEffect(applyParentCommand, [checked, groupChecked]);
+    useIsomorphicLayoutEffect(applyLive0, [effectiveDisabledValue]);
+    useIsomorphicLayoutEffect(applyLive1, [indeterminate]);
+    useIsomorphicLayoutEffect(applyLive2, [form, name, required, uncheckedValue, value]);
+    const renderedChecked = groupChecked ?? checked ?? renderedState;
+    const explicitlyHidden = React.useRef(new Set<HTMLElement>());
+    const registerIndicatorVisibility = React.useCallback((node: HTMLElement, hidden: boolean) => {
+      if (hidden) explicitlyHidden.current.add(node);
+      else explicitlyHidden.current.delete(node);
+    }, []);
+    const indicatorState = {
+      checked: renderedChecked,
+      disabled: effectiveDisabledValue,
+      indeterminate: renderedIndeterminate,
+      readOnly,
+      required,
+      registerIndicatorVisibility,
+    };
+    useIsomorphicLayoutEffect(() => {
+      explicitlyHidden.current.forEach((node) => {
+        node.hidden = true;
       });
     });
-
-    const ariaChecked: React.AriaAttributes["aria-checked"] = renderedIndeterminate
-      ? "mixed"
-      : renderedChecked;
-    const commonProps: React.HTMLAttributes<HTMLElement> &
-      Record<`data-${string}`, string | undefined> = {
-      "data-sw-checkbox": "",
-      "data-default-checked": defaultCheckedRef.current ? "true" : undefined,
-      "data-form": form,
-      "data-id": id,
-      "data-name": name,
-      "data-unchecked-value": uncheckedValue,
-      "data-value": value,
-      "aria-checked": ariaChecked,
-      "aria-readonly": readOnly,
-      "aria-required": required,
-      "data-checked": renderedChecked ? "" : undefined,
-      "data-disabled": effectiveDisabled ? "" : undefined,
-      "data-indeterminate": renderedIndeterminate ? "" : undefined,
-      "data-readonly": readOnly ? "" : undefined,
-      "data-required": required ? "" : undefined,
-      "data-unchecked": !renderedChecked ? "" : undefined,
-      role: "checkbox",
-      tabIndex: effectiveDisabled ? -1 : 0,
-    };
     const input = (
       <input
         data-sw-checkbox-input
         aria-hidden="true"
-        defaultChecked={defaultCheckedRef.current}
-        defaultValue={value}
-        disabled={effectiveDisabled}
+        type="checkbox"
+        tabIndex={-1}
+        defaultChecked={initialChecked}
+        disabled={effectiveDisabledValue}
         form={form}
         id={id}
         name={name}
-        ref={inputElementRef}
         required={required}
+        defaultValue={value}
         style={visuallyHiddenStyle}
-        tabIndex={-1}
-        type="checkbox"
+        ref={composedInputRef}
       />
     );
-
-    if (nativeButton) {
-      return (
-        <>
-          <button
-            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-            {...commonProps}
-            disabled={effectiveDisabled}
-            ref={composedRef as React.Ref<HTMLButtonElement>}
-            type="button"
-          >
-            <CheckboxIndicatorContext.Provider value={indicatorState}>
-              {children}
-            </CheckboxIndicatorContext.Provider>
-          </button>
-          {input}
-        </>
-      );
-    }
-
+    const Root = nativeButton ? "button" : "span";
     return (
-      <span
-        {...(props as React.HTMLAttributes<HTMLSpanElement>)}
-        {...commonProps}
-        ref={composedRef as React.Ref<HTMLSpanElement>}
-      >
-        <CheckboxIndicatorContext.Provider value={indicatorState}>
-          {children}
-        </CheckboxIndicatorContext.Provider>
-        {input}
-      </span>
+      <>
+        <Root
+          {...props}
+          data-sw-checkbox={""}
+          data-sw-part={"root"}
+          role={"checkbox"}
+          aria-checked={renderedIndeterminate ? "mixed" : renderedChecked}
+          aria-disabled={effectiveDisabledValue ? "true" : undefined}
+          aria-readonly={readOnly}
+          aria-required={required}
+          data-default-checked={resetSeed ? "true" : undefined}
+          data-checked={renderedChecked ? "" : undefined}
+          data-unchecked={renderedChecked ? undefined : ""}
+          data-disabled={effectiveDisabledValue ? "" : undefined}
+          data-readonly={readOnly ? "" : undefined}
+          data-required={required ? "" : undefined}
+          data-indeterminate={renderedIndeterminate ? "" : undefined}
+          data-form={form}
+          data-id={id}
+          data-name={name}
+          data-unchecked-value={uncheckedValue}
+          data-value={value}
+          tabIndex={effectiveDisabledValue ? -1 : 0}
+          disabled={nativeButton ? effectiveDisabledValue : undefined}
+          type={nativeButton ? "button" : undefined}
+          ref={composedRef}
+        >
+          <CheckboxIndicatorContext.Provider value={indicatorState}>
+            {children}
+          </CheckboxIndicatorContext.Provider>
+          {!nativeButton && input}
+        </Root>
+        {nativeButton && input}
+      </>
     );
   },
 );
-
 CheckboxRoot.displayName = "Checkbox.Root";
-
 export default CheckboxRoot;

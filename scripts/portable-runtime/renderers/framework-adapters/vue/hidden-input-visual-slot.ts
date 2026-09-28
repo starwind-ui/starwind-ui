@@ -1,3 +1,11 @@
+import {
+  otpCaretFallbackClass,
+  otpConnection,
+  otpInitialSeed,
+  otpInputMode,
+  otpPattern,
+  otpTabIndex,
+} from "../../shared-recipes/structured/file-controls/input-otp-recipe.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
@@ -39,11 +47,18 @@ export function printVueHiddenInputVisualSlotIndex(
 function printRoot(facts: AdapterHiddenInputVisualSlotFacts): string {
   const props = facts.props;
   const event = facts.event;
-  if (event.callbackTiming !== "before-state-commit" || !event.cancelable) {
-    throw new TypeError(
-      "Vue hidden-input-visual-slot projection requires a cancelable before-state-commit valueChange event.",
-    );
-  }
+  const connection = otpConnection(facts, {
+    authority: "parent",
+    parentAcceptance: "reconcile-model",
+    read: "readInputs()",
+    seed: "initialDefaultValue",
+    current: "uncontrolledValue.value",
+    notify: (value, detail) => `emit("valueChange", ${value}, ${detail});`,
+    writeCurrent: (value) => `uncontrolledValue.value = ${value};`,
+    publish: (value) => `modelValue.value = ${value};`,
+    untrack: (body) => body,
+    afterCommit: (body) => `void nextTick(() => { ${body} });`,
+  });
 
   return `<script setup lang="ts">
 import {
@@ -58,7 +73,6 @@ import {
   onUpdated,
   ref,
   useAttrs,
-  watch,
 } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -89,165 +103,23 @@ const emit = defineEmits<{
 const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 const controlled = modelValue.value !== undefined;
-const initialDefaultValue = props.${props.defaultValue.name} ?? "";
+const initialDefaultValue = ${otpInitialSeed("parent", `props.${props.defaultValue.name}`)};
 const uncontrolledValue = ref(initialDefaultValue);
 const renderedValue = computed(() =>
   controlled ? (modelValue.value ?? uncontrolledValue.value) : uncontrolledValue.value,
 );
-const patternText = computed(() => normalizePattern(props.${props.pattern.name}));
-const inputMode = computed(() =>
-  ${JSON.stringify(facts.pattern.numericPatternExamples)}.includes(patternText.value)
-    ? "numeric"
-    : "text",
-);
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let unsubscribeChange: (() => void) | undefined;
-let lifecycleRevision = 0;
-let refreshRevision = 0;
-let slotElements: HTMLElement[] = [];
-
-function normalizePattern(pattern: RegExp | string | undefined): string {
-  const source = pattern instanceof RegExp ? pattern.source : pattern;
-  return (source ?? ${JSON.stringify(facts.pattern.defaultPattern)}).replace(/^\\^|\\$$/g, "");
+const patternText = computed(() => ${otpPattern(facts, `props.${props.pattern.name}`)});
+const inputMode = computed(() => ${otpInputMode(facts, "patternText.value")});
+function readInputs() {
+  return { value: modelValue.value, ${["disabled", "form", "id", "maxLength", "name", "readOnly", "required"].map((name) => `${name}: props.${name}`).join(", ")}, pattern: patternText.value };
 }
-
-function destroyInstance(): void {
-  unsubscribeChange?.();
-  unsubscribeChange = undefined;
-  instance?.destroy();
-  instance = undefined;
-}
-
-function handleValueChangeProposal(
-  value: ${event.valueType},
-  detail: ${event.detailsType},
-): void {
-  emit("valueChange", value, detail);
-}
-
-function handleAcceptedValueChange(detail: ${event.detailsType}): void {
-  if (!controlled) uncontrolledValue.value = detail.${event.valueProperty};
-  modelValue.value = detail.${event.valueProperty};
-  if (controlled) void refreshAfterVueFlush();
-}
-
-function startInstance(value = renderedValue.value): void {
-  if (!element.value) return;
-  instance = ${facts.runtime.factory}(element.value, {
-    ${props.defaultValue.name}: value,
-    ${props.disabled.name}: props.${props.disabled.name},
-    ${props.form.name}: props.${props.form.name},
-    ${props.id.name}: props.${props.id.name},
-    ${props.maxLength.name}: props.${props.maxLength.name},
-    ${props.name.name}: props.${props.name.name},
-    ${props.pattern.name}: patternText.value,
-    ${props.readOnly.name}: props.${props.readOnly.name},
-    ${props.required.name}: props.${props.required.name},
-    ${event.callbackProp}: handleValueChangeProposal,
-    ...(controlled && modelValue.value !== undefined
-      ? { ${props.value.name}: modelValue.value }
-      : {}),
-  });
-  slotElements = getOwnedSlotElements();
-  unsubscribeChange = instance.subscribe("valueChange", handleAcceptedValueChange);
-}
-
-function getOwnedSlotElements(): HTMLElement[] {
-  if (!element.value) return [];
-  return [...element.value.querySelectorAll<HTMLElement>("[${facts.attrs.slot}]")].filter(
-    (slot) => slot.closest("[${facts.attrs.root}]") === element.value,
-  );
-}
-
-function visualSlotsChanged(): boolean {
-  const nextSlots = getOwnedSlotElements();
-  return (
-    nextSlots.length !== slotElements.length ||
-    nextSlots.some((slot, index) => slot !== slotElements[index])
-  );
-}
-
-async function recreateAfterVueFlush(): Promise<void> {
-  const revision = ++lifecycleRevision;
-  const value = instance?.${facts.state.getter}() ?? renderedValue.value;
-  destroyInstance();
-  await nextTick();
-  if (revision !== lifecycleRevision) return;
-  startInstance(value);
-}
-
-async function refreshAfterVueFlush(): Promise<void> {
-  const revision = ++refreshRevision;
-  await nextTick();
-  if (revision !== refreshRevision || !instance) return;
-
-  instance.refresh();
-  slotElements = getOwnedSlotElements();
-  const value = modelValue.value;
-  if (controlled && value !== undefined && instance.${facts.state.getter}() !== value) {
-    instance.${facts.setter.method}(value, ${formatOptions(facts.setter.options)});
-    return;
-  }
-  if (!controlled) uncontrolledValue.value = instance.${facts.state.getter}();
-}
-
+${connection}
+let connection: ReturnType<typeof connectOtp> | undefined;
 defineExpose({ element });
+onMounted(() => { if (element.value) connection = connectOtp(element.value); });
+onUpdated(() => { connection?.update(); });
+onBeforeUnmount(() => { const owned = connection; connection = undefined; owned?.destroy(); });
 
-onMounted(() => startInstance());
-
-onUpdated(() => {
-  if (visualSlotsChanged()) void refreshAfterVueFlush();
-});
-
-watch(
-  () => modelValue.value,
-  (value) => {
-    if (!controlled || value === undefined || !instance) return;
-    if (instance.${facts.state.getter}() !== value) {
-      instance.${facts.setter.method}(value, ${formatOptions(facts.setter.options)});
-    }
-  },
-  { flush: "post" },
-);
-
-watch(
-  () => props.${props.disabled.name},
-  (value) => instance?.${facts.setters.disabled}(value),
-);
-
-watch(
-  () => [
-    props.${props.form.name},
-    props.${props.id.name},
-    props.${props.name.name},
-    props.${props.required.name},
-  ] as const,
-  () =>
-    instance?.${facts.setters.formOptions}({
-      ${props.form.name}: props.${props.form.name},
-      ${props.id.name}: props.${props.id.name},
-      ${props.name.name}: props.${props.name.name},
-      ${props.required.name}: props.${props.required.name},
-    }),
-);
-
-watch(
-  () => props.${props.maxLength.name},
-  () => void refreshAfterVueFlush(),
-  { flush: "post" },
-);
-
-watch(
-  () => [props.${props.pattern.name}, props.${props.readOnly.name}] as const,
-  () => void recreateAfterVueFlush(),
-  { flush: "post" },
-);
-
-onBeforeUnmount(() => {
-  lifecycleRevision += 1;
-  refreshRevision += 1;
-  destroyInstance();
-});
 </script>
 
 <template>
@@ -265,7 +137,7 @@ onBeforeUnmount(() => {
     :${facts.attrs.required}="props.${props.required.name} ? '' : undefined"
     :${facts.attrs.value}="renderedValue"
     :${facts.attrs.ariaDisabled}="props.${props.disabled.name} ? 'true' : 'false'"
-    :${facts.attrs.rootTabIndex === "tabIndex" ? "tabindex" : facts.attrs.rootTabIndex}="props.${props.disabled.name} ? -1 : 0"
+    :${facts.attrs.rootTabIndex === "tabIndex" ? "tabindex" : facts.attrs.rootTabIndex}="${otpTabIndex(`props.${props.disabled.name}`)}"
     v-bind="attrs"
   >
     <${facts.parts.input.defaultElement}
@@ -282,7 +154,7 @@ onBeforeUnmount(() => {
       :${facts.attrs.inputReadOnly}="props.${props.readOnly.name}"
       :required="props.${props.required.name}"
       :${facts.attrs.inputTabIndex === "tabIndex" ? "tabindex" : facts.attrs.inputTabIndex}="${facts.nativeInput.tabIndexValue}"
-      :value="initialDefaultValue"
+      :value="renderedValue"
     />
     <slot />
   </${facts.parts.root.defaultElement}>
@@ -350,17 +222,10 @@ defineExpose({ element });
       ${facts.attrs.slotCaretHidden}
     >
       <slot name="${facts.visualSlots.caretRendering.outletName}">
-        <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000" />
+        <div class="${otpCaretFallbackClass}" />
       </slot>
     </${facts.parts.slotCaret.defaultElement}>
   </${part.defaultElement}>
 </template>
 `;
-}
-
-function formatOptions(options: Record<string, boolean | number | string> | undefined): string {
-  if (!options) return "{}";
-  return `{ ${Object.entries(options)
-    .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-    .join(", ")} }`;
 }

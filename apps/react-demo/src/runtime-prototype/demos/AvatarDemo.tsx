@@ -56,6 +56,22 @@ export function AvatarDemo() {
           </AvatarGroupCount>
         </AvatarGroup>
       </div>
+      <div className="space-y-4">
+        {(["sm", "md", "lg"] as const).map((size) => (
+          <AvatarGroup key={size} data-avatar-group-test={size}>
+            {["First", "Second", "Third"].map((name) => (
+              <Avatar key={name} size={size}>
+                <AvatarImage
+                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath fill='%23e11d48' d='M0 0h48v48H0z'/%3E%3C/svg%3E"
+                  alt={`${name} ${size} avatar`}
+                />
+                <AvatarFallback>{name[0]}</AvatarFallback>
+              </Avatar>
+            ))}
+            <AvatarGroupCount>+3</AvatarGroupCount>
+          </AvatarGroup>
+        ))}
+      </div>
       <p className="sr-only" data-runtime-avatar-ref>
         {avatarRefSlot}
       </p>

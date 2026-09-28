@@ -9,71 +9,51 @@ import { createButton } from "@starwind-ui/runtime/button";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-
-export type ButtonRootProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  disabled?: boolean;
-  focusableWhenDisabled?: boolean;
-  type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
-};
-
+export type ButtonRootProps = Omit<
+  React.ComponentPropsWithoutRef<"button">,
+  "disabled" | "focusableWhenDisabled" | "type"
+> & { disabled?: boolean; focusableWhenDisabled?: boolean; type?: "button" | "submit" | "reset" };
 const ButtonRoot = React.forwardRef<HTMLButtonElement, ButtonRootProps>(function ButtonRoot(
-  { disabled = false, focusableWhenDisabled = false, type, ...props },
+  { children, disabled = false, focusableWhenDisabled = false, type = "button", ...rest },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLButtonElement>(null);
-  const instanceRef = React.useRef<ReturnType<typeof createButton> | null>(null);
-  const disabledRef = React.useRef(disabled);
-  disabledRef.current = disabled;
-
   const composedRef = React.useCallback(
-    (node: HTMLButtonElement | null) => {
-      rootRef.current = node;
-      return setRef(forwardedRef, node);
+    (element: HTMLButtonElement | null) => {
+      rootRef.current = element;
+      return setRef(forwardedRef, element);
     },
     [forwardedRef],
   );
 
+  const owned = React.useRef<ReturnType<typeof createButton> | undefined>(undefined);
   useIsomorphicLayoutEffect(() => {
-    if (!focusableWhenDisabled) {
-      instanceRef.current?.destroy();
-      instanceRef.current = null;
-      return;
-    }
-
-    const root = rootRef.current;
-    if (!root) return;
-
-    const instance = createButton(root, {
-      disabled: disabledRef.current,
-    });
-    instanceRef.current = instance;
-
+    const element = rootRef.current;
+    if (!element || !focusableWhenDisabled) return;
+    owned.current = createButton(element, { disabled: disabled });
     return () => {
-      if (instanceRef.current === instance) {
-        instanceRef.current = null;
-      }
-      instance.destroy();
+      const previous = owned.current;
+      owned.current = undefined;
+      previous?.destroy();
     };
   }, [focusableWhenDisabled]);
-
   useIsomorphicLayoutEffect(() => {
-    instanceRef.current?.setDisabled(disabled);
-  }, [disabled]);
-
+    owned.current?.setDisabled(disabled);
+  }, [disabled, focusableWhenDisabled]);
   return (
     <button
+      {...rest}
+      data-sw-button={""}
+      type={type}
       data-focusable-when-disabled={focusableWhenDisabled ? "true" : undefined}
-      aria-disabled={disabled && focusableWhenDisabled ? "true" : undefined}
       data-disabled={disabled ? "" : undefined}
+      aria-disabled={disabled && focusableWhenDisabled ? "true" : undefined}
       disabled={disabled && !focusableWhenDisabled}
       ref={composedRef}
-      type={type ?? "button"}
-      {...props}
-      data-sw-button
-    />
+    >
+      {children}
+    </button>
   );
 });
-
 ButtonRoot.displayName = "Button.Root";
-
 export default ButtonRoot;

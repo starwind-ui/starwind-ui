@@ -1913,7 +1913,7 @@ function getNavigationMenuItem(
     contentPlaceholder: placeholder,
     element,
     icon: queryItemElement(root, element, `[${NAV_MENU_ICON_ATTRIBUTE}]`),
-    links: queryItemElements(root, element, `[${NAV_MENU_LINK_ATTRIBUTE}]`),
+    links: getNavigationMenuItemLinks(root, element, content),
     trigger: resolveOptionalAsChildControl(
       queryItemElement(root, element, `[${NAV_MENU_TRIGGER_ATTRIBUTE}]`),
     ),
@@ -1921,6 +1921,22 @@ function getNavigationMenuItem(
       element.getAttribute(NAV_MENU_VALUE_ATTRIBUTE) ??
       `${ensureId(root, "sw-nav-menu")}-item-${index + 1}`,
   };
+}
+
+function getNavigationMenuItemLinks(
+  root: HTMLElement,
+  item: HTMLElement,
+  content: HTMLElement | null,
+): HTMLElement[] {
+  const links = queryItemElements(root, item, `[${NAV_MENU_LINK_ATTRIBUTE}]`);
+  if (content && !item.contains(content)) {
+    content.querySelectorAll<HTMLElement>(`[${NAV_MENU_LINK_ATTRIBUTE}]`).forEach((link) => {
+      const owner = link.closest<HTMLElement>(`[${NAV_MENU_ROOT_ATTRIBUTE}]`);
+      const itemOwner = link.closest<HTMLElement>(`[${NAV_MENU_ITEM_ATTRIBUTE}]`);
+      if ((!owner || owner === root) && (!itemOwner || itemOwner === item)) links.push(link);
+    });
+  }
+  return links;
 }
 
 function navigationMenuItemsEqual(first: NavigationMenuItem, second: NavigationMenuItem): boolean {

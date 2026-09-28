@@ -1,9 +1,9 @@
-import { createApp, h, nextTick, reactive, ref } from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { CheckboxGroupValueChangeDetails } from "@starwind-ui/runtime/checkbox-group";
-import { CheckboxGroupRoot } from "@starwind-ui/vue/checkbox-group";
 import { CheckboxRoot } from "@starwind-ui/vue/checkbox";
+import { CheckboxGroupRoot } from "@starwind-ui/vue/checkbox-group";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, createSSRApp, h, nextTick, reactive, ref } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 const cleanups: Array<() => void> = [];
 
@@ -50,7 +50,7 @@ describe("Vue Checkbox Group public behavior", () => {
     expect(children[0]?.getAttribute("aria-checked")).toBe("true");
     children[0]?.click();
     await nextTick();
-    expect(events).toEqual(["child-detail", "child-update", "group-detail", "group-update"]);
+    expect(events).toEqual(["child-detail", "group-detail", "group-update"]);
     expect(group.getAttribute("data-value")).toBe("[]");
 
     cancelNext.value = true;
@@ -154,3 +154,115 @@ async function mutationTurn(): Promise<void> {
   await new Promise((resolve) => window.setTimeout(resolve, 0));
   await nextTick();
 }
+
+describe("Vue Checkbox conflicting group children", () => {
+  for (const controlled of [false, true]) {
+    it(`keeps membership authoritative in a ${controlled ? "controlled" : "default"} group`, async () => {
+      const value = ref(["alpha"]);
+      const childChecked = ref(false);
+      const details: boolean[] = [];
+      const childModels: boolean[] = [];
+      const groupModels: string[][] = [];
+      const host = appendHost();
+      const app = createApp({
+        render: () =>
+          h("form", {}, [
+            h(
+              CheckboxGroupRoot,
+              {
+                ...(controlled ? { modelValue: value.value } : { defaultValue: ["alpha"] }),
+                "onUpdate:modelValue": (next: string[]) => groupModels.push(next),
+              },
+              {
+                default: () => [
+                  h(CheckboxRoot, {
+                    checked: childChecked.value,
+                    defaultChecked: false,
+                    name: "choice",
+                    value: "alpha",
+                    onCheckedChange: (next: boolean) => details.push(next),
+                    "onUpdate:checked": (next: boolean) => childModels.push(next),
+                  }),
+                  h(CheckboxRoot, {
+                    checked: !childChecked.value,
+                    defaultChecked: true,
+                    name: "choice",
+                    value: "beta",
+                    "onUpdate:checked": (next: boolean) => childModels.push(next),
+                  }),
+                ],
+              },
+            ),
+          ]),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      const form = host.querySelector<HTMLFormElement>("form")!;
+      const check = (expected: string[]) => {
+        expect(
+          Array.from(host.querySelectorAll("[data-sw-checkbox]")).map((root) =>
+            root.getAttribute("aria-checked"),
+          ),
+        ).toEqual([String(expected.includes("alpha")), String(expected.includes("beta"))]);
+        expect(new FormData(form).getAll("choice")).toEqual(expected);
+      };
+      check(["alpha"]);
+      host.querySelector<HTMLElement>('[data-sw-checkbox][data-value="alpha"]')!.click();
+      await nextTick();
+      expect(details).toEqual([false]);
+      expect(groupModels).toEqual([[]]);
+      expect(childModels).toEqual([]);
+      check(controlled ? ["alpha"] : []);
+      childChecked.value = true;
+      value.value = ["beta"];
+      await nextTick();
+      check(controlled ? ["beta"] : []);
+      form.reset();
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      await nextTick();
+      check(controlled ? ["beta"] : ["alpha"]);
+      expect(childModels).toEqual([]);
+    });
+  }
+
+  it("hydrates group selection over conflicting child props", async () => {
+    const root = {
+      render: () =>
+        h(
+          CheckboxGroupRoot,
+          { defaultValue: ["alpha"] },
+          {
+            default: () => [
+              h(CheckboxRoot, { checked: false, value: "alpha" }),
+              h(CheckboxRoot, { checked: true, value: "beta" }),
+            ],
+          },
+        ),
+    };
+    const host = appendHost();
+    host.innerHTML = await renderToString(createSSRApp(root));
+    const states = () =>
+      Array.from(host.querySelectorAll("[data-sw-checkbox]")).map((element) =>
+        element.getAttribute("aria-checked"),
+      );
+    expect(states()).toEqual(["true", "false"]);
+    expect(
+      Array.from(host.querySelectorAll<HTMLInputElement>("[data-sw-checkbox-input]")).map(
+        (input) => input.checked,
+      ),
+    ).toEqual([true, false]);
+    const warnings: string[] = [];
+    const app = createSSRApp(root);
+    app.config.warnHandler = (message) => warnings.push(message);
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+    expect(states()).toEqual(["true", "false"]);
+    expect(
+      Array.from(host.querySelectorAll<HTMLInputElement>("[data-sw-checkbox-input]")).map(
+        (input) => input.checked,
+      ),
+    ).toEqual([true, false]);
+    expect(warnings).toEqual([]);
+  });
+});

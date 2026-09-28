@@ -1,17 +1,17 @@
+import type { CheckboxCheckedChangeDetails } from "@starwind-ui/runtime/checkbox";
+import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type ComponentPublicInstance,
   createApp,
   createSSRApp,
   h,
   nextTick,
   reactive,
   ref,
-  type ComponentPublicInstance,
 } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import type { CheckboxCheckedChangeDetails } from "@starwind-ui/runtime/checkbox";
-import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
+import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 type CheckboxExposed = ComponentPublicInstance & { element: HTMLElement | null };
 
@@ -213,3 +213,143 @@ function appendHost(): HTMLDivElement {
   document.body.append(host);
   return host;
 }
+
+testAcceptedModelPublication({
+  name: "Checkbox",
+  model: "checked",
+  proposal: "onCheckedChange",
+  domEvent: "starwind:checked-change",
+  initial: false,
+  accepted: true,
+  tree: () => h(CheckboxRoot, { defaultChecked: false }),
+  root: "[data-sw-checkbox]",
+  act: (root) => root.click(),
+  read: (root) => {
+    const checked = root.getAttribute("aria-checked") === "true";
+    expect(root.querySelector<HTMLInputElement>("[data-sw-checkbox-input]")?.checked).toBe(checked);
+    return checked;
+  },
+});
+
+describe("Vue Checkbox reset baseline", () => {
+  for (const option of ["id", "nativeButton", "readOnly"] as const) {
+    for (const initial of [false, true]) {
+      it(`preserves ${initial} reset after ${option} recreation`, async () => {
+        const changed = ref(false);
+        const host = appendHost();
+        const app = createApp({
+          render: () =>
+            h("form", null, [
+              h(CheckboxRoot, {
+                defaultChecked: changed.value ? !initial : initial,
+                name: "setting",
+                value: "yes",
+                uncheckedValue: "no",
+                id: option === "id" && changed.value ? "replacement" : "original",
+                nativeButton: option === "nativeButton" && changed.value,
+                readOnly: option === "readOnly" && changed.value,
+              }),
+            ]),
+        });
+        app.mount(host);
+        cleanups.push(() => app.unmount());
+        host.querySelector<HTMLElement>("[data-sw-checkbox]")!.click();
+        await nextTick();
+        changed.value = true;
+        await nextTick();
+        expect(host.querySelector("[data-sw-checkbox]")).toHaveAttribute(
+          "aria-checked",
+          String(!initial),
+        );
+        const form = host.querySelector("form")!;
+        expect(new FormData(form).get("setting")).toBe(initial ? "no" : "yes");
+        form.reset();
+        await new Promise((resolve) => setTimeout(resolve, 15));
+        await nextTick();
+        expect(host.querySelector("[data-sw-checkbox]")).toHaveAttribute(
+          "aria-checked",
+          String(initial),
+        );
+        expect(
+          host.querySelector<HTMLInputElement>("[data-sw-checkbox-input]")!.defaultChecked,
+        ).toBe(initial);
+        expect(new FormData(form).get("setting")).toBe(initial ? "yes" : "no");
+      });
+    }
+  }
+});
+
+describe("Vue Checkbox reset lifecycle", () => {
+  it("keeps canceled reset state and ignores pending reset work after replacement and unmount", async () => {
+    const checked = ref<boolean | undefined>(undefined);
+    const id = ref("first");
+    const changes: boolean[] = [];
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h("form", {}, [
+          h(CheckboxRoot, {
+            checked: checked.value,
+            id: id.value,
+            defaultChecked: false,
+            name: "setting",
+            "onUpdate:checked": (value: boolean) => changes.push(value),
+          }),
+        ]),
+    });
+    app.mount(host);
+    let mounted = true;
+    cleanups.push(() => {
+      if (mounted) app.unmount();
+    });
+    host.querySelector<HTMLElement>("[data-sw-checkbox]")!.click();
+    await nextTick();
+    const form = host.querySelector<HTMLFormElement>("form")!;
+    form.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+    form.reset();
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    await nextTick();
+    expect(host.querySelector("[data-sw-checkbox]")).toHaveAttribute("aria-checked", "true");
+    expect(host.querySelector<HTMLInputElement>("[data-sw-checkbox-input]")!.checked).toBe(true);
+    form.reset();
+    checked.value = true;
+    id.value = "second";
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    expect(host.querySelector("[data-sw-checkbox]")).toHaveAttribute("aria-checked", "true");
+    checked.value = false;
+    await nextTick();
+    expect(host.querySelector("[data-sw-checkbox]")).toHaveAttribute("aria-checked", "false");
+    form.reset();
+    app.unmount();
+    mounted = false;
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    expect(host.childElementCount).toBe(0);
+    expect(changes).toEqual([true]);
+  });
+});
+
+it("retains an indeterminate Checkbox through recreation and a canceled reset", async () => {
+  const id = ref("first");
+  const host = appendHost();
+  const app = createApp({
+    render: () => h("form", {}, [h(CheckboxRoot, { id: id.value, indeterminate: true })]),
+  });
+  app.mount(host);
+  cleanups.push(() => app.unmount());
+  id.value = "replacement";
+  await nextTick();
+  expect(host.querySelector("[data-sw-checkbox]")).toHaveAttribute("aria-checked", "mixed");
+  expect(host.querySelector<HTMLInputElement>("[data-sw-checkbox-input]")!.indeterminate).toBe(
+    true,
+  );
+  const form = host.querySelector<HTMLFormElement>("form")!;
+  form.addEventListener("reset", (event) => event.preventDefault(), { once: true });
+  form.reset();
+  await new Promise((resolve) => setTimeout(resolve, 15));
+  await nextTick();
+  expect(host.querySelector("[data-sw-checkbox]")).toHaveAttribute("aria-checked", "mixed");
+  expect(host.querySelector<HTMLInputElement>("[data-sw-checkbox-input]")!.indeterminate).toBe(
+    true,
+  );
+});

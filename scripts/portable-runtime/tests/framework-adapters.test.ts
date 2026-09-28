@@ -57,6 +57,7 @@ import {
   buildGenericAdapterOutputModel,
   buildGenericAdapterPlan,
 } from "../renderers/generic-adapter-plan/index.js";
+import { getPrimitivePackageExportNames } from "../renderers/primitive-inventory.js";
 import {
   buildAccordionAdapterOutputModel,
   buildAccordionSpecializedAdapterSpec,
@@ -69,6 +70,9 @@ import {
   hasPrivateSvelte,
   workspacePrimitiveTargets as primitiveFrameworkAdapterTargets,
 } from "./workspace-support.js";
+
+// Public checkouts omit this registration, so keep the private fixture predicate string-based.
+const usesPrivateStyledFixture = (target: string) => target === "svelte";
 
 describe("Framework Adapter seam", () => {
   it("builds framework-neutral export and type facts for target printers", () => {
@@ -275,13 +279,27 @@ describe("Framework Adapter seam", () => {
         target: "vue",
         write: "function",
       },
+      ...(hasPrivateSvelte
+        ? [
+            {
+              generatedImportCandidateExtensions: [".svelte", ".ts", ".js"],
+              project: "function",
+              target: "svelte",
+              write: "function",
+            },
+          ]
+        : []),
     ]);
 
     for (const { capability, target } of styledTargets) {
-      const contract = target === "vue" ? buttonStyledContract : separatorStyledContract;
+      const contract =
+        target === "vue" || usesPrivateStyledFixture(target)
+          ? buttonStyledContract
+          : separatorStyledContract;
       expect(
         capability.project({
           contracts: [contract],
+          ...(usesPrivateStyledFixture(target) ? { roots: ["button"] } : {}),
           outputRoot: "/tmp/styled",
           primitiveOutputRoot: "/tmp/primitives",
         }),
@@ -291,7 +309,8 @@ describe("Framework Adapter seam", () => {
             component: contract.component,
             components: [
               {
-                exportName: target === "vue" ? "Button" : "Separator",
+                exportName:
+                  target === "vue" || usesPrivateStyledFixture(target) ? "Button" : "Separator",
               },
             ],
           },
@@ -326,10 +345,14 @@ describe("Framework Adapter seam", () => {
       for (const { capability, target } of getFrameworkAdapterTargetsWithStyledCapability()) {
         const outputRoot = join(tempRoot, target, "styled");
         const primitiveOutputRoot = join(tempRoot, target, "primitives");
-        const contract = target === "vue" ? buttonStyledContract : separatorStyledContract;
+        const contract =
+          target === "vue" || usesPrivateStyledFixture(target)
+            ? buttonStyledContract
+            : separatorStyledContract;
 
         await capability.write({
           contracts: [contract],
+          ...(usesPrivateStyledFixture(target) ? { roots: ["button"] } : {}),
           generatedBy: "scripts/portable-runtime/tests/framework-adapters.test.ts",
           outputRoot,
           primitiveOutputRoot,
@@ -925,79 +948,71 @@ describe("Framework Adapter seam", () => {
         {
           adapterTarget: "svelte",
           cliRegistry: {
+            exactAdapterPackageVersion: true,
             generatedImportCandidateExtensions: [".svelte", ".ts", ".js"],
-            primitiveArtifact: undefined,
+            packageMetadataSources: [
+              "packages/svelte/package.json",
+              "packages/runtime/package.json",
+              "apps/svelte-demo/package.json",
+            ],
+            primitiveArtifact: {
+              editableContentMarkers: expect.any(Array),
+              forbiddenContent: expect.any(Array),
+              includeLocalImportGraph: true,
+              outputDir: "svelte-primitives",
+              formatContent: expect.any(Function),
+              projectContent: "function",
+              sourceRoot: "packages/svelte/src",
+            },
             styledArtifact: {
-              collectPackageImportSources: "undefined",
+              collectPackageImportSources: "function",
               outputDir: "svelte",
               primitiveOutputDir: "svelte-primitives",
             },
-            setupPackageRequirements: [],
+            setupPackageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
           },
           fileExtension: ".svelte",
           home: "scripts/portable-runtime/renderers/framework-adapters/svelte",
           packageName: "@starwind-ui/svelte",
           primitive: {
             generatePackage: "function",
-            manualPrimitives: "undefined",
+            manualPrimitives: "object",
             outputModel: {
               projectSpecialized: "function",
               write: "function",
             },
             support: {
-              components: [
-                "button",
-                "carousel",
-                "checkbox",
-                "select",
-                "accordion",
-                "dialog",
-                "slider",
-                "toast",
-              ],
+              components: expect.arrayContaining(getPrimitivePackageExportNames()),
               kind: "subset",
             },
           },
           publicSupport: {
-            cliRegistry: false,
-            demoIntegration: false,
-            packageExports: false,
-            publicDocsClaim: false,
-            status: "non-shipping-tracer",
+            cliRegistry: true,
+            demoIntegration: true,
+            packageExports: true,
+            publicDocsClaim: true,
+            status: "public-beta",
           },
           styled: {
-            project: "undefined",
-            write: "undefined",
+            project: "function",
+            write: "function",
           },
           target: "svelte",
         },
       ].filter(({ target }) => target !== "svelte" || hasPrivateSvelte),
     );
     for (const registration of primitiveFrameworkAdapterTargets) {
-      expect(Object.keys(registration).sort()).toEqual(
-        registration.target === "svelte"
-          ? [
-              "adapter",
-              "cliRegistry",
-              "displayName",
-              "home",
-              "packageName",
-              "primitive",
-              "publicSupport",
-              "target",
-            ]
-          : [
-              "adapter",
-              "cliRegistry",
-              "displayName",
-              "home",
-              "packageName",
-              "primitive",
-              "publicSupport",
-              "styled",
-              "target",
-            ],
-      );
+      expect(Object.keys(registration).sort()).toEqual([
+        "adapter",
+        "cliRegistry",
+        "displayName",
+        "home",
+        "packageName",
+        "primitive",
+        "publicSupport",
+        "styled",
+        "target",
+      ]);
       for (const key of legacyLowLevelRegistrationKeys) {
         expect(
           registration,
@@ -1006,7 +1021,7 @@ describe("Framework Adapter seam", () => {
       }
       expect(Object.keys(registration.primitive).sort()).toEqual(
         registration.target === "svelte"
-          ? ["generatePackage", "outputModel", "support"]
+          ? ["generatePackage", "manualPrimitives", "outputModel", "support"]
           : registration.target === "vue"
             ? ["generatePackage", "manualPrimitives", "outputModel", "support"]
             : ["generatePackage", "manualPrimitives", "outputModel"],
@@ -1016,9 +1031,7 @@ describe("Framework Adapter seam", () => {
           ? ["projectSpecialized", "write"]
           : ["capabilities", "projectSpecialized", "write"],
       );
-      expect(Object.keys(registration.styled ?? {}).sort()).toEqual(
-        registration.target === "svelte" ? [] : ["project", "write"],
-      );
+      expect(Object.keys(registration.styled ?? {}).sort()).toEqual(["project", "write"]);
     }
     expect(getPrimitiveFrameworkAdapterTarget("astro").adapter).toBe(astroFrameworkAdapter);
     expect(getPrimitiveFrameworkAdapterTarget("react").adapter).toBe(reactFrameworkAdapter);
@@ -1082,28 +1095,19 @@ describe("Framework Adapter seam", () => {
         packageName: "@starwind-ui/svelte",
         primitive: {
           support: {
-            components: [
-              "button",
-              "carousel",
-              "checkbox",
-              "select",
-              "accordion",
-              "dialog",
-              "slider",
-              "toast",
-            ],
+            components: expect.arrayContaining(getPrimitivePackageExportNames()),
             kind: "subset",
           },
         },
         publicSupport: {
-          cliRegistry: false,
-          demoIntegration: false,
-          packageExports: false,
-          publicDocsClaim: false,
-          status: "non-shipping-tracer",
+          cliRegistry: true,
+          demoIntegration: true,
+          packageExports: true,
+          publicDocsClaim: true,
+          status: "public-beta",
         },
       });
-      expect(svelteTarget).not.toHaveProperty("styled");
+      expect(svelteTarget).toHaveProperty("styled");
     }
     expect(
       new Set(primitiveFrameworkAdapterTargets.map((registration) => registration.target)).size,
@@ -1134,11 +1138,13 @@ describe("Framework Adapter seam", () => {
       "astro",
       "react",
       "vue",
+      "svelte",
     ]);
     expect(artifactTargets.map((registration) => registration.target)).toEqual([
       "astro",
       "react",
       "vue",
+      ...(hasPrivateSvelte ? ["svelte"] : []),
     ]);
 
     for (const registration of artifactTargets) {

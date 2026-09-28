@@ -1,17 +1,16 @@
 import { spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-
 import { compileScript, parse } from "@vue/compiler-sfc";
 import { afterEach, describe, expect, it } from "vitest";
-
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
-import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
 import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
+import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const VUE_TSC_TIMEOUT_MS = 30_000;
@@ -104,12 +103,14 @@ describe("generic Vue Styled declared prop aliases", () => {
       primitiveOutputRoot: "/tmp/primitives",
     });
 
-    expect(source).toContain('"data-slot"?: string;');
+    expect(compactCode(source)).toContain(compactCode('"data-slot"?: string;'));
     const declaredBody = source.match(/type AliasFixtureDeclaredProps = \{([\s\S]*?)\}\s*&/)?.[1];
     expect(declaredBody).toContain('"dataSlot"?: string;');
     expect(declaredBody).not.toContain('"data-slot"?: string;');
-    expect(source).toContain('/* @vue-ignore */ Omit<AliasFixtureProps, "data-slot">;');
-    expect(source).toContain('dataSlot = "fallback-slot",');
+    expect(compactCode(source)).toContain(
+      compactCode('/* @vue-ignore */ Omit<AliasFixtureProps, "data-slot">;'),
+    );
+    expect(compactCode(source)).toContain(compactCode('dataSlot = "fallback-slot",'));
   });
 
   it("reuses the replacement for Button and Toggle without changing their public props", async () => {
@@ -127,7 +128,7 @@ describe("generic Vue Styled declared prop aliases", () => {
       ["Button", button],
       ["Toggle", toggle],
     ] as const) {
-      expect(source).toContain('"data-slot"?: string;');
+      expect(compactCode(source)).toContain(compactCode('"data-slot"?: string;'));
       const declaredBody = source.match(
         new RegExp(`type ${exportName}DeclaredProps = \\{([\\s\\S]*?)\\}\\s*&`),
       )?.[1];

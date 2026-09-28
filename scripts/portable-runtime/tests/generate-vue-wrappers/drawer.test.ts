@@ -1,14 +1,13 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { drawerRuntimeAdapterContract } from "../../contracts/primitive/components/drawer.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { compactCode } from "../source-comparison.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -58,6 +57,12 @@ describe("generated Vue Drawer and Styled Sheet", () => {
     }
 
     expect(files["DrawerRoot.vue"]).toContain("provide(DrawerContext");
+    for (const control of [files["DrawerTrigger.vue"]!, files["DrawerClose.vue"]!]) {
+      expect(control).toContain("useVueNativeControl");
+      expect(control).toContain("asChild?: boolean");
+      expect(control).toContain("root?.requestRefresh()");
+      expect(control).not.toContain("cloneVNode");
+    }
     expect(files["DrawerRoot.vue"]).toContain("await nextTick()");
     expect(files["DrawerRoot.vue"]).not.toContain("document.activeElement");
     expect(files["DrawerPortal.vue"]).toContain(':disabled="placement.disabled.value"');
@@ -78,9 +83,18 @@ describe("generated Vue Drawer and Styled Sheet", () => {
     const trigger = await readFile(path.join(directory, "SheetTrigger.vue"), "utf8");
     const close = await readFile(path.join(directory, "SheetClose.vue"), "utf8");
 
-    expect(root).toContain(':open="open"');
-    expect(root).toContain('@update:open="emit(&quot;update:open&quot;, $event)"');
-    expect(root).toContain('@open-change="handleOpenChange"');
+    for (const control of [trigger, close]) {
+      expect(control).toContain("defineComponent");
+      expect(control).toContain("{ default: slots.default }");
+      expect(control).toContain("watch(");
+      expect(control).not.toContain("cloneVNode");
+      expect(control).not.toContain("requestRefresh");
+    }
+    expect(compactCode(root)).toContain(compactCode(':open="open"'));
+    expect(compactCode(root)).toContain(
+      compactCode('@update:open="emit(&quot;update:open&quot;, $event)"'),
+    );
+    expect(compactCode(root)).toContain(compactCode('@open-change="handleOpenChange"'));
     expect(content).toContain("<SheetPrimitive.DrawerBackdrop");
     expect(content).toContain("<SheetPrimitive.DrawerPopup");
     expect(content).toContain(':side="side"');
@@ -93,9 +107,8 @@ describe("generated Vue Drawer and Styled Sheet", () => {
       ["Trigger", trigger],
       ["Close", close],
     ] as const) {
-      expect(source).toContain(`const AsChild${part} = defineComponent`);
-      expect(source).toContain("cloneVNode(child, mergeProps(");
-      expect(source).toContain(`Sheet${part} asChild requires exactly one native element VNode.`);
+      expect(source).toContain(`<SheetPrimitive.Drawer${part}`);
+      expect(compactCode(source)).toContain(compactCode(':ref="setElement"'));
       expect(() => assertVueSfcCompiles(source, `Sheet${part}.vue`)).not.toThrow();
     }
   });

@@ -159,6 +159,7 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
       return {
         contents: printVueColorPickerComponent(
           file.component.family as unknown as VueColorPickerComponentProjection,
+          file,
         ),
         path: `${file.path}${this.fileExtension}`,
       };

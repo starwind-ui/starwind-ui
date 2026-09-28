@@ -19,7 +19,6 @@ import {
 } from "vue";
 
 defineOptions({ inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
     defaultValue?: SliderValue;
@@ -49,70 +48,31 @@ const emit = defineEmits<{
   valueChange: [value: SliderValue, detail: SliderValueChangeDetails];
   valueCommitted: [value: SliderValue, detail: SliderValueCommitDetails];
 }>();
-const attrs = useAttrs();
-const element = ref<HTMLDivElement | null>(null);
-const controlled = modelValue.value !== undefined;
-const initialDefaultValue = props.defaultValue;
-const uncontrolledValue = ref<SliderValue>(initialDefaultValue);
-const renderedValue = computed(() =>
-  controlled ? (modelValue.value ?? uncontrolledValue.value) : uncontrolledValue.value,
-);
-let instance: ReturnType<typeof createSlider> | undefined;
-let unsubscribeChange: (() => void) | undefined;
-let unsubscribeCommitted: (() => void) | undefined;
-let unsubscribeStateSync: (() => void) | undefined;
-let refreshRevision = 0;
-
-function valuesEqual(left: SliderValue, right: SliderValue): boolean {
-  const leftValues = Array.isArray(left) ? left : [left];
-  const rightValues = Array.isArray(right) ? right : [right];
-  return (
-    leftValues.length === rightValues.length &&
-    leftValues.every((value, index) => value === rightValues[index])
-  );
+const attrs = useAttrs(),
+  element = ref<HTMLDivElement | null>(null);
+defineExpose({ element });
+const initialDefaultValue = copyValue(props.defaultValue ?? 0),
+  localValue = ref<SliderValue>(copyValue(modelValue.value ?? initialDefaultValue));
+const renderedValue = computed(() => modelValue.value ?? localValue.value);
+let connection: ReturnType<typeof connectSlider> | undefined;
+function copyValue<T extends SliderValue | undefined>(value: T): T {
+  return (Array.isArray(value) ? [...value] : value) as T;
 }
-
+function valuesEqual(left: SliderValue | undefined, right: SliderValue | undefined): boolean {
+  const a = Array.isArray(left) ? left : [left],
+    b = Array.isArray(right) ? right : [right];
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
 function serializeValue(value: SliderValue): string {
   return Array.isArray(value) ? JSON.stringify(value) : String(value);
 }
-
-function handleStateSync(): void {
-  if (controlled || !instance) return;
-  const nextValue = instance.getValue();
-  if (valuesEqual(uncontrolledValue.value, nextValue)) return;
-
-  uncontrolledValue.value = nextValue;
-  modelValue.value = nextValue;
-}
-
-function handleValueChangeProposal(value: SliderValue, detail: SliderValueChangeDetails): void {
-  emit("valueChange", value, detail);
-}
-
-function handleAcceptedValueChange(detail: SliderValueChangeDetails): void {
-  if (!controlled) uncontrolledValue.value = detail.value;
-  modelValue.value = detail.value;
-}
-
-async function refreshAfterVueFlush(): Promise<void> {
-  const revision = ++refreshRevision;
-  await nextTick();
-  if (revision !== refreshRevision || !instance) return;
-
-  instance.refresh();
-  const value = modelValue.value;
-  if (!controlled || value === undefined || valuesEqual(instance.getValue(), value)) {
-    return;
-  }
-  instance.setValue(value, { emit: false });
-}
-
-defineExpose({ element });
-
-onMounted(() => {
-  if (!element.value) return;
-  const createdInstance = createSlider(element.value, {
-    defaultValue: initialDefaultValue,
+function connectSlider(root: HTMLDivElement) {
+  const initialModel = copyValue(modelValue.value);
+  const controlled = initialModel !== undefined;
+  let disposed = false,
+    synchronizing = false;
+  let rendered = copyValue(initialModel ?? initialDefaultValue);
+  const readOptions = () => ({
     disabled: props.disabled,
     form: props.form,
     largeStep: props.largeStep,
@@ -122,83 +82,154 @@ onMounted(() => {
     name: props.name,
     orientation: props.orientation,
     step: props.step,
-    onValueChange: handleValueChangeProposal,
-    ...(controlled && modelValue.value !== undefined ? { value: modelValue.value } : {}),
   });
-  instance = createdInstance;
-  unsubscribeChange = createdInstance.subscribe("valueChange", handleAcceptedValueChange);
-  unsubscribeCommitted = createdInstance.subscribe("valueCommitted", (detail) => {
-    emit("valueCommitted", detail.value, detail);
+  let applied = readOptions();
+  const instance = createSlider(root, {
+    defaultValue: copyValue(initialDefaultValue),
+    ...applied,
+    ...(controlled ? { value: initialModel } : {}),
+    onValueChange: (next, detail) => {
+      emit("valueChange", copyValue(next), detail);
+    },
   });
-  unsubscribeStateSync = createdInstance.subscribe("stateSync", handleStateSync);
+  function render(next: SliderValue): void {
+    if (controlled || valuesEqual(rendered, next)) return;
+    rendered = copyValue(next);
+    localValue.value = copyValue(next);
+  }
+  function publishReadback(): void {
+    if (disposed || controlled) return;
+    const next = instance.getValue();
+    render(next);
+    if (!valuesEqual(modelValue.value, copyValue(next))) modelValue.value = copyValue(next);
+  }
+  function synchronize(next: SliderValue): void {
+    if (disposed) return;
+    synchronizing = true;
+    try {
+      instance.refresh();
+      if (!valuesEqual(instance.getValue(), next))
+        instance.setValue(copyValue(next), { emit: false });
+    } finally {
+      synchronizing = false;
+    }
+    render(instance.getValue());
+  }
+  function syncModel(): void {
+    if (disposed || !controlled) return;
+    const next = modelValue.value;
+    if (next === undefined) return;
+    synchronize(next);
+  }
+  function syncOptions(): void {
+    if (disposed) return;
+    const next = readOptions();
+    if (
+      Object.is(next.disabled, applied.disabled) &&
+      Object.is(next.form, applied.form) &&
+      Object.is(next.largeStep, applied.largeStep) &&
+      Object.is(next.max, applied.max) &&
+      Object.is(next.min, applied.min) &&
+      Object.is(next.minStepsBetweenValues, applied.minStepsBetweenValues) &&
+      Object.is(next.name, applied.name) &&
+      Object.is(next.orientation, applied.orientation) &&
+      Object.is(next.step, applied.step)
+    )
+      return;
+    synchronizing = true;
+    try {
+      if (next.disabled !== applied.disabled) instance.setDisabled(next.disabled);
+      if (next.name !== applied.name) instance.setName(next.name);
+      instance.setOptions({
+        form: next.form,
+        largeStep: next.largeStep,
+        max: next.max,
+        min: next.min,
+        minStepsBetweenValues: next.minStepsBetweenValues,
+        orientation: next.orientation,
+        step: next.step,
+      });
+      applied = next;
+    } finally {
+      synchronizing = false;
+    }
+    syncModel();
+    publishReadback();
+  }
+  const stopChange = instance.subscribe("valueChange", (detail) => {
+    if (disposed || detail.isCanceled) return;
+    render(detail.value);
+    if (!valuesEqual(modelValue.value, copyValue(detail.value)))
+      modelValue.value = copyValue(detail.value);
+  });
+  const stopCommit = instance.subscribe("valueCommitted", (detail) => {
+    if (disposed) return;
+    emit("valueCommitted", copyValue(detail.value), detail);
+  });
+  const stopState = instance.subscribe("stateSync", () => {
+    if (disposed || synchronizing) return;
+    publishReadback();
+  });
+  render(instance.getValue());
+  return {
+    instance,
+    syncModel,
+    syncOptions,
+    refresh() {
+      if (disposed) return;
+      synchronizing = true;
+      try {
+        instance.refresh();
+      } finally {
+        synchronizing = false;
+      }
+      syncModel();
+      publishReadback();
+    },
+    destroy() {
+      disposed = true;
+      stopState();
+      stopChange();
+      stopCommit();
+      instance.destroy();
+    },
+  };
+}
+onMounted(() => {
+  if (element.value) connection = connectSlider(element.value);
 });
-
-onUpdated(() => {
-  void refreshAfterVueFlush();
-});
-
 watch(
-  () => modelValue.value,
-  () => {
-    if (controlled) void refreshAfterVueFlush();
-  },
+  () => [
+    props.disabled,
+    props.form,
+    props.largeStep,
+    props.max,
+    props.min,
+    props.minStepsBetweenValues,
+    props.name,
+    props.orientation,
+    props.step,
+  ],
+  () => connection?.syncOptions(),
   { flush: "post" },
 );
-
-watch(
-  () => props.disabled,
-  (value) => instance?.setDisabled(value),
-);
-
-watch(
-  () => props.name,
-  (value) => instance?.setName(value),
-);
-
-watch(
-  () =>
-    [
-      props.form,
-      props.largeStep,
-      props.max,
-      props.min,
-      props.minStepsBetweenValues,
-      props.orientation,
-      props.step,
-    ] as const,
-  () => {
-    if (!instance) return;
-    instance.setOptions({
-      form: props.form,
-      largeStep: props.largeStep,
-      max: props.max,
-      min: props.min,
-      minStepsBetweenValues: props.minStepsBetweenValues,
-      orientation: props.orientation,
-      step: props.step,
-    });
-    if (!controlled) uncontrolledValue.value = instance.getValue();
-  },
-);
-
+watch(modelValue, () => connection?.syncModel(), { flush: "post" });
+onUpdated(() => {
+  void nextTick().then(() => connection?.refresh());
+});
 onBeforeUnmount(() => {
-  refreshRevision += 1;
-  unsubscribeStateSync?.();
-  unsubscribeChange?.();
-  unsubscribeCommitted?.();
-  unsubscribeStateSync = undefined;
-  unsubscribeChange = undefined;
-  unsubscribeCommitted = undefined;
-  instance?.destroy();
-  instance = undefined;
+  const owned = connection;
+  connection = undefined;
+  owned?.destroy();
 });
 </script>
-
 <template>
   <div
-    ref="element"
-    data-sw-slider
+    :data-sw-slider="''"
+    :data-sw-part="'root'"
+    :role="'group'"
     :data-default-value="serializeValue(initialDefaultValue)"
+    :data-value="serializeValue(renderedValue)"
     :data-disabled="props.disabled ? '' : undefined"
     :data-form="props.form"
     :data-large-step="props.largeStep"
@@ -208,8 +239,7 @@ onBeforeUnmount(() => {
     :data-name="props.name"
     :data-orientation="props.orientation"
     :data-step="props.step"
-    :data-value="serializeValue(renderedValue)"
-    role="group"
+    ref="element"
     v-bind="attrs"
   >
     <slot />

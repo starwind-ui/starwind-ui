@@ -13,7 +13,7 @@ export const avatarStyledContract: StyledAdapterContract = {
   variantCollectionName: "AvatarVariants",
   variants: {
     avatar: {
-      base: "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2",
+      base: "text-foreground bg-muted relative inline-flex shrink-0 overflow-hidden rounded-full border-2",
       variants: {
         variant: {
           default: "border-border",
@@ -37,7 +37,7 @@ export const avatarStyledContract: StyledAdapterContract = {
     },
     avatarGroup: {
       base: [
-        "group/avatar-group flex -space-x-2",
+        "group/avatar-group flex -space-x-2.5 has-data-[size=sm]:-space-x-2 has-data-[size=lg]:-space-x-3",
         "*:data-[slot=avatar]:ring-background *:data-[slot=avatar]:ring-2",
       ],
     },
@@ -48,7 +48,7 @@ export const avatarStyledContract: StyledAdapterContract = {
         "[&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
       ],
     },
-    avatarImage: { base: "relative z-1 h-full w-full object-cover" },
+    avatarImage: { base: "relative h-full w-full object-cover" },
   },
   components: [
     {

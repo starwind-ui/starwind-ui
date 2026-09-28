@@ -657,6 +657,7 @@ export function defineRuntimeCollectionStaticTests(): void {
       root: "data-sw-avatar",
     });
     expect(avatar.runtime).toEqual({
+      refresh: { method: "refresh", parts: "owned-descendants", state: "preserve" },
       factory: "createAvatar",
       importSource: "@starwind-ui/runtime/avatar",
       rootPart: "root",

@@ -14,14 +14,23 @@ import {
 
 export type ScrollAreaProps = React.ComponentPropsWithoutRef<"div"> & {
   overflowEdgeThreshold?: number;
+  autoViewport?: boolean;
   viewportClassName?: string;
   ref?: React.Ref<HTMLDivElement>;
   scrollbar?: React.ReactNode;
 };
 
 function ScrollArea(props: ScrollAreaProps) {
-  const { overflowEdgeThreshold, viewportClassName, ref, className, children, scrollbar, ...rest } =
-    props;
+  const {
+    overflowEdgeThreshold,
+    autoViewport = true,
+    viewportClassName,
+    ref,
+    className,
+    children,
+    scrollbar,
+    ...rest
+  } = props;
 
   return (
     <ScrollAreaPrimitive.Root
@@ -31,17 +40,21 @@ function ScrollArea(props: ScrollAreaProps) {
       ref={ref}
       data-slot="scroll-area"
     >
-      <ScrollAreaPrimitive.Viewport
-        className={scrollAreaViewport({ class: viewportClassName })}
-        data-slot="scroll-area-viewport"
-      >
-        <ScrollAreaPrimitive.Content
-          className={scrollAreaContent()}
-          data-slot="scroll-area-content"
+      {autoViewport ? (
+        <ScrollAreaPrimitive.Viewport
+          className={scrollAreaViewport({ class: viewportClassName })}
+          data-slot="scroll-area-viewport"
         >
-          {children}
-        </ScrollAreaPrimitive.Content>
-      </ScrollAreaPrimitive.Viewport>
+          <ScrollAreaPrimitive.Content
+            className={scrollAreaContent()}
+            data-slot="scroll-area-content"
+          >
+            {children}
+          </ScrollAreaPrimitive.Content>
+        </ScrollAreaPrimitive.Viewport>
+      ) : (
+        children
+      )}
 
       {scrollbar ?? (
         <ScrollAreaPrimitive.Scrollbar

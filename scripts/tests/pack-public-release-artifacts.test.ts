@@ -94,12 +94,14 @@ describe("public release artifact packing", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
-  it("keeps the stable pack plan and selects Vue only for the beta plan", () => {
+  it("packs both routine beta adapters and preserves the Vue recovery plan", () => {
     const outputDirectory = path.resolve(".release-packs-test");
     expect(createPackPlan({ outputDirectory }).packages.map(({ key }) => key)).toEqual([
       "runtime",
       "astro",
       "react",
+      "vue",
+      "svelte",
       "cli",
     ]);
     const plan = createPackPlan({ outputDirectory, vueBeta: true });

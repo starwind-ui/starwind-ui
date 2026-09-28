@@ -1,7 +1,22 @@
+import { requireColorPickerModelOwnership } from "../../primitive-output-model/color-picker.js";
 import type {
   AdapterColorPickerFacts,
   AdapterColorPickerPartName,
 } from "../../primitive-output-model/index.js";
+import {
+  colorPickerLiveOptions,
+  printColorPickerConnection,
+} from "../../shared-recipes/color-picker/connection.js";
+import {
+  type ColorPickerPartAccess,
+  colorPickerPartAttributes,
+  colorPickerPartProps,
+  colorPickerPartRequest,
+  printColorPickerStructure,
+} from "../../shared-recipes/color-picker/parts.js";
+import { colorPickerSeeds } from "../../shared-recipes/color-picker/seeds.js";
+import type { AdapterComponentFile } from "../types.js";
+import { getVueAcceptedModelEvent } from "./accepted-model-publication.js";
 
 export type VueColorPickerComponentProjection = {
   facts: AdapterColorPickerFacts;
@@ -125,7 +140,13 @@ export function mergeColorPickerProjection(
 
 export function printVueColorPickerComponent(
   projection: VueColorPickerComponentProjection,
+  file: AdapterComponentFile,
 ): string {
+  if (
+    projection.part === "root" &&
+    getVueAcceptedModelEvent(file, "value") !== projection.facts.events.valueChange.name
+  )
+    throw new Error("ColorPicker requires accepted value publication.");
   return projection.part === "root"
     ? printRoot(projection.facts)
     : printPart(projection.facts, projection.part);
@@ -162,17 +183,24 @@ export { ${facts.exports.runtimeFacades.values.join(", ")} } from "${facts.expor
 }
 
 function printRoot(facts: AdapterColorPickerFacts): string {
+  const seeds = colorPickerSeeds(
+    facts,
+    (name) =>
+      name === "defaultValue"
+        ? "initialDefaultValue"
+        : `props.${name === "value" ? "modelValue" : name}`,
+    { authority: "parent-prop", seed: "seed" },
+  );
+  requireColorPickerModelOwnership(Object.values(facts.controlledness.states));
   const props = facts.props;
   const root = facts.parts.root;
   const createInitial = facts.initialStateProjection.createFunction;
   const projectInitial = facts.initialStateProjection.projectFunction;
   const ownership = facts.initialStateProjection.ownershipAttribute;
-  const selectors = Object.values(facts.parts)
-    .map((part) => `[${part.discoveryAttribute}]`)
-    .join(", ");
   return `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
+  parseColor,
   ${createInitial},
   ${projectInitial},
   type ColorPickerColor,
@@ -184,7 +212,7 @@ import {
   type ColorPickerValueChangeDetails,
   type ColorPickerValueCommitDetails,
 } from "${facts.runtime.importSource}";
-import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
 import { ColorPickerRootContext, mergeColorPickerProjection } from "./ColorPickerContext.js";
 
 defineOptions({ inheritAttrs: false });
@@ -222,19 +250,14 @@ const emit = defineEmits<{
 defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
-const initial = ${createInitial}({
-  ...(props.modelValue !== undefined ? { value: props.modelValue } : { defaultValue: props.defaultValue }),
-  ...(props.format === undefined ? {} : { format: props.format }),
-  alpha: props.alpha,
-  allowEmpty: props.allowEmpty,
-});
-const uncontrolledValue = ref<ColorPickerColor | null>(initial.value);
-const uncontrolledFormat = ref<ColorPickerFormat>(initial.format);
-const renderedValue = computed(() => props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value);
-const renderedFormat = computed(() => props.format !== undefined ? props.format : uncontrolledFormat.value);
+const initialDefaultValue = props.defaultValue;
+const seed = ${seeds.constructor};
+const initial = ${createInitial}(${seeds.projection});
+const acceptedValue = ref<ColorPickerColor | null>(initial.value);
+const acceptedFormat = ref<ColorPickerFormat>(initial.format);
 const initialState = computed(() => ${createInitial}({
-  value: renderedValue.value,
-  format: renderedFormat.value,
+  value: acceptedValue.value,
+  format: acceptedFormat.value,
   alpha: props.alpha,
   allowEmpty: props.allowEmpty,
   disabled: props.disabled,
@@ -253,173 +276,46 @@ const initialRootProjection = ${projectInitial}(initialState.value, { part: "roo
 const rootProps = computed(() => mergeColorPickerProjection(initialRootProjection, attrs, { "${root.discoveryAttribute}": "" }));
 defineExpose({ element });
 
-let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let observer: MutationObserver | undefined;
-let refreshQueued = false;
-const ownershipSeeds = new Map<Element, string>();
-const structuralIds = new WeakMap<Element, number>();
-let nextStructuralId = 1;
-let structuralFingerprint = "";
-const partSelector = ${JSON.stringify(selectors)};
-const configurationAttributes = ["data-axis", "data-channel", "data-disabled", "data-orientation", "data-step", "data-value", "data-x-channel", "data-y-channel", "aria-label", "aria-labelledby", "aria-roledescription"];
-
-function ownedParts(rootElement: HTMLElement): Element[] {
-  return [rootElement, ...rootElement.querySelectorAll(partSelector)].filter((part) => part.closest("[${root.discoveryAttribute}]") === rootElement);
+let connection: ReturnType<typeof connectColorPicker> | undefined;
+function readOptions(): ColorPickerOptions {
+  return { value: props.modelValue, format: props.format, ${colorPickerLiveOptions(facts)
+    .map((name) => `${name}: props.${name}`)
+    .join(", ")},
+    onValueChange: (value, details) => emit("valueChange", value, details),
+    onValueCommitted: (value, details) => emit("valueCommitted", value, details),
+    onFormatChange: (format, details) => emit("formatChange", format, details),
+  };
 }
-function captureOwnership(rootElement: HTMLElement): void {
-  for (const part of ownedParts(rootElement)) {
-    const marker = part.getAttribute("${ownership}");
-    if (marker) ownershipSeeds.set(part, marker);
-  }
-}
-function replayOwnership(rootElement: HTMLElement): void {
-  for (const [part, marker] of ownershipSeeds) {
-    if (!part.isConnected || part.closest("[${root.discoveryAttribute}]") !== rootElement) ownershipSeeds.delete(part);
-    else part.setAttribute("${ownership}", marker);
-  }
-}
-function relevantMutation(record: MutationRecord, rootElement: HTMLElement): boolean {
-  const target = record.target instanceof Element ? record.target : undefined;
-  if (!target || target.closest("[${root.discoveryAttribute}]") !== rootElement) return false;
-  if (record.type === "childList") return true;
-  if (record.type !== "attributes" || !record.attributeName) return false;
-  if (["data-value", "data-disabled"].includes(record.attributeName)) return target.hasAttribute("data-sw-color-picker-swatch");
-  return true;
-}
-function configurationFor(part: Element): readonly string[] {
-  if (part.hasAttribute("data-sw-color-picker-area")) return ["data-x-channel", "data-y-channel"];
-  if (part.hasAttribute("data-sw-color-picker-area-input")) return ["data-axis", "data-step", "aria-label", "aria-labelledby", "aria-roledescription"];
-  if (part.hasAttribute("data-sw-color-picker-channel-slider")) return ["data-channel", "data-orientation"];
-  if (part.hasAttribute("data-sw-color-picker-channel-input")) return ["data-step"];
-  if (part.hasAttribute("data-sw-color-picker-channel-field")) return ["data-channel"];
-  if (part.hasAttribute("data-sw-color-picker-swatch")) return ["data-value", "data-disabled"];
-  return [];
-}
-function fingerprint(rootElement: HTMLElement): string {
-  return ownedParts(rootElement).map((part) => {
-    let id = structuralIds.get(part);
-    if (id === undefined) {
-      id = nextStructuralId++;
-      structuralIds.set(part, id);
-    }
-    const attributes = configurationFor(part).map((name) => name + "=" + (part.getAttribute(name) ?? "")).join(";");
-    return id + ":" + part.tagName + ":" + attributes;
-  }).join("|");
-}
-function queueRefresh(): void {
-  if (refreshQueued) return;
-  refreshQueued = true;
-  queueMicrotask(() => {
-    refreshQueued = false;
-    if (!element.value || !instance) return;
-    const nextFingerprint = fingerprint(element.value);
-    if (nextFingerprint === structuralFingerprint) return;
-    structuralFingerprint = nextFingerprint;
-    captureOwnership(element.value);
-    instance.refresh({ preserveState: true });
-    structuralFingerprint = fingerprint(element.value);
-  });
-}
+${printColorPickerConnection(facts)}
+let stopObservation: (() => void) | undefined;
+${printColorPickerStructure(facts)}
 
 onMounted(() => {
   const rootElement = element.value;
   if (!rootElement) return;
-  replayOwnership(rootElement);
-  captureOwnership(rootElement);
-  instance = ${facts.runtime.factory}(rootElement, {
-    ...(props.modelValue !== undefined ? { value: props.modelValue } : { defaultValue: props.defaultValue }),
-    format: renderedFormat.value,
-    alpha: props.alpha,
-    allowEmpty: props.allowEmpty,
-    disabled: props.disabled,
-    readOnly: props.readOnly,
-    name: props.name,
-    form: props.form,
-    required: props.required,
-    locale: props.locale,
-    dir: props.dir,
-    getAriaValueText: props.getAriaValueText,
-    getAreaRoleDescription: props.getAreaRoleDescription,
-    getColorDescription: props.getColorDescription,
-    onValueChange: (value, details) => {
-      const eventWasControlled = props.modelValue !== undefined;
-      emit("valueChange", value, details);
-      if (details.isCanceled) return;
-      if (!eventWasControlled) uncontrolledValue.value = value;
-      emit("update:modelValue", value);
+  const structure = colorPickerStructure(rootElement);
+  connection = connectColorPicker(rootElement, {
+    seed, read: readOptions,
+    restoreAuthoredOwnership: structure.restoreOwnership,
+    captureAuthoredOwnership: structure.captureOwnership,
+    observe: (value, format) => {
+      acceptedValue.value = value;
+      acceptedFormat.value = format;
     },
-    onValueCommitted: (value, details) => emit("valueCommitted", value, details),
-    onFormatChange: (format, details) => {
-      const eventWasControlled = props.format !== undefined;
-      emit("formatChange", format, details);
-      if (!eventWasControlled) uncontrolledFormat.value = format;
-      emit("update:format", format);
-    },
+    publishValue: (value) => { emit("update:modelValue", value); },
+    publishFormat: (format) => { emit("update:format", format); },
+    afterUpdate: (run) => { void nextTick(run); },
   });
-  instance.refresh();
-  structuralFingerprint = fingerprint(rootElement);
-  observer = new MutationObserver((records) => {
-    if (records.some((record) => relevantMutation(record, rootElement))) queueRefresh();
-  });
-  observer.observe(rootElement, { attributes: true, attributeFilter: configurationAttributes, childList: true, subtree: true });
+  stopObservation = structure.observe(() => connection?.update());
 });
-watch(() => props.modelValue, (value, previousValue) => {
-  if (!instance) return;
-  if (value === undefined) {
-    if (previousValue !== undefined) {
-      instance.refresh({ preserveState: true });
-      instance.setValue(uncontrolledValue.value, { emit: false });
-    }
-    return;
-  }
-  instance.refresh({ preserveState: true });
-  instance.setValue(value, { emit: false });
-  uncontrolledValue.value = instance.getValue();
-}, { flush: "post" });
-watch(() => props.format, (format, previousFormat) => {
-  if (!instance) return;
-  if (format === undefined) {
-    if (previousFormat !== undefined) {
-      instance.refresh({ preserveState: true });
-      instance.setFormat(uncontrolledFormat.value, { emit: false });
-    }
-    return;
-  }
-  instance.refresh({ preserveState: true });
-  instance.setFormat(format, { emit: false });
-  uncontrolledFormat.value = instance.getFormat();
-}, { flush: "post" });
-watch(() => props.disabled, (value) => instance?.setDisabled(value), { flush: "post" });
-watch(() => props.readOnly, (value) => instance?.setReadOnly(value), { flush: "post" });
-watch(() => props.name, (value) => instance?.setName(value ?? null), { flush: "post" });
-watch([
-  () => props.alpha,
-  () => props.allowEmpty,
-  () => props.dir,
-  () => props.form,
-  () => props.getAreaRoleDescription,
-  () => props.getAriaValueText,
-  () => props.getColorDescription,
-  () => props.locale,
-  () => props.required,
-], () => instance?.setOptions({
-  alpha: props.alpha,
-  allowEmpty: props.allowEmpty,
-  dir: props.dir ?? null,
-  form: props.form ?? null,
-  getAreaRoleDescription: props.getAreaRoleDescription,
-  getAriaValueText: props.getAriaValueText,
-  getColorDescription: props.getColorDescription,
-  locale: props.locale ?? null,
-  required: props.required,
-}), { flush: "post" });
+watch(() => [props.modelValue, props.format, ${colorPickerLiveOptions(facts)
+    .map((name) => `props.${name}`)
+    .join(", ")}], () => connection?.update(), { flush: "post" });
 onBeforeUnmount(() => {
-  observer?.disconnect();
-  observer = undefined;
-  const owned = instance;
-  instance = undefined;
-  owned?.destroy();
-  ownershipSeeds.clear();
+  stopObservation?.();
+  stopObservation = undefined;
+  connection?.destroy();
+  connection = undefined;
 });
 </script>
 
@@ -469,42 +365,23 @@ defineExpose({ element });
 `;
 }
 
+const partAccess: ColorPickerPartAccess = {
+  prop: (name) => `props.${name}`,
+  area: (name) => `area.${name}.value`,
+  slider: (name) => `slider.${name}.value`,
+  aria: (name) => `attrs[${JSON.stringify(name)}] as string | undefined`,
+};
 function customProps(part: AdapterColorPickerPartName): string {
-  switch (part) {
-    case "area":
-      return "\n  xChannel?: ColorPickerInitialChannel;\n  yChannel?: ColorPickerInitialChannel;\n  xStep?: number;\n  yStep?: number;";
-    case "areaInput":
-      return '\n  axis?: "x" | "y";\n  step?: number;';
-    case "channelSlider":
-      return '\n  channel?: ColorPickerInitialChannel;\n  orientation?: "horizontal" | "vertical";\n  step?: number;';
-    case "channelSliderInput":
-      return "\n  step?: number;";
-    case "channelInput":
-      return "\n  channel?: ColorPickerInitialChannel;";
-    case "swatch":
-      return "\n  swatchValue: ColorPickerValue;\n  swatchDisabled?: boolean;";
-    default:
-      return "";
-  }
+  return (colorPickerPartProps[part] ?? [])
+    .map((prop) => `\n  ${prop.name}${prop.required ? "" : "?"}: ${prop.type};`)
+    .join("");
 }
-
 function defaultProps(part: AdapterColorPickerPartName): string {
-  switch (part) {
-    case "area":
-      return ' xChannel: "saturation", yChannel: "brightness" ';
-    case "areaInput":
-      return ' axis: "x" ';
-    case "channelSlider":
-      return ' channel: "hue", orientation: "horizontal" ';
-    case "channelInput":
-      return ' channel: "hue" ';
-    case "swatch":
-      return " swatchDisabled: false ";
-    default:
-      return "";
-  }
+  return (colorPickerPartProps[part] ?? [])
+    .filter((prop) => prop.default !== undefined)
+    .map((prop) => `${prop.name}: ${prop.default}`)
+    .join(", ");
 }
-
 function contextSetupCode(part: AdapterColorPickerPartName): string {
   switch (part) {
     case "area":
@@ -525,47 +402,8 @@ function contextSetupCode(part: AdapterColorPickerPartName): string {
 }
 
 function requestCode(part: AdapterColorPickerPartName): string {
-  switch (part) {
-    case "area":
-      return '{ part: "area", xChannel: props.xChannel, yChannel: props.yChannel, xStep: props.xStep, yStep: props.yStep }';
-    case "areaBackground":
-    case "areaThumb":
-      return `{ part: "${part}", xChannel: area.xChannel.value, yChannel: area.yChannel.value, xStep: area.xStep.value, yStep: area.yStep.value }`;
-    case "areaInput":
-      return '{ part: "areaInput", xChannel: area.xChannel.value, yChannel: area.yChannel.value, axis: props.axis, ...(props.axis === "x" ? { xStep: props.step ?? area.xStep.value } : { yStep: props.step ?? area.yStep.value }) }';
-    case "channelSlider":
-      return '{ part: "channelSlider", channel: props.channel, orientation: props.orientation, step: props.step }';
-    case "channelSliderTrack":
-    case "channelSliderThumb":
-      return `{ part: "${part}", channel: slider.channel.value, orientation: slider.orientation.value, step: slider.step.value }`;
-    case "channelSliderInput":
-      return '{ part: "channelSliderInput", channel: slider.channel.value, orientation: slider.orientation.value, step: props.step ?? slider.step.value }';
-    case "channelInput":
-      return '{ part: "channelInput", channel: props.channel }';
-    case "swatch":
-      return '{ part: "swatch", value: props.swatchValue, disabled: props.swatchDisabled }';
-    default:
-      return `{ part: "${part}" }`;
-  }
+  return colorPickerPartRequest(part, partAccess);
 }
-
 function protectedPropsCode(part: AdapterColorPickerPartName, discovery: string): string {
-  const values = [`${JSON.stringify(discovery)}: ""`];
-  if (part === "area")
-    values.push('"data-x-channel": props.xChannel', '"data-y-channel": props.yChannel');
-  if (part === "areaInput")
-    values.push(
-      '"data-axis": props.axis',
-      '"data-step": props.step ?? (props.axis === "x" ? area.xStep.value : area.yStep.value)',
-    );
-  if (part === "channelSlider")
-    values.push('"data-channel": props.channel', '"data-orientation": props.orientation');
-  if (part === "channelSliderInput") values.push('"data-step": props.step ?? slider.step.value');
-  if (part === "channelInput") values.push('"data-channel": props.channel');
-  if (part === "swatch")
-    values.push(
-      '"data-value": typeof props.swatchValue === "string" ? props.swatchValue : props.swatchValue?.toString()',
-      '"data-disabled": props.swatchDisabled ? "" : undefined',
-    );
-  return `{ ${values.join(", ")} }`;
+  return `{ ${[`${JSON.stringify(discovery)}: ""`, ...colorPickerPartAttributes(part, partAccess)].join(", ")} }`;
 }

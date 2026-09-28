@@ -6,34 +6,30 @@
 "use client";
 
 import * as React from "react";
-
 import { useTabsContext } from "./TabsContext";
-
-export type TabsListProps = React.HTMLAttributes<HTMLDivElement> & {
-  activateOnFocus?: boolean;
-  loopFocus?: boolean;
-};
-
+export type TabsListProps = Omit<
+  React.ComponentPropsWithoutRef<"div">,
+  "activateOnFocus" | "loopFocus"
+> & { activateOnFocus?: boolean; loopFocus?: boolean };
 const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(function TabsList(
-  { activateOnFocus = false, loopFocus = true, ...props },
-  forwardedRef,
+  { children, activateOnFocus = false, loopFocus = true, ...rest },
+  ref,
 ) {
-  const { orientation } = useTabsContext();
-
+  const { orientation, value: selected } = useTabsContext();
   return (
     <div
-      data-sw-tabs-list
-      data-activate-on-focus={activateOnFocus ? "" : undefined}
-      data-loop-focus={!loopFocus ? "false" : undefined}
+      {...rest}
+      data-sw-tabs-list={""}
+      data-sw-part={"list"}
       data-orientation={orientation}
+      data-activate-on-focus={activateOnFocus ? "" : undefined}
+      data-loop-focus={loopFocus ? undefined : "false"}
       aria-orientation={orientation === "vertical" ? "vertical" : undefined}
-      ref={forwardedRef}
-      role="tablist"
-      {...props}
-    />
+      role={"tablist"}
+      ref={ref}
+    >
+      {children}
+    </div>
   );
 });
-
-TabsList.displayName = "Tabs.List";
-
 export default TabsList;
