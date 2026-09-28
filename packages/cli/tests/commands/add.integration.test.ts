@@ -182,6 +182,7 @@ describe.sequential("add command integration", () => {
   let previousCwd = "";
   let previousFetch: typeof globalThis.fetch;
   let mockExit: ReturnType<typeof vi.spyOn>;
+  const originalExitCode = process.exitCode;
 
   beforeAll(() => {
     vueRegistryFixture = JSON.parse(
@@ -237,6 +238,7 @@ describe.sequential("add command integration", () => {
   });
 
   afterEach(async () => {
+    process.exitCode = originalExitCode;
     process.chdir(previousCwd);
     globalThis.fetch = previousFetch;
     mockExit.mockRestore();

@@ -179,7 +179,7 @@ if (!selected.length || selected.includes("theme-toggle") || args.includes("--la
     );
   });
 }
-if (args.includes("--layout"))
+if (!selected.length || selected.includes("theme-toggle") || args.includes("--layout"))
   test("Catalog layout releases theme owners on replacement and unmount", { timeout: 30_000 }, () =>
     verifyThemeLayoutLifecycle(browser, appRoot),
   );

@@ -576,8 +576,13 @@ ${sortComponentPresentation(registryResults.installed)
       }
     }
 
-    await sleep(1000);
+    if (results.failed.length > 0 || (registryResults?.failed.length ?? 0) > 0) {
+      process.exitCode = 1;
+      p.outro("Some components could not be installed. See the errors above.");
+      return;
+    }
 
+    await sleep(1000);
     p.outro("Enjoy using Starwind UI 🚀");
   } catch (error) {
     p.log.error(error instanceof Error ? error.message : "Failed to add components");

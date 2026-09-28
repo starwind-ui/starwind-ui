@@ -86,6 +86,7 @@ window.themeFixture = { app, settle, dispose: async () => { await unmount(app); 
       const remounted = document.getElementById("observed-toggle");
       const synchronized =
         remounted.getAttribute("aria-pressed") === header.getAttribute("aria-pressed");
+      const afterShow = app.snapshot();
       const liveSignals = window.themeSignals.map(({ type, signal }) => ({
         type,
         aborted: signal.aborted,
@@ -114,6 +115,7 @@ window.themeFixture = { app, settle, dispose: async () => { await unmount(app); 
         afterHide,
         stillUsable,
         synchronized,
+        afterShow,
         liveSignals,
         aborted: window.themeSignals.every(({ signal }) => signal.aborted),
         afterDispose,
@@ -122,20 +124,24 @@ window.themeFixture = { app, settle, dispose: async () => { await unmount(app); 
         remainingControls: document.querySelectorAll("[data-sw-theme-toggle]").length,
       };
     });
-    assert.deepEqual(result.before, { refs: ["a:BUTTON"], attachments: ["a:setup"], clicks: 0 });
-    assert.deepEqual(result.afterClass, result.before);
-    assert.deepEqual(result.afterReplace, {
-      refs: ["a:BUTTON", "a:null", "b:BUTTON"],
-      attachments: ["a:setup", "a:cleanup", "b:setup"],
-      clicks: 0,
-    });
+    // Svelte may rerun spread attachments when attributes change. Check ownership
+    // and cleanup at each step without prescribing the number of valid reruns.
+    assertAttachmentOwner(result.before.attachments, "a");
+    assertAttachmentOwner(result.afterClass.attachments, "a");
+    assertAttachmentOwner(result.afterReplace.attachments, "b");
+    assertAttachmentOwner(result.afterHide.attachments, null);
+    assertAttachmentOwner(result.afterShow.attachments, "b");
+    assertAttachmentOwner(result.afterDispose.attachments, null);
+    assert.deepEqual(result.before.refs, ["a:BUTTON"]);
+    assert.deepEqual(result.afterClass.refs, result.before.refs);
+    assert.equal(result.before.clicks, 0);
+    assert.equal(result.afterClass.clicks, 0);
+    assert.deepEqual(result.afterReplace.refs, ["a:BUTTON", "a:null", "b:BUTTON"]);
+    assert.equal(result.afterReplace.clicks, 0);
     assert.equal(result.sameNode, true);
     assert.equal(result.clickCount, 1);
-    assert.deepEqual(result.afterHide, {
-      refs: ["a:BUTTON", "a:null", "b:BUTTON", "b:null"],
-      attachments: ["a:setup", "a:cleanup", "b:setup", "b:cleanup"],
-      clicks: 1,
-    });
+    assert.deepEqual(result.afterHide.refs, ["a:BUTTON", "a:null", "b:BUTTON", "b:null"]);
+    assert.equal(result.afterHide.clicks, 1);
     assert.equal(result.stillUsable, true);
     assert.equal(result.synchronized, true);
     assert.deepEqual(result.liveSignals.map(({ type }) => type).sort(), [
@@ -145,11 +151,15 @@ window.themeFixture = { app, settle, dispose: async () => { await unmount(app); 
     ]);
     assert.ok(result.liveSignals.every(({ aborted }) => !aborted));
     assert.equal(result.aborted, true);
-    assert.deepEqual(result.afterDispose, {
-      refs: ["a:BUTTON", "a:null", "b:BUTTON", "b:null", "b:BUTTON", "b:null"],
-      attachments: ["a:setup", "a:cleanup", "b:setup", "b:cleanup", "b:setup", "b:cleanup"],
-      clicks: 1,
-    });
+    assert.deepEqual(result.afterDispose.refs, [
+      "a:BUTTON",
+      "a:null",
+      "b:BUTTON",
+      "b:null",
+      "b:BUTTON",
+      "b:null",
+    ]);
+    assert.equal(result.afterDispose.clicks, 1);
     assert.deepEqual(result.final, result.afterDispose);
     assert.equal(result.staleThemeChange, false);
     assert.equal(result.remainingControls, 0);
@@ -162,6 +172,26 @@ window.themeFixture = { app, settle, dispose: async () => { await unmount(app); 
       );
     await rm(root, { recursive: true, force: true });
   }
+}
+
+function assertAttachmentOwner(events, expectedOwner) {
+  let activeOwner = null;
+  for (const event of events) {
+    const [owner, phase] = event.split(":");
+    if (phase === "setup") {
+      assert.equal(
+        activeOwner,
+        null,
+        `Attachment ${owner} started before ${activeOwner} cleaned up`,
+      );
+      activeOwner = owner;
+    } else {
+      assert.equal(phase, "cleanup", `Unknown attachment event: ${event}`);
+      assert.equal(activeOwner, owner, `Attachment ${owner} cleaned up without owning the element`);
+      activeOwner = null;
+    }
+  }
+  assert.equal(activeOwner, expectedOwner, "The expected attachment must own the element");
 }
 
 const APP = `<script lang="ts">

@@ -24,9 +24,8 @@ sidebar:
 
 import PrimitiveInventory from "@/docs/components/primitive-reference/PrimitiveInventory.astro";
 
-Starwind exposes 36 Runtime-backed primitives for Astro, React, and the Vue 3.5 public beta. They use the same
-use-case groups as the styled component overview, making it easy to move between the styled and
-behavior-first layers.
+Primitives give you accessible interactions without default styles. Use them in Astro, React, Vue,
+or Svelte when you want to build your own component design.
 
 <PrimitiveInventory />
 
@@ -39,8 +38,10 @@ configuring Starwind manually, install the package that matches the files you ar
 npm install @starwind-ui/astro
 # or
 npm install @starwind-ui/react
-# or, for the Vue 3.5 public beta
+# or, for Vue
 npm install @starwind-ui/vue@beta vue@^3.5
+# or, for Svelte
+npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
 \`\`\`
 
 You can also copy Primitive adapter source into your project with \`starwind primitives add\`. See
@@ -65,14 +66,21 @@ import { Accordion } from "@starwind-ui/astro/accordion";
 import { Accordion } from "@starwind-ui/react/accordion";
 \`\`\`
 
-**Vue 3.5 public beta**
+**Vue**
 
 \`\`\`ts
 import Accordion from "@starwind-ui/vue/accordion";
 \`\`\`
 
-The Vue API can change during the \`0.x\` release series. Send beta feedback through the
-[issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
+**Svelte**
+
+\`\`\`ts
+import { Accordion } from "@starwind-ui/svelte/accordion";
+\`\`\`
+
+See the [Svelte guide](/docs/getting-started/svelte/) for bindings and component examples.
+
+See the [installation guide](/docs/getting-started/installation/) for framework support details.
 
 When you vendor Primitive source, import from the configured \`primitiveDir\` or
 \`primitiveDirs.<framework>\` destination instead.
@@ -361,7 +369,7 @@ ${GENERATED_MDX_COMMENT}
 
 The Runtime surface is for raw HTML and framework adapters that already render the Starwind DOM
 contract. It owns initialization, cleanup, discovery hooks, factories, DOM events, instance
-methods, and theme helpers without requiring Astro or React.
+methods, and theme helpers without requiring a framework.
 
 Use styled components first when you want ready-to-render UI. Use the Runtime directly when you are
 rendering static markup, building a framework adapter, or integrating Starwind behavior into a
@@ -442,7 +450,7 @@ Runtime factories bridge controlled and uncontrolled state with DOM events. For 
 updating state from framework adapters or custom DOM code.
 
 Use event names from the factory table when listening from raw HTML. Use callback props from the
-framework adapter when you are inside Astro or React primitives.
+framework package when you use Astro, React, Vue, or Svelte primitives.
 
 ## Theme
 
@@ -536,7 +544,7 @@ const getPrimitiveDocsFrameworkLabel = (framework: PrimitiveDocsFrameworkTarget)
   framework === "raw-html"
     ? "HTML"
     : framework === "vue"
-      ? "Vue · Beta"
+      ? "Vue"
       : toDisplayTitle(framework);
 
 export const isPrimitiveDocsFrameworkTarget = (

@@ -670,8 +670,8 @@ function buildExampleEntry(
       code: renderAstroExample(contract),
     },
     vue: {
-      title: "Vue · Beta",
-      summary: `Use the Vue 3.5 beta adapter to render ${contract.displayName} anatomy.`,
+      title: "Vue",
+      summary: `Use the Vue components to build ${contract.displayName}.`,
       language: "vue",
       code: renderVueExample(contract),
     },

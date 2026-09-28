@@ -1108,9 +1108,9 @@ describe("generateLayeredDocsMetadata", () => {
     expect(defaultCheckedProp?.frameworkBehavior).toEqual(checkedState?.frameworkBehavior);
     expect(checkedChangeProp?.frameworkBehavior).toEqual(checkedState?.frameworkBehavior);
     expect(checkboxRoot?.props.some((prop) => prop.name === "defaultCheck")).toBe(false);
-    expect(checkbox?.docsReference.frameworkCoordination).toContain(
-      "share one semantic component API",
-    );
+    for (const framework of ["Astro", "React", "Vue", "Svelte"]) {
+      expect(checkbox?.docsReference.frameworkCoordination).toContain(framework);
+    }
     expect(checkedChangeEvent?.stateModel).toBe("checked");
     expect(checkedChangeEvent?.cancellationSequence).toEqual([
       { step: 1, action: "Check internal eligibility and intent." },
@@ -2080,7 +2080,7 @@ describe("generateLayeredDocsMetadata", () => {
       expect(vueExample).toMatchObject({
         id: "basic",
         language: "vue",
-        title: "Vue · Beta",
+        title: "Vue",
         source: `scripts/portable-runtime/docs/layered-docs/examples.ts#${contract.component}-basic-vue`,
       });
       expect(vueExample?.code).toContain(
@@ -3360,7 +3360,7 @@ describe("generateLayeredDocsMetadata", () => {
         "This Primitive supports the Vue 3.5 public beta.",
       );
       expect(buttonPrimitiveSource).toContain(
-        '<DocsTabsTrigger value="vue">Vue · Beta</DocsTabsTrigger>',
+        '<DocsTabsTrigger value="vue">Vue</DocsTabsTrigger>',
       );
       const drawerPrimitiveSource = await readFile(
         path.join(docsRoot, "src/docs/data/docs/en/primitives/drawer.mdx"),
@@ -3414,11 +3414,11 @@ describe("generateLayeredDocsMetadata", () => {
       expect(primitiveIndexSource).toContain("title: Runtime Primitives");
       expect(primitiveIndexSource).toContain("<PrimitiveInventory />");
       expectSubstringsInOrder(primitiveIndexSource, [
-        "Starwind exposes 36 Runtime-backed primitives for Astro, React, and the Vue 3.5 public beta.",
         "<PrimitiveInventory />",
         "## Installation",
         "npm install @starwind-ui/astro",
         "npm install @starwind-ui/react",
+        "npm install @starwind-ui/svelte@beta",
         "[Getting Started Primitives guide](/docs/getting-started/primitives/)",
         "## Import Pattern",
         'import { Accordion } from "@starwind-ui/astro/accordion";',
@@ -3569,7 +3569,7 @@ describe("generateLayeredDocsMetadata", () => {
       expect(selectPrimitiveSource).not.toContain('::example{id="positioned-select"}');
       expect(checkboxPrimitiveSource).not.toContain("## Demo");
       expect(checkboxPrimitiveSource).toContain(
-        "Astro and React share one semantic component API.",
+        "Astro, React, Vue, and Svelte components use the same underlying interactions.",
       );
       const colorPicker = metadata.primitives.find((primitive) => primitive.id === "color-picker");
       expect(colorPicker?.cssVariables).toContainEqual({

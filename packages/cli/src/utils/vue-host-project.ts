@@ -13,14 +13,13 @@ import {
   setupLaravelInertiaVueProject,
   validateLaravelInertiaVueProjectSetup,
 } from "./laravel-inertia-vue-project.js";
-import { setupLayoutCssImport } from "./layout.js";
+import { type CssImportResult, setupLayoutCssImport } from "./layout.js";
 import {
   getNuxtProjectPlan,
   NUXT_PROJECT_CANDIDATE_PATHS,
   setupNuxtProject,
   validateNuxtProjectSetup,
 } from "./nuxt-project.js";
-import type { PackageManager } from "./package-manager.js";
 import {
   getQuasarProjectPlan,
   hasQuasarProjectEvidence,
@@ -91,7 +90,7 @@ type VueHostProjectIdentity =
 
 type VueHostCssSetup =
   | Readonly<{
-      setupCss: (cssFile: string) => Promise<boolean>;
+      setupCss: (cssFile: string) => Promise<boolean | CssImportResult>;
       setupCssLabel: string;
       setupCssResult: string;
     }>
@@ -408,8 +407,8 @@ function createAstroVueHostProjectPlan(
       if (!success) throw new Error("Failed to setup Astro config");
     },
     setupCss: setupLayoutCssImport,
-    setupCssLabel: "Adding CSS import to layout",
-    setupCssResult: "CSS import added to layout",
+    setupCssLabel: "Connecting Starwind CSS",
+    setupCssResult: "Starwind CSS connected",
     setupLabel: "Setup Astro config file",
     setupResult: "Astro config setup completed",
     setupTypeScript: async () => setupTsConfig("astro"),
