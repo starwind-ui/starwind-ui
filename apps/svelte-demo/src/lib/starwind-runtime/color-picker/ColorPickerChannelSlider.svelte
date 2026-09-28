@@ -10,11 +10,12 @@
   import { ColorPickerChannelSliderInput } from "@starwind-ui/svelte/color-picker";
   import "./styles.css";
 
-  export type ColorPickerChannelSliderProps = ComponentProps<typeof ColorPickerChannelSlider> & {children?:Snippet; channel: import("@starwind-ui/svelte/color-picker").ColorPickerChannel; orientation?: "horizontal" | "vertical"; };
+  export type ColorPickerChannelSliderProps = ComponentProps<typeof ColorPickerChannelSlider> & {children?:Snippet; step?: number; channel: import("@starwind-ui/svelte/color-picker").ColorPickerChannel; orientation?: "horizontal" | "vertical";};
 </script>
 
 <script lang="ts">
   let {
+    "step": step,
     "channel": channel,
     "orientation": orientation = "horizontal",
     "class": className,
@@ -25,6 +26,7 @@
 
 <ColorPickerChannelSlider
   channel={channel}
+  step={step}
   orientation={orientation}
   class={colorPickerChannelSlider({ "class": cx(className) })}
   {...rest}

@@ -136,6 +136,7 @@ describe("styled Color Picker contract", () => {
       { name: "formatContentSize", optional: true, type: '"sm" | "md" | "lg"' },
       { name: "portalContainer", optional: true, type: "string" },
       { name: "disablePortal", optional: true, type: "boolean" },
+      expect.objectContaining({ name: "initial", frameworks: ["astro"] }),
     ]);
     const render = JSON.stringify(input.render);
     expect(render).toContain('"part":"ValueInput"');

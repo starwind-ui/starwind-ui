@@ -6,16 +6,18 @@ import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import { colorPickerChannelSlider, colorPickerChannelSliderThumb } from "./variants";
 
 export type ColorPickerChannelSliderProps = React.ComponentPropsWithoutRef<"div"> & {
+  step?: number;
   channel: import("@starwind-ui/react/color-picker").ColorPickerChannel;
   orientation?: "horizontal" | "vertical";
 };
 
 function ColorPickerChannelSlider(props: ColorPickerChannelSliderProps) {
-  const { channel, orientation = "horizontal", className, ...rest } = props;
+  const { step, channel, orientation = "horizontal", className, ...rest } = props;
 
   return (
     <ColorPickerPrimitive.ChannelSlider
       channel={channel}
+      step={step}
       orientation={orientation}
       className={colorPickerChannelSlider({ class: className })}
       {...rest}

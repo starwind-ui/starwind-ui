@@ -27,7 +27,7 @@
   data-slot={"context-menu-sub-trigger"}
 >
   {@render children?.()}
-  <svg
+  {#if icon}{@render icon()}{:else}<svg
     xmlns={"http://www.w3.org/2000/svg"}
     viewBox={"0 0 24 24"}
     fill={"none"}
@@ -46,5 +46,5 @@
     <path
       d={"M9 6l6 6l-6 6"}
     />
-  </svg>
+  </svg>{/if}
 </ContextMenuSubmenuTrigger>

@@ -8,10 +8,11 @@ import { dropdownItem } from "./variants";
 export type DropdownSubTriggerProps = React.ComponentPropsWithoutRef<"div"> & {
   inset?: boolean;
   disabled?: boolean;
+  icon?: React.ReactNode;
 };
 
 function DropdownSubTrigger(props: DropdownSubTriggerProps) {
-  const { className, inset = false, disabled = false, children, ...rest } = props;
+  const { className, inset = false, disabled = false, children, icon, ...rest } = props;
 
   const subTriggerClassName = className;
 
@@ -24,7 +25,7 @@ function DropdownSubTrigger(props: DropdownSubTriggerProps) {
     >
       {children}
 
-      <ChevronRight className="ml-auto size-4" />
+      {icon ?? <ChevronRight className="ml-auto size-4" />}
     </MenuPrimitive.SubmenuTrigger>
   );
 }

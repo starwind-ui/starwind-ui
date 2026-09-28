@@ -1,5 +1,9 @@
 import { defineFrameworkAdapterTarget } from "../target-definition.js";
-import type { FrameworkAdapterTargetRegistration } from "../types.js";
+import {
+  frameworkAdapterTargetRenderedPortal,
+  type FrameworkAdapterTargetRegistration,
+} from "../types.js";
+import { svelteRenderedPortalCapability } from "./portal-inspection.js";
 import { svelteFrameworkAdapter, svelteFrameworkAdapterReadiness } from "./adapter.js";
 import {
   collectSvelteStyledPackageImportSources,
@@ -52,6 +56,7 @@ const svelteFrameworkAdapterTargetDefinition = {
   home: "scripts/portable-runtime/renderers/framework-adapters/svelte",
   packageName: "@starwind-ui/svelte",
   primitive: {
+    [frameworkAdapterTargetRenderedPortal]: svelteRenderedPortalCapability,
     async generatePackage(args) {
       await generateSveltePrimitivePackage(args);
       if (args.components.includes("sidebar")) await writeSvelteSidebarRootExports(args.outputRoot);

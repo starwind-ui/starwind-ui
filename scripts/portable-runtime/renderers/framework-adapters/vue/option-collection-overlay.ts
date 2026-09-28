@@ -247,6 +247,7 @@ const disabled = computed(() => props.${props.disabled.name});
 const readOnly = computed(() => props.${props.readOnly.name});
 const required = computed(() => props.${props.required.name});
 let instance: ReturnType<typeof ${runtime.factory}> | undefined;
+let labelObserver: MutationObserver | undefined;
 let portalBinding: ReturnType<typeof createPortalBinding> | undefined;
 let unsubscribeOpenChange: (() => void) | undefined;
 let unsubscribeValueChange: (() => void) | undefined;
@@ -295,17 +296,16 @@ function readItemLabel(item: HTMLElement | undefined): string | null {
 
 function findSelectedLabel(value: string | null): string | null {
   if (value === null || !rootRef.value) return null;
-  const roots = [rootRef.value, portalReference].filter(
-    (candidate): candidate is HTMLElement => candidate instanceof HTMLElement,
-  );
-  const item = roots
-    .flatMap((candidate) => [...candidate.querySelectorAll<HTMLElement>("[${itemAttribute}]")])
-    .find((candidate) => candidate.getAttribute("${facts.collection.itemIdentity.attribute}") === value);
-  return readItemLabel(item);
+  const selector = \`[${itemAttribute}][${facts.collection.itemIdentity.attribute}="\${CSS.escape(value)}"]\`;
+  const item = (portalReference ?? rootRef.value).querySelector<HTMLElement>(selector);
+  return readItemLabel(item ?? undefined);
 }
 
-function syncSelectedLabel(value: string | null, item?: HTMLElement): void {
-  selectedLabelState.value = { label: readItemLabel(item) ?? findSelectedLabel(value), value };
+function syncSelectedLabel(value: string | null, item?: HTMLElement): boolean {
+  const label = readItemLabel(item) ?? findSelectedLabel(value);
+  if (selectedLabelState.value.label === label && selectedLabelState.value.value === value) return false;
+  selectedLabelState.value = { label, value };
+  return true;
 }
 
 function unbindFormReset(): void {
@@ -328,6 +328,8 @@ function bindFormReset(): void {
 }
 
 function destroyOwnedInstance(): void {
+  labelObserver?.disconnect();
+  labelObserver = undefined;
   unsubscribeOpenChange?.();
   unsubscribeOpenChange = undefined;
   unsubscribeValueChange?.();
@@ -378,6 +380,16 @@ function setupRuntime(): void {
     reportPortalPlacement(portalReference, { ready: true, target: portalTarget });
   }
   ${selectFragments("vue").connection}
+  const popup = (portalReference ?? element).querySelector("[${facts.attrs.popup}]");
+  labelObserver = new MutationObserver((records) => {
+    const value = owned.${state.value.getter}();
+    if (value === null || !records.some(({ target }) => {
+      const item = (target instanceof Element ? target : target.parentElement)?.closest("[${itemAttribute}]");
+      return !item || item.getAttribute("${facts.collection.itemIdentity.attribute}") === value;
+    })) return;
+    if (syncSelectedLabel(value)) owned.${state.value.setter}(value, { emit: false });
+  });
+  if (popup) labelObserver.observe(popup, { childList: true, characterData: true, subtree: true });
   syncSelectedLabel(instance.${state.value.getter}());
   bindFormReset();
 }

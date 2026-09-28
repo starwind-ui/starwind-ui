@@ -26,8 +26,8 @@ const triggerClassName = computed(() => (asChild ? className : triggerBaseClassN
   <PopoverPrimitive.PopoverTrigger
     :class="triggerClassName"
     :as-child="asChild"
-    v-bind="$attrs"
     data-slot="popover-trigger"
+    v-bind="$attrs"
   >
     <slot />
   </PopoverPrimitive.PopoverTrigger>

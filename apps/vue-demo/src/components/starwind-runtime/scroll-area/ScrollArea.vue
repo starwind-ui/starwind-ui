@@ -16,19 +16,22 @@ defineOptions({ inheritAttrs: false });
 
 export type ScrollAreaProps = Omit<
   HTMLAttributes,
-  "class" | "overflowEdgeThreshold" | "viewportClass"
+  "autoViewport" | "class" | "overflowEdgeThreshold" | "viewportClass"
 > & {
   overflowEdgeThreshold?: number;
+  autoViewport?: boolean;
   viewportClass?: string;
   class?: ClassValue;
 };
 type ScrollAreaDeclaredProps = {
   overflowEdgeThreshold?: number;
+  autoViewport?: boolean;
   viewportClass?: string;
   class?: ClassValue;
 } & /* @vue-ignore */ ScrollAreaProps;
 const {
   overflowEdgeThreshold,
+  autoViewport = true,
   viewportClass,
   class: className,
 } = defineProps<ScrollAreaDeclaredProps>();
@@ -67,17 +70,22 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     v-bind="$attrs"
     data-slot="scroll-area"
   >
-    <ScrollAreaPrimitive.ScrollAreaViewport
-      :class="scrollAreaViewport({ class: viewportClass })"
-      data-slot="scroll-area-viewport"
-    >
-      <ScrollAreaPrimitive.ScrollAreaContent
-        :class="scrollAreaContent()"
-        data-slot="scroll-area-content"
+    <template v-if="autoViewport">
+      <ScrollAreaPrimitive.ScrollAreaViewport
+        :class="scrollAreaViewport({ class: viewportClass })"
+        data-slot="scroll-area-viewport"
       >
-        <slot />
-      </ScrollAreaPrimitive.ScrollAreaContent>
-    </ScrollAreaPrimitive.ScrollAreaViewport>
+        <ScrollAreaPrimitive.ScrollAreaContent
+          :class="scrollAreaContent()"
+          data-slot="scroll-area-content"
+        >
+          <slot />
+        </ScrollAreaPrimitive.ScrollAreaContent>
+      </ScrollAreaPrimitive.ScrollAreaViewport>
+    </template>
+    <template v-else>
+      <slot />
+    </template>
     <slot name="scrollbar">
       <ScrollAreaPrimitive.ScrollAreaScrollbar
         :class="scrollAreaScrollbar()"

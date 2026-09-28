@@ -21093,6 +21093,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "catalog",
                 },
                 {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "portalContainer",
                   type: "string",
                   required: false,
@@ -21114,6 +21123,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "ColorPickerTrigger",
               props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "showValueText",
                   type: "boolean",
@@ -21161,6 +21179,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     },
                   ],
                   description: "Restricts and orders the available color formats.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -21216,7 +21243,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerArea",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerAreaProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerAreaProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -21249,6 +21286,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   ],
                   description: "Selects the channel rendered by this slider.",
                   descriptionSource: "annotation",
+                },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "step",
+                  type: "number",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the smallest allowed value increment.",
+                  descriptionSource: "catalog",
                 },
               ],
               inheritance: [
@@ -21284,6 +21338,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Selects the channel edited by this input.",
                   descriptionSource: "annotation",
                 },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -21297,7 +21360,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerValueSwatch",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:span",
@@ -21310,7 +21383,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerSwatchGroup",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -21331,6 +21414,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   classification: "wrapper",
                   defaultValue: "false",
                   description: "Disables interaction with the component.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/astro/color-picker\").ColorPickerRenderProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerRenderProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -21363,7 +21455,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerEyeDropper",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:button",
@@ -21376,7 +21478,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ColorPickerClear",
-              props: [],
+              props: [
+                {
+                  name: "initial",
+                  type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerInitialPartProjection",
+                  required: false,
+                  classification: "wrapper",
+                  displayType: "ColorPickerInitialPartProjection",
+                  description: "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:button",
@@ -21963,6 +22075,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   ],
                   description: "Selects the channel rendered by this slider.",
                   descriptionSource: "annotation",
+                },
+                {
+                  name: "step",
+                  type: "number",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the smallest allowed value increment.",
+                  descriptionSource: "catalog",
                 },
               ],
               inheritance: [
@@ -31496,6 +31616,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "ScrollArea",
               props: [
                 {
+                  name: "autoViewport",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "true",
+                  description: "Automatically renders the viewport and content wrappers. Set false to compose those parts yourself.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "overflowEdgeThreshold",
                   type: "number",
                   required: false,
@@ -31600,6 +31729,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "ScrollArea",
               props: [
+                {
+                  name: "autoViewport",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "true",
+                  description: "Automatically renders the viewport and content wrappers. Set false to compose those parts yourself.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "overflowEdgeThreshold",
                   type: "number",

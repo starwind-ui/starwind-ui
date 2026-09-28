@@ -109,6 +109,7 @@ const disabled = computed(() => props.disabled);
 const readOnly = computed(() => props.readOnly);
 const required = computed(() => props.required);
 let instance: ReturnType<typeof createSelect> | undefined;
+let labelObserver: MutationObserver | undefined;
 let portalBinding: ReturnType<typeof createPortalBinding> | undefined;
 let unsubscribeOpenChange: (() => void) | undefined;
 let unsubscribeValueChange: (() => void) | undefined;
@@ -161,17 +162,17 @@ function readItemLabel(item: HTMLElement | undefined): string | null {
 
 function findSelectedLabel(value: string | null): string | null {
   if (value === null || !rootRef.value) return null;
-  const roots = [rootRef.value, portalReference].filter(
-    (candidate): candidate is HTMLElement => candidate instanceof HTMLElement,
-  );
-  const item = roots
-    .flatMap((candidate) => [...candidate.querySelectorAll<HTMLElement>("[data-sw-select-item]")])
-    .find((candidate) => candidate.getAttribute("data-value") === value);
-  return readItemLabel(item);
+  const selector = `[data-sw-select-item][data-value="${CSS.escape(value)}"]`;
+  const item = (portalReference ?? rootRef.value).querySelector<HTMLElement>(selector);
+  return readItemLabel(item ?? undefined);
 }
 
-function syncSelectedLabel(value: string | null, item?: HTMLElement): void {
-  selectedLabelState.value = { label: readItemLabel(item) ?? findSelectedLabel(value), value };
+function syncSelectedLabel(value: string | null, item?: HTMLElement): boolean {
+  const label = readItemLabel(item) ?? findSelectedLabel(value);
+  if (selectedLabelState.value.label === label && selectedLabelState.value.value === value)
+    return false;
+  selectedLabelState.value = { label, value };
+  return true;
 }
 
 function unbindFormReset(): void {
@@ -219,6 +220,8 @@ function bindFormReset(): void {
 }
 
 function destroyOwnedInstance(): void {
+  labelObserver?.disconnect();
+  labelObserver = undefined;
   unsubscribeOpenChange?.();
   unsubscribeOpenChange = undefined;
   unsubscribeValueChange?.();
@@ -308,6 +311,22 @@ function setupRuntime(): void {
     }
     emit("update:modelValue", detail.value);
   });
+  const popup = (portalReference ?? element).querySelector("[data-sw-select-popup]");
+  labelObserver = new MutationObserver((records) => {
+    const value = owned.getValue();
+    if (
+      value === null ||
+      !records.some(({ target }) => {
+        const item = (target instanceof Element ? target : target.parentElement)?.closest(
+          "[data-sw-select-item]",
+        );
+        return !item || item.getAttribute("data-value") === value;
+      })
+    )
+      return;
+    if (syncSelectedLabel(value)) owned.setValue(value, { emit: false });
+  });
+  if (popup) labelObserver.observe(popup, { childList: true, characterData: true, subtree: true });
   syncSelectedLabel(instance.getValue());
   bindFormReset();
 }

@@ -22,5 +22,7 @@ const subTriggerClassName = className;
 >
   <slot />
 
-  <ChevronRight class="ml-auto size-4" />
+  <slot name="icon">
+    <ChevronRight class="ml-auto size-4" />
+  </slot>
 </MenuPrimitive.SubmenuTrigger>

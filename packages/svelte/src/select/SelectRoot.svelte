@@ -132,13 +132,15 @@
   }
   function findSelectedLabel(root: HTMLElement, nextValue: string | null): string | null {
     if (nextValue === null) return null;
-    const candidates = [root, portalReference].filter((candidate): candidate is HTMLElement => candidate instanceof HTMLElement);
-    const item = candidates.flatMap((candidate) => [...candidate.querySelectorAll<HTMLElement>("[data-sw-select-item]")])
-      .find((candidate) => candidate.getAttribute("data-value") === nextValue);
-    return readItemLabel(item);
+    const selector = `[data-sw-select-item][data-value="${CSS.escape(nextValue)}"]`;
+    const item = (portalReference ?? root).querySelector<HTMLElement>(selector);
+    return readItemLabel(item ?? undefined);
   }
-  function syncSelectedLabel(root: HTMLElement, nextValue: string | null, item?: HTMLElement): void {
-    selectedLabelState = { label: readItemLabel(item) ?? findSelectedLabel(root, nextValue), value: nextValue };
+  function syncSelectedLabel(root: HTMLElement, nextValue: string | null, item?: HTMLElement): boolean {
+    const label = readItemLabel(item) ?? findSelectedLabel(root, nextValue);
+    if (selectedLabelState.label === label && selectedLabelState.value === nextValue) return false;
+    selectedLabelState = { label, value: nextValue };
+    return true;
   }
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
@@ -187,6 +189,16 @@ renderedValue = instance.getValue();
         synchronizeValue(value !== undefined ? value : renderedValue);
         synchronizeOpen(open ?? renderedOpen);
       });
+      const popup = (ownedPortal ?? root).querySelector("[data-sw-select-popup]");
+      const labelObserver = new MutationObserver((records) => {
+        const value = instance.getValue();
+        if (value === null || !records.some(({ target }) => {
+          const item = (target instanceof Element ? target : target.parentElement)?.closest("[data-sw-select-item]");
+          return !item || item.getAttribute("data-value") === value;
+        })) return;
+        if (syncSelectedLabel(root, value)) instance.setValue(value, { emit: false });
+      });
+      if (popup) labelObserver.observe(popup, { childList: true, characterData: true, subtree: true });
       const unsubscribeOpen = owned.subscribe("openChange", detail => {
     if (runtimeInstance !== owned) return;
     untrack(() => { renderedOpen = detail.open;
@@ -264,6 +276,7 @@ $effect(() => { void autoComplete; void form; void name; void required; untrack(
 
       bindReset(); }); });
       return () => {
+        labelObserver.disconnect();
         unsubscribeOpen();
         unsubscribeValue();
         window.clearTimeout(resetTimer);

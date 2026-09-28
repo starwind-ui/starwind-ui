@@ -48,7 +48,7 @@ type SelectExposed = ComponentPublicInstance & {
   updatePosition(): void;
 };
 
-type SelectItemValue = { disabled?: boolean; label: string; value: string };
+type SelectItemValue = { disabled?: boolean; label: string | VNode; value: string };
 const cleanups: Array<() => void> = [];
 
 afterEach(() => {
@@ -58,6 +58,63 @@ afterEach(() => {
 });
 
 describe("Vue Select public behavior", () => {
+  it.each([false, true])(
+    "refreshes selected labels after option text changes or arrives (open=%s)",
+    async (open) => {
+      const items = reactive([
+        { label: "Apple", value: "apple" },
+        { label: "Pear", value: "pear" },
+      ]);
+      const value = ref("apple");
+      const events = vi.fn();
+      const host = appendHost();
+      const app = createApp({
+        render: () =>
+          renderSelect(
+            { modelValue: value.value, open, onValueChange: events, "onUpdate:modelValue": events },
+            items,
+            { container: document.body },
+          ),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await frame();
+      const label = () => host.querySelector("[data-sw-select-value]")?.textContent;
+      expect(label()).toBe("Apple");
+      const valueText = host.querySelector("[data-sw-select-value]")!.firstChild;
+      items[1]!.label = "Green pear";
+      await frame();
+      expect(host.querySelector("[data-sw-select-value]")!.firstChild).toBe(valueText);
+      items[0]!.label = "Green apple";
+      await frame();
+      expect.soft(label()).toBe("Green apple");
+      value.value = "banana";
+      await frame();
+      items.push({ label: "Banana", value: "banana" });
+      await frame();
+      expect.soft(label()).toBe("Banana");
+      expect(events).not.toHaveBeenCalled();
+    },
+  );
+
+  it("refreshes selected text owned by a nested component", async () => {
+    const text = ref("Apple");
+    const NestedLabel = { render: () => h("span", text.value) };
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect({ defaultValue: "apple" }, [{ label: h(NestedLabel), value: "apple" }], {
+          container: document.body,
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await frame();
+    text.value = "Green apple";
+    await frame();
+    expect(host.querySelector("[data-sw-select-value]")?.textContent).toBe("Green apple");
+  });
+
   it("forwards public surface and accepts or cancels both models in detail-first order", async () => {
     const exposed = ref<SelectExposed | null>(null);
     const events: string[] = [];

@@ -29,7 +29,8 @@ describe("Svelte Styled typed projection", () => {
     expect(files.filter((file) => file.relativePath.endsWith(".svelte"))).toHaveLength(23);
     const content = (name: string) =>
       files.find((file) => file.relativePath === `sidebar/${name}`)!.content;
-    expect(content("Sidebar.svelte")).toContain("bind:open={() => context.mobileOpen");
+    expect(content("Sidebar.svelte")).toContain("<Sheet");
+    expect(content("Sidebar.svelte")).toContain('data-slot={"sidebar-mobile"}');
     expect(content("Sidebar.svelte")).toContain('data-sidebar={"mobile"}');
     expect(content("SidebarMenuButton.svelte")).toContain('import "./styles.css"');
     expect(content("SidebarMenuButton.svelte")).toContain('"data-sw-tooltip-trigger"');
@@ -54,6 +55,7 @@ describe("Svelte Styled typed projection", () => {
     const source = files[0]!.content;
     expect(source).toContain('buttonAs === "a" || href !== undefined');
     expect(source).toContain("tabindex={disabled ? -1 : tabindex}");
+    expect(source).not.toContain("child?: never");
     expect(source).toContain('from "@starwind-ui/svelte/button"');
     expect(source).not.toMatch(/React\.|on:|v-bind|@starwind-ui\/runtime/);
   });
@@ -178,8 +180,9 @@ describe("Svelte Styled typed projection", () => {
     const content = files.find(
       (file) => file.relativePath === "color-picker/ColorPickerContent.svelte",
     )!.content;
-    expect(content).toContain("container={ownedPortalContainer}");
-    expect(content).toContain("<PopoverPortal");
+    expect(content).toContain("portalContainer={portalContainer}");
+    expect(content).toContain("<PopoverContent");
+    expect(content).not.toContain("<PopoverPortal");
     const variants = files.find(
       (file) => file.relativePath === "color-picker/variants.ts",
     )!.content;

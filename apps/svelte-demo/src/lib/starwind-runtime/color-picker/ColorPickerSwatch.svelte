@@ -7,7 +7,7 @@
   import { ColorPickerTransparencyGrid } from "@starwind-ui/svelte/color-picker";
   import "./styles.css";
 
-  export type ColorPickerSwatchProps = Omit<ComponentProps<typeof ColorPickerSwatch>, "value" | "swatchValue" | "swatchDisabled" | "disabled"> & {children?:Snippet; value: import("@starwind-ui/svelte/color-picker").ColorPickerValue; disabled?: boolean; };
+  export type ColorPickerSwatchProps = Omit<ComponentProps<typeof ColorPickerSwatch>, "value" | "swatchValue" | "swatchDisabled" | "disabled"> & {children?:Snippet; value: import("@starwind-ui/svelte/color-picker").ColorPickerValue; disabled?: boolean;};
 </script>
 
 <script lang="ts">

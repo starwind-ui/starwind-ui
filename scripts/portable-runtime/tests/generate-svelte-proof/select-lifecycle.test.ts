@@ -775,6 +775,9 @@ let modal = $state(false);
 let associatedForm = $state<string | undefined>(undefined);
 let container = $state("#portal-a");
 let triggerKey = $state(0);
+let alphaLabel = $state("Alpha");
+let betaLabel = $state("Beta");
+let lateOption = $state(false);
 const openWrites: boolean[] = [];
 const valueWrites: (string | null)[] = [];
 const openCallbacks: any[] = [];
@@ -805,6 +808,9 @@ function publishValue(next) {
   if (valueSetter === "identity") valueModel = next;
   else if (valueSetter === "transform") valueModel = next === "beta" ? "gamma" : next;
 }
+export function renameBeta() { betaLabel = "Updated beta"; }
+export function renameAlpha() { alphaLabel = "Updated alpha"; }
+export function addLateOption() { lateOption = true; }
 export function setOpen(next: boolean | undefined) { openModel = next; }
 export function setValue(next: string | null | undefined) { valueModel = next; }
 export function setDefault(next: string | null | undefined) { valueSeed = next; }
@@ -828,8 +834,9 @@ export function snapshot() { return {
   <SelectTrigger child={triggerChild}><SelectValue placeholder="Choose" /></SelectTrigger>
   <SelectPortal {container} data-model-portal={id}>
     <SelectPopup>
-      <SelectItem value="alpha"><SelectItemText>Alpha</SelectItemText></SelectItem>
-      <SelectItem value="beta"><SelectItemText>Beta</SelectItemText></SelectItem>
+      <SelectItem value="alpha"><SelectItemText>{alphaLabel}</SelectItemText></SelectItem>
+      {#if lateOption}<SelectItem value="late"><SelectItemText>Loaded option</SelectItemText></SelectItem>{/if}
+      <SelectItem value="beta"><SelectItemText>{betaLabel}</SelectItemText></SelectItem>
       <SelectItem value="gamma"><SelectItemText>Gamma</SelectItemText></SelectItem>
       <SelectItem value=""><SelectItemText>Empty</SelectItemText></SelectItem>
     </SelectPopup>
@@ -1276,4 +1283,31 @@ describe("Select accepted models", () => {
       valueWrites: [],
     });
   }, 60_000);
+});
+
+describe("Select selected label updates", () => {
+  it.each([false, true])(
+    "refreshes selected labels after option text changes or arrives (open=%s)",
+    async (open) => {
+      const result = await runSelectModelCases(
+        [{ id: "labels", mode: "plain", initialValue: "alpha", initialOpen: open }],
+        `
+      const label = () => root("labels").querySelector("[data-sw-select-value]").textContent;
+      const before = globalThis.__selectLifecycle.setValue;
+      cases.labels.renameBeta(); await resetSettled();
+      const unrelatedWrites = globalThis.__selectLifecycle.setValue - before;
+      cases.labels.renameAlpha(); await resetSettled();
+      const renamed = label();
+      cases.labels.setValue("late"); await resetSettled();
+      cases.labels.addLateOption(); await resetSettled();
+      return { unrelatedWrites, renamed, loaded: label(), callbacks: state("labels").valueCallbacks };
+    `,
+      );
+      expect(result.unrelatedWrites).toBe(0);
+      expect.soft(result.renamed).toBe("Updated alpha");
+      expect.soft(result.loaded).toBe("Loaded option");
+      expect(result.callbacks).toEqual([]);
+    },
+    30_000,
+  );
 });

@@ -11,7 +11,6 @@
   type CommonProps = VariantProps<typeof button> & { "data-slot"?: string; "focusableWhenDisabled"?: boolean; };
   type AnchorProps = Omit<HTMLAnchorAttributes, "type" | "children"> & CommonProps & {
     children?: NativeButtonProps["children"];
-    child?: never;
     disabled?: boolean;
     ref?: (element: HTMLAnchorElement | null) => void;
   } & ({ as: "a"; href?: string } | { as?: "a" | "button"; href: string });

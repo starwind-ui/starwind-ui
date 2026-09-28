@@ -216,13 +216,15 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   }
   function findSelectedLabel(root: HTMLElement, nextValue: string | null): string | null {
     if (nextValue === null) return null;
-    const candidates = [root, portalReference].filter((candidate): candidate is HTMLElement => candidate instanceof HTMLElement);
-    const item = candidates.flatMap((candidate) => [...candidate.querySelectorAll<HTMLElement>("[${itemAttribute}]")])
-      .find((candidate) => candidate.getAttribute("${facts.collection.itemIdentity.attribute}") === nextValue);
-    return readItemLabel(item);
+    const selector = \`[${itemAttribute}][${facts.collection.itemIdentity.attribute}="\${CSS.escape(nextValue)}"]\`;
+    const item = (portalReference ?? root).querySelector<HTMLElement>(selector);
+    return readItemLabel(item ?? undefined);
   }
-  function syncSelectedLabel(root: HTMLElement, nextValue: string | null, item?: HTMLElement): void {
-    selectedLabelState = { label: readItemLabel(item) ?? findSelectedLabel(root, nextValue), value: nextValue };
+  function syncSelectedLabel(root: HTMLElement, nextValue: string | null, item?: HTMLElement): boolean {
+    const label = readItemLabel(item) ?? findSelectedLabel(root, nextValue);
+    if (selectedLabelState.label === label && selectedLabelState.value === nextValue) return false;
+    selectedLabelState = { label, value: nextValue };
+    return true;
   }
 ${printSvelteRefAttachment("HTMLDivElement")}
   const attachRuntime: Attachment<HTMLDivElement> = (root) => {
@@ -245,6 +247,16 @@ ${printSvelteRefAttachment("HTMLDivElement")}
         synchronizeValue(value !== undefined ? value : renderedValue);
         synchronizeOpen(open ?? renderedOpen);
       });
+      const popup = (ownedPortal ?? root).querySelector("[${facts.attrs.popup}]");
+      const labelObserver = new MutationObserver((records) => {
+        const value = instance.getValue();
+        if (value === null || !records.some(({ target }) => {
+          const item = (target instanceof Element ? target : target.parentElement)?.closest("[${itemAttribute}]");
+          return !item || item.getAttribute("${facts.collection.itemIdentity.attribute}") === value;
+        })) return;
+        if (syncSelectedLabel(root, value)) instance.setValue(value, { emit: false });
+      });
+      if (popup) labelObserver.observe(popup, { childList: true, characterData: true, subtree: true });
       ${selectFragments("svelte").subscriptions}
       let valueRevision = 0;
       const handleReset = (event: Event) => {
@@ -272,6 +284,7 @@ ${printSvelteRefAttachment("HTMLDivElement")}
 
 ${selectOptionObservers("svelte")}
       return () => {
+        labelObserver.disconnect();
         unsubscribeOpen();
         unsubscribeValue();
         window.clearTimeout(resetTimer);

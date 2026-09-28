@@ -1,0 +1,11 @@
+{
+  "components": {
+    "scroll-area": "minor",
+    "color-picker": "minor",
+    "dropdown": "minor",
+    "context-menu": "minor",
+    "popover": "patch",
+    "button": "patch"
+  },
+  "impact": "source"
+}
