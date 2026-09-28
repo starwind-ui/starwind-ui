@@ -2,4 +2,4 @@
 "starwind": patch
 ---
 
-Add Avatar Group and Avatar Group Count composition components with size-aware overlapping styles.
+Added AvatarGroup and AvatarGroupCount to display overlapping avatars with a count. The overlap scales with the avatar size and supports right-to-left layouts.

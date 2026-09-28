@@ -6,11 +6,12 @@
 "starwind": patch
 ---
 
-Fixed component updates and form resets across frameworks:
+Fixed several component updates and form resets:
 
-- Vue bindings now reflect changes accepted by the component. Checkboxes and switches keep their original reset values, and Checkbox Group manages the correct child controls.
-- React Navigation Menu handles content being removed from its shared viewport. Sidebar stays in sync with saved state and handles nested mobile sheets correctly.
-- Color Picker keeps values supplied by your app when the form resets.
-- Input and Dropzone keep working when their input elements or associated forms change. Custom Runtime integrations can use their new `refresh` methods to reconnect those elements.
+- In Vue, canceling a checkbox, switch, menu, or popup change now keeps its previous value or open state.
+- React and Vue checkboxes and switches keep their original form-reset values after options such as `readOnly` change. Checkbox Group selection now follows the group value, including when a child has its own checked value.
+- React Navigation Menu no longer crashes when the open content is removed. React Sidebar controls now match saved state, and each nested Sidebar opens and closes its own mobile sheet.
+- Vue and Svelte Color Picker keep app-controlled colors and formats under app control, including after form resets. Initialize a controlled value or format when the picker mounts; remount it to change between controlled and uncontrolled use.
+- Input and Dropzone keep working after their input elements or associated forms change. Custom Runtime integrations can call their new `refresh()` methods after these changes.
 
-Components installed through the CLI include these fixes. Installing the Field Primitive also includes its required Input files.
+Installing the Field Primitive through the CLI now includes its required Input files.

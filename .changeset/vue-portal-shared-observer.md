@@ -3,4 +3,4 @@
 "starwind": patch
 ---
 
-Reduced repeated DOM observation in Vue pages with multiple portaled components, such as menus and tooltips. Portals now share one observer, which reduces the work needed to track changes to the page.
+Reduced background work on Vue pages with multiple menus, tooltips, or other components that use portals. These components now share the work of watching for changes to the page.

@@ -54,6 +54,9 @@ pnpm runtime:size:check
   backward-compatible capabilities, and `major` for breaking changes.
 - Add a Changeset for package-facing changes. Follow the beta release policy for
   `@starwind-ui/vue` and `@starwind-ui/svelte`. Demo workspaces remain private.
+- Before writing or editing a Changeset or changelog, apply the Release Note Writing rules in
+  `docs/release/versioning.md` and use the `write-changeset` skill when available. This requirement
+  applies during implementation and release preparation without an explicit skill request.
 - Follow `docs/release/versioning.md`. Existing component changes schedule a `starwind` patch
   independently from their component bump. A brand-new stable component schedules a `starwind`
   minor.

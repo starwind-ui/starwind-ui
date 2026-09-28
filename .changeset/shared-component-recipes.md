@@ -5,6 +5,4 @@
 "starwind": patch
 ---
 
-Improved how React, Vue, and Svelte components handle form resets, changes made by your app, and nested menus or popups.
-
-Fixed missing files and packages when adding some components through the CLI. The CLI now finds their required dependencies even when their imports are written in a different format.
+Fixed CLI installs that omitted files or packages required by a component. Existing component APIs remain unchanged.

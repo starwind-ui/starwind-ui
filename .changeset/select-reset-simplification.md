@@ -5,6 +5,6 @@
 "starwind": patch
 ---
 
-Simplified React Select form-reset handling and timer cleanup. Canceled resets keep the current selection, and pending resets cannot overwrite a newer value.
+React Select keeps its current selection when a form reset is canceled. A pending reset also preserves any newer value set by the user or app.
 
-Moving a Select to another form while a reset is pending no longer has special handling. Keep it attached to the same form until that reset finishes.
+Keep Select in the same form until a pending reset finishes. Moving it to another form during that reset is outside the supported behavior.
