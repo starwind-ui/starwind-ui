@@ -1,3 +1,4 @@
+import { assertStyledContractFiles } from "../../../styled-output-model/contract-guard.js";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -73,6 +74,7 @@ function prepareFiles(
       }
     }
   }
+  assertStyledContractFiles(args.contracts, files, "svelte");
   const paths = new Set<string>();
   for (const file of files) {
     if (

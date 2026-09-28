@@ -3,12 +3,12 @@
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
   import { colorPicker, colorPickerLabel, colorPickerControl, colorPickerTrigger, colorPickerContent, colorPickerInput, colorPickerValueInputLayout, colorPickerArea, colorPickerAreaThumb, colorPickerSliders, colorPickerSliderActionRow, colorPickerValueFormatRow, colorPickerSeparator, colorPickerChannelSlider, colorPickerChannelSliderThumb, colorPickerChannelInputLayout, colorPickerSwatch, colorPickerSwatchGroup, colorPickerValueSwatch, colorPickerFormatSelectTrigger, colorPickerAction, colorPickerHiddenInput, colorPickerChannelInput, colorPickerValueInput, colorPickerNativeFormatSelectWrapper, colorPickerNativeFormatSelect, colorPickerNativeFormatSelectIcon } from "./variants.js";
-  import { PopoverTrigger } from "@starwind-ui/svelte/popover";
+  import { PopoverTrigger } from "../popover/index.js";
   import { ColorPickerValueSwatch } from "@starwind-ui/svelte/color-picker";
   import { ColorPickerTransparencyGrid } from "@starwind-ui/svelte/color-picker";
   import { ColorPickerValueText } from "@starwind-ui/svelte/color-picker";
 
-  export type ColorPickerTriggerProps = ComponentProps<typeof PopoverTrigger> & {children?:Snippet; showValueText?: boolean; };
+  export type ColorPickerTriggerProps = ComponentProps<typeof PopoverTrigger> & {children?:Snippet; showValueText?: boolean;};
 </script>
 
 <script lang="ts">

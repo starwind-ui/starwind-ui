@@ -66,8 +66,9 @@ export const scrollAreaStyledContract: StyledAdapterContract = {
         extends: [{ type: "htmlAttributes", element: "div" }],
         fields: [
           { name: "overflowEdgeThreshold", optional: true, type: "number" },
+          { name: "autoViewport", optional: true, type: "boolean" },
           { name: "viewportClass", optional: true, type: "string", frameworks: ["astro"] },
-          { name: "viewportClass", optional: true, type: "string", frameworks: ["vue"] },
+          { name: "viewportClass", optional: true, type: "string", frameworks: ["vue", "svelte"] },
           { name: "viewportClassName", optional: true, type: "string", frameworks: ["react"] },
           {
             name: "ref",
@@ -80,8 +81,9 @@ export const scrollAreaStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "overflowEdgeThreshold" },
+          { name: "autoViewport", defaultValue: "true" },
           { name: "viewportClass", frameworks: ["astro"] },
-          { name: "viewportClass", frameworks: ["vue"] },
+          { name: "viewportClass", frameworks: ["vue", "svelte"] },
           { name: "viewportClassName", frameworks: ["react"] },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
@@ -112,54 +114,67 @@ export const scrollAreaStyledContract: StyledAdapterContract = {
           ],
           children: [
             {
-              type: "primitive",
-              component: "scroll-area",
-              part: "Viewport",
-              attrs: [
-                {
-                  name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "scrollAreaViewport",
-                    args: { class: "viewportClass" },
-                  },
-                  frameworks: ["astro"],
-                },
-                {
-                  name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "scrollAreaViewport",
-                    args: { class: "viewportClass" },
-                  },
-                  frameworks: ["vue"],
-                },
-                {
-                  name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "scrollAreaViewport",
-                    args: { class: "viewportClassName" },
-                  },
-                  frameworks: ["react"],
-                },
-                { name: "data-slot", value: { type: "literal", value: "scroll-area-viewport" } },
-              ],
-              children: [
+              type: "conditional",
+              condition: "autoViewport",
+              then: [
                 {
                   type: "primitive",
                   component: "scroll-area",
-                  part: "Content",
+                  part: "Viewport",
                   attrs: [
                     {
                       name: "class",
-                      value: { type: "classVariant", variant: "scrollAreaContent" },
+                      value: {
+                        type: "classVariant",
+                        variant: "scrollAreaViewport",
+                        args: { class: "viewportClass" },
+                      },
+                      frameworks: ["astro"],
                     },
-                    { name: "data-slot", value: { type: "literal", value: "scroll-area-content" } },
+                    {
+                      name: "class",
+                      value: {
+                        type: "classVariant",
+                        variant: "scrollAreaViewport",
+                        args: { class: "viewportClass" },
+                      },
+                      frameworks: ["vue", "svelte"],
+                    },
+                    {
+                      name: "class",
+                      value: {
+                        type: "classVariant",
+                        variant: "scrollAreaViewport",
+                        args: { class: "viewportClassName" },
+                      },
+                      frameworks: ["react"],
+                    },
+                    {
+                      name: "data-slot",
+                      value: { type: "literal", value: "scroll-area-viewport" },
+                    },
                   ],
-                  children: [{ type: "slot" }],
+                  children: [
+                    {
+                      type: "primitive",
+                      component: "scroll-area",
+                      part: "Content",
+                      attrs: [
+                        {
+                          name: "class",
+                          value: { type: "classVariant", variant: "scrollAreaContent" },
+                        },
+                        {
+                          name: "data-slot",
+                          value: { type: "literal", value: "scroll-area-content" },
+                        },
+                      ],
+                      children: [{ type: "slot" }],
+                    },
+                  ],
                 },
               ],
+              else: [{ type: "slot" }],
             },
             {
               type: "slot",

@@ -11,6 +11,38 @@ describe("createPopover", () => {
     vi.useRealTimers();
   });
 
+  it("presents a DOM-owned editor above its dialog and restores presentation on close", async () => {
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("data-sw-dialog-content", "");
+    dialog.innerHTML = `<div data-sw-color-picker data-floating-root><div data-sw-popover><button data-sw-popover-trigger>Open</button><div data-sw-popover-portal><div data-sw-popover-popup style="margin: 7px; right: 9px; bottom: 11px; width: 100px; height: 80px"><input aria-label="Color channel" /></div></div></div></div>`;
+    document.body.append(dialog);
+    dialog.showModal();
+    const root = dialog.querySelector<HTMLElement>("[data-sw-popover]")!;
+    const popup = dialog.querySelector<HTMLElement>("[data-sw-popover-popup]")!;
+    const owner = dialog.querySelector<HTMLElement>("[data-sw-color-picker]")!;
+    const controller = createPopover(root);
+    try {
+      controller.setOpen(true, { emit: false });
+      expect(popup.closest("[data-sw-color-picker]")).toBe(owner);
+      await vi.waitFor(() => expect(popup.matches(":popover-open")).toBe(true));
+      expect(popup.style.margin).toBe("7px");
+      popup.style.margin = "13px";
+      controller.setOpen(false, { emit: false });
+      await vi.waitFor(() => expect(popup.matches(":popover-open")).toBe(false));
+      expect(popup.hasAttribute("popover")).toBe(false);
+      expect(popup.style.right).toBe("");
+      expect(popup.style.bottom).toBe("");
+      controller.setOpen(true, { emit: false });
+      await vi.waitFor(() => expect(popup.matches(":popover-open")).toBe(true));
+      expect(popup.style.margin).toBe("13px");
+    } finally {
+      controller.destroy();
+      dialog.close();
+      dialog.remove();
+    }
+    expect(popup.hasAttribute("popover")).toBe(false);
+  });
+
   it("does not lock body scroll by default while open", () => {
     const popover = createPopover(renderPopover());
 

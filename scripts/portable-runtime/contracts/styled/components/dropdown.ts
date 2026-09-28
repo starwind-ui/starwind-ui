@@ -918,9 +918,15 @@ export const dropdownStyledContract: StyledAdapterContract = {
           children: [
             { type: "slot" },
             {
-              type: "icon",
-              importName: "ChevronRight",
-              attrs: [{ name: "class", value: { type: "literal", value: "ml-auto size-4" } }],
+              type: "slot",
+              name: "icon",
+              fallback: [
+                {
+                  type: "icon",
+                  importName: "ChevronRight",
+                  attrs: [{ name: "class", value: { type: "literal", value: "ml-auto size-4" } }],
+                },
+              ],
             },
           ],
         },

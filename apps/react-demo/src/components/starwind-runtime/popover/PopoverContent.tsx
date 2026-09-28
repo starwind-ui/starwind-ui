@@ -44,8 +44,8 @@ function PopoverContent(props: PopoverContentProps) {
         sideOffset={sideOffset}
         avoidCollisions={avoidCollisions}
         collisionStrategy={collisionStrategy}
-        {...rest}
         data-slot="popover-content"
+        {...rest}
       >
         {children}
       </PopoverPrimitive.Popup>

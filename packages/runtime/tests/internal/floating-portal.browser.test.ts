@@ -11,6 +11,25 @@ afterEach(() => {
 });
 
 describe("floating portal placement", () => {
+  it("keeps DOM-owned ColorPicker controls under their owner in every placement mode", () => {
+    document.body.innerHTML = `<div data-sw-popover><div data-sw-color-picker data-floating-root><div id="local"></div><div data-sw-color-picker id="nested"></div><div id="portal"></div></div></div><div id="outside"></div>`;
+    const wrapper = document.querySelector<HTMLElement>("#portal")!;
+    const owner = wrapper.closest<HTMLElement>("[data-sw-color-picker]")!;
+    const reference = document.querySelector<HTMLElement>("[data-sw-popover]")!;
+    for (const mode of ["runtime", "framework"] as const) {
+      expect(resolvePortalPlacement(wrapper, { reference, mode }).target).toBe(owner);
+      expect(
+        resolvePortalPlacement(wrapper, { reference, mode, container: "#outside" }).target,
+      ).toBe(owner);
+      expect(
+        resolvePortalPlacement(wrapper, { reference, mode, container: "#nested" }).target,
+      ).toBe(owner);
+      expect(resolvePortalPlacement(wrapper, { reference, mode, container: "#local" }).target).toBe(
+        document.querySelector("#local"),
+      );
+    }
+  });
+
   it("moves and restores one Runtime-owned public wrapper", () => {
     const root = document.createElement("div");
     const before = document.createElement("span");

@@ -65,6 +65,9 @@ export function resolvePortalPlacement(
   const disabled = options.disabled ?? wrapper.hasAttribute("data-disabled");
   const mode = options.mode ?? readPortalPlacementMode(wrapper);
   const reference = options.reference ?? wrapper;
+  // ColorPicker delegates input events through its DOM root. Its editors and
+  // nested overlays must retain that owner in every framework.
+  const domOwner = wrapper.closest<HTMLElement>("[data-sw-color-picker]");
   const attributeContainer = wrapper.getAttribute("data-container");
   const container = options.container ?? attributeContainer;
   const hasExplicitContainerIntent =
@@ -73,10 +76,17 @@ export function resolvePortalPlacement(
       : Boolean(attributeContainer?.trim());
   const resolvedContainer = resolvePortalContainer(wrapper.ownerDocument, container);
   const explicitTarget =
-    resolvedContainer && !wrapper.contains(resolvedContainer) ? resolvedContainer : null;
-  const fallbackTarget = options.fallbackTarget ?? resolveFloatingPortalTarget(reference);
+    resolvedContainer &&
+    !wrapper.contains(resolvedContainer) &&
+    (!domOwner || resolvedContainer.closest("[data-sw-color-picker]") === domOwner)
+      ? resolvedContainer
+      : null;
+  const fallbackTarget =
+    domOwner ?? options.fallbackTarget ?? resolveFloatingPortalTarget(reference);
   const resolvedExplicitTarget = explicitTarget
-    ? resolveFloatingPortalTarget(reference, { explicitTargets: [explicitTarget] })
+    ? domOwner && explicitTarget instanceof HTMLElement
+      ? explicitTarget
+      : resolveFloatingPortalTarget(reference, { explicitTargets: [explicitTarget] })
     : null;
   const runtimeTarget =
     explicitTarget && resolvedExplicitTarget === explicitTarget
@@ -91,7 +101,10 @@ export function resolvePortalPlacement(
   const reportedTarget = Object.hasOwn(options, "container")
     ? null
     : resolveFrameworkReportedTarget(wrapper, report, reference, explicitContainerTarget);
-  const target = reportedTarget ?? runtimeTarget;
+  const target =
+    reportedTarget && (!domOwner || reportedTarget.closest("[data-sw-color-picker]") === domOwner)
+      ? reportedTarget
+      : runtimeTarget;
   const ready =
     disabled ||
     mode === "runtime" ||

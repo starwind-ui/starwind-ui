@@ -16,7 +16,7 @@
   import { SelectItem } from "../select/index.js";
   import "./styles.css";
 
-  export type ColorPickerInputProps = HTMLAttributes<HTMLDivElement> & {ref?:(node:HTMLDivElement|null)=>void} & {children?:Snippet; formatControl?: "select" | "native" | "none"; formats?: readonly import("@starwind-ui/svelte/color-picker").ColorPickerFormat[]; formatContentSize?: "sm" | "md" | "lg"; portalContainer?: string; disablePortal?: boolean; };
+  export type ColorPickerInputProps = HTMLAttributes<HTMLDivElement> & {ref?:(node:HTMLDivElement|null)=>void} & {children?:Snippet; formatControl?: "select" | "native" | "none"; formats?: readonly import("@starwind-ui/svelte/color-picker").ColorPickerFormat[]; formatContentSize?: "sm" | "md" | "lg"; portalContainer?: string; disablePortal?: boolean;};
 </script>
 
 <script lang="ts">

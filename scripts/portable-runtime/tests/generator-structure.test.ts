@@ -556,7 +556,10 @@ describe("portable runtime generator structure", () => {
 
     expect(frameworkWrapperGenerator).toContain("getPrimitiveFrameworkAdapterTarget");
     expect(frameworkWrapperGenerator).toContain(".styled");
-    expect(frameworkWrapperGenerator).toContain(".write(options)");
+    expect(frameworkWrapperGenerator).toContain("styledAdapter.write({");
+    expect(frameworkWrapperGenerator).toContain(
+      "assertStyledContractFiles(options.contracts, files, target)",
+    );
   });
 
   it("moves specialized primitive generation to route-free registry entries", async () => {

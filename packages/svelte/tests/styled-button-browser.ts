@@ -102,6 +102,8 @@ console.log(JSON.stringify({ body: render(App).body }));`,
         "anchor-a:null",
         "anchor-b:A",
         "button:null",
+        "button:BUTTON",
+        "button:null",
         "anchor-b:null",
       ],
       remainingNodes: 0,
@@ -189,7 +191,13 @@ assert(JSON.stringify(app.snapshot().refs) === JSON.stringify(setup.refs), "Clas
 assert(button.classList.contains("next-object") && anchor.classList.contains("next-class"), "Updated classes were lost");
 app.replaceRef(); await settle();
 assert(anchor === document.getElementById("native-anchor"), "Replacing the ref replaced the anchor");
+const refsBeforeAttachment = app.snapshot().refs;
 app.replaceAttachment(); await settle();
+// Svelte invalidates the forwarded prop getter when this spread object changes.
+// Its reactive ref attachment cleans up before attaching to the same native node.
+assert(button === document.getElementById("native-button"), "Attachment replacement replaced the button");
+const refsAfterAttachment = JSON.stringify([...refsBeforeAttachment, "button:null", "button:BUTTON"]);
+assert(JSON.stringify(app.snapshot().refs) === refsAfterAttachment, "Attachment replacement did not balance its ref cleanup and setup");
 app.setDisabled(true); await settle();
 assert(button.disabled === true, "Native disabled button was lost");
 button.click(); await settle();
@@ -197,6 +205,7 @@ assert(app.snapshot().clicks === 1, "Disabled button emitted a click");
 assert(!anchor.hasAttribute("href") && anchor.getAttribute("aria-disabled") === "true" && anchor.hasAttribute("data-disabled") && anchor.tabIndex === -1, "Disabled anchor semantics");
 app.setDisabled(false); await settle();
 assert(anchor.getAttribute("href") === "/docs" && !anchor.hasAttribute("aria-disabled") && anchor.tabIndex === 3, "Anchor did not restore its native state");
+assert(JSON.stringify(app.snapshot().refs) === refsAfterAttachment, "Disabled updates recreated refs");
 const select = document.getElementById("composed-select");
 const dialog = document.getElementById("composed-dialog");
 const popover = document.getElementById("composed-popover");

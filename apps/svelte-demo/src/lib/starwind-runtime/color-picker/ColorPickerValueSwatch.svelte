@@ -7,7 +7,7 @@
   import { ColorPickerTransparencyGrid } from "@starwind-ui/svelte/color-picker";
   import "./styles.css";
 
-  export type ColorPickerValueSwatchProps = ComponentProps<typeof ColorPickerValueSwatch> & {children?:Snippet;  };
+  export type ColorPickerValueSwatchProps = ComponentProps<typeof ColorPickerValueSwatch> & {children?:Snippet; };
 </script>
 
 <script lang="ts">

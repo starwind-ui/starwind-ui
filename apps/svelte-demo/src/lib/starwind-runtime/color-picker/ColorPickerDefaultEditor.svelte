@@ -11,7 +11,7 @@
   import { default as ColorPickerSwatch } from "./ColorPickerSwatch.svelte";
   import { default as ColorPickerClear } from "./ColorPickerClear.svelte";
 
-  export type ColorPickerDefaultEditorProps = {} & {children?:Snippet; size?: "sm" | "md" | "lg"; showEyeDropper?: boolean; portalContainer?: string; disablePortal?: boolean; formatControl?: "select" | "native" | "none"; formats?: readonly import("@starwind-ui/svelte/color-picker").ColorPickerFormat[]; swatches?: readonly (import("@starwind-ui/svelte/color-picker").ColorPickerValue | { value: import("@starwind-ui/svelte/color-picker").ColorPickerValue; label: string; disabled?: boolean })[]; };
+  export type ColorPickerDefaultEditorProps = {} & {children?:Snippet; size?: "sm" | "md" | "lg"; showEyeDropper?: boolean; portalContainer?: string; disablePortal?: boolean; formatControl?: "select" | "native" | "none"; formats?: readonly import("@starwind-ui/svelte/color-picker").ColorPickerFormat[]; swatches?: readonly (import("@starwind-ui/svelte/color-picker").ColorPickerValue | { value: import("@starwind-ui/svelte/color-picker").ColorPickerValue; label: string; disabled?: boolean })[];};
 </script>
 
 <script lang="ts">

@@ -3,7 +3,6 @@ import type {
   StyledOutputComponentGroup,
   StyledOutputRenderNode,
 } from "../../../styled-output-model/index.js";
-import { printSvelteNativePopupPresentation } from "./native-popup.js";
 import { sveltePrimitiveImport } from "./imports.js";
 import { supportsSvelteScope } from "./scope.js";
 import type { SvelteStyledComponentProjection, SvelteStyledRenderOptions } from "./types.js";
@@ -119,57 +118,6 @@ export function specializeSvelteStyledColorPicker(
     ];
     component.render = [overlayOwner];
   }
-  // The public Color Picker slots belong on the existing native Popover owners.
-  // Reuse its recipe and Portal composition without a second overlay implementation.
-  if (trigger || content) {
-    const owner = component.render[0];
-    if (owner?.type !== "component" || owner.component !== "popover")
-      fail("missing Popover composition");
-    const popup = owner as Extract<StyledOutputRenderNode, { type: "component" }>;
-    let attrs = popup.attrs;
-    if (content) {
-      attrs = attrs.filter(
-        (attr) => !["portalContainer", "disablePortal", "exitMotion"].includes(attr.name),
-      );
-      const classes = attrs.find((attr) => attr.name === "class");
-      if (!classes?.value) fail("missing content recipe");
-      classes!.value = {
-        type: "class-join",
-        items: [{ type: "raw", code: "popoverContent({ exitMotion })" }, classes!.value!],
-      };
-    }
-    const native: StyledOutputRenderNode = {
-      type: "primitive",
-      component: "popover",
-      part: trigger ? "Trigger" : "Popup",
-      attrs,
-      children: popup.children,
-      selfClosing: false,
-    };
-    component.render = content
-      ? [
-          {
-            type: "primitive",
-            component: "popover",
-            part: "Portal",
-            attrs: [
-              {
-                name: "container",
-                value: { type: "raw", code: "ownedPortalContainer" },
-              },
-              { name: "ref", value: { type: "variable", name: "capturePortal" } },
-              {
-                name: "disabled",
-                value: { type: "raw", code: "disablePortal || !portalReady || dialogLocal" },
-              },
-              { name: "data-slot", value: { type: "literal", value: "popover-portal" } },
-            ],
-            children: [native],
-            selfClosing: false,
-          },
-        ]
-      : [native];
-  }
   const source = sveltePrimitiveImport("color-picker", options);
   const extra = (component.props?.fields ?? [])
     .filter(
@@ -187,7 +135,7 @@ export function specializeSvelteStyledColorPicker(
     : trigger
       ? "PopoverTrigger"
       : content
-        ? "PopoverPopup"
+        ? "PopoverContent"
         : undefined;
   const inherited = root
     ? 'Omit<ComponentProps<typeof ColorPickerRoot>, "children" | "allowEmpty"> & Pick<ComponentProps<typeof Popover>, "open" | "defaultOpen" | "onOpenChange" | "onCloseComplete" | "closeOnEscape" | "closeOnOutsideInteract" | "modal" | "openOnHover" | "closeDelay">'
@@ -223,10 +171,7 @@ export function specializeSvelteStyledColorPicker(
       },
       ...(part ? [{ source, names: [nativeName!] }] : []),
       ...(root ? [{ source: "../popover/index.js", names: ["Popover"] }] : []),
-      ...(trigger || content
-        ? [{ source: sveltePrimitiveImport("popover", options), names: [nativeName!] }]
-        : []),
-      ...(content ? [{ source: "../popover/variants.js", names: ["popoverContent"] }] : []),
+      ...(trigger || content ? [{ source: "../popover/index.js", names: [nativeName!] }] : []),
       ...(input
         ? [
             { source: "svelte", names: ["untrack"] },
@@ -235,45 +180,13 @@ export function specializeSvelteStyledColorPicker(
           ]
         : []),
     ],
-    publicTypes: `export type ${name}Props = ${inherited}${variants} & {children?:Snippet; ${extra} ${content ? 'exitMotion?: "popover" | "fade"; portalContainer?: string; disablePortal?:boolean;' : ""}};`,
+    publicTypes: `export type ${name}Props = ${inherited}${variants} & {children?:Snippet; ${extra}};`,
     destructure: props,
     rest: component.destructure?.rest,
-    setup: content
+    setup: input
       ? [
-          printSvelteNativePopupPresentation(),
-          `let localPortalContainer = $state.raw<HTMLElement>();
-let portalOwner = $state.raw<HTMLElement>();
-let portalNode = $state.raw<HTMLDivElement>();
-let portalReady = $state(false);
-let dialogLocal = $state(false);
-const capturePortal = (node: HTMLDivElement | null) => {
-  if (!node) return;
-  portalNode = node;
-  portalOwner = node.parentElement?.closest<HTMLElement>("[data-sw-color-picker]") ?? undefined;
-  const local = node.parentElement?.closest<HTMLElement>("[data-floating-root]");
-  localPortalContainer = local && local.closest("[data-sw-color-picker]") === portalOwner ? local : portalOwner;
-  dialogLocal = Boolean(portalOwner?.closest("dialog[data-sw-dialog-content]"));
-  portalReady = true;
-};
-const ownedPortalContainer = $derived.by(() => {
-  const owner = portalOwner;
-  if (!owner || !portalContainer) return localPortalContainer;
-  let target: HTMLElement | null = null;
-  try { target = owner.ownerDocument.querySelector<HTMLElement>(portalContainer); } catch { /* Invalid selectors retain the local owner. */ }
-  return target?.closest("[data-sw-color-picker]") === owner && !portalNode?.contains(target)
-    ? target : localPortalContainer;
-});
-$effect(() => {
-  const popup = portalNode?.querySelector<HTMLElement>("[data-sw-popover-popup]");
-  const dialog = portalOwner?.closest<HTMLDialogElement>("dialog[data-sw-dialog-content]");
-  if (!dialogLocal || !popup || !dialog) return;
-  return connectNativePopup(popup, () => dialog.open);
-});`,
+          `const attachRef: Attachment<HTMLDivElement> = (node) => { $effect(() => { const callback=ref; untrack(()=>callback?.(node)); return()=>untrack(()=>callback?.(null)); }); };`,
         ]
-      : input
-        ? [
-            `const attachRef: Attachment<HTMLDivElement> = (node) => { $effect(() => { const callback=ref; untrack(()=>callback?.(node)); return()=>untrack(()=>callback?.(null)); }); };`,
-          ]
-        : [],
+      : [],
   };
 }

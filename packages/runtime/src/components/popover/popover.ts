@@ -1,3 +1,4 @@
+import { presentDomOwnedPopup } from "../../internal/dom-owned-popup";
 import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
@@ -177,6 +178,7 @@ class PopoverController implements PopoverInstance {
   private openState: boolean;
   private pendingControlledCloseRequest: OpenRequest | null = null;
   private pendingControlledOpenRequest: OpenRequest | null = null;
+  private releasePresentation: (() => void) | undefined;
   private previousActiveElement: HTMLElement | null = null;
   private portalSurfaceAbortController: AbortController | null = null;
   private registeredOpenParent: PopoverController | null = null;
@@ -234,6 +236,8 @@ class PopoverController implements PopoverInstance {
         this.registerAsOpenChildOnParent();
       },
       onCloseComplete: ({ request }) => {
+        this.releasePresentation?.();
+        this.releasePresentation = undefined;
         this.unregisterAsOpenChildOnParent();
         this.restoreFocus();
         this.notifyCloseComplete(createCloseCompleteDetails(request));
@@ -243,9 +247,12 @@ class PopoverController implements PopoverInstance {
         this.requestOpen(false, { event, reason: "escape-key" });
       },
       onImmediateClose: () => {
+        this.releasePresentation?.();
+        this.releasePresentation = undefined;
         this.unregisterAsOpenChildOnParent();
       },
       onOpenFrame: () => {
+        this.releasePresentation ??= presentDomOwnedPopup(this.elements.popup);
         focusFirstElement(this.elements.popup, { preventScroll: true });
       },
       onOwnerCloseRequest: () => {
@@ -332,6 +339,8 @@ class PopoverController implements PopoverInstance {
     this.portalSurfaceAbortController?.abort();
     this.clearHoverCloseTimer();
     this.lifecycle.destroy();
+    this.releasePresentation?.();
+    this.releasePresentation = undefined;
     this.openChangeSubscribers.clear();
     this.closeCompleteSubscribers.clear();
     this.unregisterAsOpenChildOnParent();

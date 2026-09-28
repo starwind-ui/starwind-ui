@@ -34,6 +34,10 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   defaultPressed: "Sets the initial pressed state when the control is uncontrolled.",
   defaultValue: "Sets the initial value when the component is uncontrolled.",
   delay: "Sets the delay in milliseconds before the behavior begins.",
+  autoViewport:
+    "Automatically renders the viewport and content wrappers. Set false to compose those parts yourself.",
+  initial:
+    "Supplies the Astro server-render projection for this Color Picker part before browser initialization.",
   disablePortal: "Keeps the public Portal wrapper inline instead of moving it to a target.",
   dirty: "Marks the field as changed from its initial value.",
   disableHoverableContent: "Prevents pointer movement into floating content from keeping it open.",

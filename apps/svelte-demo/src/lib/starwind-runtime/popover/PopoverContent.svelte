@@ -37,8 +37,8 @@
     sideOffset={sideOffset}
     avoidCollisions={avoidCollisions}
     collisionStrategy={collisionStrategy}
-    {...rest}
     data-slot={"popover-content"}
+    {...rest}
   >
     {@render children?.()}
   </PopoverPopup>

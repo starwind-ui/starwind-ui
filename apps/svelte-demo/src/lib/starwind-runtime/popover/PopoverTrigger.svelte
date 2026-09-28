@@ -22,8 +22,8 @@
 
 <PopoverTrigger
   class={triggerClassName}
-  {...rest}
   data-slot={"popover-trigger"}
+  {...rest}
   child={child}
 >
   {@render children?.()}

@@ -9,7 +9,7 @@
   import { ColorPickerAreaInput } from "@starwind-ui/svelte/color-picker";
   import "./styles.css";
 
-  export type ColorPickerAreaProps = ComponentProps<typeof ColorPickerArea> & {children?:Snippet;  };
+  export type ColorPickerAreaProps = ComponentProps<typeof ColorPickerArea> & {children?:Snippet; };
 </script>
 
 <script lang="ts">

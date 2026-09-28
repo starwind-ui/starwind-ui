@@ -46,7 +46,7 @@ export function specializeSvelteStyledScrollArea(
   const fields = component.props!.fields.filter((field) => supportsSvelteScope(field.targetScopes));
   const allowed =
     part === "Root"
-      ? ["overflowEdgeThreshold"]
+      ? ["overflowEdgeThreshold", "autoViewport", "viewportClass"]
       : part === "Scrollbar"
         ? ["keepMounted", "orientation"]
         : [];
@@ -57,9 +57,12 @@ export function specializeSvelteStyledScrollArea(
   );
   props.push({ name: "children" });
   if (part === "Root") {
-    const [viewport, scrollbar, corner] = owner.children;
+    const [composition, scrollbar, corner] = owner.children;
+    const viewport = composition?.type === "condition" ? composition.then[0] : undefined;
     if (
       owner.children.length !== 3 ||
+      composition?.type !== "condition" ||
+      composition.condition !== "autoViewport" ||
       viewport?.type !== "primitive" ||
       viewport.part !== "Viewport" ||
       viewport.children[0]?.type !== "primitive" ||
@@ -75,17 +78,7 @@ export function specializeSvelteStyledScrollArea(
     );
     if (!viewportClass) return fail("requires the contract viewport class");
     viewportClass.targetScopes = ["svelte"];
-    owner.children[0] = {
-      type: "condition",
-      condition: "autoViewport",
-      then: [viewport],
-      else: [{ type: "slot", fallback: [] }],
-    };
-    props.push(
-      { name: "autoViewport", defaultValue: "true" },
-      { name: "viewportClass" },
-      { name: "scrollbar" },
-    );
+    props.push({ name: "scrollbar" });
   }
   return {
     imports: [

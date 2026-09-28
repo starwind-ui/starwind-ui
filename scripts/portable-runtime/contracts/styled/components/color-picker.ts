@@ -1381,6 +1381,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       props: {
         extends: [{ type: "htmlAttributes", element: "div" }],
         fields: [
+          { name: "step", optional: true, type: "number" },
           {
             name: "channel",
             type: 'import("@starwind-ui/runtime/color-picker").ColorPickerChannel',
@@ -1390,6 +1391,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
+          { name: "step" },
           { name: "channel" },
           { name: "orientation", defaultValue: '"horizontal"' },
           { name: "class", alias: "className" },
@@ -1401,6 +1403,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           "ChannelSlider",
           [
             { name: "channel", value: variable("channel") },
+            { name: "step", value: variable("step") },
             { name: "orientation", value: variable("orientation") },
             {
               name: "class",
@@ -1611,3 +1614,32 @@ export const colorPickerStyledContract: StyledAdapterContract = {
     simplePart("ColorPickerClear", "Clear", "button", "colorPickerAction", "color-picker-clear"),
   ],
 };
+
+// Astro carries initial server-render projections through its slot boundary.
+export const colorPickerAstroProjectionTypes: Record<string, string> = {
+  ColorPickerDefaultEditor: "ColorPickerRenderProjection",
+  ColorPickerInput: "ColorPickerRenderProjection",
+  ColorPickerTrigger: "ColorPickerRenderProjection",
+  ColorPickerContent: "ColorPickerRenderProjection",
+  ColorPickerArea: "ColorPickerAreaProjection",
+  ColorPickerChannelSlider: "ColorPickerRenderProjection",
+  ColorPickerChannelInput: "ColorPickerInitialPartProjection",
+  ColorPickerValueSwatch: "ColorPickerRenderProjection",
+  ColorPickerSwatchGroup: "ColorPickerInitialPartProjection",
+  ColorPickerSwatch: "ColorPickerRenderProjection",
+  ColorPickerEyeDropper: "ColorPickerInitialPartProjection",
+  ColorPickerClear: "ColorPickerInitialPartProjection",
+};
+
+for (const component of colorPickerStyledContract.components) {
+  const projectionType = colorPickerAstroProjectionTypes[component.exportName];
+  if (!projectionType) continue;
+  if (component.props)
+    (component.props.fields ??= []).push({
+      name: "initial",
+      optional: true,
+      frameworks: ["astro"],
+      type: `import("${projectionType === "ColorPickerInitialPartProjection" ? "@starwind-ui/runtime/color-picker" : "@starwind-ui/astro/color-picker"}").${projectionType}`,
+    });
+  component.destructure?.props.unshift({ name: "initial", frameworks: ["astro"] });
+}

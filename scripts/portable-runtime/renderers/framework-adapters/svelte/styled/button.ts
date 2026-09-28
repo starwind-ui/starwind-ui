@@ -116,7 +116,6 @@ export function specializeSvelteStyledButton(
 type CommonProps = ${common};
 type AnchorProps = Omit<HTMLAnchorAttributes, "type" | "children"> & CommonProps & {
   children?: NativeButtonProps["children"];
-  child?: never;
   disabled?: boolean;
   ref?: (element: HTMLAnchorElement | null) => void;
 } & ({ as: "a"; href?: string } | { as?: "a" | "button"; href: string });

@@ -5,7 +5,7 @@
   import { colorPicker, colorPickerLabel, colorPickerControl, colorPickerTrigger, colorPickerContent, colorPickerInput, colorPickerValueInputLayout, colorPickerArea, colorPickerAreaThumb, colorPickerSliders, colorPickerSliderActionRow, colorPickerValueFormatRow, colorPickerSeparator, colorPickerChannelSlider, colorPickerChannelSliderThumb, colorPickerChannelInputLayout, colorPickerSwatch, colorPickerSwatchGroup, colorPickerValueSwatch, colorPickerFormatSelectTrigger, colorPickerAction, colorPickerHiddenInput, colorPickerChannelInput, colorPickerValueInput, colorPickerNativeFormatSelectWrapper, colorPickerNativeFormatSelect, colorPickerNativeFormatSelectIcon } from "./variants.js";
   import { ColorPickerSwatchGroup } from "@starwind-ui/svelte/color-picker";
 
-  export type ColorPickerSwatchGroupProps = ComponentProps<typeof ColorPickerSwatchGroup> & {children?:Snippet;  };
+  export type ColorPickerSwatchGroupProps = ComponentProps<typeof ColorPickerSwatchGroup> & {children?:Snippet; };
 </script>
 
 <script lang="ts">

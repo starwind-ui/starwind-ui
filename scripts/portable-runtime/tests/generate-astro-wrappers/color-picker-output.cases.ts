@@ -224,7 +224,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(html).toContain('data-slot="color-picker-swatch"');
     expect(html).toMatch(/<button(?=[^>]*data-sw-color-picker-swatch)(?=[^>]*data-selected)[^>]*>/);
     expect(html).toMatch(
-      /data-slot="popover-content"[\s\S]*data-slot="color-picker-area"[\s\S]*data-slot="color-picker-channel-slider"[\s\S]*data-slot="color-picker-value-input"/,
+      /data-slot="color-picker-content"[\s\S]*data-slot="color-picker-area"[\s\S]*data-slot="color-picker-channel-slider"[\s\S]*data-slot="color-picker-value-input"/,
     );
     expect(html.match(/--sw-color-picker-area-x:/g)).toHaveLength(4);
     expect(html.match(/--sw-color-picker-channel-position:/g)).toHaveLength(7);
