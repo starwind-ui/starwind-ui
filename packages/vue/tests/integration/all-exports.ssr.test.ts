@@ -1392,6 +1392,8 @@ describe("Vue source package and Styled SSR inventory", () => {
     expect(Object.keys(StyledAvatarPackage).sort()).toEqual([
       "Avatar",
       "AvatarFallback",
+      "AvatarGroup",
+      "AvatarGroupCount",
       "AvatarImage",
       "AvatarVariants",
       "default",
