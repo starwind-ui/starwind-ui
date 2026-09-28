@@ -7580,6 +7580,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         publicExports: [
           "Avatar",
           "AvatarFallback",
+          "AvatarGroup",
+          "AvatarGroupCount",
           "AvatarImage",
         ],
         frameworkAvailability: {
@@ -7600,7 +7602,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "avatar",
             exportName: "AvatarVariants",
-            baseClassCount: 7,
+            baseClassCount: 8,
             options: [
               {
                 name: "variant",
@@ -7635,9 +7637,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             compoundVariantCount: 0,
           },
           {
+            name: "avatarGroup",
+            exportName: "AvatarVariants",
+            baseClassCount: 7,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "avatarGroupCount",
+            exportName: "AvatarVariants",
+            baseClassCount: 17,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
             name: "avatarImage",
             exportName: "AvatarVariants",
-            baseClassCount: 5,
+            baseClassCount: 4,
             options: [],
             compoundVariantCount: 0,
           },
@@ -7645,9 +7661,65 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         slots: [
           "avatar",
           "avatar-fallback",
+          "avatar-group",
+          "avatar-group-count",
           "avatar-image",
         ],
-        stateSelectors: [],
+        stateSelectors: [
+          {
+            attribute: "data-size",
+            selector: "data-size",
+            source: "render-attribute",
+          },
+          {
+            attribute: "data-size",
+            value: "lg",
+            selector: "group-has-data-[size=lg]/avatar-group:[&>svg]:size-5",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
+            value: "lg",
+            selector: "group-has-data-[size=lg]/avatar-group:size-12",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
+            value: "lg",
+            selector: "has-data-[size=lg]:-space-x-3",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
+            value: "sm",
+            selector: "group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
+            value: "sm",
+            selector: "group-has-data-[size=sm]/avatar-group:size-8",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
+            value: "sm",
+            selector: "has-data-[size=sm]:-space-x-2",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "avatar",
+            selector: "*:data-[slot=avatar]:ring-2",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "avatar",
+            selector: "*:data-[slot=avatar]:ring-background",
+            source: "variant-class",
+          },
+        ],
       },
       {
         id: "badge",
@@ -17971,32 +18043,44 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       publicExports: [
         "Avatar",
         "AvatarFallback",
+        "AvatarGroup",
+        "AvatarGroupCount",
         "AvatarImage",
       ],
       defaultExport: {
         Root: "Avatar",
         Image: "AvatarImage",
         Fallback: "AvatarFallback",
+        Group: "AvatarGroup",
+        GroupCount: "AvatarGroupCount",
       },
       variantCollectionName: "AvatarVariants",
       variantNames: [
         "avatar",
         "avatarFallback",
+        "avatarGroup",
+        "avatarGroupCount",
         "avatarImage",
       ],
       slots: [
         "avatar",
         "avatar-fallback",
+        "avatar-group",
+        "avatar-group-count",
         "avatar-image",
       ],
       aliases: [
         "avatar",
         "Avatar",
         "AvatarFallback",
+        "AvatarGroup",
+        "AvatarGroupCount",
         "AvatarImage",
         "Root",
         "Image",
         "Fallback",
+        "Group",
+        "GroupCount",
         "AvatarVariants",
         "Content & Media",
         "content",
@@ -18108,6 +18192,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 },
               ],
             },
+            {
+              exportName: "AvatarGroup",
+              props: [],
+              inheritance: [
+                {
+                  key: "html:div",
+                  kind: "element-attributes",
+                  displayName: "div attributes",
+                  element: "div",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "AvatarGroupCount",
+              props: [],
+              inheritance: [
+                {
+                  key: "html:div",
+                  kind: "element-attributes",
+                  displayName: "div attributes",
+                  element: "div",
+                  omittedProps: [],
+                },
+              ],
+            },
           ],
         },
         react: {
@@ -18206,6 +18316,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "element-attributes",
                   displayName: "span attributes",
                   element: "span",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "AvatarGroup",
+              props: [],
+              inheritance: [
+                {
+                  key: "html:div",
+                  kind: "element-attributes",
+                  displayName: "div attributes",
+                  element: "div",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "AvatarGroupCount",
+              props: [],
+              inheritance: [
+                {
+                  key: "html:div",
+                  kind: "element-attributes",
+                  displayName: "div attributes",
+                  element: "div",
                   omittedProps: [],
                 },
               ],

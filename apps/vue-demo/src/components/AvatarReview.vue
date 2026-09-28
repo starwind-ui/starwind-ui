@@ -4,6 +4,8 @@ import { ref } from "vue";
 
 import Avatar from "./starwind-runtime/avatar/Avatar.vue";
 import AvatarFallback from "./starwind-runtime/avatar/AvatarFallback.vue";
+import AvatarGroup from "./starwind-runtime/avatar/AvatarGroup.vue";
+import AvatarGroupCount from "./starwind-runtime/avatar/AvatarGroupCount.vue";
 import AvatarImage from "./starwind-runtime/avatar/AvatarImage.vue";
 
 const props = defineProps<{ styledOnly?: boolean }>();
@@ -38,6 +40,16 @@ const styledFallback = ref<InstanceType<typeof AvatarFallback> | null>(null);
       </output>
     </div>
 
+    <article class="scenario space-y-4">
+      <h3>Avatar groups</h3>
+      <AvatarGroup v-for="{ size } in avatarExamples" :key="size" :data-avatar-group-test="size">
+        <Avatar v-for="name in ['First', 'Second', 'Third']" :key="name" :size="size">
+          <AvatarImage :src="loadedSource" :alt="`${name} ${size} avatar`" />
+          <AvatarFallback>{{ name[0] }}</AvatarFallback>
+        </Avatar>
+        <AvatarGroupCount>+3</AvatarGroupCount>
+      </AvatarGroup>
+    </article>
     <div class="review-grid avatar-review-grid">
       <article v-if="!props.styledOnly" class="scenario">
         <h3>Primitive loaded image</h3>

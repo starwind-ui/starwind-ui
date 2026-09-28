@@ -22,6 +22,10 @@ type NativeStyledOwner = {
 export const nativeStyledOwners: Readonly<
   Record<string, Readonly<Record<string, NativeStyledOwner>>>
 > = {
+  avatar: {
+    AvatarGroup: { tag: "div", element: "HTMLDivElement" },
+    AvatarGroupCount: { tag: "div", element: "HTMLDivElement" },
+  },
   "input-group": {
     InputGroup: { tag: "div", element: "HTMLDivElement" },
     InputGroupAddon: { tag: "div", element: "HTMLDivElement" },

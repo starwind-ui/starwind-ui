@@ -3,7 +3,7 @@
   import { AvatarImage as PrimitivePart } from "@starwind-ui/svelte/avatar";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
-  import { avatar, avatarFallback, avatarImage } from "./variants.js";
+  import { avatar, avatarFallback, avatarGroup, avatarGroupCount, avatarImage } from "./variants.js";
   import { AvatarImage } from "@starwind-ui/svelte/avatar";
 
   export type AvatarImageProps = ComponentProps<typeof PrimitivePart>;

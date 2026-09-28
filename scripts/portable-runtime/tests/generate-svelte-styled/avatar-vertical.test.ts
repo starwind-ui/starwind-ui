@@ -6,7 +6,7 @@ import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/sve
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
 
 describe("Avatar vertical", () => {
-  it("projects and compiles the contract's three Primitive owners", () => {
+  it("projects and compiles the contract's Primitive and group owners", () => {
     const group = projectStyledOutputComponentGroup(avatarStyledContract);
     const before = structuredClone(group);
     const projection = projectSvelteStyledGroup(group, {
@@ -17,9 +17,11 @@ describe("Avatar vertical", () => {
       "Avatar",
       "AvatarImage",
       "AvatarFallback",
+      "AvatarGroup",
+      "AvatarGroupCount",
     ]);
     const files = renderSvelteStyledFiles(projection);
-    expect(files).toHaveLength(5);
+    expect(files).toHaveLength(7);
     for (const file of files.filter((entry) => entry.relativePath.endsWith(".svelte"))) {
       for (const generate of ["client", "server"] as const) {
         expect(compile(file.content, { filename: file.relativePath, generate }).warnings).toEqual(

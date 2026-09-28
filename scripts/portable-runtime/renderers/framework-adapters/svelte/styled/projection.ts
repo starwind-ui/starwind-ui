@@ -168,7 +168,9 @@ export function projectSvelteStyledComponent(
   const isCollapsible = group.component === "collapsible";
   const isScrollArea = group.component === "scroll-area";
   const isProgress = group.component === "progress";
-  const isAvatar = group.component === "avatar";
+  const isAvatar =
+    group.component === "avatar" &&
+    ["Avatar", "AvatarImage", "AvatarFallback"].includes(component.exportName);
   const isVideo = group.component === "video";
   const valuePolicy = nativeValuePolicy(group.component, component.exportName);
   const isNativeForm = Boolean(nativeValuePolicy(group.component));

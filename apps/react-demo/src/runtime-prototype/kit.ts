@@ -45,7 +45,13 @@ export {
   AlertDialogTrigger,
 } from "../components/starwind-runtime/alert-dialog";
 export { AspectRatio } from "../components/starwind-runtime/aspect-ratio";
-export { Avatar, AvatarFallback, AvatarImage } from "../components/starwind-runtime/avatar";
+export {
+  Avatar,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
+  AvatarImage,
+} from "../components/starwind-runtime/avatar";
 export { Badge } from "../components/starwind-runtime/badge";
 export {
   Breadcrumb,

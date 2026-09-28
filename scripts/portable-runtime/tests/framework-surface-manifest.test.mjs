@@ -123,7 +123,7 @@ describe("framework surface manifest", () => {
       familySubpaths: 37,
       namespaceParts: 242,
       renderedPrimitivePaths: 227,
-      styledNormalizedPaths: 394,
+      styledNormalizedPaths: 396,
       styledRoots: 55,
     });
     for (const target of ["react", "vue", "svelte"]) {
@@ -131,7 +131,7 @@ describe("framework surface manifest", () => {
         familySubpaths: 37,
         namespaceParts: 242,
         renderedPrimitivePaths: 226,
-        styledNormalizedPaths: 391,
+        styledNormalizedPaths: 393,
         styledRoots: 54,
       });
     }
