@@ -1,12 +1,12 @@
 {
-  "size": {
-    "captureId": "2026-09-15-size-52081c63a5ca",
-    "path": "2026-09-15-size-52081c63a5ca/sizes.json",
-    "capturedAt": "2026-09-15T13:10:16.852Z"
-  },
   "timing": {
-    "captureId": "2026-09-15-timing-af00c7178e56",
-    "path": "2026-09-15-timing-af00c7178e56/timings.json",
-    "capturedAt": "2026-09-15T13:58:09.628Z"
+    "captureId": "2026-09-28-timing-52f65be8667b",
+    "path": "2026-09-28-timing-52f65be8667b/timings.json",
+    "capturedAt": "2026-09-28T14:35:12.254Z"
+  },
+  "size": {
+    "captureId": "2026-09-28-size-f0abe5bb2729",
+    "path": "2026-09-28-size-f0abe5bb2729/sizes.json",
+    "capturedAt": "2026-09-28T14:43:33.697Z"
   }
 }

@@ -6,7 +6,7 @@ import {
 } from "../../internal/dom";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
-import { registerFieldControlBridge } from "../field/field-control-bridge";
+import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type SwitchCheckedChangeReason = "none";
 

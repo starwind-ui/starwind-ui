@@ -1,0 +1,4855 @@
+{
+  "schema": "svelte-primitive-performance-public",
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-28T14:35:12.254Z",
+  "starwindStatus": "Svelte development build",
+  "seed": 20260915,
+  "warmupContexts": 12,
+  "measuredContexts": 60,
+  "workloads": [
+    { "id": "select-page-1", "controls": 1, "optionsPerControl": 20, "targetControl": 1 },
+    { "id": "select-page-20", "controls": 20, "optionsPerControl": 20, "targetControl": 10 },
+    {
+      "id": "combobox-500",
+      "items": 500,
+      "query": "Item 04",
+      "matchingItems": [
+        "item-040",
+        "item-041",
+        "item-042",
+        "item-043",
+        "item-044",
+        "item-045",
+        "item-046",
+        "item-047",
+        "item-048",
+        "item-049"
+      ],
+      "selectedItem": "item-042"
+    },
+    { "id": "dialog-dense-10000", "backgroundContainers": 1, "backgroundTextSpans": 10000 }
+  ],
+  "method": {
+    "endpoint": "trusted input timestamp to checked DOM completion",
+    "mount": "immediately before Svelte mount to ready closed DOM; module loading excluded",
+    "navigation": "per-context mean of actual ArrowDown key endpoints",
+    "samples": "five measured fresh contexts after one excluded warmup per provider/workload",
+    "statistics": "five values, median and range",
+    "cpuThrottleRate": 1,
+    "headed": true,
+    "viewport": { "width": 1280, "height": 900 },
+    "deviceScaleFactor": 1,
+    "svelteBundled": true,
+    "build": {
+      "target": "es2020",
+      "minify": "esbuild",
+      "mode": "production",
+      "generate": "client",
+      "dev": false,
+      "css": "external",
+      "format": "es",
+      "external": []
+    },
+    "eventTiming": "thresholded diagnostics; missing entries unavailable"
+  },
+  "packages": {
+    "@starwind-ui/svelte": {
+      "version": "0.0.0",
+      "artifactDigest": "9e4c64c3e56aa996fe6d630253199605782256bd77e3b6e6ef8363e371c64866"
+    },
+    "@starwind-ui/runtime": {
+      "version": "1.2.1",
+      "artifactDigest": "34f45bb2ae542fff1bac784be2e6e955e2111623a90e8db807b5749fb0063206"
+    },
+    "@ark-ui/svelte": {
+      "version": "5.24.2",
+      "artifactDigest": "9f05ec30ed4206043545e2013a884a5e5cb93f3ae0dc0e47825bb1b807078fb0"
+    },
+    "bits-ui": {
+      "version": "2.19.2",
+      "artifactDigest": "c3dfbf5e282bd4617bf417a0e24c72e07d14a881a286292c43549d9a204c8091"
+    },
+    "svelte": {
+      "version": "5.57.0",
+      "artifactDigest": "25e0c83e065893c3a7dbb6692ec135abd52ef859400e4ef4860f8a9838f06665"
+    },
+    "vite": {
+      "version": "7.3.5",
+      "artifactDigest": "e86957467747490a802ccec90494c7c4a76a6ec9d02631f34b3198cf365c2db4"
+    },
+    "@sveltejs/vite-plugin-svelte": {
+      "version": "6.2.1",
+      "artifactDigest": "2a8fb2b715f49a397846099a270abb3b2fa3093bce97824db2f70589437e7a99"
+    },
+    "@internationalized/date": {
+      "version": "3.12.4",
+      "artifactDigest": "943c04134a3eb9eacf5d221d608b12ee4f6e438113a5d4f35bfa0e2ab79bd7bf"
+    },
+    "@floating-ui/dom": {
+      "version": "1.7.6",
+      "artifactDigest": "b2f46139f341e1f50d1c74fcc8ad66aece48b1c771126f9e13d87dafe002cf51"
+    },
+    "embla-carousel": {
+      "version": "8.6.0",
+      "artifactDigest": "97e125f698f527a92b76f8e9b9303c12e4fb9878ff6f36c9ebf7004b71e1dcc8"
+    }
+  },
+  "browser": {
+    "version": "151.0.7922.34",
+    "playwright": "1.62.0",
+    "executableDigest": "a596b1cfc6353e987fcec8d71a23a28cd6a9e7a6b4e20b908e4c4fcffe51158e"
+  },
+  "environment": {
+    "node": "v24.20.0",
+    "pnpm": "11.8.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5 Pro",
+    "logicalCpus": 18,
+    "memoryBytes": 51539607552
+  },
+  "lockDigest": "f867e4d8d79413bff4fe89e0d6c8c755d827cd0091d907315338ec1efba51cac",
+  "fixtures": [
+    {
+      "provider": "starwind-svelte",
+      "digest": "2c73f5cda256328dcc16cd6d9dd387f8407d122ebf30b1ab1e756a93daa0dab4"
+    },
+    {
+      "provider": "ark-svelte",
+      "digest": "2c73f5cda256328dcc16cd6d9dd387f8407d122ebf30b1ab1e756a93daa0dab4"
+    },
+    {
+      "provider": "bits-svelte",
+      "digest": "2c73f5cda256328dcc16cd6d9dd387f8407d122ebf30b1ab1e756a93daa0dab4"
+    }
+  ],
+  "schedule": [
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-1",
+      "sample": 0,
+      "role": "warmup",
+      "order": 1,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-1",
+      "sample": 0,
+      "role": "warmup",
+      "order": 2,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-1",
+      "sample": 0,
+      "role": "warmup",
+      "order": 3,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-1",
+      "sample": 1,
+      "role": "measured",
+      "order": 4,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-1",
+      "sample": 1,
+      "role": "measured",
+      "order": 5,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-1",
+      "sample": 1,
+      "role": "measured",
+      "order": 6,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-1",
+      "sample": 2,
+      "role": "measured",
+      "order": 7,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-1",
+      "sample": 2,
+      "role": "measured",
+      "order": 8,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-1",
+      "sample": 2,
+      "role": "measured",
+      "order": 9,
+      "position": 3
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-1",
+      "sample": 3,
+      "role": "measured",
+      "order": 10,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-1",
+      "sample": 3,
+      "role": "measured",
+      "order": 11,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-1",
+      "sample": 3,
+      "role": "measured",
+      "order": 12,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-1",
+      "sample": 4,
+      "role": "measured",
+      "order": 13,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-1",
+      "sample": 4,
+      "role": "measured",
+      "order": 14,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-1",
+      "sample": 4,
+      "role": "measured",
+      "order": 15,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-1",
+      "sample": 5,
+      "role": "measured",
+      "order": 16,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-1",
+      "sample": 5,
+      "role": "measured",
+      "order": 17,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-1",
+      "sample": 5,
+      "role": "measured",
+      "order": 18,
+      "position": 3
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-20",
+      "sample": 0,
+      "role": "warmup",
+      "order": 19,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-20",
+      "sample": 0,
+      "role": "warmup",
+      "order": 20,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-20",
+      "sample": 0,
+      "role": "warmup",
+      "order": 21,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-20",
+      "sample": 1,
+      "role": "measured",
+      "order": 22,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-20",
+      "sample": 1,
+      "role": "measured",
+      "order": 23,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-20",
+      "sample": 1,
+      "role": "measured",
+      "order": 24,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-20",
+      "sample": 2,
+      "role": "measured",
+      "order": 25,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-20",
+      "sample": 2,
+      "role": "measured",
+      "order": 26,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-20",
+      "sample": 2,
+      "role": "measured",
+      "order": 27,
+      "position": 3
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-20",
+      "sample": 3,
+      "role": "measured",
+      "order": 28,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-20",
+      "sample": 3,
+      "role": "measured",
+      "order": 29,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-20",
+      "sample": 3,
+      "role": "measured",
+      "order": 30,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-20",
+      "sample": 4,
+      "role": "measured",
+      "order": 31,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-20",
+      "sample": 4,
+      "role": "measured",
+      "order": 32,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-20",
+      "sample": 4,
+      "role": "measured",
+      "order": 33,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-20",
+      "sample": 5,
+      "role": "measured",
+      "order": 34,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-20",
+      "sample": 5,
+      "role": "measured",
+      "order": 35,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-20",
+      "sample": 5,
+      "role": "measured",
+      "order": 36,
+      "position": 3
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "combobox-500",
+      "sample": 0,
+      "role": "warmup",
+      "order": 37,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "combobox-500",
+      "sample": 0,
+      "role": "warmup",
+      "order": 38,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "combobox-500",
+      "sample": 0,
+      "role": "warmup",
+      "order": 39,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "combobox-500",
+      "sample": 1,
+      "role": "measured",
+      "order": 40,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "combobox-500",
+      "sample": 1,
+      "role": "measured",
+      "order": 41,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "combobox-500",
+      "sample": 1,
+      "role": "measured",
+      "order": 42,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "combobox-500",
+      "sample": 2,
+      "role": "measured",
+      "order": 43,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "combobox-500",
+      "sample": 2,
+      "role": "measured",
+      "order": 44,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "combobox-500",
+      "sample": 2,
+      "role": "measured",
+      "order": 45,
+      "position": 3
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "combobox-500",
+      "sample": 3,
+      "role": "measured",
+      "order": 46,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "combobox-500",
+      "sample": 3,
+      "role": "measured",
+      "order": 47,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "combobox-500",
+      "sample": 3,
+      "role": "measured",
+      "order": 48,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "combobox-500",
+      "sample": 4,
+      "role": "measured",
+      "order": 49,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "combobox-500",
+      "sample": 4,
+      "role": "measured",
+      "order": 50,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "combobox-500",
+      "sample": 4,
+      "role": "measured",
+      "order": 51,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "combobox-500",
+      "sample": 5,
+      "role": "measured",
+      "order": 52,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "combobox-500",
+      "sample": 5,
+      "role": "measured",
+      "order": 53,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "combobox-500",
+      "sample": 5,
+      "role": "measured",
+      "order": 54,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 0,
+      "role": "warmup",
+      "order": 55,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 0,
+      "role": "warmup",
+      "order": 56,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 0,
+      "role": "warmup",
+      "order": 57,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 1,
+      "role": "measured",
+      "order": 58,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 1,
+      "role": "measured",
+      "order": 59,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 1,
+      "role": "measured",
+      "order": 60,
+      "position": 3
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 2,
+      "role": "measured",
+      "order": 61,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 2,
+      "role": "measured",
+      "order": 62,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 2,
+      "role": "measured",
+      "order": 63,
+      "position": 3
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 3,
+      "role": "measured",
+      "order": 64,
+      "position": 1
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 3,
+      "role": "measured",
+      "order": 65,
+      "position": 2
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 3,
+      "role": "measured",
+      "order": 66,
+      "position": 3
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 4,
+      "role": "measured",
+      "order": 67,
+      "position": 1
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 4,
+      "role": "measured",
+      "order": 68,
+      "position": 2
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 4,
+      "role": "measured",
+      "order": 69,
+      "position": 3
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 5,
+      "role": "measured",
+      "order": 70,
+      "position": 1
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 5,
+      "role": "measured",
+      "order": 71,
+      "position": 2
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "dialog-dense-10000",
+      "sample": 5,
+      "role": "measured",
+      "order": 72,
+      "position": 3
+    }
+  ],
+  "results": [
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-1",
+      "endpoints": {
+        "mount": {
+          "values": [9.200000047683716, 9, 8.900000035762787, 8.900000035762787, 8.900000035762787],
+          "median": 8.900000035762787,
+          "min": 8.900000035762787,
+          "max": 9.200000047683716
+        },
+        "open": {
+          "values": [
+            2.5, 2.699999988079071, 2.600000023841858, 2.600000023841858, 2.600000023841858
+          ],
+          "median": 2.600000023841858,
+          "min": 2.5,
+          "max": 2.699999988079071
+        },
+        "escape": {
+          "values": [1, 1.100000023841858, 1, 0.9000000357627869, 1],
+          "median": 1,
+          "min": 0.9000000357627869,
+          "max": 1.100000023841858
+        },
+        "reopen": {
+          "values": [1.0999999642372131, 1, 1, 1, 1],
+          "median": 1,
+          "min": 1,
+          "max": 1.0999999642372131
+        },
+        "navigation": {
+          "values": [0.25, 0.2999999523162842, 0.19999998807907104, 0.25, 0.29999998211860657],
+          "median": 0.25,
+          "min": 0.19999998807907104,
+          "max": 0.29999998211860657
+        },
+        "choose": {
+          "values": [1.199999988079071, 1.0999999642372131, 1.100000023841858, 1, 1],
+          "median": 1.0999999642372131,
+          "min": 1,
+          "max": 1.199999988079071
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.19999998807907104
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.2999999523162842
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.2999999523162842
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.19999998807907104
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.19999998807907104
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.19999998807907104
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.3999999761581421
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.19999998807907104
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 54,
+              "fixtureElements": 9,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "select-page-20",
+      "endpoints": {
+        "mount": {
+          "values": [
+            25.19999998807907, 24.599999964237213, 24.600000023841858, 25.099999964237213,
+            25.30000001192093
+          ],
+          "median": 25.099999964237213,
+          "min": 24.599999964237213,
+          "max": 25.30000001192093
+        },
+        "open": {
+          "values": [3, 2.899999976158142, 2.799999952316284, 3.100000023841858, 2.800000011920929],
+          "median": 2.899999976158142,
+          "min": 2.799999952316284,
+          "max": 3.100000023841858
+        },
+        "escape": {
+          "values": [
+            1.199999988079071, 1.2000000476837158, 1.0999999642372131, 1.199999988079071,
+            1.0999999642372131
+          ],
+          "median": 1.199999988079071,
+          "min": 1.0999999642372131,
+          "max": 1.2000000476837158
+        },
+        "reopen": {
+          "values": [
+            1.199999988079071, 1.199999988079071, 1.300000011920929, 1.199999988079071,
+            1.0999999642372131
+          ],
+          "median": 1.199999988079071,
+          "min": 1.0999999642372131,
+          "max": 1.300000011920929
+        },
+        "navigation": {
+          "values": [
+            0.25, 0.30000001192092896, 0.29999998211860657, 0.2499999701976776, 0.30000001192092896
+          ],
+          "median": 0.29999998211860657,
+          "min": 0.2499999701976776,
+          "max": 0.30000001192092896
+        },
+        "choose": {
+          "values": [
+            1.300000011920929, 1.199999988079071, 1.199999988079071, 1.300000011920929,
+            1.2999999523162842
+          ],
+          "median": 1.2999999523162842,
+          "min": 1.199999988079071,
+          "max": 1.300000011920929
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.19999998807907104
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.30000001192092896
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.2999999523162842
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.19999998807907104
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.2999999523162842
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.30000001192092896
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1023,
+              "fixtureElements": 142,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "combobox-500",
+      "endpoints": {
+        "mount": {
+          "values": [
+            19.599999964237213, 19.399999976158142, 19.80000001192093, 19.69999998807907,
+            19.900000035762787
+          ],
+          "median": 19.69999998807907,
+          "min": 19.399999976158142,
+          "max": 19.900000035762787
+        },
+        "open": {
+          "values": [6.5, 6.5, 6.199999988079071, 6.300000011920929, 6.300000011920929],
+          "median": 6.300000011920929,
+          "min": 6.199999988079071,
+          "max": 6.5
+        },
+        "filter": {
+          "values": [
+            2.100000023841858, 2.300000011920929, 2.199999988079071, 2.199999988079071,
+            2.300000011920929
+          ],
+          "median": 2.199999988079071,
+          "min": 2.100000023841858,
+          "max": 2.300000011920929
+        },
+        "navigation": {
+          "values": [
+            0.20000000794728598, 0.2666666905085246, 0.2666666507720947, 0.26666667064030963,
+            0.19999998807907104
+          ],
+          "median": 0.2666666507720947,
+          "min": 0.19999998807907104,
+          "max": 0.2666666905085246
+        },
+        "choose": {
+          "values": [3.399999976158142, 3.5, 3.400000035762787, 3.399999976158142, 3.5],
+          "median": 3.400000035762787,
+          "min": 3.399999976158142,
+          "max": 3.5
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": null,
+                "to": "item-040",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.19999998807907104
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.10000002384185791
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": null,
+                "to": "item-040",
+                "milliseconds": 0.20000004768371582
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.30000001192092896
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": null,
+                "to": "item-040",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.2999999523162842
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.19999998807907104
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": null,
+                "to": "item-040",
+                "milliseconds": 0.19999998807907104
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.30000001192092896
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.30000001192092896
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": null,
+                "to": "item-040",
+                "milliseconds": 0.19999998807907104
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.19999998807907104
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.19999998807907104
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1015,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "starwind-svelte",
+      "workload": "dialog-dense-10000",
+      "endpoints": {
+        "mount": {
+          "values": [
+            23.69999998807907, 23.69999998807907, 23.80000001192093, 23.80000001192093,
+            23.599999964237213
+          ],
+          "median": 23.69999998807907,
+          "min": 23.599999964237213,
+          "max": 23.80000001192093
+        },
+        "open": {
+          "values": [8, 7.899999976158142, 8.199999988079071, 8.099999964237213, 8],
+          "median": 8,
+          "min": 7.899999976158142,
+          "max": 8.199999988079071
+        },
+        "escape": {
+          "values": [17, 16.80000001192093, 17, 17.19999998807907, 16.900000035762787],
+          "median": 17,
+          "min": 16.80000001192093,
+          "max": 17.19999998807907
+        },
+        "reopen": {
+          "values": [6.5, 6.5, 6.599999964237213, 6.5, 6.800000011920929],
+          "median": 6.5,
+          "min": 6.5,
+          "max": 6.800000011920929
+        },
+        "button-close": {
+          "values": [14.899999976158142, 13.5, 14.100000023841858, 13.699999988079071, 15],
+          "median": 14.100000023841858,
+          "min": 13.5,
+          "max": 15
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": true,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": true,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": true,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": true,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10016,
+              "fixtureElements": 10015,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": true,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-1",
+      "endpoints": {
+        "mount": {
+          "values": [8.699999988079071, 9, 8.899999976158142, 8.800000011920929, 8.900000035762787],
+          "median": 8.899999976158142,
+          "min": 8.699999988079071,
+          "max": 9
+        },
+        "open": {
+          "values": [5.199999988079071, 5.400000035762787, 5, 5.300000011920929, 5.099999964237213],
+          "median": 5.199999988079071,
+          "min": 5,
+          "max": 5.400000035762787
+        },
+        "escape": {
+          "values": [6.899999976158142, 7.800000011920929, 7, 7.300000011920929, 6.900000035762787],
+          "median": 7,
+          "min": 6.899999976158142,
+          "max": 7.800000011920929
+        },
+        "reopen": {
+          "values": [
+            3.300000011920929, 2.799999952316284, 2.799999952316284, 2.900000035762787,
+            2.800000011920929
+          ],
+          "median": 2.800000011920929,
+          "min": 2.799999952316284,
+          "max": 3.300000011920929
+        },
+        "navigation": {
+          "values": [
+            2, 1.7500000298023224, 1.9500000178813934, 1.8499999940395355, 1.850000023841858
+          ],
+          "median": 1.850000023841858,
+          "min": 1.7500000298023224,
+          "max": 2
+        },
+        "choose": {
+          "values": [
+            7.199999988079071, 7.200000047683716, 7.5, 8.099999964237213, 7.699999988079071
+          ],
+          "median": 7.5,
+          "min": 7.199999988079071,
+          "max": 8.099999964237213
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              { "key": "ArrowDown", "from": "option-1", "to": "option-2", "milliseconds": 2 },
+              { "key": "ArrowDown", "from": "option-2", "to": "option-4", "milliseconds": 2 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 1.7000000476837158
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.800000011920929
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 1.9000000357627869
+              },
+              { "key": "ArrowDown", "from": "option-2", "to": "option-4", "milliseconds": 2 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 1.800000011920929
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.899999976158142
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 1.800000011920929
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.9000000357627869
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 73,
+              "fixtureElements": 30,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "select-page-20",
+      "endpoints": {
+        "mount": {
+          "values": [
+            21.69999998807907, 21.19999998807907, 21.5, 20.399999976158142, 21.600000023841858
+          ],
+          "median": 21.5,
+          "min": 20.399999976158142,
+          "max": 21.69999998807907
+        },
+        "open": {
+          "values": [
+            4.899999976158142, 4.899999976158142, 5.100000023841858, 4.899999976158142,
+            4.800000011920929
+          ],
+          "median": 4.899999976158142,
+          "min": 4.800000011920929,
+          "max": 5.100000023841858
+        },
+        "escape": {
+          "values": [6.699999988079071, 6.600000023841858, 7.699999988079071, 6, 6.899999976158142],
+          "median": 6.699999988079071,
+          "min": 6,
+          "max": 7.699999988079071
+        },
+        "reopen": {
+          "values": [
+            2.699999988079071, 2.800000011920929, 2.600000023841858, 2.699999988079071,
+            2.600000023841858
+          ],
+          "median": 2.699999988079071,
+          "min": 2.600000023841858,
+          "max": 2.800000011920929
+        },
+        "navigation": {
+          "values": [1.8499999940395355, 1.8499999940395355, 1.75, 2, 1.8499999940395355],
+          "median": 1.8499999940395355,
+          "min": 1.75,
+          "max": 2
+        },
+        "choose": {
+          "values": [
+            7.399999976158142, 7.800000011920929, 7.400000035762787, 7.699999988079071,
+            7.399999976158142
+          ],
+          "median": 7.400000035762787,
+          "min": 7.399999976158142,
+          "max": 7.800000011920929
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 1.9000000357627869
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.7999999523162842
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 2.099999964237213
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.600000023841858
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 1.9000000357627869
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.5999999642372131
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 2.100000023841858
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.899999976158142
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 1.9000000357627869
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 1.7999999523162842
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 1,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 1403,
+              "fixtureElements": 562,
+              "popups": 20,
+              "visiblePopups": 0,
+              "items": 400,
+              "forms": 20,
+              "portals": 21,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": true,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "combobox-500",
+      "endpoints": {
+        "mount": {
+          "values": [
+            8.100000023841858, 7.699999988079071, 7.800000011920929, 7.899999976158142,
+            7.800000011920929
+          ],
+          "median": 7.800000011920929,
+          "min": 7.699999988079071,
+          "max": 8.100000023841858
+        },
+        "open": {
+          "values": [
+            41.299999952316284, 40.30000001192093, 41.60000002384186, 40.80000001192093,
+            40.39999997615814
+          ],
+          "median": 40.80000001192093,
+          "min": 40.30000001192093,
+          "max": 41.60000002384186
+        },
+        "filter": {
+          "values": [
+            1.899999976158142, 2, 1.899999976158142, 1.9000000357627869, 1.899999976158142
+          ],
+          "median": 1.899999976158142,
+          "min": 1.899999976158142,
+          "max": 2
+        },
+        "navigation": {
+          "values": [
+            1.2333333293596904, 1.300000011920929, 1.299999992052714, 1.2333333293596904,
+            1.3333333532015483
+          ],
+          "median": 1.299999992052714,
+          "min": 1.2333333293596904,
+          "max": 1.3333333532015483
+        },
+        "choose": {
+          "values": [
+            7.100000023841858, 7.300000011920929, 7.300000011920929, 8.200000047683716, 7.5
+          ],
+          "median": 7.300000011920929,
+          "min": 7.100000023841858,
+          "max": 8.200000047683716
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": null,
+                "to": "item-040",
+                "milliseconds": 1.399999976158142
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 1.199999988079071
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 1.100000023841858
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 33,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 15,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 1,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              { "key": "ArrowDown", "from": null, "to": "item-040", "milliseconds": 1.5 },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 1.300000011920929
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 1.100000023841858
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 33,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 15,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 1,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              { "key": "ArrowDown", "from": null, "to": "item-040", "milliseconds": 1.5 },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 1.300000011920929
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 1.0999999642372131
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 33,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 15,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 1,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": null,
+                "to": "item-040",
+                "milliseconds": 1.399999976158142
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 1.300000011920929
+              },
+              { "key": "ArrowDown", "from": "item-041", "to": "item-042", "milliseconds": 1 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 33,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 15,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 1,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 3,
+            "initial": null,
+            "keys": [
+              { "key": "ArrowDown", "from": null, "to": "item-040", "milliseconds": 1.5 },
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 1.4000000357627869
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 1.100000023841858
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 1013,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 33,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 15,
+              "fixtureElements": 10,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 1,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "ark-svelte",
+      "workload": "dialog-dense-10000",
+      "endpoints": {
+        "mount": {
+          "values": [24.600000023841858, 24.299999952316284, 24.5, 24.400000035762787, 24],
+          "median": 24.400000035762787,
+          "min": 24,
+          "max": 24.600000023841858
+        },
+        "open": {
+          "values": [
+            16.899999976158142, 16.69999998807907, 17, 16.600000023841858, 16.80000001192093
+          ],
+          "median": 16.80000001192093,
+          "min": 16.600000023841858,
+          "max": 17
+        },
+        "escape": {
+          "values": [22.5, 22.5, 22.600000023841858, 22.600000023841858, 22.600000023841858],
+          "median": 22.600000023841858,
+          "min": 22.5,
+          "max": 22.600000023841858
+        },
+        "reopen": {
+          "values": [
+            13.600000023841858, 14.300000011920929, 14.299999952316284, 13.800000011920929,
+            13.600000023841858
+          ],
+          "median": 13.800000011920929,
+          "min": 13.600000023841858,
+          "max": 14.300000011920929
+        },
+        "button-close": {
+          "values": [
+            19.69999998807907, 19.80000001192093, 20.19999998807907, 20.200000047683716, 20.5
+          ],
+          "median": 20.19999998807907,
+          "min": 19.69999998807907,
+          "max": 20.5
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10015,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-1",
+      "endpoints": {
+        "mount": {
+          "values": [
+            6.900000035762787, 6.700000047683716, 6.899999976158142, 6.699999988079071,
+            6.899999976158142
+          ],
+          "median": 6.899999976158142,
+          "min": 6.699999988079071,
+          "max": 6.900000035762787
+        },
+        "open": {
+          "values": [6.699999988079071, 7.100000023841858, 7.099999964237213, 7, 7.099999964237213],
+          "median": 7.099999964237213,
+          "min": 6.699999988079071,
+          "max": 7.100000023841858
+        },
+        "escape": {
+          "values": [6.800000011920929, 6.699999988079071, 7, 6.900000035762787, 6.899999976158142],
+          "median": 6.899999976158142,
+          "min": 6.699999988079071,
+          "max": 7
+        },
+        "reopen": {
+          "values": [2.099999964237213, 2, 2.100000023841858, 2.100000023841858, 2],
+          "median": 2.099999964237213,
+          "min": 2,
+          "max": 2.100000023841858
+        },
+        "navigation": {
+          "values": [
+            0.5, 0.4999999701976776, 0.45000001788139343, 0.5499999821186066, 0.44999998807907104
+          ],
+          "median": 0.4999999701976776,
+          "min": 0.44999998807907104,
+          "max": 0.5499999821186066
+        },
+        "choose": {
+          "values": [8, 7.699999988079071, 6.899999976158142, 7.099999964237213, 7.100000023841858],
+          "median": 7.100000023841858,
+          "min": 6.899999976158142,
+          "max": 8
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              { "key": "ArrowDown", "from": "option-1", "to": "option-2", "milliseconds": 0.5 },
+              { "key": "ArrowDown", "from": "option-2", "to": "option-4", "milliseconds": 0.5 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 31,
+              "fixtureElements": 7,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.5999999642372131
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.3999999761581421
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 31,
+              "fixtureElements": 7,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              { "key": "ArrowDown", "from": "option-1", "to": "option-2", "milliseconds": 0.5 },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.40000003576278687
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 31,
+              "fixtureElements": 7,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.5999999642372131
+              },
+              { "key": "ArrowDown", "from": "option-2", "to": "option-4", "milliseconds": 0.5 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 31,
+              "fixtureElements": 7,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.3999999761581421
+              },
+              { "key": "ArrowDown", "from": "option-2", "to": "option-4", "milliseconds": 0.5 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 31,
+              "fixtureElements": 7,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 8,
+              "fixtureElements": 7,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "select-page-20",
+      "endpoints": {
+        "mount": {
+          "values": [
+            12.600000023841858, 12.300000011920929, 12.600000023841858, 12.399999976158142,
+            12.599999964237213
+          ],
+          "median": 12.599999964237213,
+          "min": 12.300000011920929,
+          "max": 12.600000023841858
+        },
+        "open": {
+          "values": [7.200000047683716, 7.100000023841858, 6.900000035762787, 7, 6.899999976158142],
+          "median": 7,
+          "min": 6.899999976158142,
+          "max": 7.200000047683716
+        },
+        "escape": {
+          "values": [
+            6.899999976158142, 6.699999988079071, 6.899999976158142, 6.800000011920929,
+            6.800000011920929
+          ],
+          "median": 6.800000011920929,
+          "min": 6.699999988079071,
+          "max": 6.899999976158142
+        },
+        "reopen": {
+          "values": [2, 2, 1.9000000357627869, 2.399999976158142, 1.9000000357627869],
+          "median": 2,
+          "min": 1.9000000357627869,
+          "max": 2.399999976158142
+        },
+        "navigation": {
+          "values": [0.550000011920929, 0.5, 0.5999999940395355, 0.5999999940395355, 0.5],
+          "median": 0.550000011920929,
+          "min": 0.5,
+          "max": 0.5999999940395355
+        },
+        "choose": {
+          "values": [
+            7.5, 7.699999988079071, 7.199999988079071, 7.099999964237213, 7.300000011920929
+          ],
+          "median": 7.300000011920929,
+          "min": 7.099999964237213,
+          "max": 7.699999988079071
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              { "key": "ArrowDown", "from": "option-1", "to": "option-2", "milliseconds": 0.5 },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.6000000238418579
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 126,
+              "fixtureElements": 102,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 20,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              { "key": "ArrowDown", "from": "option-1", "to": "option-2", "milliseconds": 0.5 },
+              { "key": "ArrowDown", "from": "option-2", "to": "option-4", "milliseconds": 0.5 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 126,
+              "fixtureElements": 102,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 20,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.5999999642372131
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.6000000238418579
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 126,
+              "fixtureElements": 102,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 20,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "option-1",
+                "to": "option-2",
+                "milliseconds": 0.5999999642372131
+              },
+              {
+                "key": "ArrowDown",
+                "from": "option-2",
+                "to": "option-4",
+                "milliseconds": 0.6000000238418579
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 126,
+              "fixtureElements": 102,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 20,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 2,
+            "initial": "option-1",
+            "keys": [
+              { "key": "ArrowDown", "from": "option-1", "to": "option-2", "milliseconds": 0.5 },
+              { "key": "ArrowDown", "from": "option-2", "to": "option-4", "milliseconds": 0.5 }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 126,
+              "fixtureElements": 102,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 20,
+              "forms": 20,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "escape": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 103,
+              "fixtureElements": 102,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 20,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": {
+            "ariaDisabled": false,
+            "dataDisabled": true,
+            "selectionBlocked": true
+          },
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "combobox-500",
+      "endpoints": {
+        "mount": {
+          "values": [
+            6.899999976158142, 6.699999988079071, 6.700000047683716, 6.899999976158142,
+            6.800000011920929
+          ],
+          "median": 6.800000011920929,
+          "min": 6.699999988079071,
+          "max": 6.899999976158142
+        },
+        "open": {
+          "values": [
+            23.100000023841858, 23.100000023841858, 23.600000023841858, 23.400000035762787,
+            23.19999998807907
+          ],
+          "median": 23.19999998807907,
+          "min": 23.100000023841858,
+          "max": 23.600000023841858
+        },
+        "filter": {
+          "values": [
+            1.100000023841858, 1.0999999642372131, 1.0999999642372131, 1.199999988079071,
+            1.2000000476837158
+          ],
+          "median": 1.100000023841858,
+          "min": 1.0999999642372131,
+          "max": 1.2000000476837158
+        },
+        "navigation": {
+          "values": [
+            0.3499999940395355, 0.3999999761581421, 0.44999998807907104, 0.45000001788139343,
+            0.3999999761581421
+          ],
+          "median": 0.3999999761581421,
+          "min": 0.3499999940395355,
+          "max": 0.45000001788139343
+        },
+        "choose": {
+          "values": [
+            7.300000011920929, 7.199999988079071, 7.199999988079071, 7.400000035762787,
+            7.300000011920929
+          ],
+          "median": 7.300000011920929,
+          "min": 7.199999988079071,
+          "max": 7.400000035762787
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": {
+            "count": 2,
+            "initial": "item-040",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.2999999523162842
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.40000003576278687
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 512,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 22,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": {
+            "count": 2,
+            "initial": "item-040",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.3999999761581421
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.3999999761581421
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 512,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 22,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": {
+            "count": 2,
+            "initial": "item-040",
+            "keys": [
+              { "key": "ArrowDown", "from": "item-040", "to": "item-041", "milliseconds": 0.5 },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.3999999761581421
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 512,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 22,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": {
+            "count": 2,
+            "initial": "item-040",
+            "keys": [
+              { "key": "ArrowDown", "from": "item-040", "to": "item-041", "milliseconds": 0.5 },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.40000003576278687
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 512,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 22,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": {
+            "count": 2,
+            "initial": "item-040",
+            "keys": [
+              {
+                "key": "ArrowDown",
+                "from": "item-040",
+                "to": "item-041",
+                "milliseconds": 0.3999999761581421
+              },
+              {
+                "key": "ArrowDown",
+                "from": "item-041",
+                "to": "item-042",
+                "milliseconds": 0.3999999761581421
+              }
+            ]
+          },
+          "dom": {
+            "closed": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            },
+            "open": {
+              "bodyElements": 512,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 500,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "filtered": {
+              "bodyElements": 22,
+              "fixtureElements": 8,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 10,
+              "forms": 1,
+              "portals": 2,
+              "spanCount": 0
+            },
+            "chosen": {
+              "bodyElements": 9,
+              "fixtureElements": 8,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 1,
+              "portals": 1,
+              "spanCount": 0
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        }
+      ]
+    },
+    {
+      "provider": "bits-svelte",
+      "workload": "dialog-dense-10000",
+      "endpoints": {
+        "mount": {
+          "values": [
+            23.899999976158142, 24.100000023841858, 23.69999998807907, 24.100000023841858,
+            24.30000001192093
+          ],
+          "median": 24.100000023841858,
+          "min": 23.69999998807907,
+          "max": 24.30000001192093
+        },
+        "open": {
+          "values": [
+            11.699999988079071, 12.100000023841858, 11.699999988079071, 11.600000023841858,
+            11.599999964237213
+          ],
+          "median": 11.699999988079071,
+          "min": 11.599999964237213,
+          "max": 12.100000023841858
+        },
+        "escape": {
+          "values": [
+            6.199999988079071, 5.600000023841858, 6.899999976158142, 6.5, 6.699999988079071
+          ],
+          "median": 6.5,
+          "min": 5.600000023841858,
+          "max": 6.899999976158142
+        },
+        "reopen": {
+          "values": [
+            12.599999964237213, 12.699999988079071, 12.099999964237213, 11.5, 11.899999976158142
+          ],
+          "median": 12.099999964237213,
+          "min": 11.5,
+          "max": 12.699999988079071
+        },
+        "button-close": {
+          "values": [
+            15.400000035762787, 15.199999988079071, 14.900000035762787, 14.399999976158142,
+            15.899999976158142
+          ],
+          "median": 15.199999988079071,
+          "min": 14.399999976158142,
+          "max": 15.899999976158142
+        }
+      },
+      "runs": [
+        {
+          "sample": 1,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10008,
+              "fixtureElements": 10007,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10014,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 2,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10008,
+              "fixtureElements": 10007,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10014,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 3,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10008,
+              "fixtureElements": 10007,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10014,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 4,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10008,
+              "fixtureElements": 10007,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10014,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        },
+        {
+          "sample": 5,
+          "navigation": null,
+          "dom": {
+            "closed": {
+              "bodyElements": 10008,
+              "fixtureElements": 10007,
+              "popups": 0,
+              "visiblePopups": 0,
+              "items": 0,
+              "forms": 0,
+              "portals": 1,
+              "spanCount": 10000
+            },
+            "open": {
+              "bodyElements": 10014,
+              "fixtureElements": 10007,
+              "popups": 1,
+              "visiblePopups": 1,
+              "items": 0,
+              "forms": 0,
+              "portals": 3,
+              "spanCount": 10000
+            }
+          },
+          "eventTimingSupported": true,
+          "nativeModal": null,
+          "disabledOption": null,
+          "taskAndCleanupPassed": true
+        }
+      ]
+    }
+  ]
+}

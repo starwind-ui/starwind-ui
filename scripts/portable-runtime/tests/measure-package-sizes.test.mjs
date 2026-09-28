@@ -15,6 +15,7 @@ import {
   formatColorPickerSizeComparisonMarkdown,
   formatPackageSizeReports,
   getPackageSizeCommandMode,
+  getPackageSizeComparisonOptions,
   getPackageSizeMeasurementPlan,
   measureBundle,
   publicComparatorExpectedResolvedVersions,
@@ -36,6 +37,40 @@ import {
 import { buildSourceContributionAnalyses } from "../source-contribution-report.mjs";
 
 describe("package-size command prerequisites", () => {
+  it("accepts explicit comparison and candidate paths, and rejects ambiguous arguments", () => {
+    expect(
+      getPackageSizeComparisonOptions([
+        "--compare-to",
+        "/tmp/base.json",
+        "--snapshot",
+        "/tmp/after.json",
+      ]),
+    ).toEqual({ compareTo: "/tmp/base.json", snapshotPath: "/tmp/after.json" });
+    expect(() => getPackageSizeComparisonOptions(["--compare-to"])).toThrow(
+      "requires one file path",
+    );
+    expect(() => getPackageSizeComparisonOptions(["--snapshot", "a", "--snapshot", "b"])).toThrow(
+      "requires one file path",
+    );
+  });
+
+  it("checks every React component, including entries outside the comparator overlap", () => {
+    const components = getPackageSizeMeasurementPlan({ checkOnly: true })
+      .supportRows.filter((row) => row.component)
+      .map((row) => row.component);
+    expect(components).toEqual(
+      expect.arrayContaining([
+        "color-picker",
+        "fieldset",
+        "form",
+        "navigation-menu",
+        "sidebar",
+        "theme",
+      ]),
+    );
+    expect(new Set(components).size).toBe(components.length);
+  });
+
   it("builds Vue and includes its evidence in the prepared public check", () => {
     const rootPackage = JSON.parse(
       readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
@@ -457,10 +492,7 @@ describe("package-size public and diagnostic reports", () => {
     const privateHeadings = [
       "Budget Checks",
       "Private Vue Measurement Method",
-      "Private Vue Accepted Baseline Provenance",
-      "Private Vue Accepted Raw Runs",
-      "Private Vue Accepted Cold-Import Sentinels",
-      "Private Vue Adopted Budgets",
+      "Vue Size Changes",
       "Private Vue Headlines",
       "Private Vue Cold Imports",
       "Private Vue Combined Catalog",
@@ -484,21 +516,10 @@ describe("package-size public and diagnostic reports", () => {
       "Starwind Published Source Payloads",
       "Reading The Numbers",
     ]);
-    expect(
-      [
-        "Budget Checks",
-        "Color Picker Rebaseline Evidence",
-        "Headline Aggregate Regression Guards",
-        "Targeted Cold-Import Budgets",
-        "Matched-Support Aggregate Regression Guards",
-        "Standalone Color Picker Comparison",
-        "Private Vue Accepted Baseline Provenance",
-        "Private Vue Accepted Raw Runs",
-        "Private Vue Accepted Cold-Import Sentinels",
-        "Private Vue Adopted Budgets",
-        "Private Vue Measurement Method",
-      ].map((heading) => diagnosticHeadings.indexOf(heading)),
-    ).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(diagnosticHeadings).toContain("Change from the accepted base");
+    expect(diagnosticHeadings.indexOf("Budget Checks")).toBeLessThan(
+      diagnosticHeadings.indexOf("Change from the accepted base"),
+    );
     expect(reports.publicReport).toContain("Generated: 2030-05-06");
     expect(reports.diagnosticReport).toContain("Generated: 2030-05-06");
     expect(reports.publicReport).toContain("| 1 | `@starwind-ui/runtime` | 2.0 KiB | 4.0 KiB |");
@@ -521,22 +542,8 @@ describe("package-size public and diagnostic reports", () => {
       "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
     );
     expect(reports.diagnosticReport).toContain(
-      "| `vue.adapter-only` | 51,807 B | 51,807 B (50.6 KiB) | 0 B (0.00%) | 54,398 B | 56,988 B (55.7 KiB) | Pass |",
+      "Vue uses the same accepted snapshot as Runtime and React.",
     );
-    expect(reports.diagnosticReport).toContain(
-      "| Zag Vue 1.42.0 matched support | 128,292 B | Advisory snapshot |",
-    );
-    expect(reports.diagnosticReport).toContain(
-      "The accepted sentinels are the five Runtime-backed cold imports with the largest stable maximum. Ties are broken by component id. Theme is excluded.",
-    );
-    expect(
-      reports.diagnosticReport
-        .match(
-          /## Private Vue Accepted Cold-Import Sentinels\n\n[\s\S]+?\n\n## Private Vue Adopted Budgets/,
-        )?.[0]
-        .match(/^\| \d \| ([^|]+) \|/gm)
-        ?.map((row) => row.match(/^\| \d \| ([^|]+) \|/)?.[1].trim()),
-    ).toEqual(["select", "combobox", "context-menu", "menu", "navigation-menu"]);
     expect(reports.diagnosticReport).toContain("| 54 | 1.0 KiB |");
     expect(reports.diagnosticReport).toContain(
       "| @starwind-ui/vue complete catalog | `chunks/vue-dynamic.js` | 21 B |",

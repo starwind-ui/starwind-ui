@@ -1,67 +1,30 @@
 import { readBooleanAttribute } from "../../internal/dom";
 
-export type FieldControlKind =
-  | "checkbox"
-  | "checkbox-group"
-  | "color-picker"
-  | "combobox"
-  | "dropzone"
-  | "input"
-  | "input-otp"
-  | "native"
-  | "radio"
-  | "radio-group"
-  | "select"
-  | "slider"
-  | "switch"
-  | "unknown";
+import {
+  type FieldControlBridge,
+  type FieldControlConnectOptions,
+  type FieldControlCustomValidity,
+  type FieldControlKind,
+  type FieldControlNativeControlsOptions,
+  type FieldNativeControl,
+  getFieldControlBridge,
+  registerFieldControlBridge,
+} from "./field-control-registry";
 
-export type FieldNativeControl = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-
-export type FieldControlValidityKey =
-  | "badInput"
-  | "customError"
-  | "patternMismatch"
-  | "rangeOverflow"
-  | "rangeUnderflow"
-  | "stepMismatch"
-  | "tooLong"
-  | "tooShort"
-  | "typeMismatch"
-  | "valueMissing";
-
-export type FieldControlCustomValidity = {
-  valid: boolean | null;
-} & Partial<Record<FieldControlValidityKey, boolean>>;
-
-export type FieldControlConnectOptions = {
-  disabled: boolean;
-  name?: string;
-  shouldSyncName: boolean;
-};
+export type {
+  FieldControlBridge,
+  FieldControlConnectOptions,
+  FieldControlCustomValidity,
+  FieldControlKind,
+  FieldControlNativeControlsOptions,
+  FieldControlValidityKey,
+  FieldNativeControl,
+} from "./field-control-registry";
+export { registerFieldControlBridge } from "./field-control-registry";
 
 type FieldControlConnectRequest = FieldControlConnectOptions & {
   onConnected?: () => void;
   signal?: AbortSignal;
-};
-
-export type FieldControlNativeControlsOptions = {
-  includeHidden?: boolean;
-};
-
-export type FieldControlBridge = {
-  kind: FieldControlKind;
-  connect?(control: HTMLElement, options: FieldControlConnectOptions): void;
-  getAccessibleSurfaces?(fieldRoot: HTMLElement, control: HTMLElement): HTMLElement[];
-  getFocusTarget?(control: HTMLElement): HTMLElement | undefined;
-  getLabelSurfaces?(fieldRoot: HTMLElement, control: HTMLElement): HTMLElement[];
-  getNativeControls?(
-    control: HTMLElement,
-    options?: FieldControlNativeControlsOptions,
-  ): FieldNativeControl[];
-  getStateSurfaces?(fieldRoot: HTMLElement, control: HTMLElement): HTMLElement[];
-  readCustomValidity?(control: HTMLElement, value: string): FieldControlCustomValidity | undefined;
-  readValue?(control: HTMLElement): string | undefined;
 };
 
 const FORM_CONTROL_SURFACE_SELECTORS = [
@@ -86,7 +49,6 @@ const FORM_CONTROL_ACCESSIBLE_SURFACE_SELECTORS = [
   "[data-sw-slider-thumb]",
 ].join(",");
 
-const bridges = new Map<FieldControlKind, FieldControlBridge>();
 const lazyBridgeLoaders = new Map<FieldControlKind, () => Promise<unknown>>();
 const pendingLazyBridgeLoads = new Map<FieldControlKind, Promise<unknown>>();
 const colorPickerBridgeParts = new WeakMap<HTMLElement, Element[]>();
@@ -139,22 +101,6 @@ registerFieldControlLazyBridge("radio-group", siblingRuntimeComponentLoaders["ra
 registerFieldControlLazyBridge("select", siblingRuntimeComponentLoaders.select);
 registerFieldControlLazyBridge("slider", siblingRuntimeComponentLoaders.slider);
 registerFieldControlLazyBridge("switch", siblingRuntimeComponentLoaders.switch);
-
-export function registerFieldControlBridge(bridge: FieldControlBridge): () => void {
-  const previous = bridges.get(bridge.kind);
-  bridges.set(bridge.kind, bridge);
-
-  return () => {
-    if (bridges.get(bridge.kind) !== bridge) return;
-
-    if (previous) {
-      bridges.set(bridge.kind, previous);
-      return;
-    }
-
-    bridges.delete(bridge.kind);
-  };
-}
 
 export function getFieldControlKind(control: HTMLElement): FieldControlKind {
   if (control.hasAttribute("data-sw-color-picker")) return "color-picker";
@@ -510,7 +456,7 @@ export function getFieldControlLabelSurfaces(
 }
 
 function getRegisteredBridge(control: HTMLElement): FieldControlBridge | undefined {
-  return bridges.get(getFieldControlKind(control));
+  return getFieldControlBridge(getFieldControlKind(control));
 }
 
 export function registerFieldControlLazyBridge(

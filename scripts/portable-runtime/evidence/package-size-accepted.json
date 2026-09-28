@@ -1,0 +1,531 @@
+{
+  "schemaVersion": 1,
+  "method": "package-dist-static-gzip-v1",
+  "provenance": {
+    "capturedAt": "2026-09-28T18:16:01.970Z",
+    "sourceCommit": "e7542c129b87b16799f3ba3fb20d096dd3df5eac",
+    "workingTreeDirty": true,
+    "esbuildVersion": "0.28.1",
+    "lockfileSha256": "f1b8cef9550879ac8a9b68ae3970c21d6558ff47a8f203e9373d366dd86fb55c",
+    "acceptedAt": "2026-09-28",
+    "reason": "Maintainer accepted current sizes after release review and commit attribution, including the shared recipe migration, Field registry split, React Portal cleanup and Color Picker refresh fix."
+  },
+  "measurements": [
+    {
+      "id": "react.accordion",
+      "label": "Starwind accordion",
+      "kind": "component",
+      "gzipBytes": 4488
+    },
+    {
+      "id": "react.adapter",
+      "label": "@starwind-ui/react (adapter only)",
+      "kind": "aggregate",
+      "gzipBytes": 46475
+    },
+    {
+      "id": "react.alert-dialog",
+      "label": "Starwind alert-dialog",
+      "kind": "component",
+      "gzipBytes": 13859
+    },
+    {
+      "id": "react.avatar",
+      "label": "Starwind avatar",
+      "kind": "component",
+      "gzipBytes": 2691
+    },
+    {
+      "id": "react.button",
+      "label": "Starwind button",
+      "kind": "component",
+      "gzipBytes": 1271
+    },
+    {
+      "id": "react.carousel",
+      "label": "Starwind carousel",
+      "kind": "component",
+      "gzipBytes": 9688
+    },
+    {
+      "id": "react.catalog",
+      "label": "@starwind-ui/react + runtime",
+      "kind": "aggregate",
+      "gzipBytes": 197865
+    },
+    {
+      "id": "react.checkbox",
+      "label": "Starwind checkbox",
+      "kind": "component",
+      "gzipBytes": 6124
+    },
+    {
+      "id": "react.checkbox-group",
+      "label": "Starwind checkbox-group",
+      "kind": "component",
+      "gzipBytes": 6940
+    },
+    {
+      "id": "react.collapsible",
+      "label": "Starwind collapsible",
+      "kind": "component",
+      "gzipBytes": 4713
+    },
+    {
+      "id": "react.color-picker",
+      "label": "Starwind color-picker",
+      "kind": "component",
+      "gzipBytes": 18006
+    },
+    {
+      "id": "react.combobox",
+      "label": "Starwind combobox",
+      "kind": "component",
+      "gzipBytes": 29746
+    },
+    {
+      "id": "react.context-menu",
+      "label": "Starwind context-menu",
+      "kind": "component",
+      "gzipBytes": 28658
+    },
+    {
+      "id": "react.dialog",
+      "label": "Starwind dialog",
+      "kind": "component",
+      "gzipBytes": 11480
+    },
+    {
+      "id": "react.drawer",
+      "label": "Starwind drawer",
+      "kind": "component",
+      "gzipBytes": 13845
+    },
+    {
+      "id": "react.dropzone",
+      "label": "Starwind dropzone",
+      "kind": "component",
+      "gzipBytes": 4486
+    },
+    {
+      "id": "react.field",
+      "label": "Starwind field",
+      "kind": "component",
+      "gzipBytes": 10273
+    },
+    {
+      "id": "react.fieldset",
+      "label": "Starwind fieldset",
+      "kind": "component",
+      "gzipBytes": 2503
+    },
+    {
+      "id": "react.form",
+      "label": "Starwind form",
+      "kind": "component",
+      "gzipBytes": 17577
+    },
+    {
+      "id": "react.input",
+      "label": "Starwind input",
+      "kind": "component",
+      "gzipBytes": 2646
+    },
+    {
+      "id": "react.input-otp",
+      "label": "Starwind input-otp",
+      "kind": "component",
+      "gzipBytes": 5725
+    },
+    {
+      "id": "react.matched.all-three-overlap",
+      "label": "All-three overlap - Starwind",
+      "kind": "aggregate",
+      "gzipBytes": 133932
+    },
+    {
+      "id": "react.matched.starwind-base-overlap",
+      "label": "Starwind/Base UI overlap - Starwind",
+      "kind": "aggregate",
+      "gzipBytes": 142479
+    },
+    {
+      "id": "react.matched.starwind-zag-overlap",
+      "label": "Starwind/Zag overlap - Starwind",
+      "kind": "aggregate",
+      "gzipBytes": 146362
+    },
+    {
+      "id": "react.menu",
+      "label": "Starwind menu",
+      "kind": "component",
+      "gzipBytes": 27952
+    },
+    {
+      "id": "react.navigation-menu",
+      "label": "Starwind navigation-menu",
+      "kind": "component",
+      "gzipBytes": 24467
+    },
+    {
+      "id": "react.popover",
+      "label": "Starwind popover",
+      "kind": "component",
+      "gzipBytes": 21459
+    },
+    {
+      "id": "react.preview-card",
+      "label": "Starwind preview-card",
+      "kind": "component",
+      "gzipBytes": 19612
+    },
+    {
+      "id": "react.progress",
+      "label": "Starwind progress",
+      "kind": "component",
+      "gzipBytes": 2804
+    },
+    {
+      "id": "react.radio",
+      "label": "Starwind radio",
+      "kind": "component",
+      "gzipBytes": 5637
+    },
+    {
+      "id": "react.radio-group",
+      "label": "Starwind radio-group",
+      "kind": "component",
+      "gzipBytes": 8757
+    },
+    {
+      "id": "react.scroll-area",
+      "label": "Starwind scroll-area",
+      "kind": "component",
+      "gzipBytes": 4728
+    },
+    {
+      "id": "react.select",
+      "label": "Starwind select",
+      "kind": "component",
+      "gzipBytes": 31305
+    },
+    {
+      "id": "react.sidebar",
+      "label": "Starwind sidebar",
+      "kind": "component",
+      "gzipBytes": 5941
+    },
+    {
+      "id": "react.slider",
+      "label": "Starwind slider",
+      "kind": "component",
+      "gzipBytes": 8066
+    },
+    {
+      "id": "react.switch",
+      "label": "Starwind switch",
+      "kind": "component",
+      "gzipBytes": 4864
+    },
+    {
+      "id": "react.tabs",
+      "label": "Starwind tabs",
+      "kind": "component",
+      "gzipBytes": 6644
+    },
+    {
+      "id": "react.theme",
+      "label": "Starwind theme",
+      "kind": "component",
+      "gzipBytes": 3635
+    },
+    {
+      "id": "react.toast",
+      "label": "Starwind toast",
+      "kind": "component",
+      "gzipBytes": 6029
+    },
+    {
+      "id": "react.toggle",
+      "label": "Starwind toggle",
+      "kind": "component",
+      "gzipBytes": 3310
+    },
+    {
+      "id": "react.toggle-group",
+      "label": "Starwind toggle-group",
+      "kind": "component",
+      "gzipBytes": 5354
+    },
+    {
+      "id": "react.tooltip",
+      "label": "Starwind tooltip",
+      "kind": "component",
+      "gzipBytes": 20240
+    },
+    {
+      "id": "runtime.catalog",
+      "label": "@starwind-ui/runtime",
+      "kind": "aggregate",
+      "gzipBytes": 148501
+    },
+    {
+      "id": "runtime.color-picker",
+      "label": "@starwind-ui/runtime/color-picker",
+      "kind": "component",
+      "gzipBytes": 13605
+    },
+    {
+      "id": "vue.accordion",
+      "label": "@starwind-ui/vue/accordion",
+      "kind": "component",
+      "gzipBytes": 4882
+    },
+    {
+      "id": "vue.adapter",
+      "label": "@starwind-ui/vue (adapter only)",
+      "kind": "aggregate",
+      "gzipBytes": 58629
+    },
+    {
+      "id": "vue.alert-dialog",
+      "label": "@starwind-ui/vue/alert-dialog",
+      "kind": "component",
+      "gzipBytes": 14114
+    },
+    {
+      "id": "vue.avatar",
+      "label": "@starwind-ui/vue/avatar",
+      "kind": "component",
+      "gzipBytes": 2882
+    },
+    {
+      "id": "vue.button",
+      "label": "@starwind-ui/vue/button",
+      "kind": "component",
+      "gzipBytes": 1329
+    },
+    {
+      "id": "vue.carousel",
+      "label": "@starwind-ui/vue/carousel",
+      "kind": "component",
+      "gzipBytes": 9922
+    },
+    {
+      "id": "vue.catalog",
+      "label": "@starwind-ui/vue + runtime",
+      "kind": "aggregate",
+      "gzipBytes": 211881
+    },
+    {
+      "id": "vue.checkbox",
+      "label": "@starwind-ui/vue/checkbox",
+      "kind": "component",
+      "gzipBytes": 6100
+    },
+    {
+      "id": "vue.checkbox-group",
+      "label": "@starwind-ui/vue/checkbox-group",
+      "kind": "component",
+      "gzipBytes": 7021
+    },
+    {
+      "id": "vue.collapsible",
+      "label": "@starwind-ui/vue/collapsible",
+      "kind": "component",
+      "gzipBytes": 5531
+    },
+    {
+      "id": "vue.color-picker",
+      "label": "@starwind-ui/vue/color-picker",
+      "kind": "component",
+      "gzipBytes": 18919
+    },
+    {
+      "id": "vue.combobox",
+      "label": "@starwind-ui/vue/combobox",
+      "kind": "component",
+      "gzipBytes": 29272
+    },
+    {
+      "id": "vue.complete-catalog",
+      "label": "@starwind-ui/vue complete catalog",
+      "kind": "aggregate",
+      "gzipBytes": 214706
+    },
+    {
+      "id": "vue.context-menu",
+      "label": "@starwind-ui/vue/context-menu",
+      "kind": "component",
+      "gzipBytes": 29406
+    },
+    {
+      "id": "vue.dialog",
+      "label": "@starwind-ui/vue/dialog",
+      "kind": "component",
+      "gzipBytes": 12134
+    },
+    {
+      "id": "vue.drawer",
+      "label": "@starwind-ui/vue/drawer",
+      "kind": "component",
+      "gzipBytes": 14075
+    },
+    {
+      "id": "vue.dropzone",
+      "label": "@starwind-ui/vue/dropzone",
+      "kind": "component",
+      "gzipBytes": 4788
+    },
+    {
+      "id": "vue.field",
+      "label": "@starwind-ui/vue/field",
+      "kind": "component",
+      "gzipBytes": 10816
+    },
+    {
+      "id": "vue.fieldset",
+      "label": "@starwind-ui/vue/fieldset",
+      "kind": "component",
+      "gzipBytes": 2577
+    },
+    {
+      "id": "vue.form",
+      "label": "@starwind-ui/vue/form",
+      "kind": "component",
+      "gzipBytes": 17765
+    },
+    {
+      "id": "vue.input",
+      "label": "@starwind-ui/vue/input",
+      "kind": "component",
+      "gzipBytes": 2662
+    },
+    {
+      "id": "vue.input-otp",
+      "label": "@starwind-ui/vue/input-otp",
+      "kind": "component",
+      "gzipBytes": 6121
+    },
+    {
+      "id": "vue.matched.starwind-zag-vue-overlap",
+      "label": "Starwind/Zag Vue overlap - Starwind Vue",
+      "kind": "aggregate",
+      "gzipBytes": 186818
+    },
+    {
+      "id": "vue.menu",
+      "label": "@starwind-ui/vue/menu",
+      "kind": "component",
+      "gzipBytes": 29294
+    },
+    {
+      "id": "vue.navigation-menu",
+      "label": "@starwind-ui/vue/navigation-menu",
+      "kind": "component",
+      "gzipBytes": 25465
+    },
+    {
+      "id": "vue.packed",
+      "label": "@starwind-ui/vue",
+      "kind": "payload",
+      "gzipBytes": 146699
+    },
+    {
+      "id": "vue.popover",
+      "label": "@starwind-ui/vue/popover",
+      "kind": "component",
+      "gzipBytes": 22090
+    },
+    {
+      "id": "vue.preview-card",
+      "label": "@starwind-ui/vue/preview-card",
+      "kind": "component",
+      "gzipBytes": 20182
+    },
+    {
+      "id": "vue.progress",
+      "label": "@starwind-ui/vue/progress",
+      "kind": "component",
+      "gzipBytes": 3049
+    },
+    {
+      "id": "vue.radio",
+      "label": "@starwind-ui/vue/radio",
+      "kind": "component",
+      "gzipBytes": 5936
+    },
+    {
+      "id": "vue.radio-group",
+      "label": "@starwind-ui/vue/radio-group",
+      "kind": "component",
+      "gzipBytes": 8854
+    },
+    {
+      "id": "vue.scroll-area",
+      "label": "@starwind-ui/vue/scroll-area",
+      "kind": "component",
+      "gzipBytes": 5139
+    },
+    {
+      "id": "vue.select",
+      "label": "@starwind-ui/vue/select",
+      "kind": "component",
+      "gzipBytes": 31202
+    },
+    {
+      "id": "vue.sidebar",
+      "label": "@starwind-ui/vue/sidebar",
+      "kind": "component",
+      "gzipBytes": 6951
+    },
+    {
+      "id": "vue.slider",
+      "label": "@starwind-ui/vue/slider",
+      "kind": "component",
+      "gzipBytes": 8384
+    },
+    {
+      "id": "vue.switch",
+      "label": "@starwind-ui/vue/switch",
+      "kind": "component",
+      "gzipBytes": 5077
+    },
+    {
+      "id": "vue.tabs",
+      "label": "@starwind-ui/vue/tabs",
+      "kind": "component",
+      "gzipBytes": 7136
+    },
+    {
+      "id": "vue.theme",
+      "label": "@starwind-ui/vue/theme",
+      "kind": "component",
+      "gzipBytes": 3556
+    },
+    {
+      "id": "vue.toast",
+      "label": "@starwind-ui/vue/toast",
+      "kind": "component",
+      "gzipBytes": 6509
+    },
+    {
+      "id": "vue.toggle",
+      "label": "@starwind-ui/vue/toggle",
+      "kind": "component",
+      "gzipBytes": 3475
+    },
+    {
+      "id": "vue.toggle-group",
+      "label": "@starwind-ui/vue/toggle-group",
+      "kind": "component",
+      "gzipBytes": 5430
+    },
+    {
+      "id": "vue.tooltip",
+      "label": "@starwind-ui/vue/tooltip",
+      "kind": "component",
+      "gzipBytes": 20804
+    }
+  ]
+}

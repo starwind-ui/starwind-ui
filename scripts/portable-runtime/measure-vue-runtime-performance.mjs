@@ -1,10 +1,11 @@
 import { execFileSync } from "node:child_process";
 import {
   existsSync,
-  mkdtempSync,
   mkdirSync,
-  readFileSync,
+  mkdtempSync,
   readdirSync,
+  readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -31,24 +32,24 @@ import {
   vuePerformanceProviderRows,
 } from "./runtime-performance/vue-plan.mjs";
 import {
-  buildVuePerformanceEvidence,
-  buildVuePerformanceRowRecord,
-  checkVuePerformanceEvidence,
-  createVuePerformanceEligibility,
-  createVuePerformanceAudit,
-  createVuePerformanceDiagnosticRun,
-  createVuePerformanceRun,
-  assertVuePerformanceEligibilityForRun,
-  publishVuePerformanceEvidence,
-  publishVuePerformanceRow,
-  serializeVuePerformanceEvidence,
-  validateVuePerformanceEligibility,
-  VUE_PERFORMANCE_MOUNT_SAMPLING_CONTROL,
-} from "./runtime-performance/vue-run-evidence.mjs";
-import {
   renderVuePerformanceEvidenceMarkdown,
   renderVuePerformanceRunMarkdown,
 } from "./runtime-performance/vue-report.mjs";
+import {
+  assertVuePerformanceEligibilityForRun,
+  buildVuePerformanceEvidence,
+  buildVuePerformanceRowRecord,
+  checkVuePerformanceEvidence,
+  createVuePerformanceAudit,
+  createVuePerformanceDiagnosticRun,
+  createVuePerformanceEligibility,
+  createVuePerformanceRun,
+  publishVuePerformanceEvidence,
+  publishVuePerformanceRow,
+  serializeVuePerformanceEvidence,
+  VUE_PERFORMANCE_MOUNT_SAMPLING_CONTROL,
+  validateVuePerformanceEligibility,
+} from "./runtime-performance/vue-run-evidence.mjs";
 import {
   buildStarwindVueFixture,
   buildStarwindVuePerformanceAliases,
@@ -448,15 +449,28 @@ export function checkAcceptedVuePerformanceEvidence() {
   });
 }
 
+export function createVuePerformanceTemporaryRoot({
+  parent = process.env.STARWIND_MEASUREMENT_TMP_ROOT ?? os.tmpdir(),
+  repository = VUE_PERFORMANCE_REPO_ROOT,
+  makeTemporaryRoot = mkdtempSync,
+} = {}) {
+  const canonicalParent = realpathSync(parent);
+  const relative = path.relative(realpathSync(repository), canonicalParent);
+  if (
+    relative === "" ||
+    (!path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`))
+  ) {
+    throw new Error("Vue performance temporary root must be outside the repository workspace.");
+  }
+  return realpathSync(makeTemporaryRoot(path.join(canonicalParent, "starwind-vue-performance-")));
+}
+
 export async function runVuePerformanceOnce(config, dependencies = {}) {
   assertBuiltVuePerformancePackages();
   const startedAt = new Date().toISOString();
-  const temporaryRoot = (dependencies.makeTemporaryRoot ?? mkdtempSync)(
-    path.join(
-      process.env.STARWIND_MEASUREMENT_TMP_ROOT ?? os.tmpdir(),
-      "starwind-vue-performance-",
-    ),
-  );
+  const temporaryRoot = createVuePerformanceTemporaryRoot({
+    makeTemporaryRoot: dependencies.makeTemporaryRoot,
+  });
   const comparatorRoot = path.join(temporaryRoot, "comparators");
   const appRoot = path.join(temporaryRoot, "app");
   const distRoot = path.join(temporaryRoot, "dist");
@@ -588,7 +602,7 @@ export function installVueComparators({ comparatorRoot, execute = execFileSync }
 }
 
 export function buildVueComparatorInstallCommands({ platform = process.platform } = {}) {
-  const common = ["install", "--ignore-scripts", "--frozen-lockfile=false"];
+  const common = ["install", "--ignore-workspace", "--ignore-scripts", "--frozen-lockfile=false"];
   if (platform === "win32") {
     const windows = (arguments_) => ({
       arguments: [

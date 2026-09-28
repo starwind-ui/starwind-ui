@@ -5,7 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
-import { registerFieldControlBridge } from "../field/field-control-bridge";
+import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type DropzoneFilesChangeReason = "drop" | "imperative-action" | "input-change";
 

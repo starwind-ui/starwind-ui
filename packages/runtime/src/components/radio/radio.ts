@@ -7,7 +7,7 @@ import {
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
-import { registerFieldControlBridge } from "../field/field-control-bridge";
+import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type RadioCheckedChangeReason = "root-press" | "input-change" | "imperative-action";
 

@@ -1,556 +1,163 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  aggregateBaselineProvenance,
+  acceptedPackageSizeBaseline,
   evaluatePackageSizeBudgets,
-  evaluateVueSizeBudget,
-  reactAdapterOnlyBaselineProvenance,
+  getPackageSizeBudgetCeilings,
 } from "../package-size-budget-checks.mjs";
-import { vuePackageSizeBaseline } from "../vue-package-size-baseline.mjs";
+import { createPackageSizeSnapshot } from "../package-size-change-baseline.mjs";
 
-describe("package size budget checks", () => {
-  it("records the stable release candidate used for the aggregate rebaseline", () => {
-    expect(aggregateBaselineProvenance).toEqual({
-      date: "2026-08-15",
-      publicCommit: "6d497055479ca56bad8463f3fc38bedc231d0174",
-      release: {
-        astro: "1.1.0",
-        cli: "3.1.0",
-        react: "1.1.0",
-        runtime: "1.1.0",
-      },
-    });
-    expect(Object.isFrozen(aggregateBaselineProvenance)).toBe(true);
-    expect(Object.isFrozen(aggregateBaselineProvenance.release)).toBe(true);
-    expect(reactAdapterOnlyBaselineProvenance).toEqual({
-      command: "pnpm runtime:size:check",
-      context: "accepted pre-release React adapter candidate",
-      date: "2026-09-17",
-      measuredGzipBytes: 40_770,
-    });
-    expect(Object.isFrozen(reactAdapterOnlyBaselineProvenance)).toBe(true);
+function acceptedResults() {
+  const results = {
+    bundleResults: [],
+    supportResults: [],
+    vueBundleResults: [],
+    vueColdImportResults: [],
+    vueMatchedSupportResults: [],
+  };
+  for (const row of acceptedPackageSizeBaseline.measurements) {
+    const { id, label, gzipBytes } = row;
+    if (
+      ["runtime.catalog", "runtime.color-picker", "react.adapter", "react.catalog"].includes(id)
+    ) {
+      results.bundleResults.push({ label, gzipBytes });
+    } else if (id.startsWith("react.matched.")) {
+      results.supportResults.push({
+        label,
+        gzipBytes,
+        comparisonSet: id.slice("react.matched.".length),
+        provider: "starwind",
+      });
+    } else if (id.startsWith("react.")) {
+      results.supportResults.push({
+        label,
+        gzipBytes,
+        component: id.slice(6),
+        provider: "starwind",
+      });
+    } else if (["vue.adapter", "vue.catalog", "vue.complete-catalog"].includes(id)) {
+      results.vueBundleResults.push({ label, gzipBytes });
+    } else if (id === "vue.packed") {
+      results.vuePackagePayload = { label, packageGzipBytes: gzipBytes };
+    } else if (id.startsWith("vue.matched.")) {
+      results.vueMatchedSupportResults.push({
+        label,
+        gzipBytes,
+        comparisonSet: id.slice("vue.matched.".length),
+        provider: "starwind-vue",
+      });
+    } else if (id.startsWith("vue.")) {
+      results.vueColdImportResults.push({
+        label,
+        gzipBytes,
+        component: id.slice(4),
+        provider: "starwind-vue",
+      });
+    }
+  }
+  return results;
+}
+
+const evaluate = (results, options = {}) =>
+  evaluatePackageSizeBudgets({
+    ...results,
+    includePrivateVue: true,
+    ...options,
   });
 
-  it("allows normal aggregate feature growth while reporting the real Zag advisory", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: passingSupportResults(),
-    });
-
+describe("package size checks", () => {
+  it("accepts the reviewed sizes, including every component import", () => {
+    const result = evaluate(acceptedResults());
     expect(result.failures).toEqual([]);
-    expect(result.advisories).toContain(
-      "Starwind/Zag overlap comparison against Zag React advisory: Starwind 121,678 B (118.8 KiB) is not below Zag React 112,282 B (109.7 KiB).",
-    );
-    expect(result.headlineChecks.every((check) => check.status === "Pass")).toBe(true);
-    expect(result.headlineChecks).toEqual(
+    expect(result.changeChecks).toHaveLength(acceptedPackageSizeBaseline.measurements.length);
+    expect(
+      result.changeChecks.every((check) => check.growthBytes === 0 && check.status === "Pass"),
+    ).toBe(true);
+    expect(result.changeChecks.map((check) => check.id)).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          baselineGzipBytes: 139_964,
-          label: "@starwind-ui/runtime",
-          maxGzipBytes: 153_960,
-        }),
-        expect.objectContaining({
-          baselineGzipBytes: 40_770,
-          label: "@starwind-ui/react (adapter only)",
-          maxGzipBytes: 44_847,
-        }),
-        expect.objectContaining({
-          baselineGzipBytes: 179_332,
-          label: "@starwind-ui/react + runtime",
-          maxGzipBytes: 194_692,
-        }),
+        "react.checkbox",
+        "react.color-picker",
+        "react.form",
+        "vue.select",
+        "vue.packed",
       ]),
     );
-    expect(result.fieldColdImportChecks).toEqual([
-      expect.objectContaining({
-        gzipBytes: 20 * 1024,
-        label: "Field cold import",
-        maxGzipBytes: 22 * 1024,
-        status: "Pass",
-      }),
-    ]);
-    expect(result.standaloneComponentChecks).toEqual([
-      expect.objectContaining({
-        gzipBytes: 13_300,
-        label: "Color Picker cold import",
-        maxGzipBytes: 24 * 1024,
-        status: "Pass",
-      }),
-    ]);
-    expect(result.matchedSupportChecks.every((check) => check.status === "Pass")).toBe(true);
+  });
+
+  it("catches growth in an individual component even when the full catalog remains unchanged", () => {
+    const results = acceptedResults();
+    results.supportResults.find((row) => row.component === "checkbox").gzipBytes += 2049;
+    const result = evaluate(results);
+    expect(result.headlineChecks.every((check) => check.status === "Pass")).toBe(true);
+    expect(result.changeChecks.find((check) => check.id === "react.checkbox")).toMatchObject({
+      growthBytes: 2049,
+      status: "Fail",
+    });
+    expect(result.failures).toHaveLength(1);
+  });
+
+  it("uses an explicitly reviewed base instead of retaining earlier accumulated growth", () => {
+    const results = acceptedResults();
+    results.supportResults.find((row) => row.component === "checkbox").gzipBytes += 2049;
+    const baseline = createPackageSizeSnapshot(results, acceptedPackageSizeBaseline.provenance);
+    expect(evaluate(results, { baseline }).failures).toEqual([]);
+    results.supportResults.find((row) => row.component === "checkbox").gzipBytes += 50;
     expect(
-      result.matchedSupportChecks.find(
-        (check) => check.label === "Starwind/Zag overlap vs Zag React",
-      ),
-    ).toEqual(
-      expect.objectContaining({
-        baselineGzipBytes: 129_328,
-        maxStarwindGzipBytes: 142_260,
-        comparatorGzipBytes: 112_282,
-        comparisonStatus: "Above comparator",
-        starwindGzipBytes: 121_678,
-        status: "Pass",
-      }),
-    );
+      evaluate(results, { baseline }).changeChecks.find((check) => check.id === "react.checkbox"),
+    ).toMatchObject({
+      growthBytes: 50,
+      status: "Pass",
+    });
   });
 
-  it("reports missing budgeted headline and comparator measurements clearly", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: [
-        { label: "@starwind-ui/runtime", gzipBytes: null },
-        { label: "@starwind-ui/react (adapter only)", gzipBytes: 26 * 1024 },
-        { label: "@starwind-ui/react + runtime", gzipBytes: 133 * 1024 },
-        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
-      ],
-      supportResults: [
-        supportRow("all-three-overlap", "starwind", 94 * 1024),
-        supportRow("all-three-overlap", "zag", null),
-        supportRow("all-three-overlap", "base", 139 * 1024),
-        supportRow("starwind-zag-overlap", "starwind", 106 * 1024),
-        supportRow("starwind-zag-overlap", "zag", 109 * 1024),
-        supportRow("starwind-base-overlap", "starwind", 102 * 1024),
-        supportRow("starwind-base-overlap", "base", 143 * 1024),
-        fieldSupportRow(20 * 1024),
-      ],
-    });
-
-    expect(result.failures.join("\n")).toContain(
-      "@starwind-ui/runtime headline package budget could not be evaluated: missing min+gzip measurement.",
-    );
-    expect(result.advisories.join("\n")).toContain(
-      "All-three overlap comparison against Zag React could not be evaluated: missing Zag React min+gzip measurement.",
-    );
+  it("keeps Field and Runtime Color Picker absolute ceilings after a baseline update", () => {
+    const results = acceptedResults();
+    results.supportResults.find((row) => row.component === "field").gzipBytes = 22 * 1024 + 1;
+    results.bundleResults.find(
+      (row) => row.label === "@starwind-ui/runtime/color-picker",
+    ).gzipBytes = 24 * 1024 + 1;
+    const baseline = createPackageSizeSnapshot(results, acceptedPackageSizeBaseline.provenance);
+    const result = evaluate(results, { baseline });
+    expect(result.failures).toHaveLength(2);
+    expect(result.fieldColdImportChecks[0].status).toBe("Fail");
+    expect(result.standaloneComponentChecks[0].status).toBe("Fail");
   });
 
-  it("reports matched-support comparisons as advisories without failing the absolute gate", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: [
-        supportRow("all-three-overlap", "starwind", 94 * 1024),
-        supportRow("all-three-overlap", "zag", 97 * 1024),
-        supportRow("all-three-overlap", "base", 139 * 1024),
-        supportRow("starwind-zag-overlap", "starwind", 110 * 1024),
-        supportRow("starwind-zag-overlap", "zag", 109 * 1024),
-        supportRow("starwind-base-overlap", "starwind", 102 * 1024),
-        supportRow("starwind-base-overlap", "base", 143 * 1024),
-        fieldSupportRow(20 * 1024),
-      ],
+  it("keeps comparator rankings informational and preserves size failure status", () => {
+    const results = acceptedResults();
+    results.supportResults.push({
+      provider: "zag",
+      comparisonSet: "all-three-overlap",
+      gzipBytes: 1,
     });
-
+    const result = evaluate(results);
     expect(result.failures).toEqual([]);
-    expect(result.advisories).toContain(
-      "Starwind/Zag overlap comparison against Zag React advisory: Starwind 112,640 B (110.0 KiB) is not below Zag React 111,616 B (109.0 KiB).",
-    );
-    expect(
-      result.matchedSupportChecks.find(
-        (check) => check.label === "Starwind/Zag overlap vs Zag React",
-      ),
-    ).toEqual(
-      expect.objectContaining({
-        comparisonStatus: "Above comparator",
-        status: "Pass",
-      }),
-    );
+    expect(result.matchedSupportChecks[0]).toMatchObject({
+      comparisonStatus: "Above comparator",
+      status: "Pass",
+    });
+    results.supportResults.find(
+      (row) => row.comparisonSet === "all-three-overlap" && row.provider === "starwind",
+    ).gzipBytes += 16000;
+    expect(evaluate(results).matchedSupportChecks[0].status).toBe("Fail");
   });
 
-  it("passes each aggregate headline guard exactly and fails one byte above it", () => {
-    const atCeiling = evaluatePackageSizeBudgets({
-      bundleResults: [
-        { label: "@starwind-ui/runtime", gzipBytes: 153_960 },
-        { label: "@starwind-ui/react (adapter only)", gzipBytes: 44_847 },
-        { label: "@starwind-ui/react + runtime", gzipBytes: 194_692 },
-        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
-      ],
-      supportResults: passingSupportResults(),
-    });
-    const oneByteAbove = evaluatePackageSizeBudgets({
-      bundleResults: [
-        { label: "@starwind-ui/runtime", gzipBytes: 153_961 },
-        { label: "@starwind-ui/react (adapter only)", gzipBytes: 44_848 },
-        { label: "@starwind-ui/react + runtime", gzipBytes: 194_693 },
-        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
-      ],
-      supportResults: passingSupportResults(),
-    });
-
-    expect(atCeiling.headlineChecks.every((check) => check.status === "Pass")).toBe(true);
-    expect(oneByteAbove.failures.join("\n")).toContain(
-      "@starwind-ui/runtime exceeded aggregate regression guard",
-    );
-    expect(oneByteAbove.failures.join("\n")).toContain(
-      "@starwind-ui/react (adapter only) exceeded aggregate regression guard",
-    );
-    expect(oneByteAbove.failures.join("\n")).toContain(
-      "@starwind-ui/react + runtime exceeded aggregate regression guard",
-    );
+  it("omits Vue only when the caller explicitly leaves it out", () => {
+    const results = acceptedResults();
+    delete results.vueBundleResults;
+    delete results.vueColdImportResults;
+    delete results.vueMatchedSupportResults;
+    delete results.vuePackagePayload;
+    expect(evaluate(results, { includePrivateVue: false }).failures).toEqual([]);
+    expect(evaluate(results).failures.length).toBeGreaterThan(0);
   });
 
-  it("reports set-wide matched-support regression failures with affected rows", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: [
-        supportRow("all-three-overlap", "starwind", 128_911),
-        supportRow("all-three-overlap", "zag", 120 * 1024),
-        supportRow("all-three-overlap", "base", 140 * 1024),
-        supportRow("starwind-zag-overlap", "starwind", 106 * 1024),
-        supportRow("starwind-zag-overlap", "zag", 109 * 1024),
-        supportRow("starwind-base-overlap", "starwind", 102 * 1024),
-        supportRow("starwind-base-overlap", "base", 143 * 1024),
-        fieldSupportRow(20 * 1024),
-      ],
-    });
-
-    expect(result.failures.join("\n")).toContain(
-      "All-three overlap set-wide Starwind matched-support regression guard exceeded",
-    );
-    expect(result.failures.join("\n")).toContain(
-      "Affected rows: All-three overlap vs Zag React, All-three overlap vs Base UI.",
-    );
-    expect(
-      result.matchedSupportChecks
-        .filter((check) => check.label.startsWith("All-three overlap"))
-        .every((check) => check.status === "Fail"),
-    ).toBe(true);
-  });
-
-  it("passes the Starwind/Zag aggregate guard exactly and fails one byte above it", () => {
-    const supportResults = [
-      supportRow("all-three-overlap", "starwind", 94 * 1024),
-      supportRow("all-three-overlap", "zag", 97 * 1024),
-      supportRow("all-three-overlap", "base", 139 * 1024),
-      supportRow("starwind-zag-overlap", "starwind", 142_260),
-      supportRow("starwind-zag-overlap", "zag", 112_282),
-      supportRow("starwind-base-overlap", "starwind", 102 * 1024),
-      supportRow("starwind-base-overlap", "base", 143 * 1024),
-      fieldSupportRow(20 * 1024),
-    ];
-    const atCeiling = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults,
-    });
-    const oneByteAbove = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: supportResults.map((row) =>
-        row.comparisonSet === "starwind-zag-overlap" && row.provider === "starwind"
-          ? { ...row, gzipBytes: 142_261 }
-          : row,
-      ),
-    });
-
-    expect(
-      atCeiling.matchedSupportChecks.find(
-        (check) => check.label === "Starwind/Zag overlap vs Zag React",
-      ),
-    ).toEqual(expect.objectContaining({ maxStarwindGzipBytes: 142_260, status: "Pass" }));
-    expect(oneByteAbove.failures.join("\n")).toContain(
-      "Starwind/Zag overlap set-wide Starwind matched-support regression guard exceeded",
-    );
-    expect(
-      oneByteAbove.matchedSupportChecks.find(
-        (check) => check.label === "Starwind/Zag overlap vs Zag React",
-      ),
-    ).toEqual(expect.objectContaining({ maxStarwindGzipBytes: 142_260, status: "Fail" }));
-  });
-
-  it("keeps targeted Color Picker cold-import growth as a strict absolute gate", () => {
-    const atCeiling = evaluatePackageSizeBudgets({
-      bundleResults: [
-        ...passingBundleResults().filter(
-          ({ label }) => label !== "@starwind-ui/runtime/color-picker",
-        ),
-        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 24 * 1024 },
-      ],
-      supportResults: passingSupportResults(),
-    });
-    const oneByteAbove = evaluatePackageSizeBudgets({
-      bundleResults: [
-        ...passingBundleResults().filter(
-          ({ label }) => label !== "@starwind-ui/runtime/color-picker",
-        ),
-        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 24 * 1024 + 1 },
-      ],
-      supportResults: passingSupportResults(),
-    });
-
-    expect(atCeiling.standaloneComponentChecks).toEqual([
-      expect.objectContaining({ status: "Pass" }),
-    ]);
-    expect(oneByteAbove.failures).toContain(
-      "Color Picker cold import budget exceeded: 24,577 B (24.0 KiB) > budget 24,576 B (24.0 KiB).",
-    );
-  });
-
-  it("reports Field cold import budget failures with measured values", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: [...passingSupportResults({ fieldGzipBytes: 44.6 * 1024 })],
-    });
-
-    expect(result.fieldColdImportChecks).toEqual([
-      expect.objectContaining({
-        gzipBytes: 44.6 * 1024,
-        label: "Field cold import",
-        status: "Fail",
-      }),
-    ]);
-    expect(result.failures).toContain(
-      "Field cold import budget exceeded: Field cold import 45,670 B (44.6 KiB) > budget 22,528 B (22.0 KiB).",
-    );
-  });
-
-  it("reports missing Field cold import measurements clearly", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: passingSupportResults({ includeField: false }),
-    });
-
-    expect(result.fieldColdImportChecks).toEqual([
-      expect.objectContaining({
-        gzipBytes: null,
-        label: "Field cold import",
-        status: "Fail",
-      }),
-    ]);
-    expect(result.failures).toContain(
-      "Field cold import budget could not be evaluated: missing Field cold import min+gzip measurement.",
-    );
-  });
-
-  it("passes every frozen Vue warning limit at equality and warns one byte above", () => {
-    const atCeiling = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      includePrivateVue: true,
-      supportResults: passingSupportResults(),
-      ...privateVueBudgetResults(),
-    });
-    const oneByteAbove = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      includePrivateVue: true,
-      supportResults: passingSupportResults(),
-      ...privateVueBudgetResults({ offset: 1 }),
-    });
-
-    expect(atCeiling.vueAbsoluteChecks).toHaveLength(8);
-    expect(atCeiling.vueAbsoluteChecks.every(({ status }) => status === "Pass")).toBe(true);
-    expect(oneByteAbove.vueAbsoluteChecks.every(({ status }) => status === "Warn")).toBe(true);
-    expect(oneByteAbove.failures).toEqual([]);
-    for (const id of Object.keys(vuePackageSizeBaseline.budgets)) {
-      expect(oneByteAbove.advisories.join("\n")).toContain(`${id} review warning`);
+  it("reports the active catalog ceilings for architecture diagnostics", () => {
+    const result = evaluate(acceptedResults());
+    const ceilings = getPackageSizeBudgetCeilings();
+    for (const check of result.headlineChecks) {
+      expect(ceilings.headline[check.label]).toBe(check.maxGzipBytes);
+      expect(check.maxGzipBytes).toBeGreaterThan(check.gzipBytes);
     }
-  });
-
-  it.each(Object.entries(vuePackageSizeBaseline.budgets))(
-    "allows hard-limit equality for %s and fails one byte above",
-    (id, budget) => {
-      const maxGzipBytes =
-        budget.maximumBytes + Math.max(Math.ceil(budget.maximumBytes / 10), 2048);
-      const atLimit = evaluateVueSizeBudget({ id, ...budget, measuredBytes: maxGzipBytes });
-      const above = evaluateVueSizeBudget({ id, ...budget, measuredBytes: maxGzipBytes + 1 });
-      expect(atLimit).toMatchObject({
-        baselineGzipBytes: budget.maximumBytes,
-        warningGzipBytes: budget.ceilingBytes,
-        maxGzipBytes,
-        failure: null,
-        status: "Warn",
-      });
-      expect(above.status).toBe("Fail");
-      expect(above.advisory).toBeNull();
-      expect(above.failure).toContain("hard limit");
-      expect(above.failure).toContain("growth from baseline");
-      expect(above.growthBytes).toBe(maxGzipBytes + 1 - budget.maximumBytes);
-      expect(above.growthPercent).toBeCloseTo((above.growthBytes / budget.maximumBytes) * 100);
-    },
-  );
-
-  it.each([
-    [10_000, 11_024, 12_048],
-    [20_480, 21_504, 22_528],
-    [30_000, 31_500, 33_000],
-  ])("applies both growth bands to a %s byte baseline", (maximumBytes, ceilingBytes, hardLimit) => {
-    const evaluate = (measuredBytes) =>
-      evaluateVueSizeBudget({
-        id: "vue.synthetic",
-        maximumBytes,
-        ceilingBytes,
-        headroomBytes: ceilingBytes - maximumBytes,
-        measuredBytes,
-      });
-    expect(evaluate(ceilingBytes - 1).status).toBe("Pass");
-    expect(evaluate(ceilingBytes).status).toBe("Pass");
-    expect(evaluate(ceilingBytes + 1).status).toBe("Warn");
-    expect(evaluate(hardLimit - 1).status).toBe("Warn");
-    expect(evaluate(hardLimit)).toMatchObject({
-      status: "Warn",
-      maxGzipBytes: hardLimit,
-      failure: null,
-    });
-    expect(evaluate(hardLimit + 1).status).toBe("Fail");
-  });
-
-  it.each([undefined, null, NaN, Infinity, -Infinity, -1, 1.5, "123", {}, true])(
-    "fails an invalid required Vue measurement: %s",
-    (measuredBytes) => {
-      const input = privateVueBudgetResults({ measurement: () => measuredBytes });
-      const result = evaluatePackageSizeBudgets({
-        bundleResults: passingBundleResults(),
-        supportResults: passingSupportResults(),
-        includePrivateVue: true,
-        ...input,
-      });
-      expect(result.failures).toHaveLength(8);
-      expect(result.vueAbsoluteChecks.every((check) => check.status === "Fail")).toBe(true);
-      for (const check of result.vueAbsoluteChecks) {
-        expect(check.advisory).toBeNull();
-        expect(check.growthBytes).toBeNull();
-        expect(check.growthPercent).toBeNull();
-      }
-    },
-  );
-
-  it("reports the four current Vue growth warnings without failing the gate", () => {
-    const currentBytes = {
-      "vue.adapter-only": 51_790,
-      "vue.combined": 202_960,
-      "vue.packed-tarball": 136_552,
-      "vue.cold.combobox": 30_985,
-      "vue.cold.context-menu": 28_704,
-      "vue.cold.menu": 28_661,
-      "vue.cold.navigation-menu": 24_913,
-      "vue.cold.select": 31_783,
-    };
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: passingSupportResults(),
-      includePrivateVue: true,
-      ...privateVueBudgetResults({ measurement: (id) => currentBytes[id] }),
-    });
-    expect(result.failures).toEqual([]);
-    expect(
-      result.vueAbsoluteChecks.filter(({ status }) => status === "Warn").map(({ id }) => id),
-    ).toEqual(["vue.cold.combobox", "vue.cold.context-menu", "vue.cold.menu", "vue.cold.select"]);
-    for (const check of result.vueAbsoluteChecks) {
-      expect(check.failure).toBeNull();
-      if (check.status === "Warn") {
-        expect(result.advisories).toContain(check.advisory);
-        expect(check.advisory).toContain("growth from baseline");
-        expect(check.advisory).toContain("hard limit");
-      }
-    }
-  });
-
-  it("adds all eight hard-limit violations to failures", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      supportResults: passingSupportResults(),
-      includePrivateVue: true,
-      ...privateVueBudgetResults({
-        measurement: (id) => {
-          const baseline = vuePackageSizeBaseline.budgets[id].maximumBytes;
-          return baseline + Math.max(Math.ceil(baseline / 10), 2048) + 1;
-        },
-      }),
-    });
-    expect(result.failures).toHaveLength(8);
-    for (const check of result.vueAbsoluteChecks) {
-      expect(check.status).toBe("Fail");
-      expect(result.failures).toContain(check.failure);
-      expect(check.advisory).toBeNull();
-    }
-  });
-
-  it("fails every missing adopted Vue measurement", () => {
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      includePrivateVue: true,
-      supportResults: passingSupportResults(),
-      vueBundleResults: [],
-      vueColdImportResults: [],
-      vueMatchedSupportResults: [],
-    });
-
-    expect(result.vueAbsoluteChecks).toHaveLength(8);
-    expect(result.vueAbsoluteChecks.every(({ status }) => status === "Fail")).toBe(true);
-    expect(result.failures).toHaveLength(8);
-    expect(result.failures).toContain(
-      "vue.packed-tarball budget could not be evaluated: missing min+gzip measurement.",
-    );
-  });
-
-  it.each([
-    [128_291, "Above comparator"],
-    [180_110, "Equal comparator"],
-    [180_111, "Below comparator"],
-    [null, "Unavailable"],
-  ])("keeps the Vue comparator snapshot advisory at %s", (comparatorBytes, status) => {
-    const input = privateVueBudgetResults();
-    input.vueMatchedSupportResults = [
-      { gzipBytes: 180_110, provider: "starwind-vue" },
-      ...(comparatorBytes == null ? [] : [{ gzipBytes: comparatorBytes, provider: "zag-vue" }]),
-    ];
-    const result = evaluatePackageSizeBudgets({
-      bundleResults: passingBundleResults(),
-      includePrivateVue: true,
-      supportResults: passingSupportResults(),
-      ...input,
-    });
-
-    expect(result.failures).toEqual([]);
-    expect(result.vueMatchedSupportCheck).toEqual(
-      expect.objectContaining({ comparisonStatus: status, failure: null, status: "Pass" }),
-    );
   });
 });
-
-function privateVueBudgetResults({ offset = 0, measurement } = {}) {
-  const ceiling = measurement ?? ((id) => vuePackageSizeBaseline.budgets[id].ceilingBytes + offset);
-  return {
-    vueBundleResults: [
-      { gzipBytes: ceiling("vue.adapter-only"), label: "@starwind-ui/vue (adapter only)" },
-      { gzipBytes: ceiling("vue.combined"), label: "@starwind-ui/vue + runtime" },
-    ],
-    vueColdImportResults: vuePackageSizeBaseline.sentinels.map((component) => ({
-      component,
-      gzipBytes: ceiling(`vue.cold.${component}`),
-    })),
-    vueMatchedSupportResults: [
-      { gzipBytes: 180_110, provider: "starwind-vue" },
-      { gzipBytes: 128_292, provider: "zag-vue" },
-    ],
-    vuePackagePayload: { packageGzipBytes: ceiling("vue.packed-tarball") },
-  };
-}
-
-function passingBundleResults() {
-  return [
-    { label: "@starwind-ui/runtime", gzipBytes: 132_532 },
-    { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13_300 },
-    { label: "@starwind-ui/react (adapter only)", gzipBytes: 35_400 },
-    { label: "@starwind-ui/react + runtime", gzipBytes: 170_778 },
-  ];
-}
-
-function passingSupportResults({ fieldGzipBytes = 20 * 1024, includeField = true } = {}) {
-  const rows = [
-    supportRow("all-three-overlap", "starwind", 109_537),
-    supportRow("all-three-overlap", "zag", 97 * 1024),
-    supportRow("all-three-overlap", "base", 139 * 1024),
-    supportRow("starwind-zag-overlap", "starwind", 121_678),
-    supportRow("starwind-zag-overlap", "zag", 112_282),
-    supportRow("starwind-base-overlap", "starwind", 102 * 1024),
-    supportRow("starwind-base-overlap", "base", 143 * 1024),
-  ];
-
-  if (includeField) {
-    rows.push(fieldSupportRow(fieldGzipBytes));
-  }
-
-  return rows;
-}
-
-function supportRow(comparisonSet, provider, gzipBytes) {
-  return { comparisonSet, gzipBytes, provider };
-}
-
-function fieldSupportRow(gzipBytes) {
-  return { component: "field", gzipBytes, provider: "starwind" };
-}

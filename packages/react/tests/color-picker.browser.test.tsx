@@ -1,3 +1,4 @@
+import { createColorPicker } from "@starwind-ui/runtime/color-picker";
 import * as React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -16,6 +17,56 @@ afterEach(async () => {
 });
 
 describe("React Color Picker mounted lifecycle", () => {
+  it("settles stable slider input without rebinding unchanged parts", async () => {
+    await mount(
+      <ColorPicker.Root defaultValue="#336699">
+        <ColorPicker.ChannelSlider channel="hue">
+          <ColorPicker.ChannelSliderInput />
+        </ColorPicker.ChannelSlider>
+      </ColorPicker.Root>,
+    );
+    const owner = createColorPicker(query<HTMLElement>("[data-sw-color-picker]"));
+    const refresh = vi.spyOn(owner, "refresh");
+    const input = query<HTMLInputElement>("[data-sw-color-picker-channel-input]");
+    const initial = owner.getValueAsString();
+    for (let index = 0; index < 3; index += 1) {
+      input.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+      await flush();
+    }
+    expect(owner.getValueAsString()).not.toBe(initial);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(query("[data-sw-color-picker-channel-input]")).toBe(input);
+  });
+
+  it("refreshes callback-replaced controls before restoring a controlled value", async () => {
+    function Picker() {
+      const [revision, setRevision] = React.useState(0);
+      return (
+        <ColorPicker.Root value="#336699" onValueChange={() => setRevision((n) => n + 1)}>
+          <ColorPicker.ChannelSlider channel="hue">
+            <ColorPicker.ChannelSliderInput key={revision} />
+          </ColorPicker.ChannelSlider>
+        </ColorPicker.Root>
+      );
+    }
+    await mount(<Picker />);
+    const owner = createColorPicker(query<HTMLElement>("[data-sw-color-picker]"));
+    const refresh = vi.spyOn(owner, "refresh");
+    const first = query<HTMLInputElement>("[data-sw-color-picker-channel-input]");
+    first.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    await flush();
+    const replacement = query<HTMLInputElement>("[data-sw-color-picker-channel-input]");
+    expect(replacement).not.toBe(first);
+    expect(first.isConnected).toBe(false);
+    expect(refresh).toHaveBeenCalled();
+    expect(owner.getValueAsString()).toBe("#336699");
+    expect(replacement.value).toBe("210");
+    replacement.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    await flush();
+    expect(query("[data-sw-color-picker-channel-input]")).not.toBe(replacement);
+    expect(owner.getValueAsString()).toBe("#336699");
+  });
+
   it("keeps FormatControl synchronized with controlled format changes and cleans up", async () => {
     const formatChanged = vi.fn();
     function Picker({ format }: { format: "hsl" | "hsb" }) {

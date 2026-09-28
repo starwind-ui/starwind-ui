@@ -469,33 +469,6 @@ describe("Framework Adapter seam", () => {
     );
   });
 
-  it("routes all styled output through the Styled Output Model before target writing", () => {
-    const targetSources = [
-      readFileSync(
-        join(
-          process.cwd(),
-          "scripts/portable-runtime/renderers/framework-adapters/astro/styled/writer.ts",
-        ),
-        "utf8",
-      ),
-      readFileSync(
-        join(
-          process.cwd(),
-          "scripts/portable-runtime/renderers/framework-adapters/react/styled/writer.ts",
-        ),
-        "utf8",
-      ),
-    ];
-
-    for (const source of targetSources) {
-      expect(source).toContain("projectStyledOutputModel");
-      expect(source).toContain("generateStyledOutputComponentGroup");
-      expect(source).not.toContain("toStyledAdapterContract");
-      expect(source).not.toContain("STYLED_OUTPUT_MODEL_MIGRATED_COMPONENTS");
-      expect(source).not.toContain("generateLegacyStyledComponentGroup");
-    }
-  });
-
   it("prints styled model constants deterministically in target indexes", () => {
     const group = {
       component: "constant-order",

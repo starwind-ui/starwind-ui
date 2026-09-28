@@ -43,7 +43,7 @@ import {
   createRovingFocusNavigationAdapter,
   type OwnedListNavigation,
 } from "../../internal/owned-list-navigation";
-import { registerFieldControlBridge } from "../field/field-control-bridge";
+import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type SelectOpenChangeReason =
   | "escape-key"

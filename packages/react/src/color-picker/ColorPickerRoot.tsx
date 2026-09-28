@@ -277,6 +277,7 @@ const ColorPickerRoot = React.forwardRef<React.ElementRef<"div">, ColorPickerRoo
         read: () => incomingRef.current,
         restoreAuthoredOwnership: structure.restoreOwnership,
         captureAuthoredOwnership: structure.captureOwnership,
+        structureChanged: structure.hasChanged,
         observe: (nextValue, nextFormat) => {
           setAcceptedValue(nextValue);
           setAcceptedFormat(nextFormat);
@@ -346,6 +347,7 @@ type ColorPickerConnectionTransport = {
   read(): ColorPickerOptions;
   restoreAuthoredOwnership?(): void;
   captureAuthoredOwnership?(): void;
+  structureChanged(): boolean;
   own?(instance: ReturnType<typeof createColorPicker> | undefined): void;
   observe(value: ColorPickerColor | null, format: ColorPickerFormat): void;
   publishValue?(value: ColorPickerColor | null): void;
@@ -451,10 +453,14 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
     });
     applied = next;
   }
-  function update(refresh = true): void {
+  function update(): void {
     if (!active) return;
     const next = transport.read();
-    if (refresh) owner.refresh({ preserveState: true });
+    if (transport.structureChanged()) {
+      owner.refresh({ preserveState: true });
+      // Runtime may restore owned ARIA while refreshing. Retain that settled structure.
+      transport.structureChanged();
+    }
     applyOptions(next);
     syncModels(next);
     observedValue = owner.getValue();
@@ -616,9 +622,17 @@ function colorPickerStructure(root: HTMLElement) {
       })
       .join("|");
   }
+  let previous: string | undefined;
+  function hasChanged(): boolean {
+    const next = fingerprint();
+    if (next === previous) return false;
+    previous = next;
+    captureOwnership();
+    return true;
+  }
   function observe(refresh: () => void): () => void {
-    let previous = fingerprint(),
-      pending = false,
+    previous = fingerprint();
+    let pending = false,
       active = true;
     const observer = new MutationObserver((records) => {
       const relevant = records.some((record) => {
@@ -638,7 +652,7 @@ function colorPickerStructure(root: HTMLElement) {
         if (!active) return;
         const next = fingerprint();
         if (next === previous) return;
-        previous = next;
+
         captureOwnership();
         refresh();
         previous = fingerprint();
@@ -667,5 +681,5 @@ function colorPickerStructure(root: HTMLElement) {
       observer.disconnect();
     };
   }
-  return { captureOwnership, restoreOwnership, observe };
+  return { captureOwnership, restoreOwnership, observe, hasChanged };
 }

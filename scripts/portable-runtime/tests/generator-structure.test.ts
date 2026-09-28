@@ -2667,6 +2667,8 @@ async function readFilesRecursively(
     entries.map(async (entry) => {
       const entryPath = path.join(dir, entry.name);
 
+      if (entry.name === "node_modules" || entry.isSymbolicLink()) return [];
+
       if (entry.isDirectory()) {
         return readFilesRecursively(entryPath, root);
       }

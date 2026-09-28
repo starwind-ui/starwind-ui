@@ -10,9 +10,9 @@ import {
   getFieldControlStateSurfaces,
   readFieldControlCustomValidity,
   readFieldControlValue,
-  registerFieldControlBridge,
   registerFieldControlLazyBridge,
 } from "../../../src/components/field/field-control-bridge";
+import { registerFieldControlBridge } from "../../../src/components/field/field-control-registry";
 
 describe("field control bridge", () => {
   beforeEach(() => {

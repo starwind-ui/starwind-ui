@@ -425,7 +425,7 @@ export function getCandidateWorkspacePolicy(_projects, packages) {
   return `packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\noverrides:\n  "@starwind-ui/astro": "${fileSpecifier(packages.astro)}"\n  "@starwind-ui/react": "${fileSpecifier(packages.react)}"\n  "@starwind-ui/runtime": "${fileSpecifier(packages.runtime)}"\n  "@starwind-ui/svelte": "${fileSpecifier(packages.svelte)}"\n  "@starwind-ui/vue": "${fileSpecifier(packages.vue)}"\n  starwind: "${fileSpecifier(packages.cli)}"\n`;
 }
 
-async function prepareProjectManifest(project) {
+async function prepareProjectManifest(project, packages) {
   const manifestPath = path.join(project.directory, "package.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 
@@ -448,6 +448,9 @@ async function prepareProjectManifest(project) {
       ...manifest.dependencies,
       react: project.frameworkVersion,
       "react-dom": project.frameworkVersion,
+      ...(project.host === "vite"
+        ? { "@starwind-ui/runtime": fileSpecifier(packages.runtime) }
+        : {}),
     };
     const typeVersion = project.frameworkVersion.startsWith("18.") ? "^18.3.0" : "^19.2.0";
     manifest.devDependencies = {
@@ -533,6 +536,47 @@ ${routeRegistration}${routeRegistration ? "" : "export default "}function Accept
 export function getCandidateFixtureFiles(project) {
   if (project.framework === "astro" || project.host === "vite") {
     const files = getFixtureFiles(project.framework);
+    if (project.framework === "react") {
+      for (const file of files) {
+        assert.ok(
+          file.content.includes("<main className="),
+          "React candidate fixture must mount its portal cleanup check.",
+        );
+        assert.ok(
+          file.content.includes("</main>"),
+          "React candidate fixture must close its main element.",
+        );
+        file.content =
+          `import { useEffect, useRef, useState } from "react";
+import { Select } from "@starwind-ui/react/select";
+import { createPortalBinding } from "@starwind-ui/runtime/select";
+${file.content}`
+            .replace("<main className=", "<><ConditionalPortalCheck /><main className=")
+            .replace("</main>", "</main></>") +
+          `
+function ConditionalPortalCheck() {
+  const root = useRef(null);
+  const [visible, setVisible] = useState(true);
+  const [retained, setRetained] = useState(-1);
+  useEffect(() => {
+    if (visible || !root.current) return;
+    const snapshot = createPortalBinding(root.current).getSnapshot();
+    setRetained(snapshot.status === "ready" ? snapshot.parts.wrappers.length : -1);
+  }, [visible]);
+  return <section>
+    <button id="remove-conditional-portal" onClick={() => setVisible(false)}>Remove portal</button>
+    <output id="retained-portal-count">{retained}</output>
+    <Select.Root ref={root}>
+      <Select.Trigger>Conditional options</Select.Trigger>
+      {visible && <Select.Portal disabled><Select.Positioner><Select.Popup keepMounted>
+        <Select.Item value="one">One</Select.Item>
+      </Select.Popup></Select.Positioner></Select.Portal>}
+    </Select.Root>
+  </section>;
+}
+`;
+      }
+    }
     return project.language === "javascript"
       ? files.map((file) => ({ ...file, path: file.path.replace(/\.tsx$/, ".jsx") }))
       : files;
@@ -818,7 +862,7 @@ export async function runReleaseCandidateAcceptance({
     registry = await startCandidateRegistry(registryPackages);
     for (const project of plan.projects) {
       await runCommand(project.scaffold);
-      await prepareProjectManifest(project);
+      await prepareProjectManifest(project, packages);
       await writeFile(
         path.join(project.directory, ".npmrc"),
         `@starwind-ui:registry=${registry.url}\n`,

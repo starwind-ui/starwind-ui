@@ -1,7 +1,7 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-09-06T13:37:51.222Z",
+  "capturedAt": "2026-09-28T14:46:02.438Z",
   "catalog": {
     "brotliBytes": 251906,
     "gzipBytes": 325299,

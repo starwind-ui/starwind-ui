@@ -1,5 +1,6 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync } from "node:fs";
 import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
@@ -11,6 +12,7 @@ import {
   buildVuePerformanceRunConfig,
   collectVuePerformanceEnvironment,
   createVuePerformanceFlags,
+  createVuePerformanceTemporaryRoot,
   formatVuePerformanceList,
   main,
   publishRejectedVuePerformanceCandidate,
@@ -122,11 +124,17 @@ describe("Vue runtime performance runner", () => {
     ).toEqual(new Set(["1.42.0", "2.10.3"]));
     expect(buildVueComparatorInstallCommands({ platform: "linux" })).toEqual({
       network: {
-        arguments: ["install", "--ignore-scripts", "--frozen-lockfile=false"],
+        arguments: ["install", "--ignore-workspace", "--ignore-scripts", "--frozen-lockfile=false"],
         executable: "pnpm",
       },
       offline: {
-        arguments: ["install", "--ignore-scripts", "--frozen-lockfile=false", "--offline"],
+        arguments: [
+          "install",
+          "--ignore-workspace",
+          "--ignore-scripts",
+          "--frozen-lockfile=false",
+          "--offline",
+        ],
         executable: "pnpm",
       },
     });
@@ -134,8 +142,63 @@ describe("Vue runtime performance runner", () => {
       "/d",
       "/s",
       "/c",
-      "pnpm install --ignore-scripts --frozen-lockfile=false --offline",
+      "pnpm install --ignore-workspace --ignore-scripts --frozen-lockfile=false --offline",
     ]);
+  });
+
+  it("canonicalizes a symlinked temporary parent before creating benchmark paths", () => {
+    const directory = realpathSync(mkdtempSync(path.join(os.tmpdir(), "vue-perf-path-test-")));
+    try {
+      const parent = path.join(directory, "physical");
+      const alias = path.join(directory, "alias");
+      mkdirSync(parent);
+      symlinkSync(parent, alias, process.platform === "win32" ? "junction" : "dir");
+      const temporaryRoot = createVuePerformanceTemporaryRoot({ parent: alias });
+      expect(path.dirname(temporaryRoot)).toBe(parent);
+      expect(temporaryRoot).toBe(realpathSync(temporaryRoot));
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects repository temporary roots, including symlink aliases, before creating them", () => {
+    const directory = realpathSync(mkdtempSync(path.join(os.tmpdir(), "vue-perf-path-test-")));
+    const create = vi.fn();
+    try {
+      const repository = path.join(directory, "repo");
+      const nested = path.join(repository, "scratch");
+      const alias = path.join(directory, "alias");
+      mkdirSync(nested, { recursive: true });
+      symlinkSync(nested, alias, process.platform === "win32" ? "junction" : "dir");
+      for (const parent of [repository, nested, alias]) {
+        expect(() =>
+          createVuePerformanceTemporaryRoot({
+            parent,
+            repository,
+            makeTemporaryRoot: create,
+          }),
+        ).toThrow("outside the repository workspace");
+      }
+      expect(create).not.toHaveBeenCalled();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("requires an existing temporary parent before creating a capture directory", () => {
+    const directory = mkdtempSync(path.join(os.tmpdir(), "vue-perf-path-test-"));
+    const create = vi.fn();
+    try {
+      expect(() =>
+        createVuePerformanceTemporaryRoot({
+          parent: path.join(directory, "missing"),
+          makeTemporaryRoot: create,
+        }),
+      ).toThrow(/ENOENT/);
+      expect(create).not.toHaveBeenCalled();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it("collects exact toolchain versions from the runner resolution boundaries", () => {
