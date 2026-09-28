@@ -227,7 +227,10 @@ function assertComponent(
       ts.isVariableDeclaration(node) &&
       ts.isObjectBindingPattern(node.name) &&
       node.initializer &&
-      /^(?:props|Astro\.props|\$props\(\))$/.test(node.initializer.getText(source))
+      (/^(?:props|Astro\.props|\$props\(\))$/.test(node.initializer.getText(source)) ||
+        (ts.isCallExpression(node.initializer) &&
+          ts.isIdentifier(node.initializer.expression) &&
+          node.initializer.expression.text === "defineProps"))
     ) {
       for (const entry of node.name.elements) {
         const name = entry.propertyName ?? entry.name;

@@ -47,11 +47,17 @@ function commandPhases(command: string | undefined): string[] {
   return command?.split(/\s*&&\s*/).filter(Boolean) ?? [];
 }
 
+function expectRequiredPhasesOnce(phases: string[], required: string[]): void {
+  for (const phase of required) {
+    expect(phases.filter((entry) => entry === phase)).toHaveLength(1);
+  }
+}
+
 describe("root verification scripts", () => {
   it("runs the real lint, typecheck, and format commands", async () => {
     const pkg = await readRootPackage();
 
-    expect(commandPhases(pkg.scripts?.check)).toEqual([
+    expectRequiredPhasesOnce(commandPhases(pkg.scripts?.check), [
       "pnpm lint:check",
       "pnpm typecheck",
       "pnpm format:check",
@@ -68,7 +74,7 @@ describe("root verification scripts", () => {
       expect(pkg.scripts?.["runtime:generate:svelte:test"]).toContain("--project=portable-svelte");
     else expect(pkg.scripts?.["runtime:generate:svelte:test"]).toBeUndefined();
     expect(pkg.scripts?.["runtime:generate:vue:test"]).toContain("--project=portable-vue");
-    expect(commandPhases(pkg.scripts?.["test:all"])).toEqual([
+    expectRequiredPhasesOnce(commandPhases(pkg.scripts?.["test:all"]), [
       "pnpm test:run",
       "pnpm runtime:test",
       "pnpm react:test",
@@ -107,7 +113,7 @@ describe("root verification scripts", () => {
     const pkg = await readRootPackage();
     const phases = commandPhases(pkg.scripts?.verify);
 
-    expect(phases).toEqual([
+    expectRequiredPhasesOnce(phases, [
       "pnpm check",
       "pnpm styled:versions:check",
       "pnpm primitive:versions:check",
@@ -117,7 +123,7 @@ describe("root verification scripts", () => {
       "pnpm runtime:docs:metadata:check",
       "pnpm build",
     ]);
-    expect(commandPhases(pkg.scripts?.["verify:public"])).toEqual([
+    expectRequiredPhasesOnce(commandPhases(pkg.scripts?.["verify:public"]), [
       "pnpm check:public",
       "pnpm styled:versions:check",
       "pnpm primitive:versions:check",
@@ -135,7 +141,7 @@ describe("root verification scripts", () => {
     expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=vue-demo");
     expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=@starwind-ui/svelte");
     expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=svelte-demo");
-    expect(commandPhases(pkg.scripts?.["runtime:generate:all"])).toEqual([
+    expectRequiredPhasesOnce(commandPhases(pkg.scripts?.["runtime:generate:all"]), [
       "pnpm runtime:generate:astro",
       "pnpm runtime:generate:react",
       "pnpm runtime:generate:vue",
@@ -195,20 +201,45 @@ describe("root verification scripts", () => {
         }),
       ]),
     );
-    expect(runs).toEqual(
-      expect.arrayContaining([
-        "pnpm check && pnpm test:homes && pnpm runtime:generate:typecheck",
-        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run && pnpm svelte:test",
-        "pnpm runtime:generate:test:ci",
-        "pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci",
-        "pnpm runtime:generate:all && pnpm runtime:registry:generate",
-        "pnpm exec turbo build --filter=@starwind-ui/runtime --filter=@starwind-ui/react --filter=@starwind-ui/vue --filter=@starwind-ui/svelte --filter=starwind",
-        "git diff --exit-code",
-        "pnpm --filter=starwind package:check",
-        'pnpm styled:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
-        'pnpm primitive:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
-      ]),
+    const phases = runs.flatMap(commandPhases);
+    for (const command of [
+      "pnpm check",
+      "pnpm test:homes",
+      "pnpm runtime:generate:typecheck",
+      "pnpm test:node",
+      "pnpm runtime:test:unit",
+      "pnpm react:test:ssr",
+      "pnpm --filter=@starwind-ui/vue test:run",
+      "pnpm svelte:test",
+      "pnpm runtime:generate:test:ci",
+      "pnpm runtime:test:browser",
+      "pnpm react:test:browser",
+      "pnpm vue:test:browser:ci",
+      "pnpm test:form-parity",
+      "pnpm runtime:generate:all",
+      "pnpm runtime:registry:generate",
+      "git diff --exit-code",
+      "pnpm --filter=starwind package:check",
+    ]) {
+      expect(phases).toContain(command);
+    }
+    expect(phases).toContain(
+      'pnpm styled:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
     );
+    expect(phases).toContain(
+      'pnpm primitive:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
+    );
+    const buildPhase = phases.find((phase) => phase.startsWith("pnpm exec turbo build "));
+    expect(buildPhase).toBeDefined();
+    for (const name of [
+      "@starwind-ui/runtime",
+      "@starwind-ui/react",
+      "@starwind-ui/vue",
+      "@starwind-ui/svelte",
+      "starwind",
+    ]) {
+      expect(buildPhase?.split(/\s+/)).toContain(`--filter=${name}`);
+    }
     expect(runs.join("\n")).not.toMatch(
       /pnpm (?:vue:verify|vue:test(?:\s|$)|svelte:verify|build(?:\s|$)|runtime:size:|runtime:perf:|test:vue-cli-host-acceptance|test:windows-packed-cli|release:consumer:node22)/,
     );

@@ -752,6 +752,13 @@ export async function verifyBrowserProject({ artifacts, browser, project }) {
         "#ff0000",
     );
 
+    if (project.framework === "react" && project.host === "vite") {
+      await page.locator("#remove-conditional-portal").click();
+      await page.waitForFunction(
+        () => document.querySelector("#retained-portal-count")?.textContent === "0",
+      );
+    }
+
     assert.deepEqual(browserErrors, [], `${project.framework} browser errors`);
     console.log(`[acceptance] ${project.framework} browser behavior passed at ${url}`);
   } catch (error) {

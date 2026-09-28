@@ -1,6 +1,6 @@
 import { createCombobox } from "@starwind-ui/runtime/combobox";
 import { createMenu } from "@starwind-ui/runtime/menu";
-import { createSelect } from "@starwind-ui/runtime/select";
+import { createPortalBinding, createSelect } from "@starwind-ui/runtime/select";
 import * as React from "react";
 import { act } from "react";
 import { createRoot, hydrateRoot, type Root } from "react-dom/client";
@@ -53,6 +53,41 @@ afterEach(async () => {
 });
 
 describe("React-owned Portal parts", () => {
+  it("removes a conditional portal from the persistent root binding", async () => {
+    container = document.createElement("div");
+    document.body.append(container);
+    reactRoot = createRoot(container);
+    const render = async (show: boolean) => {
+      await act(() =>
+        reactRoot!.render(
+          <Select.Root>
+            <Select.Trigger>Choose</Select.Trigger>
+            {show ? (
+              <Select.Portal disabled>
+                <Select.Positioner>
+                  <Select.Popup keepMounted>
+                    <Select.Item value="one">One</Select.Item>
+                  </Select.Popup>
+                </Select.Positioner>
+              </Select.Portal>
+            ) : null}
+          </Select.Root>,
+        ),
+      );
+    };
+    await render(true);
+    const root = container.querySelector<HTMLElement>("[data-sw-select]")!;
+    const binding = createPortalBinding(root);
+    const mounted = binding.getSnapshot();
+    expect(mounted.status === "ready" && mounted.parts.wrappers.length).toBe(1);
+    await render(false);
+    const removed = binding.getSnapshot();
+    expect(removed.status === "ready" && removed.parts.wrappers.length).toBe(0);
+    await render(true);
+    const restored = binding.getSnapshot();
+    expect(restored.status === "ready" && restored.parts.wrappers.length).toBe(1);
+  });
+
   it("shares document observation across portal families until the last portal unmounts", async () => {
     const activeObservers = new Set<MutationObserver>();
     const nativeObserve = MutationObserver.prototype.observe;

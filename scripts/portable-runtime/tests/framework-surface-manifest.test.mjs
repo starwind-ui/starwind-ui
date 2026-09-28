@@ -1,8 +1,8 @@
-import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import {
   assertFrameworkSurfaceManifest,
@@ -87,6 +87,41 @@ const expectedRenderedStyledPortalSlots = {
 };
 
 describe("framework surface manifest", () => {
+  let primitiveBaselineRootPromise;
+  const primitiveBaselines = new Map();
+
+  afterAll(async () => {
+    if (primitiveBaselineRootPromise)
+      await rm(await primitiveBaselineRootPromise, { force: true, recursive: true });
+  });
+
+  async function getPrimitiveBaseline(target) {
+    if (!primitiveBaselines.has(target)) {
+      primitiveBaselines.set(
+        target,
+        (async () => {
+          primitiveBaselineRootPromise ??= mkdtemp(
+            path.join(os.tmpdir(), "starwind-surface-baseline-"),
+          );
+          const outputRoot = path.join(await primitiveBaselineRootPromise, target);
+          await generateFrameworkPrimitiveWrappers(target, {
+            generatedBy: "scripts/portable-runtime/tests/framework-surface-manifest.test.mjs",
+            outputRoot,
+          });
+          return outputRoot;
+        })(),
+      );
+    }
+    return primitiveBaselines.get(target);
+  }
+
+  async function copyPrimitiveBaseline(target, temporaryRoot) {
+    const destination = path.join(temporaryRoot, "primitive", target);
+    await mkdir(path.dirname(destination), { recursive: true });
+    await cp(await getPrimitiveBaseline(target), destination, { recursive: true });
+    return destination;
+  }
+
   it("matches fresh deterministic Primitive and Styled output", async () => {
     const committed = JSON.parse(await readFile(manifestPath, "utf8"));
     const first = await buildFrameworkSurfaceManifest({ repoRoot });
@@ -156,13 +191,9 @@ describe("framework surface manifest", () => {
 
   it("derives the approved Astro ThemeInitScript path from fresh output", async () => {
     const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-surface-theme-"));
-    const primitiveRoot = path.join(temporaryRoot, "primitive", "astro");
 
     try {
-      await generateFrameworkPrimitiveWrappers("astro", {
-        generatedBy: "scripts/portable-runtime/tests/framework-surface-manifest.test.mjs",
-        outputRoot: primitiveRoot,
-      });
+      const primitiveRoot = await copyPrimitiveBaseline("astro", temporaryRoot);
       await rename(
         path.join(primitiveRoot, "theme", "ThemeInitScript.astro"),
         path.join(primitiveRoot, "theme", "RenamedThemeInitScript.astro"),
@@ -188,10 +219,7 @@ describe("framework surface manifest", () => {
       );
 
       try {
-        await generateFrameworkPrimitiveWrappers(target, {
-          generatedBy: "scripts/portable-runtime/tests/framework-surface-manifest.test.mjs",
-          outputRoot: primitiveRoot,
-        });
+        await copyPrimitiveBaseline(target, temporaryRoot);
         const source = await readFile(portalPath, "utf8");
         await writeFile(
           portalPath,
@@ -220,10 +248,7 @@ describe("framework surface manifest", () => {
           : path.join(primitiveRoot, "combobox", `ComboboxPortal.${target}`);
 
       try {
-        await generateFrameworkPrimitiveWrappers(target, {
-          generatedBy: "scripts/portable-runtime/tests/framework-surface-manifest.test.mjs",
-          outputRoot: primitiveRoot,
-        });
+        await copyPrimitiveBaseline(target, temporaryRoot);
         const source = await readFile(portalPath, "utf8");
         const mutated =
           target === "react"

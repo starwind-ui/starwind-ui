@@ -378,14 +378,6 @@ describe("Vue package foundation", () => {
       status: "public-beta",
     });
 
-    const rootPackage = JSON.parse(await readFile("package.json", "utf8"));
-    expect(rootPackage.scripts["runtime:generate:all"]).toContain("pnpm runtime:generate:vue");
-    expect(rootPackage.scripts["build:public"]).toContain("--filter=@starwind-ui/vue");
-    expect(rootPackage.scripts["typecheck:public"]).toContain("--filter=@starwind-ui/vue");
-    expect(rootPackage.scripts["test:all"]).toContain("pnpm vue:test");
-    expect(rootPackage.scripts["release:prepare"]).toContain("pnpm runtime:generate:all");
-    expect(rootPackage.scripts["release:prepare"]).toContain("pnpm runtime:registry:generate");
-
     const changesetConfig = JSON.parse(await readFile(".changeset/config.json", "utf8"));
     expect(changesetConfig.fixed).toEqual([
       ["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"],
@@ -398,10 +390,6 @@ describe("Vue package foundation", () => {
     expect(vueDemoPackage.private).toBe(true);
     const sveltePackage = JSON.parse(await readFile("packages/svelte/package.json", "utf8"));
     expect(sveltePackage.private).not.toBe(true);
-    expect(rootPackage.scripts["runtime:generate:all"]).toContain("svelte");
-    expect(rootPackage.scripts["build:public"]).toContain("@starwind-ui/svelte");
-    expect(rootPackage.scripts["typecheck:public"]).toContain("@starwind-ui/svelte");
-
     const bundledRegistry = JSON.parse(
       await readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
     );

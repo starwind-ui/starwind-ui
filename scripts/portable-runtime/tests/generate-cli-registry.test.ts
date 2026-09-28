@@ -30,6 +30,7 @@ import {
   loadPackageRanges,
   loadPrimitiveVersionManifest,
   loadRegistryVersionManifest,
+  type PrimitiveVendoringArtifacts,
   type RuntimeRegistry,
   writeRuntimeRegistry,
 } from "../generate-cli-registry.js";
@@ -69,6 +70,9 @@ const STABLE_TARGET_POLICY = createCliRegistryBuildPolicy([
 
 describe("generateCliRegistry", () => {
   let tempRoot: string;
+  let defaultPrimitiveArtifacts: Promise<PrimitiveVendoringArtifacts> | undefined;
+  const getDefaultPrimitiveArtifacts = () =>
+    (defaultPrimitiveArtifacts ??= buildPrimitiveVendoringArtifacts());
 
   beforeEach(async () => {
     tempRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-cli-registry-"));
@@ -1813,7 +1817,7 @@ describe("generateCliRegistry", () => {
 
   it("generates default primitive artifacts for every current primitive contract", async () => {
     const [artifactSet, versionManifest] = await Promise.all([
-      buildPrimitiveVendoringArtifacts({ tempRoot }),
+      getDefaultPrimitiveArtifacts(),
       loadPrimitiveVersionManifest(),
     ]);
     const artifactComponents = artifactSet.primitives.map((primitive) => primitive.component);
@@ -2259,9 +2263,7 @@ describe("generateCliRegistry", () => {
         "utf8",
       ),
     );
-    const generatedArtifacts = await buildPrimitiveVendoringArtifacts({
-      tempRoot: path.join(tempRoot, "primitive-artifacts"),
-    });
+    const generatedArtifacts = await getDefaultPrimitiveArtifacts();
     const committedArtifactsSource = JSON.stringify(committedArtifacts);
     const navigationMenu = committedArtifacts.primitives.find(
       (primitive: { component: string; framework: string }) =>

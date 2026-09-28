@@ -1,14 +1,14 @@
 # Svelte Primitive interaction timings
 
-Captured: 2026-09-15T13:58:09.628Z
+Captured: 2026-09-28T14:35:12.254Z
 
 Starwind is a Svelte development build. Comparators: Ark UI 5.24.2 and Bits UI 2.19.2.
 
 ## Quick comparison
 
-**Opening controls:** Starwind's first-open median is 41% shorter than Ark UI and 59% shorter than Bits UI on the twenty-Select page. Native Dialog opening is 76% shorter than Ark UI and 72% shorter than Bits UI.
+**Opening controls:** Starwind's first-open median is 41% shorter than Ark UI and 59% shorter than Bits UI on the twenty-Select page. Native Dialog opening is 52% shorter than Ark UI and 32% shorter than Bits UI.
 
-**Collection setup and filtering:** Starwind's 500-item Combobox mount is 176% longer than Ark UI and 224% longer than Bits UI; its filter interval is 56% longer than Ark UI and 150% longer than Bits UI. Use the absolute times below to judge the size of these differences.
+**Collection setup and filtering:** Starwind's 500-item Combobox mount is 153% longer than Ark UI and 190% longer than Bits UI; its filter interval is 16% longer than Ark UI and 100% longer than Bits UI. Use the absolute times below to judge the size of these differences.
 
 All values below are **median milliseconds from five runs**. Lower means less elapsed time to the checked DOM state. Page setup and interaction have separate clocks.
 
@@ -18,22 +18,22 @@ This includes mounting the controls and their initial DOM after JavaScript modul
 
 | Page                                | Starwind | Ark UI | Bits UI |
 | ----------------------------------- | -------: | -----: | ------: |
-| One Select                          |      8.5 |    8.2 |     6.4 |
-| Twenty Selects                      |     23.8 |   20.5 |    12.0 |
-| Combobox with 500 items             |     20.4 |    7.4 |     6.3 |
-| Dialog plus 10,000 background spans |     22.9 |   23.3 |    22.8 |
+| One Select                          |      8.9 |    8.9 |     6.9 |
+| Twenty Selects                      |     25.1 |   21.5 |    12.6 |
+| Combobox with 500 items             |     19.7 |    7.8 |     6.8 |
+| Dialog plus 10,000 background spans |     23.7 |   24.4 |    24.1 |
 
 ### Selected interactions
 
 | Action                                   | Starwind | Ark UI | Bits UI |
 | ---------------------------------------- | -------: | -----: | ------: |
-| Open a Select on the twenty-control page |      2.6 |    4.4 |     6.4 |
-| Accept the selected option               |      1.3 |    7.7 |     7.5 |
-| Open the 500-item Combobox               |      6.6 |   37.4 |    21.3 |
-| Filter 500 items to ten matches          |      2.5 |    1.6 |     1.0 |
-| Open the modal Dialog                    |      7.4 |   31.0 |    26.2 |
-| Close Dialog with Escape                 |     16.8 |   22.9 |     6.9 |
-| Close Dialog with its button             |     15.8 |   20.7 |    15.4 |
+| Open a Select on the twenty-control page |      2.9 |    4.9 |     7.0 |
+| Accept the selected option               |      1.3 |    7.4 |     7.3 |
+| Open the 500-item Combobox               |      6.3 |   40.8 |    23.2 |
+| Filter 500 items to ten matches          |      2.2 |    1.9 |     1.1 |
+| Open the modal Dialog                    |      8.0 |   16.8 |    11.7 |
+| Close Dialog with Escape                 |     17.0 |   22.6 |     6.5 |
+| Close Dialog with its button             |     14.1 |   20.2 |    15.2 |
 
 The opening result is one part of each task. Compare setup, filtering and closing as well. Starwind and Ark retain authored collection nodes while closed; Bits creates those nodes when opened. The fixtures therefore distribute work across different phases. DOM counts and all remaining endpoints appear below.
 
@@ -50,87 +50,87 @@ Values are milliseconds, displayed to three decimal places. Each row shows the f
 
 | Provider | Endpoint   | Five context values (ms)          | Median | Range       |
 | -------- | ---------- | --------------------------------- | ------ | ----------- |
-| Starwind | mount      | 8.500, 8.400, 8.500, 8.600, 8.500 | 8.500  | 8.400–8.600 |
-| Starwind | open       | 2.300, 2.300, 2.400, 2.400, 2.400 | 2.400  | 2.300–2.400 |
-| Starwind | escape     | 0.900, 0.800, 0.800, 1.000, 0.900 | 0.900  | 0.800–1.000 |
-| Starwind | reopen     | 1.000, 0.900, 1.000, 0.800, 1.000 | 1.000  | 0.800–1.000 |
-| Starwind | navigation | 0.200, 0.150, 0.200, 0.150, 0.250 | 0.200  | 0.150–0.250 |
-| Starwind | choose     | 1.000, 1.100, 1.100, 1.000, 1.100 | 1.100  | 1.000–1.100 |
-| Ark UI   | mount      | 8.200, 8.100, 8.100, 8.400, 8.200 | 8.200  | 8.100–8.400 |
-| Ark UI   | open       | 4.700, 4.600, 4.700, 4.500, 4.700 | 4.700  | 4.500–4.700 |
-| Ark UI   | escape     | 8.800, 4.800, 7.100, 9.000, 7.200 | 7.200  | 4.800–9.000 |
-| Ark UI   | reopen     | 3.000, 2.900, 2.800, 2.900, 3.000 | 2.900  | 2.800–3.000 |
-| Ark UI   | navigation | 1.850, 1.900, 1.900, 2.000, 1.850 | 1.900  | 1.850–2.000 |
-| Ark UI   | choose     | 7.300, 8.100, 8.500, 7.400, 7.500 | 7.500  | 7.300–8.500 |
-| Bits UI  | mount      | 6.300, 6.200, 6.400, 6.400, 6.500 | 6.400  | 6.200–6.500 |
-| Bits UI  | open       | 6.500, 6.300, 6.200, 6.300, 6.400 | 6.300  | 6.200–6.500 |
-| Bits UI  | escape     | 6.900, 7.400, 7.200, 6.700, 7.100 | 7.100  | 6.700–7.400 |
-| Bits UI  | reopen     | 2.000, 2.200, 2.200, 2.000, 2.300 | 2.200  | 2.000–2.300 |
-| Bits UI  | navigation | 0.400, 0.400, 0.400, 0.500, 0.500 | 0.400  | 0.400–0.500 |
-| Bits UI  | choose     | 7.300, 7.400, 8.500, 8.200, 7.400 | 7.400  | 7.300–8.500 |
+| Starwind | mount      | 9.200, 9.000, 8.900, 8.900, 8.900 | 8.900  | 8.900–9.200 |
+| Starwind | open       | 2.500, 2.700, 2.600, 2.600, 2.600 | 2.600  | 2.500–2.700 |
+| Starwind | escape     | 1.000, 1.100, 1.000, 0.900, 1.000 | 1.000  | 0.900–1.100 |
+| Starwind | reopen     | 1.100, 1.000, 1.000, 1.000, 1.000 | 1.000  | 1.000–1.100 |
+| Starwind | navigation | 0.250, 0.300, 0.200, 0.250, 0.300 | 0.250  | 0.200–0.300 |
+| Starwind | choose     | 1.200, 1.100, 1.100, 1.000, 1.000 | 1.100  | 1.000–1.200 |
+| Ark UI   | mount      | 8.700, 9.000, 8.900, 8.800, 8.900 | 8.900  | 8.700–9.000 |
+| Ark UI   | open       | 5.200, 5.400, 5.000, 5.300, 5.100 | 5.200  | 5.000–5.400 |
+| Ark UI   | escape     | 6.900, 7.800, 7.000, 7.300, 6.900 | 7.000  | 6.900–7.800 |
+| Ark UI   | reopen     | 3.300, 2.800, 2.800, 2.900, 2.800 | 2.800  | 2.800–3.300 |
+| Ark UI   | navigation | 2.000, 1.750, 1.950, 1.850, 1.850 | 1.850  | 1.750–2.000 |
+| Ark UI   | choose     | 7.200, 7.200, 7.500, 8.100, 7.700 | 7.500  | 7.200–8.100 |
+| Bits UI  | mount      | 6.900, 6.700, 6.900, 6.700, 6.900 | 6.900  | 6.700–6.900 |
+| Bits UI  | open       | 6.700, 7.100, 7.100, 7.000, 7.100 | 7.100  | 6.700–7.100 |
+| Bits UI  | escape     | 6.800, 6.700, 7.000, 6.900, 6.900 | 6.900  | 6.700–7.000 |
+| Bits UI  | reopen     | 2.100, 2.000, 2.100, 2.100, 2.000 | 2.100  | 2.000–2.100 |
+| Bits UI  | navigation | 0.500, 0.500, 0.450, 0.550, 0.450 | 0.500  | 0.450–0.550 |
+| Bits UI  | choose     | 8.000, 7.700, 6.900, 7.100, 7.100 | 7.100  | 6.900–8.000 |
 
 ## select-page-20
 
 | Provider | Endpoint   | Five context values (ms)               | Median | Range         |
 | -------- | ---------- | -------------------------------------- | ------ | ------------- |
-| Starwind | mount      | 24.400, 23.800, 23.900, 23.800, 23.800 | 23.800 | 23.800–24.400 |
-| Starwind | open       | 2.600, 2.600, 2.600, 2.600, 2.600      | 2.600  | 2.600–2.600   |
-| Starwind | escape     | 1.200, 1.100, 1.200, 1.200, 1.200      | 1.200  | 1.100–1.200   |
-| Starwind | reopen     | 1.200, 1.100, 1.200, 1.000, 1.100      | 1.100  | 1.000–1.200   |
-| Starwind | navigation | 0.200, 0.300, 0.200, 0.200, 0.200      | 0.200  | 0.200–0.300   |
-| Starwind | choose     | 1.300, 1.300, 1.300, 1.200, 1.400      | 1.300  | 1.200–1.400   |
-| Ark UI   | mount      | 20.200, 20.600, 20.500, 20.300, 20.500 | 20.500 | 20.200–20.600 |
-| Ark UI   | open       | 4.500, 4.400, 4.600, 4.200, 4.300      | 4.400  | 4.200–4.600   |
-| Ark UI   | escape     | 6.900, 9.000, 8.700, 7.900, 7.100      | 7.900  | 6.900–9.000   |
-| Ark UI   | reopen     | 2.700, 2.600, 2.700, 2.600, 2.600      | 2.600  | 2.600–2.700   |
-| Ark UI   | navigation | 1.800, 1.800, 2.000, 1.750, 1.900      | 1.800  | 1.750–2.000   |
-| Ark UI   | choose     | 7.700, 8.400, 7.600, 9.500, 7.500      | 7.700  | 7.500–9.500   |
-| Bits UI  | mount      | 12.100, 11.700, 12.000, 11.600, 12.000 | 12.000 | 11.600–12.100 |
-| Bits UI  | open       | 6.400, 6.700, 6.300, 6.300, 6.400      | 6.400  | 6.300–6.700   |
-| Bits UI  | escape     | 7.200, 7.200, 6.800, 7.100, 7.200      | 7.200  | 6.800–7.200   |
-| Bits UI  | reopen     | 2.000, 2.000, 2.100, 2.000, 2.000      | 2.000  | 2.000–2.100   |
-| Bits UI  | navigation | 0.400, 0.450, 0.450, 0.450, 0.400      | 0.450  | 0.400–0.450   |
-| Bits UI  | choose     | 7.400, 7.400, 7.500, 9.000, 7.500      | 7.500  | 7.400–9.000   |
+| Starwind | mount      | 25.200, 24.600, 24.600, 25.100, 25.300 | 25.100 | 24.600–25.300 |
+| Starwind | open       | 3.000, 2.900, 2.800, 3.100, 2.800      | 2.900  | 2.800–3.100   |
+| Starwind | escape     | 1.200, 1.200, 1.100, 1.200, 1.100      | 1.200  | 1.100–1.200   |
+| Starwind | reopen     | 1.200, 1.200, 1.300, 1.200, 1.100      | 1.200  | 1.100–1.300   |
+| Starwind | navigation | 0.250, 0.300, 0.300, 0.250, 0.300      | 0.300  | 0.250–0.300   |
+| Starwind | choose     | 1.300, 1.200, 1.200, 1.300, 1.300      | 1.300  | 1.200–1.300   |
+| Ark UI   | mount      | 21.700, 21.200, 21.500, 20.400, 21.600 | 21.500 | 20.400–21.700 |
+| Ark UI   | open       | 4.900, 4.900, 5.100, 4.900, 4.800      | 4.900  | 4.800–5.100   |
+| Ark UI   | escape     | 6.700, 6.600, 7.700, 6.000, 6.900      | 6.700  | 6.000–7.700   |
+| Ark UI   | reopen     | 2.700, 2.800, 2.600, 2.700, 2.600      | 2.700  | 2.600–2.800   |
+| Ark UI   | navigation | 1.850, 1.850, 1.750, 2.000, 1.850      | 1.850  | 1.750–2.000   |
+| Ark UI   | choose     | 7.400, 7.800, 7.400, 7.700, 7.400      | 7.400  | 7.400–7.800   |
+| Bits UI  | mount      | 12.600, 12.300, 12.600, 12.400, 12.600 | 12.600 | 12.300–12.600 |
+| Bits UI  | open       | 7.200, 7.100, 6.900, 7.000, 6.900      | 7.000  | 6.900–7.200   |
+| Bits UI  | escape     | 6.900, 6.700, 6.900, 6.800, 6.800      | 6.800  | 6.700–6.900   |
+| Bits UI  | reopen     | 2.000, 2.000, 1.900, 2.400, 1.900      | 2.000  | 1.900–2.400   |
+| Bits UI  | navigation | 0.550, 0.500, 0.600, 0.600, 0.500      | 0.550  | 0.500–0.600   |
+| Bits UI  | choose     | 7.500, 7.700, 7.200, 7.100, 7.300      | 7.300  | 7.100–7.700   |
 
 ## combobox-500
 
 | Provider | Endpoint   | Five context values (ms)               | Median | Range         |
 | -------- | ---------- | -------------------------------------- | ------ | ------------- |
-| Starwind | mount      | 20.400, 20.300, 20.500, 20.400, 20.200 | 20.400 | 20.200–20.500 |
-| Starwind | open       | 6.500, 6.600, 6.700, 6.600, 6.700      | 6.600  | 6.500–6.700   |
-| Starwind | filter     | 2.600, 2.400, 2.600, 2.500, 2.500      | 2.500  | 2.400–2.600   |
-| Starwind | navigation | 0.167, 0.133, 0.233, 0.200, 0.133      | 0.167  | 0.133–0.233   |
-| Starwind | choose     | 4.000, 4.000, 3.900, 3.900, 3.500      | 3.900  | 3.500–4.000   |
-| Ark UI   | mount      | 7.400, 7.500, 7.200, 7.300, 7.700      | 7.400  | 7.200–7.700   |
-| Ark UI   | open       | 37.500, 37.400, 36.700, 37.300, 39.200 | 37.400 | 36.700–39.200 |
-| Ark UI   | filter     | 1.600, 1.600, 1.600, 1.600, 1.600      | 1.600  | 1.600–1.600   |
-| Ark UI   | navigation | 1.133, 1.167, 1.133, 1.133, 1.200      | 1.133  | 1.133–1.200   |
-| Ark UI   | choose     | 7.200, 7.300, 7.300, 7.100, 7.600      | 7.300  | 7.100–7.600   |
-| Bits UI  | mount      | 6.300, 6.300, 6.200, 6.300, 6.100      | 6.300  | 6.100–6.300   |
-| Bits UI  | open       | 21.500, 21.400, 21.300, 21.300, 20.900 | 21.300 | 20.900–21.500 |
-| Bits UI  | filter     | 0.900, 1.100, 1.000, 1.000, 1.100      | 1.000  | 0.900–1.100   |
-| Bits UI  | navigation | 0.250, 0.300, 0.350, 0.300, 0.300      | 0.300  | 0.250–0.350   |
-| Bits UI  | choose     | 7.600, 7.600, 7.600, 7.600, 8.600      | 7.600  | 7.600–8.600   |
+| Starwind | mount      | 19.600, 19.400, 19.800, 19.700, 19.900 | 19.700 | 19.400–19.900 |
+| Starwind | open       | 6.500, 6.500, 6.200, 6.300, 6.300      | 6.300  | 6.200–6.500   |
+| Starwind | filter     | 2.100, 2.300, 2.200, 2.200, 2.300      | 2.200  | 2.100–2.300   |
+| Starwind | navigation | 0.200, 0.267, 0.267, 0.267, 0.200      | 0.267  | 0.200–0.267   |
+| Starwind | choose     | 3.400, 3.500, 3.400, 3.400, 3.500      | 3.400  | 3.400–3.500   |
+| Ark UI   | mount      | 8.100, 7.700, 7.800, 7.900, 7.800      | 7.800  | 7.700–8.100   |
+| Ark UI   | open       | 41.300, 40.300, 41.600, 40.800, 40.400 | 40.800 | 40.300–41.600 |
+| Ark UI   | filter     | 1.900, 2.000, 1.900, 1.900, 1.900      | 1.900  | 1.900–2.000   |
+| Ark UI   | navigation | 1.233, 1.300, 1.300, 1.233, 1.333      | 1.300  | 1.233–1.333   |
+| Ark UI   | choose     | 7.100, 7.300, 7.300, 8.200, 7.500      | 7.300  | 7.100–8.200   |
+| Bits UI  | mount      | 6.900, 6.700, 6.700, 6.900, 6.800      | 6.800  | 6.700–6.900   |
+| Bits UI  | open       | 23.100, 23.100, 23.600, 23.400, 23.200 | 23.200 | 23.100–23.600 |
+| Bits UI  | filter     | 1.100, 1.100, 1.100, 1.200, 1.200      | 1.100  | 1.100–1.200   |
+| Bits UI  | navigation | 0.350, 0.400, 0.450, 0.450, 0.400      | 0.400  | 0.350–0.450   |
+| Bits UI  | choose     | 7.300, 7.200, 7.200, 7.400, 7.300      | 7.300  | 7.200–7.400   |
 
 ## dialog-dense-10000
 
 | Provider | Endpoint     | Five context values (ms)               | Median | Range         |
 | -------- | ------------ | -------------------------------------- | ------ | ------------- |
-| Starwind | mount        | 22.900, 22.800, 23.400, 22.900, 23.400 | 22.900 | 22.800–23.400 |
-| Starwind | open         | 7.600, 7.500, 7.400, 7.400, 7.400      | 7.400  | 7.400–7.600   |
-| Starwind | escape       | 18.700, 16.800, 16.700, 13.400, 17.100 | 16.800 | 13.400–18.700 |
-| Starwind | reopen       | 6.600, 6.700, 6.600, 6.600, 6.500      | 6.600  | 6.500–6.700   |
-| Starwind | button-close | 13.700, 18.100, 15.300, 15.800, 15.800 | 15.800 | 13.700–18.100 |
-| Ark UI   | mount        | 23.000, 23.600, 23.200, 25.400, 23.300 | 23.300 | 23.000–25.400 |
-| Ark UI   | open         | 31.100, 31.000, 31.100, 31.000, 30.600 | 31.000 | 30.600–31.100 |
-| Ark UI   | escape       | 21.400, 23.200, 22.900, 23.000, 22.800 | 22.900 | 21.400–23.200 |
-| Ark UI   | reopen       | 14.400, 14.300, 14.200, 14.200, 14.300 | 14.300 | 14.200–14.400 |
-| Ark UI   | button-close | 20.700, 19.500, 20.900, 20.700, 20.800 | 20.700 | 19.500–20.900 |
-| Bits UI  | mount        | 22.800, 22.700, 22.800, 23.100, 23.100 | 22.800 | 22.700–23.100 |
-| Bits UI  | open         | 25.700, 26.200, 26.500, 26.400, 26.200 | 26.200 | 25.700–26.500 |
-| Bits UI  | escape       | 7.000, 5.100, 6.900, 6.800, 7.200      | 6.900  | 5.100–7.200   |
-| Bits UI  | reopen       | 12.800, 12.700, 12.500, 13.300, 12.700 | 12.700 | 12.500–13.300 |
-| Bits UI  | button-close | 15.400, 15.100, 15.400, 15.200, 15.400 | 15.400 | 15.100–15.400 |
+| Starwind | mount        | 23.700, 23.700, 23.800, 23.800, 23.600 | 23.700 | 23.600–23.800 |
+| Starwind | open         | 8.000, 7.900, 8.200, 8.100, 8.000      | 8.000  | 7.900–8.200   |
+| Starwind | escape       | 17.000, 16.800, 17.000, 17.200, 16.900 | 17.000 | 16.800–17.200 |
+| Starwind | reopen       | 6.500, 6.500, 6.600, 6.500, 6.800      | 6.500  | 6.500–6.800   |
+| Starwind | button-close | 14.900, 13.500, 14.100, 13.700, 15.000 | 14.100 | 13.500–15.000 |
+| Ark UI   | mount        | 24.600, 24.300, 24.500, 24.400, 24.000 | 24.400 | 24.000–24.600 |
+| Ark UI   | open         | 16.900, 16.700, 17.000, 16.600, 16.800 | 16.800 | 16.600–17.000 |
+| Ark UI   | escape       | 22.500, 22.500, 22.600, 22.600, 22.600 | 22.600 | 22.500–22.600 |
+| Ark UI   | reopen       | 13.600, 14.300, 14.300, 13.800, 13.600 | 13.800 | 13.600–14.300 |
+| Ark UI   | button-close | 19.700, 19.800, 20.200, 20.200, 20.500 | 20.200 | 19.700–20.500 |
+| Bits UI  | mount        | 23.900, 24.100, 23.700, 24.100, 24.300 | 24.100 | 23.700–24.300 |
+| Bits UI  | open         | 11.700, 12.100, 11.700, 11.600, 11.600 | 11.700 | 11.600–12.100 |
+| Bits UI  | escape       | 6.200, 5.600, 6.900, 6.500, 6.700      | 6.500  | 5.600–6.900   |
+| Bits UI  | reopen       | 12.600, 12.700, 12.100, 11.500, 11.900 | 12.100 | 11.500–12.700 |
+| Bits UI  | button-close | 15.400, 15.200, 14.900, 14.400, 15.900 | 15.200 | 14.400–15.900 |
 
 ## Observed DOM
 
@@ -188,6 +188,6 @@ One production build per provider uses the same frozen Svelte compiler and offic
 
 The measurements describe checked DOM completion. They do not certify painted pixels, INP or isolated JavaScript CPU time. Event Timing is retained as thresholded diagnostics; a missing entry remains unavailable. Five contexts do not establish a stable tail percentile or a release budget. Browser cache and system scheduling can affect results. Provider surfaces and behavior differ, so these tasks do not isolate framework glue by subtraction.
 
-[Five-value evidence, actual key paths and input digests](performance-evidence/svelte/2026-09-15-timing-af00c7178e56/timings.json) reproduce the tables. Component API sources are the [Ark UI documentation](https://ark-ui.com/docs/components/combobox) and [Bits UI documentation](https://www.bits-ui.com/docs/components/combobox). The [Svelte mount API](https://svelte.dev/docs/svelte/svelte#mount) defines the framework entry point.
+[Five-value evidence, actual key paths and input digests](performance-evidence/svelte/2026-09-28-timing-52f65be8667b/timings.json) reproduce the tables. Component API sources are the [Ark UI documentation](https://ark-ui.com/docs/components/combobox) and [Bits UI documentation](https://www.bits-ui.com/docs/components/combobox). The [Svelte mount API](https://svelte.dev/docs/svelte/svelte#mount) defines the framework entry point.
 
 </details>

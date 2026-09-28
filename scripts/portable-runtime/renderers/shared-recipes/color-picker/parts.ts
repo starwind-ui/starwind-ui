@@ -131,7 +131,10 @@ export function colorPickerConfigurationLookup(
 }
 
 /** React and Vue observe authored configuration and conditional parts through native DOM APIs. */
-export function printColorPickerStructure(f: AdapterColorPickerFacts): string {
+export function printColorPickerStructure(
+  f: AdapterColorPickerFacts,
+  checkBeforeSync = false,
+): string {
   const selector = Object.values(f.parts)
     .map((part) => `[${part.discoveryAttribute}]`)
     .join(", ");
@@ -163,8 +166,20 @@ export function printColorPickerStructure(f: AdapterColorPickerFacts): string {
       return id + ":" + part.tagName + ":" + configuration(part).map(name => name + "=" + (part.getAttribute(name) ?? "")).join(";");
     }).join("|");
   }
-  function observe(refresh: () => void): () => void {
-    let previous = fingerprint(), pending = false, active = true;
+${
+  checkBeforeSync
+    ? `  let previous: string | undefined;
+  function hasChanged(): boolean {
+    const next = fingerprint();
+    if (next === previous) return false;
+    previous = next;
+    captureOwnership();
+    return true;
+  }
+`
+    : ""
+}  function observe(refresh: () => void): () => void {
+    ${checkBeforeSync ? "previous = fingerprint();\n    let pending = false, active = true;" : "let previous = fingerprint(), pending = false, active = true;"}
     const observer = new MutationObserver(records => {
       const relevant = records.some(record => {
         const target = record.target instanceof Element ? record.target : undefined;
@@ -179,7 +194,7 @@ export function printColorPickerStructure(f: AdapterColorPickerFacts): string {
         if (!active) return;
         const next = fingerprint();
         if (next === previous) return;
-        previous = next;
+        ${checkBeforeSync ? "" : "previous = next;"}
         captureOwnership();
         refresh();
         previous = fingerprint();
@@ -188,7 +203,7 @@ export function printColorPickerStructure(f: AdapterColorPickerFacts): string {
     observer.observe(root, { attributes: true, attributeFilter: ${JSON.stringify(colorPickerConfigurationAttributes())}, childList: true, subtree: true });
     return () => { active = false; observer.disconnect(); };
   }
-  return { captureOwnership, restoreOwnership, observe };
+  return { captureOwnership, restoreOwnership, observe${checkBeforeSync ? ", hasChanged" : ""} };
 }
 `;
 }

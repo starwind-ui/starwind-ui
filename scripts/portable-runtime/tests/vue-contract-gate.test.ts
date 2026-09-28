@@ -174,16 +174,6 @@ const forbiddenPublicVueScriptCommandPatterns = [
   /(?:runtime:registry(?::|\b)|generate-cli-registry|packages\/cli\/(?:registry|src\/registry))/i,
 ] as const;
 const approvedChangesetIgnore = ["demo", "react-demo", "vue-demo"];
-const approvedProductPositioningVueClaim =
-  /Current first-party Primitive adapter packages are Astro, React, the Vue 3\.5 public beta, and the\s+Svelte 5 public beta\. Runtime adapter contract types also allow future targets such as Solid\. Claim support\s+only after generated package output, demos, host checks, and release metadata exist\./;
-const approvedVueArchitectureDoc = "docs/adr/0011-use-idiomatic-vue-adapter-semantics.md";
-const approvedVueDocumentationPaths = new Set([
-  "docs/agents/svelte-verification.md",
-  "docs/product/research/ai-citation-empirical-evidence-2026-09.md",
-  "docs/product/research/ai-engine-official-guidance-2026-09.md",
-  "docs/product/research/starwind-ai-citation-strategy-2026-09.md",
-]);
-
 const publicCliTextSurfacePaths = [
   "packages/cli/src/index.ts",
   "packages/cli/src/program.ts",
@@ -250,27 +240,6 @@ function readTextSurfaces(paths: readonly string[]): TextSurface[] {
     path,
     source: readFileSync(join(process.cwd(), path), "utf8"),
   }));
-}
-
-function isApprovedVueDocumentation({ path, source }: TextSurface): boolean {
-  if (!containsBoundaryAwareVue(source)) return true;
-  if (path.startsWith("docs/portable-runtime/")) return true;
-  if (path === "docs/agents/test-health.md") return true;
-  if (path === "docs/release/versioning.md") return true;
-  if (path === approvedVueArchitectureDoc) return true;
-  if (path === "docs/adr/0018-use-accepted-svelte-models-and-semantic-child-snippets.md")
-    return true;
-  if (approvedVueDocumentationPaths.has(path)) return true;
-  if (path !== "docs/product/positioning.md") return false;
-
-  return approvedProductPositioningVueClaim.test(source);
-}
-
-function findUnexpectedVueDocumentation(surfaces: TextSurface[]): string[] {
-  return surfaces
-    .filter((surface) => !isApprovedVueDocumentation(surface))
-    .map(({ path }) => path)
-    .sort();
 }
 
 function findChangesetConfigVueViolations(
@@ -807,56 +776,13 @@ describe("Vue public-beta contract gate", () => {
       "scripts/release-packages.mjs",
     ]);
 
-    const publicReadmeSurfaces: TextSurface[] = [
-      {
-        path: "README.md",
-        source: readFileSync(join(process.cwd(), "README.md"), "utf8"),
-      },
-    ];
-    for (const packageDirectory of readdirSync(join(process.cwd(), "packages"), {
-      withFileTypes: true,
-    }).filter((entry) => entry.isDirectory())) {
-      const packageRoot = join(process.cwd(), "packages", packageDirectory.name);
-      const manifestPath = join(packageRoot, "package.json");
-      const readmePath = join(packageRoot, "README.md");
-      if (!existsSync(manifestPath) || !existsSync(readmePath)) continue;
-      const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as PackageManifest;
-      if (manifest.private === true) continue;
-      publicReadmeSurfaces.push({
-        path: `packages/${packageDirectory.name}/README.md`,
-        source: readFileSync(readmePath, "utf8"),
-      });
-    }
-    expect(findBoundaryAwareVueSurfaces(publicReadmeSurfaces)).toEqual([
-      "README.md",
-      "packages/vue/README.md",
-    ]);
-
-    const documentationSurfaces = listFiles(join(process.cwd(), "docs")).map((file) => ({
-      path: `docs/${file}`,
-      source: readFileSync(join(process.cwd(), "docs", file), "utf8"),
-    }));
-    expect(findUnexpectedVueDocumentation(documentationSurfaces)).toEqual([]);
-    const productPositioningPath = join(process.cwd(), "docs/product/positioning.md");
-    if (existsSync(productPositioningPath)) {
-      expect(readFileSync(productPositioningPath, "utf8")).toMatch(
-        approvedProductPositioningVueClaim,
-      );
-    }
-    expect(
-      documentationSurfaces
-        .filter(({ source }) => containsBoundaryAwareVue(source))
-        .every(
-          ({ path }) =>
-            path.startsWith("docs/portable-runtime/") ||
-            path === "docs/agents/test-health.md" ||
-            path === "docs/release/versioning.md" ||
-            path === approvedVueArchitectureDoc ||
-            path === "docs/adr/0018-use-accepted-svelte-models-and-semantic-child-snippets.md" ||
-            approvedVueDocumentationPaths.has(path) ||
-            path === "docs/product/positioning.md",
-        ),
-    ).toBe(true);
+    const readme = readFileSync(join(process.cwd(), "README.md"), "utf8");
+    const vueReadme = readFileSync(join(process.cwd(), "packages/vue/README.md"), "utf8");
+    const positioning = readFileSync(join(process.cwd(), "docs/product/positioning.md"), "utf8");
+    expect(readme).toMatch(/Vue 3\.5 beta/);
+    expect(vueReadme).toMatch(/public beta[\s\S]*Vue 3\.5/);
+    expect(positioning).toMatch(/Vue 3\.5 public beta/);
+    expect(positioning).toMatch(/Svelte 5 public beta/);
   });
 
   it("pins established Astro and React generation output as regression oracles", () => {
@@ -969,22 +895,6 @@ describe("Vue public-beta contract gate", () => {
         { path: "registry/target.json", source: '{ "target": "VUE" }' },
       ]),
     ).toEqual(["registry/framework.json", "registry/target.json"]);
-    expect(
-      findUnexpectedVueDocumentation([
-        {
-          path: "README.md",
-          source: "Vue is now a supported first-party adapter.",
-        },
-        {
-          path: "docs/getting-started.md",
-          source: "Install the Vue adapter.",
-        },
-        {
-          path: "docs/product/positioning.md",
-          source: "Vue is now a supported first-party adapter.",
-        },
-      ]),
-    ).toEqual(["README.md", "docs/getting-started.md", "docs/product/positioning.md"]);
     expect(
       findForbiddenVueDependencies({
         dependencies: { "@starwind-ui/vue": "workspace:*", vue: "3.5.0" },

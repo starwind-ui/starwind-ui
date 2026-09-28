@@ -344,6 +344,7 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
       read: () => incomingRef.current,
       restoreAuthoredOwnership: structure.restoreOwnership,
       captureAuthoredOwnership: structure.captureOwnership,
+    structureChanged: structure.hasChanged,
       observe: (nextValue, nextFormat) => {
         setAcceptedValue(nextValue);
         setAcceptedFormat(nextFormat);
@@ -385,7 +386,7 @@ ${rootExport}.displayName = "${facts.exports.namespace}.Root";
 
 export default ${rootExport};
 
-${printColorPickerConnection(facts)}
+${printColorPickerConnection(facts, true)}
 function translateColorPickerProjection(
   projection: ColorPickerInitialPartProjection,
   authoredProps: ColorPickerProjectedProps,
@@ -440,7 +441,7 @@ function toReactStyleName(name: string): string {
   return name.startsWith("--") ? name : name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
-${printColorPickerStructure(facts)}
+${printColorPickerStructure(facts, true)}
 `;
 }
 

@@ -15,7 +15,7 @@ import {
   type CheckboxInstance,
   createCheckbox,
 } from "../checkbox";
-import { registerFieldControlBridge } from "../field/field-control-bridge";
+import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type CheckboxGroupValue = string[];
 

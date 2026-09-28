@@ -5,7 +5,7 @@ import {
 import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
-import { registerFieldControlBridge } from "../field/field-control-bridge";
+import { registerFieldControlBridge } from "../field/field-control-registry";
 import {
   createRadio,
   type RadioCheckedChangeDetails,

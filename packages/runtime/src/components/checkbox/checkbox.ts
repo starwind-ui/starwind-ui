@@ -7,7 +7,7 @@ import {
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
-import { registerFieldControlBridge } from "../field/field-control-bridge";
+import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type CheckboxCheckedChangeReason = "root-press" | "input-change" | "imperative-action";
 

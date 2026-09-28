@@ -1,5 +1,13 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -7,15 +15,23 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
 
 import {
-  aggregateBaselineProvenance,
+  acceptedPackageSizeBaseline,
   evaluatePackageSizeBudgets,
-  reactAdapterOnlyBaselineProvenance,
 } from "./package-size-budget-checks.mjs";
+import { summarizeInitialBundleOutput } from "./package-size-bundle-output.mjs";
+import {
+  createPackageSizeSnapshot,
+  formatPackageSizeChanges,
+  validatePackageSizeSnapshot,
+} from "./package-size-change-baseline.mjs";
+import {
+  measurePublishedPackagePayload,
+  measureStyledCopiedSourcePayload,
+} from "./package-size-payloads.mjs";
 import {
   buildRawGzipDiagnostics,
   formatRawGzipDiagnosticsMarkdown,
 } from "./package-size-raw-gzip-diagnostics.mjs";
-import { summarizeInitialBundleOutput } from "./package-size-bundle-output.mjs";
 import {
   assertPackageSizeBaselinePlatform,
   collectPackageSizeEnvironment,
@@ -23,32 +39,28 @@ import {
   publishAcceptedPackageSizeArtifacts,
 } from "./package-size-run-evidence.mjs";
 import {
-  VUE_BASELINE_REQUIRED_ROW_IDS,
   checkVueBaselineEvidence,
   runVueBaselineCapture,
+  VUE_BASELINE_REQUIRED_ROW_IDS,
 } from "./package-size-vue-baseline-runner.mjs";
 import {
-  measurePublishedPackagePayload,
-  measureStyledCopiedSourcePayload,
-} from "./package-size-payloads.mjs";
-import {
-  ZAG_SIZE_COMPARATOR_VERSION,
-  getZagVueSizeComparatorPlan,
   buildStarwindVueBrowserMeasurementRows,
+  getZagVueSizeComparatorPlan,
   starwindVueStyledComponents,
   starwindVueStyledExclusions,
   starwindZagVueOverlapMappings,
+  ZAG_SIZE_COMPARATOR_VERSION,
   zagVueComparatorPackages,
 } from "./package-size-vue-plan.mjs";
+import {
+  buildSourceContributionAnalyses,
+  buildSourceContributionContext,
+  formatSourceContributionMarkdown,
+} from "./source-contribution-report.mjs";
 import {
   validateVuePackageSizeBaselineEvidence,
   vuePackageSizeBaseline,
 } from "./vue-package-size-baseline.mjs";
-import {
-  buildSourceContributionContext,
-  buildSourceContributionAnalyses,
-  formatSourceContributionMarkdown,
-} from "./source-contribution-report.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -580,6 +592,26 @@ const supportRows = [
         ]
       : []),
   ]),
+  ...readdirSync(path.join(REPO_ROOT, "packages/react/src"), { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        entry.name !== "internal" &&
+        existsSync(path.join(REPO_ROOT, "packages/react/src", entry.name, "index.ts")),
+    )
+    .map((entry) => entry.name)
+    .filter(
+      (component) => !starwindSupportMappings.some((mapping) => mapping.starwind === component),
+    )
+    .map((component) => ({
+      group: "Starwind component",
+      label: `Starwind ${component}`,
+      entry: starwindReactComponentsEntry([{ starwind: component }]),
+      provider: "starwind",
+      component,
+      versionPackage: "@starwind-ui/react",
+      plugins: [starwindReactAlias, starwindRuntimeAlias],
+    })),
 ];
 
 export const committedComparatorBaselines = Object.freeze({
@@ -670,6 +702,7 @@ export function getPackageSizeMeasurementPlan({
 }
 
 export async function runPackageSizeMeasurements({
+  sizeBaseline = acceptedPackageSizeBaseline,
   baselineVue = false,
   checkOnly = false,
   includePrivateVue = !checkOnly,
@@ -750,6 +783,7 @@ export async function runPackageSizeMeasurements({
     : undefined;
 
   const packageBudgetResults = evaluatePackageSizeBudgets({
+    baseline: sizeBaseline,
     bundleResults,
     includePrivateVue,
     supportResults,
@@ -816,12 +850,66 @@ async function main() {
     });
     validateVuePackageSizeBaselineEvidence(evidence);
   }
+  const { compareTo, snapshotPath } = getPackageSizeComparisonOptions();
+  const sizeBaseline = compareTo
+    ? JSON.parse(readFileSync(path.resolve(compareTo), "utf8"))
+    : acceptedPackageSizeBaseline;
+  validatePackageSizeSnapshot(sizeBaseline);
+  if (
+    snapshotPath &&
+    existsSync(snapshotPath) &&
+    [
+      realpathSync(compareTo ?? path.join(__dirname, "evidence/package-size-accepted.json")),
+      realpathSync(path.join(__dirname, "evidence/package-size-accepted.json")),
+    ].includes(realpathSync(snapshotPath))
+  ) {
+    throw new Error(
+      "Write the candidate snapshot to a separate file; review it before replacing the accepted baseline.",
+    );
+  }
   const results = await runPackageSizeMeasurements({
+    sizeBaseline,
     checkOnly: CHECK_ONLY,
     includePrivateVue: INCLUDE_PRIVATE_VUE,
   });
-
   const diagnosticsDirectory = writePackageSizeRunDiagnostics({ results });
+
+  const snapshot = createPackageSizeSnapshot(results, {
+    capturedAt: new Date().toISOString(),
+    sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+    }).trim(),
+    workingTreeDirty:
+      execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], {
+        cwd: REPO_ROOT,
+        encoding: "utf8",
+      }).trim().length > 0,
+    esbuildVersion: esbuild.version,
+    lockfileSha256: createHash("sha256")
+      .update(readFileSync(path.join(REPO_ROOT, "pnpm-lock.yaml")))
+      .digest("hex"),
+  });
+
+  const candidatePath = path.resolve(
+    snapshotPath ?? path.join(diagnosticsDirectory, "package-size-snapshot.json"),
+  );
+  mkdirSync(path.dirname(candidatePath), { recursive: true });
+  writeFileSync(candidatePath, `${JSON.stringify(snapshot, null, 2)}\n`);
+  console.log(
+    `\nSize change from ${sizeBaseline.provenance.capturedAt} (${sizeBaseline.provenance.sourceCommit.slice(0, 12)}${sizeBaseline.provenance.workingTreeDirty ? " + recorded worktree changes" : ""}):\n`,
+  );
+  console.log(
+    formatPackageSizeChanges(results.packageBudgetResults.changeChecks, { changedOnly: true }),
+  );
+  for (const key of ["esbuildVersion", "lockfileSha256"]) {
+    if (sizeBaseline.provenance[key] !== snapshot.provenance[key]) {
+      console.log(
+        `Comparison includes a change to ${key}; use matching dependencies and compiler to isolate a source change.`,
+      );
+    }
+  }
+  console.log(`Candidate snapshot: ${candidatePath}`);
   console.log(`Saved current package-size measurements and diagnostics to ${diagnosticsDirectory}`);
   const reportsWritten = writePackageSizeReports(results, { checkOnly: CHECK_ONLY });
   if (!reportsWritten) {
@@ -843,6 +931,23 @@ async function main() {
     );
     process.exitCode = 1;
   }
+}
+
+export function getPackageSizeComparisonOptions(arguments_ = process.argv.slice(2)) {
+  const options = {};
+  for (const [flag, key] of [
+    ["--compare-to", "compareTo"],
+    ["--snapshot", "snapshotPath"],
+  ]) {
+    const index = arguments_.indexOf(flag);
+    if (index < 0) continue;
+    const value = arguments_[index + 1];
+    if (!value || value.startsWith("--") || arguments_.lastIndexOf(flag) !== index) {
+      throw new Error(`${flag} requires one file path.`);
+    }
+    options[key] = value;
+  }
+  return options;
 }
 
 export function getPackageSizeCommandMode(arguments_ = process.argv.slice(2)) {
@@ -1548,8 +1653,12 @@ export function formatDiagnosticPackageSizeReport({
           "",
         ]
       : []),
-    "`pnpm runtime:size` treats aggregate package and support-set sizes as regression guards: they fail only after more than 10% or 15 KiB of gzip growth from the committed baseline, whichever comes first. Field and Runtime Color Picker cold imports retain strict absolute budgets. Competitor comparisons are informational.",
-    `The shared aggregate baselines were refreshed from public commit \`${aggregateBaselineProvenance.publicCommit}\` on ${aggregateBaselineProvenance.date} for Runtime ${aggregateBaselineProvenance.release.runtime}, Astro ${aggregateBaselineProvenance.release.astro}, React ${aggregateBaselineProvenance.release.react}, and CLI ${aggregateBaselineProvenance.release.cli}. The React adapter-only row was measured at ${formatBytes(reactAdapterOnlyBaselineProvenance.measuredGzipBytes)} from the ${reactAdapterOnlyBaselineProvenance.context} on ${reactAdapterOnlyBaselineProvenance.date} with \`${reactAdapterOnlyBaselineProvenance.command}\`. Targeted cold-import budgets were not rebaselined.`,
+    "Checks compare current output with a reviewed size snapshot. Catalog growth fails above 10% or 15 KiB, whichever comes first. Individual imports and package payloads warn above the greater of 5% or 1 KiB, and fail above the greater of 10% or 2 KiB. Field and Runtime Color Picker also retain absolute ceilings. Competitor comparisons are informational.",
+    `Comparison base: ${(packageBudgetResults.baselineProvenance ?? acceptedPackageSizeBaseline.provenance).capturedAt}. Use \`--compare-to <snapshot.json>\` for a specific accepted base. See [Size checks](../size-checks.md) for capture and review commands.`,
+    "",
+    "### Change from the accepted base",
+    "",
+    formatPackageSizeChanges(packageBudgetResults.changeChecks ?? []),
     "",
     ...formatColorPickerRebaselineMarkdown(),
     "",
@@ -1873,63 +1982,12 @@ function formatPrivateVueDiagnosticMarkdown({
 }
 
 function formatPrivateVueAcceptedBaselineMarkdown(packageBudgetResults) {
-  const baseline = vuePackageSizeBaseline;
-  const checksById = new Map(
-    (packageBudgetResults.vueAbsoluteChecks ?? []).map((check) => [check.id, check]),
-  );
   return [
-    "## Private Vue Accepted Baseline Provenance",
+    "## Vue Size Changes",
     "",
-    `Evidence source: \`${baseline.evidenceSource}\`.`,
+    "Vue uses the same accepted snapshot as Runtime and React. The original August baseline remains historical evidence in `scripts/portable-runtime/evidence/vue-package-size-baseline.json`.",
     "",
-    `Commit: \`${baseline.provenance.commit}\`.`,
-    "",
-    `Environment: ${baseline.provenance.environment.osName} ${baseline.provenance.environment.osRelease}; ${baseline.provenance.environment.platform} ${baseline.provenance.environment.architecture}; Node ${baseline.provenance.environment.nodeVersion}; npm ${baseline.provenance.environment.npmVersion}; pnpm ${baseline.provenance.environment.pnpmVersion}; esbuild ${baseline.provenance.environment.esbuildVersion}; zlib ${baseline.provenance.environment.zlibVersion}.`,
-    "",
-    `Capture command: \`${formatCommand(baseline.provenance.command)}\`.`,
-    "",
-    `Exact comparator packages: ${Object.entries(baseline.comparatorSnapshots.packages)
-      .map(([name, version]) => `\`${name}\` ${version}`)
-      .join(", ")}.`,
-    "",
-    "| Comparator snapshot | Minified + gzip | Policy |",
-    "| --- | ---: | --- |",
-    `| Zag Vue ${baseline.comparatorSnapshots.zagVersion} matched support | ${formatIntegerBytes(baseline.comparatorSnapshots.zagMatchedGzipBytes)} | Advisory snapshot |`,
-    "",
-    "## Private Vue Accepted Raw Runs",
-    "",
-    "| Row id | Run 1 | Run 2 | Run 3 | Stable maximum |",
-    "| --- | ---: | ---: | ---: | ---: |",
-    ...Object.entries(baseline.budgets).map(
-      ([id, budget]) =>
-        `| \`${id}\` | ${formatIntegerBytes(budget.values[0])} | ${formatIntegerBytes(budget.values[1])} | ${formatIntegerBytes(budget.values[2])} | ${formatIntegerBytes(budget.maximumBytes)} |`,
-    ),
-    "",
-    "## Private Vue Accepted Cold-Import Sentinels",
-    "",
-    "The accepted sentinels are the five Runtime-backed cold imports with the largest stable maximum. Ties are broken by component id. Theme is excluded.",
-    "",
-    "| Rank | Component | Row id | Stable maximum |",
-    "| ---: | --- | --- | ---: |",
-    ...baseline.sentinelRecords.map(
-      (sentinel) =>
-        `| ${sentinel.rank} | ${sentinel.component} | \`${sentinel.id}\` | ${formatIntegerBytes(sentinel.maximumBytes)} |`,
-    ),
-    "",
-    "## Private Vue Adopted Budgets",
-    "",
-    "Growth above the larger of 5% or 1 KiB produces a review warning. Growth above the larger of 10% or 2 KiB fails the check. Both thresholds use the recorded stable maximum; the historical evidence remains unchanged. Missing or invalid measurements fail. Comparator ordering is advisory.",
-    "",
-    "| Row id | Baseline | Current | Growth | Review limit | Hard limit | Status |",
-    "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
-    ...Object.entries(baseline.budgets).map(([id, budget]) => {
-      const check = checksById.get(id);
-      const growth =
-        check?.growthBytes == null
-          ? "N/A"
-          : `${formatEvidenceDelta(check.growthBytes)} (${check.growthPercent.toFixed(2)}%)`;
-      return `| \`${id}\` | ${formatIntegerBytes(budget.maximumBytes)} | ${formatExactBytes(check?.gzipBytes)} | ${growth} | ${formatIntegerBytes(budget.ceilingBytes)} | ${formatExactBytes(check?.maxGzipBytes)} | ${check?.status ?? "Not evaluated"} |`;
-    }),
+    formatPackageSizeChanges(packageBudgetResults.vueAbsoluteChecks ?? []),
   ];
 }
 
@@ -2140,16 +2198,6 @@ function formatBytes(bytes) {
 function formatExactBytes(bytes) {
   if (bytes == null) return "N/A";
   return `${Math.round(bytes).toLocaleString("en-US")} B (${formatBytes(bytes)})`;
-}
-
-function formatIntegerBytes(bytes) {
-  return `${bytes.toLocaleString("en-US")} B`;
-}
-
-function formatCommand(command) {
-  return [command.executable, ...command.arguments]
-    .map((argument) => JSON.stringify(argument))
-    .join(" ");
 }
 
 function findSupportResult(results, comparisonSet, provider) {

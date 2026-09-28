@@ -491,6 +491,7 @@ export const ReactPortal = React.forwardRef<HTMLDivElement, ReactPortalImplement
     const scope = React.useContext(ReactPortalScopeContext);
     const token = React.useId();
     const wrapperRef = React.useRef<HTMLDivElement | null>(null);
+    const cleanupRef = React.useRef<(() => void) | undefined>(undefined);
     const referenceRef = React.useRef<Element | null>(null);
     const [standalonePhase, setStandalonePhase] = React.useState<"inline" | "placed">("inline");
     const [placement, setPlacement] = React.useState<{ ready: boolean; target: HTMLElement | null }>({
@@ -505,7 +506,8 @@ export const ReactPortal = React.forwardRef<HTMLDivElement, ReactPortalImplement
 
     const composedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
-        if (!node) return setRef(forwardedRef, null);
+        cleanupRef.current?.();
+        if (!node) return;
         wrapperRef.current = node;
         if (!referenceRef.current) referenceRef.current = node.parentElement;
         const cleanupForwardedRef = setRef(forwardedRef, node);
@@ -515,12 +517,18 @@ export const ReactPortal = React.forwardRef<HTMLDivElement, ReactPortalImplement
           ready: placementRef.current.ready,
           target: placementRef.current.target,
         });
-        return () => {
+        let active = true;
+        const cleanup = () => {
+          if (!active) return;
+          active = false;
+          if (cleanupRef.current === cleanup) cleanupRef.current = undefined;
           cleanupRegistration?.();
           reportPlacement(node, null);
           if (wrapperRef.current === node) wrapperRef.current = null;
           cleanupForwardedRef?.();
         };
+        cleanupRef.current = cleanup;
+        return cleanup;
       },
       [forwardedRef, registerPortal, reportPlacement, token],
     );

@@ -17,7 +17,10 @@ export function colorPickerLiveOptions(f: AdapterColorPickerFacts): string[] {
   );
 }
 
-export function printColorPickerConnection(f: AdapterColorPickerFacts): string {
+export function printColorPickerConnection(
+  f: AdapterColorPickerFacts,
+  checkStructure = false,
+): string {
   requireColorPickerModelOwnership(Object.values(f.controlledness.states));
   if (
     !f.controlledness.refreshBeforeSync ||
@@ -52,7 +55,13 @@ export function printColorPickerConnection(f: AdapterColorPickerFacts): string {
     )
     .join("\n");
   const updateSteps = {
-    refresh: "if (refresh) owner.refresh({ preserveState: true });",
+    refresh: checkStructure
+      ? `if (transport.structureChanged()) {
+      owner.refresh({ preserveState: true });
+      // Runtime may restore owned ARIA while refreshing. Retain that settled structure.
+      transport.structureChanged();
+    }`
+      : "if (refresh) owner.refresh({ preserveState: true });",
     options: "applyOptions(next);",
     models: "syncModels(next);",
     observe: `observedValue = owner.${value.runtimeGetter}(); observedFormat = owner.${format.runtimeGetter}();
@@ -63,7 +72,7 @@ export function printColorPickerConnection(f: AdapterColorPickerFacts): string {
   read(): ColorPickerOptions;
   restoreAuthoredOwnership?(): void;
   captureAuthoredOwnership?(): void;
-  own?(instance: ReturnType<typeof ${f.runtime.factory}> | undefined): void;
+${checkStructure ? "  structureChanged(): boolean;\n" : ""}  own?(instance: ReturnType<typeof ${f.runtime.factory}> | undefined): void;
   observe(value: ColorPickerColor | null, format: ColorPickerFormat): void;
   publishValue?(value: ColorPickerColor | null): void;
   publishFormat?(format: ColorPickerFormat): void;
@@ -122,7 +131,7 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
     ${options}
     applied = next;
   }
-  function update(refresh = true): void {
+  function update(${checkStructure ? "" : "refresh = true"}): void {
     if (!active) return;
     const next = transport.read();
     ${colorPickerConnectionPolicy.updateOrder.map((step) => updateSteps[step]).join("\n")}

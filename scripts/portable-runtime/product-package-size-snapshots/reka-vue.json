@@ -1,11 +1,11 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-09-06T13:37:50.760Z",
+  "capturedAt": "2026-09-28T14:46:09.156Z",
   "catalog": {
-    "brotliBytes": 160305,
-    "gzipBytes": 211110,
-    "minifiedBytes": 792078
+    "brotliBytes": 160676,
+    "gzipBytes": 211620,
+    "minifiedBytes": 793668
   },
   "comparatorId": "reka-vue",
   "components": {
@@ -35,9 +35,9 @@
       "minifiedBytes": 12699
     },
     "combobox": {
-      "brotliBytes": 36862,
-      "gzipBytes": 41960,
-      "minifiedBytes": 128774
+      "brotliBytes": 37363,
+      "gzipBytes": 42457,
+      "minifiedBytes": 130360
     },
     "context-menu": {
       "brotliBytes": 26865,
@@ -546,14 +546,14 @@
   },
   "overlaps": {
     "vue-exact-three-way": {
-      "brotliBytes": 83105,
-      "gzipBytes": 103396,
-      "minifiedBytes": 378450
+      "brotliBytes": 83575,
+      "gzipBytes": 103922,
+      "minifiedBytes": 380038
     },
     "vue-reka-vue-overlap": {
-      "brotliBytes": 83105,
-      "gzipBytes": 103396,
-      "minifiedBytes": 378450
+      "brotliBytes": 83575,
+      "gzipBytes": 103922,
+      "minifiedBytes": 380038
     }
   },
   "package": {

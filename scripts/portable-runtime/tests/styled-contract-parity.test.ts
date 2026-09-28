@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { colorPickerStyledContract } from "../contracts/styled/components/color-picker.js";
 import { scrollAreaStyledContract } from "../contracts/styled/components/scroll-area.js";
@@ -92,12 +93,28 @@ describe("emitted Styled contract guard", () => {
       /autoViewport.*forbidden/,
     );
   });
-  it("rejects a changed default in emitted code", () => {
-    const output = files();
-    output[0]!.content = output[0]!.content.replace("autoViewport = true", "autoViewport = false");
-    expect(() => assertStyledContractFiles(starwindStyledContracts, output, "svelte")).toThrow(
-      /default for "autoViewport"/,
+  it.each([
+    ["astro", "apps/demo/src/components/starwind-runtime", "astro"],
+    ["react", "apps/react-demo/src/components/starwind-runtime", "tsx"],
+    ["vue", "apps/vue-demo/src/components/starwind-runtime", "vue"],
+    ["svelte", "apps/svelte-demo/src/lib/starwind-runtime", "svelte"],
+  ])("rejects a changed default in emitted %s code", (target, root, extension) => {
+    const relativePath = `scroll-area/ScrollArea.${extension}`;
+    const content = readFileSync(
+      new URL(`../../../${root}/${relativePath}`, import.meta.url),
+      "utf8",
     );
+    expect(content).toContain("autoViewport = true");
+    expect(() =>
+      assertStyledContractFiles(starwindStyledContracts, [{ relativePath, content }], target),
+    ).not.toThrow();
+    expect(() =>
+      assertStyledContractFiles(
+        starwindStyledContracts,
+        [{ relativePath, content: content.replace("autoViewport = true", "autoViewport = false") }],
+        target,
+      ),
+    ).toThrow(/default for "autoViewport"/);
   });
   it.each(["react", "astro", "vue", "svelte"])(
     "rejects a removed Styled component boundary for %s",
