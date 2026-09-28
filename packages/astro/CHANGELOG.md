@@ -1,5 +1,80 @@
 # @starwind-ui/astro
 
+## 1.3.0
+
+### Minor Changes
+
+- Fixed Color Picker form resets in React and Vue. Canceling a reset now keeps the selected color and format, and a pending reset no longer overwrites a newer selection or slider change.
+
+  For custom Runtime integrations, the new `stateSync` subscription lets you update your UI after a form reset finishes without firing a user-change event.
+
+- React, Vue, and Svelte Form components now support validation settings, server errors, and options for when errors appear. You can use synchronous or asynchronous validators and configure submission and reset behavior through component props.
+- Fixed several component updates and form resets:
+  - In Vue, canceling a checkbox, switch, menu, or popup change now keeps its previous value or open state.
+  - React and Vue checkboxes and switches keep their original form-reset values after options such as `readOnly` change. Checkbox Group selection now follows the group value, including when a child has its own checked value.
+  - React Navigation Menu no longer crashes when the open content is removed. React Sidebar controls now match saved state, and each nested Sidebar opens and closes its own mobile sheet.
+  - Vue and Svelte Color Picker keep app-controlled colors and formats under app control, including after form resets. Initialize a controlled value or format when the picker mounts; remount it to change between controlled and uncontrolled use.
+  - Input and Dropzone keep working after their input elements or associated forms change. Custom Runtime integrations can call their new `refresh()` methods after these changes.
+
+  Installing the Field Primitive through the CLI now includes its required Input files.
+
+- Fixed component behavior in the following cases:
+  - Vue Accordion, Collapsible, Tabs, and menu options keep their previous state when a change is canceled. Alert Dialog, Drawer, and Popover respond to open and close requests from app code.
+  - React Checkbox and Switch, and Vue Switch, use the app-provided checked state for their initial native input value. React toggles inside Toggle Group start with the group's selected and disabled state.
+  - React and Vue Input OTP restore the original default value after a form reset, including after `readOnly` changes.
+  - Avatar connects replacement images and fallbacks. Fieldset keeps its accessible label linked to its current legend.
+  - Dialog, Alert Dialog, and Drawer recognize trigger and close buttons added after the component mounts. Custom Runtime integrations can call the new `refresh()` method after adding or replacing these buttons.
+  - Vue Toaster now uses the spacing set through its `gap` and `peek` props.
+
+  Tabs keeps its initial `syncKey` for its mounted lifetime. Remount Tabs to change that key.
+
+- Tabs now supports CSS entrance and exit animations. Panels stay visible until their exit animation finishes, while inactive content stops accepting keyboard focus and clicks. Use `data-starting-style` and `data-ending-style` to style the animations.
+
+  When your code changes the selected tab, pressing Tab to enter the tab list now focuses that tab. Focus stays in place while someone is already navigating the list.
+
+- Fixed open React tooltips and hover cards losing their position when the component updates. Tooltip also cancels a scheduled opening when disabled and responds to its trigger again when re-enabled.
+
+  For custom Runtime integrations, Tooltip and Preview Card `setOpen` methods now accept an optional trigger element. Use it to restore an open overlay at its trigger.
+
+- React Tooltip now reports a clear error if its Primitive markup is missing `Tooltip.Portal`.
+
+  If you used the previous Primitive example, wrap `Tooltip.Positioner` and `Tooltip.Popup` in `Tooltip.Portal`. For inline rendering, keep the wrapper and set its `disabled` prop. Styled Tooltip already includes this wrapper and needs no change.
+
+### Patch Changes
+
+- Fixed Combobox values and input text after form resets. Canceling a reset keeps the current value, and a pending reset no longer overwrites newer input.
+
+  In React, pressing Escape restores the expected input text. In Vue, canceling an input change restores the previous text.
+
+- Fixed an open Context Menu jumping away from where it was opened when the component updates. It now keeps its position until the next time you open it at another location.
+- Input OTP now shows a visible, blinking caret when focused in Astro, React, Vue, and Svelte. Its caret styles are included with the component.
+
+  Popovers now shift to stay within the viewport near an edge, while keeping space between the popup and its trigger.
+
+- Fixed Navigation Menu links after content moves into the shared viewport. Links still follow your close-on-select settings, canceled actions stay canceled, and links in nested menus affect the correct menu.
+- Reduced background work on React pages with multiple menus, tooltips, or other components that use portals. These components now share the work of watching for changes to the page.
+- Reduced the JavaScript loaded by form controls used without Field, including Checkbox and Select. Controls still connect to Field when it is used.
+
+  In React 18, removing a Portal now releases references to its removed popup elements while the parent component stays mounted.
+
+  React Color Picker now avoids rebuilding its controls when only the selected color changes. It still connects controls that your app adds or replaces.
+
+- React Select keeps its current selection when a form reset is canceled. A pending reset also preserves any newer value set by the user or app.
+
+  Keep Select in the same form until a pending reset finishes. Moving it to another form during that reset is outside the supported behavior.
+
+- Scroll Area now supports `autoViewport` in every framework. It defaults to `true`; set it to `false` to supply your own viewport and content parts. Color Picker channel sliders support `step` to set the amount each keyboard action changes the value. Menu and Context Menu submenu triggers accept an optional icon slot.
+
+  Fixed Svelte Color Picker popup styling and clicks inside native dialogs.
+
+  Keep custom portal targets for Color Picker controls inside the picker root so input changes reach the picker.
+
+  Popover now preserves the `data-slot` set by components such as Color Picker, so their styles continue to apply.
+
+- Fixed toasts skipping their entrance animation or leaving incorrect spacing when updated immediately, including when a promise resolves. Closing a toast also cancels any remaining entrance animation work.
+- Updated dependencies
+  - @starwind-ui/runtime@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes
