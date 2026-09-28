@@ -1,4 +1,3 @@
-import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,18 +12,15 @@ import {
 
 // Mock dependencies
 vi.mock("fs-extra");
-vi.mock("@clack/prompts");
 vi.mock("../../src/utils/fs.js");
 
 const mockReadFile = vi.mocked(fs.readFile);
 const mockWriteFile = vi.mocked(fs.writeFile);
 const mockFileExists = vi.mocked(fsUtils.fileExists);
-const mockLogError = vi.fn();
 
 describe("layout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(p.log).error = mockLogError;
   });
 
   describe("findLayoutFile", () => {
@@ -360,14 +356,16 @@ some content
 
   describe("setupLayoutCssImport", () => {
     describe("when no layout file exists", () => {
-      it("should return true without error", async () => {
+      it("should return a manual step when no target exists", async () => {
         mockFileExists.mockResolvedValue(false);
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({
+          status: "manual",
+          message: expect.stringContaining('import "@/styles/starwind.css";'),
+        });
         expect(mockWriteFile).not.toHaveBeenCalled();
-        expect(mockLogError).not.toHaveBeenCalled();
       });
     });
 
@@ -385,7 +383,7 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "added" });
         expect(mockWriteFile).toHaveBeenCalledWith(
           "src/layouts/Layout.astro",
           expect.stringContaining('import "@/styles/starwind.css";'),
@@ -406,7 +404,7 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "present" });
         expect(mockWriteFile).not.toHaveBeenCalled();
       });
 
@@ -417,7 +415,7 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "added" });
         expect(mockWriteFile).toHaveBeenCalledWith(
           "src/layouts/Layout.astro",
           expect.stringMatching(/^---\nimport "@\/styles\/starwind\.css";\n---\n\n<html>/),
@@ -439,7 +437,7 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "added" });
         expect(mockWriteFile).toHaveBeenCalledWith(
           "src/layouts/BaseLayout.astro",
           expect.stringContaining('import "@/styles/starwind.css";'),
@@ -455,10 +453,10 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(false);
-        expect(mockLogError).toHaveBeenCalledWith(
-          expect.stringContaining("Failed to setup CSS import in layout"),
-        );
+        expect(result).toMatchObject({ status: "error" });
+        expect(result).toMatchObject({
+          message: expect.stringContaining("Could not add the Starwind CSS import"),
+        });
       });
 
       it("should return false and log error if write fails", async () => {
@@ -471,10 +469,10 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(false);
-        expect(mockLogError).toHaveBeenCalledWith(
-          expect.stringContaining("Failed to setup CSS import in layout"),
-        );
+        expect(result).toMatchObject({ status: "error" });
+        expect(result).toMatchObject({
+          message: expect.stringContaining("Could not add the Starwind CSS import"),
+        });
       });
 
       it("should handle unknown errors gracefully", async () => {
@@ -482,10 +480,10 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(false);
-        expect(mockLogError).toHaveBeenCalledWith(
-          expect.stringContaining("An unknown error occurred"),
-        );
+        expect(result).toMatchObject({ status: "error" });
+        expect(result).toMatchObject({
+          message: expect.stringContaining("An unknown error occurred"),
+        });
       });
     });
 
@@ -500,7 +498,7 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/styles/global.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "added" });
         expect(mockWriteFile).toHaveBeenCalledWith(
           "src/layouts/Layout.astro",
           expect.stringContaining('import "@/styles/global.css";'),
@@ -518,7 +516,7 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("src/assets/css/main.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "added" });
         expect(mockWriteFile).toHaveBeenCalledWith(
           "src/layouts/Layout.astro",
           expect.stringContaining('import "@/assets/css/main.css";'),
@@ -536,7 +534,7 @@ const title = "Hello";
 
         const result = await setupLayoutCssImport("@/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "added" });
         expect(mockWriteFile).toHaveBeenCalledWith(
           "src/layouts/Layout.astro",
           expect.stringContaining('import "@/styles/starwind.css";'),
@@ -576,7 +574,7 @@ const { title } = Astro.props;
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "added" });
         const writtenContent = mockWriteFile.mock.calls[0]?.[1] as string;
         expect(writtenContent).toContain('import "@/styles/starwind.css";');
         expect(writtenContent).toContain('import Nav from "@/components/Nav.astro";');
@@ -595,7 +593,7 @@ import "@/styles/starwind.css";
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "present" });
         expect(mockWriteFile).not.toHaveBeenCalled();
       });
 
@@ -611,7 +609,7 @@ import '@/styles/starwind.css';
 
         const result = await setupLayoutCssImport("src/styles/starwind.css");
 
-        expect(result).toBe(true);
+        expect(result).toMatchObject({ status: "present" });
         expect(mockWriteFile).not.toHaveBeenCalled();
       });
     });

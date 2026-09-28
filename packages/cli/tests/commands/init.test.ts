@@ -193,7 +193,11 @@ function mockDefaultProject() {
   mockPrepareAstroVueIntegration.mockResolvedValue({ status: "ready" });
   mockSetupTsConfig.mockResolvedValue(true);
   mockSetupVueTsConfig.mockResolvedValue(true);
-  mockSetupLayoutCssImport.mockResolvedValue(true);
+  mockSetupLayoutCssImport.mockResolvedValue({
+    status: "added",
+    path: "src/layouts/Layout.astro",
+    message: "Added Starwind CSS import to src/layouts/Layout.astro",
+  });
   mockSetupReactViteConfig.mockResolvedValue(true);
   mockSetupReactCssImport.mockResolvedValue(true);
   mockSetupStarwindProEnv.mockResolvedValue(true);
@@ -283,6 +287,92 @@ describe("init command", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDefaultProject();
+  });
+
+  it.each([
+    {
+      status: "added" as const,
+      path: "src/pages/index.astro",
+      message: "Added Starwind CSS import to src/pages/index.astro",
+    },
+    {
+      status: "present" as const,
+      path: "src/pages/index.astro",
+      message: "Starwind CSS is already imported in src/pages/index.astro",
+    },
+    {
+      status: "manual" as const,
+      message:
+        'Add import "@/styles/starwind.css"; between the --- lines at the top of your Astro layout or page.',
+    },
+  ])("reports the $status CSS outcome accurately", async (result) => {
+    mockSetupLayoutCssImport.mockResolvedValue(result);
+    const messages: unknown[] = [];
+    mockTasks.mockImplementation(async (tasks) => {
+      for (const task of tasks) messages.push(await task.task(() => {}));
+    });
+    await init(false, { defaults: true, framework: "astro", packageManager: "pnpm" });
+    if (result.status === "manual") {
+      expect(clackPrompts.note).toHaveBeenCalledWith(
+        result.message,
+        "Import Starwind CSS to finish setup",
+      );
+      expect(messages).toContain("Starwind CSS needs a manual import (see instructions above)");
+      expect(clackPrompts.outro).toHaveBeenCalledWith(
+        "Finish setup by adding the CSS import shown above.",
+      );
+      expect(clackPrompts.outro).not.toHaveBeenCalledWith("Enjoy using Starwind UI 🚀");
+    } else {
+      expect(messages).toContain(result.message);
+    }
+    expect(messages).not.toContain("CSS import added to layout");
+  });
+
+  it("reports a CSS write error without claiming the import was added", async () => {
+    mockSetupLayoutCssImport.mockResolvedValue({
+      status: "error",
+      message: "Could not write src/pages/index.astro: Permission denied",
+    });
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exit");
+    });
+    try {
+      await expect(
+        init(true, { defaults: true, framework: "astro", packageManager: "pnpm" }),
+      ).rejects.toThrow("exit");
+      expect(exit).toHaveBeenCalledWith(1);
+      expect(clackPrompts.log.error).toHaveBeenCalledWith(
+        "Could not write src/pages/index.astro: Permission denied",
+      );
+    } finally {
+      exit.mockRestore();
+    }
+  });
+
+  it("uses the actual CSS outcome for Astro with Vue", async () => {
+    const message = "Added Starwind CSS import to src/pages/index.astro";
+    mockReadJsonFile.mockResolvedValue({ dependencies: { astro: "^7.0.0" } });
+    mockPrepareAstroVueIntegration.mockResolvedValue({ status: "ready" });
+    mockSetupLayoutCssImport.mockResolvedValue({
+      status: "added",
+      path: "src/pages/index.astro",
+      message,
+    });
+    const messages: unknown[] = [];
+    mockTasks.mockImplementation(async (tasks) => {
+      for (const task of tasks) messages.push(await task.task(() => {}));
+    });
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan: createAstroVueHostPlan(),
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+    expect(messages).toContain(message);
+    expect(messages).not.toContain("CSS import added to layout");
   });
 
   const vueRegistry = {
@@ -1547,9 +1637,7 @@ describe("init command", () => {
 
     await init(true, { defaults: true, framework: "react", packageManager: "pnpm" });
 
-    expect(clackPrompts.log.info).toHaveBeenCalledWith(
-      expect.stringContaining("already configured"),
-    );
+    expect(clackPrompts.log.info).toHaveBeenCalledWith(expect.stringContaining("already set up"));
     expect(mockUpdateConfig).not.toHaveBeenCalled();
     expect(mockInstallDependencies).not.toHaveBeenCalled();
   });
@@ -1563,9 +1651,7 @@ describe("init command", () => {
 
     await init(false, { packageManager: "pnpm", pro: true });
 
-    expect(clackPrompts.log.info).toHaveBeenCalledWith(
-      expect.stringContaining("already configured"),
-    );
+    expect(clackPrompts.log.info).toHaveBeenCalledWith(expect.stringContaining("already set up"));
     expect(mockSetupStarwindProConfig).toHaveBeenCalled();
     expect(mockSetupStarwindProEnv).toHaveBeenCalled();
     expect(mockUpdateConfig).not.toHaveBeenCalled();

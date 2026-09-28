@@ -161,4 +161,4 @@ export const findPrimitivePropStateModel = (contract: RuntimeAdapterContract, pr
   });
 
 export const frameworkCoordinationSummary =
-  "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.";
+  "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.";

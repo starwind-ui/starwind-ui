@@ -1,4 +1,5 @@
 import type { ProjectPackage } from "./host-planner.js";
+import type { CssImportResult } from "./layout.js";
 import type { PackageManager } from "./package-manager.js";
 
 export type HostProjectPreparation =
@@ -37,7 +38,7 @@ export type HostProjectPlanBase = {
   validate: () => Promise<void>;
 } & (
   | {
-      setupCss: (cssFile: string) => Promise<boolean>;
+      setupCss: (cssFile: string) => Promise<boolean | CssImportResult>;
       setupCssLabel: string;
       setupCssResult: string;
     }

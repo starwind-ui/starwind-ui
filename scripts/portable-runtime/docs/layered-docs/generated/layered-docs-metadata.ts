@@ -38184,7 +38184,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Accordion is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -38227,8 +38227,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Accordion anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Accordion.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Accordion from \"@starwind-ui/vue/accordion\";\n</script>\n\n<template>\n  <Accordion.Root>\n    <Accordion.Item value=\"details\">\n      <Accordion.Header>\n        <Accordion.Trigger>Toggle details</Accordion.Trigger>\n      </Accordion.Header>\n      <Accordion.Panel>Accordion panel content</Accordion.Panel>\n    </Accordion.Item>\n  </Accordion.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#accordion-basic-vue",
@@ -39568,7 +39568,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Alert Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -39611,8 +39611,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render AlertDialog anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build AlertDialog.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport AlertDialog from \"@starwind-ui/vue/alert-dialog\";\n</script>\n\n<template>\n  <AlertDialog.Root>\n    <AlertDialog.Trigger>Delete item</AlertDialog.Trigger>\n    <AlertDialog.Backdrop />\n    <AlertDialog.Viewport>\n      <AlertDialog.Popup>\n        <AlertDialog.Title>Delete item?</AlertDialog.Title>\n        <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>\n        <AlertDialog.Close>Cancel</AlertDialog.Close>\n      </AlertDialog.Popup>\n    </AlertDialog.Viewport>\n  </AlertDialog.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#alert-dialog-basic-vue",
@@ -40884,7 +40884,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Avatar is a Starwind Runtime primitive in the static-semantic contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -40927,8 +40927,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Avatar anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Avatar.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Avatar from \"@starwind-ui/vue/avatar\";\n</script>\n\n<template>\n  <Avatar.Root>\n    <Avatar.Image alt=\"Starwind UI\" src=\"/avatar.png\" />\n    <Avatar.Fallback>SW</Avatar.Fallback>\n  </Avatar.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#avatar-basic-vue",
@@ -41608,7 +41608,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Button uses native button semantics by default and adds Runtime behavior only for focusable-disabled state.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -41655,8 +41655,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Button anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Button.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Button from \"@starwind-ui/vue/button\";\n</script>\n\n<template>\n  <Button.Root type=\"button\" :focusableWhenDisabled=\"true\">Button</Button.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#button-basic-vue",
@@ -42145,7 +42145,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Carousel is a Starwind Runtime primitive in the viewport-measurement contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -42188,8 +42188,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Carousel anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Carousel.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Carousel from \"@starwind-ui/vue/carousel\";\n</script>\n\n<template>\n  <Carousel.Root>\n    <Carousel.Viewport>\n      <Carousel.Container>\n        <Carousel.Item>Slide 1</Carousel.Item>\n      </Carousel.Container>\n    </Carousel.Viewport>\n    <Carousel.Previous>Previous</Carousel.Previous>\n    <Carousel.Next>Next</Carousel.Next>\n  </Carousel.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#carousel-basic-vue",
@@ -43181,7 +43181,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Checkbox coordinates a visible boolean control, indicator presence, and hidden form inputs for boolean form state.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -43236,8 +43236,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Checkbox anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Checkbox.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Checkbox from \"@starwind-ui/vue/checkbox\";\n</script>\n\n<template>\n  <Checkbox.Root>\n    <Checkbox.Indicator />\n  </Checkbox.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-basic-vue",
@@ -44410,7 +44410,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Checkbox Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -44453,8 +44453,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render CheckboxGroup anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build CheckboxGroup.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport CheckboxGroup from \"@starwind-ui/vue/checkbox-group\";\n</script>\n\n<template>\n  <CheckboxGroup.Root />\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-group-basic-vue",
@@ -45327,7 +45327,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Collapsible is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -45370,8 +45370,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Collapsible anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Collapsible.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Collapsible from \"@starwind-ui/vue/collapsible\";\n</script>\n\n<template>\n  <Collapsible.Root>\n    <Collapsible.Trigger>Toggle details</Collapsible.Trigger>\n    <Collapsible.Panel>Collapsible content</Collapsible.Panel>\n  </Collapsible.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#collapsible-basic-vue",
@@ -47312,7 +47312,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Color Picker coordinates color parsing, two-dimensional area input, channel controls, editable values, presets, and native form submission.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -47398,8 +47398,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Color Picker anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Color Picker.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport ColorPicker from \"@starwind-ui/vue/color-picker\";\n</script>\n\n<template>\n  <ColorPicker.Root>\n    <ColorPicker.Label>Color</ColorPicker.Label>\n    <ColorPicker.Control>\n      <ColorPicker.ValueSwatch />\n      <ColorPicker.ValueInput />\n      <ColorPicker.ValueText />\n    </ColorPicker.Control>\n    <ColorPicker.Area xChannel=\"saturation\" yChannel=\"brightness\">\n      <ColorPicker.AreaBackground />\n      <ColorPicker.AreaThumb />\n      <ColorPicker.AreaInput axis=\"x\" />\n      <ColorPicker.AreaInput axis=\"y\" />\n    </ColorPicker.Area>\n    <ColorPicker.ChannelSlider channel=\"hue\">\n      <ColorPicker.ChannelSliderTrack />\n      <ColorPicker.ChannelSliderThumb />\n      <ColorPicker.ChannelSliderInput />\n    </ColorPicker.ChannelSlider>\n    <ColorPicker.ChannelInput channel=\"hue\" />\n    <ColorPicker.FormatSelect />\n    <ColorPicker.FormatControl />\n    <ColorPicker.TransparencyGrid />\n    <ColorPicker.SwatchGroup>\n      <ColorPicker.Swatch swatchValue=\"#3b82f6\" />\n    </ColorPicker.SwatchGroup>\n    <ColorPicker.EyeDropperTrigger>Pick from screen</ColorPicker.EyeDropperTrigger>\n    <ColorPicker.Clear>Clear</ColorPicker.Clear>\n    <ColorPicker.HiddenInput />\n  </ColorPicker.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-basic-vue",
@@ -50825,7 +50825,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Combobox is a Starwind Runtime primitive in the floating-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -50868,8 +50868,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Combobox anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Combobox.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Combobox from \"@starwind-ui/vue/combobox\";\n</script>\n\n<template>\n  <Combobox.Root>\n    <Combobox.Label>Choose a framework</Combobox.Label>\n    <Combobox.InputGroup>\n      <Combobox.Input placeholder=\"Search frameworks\" />\n      <Combobox.Trigger>Open</Combobox.Trigger>\n      <Combobox.Clear>Clear</Combobox.Clear>\n    </Combobox.InputGroup>\n    <Combobox.Positioner>\n      <Combobox.Popup>\n        <Combobox.Empty>No results</Combobox.Empty>\n      </Combobox.Popup>\n    </Combobox.Positioner>\n  </Combobox.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-vue",
@@ -54424,7 +54424,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Context Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -54467,8 +54467,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render ContextMenu anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build ContextMenu.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport ContextMenu from \"@starwind-ui/vue/context-menu\";\n</script>\n\n<template>\n  <ContextMenu.Root>\n    <ContextMenu.Trigger>Right click</ContextMenu.Trigger>\n    <ContextMenu.Positioner>\n      <ContextMenu.Popup>\n        <ContextMenu.Item>Copy</ContextMenu.Item>\n      </ContextMenu.Popup>\n    </ContextMenu.Positioner>\n  </ContextMenu.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#context-menu-basic-vue",
@@ -57815,7 +57815,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -57858,8 +57858,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Dialog anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Dialog.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Dialog from \"@starwind-ui/vue/dialog\";\n</script>\n\n<template>\n  <Dialog.Root>\n    <Dialog.Trigger>Open dialog</Dialog.Trigger>\n    <Dialog.Backdrop />\n    <Dialog.Popup>\n      <Dialog.Title>Dialog title</Dialog.Title>\n      <Dialog.Description>Dialog description</Dialog.Description>\n      <Dialog.Close>Close</Dialog.Close>\n    </Dialog.Popup>\n  </Dialog.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-vue",
@@ -59270,7 +59270,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Drawer is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -59313,8 +59313,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Drawer anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Drawer.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Drawer from \"@starwind-ui/vue/drawer\";\n</script>\n\n<template>\n  <Drawer.Root>\n    <Drawer.Trigger>Open drawer</Drawer.Trigger>\n    <Drawer.Backdrop />\n    <Drawer.Viewport>\n      <Drawer.Popup>\n        <Drawer.Title>Drawer title</Drawer.Title>\n        <Drawer.Description>Drawer description</Drawer.Description>\n        <Drawer.Close>Close</Drawer.Close>\n      </Drawer.Popup>\n    </Drawer.Viewport>\n  </Drawer.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#drawer-basic-vue",
@@ -60706,7 +60706,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Dropzone is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -60749,8 +60749,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Dropzone anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Dropzone.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Dropzone from \"@starwind-ui/vue/dropzone\";\n</script>\n\n<template>\n  <Dropzone.Root>\n    <Dropzone.Input />\n    <Dropzone.UploadIndicator>Drop files here</Dropzone.UploadIndicator>\n    <Dropzone.LoadingIndicator>Uploading...</Dropzone.LoadingIndicator>\n    <Dropzone.FilesList />\n  </Dropzone.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dropzone-basic-vue",
@@ -62035,7 +62035,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Field is a Starwind Runtime primitive in the field-control-coordinator contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -62085,8 +62085,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Field anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Field.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Field from \"@starwind-ui/vue/field\";\n</script>\n\n<template>\n  <Field.Root>\n    <Field.Label>Email</Field.Label>\n    <Field.Control />\n    <Field.Description>Use your work email.</Field.Description>\n    <Field.Error>Enter a valid email.</Field.Error>\n  </Field.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#field-basic-vue",
@@ -63004,7 +63004,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Fieldset is a Starwind Runtime primitive in the field-control-coordinator contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -63047,8 +63047,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Fieldset anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Fieldset.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Fieldset from \"@starwind-ui/vue/fieldset\";\n</script>\n\n<template>\n  <Fieldset.Root>\n    <Fieldset.Legend>Preferences</Fieldset.Legend>\n  </Fieldset.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#fieldset-basic-vue",
@@ -63492,7 +63492,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Form coordinates native constraints, custom and asynchronous validators, schema results, error visibility, and submission across its Fields.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -63545,8 +63545,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Form anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Form.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Form from \"@starwind-ui/vue/form\";\n</script>\n\n<template>\n  <Form.Root>\n    <Form.ErrorSummary>Please fix the highlighted fields.</Form.ErrorSummary>\n  </Form.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#form-basic-vue",
@@ -64117,7 +64117,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Input is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -64160,8 +64160,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Input anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Input.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Input from \"@starwind-ui/vue/input\";\n</script>\n\n<template>\n  <Input.Root placeholder=\"Email\" />\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-basic-vue",
@@ -65247,7 +65247,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Input OTP is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -65290,8 +65290,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render InputOtp anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build InputOtp.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport InputOtp from \"@starwind-ui/vue/input-otp\";\n</script>\n\n<template>\n  <InputOtp.Root>\n    <InputOtp.Group>\n      <InputOtp.Slot :index=\"0\" />\n      <InputOtp.Separator />\n      <InputOtp.Slot :index=\"1\" />\n    </InputOtp.Group>\n  </InputOtp.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-otp-basic-vue",
@@ -67570,7 +67570,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -67618,8 +67618,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Menu anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Menu.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Menu from \"@starwind-ui/vue/menu\";\n</script>\n\n<template>\n  <Menu.Root>\n    <Menu.Trigger>Open menu</Menu.Trigger>\n    <Menu.Positioner>\n      <Menu.Popup>\n        <Menu.Item>Edit</Menu.Item>\n      </Menu.Popup>\n    </Menu.Positioner>\n  </Menu.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#menu-basic-vue",
@@ -71356,7 +71356,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Navigation Menu coordinates a single active top-level item, shared viewport content, hover timing, keyboard movement, and link close behavior for site navigation.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -71417,8 +71417,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render NavigationMenu anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build NavigationMenu.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport NavigationMenu from \"@starwind-ui/vue/navigation-menu\";\n</script>\n\n<template>\n  <NavigationMenu.Root>\n    <NavigationMenu.List>\n      <NavigationMenu.Item value=\"products\">\n        <NavigationMenu.Trigger>\n          <NavigationMenu.Icon>v</NavigationMenu.Icon>\n        </NavigationMenu.Trigger>\n        <NavigationMenu.Content>\n          <NavigationMenu.Link href=\"/docs\">Docs</NavigationMenu.Link>\n        </NavigationMenu.Content>\n      </NavigationMenu.Item>\n    </NavigationMenu.List>\n    <NavigationMenu.Portal>\n      <NavigationMenu.Positioner>\n        <NavigationMenu.Popup>\n          <NavigationMenu.Viewport />\n          <NavigationMenu.Arrow />\n        </NavigationMenu.Popup>\n      </NavigationMenu.Positioner>\n    </NavigationMenu.Portal>\n  </NavigationMenu.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#navigation-menu-basic-vue",
@@ -73613,7 +73613,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Popover is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -73656,8 +73656,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Popover anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Popover.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Popover from \"@starwind-ui/vue/popover\";\n</script>\n\n<template>\n  <Popover.Root>\n    <Popover.Trigger>Open popover</Popover.Trigger>\n    <Popover.Backdrop />\n    <Popover.Positioner>\n      <Popover.Popup>\n        <Popover.Title>Popover title</Popover.Title>\n        <Popover.Description>Popover description</Popover.Description>\n        <Popover.Close>Close</Popover.Close>\n        <Popover.Arrow />\n      </Popover.Popup>\n    </Popover.Positioner>\n  </Popover.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#popover-basic-vue",
@@ -75609,7 +75609,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Preview Card is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -75652,8 +75652,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render PreviewCard anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build PreviewCard.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport PreviewCard from \"@starwind-ui/vue/preview-card\";\n</script>\n\n<template>\n  <PreviewCard.Root>\n    <PreviewCard.Trigger>Preview profile</PreviewCard.Trigger>\n    <PreviewCard.Positioner>\n      <PreviewCard.Popup>\n        <PreviewCard.Arrow />\n      </PreviewCard.Popup>\n    </PreviewCard.Positioner>\n  </PreviewCard.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#preview-card-basic-vue",
@@ -77147,7 +77147,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Progress is a Starwind Runtime primitive in the static-semantic contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -77190,8 +77190,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Progress anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Progress.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Progress from \"@starwind-ui/vue/progress\";\n</script>\n\n<template>\n  <Progress.Root>\n    <Progress.Label>Upload progress</Progress.Label>\n    <Progress.Track>\n      <Progress.Indicator />\n    </Progress.Track>\n    <Progress.Value>Selected value</Progress.Value>\n  </Progress.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#progress-basic-vue",
@@ -78161,7 +78161,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Radio is a Starwind Runtime primitive in the single-boolean-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -78204,8 +78204,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Radio anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Radio.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Radio from \"@starwind-ui/vue/radio\";\n</script>\n\n<template>\n  <Radio.Root value=\"option-one\">\n    <Radio.Indicator />\n  </Radio.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-basic-vue",
@@ -79365,7 +79365,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Radio Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -79408,8 +79408,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render RadioGroup anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build RadioGroup.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport RadioGroup from \"@starwind-ui/vue/radio-group\";\n</script>\n\n<template>\n  <RadioGroup.Root />\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-group-basic-vue",
@@ -80312,7 +80312,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Scroll Area is a Starwind Runtime primitive in the viewport-measurement contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -80355,8 +80355,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render ScrollArea anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build ScrollArea.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport ScrollArea from \"@starwind-ui/vue/scroll-area\";\n</script>\n\n<template>\n  <ScrollArea.Root>\n    <ScrollArea.Viewport>\n      <ScrollArea.Content>Scrollable content</ScrollArea.Content>\n    </ScrollArea.Viewport>\n    <ScrollArea.Scrollbar>\n      <ScrollArea.Thumb />\n    </ScrollArea.Scrollbar>\n    <ScrollArea.Corner />\n  </ScrollArea.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#scroll-area-basic-vue",
@@ -81683,7 +81683,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Select is a Starwind Runtime primitive in the floating-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -81735,8 +81735,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Select anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Select.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Select from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n  <Select.Root>\n    <Select.Label>Choose a framework</Select.Label>\n    <Select.Trigger>\n      <Select.Value>Astro</Select.Value>\n      <Select.Icon>v</Select.Icon>\n    </Select.Trigger>\n    <Select.Positioner>\n      <Select.Popup />\n    </Select.Positioner>\n  </Select.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-vue",
@@ -84244,7 +84244,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Sidebar is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -84287,8 +84287,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Sidebar anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Sidebar.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Sidebar from \"@starwind-ui/vue/sidebar\";\n</script>\n\n<template>\n  <Sidebar.Provider>\n    <Sidebar.Sidebar>\n      <Sidebar.MenuButton>Dashboard</Sidebar.MenuButton>\n    </Sidebar.Sidebar>\n    <Sidebar.Trigger>Toggle sidebar</Sidebar.Trigger>\n    <Sidebar.Rail />\n  </Sidebar.Provider>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#sidebar-basic-vue",
@@ -86027,7 +86027,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Slider is a Starwind Runtime primitive in the form-value-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -86070,8 +86070,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Slider anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Slider.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Slider from \"@starwind-ui/vue/slider\";\n</script>\n\n<template>\n  <Slider.Root>\n    <Slider.Label>Volume</Slider.Label>\n    <Slider.Control>\n      <Slider.Track>\n        <Slider.Indicator />\n        <Slider.Thumb />\n      </Slider.Track>\n    </Slider.Control>\n  </Slider.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#slider-basic-vue",
@@ -87442,7 +87442,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Switch is a Starwind Runtime primitive in the single-boolean-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -87485,8 +87485,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Switch anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Switch.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Switch from \"@starwind-ui/vue/switch\";\n</script>\n\n<template>\n  <Switch.Root>\n    <Switch.Thumb />\n  </Switch.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#switch-basic-vue",
@@ -88762,7 +88762,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Tabs is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -88818,8 +88818,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Tabs anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Tabs.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Tabs from \"@starwind-ui/vue/tabs\";\n</script>\n\n<template>\n  <Tabs.Root defaultValue=\"account\">\n    <Tabs.List>\n      <Tabs.Tab value=\"account\">Account</Tabs.Tab>\n    </Tabs.List>\n    <Tabs.Panel value=\"account\">Account settings</Tabs.Panel>\n  </Tabs.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tabs-basic-vue",
@@ -90101,7 +90101,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toast is a Starwind Runtime primitive in the notification-system contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -90144,8 +90144,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Toast anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Toast.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Toast from \"@starwind-ui/vue/toast\";\n</script>\n\n<template>\n  <Toast.Viewport>\n    <Toast.Root>\n      <Toast.Content>\n        <Toast.Title>Saved</Toast.Title>\n        <Toast.Description>Your changes were saved.</Toast.Description>\n      </Toast.Content>\n      <Toast.Close>Dismiss</Toast.Close>\n    </Toast.Root>\n  </Toast.Viewport>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toast-basic-vue",
@@ -90991,7 +90991,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toggle is a Starwind Runtime primitive in the single-boolean-control contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -91034,8 +91034,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Toggle anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Toggle.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Toggle from \"@starwind-ui/vue/toggle\";\n</script>\n\n<template>\n  <Toggle.Root>Toggle</Toggle.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-basic-vue",
@@ -91945,7 +91945,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toggle Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -91988,8 +91988,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render ToggleGroup anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build ToggleGroup.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport ToggleGroup from \"@starwind-ui/vue/toggle-group\";\n</script>\n\n<template>\n  <ToggleGroup.Root />\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-group-basic-vue",
@@ -93195,7 +93195,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Tooltip is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
-        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -93238,8 +93238,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "basic",
             framework: "vue",
-            title: "Vue · Beta",
-            summary: "Use the Vue 3.5 beta adapter to render Tooltip anatomy.",
+            title: "Vue",
+            summary: "Use the Vue components to build Tooltip.",
             language: "vue",
             code: "<script setup lang=\"ts\">\nimport Tooltip from \"@starwind-ui/vue/tooltip\";\n</script>\n\n<template>\n  <Tooltip.Root>\n    <Tooltip.Trigger>Hover me</Tooltip.Trigger>\n    <Tooltip.Portal>\n      <Tooltip.Positioner>\n        <Tooltip.Popup>\n          <Tooltip.Arrow />\n        </Tooltip.Popup>\n      </Tooltip.Positioner>\n    </Tooltip.Portal>\n  </Tooltip.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tooltip-basic-vue",

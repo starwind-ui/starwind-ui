@@ -36,7 +36,7 @@ import {
   validatePrivateHostTarget,
 } from "@/utils/host-planner.js";
 import type { HostProjectPreparation } from "@/utils/host-project.js";
-import { setupLayoutCssImport } from "@/utils/layout.js";
+import { type CssImportResult, setupLayoutCssImport } from "@/utils/layout.js";
 import {
   detectPackageManager,
   installDependencies,
@@ -285,7 +285,7 @@ export async function init(
     }
 
     if (configState.status === "current") {
-      p.log.info("Starwind Runtime is already configured for this project.");
+      p.log.info("Starwind is already set up for this project.");
 
       if (options?.pro) {
         await setupProForExistingRuntime({
@@ -355,6 +355,7 @@ export async function init(
     // Check Astro version compatibility
     const installTasks = [];
     const configTasks = [];
+    let needsCssImport = false;
     if (hostPreparation?.status === "prepared" && hostPreparation.applyIntegration) {
       configTasks.push({
         title: hostPreparation.integrationLabel,
@@ -641,10 +642,12 @@ export async function init(
       configTasks.push({
         title: hostProject.setupCssLabel,
         task: async () => {
-          const success = await hostProject.setupCss(configChoices.cssFile);
-          if (!success) {
-            throw new Error("Failed to configure the host CSS entry");
+          const result = await hostProject.setupCss(configChoices.cssFile);
+          if (typeof result !== "boolean") {
+            needsCssImport = result.status === "manual";
+            return reportCssImportResult(result);
           }
+          if (!result) throw new Error("Could not connect the stylesheet to your app");
           await sleep(250);
           return hostProject.setupCssResult;
         },
@@ -654,14 +657,11 @@ export async function init(
       //                 Add CSS import to layout file
       // ================================================================
       configTasks.push({
-        title: "Adding CSS import to layout",
+        title: "Connecting Starwind CSS",
         task: async () => {
-          const success = await setupLayoutCssImport(configChoices.cssFile);
-          if (!success) {
-            throw new Error("Failed to add CSS import to layout");
-          }
-          await sleep(250);
-          return "CSS import added to layout";
+          const result = await setupLayoutCssImport(configChoices.cssFile);
+          needsCssImport = result.status === "manual";
+          return reportCssImportResult(result);
         },
       });
     }
@@ -878,9 +878,11 @@ export async function init(
 
     if (!withinAdd) {
       await sleep(1000);
-      const outroMessage = options?.pro
-        ? "Enjoy using Starwind UI with Pro components! 🚀"
-        : "Enjoy using Starwind UI 🚀";
+      const outroMessage = needsCssImport
+        ? "Finish setup by adding the CSS import shown above."
+        : options?.pro
+          ? "Enjoy using Starwind UI with Pro components! 🚀"
+          : "Enjoy using Starwind UI 🚀";
       p.outro(outroMessage);
     }
   } catch (error) {
@@ -888,4 +890,13 @@ export async function init(
     p.cancel("Operation cancelled");
     process.exit(1);
   }
+}
+
+function reportCssImportResult(result: CssImportResult): string {
+  if (result.status === "error") throw new Error(result.message);
+  if (result.status === "manual") {
+    p.note(result.message, "Import Starwind CSS to finish setup");
+    return "Starwind CSS needs a manual import (see instructions above)";
+  }
+  return result.message;
 }

@@ -1,8 +1,9 @@
-import * as p from "@clack/prompts";
+import path from "node:path";
+
+import { parse } from "@babel/parser";
 import fs from "fs-extra";
 
 import { fileExists } from "@/utils/fs.js";
-import { highlighter } from "@/utils/highlighter.js";
 
 export const LAYOUT_PATHS = ["src/layouts/Layout.astro", "src/layouts/BaseLayout.astro"] as const;
 
@@ -25,34 +26,47 @@ export async function findLayoutFile(): Promise<string | null> {
  * @param cssPath - The CSS file path to check for
  * @returns true if the import already exists
  */
-export function hasCssImport(content: string, cssPath: string): boolean {
-  // Normalize the path for comparison (handle both forward and back slashes)
-  const normalizedCssPath = cssPath.replace(/\\/g, "/");
+export function hasCssImport(
+  content: string,
+  cssPath: string,
+  targetPath = "src/layouts/Layout.astro",
+): boolean {
+  const frontmatter = getFrontmatter(content);
+  if (!frontmatter) return false;
 
-  // Check for various import formats
-  const importPatterns = [
-    // import "@/styles/starwind.css"
-    new RegExp(`import\\s+["']${escapeRegExp(normalizedCssPath)}["']`),
-    // import "@/styles/starwind.css";
-    new RegExp(`import\\s+["']${escapeRegExp(normalizedCssPath)}["'];?`),
-    // Handle paths without @/ prefix if cssPath starts with src/
-    ...(normalizedCssPath.startsWith("src/")
-      ? [new RegExp(`import\\s+["']@/${escapeRegExp(normalizedCssPath.slice(4))}["']`)]
-      : []),
-    // Handle @/ paths if cssPath doesn't have it
-    ...(!normalizedCssPath.startsWith("@/")
-      ? [new RegExp(`import\\s+["']@/${escapeRegExp(normalizedCssPath)}["']`)]
-      : []),
-  ];
-
-  return importPatterns.some((pattern) => pattern.test(content));
+  const ast = parse(frontmatter.code, {
+    sourceType: "module",
+    plugins: ["typescript"],
+    allowAwaitOutsideFunction: true,
+  });
+  const expected = resolveImportPath(cssPath, targetPath);
+  return ast.program.body.some(
+    (statement) =>
+      statement.type === "ImportDeclaration" &&
+      statement.importKind !== "type" &&
+      resolveImportPath(statement.source.value, targetPath) === expected,
+  );
 }
 
-/**
- * Escapes special regex characters in a string
- */
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function resolveImportPath(value: string, targetPath: string): string {
+  const normalized = value.replace(/\\/g, "/");
+  if (normalized.startsWith("@/")) return path.posix.normalize(`src/${normalized.slice(2)}`);
+  if (normalized.startsWith(".")) {
+    return path.posix.normalize(path.posix.join(path.posix.dirname(targetPath), normalized));
+  }
+  return path.posix.normalize(normalized.startsWith("src/") ? normalized : `src/${normalized}`);
+}
+
+function getFrontmatter(content: string): { code: string; start: number } | undefined {
+  const opening = content.match(/^\uFEFF?---[ \t]*\r?\n/);
+  if (!opening) {
+    if (/^\uFEFF?---/.test(content)) throw new Error("Incomplete Astro frontmatter");
+    return undefined;
+  }
+  const start = opening[0].length;
+  const closing = content.slice(start).match(/^---[ \t]*(?:\r?\n|$)/m);
+  if (!closing || closing.index === undefined) throw new Error("Incomplete Astro frontmatter");
+  return { code: content.slice(start, start + closing.index), start };
 }
 
 /**
@@ -84,54 +98,69 @@ export function toImportPath(cssPath: string): string {
  * @returns The updated content with the CSS import
  */
 export function addCssImportToLayout(content: string, cssPath: string): string {
-  const importPath = toImportPath(cssPath);
-  const importStatement = `import "${importPath}";`;
-
-  // Check if file has frontmatter (starts with ---)
-  const frontmatterMatch = content.match(/^---\r?\n/);
-
-  if (frontmatterMatch) {
-    // File has frontmatter, add import after the opening ---
-    const insertPosition = frontmatterMatch[0].length;
+  const importStatement = `import ${JSON.stringify(toImportPath(cssPath))};`;
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const frontmatter = getFrontmatter(content);
+  if (frontmatter) {
     return (
-      content.slice(0, insertPosition) + importStatement + "\n" + content.slice(insertPosition)
+      content.slice(0, frontmatter.start) +
+      importStatement +
+      newline +
+      content.slice(frontmatter.start)
     );
-  } else {
-    // File doesn't have frontmatter, add it with the import
-    return `---\n${importStatement}\n---\n\n${content}`;
   }
+  const bom = content.startsWith("\uFEFF") ? "\uFEFF" : "";
+  return `${bom}---${newline}${importStatement}${newline}---${newline}${newline}${content.slice(bom.length)}`;
 }
 
-/**
- * Sets up the CSS import in the main layout file
- * @param cssPath - The CSS file path to import
- * @returns true if successful or no layout file found, false on error
- */
-export async function setupLayoutCssImport(cssPath: string): Promise<boolean> {
+export type CssImportResult =
+  | { status: "added" | "present"; path: string; message: string }
+  | { status: "manual" | "error"; message: string };
+
+/** Connect the stylesheet to a known Astro layout or the minimal starter page. */
+export async function setupLayoutCssImport(cssPath: string): Promise<CssImportResult> {
+  let targetPath: string | null = null;
   try {
-    const layoutPath = await findLayoutFile();
-
-    if (!layoutPath) {
-      // No layout file found, skip silently (not an error)
-      return true;
+    targetPath = await findLayoutFile();
+    if (!targetPath && (await fileExists("src/pages/index.astro"))) {
+      targetPath = "src/pages/index.astro";
+    }
+    const manualStep = `Add this line between the --- lines at the top\nof your Astro layout or page:\n\nimport ${JSON.stringify(toImportPath(cssPath))};`;
+    if (!targetPath) {
+      return {
+        status: "manual",
+        message: `Starwind CSS still needs to be imported.\nNo supported layout or home page was found.\n\n${manualStep}`,
+      };
     }
 
-    const content = await fs.readFile(layoutPath, "utf-8");
-
-    // Check if import already exists
-    if (hasCssImport(content, cssPath)) {
-      // Import already exists, nothing to do
-      return true;
+    const content = await fs.readFile(targetPath, "utf-8");
+    let updatedContent: string;
+    try {
+      if (hasCssImport(content, cssPath, targetPath)) {
+        return {
+          status: "present",
+          path: targetPath,
+          message: `Starwind CSS is already imported in ${targetPath}`,
+        };
+      }
+      updatedContent = addCssImportToLayout(content, cssPath);
+    } catch {
+      return {
+        status: "manual",
+        message: `Starwind could not safely edit ${targetPath}.\n\n${manualStep}`,
+      };
     }
-
-    // Add the import
-    const updatedContent = addCssImportToLayout(content, cssPath);
-    await fs.writeFile(layoutPath, updatedContent, "utf-8");
-
-    return true;
+    await fs.writeFile(targetPath, updatedContent, "utf-8");
+    return {
+      status: "added",
+      path: targetPath,
+      message: `Added Starwind CSS import to ${targetPath}`,
+    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-    p.log.error(highlighter.error(`Failed to setup CSS import in layout: ${errorMessage}`));
-    return false;
+    const detail = error instanceof Error ? error.message : "An unknown error occurred";
+    return {
+      status: "error",
+      message: `Could not add the Starwind CSS import${targetPath ? ` to ${targetPath}` : ""}: ${detail}`,
+    };
   }
 }
