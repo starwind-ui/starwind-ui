@@ -12,11 +12,10 @@ export type AlertDialogCancelProps = React.ComponentProps<typeof Button> & {
 function AlertDialogCancel(props: AlertDialogCancelProps) {
   const { asChild = false, variant = "outline", size = "md", className, children, ...rest } = props;
 
-  const consumerRef = (props as { ref?: React.Ref<HTMLElement> }).ref;
   const { controlKey, setControlElement } = __useAlertDialogControl({
     asChild,
     children,
-    forwardedRef: consumerRef,
+    props,
   });
   const asChildRest = rest as unknown as React.HTMLAttributes<HTMLDivElement>;
 
