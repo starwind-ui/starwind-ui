@@ -38,7 +38,7 @@ import {
   VUE_PERFORMANCE_BASELINE_FLAGS,
 } from "../runtime-performance/vue-run-evidence.mjs";
 import { buildStarwindVueFixture } from "../runtime-performance/vue-starwind-fixture.mjs";
-import { hasPrivateSvelte } from "./workspace-support.js";
+import { hasPrivateWorkspace } from "./workspace-support.js";
 
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
@@ -902,12 +902,12 @@ describe("Vue runtime performance runner", () => {
       "measure-runtime-performance.mjs --snapshot",
     );
     expect(packageJson.scripts["runtime:perf:vue:evidence:check"]).toBe(
-      hasPrivateSvelte
+      hasPrivateWorkspace
         ? "node scripts/portable-runtime/measure-vue-runtime-performance.mjs --check"
         : undefined,
     );
     expect(packageJson.scripts["runtime:perf:vue:check"]).toBe(
-      hasPrivateSvelte ? "pnpm runtime:perf:vue:evidence:check" : undefined,
+      hasPrivateWorkspace ? "pnpm runtime:perf:vue:evidence:check" : undefined,
     );
   });
 });

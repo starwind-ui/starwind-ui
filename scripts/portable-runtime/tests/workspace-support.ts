@@ -13,6 +13,9 @@ export const getWorkspacePrimitiveTarget =
 
 // The public sync intentionally omits private adapter source and evidence.
 export const hasPrivateSvelte = existsSync("packages/svelte/package.json");
+// Svelte is public now, so its package no longer marks the private workspace. This directory
+// stays out of the public sync, together with the private measurement scripts.
+export const hasPrivateWorkspace = existsSync("scripts/portable-runtime/tests/private");
 export const expectedPrimitiveTargets = [
   "astro",
   "react",
