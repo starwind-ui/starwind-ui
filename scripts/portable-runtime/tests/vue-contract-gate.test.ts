@@ -34,6 +34,7 @@ import {
   vueAdapterPublicContract,
 } from "../renderers/framework-adapters/vue/index.js";
 import { vuePackageExports } from "../renderers/framework-adapters/vue/inventory.js";
+import { hasPrivateWorkspace } from "./workspace-support.js";
 
 function getFixture(path: (typeof VUE_CONTRACT_FIXTURE_PATHS)[number]): string {
   const fixture = createVueContractFixtureFiles().find((file) => file.path === path);
@@ -133,9 +134,7 @@ const approvedVueScriptNames = [
   "runtime:generate:vue:test",
   "runtime:perf:vue",
   "runtime:perf:vue:baseline",
-  ...(existsSync("packages/svelte/package.json")
-    ? ["runtime:perf:vue:evidence:check", "runtime:perf:vue:check"]
-    : []),
+  ...(hasPrivateWorkspace ? ["runtime:perf:vue:evidence:check", "runtime:perf:vue:check"] : []),
   "runtime:size",
   "runtime:size:baseline:vue",
   "runtime:size:check",
@@ -778,11 +777,14 @@ describe("Vue public-beta contract gate", () => {
 
     const readme = readFileSync(join(process.cwd(), "README.md"), "utf8");
     const vueReadme = readFileSync(join(process.cwd(), "packages/vue/README.md"), "utf8");
-    const positioning = readFileSync(join(process.cwd(), "docs/product/positioning.md"), "utf8");
     expect(readme).toMatch(/Vue 3\.5 beta/);
     expect(vueReadme).toMatch(/public beta[\s\S]*Vue 3\.5/);
-    expect(positioning).toMatch(/Vue 3\.5 public beta/);
-    expect(positioning).toMatch(/Svelte 5 public beta/);
+    // The positioning document stays in the private workspace.
+    if (hasPrivateWorkspace) {
+      const positioning = readFileSync(join(process.cwd(), "docs/product/positioning.md"), "utf8");
+      expect(positioning).toMatch(/Vue 3\.5 public beta/);
+      expect(positioning).toMatch(/Svelte 5 public beta/);
+    }
   });
 
   it("pins established Astro and React generation output as regression oracles", () => {
@@ -834,10 +836,10 @@ describe("Vue public-beta contract gate", () => {
         "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs",
       "runtime:perf:vue:baseline":
         "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs --baseline",
-      "runtime:perf:vue:evidence:check": existsSync("packages/svelte/package.json")
+      "runtime:perf:vue:evidence:check": hasPrivateWorkspace
         ? "node scripts/portable-runtime/measure-vue-runtime-performance.mjs --check"
         : undefined,
-      "runtime:perf:vue:check": existsSync("packages/svelte/package.json")
+      "runtime:perf:vue:check": hasPrivateWorkspace
         ? "pnpm runtime:perf:vue:evidence:check"
         : undefined,
     });
