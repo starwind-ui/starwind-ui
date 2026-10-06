@@ -370,8 +370,9 @@ interface Props extends HTMLAttributes<"${part.defaultElement}"> {
   initial?: ColorPickerInitialPartProjection;
   channel: ColorPickerChannel;
   orientation?: "horizontal" | "vertical";
+  step?: number;
 }
-const { initial: suppliedInitial, channel, orientation = "horizontal", style, hidden, ...rest } = Astro.props;
+const { initial: suppliedInitial, channel, orientation = "horizontal", step: _step, style, hidden, ...rest } = Astro.props;
 const initial = assertColorPickerInitialPart("channelSlider", suppliedInitial);
 const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 ---

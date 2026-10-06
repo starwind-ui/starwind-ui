@@ -117,7 +117,7 @@ type TextSurface = {
 const boundaryAwareVuePattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/i;
 const approvedVueCliManifestPath = "packages/cli/package.json";
 const approvedVueCliDescription =
-  "Install and manage Starwind UI components in Astro, React, and Vue (beta) applications";
+  "Install and manage Starwind UI components in Astro, React, Vue (beta), and Svelte (beta) applications";
 const approvedVueScriptNames = [
   "build:public",
   "l",

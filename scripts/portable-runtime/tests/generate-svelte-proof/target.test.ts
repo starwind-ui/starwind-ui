@@ -476,7 +476,6 @@ describe("Svelte public beta target", () => {
       "apps/react-demo/package.json",
       "apps/vue-demo/package.json",
       "packages/astro/package.json",
-      "packages/cli/package.json",
       "packages/react/package.json",
       "packages/runtime/package.json",
       "packages/vue/package.json",
