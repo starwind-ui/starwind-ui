@@ -44,6 +44,31 @@ it("reconnects Input to a replaced external form without replacing its controlle
   }
 });
 
+it("clears proposal state after a parent rejects a controlled Input change", async () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(() => root.render(<Input.Root value="Ada" onValueChange={() => {}} />));
+    const input = host.querySelector("input")!;
+    await act(async () => {
+      // React tracks the value property, so the native setter stands in for typing.
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(
+        input,
+        "Grace",
+      );
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+    expect(input.value).toBe("Ada");
+    expect(input.hasAttribute("data-dirty")).toBe(false);
+    expect(input.hasAttribute("data-filled")).toBe(true);
+  } finally {
+    await act(() => root.unmount());
+    host.remove();
+  }
+});
+
 it("shares document discovery across controls and releases the final subscription", async () => {
   const observe = vi.spyOn(MutationObserver.prototype, "observe");
   const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");

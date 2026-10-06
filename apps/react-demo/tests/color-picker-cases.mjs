@@ -68,7 +68,9 @@ async function assertCanonicalDocsComposition(page) {
   assert.equal(await root.locator('[data-slot="color-picker-value-text"]').count(), 1);
 
   await root.getByRole("button", { name: "Open brand color picker" }).click();
-  const content = page.locator('[data-slot="popover-content"][aria-label="Brand color editor"]');
+  const content = page.locator(
+    '[data-slot="color-picker-content"][aria-label="Brand color editor"]',
+  );
   await content.waitFor();
   await content.evaluate(async (element) => {
     const animations = element.getAnimations({ subtree: true });
@@ -619,7 +621,9 @@ async function assertSpecParityFixtures(page) {
 async function assertClearEligibility(page) {
   const fixture = page.getByTestId("color-picker-clear-eligibility-fixture");
   await fixture.getByRole("button", { name: "Open optional color picker" }).click();
-  const content = page.locator('[data-slot="popover-content"][aria-label="Optional color editor"]');
+  const content = page.locator(
+    '[data-slot="color-picker-content"][aria-label="Optional color editor"]',
+  );
   await content.waitFor();
   const clear = content.getByRole("button", { name: "Clear color" });
   const separator = content.locator('[data-slot="color-picker-separator"]');
@@ -647,7 +651,7 @@ async function assertControlledBlackState(page) {
   assert.match(await page.getByTestId("controlled-color-commit-count").textContent(), /0$/);
 
   await fixture.getByRole("button", { name: "External open" }).click();
-  const popup = page.locator('[data-slot="popover-content"]:visible');
+  const popup = page.locator('[data-slot="color-picker-content"]:visible');
   await popup.waitFor();
   const area = popup.locator('[data-slot="color-picker-area"]');
   const thumb = popup.locator('[data-slot="color-picker-area-thumb"]');
@@ -668,7 +672,7 @@ async function assertPublicAnatomy(root) {
   await root.locator('[data-slot="color-picker-label"]').waitFor();
   assert.equal(await root.locator('[data-slot="color-picker-control"]').count(), 1);
   assert.equal(await root.locator('[data-slot="color-picker-value-input"]').count(), 2);
-  assert.equal(await root.locator('[data-slot="popover-trigger"]').count(), 1);
+  assert.equal(await root.locator('[data-slot="color-picker-trigger"]').count(), 1);
   assert.equal(await root.locator('[data-slot="color-picker-hidden-input"]').count(), 1);
   assert.equal(await root.getByRole("button", { name: "Open accent color picker" }).count(), 1);
   assert.equal(await root.getByRole("textbox").count(), 1);
@@ -720,7 +724,7 @@ async function assertControlledState(page) {
   await page.getByTestId("controlled-color-open").getByText(/open$/).waitFor();
   assert.match(await changes.textContent(), /0$/, "opening the popup does not change color");
   assert.match(await commits.textContent(), /0$/, "opening the popup does not commit color");
-  const popup = page.locator('[data-slot="popover-content"]:visible');
+  const popup = page.locator('[data-slot="color-picker-content"]:visible');
   await popup.waitFor();
 
   await popup.locator('[data-slot="color-picker-area"]').click({ position: { x: 40, y: 28 } });
@@ -766,7 +770,7 @@ async function assertControlledState(page) {
   assert.match(await commits.textContent(), /2$/, "closing the popup does not commit color");
 
   await fixture.getByRole("button", { name: "External open" }).click();
-  await page.locator('[data-slot="popover-content"]:visible').waitFor();
+  await page.locator('[data-slot="color-picker-content"]:visible').waitFor();
   await popup.getByRole("button", { name: "Use #4f46e5" }).click();
   await value.getByText(/#4f46e5/i).waitFor();
   assert.match(await changes.textContent(), /3$/);
@@ -774,9 +778,9 @@ async function assertControlledState(page) {
 
   await fixture.getByRole("button", { name: "Cancel next change" }).click();
   await fixture.getByRole("button", { name: "External open" }).click();
-  await page.locator('[data-slot="popover-content"]:visible').waitFor();
+  await page.locator('[data-slot="color-picker-content"]:visible').waitFor();
   await page
-    .locator('[data-slot="popover-content"]:visible')
+    .locator('[data-slot="color-picker-content"]:visible')
     .getByRole("button", { name: "Use #e11d48" })
     .click();
   await page
@@ -793,7 +797,7 @@ async function assertControlledState(page) {
   assert.match(await commits.textContent(), /3$/, "external synchronization does not commit");
 
   await fixture.getByRole("button", { name: "External close" }).click();
-  await page.locator('[data-slot="popover-content"]:visible').waitFor({ state: "hidden" });
+  await page.locator('[data-slot="color-picker-content"]:visible').waitFor({ state: "hidden" });
 }
 
 async function assertRequiredAndInvalidRecovery(page) {
@@ -871,11 +875,11 @@ async function assertDisabledAndReadOnly(page) {
   const disabledTrigger = disabled.getByRole("button", { name: "Open accent color picker" });
   assert.equal(await disabledTrigger.isDisabled(), true);
   await assert.rejects(disabledTrigger.click({ timeout: 500 }), /not enabled/);
-  assert.equal(await page.locator('[data-slot="popover-content"]:visible').count(), 0);
+  assert.equal(await page.locator('[data-slot="color-picker-content"]:visible').count(), 0);
   assert.equal(await disabledInput.inputValue(), disabledValue);
 
   await readonly.getByRole("button", { name: "Open accent color picker" }).click();
-  const popup = page.locator('[data-slot="popover-content"]:visible');
+  const popup = page.locator('[data-slot="color-picker-content"]:visible');
   await popup.waitFor();
   await popup.locator('[data-slot="color-picker-area"]').click({ position: { x: 30, y: 20 } });
   assert.equal(await readonlyInput.inputValue(), readonlyValue);
@@ -889,7 +893,7 @@ async function assertNestedPopupFocus(page) {
   await dialog.waitFor();
   const trigger = dialog.getByRole("button", { name: "Open accent color picker" });
   await trigger.click();
-  const popup = page.locator('[data-slot="popover-content"]:visible');
+  const popup = page.locator('[data-slot="color-picker-content"]:visible');
   await popup.waitFor();
   await popup.locator('[data-slot="color-picker-area-input-x"]').focus();
   await trigger.focus();

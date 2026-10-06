@@ -114,7 +114,9 @@ const InputRoot = React.forwardRef<HTMLInputElement, InputRootProps>(function In
         if (nativeTimer !== undefined) window.clearTimeout(nativeTimer);
         nativeTimer = window.setTimeout(() => {
           nativeTimer = undefined;
-          if (!disposed) synchronize(element.value);
+          // A rejected change leaves Runtime and the element at the old value. Apply the
+          // value again so Runtime clears the dirty and filled state from the proposal.
+          if (!disposed) instance.setValue(element.value, { emit: false });
         }, 0);
       },
       destroy(): void {

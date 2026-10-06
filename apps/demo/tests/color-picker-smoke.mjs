@@ -47,7 +47,7 @@ try {
   // Popup interaction, area keyboard/pointer, channel keyboard/pointer, and public events.
   const trigger = page.getByTestId("popup-trigger");
   await trigger.click();
-  const popup = page.locator('[data-slot="popover-content"][aria-label="Brand color editor"]');
+  const popup = page.locator('[data-slot="color-picker-content"][aria-label="Brand color editor"]');
   await popup.waitFor({ timeout: 3000 }).catch(async () => {
     throw new Error(
       `Popup did not open: trigger=${JSON.stringify(await trigger.evaluate((node) => ({ expanded: node.getAttribute("aria-expanded"), state: node.getAttribute("data-state") })))} root=${JSON.stringify(await page.locator("#popup-picker").evaluate((node) => ({ state: node.getAttribute("data-state") })))} popup=${JSON.stringify(await popup.evaluate((node) => ({ hidden: node.hidden, state: node.getAttribute("data-state") })))}`,
@@ -320,8 +320,8 @@ try {
   const inputOnlyRoot = page.getByTestId("input-only-root");
   const swatchOnlyRoot = page.getByTestId("swatch-only-root");
   for (const root of [inlineRoot, inputOnlyRoot, swatchOnlyRoot]) {
-    assert.equal(await root.locator('[data-slot="popover-trigger"]').count(), 0);
-    assert.equal(await root.locator('[data-slot="popover-content"]').count(), 0);
+    assert.equal(await root.locator('[data-slot="color-picker-trigger"]').count(), 0);
+    assert.equal(await root.locator('[data-slot="color-picker-content"]').count(), 0);
   }
   await inputOnly.fill("#102030");
   await inputOnly.press("Enter");
@@ -395,7 +395,7 @@ try {
   const dialogPickerTrigger = dialog.getByTestId("dialog-trigger");
   await dialogPickerTrigger.click();
   const nestedPicker = page.locator(
-    '[data-slot="popover-content"][aria-label="Dialog color editor"]',
+    '[data-slot="color-picker-content"][aria-label="Dialog color editor"]',
   );
   await nestedPicker.waitFor();
   await nestedPicker.getByRole("button", { name: "Blue swatch" }).click();
@@ -410,7 +410,7 @@ try {
   const canonicalTrigger = canonical.getByRole("button", { name: "Open brand color picker" });
   await canonicalTrigger.click();
   const canonicalPopup = page.locator(
-    '[data-slot="popover-content"][aria-label="Brand color editor"]',
+    '[data-slot="color-picker-content"][aria-label="Brand color editor"]',
   );
   await canonicalPopup.waitFor();
   const canonicalClear = canonicalPopup.locator('[data-slot="color-picker-clear"]');
@@ -535,7 +535,7 @@ try {
 
   await page.getByTestId("canonical-color-picker-swatch-trigger").click();
   const swatchOnlyPopup = page.locator(
-    '[data-slot="popover-content"][aria-label="Swatch-only color editor"]',
+    '[data-slot="color-picker-content"][aria-label="Swatch-only color editor"]',
   );
   await swatchOnlyPopup.waitFor();
   const swatchOnlySeparator = swatchOnlyPopup.locator('[data-slot="color-picker-separator"]');
@@ -553,7 +553,7 @@ try {
   ]) {
     await page.getByTestId(`canonical-color-picker-${fixture.size}-trigger`).click();
     const sizePopup = page.locator(
-      `[data-slot="popover-content"][aria-label="${fixture.size === "sm" ? "Small" : fixture.size === "md" ? "Medium" : "Large"} color editor"]`,
+      `[data-slot="color-picker-content"][aria-label="${fixture.size === "sm" ? "Small" : fixture.size === "md" ? "Medium" : "Large"} color editor"]`,
     );
     await sizePopup.waitFor();
     assert.equal(

@@ -162,7 +162,7 @@ const settle = async () => { flushSync(); await tick(); flushSync(); };
 const finish = async () => { for (let index=0; index<8; index++) { await new Promise(requestAnimationFrame); await settle(); } };
 await settle();
 assert(before.every((node,index) => node === part(["button", "checkbox", "theme", "trigger", "dialog", "select"][index])), "Styled compatibility hydration replaced owners");
-assert(app.snapshot().checked === true && app.snapshot().open === undefined && app.snapshot().value === "alpha" && app.snapshot().selectOpen === false, "Styled initial undefined bindings "+JSON.stringify(app.snapshot()));
+assert(app.snapshot().checked === true && app.snapshot().open === undefined && app.snapshot().value === undefined && app.snapshot().selectOpen === undefined && document.querySelector("[data-sw-select-input]")?.value === "alpha", "Styled initial undefined bindings "+JSON.stringify(app.snapshot()));
 assert(Object.values(app.snapshot().callbacks).every((count) => count === 0), "Styled initialization called proposal callbacks");
 part("button").click(); part("checkbox").click(); await settle(); part("theme").click(); await settle(); const themed = document.documentElement.classList.contains("dark");
 const trigger = part("trigger"); app.replaceRef(); await settle(); assert(trigger === part("trigger"), "Styled ref replacement changed owner");

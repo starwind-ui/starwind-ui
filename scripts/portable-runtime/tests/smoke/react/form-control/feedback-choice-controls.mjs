@@ -574,8 +574,9 @@ export async function verifyReactFeedbackChoiceControlCases({ page }) {
     checkboxState.afterToggle.default.inputChecked !== true ||
     checkboxState.afterToggle.default.indicatorOpacity !== "1" ||
     checkboxState.afterToggle.default.iconAnimationName !== "draw-check" ||
-    checkboxState.afterToggle.indeterminate.ariaChecked !== "true" ||
-    checkboxState.afterToggle.indeterminate.hasIndeterminate !== false ||
+    // The demo keeps its indeterminate prop set, and that prop stays in control after a click.
+    checkboxState.afterToggle.indeterminate.ariaChecked !== "mixed" ||
+    checkboxState.afterToggle.indeterminate.hasIndeterminate !== true ||
     checkboxState.afterToggle.disabled.hasChecked !== false ||
     checkboxState.afterToggle.disabled.inputChecked !== false ||
     controlledCheckboxState.ariaChecked !== "true" ||
