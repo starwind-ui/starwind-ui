@@ -202,7 +202,6 @@ function printRoot(
   let renderedChecked = $state(initialChecked);
   let renderedIndeterminate = $state(untrack(() => ${indeterminate.name}));
   let initialized = false;
-  let nativeProps = $derived({ ...rest } as NativeProps);
 
   setContext<${indicatorContextType}>(${indicatorContext}, {
     get checked() { return renderedChecked; },
@@ -381,7 +380,7 @@ function printRoot(
 
 <svelte:element
   this={${nativeButton} ? "${facts.render.nativeElement}" : "${facts.render.nonNativeElement}"}
-  {...nativeProps}
+  {...rest}
   ${facts.attrs.root}=""
   ${facts.attrs.defaultState}={initialDefaultChecked ? "true" : undefined}
   ${facts.attrs.form}={${form.name}}
@@ -489,13 +488,12 @@ function printIndicator(
     required: false,
   };
   let active = $derived(${visibility.active});
-  let nativeProps = $derived({ ...rest } as HTMLAttributes<HTMLSpanElement>);
 ${printSvelteRefAttachment("HTMLSpanElement")}
 </script>
 
 {#if ${visibility.mounted}}
   <span
-    {...nativeProps}
+    {...rest}
     ${indicator.discoveryAttribute}=""
     ${facts.attrs.stateIndicatorKeepMounted}={${keepMounted.name} ? "" : undefined}
     ${facts.attrs.truthyPresence}={state.checked ? "" : undefined}

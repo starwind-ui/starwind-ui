@@ -17,8 +17,7 @@
     });
     return () => {  };
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLUListElement>(() => ref);
 </script>
-<ul {...elementProps} data-sw-nav-menu-list="" data-sw-part="list" data-orientation={menu?.orientation} {@attach attachPart} {@attach attachRef}>{@render children?.()}</ul>
+<ul {...rest} data-sw-nav-menu-list="" data-sw-part="list" data-orientation={menu?.orientation} {@attach attachPart} {@attach attachRef}>{@render children?.()}</ul>

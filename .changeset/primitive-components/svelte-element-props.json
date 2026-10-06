@@ -1,0 +1,11 @@
+{
+  "primitives": {
+    "checkbox": "patch",
+    "combobox": "patch",
+    "context-menu": "patch",
+    "navigation-menu": "patch",
+    "select": "patch",
+    "switch": "patch"
+  },
+  "impact": "source"
+}

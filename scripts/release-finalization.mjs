@@ -17,6 +17,10 @@ const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
 const PUBLIC_REPOSITORY = "starwind-ui/starwind-ui";
 const DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS = 31;
 const DEFAULT_REGISTRY_RETRY_DELAY_MS = 10_000;
+const APPROVED_INITIAL_BETA_LATEST = {
+  "@starwind-ui/vue": "0.1.0",
+  "@starwind-ui/svelte": "0.1.0",
+};
 
 export function createCommandSystem({ cwd = ROOT_DIR, spawnProcess = spawn } = {}) {
   async function capture(command, args) {
@@ -223,15 +227,15 @@ export async function verifyPublishedPackages(release, system, options = {}) {
         release.preservedDistTags?.[entry.name] ?? {},
       )) {
         const actualVersion = tags?.[preservedTag] ?? null;
-        // The release owner approved latest on the first Vue beta only.
-        const approvedInitialVueLatest =
-          entry.name === "@starwind-ui/vue" &&
-          entry.version === "0.1.0" &&
+        // npm assigns latest to a package's first version. The release owner approved that
+        // result for these first beta publications only.
+        const approvedInitialBetaLatest =
+          APPROVED_INITIAL_BETA_LATEST[entry.name] === entry.version &&
           expectedTag === "beta" &&
           preservedTag === "latest" &&
           preservedVersion === null &&
-          actualVersion === "0.1.0";
-        if (actualVersion !== preservedVersion && !approvedInitialVueLatest) {
+          actualVersion === entry.version;
+        if (actualVersion !== preservedVersion && !approvedInitialBetaLatest) {
           throw new Error(
             `${entry.name} dist-tag ${preservedTag} changed during publication: expected ${preservedVersion ?? "nothing"}, found ${actualVersion ?? "nothing"}.`,
           );

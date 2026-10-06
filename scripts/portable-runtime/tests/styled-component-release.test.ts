@@ -239,11 +239,17 @@ describe("styled component release intents", () => {
       name: "@starwind-ui/vue",
       range: "0.1.0",
     };
+    before.targets!.svelte = structuredClone(before.targets!.react!);
+    before.targets!.svelte.packageRequirements[0] = {
+      name: "@starwind-ui/svelte",
+      range: "0.0.0",
+    };
     const releaseOnly = structuredClone(before);
     releaseOnly.version = "2.0.2";
     releaseOnly.sourceVersion = "2.0.2";
     releaseOnly.targets!.astro!.packageRequirements[0].range = "^0.1.0-beta.3";
     releaseOnly.targets!.vue!.packageRequirements[0].range = "0.1.1";
+    releaseOnly.targets!.svelte!.packageRequirements[0].range = "0.1.0";
     expect(createStyledRegistryFingerprint(before)).toBe(
       createStyledRegistryFingerprint(releaseOnly),
     );
@@ -535,6 +541,23 @@ describe("styled component release intents", () => {
     expect(validateStyledVersionPullRequest({ base, head: dependencyOnlyHead })).toMatchObject({
       mode: "version",
     });
+
+    const withSvelteTarget = (source: StyledReleaseSnapshot, range: string) => {
+      const next = structuredClone(source);
+      for (const component of next.registry.components) {
+        component.targets!.svelte = {
+          ...structuredClone(component.targets!.react!),
+          packageRequirements: [{ name: "@starwind-ui/svelte", range }],
+        };
+      }
+      return next;
+    };
+    expect(
+      validateStyledVersionPullRequest({
+        base: withSvelteTarget(base, "0.0.0"),
+        head: withSvelteTarget(head, "0.1.0"),
+      }),
+    ).toMatchObject({ mode: "version" });
   });
 
   it("versions a temporary manifest once, consumes fragments, and is idempotent", async () => {

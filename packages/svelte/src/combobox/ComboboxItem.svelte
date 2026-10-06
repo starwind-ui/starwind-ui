@@ -11,9 +11,8 @@
   let selected = $derived(combobox?.value === value);
   setContext<ComboboxItemContext>(comboboxItemKey, { get value() { return value; }, get disabled() { return disabled; } });
 
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...elementProps} data-sw-combobox-item="" data-sw-part="item" data-value={value} role="option" aria-selected={selected}
+<div {...rest} data-sw-combobox-item="" data-sw-part="item" data-value={value} role="option" aria-selected={selected}
 data-selected={selected ? "" : undefined} aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined} tabindex="-1"  {@attach attachRef}>{@render children?.()}</div>

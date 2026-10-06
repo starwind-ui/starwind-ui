@@ -1,8 +1,37 @@
 {
   "name": "@starwind-ui/svelte",
   "version": "0.0.0",
-  "description": "Svelte 5 primitive adapters for Starwind UI",
+  "description": "Public-beta Svelte 5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
+  "homepage": "https://starwind.dev/",
+  "author": {
+    "name": "boston343",
+    "url": "https://x.com/boston343builds"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starwind-ui/starwind-ui.git",
+    "directory": "packages/svelte"
+  },
+  "bugs": {
+    "url": "https://github.com/starwind-ui/starwind-ui/issues"
+  },
+  "keywords": [
+    "starwind",
+    "starwind-ui",
+    "ui",
+    "components",
+    "accessibility",
+    "accessible",
+    "svelte",
+    "svelte-components",
+    "primitives",
+    "runtime",
+    "tailwindcss",
+    "design-system",
+    "typescript",
+    "beta"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -72,6 +72,18 @@ describe("routine publication planning", () => {
     expect(await loadPublicationPlan(input)).toEqual(result);
   });
 
+  it("records an absent latest baseline before a package's first publication", async () => {
+    const input = await fixture();
+    const capture = input.registry.capture;
+    input.registry.capture = async (command, args) =>
+      args[1] === "@starwind-ui/svelte" && args[2] === "dist-tags"
+        ? { code: 1, stdout: "", stderr: "npm ERR! code E404" }
+        : capture(command, args);
+    const result = await preparePublicationPlan(input);
+    expect(result).toMatchObject({ svelteLatest: null, vueLatest: "0.1.0" });
+    expect(await loadPublicationPlan(input)).toEqual(result);
+  });
+
   it("keeps dry-run discovery free of persistent state", async () => {
     const input = await fixture();
     expect((await preparePublicationPlan({ ...input, dryRun: true })).packages).toEqual(snapshot);

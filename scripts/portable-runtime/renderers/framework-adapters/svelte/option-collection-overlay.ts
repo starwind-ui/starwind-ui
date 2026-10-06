@@ -187,7 +187,6 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   let portalReference = $state<HTMLElement | null>(null);
   let runtimeInstance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
   let selectedLabel = $derived(selectedLabelState.value === renderedValue ? selectedLabelState.label : null);
-  let nativeProps = $derived({ ...rest } as NativeProps);
 
   setContext<${facts.context.rootContextValueType}>(${facts.context.rootContext}, {
     get disabled() { return ${facts.props.disabled.name}; },
@@ -299,7 +298,7 @@ ${selectOptionObservers("svelte")}
 </script>
 
 <div
-  {...nativeProps}
+  {...rest}
   ${facts.attrs.root}=""
   data-sw-part="${facts.parts.root.name}"
   ${facts.attrs.autoComplete}={${facts.props.autoComplete.name}}

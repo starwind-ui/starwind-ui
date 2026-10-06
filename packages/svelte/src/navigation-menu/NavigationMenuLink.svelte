@@ -17,8 +17,7 @@
     });
     return () => {  };
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLAnchorElement>(() => ref);
 </script>
-<a {...elementProps} data-sw-nav-menu-link="" data-sw-part="link" data-active={active ? "" : undefined} aria-current={active ? "page" : undefined} data-close-on-click={closeOnClick ? undefined : "false"} {@attach attachPart} {@attach attachRef}>{@render children?.()}</a>
+<a {...rest} data-sw-nav-menu-link="" data-sw-part="link" data-active={active ? "" : undefined} aria-current={active ? "page" : undefined} data-close-on-click={closeOnClick ? undefined : "false"} {@attach attachPart} {@attach attachRef}>{@render children?.()}</a>

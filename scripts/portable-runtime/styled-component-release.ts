@@ -75,6 +75,7 @@ const RELEASE_MANAGED_PACKAGES = new Set([
 const FINGERPRINT_RELEASE_MANAGED_PACKAGES = new Set([
   ...RELEASE_MANAGED_PACKAGES,
   "@starwind-ui/vue",
+  "@starwind-ui/svelte",
 ]);
 const FIXED_GROUP_PACKAGES = [
   "@starwind-ui/runtime",

@@ -165,10 +165,9 @@ ${
   };`
     : ""
 }
-  let elementProps = $derived({ ...rest });
 ${printSvelteRefAttachment(elementType)}
 </script>
-<${tag} {...elementProps} ${part === "value" ? `${f.attrs.value}={children ? undefined : ""}` : `${f.attrs[part]}=""`} data-sw-part="${f.parts[part].name}" ${markup} ${captured ? "{@attach attachPart}" : ""} {@attach attachRef}${part === "input" ? " />" : `>${part === "value" ? '{#if children}{@render children()}{:else}{placeholder ?? ""}{/if}' : "{@render children?.()}"}</${tag}>`}
+<${tag} {...rest} ${part === "value" ? `${f.attrs.value}={children ? undefined : ""}` : `${f.attrs[part]}=""`} data-sw-part="${f.parts[part].name}" ${markup} ${captured ? "{@attach attachPart}" : ""} {@attach attachRef}${part === "input" ? " />" : `>${part === "value" ? '{#if children}{@render children()}{:else}{placeholder ?? ""}{/if}' : "{@render children?.()}"}</${tag}>`}
 `;
 }
 
@@ -286,10 +285,9 @@ ${Object.values(f.events)
       mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined;
     };
   };
-  let elementProps = $derived({ ...rest });
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
-<div {...elementProps} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={initialDefaults.value ?? undefined} ${f.attrs.defaultInputValue}={initialDefaults.inputValue} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.readOnly}={readOnly ? "" : undefined} ${f.attrs.name}={name} ${f.attrs.form}={form} ${f.attrs.required}={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
+<div {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={initialDefaults.value ?? undefined} ${f.attrs.defaultInputValue}={initialDefaults.inputValue} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.readOnly}={readOnly ? "" : undefined} ${f.attrs.name}={name} ${f.attrs.form}={form} ${f.attrs.required}={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
   <input type="${f.hiddenInput.constantAttributes.type}" ${f.attrs.hiddenInput}="" aria-hidden="${f.hiddenInput.constantAttributes.ariaHidden}" tabindex={${f.hiddenInput.constantAttributes.tabIndex}} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
 </div>

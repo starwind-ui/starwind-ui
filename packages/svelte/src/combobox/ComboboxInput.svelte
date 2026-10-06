@@ -17,8 +17,7 @@
       return () => combobox?.registerPart(owner, null);
     });
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLInputElement>(() => ref);
 </script>
-<input {...elementProps} data-sw-combobox-input="" data-sw-part="input" role="combobox" autocomplete="off" aria-autocomplete="list" aria-expanded={combobox?.open ?? false} disabled={disabled || combobox?.disabled} readonly={nativeReadOnly || combobox?.readOnly} value={combobox?.inputValue ?? defaultValue ?? ""} {@attach attachPart} {@attach attachRef} />
+<input {...rest} data-sw-combobox-input="" data-sw-part="input" role="combobox" autocomplete="off" aria-autocomplete="list" aria-expanded={combobox?.open ?? false} disabled={disabled || combobox?.disabled} readonly={nativeReadOnly || combobox?.readOnly} value={combobox?.inputValue ?? defaultValue ?? ""} {@attach attachPart} {@attach attachRef} />

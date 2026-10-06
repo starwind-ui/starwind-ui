@@ -9,7 +9,6 @@
     children?: Snippet; disabled?: boolean; ref?: (element: HTMLDivElement | null) => void;
   };
   let { children, disabled = false, tabindex = 0, style, ref, ...rest }: Props = $props();
-  let elementProps = $derived({ ...rest });
   const tree = getMenuTreeContext(); const menu = getMenuOwnerContext(); const owner = Symbol("Context Menu trigger");
   const attachPart: Attachment<HTMLDivElement> = (element) => {
     tree?.registerPart(owner, { element, scope: menu!.scope, part: "trigger" });
@@ -19,4 +18,4 @@
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
 <!-- svelte-ignore a11y_no_noninteractive_tabindex (Runtime binds ContextMenu and Shift+F10 to this focusable context region.) -->
-<div {...elementProps} data-sw-context-menu-trigger="" data-sw-menu-trigger="" data-sw-part="trigger" aria-haspopup="menu" aria-expanded={!!menu?.open} aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined} data-state={menu?.open ? "open" : "closed"} tabindex={disabled ? -1 : tabindex} style={"-webkit-touch-callout: none; " + (style ?? "")} {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-context-menu-trigger="" data-sw-menu-trigger="" data-sw-part="trigger" aria-haspopup="menu" aria-expanded={!!menu?.open} aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined} data-state={menu?.open ? "open" : "closed"} tabindex={disabled ? -1 : tabindex} style={"-webkit-touch-callout: none; " + (style ?? "")} {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>

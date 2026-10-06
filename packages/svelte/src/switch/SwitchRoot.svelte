@@ -31,7 +31,6 @@ let effectiveDisabledValue = $derived(disabled);
 
 function effectiveChecked(): boolean | undefined { return checked; }
 function effectiveDisabled(): boolean { return effectiveDisabledValue; }
-let nativeProps = $derived({ ...rest } as SpanProps | ButtonProps);
 const initial = untrack(() => { const initialChecked = checked ?? defaultChecked ?? false;
 const resetSeed = defaultChecked ?? initialChecked; return { checked: initialChecked, reset: resetSeed }; });
 const initialChecked = initial.checked;
@@ -151,7 +150,7 @@ $effect(() => { void [form, name, required, uncheckedValue, value]; untrack(appl
 const attachRef = createRefAttachment<HTMLElement, RootElement>(() => ref as ((element: RootElement | null) => void) | undefined);
 const attachInputRef = createRefAttachment<HTMLInputElement>(() => inputRef);
 </script>
-<svelte:element this={nativeButton ? "button" : "span"} {...nativeProps} data-sw-switch={""}
+<svelte:element this={nativeButton ? "button" : "span"} {...rest} data-sw-switch={""}
 data-sw-part={"root"}
 role={"switch"}
 aria-checked={renderedChecked}

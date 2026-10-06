@@ -109,9 +109,15 @@ approved promotion changes it. Component versions do not set a beta package chan
 membership require a separate approved decision. The legacy `--vue-beta` mode exists only to
 recover the frozen first `0.1.0` release; it is not an ordinary Vue release path.
 
+npm assigns `latest` to the first version of a new package, even when that publication uses
+`--tag beta`. The plan records the missing `latest` baseline before a first publication.
+Finalization then accepts `latest` at the published version for an approved first beta version.
+The approved versions are Vue `0.1.0` and Svelte `0.1.0`.
+
 The first Vue publication is historical: it published Vue `0.1.0` on `beta` and set `latest` to
-`0.1.0` because no prior `latest` existed. It also published CLI `3.3.0`. Later beta publications
-must preserve the existing `latest` value.
+`0.1.0` because no prior `latest` existed. It also published CLI `3.3.0`. The first Svelte
+publication is `0.1.0` on `beta`, and npm sets its `latest` to `0.1.0` for the same reason. Later
+beta publications must preserve the existing `latest` value.
 
 ## Release preparation and verification
 

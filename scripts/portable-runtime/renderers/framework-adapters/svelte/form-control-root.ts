@@ -70,7 +70,6 @@ let groupChecked = $derived(${groupExpressions.checked});`
 }
 let effectiveDisabledValue = $derived(${groupExpressions.disabled});
 ${groupFunction}
-let nativeProps = $derived({ ...rest } as SpanProps | ButtonProps);
 const initial = untrack(() => { ${initial} return { checked: initialChecked, reset: resetSeed }; });
 const initialChecked = initial.checked;
 const resetSeed = initial.reset;
@@ -83,7 +82,7 @@ ${observe(plan)}
 const attachRef = createRefAttachment<HTMLElement, RootElement>(() => ref as ((element: RootElement | null) => void) | undefined);
 ${plan.form.publicInputRef ? "const attachInputRef = createRefAttachment<HTMLInputElement>(() => inputRef);" : ""}
 </script>
-<svelte:element this={nativeButton ? "button" : "span"} {...nativeProps} ${attributes} disabled={nativeButton ? effectiveDisabledValue : undefined} type={nativeButton ? "button" : undefined} {@attach attachRef}>
+<svelte:element this={nativeButton ? "button" : "span"} {...rest} ${attributes} disabled={nativeButton ? effectiveDisabledValue : undefined} type={nativeButton ? "button" : undefined} {@attach attachRef}>
 {@render children?.()}
 ${plan.form.inputPlacement.svelte === "inside-span" ? `{#if !nativeButton}${input}{/if}` : ""}
 </svelte:element>

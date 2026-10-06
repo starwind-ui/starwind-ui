@@ -20,7 +20,9 @@ Stable package versions publish with `latest` only after prerelease state has be
 
 Runtime, Astro, and React are versioned in lockstep. Vue and Svelte have independent beta channels
 and always publish on `beta`, including versions without a SemVer prerelease suffix. The saved plan
-preserves each beta package's `latest` until an approved promotion changes it. Release the CLI alongside Runtime changes so generated
+preserves each beta package's `latest` until an approved promotion changes it. npm assigns `latest`
+to a new package's first version, and finalization accepts that value for the approved first Vue and
+Svelte beta versions in `docs/release/versioning.md`. Release the CLI alongside Runtime changes so generated
 styled components and vendored Primitive sources request compatible package versions. Use
 `pnpm release:version` to consolidate deferred styled component intent, regenerate registry
 artifacts, and advance package versions; do not hand-edit prerelease versions. Before a release,
@@ -151,7 +153,8 @@ differs.
 After publishing, query npm for every exact version in the saved plan and verify:
 
 - the expected dist-tag points to each intended version
-- Vue and Svelte `latest` match their captured baselines
+- Vue and Svelte `latest` match their captured baselines, or the published version after an approved
+  first publication
 - repository metadata and packed file lists are correct
 - Astro and React declare the intended Runtime version
 - the CLI declares compatible adapter and Runtime requirements
@@ -160,10 +163,11 @@ Install the released CLI in disposable Astro and React projects, add `button`, `
 `context-menu`, and `color-picker`, build both projects, and exercise Dialog, Context Menu, and
 Color Picker behavior in a browser.
 
-Run the persistent published-package acceptance harness with the exact CLI version:
+Run the persistent published-package acceptance harness with the exact CLI, Vue, and Svelte
+versions. Pass an existing published beta version when that package is unchanged in the release:
 
 ```bash
-pnpm test:published-release -- --version <cli-version>
+pnpm test:published-release -- --version <cli-version> --vue-version <vue-version> --svelte-version <svelte-version>
 ```
 
 The harness creates disposable Astro and React projects, installs the exact published CLI, verifies

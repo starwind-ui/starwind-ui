@@ -57,7 +57,11 @@ describe("Vue beta release finalization", () => {
     ["@starwind-ui/vue", "0.1.0", "beta", "0.0.8", "0.1.0", false],
     ["@starwind-ui/vue", "0.1.0", "beta", null, "0.2.0", false],
     ["@starwind-ui/vue", "0.1.1", "beta", null, "0.1.1", false],
-    ["@starwind-ui/svelte", "0.1.0", "beta", null, "0.1.0", false],
+    ["@starwind-ui/svelte", "0.1.0", "beta", null, "0.1.0", true],
+    ["@starwind-ui/svelte", "0.1.0", "beta", null, null, true],
+    ["@starwind-ui/svelte", "0.1.0", "beta", null, "0.2.0", false],
+    ["@starwind-ui/svelte", "0.1.1", "beta", null, "0.1.1", false],
+    ["@starwind-ui/svelte", "0.1.0", "next", null, "0.1.0", false],
     ["@starwind-ui/react", "0.1.0", "beta", null, "0.1.0", false],
     ["@starwind-ui/vue", "0.1.0", "next", null, "0.1.0", false],
   ])(
@@ -413,7 +417,7 @@ describe("routine release finalization", () => {
     vueLatest: "0.1.0",
   };
 
-  it("finalizes a first Svelte-only beta without creating latest", async () => {
+  it("finalizes a first Svelte-only beta after npm assigns latest", async () => {
     const svelteManifests = [
       {
         entry: { name: "@starwind-ui/svelte", tag: "beta" },
@@ -435,7 +439,9 @@ describe("routine release finalization", () => {
             return {
               code: 0,
               stderr: "",
-              stdout: JSON.stringify(args[2] === "version" ? "0.1.0" : { beta: "0.1.0" }),
+              stdout: JSON.stringify(
+                args[2] === "version" ? "0.1.0" : { beta: "0.1.0", latest: "0.1.0" },
+              ),
             };
           }
           if (command === "git" && args[0] === "ls-remote") {

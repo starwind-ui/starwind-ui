@@ -7197,11 +7197,9 @@ describe("SpecializedAdapterSpec", () => {
 
     const generatedRoot = readFileSync(join(outputRoot, "field/FieldRoot.astro"), "utf8");
     expect(compactCode(generatedRoot)).toContain(
-      compactCode("const getInitCandidates = (event: Event | undefined"),
-    );
-    expect(compactCode(generatedRoot)).toContain(compactCode("event.detail?.root"));
-    expect(compactCode(generatedRoot)).toContain(
-      compactCode("scopedRoot instanceof Element && scopedRoot.matches(selector)"),
+      compactCode(
+        'import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";',
+      ),
     );
     expect(compactCode(generatedRoot)).toContain(
       compactCode('getInitCandidates(event, "[data-sw-field]")'),

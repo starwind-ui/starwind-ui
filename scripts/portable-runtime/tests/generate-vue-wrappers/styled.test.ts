@@ -50,7 +50,15 @@ const EXPECTED_REQUESTED_ROOT_FILES = {
     "variants.ts",
   ],
   "aspect-ratio": ["AspectRatio.vue", "index.ts", "variants.ts"],
-  avatar: ["Avatar.vue", "AvatarFallback.vue", "AvatarImage.vue", "index.ts", "variants.ts"],
+  avatar: [
+    "Avatar.vue",
+    "AvatarFallback.vue",
+    "AvatarGroup.vue",
+    "AvatarGroupCount.vue",
+    "AvatarImage.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   badge: ["Badge.vue", "index.ts", "variants.ts"],
   breadcrumb: [
     "Breadcrumb.vue",

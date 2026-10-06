@@ -17,10 +17,21 @@ export function defineAstroScopedInitOutputTests(getTempRoot: GetTempRoot): void
       ([relativePath, source]) =>
         relativePath.endsWith(".astro") &&
         source.includes("registerAstroControllerLifecycle(") &&
-        source.includes("querySelectorAll<HTMLElement>"),
+        (source.includes("querySelectorAll<HTMLElement>") ||
+          source.includes("getAstroInitCandidates")),
     );
 
     expect(initScripts.length).toBeGreaterThan(0);
+    const sharedDiscovery = tree["internal/controller-lifecycle.ts"];
+    expect(sharedDiscovery).toContain("export const getAstroInitCandidates =");
+    expect(sharedDiscovery).toContain('event?.type === "starwind:init"');
+    expect(sharedDiscovery).toContain("event.detail?.root");
+    expect(sharedDiscovery).toContain("isQueryableRoot(initRoot)");
+    expect(sharedDiscovery).toContain("scopedRoot.querySelectorAll<HTMLElement>(selector)");
+    expect(sharedDiscovery).toContain("candidates.unshift(scopedRoot as HTMLElement)");
+    for (const rootType of ["Document", "DocumentFragment", "Element"]) {
+      expect(sharedDiscovery).toContain(`value instanceof ${rootType}`);
+    }
     for (const name of ["input/InputRoot.astro", "dropzone/DropzoneRoot.astro"]) {
       expect(tree[name]).toContain("instance.refresh()");
       expect(tree[name]).toContain("knownRoots.has(owner)");
@@ -45,15 +56,24 @@ export function defineAstroScopedInitOutputTests(getTempRoot: GetTempRoot): void
         expect(source).not.toMatch(/document\s*\.\s*querySelectorAll<HTMLElement>/);
         continue;
       }
-      expect(source, relativePath).toContain("const getInitCandidates = (");
-      expect(source, relativePath).toContain('event?.type === "starwind:init"');
-      expect(source, relativePath).toContain("const initRoot =");
-      expect(source, relativePath).toContain("isQueryableRoot(initRoot)");
-      expect(source, relativePath).toContain("scopedRoot.querySelectorAll<HTMLElement>(selector)");
-      expect(source, relativePath).toContain("candidates.unshift(scopedRoot as HTMLElement)");
-      expect(source, relativePath).toContain("value instanceof Document");
-      expect(source, relativePath).toContain("value instanceof DocumentFragment");
-      expect(source, relativePath).toContain("value instanceof Element");
+      if (source.includes("getAstroInitCandidates")) {
+        expect(source, relativePath).toContain(
+          'import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";',
+        );
+        expect(source, relativePath).not.toContain("const getInitCandidates =");
+      } else {
+        expect(source, relativePath).toContain("const getInitCandidates = (");
+        expect(source, relativePath).toContain('event?.type === "starwind:init"');
+        expect(source, relativePath).toContain("const initRoot =");
+        expect(source, relativePath).toContain("isQueryableRoot(initRoot)");
+        expect(source, relativePath).toContain(
+          "scopedRoot.querySelectorAll<HTMLElement>(selector)",
+        );
+        expect(source, relativePath).toContain("candidates.unshift(scopedRoot as HTMLElement)");
+        expect(source, relativePath).toContain("value instanceof Document");
+        expect(source, relativePath).toContain("value instanceof DocumentFragment");
+        expect(source, relativePath).toContain("value instanceof Element");
+      }
       expect(source, relativePath).toMatch(/const setup\w+ = \(event\?: Event\) => \{/);
       if (relativePath === "dialog/DialogRoot.astro") {
         expect(source).toContain(
@@ -67,54 +87,84 @@ export function defineAstroScopedInitOutputTests(getTempRoot: GetTempRoot): void
     }
   });
 
-  it("executes generated scoped initialization for containers and root elements", async () => {
-    const tempRoot = getTempRoot();
+  it.each(["button", "checkbox"])(
+    "executes generated %s scoped initialization for containers and root elements",
+    async (component) => {
+      const tempRoot = getTempRoot();
 
-    await generateAstroPrimitiveWrappers({
-      outputDir: "generated/primitives/astro",
-      repoRoot: tempRoot,
-    });
+      await generateAstroPrimitiveWrappers({
+        outputDir: "generated/primitives/astro",
+        repoRoot: tempRoot,
+      });
 
-    const outputRoot = path.join(tempRoot, "generated/primitives/astro");
-    const tree = await readGeneratedTree(outputRoot);
-    const buttonRoot = tree["button/ButtonRoot.astro"];
-    const optedButtonSelector = '[data-sw-button][data-focusable-when-disabled="true"]';
-    const ordinaryButton = new FakeElement("[data-sw-button]");
-    const outsideButton = new FakeElement(optedButtonSelector);
-    const scopedButton = new FakeElement(optedButtonSelector);
-    const scopedContainer = new FakeElement(undefined, [scopedButton]);
-    const documentRoot = new FakeDocument([ordinaryButton, outsideButton, scopedContainer]);
-    const initialized: FakeElement[] = [];
+      const outputRoot = path.join(tempRoot, "generated/primitives/astro");
+      const tree = await readGeneratedTree(outputRoot);
+      const helper = tree["internal/controller-lifecycle.ts"]
+        .split("type AstroController =")[0]
+        .replace("export const getAstroInitCandidates", "const getInitCandidates");
+      const usesSharedDiscovery = component === "checkbox";
+      const source = usesSharedDiscovery
+        ? tree["checkbox/CheckboxRoot.astro"]
+        : tree["button/ButtonRoot.astro"];
+      if (usesSharedDiscovery)
+        expect(source).toContain("getAstroInitCandidates as getInitCandidates");
+      const buttonRoot = source
+        .replaceAll("createCheckbox", "createButton")
+        .replace(
+          '  import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";',
+          helper,
+        );
+      const optedButtonSelector = usesSharedDiscovery
+        ? "[data-sw-checkbox]"
+        : '[data-sw-button][data-focusable-when-disabled="true"]';
+      const ordinaryButton = new FakeElement("[data-sw-button]");
+      const outsideButton = new FakeElement(optedButtonSelector);
+      const scopedButton = new FakeElement(optedButtonSelector);
+      const scopedContainer = new FakeElement(undefined, [scopedButton]);
+      const documentRoot = new FakeDocument([ordinaryButton, outsideButton, scopedContainer]);
+      const initialized: FakeElement[] = [];
 
-    executeGeneratedScript(buttonRoot, {
-      createButton: (root) => {
-        initialized.push(root);
-        return { setDisabled: () => {} };
-      },
-      document: documentRoot,
-    });
+      executeGeneratedScript(buttonRoot, {
+        createButton: (root) => {
+          initialized.push(root);
+          return { setDisabled: () => {} };
+        },
+        document: documentRoot,
+      });
 
-    expect(initialized).toEqual([outsideButton, scopedButton]);
+      expect(initialized).toEqual([outsideButton, scopedButton]);
 
-    initialized.length = 0;
-    documentRoot.dispatch("starwind:init", new FakeCustomEvent("starwind:init", scopedContainer));
-    expect(initialized).toEqual([scopedButton]);
+      initialized.length = 0;
+      documentRoot.dispatch("starwind:init", new FakeCustomEvent("starwind:init", scopedContainer));
+      expect(initialized).toEqual([scopedButton]);
 
-    initialized.length = 0;
-    documentRoot.dispatch("starwind:init", new FakeCustomEvent("starwind:init", scopedButton));
-    expect(initialized).toEqual([scopedButton]);
+      initialized.length = 0;
+      documentRoot.dispatch(
+        "starwind:init",
+        new FakeCustomEvent("starwind:init", new FakeDocumentFragment([scopedButton])),
+      );
+      expect(initialized).toEqual([scopedButton]);
 
-    initialized.length = 0;
-    documentRoot.dispatch(
-      "astro:after-swap",
-      new FakeCustomEvent("astro:after-swap", scopedContainer),
-    );
-    expect(initialized).toEqual([outsideButton, scopedButton]);
+      initialized.length = 0;
+      documentRoot.dispatch("starwind:init", new FakeCustomEvent("starwind:init", documentRoot));
+      expect(initialized).toEqual([outsideButton, scopedButton]);
 
-    initialized.length = 0;
-    documentRoot.dispatch("starwind:init", new FakeCustomEvent("starwind:init", new FakeNode()));
-    expect(initialized).toEqual([outsideButton, scopedButton]);
-  });
+      initialized.length = 0;
+      documentRoot.dispatch("starwind:init", new FakeCustomEvent("starwind:init", scopedButton));
+      expect(initialized).toEqual([scopedButton]);
+
+      initialized.length = 0;
+      documentRoot.dispatch(
+        "astro:after-swap",
+        new FakeCustomEvent("astro:after-swap", scopedContainer),
+      );
+      expect(initialized).toEqual([outsideButton, scopedButton]);
+
+      initialized.length = 0;
+      documentRoot.dispatch("starwind:init", new FakeCustomEvent("starwind:init", new FakeNode()));
+      expect(initialized).toEqual([outsideButton, scopedButton]);
+    },
+  );
 }
 
 type ExecuteGeneratedScriptOptions = {
@@ -133,7 +183,7 @@ function executeGeneratedScript(
 
   const executableScript = script
     .replace(
-      /^\s*import\s+\{\s*createButton\s*\}\s+from\s+"@starwind-ui\/runtime\/button";\s*$/m,
+      /^\s*import\s+\{\s*createButton\s*\}\s+from\s+"@starwind-ui\/runtime\/(?:button|checkbox)";\s*$/m,
       "",
     )
     .replace(/^\s*import\s+\{[\s\S]*?\}\s+from\s+"\.\.\/internal\/controller-lifecycle";\s*$/m, "");

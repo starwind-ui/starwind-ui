@@ -380,7 +380,7 @@ describe("Svelte Select proof generation", () => {
     expect(helper).toContain("parent.insertBefore(element, next)");
     expect(portal).toContain("restore();");
     expect(helper).toMatch(
-      /reportPortalPlacement\(element, \{ ready: false, target \}\)[\s\S]*move\(target\)[\s\S]*reportPortalPlacement\(element, \{ ready: true, target \}\)/,
+      /reportPortalPlacement\(element, \{ ready: false, target \}\)[\s\S]*move\(target, firstDescendant \?\? null\)[\s\S]*reportPortalPlacement\(element, \{ ready: true, target \}\)/,
     );
     expect(portal).not.toContain("document.querySelector(container)");
 

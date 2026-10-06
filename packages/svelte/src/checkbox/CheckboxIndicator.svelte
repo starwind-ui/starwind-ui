@@ -26,14 +26,13 @@
     required: false,
   };
   let active = $derived(state.checked || state.indeterminate);
-  let nativeProps = $derived({ ...rest } as HTMLAttributes<HTMLSpanElement>);
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLSpanElement>(() => ref);
 </script>
 
 {#if keepMounted || active}
   <span
-    {...nativeProps}
+    {...rest}
     data-sw-checkbox-indicator=""
     data-keep-mounted={keepMounted ? "" : undefined}
     data-checked={state.checked ? "" : undefined}

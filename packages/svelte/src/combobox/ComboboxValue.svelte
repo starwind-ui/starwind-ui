@@ -10,8 +10,7 @@
   const combobox = getComboboxContext();
 
 
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLSpanElement>(() => ref);
 </script>
-<span {...elementProps} data-sw-combobox-value={children ? undefined : ""} data-sw-part="value" data-placeholder={placeholder}  {@attach attachRef}>{#if children}{@render children()}{:else}{placeholder ?? ""}{/if}</span>
+<span {...rest} data-sw-combobox-value={children ? undefined : ""} data-sw-part="value" data-placeholder={placeholder}  {@attach attachRef}>{#if children}{@render children()}{:else}{placeholder ?? ""}{/if}</span>

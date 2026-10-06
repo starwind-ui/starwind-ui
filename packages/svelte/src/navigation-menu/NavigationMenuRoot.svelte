@@ -152,8 +152,7 @@ connection.initialized = true;
     });
     return () => { alive = false; disconnect(); disconnectCurrent = undefined; mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined; };
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLElement>(() => ref);
 </script>
-<nav {...elementProps} data-sw-nav-menu="" data-sw-part="root" data-open-delay={openDelay} data-close-delay={closeDelay} data-close-on-escape={closeOnEscape} data-close-on-outside-interact={closeOnOutsideInteract} data-orientation={orientation} data-state="closed" {@attach attachRuntime} {@attach attachRef}>{@render children?.(accepted)}</nav>
+<nav {...rest} data-sw-nav-menu="" data-sw-part="root" data-open-delay={openDelay} data-close-delay={closeDelay} data-close-on-escape={closeOnEscape} data-close-on-outside-interact={closeOnOutsideInteract} data-orientation={orientation} data-state="closed" {@attach attachRuntime} {@attach attachRef}>{@render children?.(accepted)}</nav>

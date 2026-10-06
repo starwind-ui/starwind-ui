@@ -78,6 +78,7 @@ import Select from "@starwind-ui/svelte/select";
 import { createAttachmentKey, type Attachment } from "svelte/attachments";
 let firstValue = $state(0), secondValue = $state(0), replaced = $state(false);
 let present = $state(true), secondPresent = $state(true), generation = $state(0), changed = $state(false);
+const clicks: string[] = [];
 const firstKey = createAttachmentKey(), secondKey = createAttachmentKey();
 const parts = ["checkbox", "indicator", "select"] as const;
 type Part = typeof parts[number];
@@ -116,7 +117,8 @@ function pair(part: Part) {
 const pairs = Object.fromEntries(parts.map(part => [part, pair(part)])) as Record<Part, ReturnType<typeof pair>>;
 function props(part: Part) {
   const value = pairs[part];
-  return { get ref() { changed; return value.ref; }, "data-probe": part, title: changed ? "changed" : "initial",
+  const stamp = changed ? "changed" : "initial";
+  return { get ref() { changed; return value.ref; }, "data-probe": part, title: stamp, class: stamp, onclick: (event: MouseEvent) => { if (event.target === event.currentTarget) clicks.push(part + ":" + stamp); },
     ...(present ? { [firstKey]: value.first, ...(secondPresent ? { [secondKey]: replaced ? value.replacement : value.second } : {}) } : {}) };
 }
 export function updateFirst() { firstValue++; }
@@ -129,6 +131,7 @@ export function restoreAll() { present = true; }
 export function replaceOwners() { generation++; }
 export function changeAttrs() { changed = true; }
 export function snapshot() { return Object.fromEntries(parts.map(part => [part, pairs[part].snapshot()])); }
+export function clicked() { return clicks; }
 export function owners() { return parts.map(part => pairs[part].node()); }
 export function verify(unmounted = false) { for (const part of parts) pairs[part].verify(unmounted); }
 </script>
@@ -153,7 +156,12 @@ try {
   for (const part of parts) same(app.snapshot()[part].events.at(-1), "first:1:setup", "reactive attachment input " + part);
   app.replaceSecond(); await settle(); app.updateSecond(); await settle(); app.verify();
   for (const part of parts) same(app.snapshot()[part].events.at(-1), "replacement:1:setup", "replacement attachment active " + part);
+  for (const node of app.owners()) node.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  same(app.clicked(), parts.map(part => part + ":initial"), "initial event callbacks");
   app.changeAttrs(); await settle();
+  for (const node of app.owners()) node.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  same(app.clicked(), [...parts.map(part => part + ":initial"), ...parts.map(part => part + ":changed")], "replaced event callbacks");
+  same(app.owners().map(node => node.className), ["changed","changed","changed"], "reactive native classes");
   same(app.owners().map((node, index) => node === initialOwners[index] && node.title === "changed"), [true,true,true], "stable native owners");
   await unmount(app); await settle();
   app.verify(true);

@@ -274,9 +274,7 @@ describe("Svelte public beta target", () => {
     expect(events.functionBinding.fixedPointLoops).toBe(false);
     expect(events.reentrantParent).toBe("outside-direct-model-contract");
     expect(events.functionBinding.transformedReadback).toBe("out-of-scope");
-    expect(models.reset.inputOtp).toBe(
-      "runtime-and-dom-reset-without-external-model-publication",
-    );
+    expect(models.reset.inputOtp).toBe("runtime-and-dom-reset-without-external-model-publication");
   });
 
   it("records the button child payload and exact composition cohort", () => {
@@ -513,10 +511,16 @@ describe("Svelte public beta target", () => {
     const packageReadme = (
       await readFile(path.join(process.cwd(), "packages/svelte/README.md"), "utf8")
     ).replace(/\s+/g, " ");
-    expect(packageReadme).toContain(
-      "The target inventory in `scripts/portable-runtime/renderers/framework-adapters/svelte/inventory.ts` lists its implemented Primitive families and their test owners.",
-    );
-    expect(packageReadme).toContain("This Svelte 5 public-beta adapter package");
+    expect(packageReadme).toContain("public beta");
+    expect(packageReadme).toContain("Svelte 5.29 and newer versions before Svelte 6");
+    expect(packageReadme).toContain('@starwind-ui/svelte@beta "svelte@>=5.29.0 <6"');
+    expect(packageReadme).not.toMatch(/\bstable support\b/i);
+    expect(packageReadme).not.toContain("scripts/portable-runtime");
+    expect(packageManifest).toMatchObject({
+      bugs: { url: "https://github.com/starwind-ui/starwind-ui/issues" },
+      homepage: "https://starwind.dev/",
+      repository: { directory: "packages/svelte" },
+    });
 
     for (const absentPath of [
       "docs/svelte",

@@ -533,7 +533,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(accordionRoot).toContain(
       'registerAstroControllerLifecycle("AccordionRoot", setupAccordions)',
     );
-    expect(accordionRoot).toContain("starwind:init");
+    expect(accordionRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(accordionItem).toContain("data-value");
     expect(accordionItem).toContain("data-disabled");
     expect(accordionItem).not.toContain(removedAttr("data-sw-accordion", "value"));
@@ -739,7 +739,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(formRoot).toContain('getInitCandidates(event, "[data-sw-form]")');
     expect(formRoot).toContain("createForm(form)");
     expect(formRoot).toContain("registerAstroControllerLifecycle");
-    expect(formRoot).toContain("starwind:init");
+    expect(formRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(formErrorSummary).toContain('interface Props extends HTMLAttributes<"div">');
     expect(formErrorSummary).toContain("data-sw-form-error-summary");
     expect(formErrorSummary).toContain('data-slot="form-error-summary"');
@@ -872,7 +872,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(checkboxGroupRoot).toContain("createCheckboxGroup(root)");
     expect(checkboxGroupRoot).toContain('role="group"');
     expect(checkboxGroupRoot).toContain("registerAstroControllerLifecycle");
-    expect(checkboxGroupRoot).toContain("starwind:init");
+    expect(checkboxGroupRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(checkboxGroupIndex).toContain("Root: CheckboxGroupRoot");
 
     expect(radioRoot).toContain('import { createRadio } from "@starwind-ui/runtime/radio"');
@@ -918,7 +918,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(radioGroupRoot).toContain('role="radiogroup"');
     expect(radioGroupRoot).toContain("createRadioGroup(root)");
     expect(radioGroupRoot).toContain("registerAstroControllerLifecycle");
-    expect(radioGroupRoot).toContain("starwind:init");
+    expect(radioGroupRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(radioGroupIndex).toContain("Root: RadioGroupRoot");
 
     expect(inputRoot).toContain('import { createInput } from "@starwind-ui/runtime/input"');
@@ -942,7 +942,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(inputOtpRoot).toContain("inputmode={inputMode}");
     expect(inputOtpRoot).toContain("createInputOtp(root)");
     expect(inputOtpRoot).toContain("registerAstroControllerLifecycle");
-    expect(inputOtpRoot).toContain("starwind:init");
+    expect(inputOtpRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(inputOtpGroup).toContain("data-sw-input-otp-group");
     expect(inputOtpSlot).toContain("data-sw-input-otp-slot");
     expect(inputOtpSlot).toContain("data-sw-input-otp-char");
@@ -967,7 +967,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(progressRoot).toContain('role="progressbar"');
     expect(progressRoot).toContain("createProgress(root)");
     expect(progressRoot).toContain("registerAstroControllerLifecycle");
-    expect(progressRoot).toContain("starwind:init");
+    expect(progressRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(progressTrack).toContain("data-sw-progress-track");
     expect(progressIndicator).toContain("data-sw-progress-indicator");
     expect(progressValue).toContain("data-sw-progress-value");
@@ -1108,7 +1108,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(scrollAreaRoot).toContain('role="presentation"');
     expect(scrollAreaRoot).toContain("createScrollArea(root)");
     expect(scrollAreaRoot).toContain("registerAstroControllerLifecycle");
-    expect(scrollAreaRoot).toContain("starwind:init");
+    expect(scrollAreaRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(scrollAreaViewport).toContain("data-sw-scroll-area-viewport");
     expect(scrollAreaViewport).toContain('role="presentation"');
     expect(scrollAreaViewport).toContain('tabindex="-1"');
@@ -1320,7 +1320,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       'trackAstroController("TabsRoot", root, createTabs(root)).refresh()',
     );
     expect(tabsRoot).toContain("registerAstroControllerLifecycle");
-    expect(tabsRoot).toContain("starwind:init");
+    expect(tabsRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(tabsList).toContain("activateOnFocus?: boolean");
     expect(tabsList).toContain("loopFocus?: boolean");
     expect(tabsList).toContain("data-sw-tabs-list");
@@ -1386,7 +1386,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(toggleGroupRoot).toContain("const valueAttribute = JSON.stringify(defaultValue ?? [])");
     expect(toggleGroupRoot).toContain("createToggleGroup(root)");
     expect(toggleGroupRoot).toContain("registerAstroControllerLifecycle");
-    expect(toggleGroupRoot).toContain("starwind:init");
+    expect(toggleGroupRoot).toContain("getAstroInitCandidates as getInitCandidates");
     expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "default-value"));
     expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "loop-focus"));
     expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "multiple"));

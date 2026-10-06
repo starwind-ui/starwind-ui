@@ -227,11 +227,10 @@ $effect(() => { void autoComplete; void form; void name; void required; untrack(
       mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined;
     };
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...elementProps} data-sw-combobox="" data-sw-part="root" data-default-value={initialDefaults.value ?? undefined} data-default-input-value={initialDefaults.inputValue} data-disabled={disabled ? "" : undefined} data-readonly={readOnly ? "" : undefined} data-name={name} data-form={form} data-required={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
+<div {...rest} data-sw-combobox="" data-sw-part="root" data-default-value={initialDefaults.value ?? undefined} data-default-input-value={initialDefaults.inputValue} data-disabled={disabled ? "" : undefined} data-readonly={readOnly ? "" : undefined} data-name={name} data-form={form} data-required={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
   <input type="hidden" data-sw-combobox-hidden-input="" aria-hidden="true" tabindex={-1} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
 </div>

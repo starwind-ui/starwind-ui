@@ -1,60 +1,83 @@
 # `@starwind-ui/svelte`
 
-This Svelte 5 public-beta adapter package stays at source version `0.0.0` until the normal release
-flow applies its first beta version. The target inventory in
-`scripts/portable-runtime/renderers/framework-adapters/svelte/inventory.ts` lists its implemented
-Primitive families and their test owners. Generated Styled groups live in the Svelte demo at
-`apps/svelte-demo/src/lib/starwind-runtime`. The implemented inventory contains 36 Primitive
-families plus Theme and 54 Styled roots. The general review route has 53 inline groups and links
-to Sidebar's dedicated owner at `/review/sidebar/`.
+This package contains the public beta of the generated Svelte 5 Primitive adapters for Starwind UI.
+It provides the lower-level accessible behavior and framework-native component layer through the
+shared framework-neutral Runtime.
 
-Color Picker exports 23 Primitive parts and its Runtime facade through the public subpath and
-package root. Its optional value and format bindings publish accepted Runtime values after mount.
-Color objects keep their immutable methods. Form reset restores separate frozen value and format
-seeds, with cancellation and newer commands handled at the connected form owner.
+Starwind UI ships 54 source-owned styled components for Svelte. Developers install these styled
+components as editable application source with the Starwind CLI. The Svelte Primitive adapters use
+the same Runtime as the Astro, React, and Vue adapters.
 
-Styled Color Picker supplies twelve exports with popup, inline, and custom compositions. Value and
-format bind through the Primitive, while Popover owns accepted open state. Each branch retains the
-hidden form input. The review catalog shows popup and inline editors with native and Styled format
-controls. Nested Dialog content keeps its authored Color Picker owner through the Portal option.
+The package supports Svelte 5.29 and newer versions before Svelte 6. Svelte support is in public
+beta, and its API can change during the `0.x` release series.
 
-Sidebar exports five Primitive parts, its namespace, and reactive Provider context. Optional desktop
-and mobile bindings follow accepted Runtime state. Stored desktop state can seed the first mount;
-reconstruction preserves current state. MenuButton selects a native button or link from href and
-exposes a tagged child snippet with native props, refs, and attachments. The lifecycle proof
-connects mobile state to the existing Sheet through defined model inputs and accepted binding output.
+## Start with the CLI
 
-Styled Carousel provides five components, a default namespace, and CarouselVariants. Its Root
-forwards orientation, options, plugins, and the API callback to the existing Primitive service.
-Content sends native props, refs, and attachments to the Viewport, while its class styles the
-inner Container. Native Previous and Next buttons keep the Button recipe variants. The public-beta
-`/review/` catalog includes horizontal and vertical examples with source snippets.
+For ready-to-use styled components, initialize the project and add components with the Starwind
+CLI:
 
-Styled Toast supplies Toaster and seven template parts with ToastVariants and the existing toast
-service. Toaster loads the contract stylesheet and supplies six default templates. Custom children
-replace them. Runtime clones template markup, so service `action.onClick` handles cloned actions.
-Svelte state and handlers remain on the template source. The review example shows both
-compositions through one mounted Toaster.
+```bash
+npx starwind@latest init --framework svelte
+npx starwind@latest add button
+```
 
-Do not edit `src` by hand. Change framework-neutral behavior facts in
-`scripts/portable-runtime/contracts/primitive`, shared generation plans under
-`scripts/portable-runtime/renderers`, or Svelte-specific syntax under
-`scripts/portable-runtime/renderers/framework-adapters/svelte`, then run
-`pnpm runtime:generate:svelte`.
+The CLI installs styled components as source in your application. It supports Vite with Svelte,
+SvelteKit, and Astro with Svelte.
 
-The package, normal CLI registry, demo, and generated docs metadata expose Svelte 5 as public beta.
-The source version remains `0.0.0`, and Changesets remains unchanged until the release ticket
-materializes the approved `0.1.0` beta plan.
+## Install the Primitive adapters
 
-Run `pnpm svelte:verify --component=<name>` from the repository root for the affected owners,
-consumer types, and generation drift. The command checks committed output without rewriting it.
-The [verification policy](../../docs/agents/svelte-verification.md) defines the reduced `--all`
-suite and explicit compatibility/packed-host checks. Compiler pins remain 5.29.0 and 5.57.0.
+Install this package directly when you need to build with the lower-level Primitive parts. Beta
+releases use the `beta` npm tag:
 
-The public beta supports Svelte 5 from 5.29.0 through the current 5.x line. Compiler checks remain
-pinned to 5.29.0 and 5.57.0. Starwind Pro support is outside this beta.
+```bash
+npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
+```
 
-The Styled Sidebar demo is at `/review/sidebar/`, linked from the component catalog. Its
-23 exports retain independent desktop/mobile models, native button/link children, and the existing
-Sheet for mobile navigation. Collapsed desktop links use the existing Tooltip service and contract
-CSS. The page includes source and a separate key for optional desktop persistence.
+## Use an adapter
+
+```svelte
+<script lang="ts">
+  import Button from "@starwind-ui/svelte/button";
+</script>
+
+<Button.Root type="button">Save</Button.Root>
+```
+
+Adapters connect Svelte component lifecycles to the shared Runtime and clean up their controllers
+when they unmount. Component state works with Svelte `bind:` props such as `bind:open` and
+`bind:value`.
+
+The package ships Svelte components with type declarations. Svelte remains a peer dependency, and
+each release pins its tested `@starwind-ui/runtime` version.
+
+## Theme initialization
+
+Use `getThemeInitScript` from `@starwind-ui/svelte/theme` to apply the stored theme before the first
+paint. The [dark mode guide](https://starwind.dev/docs/getting-started/dark-mode/) shows the setup
+for Vite, SvelteKit, and Astro projects.
+
+## Beta feedback
+
+Report Svelte beta issues through the
+[Starwind UI issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
+
+## Starwind UI ecosystem
+
+- [Website](https://starwind.dev/)
+- [Installation](https://starwind.dev/docs/getting-started/installation/)
+- [Styled components](https://starwind.dev/docs/components/)
+- [Primitives](https://starwind.dev/docs/primitives/)
+- [GitHub repository](https://github.com/starwind-ui/starwind-ui)
+- [Issue tracker](https://github.com/starwind-ui/starwind-ui/issues)
+
+Coding agents can use [Starwind Skills](https://starwind.dev/docs/getting-started/skills/) and the
+optional [MCP server](https://starwind.dev/docs/getting-started/mcp/) for framework-aware
+installation, documentation, and migration guidance.
+
+## Contributing
+
+Please read the [contributing guide](https://github.com/starwind-ui/starwind-ui/blob/main/CONTRIBUTING.md).
+
+## License
+
+Licensed under the [MIT license](https://github.com/starwind-ui/starwind-ui/blob/main/LICENSE).

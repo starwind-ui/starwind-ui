@@ -99,7 +99,6 @@
   let portalReference = $state<HTMLElement | null>(null);
   let runtimeInstance: ReturnType<typeof createSelect> | undefined;
   let selectedLabel = $derived(selectedLabelState.value === renderedValue ? selectedLabelState.label : null);
-  let nativeProps = $derived({ ...rest } as NativeProps);
 
   setContext<SelectContextValue>(SelectContext, {
     get disabled() { return disabled; },
@@ -291,7 +290,7 @@ $effect(() => { void autoComplete; void form; void name; void required; untrack(
 </script>
 
 <div
-  {...nativeProps}
+  {...rest}
   data-sw-select=""
   data-sw-part="root"
   data-autocomplete={autoComplete}
