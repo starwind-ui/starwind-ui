@@ -49,7 +49,19 @@ export function normalizeAstroPrimitiveOutput(fileName: string, contents: string
 }
 
 export function renderAstroControllerLifecycleFile(tsHeader: string): string {
-  return `${tsHeader}type AstroController = {
+  return `${tsHeader}  export const getAstroInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
+    const initRoot = event?.type === "starwind:init" && event instanceof CustomEvent ? event.detail?.root : undefined;
+    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot) ? initRoot : document;
+    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
+    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
+      candidates.unshift(scopedRoot as HTMLElement);
+    }
+    return candidates;
+  };
+  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
+    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
+
+type AstroController = {
   destroy(): void;
 };
 
@@ -166,9 +178,7 @@ function applyManagedControllerLifecycle(fileName: string, contents: string): st
       `\n  registerAstroControllerLifecycle("${lifecycleKey}", ${setupName}${destroyName ? `, ${destroyName}` : ""});\n`,
     )
     .replace(
-      new RegExp(
-        `  document\\.addEventListener\\("astro:after-swap", ${setupName}\\);\\n`,
-      ),
+      new RegExp(`  document\\.addEventListener\\("astro:after-swap", ${setupName}\\);\\n`),
       "",
     )
     .replace(
@@ -178,9 +188,7 @@ function applyManagedControllerLifecycle(fileName: string, contents: string): st
 
   if (destroyName) {
     next = next.replace(
-      new RegExp(
-        `  document\\.addEventListener\\("astro:before-swap", ${destroyName}\\);\\n`,
-      ),
+      new RegExp(`  document\\.addEventListener\\("astro:before-swap", ${destroyName}\\);\\n`),
       "",
     );
   }
@@ -197,23 +205,7 @@ function applyScopedInit(contents: string): string {
 
   const setupName = setupMatch[1];
   const scopedSetup = `
-  const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
-    const initRoot =
-      event?.type === "starwind:init" && event instanceof CustomEvent ? event.detail?.root : undefined;
-    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)
-      ? initRoot
-      : document;
-    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
-
-    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
-      candidates.unshift(scopedRoot as HTMLElement);
-    }
-
-    return candidates;
-  };
-
-  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
-    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
+  import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";
 
   const ${setupName} = (event?: Event) => {
 `;

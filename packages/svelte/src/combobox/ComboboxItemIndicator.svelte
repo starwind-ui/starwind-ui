@@ -11,11 +11,10 @@
   const item = getComboboxItemContext();
   let selected = $derived(combobox?.value === item?.value);
 
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLSpanElement>(() => ref);
 </script>
-<span {...elementProps} data-sw-combobox-item-indicator="" data-sw-part="itemIndicator" aria-hidden="true" data-state={selected ? "checked" : "unchecked"}
+<span {...rest} data-sw-combobox-item-indicator="" data-sw-part="itemIndicator" aria-hidden="true" data-state={selected ? "checked" : "unchecked"}
 data-visible={selected ? "" : undefined}
 data-hidden={selected ? undefined : ""}
 hidden={!selected}  {@attach attachRef}>{@render children?.()}</span>

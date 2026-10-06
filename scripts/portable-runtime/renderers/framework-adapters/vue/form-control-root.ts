@@ -44,15 +44,21 @@ export function printFormProjection(projection: FormProjection): string {
   )
     .map(([key, value]) => `:${key}='${value.replace(/'/g, "&apos;")}'`)
     .join(" ")} style="${hiddenStyle}" />`;
+  // Only plain string props have redundant absent defaults here. Preserve Boolean
+  // unions and unknown types because Vue can apply Boolean casting to them.
+  const propDefaults = defaults.filter(
+    (prop) =>
+      prop.type !== "string" ||
+      (prop.defaultValue !== undefined && prop.defaultValue !== "undefined"),
+  );
   return `<script setup lang="ts">
 ${imports}
-import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 ${grouped ? 'import { useCheckboxGroupContext } from "../checkbox-group/CheckboxGroupContext";' : ""}
 defineOptions({ inheritAttrs: false });
-const props = withDefaults(defineProps<{ ${fields} }>(), { ${defaults.map((prop) => `${prop.name}: ${prop.defaultValue ?? "undefined"}`).join(", ")} });
+const props = withDefaults(defineProps<{ ${fields} }>(), { ${propDefaults.map((prop) => `${prop.name}: ${prop.defaultValue ?? "undefined"}`).join(", ")} });
 const emit = defineEmits<{ checkedChange: [checked: boolean, detail: ${plan.model.details}]; "update:checked": [checked: boolean] }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLElement | null>(null);
 const inputElement = ref<HTMLInputElement | null>(null);
 ${
@@ -72,7 +78,7 @@ defineExpose({ element: rootRef${plan.form.publicInputRef ? ", input: inputEleme
 ${code}
 ${observe(plan)}
 </script>
-<template><component :is="props.nativeButton ? 'button' : 'span'" ref="rootRef" v-bind="attrs" ${attributes} :type="props.nativeButton ? 'button' : undefined" :disabled="props.nativeButton ? effectiveDisabledValue : undefined"><slot />${plan.form.inputPlacement.vue === "inside-span" ? input.replace("<input ", '<input v-if="!props.nativeButton" ') : ""}</component>${plan.form.inputPlacement.vue === "inside-span" ? input.replace("<input ", '<input v-if="props.nativeButton" ') : input}</template>
+<template><component :is="props.nativeButton ? 'button' : 'span'" ref="rootRef" v-bind="$attrs" ${attributes} :type="props.nativeButton ? 'button' : undefined" :disabled="props.nativeButton ? effectiveDisabledValue : undefined"><slot />${plan.form.inputPlacement.vue === "inside-span" ? input.replace("<input ", '<input v-if="!props.nativeButton" ') : ""}</component>${plan.form.inputPlacement.vue === "inside-span" ? input.replace("<input ", '<input v-if="props.nativeButton" ') : input}</template>
 `;
 }
 function observe(plan: FormControlPlan): string {

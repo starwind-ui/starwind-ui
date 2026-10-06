@@ -10,8 +10,7 @@
   const combobox = getComboboxContext();
 
 
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...elementProps} data-sw-combobox-separator="" data-sw-part="separator" role="separator" aria-orientation="horizontal"  {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-combobox-separator="" data-sw-part="separator" role="separator" aria-orientation="horizontal"  {@attach attachRef}>{@render children?.()}</div>

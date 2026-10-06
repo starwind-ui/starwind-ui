@@ -21,8 +21,7 @@
     });
     return () => { currentElement = null; };
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLLIElement>(() => ref);
 </script>
-<li {...elementProps} data-sw-nav-menu-item="" data-sw-part="item" data-value={value} data-state={open ? "open" : "closed"} {@attach attachPart} {@attach attachRef}>{@render children?.()}</li>
+<li {...rest} data-sw-nav-menu-item="" data-sw-part="item" data-value={value} data-state={open ? "open" : "closed"} {@attach attachPart} {@attach attachRef}>{@render children?.()}</li>

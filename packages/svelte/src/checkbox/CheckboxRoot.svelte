@@ -38,7 +38,6 @@ let effectiveDisabledValue = $derived(disabled || group?.disabled === true);
 function groupCheckedValue(): boolean | undefined { return groupChecked; }
 function effectiveChecked(): boolean | undefined { return groupCheckedValue() ?? checked; }
 function effectiveDisabled(): boolean { return effectiveDisabledValue; }
-let nativeProps = $derived({ ...rest } as SpanProps | ButtonProps);
 const initial = untrack(() => { const initialChecked = groupCheckedValue() ?? checked ?? defaultChecked ?? false;
 const resetSeed = defaultChecked ?? initialChecked; return { checked: initialChecked, reset: resetSeed }; });
 const initialChecked = initial.checked;
@@ -169,7 +168,7 @@ $effect(() => { void [form, name, required, uncheckedValue, value]; untrack(appl
 const attachRef = createRefAttachment<HTMLElement, RootElement>(() => ref as ((element: RootElement | null) => void) | undefined);
 
 </script>
-<svelte:element this={nativeButton ? "button" : "span"} {...nativeProps} data-sw-checkbox={""}
+<svelte:element this={nativeButton ? "button" : "span"} {...rest} data-sw-checkbox={""}
 data-sw-part={"root"}
 role={"checkbox"}
 aria-checked={renderedIndeterminate ? "mixed" : renderedChecked}

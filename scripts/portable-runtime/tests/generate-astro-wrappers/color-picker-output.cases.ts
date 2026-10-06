@@ -331,6 +331,9 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(tree["ColorPickerFormatControl.astro"]).toContain("data-sw-color-picker-format-control");
     expect(tree["ColorPickerAreaThumb.astro"]).toContain("mergeColorPickerInitialStyles");
     expect(tree["ColorPickerChannelSliderThumb.astro"]).toContain("mergeColorPickerInitialStyles");
+    // The Styled slider forwards step to this root, so its Props must declare the prop.
+    expect(tree["ColorPickerChannelSlider.astro"]).toContain("step?: number;");
+    expect(tree["ColorPickerChannelSlider.astro"]).toMatch(/step: _step,[\s\S]*\.\.\.rest/);
   });
 
   it("keeps Color Picker projection output deterministic", async () => {

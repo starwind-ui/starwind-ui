@@ -38,6 +38,25 @@ const families = [
 ] as const;
 
 describe("Styled native overlay control wiring", () => {
+  it("forwards consumer refs from Alert Dialog Action and Cancel", async () => {
+    const actionRef = React.createRef<HTMLButtonElement>();
+    const cancelRef = React.createRef<HTMLButtonElement>();
+    await render(
+      <AlertDialog.Root>
+        <AlertDialog.Content>
+          <AlertDialog.Title>Title</AlertDialog.Title>
+          <AlertDialog.Cancel ref={cancelRef}>Cancel</AlertDialog.Cancel>
+          <AlertDialog.Action ref={actionRef}>Continue</AlertDialog.Action>
+        </AlertDialog.Content>
+      </AlertDialog.Root>,
+    );
+    const action = document.querySelector('[data-slot="alert-dialog-action"]');
+    const cancel = document.querySelector('[data-slot="alert-dialog-cancel"]');
+    expect(action).toBeInstanceOf(HTMLButtonElement);
+    expect(actionRef.current).toBe(action);
+    expect(cancelRef.current).toBe(cancel);
+  });
+
   it.each(families)(
     "refreshes $name child controls with stable ownership",
     async ({ name, parts, Close, factory }) => {

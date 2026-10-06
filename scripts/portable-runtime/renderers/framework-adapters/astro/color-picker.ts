@@ -271,25 +271,7 @@ const mergedStyle = mergeColorPickerInitialStyles(style, rootInitial);
     trackAstroController,
   } from "../internal/controller-lifecycle";
 
-  const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
-    const initRoot =
-      event?.type === "starwind:init" && event instanceof CustomEvent
-        ? event.detail?.root
-        : undefined;
-    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)
-      ? initRoot
-      : document;
-    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
-
-    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
-      candidates.unshift(scopedRoot as HTMLElement);
-    }
-
-    return candidates;
-  };
-
-  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
-    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
+  import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";
 
   const setupColorPickers = (event?: Event) => {
     getInitCandidates(event, "[${root.discoveryAttribute}]").forEach((root) =>
@@ -388,8 +370,9 @@ interface Props extends HTMLAttributes<"${part.defaultElement}"> {
   initial?: ColorPickerInitialPartProjection;
   channel: ColorPickerChannel;
   orientation?: "horizontal" | "vertical";
+  step?: number;
 }
-const { initial: suppliedInitial, channel, orientation = "horizontal", style, hidden, ...rest } = Astro.props;
+const { initial: suppliedInitial, channel, orientation = "horizontal", step: _step, style, hidden, ...rest } = Astro.props;
 const initial = assertColorPickerInitialPart("channelSlider", suppliedInitial);
 const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 ---

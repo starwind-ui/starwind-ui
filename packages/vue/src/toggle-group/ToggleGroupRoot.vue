@@ -5,7 +5,7 @@ import {
   type ToggleGroupValue,
   type ToggleGroupValueChangeDetails,
 } from "@starwind-ui/runtime/toggle-group";
-import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import { ToggleGroupContext } from "./ToggleGroupContext";
 
 defineOptions({ inheritAttrs: false });
@@ -31,7 +31,6 @@ const emit = defineEmits<{
   "update:modelValue": [value: ToggleGroupValue];
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 defineExpose({ element: rootRef });
 const initialDefault = normalizeValue(props.defaultValue ?? [], props.multiple);
@@ -152,7 +151,7 @@ provide(ToggleGroupContext, {
 <template>
   <div
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-toggle-group=""
     data-sw-part="root"
     :data-default-value="initialDefault.length ? JSON.stringify(initialDefault) : undefined"

@@ -187,10 +187,9 @@ function printRoot(f: Facts): string {
     });
     return () => { alive = false; disconnect(); disconnectCurrent = undefined; mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined; };
   };
-  let elementProps = $derived({ ...rest });
 ${printSvelteRefAttachment("HTMLElement")}
 </script>
-<nav {...elementProps} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.openDelay}={openDelay} ${f.attrs.closeDelay}={closeDelay} ${f.attrs.closeOnEscape}={closeOnEscape} ${f.attrs.closeOnOutsideInteract}={closeOnOutsideInteract} ${f.attrs.orientation}={orientation} data-state="closed" {@attach attachRuntime} {@attach attachRef}>{@render children?.(${initial.rendered})}</nav>
+<nav {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.openDelay}={openDelay} ${f.attrs.closeDelay}={closeDelay} ${f.attrs.closeOnEscape}={closeOnEscape} ${f.attrs.closeOnOutsideInteract}={closeOnOutsideInteract} ${f.attrs.orientation}={orientation} data-state="closed" {@attach attachRuntime} {@attach attachRef}>{@render children?.(${initial.rendered})}</nav>
 `;
 }
 
@@ -308,9 +307,8 @@ ${part === "item" ? "    currentElement = element;\n" : ""}${part === "content" 
     });
     return () => { ${part === "item" ? "currentElement = null;" : part === "content" ? "releaseContent?.();" : ""} };
   };
-  let elementProps = $derived({ ...rest });
 ${printSvelteRefAttachment(elementType)}
 </script>
-${part === "content" ? '<div style="display: contents" data-sw-nav-menu-content-carrier>\n  ' : ""}<${tag} {...elementProps} ${f.attrs[part]}="" data-sw-part="${f.parts[part].name}" ${markup} {@attach attachPart} {@attach attachRef}>{@render children?.()}</${tag}>${part === "content" ? "\n</div>" : ""}
+${part === "content" ? '<div style="display: contents" data-sw-nav-menu-content-carrier>\n  ' : ""}<${tag} {...rest} ${f.attrs[part]}="" data-sw-part="${f.parts[part].name}" ${markup} {@attach attachPart} {@attach attachRef}>{@render children?.()}</${tag}>${part === "content" ? "\n</div>" : ""}
 `;
 }

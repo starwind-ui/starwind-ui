@@ -59,7 +59,6 @@ function printTrigger(f: AdapterAnchoredMenuOverlayFacts): string {
     children?: Snippet; disabled?: boolean; ref?: (element: HTMLDivElement | null) => void;
   };
   let { children, disabled = false, tabindex = ${trigger.tabIndexDefaultValue}, style, ref, ...rest }: Props = $props();
-  let elementProps = $derived({ ...rest });
   const tree = getMenuTreeContext(); const menu = getMenuOwnerContext(); const owner = Symbol("Context Menu trigger");
   const attachPart: Attachment<HTMLDivElement> = (element) => {
     tree?.registerPart(owner, { element, scope: menu!.scope, part: "trigger" });
@@ -68,6 +67,6 @@ function printTrigger(f: AdapterAnchoredMenuOverlayFacts): string {
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
 <!-- svelte-ignore a11y_no_noninteractive_tabindex (Runtime binds ContextMenu and Shift+F10 to this focusable context region.) -->
-<${f.parts.trigger.defaultElement} {...elementProps} ${f.attrs.trigger}="" ${f.attrs.menuTrigger}="" data-sw-part="${f.parts.trigger.name}" ${trigger.disclosure.ariaHaspopup.attribute}="${trigger.disclosure.ariaHaspopup.value}" ${trigger.disclosure.ariaExpanded}={!!menu?.open} ${trigger.disabled.ariaAttribute}={disabled ? "true" : undefined} ${trigger.disabled.dataAttribute}={disabled ? "" : undefined} ${trigger.disclosure.stateAttribute}={menu?.open ? "${trigger.disclosure.openStateValue}" : "${trigger.disclosure.closedStateValue}"} tabindex={disabled ? -1 : tabindex} style={"${trigger.touchCalloutStyle.property}: ${trigger.touchCalloutStyle.value}; " + (style ?? "")} {@attach attachPart} {@attach attachRef}>{@render children?.()}</${f.parts.trigger.defaultElement}>
+<${f.parts.trigger.defaultElement} {...rest} ${f.attrs.trigger}="" ${f.attrs.menuTrigger}="" data-sw-part="${f.parts.trigger.name}" ${trigger.disclosure.ariaHaspopup.attribute}="${trigger.disclosure.ariaHaspopup.value}" ${trigger.disclosure.ariaExpanded}={!!menu?.open} ${trigger.disabled.ariaAttribute}={disabled ? "true" : undefined} ${trigger.disabled.dataAttribute}={disabled ? "" : undefined} ${trigger.disclosure.stateAttribute}={menu?.open ? "${trigger.disclosure.openStateValue}" : "${trigger.disclosure.closedStateValue}"} tabindex={disabled ? -1 : tabindex} style={"${trigger.touchCalloutStyle.property}: ${trigger.touchCalloutStyle.value}; " + (style ?? "")} {@attach attachPart} {@attach attachRef}>{@render children?.()}</${f.parts.trigger.defaultElement}>
 `;
 }

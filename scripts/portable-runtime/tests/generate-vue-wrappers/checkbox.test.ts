@@ -11,6 +11,8 @@ import {
 } from "../../renderers/generic-adapter-plan/index.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { printFormRoot } from "../../renderers/shared-recipes/structured/forms/frame.js";
+import { checkboxPlan } from "../../renderers/shared-recipes/structured/forms/plan.js";
 import { compactCode, normalizeVueSource } from "../source-comparison.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
@@ -48,6 +50,27 @@ describe("generated Vue Checkbox Primitive", () => {
         }),
       ]),
     );
+  });
+
+  it("keeps absent Boolean unions while omitting only redundant string defaults", () => {
+    const root = printFormRoot("vue", {
+      ...checkboxPlan,
+      props: [
+        ...checkboxPlan.props,
+        { name: "absentString", type: "string" },
+        { name: "absentBooleanUnion", type: "boolean | string" },
+        { name: "unknownProp", type: "unknown" },
+        { name: "namedString", type: "string", defaultValue: '"label"' },
+      ],
+    });
+
+    expect(root).toContain("absentString?: string;");
+    expect(root).not.toContain("absentString: undefined");
+    expect(root).toContain("absentBooleanUnion: undefined");
+    expect(root).toContain("unknownProp: undefined");
+    expect(root).toContain('namedString: "label"');
+    expect(root).toContain("checked: undefined");
+    expect(() => assertVueSfcCompiles(root, "CheckboxRoot.vue")).not.toThrow();
   });
 
   it("generates deterministic, compiler-valid Checkbox-owned output", async () => {

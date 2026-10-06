@@ -640,6 +640,8 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(alertDialogAction).toContain("variant={variant}");
   expect(alertDialogAction).toContain("size={size}");
   expect(alertDialogAction).toContain("__useAlertDialogControl");
+  // Copied source must not read a ref during render. The react-hooks/refs rule rejects it.
+  expect(alertDialogAction).not.toMatch(/consumerRef|forwardedRef|\)\.ref\b/);
   expect(alertDialogAction).toContain("ref={setControlElement}");
   expect(alertDialogAction).not.toContain("AlertDialogPrimitive.Close");
   expect(alertDialogAction).toContain("asChild?: boolean;");
@@ -659,6 +661,7 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(alertDialogCancel).toContain("variant={variant}");
   expect(alertDialogCancel).toContain("size={size}");
   expect(alertDialogCancel).toContain("__useAlertDialogControl");
+  expect(alertDialogCancel).not.toMatch(/consumerRef|forwardedRef|\)\.ref\b/);
   expect(alertDialogCancel).toContain("ref={setControlElement}");
   expect(alertDialogCancel).not.toContain("AlertDialogPrimitive.Close");
   expect(alertDialogCancel).toContain("asChild?: boolean;");

@@ -526,10 +526,22 @@ async function verifyNavigationHostBrowser(server: Server, host: "sveltekit" | "
         (window as unknown as NavigationWindow).__hostOwners.at(-1)!.app.snapshot(),
       );
       assert.deepEqual(initial.callbacks, { checked: 0, dialog: 0, value: 0, select: 0 });
-      assert.equal(initial.checked, true);
-      assert.equal(initial.value, "alpha");
-      assert.equal(initial.open, false);
-      assert.equal(initial.selectOpen, false);
+      // Bindings that start undefined stay undefined until an accepted change.
+      assert.deepEqual(
+        {
+          checked: initial.checked,
+          open: initial.open,
+          selectOpen: initial.selectOpen,
+          value: initial.value,
+        },
+        { checked: true, open: undefined, selectOpen: undefined, value: undefined },
+        `${host} initial undefined bindings`,
+      );
+      assert.equal(
+        await page.locator("[data-sw-select-input]").first().inputValue(),
+        "alpha",
+        `${host} Select default is not rendered`,
+      );
       await page.locator('[data-test="checkbox"]').click();
       assert.deepEqual(
         await page.evaluate(() => {
@@ -625,7 +637,10 @@ async function verifyNavigationHostBrowser(server: Server, host: "sveltekit" | "
       assert.equal(result.remaining, 0);
       assert.equal(result.stale, 0);
       assert.equal(result.scrollLocked, false);
-      assert.deepEqual(result.snapshot.refs, { setups: 7, cleanups: 7 });
+      // Svelte 5.29.0 reapplies spread attachments when the trigger state attributes change, so
+      // the count grows with each Dialog open change. Each setup still needs one cleanup.
+      assert.equal(result.snapshot.refs.setups, result.snapshot.refs.cleanups);
+      assert.ok(result.snapshot.refs.setups >= 7, `${host} ref setup count`);
       assert.equal(result.snapshot.clicks, 1);
       assert.equal(result.snapshot.checked, false);
       assert.equal(result.snapshot.value, "beta");

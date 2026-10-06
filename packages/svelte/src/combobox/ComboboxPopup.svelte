@@ -17,8 +17,7 @@
       return () => combobox?.registerPart(owner, null);
     });
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...elementProps} data-sw-combobox-popup="" data-sw-part="popup" role="listbox" tabindex="-1" hidden data-state="closed" data-side={side} data-align={align} data-side-offset={sideOffset} data-align-offset={alignOffset} data-avoid-collisions={avoidCollisions} {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-combobox-popup="" data-sw-part="popup" role="listbox" tabindex="-1" hidden data-state="closed" data-side={side} data-align={align} data-side-offset={sideOffset} data-align-offset={alignOffset} data-avoid-collisions={avoidCollisions} {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>

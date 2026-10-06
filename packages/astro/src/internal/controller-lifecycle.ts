@@ -3,6 +3,26 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+export const getAstroInitCandidates = (
+  event: Event | undefined,
+  selector: string,
+): HTMLElement[] => {
+  const initRoot =
+    event?.type === "starwind:init" && event instanceof CustomEvent
+      ? event.detail?.root
+      : undefined;
+  const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)
+    ? initRoot
+    : document;
+  const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
+  if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
+    candidates.unshift(scopedRoot as HTMLElement);
+  }
+  return candidates;
+};
+const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
+  value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
+
 type AstroController = {
   destroy(): void;
 };

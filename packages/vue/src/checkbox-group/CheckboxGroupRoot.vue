@@ -5,7 +5,7 @@ import {
   type CheckboxGroupValueChangeDetails,
   createCheckboxGroup,
 } from "@starwind-ui/runtime/checkbox-group";
-import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import { CheckboxGroupContext } from "./CheckboxGroupContext";
 
 defineOptions({ inheritAttrs: false });
@@ -15,15 +15,14 @@ const props = withDefaults(
     disabled?: boolean;
     modelValue?: CheckboxGroupValue;
   }>(),
-  { disabled: false, modelValue: undefined, defaultValue: undefined },
+  { disabled: false },
 );
 const emit = defineEmits<{
   valueChange: [value: CheckboxGroupValue, detail: CheckboxGroupValueChangeDetails];
   "update:modelValue": [value: CheckboxGroupValue];
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs(),
-  rootRef = ref<HTMLDivElement | null>(null);
+const rootRef = ref<HTMLDivElement | null>(null);
 defineExpose({ element: rootRef });
 const resetSeed = copyModel(props.defaultValue ?? props.modelValue ?? []);
 const initialValue = copyModel(props.modelValue ?? resetSeed);
@@ -122,7 +121,7 @@ watch(
 <template>
   <div
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-checkbox-group=""
     data-sw-part="root"
     role="group"

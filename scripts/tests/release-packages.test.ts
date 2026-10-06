@@ -1150,11 +1150,11 @@ describe("release package tooling", () => {
     ).toEqual(["@starwind-ui/vue@0.1.0 -> npm tag beta", "starwind@3.3.0 -> npm tag latest"]);
   });
 
-  it("publishes CLI metadata that names the Vue beta", async () => {
+  it("publishes CLI metadata that names the Vue and Svelte betas", async () => {
     const cliPackage = await readJson<PackageJson>("packages/cli/package.json");
 
     expect(cliPackage.description).toBe(
-      "Install and manage Starwind UI components in Astro, React, and Vue (beta) applications",
+      "Install and manage Starwind UI components in Astro, React, Vue (beta), and Svelte (beta) applications",
     );
   });
 

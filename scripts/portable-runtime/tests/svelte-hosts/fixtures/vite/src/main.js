@@ -43,9 +43,13 @@ try {
     assert(
       app.snapshot().checked === true &&
         app.snapshot().open === undefined &&
-        app.snapshot().value === "alpha" &&
-        app.snapshot().selectOpen === false,
+        app.snapshot().value === undefined &&
+        app.snapshot().selectOpen === undefined,
       "Styled initial undefined bindings",
+    );
+    assert(
+      document.querySelector("[data-sw-select-input]")?.value === "alpha",
+      "Styled Select default is not rendered",
     );
     assert(
       Object.values(app.snapshot().callbacks).every((count) => count === 0),
@@ -85,10 +89,14 @@ try {
     const services = mount(Services, { target });
     await finish();
     assert(
-      services.snapshot().color === "#123456" &&
-        services.snapshot().format === "hex" &&
+      services.snapshot().color === undefined &&
+        services.snapshot().format === undefined &&
         services.snapshot().open === true,
       "Packed service subpath initial models",
+    );
+    assert(
+      new FormData(part("services-form")).get("accent") === "#123456",
+      "Packed Color Picker default is not rendered",
     );
     assert(services.snapshot().changes === 0, "Packed service initialization notified changes");
     const swatch = part("services-swatch"),
@@ -130,7 +138,13 @@ try {
     );
     const vendored = mount(VendoredSelect, { target });
     await finish();
-    assert(vendored.snapshot() === "alpha", "Vendored Select default value");
+    assert(
+      vendored.snapshot() === undefined &&
+        part("vendored-trigger")
+          .closest("[data-sw-select]")
+          ?.querySelector("[data-sw-select-input]")?.value === "alpha",
+      "Vendored Select default value",
+    );
     part("vendored-trigger").click();
     await finish();
     const vendoredItem = part("vendored-beta");

@@ -1,0 +1,6 @@
+{
+  "components": {
+    "alert-dialog": "patch"
+  },
+  "impact": "source"
+}

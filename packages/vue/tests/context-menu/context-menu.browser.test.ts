@@ -43,7 +43,7 @@ describe("Vue Context Menu", () => {
       const original = createContextMenu(root);
       dispatchContextMenu(trigger, 300, 240);
       await frame();
-      const popup = document.querySelector<HTMLElement>("[data-sw-menu-popup]")!;
+      const popup = readRootPopup();
       const before = popup.getBoundingClientRect();
       const oldAnchor = document.querySelector<HTMLElement>("[data-sw-context-menu-anchor]")!;
       expect(original.getOpen()).toBe(true);
@@ -98,7 +98,7 @@ describe("Vue Context Menu", () => {
     await frame();
     expect(events).toEqual(["open-detail"]);
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(document.querySelector<HTMLElement>("[data-sw-menu-popup]")?.hidden).toBe(true);
+    expect(readRootPopup().hidden).toBe(true);
     expect(readAnchorPosition()).toEqual({ left: "120px", top: "140px" });
 
     state.cancelOpen = false;
@@ -106,7 +106,7 @@ describe("Vue Context Menu", () => {
     await frame();
     expect(events.slice(-2)).toEqual(["open-detail", "open-update"]);
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
-    expect(document.querySelector<HTMLElement>("[data-sw-menu-popup]")?.hidden).toBe(false);
+    expect(readRootPopup().hidden).toBe(false);
     expect(readAnchorPosition()).toEqual({ left: "220px", top: "240px" });
   });
 
@@ -116,7 +116,7 @@ describe("Vue Context Menu", () => {
     trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ContextMenu" }));
     await frame();
 
-    const popup = document.querySelector<HTMLElement>("[data-sw-menu-popup]")!;
+    const popup = readRootPopup();
     expect(document.activeElement?.textContent).toContain("Rename");
     popup.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await frame();
@@ -129,8 +129,8 @@ describe("Vue Context Menu", () => {
     const { app, trigger } = mountContextMenu();
     await frame();
 
-    expect(document.body.querySelectorAll(":scope > [data-sw-menu-portal]")).toHaveLength(1);
-    expect(document.body.querySelectorAll("[data-sw-menu-portal]")).toHaveLength(2);
+    // The submenu portal renders under body beside its parent menu portal.
+    expect(document.body.querySelectorAll(":scope > [data-sw-menu-portal]")).toHaveLength(2);
     expect(document.querySelectorAll("[data-sw-context-menu-anchor]")).toHaveLength(1);
 
     dispatchContextMenu(trigger, 80, 90);
@@ -156,6 +156,13 @@ type RenderOptions = {
   onOpenChange?: (open: boolean, detail: ContextMenuOpenChangeDetails) => void;
   onOpenUpdate?: (open: boolean) => void;
 };
+
+// Nested portals share body, so document order no longer identifies the root menu popup.
+function readRootPopup(): HTMLElement {
+  return document.querySelector<HTMLElement>(
+    '[data-sw-menu-popup][aria-labelledby="context-target"]',
+  )!;
+}
 
 function mountContextMenu(options: RenderOptions = {}) {
   const host = document.createElement("div");

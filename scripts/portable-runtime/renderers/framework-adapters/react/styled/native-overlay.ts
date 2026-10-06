@@ -41,11 +41,11 @@ export function isAlertDialogButtonControl(component: StyledOutputComponent): bo
 export function renderAlertDialogButtonControlSetup(component: StyledOutputComponent): string {
   if (!isAlertDialogButtonControl(component)) return "";
 
-  return `const consumerRef = (props as { ref?: React.Ref<HTMLElement> }).ref;
-const { controlKey, setControlElement } = __useAlertDialogControl({
+  // The Primitive hook reads the ref from props. Reading it here fails react-hooks/refs.
+  return `const { controlKey, setControlElement } = __useAlertDialogControl({
   asChild,
   children,
-  forwardedRef: consumerRef,
+  props,
 });
 const asChildRest = rest as unknown as React.HTMLAttributes<HTMLDivElement>;`;
 }

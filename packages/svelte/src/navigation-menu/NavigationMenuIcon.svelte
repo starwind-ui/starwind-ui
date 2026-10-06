@@ -17,8 +17,7 @@
     });
     return () => {  };
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLSpanElement>(() => ref);
 </script>
-<span {...elementProps} data-sw-nav-menu-icon="" data-sw-part="icon" aria-hidden="true" data-state={item?.open ? "open" : "closed"} {@attach attachPart} {@attach attachRef}>{@render children?.()}</span>
+<span {...rest} data-sw-nav-menu-icon="" data-sw-part="icon" aria-hidden="true" data-state={item?.open ? "open" : "closed"} {@attach attachPart} {@attach attachRef}>{@render children?.()}</span>

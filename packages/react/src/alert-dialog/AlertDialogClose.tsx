@@ -16,11 +16,21 @@ export type AlertDialogCloseProps = React.ButtonHTMLAttributes<HTMLButtonElement
   asChild?: boolean;
 };
 
+/**
+ * Styled controls pass their props object. The ref is read here, so copied component source
+ * does not read a ref during render.
+ */
 export function __useAlertDialogControl(
-  options: Omit<NativeOverlayControlOptions, "requestRefresh">,
+  options: Omit<NativeOverlayControlOptions, "forwardedRef" | "requestRefresh"> & {
+    forwardedRef?: NativeOverlayControlOptions["forwardedRef"];
+    props?: object;
+  },
 ) {
   const requestRefresh = React.useContext(NativeOverlayControlContext);
-  return useNativeOverlayControl({ ...options, requestRefresh });
+  const { props, ...control } = options;
+  const forwardedRef =
+    control.forwardedRef ?? (props as { ref?: React.Ref<HTMLElement> } | undefined)?.ref;
+  return useNativeOverlayControl({ ...control, forwardedRef, requestRefresh });
 }
 
 const AlertDialogClose = React.forwardRef<HTMLButtonElement, AlertDialogCloseProps>(

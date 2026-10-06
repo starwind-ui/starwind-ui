@@ -1730,7 +1730,7 @@ function printReactNativeOverlayClose(facts: AdapterNativeOverlayFacts): string 
   const exportName = facts.exports.close;
   const alertDialogHook =
     facts.displayName === "AlertDialog"
-      ? `\nexport function __useAlertDialogControl(\n  options: Omit<NativeOverlayControlOptions, "requestRefresh">,\n) {\n  const requestRefresh = React.useContext(NativeOverlayControlContext);\n  return useNativeOverlayControl({ ...options, requestRefresh });\n}\n`
+      ? `\n/**\n * Styled controls pass their props object. The ref is read here, so copied component source\n * does not read a ref during render.\n */\nexport function __useAlertDialogControl(\n  options: Omit<NativeOverlayControlOptions, "forwardedRef" | "requestRefresh"> & {\n    forwardedRef?: NativeOverlayControlOptions["forwardedRef"];\n    props?: object;\n  },\n) {\n  const requestRefresh = React.useContext(NativeOverlayControlContext);\n  const { props, ...control } = options;\n  const forwardedRef =\n    control.forwardedRef ?? (props as { ref?: React.Ref<HTMLElement> } | undefined)?.ref;\n  return useNativeOverlayControl({ ...control, forwardedRef, requestRefresh });\n}\n`
       : "";
   const helperImport =
     facts.displayName === "AlertDialog"

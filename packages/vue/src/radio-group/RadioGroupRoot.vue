@@ -5,7 +5,7 @@ import {
   type RadioGroupValue,
   type RadioGroupValueChangeDetails,
 } from "@starwind-ui/runtime/radio-group";
-import { computed, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import { RadioGroupContext } from "./RadioGroupContext";
 
 defineOptions({ inheritAttrs: false });
@@ -20,22 +20,14 @@ const props = withDefaults(
     required?: boolean;
     modelValue?: RadioGroupValue;
   }>(),
-  {
-    disabled: false,
-    orientation: "vertical",
-    readOnly: false,
-    required: false,
-    modelValue: undefined,
-    defaultValue: undefined,
-  },
+  { disabled: false, orientation: "vertical", readOnly: false, required: false },
 );
 const emit = defineEmits<{
   valueChange: [value: string, detail: RadioGroupValueChangeDetails];
   "update:modelValue": [value: RadioGroupValue];
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs(),
-  rootRef = ref<HTMLDivElement | null>(null);
+const rootRef = ref<HTMLDivElement | null>(null);
 defineExpose({ element: rootRef });
 const resetSeed = props.defaultValue ?? props.modelValue;
 const initialValue = props.modelValue ?? resetSeed;
@@ -141,7 +133,7 @@ watch(
 <template>
   <div
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-radio-group=""
     data-sw-part="root"
     role="radiogroup"

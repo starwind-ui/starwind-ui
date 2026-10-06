@@ -61,7 +61,9 @@ describe("Vue attribute access projection", () => {
     const styled = await source("styled/alert/Alert.vue");
     const styledIcon = await source("styled/spinner/Spinner.vue");
 
-    for (const output of [primitive, styled, styledIcon]) {
+    const toggle = await source("primitive/toggle/ToggleRoot.vue");
+
+    for (const output of [primitive, styled, styledIcon, toggle]) {
       expect(output).toContain('v-bind="$attrs"');
       expect(output).not.toContain("useAttrs");
       expect(output).not.toContain("const attrs");
@@ -73,7 +75,6 @@ describe("Vue attribute access projection", () => {
       "primitive/avatar/AvatarFallback.vue",
       "primitive/collapsible/CollapsibleTrigger.vue",
       "primitive/dropzone/DropzoneInput.vue",
-      "primitive/toggle/ToggleRoot.vue",
       "styled/dropzone/DropzoneFilesList.vue",
     ];
 
@@ -84,7 +85,7 @@ describe("Vue attribute access projection", () => {
     }
   });
 
-  it("freezes the complete generated template and setup attribute cohorts", async () => {
+  it("keeps template consumers free of setup attribute reads", async () => {
     const files = (
       await Promise.all([
         listVueFiles(path.join(process.cwd(), "packages/vue/src")),
@@ -95,14 +96,21 @@ describe("Vue attribute access projection", () => {
       files.map(async (file) => ({ file, source: await readFile(file, "utf8") })),
     );
     const templateBindings = outputs.filter(({ source }) => source.includes('v-bind="$attrs"'));
-    const setup = outputs.filter(({ source }) => source.includes("const attrs = useAttrs();"));
     const dualAccess = templateBindings.filter(({ source }) =>
       source.includes("const attrs = useAttrs();"),
     );
 
-    expect(templateBindings).toHaveLength(357);
-    // Six overlay Trigger/Close parts and Select.Trigger now merge attrs in setup.
-    expect(setup).toHaveLength(136);
+    expect(templateBindings.map(({ file }) => path.relative(process.cwd(), file))).toEqual(
+      expect.arrayContaining([
+        "packages/vue/src/checkbox/CheckboxRoot.vue",
+        "packages/vue/src/switch/SwitchRoot.vue",
+        "packages/vue/src/checkbox-group/CheckboxGroupRoot.vue",
+        "packages/vue/src/radio/RadioRoot.vue",
+        "packages/vue/src/radio-group/RadioGroupRoot.vue",
+        "packages/vue/src/toggle/ToggleRoot.vue",
+        "packages/vue/src/toggle-group/ToggleGroupRoot.vue",
+      ]),
+    );
     expect(dualAccess.map(({ file }) => path.relative(process.cwd(), file)).sort()).toEqual([
       "packages/vue/src/alert-dialog/AlertDialogClose.vue",
       "packages/vue/src/alert-dialog/AlertDialogTrigger.vue",

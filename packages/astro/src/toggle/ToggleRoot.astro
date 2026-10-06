@@ -60,25 +60,7 @@ const defaultPressedAttribute = pressed === undefined && defaultPressed ? "true"
 
   const toggleInstances = new Set<ReturnType<typeof createToggle>>();
 
-  const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
-    const initRoot =
-      event?.type === "starwind:init" && event instanceof CustomEvent
-        ? event.detail?.root
-        : undefined;
-    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)
-      ? initRoot
-      : document;
-    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
-
-    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
-      candidates.unshift(scopedRoot as HTMLElement);
-    }
-
-    return candidates;
-  };
-
-  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>
-    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
+  import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";
 
   const setupToggles = (event?: Event) => {
     getInitCandidates(event, "[data-sw-toggle]").forEach((root) => {

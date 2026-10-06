@@ -3304,7 +3304,7 @@ async function verifyStyledComplexServices(page) {
   );
   const controlledColorTrigger = page
     .getByTestId("styled-color-picker-controlled")
-    .locator('[data-slot="popover-trigger"]');
+    .locator('[data-slot="color-picker-trigger"]');
   const controlledColorPopupId = await controlledColorTrigger.getAttribute("aria-controls");
   if (!controlledColorPopupId) {
     throw new Error("Styled Color Picker trigger did not identify its popup.");
@@ -4097,7 +4097,8 @@ async function waitForDialogClosed(page, testId) {
 async function assertAlertDialogCleanup(page, label) {
   const cleanup = await page.evaluate(() => ({
     bodyLocked: document.body.hasAttribute("data-sw-scroll-locked"),
-    inertCount: document.querySelectorAll("[inert]").length,
+    // Inactive Tabs panels stay inert by design. Count only what the dialog could leave behind.
+    inertCount: document.querySelectorAll("[inert]:not([data-sw-tabs-panel])").length,
     openPopupCount: document.querySelectorAll("[data-sw-alert-dialog-popup][open]").length,
     visiblePopupCount: Array.from(document.querySelectorAll("[data-sw-alert-dialog-popup]")).filter(
       (element) =>

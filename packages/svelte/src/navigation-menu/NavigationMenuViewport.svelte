@@ -17,8 +17,7 @@
     });
     return () => {  };
   };
-  let elementProps = $derived({ ...rest });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...elementProps} data-sw-nav-menu-viewport="" data-sw-part="viewport" data-state="closed" hidden {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-nav-menu-viewport="" data-sw-part="viewport" data-state="closed" hidden {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>

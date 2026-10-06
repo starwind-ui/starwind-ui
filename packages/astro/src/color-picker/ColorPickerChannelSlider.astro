@@ -17,11 +17,13 @@ interface Props extends HTMLAttributes<"div"> {
   initial?: ColorPickerInitialPartProjection;
   channel: ColorPickerChannel;
   orientation?: "horizontal" | "vertical";
+  step?: number;
 }
 const {
   initial: suppliedInitial,
   channel,
   orientation = "horizontal",
+  step: _step,
   style,
   hidden,
   ...rest
