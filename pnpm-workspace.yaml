@@ -32,7 +32,7 @@ minimumReleaseAgeExclude:
   - "@astrojs/markdown-remark"
   - js-yaml@4.3.2
   - svgo@4.1.0
-  - sharp@0.35.4
+  - sharp@0.35.5
   # security patch published inside the release age window
   - http-cache-semantics@4.3.0
 
@@ -47,8 +47,9 @@ overrides:
   js-yaml@>=4.0.0 <4.3.2: 4.3.2
   nanoid@<3.3.18: 3.3.18
   postcss@<=8.5.17: ^8.5.18
-  sharp@<0.35.4: ^0.35.4
+  sharp@<0.35.5: ^0.35.5
   smol-toml@<=1.7.0: 1.7.1
+  source-map-js@>=1.0.0 <1.2.2: 1.2.2
   svgo@>=4.0.0 <4.1.0: ^4.1.0
   yaml@>=2.0.0 <2.8.3: 2.9.0
 
