@@ -1,6 +1,8 @@
+import { shared } from "./shared";
+
 type FormValueRevision = object;
 
-const revisions = new WeakMap<object, FormValueRevision>();
+const revisions = shared<WeakMap<object, FormValueRevision>>("form-value-revision");
 
 export function attachFormValueRevision(target: object, source?: object): FormValueRevision {
   const revision = source ? (getFormValueRevision(source) ?? createRevision(source)) : {};

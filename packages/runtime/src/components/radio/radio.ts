@@ -6,7 +6,9 @@ import {
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { labelFromNativeInput, proxyNativeInput } from "../../internal/native-input";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type RadioCheckedChangeReason = "root-press" | "input-change" | "imperative-action";
@@ -102,7 +104,7 @@ const RADIO_READONLY_ATTRIBUTE = "data-readonly";
 const RADIO_REQUIRED_ATTRIBUTE = "data-required";
 const RADIO_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, RadioController>();
+const instances = shared<WeakMap<HTMLElement, RadioController>>("radio");
 
 registerFieldControlBridge({
   kind: "radio",
@@ -350,17 +352,8 @@ class RadioController implements RadioInstance {
     input.defaultChecked = this.initialChecked;
     input.disabled = this.disabled;
     input.required = this.required;
-    input.tabIndex = -1;
-    input.setAttribute("aria-hidden", "true");
     input.setAttribute(RADIO_INPUT_ATTRIBUTE, "");
-    input.style.position = "absolute";
-    input.style.width = "1px";
-    input.style.height = "1px";
-    input.style.margin = "-1px";
-    input.style.overflow = "hidden";
-    input.style.clip = "rect(0 0 0 0)";
-    input.style.whiteSpace = "nowrap";
-    input.style.border = "0";
+    proxyNativeInput(input, () => this.root, this.abortController.signal);
 
     if (this.name !== undefined) {
       input.name = this.name;
@@ -437,6 +430,7 @@ class RadioController implements RadioInstance {
     } else {
       this.elements.input.removeAttribute("form");
     }
+    labelFromNativeInput(this.root, this.elements.input);
 
     this.elements.indicators.forEach((indicator) => {
       setRadioStateAttributes(indicator.element, {

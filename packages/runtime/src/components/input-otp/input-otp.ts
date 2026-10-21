@@ -7,6 +7,7 @@ import {
 import { dispatchCustomEvent } from "../../internal/events";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type InputOtpValueChangeReason =
@@ -103,7 +104,7 @@ const INPUT_OTP_OBSERVED_ROOT_ATTRIBUTES = [
 const DEFAULT_PATTERN = "\\d";
 const NUMERIC_PATTERNS = new Set(["\\d", "[0-9]", "\\d+", "[0-9]+"]);
 
-const instances = new WeakMap<HTMLElement, InputOtpController>();
+const instances = shared<WeakMap<HTMLElement, InputOtpController>>("input-otp");
 
 registerFieldControlBridge({
   kind: "input-otp",

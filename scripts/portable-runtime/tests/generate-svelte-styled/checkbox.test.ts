@@ -75,6 +75,10 @@ assert.equal(globalThis.document, undefined); assert.equal(Default, exports.Chec
     expect(body.match(/aria-checked="true"/g)).toHaveLength(1);
     expect(body.match(/aria-checked="false"/g)).toHaveLength(1);
     expect(body.match(/data-sw-checkbox-check-icon/g)).toHaveLength(3);
+    expect(body.match(/data-sw-checkbox-indeterminate-icon/g)).toHaveLength(3);
+    expect(body).toMatch(
+      /<[^>]*data-indeterminate[^>]*aria-checked="mixed"|aria-checked="mixed"[^>]*data-indeterminate/,
+    );
   });
 
   it("preserves Checkbox accepted models, cancellation, parent echoes, form seeds, and native owners", async () => {
@@ -129,11 +133,11 @@ assert.equal(globalThis.document, undefined); assert.equal(Default, exports.Chec
     expect(result.finalOwners.callbacks).toEqual(result.ownersClicked.callbacks);
     expect(result.finalOwners.refs.at(-1)).toBe("b:null");
     expect(result.finalOwners.attachments.at(-1)).toBe("b:cleanup");
-    expect(result.finalOwners.attachments.filter((entry: string) => entry.endsWith(":setup")))
-      .toHaveLength(
-        result.finalOwners.attachments.filter((entry: string) => entry.endsWith(":cleanup"))
-          .length,
-      );
+    expect(
+      result.finalOwners.attachments.filter((entry: string) => entry.endsWith(":setup")),
+    ).toHaveLength(
+      result.finalOwners.attachments.filter((entry: string) => entry.endsWith(":cleanup")).length,
+    );
     expect(result.nativeForm).toBe("yes");
   }, 60_000);
 });

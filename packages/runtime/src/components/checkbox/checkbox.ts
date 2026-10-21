@@ -1,12 +1,14 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { labelFromNativeInput, proxyNativeInput } from "../../internal/native-input";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type CheckboxCheckedChangeReason = "root-press" | "input-change" | "imperative-action";
@@ -91,7 +93,7 @@ const CHECKBOX_UNCHECKED_INPUT_ATTRIBUTE = "data-sw-checkbox-unchecked-input";
 const CHECKBOX_UNCHECKED_VALUE_ATTRIBUTE = "data-unchecked-value";
 const CHECKBOX_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, CheckboxController>();
+const instances = shared<WeakMap<HTMLElement, CheckboxController>>("checkbox");
 
 registerFieldControlBridge({
   kind: "checkbox",
@@ -297,17 +299,8 @@ class CheckboxController implements CheckboxInstance {
     input.defaultChecked = this.initialChecked;
     input.disabled = this.disabled;
     input.required = this.required;
-    input.tabIndex = -1;
-    input.setAttribute("aria-hidden", "true");
     input.setAttribute(CHECKBOX_INPUT_ATTRIBUTE, "");
-    input.style.position = "absolute";
-    input.style.width = "1px";
-    input.style.height = "1px";
-    input.style.margin = "-1px";
-    input.style.overflow = "hidden";
-    input.style.clip = "rect(0 0 0 0)";
-    input.style.whiteSpace = "nowrap";
-    input.style.border = "0";
+    proxyNativeInput(input, () => this.root, this.abortController.signal);
 
     if (this.name !== undefined) {
       input.name = this.name;
@@ -388,6 +381,7 @@ class CheckboxController implements CheckboxInstance {
       this.elements.input.removeAttribute("form");
     }
 
+    labelFromNativeInput(this.root, this.elements.input);
     this.renderUncheckedInput();
 
     this.elements.indicators.forEach((indicator) => {

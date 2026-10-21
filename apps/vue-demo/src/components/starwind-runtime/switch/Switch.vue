@@ -87,7 +87,7 @@ const emit = defineEmits<{
 }>();
 const resolvedPadding = computed(() => padding ?? (size === "sm" ? 2.5 : size === "lg" ? 4 : 3));
 const sizeMultiplier = computed(() => (size === "sm" ? 4 : size === "lg" ? 6 : 5));
-const ariaLabel = computed(() => attrs["aria-label"] ?? label ?? "switch");
+const ariaLabel = computed(() => attrs["aria-label"] ?? label);
 const switchStyle = computed(() => ({
   "--padding": `${resolvedPadding.value}px`,
   "--height": `calc((var(--spacing) * ${sizeMultiplier.value}) + (var(--padding) * 2))`,

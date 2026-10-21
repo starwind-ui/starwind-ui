@@ -314,7 +314,8 @@ $effect(() => { void autoComplete; void form; void name; void required; untrack(
   <input
     data-sw-select-input=""
     data-sw-part="input"
-    type="hidden"
+    type={required ? undefined : "hidden"}
+    style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0"
     value={renderedValue ?? ""}
     autocomplete={autoComplete as HTMLInputAttributes["autocomplete"]}
     disabled={disabled}

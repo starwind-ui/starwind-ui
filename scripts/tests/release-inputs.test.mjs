@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, expect, it } from "vitest";
@@ -40,6 +40,25 @@ it("lists a source tree whose Git output exceeds the default child-process buffe
   await writeFile(path.join(root, files.at(-1)), "changed tail input");
   expect(fingerprintFiles(root, releaseSourceFiles(root))).not.toBe(original);
 });
+it("fingerprints a tracked directory symlink by its target path", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "release-inputs-symlink-"));
+  roots.push(root);
+  execFileSync("git", ["init", "--quiet"], { cwd: root });
+  await mkdir(path.join(root, "first"));
+  await mkdir(path.join(root, "second"));
+  await writeFile(path.join(root, "first", "SKILL.md"), "skill\n");
+  await symlink("first", path.join(root, "link"));
+  execFileSync("git", ["add", "."], { cwd: root });
+
+  const original = releaseSourceFingerprint(root);
+  await writeFile(path.join(root, "first", "SKILL.md"), "edited skill\n");
+  const edited = releaseSourceFingerprint(root);
+  expect(edited).not.toBe(original);
+  await rm(path.join(root, "link"));
+  await symlink("second", path.join(root, "link"));
+  expect(releaseSourceFingerprint(root)).not.toBe(edited);
+});
+
 it("invalidates release evidence for edited and new source, dependencies, and built artifacts", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "release-inputs-test-"));
   roots.push(root);

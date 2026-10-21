@@ -15,6 +15,10 @@ export type DropzoneProps = Omit<React.ComponentPropsWithoutRef<"input">, "disab
     files: File[],
     details: import("@starwind-ui/react/dropzone").DropzoneFilesChangeDetails,
   ) => void;
+  onFilesReject?: (
+    files: File[],
+    details: import("@starwind-ui/react/dropzone").DropzoneFilesRejectDetails,
+  ) => void;
   ref?: React.Ref<HTMLLabelElement>;
 };
 
@@ -24,6 +28,7 @@ function Dropzone(props: DropzoneProps) {
     disabled = false,
     isUploading = false,
     onFilesChange,
+    onFilesReject,
     ref,
     "aria-invalid": ariaInvalid,
     className,
@@ -38,6 +43,7 @@ function Dropzone(props: DropzoneProps) {
       disabled={disabled}
       isUploading={isUploading}
       onFilesChange={onFilesChange}
+      onFilesReject={onFilesReject}
       aria-invalid={ariaInvalid}
       ref={ref}
       data-slot="dropzone"

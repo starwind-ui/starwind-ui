@@ -12,6 +12,7 @@ import { verifyAstroFormControlCases } from "./astro/form-control-cases.mjs";
 import { verifyAstroFoundationCases } from "./astro/foundation-cases.mjs";
 import { verifyAstroMediaOverlayCases } from "./astro/media-overlay-cases.mjs";
 import { verifyAstroSheetMenuCases } from "./astro/sheet-menu-cases.mjs";
+import { verifyAstroSidebarInitialStateCases } from "./astro/sidebar-initial-state-cases.mjs";
 import { waitForAstroSmokePage } from "./astro-smoke-readiness.mjs";
 import { startAstroSmokeDevServer } from "./astro-smoke-dev-server.mjs";
 import { verifyNavigationMenuSizingCases } from "./shared/navigation-menu-sizing.mjs";
@@ -205,6 +206,11 @@ try {
   await verifyAstroMediaOverlayCases({ page, serverMode: SERVER_MODE });
   await verifyAstroSheetMenuCases({ page });
   await verifyAstroAvatarLazyImageCase({ page, baseUrl, serverMode: SERVER_MODE });
+  await verifyAstroSidebarInitialStateCases({
+    browser,
+    baseUrl,
+    serverMode: SERVER_MODE,
+  });
 
   if (messages.length > 0) {
     throw new Error(messages.join("\n"));

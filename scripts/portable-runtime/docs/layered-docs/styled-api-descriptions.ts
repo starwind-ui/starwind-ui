@@ -91,6 +91,7 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   onCheckedChange: "Runs after the checked state changes.",
   onCloseComplete: "Runs after the closing transition and cleanup complete.",
   onFilesChange: "Runs when the selected file collection changes.",
+  onFilesReject: "Runs when dropped files do not match accept or exceed the single-file limit.",
   onFormatChange: "Runs after the accepted color format changes.",
   onInputValueChange: "Runs when the editable input text changes.",
   onLoadingStatusChange: "Runs when image loading status changes.",

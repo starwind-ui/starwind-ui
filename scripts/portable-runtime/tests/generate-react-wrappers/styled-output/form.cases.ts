@@ -244,7 +244,9 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxIndex).toContain("ComboboxClear");
   expect(comboboxIndex).toContain("Root: Combobox");
   expect(checkbox).toContain('CheckboxPrimitive from "../primitives/react/checkbox"');
-  expect(checkbox).toContain('import { IconCheck as Check } from "@tabler/icons-react";');
+  expect(checkbox).toContain(
+    'import { IconCheck as Check, IconMinus as Minus } from "@tabler/icons-react";',
+  );
   expect(checkbox).toContain('import "./styles.css";');
   expect(checkbox).toContain("<CheckboxPrimitive.Root");
   expect(checkbox).toContain("<CheckboxPrimitive.Indicator");
@@ -259,16 +261,24 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(checkbox).toContain('data-slot="checkbox"');
   expect(checkbox).toContain('data-slot="checkbox-label"');
   expect(checkbox).toContain("data-sw-checkbox-check-icon");
+  expect(checkbox).toContain("data-sw-checkbox-indeterminate-icon");
   expect(checkbox).not.toContain('from "@starwind-ui/runtime"');
   expect(checkboxVariants).not.toContain("starwind-checkbox");
   expect(checkboxVariants).toContain("relative flex items-center space-x-2");
   expect(checkboxVariants).toContain("relative flex");
   expect(checkboxVariants).toContain("items-center justify-center");
   expect(checkboxVariants).toContain("data-checked:bg-primary");
+  expect(checkboxVariants).toContain(
+    "data-checked:bg-foreground data-checked:border-foreground data-indeterminate:bg-foreground data-indeterminate:border-foreground",
+  );
+  expect(checkboxVariants).toContain(
+    "data-indeterminate:bg-primary data-indeterminate:border-primary",
+  );
   expect(checkboxVariants).toContain("data-disabled:cursor-not-allowed");
   expect(checkboxVariants).toContain(
     "data-error-visible:border-error data-error-visible:focus-visible:ring-error/40",
   );
+  expect(checkboxVariants).toContain("data-indeterminate:data-error-visible:border-error");
   expect(checkboxVariants).toContain("grid place-content-center p-0.5");
   expect(checkboxVariants).toContain("opacity-0");
   expect(checkboxVariants).toContain("[&>svg]:size-full");
@@ -279,6 +289,16 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
     '[data-sw-checkbox][data-checked] [data-slot="checkbox-indicator"]',
   );
   expect(checkboxStyles).toContain("@keyframes draw-check");
+  expect(checkboxStyles).toContain(
+    "[data-sw-checkbox][data-checked]:not([data-indeterminate]) [data-sw-checkbox-check-icon]",
+  );
+  expect(checkboxStyles).toContain(
+    "[data-sw-checkbox][data-indeterminate] [data-sw-checkbox-indeterminate-icon]",
+  );
+  expect(checkboxStyles).not.toContain(
+    '[data-sw-checkbox][data-indeterminate] [data-slot="checkbox-indicator"] > [data-sw-checkbox-check-icon]',
+  );
+  expect(checkboxStyles).toContain("@keyframes draw-indeterminate");
   expect(checkboxIndex).toContain("export default Checkbox;");
   expect(checkboxIndex).not.toContain("styles.css");
   expect(checkboxIndex).not.toContain("CheckboxIndicator");
@@ -610,7 +630,8 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(switchComponent).toContain("onCheckedChange?:");
   expect(switchComponent).toContain('variant = "default"');
   expect(switchComponent).toContain('size = "md"');
-  expect(switchComponent).toContain('rest["aria-label"] ?? label ?? "switch"');
+  expect(switchComponent).toContain('rest["aria-label"] ?? label;');
+  expect(switchComponent).not.toContain('?? "switch"');
   expect(switchComponent).toContain("nativeButton");
   expect(switchComponent).toContain("style={switchStyle as React.CSSProperties}");
   expect(switchComponent).toContain("style={thumbStyle as React.CSSProperties}");

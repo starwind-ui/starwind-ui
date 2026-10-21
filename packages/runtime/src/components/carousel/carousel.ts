@@ -2,6 +2,7 @@ import type { EmblaCarouselType, EmblaOptionsType, EmblaPluginType } from "embla
 import EmblaCarousel from "embla-carousel";
 
 import { assertHTMLElement } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 
 export type CarouselOrientation = "horizontal" | "vertical";
 
@@ -33,7 +34,7 @@ const CAROUSEL_NEXT_ATTRIBUTE = "data-sw-carousel-next";
 const CAROUSEL_AXIS_ATTRIBUTE = "data-axis";
 const CAROUSEL_OPTIONS_ATTRIBUTE = "data-opts";
 
-const instances = new WeakMap<HTMLElement, CarouselController>();
+const instances = shared<WeakMap<HTMLElement, CarouselController>>("carousel");
 
 export function createCarousel(root: HTMLElement, options: CarouselOptions = {}): CarouselInstance {
   assertHTMLElement(root, "createCarousel root");

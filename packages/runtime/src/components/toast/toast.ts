@@ -4,6 +4,7 @@ import {
   readNumberAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 
 export type ToastVariant = "default" | "error" | "info" | "loading" | "success" | "warning";
 
@@ -128,7 +129,7 @@ const DAMPING_FACTOR = 0.1;
 const LONG_PRESS_DURATION = 300;
 const TOAST_MANAGER_REGISTRY = Symbol.for("@starwind-ui/runtime/toast-manager-registry");
 
-const instances = new WeakMap<HTMLElement, ToastManagerController>();
+const instances = shared<WeakMap<HTMLElement, ToastManagerController>>("toast");
 
 declare global {
   interface Window {

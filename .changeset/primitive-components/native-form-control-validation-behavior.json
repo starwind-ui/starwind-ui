@@ -1,0 +1,11 @@
+{
+  "primitives": {
+    "checkbox": "patch",
+    "field": "patch",
+    "form": "patch",
+    "radio": "patch",
+    "radio-group": "patch",
+    "switch": "patch"
+  },
+  "impact": "behavior"
+}

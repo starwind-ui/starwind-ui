@@ -1,5 +1,6 @@
 import { assertHTMLElement, readBooleanAttribute } from "../../internal/dom";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
+import { shared } from "../../internal/shared";
 import {
   createDialog,
   type DialogCloseCompleteDetails,
@@ -40,7 +41,7 @@ const DIALOG_CLOSE_ATTRIBUTE = "data-sw-dialog-close";
 const DIALOG_TITLE_ATTRIBUTE = "data-sw-dialog-title";
 const DIALOG_DESCRIPTION_ATTRIBUTE = "data-sw-dialog-description";
 
-const instances = new WeakMap<HTMLElement, DrawerInstance>();
+const instances = shared<WeakMap<HTMLElement, DrawerInstance>>("drawer");
 
 export function createDrawer(root: HTMLElement, options: DrawerOptions = {}): DrawerInstance {
   assertHTMLElement(root, "createDrawer root");

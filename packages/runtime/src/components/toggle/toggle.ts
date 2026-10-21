@@ -6,6 +6,7 @@ import {
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
+import { shared } from "../../internal/shared";
 
 export type TogglePressedChangeReason = "none";
 
@@ -64,7 +65,7 @@ const TOGGLE_NATIVE_ATTRIBUTE = "data-native";
 const TOGGLE_SYNC_GROUP_ATTRIBUTE = "data-sync-group";
 const TOGGLE_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, ToggleController>();
+const instances = shared<WeakMap<HTMLElement, ToggleController>>("toggle");
 
 export function createToggle(root: HTMLElement, options: ToggleOptions = {}): ToggleInstance {
   assertHTMLElement(root, "createToggle root");

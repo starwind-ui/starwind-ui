@@ -1,0 +1,11 @@
+{
+  "components": {
+    "checkbox": "patch",
+    "field": "patch",
+    "form": "patch",
+    "radio-group": "patch",
+    "select": "patch",
+    "switch": "patch"
+  },
+  "impact": "behavior"
+}

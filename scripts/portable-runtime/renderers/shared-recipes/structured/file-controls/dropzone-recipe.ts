@@ -1,9 +1,12 @@
-import type { AdapterFileDropControlFacts } from "../../../framework-adapters/types.js";
+import type {
+  AdapterFileDropControlEventFacts,
+  AdapterFileDropControlFacts,
+} from "../../../framework-adapters/types.js";
 import { requireRefreshConnection } from "../../../primitive-output-model/refresh-connection.js";
 
 export interface DropzoneOperations {
   read: string;
-  notify(files: string, detail: string): string;
+  notify(event: AdapterFileDropControlEventFacts, files: string, detail: string): string;
   untrack(body: string): string;
 }
 
@@ -27,9 +30,16 @@ export function dropzoneConnection(
     const instance = ${facts.runtime.factory}(root, {
       ${fields.map(({ name }) => `${name}: previous.${name},`).join("\n")}
     });
-    const unsubscribe = instance.subscribe("${facts.event.name}", (detail) => {
-      ${ops.untrack(ops.notify("detail.files", "detail"))}
-    });
+    ${[facts.event, facts.rejectEvent]
+      .map(
+        (
+          event,
+          index,
+        ) => `const ${index === 0 ? "unsubscribe" : "unsubscribeReject"} = instance.subscribe("${event.name}", (detail) => {
+      ${ops.untrack(ops.notify(event, `detail.${event.valueProperty}`, "detail"))}
+    });`,
+      )
+      .join("\n    ")}
     const stopDiscovery = observeFormDiscovery(root.ownerDocument, () => {
       ${ops.untrack(`instance.${refresh.method}();`)}
     });
@@ -42,6 +52,7 @@ export function dropzoneConnection(
       destroy(): void {
         stopDiscovery();
         unsubscribe();
+        unsubscribeReject();
         instance.destroy();
       },
     };

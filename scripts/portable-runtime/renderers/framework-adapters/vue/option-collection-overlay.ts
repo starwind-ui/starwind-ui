@@ -478,7 +478,8 @@ onBeforeUnmount(() => {
       ref="inputRef"
       ${attrs.input}
       data-sw-part="${facts.parts.input.name}"
-      type="hidden"
+      :type="props.${props.required.name} ? undefined : 'hidden'"
+      style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0"
       :autocomplete="props.${props.autoComplete.name}"
       :disabled="props.${props.disabled.name}"
       :form="props.${props.form.name}"

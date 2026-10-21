@@ -7,6 +7,7 @@ import {
 import { dispatchCustomEvent } from "../../internal/events";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type SliderValue = number | number[];
@@ -137,7 +138,7 @@ const SLIDER_TRACK_ATTRIBUTE = "data-sw-slider-track";
 const SLIDER_TRACK_SELECTOR = `[${SLIDER_TRACK_ATTRIBUTE}]`;
 const SLIDER_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, SliderController>();
+const instances = shared<WeakMap<HTMLElement, SliderController>>("slider");
 
 registerFieldControlBridge({
   kind: "slider",

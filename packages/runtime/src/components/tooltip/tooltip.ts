@@ -24,6 +24,7 @@ import {
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { showElement } from "../../internal/presence";
+import { shared } from "../../internal/shared";
 
 export type TooltipOpenChangeReason =
   | "escape-key"
@@ -133,7 +134,7 @@ const INTERACTIVE_TOOLTIP_DESCENDANT_SELECTOR = [
   "[role='tab']",
 ].join(",");
 
-const instances = new WeakMap<HTMLElement, TooltipController>();
+const instances = shared<WeakMap<HTMLElement, TooltipController>>("tooltip");
 
 export function refreshTooltipPortalSurface(root: HTMLElement): void {
   const controller = instances.get(root);

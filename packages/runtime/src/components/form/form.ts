@@ -1,5 +1,6 @@
 import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "../../internal/dom";
 import { getFormValueRevision } from "../../internal/form-value-revision";
+import { shared } from "../../internal/shared";
 import {
   createField,
   type FieldFormRegistration,
@@ -242,6 +243,8 @@ type AsyncValidationBatch = {
   readonly controller: AbortController;
   readonly generation: number;
   readonly onAbort?: () => void;
+  // Fields whose own change or blur started this batch.
+  readonly policyRoots?: readonly HTMLElement[];
   readonly writeFieldRoots: readonly HTMLElement[];
 };
 
@@ -279,7 +282,7 @@ type PendingChangeRevision = {
   readonly semanticNotifications: Event[];
 };
 
-const instances = new WeakMap<HTMLFormElement, FormController>();
+const instances = shared<WeakMap<HTMLFormElement, FormController>>("form");
 
 export function createForm(root: HTMLElement, options: FormOptions = {}): FormInstance {
   assertHTMLElement(root, "createForm root");
@@ -340,6 +343,9 @@ class FormController implements FormInstance {
   private readonly validatingFieldRoots = new Set<HTMLElement>();
   private readonly validatedFieldRoots = new Set<HTMLElement>();
   private readonly revealedFieldRoots = new Set<HTMLElement>();
+  // Fields with errors visible after validate(). They follow revalidationTiming, the same as
+  // after a submit attempt.
+  private readonly postValidateFieldRoots = new WeakSet<HTMLElement>();
   private readonly activePendingChangeRevisions = new WeakMap<HTMLElement, WeakSet<object>>();
   private readonly nativeInputRevisions = new WeakMap<
     HTMLElement,
@@ -583,6 +589,7 @@ class FormController implements FormInstance {
       this.validatingFieldRoots.delete(fieldRoot);
       this.validatedFieldRoots.delete(fieldRoot);
       this.revealedFieldRoots.delete(fieldRoot);
+      this.postValidateFieldRoots.delete(fieldRoot);
       this.clearChangeRevisionBookkeeping(fieldRoot);
     });
 
@@ -696,6 +703,9 @@ class FormController implements FormInstance {
         this.revealedFieldRoots.add(fieldRoot);
       } else if (options.reveal === undefined) {
         this.updateErrorVisibility(fieldRoot, "manual");
+      }
+      if (this.revealedFieldRoots.has(fieldRoot)) {
+        this.postValidateFieldRoots.add(fieldRoot);
       }
     });
     targetFieldRoots.forEach((fieldRoot) => this.syncFieldValidationState(fieldRoot));
@@ -983,7 +993,7 @@ class FormController implements FormInstance {
       pending = {
         nativeNotificationSeen: false,
         policy: this.getFieldPolicy(fieldRoot),
-        postSubmit: this.submitAttempted,
+        postSubmit: this.isPostSubmitField(fieldRoot),
         semanticNotifications: [],
       };
       fieldsForRevision.set(fieldRoot, pending);
@@ -1080,15 +1090,25 @@ class FormController implements FormInstance {
   private readonly handleSubmit = (event: SubmitEvent): void => {
     if (this.destroyed) return;
 
+    const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
+    // A submitter with formnovalidate (for example "Save draft") skips validation. Form-level
+    // novalidate only turns off browser bubbles, so it keeps Runtime validation.
+    const skipValidation = (submitter as HTMLButtonElement | null)?.formNoValidate;
+
     if (this.submitHandler) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
-      void this.runValidationForManagedSubmit(event, submitter);
+      if (skipValidation) {
+        // A pending async submit must not call onSubmit after this draft submit.
+        this.cancelAsyncValidation();
+        this.callSubmitHandler(event, submitter);
+      } else {
+        void this.runValidationForManagedSubmit(event, submitter);
+      }
       return;
     }
 
-    if (!this.runSynchronousSubmitValidation()) {
+    if (!skipValidation && !this.runSynchronousSubmitValidation()) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
@@ -1246,10 +1266,12 @@ class FormController implements FormInstance {
     if (!field) return [];
 
     const registration = field.getFormRegistration();
-    const errors = [
-      ...getOwnNativeControls(fieldRoot).flatMap((control) => readNativeValidationErrors(control)),
-      ...readRuntimeValidationErrors(registration),
-    ];
+    const nativeErrors = getOwnNativeControls(fieldRoot).flatMap((control) =>
+      readNativeValidationErrors(control),
+    );
+    // A Select value input reports its own valueMissing error, so the Runtime check is a fallback.
+    const errors =
+      nativeErrors.length > 0 ? nativeErrors : readRuntimeValidationErrors(registration);
     return errors.map((error) => ({
       ...error,
       control: registration.control,
@@ -1532,7 +1554,9 @@ class FormController implements FormInstance {
     const targetFieldRoots = this.getAsyncTargetFieldRoots(fieldRoots, true);
     if (targetFieldRoots.length === 0) return;
 
-    const batch = this.beginAsyncValidationBatch(targetFieldRoots);
+    const batch = this.beginAsyncValidationBatch(targetFieldRoots, {
+      policyRoots: fieldRoots,
+    });
 
     const run = () => {
       this.asyncValidationTimer = undefined;
@@ -1846,6 +1870,7 @@ class FormController implements FormInstance {
     validatingFieldRoots: readonly HTMLElement[],
     options: {
       readonly onAbort?: () => void;
+      readonly policyRoots?: readonly HTMLElement[];
       readonly writeFieldRoots?: readonly HTMLElement[];
     } = {},
   ): AsyncValidationBatch {
@@ -1854,6 +1879,7 @@ class FormController implements FormInstance {
       controller: new AbortController(),
       generation: this.validationGeneration,
       onAbort: options.onAbort,
+      policyRoots: options.policyRoots,
       writeFieldRoots: [...(options.writeFieldRoots ?? validatingFieldRoots)],
     };
     this.currentAsyncValidationBatch = batch;
@@ -1905,19 +1931,25 @@ class FormController implements FormInstance {
     fieldRoot: HTMLElement,
     cause: FormValidationCause,
     policy = this.getFieldPolicy(fieldRoot),
-    postSubmit = this.submitAttempted,
+    postSubmit = this.isPostSubmitField(fieldRoot),
   ): void {
     const externalErrorsChanged = this.clearExternalErrorsOnChange(fieldRoot, cause);
     const shouldValidate = this.shouldValidateField(policy, cause, postSubmit);
     const visibilityChanged = this.updateErrorVisibility(fieldRoot, cause, policy);
 
     if (shouldValidate) {
+      // Only one async batch runs at a time. Carry the fields of a pending change or blur batch
+      // into the next batch so that their async results are not lost.
+      const asyncFieldRoots =
+        this.currentAsyncValidationBatch?.policyRoots?.filter((root) => root !== fieldRoot) ?? [];
       this.cancelAsyncValidation();
       this.validatedFieldRoots.add(fieldRoot);
       this.clearAsyncErrorsForField(fieldRoot);
-      const fieldValid = this.validateNativeField(fieldRoot);
-      if (fieldValid) {
-        this.scheduleAsyncValidation([fieldRoot], cause);
+      if (this.validateNativeField(fieldRoot)) {
+        asyncFieldRoots.push(fieldRoot);
+      }
+      if (asyncFieldRoots.length > 0) {
+        this.scheduleAsyncValidation(asyncFieldRoots, cause);
       }
       return;
     }
@@ -2030,10 +2062,14 @@ class FormController implements FormInstance {
     return !foundMatchingField || !foundMatchingControl;
   }
 
+  private isPostSubmitField(fieldRoot: HTMLElement): boolean {
+    return this.submitAttempted || this.postValidateFieldRoots.has(fieldRoot);
+  }
+
   private shouldValidateField(
     policy: FormFieldPolicy,
     cause: FormValidationCause,
-    postSubmit = this.submitAttempted,
+    postSubmit: boolean,
   ): boolean {
     const activeTiming = postSubmit ? policy.revalidationTiming : policy.validationTiming;
     return doesTimingMatch(activeTiming, cause);

@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type DropzoneFilesChangeReason = "drop" | "imperative-action" | "input-change";
@@ -15,6 +16,12 @@ export type DropzoneFilesChangeDetails = {
   previousFiles: File[];
   reason: DropzoneFilesChangeReason;
   trigger?: Element;
+};
+
+export type DropzoneFilesRejectDetails = {
+  event: Event;
+  /** Dropped files that did not match `accept`, or extra files that single-file mode did not keep. */
+  files: File[];
 };
 
 export type DropzoneOptions = {
@@ -43,6 +50,10 @@ export type DropzoneInstance = {
     event: "filesChange",
     callback: (details: DropzoneFilesChangeDetails) => void,
   ): () => void;
+  subscribe(
+    event: "filesReject",
+    callback: (details: DropzoneFilesRejectDetails) => void,
+  ): () => void;
 };
 
 type DropzoneElements = {
@@ -68,10 +79,11 @@ const DROPZONE_DISABLED_ATTRIBUTE = "data-disabled";
 const DROPZONE_DRAG_ACTIVE_ATTRIBUTE = "data-drag-active";
 const DROPZONE_HAS_FILES_ATTRIBUTE = "data-has-files";
 const DROPZONE_IS_UPLOADING_ATTRIBUTE = "data-is-uploading";
+const DROPZONE_REJECTED_ATTRIBUTE = "data-rejected";
 
 const FILE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /></svg>`;
 
-const instances = new WeakMap<HTMLElement, DropzoneController>();
+const instances = shared<WeakMap<HTMLElement, DropzoneController>>("dropzone");
 
 registerFieldControlBridge({
   kind: "dropzone",
@@ -116,7 +128,10 @@ class DropzoneController implements DropzoneInstance {
   private resetTimer: number | undefined;
   private readonly managesTabIndex: boolean;
   private readonly onFilesChange?: (files: File[], details: DropzoneFilesChangeDetails) => void;
-  private readonly subscribers = new Set<(details: DropzoneFilesChangeDetails) => void>();
+  private readonly subscribers = {
+    filesChange: new Set<(details: DropzoneFilesChangeDetails) => void>(),
+    filesReject: new Set<(details: DropzoneFilesRejectDetails) => void>(),
+  };
   private disabled: boolean;
   private dragActive = false;
   private files: File[] = [];
@@ -155,7 +170,8 @@ class DropzoneController implements DropzoneInstance {
     this.partAbortController.abort();
     this.clearResetTimer();
     this.mutationObserver?.disconnect();
-    this.subscribers.clear();
+    this.subscribers.filesChange.clear();
+    this.subscribers.filesReject.clear();
     instances.delete(this.root);
     this.destroyed = true;
   }
@@ -231,13 +247,19 @@ class DropzoneController implements DropzoneInstance {
   subscribe(
     event: "filesChange",
     callback: (details: DropzoneFilesChangeDetails) => void,
-  ): () => void {
-    if (event !== "filesChange") {
+  ): () => void;
+  subscribe(
+    event: "filesReject",
+    callback: (details: DropzoneFilesRejectDetails) => void,
+  ): () => void;
+  subscribe(event: "filesChange" | "filesReject", callback: (details: never) => void): () => void {
+    const subscribers = this.subscribers[event] as Set<(details: never) => void> | undefined;
+    if (!subscribers) {
       throw new Error(`Unsupported Dropzone event: ${event}`);
     }
 
-    this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
+    subscribers.add(callback);
+    return () => subscribers.delete(callback);
   }
 
   private setupInput(): void {
@@ -312,6 +334,7 @@ class DropzoneController implements DropzoneInstance {
   private requestFiles(request: FilesRequest, options: DropzoneSetFilesOptions = {}): void {
     if (this.disabled && request.reason !== "imperative-action") return;
 
+    this.root.removeAttribute(DROPZONE_REJECTED_ATTRIBUTE);
     const previousFiles = this.files;
     this.files = request.files;
     this.writeInputFiles(request.files);
@@ -329,7 +352,7 @@ class DropzoneController implements DropzoneInstance {
 
     dispatchCustomEvent(this.root, "starwind:files-change", details);
     this.onFilesChange?.(details.files, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
+    this.subscribers.filesChange.forEach((subscriber) => subscriber(details));
   }
 
   private render(): void {
@@ -459,23 +482,29 @@ class DropzoneController implements DropzoneInstance {
       return;
     }
 
-    const files = constrainFilesForInput(
-      normalizeFiles(event.dataTransfer?.files ?? []),
-      this.input,
-    );
-    if (files.length === 0) {
+    const dropped = normalizeFiles(event.dataTransfer?.files ?? []);
+    const files = constrainFilesForInput(dropped, this.input);
+    const rejected = dropped.filter((file) => !files.includes(file));
+    if (files.length > 0) {
+      this.suppressNextInputChange = true;
+      this.requestFiles({
+        event,
+        files,
+        reason: "drop",
+        trigger: this.root,
+      });
+      this.input.dispatchEvent(new Event("change", { bubbles: true }));
+    } else {
+      // Only a drop that kept nothing marks the root; kept files keep their normal styling.
+      if (dropped.length > 0) this.root.setAttribute(DROPZONE_REJECTED_ATTRIBUTE, "");
       this.render();
-      return;
     }
 
-    this.suppressNextInputChange = true;
-    this.requestFiles({
-      event,
-      files,
-      reason: "drop",
-      trigger: this.root,
-    });
-    this.input.dispatchEvent(new Event("change", { bubbles: true }));
+    if (rejected.length > 0) {
+      const details: DropzoneFilesRejectDetails = { event, files: rejected };
+      dispatchCustomEvent(this.root, "starwind:files-reject", details);
+      this.subscribers.filesReject.forEach((subscriber) => subscriber(details));
+    }
   };
 
   private readonly handleInputChange = (event: Event): void => {

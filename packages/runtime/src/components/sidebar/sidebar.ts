@@ -1,5 +1,6 @@
 import { assertHTMLElement, readBooleanAttribute, resolveAsChildControl } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { shared } from "../../internal/shared";
 
 export type SidebarOpenState = "collapsed" | "expanded";
 
@@ -101,7 +102,7 @@ const DEFAULT_MOBILE_QUERY = "(max-width: 767.98px)";
 const DEFAULT_PERSISTENCE_KEY = "starwind-sidebar-open";
 const DEFAULT_PERSISTENCE_MAX_AGE = 60 * 60 * 24 * 7;
 
-const instances = new WeakMap<HTMLElement, SidebarController>();
+const instances = shared<WeakMap<HTMLElement, SidebarController>>("sidebar");
 
 export function createSidebarController(
   provider: HTMLElement,

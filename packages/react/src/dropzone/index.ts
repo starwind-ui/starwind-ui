@@ -30,4 +30,4 @@ export {
 
 export default Dropzone;
 
-export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime";
+export type { DropzoneFilesChangeDetails, DropzoneFilesRejectDetails } from "@starwind-ui/runtime";

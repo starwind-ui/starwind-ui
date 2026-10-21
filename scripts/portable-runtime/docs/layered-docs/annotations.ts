@@ -685,7 +685,8 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
       "Validation timing and error visibility are separate policies: a field can be validated before its errors are revealed.",
       "Policies set on Form apply to every nested Field unless that Field supplies its own timing attributes.",
       "After a submission attempt, revalidationTiming replaces validationTiming for every Field; the policies are not additive.",
-      "Submitting the form always validates every registered Field, regardless of validationTiming.",
+      'When `validate()` shows errors on a Field, through `reveal: true` or `errorVisibility="manual"`, revalidationTiming replaces validationTiming for that Field. `resetValidation()` and native form reset restore validationTiming.',
+      "Submitting the form validates every registered Field, regardless of validationTiming. A submit button with `formnovalidate` skips validation and stops a pending async submit: `onSubmit` runs, or native submission continues when no `onSubmit` is set. A `novalidate` attribute on the form only turns off native browser messages, so Runtime validation still runs.",
     ],
     sections: [
       {

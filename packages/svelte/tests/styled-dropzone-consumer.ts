@@ -4,7 +4,7 @@ export const createStyledDropzoneConsumer = (root: string) =>
   createStyledNativeConsumer(root, ["dropzone", "field", "separator", "form"]);
 
 export const dropzoneImports = `import Dropzone, { Dropzone as StyledRoot, DropzoneFilesList, DropzoneLoadingIndicator, DropzoneUploadIndicator, DropzoneVariants, type DropzoneProps } from "./dropzone/index.js";
-import Primitive, { Dropzone as Namespace, DropzoneRoot, DropzoneInput, DropzoneFilesList as FilesList, DropzoneLoadingIndicator as LoadingIndicator, DropzoneUploadIndicator as UploadIndicator, type DropzoneFilesChangeDetails } from "@starwind-ui/svelte/dropzone";
+import Primitive, { Dropzone as Namespace, DropzoneRoot, DropzoneInput, DropzoneFilesList as FilesList, DropzoneLoadingIndicator as LoadingIndicator, DropzoneUploadIndicator as UploadIndicator, type DropzoneFilesChangeDetails, type DropzoneFilesRejectDetails } from "@starwind-ui/svelte/dropzone";
 import { createDropzone, type DropzoneInstance, type DropzoneOptions, type DropzoneSetFilesOptions } from "@starwind-ui/runtime/dropzone";`;
 
 export const dropzonePositive = `<script lang="ts">
@@ -14,6 +14,7 @@ const options: DropzoneOptions = { disabled: false, isUploading: false };
 const filesOptions: DropzoneSetFilesOptions = { emit: false };
 const props: DropzoneProps = { id: "upload", name: "files", form: "upload-form", accept: ".txt", multiple: true, required: true, isUploading: false,
  onFilesChange(files, detail) { const values: File[] = files; const notification: DropzoneFilesChangeDetails = detail; void [values, notification.reason]; },
+ onFilesReject(files, detail) { const values: File[] = files; const notification: DropzoneFilesRejectDetails = detail; void [values, notification.event]; },
  onchange(event) { const input: HTMLInputElement = event.currentTarget; void input.files; },
  ref(node) { const owner: HTMLLabelElement | null = node; if(owner) { const instance: DropzoneInstance = createDropzone(owner); instance.setFiles(instance.getFiles(), filesOptions); instance.setUploading(instance.getUploading()); instance.clearFiles(filesOptions); } },
 };

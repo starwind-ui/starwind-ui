@@ -44,11 +44,11 @@ export function printSvelteFileDropControlComponent(
 function printRoot(facts: AdapterFileDropControlFacts): string {
   const connection = dropzoneConnection(facts, {
     read: "readInputs()",
-    notify: (files, detail) => `onFilesChange?.(${files}, ${detail});`,
+    notify: (event, files, detail) => `${event.callbackProp}?.(${files}, ${detail});`,
     untrack: (body) => `untrack(() => { ${body} });`,
   });
   return `<script lang="ts">
-  import { ${facts.runtime.factory}, type ${facts.event.detailsType} } from "${facts.runtime.importSource}";
+  import { ${facts.runtime.factory}, type ${facts.event.detailsType}, type ${facts.rejectEvent.detailsType} } from "${facts.runtime.importSource}";
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import { observeFormDiscovery } from "../_internal/form-discovery.js";
@@ -58,9 +58,10 @@ function printRoot(facts: AdapterFileDropControlFacts): string {
     disabled?: boolean;
     isUploading?: boolean;
     onFilesChange?: (files: File[], detail: ${facts.event.detailsType}) => void;
+    ${facts.rejectEvent.callbackProp}?: (files: ${facts.rejectEvent.valueType}, detail: ${facts.rejectEvent.detailsType}) => void;
     ref?: (element: HTMLLabelElement | null) => void;
   };
-  let { children, disabled = ${facts.props.disabled.defaultValue}, isUploading = ${facts.props.isUploading.defaultValue}, onFilesChange, ref, ...rest }: Props = $props();
+  let { children, disabled = ${facts.props.disabled.defaultValue}, isUploading = ${facts.props.isUploading.defaultValue}, onFilesChange, ${facts.rejectEvent.callbackProp}, ref, ...rest }: Props = $props();
   const readInputs = () => ({ disabled, isUploading });
   ${connection}
   const attachRuntime: Attachment<HTMLLabelElement> = (element) => {

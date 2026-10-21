@@ -33,13 +33,39 @@ const {
   persistenceMaxAge = 604800,
   ...rest
 } = Astro.props;
+
+const initialState = defaultOpen ? "expanded" : "collapsed";
+// Astro has no component context. Record this initial state for the Sidebar parts in this request.
+const sidebarInitialStatesKey = Symbol.for("starwind-ui.sidebar.initial-states");
+const requestLocals = Astro.locals as unknown as
+  | Record<symbol, Set<string> | undefined>
+  | undefined;
+if (requestLocals) {
+  const sidebarInitialStates = requestLocals[sidebarInitialStatesKey] ?? new Set<string>();
+  sidebarInitialStates.add(initialState);
+  requestLocals[sidebarInitialStatesKey] = sidebarInitialStates;
+}
+
+const providerAttributes = Object.fromEntries(
+  Object.entries(rest).filter(
+    ([name]) =>
+      ![
+        "data-sw-sidebar-provider",
+        "data-state",
+        "data-mobile-open",
+        "data-keyboard-shortcut",
+        "data-mobile-query",
+        "data-persistence-max-age",
+      ].includes(name),
+  ),
+);
 ---
 
 <div
   data-sw-sidebar-provider
   data-default-open={defaultOpen ? "true" : undefined}
   data-default-mobile-open={defaultMobileOpen ? "true" : undefined}
-  data-state={defaultOpen ? "expanded" : "collapsed"}
+  data-state={initialState}
   data-mobile-open={defaultMobileOpen ? "true" : "false"}
   data-keyboard-shortcut={keyboardShortcut}
   data-mobile-query={mobileQuery}
@@ -47,7 +73,7 @@ const {
   data-persistence-key={persistenceKey}
   data-persistence-storage={persistenceStorage === false ? "false" : persistenceStorage}
   data-persistence-max-age={persistenceMaxAge}
-  {...rest}
+  {...providerAttributes}
 >
   <slot />
 </div>

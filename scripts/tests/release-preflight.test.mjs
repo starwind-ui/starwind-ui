@@ -1,17 +1,17 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
-import { collectPreflightFailures, rehearseRelease } from "../release-preflight.mjs";
 import {
   createChangesetStatusCommand,
   runChangesetStatus,
 } from "../portable-runtime/changeset-status.ts";
+import { collectPreflightFailures, rehearseRelease } from "../release-preflight.mjs";
 
 const roots = [];
 
@@ -125,6 +125,25 @@ describe("release preflight", () => {
     expect(calls).toContainEqual(["release:version"]);
     expect(calls).toContainEqual(["install", "--frozen-lockfile", "--ignore-scripts", "--offline"]);
     expect(existsSync(candidate)).toBe(false);
+  });
+
+  it("copies a tracked directory symlink as a symlink", async () => {
+    const root = await createFixture();
+    await mkdir(path.join(root, "skills", "release"), { recursive: true });
+    await writeFile(path.join(root, "skills", "release", "SKILL.md"), "skill\n");
+    await mkdir(path.join(root, "links"));
+    await symlink("../skills/release", path.join(root, "links", "release"));
+    execFileSync("git", ["add", "."], { cwd: root });
+    let copiedLink;
+
+    await rehearseRelease({
+      root,
+      run: async (_args, cwd) => {
+        copiedLink ??= await readlink(path.join(cwd, "links", "release"));
+      },
+    });
+
+    expect(copiedLink).toBe("../skills/release");
   });
 
   it("runs the audit and removes the rehearsal when versioning fails", async () => {

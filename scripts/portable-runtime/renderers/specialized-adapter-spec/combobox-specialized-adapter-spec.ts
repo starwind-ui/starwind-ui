@@ -161,7 +161,6 @@ type ComboboxFormControlRecipe = {
     constantAttributes: {
       ariaHidden: "true";
       tabIndex: "-1";
-      type: "hidden";
     };
     contractProps: string[];
     fieldIntegration: true;
@@ -169,7 +168,7 @@ type ComboboxFormControlRecipe = {
     publicExport: false;
     renderedAttributes: string[];
     renderedInsidePart: "root";
-    type: "hidden";
+    type: "text";
     valueState: "value";
   };
   rootAttributes: {
@@ -231,7 +230,7 @@ type ComboboxReusableSelectMetadataRecipe = {
     fieldIntegration: true;
     hiddenInputPart: "hiddenInput";
     props: string[];
-    type: "hidden";
+    type: "text";
   };
   itemContext: {
     part: "item";
@@ -1029,19 +1028,16 @@ function buildFormControlRecipe(spec: SpecializedAdapterSpec): ComboboxFormContr
   if (
     !form?.hiddenInput ||
     form.hiddenInput.part !== "hiddenInput" ||
-    form.hiddenInput.type !== "hidden"
+    form.hiddenInput.type !== "text"
   ) {
-    throw new Error(
-      "Combobox specialized adapter spec requires hiddenInput hidden-input metadata.",
-    );
+    throw new Error("Combobox specialized adapter spec requires a validating text input recipe.");
   }
   if (form.fieldIntegration !== true) {
     throw new Error("Combobox specialized adapter spec requires field integration metadata.");
   }
-  for (const attribute of ["type", "form", "name", "value", "aria-hidden", "tabIndex"]) {
+  for (const attribute of ["form", "name", "value", "aria-hidden", "tabIndex"]) {
     assertStaticAttribute(spec, "hiddenInput", attribute);
   }
-  assertStaticAttributeValue(spec, "hiddenInput", "type", "hidden");
   assertStaticAttributeValue(spec, "hiddenInput", "aria-hidden", "true");
   assertStaticAttributeValue(spec, "hiddenInput", "tabIndex", "-1");
   assertStaticAttribute(spec, "root", "data-autocomplete");
@@ -1054,7 +1050,6 @@ function buildFormControlRecipe(spec: SpecializedAdapterSpec): ComboboxFormContr
       constantAttributes: {
         ariaHidden: "true",
         tabIndex: "-1",
-        type: "hidden",
       },
       contractProps: [...form.props],
       fieldIntegration: true,
@@ -1064,7 +1059,7 @@ function buildFormControlRecipe(spec: SpecializedAdapterSpec): ComboboxFormContr
         .filter((attribute) => attribute.part === "hiddenInput")
         .map((attribute) => attribute.name),
       renderedInsidePart: "root",
-      type: "hidden",
+      type: "text",
       valueState: "value",
     },
     rootAttributes: {
@@ -1141,11 +1136,9 @@ function buildReusableSelectMetadataRecipe(
   if (
     !form?.hiddenInput ||
     form.hiddenInput.part !== "hiddenInput" ||
-    form.hiddenInput.type !== "hidden"
+    form.hiddenInput.type !== "text"
   ) {
-    throw new Error(
-      "Combobox specialized adapter spec requires hiddenInput hidden-input metadata.",
-    );
+    throw new Error("Combobox specialized adapter spec requires a validating text input recipe.");
   }
 
   assertStaticAttribute(spec, "itemIndicator", "data-state");
@@ -1161,7 +1154,7 @@ function buildReusableSelectMetadataRecipe(
       fieldIntegration: true,
       hiddenInputPart: "hiddenInput",
       props: [...(form.props ?? [])],
-      type: "hidden",
+      type: "text",
     },
     itemContext: { part: "item", valueProp: "value" },
     itemIndicator: {

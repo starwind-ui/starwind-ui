@@ -1,3 +1,5 @@
+import { shared } from "./shared";
+
 export type DocumentScrollLock = {
   release(): void;
 };
@@ -18,7 +20,7 @@ type DocumentScrollLockState = {
 
 const SCROLL_LOCK_ATTRIBUTE = "data-sw-scroll-locked";
 const SCROLLBAR_WIDTH_PROPERTY = "--sw-scrollbar-width";
-const documentLocks = new WeakMap<Document, DocumentScrollLockState>();
+const documentLocks = shared<WeakMap<Document, DocumentScrollLockState>>("scroll-lock");
 
 export function lockDocumentScroll(ownerDocument: Document = document): DocumentScrollLock {
   const body = ownerDocument.body;

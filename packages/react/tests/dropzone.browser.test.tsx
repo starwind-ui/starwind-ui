@@ -52,3 +52,36 @@ it("reconnects keyed and returning Dropzone inputs while preserving files and co
     host.remove();
   }
 });
+
+it("reports rejected dropped files through the latest onFilesReject prop", async () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const first: File[][] = [];
+  const latest: Array<{ files: File[]; event: Event }> = [];
+  const render = (onFilesReject: (files: File[], details: { event: Event }) => void) => (
+    <Dropzone.Root onFilesReject={onFilesReject}>
+      <Dropzone.Input accept="image/*" />
+    </Dropzone.Root>
+  );
+  try {
+    await act(() => root.render(render((files) => first.push(files))));
+    await act(() =>
+      root.render(render((files, details) => latest.push({ files, event: details.event }))),
+    );
+    const element = host.querySelector<HTMLElement>("[data-sw-dropzone]")!;
+    const pdf = new File(["paper"], "paper.pdf", { type: "application/pdf" });
+    const transfer = new DataTransfer();
+    transfer.items.add(pdf);
+    const drop = new DragEvent("drop", { bubbles: true, dataTransfer: transfer });
+    await act(() => {
+      element.dispatchEvent(drop);
+    });
+    expect(first).toEqual([]);
+    expect(latest).toEqual([{ files: [pdf], event: drop }]);
+    expect(element.hasAttribute("data-rejected")).toBe(true);
+  } finally {
+    await act(() => root.unmount());
+    host.remove();
+  }
+});

@@ -9,6 +9,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
+import { shared } from "../../internal/shared";
 import { createToggle, type ToggleInstance, type TogglePressedChangeDetails } from "../toggle";
 
 export type ToggleGroupValue = string[];
@@ -76,7 +77,7 @@ const TOGGLE_GROUP_VALUE_ATTRIBUTE = "data-value";
 const TOGGLE_ROOT_ATTRIBUTE = "data-sw-toggle";
 const TOGGLE_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, ToggleGroupController>();
+const instances = shared<WeakMap<HTMLElement, ToggleGroupController>>("toggle-group");
 
 export function createToggleGroup(
   root: HTMLElement,

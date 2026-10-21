@@ -35,6 +35,7 @@ export const dropzoneRuntimeAdapterContract = {
         { name: "data-drag-active", source: "state" },
         { name: "data-has-files", source: "state" },
         { name: "data-is-uploading", source: "prop" },
+        { name: "data-rejected", source: "state" },
         { name: "aria-disabled", source: "prop" },
         { name: "role", source: "constant", value: "button" },
         { name: "tabindex", source: "state" },
@@ -88,6 +89,7 @@ export const dropzoneRuntimeAdapterContract = {
       type: "boolean",
     },
     { name: "onFilesChange", kind: "callback", type: "DropzoneFilesChangeDetails" },
+    { name: "onFilesReject", kind: "callback", type: "DropzoneFilesRejectDetails" },
     { name: "accept", kind: "attribute", targets: ["input"], type: "string" },
     { name: "multiple", kind: "attribute", targets: ["input"], type: "boolean" },
     { name: "name", kind: "attribute", targets: ["input"], type: "string" },
@@ -110,6 +112,15 @@ export const dropzoneRuntimeAdapterContract = {
       callbackProp: "onFilesChange",
       detailsType: "DropzoneFilesChangeDetails",
       domEvent: "starwind:files-change",
+      emitsFrom: "root",
+      valueProperty: "files",
+      valueType: "File[]",
+    },
+    {
+      name: "filesReject",
+      callbackProp: "onFilesReject",
+      detailsType: "DropzoneFilesRejectDetails",
+      domEvent: "starwind:files-reject",
       emitsFrom: "root",
       valueProperty: "files",
       valueType: "File[]",
@@ -182,6 +193,7 @@ export const dropzoneRuntimeAdapterContract = {
   frameworkNotes: {
     astro: [
       "Render the file input and indicator/list parts statically; runtime owns drag state, keyboard activation, file list rendering, and upload-state synchronization.",
+      "Listen for starwind:files-reject on the root to read dropped files that did not match accept or multiple. When a drop keeps no files, the root carries data-rejected until the next accepted drop, file picker change, setFiles call, or form reset.",
     ],
     react: [
       "Create the runtime controller once, bridge disabled and uploading changes through setters, and surface file changes through onFilesChange.",
@@ -200,6 +212,7 @@ export const dropzoneRuntimeAdapterContract = {
         "isUploading control prop and setter",
         "disabled option prop and setter",
         "files-change event/callback/details value",
+        "files-reject event/callback/details value",
         "file input form props",
         "initial root/input/indicator/list attributes",
       ],

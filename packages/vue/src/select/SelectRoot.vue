@@ -470,7 +470,18 @@ onBeforeUnmount(() => {
       ref="inputRef"
       data-sw-select-input
       data-sw-part="input"
-      type="hidden"
+      :type="props.required ? undefined : 'hidden'"
+      style="
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      "
       :autocomplete="props.autoComplete"
       :disabled="props.disabled"
       :form="props.form"

@@ -45,6 +45,18 @@ export type ComboboxRootProps = Omit<
   value?: string | null;
 };
 
+const visuallyHiddenInputStyle: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: "hidden",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(function ComboboxRoot(
   {
     autoComplete,
@@ -598,7 +610,7 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
         >
           <input
             data-sw-combobox-hidden-input
-            type="hidden"
+            type={required ? undefined : "hidden"}
             autoComplete={autoComplete}
             form={form}
             name={name}
@@ -607,7 +619,12 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
             value={renderedValue}
             aria-hidden="true"
             tabIndex={-1}
-            readOnly
+            style={visuallyHiddenInputStyle}
+            onFocus={() =>
+              rootRef.current?.querySelector<HTMLElement>("[data-sw-combobox-input]")?.focus()
+            }
+            // Only autofill writes here. React restores the controlled value.
+            onChange={ensureInstance}
           />
           {children}
         </div>

@@ -1,0 +1,6 @@
+{
+  "components": {
+    "sidebar": "patch"
+  },
+  "impact": "source"
+}

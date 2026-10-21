@@ -389,6 +389,162 @@ describe("createDropzone", () => {
     );
   });
 
+  it("reports a fully rejected drop, marks the root, and keeps the current files", () => {
+    const root = renderDropzone({ accept: "image/*" });
+    const rejectListener = vi.fn();
+    const changeListener = vi.fn();
+    const inputChange = vi.fn();
+    root.addEventListener("starwind:files-reject", rejectListener);
+    root.addEventListener("starwind:files-change", changeListener);
+    getInput().addEventListener("change", inputChange);
+    const dropzone = createDropzone(root);
+    const subscriber = vi.fn();
+    dropzone.subscribe("filesReject", subscriber);
+    const imageFile = new File(["avatar"], "avatar.png", { type: "image/png" });
+    const pdfFile = new File(["paper"], "paper.pdf", { type: "application/pdf" });
+    dropzone.setFiles([imageFile], { emit: false });
+    const transfer = new DataTransfer();
+    transfer.items.add(pdfFile);
+
+    const drop = new DragEvent("drop", { bubbles: true, dataTransfer: transfer });
+    root.dispatchEvent(drop);
+
+    expect(root.hasAttribute("data-rejected")).toBe(true);
+    expect(dropzone.getFiles()).toEqual([imageFile]);
+    expect(Array.from(getInput().files ?? [])).toEqual([imageFile]);
+    expect(changeListener).not.toHaveBeenCalled();
+    expect(inputChange).not.toHaveBeenCalled();
+    expect(rejectListener).toHaveBeenCalledTimes(1);
+    expect(rejectListener).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: { event: drop, files: [pdfFile] } }),
+    );
+    expect(subscriber).toHaveBeenCalledWith({ event: drop, files: [pdfFile] });
+  });
+
+  it("does not mark the root when a drop carries no files", () => {
+    const root = renderDropzone({ accept: "image/*" });
+    const rejectListener = vi.fn();
+    root.addEventListener("starwind:files-reject", rejectListener);
+    createDropzone(root);
+
+    root.dispatchEvent(new DragEvent("drop", { bubbles: true, dataTransfer: new DataTransfer() }));
+
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+    expect(rejectListener).not.toHaveBeenCalled();
+  });
+
+  it("accepts matching files from a mixed drop, reports the rest, and leaves the root unmarked", () => {
+    const root = renderDropzone({ accept: "image/*", multiple: true });
+    const events: string[] = [];
+    const changeListener = vi.fn(() => events.push("change"));
+    const rejectListener = vi.fn(() => events.push("reject"));
+    root.addEventListener("starwind:files-change", changeListener);
+    root.addEventListener("starwind:files-reject", rejectListener);
+    const dropzone = createDropzone(root);
+    const imageFile = new File(["avatar"], "avatar.png", { type: "image/png" });
+    const pdfFile = new File(["paper"], "paper.pdf", { type: "application/pdf" });
+    const textFile = new File(["notes"], "notes.txt", { type: "text/plain" });
+    const transfer = new DataTransfer();
+    transfer.items.add(pdfFile);
+    transfer.items.add(imageFile);
+    transfer.items.add(textFile);
+
+    root.dispatchEvent(new DragEvent("drop", { bubbles: true, dataTransfer: transfer }));
+
+    expect(dropzone.getFiles()).toEqual([imageFile]);
+    expect(Array.from(getInput().files ?? [])).toEqual([imageFile]);
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+    expect(events).toEqual(["change", "reject"]);
+    expect(changeListener).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ files: [imageFile] }) }),
+    );
+    expect(rejectListener).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ files: [pdfFile, textFile] }) }),
+    );
+  });
+
+  it("reports extra dropped files in single-file mode without marking the root", () => {
+    const root = renderDropzone();
+    const rejectListener = vi.fn();
+    root.addEventListener("starwind:files-reject", rejectListener);
+    const dropzone = createDropzone(root);
+    const first = new File(["a"], "a.txt", { type: "text/plain" });
+    const second = new File(["b"], "b.txt", { type: "text/plain" });
+    const transfer = new DataTransfer();
+    transfer.items.add(first);
+    transfer.items.add(second);
+
+    root.dispatchEvent(new DragEvent("drop", { bubbles: true, dataTransfer: transfer }));
+
+    expect(dropzone.getFiles()).toEqual([first]);
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+    expect(rejectListener).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expect.objectContaining({ files: [second] }) }),
+    );
+  });
+
+  it("clears the rejected state on an accepted drop, picker change, setFiles, and form reset", async () => {
+    const form = document.createElement("form");
+    document.body.append(form);
+    const root = renderDropzone({ accept: "image/*" });
+    form.append(root);
+    const dropzone = createDropzone(root);
+    const imageFile = new File(["avatar"], "avatar.png", { type: "image/png" });
+    const pdfFile = new File(["paper"], "paper.pdf", { type: "application/pdf" });
+    const dropFile = (file: File) => {
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      root.dispatchEvent(new DragEvent("drop", { bubbles: true, dataTransfer: transfer }));
+    };
+
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+
+    dropFile(pdfFile);
+    expect(root.hasAttribute("data-rejected")).toBe(true);
+    dropFile(imageFile);
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+    expect(dropzone.getFiles()).toEqual([imageFile]);
+
+    dropFile(pdfFile);
+    const transfer = new DataTransfer();
+    transfer.items.add(imageFile);
+    getInput().files = transfer.files;
+    getInput().dispatchEvent(new Event("change", { bubbles: true }));
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+
+    dropFile(pdfFile);
+    dropzone.setFiles([]);
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+
+    dropFile(pdfFile);
+    form.reset();
+    await waitForMacrotask();
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+  });
+
+  it("keeps picked files that the native dialog allowed, even when their MIME type differs", () => {
+    const root = renderDropzone({ accept: "text/csv" });
+    const onFilesChange = vi.fn();
+    const rejectListener = vi.fn();
+    root.addEventListener("starwind:files-reject", rejectListener);
+    const dropzone = createDropzone(root, { onFilesChange });
+    const csvFile = new File(["a,b"], "data.csv", { type: "application/vnd.ms-excel" });
+    const transfer = new DataTransfer();
+    transfer.items.add(csvFile);
+
+    getInput().files = transfer.files;
+    getInput().dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(dropzone.getFiles()).toEqual([csvFile]);
+    expect(Array.from(getInput().files ?? [])).toEqual([csvFile]);
+    expect(onFilesChange).toHaveBeenCalledWith(
+      [csvFile],
+      expect.objectContaining({ reason: "input-change" }),
+    );
+    expect(rejectListener).not.toHaveBeenCalled();
+    expect(root.hasAttribute("data-rejected")).toBe(false);
+  });
+
   it("clears rendered and internal file state when the owning form resets", async () => {
     const form = document.createElement("form");
     document.body.append(form);

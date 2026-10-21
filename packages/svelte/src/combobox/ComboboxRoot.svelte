@@ -232,5 +232,5 @@ $effect(() => { void autoComplete; void form; void name; void required; untrack(
 </script>
 <div {...rest} data-sw-combobox="" data-sw-part="root" data-default-value={initialDefaults.value ?? undefined} data-default-input-value={initialDefaults.inputValue} data-disabled={disabled ? "" : undefined} data-readonly={readOnly ? "" : undefined} data-name={name} data-form={form} data-required={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
-  <input type="hidden" data-sw-combobox-hidden-input="" aria-hidden="true" tabindex={-1} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
+  <input type={required ? undefined : "hidden"} style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0" data-sw-combobox-hidden-input="" aria-hidden="true" tabindex={-1} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
 </div>

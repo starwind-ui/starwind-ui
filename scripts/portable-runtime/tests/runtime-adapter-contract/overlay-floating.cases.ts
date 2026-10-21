@@ -849,7 +849,7 @@ export function defineRuntimeOverlayFloatingTests(): void {
       { method: "setOpen", stateModel: "open", suppressesEmit: true },
       { method: "setValue", stateModel: "value", suppressesEmit: true },
     ]);
-    expect(select.form?.hiddenInput).toEqual({ part: "input", type: "hidden" });
+    expect(select.form?.hiddenInput).toEqual({ part: "input", type: "text" });
     expect(select.form?.props).toEqual(["autoComplete", "form", "name", "required", "value"]);
     expect(select.runtime.optionProps).toEqual([
       "autoComplete",
@@ -947,7 +947,7 @@ export function defineRuntimeOverlayFloatingTests(): void {
       { method: "setOpen", stateModel: "open", suppressesEmit: true },
       { method: "setValue", stateModel: "value", suppressesEmit: true },
     ]);
-    expect(combobox.form?.hiddenInput).toEqual({ part: "hiddenInput", type: "hidden" });
+    expect(combobox.form?.hiddenInput).toEqual({ part: "hiddenInput", type: "text" });
     expect(combobox.floating).toEqual(
       expect.objectContaining({
         anchorPart: "inputGroup",

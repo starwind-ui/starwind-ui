@@ -1,0 +1,64 @@
+---
+import "@/styles/global.css";
+
+import Home from "@tabler/icons/outline/home.svg";
+import Inbox from "@tabler/icons/outline/inbox.svg";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/starwind-runtime/sidebar";
+
+const menuItems = [
+  { title: "Home", icon: Home },
+  { title: "Inbox", icon: Inbox },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Sidebar initial state smoke fixture</title>
+  </head>
+  <body>
+    <SidebarProvider id="sidebar-initial-state-provider" defaultOpen={false}>
+      <Sidebar collapsible="icon">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Application</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {
+                  menuItems.map((item) => (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton tooltip={item.title}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                }
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <main class="flex flex-1 flex-col gap-4 p-4">
+        <div class="flex items-center gap-2">
+          <SidebarTrigger id="sidebar-initial-state-trigger" />
+          <h1>Sidebar initial state smoke fixture</h1>
+        </div>
+        <p id="sidebar-initial-state-probe">The left edge of this text moves with the sidebar.</p>
+      </main>
+    </SidebarProvider>
+  </body>
+</html>

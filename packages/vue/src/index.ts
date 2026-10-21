@@ -56,6 +56,7 @@ export type {
   DrawerCloseCompleteDetails,
   DrawerOpenChangeDetails,
   DropzoneFilesChangeDetails,
+  DropzoneFilesRejectDetails,
   FormExternalErrorOptions,
   FormExternalErrors,
   FormInstance,

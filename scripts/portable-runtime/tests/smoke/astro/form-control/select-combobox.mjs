@@ -58,10 +58,12 @@ export async function verifyAstroSelectComboboxCases({ page }) {
 
       return {
         hasDataSwSelect: root?.hasAttribute("data-sw-select") ?? null,
+        inputAriaHidden: input?.getAttribute("aria-hidden"),
         inputAutoComplete: input?.getAttribute("autocomplete"),
         inputForm: input?.getAttribute("form"),
         inputName: input?.getAttribute("name"),
         inputRequired: input instanceof HTMLInputElement ? input.required : null,
+        inputTabIndex: input instanceof HTMLInputElement ? input.tabIndex : null,
         inputType: input instanceof HTMLInputElement ? input.type : null,
         inputValue: input instanceof HTMLInputElement ? input.value : null,
         popupHidden: popup instanceof HTMLElement ? popup.hidden : null,
@@ -148,7 +150,11 @@ export async function verifyAstroSelectComboboxCases({ page }) {
     selectState.initial.hasDataSwSelect !== true ||
     selectState.initial.triggerRole !== "combobox" ||
     selectState.initial.triggerAriaHaspopup !== "listbox" ||
-    selectState.initial.inputType !== "hidden" ||
+    // A required Select keeps a visually hidden text input in constraint validation.
+    selectState.initial.inputType !== "text" ||
+    selectState.initial.inputAriaHidden !== "true" ||
+    selectState.initial.inputTabIndex !== -1 ||
+    selectState.afterAsChildSelection.inputType !== "hidden" ||
     selectState.initial.inputName !== "runtimeTheme" ||
     selectState.initial.inputRequired !== true ||
     selectState.initial.inputValue !== "system" ||
@@ -393,9 +399,11 @@ export async function verifyAstroSelectComboboxCases({ page }) {
       return {
         hasDataSwCombobox: root?.hasAttribute("data-sw-combobox") ?? null,
         hasClear: root?.querySelector("[data-sw-combobox-clear]") !== null,
+        hiddenInputAriaHidden: hiddenInput?.getAttribute("aria-hidden"),
         hiddenInputForm: hiddenInput?.getAttribute("form"),
         hiddenInputName: hiddenInput?.getAttribute("name"),
         hiddenInputRequired: hiddenInput instanceof HTMLInputElement ? hiddenInput.required : null,
+        hiddenInputTabIndex: hiddenInput instanceof HTMLInputElement ? hiddenInput.tabIndex : null,
         hiddenInputType: hiddenInput instanceof HTMLInputElement ? hiddenInput.type : null,
         hiddenInputValue: hiddenInput instanceof HTMLInputElement ? hiddenInput.value : null,
         inputAriaActiveDescendant: input?.getAttribute("aria-activedescendant"),
@@ -539,7 +547,11 @@ export async function verifyAstroSelectComboboxCases({ page }) {
   });
   if (
     comboboxState.initial.hasDataSwCombobox !== true ||
-    comboboxState.initial.hiddenInputType !== "hidden" ||
+    // A required Combobox keeps a visually hidden text input in constraint validation.
+    comboboxState.initial.hiddenInputType !== "text" ||
+    comboboxState.initial.hiddenInputAriaHidden !== "true" ||
+    comboboxState.initial.hiddenInputTabIndex !== -1 ||
+    comboboxState.afterAsChildSelection.hiddenInputType !== "hidden" ||
     comboboxState.initial.hiddenInputName !== "runtimeFruit" ||
     comboboxState.initial.hiddenInputRequired !== true ||
     comboboxState.initial.hiddenInputValue !== "banana" ||
@@ -622,7 +634,7 @@ export async function verifyAstroSelectComboboxCases({ page }) {
   const comboboxAfterPointerSelection = await page.evaluate(() => {
     const root = document.querySelector("#runtime-combobox-fruit");
     const input = document.querySelector("#runtime-combobox-fruit-input");
-    const hiddenInput = root?.querySelector('input[type="hidden"]');
+    const hiddenInput = root?.querySelector("[data-sw-combobox-hidden-input]");
 
     return {
       activeElementId:
@@ -664,7 +676,7 @@ export async function verifyAstroSelectComboboxCases({ page }) {
   const selectedComboboxAfterEscapeRollback = await page.evaluate(() => {
     const root = document.querySelector("#runtime-combobox-fruit");
     const input = document.querySelector("#runtime-combobox-fruit-input");
-    const hiddenInput = root?.querySelector('input[type="hidden"]');
+    const hiddenInput = root?.querySelector("[data-sw-combobox-hidden-input]");
 
     return {
       hiddenInputValue: hiddenInput instanceof HTMLInputElement ? hiddenInput.value : null,
@@ -696,7 +708,7 @@ export async function verifyAstroSelectComboboxCases({ page }) {
   const emptyComboboxAfterEscapeRollback = await page.evaluate(() => {
     const root = document.querySelector("#runtime-combobox-starts-with");
     const input = document.querySelector("#runtime-combobox-starts-with-input");
-    const hiddenInput = root?.querySelector('input[type="hidden"]');
+    const hiddenInput = root?.querySelector("[data-sw-combobox-hidden-input]");
 
     return {
       hiddenInputValue: hiddenInput instanceof HTMLInputElement ? hiddenInput.value : null,

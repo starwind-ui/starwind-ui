@@ -28,6 +28,7 @@ export type DropzoneSpecializedAdapterSpec = SpecializedAdapterSpec & {
     fileInput: DropzoneFileInputRecipe;
     fileList: DropzoneFileListRecipe;
     filesChange: DropzoneFilesChangeRecipe;
+    filesReject: DropzoneFilesRejectRecipe;
     formBridge: DropzoneFormBridgeRecipe;
     namespace: DropzoneNamespaceRecipe;
     runtimeBoundary: string[];
@@ -107,6 +108,11 @@ type DropzoneFilesChangeRecipe = {
   subscriberEvent: "filesChange";
   valueProperty: string;
   valueType: string;
+};
+
+type DropzoneFilesRejectRecipe = Omit<DropzoneFilesChangeRecipe, "reasons" | "subscriberEvent"> & {
+  reasons: ["drop"];
+  subscriberEvent: "filesReject";
 };
 
 type DropzoneFormBridgeRecipe = {
@@ -195,6 +201,7 @@ const DROPZONE_PROJECTED_PROP_NAMES = [
   "disabled",
   "isUploading",
   "onFilesChange",
+  "onFilesReject",
   "accept",
   "multiple",
   "name",
@@ -202,6 +209,7 @@ const DROPZONE_PROJECTED_PROP_NAMES = [
 ] as const;
 const DROPZONE_FORM_PROPS = ["accept", "multiple", "name", "required"] as const;
 const DROPZONE_FILES_CHANGE_REASONS = ["drop", "imperative-action", "input-change"] as const;
+const DROPZONE_FILES_REJECT_REASONS = ["drop"] as const;
 const DROPZONE_RUNTIME_BOUNDARY = [
   "file input setup and label association",
   "keyboard activation and click forwarding",
@@ -247,6 +255,7 @@ export function buildDropzoneSpecializedAdapterSpec(
       fileInput: buildFileInputRecipe(spec),
       fileList: buildFileListRecipe(spec),
       filesChange: buildFilesChangeRecipe(spec),
+      filesReject: buildFilesRejectRecipe(spec),
       formBridge: buildFormBridgeRecipe(spec),
       namespace: buildNamespaceRecipe(spec),
       runtimeBoundary: [...DROPZONE_RUNTIME_BOUNDARY],
@@ -288,6 +297,7 @@ export function validateDropzoneSpecializedAdapterSpec(
     "fileInput",
     "fileList",
     "filesChange",
+    "filesReject",
     "formBridge",
     "namespace",
     "runtimeBoundary",
@@ -332,6 +342,7 @@ export function validateDropzoneSpecializedAdapterSpec(
   errors.push(...validateFileInput(spec, dropzone.fileInput));
   errors.push(...validateUploadState(spec, dropzone.uploadState));
   errors.push(...validateFilesChange(spec, dropzone.filesChange));
+  errors.push(...validateFilesReject(spec, dropzone.filesReject));
   errors.push(...validateFileList(spec, dropzone.fileList));
   errors.push(...validateFormBridge(spec, dropzone.formBridge));
   errors.push(...validateNamespace(spec, dropzone.namespace));
@@ -390,14 +401,12 @@ function createDropzoneComponentFile(
       displayName: `${facts.displayName}.${part.namespaceKey}`,
       events:
         partName === "root"
-          ? [
-              {
-                detailType: facts.event.detailsType,
-                handlerProp: facts.event.callbackProp,
-                runtimeEvent: facts.event.name,
-                targetPart: "root",
-              },
-            ]
+          ? [facts.event, facts.rejectEvent].map((event) => ({
+              detailType: event.detailsType,
+              handlerProp: event.callbackProp,
+              runtimeEvent: event.name,
+              targetPart: "root",
+            }))
           : [],
       exports: {
         kind: "named",
@@ -558,6 +567,13 @@ function getDropzoneFileDropControlFacts(
       valueProperty: spec.dropzone.filesChange.valueProperty,
       valueType: spec.dropzone.filesChange.valueType,
     },
+    rejectEvent: {
+      callbackProp: spec.dropzone.filesReject.callbackProp,
+      detailsType: spec.dropzone.filesReject.detailsType,
+      name: spec.dropzone.filesReject.subscriberEvent,
+      valueProperty: spec.dropzone.filesReject.valueProperty,
+      valueType: spec.dropzone.filesReject.valueType,
+    },
     exports: {
       filesList: exportsByPart.filesList,
       input: exportsByPart.input,
@@ -598,7 +614,7 @@ function getDropzoneFileDropControlFacts(
         key: entry.property,
         name: entry.exportName,
       })),
-      typeExports: [spec.dropzone.filesChange.detailsType],
+      typeExports: [spec.dropzone.filesChange.detailsType, spec.dropzone.filesReject.detailsType],
     },
     parts: {
       filesList: getDropzoneFileDropControlPart(anatomy.filesList, entriesByPart),
@@ -777,6 +793,22 @@ function buildFilesChangeRecipe(spec: SpecializedAdapterSpec): DropzoneFilesChan
     lifecycle: "constructor-callback-ref",
     reasons: [...DROPZONE_FILES_CHANGE_REASONS],
     subscriberEvent: "filesChange",
+    valueProperty: event.valueProperty,
+    valueType: event.valueType,
+  };
+}
+
+function buildFilesRejectRecipe(spec: SpecializedAdapterSpec): DropzoneFilesRejectRecipe {
+  const event = getRequiredEvent(spec, "filesReject");
+
+  return {
+    callbackProp: event.callbackProp,
+    detailsType: event.detailsType,
+    domEvent: event.domEvent,
+    emitsFrom: event.emitsFrom,
+    lifecycle: "constructor-callback-ref",
+    reasons: [...DROPZONE_FILES_REJECT_REASONS],
+    subscriberEvent: "filesReject",
     valueProperty: event.valueProperty,
     valueType: event.valueType,
   };
@@ -986,6 +1018,18 @@ function validateFilesChange(spec: SpecializedAdapterSpec, value: unknown): stri
     ? []
     : [
         "Dropzone specialized adapter spec filesChange metadata must match callback, event, reasons, and subscriber facts.",
+      ];
+}
+
+function validateFilesReject(spec: SpecializedAdapterSpec, value: unknown): string[] {
+  if (!isRecord(value)) {
+    return ["Dropzone specialized adapter spec requires filesReject metadata."];
+  }
+
+  return recipeEquals(() => buildFilesRejectRecipe(spec), value)
+    ? []
+    : [
+        "Dropzone specialized adapter spec filesReject metadata must match callback, event, reasons, and subscriber facts.",
       ];
 }
 

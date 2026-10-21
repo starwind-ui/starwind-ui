@@ -24,6 +24,7 @@ import {
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
+import { shared } from "../../internal/shared";
 
 export type PreviewCardOpenChangeReason =
   | "escape-key"
@@ -107,7 +108,7 @@ const PREVIEW_CARD_ALIGN_ATTRIBUTE = "data-align";
 const PREVIEW_CARD_SIDE_OFFSET_ATTRIBUTE = "data-side-offset";
 const PREVIEW_CARD_AVOID_COLLISIONS_ATTRIBUTE = "data-avoid-collisions";
 
-const instances = new WeakMap<HTMLElement, PreviewCardController>();
+const instances = shared<WeakMap<HTMLElement, PreviewCardController>>("preview-card");
 
 export function refreshPreviewCardPortalSurface(root: HTMLElement): void {
   const controller = instances.get(root);

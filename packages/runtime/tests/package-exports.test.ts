@@ -37,8 +37,12 @@ describe("runtime package exports", () => {
       await readFile(path.join(packageRoot, "package.json"), "utf8"),
     ) as {
       exports: Record<string, { import: string; types: string }>;
+      sideEffects?: unknown;
     };
     const expectedSubpaths = await getExpectedSubpaths();
+
+    // Lets bundlers drop unused components from root-entry imports.
+    expect(packageJson.sideEffects).toBe(false);
 
     expect(Object.keys(packageJson.exports).sort()).toEqual(
       [".", ...expectedSubpaths.map((subpath) => `./${subpath}`)].sort(),

@@ -55,8 +55,6 @@ const mobileStyle = computed(() => ({ "--sidebar-width": "18rem" }));
   <template v-else>
     <SidebarPrimitive.SidebarComponent
       :class="sidebar({ class: className })"
-      data-state="expanded"
-      data-collapsible=""
       :data-collapsible-mode="collapsible"
       :collapsible="collapsible"
       :data-variant="variant"

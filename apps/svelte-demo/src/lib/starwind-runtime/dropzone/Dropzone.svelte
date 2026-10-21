@@ -9,7 +9,7 @@
   import { default as DropzoneFilesList } from "./DropzoneFilesList.svelte";
   import { DropzoneInput } from "@starwind-ui/svelte/dropzone";
 
-  export type DropzoneProps = Omit<ComponentProps<typeof NativeInput>, "ref" | "id"> & Pick<ComponentProps<typeof PrimitivePart>, "disabled" | "isUploading" | "onFilesChange" | "ref"> & { children?: Snippet; id?: string };
+  export type DropzoneProps = Omit<ComponentProps<typeof NativeInput>, "ref" | "id"> & Pick<ComponentProps<typeof PrimitivePart>, "disabled" | "isUploading" | "onFilesChange" | "onFilesReject" | "ref"> & { children?: Snippet; id?: string };
 </script>
 
 <script lang="ts">
@@ -21,6 +21,7 @@
     "class": className,
     "ref": ref,
     "onFilesChange": onFilesChange,
+    "onFilesReject": onFilesReject,
     "children": children,
     ...rest
   }: DropzoneProps = $props();
@@ -32,6 +33,7 @@
   disabled={disabled}
   isUploading={isUploading}
   onFilesChange={onFilesChange}
+  onFilesReject={onFilesReject}
   aria-invalid={ariaInvalid}
   ref={ref}
   data-slot={"dropzone"}

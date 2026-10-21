@@ -428,7 +428,18 @@ onBeforeUnmount(() => {
       ref="hiddenInputRef"
       data-sw-combobox-hidden-input
       data-sw-part="hidden-input"
-      type="hidden"
+      :type="props.required ? undefined : 'hidden'"
+      style="
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      "
       :autocomplete="props.autoComplete"
       :disabled="props.disabled"
       :form="props.form"
@@ -437,7 +448,6 @@ onBeforeUnmount(() => {
       :value="renderedValue ?? ''"
       aria-hidden="true"
       tabindex="-1"
-      readonly
     />
     <slot />
   </div>

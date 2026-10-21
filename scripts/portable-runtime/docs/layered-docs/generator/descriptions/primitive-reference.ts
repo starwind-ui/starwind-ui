@@ -426,6 +426,8 @@ const commonPrimitivePropDescriptions: Record<string, PrimitivePropDescriptionFa
   isUploading: ({ contract }) => `Controls whether ${contract.displayName} is uploading.`,
   files: ({ contract }) => `Controls the selected files for ${contract.displayName}.`,
   onFilesChange: ({ contract }) => `Runs when selected files change for ${contract.displayName}.`,
+  onFilesReject: ({ contract }) =>
+    `Runs when ${contract.displayName} does not keep dropped files because of accept or multiple.`,
   accept: () => "Limits which file types can be selected.",
   maxFiles: () => "Sets the maximum number of files that can be selected.",
   maxSize: () => "Sets the maximum allowed file size.",
@@ -639,6 +641,8 @@ const commonPrimitiveEventDescriptions: Record<string, PrimitiveEventDescription
   inputValueChange: ({ contract }) =>
     `Fires when the text input value changes for ${contract.displayName}.`,
   filesChange: ({ contract }) => `Fires when selected files change for ${contract.displayName}.`,
+  filesReject: ({ contract }) =>
+    `Fires when ${contract.displayName} does not keep dropped files because of accept or multiple.`,
   mobileOpenChange: ({ contract }) =>
     `Fires when the mobile panel opens or closes for ${contract.displayName}.`,
   valueCommitted: ({ contract }) =>

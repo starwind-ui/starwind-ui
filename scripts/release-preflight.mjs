@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync, spawn } from "node:child_process";
-import { copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { copyFile, lstat, mkdir, mkdtemp, readlink, rm, symlink } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -10,14 +11,31 @@ import { assertRoutineReleaseMetadata } from "./release-packages.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-export function runReleaseCommand(args, cwd = ROOT) {
+export function runReleaseCommand(args, cwd = ROOT, { logFile } = {}) {
   const shape = createSpawnCommand(getPackageManagerCommand("pnpm"), args);
   return new Promise((resolve, reject) => {
-    const child = spawn(shape.command, shape.args, { cwd, stdio: "inherit", env: process.env });
+    // A log file keeps concurrent gate stages from interleaving their output.
+    const log = logFile ? createWriteStream(logFile) : undefined;
+    const child = spawn(shape.command, shape.args, {
+      cwd,
+      stdio: log ? ["ignore", "pipe", "pipe"] : "inherit",
+      env: process.env,
+    });
+    if (log) {
+      child.stdout.pipe(log, { end: false });
+      child.stderr.pipe(log, { end: false });
+    }
     child.once("error", reject);
-    child.once("exit", (code) =>
-      code === 0 ? resolve() : reject(new Error(`pnpm ${args.join(" ")} failed (${code}).`)),
-    );
+    child.once("close", (code) => {
+      const settle = () =>
+        code === 0
+          ? resolve()
+          : reject(
+              new Error(`pnpm ${args.join(" ")} failed (${code}).${log ? ` Log: ${logFile}` : ""}`),
+            );
+      if (log) log.end(settle);
+      else settle();
+    });
   });
 }
 
@@ -44,7 +62,9 @@ export async function rehearseRelease({ root = ROOT, run = runReleaseCommand } =
       const target = path.join(candidate, file);
       await mkdir(path.dirname(target), { recursive: true });
       try {
-        await copyFile(path.join(root, file), target);
+        const source = path.join(root, file);
+        if ((await lstat(source)).isSymbolicLink()) await symlink(await readlink(source), target);
+        else await copyFile(source, target);
       } catch (error) {
         if (error.code !== "ENOENT") throw error;
       }

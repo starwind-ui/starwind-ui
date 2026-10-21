@@ -93,7 +93,6 @@ export const selectRuntimeAdapterContract = {
       defaultElement: "input",
       discoveryAttribute: "data-sw-select-input",
       initialAttributes: [
-        { name: "type", source: "constant", value: "hidden" },
         { name: "autocomplete", source: "prop" },
         { name: "form", source: "prop" },
         { name: "value", source: "state" },
@@ -325,7 +324,7 @@ export const selectRuntimeAdapterContract = {
     { method: "setValue", stateModel: "value", suppressesEmit: true },
   ],
   form: {
-    hiddenInput: { part: "input", type: "hidden" },
+    hiddenInput: { part: "input", type: "text" },
     fieldIntegration: true,
     props: ["autoComplete", "form", "name", "required", "value"],
   },

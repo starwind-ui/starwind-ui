@@ -415,7 +415,13 @@ export function getFieldControlFocusTarget(control: HTMLElement): HTMLElement | 
   const bridgeTarget = getRegisteredBridge(control)?.getFocusTarget?.(control);
   if (bridgeTarget) return bridgeTarget;
 
-  return getFieldControlNativeControls(control)[0] ?? control;
+  const controls = getFieldControlNativeControls(control);
+  // A radio group moves focus to its checked radio, like keyboard entry does.
+  return (
+    controls.find((nativeControl) => (nativeControl as HTMLInputElement).checked) ??
+    controls[0] ??
+    control
+  );
 }
 
 export function getFieldControlNativeControls(

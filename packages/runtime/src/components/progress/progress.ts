@@ -1,4 +1,5 @@
 import { assertHTMLElement, ensureId, readBooleanAttribute } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 
 export type ProgressValue = number | null;
 export type ProgressStatus = "complete" | "indeterminate" | "progressing";
@@ -67,7 +68,7 @@ const OBSERVED_ATTRIBUTES = new Set([
   PROGRESS_VALUE_ATTRIBUTE,
 ]);
 
-const instances = new WeakMap<HTMLElement, ProgressController>();
+const instances = shared<WeakMap<HTMLElement, ProgressController>>("progress");
 
 export function createProgress(root: HTMLElement, options: ProgressOptions = {}): ProgressInstance {
   assertHTMLElement(root, "createProgress root");

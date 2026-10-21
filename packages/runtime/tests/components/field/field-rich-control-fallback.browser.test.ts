@@ -72,23 +72,19 @@ describe("createField rich-control fallback", () => {
 
     instances[3]!.getFormRegistration().focus();
     expect(document.activeElement).toBe(
-      root.querySelector<HTMLInputElement>(
-        '[data-sw-field][data-name="focusChannels"] [data-sw-checkbox-input]',
+      root.querySelector<HTMLElement>(
+        '[data-sw-field][data-name="focusChannels"] [data-sw-checkbox]',
       ),
     );
 
     instances[4]!.getFormRegistration().focus();
     expect(document.activeElement).toBe(
-      root.querySelector<HTMLInputElement>(
-        '[data-sw-field][data-name="focusContact"] [data-sw-radio-input]',
-      ),
+      root.querySelector<HTMLElement>('[data-sw-field][data-name="focusContact"] [data-sw-radio]'),
     );
 
     instances[5]!.getFormRegistration().focus();
     expect(document.activeElement).toBe(
-      root.querySelector<HTMLInputElement>(
-        '[data-sw-field][data-name="focusAlerts"] [data-sw-switch-input]',
-      ),
+      root.querySelector<HTMLElement>('[data-sw-field][data-name="focusAlerts"] [data-sw-switch]'),
     );
   });
 

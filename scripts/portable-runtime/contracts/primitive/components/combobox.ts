@@ -133,7 +133,6 @@ export const comboboxRuntimeAdapterContract = {
       defaultElement: "input",
       discoveryAttribute: "data-sw-combobox-hidden-input",
       initialAttributes: [
-        { name: "type", source: "constant", value: "hidden" },
         { name: "form", source: "prop" },
         { name: "name", source: "prop" },
         { name: "value", source: "state" },
@@ -388,7 +387,7 @@ export const comboboxRuntimeAdapterContract = {
     { method: "setValue", stateModel: "value", suppressesEmit: true },
   ],
   form: {
-    hiddenInput: { part: "hiddenInput", type: "hidden" },
+    hiddenInput: { part: "hiddenInput", type: "text" },
     fieldIntegration: true,
     props: ["autoComplete", "form", "name", "required", "value"],
   },
@@ -438,7 +437,7 @@ export const comboboxRuntimeAdapterContract = {
     },
     {
       part: "hiddenInput",
-      attributes: ["type", "form", "name", "value", "aria-hidden", "tabIndex"],
+      attributes: ["form", "name", "value", "aria-hidden", "tabIndex"],
       reason: "Form value submission must work without waiting for the runtime.",
     },
     {

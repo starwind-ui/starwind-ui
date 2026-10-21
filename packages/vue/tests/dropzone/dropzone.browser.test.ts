@@ -1,4 +1,8 @@
-import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";
+import {
+  createDropzone,
+  type DropzoneFilesChangeDetails,
+  type DropzoneFilesRejectDetails,
+} from "@starwind-ui/runtime/dropzone";
 import {
   DropzoneFilesList,
   DropzoneInput,
@@ -33,13 +37,16 @@ describe("Vue Dropzone public behavior", () => {
     expect(click).toHaveBeenCalledTimes(2);
   });
 
-  it("delegates drag state, acceptance, multiple constraints, and rejected-only silence", async () => {
+  it("delegates drag state, acceptance, multiple constraints, and rejected-file events", async () => {
     const changes: Array<{ detail: DropzoneFilesChangeDetails; files: File[] }> = [];
+    const rejects: Array<{ detail: DropzoneFilesRejectDetails; files: File[] }> = [];
     const host = mountDropzone({
       accept: "image/*,.txt",
       multiple: true,
       onFilesChange: (files: File[], detail: DropzoneFilesChangeDetails) =>
         changes.push({ detail, files }),
+      onFilesReject: (files: File[], detail: DropzoneFilesRejectDetails) =>
+        rejects.push({ detail, files }),
     });
     const root = getRoot(host);
 
@@ -62,10 +69,17 @@ describe("Vue Dropzone public behavior", () => {
     expect(getInput(host).files).toHaveLength(2);
     expect(root).toHaveAttribute("data-has-files", "true");
     expect(host.querySelector("[data-sw-dropzone-files-list]")?.textContent).toContain("photo.png");
+    expect(rejects).toEqual([
+      { detail: expect.objectContaining({ files: [rejected] }), files: [rejected] },
+    ]);
+    expect(root).not.toHaveAttribute("data-rejected");
 
     root.dispatchEvent(createDragEvent("drop", [rejected]));
     await settle();
     expect(changes).toHaveLength(1);
+    expect(rejects).toHaveLength(2);
+    expect(root).toHaveAttribute("data-rejected");
+    expect(getInput(host).files).toHaveLength(2);
 
     const singleHost = mountDropzone({ accept: "image/*", multiple: false });
     getRoot(singleHost).dispatchEvent(createDragEvent("drop", [image, text]));

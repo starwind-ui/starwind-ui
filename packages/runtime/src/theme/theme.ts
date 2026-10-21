@@ -1,4 +1,5 @@
 import { ensureId, setBooleanAttribute } from "../internal/dom";
+import { shared } from "../internal/shared";
 
 type SelectRuntimeModule = typeof import("../components/select");
 type SwitchRuntimeModule = typeof import("../components/switch");
@@ -54,7 +55,7 @@ export type ThemeControllerInstance = {
   syncControls(): void;
 };
 
-const sharedThemeControllers = new WeakMap<ParentNode, ThemeController>();
+const sharedThemeControllers = shared<WeakMap<ParentNode, ThemeController>>("theme");
 
 const THEME_CONTROL_SELECTOR = "[data-sw-theme-control], [data-sw-theme-toggle]";
 const THEME_TOGGLE_ATTRIBUTE = "data-sw-theme-toggle";

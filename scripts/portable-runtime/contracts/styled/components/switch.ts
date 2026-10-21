@@ -126,7 +126,7 @@ export const switchStyledContract: StyledAdapterContract = {
         },
         {
           name: "ariaLabel",
-          value: { type: "raw", code: 'rest["aria-label"] ?? label ?? "switch"' },
+          value: { type: "raw", code: 'rest["aria-label"] ?? label' },
         },
         {
           name: "switchStyle",

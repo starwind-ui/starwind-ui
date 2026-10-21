@@ -31,18 +31,20 @@ import {
   getNextDocumentTabStop,
 } from "../../internal/focus-boundary";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { focusVisible, hideNativeInput } from "../../internal/native-input";
 import {
   type OverlayOpenChangeShellResult,
   runOverlayOpenChangeShell,
 } from "../../internal/overlay-open-change";
-import { showElement } from "../../internal/presence";
-import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
-import { lockDocumentScroll } from "../../internal/scroll-lock";
 import {
   createOwnedListNavigation,
   createRovingFocusNavigationAdapter,
   type OwnedListNavigation,
 } from "../../internal/owned-list-navigation";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
+import { showElement } from "../../internal/presence";
+import { lockDocumentScroll } from "../../internal/scroll-lock";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type SelectOpenChangeReason =
@@ -219,7 +221,7 @@ const SELECT_FLOATING_VIEWPORT_PADDING = 8;
 const SELECT_SCROLL_ARROW_STEP = 24;
 const SELECT_SCROLL_ARROW_INTERVAL = 32;
 
-const instances = new WeakMap<HTMLElement, SelectController>();
+const instances = shared<WeakMap<HTMLElement, SelectController>>("select");
 
 export function refreshSelectPortalSurface(root: HTMLElement): void {
   const controller = instances.get(root);
@@ -601,11 +603,7 @@ class SelectController implements SelectInstance {
       );
     }
 
-    if (input) {
-      input.type = "hidden";
-      input.tabIndex = -1;
-      input.setAttribute("aria-hidden", "true");
-    }
+    if (input) hideNativeInput(input);
 
     this.syncFormInput();
     this.renderDisabledState();
@@ -614,6 +612,22 @@ class SelectController implements SelectInstance {
   private bindEvents(): void {
     const { signal } = this.abortController;
     const { trigger } = this.elements;
+
+    this.root.addEventListener(
+      "focusin",
+      (event) => {
+        if (event.target === this.elements.input) focusVisible(this.elements.trigger);
+      },
+      { signal },
+    );
+    // Only autofill writes to the value input. Restore it so the submitted value matches the selection.
+    this.root.addEventListener(
+      "input",
+      (event) => {
+        if (event.target === this.elements.input) this.applyValueState(this.valueState);
+      },
+      { signal },
+    );
 
     this.root.ownerDocument.addEventListener(
       "focusin",
@@ -1852,6 +1866,9 @@ class SelectController implements SelectInstance {
       this.elements.input.removeAttribute("name");
     }
 
+    // A required Select uses a text input, which takes part in constraint validation. An optional
+    // Select keeps a hidden input so it does not block implicit submission with the Enter key.
+    this.elements.input.type = this.required ? "text" : "hidden";
     this.elements.input.required = this.required;
     if (this.form !== undefined) {
       this.elements.input.setAttribute("form", this.form);

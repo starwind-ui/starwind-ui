@@ -2997,6 +2997,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             description: "Fires when selected files change for Dropzone.",
             descriptionSource: "authored",
           },
+          {
+            name: "filesReject",
+            callbackProp: "onFilesReject",
+            detailsType: "DropzoneFilesRejectDetails",
+            domEvent: "starwind:files-reject",
+            emitsFrom: "root",
+            valueProperty: "files",
+            valueType: "File[]",
+            description: "Fires when Dropzone does not keep dropped files because of accept or multiple.",
+            descriptionSource: "authored",
+          },
         ],
         setters: [
           {
@@ -8609,7 +8620,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "checkbox",
             exportName: "CheckboxVariants",
-            baseClassCount: 24,
+            baseClassCount: 25,
             options: [
               {
                 name: "size",
@@ -8693,12 +8704,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         stateSelectors: [
           {
             attribute: "data-checked",
-            selector: "[data-sw-checkbox][data-checked] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon],",
+            selector: "[data-sw-checkbox][data-checked] [data-slot=\"checkbox-indicator\"],",
             source: "local-style",
           },
           {
             attribute: "data-checked",
-            selector: "[data-sw-checkbox][data-checked] [data-slot=\"checkbox-indicator\"],",
+            selector: "[data-sw-checkbox][data-checked]:not([data-indeterminate]) [data-sw-checkbox-check-icon] {",
             source: "local-style",
           },
           {
@@ -8807,25 +8818,104 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             source: "variant-class",
           },
           {
+            attribute: "data-error-visible",
+            selector: "data-indeterminate:data-error-visible:border-error",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "[data-sw-checkbox][data-checked]:not([data-indeterminate]) [data-sw-checkbox-check-icon] {",
+            source: "local-style",
+          },
+          {
             attribute: "data-indeterminate",
             selector: "[data-sw-checkbox][data-indeterminate] [data-slot=\"checkbox-indicator\"] {",
             source: "local-style",
           },
           {
             attribute: "data-indeterminate",
-            selector: "[data-sw-checkbox][data-indeterminate] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon] {",
+            selector: "[data-sw-checkbox][data-indeterminate] [data-sw-checkbox-indeterminate-icon] {",
             source: "local-style",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:bg-error",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:bg-foreground",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:bg-info",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:bg-primary",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:bg-secondary",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:bg-success",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:bg-warning",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:border-error",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:border-foreground",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:border-info",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:border-primary",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:border-secondary",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:border-success",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:border-warning",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indeterminate",
+            selector: "data-indeterminate:data-error-visible:border-error",
+            source: "variant-class",
           },
           {
             attribute: "data-slot",
             value: "checkbox-indicator",
             selector: "[data-sw-checkbox] [data-slot=\"checkbox-indicator\"] > svg {",
-            source: "local-style",
-          },
-          {
-            attribute: "data-slot",
-            value: "checkbox-indicator",
-            selector: "[data-sw-checkbox][data-checked] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon],",
             source: "local-style",
           },
           {
@@ -8841,19 +8931,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             source: "local-style",
           },
           {
-            attribute: "data-slot",
-            value: "checkbox-indicator",
-            selector: "[data-sw-checkbox][data-indeterminate] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon] {",
-            source: "local-style",
-          },
-          {
             attribute: "data-sw-checkbox",
             selector: "[data-sw-checkbox] [data-slot=\"checkbox-indicator\"] > svg {",
-            source: "local-style",
-          },
-          {
-            attribute: "data-sw-checkbox",
-            selector: "[data-sw-checkbox][data-checked] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon],",
             source: "local-style",
           },
           {
@@ -8863,12 +8942,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-checkbox",
+            selector: "[data-sw-checkbox][data-checked]:not([data-indeterminate]) [data-sw-checkbox-check-icon] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-checkbox",
             selector: "[data-sw-checkbox][data-indeterminate] [data-slot=\"checkbox-indicator\"] {",
             source: "local-style",
           },
           {
             attribute: "data-sw-checkbox",
-            selector: "[data-sw-checkbox][data-indeterminate] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon] {",
+            selector: "[data-sw-checkbox][data-indeterminate] [data-sw-checkbox-indeterminate-icon] {",
             source: "local-style",
           },
           {
@@ -8878,12 +8962,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-checkbox-check-icon",
-            selector: "[data-sw-checkbox][data-checked] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon],",
+            selector: "[data-sw-checkbox][data-checked]:not([data-indeterminate]) [data-sw-checkbox-check-icon] {",
             source: "local-style",
           },
           {
-            attribute: "data-sw-checkbox-check-icon",
-            selector: "[data-sw-checkbox][data-indeterminate] [data-slot=\"checkbox-indicator\"] > [data-sw-checkbox-check-icon] {",
+            attribute: "data-sw-checkbox-indeterminate-icon",
+            selector: "[data-sw-checkbox-indeterminate-icon] {",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-checkbox-indeterminate-icon",
+            selector: "[data-sw-checkbox][data-indeterminate] [data-sw-checkbox-indeterminate-icon] {",
             source: "local-style",
           },
         ],
@@ -8891,7 +8980,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importFrom: [
             "Checkbox",
           ],
-          selectorCount: 7,
+          selectorCount: 12,
         },
       },
       {
@@ -10869,7 +10958,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "dropzone",
             exportName: "DropzoneVariants",
-            baseClassCount: 31,
+            baseClassCount: 32,
             options: [],
             compoundVariantCount: 0,
           },
@@ -10934,6 +11023,11 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-is-uploading",
             value: "true",
             selector: "data-[is-uploading=true]:hidden",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-rejected",
+            selector: "data-rejected:border-error",
             source: "variant-class",
           },
         ],
@@ -14381,11 +14475,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-collapsible",
-            selector: "data-collapsible=\"\"",
-            source: "render-attribute",
-          },
-          {
-            attribute: "data-collapsible",
             value: "icon",
             selector: "group-data-[collapsible=icon]:-mt-10",
             source: "variant-class",
@@ -14780,12 +14869,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             value: "collapsed",
             selector: "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
             source: "variant-class",
-          },
-          {
-            attribute: "data-state",
-            value: "expanded",
-            selector: "data-state=\"expanded\"",
-            source: "render-attribute",
           },
           {
             attribute: "data-state",
@@ -26096,6 +26179,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   },
                   displayType: "(files: File[], details: DropzoneFilesChangeDetails) => void",
                   description: "Runs when the selected file collection changes.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "onFilesReject",
+                  type: "(files: File[], details: import(\"@starwind-ui/runtime\").DropzoneFilesRejectDetails) => void",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "dropzone",
+                    part: "Root",
+                    propName: "onFilesReject",
+                  },
+                  displayType: "(files: File[], details: DropzoneFilesRejectDetails) => void",
+                  description: "Runs when dropped files do not match accept or exceed the single-file limit.",
                   descriptionSource: "catalog",
                 },
               ],
@@ -50196,11 +50293,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           defaultElement: "input",
           initialAttributes: [
             {
-              name: "type",
-              source: "constant",
-              value: "hidden",
-            },
-            {
               name: "form",
               source: "prop",
             },
@@ -51033,7 +51125,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         {
           part: "hiddenInput",
           attributes: [
-            "type",
             "form",
             "name",
             "value",
@@ -51057,7 +51148,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       form: {
         hiddenInput: {
           part: "hiddenInput",
-          type: "hidden",
+          type: "text",
         },
         fieldIntegration: true,
         props: [
@@ -52414,7 +52505,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               form: {
                 hiddenInput: {
                   part: "hiddenInput",
-                  type: "hidden",
+                  type: "text",
                 },
                 props: [
                   "autoComplete",
@@ -52689,7 +52780,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 {
                   part: "hiddenInput",
                   attributes: [
-                    "type",
                     "form",
                     "name",
                     "value",
@@ -52702,7 +52792,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               form: {
                 hiddenInput: {
                   part: "hiddenInput",
-                  type: "hidden",
+                  type: "text",
                 },
                 props: [
                   "autoComplete",
@@ -60656,6 +60746,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               source: "prop",
             },
             {
+              name: "data-rejected",
+              source: "state",
+            },
+            {
               name: "aria-disabled",
               source: "prop",
             },
@@ -60766,6 +60860,11 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           type: "DropzoneFilesChangeDetails",
         },
         {
+          name: "onFilesReject",
+          kind: "callback",
+          type: "DropzoneFilesRejectDetails",
+        },
+        {
           name: "accept",
           kind: "attribute",
           targets: [
@@ -60864,6 +60963,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           valueProperty: "files",
           valueType: "File[]",
           description: "Fires when selected files change for Dropzone.",
+          descriptionSource: "authored",
+        },
+        {
+          name: "filesReject",
+          callbackProp: "onFilesReject",
+          detailsType: "DropzoneFilesRejectDetails",
+          domEvent: "starwind:files-reject",
+          emitsFrom: "root",
+          valueProperty: "files",
+          valueType: "File[]",
+          description: "Fires when Dropzone does not keep dropped files because of accept or multiple.",
           descriptionSource: "authored",
         },
       ],
@@ -60973,6 +61083,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       frameworkNotes: {
         astro: [
           "Render the file input and indicator/list parts statically; runtime owns drag state, keyboard activation, file list rendering, and upload-state synchronization.",
+          "Listen for starwind:files-reject on the root to read dropped files that did not match accept or multiple. When a drop keeps no files, the root carries data-rejected until the next accepted drop, file picker change, setFiles call, or form reset.",
         ],
         react: [
           "Create the runtime controller once, bridge disabled and uploading changes through setters, and surface file changes through onFilesChange.",
@@ -61141,6 +61252,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Runs when selected files change for Dropzone.",
                   descriptionSource: "authored",
                 },
+                {
+                  name: "onFilesReject",
+                  kind: "callback",
+                  type: "DropzoneFilesRejectDetails",
+                  displayType: "(files: File[], details: DropzoneFilesRejectDetails) => void",
+                  description: "Runs when Dropzone does not keep dropped files because of accept or multiple.",
+                  descriptionSource: "authored",
+                },
               ],
               dataAttributes: [
                 {
@@ -61171,6 +61290,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "data-is-uploading",
                   source: "prop",
                   description: "Reflects the uploading prop on the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-rejected",
+                  source: "state",
+                  description: "Reflects the rejected state on the Root part.",
                   descriptionSource: "authored",
                 },
               ],
@@ -61240,6 +61365,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   valueProperty: "files",
                   valueType: "File[]",
                   description: "Fires when selected files change for Dropzone.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "filesReject",
+                  callbackProp: "onFilesReject",
+                  detailsType: "DropzoneFilesRejectDetails",
+                  domEvent: "starwind:files-reject",
+                  emitsFrom: "root",
+                  valueProperty: "files",
+                  valueType: "File[]",
+                  description: "Fires when Dropzone does not keep dropped files because of accept or multiple.",
                   descriptionSource: "authored",
                 },
               ],
@@ -63779,7 +63915,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "Validation timing and error visibility are separate policies: a field can be validated before its errors are revealed.",
           "Policies set on Form apply to every nested Field unless that Field supplies its own timing attributes.",
           "After a submission attempt, revalidationTiming replaces validationTiming for every Field; the policies are not additive.",
-          "Submitting the form always validates every registered Field, regardless of validationTiming.",
+          "When `validate()` shows errors on a Field, through `reveal: true` or `errorVisibility=\"manual\"`, revalidationTiming replaces validationTiming for that Field. `resetValidation()` and native form reset restore validationTiming.",
+          "Submitting the form validates every registered Field, regardless of validationTiming. A submit button with `formnovalidate` skips validation and stops a pending async submit: `onSubmit` runs, or native submission continues when no `onSubmit` is set. A `novalidate` attribute on the form only turns off native browser messages, so Runtime validation still runs.",
         ],
         usageGuidelines: [],
         sections: [
@@ -81223,11 +81360,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           defaultElement: "input",
           initialAttributes: [
             {
-              name: "type",
-              source: "constant",
-              value: "hidden",
-            },
-            {
               name: "autocomplete",
               source: "prop",
             },
@@ -81915,7 +82047,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       form: {
         hiddenInput: {
           part: "input",
-          type: "hidden",
+          type: "text",
         },
         fieldIntegration: true,
         props: [
@@ -81967,7 +82099,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "vue",
         ],
         behaviorNotes: [],
-        usageGuidelines: [],
+        usageGuidelines: [
+          {
+            title: "Give the root a position for form validation.",
+            description: "A required Select blocks form submission while it has no value. The browser shows its message next to the trigger and moves focus to the trigger. Give the Select root a position, such as `position: relative`, so the message appears at the trigger inside scroll containers. The styled Select already does this.",
+          },
+        ],
         sections: [
           {
             title: "Positioning",
@@ -82928,7 +83065,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               form: {
                 hiddenInput: {
                   part: "input",
-                  type: "hidden",
+                  type: "text",
                 },
                 props: [
                   "autoComplete",
@@ -83111,7 +83248,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               form: {
                 hiddenInput: {
                   part: "input",
-                  type: "hidden",
+                  type: "text",
                 },
                 props: [
                   "autoComplete",

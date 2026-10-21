@@ -250,6 +250,10 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
       const input = root?.querySelector("[data-sw-checkbox-input]");
       const indicator = root?.querySelector('[data-slot="checkbox-indicator"]');
       const icon = indicator?.querySelector("[data-sw-checkbox-check-icon]");
+      const indeterminateIcon = indicator?.querySelector("[data-sw-checkbox-indeterminate-icon]");
+      const indeterminateIconStyle =
+        indeterminateIcon instanceof SVGElement ? getComputedStyle(indeterminateIcon) : undefined;
+      const rootStyle = root instanceof HTMLElement ? getComputedStyle(root) : undefined;
       const label = root?.parentElement?.querySelector('[data-slot="checkbox-label"]');
       const rootRect = root instanceof HTMLElement ? root.getBoundingClientRect() : undefined;
       const indicatorRect =
@@ -286,6 +290,10 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
         hasDisabled: root?.hasAttribute("data-disabled"),
         hasIndeterminate: root?.hasAttribute("data-indeterminate"),
         iconAnimationName: iconStyle?.animationName,
+        indeterminateIconAnimationName: indeterminateIconStyle?.animationName,
+        indeterminateIconOpacity: indeterminateIconStyle?.opacity,
+        rootBackgroundColor: rootStyle?.backgroundColor,
+        rootBorderColor: rootStyle?.borderTopColor,
         iconCenterDeltaX:
           rootCenter && iconCenter ? Math.abs(rootCenter.x - iconCenter.x) : undefined,
         iconCenterDeltaY:
@@ -328,6 +336,27 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
       rootCount: document.querySelectorAll('[data-slot="checkbox"][data-sw-checkbox]').length,
     };
 
+    const readErrorBorder = (id) => {
+      const root = document.querySelector(`[data-sw-checkbox][data-id="${id}"]`);
+      if (!(root instanceof HTMLElement)) return undefined;
+      const previousTransition = root.style.transition;
+      root.style.transition = "none";
+      root.setAttribute("data-error-visible", "");
+      const borderColor = getComputedStyle(root).borderTopColor;
+      root.removeAttribute("data-error-visible");
+      root.style.transition = previousTransition;
+      return borderColor;
+    };
+    const errorProbe = document.createElement("span");
+    errorProbe.className = "border border-error";
+    document.body.append(errorProbe);
+    const errorBorder = {
+      checked: readErrorBorder("runtime-checkbox-checked"),
+      expected: getComputedStyle(errorProbe).borderTopColor,
+      indeterminate: readErrorBorder("runtime-checkbox-indeterminate"),
+    };
+    errorProbe.remove();
+
     defaultRoot?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     indeterminateRoot?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     disabledRoot?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
@@ -342,6 +371,7 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
         disabled: readCheckbox("runtime-checkbox-disabled"),
         indeterminate: readCheckbox("runtime-checkbox-indeterminate"),
       },
+      errorBorder,
       initial,
     };
   });
@@ -559,13 +589,16 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
       switch: readInputs("[data-sw-switch-input]"),
     };
   });
-  const hiddenFormControlInputsAreHidden = [
+  // Native inputs stay in constraint validation, so Runtime hides them visually and from
+  // assistive technology instead of with the hidden attribute.
+  const nativeInputsAreVisuallyHidden = [
     ...hiddenFormControlInputState.checkbox,
     ...hiddenFormControlInputState.radio,
-  ].every((input) => input.hidden === true && input.display === "none");
-  const switchInputsAreVisuallyHidden = hiddenFormControlInputState.switch.every(
+    ...hiddenFormControlInputState.switch,
+  ].every(
     (input) =>
       input.hidden === false &&
+      input.display !== "none" &&
       input.ariaHidden === "true" &&
       input.position === "absolute" &&
       input.width === "1px" &&
@@ -574,9 +607,9 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
       input.whiteSpace === "nowrap" &&
       input.tabIndex === -1,
   );
-  if (!hiddenFormControlInputsAreHidden || !switchInputsAreVisuallyHidden) {
+  if (!nativeInputsAreVisuallyHidden) {
     throw new Error(
-      `Expected Astro Checkbox and RadioGroup native inputs to stay hidden and Switch native inputs to stay visually hidden, got ${JSON.stringify(
+      `Expected Astro Checkbox, RadioGroup, and Switch native inputs to stay visually hidden, got ${JSON.stringify(
         hiddenFormControlInputState,
       )}.`,
     );
@@ -618,6 +651,19 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
     checkboxState.initial.checked.iconAnimationName !== "draw-check" ||
     checkboxState.initial.indeterminate.ariaChecked !== "mixed" ||
     checkboxState.initial.indeterminate.hasIndeterminate !== true ||
+    // A mixed checkbox fills its box and shows a minus. The check icon stays hidden.
+    checkboxState.initial.indeterminate.rootBackgroundColor ===
+      checkboxState.initial.default.rootBackgroundColor ||
+    checkboxState.initial.indeterminate.rootBorderColor ===
+      checkboxState.initial.default.rootBorderColor ||
+    checkboxState.initial.indeterminate.indicatorOpacity !== "1" ||
+    checkboxState.initial.indeterminate.iconOpacity !== "0" ||
+    checkboxState.initial.indeterminate.indeterminateIconOpacity !== "1" ||
+    checkboxState.initial.indeterminate.indeterminateIconAnimationName !== "draw-indeterminate" ||
+    checkboxState.initial.checked.indeterminateIconOpacity !== "0" ||
+    // A visible error keeps the error border in every state, including mixed.
+    checkboxState.errorBorder.checked !== checkboxState.errorBorder.expected ||
+    checkboxState.errorBorder.indeterminate !== checkboxState.errorBorder.expected ||
     checkboxState.initial.disabled.hasDisabled !== true ||
     checkboxState.afterToggle.default.hasChecked !== true ||
     checkboxState.afterToggle.default.inputChecked !== true ||

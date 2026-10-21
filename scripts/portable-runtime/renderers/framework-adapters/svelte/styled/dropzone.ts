@@ -39,7 +39,7 @@ export function specializeSvelteStyledDropzone(
     supportsSvelteScope(prop.targetScopes),
   );
   if (part === "Root") {
-    for (const name of ["ref", "onFilesChange"]) {
+    for (const name of ["ref", "onFilesChange", "onFilesReject"]) {
       const attr = owner.attrs.find((attr) => attr.name === name);
       if (!attr) throw new TypeError(`Styled Dropzone requires its ${name} contract.`);
       attr.targetScopes = ["svelte"];
@@ -72,7 +72,7 @@ export function specializeSvelteStyledDropzone(
     ],
     publicTypes:
       part === "Root"
-        ? `export type DropzoneProps = Omit<ComponentProps<typeof NativeInput>, "ref" | "id"> & Pick<ComponentProps<typeof PrimitivePart>, "disabled" | "isUploading" | "onFilesChange" | "ref"> & { children?: Snippet; id?: string };`
+        ? `export type DropzoneProps = Omit<ComponentProps<typeof NativeInput>, "ref" | "id"> & Pick<ComponentProps<typeof PrimitivePart>, "disabled" | "isUploading" | "onFilesChange" | "onFilesReject" | "ref"> & { children?: Snippet; id?: string };`
         : `export type ${component.exportName}Props = ComponentProps<typeof PrimitivePart>;`,
     destructure: props,
     rest: component.destructure.rest,

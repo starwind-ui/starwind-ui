@@ -119,7 +119,7 @@ describe("createSelect", () => {
     expect(onOpenChange).toHaveBeenCalledOnce();
   });
 
-  it("initializes an uncontrolled select with default value and hidden form value", () => {
+  it("initializes an uncontrolled select with default value and a validating form value", () => {
     const root = renderSelect({ defaultValue: "system", name: "theme", required: true });
     const select = createSelect(root);
 
@@ -131,7 +131,10 @@ describe("createSelect", () => {
     expect(getPopup().getAttribute("role")).toBe("listbox");
     expect(getPopup().hidden).toBe(true);
     expect(getValue().textContent).toBe("System");
-    expect(getInput().type).toBe("hidden");
+    expect(getInput().type).toBe("text");
+    expect(getInput().required).toBe(true);
+    expect(getInput().tabIndex).toBe(-1);
+    expect(getInput().getAttribute("aria-hidden")).toBe("true");
     expect(getInput().name).toBe("theme");
     expect(getInput().value).toBe("system");
     expect(root.hasAttribute("data-placeholder")).toBe(false);

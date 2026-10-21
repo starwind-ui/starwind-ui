@@ -136,7 +136,7 @@ const primitiveRuntimeAdapterFacts = [
   {
     component: "dropzone",
     generation: { source: "specialized-adapter-spec", strategy: "specialized-adapter-spec" },
-    runtimeFacades: { types: ["DropzoneFilesChangeDetails"] },
+    runtimeFacades: { types: ["DropzoneFilesChangeDetails", "DropzoneFilesRejectDetails"] },
   },
   {
     component: "field",

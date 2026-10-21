@@ -5,7 +5,11 @@
 
 "use client";
 
-import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";
+import {
+  createDropzone,
+  type DropzoneFilesChangeDetails,
+  type DropzoneFilesRejectDetails,
+} from "@starwind-ui/runtime/dropzone";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { observeFormDiscovery } from "../internal/form-discovery";
@@ -14,15 +18,16 @@ export type DropzoneRootProps = Omit<React.LabelHTMLAttributes<HTMLLabelElement>
   disabled?: boolean;
   isUploading?: boolean;
   onFilesChange?: (files: File[], details: DropzoneFilesChangeDetails) => void;
+  onFilesReject?: (files: File[], details: DropzoneFilesRejectDetails) => void;
 };
 const DropzoneRoot = React.forwardRef<HTMLLabelElement, DropzoneRootProps>(function DropzoneRoot(
-  { disabled = false, isUploading = false, onFilesChange, ...props },
+  { disabled = false, isUploading = false, onFilesChange, onFilesReject, ...props },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLLabelElement>(null);
-  const inputs = React.useRef({ disabled, isUploading, onFilesChange });
+  const inputs = React.useRef({ disabled, isUploading, onFilesChange, onFilesReject });
   useIsomorphicLayoutEffect(() => {
-    inputs.current = { disabled, isUploading, onFilesChange };
+    inputs.current = { disabled, isUploading, onFilesChange, onFilesReject };
   });
   function connectDropzone(root: HTMLElement) {
     let previous = inputs.current;
@@ -32,6 +37,9 @@ const DropzoneRoot = React.forwardRef<HTMLLabelElement, DropzoneRootProps>(funct
     });
     const unsubscribe = instance.subscribe("filesChange", (detail) => {
       inputs.current.onFilesChange?.(detail.files, detail);
+    });
+    const unsubscribeReject = instance.subscribe("filesReject", (detail) => {
+      inputs.current.onFilesReject?.(detail.files, detail);
     });
     const stopDiscovery = observeFormDiscovery(root.ownerDocument, () => {
       instance.refresh();
@@ -46,6 +54,7 @@ const DropzoneRoot = React.forwardRef<HTMLLabelElement, DropzoneRootProps>(funct
       destroy(): void {
         stopDiscovery();
         unsubscribe();
+        unsubscribeReject();
         instance.destroy();
       },
     };

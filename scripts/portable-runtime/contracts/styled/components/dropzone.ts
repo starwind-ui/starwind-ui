@@ -23,6 +23,7 @@ export const dropzoneStyledContract: StyledAdapterContract = {
         "data-[is-uploading=false]:hover:bg-muted data-[drag-active=true]:bg-muted transition",
         "focus-visible:border-outline focus-visible:ring-outline/50 outline-none focus-visible:ring-3",
         "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
+        "data-rejected:border-error",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
       ],
     },
@@ -63,6 +64,12 @@ export const dropzoneStyledContract: StyledAdapterContract = {
             frameworks: ["react"],
           },
           {
+            name: "onFilesReject",
+            optional: true,
+            type: '(files: File[], details: import("@starwind-ui/runtime").DropzoneFilesRejectDetails) => void',
+            frameworks: ["react"],
+          },
+          {
             name: "ref",
             optional: true,
             type: "React.Ref<HTMLLabelElement>",
@@ -76,6 +83,7 @@ export const dropzoneStyledContract: StyledAdapterContract = {
           { name: "disabled", defaultValue: "false" },
           { name: "isUploading", defaultValue: "false" },
           { name: "onFilesChange", frameworks: ["react"] },
+          { name: "onFilesReject", frameworks: ["react"] },
           { name: "ref", frameworks: ["react"] },
           { name: "aria-invalid", alias: "ariaInvalid" },
           { name: "class", alias: "className" },
@@ -102,6 +110,11 @@ export const dropzoneStyledContract: StyledAdapterContract = {
             {
               name: "onFilesChange",
               value: { type: "variable", name: "onFilesChange" },
+              frameworks: ["react"],
+            },
+            {
+              name: "onFilesReject",
+              value: { type: "variable", name: "onFilesReject" },
               frameworks: ["react"],
             },
             { name: "aria-invalid", value: { type: "variable", name: "ariaInvalid" } },

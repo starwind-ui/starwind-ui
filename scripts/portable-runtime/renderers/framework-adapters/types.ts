@@ -965,7 +965,6 @@ export type AdapterEditableCollectionOverlayFacts = {
     constantAttributes: {
       ariaHidden: string;
       tabIndex: string;
-      type: string;
     };
   };
   index: {
@@ -2501,6 +2500,14 @@ export type AdapterFileDropControlIndexProjection = {
   kind: "file-drop-control";
 };
 
+export type AdapterFileDropControlEventFacts = {
+  callbackProp: string;
+  detailsType: string;
+  name: string;
+  valueProperty: string;
+  valueType: string;
+};
+
 export type AdapterFileDropControlFacts = {
   attrs: {
     ariaDisabled: string;
@@ -2520,13 +2527,9 @@ export type AdapterFileDropControlFacts = {
     uploadIndicator: string;
   };
   displayName: string;
-  event: {
-    callbackProp: string;
-    detailsType: string;
-    name: string;
-    valueProperty: string;
-    valueType: string;
-  };
+  event: AdapterFileDropControlEventFacts;
+  /** Runtime event for dropped or picked files that the input constraints did not keep. */
+  rejectEvent: AdapterFileDropControlEventFacts;
   exports: {
     filesList: string;
     input: string;
