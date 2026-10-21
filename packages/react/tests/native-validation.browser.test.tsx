@@ -1,10 +1,11 @@
-import { Checkbox } from "@starwind-ui/react/checkbox";
-import { Combobox } from "@starwind-ui/react/combobox";
 import { Select } from "@starwind-ui/react/select";
 import type * as React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { Checkbox } from "../src/checkbox";
+import { Combobox } from "../src/combobox";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
