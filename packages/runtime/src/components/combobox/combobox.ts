@@ -23,6 +23,7 @@ import {
   type FloatingListLifecycle,
 } from "../../internal/floating-list-lifecycle";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { hideNativeInput } from "../../internal/native-input";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { showElement } from "../../internal/presence";
@@ -32,6 +33,7 @@ import {
   createOwnedListNavigation,
   type OwnedListNavigation,
 } from "../../internal/owned-list-navigation";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type ComboboxOpenChangeReason =
@@ -241,7 +243,7 @@ const COMBOBOX_FILTERED_ATTRIBUTE = "data-filtered";
 const COMBOBOX_PLACEHOLDER_ATTRIBUTE = "data-placeholder";
 const COMBOBOX_EMPTY_STATE_ATTRIBUTE = "data-empty";
 
-const instances = new WeakMap<HTMLElement, ComboboxController>();
+const instances = shared<WeakMap<HTMLElement, ComboboxController>>("combobox");
 
 export function refreshComboboxPortalSurface(root: HTMLElement): void {
   const controller = instances.get(root);
@@ -666,11 +668,7 @@ class ComboboxController implements ComboboxInstance {
       setBooleanAttribute(clear, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
     }
 
-    if (hiddenInput) {
-      hiddenInput.type = "hidden";
-      hiddenInput.tabIndex = -1;
-      hiddenInput.setAttribute("aria-hidden", "true");
-    }
+    if (hiddenInput) hideNativeInput(hiddenInput);
 
     this.syncFormInput();
     this.renderDisabledState();
@@ -679,6 +677,22 @@ class ComboboxController implements ComboboxInstance {
   private bindEvents(): void {
     const { clear, input, inputGroup, trigger } = this.elements;
     const { signal } = this.abortController;
+
+    this.root.addEventListener(
+      "focusin",
+      (event) => {
+        if (event.target === this.elements.hiddenInput) this.focusInputWithoutOpening();
+      },
+      { signal },
+    );
+    // Only autofill writes to the value input. Restore it so the submitted value matches the selection.
+    this.root.addEventListener(
+      "input",
+      (event) => {
+        if (event.target === this.elements.hiddenInput) this.applyValueState(this.valueState);
+      },
+      { signal },
+    );
 
     this.root.addEventListener(
       "starwind:set-value",
@@ -1638,6 +1652,9 @@ class ComboboxController implements ComboboxInstance {
       this.elements.hiddenInput.removeAttribute("name");
     }
 
+    // A required Combobox uses a text input, which takes part in constraint validation. An optional
+    // Combobox keeps a hidden input so it does not block implicit submission with the Enter key.
+    this.elements.hiddenInput.type = this.required ? "text" : "hidden";
     this.elements.hiddenInput.required = this.required;
     if (this.form !== undefined) {
       this.elements.hiddenInput.setAttribute("form", this.form);

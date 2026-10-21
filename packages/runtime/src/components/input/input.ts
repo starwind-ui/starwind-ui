@@ -1,5 +1,6 @@
 import { assertHTMLElement, setBooleanAttribute } from "../../internal/dom";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { shared } from "../../internal/shared";
 
 export type InputValue = string | number | string[];
 
@@ -42,7 +43,7 @@ export type InputInstance = {
 
 const INPUT_ROOT_ATTRIBUTE = "data-sw-input";
 
-const instances = new WeakMap<HTMLInputElement, InputController>();
+const instances = shared<WeakMap<HTMLInputElement, InputController>>("input");
 
 export function createInput(root: HTMLElement, options: InputOptions = {}): InputInstance {
   assertHTMLElement(root, "createInput root");

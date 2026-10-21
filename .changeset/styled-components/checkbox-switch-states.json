@@ -1,0 +1,7 @@
+{
+  "components": {
+    "checkbox": "patch",
+    "switch": "patch"
+  },
+  "impact": "source"
+}

@@ -14,6 +14,7 @@ import {
   createCancelableDetails,
   runCancelableDetailsTransaction,
 } from "../../internal/cancelable-details";
+import { shared } from "../../internal/shared";
 import { renderCollapsiblePanel } from "../collapsible/collapsible-panel";
 import {
   type AccordionType,
@@ -75,7 +76,7 @@ type AccordionValueChangeMetadata = Pick<
 
 const ACCORDION_CONTENT_HEIGHT_PROPERTY = "--starwind-accordion-content-height";
 
-const instances = new WeakMap<HTMLElement, AccordionController>();
+const instances = shared<WeakMap<HTMLElement, AccordionController>>("accordion");
 
 export function createAccordion(
   root: HTMLElement,

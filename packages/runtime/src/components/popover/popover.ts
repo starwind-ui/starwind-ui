@@ -26,6 +26,7 @@ import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { lockDocumentScroll } from "../../internal/scroll-lock";
+import { shared } from "../../internal/shared";
 
 export type PopoverOpenChangeReason =
   | "close-press"
@@ -123,7 +124,7 @@ const POPOVER_ALIGN_ATTRIBUTE = "data-align";
 const POPOVER_SIDE_OFFSET_ATTRIBUTE = "data-side-offset";
 const POPOVER_AVOID_COLLISIONS_ATTRIBUTE = "data-avoid-collisions";
 const POPOVER_COLLISION_STRATEGY_ATTRIBUTE = "data-collision-strategy";
-const instances = new WeakMap<HTMLElement, PopoverController>();
+const instances = shared<WeakMap<HTMLElement, PopoverController>>("popover");
 
 export function refreshPopoverPortalSurface(root: HTMLElement): void {
   const controller = instances.get(root);

@@ -36,10 +36,16 @@ export function defineReactDropzoneOutputTests(getTempRoot: GetTempRoot): void {
     expect(generatedPrimitiveEntries).toContain("dropzone");
     expect(compactCode(root)).toContain(
       compactCode(
-        'import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";',
+        'import { createDropzone, type DropzoneFilesChangeDetails, type DropzoneFilesRejectDetails } from "@starwind-ui/runtime/dropzone";',
       ),
     );
     expect(compactCode(root)).toContain(compactCode("onFilesChange?:"));
+    expect(compactCode(root)).toContain(compactCode("onFilesReject?:"));
+    expect(compactCode(root)).toContain(
+      compactCode(
+        'instance.subscribe("filesReject", (detail) => { inputs.current.onFilesReject?.(detail.files, detail); });',
+      ),
+    );
     expect(compactCode(root)).toContain(compactCode("instance.setDisabled(next.disabled)"));
     expect(compactCode(root)).toContain(compactCode("instance.setUploading(next.isUploading)"));
     expect(compactCode(root)).toContain(compactCode("data-sw-dropzone"));
@@ -69,7 +75,9 @@ export function defineReactDropzoneOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(index)).toContain(compactCode("Input: DropzoneInput"));
     expect(compactCode(index)).toContain(compactCode("FilesList: DropzoneFilesList"));
     expect(compactCode(index)).toContain(
-      compactCode('export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime"'),
+      compactCode(
+        'export type { DropzoneFilesChangeDetails, DropzoneFilesRejectDetails } from "@starwind-ui/runtime"',
+      ),
     );
   });
 

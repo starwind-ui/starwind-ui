@@ -123,6 +123,18 @@ export type ${root}Props = Omit<
   ${props.value.name}?: ${props.value.type};
 };
 
+const visuallyHiddenInputStyle: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: "hidden",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
   {
     ${props.autoComplete.name},
@@ -438,7 +450,7 @@ ${selectOptionObservers("react")}
         <input
           ref={inputRef}
           ${facts.attrs.input}
-          type="hidden"
+          type={${props.required.name} ? undefined : "hidden"}
           autoComplete={${props.autoComplete.name}}
           form={${props.form.name}}
           name={${props.name.name}}
@@ -447,7 +459,14 @@ ${selectOptionObservers("react")}
           value={renderedValue}
           aria-hidden="true"
           tabIndex={-1}
-          readOnly
+          style={visuallyHiddenInputStyle}
+          onFocus={() =>
+            rootRef.current
+              ?.querySelector<HTMLElement>("[${facts.attrs.trigger}]")
+              ?.focus({ focusVisible: true } as FocusOptions)
+          }
+          // Only autofill writes here. React restores the controlled value.
+          onChange={ensureInstance}
         />
         {children}
       </div>

@@ -633,8 +633,6 @@ function sidebarComponent(): StyledComponentContract {
                       args: { class: "className" },
                     },
                   },
-                  { name: "data-state", value: { type: "literal", value: "expanded" } },
-                  { name: "data-collapsible", value: { type: "literal", value: "" } },
                   {
                     name: "data-collapsible-mode",
                     value: { type: "variable", name: "collapsible" },

@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from "node:fs";
 import path from "node:path";
 import { createSpawnCommand, getPackageManagerCommand } from "./command-process.mjs";
 
@@ -28,6 +28,11 @@ export function fingerprintFiles(root, files) {
       continue;
     }
     const stat = lstatSync(target);
+    // Git tracks a symbolic link as its target path, so hash the path and not what it points to.
+    if (stat.isSymbolicLink()) {
+      hash.update("symlink\0").update(readlinkSync(target)).update("\0");
+      continue;
+    }
     if (!stat.isFile()) throw new Error(`Release input must be a regular file: ${file}`);
     hash
       .update(String(stat.mode & 0o111))

@@ -5,6 +5,7 @@ import {
 import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 import {
   createRadio,
@@ -100,7 +101,7 @@ const RADIO_READONLY_ATTRIBUTE = "data-readonly";
 const RADIO_REQUIRED_ATTRIBUTE = "data-required";
 const RADIO_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, RadioGroupController>();
+const instances = shared<WeakMap<HTMLElement, RadioGroupController>>("radio-group");
 
 registerFieldControlBridge({
   kind: "radio-group",

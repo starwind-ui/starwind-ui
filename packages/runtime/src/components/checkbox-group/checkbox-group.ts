@@ -10,6 +10,7 @@ import {
 } from "../../internal/dom";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { shared } from "../../internal/shared";
 import {
   type CheckboxCheckedChangeDetails,
   type CheckboxInstance,
@@ -77,7 +78,7 @@ const CHECKBOX_INPUT_ATTRIBUTE = "data-sw-checkbox-input";
 const CHECKBOX_NAME_ATTRIBUTE = "data-name";
 const CHECKBOX_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, CheckboxGroupController>();
+const instances = shared<WeakMap<HTMLElement, CheckboxGroupController>>("checkbox-group");
 
 registerFieldControlBridge({
   kind: "checkbox-group",

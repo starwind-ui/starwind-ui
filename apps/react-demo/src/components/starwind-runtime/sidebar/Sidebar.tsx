@@ -53,8 +53,6 @@ function Sidebar(props: SidebarProps) {
     <>
       <SidebarPrimitive.Sidebar
         className={sidebar({ class: className })}
-        data-state="expanded"
-        data-collapsible=""
         data-collapsible-mode={collapsible}
         collapsible={collapsible}
         data-variant={variant}

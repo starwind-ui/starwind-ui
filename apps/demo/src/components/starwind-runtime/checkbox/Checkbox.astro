@@ -1,5 +1,6 @@
 ---
 import Check from "@tabler/icons/outline/check.svg";
+import Minus from "@tabler/icons/outline/minus.svg";
 import type { HTMLAttributes } from "astro/types";
 import type { VariantProps } from "tailwind-variants";
 
@@ -72,6 +73,8 @@ const ariaLabel = rest["aria-label"] ?? label;
       data-slot="checkbox-indicator"
     >
       <Check data-sw-checkbox-check-icon />
+
+      <Minus data-sw-checkbox-indeterminate-icon />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 

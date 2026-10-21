@@ -46,7 +46,7 @@ export function printVueFileDropControlIndex(
 function printRoot(facts: AdapterFileDropControlFacts): string {
   const connection = dropzoneConnection(facts, {
     read: "readInputs()",
-    notify: (files, detail) => `emit("filesChange", ${files}, ${detail});`,
+    notify: (event, files, detail) => `emit("${event.name}", ${files}, ${detail});`,
     untrack: (body) => body,
   });
   const props = facts.props;
@@ -57,6 +57,7 @@ function printRoot(facts: AdapterFileDropControlFacts): string {
 import {
   ${facts.runtime.factory},
   type ${facts.event.detailsType},
+  type ${facts.rejectEvent.detailsType},
 } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 import { observeFormDiscovery } from "../_internal/form-discovery";
@@ -75,6 +76,7 @@ const props = withDefaults(
 );
 const emit = defineEmits<{
   filesChange: [files: ${facts.event.valueType}, detail: ${facts.event.detailsType}];
+  ${facts.rejectEvent.name}: [files: ${facts.rejectEvent.valueType}, detail: ${facts.rejectEvent.detailsType}];
 }>();
 const attrs = useAttrs();
 const element = ref<HTMLLabelElement | null>(null);

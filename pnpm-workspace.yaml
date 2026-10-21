@@ -51,6 +51,8 @@ overrides:
   smol-toml@<=1.7.0: 1.7.1
   source-map-js@>=1.0.0 <1.2.2: 1.2.2
   svgo@>=4.0.0 <4.1.0: ^4.1.0
+  vite@>=7.0.0 <7.3.7: 7.3.7
+  vite@>=8.0.0 <8.1.6: 8.1.6
   yaml@>=2.0.0 <2.8.3: 2.9.0
 
 patchedDependencies:

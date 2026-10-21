@@ -322,7 +322,8 @@ ${selectOptionObservers("svelte")}
   <input
     ${facts.attrs.input}=""
     data-sw-part="${facts.parts.input.name}"
-    type="hidden"
+    type={${facts.props.required.name} ? undefined : "hidden"}
+    style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0"
     value={renderedValue ?? ""}
     autocomplete={${facts.props.autoComplete.name} as HTMLInputAttributes["autocomplete"]}
     disabled={${facts.props.disabled.name}}

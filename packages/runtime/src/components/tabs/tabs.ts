@@ -6,6 +6,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { shared } from "../../internal/shared";
 import { getTabsIndicatorGeometry } from "../../internal/tabs-indicator-geometry";
 
 import { createPanelPresence } from "./panel-presence";
@@ -109,7 +110,7 @@ const TABS_ACTIVE_TAB_BOTTOM_CSS_VAR = "--active-tab-bottom";
 const TABS_ACTIVE_TAB_WIDTH_CSS_VAR = "--active-tab-width";
 const TABS_ACTIVE_TAB_HEIGHT_CSS_VAR = "--active-tab-height";
 
-const instances = new WeakMap<HTMLElement, TabsController>();
+const instances = shared<WeakMap<HTMLElement, TabsController>>("tabs");
 
 export function createTabs(root: HTMLElement, options: TabsOptions = {}): TabsInstance {
   assertHTMLElement(root, "createTabs root");

@@ -433,6 +433,24 @@ Runtime instance without requiring a framework render cycle.
 
 <RuntimeFactoriesTable />
 
+## Control A Component From Page Code
+
+A factory returns the live controller when the element already has one. To open a Dialog, check a
+Checkbox, or set a Slider value from page code, call the factory with the root element and no
+options. Then call the controller methods.
+
+\`\`\`ts
+import { createDialog } from "@starwind-ui/runtime/dialog";
+
+const dialog = createDialog(document.querySelector<HTMLElement>("#settings-dialog")!);
+dialog.open();
+\`\`\`
+
+If the component already has a controller, the factory returns it and ignores the options you pass.
+If your script runs first, the options you pass take priority over the options from the markup. Set options through
+data attributes or component props. \`createForm\` is different: it applies the options you pass,
+such as \`onSubmit\` and validators, to the live form.
+
 ## Lifecycle And Cleanup
 
 \`initStarwind\` returns a cleanup object for the initialized root. Calling \`destroy()\` tears down

@@ -434,6 +434,7 @@ describe("release candidate acceptance", () => {
       [
         "candidate hosts",
         ["release:candidate:acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"],
+        "candidate",
       ],
     ]);
     expect(manifest.scripts["sync-public-runtime"] ?? "").not.toContain(

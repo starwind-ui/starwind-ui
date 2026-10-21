@@ -36,6 +36,7 @@ import {
   createRovingFocusNavigationAdapter,
   type OwnedListNavigation,
 } from "../../internal/owned-list-navigation";
+import { shared } from "../../internal/shared";
 
 export type MenuOpenChangeReason =
   | "escape-key"
@@ -198,7 +199,7 @@ const MENU_ITEM_COLLECTION_ATTRIBUTES = [
   MENU_VALUE_ATTRIBUTE,
 ];
 
-const instances = new WeakMap<HTMLElement, MenuController>();
+const instances = shared<WeakMap<HTMLElement, MenuController>>("menu");
 
 export function refreshMenuPortalSurface(root: HTMLElement): void {
   const controller = instances.get(root);

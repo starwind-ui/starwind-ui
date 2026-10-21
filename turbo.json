@@ -16,6 +16,10 @@
     "typecheck": {
       "outputs": []
     },
+    "svelte-demo#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["build/**"]
+    },
     "svelte-demo#typecheck": {
       "dependsOn": ["^build"],
       "outputs": []

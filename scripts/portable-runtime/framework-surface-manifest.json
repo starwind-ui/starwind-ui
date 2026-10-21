@@ -1800,6 +1800,11 @@
               "classification": "runtime-facade"
             },
             {
+              "name": "DropzoneFilesRejectDetails",
+              "kind": "type",
+              "classification": "runtime-facade"
+            },
+            {
               "name": "Dropzone",
               "kind": "value",
               "classification": "namespace"
@@ -6768,6 +6773,11 @@
             },
             {
               "name": "DropzoneFilesChangeDetails",
+              "kind": "type",
+              "classification": "runtime-facade"
+            },
+            {
+              "name": "DropzoneFilesRejectDetails",
               "kind": "type",
               "classification": "runtime-facade"
             },
@@ -11875,6 +11885,11 @@
               "classification": "runtime-facade"
             },
             {
+              "name": "DropzoneFilesRejectDetails",
+              "kind": "type",
+              "classification": "runtime-facade"
+            },
+            {
               "name": "Dropzone",
               "kind": "value",
               "classification": "namespace"
@@ -16939,6 +16954,11 @@
             },
             {
               "name": "DropzoneFilesChangeDetails",
+              "kind": "type",
+              "classification": "runtime-facade"
+            },
+            {
+              "name": "DropzoneFilesRejectDetails",
               "kind": "type",
               "classification": "runtime-facade"
             },

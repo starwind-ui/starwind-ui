@@ -39,6 +39,18 @@ export type SelectRootProps = Omit<
   value?: string | null;
 };
 
+const visuallyHiddenInputStyle: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: "hidden",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function SelectRoot(
   {
     autoComplete,
@@ -477,7 +489,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
           <input
             ref={inputRef}
             data-sw-select-input
-            type="hidden"
+            type={required ? undefined : "hidden"}
             autoComplete={autoComplete}
             form={form}
             name={name}
@@ -486,7 +498,14 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
             value={renderedValue}
             aria-hidden="true"
             tabIndex={-1}
-            readOnly
+            style={visuallyHiddenInputStyle}
+            onFocus={() =>
+              rootRef.current
+                ?.querySelector<HTMLElement>("[data-sw-select-trigger]")
+                ?.focus({ focusVisible: true } as FocusOptions)
+            }
+            // Only autofill writes here. React restores the controlled value.
+            onChange={ensureInstance}
           />
           {children}
         </div>

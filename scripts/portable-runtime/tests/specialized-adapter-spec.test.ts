@@ -881,7 +881,7 @@ describe("SpecializedAdapterSpec", () => {
     expect(spec.select.hiddenInput).toEqual({
       part: "input",
       props: ["autoComplete", "form", "name", "required", "value"],
-      type: "hidden",
+      type: "text",
     });
     expect(spec.select.floating).toEqual({
       anchorPart: "trigger",
@@ -1148,7 +1148,8 @@ describe("SpecializedAdapterSpec", () => {
       compactCode('data-state={defaultOpen ? "open" : "closed"}'),
     );
     expect(compactCode(astroRoot)).toContain(compactCode("data-sw-select-input"));
-    expect(compactCode(astroRoot)).toContain(compactCode('type="hidden"'));
+    expect(compactCode(astroRoot)).not.toContain(compactCode('type="hidden"'));
+    expect(compactCode(astroRoot)).toContain(compactCode("clip-path:inset(50%)"));
     expect(compactCode(astroRoot)).toContain(compactCode("autocomplete={autoComplete}"));
     expect(compactCode(astroRoot)).toContain(compactCode('tabindex="-1"'));
     expect(compactCode(astroRoot)).toContain(compactCode("createSelect(root)"));
@@ -1382,7 +1383,7 @@ describe("SpecializedAdapterSpec", () => {
         fieldIntegration: true,
         hiddenInputPart: "hiddenInput",
         props: ["autoComplete", "form", "name", "required", "value"],
-        type: "hidden",
+        type: "text",
       },
       itemContext: { part: "item", valueProp: "value" },
       itemIndicator: {
@@ -1531,7 +1532,7 @@ describe("SpecializedAdapterSpec", () => {
       },
       hiddenInput: {
         discoveryAttribute: "data-sw-combobox-hidden-input",
-        initialAttributes: ["type", "form", "name", "value", "aria-hidden", "tabIndex"],
+        initialAttributes: ["form", "name", "value", "aria-hidden", "tabIndex"],
         publicRef: false,
       },
       icon: {
@@ -1963,15 +1964,14 @@ describe("SpecializedAdapterSpec", () => {
         constantAttributes: {
           ariaHidden: "true",
           tabIndex: "-1",
-          type: "hidden",
         },
         contractProps: ["autoComplete", "form", "name", "required", "value"],
         fieldIntegration: true,
         part: "hiddenInput",
         publicExport: false,
-        renderedAttributes: ["type", "form", "name", "value", "aria-hidden", "tabIndex"],
+        renderedAttributes: ["form", "name", "value", "aria-hidden", "tabIndex"],
         renderedInsidePart: "root",
-        type: "hidden",
+        type: "text",
         valueState: "value",
       },
       rootAttributes: {
@@ -2070,7 +2070,7 @@ describe("SpecializedAdapterSpec", () => {
       ]),
     );
     expect(validateComboboxSpecializedAdapterSpec(withoutHiddenInputForm)).toContain(
-      "Combobox specialized adapter spec requires hiddenInput hidden-input metadata.",
+      "Combobox specialized adapter spec requires a validating text input recipe.",
     );
     expect(validateComboboxSpecializedAdapterSpec(withHiddenInputAriaHiddenDrift)).toContain(
       'Combobox specialized adapter spec requires aria-hidden="true" metadata for hiddenInput.',
@@ -3880,8 +3880,15 @@ describe("SpecializedAdapterSpec", () => {
       compactCode('data-default-mobile-open={defaultMobileOpen ? "true" : undefined}'),
     );
     expect(compactCode(provider)).toContain(
-      compactCode('data-state={defaultOpen ? "expanded" : "collapsed"}'),
+      compactCode('const initialState = defaultOpen ? "expanded" : "collapsed";'),
     );
+    expect(compactCode(provider)).toContain(compactCode("data-state={initialState}"));
+    expect(compactCode(provider)).toContain(
+      compactCode('Symbol.for("starwind-ui.sidebar.initial-states")'),
+    );
+    expect(compactCode(provider)).toContain(compactCode("sidebarInitialStates.add(initialState);"));
+    expect(compactCode(provider)).toContain(compactCode("{...providerAttributes}"));
+    expect(compactCode(provider)).not.toContain(compactCode("{...rest}"));
     expect(compactCode(provider)).toContain(
       compactCode('data-mobile-open={defaultMobileOpen ? "true" : "false"}'),
     );
@@ -3907,8 +3914,31 @@ describe("SpecializedAdapterSpec", () => {
     expect(compactCode(provider)).toContain(compactCode("createSidebarController(provider)"));
     expect(compactCode(provider)).toContain(compactCode("registerAstroControllerLifecycle"));
     expect(compactCode(sidebar)).toContain(compactCode("data-sw-sidebar"));
-    expect(compactCode(sidebar)).toContain(compactCode('data-state="expanded"'));
-    expect(compactCode(sidebar)).toContain(compactCode('data-collapsible=""'));
+    expect(compactCode(sidebar)).toContain(
+      compactCode('Symbol.for("starwind-ui.sidebar.initial-states")'),
+    );
+    expect(compactCode(sidebar)).toContain(
+      compactCode(
+        'sidebarInitialStates?.size === 1 && sidebarInitialStates.has("collapsed") ? "collapsed" : "expanded"',
+      ),
+    );
+    expect(compactCode(sidebar)).toContain(compactCode("data-state={state}"));
+    expect(compactCode(sidebar)).toContain(
+      compactCode('data-collapsible={state === "collapsed" ? collapsible : ""}'),
+    );
+    expect(compactCode(sidebar)).not.toContain(compactCode('data-state="expanded"'));
+    expect(compactCode(sidebar)).toContain(compactCode("{...sidebarAttributes}"));
+    expect(compactCode(sidebar)).not.toContain(compactCode("{...rest}"));
+    for (const owned of [
+      "data-sw-sidebar",
+      "data-state",
+      "data-collapsible",
+      "data-collapsible-mode",
+      "data-variant",
+      "data-side",
+    ]) {
+      expect(sidebar).toContain(`"${owned}",`);
+    }
     expect(compactCode(sidebar)).toContain(compactCode("data-collapsible-mode={collapsible}"));
     expect(compactCode(sidebar)).toContain(compactCode("data-variant={variant}"));
     expect(compactCode(sidebar)).toContain(compactCode("data-side={side}"));
@@ -6124,6 +6154,11 @@ describe("SpecializedAdapterSpec", () => {
               detailType: "DropzoneFilesChangeDetails",
               handlerProp: "onFilesChange",
             }),
+            expect.objectContaining({
+              detailType: "DropzoneFilesRejectDetails",
+              handlerProp: "onFilesReject",
+              runtimeEvent: "filesReject",
+            }),
           ],
           lifecycle: expect.objectContaining({ factory: "createDropzone" }),
           stateSync: expect.arrayContaining([
@@ -6308,7 +6343,9 @@ describe("SpecializedAdapterSpec", () => {
     expect(astroFilesList).toContain("data-sw-dropzone-files-list");
     expect(astroFilesList).toContain('data-has-files="false"');
     expect(compactCode(astroIndex)).toContain(
-      compactCode('export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime";'),
+      compactCode(
+        'export type { DropzoneFilesChangeDetails, DropzoneFilesRejectDetails } from "@starwind-ui/runtime";',
+      ),
     );
     expect(compactCode(astroIndex)).toContain(compactCode("FilesList: DropzoneFilesList"));
 
@@ -6323,7 +6360,9 @@ describe("SpecializedAdapterSpec", () => {
     expect(reactFilesList).toContain("data-sw-dropzone-files-list");
     expect(reactFilesList).toContain('data-has-files="false"');
     expect(compactCode(reactIndex)).toContain(
-      compactCode('export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime";'),
+      compactCode(
+        'export type { DropzoneFilesChangeDetails, DropzoneFilesRejectDetails } from "@starwind-ui/runtime";',
+      ),
     );
     expect(compactCode(reactIndex)).toContain(compactCode("FilesList: DropzoneFilesList"));
 
@@ -6378,6 +6417,7 @@ describe("SpecializedAdapterSpec", () => {
           "data-drag-active",
           "data-has-files",
           "data-is-uploading",
+          "data-rejected",
           "aria-disabled",
           "role",
           "tabindex",
@@ -6509,6 +6549,17 @@ describe("SpecializedAdapterSpec", () => {
       lifecycle: "constructor-callback-ref",
       reasons: ["drop", "imperative-action", "input-change"],
       subscriberEvent: "filesChange",
+      valueProperty: "files",
+      valueType: "File[]",
+    });
+    expect(spec.dropzone.filesReject).toEqual({
+      callbackProp: "onFilesReject",
+      detailsType: "DropzoneFilesRejectDetails",
+      domEvent: "starwind:files-reject",
+      emitsFrom: "root",
+      lifecycle: "constructor-callback-ref",
+      reasons: ["drop"],
+      subscriberEvent: "filesReject",
       valueProperty: "files",
       valueType: "File[]",
     });
@@ -9193,7 +9244,7 @@ describe("SpecializedAdapterSpec", () => {
       compactCode('data-state={defaultOpen ? "open" : "closed"}'),
     );
     expect(compactCode(astroRoot)).toContain(compactCode("data-sw-combobox-hidden-input"));
-    expect(compactCode(astroRoot)).toContain(compactCode('type="hidden"'));
+    expect(compactCode(astroRoot)).toContain(compactCode('type={required ? undefined : "hidden"}'));
     expect(compactCode(astroRoot)).toContain(compactCode('value={defaultValue ?? ""}'));
     expect(compactCode(astroRoot)).toContain(compactCode('aria-hidden="true"'));
     expect(compactCode(astroRoot)).toContain(compactCode('tabindex="-1"'));

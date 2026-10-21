@@ -1,4 +1,5 @@
 import { assertHTMLElement, setBooleanAttribute } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 
 export type ButtonOptions = {
   disabled?: boolean;
@@ -12,7 +13,7 @@ export type ButtonInstance = {
 
 const BUTTON_ROOT_ATTRIBUTE = "data-sw-button";
 
-const instances = new WeakMap<HTMLButtonElement, ButtonController>();
+const instances = shared<WeakMap<HTMLButtonElement, ButtonController>>("button");
 
 export function createButton(root: HTMLButtonElement, options: ButtonOptions = {}): ButtonInstance {
   assertHTMLElement(root, "createButton root");

@@ -27,6 +27,7 @@ import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { type DocumentScrollLock, lockDocumentScroll } from "../../internal/scroll-lock";
+import { shared } from "../../internal/shared";
 
 export type DialogOpenChangeReason =
   | "trigger-press"
@@ -111,7 +112,7 @@ const DIALOG_CLOSE_ATTRIBUTE = "data-sw-dialog-close";
 const DIALOG_TARGET_ID_ATTRIBUTE = "data-sw-dialog-target-id";
 const DIALOG_ROOT_SELECTOR = "[data-sw-dialog], [data-sw-alert-dialog], [data-sw-drawer]";
 
-const instances = new WeakMap<HTMLElement, DialogController>();
+const instances = shared<WeakMap<HTMLElement, DialogController>>("dialog");
 const retainedSurfaceOwners = new WeakMap<Element, HTMLElement>();
 const openDialogStack: DialogController[] = [];
 const handledEscapeEvents = new WeakSet<Event>();

@@ -735,6 +735,17 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
           },
         ],
       },
+      {
+        handlerName: "handleFilesReject",
+        name: "filesReject",
+        parameters: [
+          { name: "files", type: "File[]" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/dropzone").DropzoneFilesRejectDetails',
+          },
+        ],
+      },
     ],
     target: { component: "dropzone", part: "Root" },
   },

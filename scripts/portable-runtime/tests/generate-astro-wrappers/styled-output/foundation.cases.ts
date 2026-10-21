@@ -343,6 +343,9 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(sidebar).toContain("import { Sheet, SheetContent, SheetDescription");
   expect(sidebar).toContain("<SidebarPrimitive.Sidebar");
   expect(sidebar).toContain("data-collapsible-mode={collapsible}");
+  // The primitive Sidebar renders the initial state from its provider.
+  expect(sidebar).not.toContain('data-state="expanded"');
+  expect(sidebar).not.toContain('data-collapsible=""');
   expect(sidebar).toContain('data-slot="sidebar-mobile"');
   expect(sidebar).toContain("<SheetContent");
   expect(sidebarTrigger).toContain(

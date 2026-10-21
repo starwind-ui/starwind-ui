@@ -289,7 +289,7 @@ ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
 <div {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={initialDefaults.value ?? undefined} ${f.attrs.defaultInputValue}={initialDefaults.inputValue} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.readOnly}={readOnly ? "" : undefined} ${f.attrs.name}={name} ${f.attrs.form}={form} ${f.attrs.required}={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
-  <input type="${f.hiddenInput.constantAttributes.type}" ${f.attrs.hiddenInput}="" aria-hidden="${f.hiddenInput.constantAttributes.ariaHidden}" tabindex={${f.hiddenInput.constantAttributes.tabIndex}} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
+  <input type={required ? undefined : "hidden"} style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0" ${f.attrs.hiddenInput}="" aria-hidden="${f.hiddenInput.constantAttributes.ariaHidden}" tabindex={${f.hiddenInput.constantAttributes.tabIndex}} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
 </div>
 `.replace(/[ \t]+$/gm, "");
 }

@@ -12,16 +12,42 @@ type Props = HTMLAttributes<"div"> & {
 };
 
 const { side = "left", variant = "sidebar", collapsible = "offcanvas", ...rest } = Astro.props;
+
+// SidebarProvider records its initial state before its slot renders. When providers on one page
+// have different initial states, keep "expanded" and let the Runtime apply the state.
+// Render the Sidebar inside its SidebarProvider slot. A Sidebar that you render before its provider,
+// for example with `Astro.slots.render`, can show the wrong state until the page script starts.
+const sidebarInitialStates = (
+  Astro.locals as unknown as Record<symbol, Set<string> | undefined> | undefined
+)?.[Symbol.for("starwind-ui.sidebar.initial-states")];
+const state =
+  sidebarInitialStates?.size === 1 && sidebarInitialStates.has("collapsed")
+    ? "collapsed"
+    : "expanded";
+
+const sidebarAttributes = Object.fromEntries(
+  Object.entries(rest).filter(
+    ([name]) =>
+      ![
+        "data-sw-sidebar",
+        "data-state",
+        "data-collapsible",
+        "data-collapsible-mode",
+        "data-variant",
+        "data-side",
+      ].includes(name),
+  ),
+);
 ---
 
 <div
   data-sw-sidebar
-  data-state="expanded"
-  data-collapsible=""
+  data-state={state}
+  data-collapsible={state === "collapsed" ? collapsible : ""}
   data-collapsible-mode={collapsible}
   data-variant={variant}
   data-side={side}
-  {...rest}
+  {...sidebarAttributes}
 >
   <slot />
 </div>

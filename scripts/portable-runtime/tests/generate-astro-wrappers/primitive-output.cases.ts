@@ -1145,7 +1145,8 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(selectRoot).toContain("data-modal");
     expect(selectRoot).toContain("data-readonly");
     expect(selectRoot).toContain("data-sw-select-input");
-    expect(selectRoot).toContain('type="hidden"');
+    expect(selectRoot).not.toContain('type="hidden"');
+    expect(selectRoot).toContain("clip-path:inset(50%)");
     expect(selectRoot).toContain("autocomplete={autoComplete}");
     expect(selectRoot).toContain("form={form}");
     expect(selectTrigger).toContain("data-sw-select-trigger");
@@ -1187,6 +1188,8 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(sidebarProvider).toContain("createSidebarController(provider)");
     expect(sidebar).toContain("data-sw-sidebar");
     expect(sidebar).toContain("data-collapsible-mode={collapsible}");
+    expect(sidebar).toContain("data-state={state}");
+    expect(sidebar).not.toContain('data-state="expanded"');
     expect(sidebarTrigger).toContain("data-sw-sidebar-trigger");
     expect(sidebarTrigger).toContain('aria-expanded="false"');
     expect(sidebarRail).toContain("data-sw-sidebar-rail");

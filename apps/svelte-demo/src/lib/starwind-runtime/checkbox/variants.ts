@@ -12,6 +12,7 @@ export const checkbox = tv({
     "outline-0 focus:ring-0 focus:ring-offset-0",
     "not-data-disabled:cursor-pointer data-disabled:cursor-not-allowed data-disabled:opacity-50",
     "data-error-visible:border-error data-error-visible:focus-visible:ring-error/40",
+    "data-indeterminate:data-error-visible:border-error",
   ],
   variants: {
     size: {
@@ -21,18 +22,18 @@ export const checkbox = tv({
     },
     variant: {
       default:
-        "data-checked:bg-foreground data-checked:border-foreground focus-visible:ring-outline/50 focus-visible:border-outline",
+        "data-checked:bg-foreground data-checked:border-foreground data-indeterminate:bg-foreground data-indeterminate:border-foreground focus-visible:ring-outline/50 focus-visible:border-outline",
       primary:
-        "data-checked:bg-primary data-checked:border-primary focus-visible:ring-primary/50 focus-visible:border-primary",
+        "data-checked:bg-primary data-checked:border-primary data-indeterminate:bg-primary data-indeterminate:border-primary focus-visible:ring-primary/50 focus-visible:border-primary",
       secondary:
-        "data-checked:bg-secondary data-checked:border-secondary focus-visible:ring-secondary/50 focus-visible:border-secondary",
-      info: "data-checked:bg-info data-checked:border-info focus-visible:ring-info/50 focus-visible:border-info",
+        "data-checked:bg-secondary data-checked:border-secondary data-indeterminate:bg-secondary data-indeterminate:border-secondary focus-visible:ring-secondary/50 focus-visible:border-secondary",
+      info: "data-checked:bg-info data-checked:border-info data-indeterminate:bg-info data-indeterminate:border-info focus-visible:ring-info/50 focus-visible:border-info",
       success:
-        "data-checked:bg-success data-checked:border-success focus-visible:ring-success/50 focus-visible:border-success",
+        "data-checked:bg-success data-checked:border-success data-indeterminate:bg-success data-indeterminate:border-success focus-visible:ring-success/50 focus-visible:border-success",
       warning:
-        "data-checked:bg-warning data-checked:border-warning focus-visible:ring-warning/50 focus-visible:border-warning",
+        "data-checked:bg-warning data-checked:border-warning data-indeterminate:bg-warning data-indeterminate:border-warning focus-visible:ring-warning/50 focus-visible:border-warning",
       error:
-        "data-checked:bg-error data-checked:border-error focus-visible:ring-error/50 focus-visible:border-error",
+        "data-checked:bg-error data-checked:border-error data-indeterminate:bg-error data-indeterminate:border-error focus-visible:ring-error/50 focus-visible:border-error",
     },
   },
   defaultVariants: {

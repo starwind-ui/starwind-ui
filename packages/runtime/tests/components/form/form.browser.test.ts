@@ -1696,14 +1696,18 @@ describe("createForm", () => {
     ]);
     expect(document.activeElement).toBe(sentinel);
 
+    // The visible error follows revalidationTiming="change"; the Form phase stays unsubmitted.
     input.value = "available";
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
     await waitForAcceptedChange();
-    expect(asyncFieldValidator).toHaveBeenCalledTimes(1);
+    expect(asyncFieldValidator).toHaveBeenCalledTimes(2);
+    expect(asyncFieldValidator.mock.calls[1]?.[1].cause).toBe("change");
+    expect(field).not.toHaveAttribute("data-submitted");
 
     input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
     await waitForMicrotasks();
     expect(asyncFieldValidator).toHaveBeenCalledTimes(2);
+    expect(field).not.toHaveAttribute("data-submitted");
   });
 
   it("runs async Form validation when retained external errors are the only invalid result", async () => {
@@ -4876,6 +4880,406 @@ describe("createForm", () => {
     expect(instance.getErrors()).toEqual([]);
     expect(field).not.toHaveAttribute("data-invalid");
     expect(error.hidden).toBe(true);
+  });
+});
+
+describe("createForm submitter formnovalidate", () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = "";
+  });
+
+  function renderDraftForm(formAttributes = ""): {
+    draft: HTMLButtonElement;
+    error: HTMLElement;
+    field: HTMLElement;
+    form: HTMLFormElement;
+    submit: HTMLButtonElement;
+  } {
+    document.body.innerHTML = `
+      <form data-sw-form ${formAttributes}>
+        <div data-sw-field data-name="title">
+          <input data-sw-field-control name="title" required />
+          <div data-sw-field-error data-match="valueMissing">Enter a title.</div>
+        </div>
+        <button type="submit" name="intent" value="publish">Publish</button>
+        <button type="submit" name="intent" value="draft" formnovalidate>Save draft</button>
+      </form>
+    `;
+
+    return {
+      draft: document.querySelector<HTMLButtonElement>("button[formnovalidate]")!,
+      error: document.querySelector<HTMLElement>("[data-sw-field-error]")!,
+      field: document.querySelector<HTMLElement>("[data-sw-field]")!,
+      form: document.querySelector<HTMLFormElement>("[data-sw-form]")!,
+      submit: document.querySelector<HTMLButtonElement>('button[value="publish"]')!,
+    };
+  }
+
+  function dispatchSubmit(form: HTMLFormElement, submitter: HTMLElement): SubmitEvent {
+    const event = new SubmitEvent("submit", { bubbles: true, cancelable: true, submitter });
+    form.dispatchEvent(event);
+    return event;
+  }
+
+  it("calls onSubmit without validation for a formnovalidate submitter", async () => {
+    const { draft, error, field, form } = renderDraftForm();
+    const managedSubmit = vi.fn();
+    const bubbleSubmit = vi.fn();
+    const asyncValidator = vi.fn(() => Promise.resolve(null));
+    const instance = createForm(form, {
+      asyncFieldValidators: { title: asyncValidator },
+      onSubmit: managedSubmit,
+    });
+    form.addEventListener("submit", bubbleSubmit);
+
+    const event = dispatchSubmit(form, draft);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(bubbleSubmit).not.toHaveBeenCalled();
+    expect(managedSubmit).toHaveBeenCalledTimes(1);
+    expect(managedSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event,
+        form,
+        submitter: draft,
+        values: { intent: "draft", title: "" },
+      }),
+    );
+    expect(asyncValidator).not.toHaveBeenCalled();
+    await waitForMacrotask();
+    expect(instance.getErrors()).toEqual([]);
+    expect(field).not.toHaveAttribute("data-invalid");
+    expect(field).not.toHaveAttribute("data-submitted");
+    expect(error.hidden).toBe(true);
+    expect(document.activeElement).not.toBe(form.querySelector("input"));
+  });
+
+  it("lets native submission continue for a formnovalidate submitter without onSubmit", () => {
+    const { draft, field, form } = renderDraftForm();
+    const bubbleSubmit = vi.fn();
+    createForm(form);
+    form.addEventListener("submit", bubbleSubmit);
+
+    const event = dispatchSubmit(form, draft);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(bubbleSubmit).toHaveBeenCalledTimes(1);
+    expect(field).not.toHaveAttribute("data-invalid");
+    expect(field).not.toHaveAttribute("data-submitted");
+  });
+
+  it("skips validation for a real requestSubmit from a formnovalidate button", () => {
+    const { draft, field, form } = renderDraftForm();
+    const managedSubmit = vi.fn();
+    createForm(form, { onSubmit: managedSubmit });
+
+    form.requestSubmit(draft);
+
+    expect(managedSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ submitter: draft, values: { intent: "draft", title: "" } }),
+    );
+    expect(field).not.toHaveAttribute("data-invalid");
+  });
+
+  it("still validates a normal submit button in the same form", async () => {
+    const { error, field, form, submit } = renderDraftForm();
+    const managedSubmit = vi.fn();
+    const bubbleSubmit = vi.fn();
+    createForm(form, { onSubmit: managedSubmit });
+    form.addEventListener("submit", bubbleSubmit);
+
+    const managedEvent = dispatchSubmit(form, submit);
+    await waitForMacrotask();
+
+    expect(managedEvent.defaultPrevented).toBe(true);
+    expect(managedSubmit).not.toHaveBeenCalled();
+    expect(field).toHaveAttribute("data-invalid");
+    expect(field).toHaveAttribute("data-submitted");
+    expect(error.hidden).toBe(false);
+
+    createForm(form, { onSubmit: undefined });
+    const nativeEvent = dispatchSubmit(form, submit);
+
+    expect(nativeEvent.defaultPrevented).toBe(true);
+    expect(bubbleSubmit).not.toHaveBeenCalled();
+  });
+
+  it("keeps Runtime validation when the form itself has novalidate", async () => {
+    const { error, field, form, submit } = renderDraftForm("novalidate");
+    const managedSubmit = vi.fn();
+    createForm(form, { onSubmit: managedSubmit });
+
+    form.requestSubmit(submit);
+    await waitForMacrotask();
+
+    expect(managedSubmit).not.toHaveBeenCalled();
+    expect(field).toHaveAttribute("data-invalid");
+    expect(error.hidden).toBe(false);
+  });
+
+  it("skips validation for an input type=submit with formnovalidate", () => {
+    const { field, form } = renderDraftForm();
+    const draftInput = document.createElement("input");
+    draftInput.type = "submit";
+    draftInput.formNoValidate = true;
+    form.append(draftInput);
+    const managedSubmit = vi.fn();
+    createForm(form, { onSubmit: managedSubmit });
+
+    form.requestSubmit(draftInput);
+
+    expect(managedSubmit).toHaveBeenCalledWith(expect.objectContaining({ submitter: draftInput }));
+    expect(field).not.toHaveAttribute("data-invalid");
+  });
+
+  it("cancels a pending async submit when a formnovalidate submit runs", async () => {
+    const { draft, form, submit } = renderDraftForm();
+    form.querySelector<HTMLInputElement>("input")!.value = "Release notes";
+    const pending = createDeferred<string | null>();
+    const managedSubmit = vi.fn();
+    createForm(form, {
+      asyncFieldValidators: { title: () => pending.promise },
+      onSubmit: managedSubmit,
+    });
+
+    dispatchSubmit(form, submit);
+    expect(managedSubmit).not.toHaveBeenCalled();
+
+    dispatchSubmit(form, draft);
+    expect(managedSubmit).toHaveBeenCalledTimes(1);
+    expect(managedSubmit).toHaveBeenLastCalledWith(expect.objectContaining({ submitter: draft }));
+
+    pending.resolve(null);
+    await waitForMicrotasks();
+    await waitForMacrotask();
+
+    expect(managedSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves visible errors in place after a formnovalidate submit", async () => {
+    const { draft, error, field, form, submit } = renderDraftForm();
+    const managedSubmit = vi.fn();
+    createForm(form, { onSubmit: managedSubmit });
+
+    dispatchSubmit(form, submit);
+    await waitForMacrotask();
+    expect(error.hidden).toBe(false);
+
+    dispatchSubmit(form, draft);
+
+    expect(managedSubmit).toHaveBeenCalledTimes(1);
+    expect(field).toHaveAttribute("data-invalid");
+    expect(error.hidden).toBe(false);
+  });
+});
+
+describe("createForm imperative reveal timing", () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = "";
+  });
+
+  function renderStepForm(formAttributes = ""): {
+    emailError: HTMLElement;
+    emailField: HTMLElement;
+    emailInput: HTMLInputElement;
+    form: HTMLFormElement;
+    nameField: HTMLElement;
+    nameInput: HTMLInputElement;
+  } {
+    document.body.innerHTML = `
+      <form data-sw-form ${formAttributes}>
+        <div data-sw-field data-name="email">
+          <input data-sw-field-control name="email" type="email" required />
+          <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
+        </div>
+        <div data-sw-field data-name="name">
+          <input data-sw-field-control name="name" required />
+          <div data-sw-field-error data-match="valueMissing">Enter a name.</div>
+        </div>
+      </form>
+    `;
+    const fields = document.querySelectorAll<HTMLElement>("[data-sw-field]");
+    const inputs = document.querySelectorAll<HTMLInputElement>("[data-sw-field-control]");
+
+    return {
+      emailError: fields[0]!.querySelector<HTMLElement>("[data-sw-field-error]")!,
+      emailField: fields[0]!,
+      emailInput: inputs[0]!,
+      form: document.querySelector<HTMLFormElement>("[data-sw-form]")!,
+      nameField: fields[1]!,
+      nameInput: inputs[1]!,
+    };
+  }
+
+  async function typeValue(input: HTMLInputElement, value: string): Promise<void> {
+    input.value = value;
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await waitForAcceptedChange();
+  }
+
+  it("revalidates fields revealed by validate() on change like after a submit", async () => {
+    const { emailError, emailField, emailInput, form, nameField, nameInput } = renderStepForm();
+    const instance = createForm(form);
+
+    const outcome = await instance.validate({ names: ["email"], reveal: true });
+    expect(outcome.valid).toBe(false);
+    expect(emailField).toHaveAttribute("data-error-visible");
+    expect(emailError.hidden).toBe(false);
+
+    await typeValue(emailInput, "ada@example.com");
+
+    expect(emailField).not.toHaveAttribute("data-invalid");
+    expect(emailError.hidden).toBe(true);
+    expect(emailInput).not.toHaveAttribute("aria-invalid");
+    expect(emailField).not.toHaveAttribute("data-submitted");
+
+    await typeValue(emailInput, "");
+
+    expect(emailField).toHaveAttribute("data-invalid");
+    expect(emailError.hidden).toBe(false);
+
+    await typeValue(nameInput, "Ada");
+    await typeValue(nameInput, "");
+
+    expect(nameField).not.toHaveAttribute("data-invalid");
+    expect(nameField).not.toHaveAttribute("data-error-visible");
+  });
+
+  it("follows the revalidationTiming policy for fields revealed by validate()", async () => {
+    const { emailError, emailField, emailInput, form } = renderStepForm(
+      'data-revalidation-timing="blur"',
+    );
+    const instance = createForm(form);
+
+    await instance.validate({ names: ["email"], reveal: true });
+    await typeValue(emailInput, "ada@example.com");
+
+    expect(emailField).toHaveAttribute("data-invalid");
+    expect(emailError.hidden).toBe(false);
+
+    emailInput.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    await waitForMicrotasks();
+
+    expect(emailField).not.toHaveAttribute("data-invalid");
+    expect(emailError.hidden).toBe(true);
+  });
+
+  it("revalidates errors shown by validate() through errorVisibility manual", async () => {
+    const { emailError, emailField, emailInput, form, nameField } = renderStepForm(
+      'data-error-visibility="manual"',
+    );
+    const instance = createForm(form);
+
+    await instance.validate({ names: ["email"] });
+    expect(emailError.hidden).toBe(false);
+    expect(nameField).not.toHaveAttribute("data-invalid");
+
+    await typeValue(emailInput, "ada@example.com");
+
+    expect(emailField).not.toHaveAttribute("data-invalid");
+    expect(emailError.hidden).toBe(true);
+    expect(emailField).not.toHaveAttribute("data-submitted");
+  });
+
+  it("keeps validationTiming when validate() does not reveal errors", async () => {
+    const { emailField, emailInput, form } = renderStepForm();
+    const instance = createForm(form);
+
+    await instance.validate({ names: ["email"] });
+    expect(emailField).toHaveAttribute("data-invalid");
+    expect(emailField).not.toHaveAttribute("data-error-visible");
+    await typeValue(emailInput, "ada@example.com");
+    expect(emailField).toHaveAttribute("data-invalid");
+
+    await typeValue(emailInput, "");
+    await instance.validate({ names: ["email"], reveal: false });
+    await typeValue(emailInput, "ada@example.com");
+    expect(emailField).toHaveAttribute("data-invalid");
+  });
+
+  it("keeps pending async validation of another field when a revealed field revalidates", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control name="handle" required />
+          <div data-sw-field-error data-match="customError">Handle is unavailable.</div>
+        </div>
+        <div data-sw-field data-name="email">
+          <input data-sw-field-control name="email" required />
+          <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
+        </div>
+      </form>
+    `;
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const [handleField, emailField] = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-sw-field]"),
+    );
+    const [handleInput, emailInput] = Array.from(
+      document.querySelectorAll<HTMLInputElement>("[data-sw-field-control]"),
+    );
+    const handleCalls: Array<{
+      resolve: (result: string | null) => void;
+      signal: AbortSignal;
+    }> = [];
+    const handleValidator = vi.fn(
+      (_value: FormFieldRegistration["value"], { signal }: { signal: AbortSignal }) =>
+        new Promise<string | null>((resolve) => {
+          handleCalls.push({ resolve, signal });
+        }),
+    );
+    const instance = createForm(form, { asyncFieldValidators: { handle: handleValidator } });
+
+    await instance.validate({ names: ["handle", "email"], reveal: true });
+    expect(handleValidator).not.toHaveBeenCalled();
+
+    await typeValue(handleInput!, "taken");
+    expect(handleValidator).toHaveBeenCalledTimes(1);
+    expect(handleField).toHaveAttribute("data-validating");
+
+    await typeValue(emailInput!, "ada@example.com");
+    expect(emailField).not.toHaveAttribute("data-invalid");
+    expect(handleField).toHaveAttribute("data-validating");
+
+    handleCalls.forEach((call) => call.resolve("Handle is unavailable."));
+    await waitForMicrotasks();
+
+    expect(handleField).not.toHaveAttribute("data-validating");
+    expect(handleField).toHaveAttribute("data-invalid");
+    expect(handleField).toHaveAttribute("data-error-visible");
+    expect(instance.getErrors()).toEqual([
+      expect.objectContaining({ name: "handle", source: "async" }),
+    ]);
+  });
+
+  it("clears the revalidation state with resetValidation and form reset", async () => {
+    const { emailField, emailInput, form, nameField, nameInput } = renderStepForm();
+    const instance = createForm(form);
+
+    await instance.validate({ names: ["email", "name"], reveal: true });
+    instance.resetValidation({ names: ["email"] });
+    await typeValue(emailInput, "ada@example.com");
+    await typeValue(emailInput, "");
+
+    expect(emailField).not.toHaveAttribute("data-invalid");
+    expect(emailField).not.toHaveAttribute("data-error-visible");
+
+    await typeValue(nameInput, "Ada");
+    expect(nameField).not.toHaveAttribute("data-invalid");
+
+    await instance.validate({ reveal: true });
+    instance.resetValidation();
+    await typeValue(nameInput, "");
+    expect(nameField).not.toHaveAttribute("data-invalid");
+
+    await instance.validate({ names: ["name"], reveal: true });
+    form.reset();
+    await waitForMacrotask();
+    await typeValue(nameInput, "Ada");
+    await typeValue(nameInput, "");
+    expect(nameField).not.toHaveAttribute("data-invalid");
+    expect(nameField).not.toHaveAttribute("data-error-visible");
   });
 });
 

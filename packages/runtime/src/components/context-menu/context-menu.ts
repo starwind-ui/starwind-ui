@@ -1,4 +1,5 @@
 import { assertHTMLElement, readBooleanAttribute } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 import {
   createMenu,
   type MenuCloseCompleteDetails,
@@ -54,7 +55,7 @@ type AnchorRectangle = Readonly<{ left: number; top: number; width: number; heig
 
 // Same-root recreation retains the invocation point without retaining the retired DOM anchor.
 const anchorRectangles = new WeakMap<HTMLElement, AnchorRectangle>();
-const instances = new WeakMap<HTMLElement, ContextMenuController>();
+const instances = shared<WeakMap<HTMLElement, ContextMenuController>>("context-menu");
 
 export function createContextMenu(
   root: HTMLElement,

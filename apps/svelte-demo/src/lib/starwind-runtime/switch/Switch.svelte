@@ -36,7 +36,7 @@
 
   let sizeMultiplier = $derived(size === "sm" ? 4 : size === "lg" ? 6 : 5);
 
-  let ariaLabel = $derived(rest["aria-label"] ?? label ?? "switch");
+  let ariaLabel = $derived(rest["aria-label"] ?? label);
 
   let switchStyle = $derived(Object.entries({ "--padding": String(resolvedPadding) + "px", "--height": "calc((var(--spacing) * " + String(sizeMultiplier) + ") + (var(--padding) * 2))", "--width": "calc((var(--spacing) * " + String(sizeMultiplier) + " * 2) + (var(--padding) * 3))", "--border-offset": "1px" }).map(([key, value]) => key + ":" + value).join(";"));
 

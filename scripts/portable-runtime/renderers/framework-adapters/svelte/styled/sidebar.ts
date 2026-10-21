@@ -169,10 +169,6 @@ export function specializeSvelteStyledSidebar(
           if (["onOpenChange", "onMobileOpenChange"].includes(attr.name))
             attr.targetScopes = ["svelte"];
       }
-      if (sidebar && node.type === "primitive" && node.part === "Sidebar")
-        node.attrs = node.attrs.filter(
-          (attr) => !["data-state", "data-collapsible"].includes(attr.name),
-        );
       if ("children" in node) wire(node.children);
       if (node.type === "condition") {
         wire(node.then);

@@ -7,6 +7,7 @@ export const dropzone = tv({
     "data-[is-uploading=false]:hover:bg-muted data-[drag-active=true]:bg-muted transition",
     "focus-visible:border-outline focus-visible:ring-outline/50 outline-none focus-visible:ring-3",
     "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
+    "data-rejected:border-error",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
   ],
 });

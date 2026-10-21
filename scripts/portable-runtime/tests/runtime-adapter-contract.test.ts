@@ -720,7 +720,7 @@ describe.each(["select", "input-otp"])("%s reset contract", (component) => {
       ]),
     );
     if (component === "select")
-      expect(contract.form?.hiddenInput).toEqual({ part: "input", type: "hidden" });
+      expect(contract.form?.hiddenInput).toEqual({ part: "input", type: "text" });
     expect(contract.setters).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ method: "setValue", stateModel: "value", suppressesEmit: true }),

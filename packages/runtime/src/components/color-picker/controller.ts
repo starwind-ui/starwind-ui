@@ -6,6 +6,7 @@ import {
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { shared } from "../../internal/shared";
 import {
   COLOR_PICKER_FORMATS,
   parseColor,
@@ -197,7 +198,7 @@ type ValidityAttributeSnapshot = Readonly<{
   ariaInvalid: string | null;
   dataInvalid: string | null;
 }>;
-const instances = new WeakMap<HTMLElement, ColorPickerController>();
+const instances = shared<WeakMap<HTMLElement, ColorPickerController>>("color-picker");
 
 export function createColorPicker(
   root: HTMLElement,

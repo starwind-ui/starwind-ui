@@ -4,6 +4,7 @@ import {
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 
 export type FieldsetState = {
   disabled: boolean;
@@ -32,7 +33,7 @@ const FIELDSET_LEGEND_ATTRIBUTE = "data-sw-fieldset-legend";
 const FIELD_ROOT_ATTRIBUTE = "data-sw-field";
 const DISABLED_ATTRIBUTE = "data-disabled";
 
-const instances = new WeakMap<HTMLElement, FieldsetController>();
+const instances = shared<WeakMap<HTMLElement, FieldsetController>>("fieldset");
 
 export function createFieldset(root: HTMLElement, options: FieldsetOptions = {}): FieldsetInstance {
   assertHTMLElement(root, "createFieldset root");

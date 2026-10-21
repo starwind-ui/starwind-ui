@@ -46,12 +46,23 @@ const emit = defineEmits<{
     files: File[],
     detail: import("@starwind-ui/vue/dropzone").DropzoneFilesChangeDetails,
   ];
+  filesReject: [
+    files: File[],
+    detail: import("@starwind-ui/vue/dropzone").DropzoneFilesRejectDetails,
+  ];
 }>();
 function handleFilesChange(
   files: File[],
   detail: import("@starwind-ui/vue/dropzone").DropzoneFilesChangeDetails,
 ): void {
   emit("filesChange", files, detail);
+}
+
+function handleFilesReject(
+  files: File[],
+  detail: import("@starwind-ui/vue/dropzone").DropzoneFilesRejectDetails,
+): void {
+  emit("filesReject", files, detail);
 }
 const element = ref<HTMLLabelElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLLabelElement | null } & ComponentPublicInstance) | null =
@@ -85,6 +96,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     v-bind="{ id, 'aria-invalid': ariaInvalid }"
     data-slot="dropzone"
     @files-change="handleFilesChange"
+    @files-reject="handleFilesReject"
   >
     <slot>
       <DropzoneUploadIndicator :is-uploading="isUploading" />

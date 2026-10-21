@@ -6,6 +6,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
+import { shared } from "../../internal/shared";
 import {
   COLLAPSIBLE_PANEL_HIDDEN_UNTIL_FOUND_ATTRIBUTE,
   hideClosedCollapsiblePanel,
@@ -71,7 +72,7 @@ const COLLAPSIBLE_DISABLED_ATTRIBUTE = "data-disabled";
 const COLLAPSIBLE_TRIGGER_SELECTOR = "[data-sw-collapsible-trigger]";
 const COLLAPSIBLE_PANEL_SELECTOR = "[data-sw-collapsible-panel], [data-sw-collapsible-content]";
 
-const instances = new WeakMap<HTMLElement, CollapsibleController>();
+const instances = shared<WeakMap<HTMLElement, CollapsibleController>>("collapsible");
 
 export function createCollapsible(
   root: HTMLElement,

@@ -294,7 +294,7 @@ describe("createCombobox", () => {
     expect(getInput().getAttribute("aria-labelledby")).toBe(getLabel().id);
     expect(getPopup().getAttribute("role")).toBe("listbox");
     expect(getPopup().hidden).toBe(true);
-    expect(getHiddenInput().type).toBe("hidden");
+    expect(getHiddenInput().type).toBe("text");
     expect(getHiddenInput().name).toBe("fruit");
     expect(getHiddenInput().required).toBe(true);
     expect(getHiddenInput().value).toBe("banana");

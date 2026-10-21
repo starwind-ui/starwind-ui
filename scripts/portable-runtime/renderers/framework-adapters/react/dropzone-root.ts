@@ -10,10 +10,11 @@ export function printReactDropzoneRoot(facts: AdapterFileDropControlFacts): stri
   const part = facts.parts.root;
   const connection = dropzoneConnection(facts, {
     read: "inputs.current",
-    notify: (files, detail) => `inputs.current.onFilesChange?.(${files}, ${detail});`,
+    notify: (event, files, detail) =>
+      `inputs.current.${event.callbackProp}?.(${files}, ${detail});`,
     untrack: (body) => body,
   });
-  return `import { ${facts.runtime.factory}, type ${facts.event.detailsType} } from "${facts.runtime.importSource}";
+  return `import { ${facts.runtime.factory}, type ${facts.event.detailsType}, type ${facts.rejectEvent.detailsType} } from "${facts.runtime.importSource}";
 import * as React from "react";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 import { observeFormDiscovery } from "../internal/form-discovery";
@@ -22,13 +23,14 @@ export type ${root}Props = Omit<React.LabelHTMLAttributes<HTMLLabelElement>, "on
   disabled?: ${facts.props.disabled.type};
   isUploading?: ${facts.props.isUploading.type};
   onFilesChange?: (files: ${facts.event.valueType}, details: ${facts.event.detailsType}) => void;
+  ${facts.rejectEvent.callbackProp}?: (files: ${facts.rejectEvent.valueType}, details: ${facts.rejectEvent.detailsType}) => void;
 };
 const ${root} = React.forwardRef<HTMLLabelElement, ${root}Props>(function ${root}(
-  { disabled = ${facts.props.disabled.defaultValue}, isUploading = ${facts.props.isUploading.defaultValue}, onFilesChange, ...props }, forwardedRef,
+  { disabled = ${facts.props.disabled.defaultValue}, isUploading = ${facts.props.isUploading.defaultValue}, onFilesChange, ${facts.rejectEvent.callbackProp}, ...props }, forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLLabelElement>(null);
-  const inputs = React.useRef({ disabled, isUploading, onFilesChange });
-  useIsomorphicLayoutEffect(() => { inputs.current = { disabled, isUploading, onFilesChange }; });
+  const inputs = React.useRef({ disabled, isUploading, onFilesChange, ${facts.rejectEvent.callbackProp} });
+  useIsomorphicLayoutEffect(() => { inputs.current = { disabled, isUploading, onFilesChange, ${facts.rejectEvent.callbackProp} }; });
   ${connection}
   const connectionRef = React.useRef<ReturnType<typeof connectDropzone> | undefined>(undefined);
   const composedRef = React.useCallback((node: HTMLLabelElement | null) => {

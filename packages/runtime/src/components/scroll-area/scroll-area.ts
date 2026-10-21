@@ -1,4 +1,5 @@
 import { assertHTMLElement, setBooleanAttribute } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 
 export type ScrollAreaOrientation = "horizontal" | "vertical";
 
@@ -69,7 +70,7 @@ const SCROLL_AREA_SCROLLING_ATTRIBUTE = "data-scrolling";
 const DEFAULT_OVERFLOW_EDGE_THRESHOLD = 0;
 const MIN_THUMB_SIZE = 20;
 
-const instances = new WeakMap<HTMLElement, ScrollAreaController>();
+const instances = shared<WeakMap<HTMLElement, ScrollAreaController>>("scroll-area");
 
 export function createScrollArea(
   root: HTMLElement,

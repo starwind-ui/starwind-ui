@@ -1,5 +1,6 @@
 import { assertHTMLElement } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { shared } from "../../internal/shared";
 
 export type AvatarImageLoadingStatus = "idle" | "loading" | "loaded" | "error";
 
@@ -54,7 +55,7 @@ const AVATAR_FALLBACK_SELECTOR = "[data-sw-avatar-fallback]";
 const AVATAR_FALLBACK_DELAY_ATTRIBUTE = "data-delay";
 const AVATAR_LOADING_STATUS_ATTRIBUTE = "data-image-loading-status";
 
-const instances = new WeakMap<HTMLElement, AvatarController>();
+const instances = shared<WeakMap<HTMLElement, AvatarController>>("avatar");
 
 export function createAvatar(root: HTMLElement, options: AvatarOptions = {}): AvatarInstance {
   assertHTMLElement(root, "createAvatar root");

@@ -4,7 +4,7 @@ import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";
 import "./styles.css";
 import CheckboxPrimitive from "@starwind-ui/react/checkbox";
-import { IconCheck as Check } from "@tabler/icons-react";
+import { IconCheck as Check, IconMinus as Minus } from "@tabler/icons-react";
 import { checkbox, checkboxIndicator, checkboxLabel, checkboxWrapper } from "./variants";
 
 export type CheckboxProps = Omit<
@@ -85,6 +85,8 @@ function Checkbox(props: CheckboxProps) {
           data-slot="checkbox-indicator"
         >
           <Check data-sw-checkbox-check-icon />
+
+          <Minus data-sw-checkbox-indeterminate-icon />
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
 

@@ -27,6 +27,7 @@ import {
 } from "../../internal/overlay-dismissal";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
+import { shared } from "../../internal/shared";
 
 export type NavigationMenuValue = string | null;
 
@@ -161,11 +162,13 @@ const BASE_UI_POPUP_HEIGHT_PROPERTY = "--popup-height";
 const BASE_UI_POSITIONER_WIDTH_PROPERTY = "--positioner-width";
 const BASE_UI_POSITIONER_HEIGHT_PROPERTY = "--positioner-height";
 const BASE_UI_TRANSFORM_ORIGIN_PROPERTY = "--transform-origin";
-const instances = new WeakMap<HTMLElement, NavigationMenuInstance>();
+const instances = shared<WeakMap<HTMLElement, NavigationMenuInstance>>("navigation-menu");
 
 export function refreshNavigationMenuPortalSurface(root: HTMLElement): void {
-  const instance = instances.get(root);
-  if (!(instance instanceof NavigationMenuController)) return;
+  // Another Runtime copy can own the controller, so check a field instead of the class. An inert
+  // controller for an unsupported nested root has no portal session.
+  const instance = instances.get(root) as NavigationMenuController | undefined;
+  if (!instance?.["portalSession"]) return;
   const nextElements = getNavigationMenuElements(root);
   if (nextElements.popup === instance["elements"].popup) return;
 

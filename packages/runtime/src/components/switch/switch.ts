@@ -1,11 +1,13 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import { labelFromNativeInput, proxyNativeInput } from "../../internal/native-input";
+import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
 export type SwitchCheckedChangeReason = "none";
@@ -80,7 +82,7 @@ const SWITCH_UNCHECKED_INPUT_ATTRIBUTE = "data-sw-switch-unchecked-input";
 const SWITCH_UNCHECKED_VALUE_ATTRIBUTE = "data-unchecked-value";
 const SWITCH_VALUE_ATTRIBUTE = "data-value";
 
-const instances = new WeakMap<HTMLElement, SwitchController>();
+const instances = shared<WeakMap<HTMLElement, SwitchController>>("switch");
 
 registerFieldControlBridge({
   kind: "switch",
@@ -262,19 +264,9 @@ class SwitchController implements SwitchInstance {
     input.checked = this.checkedState;
     input.defaultChecked = this.initialChecked;
     input.disabled = this.disabled;
-    input.hidden = false;
     input.required = this.required;
-    input.tabIndex = -1;
-    input.setAttribute("aria-hidden", "true");
     input.setAttribute(SWITCH_INPUT_ATTRIBUTE, "");
-    input.style.position = "absolute";
-    input.style.width = "1px";
-    input.style.height = "1px";
-    input.style.margin = "-1px";
-    input.style.overflow = "hidden";
-    input.style.clipPath = "inset(50%)";
-    input.style.whiteSpace = "nowrap";
-    input.style.border = "0";
+    proxyNativeInput(input, () => this.root, this.abortController.signal);
 
     if (this.id !== undefined) {
       if (this.root instanceof HTMLButtonElement) {
@@ -377,7 +369,7 @@ class SwitchController implements SwitchInstance {
       this.elements.input.removeAttribute("form");
     }
     this.bindFormResetListener();
-    this.syncRootLabeling();
+    labelFromNativeInput(this.root, this.elements.input);
 
     this.renderUncheckedInput();
   }
@@ -391,16 +383,6 @@ class SwitchController implements SwitchInstance {
     this.formResetElement?.addEventListener("reset", this.handleFormReset, {
       signal: this.abortController.signal,
     });
-  }
-
-  private syncRootLabeling(): void {
-    if (this.root.hasAttribute("aria-label") || this.root.hasAttribute("aria-labelledby")) return;
-
-    const labels = Array.from(this.elements.input.labels ?? []);
-    if (labels.length === 0) return;
-
-    const labelIds = labels.map((label) => ensureId(label, "sw-switch-label"));
-    this.root.setAttribute("aria-labelledby", labelIds.join(" "));
   }
 
   private renderUncheckedInput(): void {

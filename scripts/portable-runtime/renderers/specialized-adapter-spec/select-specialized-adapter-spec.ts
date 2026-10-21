@@ -47,7 +47,7 @@ export type SelectSpecializedAdapterSpec = SpecializedAdapterSpec & {
     hiddenInput: {
       part: "input";
       props: string[];
-      type: "hidden";
+      type: "text";
     };
     itemContext: { part: "item"; valueProp: "value" };
     itemIndicator: {
@@ -117,8 +117,8 @@ export function buildSelectSpecializedAdapterSpec(
   const floating = spec.renderPlan.floating;
   const asChildTrigger = spec.asChild.find((entry) => entry.part === "trigger");
 
-  if (!hiddenInput || hiddenInput.part !== "input" || hiddenInput.type !== "hidden") {
-    throw new Error("Select specialized adapter spec requires an input hidden-input recipe.");
+  if (!hiddenInput || hiddenInput.part !== "input" || hiddenInput.type !== "text") {
+    throw new Error("Select specialized adapter spec requires a validating text input recipe.");
   }
   if (!floating) {
     throw new Error("Select specialized adapter spec requires floating part metadata.");
@@ -629,7 +629,7 @@ export function assertSelectSpecializedAdapterSpec(spec: SelectSpecializedAdapte
     throw new Error(`${spec.displayName} is not a Select specialized adapter spec.`);
   }
 
-  if (spec.select.hiddenInput.part !== "input" || spec.select.hiddenInput.type !== "hidden") {
+  if (spec.select.hiddenInput.part !== "input" || spec.select.hiddenInput.type !== "text") {
     throw new Error("Select specialized adapter spec hidden input must target the input part.");
   }
 

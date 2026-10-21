@@ -3748,6 +3748,7 @@ describe("generateLayeredDocsMetadata", () => {
       expect(runtimeIndexSource).toContain("## Raw HTML");
       expect(runtimeIndexSource).toContain("## Data Attributes");
       expect(runtimeIndexSource).toContain("## Runtime Factories");
+      expect(runtimeIndexSource).toContain("## Control A Component From Page Code");
       expect(runtimeIndexSource).toContain("## Lifecycle And Cleanup");
       expect(runtimeIndexSource).toContain("## Events And State");
       expect(runtimeIndexSource).toContain("## Theme");

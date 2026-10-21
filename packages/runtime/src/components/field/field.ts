@@ -4,6 +4,7 @@ import {
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
+import { shared } from "../../internal/shared";
 import { createInput } from "../input";
 import {
   connectFieldControl,
@@ -154,7 +155,7 @@ const VALIDITY_KEYS: readonly FieldValidityKey[] = [
   "valueMissing",
 ];
 
-const instances = new WeakMap<HTMLElement, FieldController>();
+const instances = shared<WeakMap<HTMLElement, FieldController>>("field");
 const fieldErrorFallbackHtml = new WeakMap<HTMLElement, string>();
 const fieldErrorRenderedMessages = new WeakMap<HTMLElement, string>();
 

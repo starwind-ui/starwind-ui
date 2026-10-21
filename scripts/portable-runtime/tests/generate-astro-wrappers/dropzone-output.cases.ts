@@ -61,7 +61,7 @@ export function defineAstroDropzoneOutputTests(getTempRoot: GetTempRoot): void {
     expect(index).toContain("Input: DropzoneInput");
     expect(index).toContain("FilesList: DropzoneFilesList");
     expect(index).toContain(
-      'export type { DropzoneFilesChangeDetails } from "@starwind-ui/runtime"',
+      'export type { DropzoneFilesChangeDetails, DropzoneFilesRejectDetails } from "@starwind-ui/runtime"',
     );
   });
 
