@@ -69,13 +69,13 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@vitest/browser-playwright": "^4.1.10",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitest/browser-playwright": "^4.1.12",
     "playwright": "1.62.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },
