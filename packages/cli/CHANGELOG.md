@@ -1,5 +1,11 @@
 # starwind
 
+## 3.4.1
+
+### Patch Changes
+
+- Refresh the CLI's runtime dependencies and build tools with upstream fixes. The public API is unchanged.
+
 ## 3.4.0
 
 ### Minor Changes
