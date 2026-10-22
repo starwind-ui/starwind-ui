@@ -43018,7 +43018,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "checkbox",
       displayName: "Checkbox",
       category: "single-boolean-control",
-      registryVersion: "1.0.2",
+      registryVersion: "1.0.3",
       packages: [
         {
           framework: "astro",
@@ -50051,7 +50051,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "combobox",
       displayName: "Combobox",
       category: "floating-value-control",
-      registryVersion: "1.1.2",
+      registryVersion: "1.1.3",
       packages: [
         {
           framework: "astro",
@@ -60676,7 +60676,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "dropzone",
       displayName: "Dropzone",
       category: "form-value-control",
-      registryVersion: "1.0.1",
+      registryVersion: "1.1.0",
       packages: [
         {
           framework: "astro",
@@ -61973,7 +61973,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "field",
       displayName: "Field",
       category: "field-control-coordinator",
-      registryVersion: "1.0.2",
+      registryVersion: "1.0.3",
       packages: [
         {
           framework: "astro",
@@ -63658,7 +63658,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "form",
       displayName: "Form",
       category: "field-control-coordinator",
-      registryVersion: "1.1.0",
+      registryVersion: "1.1.1",
       packages: [
         {
           framework: "astro",
@@ -78122,7 +78122,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio",
       displayName: "Radio",
       category: "single-boolean-control",
-      registryVersion: "1.0.2",
+      registryVersion: "1.0.3",
       packages: [
         {
           framework: "astro",
@@ -79384,7 +79384,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio-group",
       displayName: "Radio Group",
       category: "controlled-value-group",
-      registryVersion: "1.0.1",
+      registryVersion: "1.0.2",
       packages: [
         {
           framework: "astro",
@@ -81187,7 +81187,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "select",
       displayName: "Select",
       category: "floating-value-control",
-      registryVersion: "1.2.0",
+      registryVersion: "1.2.1",
       packages: [
         {
           framework: "astro",
@@ -83978,7 +83978,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "sidebar",
       displayName: "Sidebar",
       category: "presence-disclosure-control",
-      registryVersion: "1.0.1",
+      registryVersion: "1.0.2",
       packages: [
         {
           framework: "astro",
@@ -87409,7 +87409,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "switch",
       displayName: "Switch",
       category: "single-boolean-control",
-      registryVersion: "1.0.2",
+      registryVersion: "1.0.3",
       packages: [
         {
           framework: "astro",
