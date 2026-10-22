@@ -61,9 +61,9 @@
     "astro": ">=5"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.8",
-    "astro": "^7.0.0",
-    "prettier": "^3.6.2",
+    "@astrojs/check": "^0.9.11",
+    "astro": "^7.4.1",
+    "prettier": "3.8.3",
     "typescript": "^5.9.3"
   },
   "engines": {
