@@ -7,9 +7,9 @@
 "starwind": patch
 ---
 
-Dropzone now reports dropped files that it does not keep. A PDF dropped on a Dropzone with `accept="image/*"` used to do nothing visible and fire no event. Dropped files that do not match `accept` are now rejected. Extra dropped files that a Dropzone without `multiple` does not keep are rejected too.
+Dropzone now tells you when it does not keep a dropped file. Before, if you dropped a PDF on a Dropzone with `accept="image/*"`, nothing happened and no event fired. Now Dropzone rejects dropped files that do not match `accept`. A Dropzone without `multiple` keeps one file and rejects the other dropped files.
 
-- Read the rejected files with the `starwind:files-reject` event on the root. In React and Svelte, use `onFilesReject`. In Vue, use `@files-reject`. The event detail has the rejected `files` and the original drop `event`.
-- When a drop keeps no files, the root gets a `data-rejected` attribute and the styled Dropzone shows an error border. The next accepted drop, file picker change, `setFiles` call, or form reset removes it. A drop that keeps some files fires the event but does not set the attribute.
+- To get the rejected files, listen for the `starwind:files-reject` event on the Dropzone. In React and Svelte, use `onFilesReject`. In Vue, use `@files-reject`. The event gives you the rejected `files` and the drop `event`.
+- When Dropzone keeps none of the dropped files, the styled Dropzone shows an error border and the root gets a `data-rejected` attribute. The error clears on the next accepted drop, file picker choice, `setFiles` call, or form reset. When a drop keeps some of the files, the event fires but the error border does not show.
 
-Screen readers do not announce a rejection by themselves. To announce one, show a message in a live region when the reject event fires.
+Screen readers do not announce a rejected drop. To tell screen reader users, show a message in a live region when the reject event fires.
