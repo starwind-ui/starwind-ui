@@ -7,4 +7,6 @@
 "starwind": patch
 ---
 
-Combobox with `required` now stops a plain HTML form from submitting while no option is selected. Before this fix, the empty form submitted with no message. The browser now shows its message and moves focus to the Combobox input. The popup stays closed so it does not cover the message. A Combobox without `required` does not change how the Enter key submits a form.
+A Combobox with `required` now stops a plain HTML form from submitting when no option is selected. Before, the empty form submitted and no message showed. Now the browser shows its message and puts focus in the Combobox input. The list stays closed so it does not cover the message.
+
+A Combobox without `required` still lets the Enter key submit the form as before.

@@ -3,13 +3,15 @@
 "starwind": patch
 ---
 
-Fixed the Astro Sidebar opening for a moment when its `SidebarProvider` starts collapsed. With `defaultOpen={false}`, the page first showed the full sidebar and then animated it closed, so the page content moved. The Sidebar now renders collapsed in the server HTML. The first paint is correct and the content stays in place. This also applies to `collapsible="offcanvas"`.
+In Astro, a Sidebar that starts collapsed no longer opens for a moment when the page loads. Before, a `SidebarProvider` with `defaultOpen={false}` showed the full sidebar first and then animated it closed, so the page content moved. Now the Sidebar is collapsed from the first paint, and the content stays in place. This also works with `collapsible="offcanvas"`.
 
-The Astro Sidebar and SidebarProvider no longer render the same attribute twice, such as two `data-state` attributes on the Sidebar.
+The Astro Sidebar and SidebarProvider no longer put the same attribute on an element two times. For example, the Sidebar had two `data-state` attributes.
 
-If one page has several `SidebarProvider` components with different `defaultOpen` values, a Sidebar can still show expanded until the page script starts. Render the Sidebar inside its `SidebarProvider` slot. A Sidebar that you render before its provider, for example with `Astro.slots.render`, can show the wrong state until the page script starts.
+Render the Sidebar inside its `SidebarProvider` slot. If you render it before the provider, for example with `Astro.slots.render`, it can show the wrong state until the page script runs.
 
-A state saved with `persistOpen` is still applied when the page script starts. To show the saved state on first paint, read the cookie in an on-demand rendered page and pass it to `defaultOpen`:
+If one page has more than one `SidebarProvider` with different `defaultOpen` values, a Sidebar can still show open until the page script runs.
+
+A state that `persistOpen` saved still loads when the page script runs. To show the saved state on first paint, read the cookie on the server in a page that renders on demand, and pass it to `defaultOpen`:
 
 ```astro
 ---
