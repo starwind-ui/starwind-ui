@@ -1,5 +1,6 @@
 import { rename, stat } from "node:fs/promises";
 import path from "node:path";
+import { isDeepStrictEqual } from "node:util";
 
 import semver from "semver";
 
@@ -11,6 +12,86 @@ export type ReleaseDecision<T extends ReleaseVersionBump = ReleaseVersionBump> =
 };
 export type PackageReleaseFacts = Record<string, ReleaseVersionBump>;
 export type ChangesetReleaseFacts = Record<string, PackageReleaseFacts>;
+
+export type VersionRollback = { addedFragments: string[]; restoredFragments: string[] };
+
+/**
+ * Recognizes a PR that rolls back an unpublished Version Packages merge at `base`.
+ * Returns undefined when `head` restores none of the intents that `base` consumed,
+ * so the caller keeps its normal checks. Throws when a rollback is incomplete.
+ */
+export function validateVersionRollback<
+  S extends {
+    fragments: Record<string, unknown>;
+    manifest: unknown;
+    packageReleases: ChangesetReleaseFacts;
+  },
+>(options: {
+  base: S;
+  baseParent: S;
+  head: S;
+  label: string;
+  validate: (base: S, head: S) => { mode: string };
+}): VersionRollback | undefined {
+  const { base, baseParent, head, label, validate } = options;
+  const consumed = Object.keys(baseParent.fragments)
+    .filter((file) => !Object.hasOwn(base.fragments, file))
+    .sort();
+  if (!consumed.some((file) => Object.hasOwn(head.fragments, file))) return undefined;
+  // A head that keeps the base manifest is a normal PR, even if it reuses a consumed filename.
+  if (isDeepStrictEqual(head.manifest, base.manifest)) return undefined;
+  if (isDeepStrictEqual(baseParent.manifest, base.manifest)) return undefined;
+  try {
+    if (validate(baseParent, base).mode !== "version") return undefined;
+  } catch {
+    return undefined;
+  }
+
+  if (!isDeepStrictEqual(head.manifest, baseParent.manifest)) {
+    throw new Error(
+      `Rollback of a ${label} version materialization must restore the previous ${label} version manifest exactly.`,
+    );
+  }
+  const missing = consumed.filter((file) => !Object.hasOwn(head.fragments, file));
+  if (missing.length > 0) {
+    throw new Error(
+      `Rollback of a ${label} version materialization must restore every consumed intent: ${missing.join(", ")}.`,
+    );
+  }
+  const modified = consumed.filter(
+    (file) => !isDeepStrictEqual(head.fragments[file], baseParent.fragments[file]),
+  );
+  if (modified.length > 0) {
+    throw new Error(
+      `Rollback of a ${label} version materialization must restore consumed intents unchanged: ${modified.join(", ")}.`,
+    );
+  }
+  const changedChangesets = Object.keys(baseParent.packageReleases)
+    .filter((file) => !Object.hasOwn(base.packageReleases, file))
+    .filter(
+      (file) =>
+        !Object.hasOwn(head.packageReleases, file) ||
+        !isDeepStrictEqual(head.packageReleases[file], baseParent.packageReleases[file]),
+    )
+    .sort();
+  if (changedChangesets.length > 0) {
+    throw new Error(
+      `Rollback of a ${label} version materialization must restore consumed changesets unchanged: ${changedChangesets.join(", ")}.`,
+    );
+  }
+  // New intents and source changes must still pass as a feature PR on the pre-version state.
+  validate(baseParent, head);
+  return {
+    addedFragments: Object.keys(head.fragments)
+      .filter((file) => !Object.hasOwn(baseParent.fragments, file))
+      .sort(),
+    restoredFragments: consumed,
+  };
+}
+
+export function formatVersionRollback(baseRef: string, rollback: VersionRollback): string {
+  return `Rollback of unpublished version materialization ${baseRef}: manifest restored; ${rollback.restoredFragments.length} restored and ${rollback.addedFragments.length} new intent fragments.`;
+}
 
 export function hasFrameworkAdditionRelease(
   base: { packageReleases: ChangesetReleaseFacts; cliVersion?: string },

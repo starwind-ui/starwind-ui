@@ -660,3 +660,100 @@ describe("styled component release intents", () => {
     ).toEqual(expect.arrayContaining([expect.stringContaining("not-last:border-b")]));
   });
 });
+
+describe("unpublished styled version rollback", () => {
+  const consumed: StyledReleaseSnapshot["fragments"] = {
+    "accordion-fix.json": { components: { accordion: "patch" }, impact: "source" },
+    "progress-feature.json": { components: { progress: "minor" }, impact: "source" },
+  };
+  const baseParent = snapshot({
+    fragments: consumed,
+    packageReleases: { "release.md": { starwind: "patch" } },
+  });
+  const base = snapshot({ manifest: { accordion: "2.0.2", progress: "2.1.0" } });
+
+  function rollbackHead(): StyledReleaseSnapshot {
+    return snapshot({
+      fragments: {
+        ...structuredClone(consumed),
+        "progress-fix.json": { components: { progress: "patch" }, impact: "source" },
+      },
+      packageReleases: {
+        "progress-fix.md": { starwind: "patch" },
+        "release.md": { starwind: "patch" },
+      },
+      registry: [
+        registryComponent("accordion", "2.0.1"),
+        registryComponent("progress", "2.0.0", "progress fixed"),
+      ],
+    });
+  }
+
+  it("accepts an exact rollback with restored and new intents", () => {
+    expect(validateStyledVersionPullRequest({ base: baseParent, head: base }).mode).toBe("version");
+    expect(validateStyledVersionPullRequest({ base, baseParent, head: rollbackHead() })).toEqual({
+      mode: "rollback",
+      rollback: {
+        addedFragments: ["progress-fix.json"],
+        restoredFragments: ["accordion-fix.json", "progress-feature.json"],
+      },
+    });
+  });
+
+  it("rejects a rollback with a modified manifest entry", () => {
+    const head = rollbackHead();
+    head.manifest.components.accordion = "2.0.2";
+    head.manifest.sourceVersions!.accordion = "2.0.2";
+    head.registry.components[0].version = "2.0.2";
+    head.registry.components[0].sourceVersion = "2.0.2";
+    expect(() => validateStyledVersionPullRequest({ base, baseParent, head })).toThrow(
+      /restore the previous styled version manifest exactly/,
+    );
+  });
+
+  it("rejects a rollback that misses or changes a consumed intent", () => {
+    const missing = rollbackHead();
+    delete missing.fragments["progress-feature.json"];
+    expect(() => validateStyledVersionPullRequest({ base, baseParent, head: missing })).toThrow(
+      /restore every consumed intent: progress-feature\.json/,
+    );
+    const modified = rollbackHead();
+    modified.fragments["progress-feature.json"] = {
+      components: { progress: "patch" },
+      impact: "source",
+    };
+    expect(() => validateStyledVersionPullRequest({ base, baseParent, head: modified })).toThrow(
+      /restore consumed intents unchanged: progress-feature\.json/,
+    );
+  });
+
+  it("keeps normal errors for a feature PR that changes versions", () => {
+    const head = snapshot({ manifest: { accordion: "2.0.3", progress: "2.1.0" } });
+    const message = /Feature PR must defer accordion version changes/;
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(message);
+    expect(() => validateStyledVersionPullRequest({ base, baseParent, head })).toThrow(message);
+  });
+
+  it("rejects a rollback that drops a consumed changeset", () => {
+    const head = rollbackHead();
+    delete head.packageReleases["release.md"];
+    expect(() => validateStyledVersionPullRequest({ base, baseParent, head })).toThrow(
+      /restore consumed changesets unchanged: release\.md/,
+    );
+  });
+
+  it("keeps a feature PR that reuses a consumed intent filename in intent mode", () => {
+    const head = snapshot({
+      fragments: {
+        "progress-feature.json": { components: { progress: "patch" }, impact: "source" },
+      },
+      manifest: { accordion: "2.0.2", progress: "2.1.0" },
+      packageReleases: { "progress-fix.md": { starwind: "patch" } },
+      registry: [
+        registryComponent("accordion", "2.0.2"),
+        registryComponent("progress", "2.1.0", "progress fixed"),
+      ],
+    });
+    expect(validateStyledVersionPullRequest({ base, baseParent, head }).mode).toBe("intent");
+  });
+});

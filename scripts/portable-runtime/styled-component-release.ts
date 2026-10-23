@@ -9,6 +9,7 @@ import semver from "semver";
 import type { RegistryVersionManifest, RuntimeRegistry } from "./generate-cli-registry.js";
 import {
   aggregateReleaseDecisions,
+  formatVersionRollback,
   applyVersionIntents,
   assertSafeIntentFile,
   type ChangesetReleaseFacts,
@@ -24,6 +25,8 @@ import {
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
+  validateVersionRollback,
+  type VersionRollback,
 } from "./release-intent-utils.js";
 
 export type StyledVersionBump = "major" | "minor" | "patch";
@@ -59,6 +62,8 @@ export type StyledVersionPlan = {
 
 type ValidatePullRequestOptions = {
   base: StyledReleaseSnapshot;
+  /** First parent of `base`; enables recognition of an unpublished version rollback. */
+  baseParent?: StyledReleaseSnapshot;
   head: StyledReleaseSnapshot;
 };
 
@@ -171,11 +176,22 @@ export function createStyledRegistryFingerprint(component: StyledRegistryCompone
 export function validateStyledVersionPullRequest(options: ValidatePullRequestOptions): {
   addedComponents?: string[];
   changedComponents?: string[];
-  mode: "intent" | "version";
+  mode: "intent" | "version" | "rollback";
+  rollback?: VersionRollback;
   versionedComponents?: string[];
 } {
   validateSnapshot(options.base, "base");
   validateSnapshot(options.head, "head");
+  const rollback =
+    options.baseParent &&
+    validateVersionRollback({
+      base: options.base,
+      baseParent: options.baseParent,
+      head: options.head,
+      label: "styled",
+      validate: (base, head) => validateStyledVersionPullRequest({ base, head }),
+    });
+  if (rollback) return { mode: "rollback", rollback };
 
   const baseFragmentNames = Object.keys(options.base.fragments).sort();
   const headFragmentNames = Object.keys(options.head.fragments).sort();
@@ -399,7 +415,8 @@ export async function checkStyledComponents(
   validateSnapshot(head, "working tree");
   if (!options.baseRef) return { mode: "state" };
   const base = await readGitSnapshot(repoRoot, options.baseRef);
-  return validateStyledVersionPullRequest({ base, head });
+  const baseParent = await readGitSnapshot(repoRoot, `${options.baseRef}^1`).catch(() => undefined);
+  return validateStyledVersionPullRequest({ base, baseParent, head });
 }
 
 async function readWorkingSnapshot(repoRoot: string): Promise<StyledReleaseSnapshot> {
@@ -831,6 +848,9 @@ async function runCli(): Promise<void> {
       }
     }
     const result = await checkStyledComponents({ baseRef });
+    if (baseRef && "rollback" in result && result.rollback) {
+      console.log(formatVersionRollback(baseRef, result.rollback));
+    }
     console.log(`Styled component release check passed (${result.mode}).`);
     return;
   }

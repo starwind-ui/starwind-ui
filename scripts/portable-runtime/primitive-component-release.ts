@@ -13,6 +13,7 @@ import type {
 } from "./generate-cli-registry.js";
 import {
   aggregateReleaseDecisions,
+  formatVersionRollback,
   applyVersionIntents,
   assertSafeIntentFile,
   type ChangesetReleaseFacts,
@@ -28,6 +29,8 @@ import {
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
+  validateVersionRollback,
+  type VersionRollback,
 } from "./release-intent-utils.js";
 
 export type PrimitiveVersionBump = "major" | "minor" | "patch";
@@ -164,16 +167,29 @@ export function createPrimitiveArtifactFingerprint(
 
 export function validatePrimitiveVersionPullRequest(options: {
   base: PrimitiveReleaseSnapshot;
+  /** First parent of `base`; enables recognition of an unpublished version rollback. */
+  baseParent?: PrimitiveReleaseSnapshot;
   head: PrimitiveReleaseSnapshot;
 }): {
   addedPrimitives?: string[];
   changedPrimitives?: string[];
-  mode: "intent" | "version";
+  mode: "intent" | "version" | "rollback";
   promotedPrimitives?: string[];
+  rollback?: VersionRollback;
   versionedPrimitives?: string[];
 } {
   validateSnapshot(options.base, "base");
   validateSnapshot(options.head, "head");
+  const rollback =
+    options.baseParent &&
+    validateVersionRollback({
+      base: options.base,
+      baseParent: options.baseParent,
+      head: options.head,
+      label: "primitive",
+      validate: (base, head) => validatePrimitiveVersionPullRequest({ base, head }),
+    });
+  if (rollback) return { mode: "rollback", rollback };
 
   const removedManifestPrimitives = Object.keys(options.base.manifest.primitives).filter(
     (primitive) => options.head.manifest.primitives[primitive] === undefined,
@@ -424,7 +440,8 @@ export async function checkPrimitiveComponents(
   validateSnapshot(head, "working tree");
   if (!options.baseRef) return { mode: "state" };
   const base = await readGitSnapshot(repoRoot, options.baseRef);
-  return validatePrimitiveVersionPullRequest({ base, head });
+  const baseParent = await readGitSnapshot(repoRoot, `${options.baseRef}^1`).catch(() => undefined);
+  return validatePrimitiveVersionPullRequest({ base, baseParent, head });
 }
 
 async function readWorkingSnapshot(repoRoot: string): Promise<PrimitiveReleaseSnapshot> {
@@ -776,6 +793,9 @@ async function runCli(): Promise<void> {
       }
     }
     const result = await checkPrimitiveComponents({ baseRef });
+    if (baseRef && "rollback" in result && result.rollback) {
+      console.log(formatVersionRollback(baseRef, result.rollback));
+    }
     console.log(`Primitive component release check passed (${result.mode}).`);
     return;
   }

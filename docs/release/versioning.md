@@ -214,6 +214,15 @@ Keep only the existing source-impact intents because source impact wins aggregat
 `version` and `sourceVersion` together. A later behavior-only release can preserve that source
 baseline while it advances `version`.
 
+A merged Version Packages PR can be rolled back while none of its versions are published. Revert the
+version commit so the PR restores the registry manifest from before that merge exactly and restores
+every consumed intent file unchanged. New intents and source changes may join the same PR. When
+`--base` points at the version merge, `styled:versions:check` and `primitive:versions:check`
+compare the PR with the first parent of that merge. They pass in rollback mode only when the base
+is a valid version materialization of its parent and every rule above holds. New intents and source
+changes must still pass the normal feature PR checks against that parent. The checks make no npm
+queries. The publish flow verifies separately that target versions are unused.
+
 Give each new stable component an explicit initial version in its manifest. Existing legacy
 components continue their published history. New stable components normally start at `1.0.0`.
 
