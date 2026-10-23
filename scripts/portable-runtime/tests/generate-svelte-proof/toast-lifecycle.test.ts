@@ -4,7 +4,6 @@ import path from "node:path";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { type Browser, chromium } from "playwright";
 import { compile } from "svelte/compiler";
-import { render } from "svelte/server";
 import { createServer, type ViteDevServer } from "vite";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -95,6 +94,8 @@ describe("Svelte Toast notification-system proof", () => {
     const ssrServer = await createProofServer(root, true);
     servers.push(ssrServer);
     const appModule = await ssrServer.ssrLoadModule("/App.svelte");
+    // Render with the Vite SSR copy of Svelte so the renderer and components share one context.
+    const { render } = await ssrServer.ssrLoadModule("svelte/server");
     const first = render(appModule.default).body;
     expect(render(appModule.default).body).toBe(first);
     expect(first.match(/data-sw-toast-viewport=""/g)).toHaveLength(2);

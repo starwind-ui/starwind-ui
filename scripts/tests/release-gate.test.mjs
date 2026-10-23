@@ -3,13 +3,39 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  assertGateEvidence as assertGateEvidenceWith,
+  assertReleaseGate as assertReleaseGateWith,
   RELEASE_PACKS,
   releaseGateStages,
   reusableGateRecord,
-  runReleaseGate,
+  runReleaseGate as runReleaseGateWith,
+  verifyGateEvidence as verifyGateEvidenceWith,
 } from "../release-gate.mjs";
+import { releaseToolchain } from "../release-inputs.mjs";
+
+// The real toolchain spawns pnpm on every source fingerprint, which costs about half a second each
+// time. These tests use a fixed toolchain. One test below keeps the real toolchain.
+let stubToolchain;
+const fixedToolchain = () => stubToolchain;
+const withToolchain =
+  (operation) =>
+  (options = {}) =>
+    operation({ toolchain: fixedToolchain, ...options });
+const assertGateEvidence = withToolchain(assertGateEvidenceWith);
+const assertReleaseGate = withToolchain(assertReleaseGateWith);
+const runReleaseGate = withToolchain(runReleaseGateWith);
+const verifyGateEvidence = withToolchain(verifyGateEvidenceWith);
+
+beforeEach(() => {
+  stubToolchain = {
+    node: process.version,
+    pnpm: "0.0.0-test",
+    platform: process.platform,
+    arch: process.arch,
+  };
+});
 
 const roots = [];
 const recordFile = path.join("node_modules", ".cache", "starwind-release", "gate.json");
@@ -263,8 +289,9 @@ describe("release gate checkpoints", () => {
     let active = 0;
     let peak = 0;
     const options = [];
-    const run = async (_args, _root, runOptions) => {
-      options.push(runOptions);
+    const run = async (args, _root, runOptions) => {
+      // The audit always writes a log, because it runs before any stage.
+      if (args[0] !== "audit:prod") options.push(runOptions);
       active += 1;
       peak = Math.max(peak, active);
       await new Promise((resolve) => setTimeout(resolve, 1));
@@ -318,5 +345,218 @@ describe("release gate checkpoints", () => {
     expect(callCount(calls, "audit:prod")).toBe(1);
     expect(callCount(calls, "check:public")).toBe(1);
     await expect(loadRecord(root)).resolves.toMatchObject({ complete: false, completed: [] });
+  });
+});
+
+describe("release gate evidence at merge points", () => {
+  const git = (root, ...args) =>
+    execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: "pipe" }).trim();
+
+  // Every stage passes, but the fixture has no packs, so the final artifact check fails. Mark the
+  // record complete as a real passing gate would.
+  async function passGate(root, options = {}) {
+    await expect(runReleaseGate({ root, run: async () => {}, ...options })).rejects.not.toThrow(
+      /failed stage/,
+    );
+    const record = await loadRecord(root);
+    await writeFile(
+      path.join(root, recordFile),
+      `${JSON.stringify({ ...record, complete: true }, null, 2)}\n`,
+    );
+    return record;
+  }
+
+  async function createLockedFixture() {
+    const root = await createFixture();
+    await writeFile(path.join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+    git(root, "add", ".");
+    git(root, "commit", "--quiet", "-m", "lockfile");
+    return root;
+  }
+
+  // This test keeps the real toolchain, so it covers the production default.
+  it("accepts a complete record for the exact source and expected head", async () => {
+    const root = await createLockedFixture();
+    const real = { toolchain: releaseToolchain };
+    const record = await passGate(root, real);
+
+    expect(record.head).toBe(git(root, "rev-parse", "HEAD"));
+    expect(record.toolchain).toEqual(releaseToolchain(root));
+    await expect(verifyGateEvidence({ root, expectHead: "HEAD", ...real })).resolves.toMatchObject({
+      ok: true,
+      problems: [],
+    });
+    await expect(assertGateEvidence({ root, expectHead: "main", ...real })).resolves.toMatchObject({
+      complete: true,
+    });
+  });
+
+  it("names a toolchain change in a stale record", async () => {
+    const root = await createLockedFixture();
+    await passGate(root);
+    stubToolchain = { ...stubToolchain, pnpm: "0.0.1-test" };
+
+    await expect(verifyGateEvidence({ root, expectHead: "HEAD" })).resolves.toMatchObject({
+      ok: false,
+      problems: [
+        "The record is for a different source tree.",
+        "Toolchain pnpm changed: record 0.0.0-test, now 0.0.1-test.",
+      ],
+    });
+  });
+
+  it("names the stages an incomplete record is missing", async () => {
+    const root = await createLockedFixture();
+    const failing = new Set(["runtime:generate:svelte:test", "release:candidate:acceptance"]);
+    await expect(
+      runReleaseGate({
+        root,
+        run: async (args) => {
+          if (failing.has(args[0])) throw new Error(`${args[0]} broke`);
+        },
+      }),
+    ).rejects.toThrow(/found 2 failed stage/);
+
+    const { ok, problems } = await verifyGateEvidence({ root });
+    expect(ok).toBe(false);
+    expect(problems).toEqual([
+      "The record is incomplete. Stages that failed or did not run: svelte generator tests, candidate hosts.",
+    ]);
+  });
+
+  it("rejects a complete record from an older source tree and prints what changed", async () => {
+    const root = await createLockedFixture();
+    const record = await passGate(root);
+    await writeFile(path.join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n# svelte 5.57\n");
+    git(root, "commit", "--quiet", "-am", "refresh dependencies");
+
+    const { ok, problems } = await verifyGateEvidence({ root, expectHead: "HEAD" });
+    expect(ok).toBe(false);
+    expect(problems).toEqual([
+      "The record is for a different source tree.",
+      "pnpm-lock.yaml changed.",
+      `The record was written at ${record.head.slice(0, 12)}; HEAD is ${git(root, "rev-parse", "HEAD").slice(0, 12)}.`,
+      "Files changed after the record (1): pnpm-lock.yaml.",
+    ]);
+    await expect(assertGateEvidence({ root })).rejects.toThrow(
+      /does not match this checkout:\n- The record is for a different source tree\./,
+    );
+  });
+
+  it("rejects a missing record, a different head, and a dirty checkout", async () => {
+    const root = await createLockedFixture();
+    await expect(verifyGateEvidence({ root })).resolves.toMatchObject({
+      ok: false,
+      problems: [`No release gate record at ${path.join(root, recordFile)}.`],
+    });
+
+    await passGate(root);
+    await expect(verifyGateEvidence({ root, expectHead: "HEAD~1" })).resolves.toMatchObject({
+      ok: false,
+      problems: [expect.stringMatching(/^The checkout is at \w{12}, not the expected \w{12}\.$/)],
+    });
+
+    await writeFile(path.join(root, "untracked.txt"), "local edit\n");
+    const { problems } = await verifyGateEvidence({ root, expectHead: "HEAD" });
+    expect(problems).toContain("The checkout has uncommitted or untracked files.");
+    expect(problems).toContain("The record is for a different source tree.");
+  });
+
+  it("accepts the same tree on another commit, as after a squash merge", async () => {
+    const root = await createLockedFixture();
+    await passGate(root);
+    git(root, "commit", "--quiet", "--allow-empty", "-m", "squash merge");
+
+    await expect(verifyGateEvidence({ root, expectHead: "main" })).resolves.toMatchObject({
+      ok: true,
+    });
+  });
+
+  it("runs every stage after a failed audit and keeps the audit out of stage evidence", async () => {
+    const root = await createLockedFixture();
+    const calls = [];
+    const run = async (args) => {
+      calls.push(args);
+      if (args[0] === "audit:prod") throw new Error("pnpm audit:prod failed (1).");
+    };
+
+    await expect(runReleaseGate({ root, run })).rejects.not.toThrow(/failed stage/);
+    for (const [, args] of releaseGateStages()) expect(calls).toContainEqual(args);
+    const record = await loadRecord(root);
+    expect(record.completed).toHaveLength(releaseGateStages().length);
+    expect(record.audit).toMatchObject({ passed: false, message: "pnpm audit:prod failed (1)." });
+    expect(record.audit.log).toMatch(/dependency-audit\.log$/);
+
+    await writeFile(
+      path.join(root, recordFile),
+      `${JSON.stringify({ ...record, complete: true }, null, 2)}\n`,
+    );
+    const evidence = await verifyGateEvidence({ root, expectHead: "HEAD" });
+    expect(evidence).toMatchObject({ ok: true, problems: [] });
+    expect(evidence.audit).toMatch(/^Dependency audit: failed\. .*dependency-audit\.log$/);
+    // Publication keeps the audit as a hard block.
+    await expect(assertReleaseGate({ root })).rejects.toThrow(
+      /dependency audit did not pass in the last gate run/,
+    );
+  });
+
+  it("reports a failed audit together with failed stages", async () => {
+    const root = await createLockedFixture();
+    const run = async (args) => {
+      if (args[0] === "audit:prod") throw new Error("advisory");
+      if (args[0] === "runtime:generate:svelte:test") throw new Error("svelte broke");
+    };
+
+    const failure = runReleaseGate({ root, run });
+    await expect(failure).rejects.toThrow(/found 1 failed stage\(s\)/);
+    await expect(failure).rejects.toThrow(
+      /svelte generator tests: svelte broke\ndependency audit: advisory/,
+    );
+    await expect(verifyGateEvidence({ root })).resolves.toMatchObject({
+      ok: false,
+      problems: [
+        "The record is incomplete. Stages that failed or did not run: svelte generator tests.",
+      ],
+    });
+  });
+
+  it("requires the expected base to be an ancestor of the checkout", async () => {
+    const root = await createLockedFixture();
+    await passGate(root);
+    git(root, "switch", "--quiet", "-c", "moved-main");
+    git(root, "commit", "--quiet", "--allow-empty", "-m", "public main moved");
+    git(root, "switch", "--quiet", "main");
+
+    await expect(verifyGateEvidence({ root, expectBase: "HEAD~1" })).resolves.toMatchObject({
+      ok: true,
+    });
+    const { ok, problems } = await verifyGateEvidence({
+      root,
+      expectHead: "main",
+      expectBase: "moved-main",
+    });
+    expect(ok).toBe(false);
+    expect(problems).toEqual([
+      expect.stringMatching(/^HEAD does not contain moved-main \(\w{12}\)\. Refresh the branch/),
+    ]);
+  });
+
+  it("rejects evidence after the installed dependencies change", async () => {
+    const root = await createLockedFixture();
+    await passGate(root);
+    await mkdir(path.join(root, "node_modules", ".pnpm"), { recursive: true });
+    await writeFile(path.join(root, "node_modules", ".pnpm", "lock.yaml"), "svelte: 5.57.2\n");
+
+    await expect(verifyGateEvidence({ root })).resolves.toMatchObject({
+      ok: false,
+      problems: [
+        "Installed dependencies changed after the record (node_modules/.pnpm/lock.yaml). Run the gate again.",
+      ],
+    });
+    const calls = [];
+    await expect(
+      runReleaseGate({ root, run: async (args) => calls.push(args) }),
+    ).rejects.not.toThrow(/failed stage/);
+    expect(callCount(calls, "check:public")).toBe(1);
   });
 });

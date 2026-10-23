@@ -3,7 +3,6 @@ import path from "node:path";
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { type Browser, chromium } from "playwright";
-import { render } from "svelte/server";
 import { createServer, type ViteDevServer } from "vite";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -32,6 +31,8 @@ describe("generated Svelte Slider lifecycle", () => {
     const ssrServer = await createProofServer(root, true);
     servers.push(ssrServer);
     const appModule = await ssrServer.ssrLoadModule("/App.svelte");
+    // Render with the Vite SSR copy of Svelte so the renderer and components share one context.
+    const { render } = await ssrServer.ssrLoadModule("svelte/server");
     const [firstRender, secondRender] = await Promise.all([
       Promise.resolve(render(appModule.default).body),
       Promise.resolve(render(appModule.default).body),

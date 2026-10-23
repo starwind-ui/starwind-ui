@@ -102,4 +102,4 @@
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLInputElement>(() => ref);
 </script>
-<input {...rest} {type} value={initialMarkup} {disabled} data-sw-input="" data-disabled={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />
+<input {...rest} {type} value={initialMarkup} defaultValue={String(seed ?? "")} {disabled} data-sw-input="" data-disabled={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />

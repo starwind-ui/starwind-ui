@@ -19,6 +19,8 @@ export default ${namespace};\n`,
   };
 }
 
+// The rendered `defaultValue` stops Svelte hydration from removing the server value attribute,
+// so a form reset restores the reset seed.
 export function printSvelteNativeInputValueComponent(
   file: AdapterComponentFile,
 ): AdapterPrintedFile {
@@ -75,7 +77,7 @@ export function printSvelteNativeInputValueComponent(
   };
 ${printSvelteRefAttachment("HTMLInputElement")}
 </script>
-<input {...rest} {type} value={initialMarkup} {disabled} ${facts.attrs.root}="" ${facts.attrs.stateDisabled}={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />
+<input {...rest} {type} value={initialMarkup} defaultValue={String(seed ?? "")} {disabled} ${facts.attrs.root}="" ${facts.attrs.stateDisabled}={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />
 `,
   };
 }

@@ -492,3 +492,103 @@ describe("primitive component release intents", () => {
     );
   });
 });
+
+describe("unpublished primitive version rollback", () => {
+  const consumed: PrimitiveReleaseSnapshot["fragments"] = {
+    "avatar-fix.json": { impact: "source", primitives: { avatar: "patch" } },
+    "select-feature.json": { impact: "source", primitives: { select: "minor" } },
+  };
+  const baseParent = snapshot({
+    fragments: consumed,
+    packageReleases: { "release.md": { starwind: "patch" } },
+  });
+  const base = snapshot({ manifest: { avatar: "0.1.1", select: "0.2.0" } });
+
+  function rollbackHead(): PrimitiveReleaseSnapshot {
+    const head = snapshot({
+      fragments: {
+        ...structuredClone(consumed),
+        "select-fix.json": { impact: "source", primitives: { select: "patch" } },
+      },
+      packageReleases: {
+        "release.md": { starwind: "patch" },
+        "select-fix.md": { starwind: "patch" },
+      },
+    });
+    for (const entry of head.artifacts.primitives.filter((item) => item.component === "select")) {
+      entry.files[0].content += " fixed";
+    }
+    return head;
+  }
+
+  it("accepts an exact rollback with restored and new intents", () => {
+    expect(validatePrimitiveVersionPullRequest({ base: baseParent, head: base }).mode).toBe(
+      "version",
+    );
+    expect(validatePrimitiveVersionPullRequest({ base, baseParent, head: rollbackHead() })).toEqual(
+      {
+        mode: "rollback",
+        rollback: {
+          addedFragments: ["select-fix.json"],
+          restoredFragments: ["avatar-fix.json", "select-feature.json"],
+        },
+      },
+    );
+  });
+
+  it("rejects a rollback with a modified manifest entry", () => {
+    const head = rollbackHead();
+    head.manifest.primitives.avatar = "0.1.1";
+    head.manifest.sourceVersions!.avatar = "0.1.1";
+    for (const entry of head.artifacts.primitives.filter((item) => item.component === "avatar")) {
+      entry.version = "0.1.1";
+      entry.sourceVersion = "0.1.1";
+    }
+    expect(() => validatePrimitiveVersionPullRequest({ base, baseParent, head })).toThrow(
+      /restore the previous primitive version manifest exactly/,
+    );
+  });
+
+  it("rejects a rollback that misses or changes a consumed intent", () => {
+    const missing = rollbackHead();
+    delete missing.fragments["select-feature.json"];
+    expect(() => validatePrimitiveVersionPullRequest({ base, baseParent, head: missing })).toThrow(
+      /restore every consumed intent: select-feature\.json/,
+    );
+    const modified = rollbackHead();
+    modified.fragments["select-feature.json"] = {
+      impact: "source",
+      primitives: { select: "patch" },
+    };
+    expect(() => validatePrimitiveVersionPullRequest({ base, baseParent, head: modified })).toThrow(
+      /restore consumed intents unchanged: select-feature\.json/,
+    );
+  });
+
+  it("keeps normal errors for a feature PR that changes versions", () => {
+    const head = snapshot({ manifest: { avatar: "0.1.2", select: "0.2.0" } });
+    const message = /expected avatar@0\.1\.1, received 0\.1\.2/;
+    expect(() => validatePrimitiveVersionPullRequest({ base, head })).toThrow(message);
+    expect(() => validatePrimitiveVersionPullRequest({ base, baseParent, head })).toThrow(message);
+  });
+
+  it("rejects a rollback that drops a consumed changeset", () => {
+    const head = rollbackHead();
+    delete head.packageReleases["release.md"];
+    expect(() => validatePrimitiveVersionPullRequest({ base, baseParent, head })).toThrow(
+      /restore consumed changesets unchanged: release\.md/,
+    );
+  });
+
+  it("keeps a feature PR that reuses a consumed intent filename in intent mode", () => {
+    const head = snapshot({
+      fragments: { "select-feature.json": { impact: "source", primitives: { select: "patch" } } },
+      manifest: { avatar: "0.1.1", select: "0.2.0" },
+      packageReleases: { "select-fix.md": { starwind: "patch" } },
+    });
+    for (const entry of head.artifacts.primitives.filter((item) => item.component === "select")) {
+      entry.files[0].content += " fixed";
+    }
+    expect(validatePrimitiveVersionPullRequest({ base, baseParent, head }).mode).toBe("intent");
+  });
+});
