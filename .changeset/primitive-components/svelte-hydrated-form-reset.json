@@ -1,9 +1,0 @@
-{
-  "primitives": {
-    "checkbox": "patch",
-    "field": "patch",
-    "input": "patch",
-    "switch": "patch"
-  },
-  "impact": "source"
-}
