@@ -84,12 +84,18 @@ export function reusableGateRecord(record, { source, outputs, stages }) {
   );
 }
 
-export async function assertReleaseGate({ root = ROOT } = {}) {
+// Each check reads the toolchain again, so a change during a run still counts. Tests pass a stub
+// toolchain to skip the pnpm subprocess.
+function sourceFingerprint(root, toolchain) {
+  return releaseSourceFingerprint(root, toolchain(root));
+}
+
+export async function assertReleaseGate({ root = ROOT, toolchain = releaseToolchain } = {}) {
   const record = JSON.parse(await readFile(path.join(root, RECORD), "utf8"));
   assert(
     record.complete &&
       reusableGateRecord(record, {
-        source: releaseSourceFingerprint(root),
+        source: sourceFingerprint(root, toolchain),
         outputs: releaseOutputFingerprint(root, path.join(root, RELEASE_PACKS)),
         stages: releaseGateStages(),
       }),
@@ -128,11 +134,11 @@ function installedFingerprint(root) {
 }
 
 // Head, lockfile, and toolchain explain a stale record; the source fingerprint decides it.
-function gateRecordContext(root) {
+function gateRecordContext(root, toolchain) {
   return {
     head: gitOutput(root, ["rev-parse", "HEAD"]),
     lockfile: fingerprintFiles(root, ["pnpm-lock.yaml"]),
-    toolchain: releaseToolchain(root),
+    toolchain: toolchain(root),
     installed: installedFingerprint(root),
   };
 }
@@ -141,10 +147,10 @@ function short(value) {
   return typeof value === "string" ? value.slice(0, 12) : String(value);
 }
 
-function staleSourceDetails(root, record) {
+function staleSourceDetails(root, record, toolchain) {
   if (!record.head || !record.lockfile || !record.toolchain)
     return ["The record has no head, lockfile, or toolchain details. Run the gate again."];
-  const current = gateRecordContext(root);
+  const current = gateRecordContext(root, toolchain);
   const details = [];
   for (const key of Object.keys({ ...record.toolchain, ...current.toolchain }))
     if (record.toolchain[key] !== current.toolchain[key])
@@ -175,7 +181,12 @@ function staleSourceDetails(root, record) {
 // lockfile, toolchain, and installed dependencies in this checkout. It ignores built outputs, so a
 // later build does not hide the evidence. It reports the recorded audit but does not require it.
 // Publication uses --check, which also requires a passing audit and matching outputs and packs.
-export async function verifyGateEvidence({ root = ROOT, expectHead, expectBase } = {}) {
+export async function verifyGateEvidence({
+  root = ROOT,
+  expectHead,
+  expectBase,
+  toolchain = releaseToolchain,
+} = {}) {
   const problems = [];
   const recordFile = path.join(root, RECORD);
   let record;
@@ -207,10 +218,10 @@ export async function verifyGateEvidence({ root = ROOT, expectHead, expectBase }
     if (record.schemaVersion !== 1) problems.push("The record has an unknown schema version.");
     if (JSON.stringify(record.stages) !== JSON.stringify(stages))
       problems.push("The gate stages changed after the record was written.");
-    if (record.source !== releaseSourceFingerprint(root))
+    if (record.source !== sourceFingerprint(root, toolchain))
       problems.push(
         "The record is for a different source tree.",
-        ...staleSourceDetails(root, record),
+        ...staleSourceDetails(root, record, toolchain),
       );
     if (!record.installed)
       problems.push("The record has no installed dependency fingerprint. Run the gate again.");
@@ -278,6 +289,7 @@ export async function runReleaseGate({
   fresh = false,
   serial = false,
   run = runReleaseCommand,
+  toolchain = releaseToolchain,
 } = {}) {
   const started = Date.now();
   await mkdir(path.join(root, RELEASE_GATE_LOGS), { recursive: true });
@@ -294,7 +306,7 @@ export async function runReleaseGate({
   }
   await run(["exec", "node", "scripts/release-preflight.mjs", "--metadata"], root);
   const stages = releaseGateStages();
-  const source = releaseSourceFingerprint(root);
+  const source = sourceFingerprint(root, toolchain);
   const packs = path.join(root, RELEASE_PACKS);
   const recordFile = path.join(root, RECORD);
   let record;
@@ -303,7 +315,7 @@ export async function runReleaseGate({
   } catch {
     /* A missing record requires every stage. */
   }
-  const context = gateRecordContext(root);
+  const context = gateRecordContext(root, toolchain);
   if (
     fresh ||
     record?.installed !== context.installed ||
@@ -336,7 +348,7 @@ export async function runReleaseGate({
     // another lane's files. Concurrent lanes check source drift once after every lane finishes.
     if (!concurrent)
       assert.equal(
-        releaseSourceFingerprint(root),
+        sourceFingerprint(root, toolchain),
         source,
         `Source changed during ${name}; rerun the gate after reviewing generated drift.`,
       );
@@ -365,7 +377,7 @@ export async function runReleaseGate({
   );
   await saving;
   const failures = [];
-  const drifted = !serial && releaseSourceFingerprint(root) !== source;
+  const drifted = !serial && sourceFingerprint(root, toolchain) !== source;
   if (drifted)
     failures.push(
       "lanes: Source changed while the lanes ran; rerun with --serial to find the stage.",

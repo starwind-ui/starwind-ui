@@ -53,9 +53,10 @@ export function releaseToolchain(root) {
   };
 }
 
-export function releaseSourceFingerprint(root) {
+// Callers that already know the toolchain can pass it to skip the pnpm subprocess.
+export function releaseSourceFingerprint(root, toolchain = releaseToolchain(root)) {
   return createHash("sha256")
-    .update(JSON.stringify(releaseToolchain(root)))
+    .update(JSON.stringify(toolchain))
     .update(fingerprintFiles(root, releaseSourceFiles(root)))
     .digest("hex");
 }

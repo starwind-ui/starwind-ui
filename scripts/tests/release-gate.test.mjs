@@ -3,16 +3,39 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  assertGateEvidence,
-  assertReleaseGate,
+  assertGateEvidence as assertGateEvidenceWith,
+  assertReleaseGate as assertReleaseGateWith,
   RELEASE_PACKS,
   releaseGateStages,
   reusableGateRecord,
-  runReleaseGate,
-  verifyGateEvidence,
+  runReleaseGate as runReleaseGateWith,
+  verifyGateEvidence as verifyGateEvidenceWith,
 } from "../release-gate.mjs";
+import { releaseToolchain } from "../release-inputs.mjs";
+
+// The real toolchain spawns pnpm on every source fingerprint, which costs about half a second each
+// time. These tests use a fixed toolchain. One test below keeps the real toolchain.
+let stubToolchain;
+const fixedToolchain = () => stubToolchain;
+const withToolchain =
+  (operation) =>
+  (options = {}) =>
+    operation({ toolchain: fixedToolchain, ...options });
+const assertGateEvidence = withToolchain(assertGateEvidenceWith);
+const assertReleaseGate = withToolchain(assertReleaseGateWith);
+const runReleaseGate = withToolchain(runReleaseGateWith);
+const verifyGateEvidence = withToolchain(verifyGateEvidenceWith);
+
+beforeEach(() => {
+  stubToolchain = {
+    node: process.version,
+    pnpm: "0.0.0-test",
+    platform: process.platform,
+    arch: process.arch,
+  };
+});
 
 const roots = [];
 const recordFile = path.join("node_modules", ".cache", "starwind-release", "gate.json");
@@ -331,8 +354,10 @@ describe("release gate evidence at merge points", () => {
 
   // Every stage passes, but the fixture has no packs, so the final artifact check fails. Mark the
   // record complete as a real passing gate would.
-  async function passGate(root) {
-    await expect(runReleaseGate({ root, run: async () => {} })).rejects.not.toThrow(/failed stage/);
+  async function passGate(root, options = {}) {
+    await expect(runReleaseGate({ root, run: async () => {}, ...options })).rejects.not.toThrow(
+      /failed stage/,
+    );
     const record = await loadRecord(root);
     await writeFile(
       path.join(root, recordFile),
@@ -349,18 +374,34 @@ describe("release gate evidence at merge points", () => {
     return root;
   }
 
+  // This test keeps the real toolchain, so it covers the production default.
   it("accepts a complete record for the exact source and expected head", async () => {
     const root = await createLockedFixture();
-    const record = await passGate(root);
+    const real = { toolchain: releaseToolchain };
+    const record = await passGate(root, real);
 
     expect(record.head).toBe(git(root, "rev-parse", "HEAD"));
-    expect(record.toolchain).toMatchObject({ node: process.version });
-    await expect(verifyGateEvidence({ root, expectHead: "HEAD" })).resolves.toMatchObject({
+    expect(record.toolchain).toEqual(releaseToolchain(root));
+    await expect(verifyGateEvidence({ root, expectHead: "HEAD", ...real })).resolves.toMatchObject({
       ok: true,
       problems: [],
     });
-    await expect(assertGateEvidence({ root, expectHead: "main" })).resolves.toMatchObject({
+    await expect(assertGateEvidence({ root, expectHead: "main", ...real })).resolves.toMatchObject({
       complete: true,
+    });
+  });
+
+  it("names a toolchain change in a stale record", async () => {
+    const root = await createLockedFixture();
+    await passGate(root);
+    stubToolchain = { ...stubToolchain, pnpm: "0.0.1-test" };
+
+    await expect(verifyGateEvidence({ root, expectHead: "HEAD" })).resolves.toMatchObject({
+      ok: false,
+      problems: [
+        "The record is for a different source tree.",
+        "Toolchain pnpm changed: record 0.0.0-test, now 0.0.1-test.",
+      ],
     });
   });
 
