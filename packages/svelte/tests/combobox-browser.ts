@@ -114,7 +114,9 @@ const oldRef=(node:HTMLButtonElement|null)=>{void refRead;refs.push("old:"+(node
 const clearRef=(node:HTMLButtonElement|null)=>{refs.push("clear:"+(node?.tagName??"null"));};
 const keyA=createAttachmentKey(),keyB=createAttachmentKey();
 const attachA:Attachment<HTMLButtonElement>=(node)=>{const read=attachmentRead;attachments.push("A:start:"+read+":"+node.tagName);return()=>{attachments.push("A:end:"+read);};};
-const attachB:Attachment<HTMLButtonElement>=(node)=>{attachments.push("B:start:"+node.tagName);return()=>{attachments.push("B:end");};};
+// Svelte 5.33.5 and newer keep a removed attachment as the previous value, so restoring the same function does not attach it again. Restore B with a new function.
+const createAttachB=():Attachment<HTMLButtonElement>=>(node)=>{attachments.push("B:start:"+node.tagName);return()=>{attachments.push("B:end");};};
+let attachB=createAttachB();
 let attachmentProps=$derived({[keyA]:attachA,...(withB?{[keyB]:attachB}:{})});
 function assign(name:string,next:any){if(name==="value")value=next;else if(name==="inputValue")inputValue=next;else open=next;}
 function propose(name:string,next:any,detail:any){events.push("proposal:"+name);callbacks.push({name,value:next,before:name==="value"?value:name==="inputValue"?inputValue:open});if(cancel.includes(name))detail.cancel();if(command)flushSync(()=>assign(command!.name,command!.value));}
@@ -131,7 +133,7 @@ export function setGroupLabel(next:string){groupLabel=next;}
 export function collection(next:{value:string;label:string;disabled:boolean}[]){items=next;}
 export function place(next:string|HTMLElement|undefined,inPlace=false){container=next;disablePortal=inPlace;}
 export function placement(next:"top"|"right"|"bottom"|"left",nextAlign:"start"|"center"|"end",nextOffset:number){side=next;align=nextAlign;offset=nextOffset;}
-export function modeChild(next:string){childMode=next;}export function changeRef(){swapRef=!swapRef;}export function readRef(){refRead++;}export function readAttachment(){attachmentRead++;}export function symbolB(next:boolean){withB=next;}export function root(){return rootNode;}export function hide(){shown=false;}
+export function modeChild(next:string){childMode=next;}export function changeRef(){swapRef=!swapRef;}export function readRef(){refRead++;}export function readAttachment(){attachmentRead++;}export function symbolB(next:boolean){if(next&&!withB)attachB=createAttachB();withB=next;}export function root(){return rootNode;}export function hide(){shown=false;}
 </script>
 {#snippet child({props,children}:ButtonChildPayload)}{#if childMode==="component"}<ForwardButton {props} {children}/>{:else}<button {...props}>{@render children?.()}</button>{/if}{/snippet}
 <form data-form={id}>{#if shown}{#key keys.root}{#if mode==="function"}${root('bind:value={()=>value,(next)=>put("value",next)} bind:inputValue={()=>inputValue,(next)=>put("inputValue",next)} bind:open={()=>open,(next)=>put("open",next)}')}{:else if mode==="bound"}${root("bind:value bind:inputValue bind:open")}{:else}${root('{...(mode==="plain"?{value,inputValue,open}:{})}')}{/if}{/key}{/if}</form>`;

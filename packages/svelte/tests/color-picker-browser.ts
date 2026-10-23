@@ -70,7 +70,7 @@ import {createAttachmentKey,type Attachment} from "svelte/attachments";
 import Picker,{parseColor,type ColorPickerValue,type ColorPickerFormat} from "@starwind-ui/svelte/color-picker";
 let {id,mode="bound",initialValue,initialFormat,defaultValue,empty=false,external=false,initialSwatchDisabled=false}:{id:string;mode?:string;initialValue?:ColorPickerValue;initialFormat?:ColorPickerFormat;defaultValue?:ColorPickerValue;empty?:boolean;external?:boolean;initialSwatchDisabled?:boolean}=$props();
 let value=$state.raw<ColorPickerValue|undefined>(untrack(()=>initialValue)),format=$state<ColorPickerFormat|undefined>(untrack(()=>initialFormat));
-let seed=$state.raw(untrack(()=>defaultValue)),allowEmpty=$state(empty),alpha=$state(true),disabled=$state(false),readOnly=$state(false),association=$state(external?"external":undefined);
+let seed=$state.raw(untrack(()=>defaultValue)),allowEmpty=$state(untrack(()=>empty)),alpha=$state(true),disabled=$state(false),readOnly=$state(false),association=$state(untrack(()=>external?"external":undefined));
 let swatchDisabled=$state(untrack(()=>initialSwatchDisabled));
 let styleText=$state("--caller: first"),partKey=$state(0),showParts=$state(true),channel=$state<"hue"|"red">("hue"),xChannel=$state<"saturation"|"red">("saturation"),orientation=$state<"horizontal"|"vertical">("horizontal"),step=$state(1),swatch=$state("#00ff00"),callbackVersion=$state(0),swapRef=$state(false),attachmentRead=$state(0),secondAttachment=$state(true);
 let rootKey=$state(0);

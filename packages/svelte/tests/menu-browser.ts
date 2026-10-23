@@ -188,7 +188,9 @@ export function setOffset(next: number) { offset = next; }`
 const writes: { kind:string; next:boolean | string | undefined }[] = [], callbacks: { kind:string; reason?: string; next:boolean | string; previous:boolean | string | undefined }[] = [], refs: string[] = [], attachments: string[] = [], popupRefs: string[] = [], completions: boolean[] = [];
 const keyA = createAttachmentKey(), keyB = createAttachmentKey();
 const attachA: Attachment<${triggerElement}> = () => { attachments.push("a:" + aRead); return () => { attachments.push("a:cleanup"); }; };
-const attachB: Attachment<${triggerElement}> = () => { attachments.push("b:" + bRead); return () => { attachments.push("b:cleanup"); }; };
+// Svelte 5.33.5 and newer keep a removed attachment as the previous value, so restoring the same function does not attach it again. Restore B with a new function.
+const createAttachB = (): Attachment<${triggerElement}> => () => { attachments.push("b:" + bRead); return () => { attachments.push("b:cleanup"); }; };
+let attachB = createAttachB();
 let forwarded = $state.raw({ [keyA]: attachA, [keyB]: attachB });
 const refA = (node: ${triggerElement} | null) => { refs.push("a:" + (node?.tagName ?? "null") + ":" + refRead); };
 const refB = (node: ${triggerElement} | null) => { refs.push("b:" + (node?.tagName ?? "null") + ":" + refRead); };
@@ -232,7 +234,7 @@ export function changeRef() { secondRef = !secondRef; }
 export function readRef() { refRead++; }
 export function readAttachment(kind: string) { if (kind === "a") aRead++; else bRead++; }
 export function removeAttachment() { forwarded = { [keyA]: attachA }; }
-export function addAttachment() { forwarded = { [keyA]: attachA, [keyB]: attachB }; }
+export function addAttachment() { if (!(keyB in forwarded)) attachB = createAttachB(); forwarded = { [keyA]: attachA, [keyB]: attachB }; }
 export function compose(next: string) { childMode = next; }
 export function hide() { shown = false; }
 export function show() { shown = true; }

@@ -39,7 +39,9 @@ export function printFormProjection(projection: FormProjection): string {
     groupDisabled: "group?.disabled === true",
     disabled: "disabled",
   });
-  const input = `<input ${inputAttrs} checked={initialChecked} ${Object.entries(inputData)
+  // A rendered native default stops Svelte hydration from removing the server checked or value
+  // attribute, so a form reset restores the reset seed.
+  const input = `<input ${inputAttrs} checked={initialChecked} defaultChecked={resetSeed} ${Object.entries(inputData)
     .map(([key, value]) => `${key}={${value}}`)
     .join(
       " ",

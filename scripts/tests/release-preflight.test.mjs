@@ -14,6 +14,7 @@ import {
 import { collectPreflightFailures, rehearseRelease } from "../release-preflight.mjs";
 
 const roots = [];
+const passingGate = async () => {};
 
 async function createFixture() {
   const root = await mkdtemp(path.join(os.tmpdir(), "starwind-release-preflight-test-"));
@@ -110,6 +111,7 @@ describe("release preflight", () => {
 
     await rehearseRelease({
       root,
+      checkGate: passingGate,
       run: async (args, cwd) => {
         candidate ??= cwd;
         calls.push(args);
@@ -138,6 +140,7 @@ describe("release preflight", () => {
 
     await rehearseRelease({
       root,
+      checkGate: passingGate,
       run: async (_args, cwd) => {
         copiedLink ??= await readlink(path.join(cwd, "links", "release"));
       },
@@ -154,6 +157,7 @@ describe("release preflight", () => {
     await expect(
       rehearseRelease({
         root,
+        checkGate: passingGate,
         run: async (args, cwd) => {
           candidate ??= cwd;
           calls.push(args);
@@ -164,5 +168,40 @@ describe("release preflight", () => {
 
     expect(calls).toContainEqual(["audit:prod"]);
     expect(existsSync(candidate)).toBe(false);
+  });
+
+  it("fails on missing gate evidence for the given checkout and still runs the rehearsal", async () => {
+    const root = await createFixture();
+    const publicCheckout = await createFixture();
+    const calls = [];
+
+    const preflight = rehearseRelease({
+      root,
+      gateEvidence: publicCheckout,
+      run: async (args) => {
+        calls.push(args);
+      },
+    });
+
+    await expect(preflight).rejects.toThrow(/found 1 failed check/);
+    await expect(preflight).rejects.toThrow(
+      new RegExp(`release gate evidence: .*\\n- No release gate record at ${publicCheckout}`),
+    );
+    expect(calls).toContainEqual(["release:version"]);
+    expect(calls.at(-1)).toEqual(["audit:prod"]);
+  });
+
+  it("checks gate evidence only for a checkout passed with --gate-evidence", async () => {
+    const root = await createFixture();
+    const checked = [];
+    const checkGate = async (checkout) => {
+      checked.push(checkout);
+    };
+
+    await rehearseRelease({ root, checkGate, run: async () => {} });
+    expect(checked).toEqual([]);
+
+    await rehearseRelease({ root, checkGate, gateEvidence: "/public", run: async () => {} });
+    expect(checked).toEqual(["/public"]);
   });
 });

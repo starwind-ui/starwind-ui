@@ -121,10 +121,13 @@ beta publications must preserve the existing `latest` value.
 
 ## Release preparation and verification
 
-Run `pnpm release:preflight` before opening release-tooling fixes. It copies the current source into
-an isolated temporary repository, rehearses `release:version`, checks frozen installation, tests the
-versioned registry and release helpers, and collects metadata, component-guard, and audit failures.
-The temporary repository is removed after the check.
+For release preparation, run `pnpm release:preflight --gate-evidence <public checkout>` before
+opening release-tooling fixes. It copies the current source into an isolated temporary repository,
+rehearses `release:version`, checks frozen installation, tests the versioned registry and release
+helpers, and collects metadata, component-guard, and audit failures. The temporary repository is
+removed after the check. Preflight checks release gate evidence only with `--gate-evidence`, and
+then it fails unless that checkout is clean at `origin/main` with complete gate evidence for its
+exact source.
 
 `pnpm release:gate` audits dependencies first, builds the public packages and demos once, and packs
 archives under `node_modules/.cache/starwind-release/packs/`. Each archive has its exact packed
@@ -135,8 +138,19 @@ command when diagnosing a host failure.
 The gate writes stage timings and completed checks to
 `node_modules/.cache/starwind-release/gate.json`. A later invocation reuses a completed prefix only
 when source files, the lockfile, toolchain, built outputs, archive hashes, and the stage plan match.
-It checks registry advisories on every invocation. Run `pnpm release:gate --fresh` for a complete
-rerun. Source edits or generated drift invalidate the record.
+It checks registry advisories on every invocation. A failed audit does not stop the stages. The
+record keeps the audit result and log, and the gate exits non-zero after the stages finish. Run
+`pnpm release:gate --fresh` for a complete rerun. Source edits, generated drift, or a changed
+`node_modules/.pnpm/lock.yaml` invalidate the record.
+
+`node scripts/release-gate.mjs --verify-evidence [--expect-head <rev>] [--expect-base <rev>]` exits
+non-zero unless every stage passed for the current source, lockfile, toolchain, and installed
+dependencies. With `--expect-head`, the checkout must be clean at that commit. With
+`--expect-base`, HEAD must contain that commit. It prints each stale input and each stage that
+failed or did not run, and it reports the recorded audit result without requiring it. It ignores
+built outputs, so it stays valid after a later build. Public merges and the Version Packages merge
+require it. `--check` stays the publication check. It also requires a passing audit and matching
+outputs and packs.
 
 The normal dry-run and user-run publisher require matching completed gate evidence for selected
 packages. They consume the verified archives through

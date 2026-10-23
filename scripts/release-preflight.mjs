@@ -54,7 +54,23 @@ export async function collectPreflightFailures(checks) {
     );
 }
 
-export async function rehearseRelease({ root = ROOT, run = runReleaseCommand } = {}) {
+// Release preparation passes the public checkout. Its gate evidence must cover the public main
+// tree that versioning starts from.
+async function checkPublicMainGate(checkout) {
+  const { assertGateEvidence } = await import("./release-gate.mjs");
+  try {
+    await assertGateEvidence({ root: checkout, expectHead: "origin/main" });
+  } catch (error) {
+    throw new Error(`${error.message}\nPreflight checked ${checkout}.`);
+  }
+}
+
+export async function rehearseRelease({
+  root = ROOT,
+  run = runReleaseCommand,
+  gateEvidence,
+  checkGate = checkPublicMainGate,
+} = {}) {
   const candidate = await mkdtemp(path.join(os.tmpdir(), "starwind-release-preflight-"));
   console.log(`[preflight] Disposable version rehearsal: ${candidate}`);
   try {
@@ -75,7 +91,12 @@ export async function rehearseRelease({ root = ROOT, run = runReleaseCommand } =
     git("config", "user.email", "release-preflight@localhost");
     git("add", ".");
     git("commit", "--quiet", "-m", "chore: prepare disposable release rehearsal");
+    if (!gateEvidence)
+      console.log(
+        "[preflight] Gate evidence not checked. Release preparation passes --gate-evidence <public checkout>.",
+      );
     await collectPreflightFailures([
+      ...(gateEvidence ? [["release gate evidence", () => checkGate(gateEvidence)]] : []),
       [
         "version rehearsal",
         async () => {
@@ -148,7 +169,7 @@ export async function rehearseRelease({ root = ROOT, run = runReleaseCommand } =
       ["dependency audit", () => run(["audit:prod"], candidate)],
     ]);
     console.log(
-      "[preflight] Versioning, frozen install, registry, release helpers, and dependency audit passed.",
+      `[preflight] ${gateEvidence ? "Release gate evidence, versioning" : "Versioning"}, frozen install, registry, release helpers, and dependency audit passed.`,
     );
   } finally {
     await rm(candidate, { recursive: true, force: true });
@@ -162,7 +183,11 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       ? assertRoutineReleaseMetadata()
       : args.length === 0
         ? rehearseRelease()
-        : Promise.reject(new Error("Expected no arguments or --metadata."));
+        : args.length === 2 && args[0] === "--gate-evidence"
+          ? rehearseRelease({ gateEvidence: path.resolve(args[1]) })
+          : Promise.reject(
+              new Error("Expected no arguments, --metadata, or --gate-evidence <checkout>."),
+            );
   operation.catch((error) => {
     console.error(error.message);
     process.exitCode = 1;

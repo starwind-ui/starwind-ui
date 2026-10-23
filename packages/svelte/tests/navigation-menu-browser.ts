@@ -53,7 +53,9 @@ const oldTriggerRef=(node:HTMLButtonElement|null)=>{void refRead;refs.push("old:
 const contentRef=(node:HTMLDivElement|null)=>{contentNode=node;void refRead;refs.push("content:"+(node?.tagName??"null"));};
 const keyA=createAttachmentKey(),keyB=createAttachmentKey();
 const attachA:Attachment<HTMLButtonElement>=(node)=>{const read=attachmentRead;attachments.push("A:start:"+read+":"+node.tagName);return()=>{attachments.push("A:end:"+read);};};
-const attachB:Attachment<HTMLButtonElement>=(node)=>{attachments.push("B:start:"+node.tagName);return()=>{attachments.push("B:end");};};
+// Svelte 5.33.5 and newer keep a removed attachment as the previous value, so restoring the same function does not attach it again. Restore B with a new function.
+const createAttachB=():Attachment<HTMLButtonElement>=>(node)=>{attachments.push("B:start:"+node.tagName);return()=>{attachments.push("B:end");};};
+let attachB=createAttachB();
 let attachmentProps=$derived({[keyA]:attachA,...(withB?{[keyB]:attachB}:{})});
 function nativeClick(event:MouseEvent){events.push("native");if(id==="links")event.preventDefault();}
 function nativeLink(event:MouseEvent){events.push("native-link");event.preventDefault();}
@@ -73,7 +75,7 @@ export function changeClass(){className=className==="before"?"after":"before";co
 export function changeRef(){newRef=!newRef;}
 export function readRef(){refRead++;}
 export function readAttachment(){attachmentRead++;}
-export function symbolB(next:boolean){withB=next;}
+export function symbolB(next:boolean){if(next&&!withB)attachB=createAttachB();withB=next;}
 export function modeChild(next:string){childMode=next;}
 export function delays(open:number,close:number){openDelay=open;closeDelay=close;}
 export function triggerDelays(open:number|undefined,close:number|undefined){triggerOpenDelay=open;triggerCloseDelay=close;}

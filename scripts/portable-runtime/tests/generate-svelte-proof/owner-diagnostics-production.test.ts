@@ -47,7 +47,9 @@ it("removes owner diagnostics from every minified production component", async (
     const code = output.output
       .filter((item) => item.type === "chunk")
       .map((item) => item.code)
-      .join("\n");
+      .join("\n")
+      // Newer Svelte compilers hoist a Set of rest-prop exclusions. It is not an owner diagnostic.
+      .replace(/new Set\(\[(?:"\$\$\w+",?)+\]\)/g, "");
     expect(code, file).not.toMatch(
       /child props|multiple owners|console\.warn|diagnos|validationRevision|\.some\(/,
     );

@@ -3,7 +3,6 @@ import path from "node:path";
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { chromium, type Browser } from "playwright";
-import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 import { createServer, type ViteDevServer } from "vite";
 
@@ -27,6 +26,8 @@ describe("generated Svelte Accordion lifecycle", () => {
     const ssrServer = await createProofServer(root, true);
     servers.push(ssrServer);
     const appModule = await ssrServer.ssrLoadModule("/App.svelte");
+    // Render with the Vite SSR copy of Svelte so the renderer and components share one context.
+    const { render } = await ssrServer.ssrLoadModule("svelte/server");
     const [firstRender, secondRender] = await Promise.all([
       Promise.resolve(render(appModule.default).body),
       Promise.resolve(render(appModule.default).body),
