@@ -723,6 +723,7 @@ function getWorkspacePolicy(packages) {
 minimumReleaseAge: 0
 minimumReleaseAgeStrict: false
 allowBuilds:
+  "@parcel/watcher": false
   esbuild: true
   sharp: true
   unrs-resolver: true
