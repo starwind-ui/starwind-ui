@@ -119,6 +119,11 @@ The first Vue publication is historical: it published Vue `0.1.0` on `beta` and 
 publication is `0.1.0` on `beta`, and npm sets its `latest` to `0.1.0` for the same reason. Later
 beta publications must preserve the existing `latest` value.
 
+Vue and Svelte each pin `@starwind-ui/runtime` to one exact version. The CLI registry uses that pin
+for every direct Runtime requirement on these targets, including vendored Primitives. A wider range
+could install a newer Runtime beside the copy that the adapter uses. Astro and React keep caret
+requirements because their adapter ranges and Runtime move together in the fixed group.
+
 ## Release preparation and verification
 
 For release preparation, run `pnpm release:preflight --gate-evidence <public checkout>` before

@@ -2269,7 +2269,7 @@
           ],
           "componentDependencies": ["input", "native-select", "popover", "select"],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "1.4.0" },
             { "name": "@starwind-ui/vue", "range": "0.3.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5" }
@@ -6047,7 +6047,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "1.4.0" },
             { "name": "@starwind-ui/vue", "range": "0.3.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5" }
@@ -8323,7 +8323,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "1.4.0" },
             { "name": "@starwind-ui/vue", "range": "0.3.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5" }
@@ -8569,7 +8569,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "1.4.0" },
             { "name": "@starwind-ui/vue", "range": "0.3.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5" }

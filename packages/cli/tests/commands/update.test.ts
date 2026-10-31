@@ -7,8 +7,10 @@ import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-t
 import * as fs from "../../src/utils/fs.js";
 import * as registry from "../../src/utils/registry.js";
 import * as runtimeComponent from "../../src/utils/runtime-component.js";
+import * as runtimePackage from "../../src/utils/runtime-package.js";
 
 vi.mock("@clack/prompts");
+vi.mock("../../src/utils/runtime-package.js");
 vi.mock("../../src/utils/config.js");
 vi.mock("../../src/utils/fs.js");
 vi.mock("../../src/utils/registry.js");
@@ -80,6 +82,9 @@ describe("update command", () => {
     });
     consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
+    vi.mocked(runtimePackage.addRuntimePackageUpdatesToPreview).mockImplementation(
+      async (plan) => plan,
+    );
     mockFileExists.mockResolvedValue(true);
     mockGetConfigState.mockResolvedValue({ status: "current", config: runtimeConfig() });
     mockParseRegistrySource.mockImplementation((value) =>
@@ -252,6 +257,73 @@ describe("update command", () => {
     expect(summary).toContain("button (1.0.0) [behavior]");
     expect(summary).toContain("card (1.0.0)");
     expect(summary).not.toContain("card (1.0.0) [");
+  });
+
+  describe("direct Runtime package", () => {
+    const skippedResult = {
+      updated: [],
+      skipped: [{ name: "button", status: "skipped" as const, oldVersion: "1.0.0" }],
+      failed: [],
+    };
+
+    it("offers the update before component updates install packages", async () => {
+      mockUpdateRuntimeComponents.mockResolvedValue(skippedResult);
+
+      await update(["button"], { packageManager: "pnpm", yes: true });
+
+      const offer = vi.mocked(runtimePackage.offerRuntimePackageUpdates);
+      expect(offer).toHaveBeenCalledWith({
+        config: expect.objectContaining({ framework: "react" }),
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+      expect(offer.mock.invocationCallOrder[0]).toBeLessThan(
+        mockUpdateRuntimeComponents.mock.invocationCallOrder[0]!,
+      );
+    });
+
+    it("exits with an error after an accepted install fails", async () => {
+      mockUpdateRuntimeComponents.mockResolvedValue(skippedResult);
+      vi.mocked(runtimePackage.offerRuntimePackageUpdates).mockResolvedValueOnce("failed");
+
+      await expect(update(["button"], { yes: true })).rejects.toThrow("process.exit called");
+
+      expect(mockUpdateRuntimeComponents).toHaveBeenCalled();
+      expect(mockExit).toHaveBeenCalledWith(1);
+    });
+
+    it("skips the offer and preview for an explicit registry", async () => {
+      mockUpdateRuntimeComponents.mockResolvedValue(skippedResult);
+
+      await update(["button"], { registry: "./registry.json", yes: true });
+      await update(["button"], { dryRun: true, registry: "./registry.json" });
+
+      expect(runtimePackage.offerRuntimePackageUpdates).not.toHaveBeenCalled();
+      expect(runtimePackage.addRuntimePackageUpdatesToPreview).not.toHaveBeenCalled();
+    });
+
+    it("skips the offer when a component comes from a custom registry", async () => {
+      mockUpdateRuntimeComponents.mockResolvedValue(skippedResult);
+      vi.mocked(runtimePackage.usesCustomStyledRegistry).mockReturnValueOnce(true);
+
+      await update(["button"], { yes: true });
+
+      expect(runtimePackage.offerRuntimePackageUpdates).not.toHaveBeenCalled();
+    });
+  });
+
+  it("adds direct Runtime package updates to the preview without installing", async () => {
+    vi.mocked(runtimePackage.addRuntimePackageUpdatesToPreview).mockImplementation(
+      async (plan) => ({
+        ...plan,
+        packagesToInstall: [...plan.packagesToInstall, "@starwind-ui/runtime@^9.0.0"],
+      }),
+    );
+
+    await update(["button"], { dryRun: true });
+
+    expect(consoleLogSpy.mock.calls.flat().join("\n")).toContain("@starwind-ui/runtime@^9.0.0");
+    expect(runtimePackage.offerRuntimePackageUpdates).not.toHaveBeenCalled();
   });
 
   it("recommends migrate for legacy configs instead of mixing Runtime updates", async () => {

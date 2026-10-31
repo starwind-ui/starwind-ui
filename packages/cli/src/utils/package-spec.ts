@@ -91,3 +91,9 @@ export function parsePackageSpec(
 
   return value as ValidatedPackageSpec;
 }
+
+export function isExactPackageSpec(value: ValidatedPackageSpec): boolean {
+  const selectorSeparator = value.lastIndexOf("@");
+
+  return selectorSeparator > 0 && semver.valid(value.slice(selectorSeparator + 1)) !== null;
+}

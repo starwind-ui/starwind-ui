@@ -30,6 +30,7 @@ export const DEFAULT_PRIMITIVE_VERSION_MANIFEST = "packages/cli/registry/primiti
 export const DEFAULT_COMPONENT_INSTALL_ROOT = "src/components/starwind";
 export const DEFAULT_PRIMITIVE_INSTALL_ROOT = "src/components/starwind-primitives";
 export const DEFAULT_CLI_REGISTRY_OUTPUT = "packages/cli/src/registry/bundled-registry.json";
+const RUNTIME_PACKAGE_NAME = "@starwind-ui/runtime";
 
 type RegistryImplementationTarget = FrameworkAdapterRegisteredTarget;
 type PrimitiveVendoringFramework = FrameworkAdapterRegisteredTarget;
@@ -393,7 +394,10 @@ export async function buildRuntimeRegistry(
   const repoRoot = options.repoRoot ?? process.cwd();
   const targetPolicy = resolveCliRegistryBuildPolicy(options.targetPolicy);
   const targetDefinitions = createTargetDefinitions(targetPolicy.targetRegistrations);
-  const packageRanges = await loadPackageRanges(repoRoot, targetPolicy.targetRegistrations);
+  const targetPackageRanges = await loadTargetPackageRanges(
+    repoRoot,
+    targetPolicy.targetRegistrations,
+  );
   const versionManifest = await loadRegistryVersionManifest({
     repoRoot,
     versionManifestPath: options.versionManifestPath,
@@ -433,7 +437,7 @@ export async function buildRuntimeRegistry(
     return {
       $schema: "https://starwind.dev/registry-schema.v2.json",
       version: options.registryVersion ?? versionManifest.registryVersion,
-      setup: buildRegistrySetup(packageRanges, targetDefinitions),
+      setup: buildRegistrySetup(targetPackageRanges, targetDefinitions),
       components: await Promise.all(
         contracts.map(async (contract) => ({
           name: contract.component,
@@ -450,8 +454,8 @@ export async function buildRuntimeRegistry(
           targets: await buildTargetsForContract({
             componentInstallRoot,
             contract,
-            packageRanges,
             styledArtifactPlanningFacts,
+            targetPackageRanges,
             targetDefinitions,
             targetOutputs,
           }),
@@ -466,7 +470,7 @@ export async function buildRuntimeRegistry(
 }
 
 function buildRegistrySetup(
-  packageRanges: Map<string, string>,
+  targetPackageRanges: Map<RegistryImplementationTarget, Map<string, string>>,
   targetDefinitions: readonly TargetDefinition[],
 ): RuntimeRegistry["setup"] {
   const setup: RuntimeRegistry["setup"] = {};
@@ -508,7 +512,7 @@ function buildRegistrySetup(
     setup[target.target] = {
       adapterPackage: {
         name: target.adapterPackage,
-        range: getPackageRange(target.adapterPackage, packageRanges),
+        range: getPackageRange(target.adapterPackage, targetPackageRanges.get(target.target)!),
       },
       packageRequirements,
     };
@@ -597,7 +601,10 @@ export async function buildPrimitiveVendoringArtifacts(
 
   try {
     const targetPolicy = resolveCliRegistryBuildPolicy(options.targetPolicy);
-    const packageRanges = await loadPackageRanges(repoRoot, targetPolicy.targetRegistrations);
+    const targetPackageRanges = await loadTargetPackageRanges(
+      repoRoot,
+      targetPolicy.targetRegistrations,
+    );
     const primitiveTargets = createPrimitiveVendoringTargetDefinitions(
       targetPolicy.targetRegistrations,
     );
@@ -637,7 +644,7 @@ export async function buildPrimitiveVendoringArtifacts(
             packageRequirements: collectPrimitivePackageRequirements({
               extraPackageNames: target.extraPackageRequirements,
               files,
-              packageRanges,
+              packageRanges: targetPackageRanges.get(target.framework)!,
             }),
           };
         }),
@@ -721,9 +728,9 @@ export async function writeRuntimeRegistry(
 async function buildTargetsForContract(options: {
   componentInstallRoot: string;
   contract: StyledAdapterContract;
-  packageRanges: Map<string, string>;
   styledArtifactPlanningFacts: StyledArtifactPlanningFacts;
   targetDefinitions: readonly TargetDefinition[];
+  targetPackageRanges: Map<RegistryImplementationTarget, Map<string, string>>;
   targetOutputs: Map<RegistryImplementationTarget, string>;
 }): Promise<Partial<Record<RegistryImplementationTarget, RegistryTarget>>> {
   const targets: Partial<Record<RegistryImplementationTarget, RegistryTarget>> = {};
@@ -746,7 +753,7 @@ async function buildTargetsForContract(options: {
       files,
       componentDependencies: planningFacts?.componentDependencies ?? [],
       packageRequirements: collectPackageRequirements({
-        packageRanges: options.packageRanges,
+        packageRanges: options.targetPackageRanges.get(target.target)!,
         packageRequirementSources: planningFacts?.packageRequirementSources ?? [
           target.adapterPackage,
         ],
@@ -800,6 +807,52 @@ export async function loadPackageRanges(
   }
 
   return ranges;
+}
+
+/**
+ * An exact adapter keeps one Runtime version for that whole adapter release. A wider direct Runtime
+ * requirement can resolve a newer copy beside it, so these targets use the adapter's own pin.
+ */
+export async function loadTargetPackageRanges(
+  repoRoot: string,
+  targetRegistrations: readonly CliRegistryTargetRegistration[],
+): Promise<Map<RegistryImplementationTarget, Map<string, string>>> {
+  const sharedRanges = await loadPackageRanges(repoRoot, targetRegistrations);
+  const targetRanges = new Map<RegistryImplementationTarget, Map<string, string>>();
+
+  for (const registration of targetRegistrations) {
+    const ranges = new Map(sharedRanges);
+    if (registration.cliRegistry.exactAdapterPackageVersion) {
+      ranges.set(RUNTIME_PACKAGE_NAME, await loadExactAdapterRuntimePin(repoRoot, registration));
+    }
+    targetRanges.set(registration.target, ranges);
+  }
+
+  return targetRanges;
+}
+
+async function loadExactAdapterRuntimePin(
+  repoRoot: string,
+  registration: CliRegistryTargetRegistration,
+): Promise<string> {
+  const adapterPackage = getCliRegistryAdapterPackage(registration.target);
+
+  for (const packageJsonPath of registration.cliRegistry.packageMetadataSources ?? []) {
+    const packageJson = await readPackageJson(repoRoot, packageJsonPath);
+    if (packageJson.name !== adapterPackage) continue;
+
+    const runtimePin = packageJson.dependencies?.[RUNTIME_PACKAGE_NAME];
+    if (!runtimePin || semver.valid(runtimePin) !== runtimePin) {
+      throw new Error(
+        `CLI registry adapter package ${adapterPackage} requires an exact ${RUNTIME_PACKAGE_NAME} dependency; received "${runtimePin}" from ${packageJsonPath}.`,
+      );
+    }
+    return runtimePin;
+  }
+
+  throw new Error(
+    `CLI registry target "${registration.target}" has no ${adapterPackage} metadata.`,
+  );
 }
 
 export async function loadRegistryVersionManifest(

@@ -22,6 +22,11 @@ import {
   type UpdateRuntimeComponentsOptions,
   updateRuntimeComponents,
 } from "@/utils/runtime-component.js";
+import {
+  addRuntimePackageUpdatesToPreview,
+  offerRuntimePackageUpdates,
+  usesCustomStyledRegistry,
+} from "@/utils/runtime-package.js";
 import { sleep } from "@/utils/sleep.js";
 import { formatUpdatePreview, getPreviewMode } from "@/utils/update-preview.js";
 
@@ -201,6 +206,7 @@ export async function update(
         ? { registry: dependencies.registry }
         : {};
     const frameworkOverride = options?.framework ? { framework: options.framework } : {};
+    const checksRuntimePackage = !runtimeRegistrySource && !usesCustomStyledRegistry(config);
 
     // ================================================================
     //                     Update Components
@@ -222,9 +228,22 @@ export async function update(
             componentsToUpdate,
             previewOptions as UpdateRuntimeComponentsOptions,
           );
-      console.log(formatUpdatePreview(plan, previewMode));
+      console.log(
+        formatUpdatePreview(
+          checksRuntimePackage ? await addRuntimePackageUpdatesToPreview(plan, config) : plan,
+          previewMode,
+        ),
+      );
       return;
     }
+
+    const runtimePackageStatus = checksRuntimePackage
+      ? await offerRuntimePackageUpdates({
+          config,
+          packageManager: options?.packageManager,
+          skipPrompts: options?.yes,
+        })
+      : "current";
 
     const updateOptions = {
       config,
@@ -289,7 +308,10 @@ export async function update(
 
     await sleep(1000);
 
-    if (results.updated.length > 0) {
+    if (runtimePackageStatus === "failed") {
+      p.cancel("Couldn't update some packages");
+      process.exit(1);
+    } else if (results.updated.length > 0) {
       p.outro("Components updated successfully 🚀");
     } else if (results.skipped.length > 0 && results.failed.length === 0) {
       p.outro("Components already up to date or skipped ✨");
