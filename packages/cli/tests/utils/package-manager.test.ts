@@ -246,6 +246,27 @@ describe("package manager detection", () => {
     rmSync(cwd, { recursive: true, force: true });
   });
 
+  it.each(["bun.lock", "bun.lockb"])("detects a Bun project from %s", (lockFile) => {
+    const cwd = mkdtempSync(join(tmpdir(), "starwind-package-manager-bun-"));
+    writeFileSync(join(cwd, lockFile), "");
+    vi.stubEnv("npm_config_user_agent", "npm/11.0.0 node/v24.0.0");
+
+    expect(detectPackageManager({ cwd }).name).toBe("bun");
+
+    vi.unstubAllEnvs();
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  it("detects Bun from a user agent that also names npm", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "starwind-package-manager-bun-agent-"));
+    vi.stubEnv("npm_config_user_agent", "bun/1.4.4 npm/? node/v24.0.0 darwin arm64");
+
+    expect(detectPackageManager({ cwd }).name).toBe("bun");
+
+    vi.unstubAllEnvs();
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
   it("uses the invoking package manager when the project has no lockfile", () => {
     const cwd = mkdtempSync(join(tmpdir(), "starwind-package-manager-unlocked-"));
     vi.stubEnv("npm_config_user_agent", "yarn/4.9.0 npm/? node/v24.0.0");

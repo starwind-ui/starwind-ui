@@ -37,11 +37,12 @@ export interface PackageManagerInfo {
 /**
  * Map of package managers to their lock files
  */
-const LOCK_FILES: Record<PackageManager, string> = {
-  npm: "package-lock.json",
-  yarn: "yarn.lock",
-  pnpm: "pnpm-lock.yaml",
-  bun: "bun.lockb",
+const LOCK_FILES: Record<PackageManager, string[]> = {
+  npm: ["package-lock.json"],
+  yarn: ["yarn.lock"],
+  pnpm: ["pnpm-lock.yaml"],
+  // Bun 1.2 and newer write bun.lock. Older projects can still have bun.lockb.
+  bun: ["bun.lock", "bun.lockb"],
 };
 
 /**
@@ -86,10 +87,10 @@ export function getCurrentPackageManager(): PackageManager | null {
       return "pnpm";
     } else if (userAgent.includes("yarn")) {
       return "yarn";
-    } else if (userAgent.includes("npm")) {
-      return "npm";
     } else if (userAgent.includes("bun")) {
       return "bun";
+    } else if (userAgent.includes("npm")) {
+      return "npm";
     }
   }
 
@@ -124,10 +125,7 @@ export function detectPackageManager(options: PackageManagerOptions = {}): Packa
 
   // Check for each lock file
   for (const pm of packageManagers) {
-    const lockFile = LOCK_FILES[pm];
-    const lockFilePath = resolve(cwd, lockFile);
-
-    if (existsSync(lockFilePath)) {
+    if (LOCK_FILES[pm].some((lockFile) => existsSync(resolve(cwd, lockFile)))) {
       return {
         name: pm,
         ...PACKAGE_MANAGER_COMMANDS[pm],

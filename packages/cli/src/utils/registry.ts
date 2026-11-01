@@ -244,7 +244,7 @@ const registrySetupTargetSchema = z
 function createRegistrySetupSchema<TFramework extends CliFrameworkTarget>(
   targetPolicy: FrameworkTargetPolicy<TFramework>,
 ) {
-  return z.record(registrySetupTargetSchema).superRefine((setup, ctx) => {
+  return z.record(z.string(), registrySetupTargetSchema).superRefine((setup, ctx) => {
     for (const target of Object.keys(setup)) {
       if (!isSetupTarget(targetPolicy, target)) {
         ctx.addIssue({
@@ -296,7 +296,7 @@ const registryTargetSchema = z
 function createRegistryTargetsSchema<TFramework extends CliFrameworkTarget>(
   targetPolicy: FrameworkTargetPolicy<TFramework>,
 ) {
-  return z.record(registryTargetSchema).superRefine((targets, ctx) => {
+  return z.record(z.string(), registryTargetSchema).superRefine((targets, ctx) => {
     for (const [target, targetMetadata] of Object.entries(targets)) {
       if (!isRegistryTarget(targetPolicy, target)) {
         ctx.addIssue({
