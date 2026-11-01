@@ -110,6 +110,32 @@ describe("starwind CLI parser", () => {
     );
   });
 
+  it.each([
+    ["add", ["add", "button"]],
+    ["update", ["update", "button"]],
+    ["migrate", ["migrate"]],
+    ["primitives add", ["primitives", "add", "dialog"]],
+    ["primitives update", ["primitives", "update", "dialog"]],
+    ["setup", ["setup"]],
+  ] as const)("accepts Bun as the %s package manager", async (_command, args) => {
+    const program = createTestProgram();
+
+    await expect(
+      program.parseAsync([...args, "--package-manager", "bun"], { from: "user" }),
+    ).resolves.toBeDefined();
+  });
+
+  it("passes the Bun package manager choice through to the add command", async () => {
+    const program = createTestProgram();
+
+    await program.parseAsync(["add", "button", "-m", "bun"], { from: "user" });
+
+    expect(mockAdd).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({ packageManager: "bun" }),
+    );
+  });
+
   it("rejects invalid search plan choices through Commander", async () => {
     const program = createTestProgram();
     let stderr = "";

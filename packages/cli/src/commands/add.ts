@@ -50,7 +50,7 @@ interface AddOptions {
   all?: boolean;
   yes?: boolean;
   overwrite?: boolean;
-  packageManager?: "npm" | "pnpm" | "yarn";
+  packageManager?: PackageManager;
   registry?: string;
   framework?: StarwindFramework;
   starwindUiVersion?: "2" | "3";

@@ -5,13 +5,14 @@ import { PATHS } from "@/utils/constants.js";
 import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import type { PackageManager } from "@/utils/package-manager.js";
 import { sleep } from "@/utils/sleep.js";
 
 import { init } from "./init.js";
 
 interface SetupOptions {
   yes?: boolean;
-  packageManager?: "npm" | "pnpm" | "yarn";
+  packageManager?: PackageManager;
   pro?: boolean;
 }
 
