@@ -14,6 +14,7 @@ import {
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import type { PackageManager } from "@/utils/package-manager.js";
 import {
   getPrimitiveComponents,
   installPrimitiveComponents,
@@ -53,7 +54,7 @@ interface PrimitiveAddOptions {
   all?: boolean;
   framework?: StarwindFramework;
   overwrite?: boolean;
-  packageManager?: "npm" | "pnpm" | "yarn";
+  packageManager?: PackageManager;
   path?: string;
   to?: string;
   yes?: boolean;
@@ -64,7 +65,7 @@ interface PrimitiveUpdateOptions {
   diff?: true | string;
   dryRun?: boolean;
   framework?: StarwindFramework;
-  packageManager?: "npm" | "pnpm" | "yarn";
+  packageManager?: PackageManager;
   view?: true | string;
   yes?: boolean;
 }
@@ -87,7 +88,7 @@ type PrivatePrimitiveListOptions = Omit<PrimitiveListOptions, "framework"> & {
 };
 
 type PrimitiveCommandOptions = {
-  packageManager?: "npm" | "pnpm" | "yarn";
+  packageManager?: PackageManager;
   yes?: boolean;
 };
 

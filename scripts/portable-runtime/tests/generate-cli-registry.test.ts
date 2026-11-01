@@ -273,7 +273,7 @@ describe("generateCliRegistry", () => {
   it.each(["^1.4.0", "workspace:*", undefined])(
     "rejects a non-exact Runtime dependency on an exact adapter: %s",
     async (runtimeDependency) => {
-      const repoRoot = path.join(tempRoot, `invalid-runtime-pin-${String(runtimeDependency)}`);
+      const repoRoot = path.join(tempRoot, "invalid-runtime-pin");
       for (const source of vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? []) {
         const packageJson = JSON.parse(await readFile(source, "utf8")) as {
           dependencies?: Record<string, string>;

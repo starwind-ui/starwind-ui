@@ -11,6 +11,7 @@ import {
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import type { PackageManager } from "@/utils/package-manager.js";
 import {
   parseRegistrySource,
   type RegistrySource,
@@ -36,7 +37,7 @@ interface UpdateOptions {
   dryRun?: boolean;
   framework?: StarwindFramework | "all";
   yes?: boolean;
-  packageManager?: "npm" | "pnpm" | "yarn";
+  packageManager?: PackageManager;
   registry?: string;
   view?: true | string;
 }

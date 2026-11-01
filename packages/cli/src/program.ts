@@ -74,6 +74,7 @@ export function createProgram(): Command {
         "npm",
         "pnpm",
         "yarn",
+        "bun",
       ]),
     )
     .action((components, options) => add(components, options));
@@ -162,6 +163,7 @@ export function createProgram(): Command {
         "npm",
         "pnpm",
         "yarn",
+        "bun",
       ]),
     )
     .action((components, options) => update(components, options));
@@ -175,6 +177,7 @@ export function createProgram(): Command {
         "npm",
         "pnpm",
         "yarn",
+        "bun",
       ]),
     )
     .action(migrate);
@@ -204,6 +207,7 @@ export function createProgram(): Command {
         "npm",
         "pnpm",
         "yarn",
+        "bun",
       ]),
     )
     .action((primitives, options) => primitivesAdd(primitives, options));
@@ -229,6 +233,7 @@ export function createProgram(): Command {
         "npm",
         "pnpm",
         "yarn",
+        "bun",
       ]),
     )
     .action((primitives, options) => primitivesUpdate(primitives, options));
@@ -272,6 +277,7 @@ export function createProgram(): Command {
         "npm",
         "pnpm",
         "yarn",
+        "bun",
       ]),
     )
     .option("-p, --pro", "Setup Starwind Pro (default)")
