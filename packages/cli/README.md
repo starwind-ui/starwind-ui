@@ -71,7 +71,8 @@ npx starwind@latest update button
 ```
 
 Some fixes update the installed packages and keep your component files as they are. Others replace
-component source, so review the diff for any edits you want to keep.
+component source, so review the diff for any edits you want to keep. If `@starwind-ui/runtime` is in
+your `package.json` and out of date, the CLI offers to update it.
 
 Use `npx starwind@latest` with any of these commands:
 

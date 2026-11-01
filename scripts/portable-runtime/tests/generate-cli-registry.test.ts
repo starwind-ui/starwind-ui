@@ -30,6 +30,7 @@ import {
   loadPackageRanges,
   loadPrimitiveVersionManifest,
   loadRegistryVersionManifest,
+  loadTargetPackageRanges,
   type PrimitiveVendoringArtifacts,
   type RuntimeRegistry,
   writeRuntimeRegistry,
@@ -56,10 +57,10 @@ const runtimePackage = JSON.parse(
 ) as { version: string };
 const vuePackage = JSON.parse(
   await readFile(new URL("../../../packages/vue/package.json", import.meta.url), "utf8"),
-) as { version: string };
+) as { dependencies: Record<string, string>; version: string };
 const sveltePackage = JSON.parse(
   await readFile(new URL("../../../packages/svelte/package.json", import.meta.url), "utf8"),
-) as { version: string };
+) as { dependencies: Record<string, string>; version: string };
 const CURRENT_BETA_PACKAGE_RANGE = `^${runtimePackage.version}`;
 const CURRENT_VUE_PACKAGE_VERSION = vuePackage.version;
 const CURRENT_SVELTE_PACKAGE_VERSION = sveltePackage.version;
@@ -90,7 +91,9 @@ describe("generateCliRegistry", () => {
     expect(await buildPrimitiveVendoringArtifacts({ targetPolicy })).toEqual(firstPrimitives);
     const styledManifest = await loadRegistryVersionManifest();
     const primitiveManifest = await loadPrimitiveVersionManifest();
-    const ranges = await loadPackageRanges(process.cwd(), [svelteFrameworkAdapterTarget]);
+    const ranges = (
+      await loadTargetPackageRanges(process.cwd(), [svelteFrameworkAdapterTarget])
+    ).get("svelte")!;
     const styled = firstRegistry.components.filter((component) => component.targets?.svelte);
     expect(styled).toHaveLength(54);
     expect(styled.map(({ name }) => name).sort()).toEqual([...SVELTE_STYLED_ROOTS].sort());
@@ -143,7 +146,10 @@ describe("generateCliRegistry", () => {
       expect(artifact.version).toBe(primitiveManifest.primitives[artifact.component]);
       expect(artifact.sourceVersion).toBe(primitiveManifest.sourceVersions[artifact.component]);
       expect(artifact.packageRequirements).toEqual([
-        { name: "@starwind-ui/runtime", range: ranges.get("@starwind-ui/runtime") },
+        {
+          name: "@starwind-ui/runtime",
+          range: sveltePackage.dependencies["@starwind-ui/runtime"],
+        },
         { name: "svelte", range: ">=5.29.0 <6" },
       ]);
       assertSafeInstallPaths(artifact.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
@@ -223,6 +229,107 @@ describe("generateCliRegistry", () => {
     expect(packageRanges.get("@starwind-ui/vue")).toBe("0.2.0");
     expect(packageRanges.get("@starwind-ui/runtime")).toBe("^4.5.6");
     expect(packageRanges.get("vue")).toBe(">=3.5");
+  });
+
+  it("uses each exact adapter's Runtime pin for direct Runtime requirements", async () => {
+    const repoRoot = path.join(tempRoot, "adapter-runtime-pin");
+    const registrations = [
+      astroFrameworkAdapterTarget,
+      reactFrameworkAdapterTarget,
+      vueFrameworkAdapterTarget,
+      svelteFrameworkAdapterTarget,
+    ];
+    const sources = new Set(
+      registrations.flatMap(({ cliRegistry }) => cliRegistry.packageMetadataSources ?? []),
+    );
+    for (const source of sources) {
+      const packageJson = JSON.parse(await readFile(source, "utf8")) as {
+        dependencies?: Record<string, string>;
+        name: string;
+        version: string;
+      };
+      if (packageJson.name === "@starwind-ui/runtime") packageJson.version = "4.5.6";
+      if (packageJson.name === "@starwind-ui/vue") {
+        packageJson.dependencies = { "@starwind-ui/runtime": "4.5.5" };
+      }
+      if (packageJson.name === "@starwind-ui/svelte") {
+        packageJson.dependencies = { "@starwind-ui/runtime": "4.5.4" };
+      }
+      const destination = path.join(repoRoot, source);
+      await mkdir(path.dirname(destination), { recursive: true });
+      await writeFile(destination, `${JSON.stringify(packageJson, null, 2)}\n`);
+    }
+
+    const targetRanges = await loadTargetPackageRanges(repoRoot, registrations);
+    const runtimeRange = (target: string) =>
+      targetRanges.get(target as "astro")?.get("@starwind-ui/runtime");
+
+    expect(runtimeRange("astro")).toBe("^4.5.6");
+    expect(runtimeRange("react")).toBe("^4.5.6");
+    expect(runtimeRange("vue")).toBe("4.5.5");
+    expect(runtimeRange("svelte")).toBe("4.5.4");
+  });
+
+  it.each(["^1.4.0", "workspace:*", undefined])(
+    "rejects a non-exact Runtime dependency on an exact adapter: %s",
+    async (runtimeDependency) => {
+      const repoRoot = path.join(tempRoot, `invalid-runtime-pin-${String(runtimeDependency)}`);
+      for (const source of vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? []) {
+        const packageJson = JSON.parse(await readFile(source, "utf8")) as {
+          dependencies?: Record<string, string>;
+          name: string;
+        };
+        if (packageJson.name === "@starwind-ui/vue") {
+          packageJson.dependencies = runtimeDependency
+            ? { "@starwind-ui/runtime": runtimeDependency }
+            : {};
+        }
+        const destination = path.join(repoRoot, source);
+        await mkdir(path.dirname(destination), { recursive: true });
+        await writeFile(destination, `${JSON.stringify(packageJson, null, 2)}\n`);
+      }
+
+      await expect(loadTargetPackageRanges(repoRoot, [vueFrameworkAdapterTarget])).rejects.toThrow(
+        /@starwind-ui\/vue requires an exact @starwind-ui\/runtime dependency/,
+      );
+    },
+  );
+
+  it("generates exact Runtime requirements for Vue and Svelte targets only", async () => {
+    const [registry, primitiveArtifacts] = await Promise.all([
+      readFile("packages/cli/src/registry/bundled-registry.json", "utf8").then(JSON.parse),
+      readFile("packages/cli/src/registry/primitive-vendoring-artifacts.json", "utf8").then(
+        JSON.parse,
+      ),
+    ]);
+    const runtimeRanges = new Map<string, Set<string>>();
+    const addRuntimeRange = (
+      target: string,
+      requirements: { name: string; range: string }[] = [],
+    ) => {
+      for (const { name, range } of requirements) {
+        if (name !== "@starwind-ui/runtime") continue;
+        runtimeRanges.set(target, (runtimeRanges.get(target) ?? new Set()).add(range));
+      }
+    };
+
+    for (const component of registry.components) {
+      for (const [target, value] of Object.entries<{
+        packageRequirements: { name: string; range: string }[];
+      }>(component.targets ?? {})) {
+        addRuntimeRange(target, value.packageRequirements);
+      }
+    }
+    for (const artifact of primitiveArtifacts.primitives) {
+      addRuntimeRange(artifact.framework, artifact.packageRequirements);
+    }
+
+    expect(Object.fromEntries(runtimeRanges)).toEqual({
+      astro: new Set([CURRENT_BETA_PACKAGE_RANGE]),
+      react: new Set([CURRENT_BETA_PACKAGE_RANGE]),
+      svelte: new Set([sveltePackage.dependencies["@starwind-ui/runtime"]]),
+      vue: new Set([vuePackage.dependencies["@starwind-ui/runtime"]]),
+    });
   });
 
   it("keeps generated artifacts stable across release-only version changes", async () => {

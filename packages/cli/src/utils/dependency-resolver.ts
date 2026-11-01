@@ -42,6 +42,9 @@ export async function filterUninstalledDependencies(dependencies: string[]): Pro
         dependenciesToInstall.push(dep);
       } else if (isLocalDependencySpec(installedVersion)) {
         continue;
+      } else if (semver.valid(requiredVersion) && !semver.valid(installedVersion)) {
+        // A range such as ^1.4.0 can satisfy 1.4.0 today and still resolve a newer version later.
+        dependenciesToInstall.push(dep);
       } else if (requiredVersion && requiredVersion !== "*") {
         const cleanInstalledVersion =
           semver.clean(installedVersion) || installedVersion.replace(/^[\^~>=<= ]+/, "");

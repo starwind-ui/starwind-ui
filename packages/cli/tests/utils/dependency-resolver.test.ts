@@ -51,6 +51,36 @@ describe("dependency resolver", () => {
       expect(result).toEqual(["@starwind-ui/react@^2.0.0"]);
     });
 
+    it("replaces a range when the requirement is an exact version", async () => {
+      mockReadJsonFile.mockResolvedValue({
+        dependencies: {
+          "@starwind-ui/runtime": "^1.4.0",
+          "@starwind-ui/vue": "0.3.0",
+        },
+        devDependencies: {
+          "@starwind-ui/svelte": "~0.2.0",
+        },
+      });
+
+      const result = await filterUninstalledDependencies([
+        "@starwind-ui/runtime@1.4.0",
+        "@starwind-ui/vue@0.3.0",
+        "@starwind-ui/svelte@0.2.0",
+      ]);
+
+      expect(result).toEqual(["@starwind-ui/runtime@1.4.0", "@starwind-ui/svelte@0.2.0"]);
+    });
+
+    it("keeps an exact entry that satisfies a range requirement", async () => {
+      mockReadJsonFile.mockResolvedValue({
+        dependencies: { "@starwind-ui/runtime": "1.4.0" },
+      });
+
+      const result = await filterUninstalledDependencies(["@starwind-ui/runtime@^1.4.0"]);
+
+      expect(result).toEqual([]);
+    });
+
     it("treats local and workspace dependency specs as installed", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {

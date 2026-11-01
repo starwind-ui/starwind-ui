@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import * as p from "@clack/prompts";
 import { execa } from "execa";
 
-import { parsePackageSpec } from "./package-spec.js";
+import { isExactPackageSpec, parsePackageSpec } from "./package-spec.js";
 
 export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -37,11 +37,12 @@ export interface PackageManagerInfo {
 /**
  * Map of package managers to their lock files
  */
-const LOCK_FILES: Record<PackageManager, string> = {
-  npm: "package-lock.json",
-  yarn: "yarn.lock",
-  pnpm: "pnpm-lock.yaml",
-  bun: "bun.lockb",
+const LOCK_FILES: Record<PackageManager, string[]> = {
+  npm: ["package-lock.json"],
+  yarn: ["yarn.lock"],
+  pnpm: ["pnpm-lock.yaml"],
+  // Bun 1.2 and newer write bun.lock. Older projects can still have bun.lockb.
+  bun: ["bun.lock", "bun.lockb"],
 };
 
 /**
@@ -86,10 +87,10 @@ export function getCurrentPackageManager(): PackageManager | null {
       return "pnpm";
     } else if (userAgent.includes("yarn")) {
       return "yarn";
-    } else if (userAgent.includes("npm")) {
-      return "npm";
     } else if (userAgent.includes("bun")) {
       return "bun";
+    } else if (userAgent.includes("npm")) {
+      return "npm";
     }
   }
 
@@ -124,10 +125,7 @@ export function detectPackageManager(options: PackageManagerOptions = {}): Packa
 
   // Check for each lock file
   for (const pm of packageManagers) {
-    const lockFile = LOCK_FILES[pm];
-    const lockFilePath = resolve(cwd, lockFile);
-
-    if (existsSync(lockFilePath)) {
+    if (LOCK_FILES[pm].some((lockFile) => existsSync(resolve(cwd, lockFile)))) {
       return {
         name: pm,
         ...PACKAGE_MANAGER_COMMANDS[pm],
@@ -166,7 +164,9 @@ export async function installDependencies(
   force = false,
 ): Promise<void> {
   const packageManager = pm ?? detectPackageManager().name;
-  await execa(packageManager, buildInstallDependencyArgs(packages, packageManager, dev, force));
+  for (const args of buildInstallDependencyCommands(packages, packageManager, dev, force)) {
+    await execa(packageManager, args);
+  }
 }
 
 /**
@@ -190,6 +190,36 @@ export async function installDependenciesWithProgress(
   }
 }
 
+/**
+ * npm saves `name@1.2.3` as `^1.2.3` unless `--save-exact` is set, and that flag also freezes every
+ * range in the same command. npm therefore installs a mixed list in two commands. Ranges go first
+ * so an adapter finds its framework peer. pnpm, Yarn, and Bun already save each spec as written.
+ */
+export function buildInstallDependencyCommands(
+  packages: string[],
+  pm: PackageManager,
+  dev = false,
+  force = false,
+): string[][] {
+  const exactPackages = packages.filter((packageSpec) =>
+    isExactPackageSpec(parsePackageSpec(packageSpec, "package dependency")),
+  );
+  const otherPackages = packages.filter((packageSpec) => !exactPackages.includes(packageSpec));
+
+  if (pm !== "npm" || exactPackages.length === 0 || otherPackages.length === 0) {
+    return [buildInstallDependencyArgs(packages, pm, dev, force)];
+  }
+
+  return [
+    buildInstallDependencyArgs(otherPackages, pm, dev, force),
+    buildInstallDependencyArgs(exactPackages, pm, dev, force),
+  ];
+}
+
+/**
+ * Builds one command. Use buildInstallDependencyCommands for a list that can mix exact versions
+ * with ranges, because npm cannot save both correctly in one command.
+ */
 export function buildInstallDependencyArgs(
   packages: string[],
   pm: PackageManager,
@@ -202,6 +232,9 @@ export function buildInstallDependencyArgs(
   const managerOptions = [
     dev ? (pm === "npm" || pm === "pnpm" ? "-D" : "--dev") : undefined,
     force ? "--force" : undefined,
+    pm === "npm" && validatedPackages.length > 0 && validatedPackages.every(isExactPackageSpec)
+      ? "--save-exact"
+      : undefined,
   ].filter((option): option is string => option !== undefined);
 
   return [pm === "npm" ? "install" : "add", ...managerOptions, "--", ...validatedPackages];

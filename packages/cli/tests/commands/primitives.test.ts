@@ -5,6 +5,7 @@ import * as config from "../../src/utils/config.js";
 import * as fs from "../../src/utils/fs.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as primitiveComponent from "../../src/utils/primitive-component.js";
+import * as runtimePackage from "../../src/utils/runtime-package.js";
 import { primitivesAdd, primitivesList, primitivesUpdate } from "../../src/commands/primitives.js";
 import * as initModule from "../../src/commands/init.js";
 import * as migrateModule from "../../src/commands/migrate.js";
@@ -13,6 +14,7 @@ vi.mock("@clack/prompts");
 vi.mock("../../src/utils/config.js");
 vi.mock("../../src/utils/fs.js");
 vi.mock("../../src/utils/primitive-component.js");
+vi.mock("../../src/utils/runtime-package.js");
 vi.mock("../../src/utils/sleep.js", () => ({
   sleep: vi.fn().mockResolvedValue(undefined),
 }));
@@ -78,6 +80,9 @@ describe("primitives command", () => {
     });
     consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
+    vi.mocked(runtimePackage.addRuntimePackageUpdatesToPreview).mockImplementation(
+      async (plan) => plan,
+    );
     mockFileExists.mockResolvedValue(true);
     mockGetConfigState.mockResolvedValue({ status: "current", config: runtimeConfig() });
     mockGetPrimitiveComponents.mockReturnValue([
@@ -539,6 +544,50 @@ describe("primitives command", () => {
     expect(mockLog.success).toHaveBeenCalledWith(
       expect.stringContaining("button (0.1.0 -> 0.2.0)"),
     );
+  });
+
+  describe("direct Runtime package", () => {
+    beforeEach(() => {
+      mockGetConfigState.mockResolvedValue({
+        status: "current",
+        config: runtimeConfig({
+          primitives: [{ name: "button", version: "0.1.0", framework: "astro", source: "bundled" }],
+        }),
+      });
+    });
+
+    it("offers the update before primitive updates install Runtime", async () => {
+      await primitivesUpdate(["button"], { packageManager: "pnpm", yes: true });
+
+      const offer = vi.mocked(runtimePackage.offerRuntimePackageUpdates);
+      expect(offer).toHaveBeenCalledWith({
+        config: expect.objectContaining({ primitives: expect.any(Array) }),
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+      expect(offer.mock.invocationCallOrder[0]).toBeLessThan(
+        mockUpdatePrimitiveComponents.mock.invocationCallOrder[0]!,
+      );
+    });
+
+    it("exits with an error after an accepted install fails", async () => {
+      vi.mocked(runtimePackage.offerRuntimePackageUpdates).mockResolvedValueOnce("failed");
+
+      await expect(primitivesUpdate(["button"], { yes: true })).rejects.toThrow(
+        "process.exit called",
+      );
+
+      expect(mockUpdatePrimitiveComponents).toHaveBeenCalled();
+      expect(mockExit).toHaveBeenCalledWith(1);
+    });
+
+    it("skips the offer when a styled component comes from a custom registry", async () => {
+      vi.mocked(runtimePackage.usesCustomStyledRegistry).mockReturnValueOnce(true);
+
+      await primitivesUpdate(["button"], { yes: true });
+
+      expect(runtimePackage.offerRuntimePackageUpdates).not.toHaveBeenCalled();
+    });
   });
 
   it("classifies mixed Primitive deliveries and uses generic success copy", async () => {

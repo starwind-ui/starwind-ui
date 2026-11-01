@@ -7,11 +7,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildInstallDependencyArgs,
+  buildInstallDependencyCommands,
   detectPackageManager,
   installDependencies,
   installDependenciesWithProgress,
 } from "../../src/utils/package-manager.js";
-import { parsePackageSpec } from "../../src/utils/package-spec.js";
+import { isExactPackageSpec, parsePackageSpec } from "../../src/utils/package-spec.js";
 
 const mockSpinner = vi.hoisted(() => ({
   message: vi.fn(),
@@ -94,6 +95,80 @@ describe("package manager dependency arguments", () => {
     expect(buildInstallDependencyArgs(["react"], "npm")).toEqual(["install", "--", "react"]);
   });
 
+  it("saves an exact npm requirement exactly", () => {
+    expect(buildInstallDependencyArgs(["@starwind-ui/vue@0.3.0"], "npm")).toEqual([
+      "install",
+      "--save-exact",
+      "--",
+      "@starwind-ui/vue@0.3.0",
+    ]);
+  });
+
+  it.each(["pnpm", "yarn", "bun"] as const)(
+    "leaves %s without an exact flag because it keeps the written version",
+    (packageManager) => {
+      expect(buildInstallDependencyArgs(["@starwind-ui/vue@0.3.0"], packageManager)).toEqual([
+        "add",
+        "--",
+        "@starwind-ui/vue@0.3.0",
+      ]);
+    },
+  );
+
+  it("keeps ranges out of the npm exact command when a list mixes both", () => {
+    expect(
+      buildInstallDependencyCommands(
+        ["@starwind-ui/vue@0.3.0", "vue@>=3.5", "@starwind-ui/runtime@1.4.0", "zod"],
+        "npm",
+        true,
+        true,
+      ),
+    ).toEqual([
+      ["install", "-D", "--force", "--", "vue@>=3.5", "zod"],
+      [
+        "install",
+        "-D",
+        "--force",
+        "--save-exact",
+        "--",
+        "@starwind-ui/vue@0.3.0",
+        "@starwind-ui/runtime@1.4.0",
+      ],
+    ]);
+  });
+
+  it.each([
+    ["npm", "install", ["react@^18.0.0"]],
+    ["npm", "install", []],
+    ["pnpm", "add", ["@starwind-ui/vue@0.3.0", "vue@>=3.5"]],
+    ["yarn", "add", ["@starwind-ui/vue@0.3.0", "vue@>=3.5"]],
+    ["bun", "add", ["@starwind-ui/vue@0.3.0", "vue@>=3.5"]],
+  ] as const)("uses one %s command for %# specs that need no split", (pm, verb, packages) => {
+    expect(buildInstallDependencyCommands([...packages], pm)).toEqual([[verb, "--", ...packages]]);
+  });
+
+  it("runs npm range and exact commands in order", async () => {
+    await installDependencies(["@starwind-ui/vue@0.3.0", "vue@>=3.5"], "npm");
+
+    expect(mockExeca.mock.calls).toEqual([
+      ["npm", ["install", "--", "vue@>=3.5"]],
+      ["npm", ["install", "--save-exact", "--", "@starwind-ui/vue@0.3.0"]],
+    ]);
+  });
+
+  it.each([
+    ["@starwind-ui/vue@0.3.0", true],
+    ["react@1.0.0-beta.1", true],
+    ["@starwind-ui/vue", false],
+    ["react", false],
+    ["react@^18.0.0", false],
+    ["react@18.x", false],
+    ["react@>=18 <20", false],
+    ["react@next", false],
+  ])("classifies %s as exact: %s", (packageSpec, expected) => {
+    expect(isExactPackageSpec(parsePackageSpec(packageSpec))).toBe(expected);
+  });
+
   it("passes the separated arguments to execa", async () => {
     await installDependencies(["react@^18.0.0"], "pnpm", true, true);
 
@@ -166,6 +241,27 @@ describe("package manager detection", () => {
     vi.stubEnv("npm_config_user_agent", "npm/11.0.0 node/v24.0.0");
 
     expect(detectPackageManager({ cwd }).name).toBe("pnpm");
+
+    vi.unstubAllEnvs();
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  it.each(["bun.lock", "bun.lockb"])("detects a Bun project from %s", (lockFile) => {
+    const cwd = mkdtempSync(join(tmpdir(), "starwind-package-manager-bun-"));
+    writeFileSync(join(cwd, lockFile), "");
+    vi.stubEnv("npm_config_user_agent", "npm/11.0.0 node/v24.0.0");
+
+    expect(detectPackageManager({ cwd }).name).toBe("bun");
+
+    vi.unstubAllEnvs();
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  it("detects Bun from a user agent that also names npm", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "starwind-package-manager-bun-agent-"));
+    vi.stubEnv("npm_config_user_agent", "bun/1.4.4 npm/? node/v24.0.0 darwin arm64");
+
+    expect(detectPackageManager({ cwd }).name).toBe("bun");
 
     vi.unstubAllEnvs();
     rmSync(cwd, { recursive: true, force: true });

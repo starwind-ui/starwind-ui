@@ -1447,7 +1447,10 @@ describe("release package tooling", () => {
     for (const requirement of requirements) {
       expect(requirement.range).not.toContain("workspace:");
       expect(requirement.range).not.toBe("*");
-      if (STARWIND_RUNTIME_DEPENDENCIES.has(requirement.name)) {
+      if (requirement.name === "@starwind-ui/runtime") {
+        // Vue and Svelte targets use their adapter's exact Runtime pin.
+        expect([currentRuntimeRange, runtimePackage.version]).toContain(requirement.range);
+      } else if (STARWIND_RUNTIME_DEPENDENCIES.has(requirement.name)) {
         expect(requirement.range).toBe(currentRuntimeRange);
       }
     }

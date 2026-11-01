@@ -431,7 +431,7 @@ describe.sequential("primitives add integration", () => {
       expect(artifact.version).toBe(primitiveVersions.primitives[artifact.component]);
       expect(artifact.packageRequirements).toEqual(
         expect.arrayContaining([
-          { name: "@starwind-ui/runtime", range: `^${runtimePackage.version}` },
+          { name: "@starwind-ui/runtime", range: runtimePackage.version },
           { name: "vue", range: ">=3.5" },
         ]),
       );
