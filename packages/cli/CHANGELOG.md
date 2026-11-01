@@ -1,5 +1,24 @@
 # starwind
 
+## 3.5.0
+
+### Minor Changes
+
+- You can now choose Bun with `--package-manager bun` or `-m bun` on `add`, `update`, `migrate`, `primitives add`, `primitives update`, and `setup`. These commands could already detect Bun from a project's lockfile, but they rejected it as an option.
+- `starwind update` and `starwind primitives update` now offer to update `@starwind-ui/runtime` if it's in your `package.json` and out of date. Before, it could stay on an older version than your other Starwind packages. Any other Starwind package that is out of date gets updated with it. Use `--yes` to skip the question, or `--dry-run` to see what would change. If you accept and the install fails, the command exits with an error.
+
+  You won't see this offer if `@starwind-ui/runtime` isn't in your `package.json`, or if your project uses a custom component registry. The CLI also leaves it alone if you set its version with `workspace:`, `catalog:`, a tag such as `latest`, or `*`.
+
+### Patch Changes
+
+- Updated the CLI to zod 4.6.7 to fix a high-severity security advisory. Before, validating a very large array could make zod run out of memory. You don't need to change anything.
+- Fixed the CLI installing packages with npm in Bun projects. It did not recognize `bun.lock`, the lockfile Bun creates by default since version 1.2. The CLI now uses Bun when it finds `bun.lock` or the older `bun.lockb`. In a project with no lockfile, it also now uses Bun when you run the CLI through Bun.
+- Fixed Vue and Svelte projects saving loose Starwind package versions. With npm, the CLI saved `@starwind-ui/vue@0.3.0` as `^0.3.0`. It now saves the exact version with every supported package manager. Ranges for other packages stay as ranges.
+
+  Vue and Svelte components and Primitives that need `@starwind-ui/runtime` now install the same exact Runtime version as their adapter. Before, a later Runtime release could install a second copy of Runtime beside the adapter's copy.
+
+  If your `package.json` lists one of these packages with a range such as `^1.4.0`, or with a version newer than the one the CLI expects, the next `add` or `update` command that needs the package replaces it with the exact version.
+
 ## 3.4.1
 
 ### Patch Changes
