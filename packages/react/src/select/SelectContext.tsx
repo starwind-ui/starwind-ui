@@ -6,9 +6,11 @@
 "use client";
 
 import * as React from "react";
+import type { ClosedItemProbe } from "../internal/use-close-presence";
 
 export type SelectContextValue = {
   disabled: boolean;
+  itemProbe?: ClosedItemProbe;
   open: boolean;
   readOnly: boolean;
   required: boolean;

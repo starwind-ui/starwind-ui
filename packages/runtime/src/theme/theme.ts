@@ -1,4 +1,4 @@
-import { ensureId, setBooleanAttribute } from "../internal/dom";
+import { ensureId, readDisabledAttribute, setBooleanAttribute } from "../internal/dom";
 import { shared } from "../internal/shared";
 
 type SelectRuntimeModule = typeof import("../components/select");
@@ -599,7 +599,7 @@ function isDisabledThemeControl(element: unknown): boolean {
 
   return (
     (element instanceof HTMLButtonElement && element.disabled) ||
-    element.hasAttribute("disabled") ||
+    readDisabledAttribute(element) ||
     element.hasAttribute("data-disabled") ||
     element.getAttribute("aria-disabled") === "true"
   );

@@ -14,11 +14,11 @@ const { asChild = false, ...rest } = Astro.props;
 
 {
   asChild ? (
-    <div data-sw-sidebar-menu-button data-as-child data-sidebar-state="expanded" {...rest}>
+    <div {...rest} data-sw-sidebar-menu-button data-as-child data-sidebar-state="expanded">
       <slot />
     </div>
   ) : (
-    <button type="button" data-sw-sidebar-menu-button data-sidebar-state="expanded" {...rest}>
+    <button {...rest} type="button" data-sw-sidebar-menu-button data-sidebar-state="expanded">
       <slot />
     </button>
   )

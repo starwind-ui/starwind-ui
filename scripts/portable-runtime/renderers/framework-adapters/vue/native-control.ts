@@ -22,10 +22,11 @@ type VueNativeControlRenderOptions = {
   consumerProps?: Record<string, unknown>;
   defaultedProps?: Record<string, unknown>;
   defaultNativeButtonType?: string;
+  disabled?: boolean;
   protectedProps?: Record<string, unknown>;
 };
 
-export function useVueNativeControl(name: string, requestRefresh?: () => void, allowComponentRoot = false) {
+export function useVueNativeControl(name: string, requestRefresh?: () => void) {
   const element = ref<HTMLElement | null>(null);
 
   watch(element, () => requestRefresh?.(), { flush: "post" });
@@ -36,13 +37,14 @@ export function useVueNativeControl(name: string, requestRefresh?: () => void, a
     consumerProps = {},
     defaultedProps = {},
     defaultNativeButtonType,
+    disabled = false,
     protectedProps = {},
   }: VueNativeControlRenderOptions): VNode {
     const child = children[0];
     if (children.length !== 1 || !isVNode(child) || (
-      typeof child.type !== "string" && !(allowComponentRoot && (typeof child.type === "object" || typeof child.type === "function"))
+      typeof child.type !== "string" && typeof child.type !== "object" && typeof child.type !== "function"
     )) {
-      throw new TypeError(\`\${name} asChild requires exactly one \${allowComponentRoot ? "native element or component" : "native element"} VNode.\`);
+      throw new TypeError(\`\${name} asChild requires exactly one native element or component VNode.\`);
     }
     const nativeButtonDefault =
       defaultNativeButtonType !== undefined &&
@@ -51,13 +53,18 @@ export function useVueNativeControl(name: string, requestRefresh?: () => void, a
       consumerProps.type === undefined
         ? { type: defaultNativeButtonType }
         : {};
-    return cloneVNode(
-      child,
-      mergeProps(defaultedProps, nativeButtonDefault, consumerProps, protectedProps, {
-        ref: setElement,
-      }),
-      true,
-    );
+    // A native disabled attribute only has meaning on a button or a component that forwards it.
+    const nativeDisabled =
+      disabled && (typeof child.type !== "string" || child.type === "button") ? { disabled: true } : {};
+    const mergedProps = mergeProps(defaultedProps, nativeButtonDefault, consumerProps, protectedProps, nativeDisabled, {
+      ref: setElement,
+    });
+    // A child that declares its own part keeps it, as in React, unless the part protects its slot.
+    const childSlot = child.props?.["data-slot"];
+    if (childSlot !== undefined && protectedProps["data-slot"] === undefined) {
+      mergedProps["data-slot"] = childSlot;
+    }
+    return cloneVNode(child, mergedProps, true);
   }
 
   function setElement(value: Element | ComponentPublicInstance | null): void {

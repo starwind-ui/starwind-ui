@@ -112,244 +112,174 @@
 
 ### Patch Changes
 
-- Deliver Runtime-backed group naming and Tabs indicator geometry corrections through the first-party adapters and bundled registry. The Vue package remains on its beta release channel.
-- Remove unused internal portal methods and retired CLI helpers. Keep public behavior and component source unchanged.
+- Select, Combobox, and Menu groups now get their name from their visible heading, so screen readers announce the group. The Tabs indicator now lines up with the selected tab when a parent element is scaled. Astro, React, and Vue get these fixes, and the CLI delivers them to installed components. The Vue package stays on its beta release channel.
+- Internal maintenance. Removed unused internal portal methods and old CLI helpers. Components work the same way, and the component files that the CLI installs do not change.
 
 ## 1.2.0
 
 ### Minor Changes
 
-- Use deterministic Portal bindings across framework adapters. Keep React wrappers under
-  framework-owned placement, retain Runtime movement for Astro, and use one Dialog-owned top-layer
-  host for nested floating content.
-- Add optional portable portal container, disabled, and placement props to Astro overlay adapters. Add the shared Runtime placement handshake so framework adapters can report when their public portal wrapper reaches its resolved target.
+- Portals now place popups in the same way every time, in every framework. React places its portal popups itself. In Astro, Starwind still moves popups into place on the page. Each Dialog now has one top layer for all of the popups inside it, such as menus and tooltips.
+- Astro overlay portals, such as `PopoverPortal`, now accept optional `container` and `disabled` props, and they show their placement in data attributes. `container` sets the element that holds the popup. `disabled` keeps the popup in place. Runtime also has a new shared step that each framework uses to tell when a portal has reached its target element.
 
 ### Patch Changes
 
-- Centralize internal owned-list discovery, mutation reconciliation, navigation, highlight, and typeahead behavior for Select, Combobox, and Menu maintenance. Public Runtime interfaces and component behavior stay unchanged.
-- Keep touch-opened Context Menu parents active while focus moves to a submenu trigger, so portaled submenus remain positioned against their trigger on mobile browsers.
-- Keep touch Select triggers and popup items inside the active focus boundary so trigger taps close an open popup and item taps commit their values on mobile browsers.
+- Internal maintenance of Select, Combobox, and Menu. They now share one code path to find their items, update when items change, move with the keyboard, highlight items, and jump to an item when you type. The public Runtime API and the behavior of these components do not change.
+- On mobile browsers, a Context Menu that you open by touch now stays open when you tap a submenu trigger. Submenus that render in a portal stay next to their trigger.
+- On mobile browsers, a tap on the Select button now closes an open Select list, and a tap on an option now selects it.
 
 ## 1.1.0
 
 ### Minor Changes
 
-- Add Menu-backed focus handoff for Menu, Dropdown, and Context Menu, including `focus-out` close details.
-- Fix Select Tab handoff and add public `focus-out` close details.
+- Menu, Dropdown, and Context Menu now close when keyboard focus leaves the menu. Tab closes the menu and moves focus to the next focusable element on the page. Shift+Tab closes it and moves focus back to the trigger. The close event gives the reason `focus-out`.
+- Fixed the Tab key in an open Select. Before, Tab did nothing and focus stayed in the list. Now Tab closes the Select and moves focus to the next focusable element. Shift+Tab closes it and moves focus to the Select button. The close event gives the reason `focus-out`.
 
 ### Patch Changes
 
-- Improve npm metadata and clarify package roles in the public READMEs.
-- Keep nested Collapsible triggers and panels scoped to their nearest Runtime root.
+- Improved the package details on npm. The READMEs now tell more clearly what each package does.
+- Fixed nested Collapsibles. Each trigger and panel now works only with its nearest Collapsible.
 
 ## 1.0.0
 
 ### Major Changes
 
-- Release the first stable Runtime adapter line for Astro and React.
+- First stable release of the Starwind Runtime packages for Astro and React.
 
 ### Minor Changes
 
-- Narrow Button Runtime to opted-in focusable-disabled native buttons, synchronize mutable disabled
-  state through generated Astro and React adapters, and refresh vendored Primitive artifacts and
-  documentation for the native-only boundary.
-- Replace additive Form validation timing with before- and after-submit policies, add the imperative
-  validation, visibility, reset, and external-error APIs, and refresh generated adapters and vendored
-  Primitive artifacts.
+- Button now adds its script only to a native `<button>` that sets `focusableWhenDisabled`. A plain button, enabled or disabled, uses only HTML. In Astro and React, a `focusableWhenDisabled` button can now change between enabled and disabled and keep focus. Button Runtime now supports native buttons only. The docs and the Primitive files that the CLI copies are updated to match.
+- Changed the Form validation timing options. `validationTiming` sets when fields check before the first submit, and `revalidationTiming` sets when they check after it. Form also has new methods to validate fields, show errors, reset validation, and set errors from outside the form, such as server errors. The Astro and React packages and the Primitive files that the CLI copies include these changes.
 
-  For the beta migration, both the previous `input` timing and the previous committed-only meaning of
-  `change` map to semantic `change`, which runs for every accepted value revision. Committed-only
-  validation timing is no longer available. Defaults remain validation on `submit`, revalidation on
-  `change`, and error visibility on `submit`; after the first submission attempt,
-  `revalidationTiming` replaces `validationTiming` instead of being additive.
+  To update from the beta: the old `input` timing and the old `change` timing both become `change`. The old `change` timing ran only after the user finished a change. The new `change` runs on every accepted change to the value. A timing that runs only after the user finishes a change is no longer available. The defaults stay the same: validation on `submit`, revalidation on `change`, and errors shown on `submit`. After the first submit, `revalidationTiming` replaces `validationTiming`. The two no longer add together.
 
-- Introduce the public Starwind Runtime architecture and its lockstep Astro and React Primitive adapter packages.
+- First public release of Starwind Runtime, with Astro and React Primitive packages that always release together with the same version.
 
-  This release moves interactive behavior into framework-agnostic Runtime controllers, adds generated first-party Primitive adapters for Astro and React, and hardens controller teardown, client-navigation cleanup, callback refs, Theme prepaint serialization, and large-collection highlighting.
+  Component behavior now lives in Runtime, which works with any framework. The Astro and React Primitive packages connect that behavior to each framework. This release also makes these areas more reliable: cleanup when a component is removed, cleanup after client-side navigation, callback refs, the Theme setting that applies before the first paint, and highlighting in large option lists.
 
-- Add the Runtime-backed Color Picker controller and generated Astro and React Primitive adapters,
-  including popup positioning, format controls, channel inputs, swatches, keyboard interaction, and
-  form integration. Preserve interaction-derived HSB saturation at zero brightness so captured area
-  dragging stays aligned at black and restores color when brightness rises, and keep Clear hidden and
-  disabled until the root explicitly allows empty values.
+- Added Color Picker to Runtime and to the Astro and React Primitive packages. It includes popup positioning, format controls, inputs for each color channel, swatches, keyboard support, and form support. When you drag the color area down to black, the picker keeps the saturation that you picked. The thumb stays under the pointer, and the color comes back when the brightness goes up. The Clear button stays hidden and disabled until you allow empty values on the root.
 
 ### Patch Changes
 
-- Make Accordion root value-change proposals synchronously cancelable before uncontrolled state commits.
-- Default Accordions to collapsible while preserving `collapsible={false}` as the required-open override.
-- Keep Avatar images eligible for native lazy loading while the Runtime conceals their loading and
-  error states, including Astro images rendered from imported assets.
-- Synchronize Checkbox Group state with native form resets across controlled, uncontrolled, external,
-  and dynamically reassociated form ownership while cleaning up reset listeners and observers.
-- Add installable styled Color Picker components to the Astro and React CLI registries, including
-  stable bottom/start Popover placement, fade-only exit motion, shared Input styling, thin channel
-  tracks, swatch-only trigger composition, and all required component dependencies.
-  Popover collision handling also keeps floating content from shifting across and covering its trigger.
-  When vertical space is constrained, the Color Picker uses Popover's measured available height and
-  scrolls its own content instead of overlapping the trigger or escaping the viewport.
-  Polish the generator-canonical Astro and React composition with endpoint-safe framed areas and
-  sliders, compact size-aware controls, an icon-only EyeDropper action, composite value swatches, and
-  footer separators and Clear actions that reflect actual Runtime eligibility.
-  Migrate legacy Color Picker installations to the Runtime-backed styled component and migrate their
-  Select dependency normally instead of retaining the obsolete compatibility bridge.
-- Distinguish accepted Radio ownership transitions from immediate commits, and keep controlled Radio
-  Group keyboard focus aligned when framework prop reconciliation completes or supersedes a proposal.
-- Prevent Styled Progress indicators from animating across incompatible determinate and indeterminate
-  geometries while preserving normal determinate value transitions and reduced-motion behavior.
-- Keep dialog-owned floating layers visible and interactive above native modal dialogs across Runtime, Astro, React, and CLI-installed consumers.
-- Present Dialog-family popups with coherent open visual state so Dialog and Sheet entry animations play completely for quick and held trigger releases.
-- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
-  hidden indicators.
-- Keep the styled Color Picker area usable in constrained viewports by preserving a minimum height,
-  choosing the best fitting Popover side before sizing, and scrolling content when neither side fits.
-  Expose the compatible Popover collision strategy through generated Astro and React Primitive
-  adapters, and continue the styled Color Picker registry version from its legacy release history.
-- Stage Dialog, Alert Dialog, and Sheet entry styles through native top-layer presentation so their opening animations remain complete under main-thread load.
-- Dismiss floating overlays when pointer interactions occur in unrelated composition-root space while
-  preserving interactions with nested portaled overlays. This corrects Color Picker Popover dismissal
-  in both Astro and React and applies the same explicit boundary behavior to other floating controls.
-- Keep nested Accordion roots independent by limiting Runtime item discovery, part rendering, and
-  delegated trigger interactions to the controller that owns their nearest Accordion root.
-- Keep ancestor submenus open while the pointer moves into a nested submenu portal.
-- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
-  React adapter.
-- Restore uncontrolled Slider values after native form reset while preserving accepted controlled
-  values and keeping Runtime state, rendered parts, and submitted form data synchronized.
-- Refresh Navigation Menu item and list ownership when its DOM collection changes.
-- Keep Navigation Menu positioners inside a connected explicit floating root that already owns the
-  portal, while preserving trigger-derived dialog ownership, nested dialog roots, and body fallback.
-- Preserve the pending starting-style release when an open element receives a repeated presence
-  refresh before the next animation frame.
-- Make Radio and Radio Group changes cancelable before state commitment, synchronize accepted state
-  with adapters, and preserve controlled and uncontrolled values through native form resets.
-- Keep Color Picker editing controls usable after clearing an optional value by retaining the last color as their editing baseline.
-- Restore a connected return-focus target when a Dialog-family Runtime controller is destroyed.
-- Normalize cancelable Runtime state proposals so callbacks and DOM events share one details object before accepted state commits. Update React Primitive adapters to preserve pre-commit cancellation, accepted-only synchronization, Combobox command cancellation, and Switch native form association. Synchronize the affected vendored React Primitive sources in the CLI.
-- Prevent unchanged Input OTP character renders from repeatedly reconnecting a Field-owned control.
-- Preserve uncontrolled Input OTP authored defaults when Field reconnects during native form reset.
-- Keep nested Popover ownership correct when framework lifecycle hooks create a child controller
-  before its parent, including hover coordination and parent controller recreation.
-- Keep Combobox and Navigation Menu explicit portal targets compatible with their active dialog owner.
-- Publish payloadless Slider state synchronization after silent Runtime settlement so generated
-  adapters can read back normalized uncontrolled values without duplicating form-reset behavior.
-- Restore the previous active Toast manager when a newer manager is destroyed so global toast calls
-  continue to route through a mounted provider.
-- Expose the generated React Toggle Group context and provide normalized group state to descendants.
+- You can now cancel an Accordion value change from its change event. When Accordion manages its own value, a canceled change does not open or close any item.
+- Accordions now let you close the open item by default. To keep one item open at all times, set `collapsible={false}`.
+- Avatar images now work with the browser's lazy loading. Starwind still hides an image while it loads and when it fails to load. This includes Astro images from imported assets.
+- Checkbox Group now goes back to its starting selection when its form resets. This works when your app controls the value and when the group manages it. It also works when the form is outside the group, and when the group moves to another form. Starwind removes its reset listeners when the group is removed.
+- You can now install the styled Color Picker for Astro and React with the CLI, together with all of the components that it needs. Its Popover opens below the trigger, aligned to the start, and it only fades when it closes. Its inputs use the same style as Input. It has thin channel tracks and a trigger that shows only a swatch.
+
+  When a Popover shifts to stay on screen, it no longer moves over its trigger. When there is little vertical space, the Color Picker uses the height that Popover measures and scrolls its own content. It does not cover the trigger or go off screen.
+
+  The Astro and React Color Picker also look better. The color area and sliders have frames, and their thumbs stay fully visible at the ends. The controls are compact and follow the size. The EyeDropper button shows only an icon. Value swatches draw the color and the checkerboard as one background. The footer has dividers, and the Clear button shows only when Clear is allowed.
+
+  The CLI moves older Color Picker installs to the new styled Color Picker, which uses Runtime. It updates their Select dependency in the normal way, and it no longer keeps the old compatibility layer.
+
+- Fixed keyboard focus in a Radio Group that your app controls. When the user presses an arrow key, focus now follows the value that your app sets. If your app keeps the old value or sets another one, focus does not stay on the radio that the user tried to select.
+- Styled Progress no longer animates when it changes between a set value and the indeterminate (loading) state. Normal value changes still animate, and reduced-motion settings still apply.
+- Popups inside a native modal Dialog, such as menus and tooltips, now show above the Dialog and respond to clicks. This applies to Runtime, Astro, React, and components that you install with the CLI.
+- Dialog and Sheet now play their full opening animation, both after a quick click and when you hold the trigger down.
+- Fixed the React Checkbox indicator in the Primitive files that the CLI copies into your project. The indicator now renders when the checkbox is checked or when you keep it mounted. It does not render when it is inactive or hidden.
+- The styled Color Picker area now stays usable on small screens. It keeps a minimum height. Its Popover opens on the side with the most space, and the content scrolls when neither side has enough space. The Astro and React Popover Primitives now let you use this collision setting. In the CLI, the styled Color Picker version continues from the versions of the older Color Picker.
+- Dialog, Alert Dialog, and Sheet now play their full opening animation, even when the page is busy.
+- A popup now closes when you click inside its component's root element but outside its trigger and popup. A click in a nested popup still keeps the parent open. This fixes Color Picker Popover closing in Astro and React. Other popups, such as Select, Menu, and Tooltip, now follow the same rule.
+- Fixed nested Accordions. Each Accordion now finds, renders, and opens only its own items. The items of an Accordion inside it are no longer affected.
+- Submenus now stay open while you move the pointer into a nested submenu.
+- Fixed React Select items with an empty label in the Primitive files that the CLI copies into your project. An item with an empty label now keeps that empty label. Its value is still sent with the form while the list is closed.
+- Slider now goes back to its starting value when its form resets, if the Slider manages its own value. A value that your app controls stays as your app set it. The thumb, the other parts on the page, and the value sent with the form all match the Slider value.
+- Navigation Menu now updates its items and lists when you add, remove, or move them on the page.
+- Fixed Navigation Menu popups when you set your own portal target. The popup now stays in the target element that you set while that element is on the page. Navigation Menus inside a Dialog, nested Dialogs, and the default placement in the page body still work as before.
+- Fixed an open element that could stay in its starting animation style. If the element was shown again before the next animation frame, its starting style was not removed. Now it is removed on the next frame.
+- You can now cancel a Radio or Radio Group change before it applies. The Astro and React packages get only the changes that apply. Values that your app controls and values that Radio manages now stay correct after a form reset.
+- After you clear a Color Picker that allows an empty value, its editing controls still work. They start from the last color.
+- When a Dialog, Alert Dialog, or Drawer is removed while it is open, focus now goes back to the element that opened it, if that element is still on the page.
+- A change that you can cancel now gives the same `details` object to the callback and to the DOM event. The callback runs first, then the DOM event. The component changes only if neither one canceled the change. In React, you can still cancel a change before it applies, and React gets only the changes that apply. You can cancel React Combobox commands, and React Switch keeps its connection to its native form. The CLI copies the fixed React Primitive files into your project.
+- Input OTP inside a Field no longer connects to the Field again each time a character renders with no change.
+- Input OTP inside a Field now keeps the default value that you set after a form reset, if Input OTP manages its own value.
+- Fixed nested Popovers when the framework creates the inner Popover before the outer one. Hover still keeps the outer Popover open, and nested Popovers still work after the outer Popover is created again.
+- Combobox and Navigation Menu inside a Dialog now work with a portal target that you set. If that target is outside the open Dialog, the popup stays inside the Dialog.
+- Slider now sends a notice when Runtime changes its value without a user action, such as when it corrects a value or resets with its form. The framework packages then read the new value from Runtime. They no longer need their own copy of the form reset code.
+- Toast calls such as `toast()` now keep working when you remove a newer Toaster. The calls go back to the Toaster that is still on the page.
+- React Toggle Group now exports `ToggleGroupContext` and `useToggleGroupContext`. Components inside a Toggle Group can read the group's current state from this context.
 
 ## 0.1.0-beta.8
 
 ### Patch Changes
 
-- Normalize cancelable Runtime state proposals so callbacks and DOM events share one details object before accepted state commits. Update React Primitive adapters to preserve pre-commit cancellation, accepted-only synchronization, Combobox command cancellation, and Switch native form association. Synchronize the affected vendored React Primitive sources in the CLI.
+- A change that you can cancel now gives the same `details` object to the callback and to the DOM event. The callback runs first, then the DOM event. The component changes only if neither one canceled the change. In React, you can still cancel a change before it applies, and React gets only the changes that apply. You can cancel React Combobox commands, and React Switch keeps its connection to its native form. The CLI copies the fixed React Primitive files into your project.
 
 ## 0.1.0-beta.7
 
 ### Patch Changes
 
-- Refresh Navigation Menu item and list ownership when its DOM collection changes.
-- Keep Navigation Menu positioners inside a connected explicit floating root that already owns the
-  portal, while preserving trigger-derived dialog ownership, nested dialog roots, and body fallback.
-- Preserve the pending starting-style release when an open element receives a repeated presence
-  refresh before the next animation frame.
-- Preserve uncontrolled Input OTP authored defaults when Field reconnects during native form reset.
-- Keep Combobox and Navigation Menu explicit portal targets compatible with their active dialog owner.
-- Restore the previous active Toast manager when a newer manager is destroyed so global toast calls
-  continue to route through a mounted provider.
+- Navigation Menu now updates its items and lists when you add, remove, or move them on the page.
+- Fixed Navigation Menu popups when you set your own portal target. The popup now stays in the target element that you set while that element is on the page. Navigation Menus inside a Dialog, nested Dialogs, and the default placement in the page body still work as before.
+- Fixed an open element that could stay in its starting animation style. If the element was shown again before the next animation frame, its starting style was not removed. Now it is removed on the next frame.
+- Input OTP inside a Field now keeps the default value that you set after a form reset, if Input OTP manages its own value.
+- Combobox and Navigation Menu inside a Dialog now work with a portal target that you set. If that target is outside the open Dialog, the popup stays inside the Dialog.
+- Toast calls such as `toast()` now keep working when you remove a newer Toaster. The calls go back to the Toaster that is still on the page.
 
 ## 0.1.0-beta.6
 
 ### Patch Changes
 
-- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
-  hidden indicators.
-- Keep nested Accordion roots independent by limiting Runtime item discovery, part rendering, and
-  delegated trigger interactions to the controller that owns their nearest Accordion root.
-- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
-  React adapter.
-- Restore uncontrolled Slider values after native form reset while preserving accepted controlled
-  values and keeping Runtime state, rendered parts, and submitted form data synchronized.
-- Publish payloadless Slider state synchronization after silent Runtime settlement so generated
-  adapters can read back normalized uncontrolled values without duplicating form-reset behavior.
+- Fixed the React Checkbox indicator in the Primitive files that the CLI copies into your project. The indicator now renders when the checkbox is checked or when you keep it mounted. It does not render when it is inactive or hidden.
+- Fixed nested Accordions. Each Accordion now finds, renders, and opens only its own items. The items of an Accordion inside it are no longer affected.
+- Fixed React Select items with an empty label in the Primitive files that the CLI copies into your project. An item with an empty label now keeps that empty label. Its value is still sent with the form while the list is closed.
+- Slider now goes back to its starting value when its form resets, if the Slider manages its own value. A value that your app controls stays as your app set it. The thumb, the other parts on the page, and the value sent with the form all match the Slider value.
+- Slider now sends a notice when Runtime changes its value without a user action, such as when it corrects a value or resets with its form. The framework packages then read the new value from Runtime. They no longer need their own copy of the form reset code.
 
 ## 0.1.0-beta.5
 
 ### Patch Changes
 
-- Make Accordion root value-change proposals synchronously cancelable before uncontrolled state commits.
-- Synchronize Checkbox Group state with native form resets across controlled, uncontrolled, external,
-  and dynamically reassociated form ownership while cleaning up reset listeners and observers.
-- Distinguish accepted Radio ownership transitions from immediate commits, and keep controlled Radio
-  Group keyboard focus aligned when framework prop reconciliation completes or supersedes a proposal.
-- Make Radio and Radio Group changes cancelable before state commitment, synchronize accepted state
-  with adapters, and preserve controlled and uncontrolled values through native form resets.
-- Restore a connected return-focus target when a Dialog-family Runtime controller is destroyed.
-- Prevent unchanged Input OTP character renders from repeatedly reconnecting a Field-owned control.
-- Keep nested Popover ownership correct when framework lifecycle hooks create a child controller
-  before its parent, including hover coordination and parent controller recreation.
-- Expose the generated React Toggle Group context and provide normalized group state to descendants.
+- You can now cancel an Accordion value change from its change event. When Accordion manages its own value, a canceled change does not open or close any item.
+- Checkbox Group now goes back to its starting selection when its form resets. This works when your app controls the value and when the group manages it. It also works when the form is outside the group, and when the group moves to another form. Starwind removes its reset listeners when the group is removed.
+- Fixed keyboard focus in a Radio Group that your app controls. When the user presses an arrow key, focus now follows the value that your app sets. If your app keeps the old value or sets another one, focus does not stay on the radio that the user tried to select.
+- You can now cancel a Radio or Radio Group change before it applies. The Astro and React packages get only the changes that apply. Values that your app controls and values that Radio manages now stay correct after a form reset.
+- When a Dialog, Alert Dialog, or Drawer is removed while it is open, focus now goes back to the element that opened it, if that element is still on the page.
+- Input OTP inside a Field no longer connects to the Field again each time a character renders with no change.
+- Fixed nested Popovers when the framework creates the inner Popover before the outer one. Hover still keeps the outer Popover open, and nested Popovers still work after the outer Popover is created again.
+- React Toggle Group now exports `ToggleGroupContext` and `useToggleGroupContext`. Components inside a Toggle Group can read the group's current state from this context.
 
 ## 0.1.0-beta.4
 
 ### Minor Changes
 
-- Replace additive Form validation timing with before- and after-submit policies, add the imperative
-  validation, visibility, reset, and external-error APIs, and refresh generated adapters and vendored
-  Primitive artifacts.
+- Changed the Form validation timing options. `validationTiming` sets when fields check before the first submit, and `revalidationTiming` sets when they check after it. Form also has new methods to validate fields, show errors, reset validation, and set errors from outside the form, such as server errors. The Astro and React packages and the Primitive files that the CLI copies include these changes.
 
-  For the beta migration, both the previous `input` timing and the previous committed-only meaning of
-  `change` map to semantic `change`, which runs for every accepted value revision. Committed-only
-  validation timing is no longer available. Defaults remain validation on `submit`, revalidation on
-  `change`, and error visibility on `submit`; after the first submission attempt,
-  `revalidationTiming` replaces `validationTiming` instead of being additive.
+  To update from the beta: the old `input` timing and the old `change` timing both become `change`. The old `change` timing ran only after the user finished a change. The new `change` runs on every accepted change to the value. A timing that runs only after the user finishes a change is no longer available. The defaults stay the same: validation on `submit`, revalidation on `change`, and errors shown on `submit`. After the first submit, `revalidationTiming` replaces `validationTiming`. The two no longer add together.
 
 ### Patch Changes
 
-- Keep Avatar images eligible for native lazy loading while the Runtime conceals their loading and
-  error states, including Astro images rendered from imported assets.
-- Keep dialog-owned floating layers visible and interactive above native modal dialogs across Runtime, Astro, React, and CLI-installed consumers.
-- Keep the styled Color Picker area usable in constrained viewports by preserving a minimum height,
-  choosing the best fitting Popover side before sizing, and scrolling content when neither side fits.
-  Expose the compatible Popover collision strategy through generated Astro and React Primitive
-  adapters, and continue the styled Color Picker registry version from its legacy release history.
-- Stage Dialog, Alert Dialog, and Sheet entry styles through native top-layer presentation so their opening animations remain complete under main-thread load.
-- Dismiss floating overlays when pointer interactions occur in unrelated composition-root space while
-  preserving interactions with nested portaled overlays. This corrects Color Picker Popover dismissal
-  in both Astro and React and applies the same explicit boundary behavior to other floating controls.
-- Keep ancestor submenus open while the pointer moves into a nested submenu portal.
+- Avatar images now work with the browser's lazy loading. Starwind still hides an image while it loads and when it fails to load. This includes Astro images from imported assets.
+- Popups inside a native modal Dialog, such as menus and tooltips, now show above the Dialog and respond to clicks. This applies to Runtime, Astro, React, and components that you install with the CLI.
+- The styled Color Picker area now stays usable on small screens. It keeps a minimum height. Its Popover opens on the side with the most space, and the content scrolls when neither side has enough space. The Astro and React Popover Primitives now let you use this collision setting. In the CLI, the styled Color Picker version continues from the versions of the older Color Picker.
+- Dialog, Alert Dialog, and Sheet now play their full opening animation, even when the page is busy.
+- A popup now closes when you click inside its component's root element but outside its trigger and popup. A click in a nested popup still keeps the parent open. This fixes Color Picker Popover closing in Astro and React. Other popups, such as Select, Menu, and Tooltip, now follow the same rule.
+- Submenus now stay open while you move the pointer into a nested submenu.
 
 ## 0.1.0-beta.3
 
 ### Patch Changes
 
-- Prevent Styled Progress indicators from animating across incompatible determinate and indeterminate
-  geometries while preserving normal determinate value transitions and reduced-motion behavior.
-- Keep Color Picker editing controls usable after clearing an optional value by retaining the last color as their editing baseline.
+- Styled Progress no longer animates when it changes between a set value and the indeterminate (loading) state. Normal value changes still animate, and reduced-motion settings still apply.
+- After you clear a Color Picker that allows an empty value, its editing controls still work. They start from the last color.
 
 ## 0.1.0-beta.2
 
 ### Minor Changes
 
-- Narrow Button Runtime to opted-in focusable-disabled native buttons, synchronize mutable disabled
-  state through generated Astro and React adapters, and refresh vendored Primitive artifacts and
-  documentation for the native-only boundary.
-- Add the Runtime-backed Color Picker controller and generated Astro and React Primitive adapters,
-  including popup positioning, format controls, channel inputs, swatches, keyboard interaction, and
-  form integration. Preserve interaction-derived HSB saturation at zero brightness so captured area
-  dragging stays aligned at black and restores color when brightness rises, and keep Clear hidden and
-  disabled until the root explicitly allows empty values.
+- Button now adds its script only to a native `<button>` that sets `focusableWhenDisabled`. A plain button, enabled or disabled, uses only HTML. In Astro and React, a `focusableWhenDisabled` button can now change between enabled and disabled and keep focus. Button Runtime now supports native buttons only. The docs and the Primitive files that the CLI copies are updated to match.
+- Added Color Picker to Runtime and to the Astro and React Primitive packages. It includes popup positioning, format controls, inputs for each color channel, swatches, keyboard support, and form support. When you drag the color area down to black, the picker keeps the saturation that you picked. The thumb stays under the pointer, and the color comes back when the brightness goes up. The Clear button stays hidden and disabled until you allow empty values on the root.
 
 ### Patch Changes
 
-- Default Accordions to collapsible while preserving `collapsible={false}` as the required-open override.
-- Add installable styled Color Picker components to the Astro and React CLI registries, including
-  stable bottom/start Popover placement, fade-only exit motion, shared Input styling, thin channel
-  tracks, swatch-only trigger composition, and all required component dependencies.
-  Popover collision handling also keeps floating content from shifting across and covering its trigger.
-  When vertical space is constrained, the Color Picker uses Popover's measured available height and
-  scrolls its own content instead of overlapping the trigger or escaping the viewport.
-  Polish the generator-canonical Astro and React composition with endpoint-safe framed areas and
-  sliders, compact size-aware controls, an icon-only EyeDropper action, composite value swatches, and
-  footer separators and Clear actions that reflect actual Runtime eligibility.
-  Migrate legacy Color Picker installations to the Runtime-backed styled component and migrate their
-  Select dependency normally instead of retaining the obsolete compatibility bridge.
-- Present Dialog-family popups with coherent open visual state so Dialog and Sheet entry animations play completely for quick and held trigger releases.
+- Accordions now let you close the open item by default. To keep one item open at all times, set `collapsible={false}`.
+- You can now install the styled Color Picker for Astro and React with the CLI, together with all of the components that it needs. Its Popover opens below the trigger, aligned to the start, and it only fades when it closes. Its inputs use the same style as Input. It has thin channel tracks and a trigger that shows only a swatch.
+
+  When a Popover shifts to stay on screen, it no longer moves over its trigger. When there is little vertical space, the Color Picker uses the height that Popover measures and scrolls its own content. It does not cover the trigger or go off screen.
+
+  The Astro and React Color Picker also look better. The color area and sliders have frames, and their thumbs stay fully visible at the ends. The controls are compact and follow the size. The EyeDropper button shows only an icon. Value swatches draw the color and the checkerboard as one background. The footer has dividers, and the Clear button shows only when Clear is allowed.
+
+  The CLI moves older Color Picker installs to the new styled Color Picker, which uses Runtime. It updates their Select dependency in the normal way, and it no longer keeps the old compatibility layer.
+
+- Dialog and Sheet now play their full opening animation, both after a quick click and when you hold the trigger down.

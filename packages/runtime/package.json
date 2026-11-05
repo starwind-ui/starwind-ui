@@ -203,6 +203,9 @@
     "test:run": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:browser": "vitest run --project browser",
+    "test:browser:webkit": "vitest run --project webkit",
+    "test:browser:dist": "vitest run --config vitest.dist.config.ts",
+    "test:browser:mangled": "vitest run --config vitest.mangled.config.ts",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,md,json}\"",
     "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,md,json}\" --cache"

@@ -127,7 +127,7 @@ const props = withDefaults(defineProps<{ modelValue?: ${p.value.type}; ${p.defau
 const emit = defineEmits<{ "update:modelValue": [value: ${event.valueType}]; ${event.name}: [value: ${event.valueType}, detail: ${event.detailsType}] }>();
 const publicAttrs = useAttrs(); const element = ref<HTMLElement | null>(null); const mounted = ref(false); const initialDefaultValue = ${initial.defaultSeed}; const uncontrolledValue = ref<${event.valueType}>(${initial.acceptedSeed}); const value = computed(() => ${initial.rendered}); const orientation = computed(() => props.${p.orientation.name});
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined; let generation = 0; let acceptedDetail: ${event.detailsType} | undefined; let unsubscribeValueChange: (() => void) | undefined;
-provide(${facts.displayName}RootContext, { element, mounted, orientation, value }); defineExpose({ element, getValue: () => instance?.${facts.valueControl.state.getter}(), setValue: (next: ${event.valueType}) => instance?.${facts.valueControl.controlledResync.setter}(next) });
+provide(${facts.displayName}RootContext, { element, mounted, orientation, value }); defineExpose({ element });
 async function resyncControlled(detail: ${event.detailsType}) { ${navigationMenuFragments("vue", facts).commitRequest} }
 function syncUncontrolledFromRuntime() { if (props.modelValue !== undefined || !instance) return; const current = instance.${facts.valueControl.state.getter}(); if (!Object.is(uncontrolledValue.value, current)) uncontrolledValue.value = current; }
 function destroyOwnedInstance() { const owned = instance; if (!owned) return; ${navigationMenuFragments("vue", facts).cleanup} }

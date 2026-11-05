@@ -134,14 +134,7 @@ provide(ComboboxContext, {
   required,
   value: renderedValue,
 });
-defineExpose({
-  element: rootRef,
-  close: () => instance?.close(),
-  open: () => {
-    if (!props.disabled) instance?.open();
-  },
-  updatePosition: () => instance?.updatePosition(),
-});
+defineExpose({ element: rootRef });
 
 function unbindReset(): void {
   if (resetTimer !== undefined) window.clearTimeout(resetTimer);
@@ -222,11 +215,6 @@ function setupRuntime(): void {
     },
     onInputValueChange: (next, detail) => {
       emit("inputValueChange", next, detail);
-      if (detail.event?.type === "input")
-        queueMicrotask(() => {
-          if (!detail.isCanceled || instance !== created) return;
-          created.setInputValue(created.getInputValue(), { emit: false, filter: false });
-        });
     },
     onOpenChange: (next, detail) => {
       emit("openChange", next, detail);
@@ -241,17 +229,11 @@ function setupRuntime(): void {
   unsubscribeAccepted.push(
     created.subscribe("valueChange", (detail) => {
       if (instance !== created) return;
-      const nextText = created.getInputValue();
 
       if (props.inputValue === undefined) {
-        const nextInput = detail.value === null ? "" : (nextText ?? created.getInputValue());
-        if (created.getInputValue() !== nextInput)
-          created.setInputValue(nextInput, { emit: false, filter: false });
-        if (props.inputValue === undefined) {
-          uncontrolledInputValue.value = nextInput;
-        }
-        emit("update:inputValue", nextInput);
+        uncontrolledInputValue.value = created.getInputValue();
       }
+
       if (props.modelValue === undefined) {
         uncontrolledValue.value = detail.value;
       }

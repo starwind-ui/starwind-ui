@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-input-otp-separator aria-hidden="true" role="separator" {...rest}>
+<div {...rest} data-sw-input-otp-separator aria-hidden="true" role="separator">
   <slot />
 </div>

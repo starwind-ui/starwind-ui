@@ -4,6 +4,7 @@
   import { cx } from "tailwind-variants";
   import { colorPicker, colorPickerLabel, colorPickerControl, colorPickerTrigger, colorPickerContent, colorPickerInput, colorPickerValueInputLayout, colorPickerArea, colorPickerAreaThumb, colorPickerSliders, colorPickerSliderActionRow, colorPickerValueFormatRow, colorPickerSeparator, colorPickerChannelSlider, colorPickerChannelSliderThumb, colorPickerChannelInputLayout, colorPickerSwatch, colorPickerSwatchGroup, colorPickerValueSwatch, colorPickerFormatSelectTrigger, colorPickerAction, colorPickerHiddenInput, colorPickerChannelInput, colorPickerValueInput, colorPickerNativeFormatSelectWrapper, colorPickerNativeFormatSelect, colorPickerNativeFormatSelectIcon } from "./variants.js";
   import { ColorPickerRoot } from "@starwind-ui/svelte/color-picker";
+  import { untrack } from "svelte";
   import { Popover } from "../popover/index.js";
   import { ColorPickerLabel } from "@starwind-ui/svelte/color-picker";
   import { default as ColorPickerDefaultEditor } from "./ColorPickerDefaultEditor.svelte";
@@ -57,10 +58,21 @@
     "class": className,
     "size": size = "md",
     "children": children,
+    "value": commandValue,
+    "open": commandOpen,
+    "format": commandFormat,
     ...rest
   }: ColorPickerProps = $props();
 
-  let resolvedFormat = $derived(format ?? "hex");
+  const formatControlled = untrack(() => commandFormat) !== undefined;
+  const commandFormatInput = () => formatControlled ? commandFormat : format;
+  let uncontrolledFormat = $state(untrack(() => format ?? formats[0] ?? "hex"));
+  $effect.pre(() => {
+    const input = commandFormatInput();
+    if (input !== undefined) uncontrolledFormat = input;
+  });
+
+  let resolvedFormat = $derived(commandFormatInput() ?? uncontrolledFormat);
 
   let requestedFormats = $derived(Array.from(new Set(formats)));
 
@@ -76,7 +88,7 @@
   closeDelay={closeDelay}
   onOpenChange={onOpenChange}
   onCloseComplete={onCloseComplete}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
   <ColorPickerRoot
     class={colorPicker({ "size": size, "class": cx(className) })}
@@ -97,8 +109,8 @@
     data-size={size}
     data-floating-root={inline ? undefined : true}
     data-slot={"color-picker"}
-    bind:value={value}
-    bind:format={format}
+    bind:value={() => commandValue, (next) => { value = next; }}
+    bind:format={() => resolvedFormat, (next) => { if (next !== undefined && !formatControlled) uncontrolledFormat = next; format = next; }}
   >
     {#if inline}
       {#if children}{@render children()}{:else}{#if label != null}

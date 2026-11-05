@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-fieldset-legend {...rest}>
+<div {...rest} data-sw-fieldset-legend>
   <slot />
 </div>

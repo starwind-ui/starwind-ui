@@ -25,6 +25,7 @@ export function printVueNativeInputValueComponent(file: AdapterComponentFile): A
   const event = facts.events.valueChange;
   const value = facts.props.value.name;
 
+  const parentModel = "readParentModel()";
   const connection = nativeInputConnection(facts, {
     model: "modelValue.value",
     defaultValue: "initialDefaultValue",
@@ -32,7 +33,10 @@ export function printVueNativeInputValueComponent(file: AdapterComponentFile): A
     authority: "parent",
     transport: "runtime-notification",
     notify: (next, detail) => `emit("valueChange", ${next}, ${detail});`,
+    parentModel,
     publish: (next) => `modelValue.value = ${next};`,
+    afterPublish: (body) =>
+      `void nextTick(() => { if (${parentModel} !== undefined) { ${body} } });`,
     untrack: (body) => body,
   });
 
@@ -43,7 +47,7 @@ import {
   type ${facts.props.value.type},
   type ${event.detailsType},
 } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 import { observeFormDiscovery } from "../_internal/form-discovery";
 
 defineOptions({ inheritAttrs: false });
@@ -62,7 +66,8 @@ const emit = defineEmits<{
   valueChange: [value: ${event.valueType}, detail: ${event.detailsType}];
 }>();
 const attrs = useAttrs();
-const isControlled = modelValue.value !== undefined;
+// defineModel keeps a local copy when no parent passes a value. Only the prop is parent-owned.
+const readParentModel = () => (props as { modelValue?: ${facts.props.value.type} }).modelValue;
 const rootRef = ref<HTMLInputElement | null>(null);
 const initialDefaultValue = props.${defaultValue};
 const initialRenderedValue = modelValue.value ?? initialDefaultValue;
@@ -76,9 +81,9 @@ onMounted(() => {
 });
 
 watch(
-  modelValue,
+  readParentModel,
   (nextValue) => {
-    if (isControlled) connection?.synchronize(nextValue);
+    connection?.synchronize(nextValue);
   },
   { flush: "post" },
 );

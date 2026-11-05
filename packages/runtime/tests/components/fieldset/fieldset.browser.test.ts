@@ -566,7 +566,8 @@ async function waitForMacrotask(): Promise<void> {
 async function waitFor(assertion: () => void): Promise<void> {
   let lastError: unknown;
 
-  for (let attempt = 0; attempt < 100; attempt += 1) {
+  // The first Field that meets an unloaded control imports every sibling control through Vite.
+  for (let attempt = 0; attempt < 1000; attempt += 1) {
     try {
       assertion();
       return;

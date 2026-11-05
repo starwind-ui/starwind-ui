@@ -15,23 +15,23 @@ const { asChild = false, ...rest } = Astro.props;
 {
   asChild ? (
     <div
+      {...rest}
       data-sw-popover-trigger
       data-as-child
       aria-haspopup="dialog"
       aria-expanded="false"
       data-state="closed"
-      {...rest}
     >
       <slot />
     </div>
   ) : (
     <button
+      {...rest}
       type="button"
       data-sw-popover-trigger
       aria-haspopup="dialog"
       aria-expanded="false"
       data-state="closed"
-      {...rest}
     >
       <slot />
     </button>

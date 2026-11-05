@@ -519,7 +519,9 @@ export const menuRuntimeAdapterContract = {
     { part: "submenuRoot", public: true },
     { part: "submenuTrigger", public: true },
   ],
-  asChild: [{ part: "trigger", merges: ["aria", "className", "data", "ref"] }],
+  asChild: [
+    { part: "trigger", merges: ["aria", "className", "data", "ref"], childElement: "button" },
+  ],
   initialMarkup: [
     {
       part: "root",

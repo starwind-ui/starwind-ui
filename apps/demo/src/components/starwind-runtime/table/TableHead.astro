@@ -8,6 +8,6 @@ type Props = HTMLAttributes<"th">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<th class={tableHead({ class: className })} {...rest} data-slot="table-head">
+<th {...rest} class={tableHead({ class: className })} data-slot="table-head">
   <slot />
 </th>

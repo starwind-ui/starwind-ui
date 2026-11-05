@@ -3,6 +3,7 @@ import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
+  readDisabledAttribute,
   readNumberAttribute,
   resolveAsChildControl,
   setBooleanAttribute,
@@ -111,17 +112,7 @@ const PREVIEW_CARD_AVOID_COLLISIONS_ATTRIBUTE = "data-avoid-collisions";
 const instances = shared<WeakMap<HTMLElement, PreviewCardController>>("preview-card");
 
 export function refreshPreviewCardPortalSurface(root: HTMLElement): void {
-  const controller = instances.get(root);
-  if (!controller) return;
-  const nextElements = getPreviewCardElements(controller.root);
-  if (nextElements.popup === controller["elements"].popup) return;
-
-  controller["portalSurfaceAbortController"]?.abort();
-  controller["portalSurfaceAbortController"] = new AbortController();
-  Object.assign(controller["elements"], nextElements);
-  controller["setupAccessibility"]();
-  controller["bindPortalEvents"]();
-  controller["lifecycle"].refreshSurface(controller["elements"].popup);
+  instances.get(root)?.refreshPortalSurface();
 }
 
 export function createPreviewCard(
@@ -266,6 +257,17 @@ class PreviewCardController implements PreviewCardInstance {
     return () => {
       this.subscribers.delete(callback);
     };
+  }
+  refreshPortalSurface(): void {
+    const nextElements = getPreviewCardElements(this.root);
+    if (nextElements.popup === this.elements.popup) return;
+
+    this.portalSurfaceAbortController?.abort();
+    this.portalSurfaceAbortController = new AbortController();
+    Object.assign(this.elements, nextElements);
+    this.setupAccessibility();
+    this.bindPortalEvents();
+    this.lifecycle.refreshSurface(this.elements.popup);
   }
 
   destroy(): void {
@@ -710,7 +712,7 @@ function createOpenChangeDetails(
 
 function isDisabledTrigger(trigger: HTMLElement): boolean {
   return (
-    trigger.hasAttribute("disabled") ||
+    readDisabledAttribute(trigger) ||
     trigger.getAttribute("aria-disabled") === "true" ||
     trigger.hasAttribute("data-disabled")
   );

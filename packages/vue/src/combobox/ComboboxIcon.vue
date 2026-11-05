@@ -8,5 +8,7 @@ const element = ref<HTMLSpanElement | null>(null);
 defineExpose({ element });
 </script>
 <template>
-  <span ref="element" v-bind="$attrs" data-sw-combobox-icon data-sw-part="icon"><slot /></span>
+  <span ref="element" v-bind="$attrs" data-sw-combobox-icon data-sw-part="icon" aria-hidden="true"
+    ><slot
+  /></span>
 </template>

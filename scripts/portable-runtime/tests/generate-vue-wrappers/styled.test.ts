@@ -1425,8 +1425,11 @@ describe("generated Vue Styled wrappers", () => {
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain("handleValueCommitted");
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain("handleCloseComplete");
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain("defineExpose({ element });");
-    expect(firstTree["color-picker/ColorPicker.vue"]).toContain(':format="format"');
-    expect(firstTree["color-picker/ColorPicker.vue"]).not.toContain(':format="resolvedFormat"');
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain(':format="resolvedFormat"');
+    expect(firstTree["color-picker/ColorPicker.vue"]).not.toContain(':format="format"');
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain(
+      'const uncontrolledFormat = ref(format ?? formats[0] ?? "hex");',
+    );
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain(
       'import { Popover } from "../popover"',
     );
@@ -1795,7 +1798,9 @@ describe("generated Vue Styled wrappers", () => {
             }),
         }),
       ),
-    ).rejects.toThrow("SelectTrigger asChild requires exactly one native element VNode.");
+    ).rejects.toThrow(
+      "SelectTrigger asChild requires exactly one native element or component VNode.",
+    );
 
     await expect(
       renderToString(
@@ -1811,20 +1816,28 @@ describe("generated Vue Styled wrappers", () => {
             }),
         }),
       ),
-    ).rejects.toThrow("SelectTrigger asChild requires exactly one native element VNode.");
+    ).rejects.toThrow(
+      "SelectTrigger asChild requires exactly one native element or component VNode.",
+    );
 
-    const UnsupportedChild = defineComponent({ render: () => h("button", "Unsupported") });
-    await expect(
-      renderToString(
-        createSSRApp({
-          render: () =>
-            h(Select, null, {
-              default: () =>
-                h(SelectTrigger, { asChild: true }, { default: () => h(UnsupportedChild) }),
-            }),
-        }),
-      ),
-    ).rejects.toThrow("SelectTrigger asChild requires exactly one native element VNode.");
+    const ComponentChild = defineComponent({
+      inheritAttrs: false,
+      setup:
+        (_, { attrs }) =>
+        () =>
+          h("button", attrs, "Component child"),
+    });
+    const componentChildHtml = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(Select, null, {
+            default: () =>
+              h(SelectTrigger, { asChild: true }, { default: () => h(ComponentChild) }),
+          }),
+      }),
+    );
+    expect(componentChildHtml).toContain("Component child");
+    expect(componentChildHtml).toContain("data-sw-select-trigger");
   }, 120_000);
 
   it("mounts generated Select models and its asChild trigger through the real Runtime controller", async () => {

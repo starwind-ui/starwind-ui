@@ -28,10 +28,10 @@ describe("Astro packed host", () => {
     expect(selectHost("astro")).toBe("astro");
     expect(ASTRO_TOOLS).toMatchObject({
       astro: "7.1.3",
-      "@astrojs/svelte": "9.0.1",
+      "@astrojs/svelte": "9.1.2",
       svelte: "5.57.0",
-      vite: "8.1.3",
-      "@sveltejs/vite-plugin-svelte": "7.3.0",
+      vite: "8.3.4",
+      "@sveltejs/vite-plugin-svelte": "7.3.1",
     });
   });
   it.each(["integration:plugin", "integration:vite", "plugin:svelte/compiler", "astro:vite"])(

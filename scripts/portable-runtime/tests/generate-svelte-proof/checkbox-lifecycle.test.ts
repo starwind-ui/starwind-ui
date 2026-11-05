@@ -191,20 +191,20 @@ describe("Checkbox model commands and accepted publication", () => {
       initial: { checked: true, model: true, callbacks: [] },
     });
     expect(result.plainInteraction).toMatchObject({
-      checked: true,
+      checked: false,
       model: false,
-      formValue: "yes",
+      formValue: "no",
     });
     expect(result.laterUndefined).toMatchObject({ checked: true, model: "undefined" });
     expect(result.parentCommand).toMatchObject({ checked: false, model: false, formValue: "no" });
-    expect(result.frozenDefault).toMatchObject({ checked: true, model: false, formValue: "yes" });
+    expect(result.frozenDefault).toMatchObject({ checked: false, model: false, formValue: "no" });
     expect(result.undefinedInteraction).toMatchObject({
       checked: false,
       model: false,
       formValue: "no",
     });
     expect(result.recreated).toMatchObject({ checked: false, model: false });
-    expect(result.initialResetSeed).toMatchObject({ checked: true, model: true });
+    expect(result.initialResetSeed).toMatchObject({ checked: false, model: false });
     expect(result.functions.identity).toMatchObject({ checked: true, model: true, writes: [true] });
   }, 60_000);
 
@@ -306,23 +306,28 @@ describe("Checkbox model commands and accepted publication", () => {
     const result = await runModelCases(
       [
         { id: "seed", mode: "function", initial: true, defaultChecked: false },
+        { id: "runtime", mode: "function", defaultChecked: false },
         { id: "parent", mode: "function", initial: false, defaultChecked: false },
         { id: "removed", mode: "function", initial: true, defaultChecked: false },
       ],
       `
       cases.seed.setDefault(true); await settle();
       reset("seed"); await resetSettled();
+      click("runtime"); await settle();
+      cases.runtime.setDefault(true); await settle();
+      reset("runtime"); await resetSettled();
       cases.parent.setIndeterminate(true); await settle();
       cases.removed.hide(); flushSync(); await settle();
       return { states: Object.fromEntries(Object.keys(cases).map((id) => [id, state(id)])) };
     `,
     );
     expect(result.states.seed).toMatchObject({
-      checked: false,
-      model: false,
-      writes: [false],
+      checked: true,
+      model: true,
+      writes: [],
       callbacks: [],
     });
+    expect(result.states.runtime).toMatchObject({ checked: false, model: false });
     expect(result.states.parent).toMatchObject({
       checked: false,
       model: false,

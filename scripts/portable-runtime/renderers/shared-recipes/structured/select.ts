@@ -64,7 +64,7 @@ export function selectFragments(target: Target, plan: SelectPlan = selectPlan) {
     ${plan.constructorInputs.map((name) => `${name}: ${s.input(name)},`).join("\n")}
     ${plan.channels.map((c) => `${c.callback}: (next, detail) => { ${s.fw.untracked(s.callback(c))} },`).join("\n")}
     ${s.portal}
-    ${s.fw.modelAuthority === "parent-prop" ? plan.channels.map((c) => `...(${s.input(c.name)} !== undefined ? { ${c.name}: ${scalar(c, s.input(c.name))} } : {}),`).join("\n") : ""}
+    ${plan.channels.map((c) => `...(${s.fw.modelAuthority === "parent-prop" ? `${s.input(c.name)} !== undefined` : s.fw.controlled(c.name)} ? { ${c.name}: ${scalar(c, s.fw.modelAuthority === "parent-prop" ? s.input(c.name) : s.fw.readModel(c.name))} } : {}),`).join("\n")}
   })`.replace(/[ \t]+$/gm, "");
   // Initialization and parent commands update internal state; only accepted changes notify models.
   const accepted = (
@@ -72,8 +72,8 @@ export function selectFragments(target: Target, plan: SelectPlan = selectPlan) {
     value: string,
     item?: string,
     origin: "accepted" | "synchronization" = "accepted",
-  ) =>
-    [
+  ) => {
+    const body = [
       channel.name === "value" ? s.label(value, item) : "",
       s.fw.modelAuthority === "parent-prop"
         ? `if (${s.input(channel.name)} === undefined) { ${s.render(channel, value)} }`
@@ -82,6 +82,11 @@ export function selectFragments(target: Target, plan: SelectPlan = selectPlan) {
     ]
       .filter(Boolean)
       .join("\n");
+    // A parent-controlled binding writes the proposal once. Rendering follows the parent getter.
+    return s.fw.modelAuthority === "runtime-binding" && origin === "accepted"
+      ? `if (${s.fw.controlled(channel.name)}) { ${s.publish(channel, value)} } else { ${body} }`
+      : body;
+  };
   const subscriptions = plan.channels
     .map(
       (
@@ -92,7 +97,9 @@ export function selectFragments(target: Target, plan: SelectPlan = selectPlan) {
   });`,
     )
     .join("\n");
-  const restore = `owned.setValue(${s.input("value")} !== undefined ? ${s.input("value")} : ${s.accepted(plan.channels[1])}, { emit: false });`;
+  const modelValue =
+    s.fw.modelAuthority === "parent-prop" ? s.input("value") : s.fw.readModel("value");
+  const restore = `owned.setValue(${modelValue} !== undefined ? ${modelValue} : ${s.accepted(plan.channels[1])}, { emit: false });`;
   const connectionSteps = {
     create: `const owned = ${construction};`,
     own: `${s.owner} = owned;`,
@@ -144,7 +151,9 @@ export function selectResetDecision(target: Target): string {
   const input = s.input("value");
   // A writable binding is output as well as input. Its unchanged previous output is not a command.
   const authority =
-    s.fw.modelAuthority === "parent-prop" ? `${input} !== undefined ? ${input} : ` : "";
+    s.fw.modelAuthority === "parent-prop"
+      ? `${input} !== undefined ? ${input} : `
+      : `${s.fw.controlled("value")} ? (${s.fw.readModel("value")} !== undefined ? ${s.fw.readModel("value")} : before) : `;
   return `${authority}event.defaultPrevented || superseded ? before : initialResetValue`;
 }
 
@@ -169,7 +178,7 @@ export function selectResetSettlement(target: Target): string {
     ${s.fw.modelAuthority === "parent-prop" ? `if (${s.input("value")} === undefined) { ${render} }` : render}
     ${r.nativeControl ? `${r.nativeControl.needsRender} = true;` : ""}
     ${r.label("acceptedValue")}
-    ${s.fw.modelAuthority === "runtime-binding" ? `if (!event.defaultPrevented && !superseded) { ${s.publish(channel, "acceptedValue")} }` : ""}`;
+    ${s.fw.modelAuthority === "runtime-binding" ? `if (!event.defaultPrevented && !superseded && !${s.fw.controlled("value")}) { ${s.publish(channel, "acceptedValue")} }` : ""}`;
   return `${capture}
     window.clearTimeout(${r.timer});
     queueMicrotask(() => {
@@ -197,7 +206,7 @@ export function selectOptionObservers(target: Target): string {
           : `{ ${update.inputs.map((name) => `${name}: ${s.input(name)}`).join(", ")} }`;
       const restoreOpen =
         "acceptedOpen" in update
-          ? `const desired = ${s.input("disabled")} ? false : (${s.input("open")} ?? ${s.accepted(channel)});
+          ? `const desired = ${s.input("disabled")} ? false : (${s.fw.modelAuthority === "parent-prop" ? s.input("open") : s.fw.readModel("open")} ?? ${s.accepted(channel)});
       if (owned.getOpen() !== desired) owned.setOpen(desired, { emit: false });
       ${s.fw.modelAuthority === "parent-prop" ? `if (${s.input("open")} === undefined) { ${s.render(channel, "owned.getOpen()")} }` : s.render(channel, "owned.getOpen()")}`
           : "";

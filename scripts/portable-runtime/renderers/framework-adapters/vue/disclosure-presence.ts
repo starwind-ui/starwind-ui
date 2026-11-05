@@ -76,7 +76,7 @@ const AsChildTrigger = defineComponent({
       const children = slots.default?.() ?? [];
       const disabled = ${disclosureDisabled("disclosure?.disabled", "attrs.disabled", "children[0]?.props?.disabled")};
       const protectedProps = {
-        disabled,
+        disabled: disabled ? true : undefined,
         "data-disabled": disabled ? "" : undefined,
         "${facts.attrs.trigger}": "",
         "${facts.attrs.triggerExpanded}": "${collapsibleParts.trigger.expanded}",

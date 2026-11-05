@@ -14,6 +14,7 @@ const triggerStyle = ["-webkit-touch-callout: none", style].filter(Boolean).join
 ---
 
 <div
+  {...rest}
   data-sw-context-menu-trigger
   data-sw-menu-trigger
   aria-haspopup="menu"
@@ -23,7 +24,6 @@ const triggerStyle = ["-webkit-touch-callout: none", style].filter(Boolean).join
   data-state="closed"
   tabindex={disabled ? -1 : 0}
   style={triggerStyle}
-  {...rest}
 >
   <slot />
 </div>

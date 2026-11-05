@@ -42,8 +42,15 @@ export function lifecycle(
 ): string {
   const read = (name: string) => fw.readInput(name),
     render = (next: string) => fw.renderAccepted("value", next);
+  const model = fw.readModel("value");
+  const binding = fw.modelAuthority === "runtime-binding";
+  const controlled = fw.controlled("value");
   const publication = (next: string, accepted = false) =>
-    `${render(next)} ${accepted || fw.modelAuthority === "runtime-binding" ? fw.publishModel("value", next) : ""}`;
+    !binding
+      ? `${render(next)} ${accepted ? fw.publishModel("value", next) : ""}`
+      : accepted
+        ? `if(${controlled}){${fw.publishModel("value", next)}}else{${render(next)} ${fw.publishModel("value", next)}}`
+        : `${render(next)} if(!${controlled}){${fw.publishModel("value", next)}}`;
   const cleanup = {
     unsubscribe: "connection.unsubscribe?.();connection.unsubscribe=undefined;",
     "clear-owner": "connection.instance=undefined;",
@@ -52,10 +59,10 @@ export function lifecycle(
   return `function normalizeModel(next:TabsValue|undefined):TabsValue{return next??null;}
  function publish(owned:ReturnType<typeof createTabs>){if(connection.instance!==owned)return;const next=owned.getValue();${publication("next")}}
  function disconnect(){const owned=connection.instance;if(!owned)return;${tabsRecipe.cleanup.map((step) => cleanup[step]).join("\n")}}
- function connect(root:HTMLDivElement){disconnect();const desired=${read("value")}!==undefined?${read("value")}:initialDefault;
+ function connect(root:HTMLDivElement){disconnect();const desired=${model}!==undefined?${model}:initialDefault;
  const owned=createTabs(root,{defaultValue:desired,...(${fw.controlled("value")}?{value:desired}:{}),${tabsRecipe.constructorInputs.map((n) => `${n}:${read(n)}`).join(",")},syncKey:initialSyncKey,onValueChange:(next,detail)=>{${fw.untracked(fw.proposal("onValueChange", "next", "detail"))}}});connection.instance=owned;
- connection.unsubscribe=owned.subscribe('valueChange',detail=>{if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(publication("detail.value", true))}});if(${read("value")}!==undefined&&owned.getValue()!==desired)owned.setValue(desired??null,{emit:false,sync:false});publish(owned);}
- function applyParent(){const owned=connection.instance,next=${read("value")};if(!owned||next===undefined||owned.getValue()===next)return;owned.refresh();if(owned.getValue()!==next)owned.setValue(next,{emit:false,sync:${parentSync}});publish(owned);}
+ connection.unsubscribe=owned.subscribe('valueChange',detail=>{if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(publication("detail.value", true))}});if(${model}!==undefined&&owned.getValue()!==desired)owned.setValue(desired??null,{emit:false,sync:false});publish(owned);}
+ function applyParent(){const owned=connection.instance,next=${model};if(!owned||next===undefined||owned.getValue()===next)return;owned.refresh();if(owned.getValue()!==next)owned.setValue(next,{emit:false,sync:${parentSync}});publish(owned);}
  function refresh(){const owned=connection.instance;if(!owned)return;owned.refresh();publish(owned);}
  function serialize(next:TabsValue|undefined){return next===null?'null':next;}`;
 }

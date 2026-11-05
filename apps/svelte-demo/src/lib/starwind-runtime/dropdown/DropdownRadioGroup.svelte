@@ -14,6 +14,7 @@
     value = $bindable(),
     "onValueChange": onValueChange,
     "children": children,
+    "value": commandValue,
     ...rest
   }: DropdownRadioGroupProps = $props();
 </script>
@@ -24,7 +25,7 @@
   {...rest}
   data-slot={"dropdown-radio-group"}
   onValueChange={onValueChange}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   {@render children?.()}
 </MenuRadioGroup>

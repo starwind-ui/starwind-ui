@@ -36,6 +36,7 @@ const SelectPopup = React.forwardRef<HTMLDivElement, SelectPopupProps>(function 
   const closePresence = useClosePresence<HTMLDivElement>({
     keepMounted,
     open: select.open,
+    probe: select.itemProbe,
   });
   const composedRef = useComposedRefs(forwardedRef, closePresence.ref);
 

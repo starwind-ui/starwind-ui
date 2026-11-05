@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"main"> & {
 const { "data-slot": dataSlot = "sidebar-inset", class: className, ...rest } = Astro.props;
 ---
 
-<main class={sidebarInset({ class: className })} {...rest} data-slot={dataSlot}>
+<main {...rest} class={sidebarInset({ class: className })} data-slot={dataSlot}>
   <slot />
 </main>

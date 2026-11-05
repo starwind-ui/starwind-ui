@@ -11,4 +11,4 @@
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...rest} data-sw-menu-item="" data-sw-part="item" role="menuitem" tabindex="0" aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined} data-close-on-click={String(closeOnClick)}  {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-menu-item="" data-sw-part="item" role="menuitem" tabindex="0" aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined} data-close-on-click={closeOnClick ? undefined : "false"}  {@attach attachRef}>{@render children?.()}</div>

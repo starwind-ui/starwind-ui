@@ -13,11 +13,11 @@ const { delay, ...rest } = Astro.props;
 ---
 
 <span
+  {...rest}
   data-sw-avatar-fallback
   data-delay={delay}
   data-image-loading-status="idle"
   hidden={delay !== undefined}
-  {...rest}
 >
   <slot />
 </span>

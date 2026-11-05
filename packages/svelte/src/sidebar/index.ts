@@ -27,7 +27,7 @@ export default Sidebar;
 export { SidebarContext, useSidebarContext } from "./SidebarContext.js";
 export type { SidebarContextValue } from "./SidebarContext.js";
 export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
-export type { AnchorChildProps, SidebarMenuButtonChildPayload } from "./SidebarMenuButton.svelte";
+export type { SidebarMenuButtonChildPayload } from "./SidebarMenuButton.svelte";
 export type {
   SidebarMobileOpenChangeDetails,
   SidebarOpenChangeDetails,

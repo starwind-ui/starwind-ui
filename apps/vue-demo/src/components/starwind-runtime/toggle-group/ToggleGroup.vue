@@ -57,7 +57,7 @@ const {
   spacing = 2,
   defaultValue,
   disabled = false,
-  loopFocus,
+  loopFocus = undefined,
   multiple = false,
   orientation = "horizontal",
   style,

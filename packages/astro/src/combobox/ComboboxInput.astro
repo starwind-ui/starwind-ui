@@ -13,6 +13,7 @@ const { defaultValue, "aria-controls": ariaControls, ...rest } = Astro.props;
 ---
 
 <input
+  {...rest}
   data-sw-combobox-input
   role="combobox"
   aria-autocomplete="list"
@@ -20,5 +21,4 @@ const { defaultValue, "aria-controls": ariaControls, ...rest } = Astro.props;
   aria-expanded="false"
   autocomplete="off"
   value={defaultValue}
-  {...rest}
 />

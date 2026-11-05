@@ -10,6 +10,6 @@ import { getFieldRefresh } from "../form/FormFieldContext.js";
 const refresh = getFieldRefresh();
 const fieldAttachment = { [createAttachmentKey()]: () => { refresh?.(); return () => refresh?.(); } };
 type Props = FieldControlProps;
-let { value = $bindable(), ...rest }: Props = $props();
+let { value = $bindable(), value: commandValue, ...rest }: Props = $props();
 </script>
-<InputRoot {...rest} {...fieldAttachment} data-sw-field-control="" bind:value />
+<InputRoot {...rest} {...fieldAttachment} data-sw-field-control="" bind:value={() => commandValue, (next) => { value = next; }} />

@@ -283,22 +283,22 @@ const getStyledContractField = (
 };
 
 const auditedAsChildVisualOwnership = [
-  ["alert-dialog", "AlertDialogTrigger", "delegates-appearance", "wrapper"],
+  ["alert-dialog", "AlertDialogTrigger", "delegates-appearance", "primitive-override"],
   ["alert-dialog", "AlertDialogAction", "preserves-styled-identity", "wrapper"],
   ["alert-dialog", "AlertDialogCancel", "preserves-styled-identity", "wrapper"],
   ["breadcrumb", "BreadcrumbLink", "delegates-appearance", "wrapper"],
   ["collapsible", "CollapsibleTrigger", "delegates-appearance", "primitive-override"],
   ["combobox", "ComboboxClear", "preserves-styled-identity", "primitive-override"],
   ["combobox", "ComboboxTrigger", "preserves-styled-identity", "primitive-override"],
-  ["dialog", "DialogTrigger", "delegates-appearance", "wrapper"],
-  ["dialog", "DialogClose", "delegates-appearance", "wrapper"],
+  ["dialog", "DialogTrigger", "delegates-appearance", "primitive-override"],
+  ["dialog", "DialogClose", "delegates-appearance", "primitive-override"],
   ["dropdown", "DropdownTrigger", "delegates-appearance", "primitive-override"],
   ["hover-card", "HoverCardTrigger", "delegates-appearance", "primitive-override"],
   ["navigation-menu", "NavigationMenuTrigger", "delegates-appearance", "primitive-override"],
   ["popover", "PopoverTrigger", "delegates-appearance", "primitive-override"],
   ["select", "SelectTrigger", "preserves-styled-identity", "primitive-override"],
-  ["sheet", "SheetTrigger", "delegates-appearance", "wrapper"],
-  ["sheet", "SheetClose", "delegates-appearance", "wrapper"],
+  ["sheet", "SheetTrigger", "delegates-appearance", "primitive-override"],
+  ["sheet", "SheetClose", "delegates-appearance", "primitive-override"],
   ["sidebar", "SidebarGroupLabel", "preserves-styled-identity", "wrapper"],
   ["sidebar", "SidebarMenuButton", "preserves-styled-identity", "wrapper"],
   ["tooltip", "TooltipTrigger", "delegates-appearance", "primitive-override"],
@@ -3359,9 +3359,7 @@ describe("generateLayeredDocsMetadata", () => {
       expect(buttonPrimitiveSource).not.toContain(
         "This Primitive supports the Vue 3.5 public beta.",
       );
-      expect(buttonPrimitiveSource).toContain(
-        '<DocsTabsTrigger value="vue">Vue</DocsTabsTrigger>',
-      );
+      expect(buttonPrimitiveSource).toContain('<DocsTabsTrigger value="vue">Vue</DocsTabsTrigger>');
       const drawerPrimitiveSource = await readFile(
         path.join(docsRoot, "src/docs/data/docs/en/primitives/drawer.mdx"),
         "utf8",

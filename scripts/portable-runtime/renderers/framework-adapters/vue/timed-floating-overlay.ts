@@ -77,9 +77,13 @@ function printTrigger(facts: AdapterTimedFloatingOverlayFacts): string {
     : "";
   const openDelay = anchor ? requireFact(facts.attrs.triggerOpenDelay, "trigger open delay") : "";
   const nativeDisabled = facts.attrs.triggerNativeDisabled;
+  const fallback = facts.trigger.asChildFallsBackToDefaultElement;
+  const asChildCondition = fallback
+    ? `props.${facts.props.asChild.name} && hasVueAsChildTarget('${facts.exports.trigger}', slots.default?.() ?? [])`
+    : `props.${facts.props.asChild.name}`;
   return `<script setup lang="ts">
 import { defineComponent, ref, useAttrs, type VNode } from "vue";
-import { createVueAsChild } from "../_internal/as-child";
+import { createVueAsChild${fallback ? ", hasVueAsChildTarget" : ""} } from "../_internal/as-child";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{
@@ -106,7 +110,7 @@ function protectedProps() {
     "${facts.attrs.triggerDisabled}": props.${facts.props.disabled.name} ? "" : undefined,
     "${facts.attrs.triggerAriaDisabled}": props.${facts.props.disabled.name} ? "true" : undefined,
     "${facts.attrs.triggerState}": "${timedTriggerPolicy.state}",
-${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    ...(props.${facts.props.disabled.name} ? { href: undefined, tabindex: -1 } : {}),\n    onClick: handleClick,\n` : nativeDisabled ? `    "${nativeDisabled}": props.${facts.props.disabled.name},\n` : ""}    "data-sw-part": "${facts.parts.trigger.name}",
+${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    ...(props.${facts.props.disabled.name} ? { href: undefined, tabindex: -1 } : {}),\n    onClick: handleClick,\n` : nativeDisabled ? `    ...(props.${facts.props.disabled.name} ? { "${nativeDisabled}": true } : {}),\n` : ""}    "data-sw-part": "${facts.parts.trigger.name}",
   };
 }
 const AsChildTrigger = defineComponent({
@@ -125,7 +129,7 @@ const AsChildTrigger = defineComponent({
 </script>
 
 <template>
-  <AsChildTrigger v-if="props.${facts.props.asChild.name}" />
+  <AsChildTrigger v-if="${asChildCondition}" />
   <${facts.trigger.renderedElement}
     v-else
     :ref="setElement"

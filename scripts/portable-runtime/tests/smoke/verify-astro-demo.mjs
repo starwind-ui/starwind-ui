@@ -1,3 +1,4 @@
+import { verifyAstroPrimitiveConsumerAttributes } from "./astro/primitive-consumer-attributes.mjs";
 import { verifyAstroTimedOverlayReinit } from "./astro/timed-overlay-reinit.mjs";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
@@ -128,6 +129,7 @@ try {
   }
 
   await verifyAstroTimedOverlayReinit({ page, baseUrl });
+  await verifyAstroPrimitiveConsumerAttributes({ page, baseUrl });
   await page.goto(carouselClientRouterStartUrl, {
     waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",
   });

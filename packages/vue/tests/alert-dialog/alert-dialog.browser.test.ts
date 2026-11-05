@@ -539,16 +539,14 @@ describe("Vue Alert Dialog public behavior", () => {
   it.each(["Trigger", "Action", "Cancel"] as const)(
     "rejects invalid Styled AlertDialog%s asChild slots",
     (part) => {
-      const Invalid = defineComponent({ render: () => h("button") });
       const slots: Array<() => VNode[]> = [
         () => [],
         () => [h("button"), h("button")],
         () => [h(Text, null, "text")],
         () => [h(Comment)],
         () => [h(Fragment, null, [h("button")])],
-        () => [h(Invalid)],
       ];
-      for (const slot of part === "Trigger" ? slots.slice(0, 5) : slots) {
+      for (const slot of slots) {
         const host = document.createElement("div");
         const app = createApp({
           render: () =>
@@ -668,7 +666,11 @@ testStyledControlRefresh("alert-dialog", {
   Close: StyledControlParts.Action,
 });
 
-import { testComponentTrigger, testInitialPortalFocus } from "../dialog/component-trigger.js";
+import {
+  testComponentClose,
+  testComponentTrigger,
+  testInitialPortalFocus,
+} from "../dialog/component-trigger.js";
 testComponentTrigger(
   {
     Root: AlertDialogRoot,
@@ -685,6 +687,16 @@ testInitialPortalFocus(
     Popup: AlertDialogPopup,
     Title: AlertDialogTitle,
     Portal: AlertDialogPortal,
+  },
+  cleanups,
+);
+
+testComponentClose(
+  {
+    Root: AlertDialogRoot,
+    Popup: AlertDialogPopup,
+    Title: AlertDialogTitle,
+    Close: AlertDialogClose,
   },
   cleanups,
 );

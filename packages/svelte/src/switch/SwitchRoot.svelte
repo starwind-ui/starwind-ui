@@ -25,12 +25,13 @@ value?: string;
  onCheckedChange?: (checked: boolean, detail: SwitchCheckedChangeDetails) => void;
  inputRef?: (element: HTMLInputElement | null) => void;
 } & ((StrictSpanProps & { nativeButton?: false; ref?: (element: HTMLSpanElement | null) => void }) | (ButtonProps & { nativeButton: true; ref?: (element: HTMLButtonElement | null) => void }));
-let { children, checked = $bindable(), defaultChecked, disabled = false, form, id, name, nativeButton = false, readOnly = false, required = false, uncheckedValue, value, onCheckedChange, ref, inputRef, ...rest }: Props = $props();
+let { children, checked = $bindable(), checked: commandChecked, defaultChecked, disabled = false, form, id, name, nativeButton = false, readOnly = false, required = false, uncheckedValue, value, onCheckedChange, ref, inputRef, ...rest }: Props = $props();
 
 let effectiveDisabledValue = $derived(disabled);
 
-function effectiveChecked(): boolean | undefined { return checked; }
+function effectiveChecked(): boolean | undefined { return commandChecked; }
 function effectiveDisabled(): boolean { return effectiveDisabledValue; }
+const checkedControlled = untrack(() => commandChecked) !== undefined;
 const initial = untrack(() => { const initialChecked = checked ?? defaultChecked ?? false;
 const resetSeed = defaultChecked ?? initialChecked; return { checked: initialChecked, reset: resetSeed }; });
 const initialChecked = initial.checked;
@@ -57,7 +58,7 @@ function connectRuntime(root: HTMLElement, input: HTMLInputElement): void {
 const desired = effectiveChecked() ?? connection.accepted;
 const owned = createSwitch(root, {
       defaultChecked: resetSeed,
-
+      ...((checkedControlled) ? { checked: desired } : {}),
       disabled: effectiveDisabled(),
 form: form,
 id: id,
@@ -74,13 +75,15 @@ value: value,
 if (owned.getChecked() !== desired) owned.setChecked(desired, { emit: false });
 connection.unsubscribe = owned.subscribe("checkedChange", detail => {
       if (connection.instance !== owned || detail.isCanceled) return;
-      untrack(() => {
+      if (checkedControlled) { untrack(() => {
+if (checked !== detail.checked) checked = detail.checked; }); return; }
+untrack(() => {
 renderRuntimeState(detail.checked);
 if (checked !== connection.accepted) checked = connection.accepted; });
     });
 bindFormReset();
 renderRuntimeState();
-untrack(() => { if (checked !== connection.accepted) checked = connection.accepted; });
+untrack(() => { if (!(checkedControlled)) { if (checked !== connection.accepted) checked = connection.accepted; } });
 }
 
 function renderRuntimeState(next = connection.instance?.getChecked()): void {
@@ -113,7 +116,7 @@ function handleFormReset(event: Event): void {
   // Runtime registers its reset task first. Read public state after it settles.
   connection.resetTimer = window.setTimeout(() => {
     connection.resetTimer = undefined;
-    if (event.defaultPrevented || !owned || connection.instance !== owned) return;
+    if (event.defaultPrevented || !owned || connection.instance !== owned || (checkedControlled)) return;
     untrack(() => {
 renderRuntimeState(owned.getChecked());
 if (checked !== connection.accepted) checked = connection.accepted; });
@@ -143,7 +146,7 @@ const attachRuntimeInput: Attachment<HTMLInputElement> = input => {
   const root = untrack(() => nativeButton ? input.previousElementSibling : input.parentElement);
   if (!(root instanceof HTMLElement)) throw new TypeError("Form input requires its semantic root.");
   $effect(() => { void [id, readOnly]; untrack(() => connectRuntime(root, input)); return disconnectRuntime; });
-  $effect(() => { void checked;  untrack(applyParentCommand); });
+  $effect(() => { void commandChecked;  untrack(applyParentCommand); });
   $effect(() => { void [effectiveDisabledValue]; untrack(applyLive0); });
 $effect(() => { void [form, name, required, uncheckedValue, value]; untrack(applyLive1); });
 };

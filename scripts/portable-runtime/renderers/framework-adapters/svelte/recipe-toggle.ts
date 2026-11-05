@@ -1,9 +1,10 @@
-import { modelOperations } from "../../shared-recipes/structured/operations.js";
+import { modelOperations, operations } from "../../shared-recipes/structured/operations.js";
 import type {
   Kind,
   Projection,
   ToggleOperations,
 } from "../../shared-recipes/toggle-selection/recipe.js";
+import { svelteCommandName, svelteTrackModel } from "./recipe-framework-operations.js";
 export function toggleOperations(kind: Kind): ToggleOperations {
   return {
     fw: {
@@ -38,7 +39,7 @@ function frame(kind: Kind, code: string, p: Projection): string {
       (x) =>
         x.name +
         (x.name === model
-          ? "=$bindable()"
+          ? `=$bindable(),${x.name}:${svelteCommandName(x.name)}`
           : x.defaultValue !== undefined
             ? "=" + x.defaultValue
             : ""),
@@ -50,12 +51,15 @@ function frame(kind: Kind, code: string, p: Projection): string {
     )
     .join(" ");
   const effects = p.commands
-    .map((c) => `$effect(()=>{ready;${c.inputs.map((n) => n + ";").join("")}untrack(${c.name});});`)
+    .map(
+      (c) =>
+        `$effect(()=>{ready;${c.inputs.map((n) => (n === model ? (group ? svelteTrackModel(n) : "") + svelteCommandName(n) : n) + ";").join("")}untrack(${c.name});});`,
+    )
     .join("\n");
   return `${group ? "" : `<script module lang="ts">export type ToggleGroupContextValue={readonly value:string[];readonly disabled:boolean};export const ToggleGroupContext=Symbol('Starwind Toggle Group');</script>`}
 <script lang="ts">import{${factory},type ${detail}${group ? ",type ToggleGroupValue" : ""}}from'@starwind-ui/runtime/${kind}';import{onMount,untrack,${group ? "setContext" : "getContext"},type Snippet}from'svelte';import type{${group ? "HTMLAttributes" : "HTMLAttributes,HTMLButtonAttributes"}}from'svelte/elements';${group ? "import{ToggleGroupContext,type ToggleGroupContextValue}from'../toggle/ToggleRoot.svelte';" : ""}
 type RootElement=${element};${group ? "" : `type Owned='children'|'disabled'|'type'|'value'|'aria-pressed'|'role';type SpanProps=Omit<HTMLAttributes<HTMLSpanElement>,Owned>;type ButtonProps=Omit<HTMLButtonAttributes,Owned>;type StrictSpanProps=SpanProps & {[Key in Exclude<keyof ButtonProps,keyof SpanProps>]?:never};`}
-type Props=${group ? `Omit<HTMLAttributes<HTMLDivElement>,'children'|'defaultValue'|'onChange'>` : `((ButtonProps & {nativeButton?:true;ref?:(node:HTMLButtonElement|null)=>void})|(StrictSpanProps & {nativeButton:false;ref?:(node:HTMLSpanElement|null)=>void}))`} & {${props}children?:Snippet;${group ? "ref?:(node:HTMLDivElement|null)=>void;" : ""}${event}?:(value:${type},detail:${detail})=>void};let{children,ref,${destructure},${event},...rest}:Props=$props();const initialDefault=untrack(()=>${p.initial});let renderedValue=$state<${type}>(initialDefault),rootElement=$state<RootElement>(),ready=$state(false);const connection:{instance?:ReturnType<typeof ${factory}>;unsubscribe?:()=>void;observer?:MutationObserver;ownDisabled?:boolean;accepted:${type}}={accepted:initialDefault};
+type Props=${group ? `Omit<HTMLAttributes<HTMLDivElement>,'children'|'defaultValue'|'onChange'>` : `((ButtonProps & {nativeButton?:true;ref?:(node:HTMLButtonElement|null)=>void})|(StrictSpanProps & {nativeButton:false;ref?:(node:HTMLSpanElement|null)=>void}))`} & {${props}children?:Snippet;${group ? "ref?:(node:HTMLDivElement|null)=>void;" : ""}${event}?:(value:${type},detail:${detail})=>void};let{children,ref,${destructure},${event},...rest}:Props=$props();const initialDefault=untrack(()=>${p.initial});${operations.svelte.controlledCell(model)}const initialModel=untrack(()=>${svelteCommandName(model)});let renderedValue=$state<${type}>(${group ? "normalizeValue(initialModel??initialDefault,untrack(()=>multiple))" : "initialModel??initialDefault"}),rootElement=$state<RootElement>(),ready=$state(false);const connection:{instance?:ReturnType<typeof ${factory}>;unsubscribe?:()=>void;observer?:MutationObserver;ownDisabled?:boolean;accepted:${type}}={accepted:untrack(()=>renderedValue)};
 ${group ? "" : `const toggleGroup=getContext<ToggleGroupContextValue|undefined>(ToggleGroupContext);const isGroupOwned=toggleGroup!==undefined;let groupPressed=$derived(${p.groupPressed});`}
 let effectiveDisabled=$derived(${p.disabled});let selected=$derived(${p.selected});${group ? `setContext<ToggleGroupContextValue>(ToggleGroupContext,{get value(){return selected;},get disabled(){return disabled;}});` : ""}${code}
 ${p.connectPhase === "after-children" ? `onMount(()=>{let alive=true;queueMicrotask(()=>{if(!alive)return;untrack(()=>{if(rootElement)connect(rootElement);ready=true;});});return()=>{alive=false;ready=false;disconnect();};});` : `$effect(()=>{const node=rootElement;${p.reconnect.map((n) => n + ";").join("")}if(!node)return;untrack(()=>connect(node));ready=true;return()=>{ready=false;disconnect();};});`}

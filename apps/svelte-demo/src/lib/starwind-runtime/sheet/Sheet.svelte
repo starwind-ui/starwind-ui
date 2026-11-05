@@ -18,6 +18,7 @@
     "onOpenChange": onOpenChange,
     "onCloseComplete": onCloseComplete,
     "children": children,
+    "open": commandOpen,
     ...rest
   }: SheetProps = $props();
 
@@ -35,7 +36,7 @@
   {...rest}
   data-slot={"sheet"}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </DrawerRoot>

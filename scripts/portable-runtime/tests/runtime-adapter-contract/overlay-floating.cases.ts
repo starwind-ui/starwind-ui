@@ -98,7 +98,12 @@ export function defineRuntimeOverlayFloatingTests(): void {
       popupPart: "popup",
       optionProps: ["side", "align", "sideOffset", "avoidCollisions"],
     });
-    expect(tooltip.asChild).toContainEqual({ part: "trigger", merges: ["data", "ref"] });
+    expect(tooltip.asChild).toContainEqual({
+      part: "trigger",
+      merges: ["data", "ref"],
+      childElement: "any-element",
+      nonElementChild: "default-element",
+    });
     expect(
       tooltip.parts
         .find((part) => part.name === "trigger")
@@ -241,6 +246,7 @@ export function defineRuntimeOverlayFloatingTests(): void {
     expect(popover.asChild).toContainEqual({
       part: "trigger",
       merges: ["aria", "className", "data", "ref"],
+      childElement: "any-element",
     });
     expect(popover.initialMarkup).toContainEqual(
       expect.objectContaining({
@@ -651,6 +657,7 @@ export function defineRuntimeOverlayFloatingTests(): void {
     expect(menu.asChild).toContainEqual({
       part: "trigger",
       merges: ["aria", "className", "data", "ref"],
+      childElement: "button",
     });
     expect(menu.presence).toEqual({
       initialHiddenParts: ["popup"],
@@ -896,6 +903,7 @@ export function defineRuntimeOverlayFloatingTests(): void {
     expect(select.asChild).toContainEqual({
       part: "trigger",
       merges: ["aria", "className", "data", "ref"],
+      childElement: "button",
     });
     expect(select.escapeHatches).toHaveLength(1);
   });
@@ -959,8 +967,12 @@ export function defineRuntimeOverlayFloatingTests(): void {
     );
     expect(combobox.asChild).toEqual(
       expect.arrayContaining([
-        { part: "clear", merges: ["aria", "className", "data", "events", "ref"] },
-        { part: "trigger", merges: ["aria", "className", "data", "ref"] },
+        {
+          part: "clear",
+          merges: ["aria", "className", "data", "events", "ref"],
+          childElement: "button",
+        },
+        { part: "trigger", merges: ["aria", "className", "data", "ref"], childElement: "button" },
       ]),
     );
     expect(combobox.escapeHatches).toHaveLength(1);

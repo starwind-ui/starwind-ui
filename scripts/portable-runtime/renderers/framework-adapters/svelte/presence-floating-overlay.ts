@@ -49,7 +49,7 @@ export {
 };
 
 export default ${facts.exports.namespace};
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+export type { ButtonChildProps, ButtonChildPayload, TriggerChildProps, TriggerChildPayload } from "../button/ButtonRoot.svelte";
 
 export type { ${facts.index.typeExports.join(", ")} } from "${facts.runtime.typeImportSource}";
 `,
@@ -92,6 +92,7 @@ function printRoot(_facts: AdapterPresenceFloatingOverlayFacts): string {
 
 function printTrigger(facts: AdapterPresenceFloatingOverlayFacts): string {
   return printSvelteButtonChild({
+    childElement: facts.childElements?.trigger,
     name: facts.exports.trigger,
     imports: "",
     init: "",

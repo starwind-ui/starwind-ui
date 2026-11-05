@@ -13,12 +13,12 @@ const { type = "button", disabled = false, focusableWhenDisabled = false, ...res
 ---
 
 <button
+  {...rest}
   data-focusable-when-disabled={focusableWhenDisabled ? "true" : undefined}
   data-disabled={disabled ? "" : undefined}
   aria-disabled={disabled && focusableWhenDisabled ? "true" : undefined}
   disabled={disabled && !focusableWhenDisabled}
   type={type}
-  {...rest}
   data-sw-button
 >
   <slot />

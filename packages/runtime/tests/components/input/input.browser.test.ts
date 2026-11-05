@@ -8,6 +8,30 @@ describe("createInput", () => {
     document.body.innerHTML = "";
   });
 
+  it("does not write the native value when it already matches", () => {
+    const input = renderInput({ value: "seed" });
+    const instance = createInput(input, { value: "seed" });
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!;
+    const writes: string[] = [];
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      get: () => descriptor.get!.call(input) as string,
+      set: (next: string) => {
+        writes.push(next);
+        descriptor.set!.call(input, next);
+      },
+    });
+
+    input.value = "typed";
+    writes.length = 0;
+    instance.setValue("typed", { emit: false });
+    expect(writes).toEqual([]);
+    expect(instance.getValue()).toBe("typed");
+
+    instance.setValue("repaired", { emit: false });
+    expect(writes).toEqual(["repaired"]);
+  });
+
   it("refreshes actual form ownership while preserving value, seed, identity and subscriptions", async () => {
     const input = renderInput({ value: "seed" });
     const first = document.createElement("form");

@@ -9,6 +9,7 @@ import {
 import { projectVueAttributeAccess, type VueAttributeSetupReason } from "../public-contract.js";
 import { computedExpressionUsesReference, projectVueComputedExpression } from "./expressions.js";
 import { projectVueImports } from "./imports.js";
+import { applyVueNativeModel } from "./native-model.js";
 import { hasVueDependentPropDefault } from "./props.js";
 import {
   applyVueStyledPublicContractBindings,
@@ -36,8 +37,15 @@ export function projectVueStyledComponent(
   const component = structuredClone(sourceComponent);
   const specialization = specializeVueStyledComponent(group.component, component);
   applyGenericNativeElementRef(component, specialization);
-  const publicContract = getVueStyledPublicContract(group.component, component.exportName);
-  applyVueStyledPublicContractBindings(component.render, publicContract);
+  const nativeModel = applyVueNativeModel(component, specialization);
+  const familyContract = getVueStyledPublicContract(group.component, component.exportName);
+  const publicContract = nativeModel
+    ? { ...familyContract, models: [...(familyContract.models ?? []), nativeModel] }
+    : familyContract;
+  const vueStateVariables = component.variables.filter(
+    (variable) => isForVue(variable) && variable.state,
+  );
+  applyVueStyledPublicContractBindings(component.render, publicContract, vueStateVariables);
   omitVueRepeatIndexes(component.render, publicContract.omittedRepeatIndexes ?? []);
   applyGenericNativeClassBindings(component);
   const manuallyForwardsAttrs = component.render.some((node) =>
@@ -63,6 +71,7 @@ export function projectVueStyledComponent(
         props: expressionProps,
       }),
       name: variable.name,
+      ...(variable.state ? { state: variable.state } : {}),
     };
     computedNames.push(variable.name);
     return projection;
@@ -95,8 +104,15 @@ export function projectVueStyledComponent(
   ];
   const attributeAccess = usesAttrs ? projectVueAttributeAccess(setupReasons) : null;
   const imports: VueImportName[] = [
-    ...(vueVariables.length || hasVueDependentPropDefault(component.destructure?.props ?? [])
+    ...(vueVariables.length > vueStateVariables.length ||
+    hasVueDependentPropDefault(component.destructure?.props ?? [])
       ? [{ kind: "value" as const, name: "computed" }]
+      : []),
+    ...(vueStateVariables.length
+      ? [
+          { kind: "value" as const, name: "ref" },
+          { kind: "value" as const, name: "watch" },
+        ]
       : []),
     ...(attributeAccess?.vueImport
       ? [{ kind: "value" as const, name: attributeAccess.vueImport }]

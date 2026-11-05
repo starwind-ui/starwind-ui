@@ -42,10 +42,9 @@
 </form>
 <Sidebar.Provider bind:open onOpenChange={() => changes++}>
   <Sidebar.Sidebar collapsible="icon">
-    <Sidebar.MenuButton href="#services-destination" data-test="services-link">
+    <Sidebar.MenuButton data-test="services-link">
       {#snippet child(payload: SidebarMenuButtonChildPayload)}
-        {#if payload.kind === "anchor"}<a {...payload.props}>{@render payload.children?.()}</a>
-        {:else}<button {...payload.props}>{@render payload.children?.()}</button>{/if}
+        <a {...payload.props} href="#services-destination">{@render payload.children?.()}</a>
       {/snippet}
       Workspace
     </Sidebar.MenuButton>

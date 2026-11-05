@@ -156,6 +156,8 @@ const eventPolicy = {
 
 const compositionPolicy = {
   asChild: {
+    childOwnedProps: ["data-slot"],
+    ignoredSlotVNodes: ["empty-branch-comment"],
     invalidChild: "throw-descriptive-type-error",
     mergeApi: "mergeProps",
     mergeOrder: ["defaulted-props", "consumer-props", "protected-props"],

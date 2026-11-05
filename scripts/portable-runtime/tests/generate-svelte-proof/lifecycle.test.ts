@@ -259,7 +259,7 @@ describe("generated Svelte compound button children", () => {
 
         domCanceled: true,
         pendingClose: true,
-        frozenReset: "alpha",
+        frozenReset: "beta",
         cleaned: true,
         balanced: true,
       });
@@ -286,7 +286,7 @@ document.documentElement.dataset.svelteProofResult = JSON.stringify({ completed:
         mode === "missing"
           ? "did not attach"
           : mode === "wrong"
-            ? "HTMLButtonElement"
+            ? "must be a button"
             : "multiple owners";
       for (const part of ["SelectTrigger"]) {
         expect(

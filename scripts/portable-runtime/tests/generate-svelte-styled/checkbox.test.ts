@@ -30,7 +30,9 @@ describe("generated Styled Checkbox", () => {
       projectSvelteStyledGroup(group, { primitiveImportBase: "@starwind-ui/svelte" }),
     );
     expect(group).toEqual(before);
-    expect(files[0]!.content).toContain("bind:checked={checked}");
+    expect(files[0]!.content).toContain(
+      "bind:checked={() => commandChecked, (next) => { checked = next; }}",
+    );
     expect(files[0]!.content).toContain("checked = $bindable()");
     expect(files[0]!.content).toContain("{label}");
     expect(files[0]!.content).toContain('import "./styles.css"');
@@ -92,7 +94,7 @@ assert.equal(globalThis.document, undefined); assert.equal(Default, exports.Chec
     expect(result.interactions).toMatchObject({
       omitted: { model: "undefined", checked: "true", form: "yes" },
       defaulted: { model: "undefined", checked: "false", form: "no" },
-      plain: { model: false, checked: "true", form: "yes" },
+      plain: { model: false, checked: "false", form: "no" },
       undefined: {
         model: false,
         checked: "false",
@@ -120,7 +122,7 @@ assert.equal(globalThis.document, undefined); assert.equal(Default, exports.Chec
     expect(result.laterUndefined).toMatchObject({ checked: "true", model: "undefined" });
     expect(result.silent).toMatchObject({ checked: "false", model: false });
     expect(result.silent.callbacks).toHaveLength(1);
-    expect(result.reset).toMatchObject({ checked: "true", model: false, form: "yes" });
+    expect(result.reset).toMatchObject({ checked: "false", model: false, form: "no" });
     expect(result.reset.callbacks).toHaveLength(1);
     expect(result.disabled).toMatchObject({ form: null, checked: "true" });
     expect(result.mixed.checked).toBe("mixed");

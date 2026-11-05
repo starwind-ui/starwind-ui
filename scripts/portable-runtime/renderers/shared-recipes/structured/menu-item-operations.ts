@@ -12,6 +12,8 @@ export interface MenuItemOperations {
   publish(model: string, value: string): string;
   project(part: MenuItemKind, value: string): string;
   settle: string;
+  /** Binding targets reapply the parent getter after a parent-controlled publication. */
+  restoreParent?: string;
 }
 export const menuItemOperations: Record<Target, MenuItemOperations> = {
   react: reactMenuItemOperations,

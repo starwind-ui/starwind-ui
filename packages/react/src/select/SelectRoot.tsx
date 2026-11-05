@@ -15,6 +15,7 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { ReactPortalScopeProvider, useReactPortalScope } from "../internal/portal";
+import { useClosedItemProbe } from "../internal/use-close-presence";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 import { SelectContext } from "./SelectContext";
@@ -94,6 +95,22 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   const defaultValueRef = React.useRef(defaultValue);
   const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(defaultOpenRef.current);
   const [uncontrolledValue, setUncontrolledValueState] = React.useState(defaultValueRef.current);
+  const [selectedLabel, setSelectedLabel] = React.useState<{
+    label: string | null;
+    value: string | null;
+  }>(() => ({ label: null, value: null }));
+  // A parent can refuse a pick, so its label stays separate until the parent value matches it.
+  const [proposedLabel, setProposedLabel] = React.useState<typeof selectedLabel>(() => ({
+    label: null,
+    value: null,
+  }));
+  // The walk cannot see items inside a user component, so a label from a pick or a probe stays.
+  const settleSelectedLabel = React.useCallback((nextValue: string | null) => {
+    const label = findSelectedOptionText(childrenRef.current, nextValue);
+    setSelectedLabel((current) =>
+      label === null && current.value === nextValue ? current : { label, value: nextValue },
+    );
+  }, []);
   const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
   const uncontrolledValueRef = React.useRef(uncontrolledValue);
   const pendingProgrammaticValueRef = React.useRef<{
@@ -148,7 +165,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
     const root = rootRef.current;
     if (!root) return undefined;
 
-    if (!portalScope.isReady()) return;
+    if (!portalScope.isReady() && !root.closest("[data-sw-field]")) return;
 
     const instance = createSelect(root, {
       defaultOpen: disabled ? false : uncontrolledOpenRef.current,
@@ -185,7 +202,10 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
     instance.subscribe("valueChange", (detail) => {
       if (instanceRef.current !== instance) return;
       const label = getTextFromSelectItem(detail.item);
-      if (label !== null || detail.value === null) setSelectedLabel({ label, value: detail.value });
+      if (label !== null || detail.value === null) {
+        if (valueRef.current === undefined) setSelectedLabel({ label, value: detail.value });
+        else setProposedLabel({ label, value: detail.value });
+      }
       if (valueRef.current === undefined) {
         setUncontrolledValue(detail.value);
       }
@@ -232,10 +252,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
       if (!instance) {
         pendingProgrammaticValueRef.current = { emit, value: nextValue };
         if (emit !== false || valueRef.current !== undefined) return;
-        setSelectedLabel({
-          label: findSelectedOptionText(children, nextValue),
-          value: nextValue,
-        });
+        settleSelectedLabel(nextValue);
         setUncontrolledValue(nextValue);
         return;
       }
@@ -243,10 +260,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
       instance.setValue(nextValue, { emit });
       if (emit !== false || valueRef.current !== undefined) return;
 
-      setSelectedLabel({
-        label: findSelectedOptionText(children, nextValue),
-        value: nextValue,
-      });
+      settleSelectedLabel(nextValue);
       setUncontrolledValue(nextValue);
     };
 
@@ -259,7 +273,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
         capture: true,
       });
     };
-  }, [children, ensureInstance, setUncontrolledValue]);
+  }, [ensureInstance, settleSelectedLabel, setUncontrolledValue]);
 
   useIsomorphicLayoutEffect(() => {
     const pending = pendingProgrammaticValueRef.current;
@@ -284,7 +298,12 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   }, []);
 
   useIsomorphicLayoutEffect(() => {
-    if ((openRef.current ?? uncontrolledOpenRef.current) !== true) return;
+    // Inside a Field, start here. Field starts a control that has no controller, and that controller lacks these options.
+    if (
+      (openRef.current ?? uncontrolledOpenRef.current) !== true &&
+      !rootRef.current?.closest("[data-sw-field]")
+    )
+      return;
 
     ensureInstance();
   }, [ensureInstance, open, uncontrolledOpen]);
@@ -342,20 +361,11 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   const renderedOpen = open ?? uncontrolledOpen;
   const selectedValue = value !== undefined ? value : (uncontrolledValue ?? null);
   const renderedValue = selectedValue ?? "";
-  const [selectedLabel, setSelectedLabel] = React.useState<{
-    label: string | null;
-    value: string | null;
-  }>(() => ({ label: null, value: null }));
   React.useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setSelectedLabel({
-        label: findSelectedOptionText(children, selectedValue),
-        value: selectedValue,
-      });
-    }, 0);
+    const timer = window.setTimeout(() => settleSelectedLabel(selectedValue), 0);
 
     return () => window.clearTimeout(timer);
-  }, [children, selectedValue]);
+  }, [children, selectedValue, settleSelectedLabel]);
   useIsomorphicLayoutEffect(() => {
     const input = inputRef.current;
     const root = rootRef.current;
@@ -410,10 +420,7 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
             setUncontrolledValue(acceptedValue);
           }
           reset.needsRender = true;
-          setSelectedLabel({
-            label: findSelectedOptionText(childrenRef.current, acceptedValue),
-            value: acceptedValue,
-          });
+          settleSelectedLabel(acceptedValue);
         }, 0);
       });
     };
@@ -421,7 +428,29 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
     formElement.addEventListener("reset", handleReset);
   });
 
-  const renderedSelectedLabel = selectedLabel.value === selectedValue ? selectedLabel.label : null;
+  const renderedSelectedLabel =
+    selectedLabel.value === selectedValue && selectedLabel.label !== null
+      ? selectedLabel.label
+      : proposedLabel.value === selectedValue
+        ? proposedLabel.label
+        : null;
+  const itemProbe = useClosedItemProbe({
+    itemAttribute: "data-sw-select-item",
+    needed:
+      selectedValue !== null &&
+      renderedSelectedLabel === null &&
+      findSelectedOptionText(children, selectedValue) === null,
+    onItem: (item, itemValue) => {
+      setSelectedLabel({ label: getTextFromSelectItem(item), value: itemValue });
+    },
+    value: selectedValue,
+  });
+  // A closed popup has no items, so Runtime reads this label from the root once React commits it.
+  useIsomorphicLayoutEffect(() => {
+    const owned = instanceRef.current;
+    if (renderedSelectedLabel === null || owned?.getValue() !== selectedValue) return;
+    owned.setValue(selectedValue, { emit: false });
+  }, [renderedSelectedLabel]);
   const initializeFromTriggerEvent = React.useCallback(
     (event: React.SyntheticEvent<HTMLDivElement>) => {
       if (disabled) return;
@@ -436,13 +465,14 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   const contextValue = React.useMemo(
     () => ({
       disabled: disabled,
+      itemProbe,
       open: renderedOpen,
       readOnly: readOnly,
       required: required,
       value: selectedValue,
       selectedLabel: renderedSelectedLabel,
     }),
-    [disabled, renderedOpen, readOnly, required, selectedValue, renderedSelectedLabel],
+    [disabled, itemProbe, renderedOpen, readOnly, required, selectedValue, renderedSelectedLabel],
   );
 
   return (

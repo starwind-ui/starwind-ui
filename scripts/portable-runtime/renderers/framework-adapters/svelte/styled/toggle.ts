@@ -72,7 +72,6 @@ export function specializeSvelteStyledToggle(
   return {
     imports: [
       { source: "svelte", names: ["ComponentProps"], typeOnly: true },
-      { source: "svelte", names: ["untrack"] },
       { source: "tailwind-variants", names: ["VariantProps"], typeOnly: true },
       { source: "tailwind-variants", names: ["cx"] },
       {
@@ -97,14 +96,6 @@ export type ${component.exportName}Props=StyledProps<PrimitiveProps>;`,
       { name: "children" },
     ],
     rest: component.destructure.rest,
-    setup: [
-      isRoot
-        ? `const copy=(next:string[]|undefined)=>next===undefined?undefined:[...next];
-const equal=(a:string[]|undefined,b:string[]|undefined)=>a===b||a!==undefined&&b!==undefined&&a.length===b.length&&a.every((item,index)=>item===b[index]);
-let observedCommand=untrack(()=>copy(commandValue));
-$effect(()=>{const next=copy(commandValue);untrack(()=>{if(equal(next,observedCommand))return;observedCommand=next;if(!equal(next,value))value=next;});});`
-        : `let observedCommand=untrack(()=>commandValue);
-$effect(()=>{const next=commandValue;untrack(()=>{if(Object.is(next,observedCommand))return;observedCommand=next;if(!Object.is(next,${model}))${model}=next;});});`,
-    ],
+    setup: [],
   };
 }

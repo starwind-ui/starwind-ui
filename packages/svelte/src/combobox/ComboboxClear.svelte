@@ -37,9 +37,7 @@
       const revision = ++validationRevision;
       void tick().then(() => {
         if (!mounted || revision !== validationRevision) return;
-        const message = [...owners].some((element) => !(element instanceof HTMLButtonElement))
-          ? "ComboboxClear child props must attach to an HTMLButtonElement."
-          : owners.size > 1
+        const message = owners.size > 1
             ? "ComboboxClear child props must attach to exactly one button; multiple owners were attached."
             : owners.size === 0
               ? "ComboboxClear child props did not attach to a button after mount. Spread the whole props object onto one button."
@@ -82,6 +80,7 @@
     diagnoseOwner?.(root, true);
     attachmentRevision += 1;
     if (root instanceof HTMLButtonElement) currentElement = root;
+    else console.error("ComboboxClear child must be a button. It does nothing on another element.");
     return () => {
       diagnoseOwner?.(root, false);
       if (!root.isConnected) {
@@ -98,7 +97,7 @@
   const ownerKey = createAttachmentKey();
   let buttonProps: ButtonChildProps = $derived({
     ...nativeProps,
-    "data-sw-combobox-clear": "", type: "button", disabled: !!(allProps.disabled || combobox?.disabled), "data-disabled": allProps.disabled || combobox?.disabled ? "" : undefined, "data-sw-part": "clear", "aria-label": allProps["aria-label"] ?? "Clear selection",
+    "data-sw-combobox-clear": "", type: "button", disabled: !!(allProps.disabled || combobox?.disabled), "data-disabled": allProps.disabled || combobox?.disabled ? "" : undefined, "data-sw-part": "clear",
     [ownerKey]: attachOwner,
   });
 </script>

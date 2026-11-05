@@ -26,6 +26,8 @@
     "onOpenChange": onOpenChange,
     "onValueChange": onValueChange,
     "children": children,
+    "open": commandOpen,
+    "value": commandValue,
     ...rest
   }: SelectProps = $props();
 </script>
@@ -46,8 +48,8 @@
   onValueChange={onValueChange}
   {...rest}
   data-slot={"select"}
-  bind:open={open}
-  bind:value={value}
+  bind:open={() => commandOpen, (next) => { open = next; }}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   {@render children?.()}
 </SelectRoot>

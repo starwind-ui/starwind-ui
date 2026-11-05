@@ -1,6 +1,15 @@
 import { readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "tsup";
+
+import {
+  internalPropertyPattern,
+  planRuntimeInternalProperties,
+} from "./build/mangle-internal-properties";
+import { manglePrivateMembersPlugin } from "./build/mangle-private-members";
+
+const tsconfigPath = fileURLToPath(new URL("./tsconfig.json", import.meta.url));
 
 const componentEntries = Object.fromEntries(
   readdirSync(new URL("./src/components", import.meta.url), { withFileTypes: true })
@@ -17,7 +26,12 @@ export default defineConfig({
   },
   format: ["esm"],
   dts: true,
+  sourcemap: true,
   clean: true,
   target: "es2022",
   outDir: "dist",
+  esbuildOptions(options) {
+    options.mangleProps = internalPropertyPattern(planRuntimeInternalProperties(tsconfigPath));
+  },
+  esbuildPlugins: [manglePrivateMembersPlugin(tsconfigPath)],
 });

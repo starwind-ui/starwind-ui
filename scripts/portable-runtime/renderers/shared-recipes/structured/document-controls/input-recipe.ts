@@ -4,12 +4,19 @@ import { requireRefreshConnection } from "../../../primitive-output-model/refres
 /** Input notifications describe a native edit already accepted by Runtime. Cancellation does not roll it back. */
 export interface NativeInputOperations {
   model: string;
+  /** Binding targets capture parent control from this read. */
   defaultValue: string;
   disabled: string;
   authority: "parent" | "binding";
   transport: "runtime-notification" | "after-native-change";
+  /** The binding read. It differs from the model after a local write on a one-way input. */
+  localModel?: string;
+  /** The parent-owned value at reset time. A target may hold a local model copy without a parent. */
+  parentModel?: string;
   notify(value: string, detail: string): string;
   publish(value: string): string;
+  /** Run the repair after the parent had its chance to accept the published value. */
+  afterPublish?(body: string): string;
   untrack(body: string): string;
 }
 
@@ -33,17 +40,23 @@ export function nativeInputConnection(
     throw new Error("After-native-change transport requires parent authority.");
   const notification = nativeTransport
     ? "pendingDetail = detail;"
-    : `${ops.authority === "parent" ? `const previous = ${ops.model};` : ""}
+    : `
        ${ops.notify("next", "detail")}
        ${ops.publish("next")}
-       ${ops.authority === "parent" ? "if (controlled) synchronize(previous);" : `synchronize(${ops.model});`}`;
+       ${
+         ops.authority === "binding"
+           ? `if (controlled) synchronize(${ops.model} ?? retained); else if (${ops.localModel} === ${ops.model}) synchronize(${ops.model});`
+           : ops.afterPublish
+             ? ops.afterPublish(`synchronize(${ops.model});`)
+             : `synchronize(${ops.model});`
+       }`;
   const settleReset =
     ops.authority === "parent"
-      ? `synchronize(${ops.model});`
-      : ops.publish(`instance.${valueGetter}()`);
+      ? `synchronize(${ops.parentModel ?? ops.model});`
+      : `if (controlled) synchronize(${ops.model} ?? retained); else { ${ops.publish(`instance.${valueGetter}()`)} }`;
   return `function connectInput(element: HTMLInputElement) {
     const initialModel = ${ops.model};
-    ${ops.authority === "parent" ? "const controlled = initialModel !== undefined;" : ""}
+${ops.authority === "binding" ? "    const controlled = initialModel !== undefined;\n    let retained = initialModel;" : ""}
     let disposed = false;
     let associated: HTMLFormElement | null = null;
     let resetTimer: number | undefined;
@@ -54,7 +67,7 @@ export function nativeInputConnection(
         : ""
     }
     function synchronize(next: ${facts.props.value.type} | undefined): void {
-      if (next === undefined || disposed) return;
+      if (next === undefined || disposed) return;${ops.authority === "binding" ? "\n      if (controlled) retained = next;" : ""}
       const normalized = String(next);
       if (instance.${valueGetter}() === normalized && element.value === normalized) return;
       instance.${valueSetter.method}(next, ${silent});
@@ -72,7 +85,7 @@ export function nativeInputConnection(
       }, 0);
     }
     function bindReset(): void {
-      ${ops.authority === "parent" ? "if (!controlled) return;" : ""}
+
       const form = element.form;
       if (associated === form) return;
       clearReset();
@@ -85,12 +98,12 @@ export function nativeInputConnection(
       ${facts.props.defaultValue.name}: ${ops.defaultValue},
       ${facts.props.disabled.name}: ${ops.disabled},
       ${event.callbackProp}(${nativeTransport ? "_next" : "next"}, detail) { ${ops.untrack(notification)} },
-      ${ops.authority === "parent" ? `...(initialModel === undefined ? {} : { ${facts.props.value.name}: initialModel }),` : ""}
+      ...(initialModel === undefined ? {} : { ${facts.props.value.name}: initialModel }),
     });
     ${
       ops.authority === "binding"
         ? `synchronize(initialModel);
-    ${`if (${ops.model} === undefined || String(${ops.model}) !== instance.${valueGetter}()) { ${ops.publish(`instance.${valueGetter}()`)} }`} `
+    ${`if (!controlled && (${ops.model} === undefined || String(${ops.model}) !== instance.${valueGetter}())) { ${ops.publish(`instance.${valueGetter}()`)} }`} `
         : ""
     }
     bindReset();

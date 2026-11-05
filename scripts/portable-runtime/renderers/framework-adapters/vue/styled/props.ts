@@ -1,3 +1,36 @@
+import ts from "typescript";
+
+/**
+ * Vue casts an absent prop to false when its runtime type includes Boolean. The generator gives
+ * these props an explicit undefined default, so the Primitive or Runtime default stays in charge.
+ */
+export function isVueBooleanCastType(type: string): boolean {
+  const source = ts.createSourceFile(
+    "vue-styled-prop-type.ts",
+    `type T = ${type};`,
+    ts.ScriptTarget.Latest,
+    false,
+    ts.ScriptKind.TS,
+  );
+  const statement = source.statements[0];
+  return (
+    statement !== undefined &&
+    ts.isTypeAliasDeclaration(statement) &&
+    typeNodeIncludesBoolean(statement.type)
+  );
+}
+
+function typeNodeIncludesBoolean(node: ts.TypeNode): boolean {
+  if (ts.isParenthesizedTypeNode(node)) return typeNodeIncludesBoolean(node.type);
+  if (ts.isUnionTypeNode(node)) return node.types.some(typeNodeIncludesBoolean);
+  if (node.kind === ts.SyntaxKind.BooleanKeyword) return true;
+  return (
+    ts.isLiteralTypeNode(node) &&
+    (node.literal.kind === ts.SyntaxKind.TrueKeyword ||
+      node.literal.kind === ts.SyntaxKind.FalseKeyword)
+  );
+}
+
 export function renderVuePropKey(name: string): string {
   return isVueIdentifier(name) ? name : JSON.stringify(name);
 }

@@ -309,7 +309,11 @@ import { testStyledControlRefresh } from "../dialog/styled-control-refresh.js";
 
 testStyledControlRefresh("drawer", { ...StyledControlParts, Close: StyledControlParts.Close });
 
-import { testComponentTrigger, testInitialPortalFocus } from "../dialog/component-trigger.js";
+import {
+  testComponentClose,
+  testComponentTrigger,
+  testInitialPortalFocus,
+} from "../dialog/component-trigger.js";
 testComponentTrigger(
   { Root: DrawerRoot, Trigger: DrawerTrigger, Popup: DrawerPopup, Title: DrawerTitle },
   cleanups,
@@ -317,5 +321,10 @@ testComponentTrigger(
 
 testInitialPortalFocus(
   { Root: DrawerRoot, Popup: DrawerPopup, Title: DrawerTitle, Portal: DrawerPortal },
+  cleanups,
+);
+
+testComponentClose(
+  { Root: DrawerRoot, Popup: DrawerPopup, Title: DrawerTitle, Close: DrawerClose },
   cleanups,
 );

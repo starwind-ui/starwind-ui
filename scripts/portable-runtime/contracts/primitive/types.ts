@@ -251,6 +251,17 @@ export type PrimitiveRefContract = {
 export type PrimitiveAsChildContract = {
   part: string;
   merges: Array<"aria" | "className" | "data" | "events" | "ref" | "style">;
+  /**
+   * What a target renders when the part has no single element child. Set this on a part whose
+   * Styled wrapper turns `asChild` on by default, so text and mixed content stay valid.
+   */
+  nonElementChild?: "default-element";
+  /**
+   * Which child element keeps the part working. "any-element": Runtime works on a link or any other
+   * element. "button": the part does nothing on another element, so a target that requires a button
+   * must report that case in production.
+   */
+  childElement?: "any-element" | "button";
 };
 
 export type PrimitiveInitialMarkupContract = {

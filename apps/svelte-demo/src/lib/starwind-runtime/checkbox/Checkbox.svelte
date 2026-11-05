@@ -32,6 +32,7 @@
     checked = $bindable(),
     "onCheckedChange": onCheckedChange,
     "ref": ref,
+    "checked": commandChecked,
     ...rest
   }: CheckboxProps = $props();
 
@@ -59,7 +60,7 @@
     {...({ ...rest, nativeButton, ref } as PrimitiveProps)}
     aria-label={ariaLabel}
     data-slot={"checkbox"}
-    bind:checked={checked}
+    bind:checked={() => commandChecked, (next) => { checked = next; }}
   >
     <CheckboxIndicator
       keepMounted

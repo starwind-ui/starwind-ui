@@ -10,9 +10,9 @@ const { variant = "default", class: className, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   class={itemMedia({ variant, class: className })}
   data-variant={variant}
-  {...rest}
   data-slot="item-media"
 >
   <slot />

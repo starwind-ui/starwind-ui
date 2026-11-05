@@ -37,9 +37,12 @@
   }: SliderProps = $props();
 
   const copy = (next: SliderValue | undefined) => Array.isArray(next) ? [...next] : next;
+  const valueControlled = untrack(() => commandValue) !== undefined;
+  // A parent-controlled value is read past the local value of a one-way bindable.
+  const acceptedInput = () => valueControlled ? commandValue : value;
   let retainedValue = $state<SliderValue>(untrack(() => copy(value ?? defaultValue ?? 0)!));
 
-  let resolvedValue = $derived(value ?? retainedValue);
+  let resolvedValue = $derived(acceptedInput() ?? retainedValue);
 
   let values = $derived(Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue]);
 
@@ -51,18 +54,8 @@
 
   let rangeStyle = $derived(orientation === "horizontal" ? `left: ${rangeStart}%; width: ${rangeEnd - rangeStart}%` : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`);
 
-  const equal = (left: SliderValue | undefined, right: SliderValue | undefined) => Array.isArray(left) && Array.isArray(right) ? left.length === right.length && left.every((value, index) => Object.is(value, right[index])) : Object.is(left, right);
-  let observedCommand = untrack(() => copy(commandValue));
   $effect(() => {
-    const next = copy(commandValue);
-    untrack(() => {
-      if (equal(next, observedCommand)) return;
-      observedCommand = copy(next);
-      if (!equal(next, value)) value = copy(next);
-    });
-  });
-  $effect(() => {
-    const next = copy(value);
+    const next = copy(acceptedInput());
     if (next !== undefined) retainedValue = next;
   });
 </script>
@@ -83,7 +76,7 @@
   step={step}
   {...rest}
   data-slot={"slider"}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   <SliderControl
     class={sliderControl({  })}

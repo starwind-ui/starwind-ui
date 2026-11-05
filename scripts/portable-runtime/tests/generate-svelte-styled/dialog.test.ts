@@ -33,7 +33,7 @@ describe("generated Styled Dialog", () => {
     expect(group).toEqual(before);
     expect(files).toHaveLength(11);
     expect(files.find((file) => file.relativePath.endsWith("/Dialog.svelte"))!.content).toContain(
-      "bind:open={open}",
+      "bind:open={() => commandOpen, (next) => { open = next; }}",
     );
     expect(files.find((file) => file.relativePath.endsWith("/Dialog.svelte"))!.content).toContain(
       "children={children}",
@@ -57,10 +57,10 @@ describe("generated Styled Dialog", () => {
     }
   });
 
-  it("server-renders Dialog state snippets with closed native markup and complete exports", async () => {
+  it("server-renders an open Dialog root with closed native markup and complete exports", async () => {
     const consumer = await fixture();
     await consumer.write({
-      "SSR.svelte": `<script lang="ts">import Dialog from "./dialog/index.js";</script><Dialog.Root defaultOpen>{#snippet children(open)}<span>Accepted {String(open)}</span><Dialog.Trigger>Open</Dialog.Trigger><Dialog.Content><Dialog.Header><Dialog.Title>Title</Dialog.Title><Dialog.Description>Description</Dialog.Description></Dialog.Header><Dialog.Footer><Dialog.Close /></Dialog.Footer></Dialog.Content>{/snippet}</Dialog.Root>`,
+      "SSR.svelte": `<script lang="ts">import Dialog from "./dialog/index.js";</script><Dialog.Root defaultOpen><Dialog.Trigger>Open</Dialog.Trigger><Dialog.Content><Dialog.Header><Dialog.Title>Title</Dialog.Title><Dialog.Description>Description</Dialog.Description></Dialog.Header><Dialog.Footer><Dialog.Close /></Dialog.Footer></Dialog.Content></Dialog.Root>`,
       "ssr.mjs": `import assert from "node:assert/strict"; import { render } from "svelte/server"; import App from "./SSR.svelte"; import Parts, * as exports from "./dialog/index.js"; assert.equal(globalThis.document, undefined); assert.equal(Parts.Root, exports.Dialog); console.log(JSON.stringify({ body: render(App).body, names: Object.keys(exports).sort(), facade: import.meta.resolve("@starwind-ui/svelte/dialog") }));`,
     });
     const result = JSON.parse(await consumer.run("ssr.mjs", { loader: true }));
@@ -70,7 +70,7 @@ describe("generated Styled Dialog", () => {
     expect(result.facade).toContain(
       `${consumer.root}/node_modules/@starwind-ui/svelte/dist/dialog/index.js`,
     );
-    expect(result.body).toContain("Accepted true");
+    expect(result.body).toMatch(/<div[^>]*data-state="open"/);
     expect(result.body).toContain('data-slot="dialog-close"');
     expect(result.body).toContain("<dialog");
     expect(result.body).not.toMatch(/<dialog[^>]*\sopen(?:\s|[=>])/);
@@ -87,6 +87,7 @@ describe("generated Styled Dialog", () => {
         { id: "undefined", defaultOpen: true },
         { id: "retained", initial: false, setter: "retain" },
         { id: "inverted", initial: false, setter: "invert" },
+        { id: "oneWay", mode: "plain", initial: false },
         { id: "echo", initial: false, proposal: "echo" },
         { id: "defined", initial: false, defaultOpen: true },
       ],
@@ -94,11 +95,12 @@ describe("generated Styled Dialog", () => {
       const initial = Object.fromEntries(Object.keys(cases).map((id) => [id, state(id)]));
       for (const id of ["undefined", "bound", "plain", "omitted"]) { close(id); await finish(); }
       await finish(); const closed = Object.fromEntries(["omitted", "plain", "bound", "undefined"].map((id) => [id, state(id)]));
-      for (const id of ["retained", "inverted", "echo"]) { trigger(id); await finish(); }
-      const accepted = Object.fromEntries(["retained", "inverted", "echo"].map((id) => [id, state(id)]));
+      for (const id of ["retained", "inverted", "echo", "oneWay"]) { trigger(id); await finish(); }
+      const accepted = Object.fromEntries(["retained", "inverted", "echo", "oneWay"].map((id) => [id, state(id)]));
+      cases.oneWay.setModel(true); await finish(); const oneWayCommand = state("oneWay");
       cases.plain.setModel(true); await settle(); cases.plain.setModel(undefined); await settle(); const laterUndefined = state("plain");
       cases.defined.options(); await finish(); const reconstructed = state("defined");
-      return { initial, closed, accepted, laterUndefined, reconstructed };
+      return { initial, closed, accepted, oneWayCommand, laterUndefined, reconstructed };
     `,
     );
     expect(result.initial.omitted).toMatchObject({
@@ -107,7 +109,11 @@ describe("generated Styled Dialog", () => {
       rendered: "true",
       callbacks: [],
     });
-    expect(result.initial.undefined).toMatchObject({ model: "undefined", writes: [], callbacks: [] });
+    expect(result.initial.undefined).toMatchObject({
+      model: "undefined",
+      writes: [],
+      callbacks: [],
+    });
     expect(result.initial.defined).toMatchObject({
       model: false,
       native: false,
@@ -125,10 +131,16 @@ describe("generated Styled Dialog", () => {
     for (const id of ["retained", "inverted"])
       expect(result.accepted[id]).toMatchObject({
         model: false,
-        native: true,
+        native: false,
         writes: [true],
         callbacks: [{ next: true, previous: false, owner: "a" }],
       });
+    expect(result.accepted.oneWay).toMatchObject({
+      model: false,
+      native: false,
+      rendered: "false",
+    });
+    expect(result.oneWayCommand).toMatchObject({ model: true, native: true, rendered: "true" });
     expect(result.accepted.echo).toMatchObject({
       model: true,
       native: true,
@@ -228,11 +240,11 @@ describe("generated Styled Dialog", () => {
     expect(result.final.owner.refs.at(-1)).toBe("b:null");
     expect(result.final.owner.headerRefs.at(-1)).toBe("b:null");
     expect(result.final.owner.attachments.at(-1)).toBe("b:cleanup");
-    expect(result.final.owner.attachments.filter((entry: string) => entry.endsWith(":setup")))
-      .toHaveLength(
-        result.final.owner.attachments.filter((entry: string) => entry.endsWith(":cleanup"))
-          .length,
-      );
+    expect(
+      result.final.owner.attachments.filter((entry: string) => entry.endsWith(":setup")),
+    ).toHaveLength(
+      result.final.owner.attachments.filter((entry: string) => entry.endsWith(":cleanup")).length,
+    );
     expect(result.final.owner.headerAttachments[0]).toBe("a:setup");
     expect(result.final.owner.headerAttachments.at(-1)).toBe("b:cleanup");
     expect(

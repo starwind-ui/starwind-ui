@@ -14,10 +14,10 @@ const { activateOnFocus = false, loopFocus = true, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-tabs-list
   data-activate-on-focus={activateOnFocus ? "" : undefined}
   data-loop-focus={!loopFocus ? "false" : undefined}
-  {...rest}
 >
   <slot />
 </div>

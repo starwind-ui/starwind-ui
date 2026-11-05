@@ -10,7 +10,7 @@ type Props = HTMLAttributes<"span">;
 const { ...rest } = Astro.props;
 ---
 
-<span data-sw-avatar data-image-loading-status="idle" {...rest}>
+<span {...rest} data-sw-avatar data-image-loading-status="idle">
   <slot />
 </span>
 

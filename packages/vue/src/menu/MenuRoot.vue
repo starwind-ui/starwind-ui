@@ -62,12 +62,7 @@ provide(MenuRootContext, {
 });
 provide(MenuOwnerContext, { kind: "root" });
 
-defineExpose({
-  element: rootRef,
-  close: () => instance?.close(),
-  open: () => instance?.open(),
-  updatePosition: () => instance?.updatePosition(),
-});
+defineExpose({ element: rootRef });
 
 function destroyOwnedInstance(): void {
   const owned = instance;

@@ -62,7 +62,7 @@ describe("astro-config", () => {
         mockFileExists.mockResolvedValue(false);
         mockReadJsonFile.mockResolvedValue({
           dependencies: {
-            astro: "^5.6.0",
+            astro: "~5.6.0",
           },
         });
 
@@ -79,6 +79,42 @@ describe("astro-config", () => {
           expect.stringContaining("svg: true"),
           "utf-8",
         );
+      });
+
+      describe("reads the installed Astro version", () => {
+        const project = (declared: string, installed?: string) => {
+          mockFileExists.mockResolvedValue(false);
+          mockReadJsonFile.mockImplementation(async (path: string) => {
+            if (path === "package.json") return { dependencies: { astro: declared } };
+            if (installed) return { version: installed };
+            throw new Error("not installed");
+          });
+        };
+        const written = () => mockWriteFile.mock.calls[0]?.[1] as string;
+
+        it("omits the flag for a low range with a current version installed", async () => {
+          project("^5.0.0", "5.18.2");
+          expect(await setupAstroConfig()).toBe(true);
+          expect(written()).not.toContain("experimental:");
+        });
+
+        it("adds the flag when the installed version needs it", async () => {
+          project("^5.0.0", "5.6.2");
+          expect(await setupAstroConfig()).toBe(true);
+          expect(written()).toContain("svg: true");
+        });
+
+        it("omits the flag for an uninstalled range that can resolve past 5.7", async () => {
+          project("^5.0.0");
+          expect(await setupAstroConfig()).toBe(true);
+          expect(written()).not.toContain("experimental:");
+        });
+
+        it("omits the flag for a tag it cannot compare", async () => {
+          project("latest");
+          expect(await setupAstroConfig()).toBe(true);
+          expect(written()).not.toContain("experimental:");
+        });
       });
 
       it("should not add experimental svg config for Astro >= 5.7.0", async () => {
@@ -353,7 +389,7 @@ describe("astro-config", () => {
 
         mockReadJsonFile.mockResolvedValue({
           dependencies: {
-            astro: "^5.5.0",
+            astro: "~5.5.0",
           },
         });
 
@@ -381,7 +417,7 @@ describe("astro-config", () => {
 
         mockReadJsonFile.mockResolvedValue({
           dependencies: {
-            astro: "^5.5.0",
+            astro: "~5.5.0",
           },
         });
 
@@ -406,7 +442,7 @@ describe("astro-config", () => {
 
         mockReadJsonFile.mockResolvedValue({
           dependencies: {
-            astro: "^5.5.0",
+            astro: "~5.5.0",
           },
         });
 
@@ -429,7 +465,7 @@ describe("astro-config", () => {
 
         mockReadJsonFile.mockResolvedValue({
           dependencies: {
-            astro: "^5.5.0",
+            astro: "~5.5.0",
           },
         });
 
@@ -452,7 +488,7 @@ describe("astro-config", () => {
 
         mockReadJsonFile.mockResolvedValue({
           dependencies: {
-            astro: "^5.5.0",
+            astro: "~5.5.0",
           },
         });
 
@@ -546,7 +582,7 @@ describe("astro-config", () => {
     });
 
     describe("version handling", () => {
-      it("should handle version with caret prefix and add experimental config", async () => {
+      it("should omit experimental config for a caret range that can reach 5.7.0", async () => {
         mockFileExists.mockResolvedValueOnce(true).mockResolvedValue(false);
         mockReadFile.mockResolvedValue(
           `import { defineConfig } from "astro/config";\n\nexport default defineConfig({});\n` as any,
@@ -561,12 +597,7 @@ describe("astro-config", () => {
         const result = await setupAstroConfig();
 
         expect(result).toBe(true);
-        // Should add experimental config for version < 5.7.0
-        expect(mockWriteFile).toHaveBeenCalledWith(
-          "astro.config.ts",
-          expect.stringContaining("experimental:"),
-          "utf-8",
-        );
+        expect(mockWriteFile.mock.calls[0]?.[1]).not.toContain("experimental:");
       });
 
       it("should handle version with tilde prefix and add experimental config", async () => {

@@ -30,5 +30,5 @@ import Tooltip from "./tooltip/index.js";
 let open = $state<boolean | undefined>(undefined);
 </script>
 <Tooltip.Root bind:open disabled={false} openDelay={200} closeDelay={200} disableHoverableContent={false} onOpenChange={(next, detail) => { void next; detail.cancel(); }}>
- {#snippet children(accepted)}<Tooltip.Trigger>Help</Tooltip.Trigger><Tooltip.Content positionerClass="custom" side="bottom" portalContainer="#portal" ref={(node: HTMLDivElement | null) => { void node; }}>{String(accepted)}{#snippet icon()}<svg aria-hidden="true"></svg>{/snippet}</Tooltip.Content>{/snippet}
+ <Tooltip.Trigger>Help</Tooltip.Trigger><Tooltip.Content positionerClass="custom" side="bottom" portalContainer="#portal" ref={(node: HTMLDivElement | null) => { void node; }}>{String(open)}{#snippet icon()}<svg aria-hidden="true"></svg>{/snippet}</Tooltip.Content>
 </Tooltip.Root>`;

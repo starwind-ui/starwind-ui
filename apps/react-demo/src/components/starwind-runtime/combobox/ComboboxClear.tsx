@@ -32,8 +32,6 @@ function ComboboxClear(props: ComboboxClearProps) {
         data-slot="combobox-clear"
       >
         {children}
-
-        {showIcon && <X />}
       </ComboboxPrimitive.Clear>
     );
   }

@@ -149,6 +149,134 @@ describe("Vue Input public behavior", () => {
     expect(clearTimeoutSpy).toHaveBeenCalled();
   });
 
+  it("keeps the caret and the native value during accepted v-model edits", async () => {
+    const model = ref("hello");
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(InputRoot, {
+          modelValue: model.value,
+          "onUpdate:modelValue": (value: string) => {
+            model.value = value;
+          },
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    const input = host.querySelector("input")!;
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!;
+    const writes: string[] = [];
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      get: () => descriptor.get!.call(input) as string,
+      set: (next: string) => {
+        writes.push(next);
+        descriptor.set!.call(input, next);
+      },
+    });
+
+    for (const [text, offset] of [
+      ["X", 2],
+      ["Y", 3],
+    ] as const) {
+      input.setSelectionRange(offset, offset);
+      input.setRangeText(text, offset, offset, "end");
+      input.dispatchEvent(new InputEvent("input", { bubbles: true, data: text }));
+      await nextTick();
+      await nextTick();
+    }
+
+    expect(model.value).toBe("heXYllo");
+    expect(input.value).toBe("heXYllo");
+    expect(input.selectionStart).toBe(4);
+    expect(input.selectionEnd).toBe(4);
+    expect(writes).toEqual([]);
+  });
+
+  it("repairs a refused change and clears the proposal state", async () => {
+    const model = ref("one");
+    const onUpdate = vi.fn();
+    const host = appendHost();
+    const app = createApp({
+      render: () => h(InputRoot, { modelValue: model.value, "onUpdate:modelValue": onUpdate }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    const input = host.querySelector("input")!;
+
+    input.value = "oXne";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, data: "X" }));
+    await nextTick();
+    await nextTick();
+
+    expect(onUpdate).toHaveBeenCalledWith("oXne");
+    expect(input.value).toBe("one");
+    expect(input.hasAttribute("data-dirty")).toBe(false);
+  });
+
+  it("follows later parent writes when the v-model starts undefined", async () => {
+    const model = ref<string | undefined>(undefined);
+    const events: string[] = [];
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(
+          "form",
+          null,
+          h(InputRoot, {
+            modelValue: model.value,
+            name: "late",
+            onValueChange: (value: string) => events.push(value),
+            "onUpdate:modelValue": (value: string) => {
+              model.value = value;
+            },
+          }),
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    const form = host.querySelector("form")!;
+    const input = host.querySelector("input")!;
+
+    model.value = "loaded";
+    await nextTick();
+    expect(input.value).toBe("loaded");
+    expect(new FormData(form).get("late")).toBe("loaded");
+    expect(events).toEqual([]);
+
+    input.setRangeText("!", 6, 6, "end");
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, data: "!" }));
+    await nextTick();
+    expect(model.value).toBe("loaded!");
+    expect(input.value).toBe("loaded!");
+
+    form.reset();
+    await new Promise((resolve) => window.setTimeout(resolve, 10));
+    expect(model.value).toBe("loaded!");
+    expect(input.value).toBe("loaded!");
+  });
+
+  it("keeps native reset under Runtime ownership with no model after edits", async () => {
+    const host = appendHost();
+    const app = createApp({
+      render: () => h("form", null, h(InputRoot, { defaultValue: "seed" })),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    const form = host.querySelector("form")!;
+    const input = host.querySelector("input")!;
+
+    input.value = "edited";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await nextTick();
+    expect(input.value).toBe("edited");
+
+    form.reset();
+    await new Promise((resolve) => window.setTimeout(resolve, 10));
+    expect(input.value).toBe("seed");
+    expect(input.hasAttribute("data-dirty")).toBe(false);
+  });
+
   it("isolates two Input instances across edits, resets, and lifecycle cleanup", async () => {
     const abort = vi.spyOn(AbortController.prototype, "abort");
     const showSecond = ref(true);

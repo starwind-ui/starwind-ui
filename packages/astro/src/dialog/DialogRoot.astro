@@ -22,13 +22,13 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-dialog
   data-default-open={defaultOpen ? "true" : undefined}
   data-close-on-escape={closeOnEscape ? "true" : "false"}
   data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
   data-modal={modal ? "true" : "false"}
   data-state={defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </div>

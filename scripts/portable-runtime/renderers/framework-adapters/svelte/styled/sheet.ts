@@ -35,23 +35,14 @@ export function specializeSvelteStyledSheet(
   for (const entry of component.imports.filter((entry) => supportsSvelteScope(entry.targetScopes)))
     if (!entry.svg) fail(`unsupported Sheet import "${entry.source}"`);
   component.imports = [];
-  if (part === "Trigger" || part === "Close") {
-    const [branch] = component.render;
-    if (
-      component.render.length !== 1 ||
-      branch?.type !== "condition" ||
-      branch.condition !== "asChild"
-    )
-      return fail("Sheet requires its child composition branch");
-    // The selected Primitive owns the native button and typed child payload in both Svelte modes.
-    component.render = branch.else;
-  }
   let owners = 0;
   function wire(nodes: StyledOutputRenderNode[]): void {
     for (const node of nodes) {
       if (node.type === "element" && node.tag === "div") node.selfClosing = false;
       if (node.type === "primitive" && node.component === "drawer" && node.part === part) {
         owners++;
+        // The selected Primitive owns the native button and typed child payload in both Svelte modes.
+        node.attrs = node.attrs.filter((attr) => attr.name !== "asChild");
         if (part === "Root") {
           for (const name of ["onOpenChange", "onCloseComplete"]) {
             const attr = node.attrs.find(

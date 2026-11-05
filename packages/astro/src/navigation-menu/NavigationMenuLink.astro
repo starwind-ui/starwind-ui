@@ -14,11 +14,11 @@ const { active = false, closeOnClick = true, ...rest } = Astro.props;
 ---
 
 <a
+  {...rest}
   data-sw-nav-menu-link
   data-active={active ? "" : undefined}
   aria-current={active ? "page" : undefined}
   data-close-on-click={closeOnClick ? undefined : "false"}
-  {...rest}
 >
   <slot />
 </a>

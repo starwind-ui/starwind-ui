@@ -2,6 +2,7 @@ import type {
   StyledOutputAttribute,
   StyledOutputPropExtend,
   StyledOutputRenderNode,
+  StyledOutputVariable,
 } from "../../../styled-output-model/index.js";
 import { projectVueModel } from "../public-contract.js";
 import { renderVueExpression } from "./expressions.js";
@@ -116,18 +117,19 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
     ],
     target: { component: "accordion", part: "Root" },
   },
+  // A Primitive part declares no aria-label prop, so strict templates need the object spread.
+  // The contract places the default before the consumer spread, and this order stays the same.
   "carousel:CarouselNext": {
     omittedTargetAttributes: ["aria-label"],
-    spreadExpression: "({ ...attrs, 'aria-label': 'Next slide' } as Record<string, unknown>)",
+    spreadExpression: "({ 'aria-label': 'Next slide', ...attrs } as Record<string, unknown>)",
     target: { component: "carousel", part: "Next" },
   },
   "carousel:CarouselPrevious": {
     omittedTargetAttributes: ["aria-label"],
-    spreadExpression: "({ ...attrs, 'aria-label': 'Previous slide' } as Record<string, unknown>)",
+    spreadExpression: "({ 'aria-label': 'Previous slide', ...attrs } as Record<string, unknown>)",
     target: { component: "carousel", part: "Previous" },
   },
   "color-picker:ColorPicker": {
-    attributeBindings: { format: "format" },
     additionalBindings: [
       {
         emits: [
@@ -330,7 +332,7 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
   },
   "sidebar:SidebarRail": {
     omittedTargetAttributes: ["aria-label"],
-    spreadExpression: "({ ...attrs, 'aria-label': 'Toggle Sidebar' } as Record<string, unknown>)",
+    spreadExpression: "({ 'aria-label': 'Toggle Sidebar', ...attrs } as Record<string, unknown>)",
     target: { component: "sidebar", part: "Rail" },
   },
   "sidebar:SidebarSeparator": {
@@ -1294,6 +1296,7 @@ export function collectVueNativeAttributesTypes(
 export function applyVueStyledPublicContractBindings(
   nodes: StyledOutputRenderNode[],
   contract: VueStyledPublicContract,
+  stateVariables: readonly StyledOutputVariable[] = [],
 ): void {
   visitNodes(nodes, (node) => {
     retainCanonicalAttributes(node, contract);
@@ -1301,14 +1304,20 @@ export function applyVueStyledPublicContractBindings(
     applyComponentSpreadExpression(node, contract);
     applyPrimitiveSpreadExpression(node, contract);
     if (contract.target) {
-      applyTargetBinding(node, {
-        emits: contract.emits,
-        models: contract.models,
-        omittedTargetAttributes: contract.omittedTargetAttributes,
-        target: { ...contract.target, type: "primitive" },
-      });
+      applyTargetBinding(
+        node,
+        {
+          emits: contract.emits,
+          models: contract.models,
+          omittedTargetAttributes: contract.omittedTargetAttributes,
+          target: { ...contract.target, type: "primitive" },
+        },
+        stateVariables,
+      );
     }
-    for (const binding of contract.additionalBindings ?? []) applyTargetBinding(node, binding);
+    for (const binding of contract.additionalBindings ?? []) {
+      applyTargetBinding(node, binding, stateVariables);
+    }
 
     if (
       contract.target &&
@@ -1360,7 +1369,11 @@ function applyPrimitiveSpreadExpression(
   }
 }
 
-function applyTargetBinding(node: StyledOutputRenderNode, binding: VueStyledTargetBinding): void {
+function applyTargetBinding(
+  node: StyledOutputRenderNode,
+  binding: VueStyledTargetBinding,
+  stateVariables: readonly StyledOutputVariable[],
+): void {
   if (!matchesTarget(node, binding.target)) return;
   if (binding.omittedTargetAttributes) {
     node.attrs = node.attrs.filter(
@@ -1380,9 +1393,15 @@ function applyTargetBinding(node: StyledOutputRenderNode, binding: VueStyledTarg
     ) {
       node.attrs.push({ name: model.name, value: { type: "variable", name: model.name } });
     }
+    const acceptedState = stateVariables.find(
+      (variable) => variable.state?.acceptedFrom === model.name,
+    );
     node.attrs.push({
       name: `@${toKebabCase(model.updateEvent)}`,
-      value: { type: "raw", code: `emit(${JSON.stringify(model.updateEvent)}, $event)` },
+      value: {
+        type: "raw",
+        code: `${acceptedState ? `${acceptedState.name} = $event; ` : ""}emit(${JSON.stringify(model.updateEvent)}, $event)`,
+      },
     });
   }
   for (const event of binding.emits ?? []) {

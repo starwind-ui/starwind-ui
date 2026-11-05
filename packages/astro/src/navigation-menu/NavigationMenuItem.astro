@@ -12,6 +12,6 @@ type Props = HTMLAttributes<"li"> & {
 const { value, ...rest } = Astro.props;
 ---
 
-<li data-sw-nav-menu-item data-value={value} data-state="closed" {...rest}>
+<li {...rest} data-sw-nav-menu-item data-value={value} data-state="closed">
   <slot />
 </li>

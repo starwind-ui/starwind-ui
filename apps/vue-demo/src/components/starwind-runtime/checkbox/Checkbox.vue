@@ -70,7 +70,7 @@ const {
   variant,
   size,
   checked = undefined,
-  defaultChecked,
+  defaultChecked = undefined,
   disabled = false,
   form,
   id,

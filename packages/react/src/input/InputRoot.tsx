@@ -52,7 +52,7 @@ const InputRoot = React.forwardRef<HTMLInputElement, InputRootProps>(function In
 
   function connectInput(element: HTMLInputElement) {
     const initialModel = valueRef.current;
-    const controlled = initialModel !== undefined;
+
     let disposed = false;
     let associated: HTMLFormElement | null = null;
     let resetTimer: number | undefined;
@@ -77,7 +77,6 @@ const InputRoot = React.forwardRef<HTMLInputElement, InputRootProps>(function In
       }, 0);
     }
     function bindReset(): void {
-      if (!controlled) return;
       const form = element.form;
       if (associated === form) return;
       clearReset();

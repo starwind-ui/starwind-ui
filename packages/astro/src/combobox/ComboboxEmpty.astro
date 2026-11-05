@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-combobox-empty hidden {...rest}>
+<div {...rest} data-sw-combobox-empty hidden>
   <slot />
 </div>

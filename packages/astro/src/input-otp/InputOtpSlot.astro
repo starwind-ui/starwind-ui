@@ -12,7 +12,7 @@ type Props = HTMLAttributes<"div"> & {
 const { index, ...rest } = Astro.props;
 ---
 
-<div data-sw-input-otp-slot data-index={index} {...rest}>
+<div {...rest} data-sw-input-otp-slot data-index={index}>
   <span data-sw-input-otp-char></span>
   <div
     data-sw-input-otp-caret

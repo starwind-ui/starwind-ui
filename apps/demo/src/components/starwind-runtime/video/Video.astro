@@ -70,6 +70,7 @@ const iframeSrc = srcdoc ? undefined : (embedUrl ?? undefined);
 {
   videoType === "native" || !embedUrl ? (
     <video
+      {...rest}
       data-sw-video
       class={video({ class: className })}
       src={src}
@@ -78,13 +79,13 @@ const iframeSrc = srcdoc ? undefined : (embedUrl ?? undefined);
       loop={loop}
       controls={controls}
       poster={poster}
-      {...rest}
       data-slot="video"
     >
       <track kind="captions" />
     </video>
   ) : (
     <iframe
+      {...rest}
       data-sw-video
       class={video({ class: className })}
       src={iframeSrc}
@@ -94,7 +95,6 @@ const iframeSrc = srcdoc ? undefined : (embedUrl ?? undefined);
       referrerpolicy="strict-origin-when-cross-origin"
       allowfullscreen
       data-video-type={isShort ? "youtube-shorts" : "youtube"}
-      {...rest}
       data-slot="video"
     />
   )

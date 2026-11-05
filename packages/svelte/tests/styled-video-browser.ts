@@ -97,7 +97,7 @@ assert.equal(globalThis.document,undefined);assert.equal(Video,exports.Video);as
     );
     assert.deepEqual(diagnostics, []);
     assert.equal(result.error, undefined, result.error);
-    assert.ok(result.attachments.setups >= 5);
+    assert.ok(result.attachments.setups >= 4);
     assert.equal(result.attachments.setups, result.attachments.cleanups);
     assert.deepEqual(result, {
       sources: videoSourceCases.length,

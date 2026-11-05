@@ -1,0 +1,111 @@
+---
+import { Checkbox } from "@starwind-ui/astro/checkbox";
+import { Combobox } from "@starwind-ui/astro/combobox";
+import { Dialog } from "@starwind-ui/astro/dialog";
+import { Select } from "@starwind-ui/astro/select";
+import { Tabs } from "@starwind-ui/astro/tabs";
+import Page from "../Page.astro";
+---
+
+<Page>
+  <main>
+    <button type="button" data-testid="outside">Outside</button>
+
+    <Combobox.Root data-testid="cu-root">
+      <Combobox.InputGroup>
+        <Combobox.Input data-testid="cu-input" />
+        <Combobox.Trigger data-testid="cu-trigger">Open</Combobox.Trigger>
+        <Combobox.Clear data-testid="cu-clear">Clear</Combobox.Clear>
+      </Combobox.InputGroup>
+      <Combobox.Positioner>
+        <Combobox.Popup data-testid="cu-popup">
+          <Combobox.List>
+            <Combobox.Item value="a" data-testid="cu-item-a">
+              <Combobox.ItemText>Apple</Combobox.ItemText>
+            </Combobox.Item>
+            <Combobox.Item value="b" data-testid="cu-item-b">
+              <Combobox.ItemText>Banana</Combobox.ItemText>
+            </Combobox.Item>
+          </Combobox.List>
+        </Combobox.Popup>
+      </Combobox.Positioner>
+    </Combobox.Root>
+
+    <Dialog.Root data-testid="du-root">
+      <Dialog.Trigger data-testid="du-trigger">Open</Dialog.Trigger>
+      <Dialog.Popup data-testid="du-popup">
+        <Dialog.Title>Title</Dialog.Title>
+        <Dialog.Close data-testid="du-close">Close</Dialog.Close>
+      </Dialog.Popup>
+    </Dialog.Root>
+
+    <Select.Root data-testid="su-root">
+      <Select.Trigger data-testid="su-trigger">
+        <Select.Value data-testid="su-value" placeholder="Pick" />
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup data-testid="su-popup">
+          <Select.List>
+            <Select.Item value="a" data-testid="su-item-a">
+              <Select.ItemText>Apple</Select.ItemText>
+            </Select.Item>
+            <Select.Item value="b" data-testid="su-item-b">
+              <Select.ItemText>Banana</Select.ItemText>
+            </Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+
+    <Select.Root data-testid="sw-root">
+      <Select.Trigger data-testid="sw-trigger">
+        <Select.Value data-testid="sw-value" placeholder="Pick" />
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup data-testid="sw-popup">
+          <Select.List>
+            <Select.Item value="a" data-testid="sw-item-a">
+              <Select.ItemText>Apple</Select.ItemText>
+            </Select.Item>
+            <Select.Item value="b" data-testid="sw-item-b">
+              <Select.ItemText>Banana</Select.ItemText>
+            </Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+
+    <Tabs.Root data-testid="tu-root" defaultValue="one">
+      <Tabs.List>
+        <Tabs.Tab value="one" data-testid="tu-tab-one">One</Tabs.Tab>
+        <Tabs.Tab value="two" data-testid="tu-tab-two">Two</Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Panel value="one" data-testid="tu-panel-one">Panel one</Tabs.Panel>
+      <Tabs.Panel value="two" data-testid="tu-panel-two">Panel two</Tabs.Panel>
+    </Tabs.Root>
+
+    <Checkbox.Root data-testid="ku-root">
+      <Checkbox.Indicator />
+    </Checkbox.Root>
+  </main>
+
+  <script>
+    import { listen } from "../../shared/harness";
+
+    const open = { "starwind:open-change": { event: "open", value: "open" } };
+    const value = { "starwind:value-change": { event: "value", value: "value" } };
+
+    listen('[data-testid="cu-root"]', "cu", {
+      ...value,
+      ...open,
+      "starwind:input-value-change": { event: "input", value: "inputValue" },
+    });
+    listen('[data-testid="du-root"]', "du", open);
+    listen('[data-testid="su-root"]', "su", { ...value, ...open });
+    listen('[data-testid="sw-root"]', "sw", value);
+    listen('[data-testid="tu-root"]', "tu", value);
+    listen('[data-testid="ku-root"]', "ku", {
+      "starwind:checked-change": { event: "checked", value: "checked" },
+    });
+  </script>
+</Page>

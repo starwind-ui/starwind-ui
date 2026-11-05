@@ -260,6 +260,8 @@ export async function measureEntry(
   return {
     brotliBytes: initial.brotliBytes,
     gzipBytes: initial.gzipBytes,
+    initialChunks: initial.initialChunks,
+    lazyChunks: initial.lazyChunks,
     minifiedBytes: initial.minifiedBytes,
     ...(initial.metafile ? { metafile: initial.metafile } : {}),
   };

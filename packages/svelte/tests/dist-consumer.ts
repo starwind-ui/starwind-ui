@@ -65,6 +65,12 @@ export const consumerFamilies = [
   "toast",
 ] as const;
 
+/** Svelte 5.57 changed attachment restoration and native multiple-select warnings. */
+export function isSvelte557OrNewer(version: string): boolean {
+  const [major = 0, minor = 0] = version.split(".").map(Number);
+  return major > 5 || (major === 5 && minor >= 57);
+}
+
 export interface DistConsumer {
   root: string;
   tools: Record<"compiler" | "checker" | "typescript", string>;

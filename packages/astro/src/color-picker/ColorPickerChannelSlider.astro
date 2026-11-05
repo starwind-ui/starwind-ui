@@ -34,9 +34,9 @@ const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 
 <div
   {...rest}
+  {...initial?.attributes}
   data-channel={initial ? undefined : channel}
   data-orientation={initial ? undefined : orientation}
-  {...initial?.attributes}
   hidden={initial?.properties.hidden ?? hidden}
   style={mergedStyle}
   data-sw-color-picker-channel-slider

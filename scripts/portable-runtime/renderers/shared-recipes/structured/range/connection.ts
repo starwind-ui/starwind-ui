@@ -18,6 +18,8 @@ export const sliderPolicy = {
 export interface SliderOperations {
   authority: "parent" | "binding";
   read(name: string): string;
+  /** Binding targets read their local bindable here for Runtime-owned readback. */
+  readBinding?: string;
   render(value: string): string;
   publish(value: string): string;
   notify(event: "valueChange" | "valueCommitted", value: string, detail: string): string;
@@ -34,22 +36,22 @@ export function sliderConnection(f: AdapterRangeControlFacts, op: SliderOperatio
     keys = sliderPolicy.options;
   const options = keys.filter((k) => k !== "disabled" && k !== "name");
   const publish = binding
-    ? `${op.publish("copyValue(next)")} const canonical=${read("value")};if(canonical!==undefined&&!valuesEqual(canonical,next))synchronize(canonical);`
+    ? `${op.publish("copyValue(next)")} const canonical=${op.readBinding};if(canonical!==undefined&&!valuesEqual(canonical,next))synchronize(canonical);`
     : op.publish("copyValue(next)");
   return `${sliderCodec()}
 function connectSlider(root:HTMLDivElement){
  const initialModel=copyValue(${read("value")});
- const controlled=${binding ? "false" : "initialModel!==undefined"};
+ const controlled=initialModel!==undefined;
  let disposed=false,synchronizing=false;
  let rendered=copyValue(initialModel??initialDefaultValue);
  const readOptions=()=>({${keys.map((k) => `${k}:${read(k)}`).join(",")}});
  let applied=readOptions();
  const instance=${f.runtime.factory}(root,{
  defaultValue:copyValue(initialDefaultValue),...applied,
- ${binding ? "" : "...(controlled?{value:initialModel}:{}),"}
+ ...(controlled?{value:initialModel}:{}),
  ${f.events.valueChange.callbackProp}:(next,detail)=>{${op.untrack(op.notify("valueChange", "copyValue(next)", "detail"))}}
  });
- function render(next:SliderValue):void{if(controlled||valuesEqual(rendered,next))return;rendered=copyValue(next);${op.render("copyValue(next)")}}
+ function render(next:SliderValue):void{if(${binding ? "" : "controlled||"}valuesEqual(rendered,next))return;rendered=copyValue(next);${op.render("copyValue(next)")}}
  function publishReadback():void{if(disposed||controlled)return;const next=instance.getValue();render(next);${publish}}
  function synchronize(next:SliderValue):void{if(disposed)return;synchronizing=true;try{instance.refresh();if(!valuesEqual(instance.getValue(),next))instance.setValue(copyValue(next),{emit:${sliderPolicy.emitCommands}});}finally{synchronizing=false;}render(instance.getValue());}
  function syncModel():void{if(disposed${binding ? "" : "||!controlled"})return;const next=${read("value")};if(next===undefined)return;synchronize(next);${binding ? "publishReadback();" : ""}}
@@ -61,7 +63,7 @@ function connectSlider(root:HTMLDivElement){
  applied=next;
  }finally{synchronizing=false;}
  syncModel();publishReadback();}
- const stopChange=instance.subscribe('${f.events.valueChange.name}',detail=>{if(disposed||detail.isCanceled)return;${op.untrack(binding ? "publishReadback();" : `render(detail.value);${op.publish("copyValue(detail.value)")}`)}});
+ const stopChange=instance.subscribe('${f.events.valueChange.name}',detail=>{if(disposed||detail.isCanceled)return;${op.untrack(binding ? `if(controlled){${op.publish("copyValue(detail.value)")}}else{publishReadback();}` : `render(detail.value);${op.publish("copyValue(detail.value)")}`)}});
  const stopCommit=instance.subscribe('${f.events.valueCommitted.name}',detail=>{if(disposed)return;${op.untrack(op.notify("valueCommitted", "copyValue(detail.value)", "detail"))}});
  const stopState=instance.subscribe('stateSync',()=>{if(disposed||synchronizing)return;${op.untrack("publishReadback();")}});
  ${binding ? "syncModel();publishReadback();" : "render(instance.getValue());"}

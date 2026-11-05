@@ -1,6 +1,7 @@
 import { initialFormState } from "../shared-recipes/structured/forms/lifecycle.js";
 import type { FormControlPlan } from "../shared-recipes/structured/forms/plan.js";
 import type { Target } from "../shared-recipes/structured/operations.js";
+import { svelteModelDestructure } from "./svelte/recipe-framework-operations.js";
 
 const hiddenStyle =
   "position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;";
@@ -19,7 +20,7 @@ export function formProjection(
   const destructure = plan.props
     .map((prop) =>
       prop.name === "checked" && target === "svelte"
-        ? "checked = $bindable()"
+        ? svelteModelDestructure("checked")
         : `${prop.name}${prop.defaultValue && prop.name !== "defaultChecked" ? ` = ${prop.defaultValue}` : ""}`,
     )
     .join(", ");
@@ -86,7 +87,7 @@ export function formProjection(
   const imports = `import { ${plan.factory}, type ${plan.model.details} } from "${plan.importSource}";`;
   const groupRead = target === "vue" ? "groupChecked.value" : "groupChecked";
   const groupFunction = `${grouped ? `function groupCheckedValue(): boolean | undefined { return ${groupRead}; }` : ""}
-function effectiveChecked(): boolean | undefined { return ${grouped ? "groupCheckedValue() ?? " : ""}${fw.readInput("checked")}; }
+function effectiveChecked(): boolean | undefined { return ${grouped ? "groupCheckedValue() ?? " : ""}${fw.readModel("checked")}; }
 function effectiveDisabled(): boolean { return ${target === "react" ? "effectiveDisabledValue" : target === "vue" ? "effectiveDisabledValue.value" : "effectiveDisabledValue"}; }`;
 
   return {

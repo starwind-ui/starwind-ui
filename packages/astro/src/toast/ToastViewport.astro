@@ -35,6 +35,7 @@ const viewportStyle = [`--gap: ${gap}`, `--peek: ${peek}`, style].filter(Boolean
 ---
 
 <div
+  {...rest}
   data-sw-toast-viewport
   data-position={position}
   data-limit={limit}
@@ -46,7 +47,6 @@ const viewportStyle = [`--gap: ${gap}`, `--peek: ${peek}`, style].filter(Boolean
   aria-label="Notifications"
   tabindex="-1"
   style={viewportStyle}
-  {...rest}
 >
   <slot />
 </div>

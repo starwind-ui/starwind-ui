@@ -12,10 +12,10 @@ const inferredRole = role ?? (variant === "error" || variant === "warning" ? "al
 ---
 
 <div
+  {...rest}
   data-sw-alert
   class={alert({ variant, class: className })}
   role={inferredRole}
-  {...rest}
   data-slot="alert"
 >
   <slot />

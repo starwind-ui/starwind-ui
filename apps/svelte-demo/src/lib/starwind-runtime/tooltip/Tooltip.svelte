@@ -20,6 +20,7 @@
     open = $bindable(),
     "onOpenChange": onOpenChange,
     "children": children,
+    "open": commandOpen,
     ...rest
   }: TooltipProps = $props();
 </script>
@@ -37,7 +38,7 @@
   {...rest}
   data-slot={"tooltip"}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </TooltipRoot>

@@ -85,7 +85,7 @@ export default Sidebar;
 export { SidebarContext, useSidebarContext } from "./SidebarContext.js";
 export type { SidebarContextValue } from "./SidebarContext.js";
 export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
-export type { AnchorChildProps, SidebarMenuButtonChildPayload } from "./SidebarMenuButton.svelte";
+export type { SidebarMenuButtonChildPayload } from "./SidebarMenuButton.svelte";
 export type { ${f.facts.index.typeExports.join(", ")} } from "${f.facts.runtime.typeImportSource}";
 `,
   };
@@ -106,7 +106,7 @@ ${printSvelteRefAttachment(element)}
 <${tag} {...rest} ${sidebarAttrs(f, part, "svelte")} {@attach attachRef}>{@render children?.()}</${tag}>`;
 }
 
-/** Keep the existing root AnchorChildProps export and give Sidebar's local type a distinct root name. */
+/** List Sidebar's root exports by name, so its ButtonChild types keep their Button owner. */
 export async function writeSvelteSidebarRootExports(outputRoot: string): Promise<void> {
   const source = await readFile(path.join(outputRoot, "index.ts"), "utf8");
   const marker = 'export * from "./sidebar/index.js";';
@@ -118,7 +118,7 @@ export async function writeSvelteSidebarRootExports(outputRoot: string): Promise
     source.replace(
       marker,
       `export { Sidebar, SidebarComponent, SidebarProvider, SidebarTrigger, SidebarRail, SidebarMenuButton, SidebarContext, useSidebarContext } from "./sidebar/index.js";
-export type { SidebarContextValue, SidebarMenuButtonChildPayload, AnchorChildProps as SidebarAnchorChildProps } from "./sidebar/index.js";`,
+export type { SidebarContextValue, SidebarMenuButtonChildPayload } from "./sidebar/index.js";`,
     ),
   );
 }

@@ -1,4 +1,7 @@
-import type { PrimitiveRefreshContract } from "../../contracts/primitive/types.js";
+import type {
+  PrimitiveAsChildContract,
+  PrimitiveRefreshContract,
+} from "../../contracts/primitive/types.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import type {
   AdapterColorPickerComponentProjection,
@@ -256,6 +259,19 @@ export type AdapterAcceptedModelPublication = {
   state: string;
   notification: "controller-subscription";
 };
+
+/** The contract's child element fact for each part that declares one. */
+export type AdapterChildElements = Partial<
+  Record<string, NonNullable<PrimitiveAsChildContract["childElement"]>>
+>;
+
+export function getAdapterChildElements(
+  asChild: readonly PrimitiveAsChildContract[] | undefined,
+): AdapterChildElements {
+  return Object.fromEntries(
+    (asChild ?? []).flatMap(({ childElement, part }) => (childElement ? [[part, childElement]] : [])),
+  );
+}
 
 export type AdapterComponentModel = {
   acceptedModelPublications?: AdapterAcceptedModelPublication[];
@@ -665,6 +681,7 @@ export type AdapterSharedViewportNavigationIndexProjection = {
 };
 
 export type AdapterSharedViewportNavigationFacts = {
+  childElements?: AdapterChildElements;
   attrs: Record<
     | "active"
     | "align"
@@ -860,6 +877,7 @@ export type AdapterEditableCollectionOverlayIndexProjection = {
 };
 
 export type AdapterEditableCollectionOverlayFacts = {
+  childElements?: AdapterChildElements;
   attrs: Record<
     | "align"
     | "alignOffset"
@@ -965,6 +983,11 @@ export type AdapterEditableCollectionOverlayFacts = {
     constantAttributes: {
       ariaHidden: string;
       tabIndex: string;
+    };
+  };
+  icon: {
+    constantAttributes: {
+      ariaHidden: string;
     };
   };
   index: {
@@ -1292,6 +1315,7 @@ export type AdapterCompositeMenuOverlayHelperProjection = {
 };
 
 export type AdapterCompositeMenuOverlayFacts = {
+  childElements?: AdapterChildElements;
   attrs: {
     align: string;
     avoidCollisions: string;
@@ -1560,6 +1584,7 @@ export type AdapterOptionCollectionOverlayIndexProjection = {
 };
 
 export type AdapterOptionCollectionOverlayFacts = {
+  childElements?: AdapterChildElements;
   attrs: {
     align: string;
     alignItemWithTrigger: string;
@@ -2851,6 +2876,7 @@ export type AdapterPresenceFloatingOverlayIndexProjection = {
 };
 
 export type AdapterPresenceFloatingOverlayFacts = {
+  childElements?: AdapterChildElements;
   attrs: {
     arrow: string;
     backdrop: string;
@@ -2999,6 +3025,7 @@ export type AdapterTimedFloatingOverlayIndexProjection = {
 };
 
 export type AdapterTimedFloatingOverlayFacts = {
+  childElements?: AdapterChildElements;
   attrs: {
     align: string;
     arrow: string;
@@ -3106,6 +3133,7 @@ export type AdapterTimedFloatingOverlayFacts = {
     valueType: string;
   };
   trigger: {
+    asChildFallsBackToDefaultElement: boolean;
     asChildWrapperElement: string;
     clickGuardWhenDisabled: boolean;
     delayOverrides: boolean;

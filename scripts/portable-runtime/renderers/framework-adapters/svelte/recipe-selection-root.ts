@@ -1,11 +1,12 @@
 import type { FrameworkOperations } from "../../shared-recipes/structured/operations.js";
 import type { ConnectionRecipe } from "../../shared-recipes/structured/plan.js";
 import type { SelectionRootProjection } from "../../shared-recipes/structured/root-frame.js";
+import { svelteModelDestructure, svelteTrackModel } from "./recipe-framework-operations.js";
 export const svelteSelectionRootProjection: SelectionRootProjection = {
   readProp: (name) => name,
   callbackType: (plan) => `(value: ${plan.model.type}, detail: ${plan.proposal.details}) => void`,
   destructureProp: (name, defaultValue, model) =>
-    model ? `${name} = $bindable()` : `${name}${defaultValue ? ` = ${defaultValue}` : ""}`,
+    model ? svelteModelDestructure(name) : `${name}${defaultValue ? ` = ${defaultValue}` : ""}`,
   marker: (name) => `${name}=""`,
   attribute: (name, value) => `${name}={${value}}`,
   print(input) {
@@ -46,6 +47,7 @@ const initialValue = untrack(() => {
   return copyModel(initialValue);
 });
 ${serializeDefault}
+${fw.controlledCell(name)}
 ${accepted}
 ${controller}
 ${code}
@@ -66,6 +68,6 @@ function observeElementConnection(plan: ConnectionRecipe, fw: FrameworkOperation
     untrack(() => connectRuntime(root));
     return disconnectRuntime;
   });
-  ${fw.observeModel(plan.model.name)}
+  $effect(() => { ${svelteTrackModel(plan.model.name)} void ${fw.readModel(plan.model.name)}; untrack(applyParentCommand); });
 };`;
 }

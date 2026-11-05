@@ -119,9 +119,9 @@ import { getFieldRefresh } from "../form/FormFieldContext.js";
 const refresh = getFieldRefresh();
 const fieldAttachment = { [createAttachmentKey()]: () => { ${fieldPartConnection("refresh")} } };
 type Props = FieldControlProps;
-let { value = $bindable(), ...rest }: Props = $props();
+let { value = $bindable(), value: commandValue, ...rest }: Props = $props();
 </script>
-<InputRoot {...rest} {...fieldAttachment} ${facts.attrs.control}="" bind:value />
+<InputRoot {...rest} {...fieldAttachment} ${facts.attrs.control}="" bind:value={() => commandValue, (next) => { value = next; }} />
 `;
 }
 function simple(

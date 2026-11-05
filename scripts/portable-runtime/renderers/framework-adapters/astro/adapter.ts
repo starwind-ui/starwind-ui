@@ -955,8 +955,11 @@ function printAstroNativeOverlayRoot(facts: AdapterNativeOverlayFacts): string {
 
 function printAstroNativeOverlayTrigger(facts: AdapterNativeOverlayFacts): string {
   const part = facts.parts.trigger;
+  const asChild = facts.props.asChild;
+  const targetId = facts.props.targetId;
+  const sharedAttributes = `${facts.attrs.triggerAriaHaspopup}="dialog"\n      ${facts.attrs.targetId}={${targetId.name}}\n      ${facts.attrs.triggerState}="closed"\n      {...rest}`;
 
-  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}"> & {\n  ${facts.props.targetId.name}?: ${facts.props.targetId.type};\n};\n\nconst { ${facts.props.targetId.name}, ...rest } = Astro.props;\n---\n\n<${part.defaultElement}\n  ${facts.attrs.triggerType}="button"\n  ${facts.attrs.trigger}\n  ${facts.attrs.triggerAriaHaspopup}="dialog"\n  ${facts.attrs.targetId}={${facts.props.targetId.name}}\n  ${facts.attrs.triggerState}="closed"\n  {...rest}\n>\n  <slot />\n</${part.defaultElement}>\n`;
+  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}"> & {\n  ${asChild.name}?: ${asChild.type};\n  ${targetId.name}?: ${targetId.type};\n};\n\nconst { ${asChild.name} = ${asChild.defaultValue}, ${targetId.name}, ...rest } = Astro.props;\n---\n\n{\n  ${asChild.name} ? (\n    <div\n      ${facts.attrs.trigger}\n      data-as-child\n      ${sharedAttributes}\n    >\n      <slot />\n    </div>\n  ) : (\n    <${part.defaultElement}\n      ${facts.attrs.triggerType}="button"\n      ${facts.attrs.trigger}\n      ${sharedAttributes}\n    >\n      <slot />\n    </${part.defaultElement}>\n  )\n}\n`;
 }
 
 function printAstroNativeOverlayBackdrop(facts: AdapterNativeOverlayFacts): string {
@@ -982,8 +985,9 @@ function printAstroNativeOverlayPopup(facts: AdapterNativeOverlayFacts): string 
 
 function printAstroNativeOverlayClose(facts: AdapterNativeOverlayFacts): string {
   const part = facts.parts.close;
+  const asChild = facts.props.asChild;
 
-  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}">;\n\nconst { ...rest } = Astro.props;\n---\n\n<${part.defaultElement} ${facts.attrs.closeType}="button" ${facts.attrs.close} {...rest}>\n  <slot />\n</${part.defaultElement}>\n`;
+  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}"> & {\n  ${asChild.name}?: ${asChild.type};\n};\n\nconst { ${asChild.name} = ${asChild.defaultValue}, ...rest } = Astro.props;\n---\n\n{\n  ${asChild.name} ? (\n    <div ${facts.attrs.close} data-as-child {...rest}>\n      <slot />\n    </div>\n  ) : (\n    <${part.defaultElement} ${facts.attrs.closeType}="button" ${facts.attrs.close} {...rest}>\n      <slot />\n    </${part.defaultElement}>\n  )\n}\n`;
 }
 
 function printAstroNativeOverlaySimplePart(
@@ -1184,7 +1188,13 @@ function printAstroTimedFloatingOverlayTrigger(facts: AdapterTimedFloatingOverla
     return printAstroTimedFloatingOverlayAnchorTrigger(facts);
   }
 
-  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}"> & {\n  ${facts.props.asChild.name}?: ${facts.props.asChild.type};\n  ${facts.props.disabled.name}?: ${facts.props.disabled.type};\n};\n\nconst { ${facts.props.asChild.name} = false, ${facts.props.disabled.name} = false, ...rest } = Astro.props;\n---\n\n{\n  ${facts.props.asChild.name} ? (\n    <span\n      ${facts.attrs.trigger}\n      ${facts.attrs.triggerAsChild}\n      ${facts.attrs.triggerDisabled}={${facts.props.disabled.name} ? "" : undefined}\n      ${facts.attrs.triggerAriaDisabled}={${facts.props.disabled.name} ? "true" : undefined}\n      ${facts.attrs.triggerState}="closed"\n      {...rest}\n    >\n      <slot />\n    </span>\n  ) : (\n    <${part.defaultElement}\n      type="button"\n      ${facts.attrs.trigger}\n      ${facts.attrs.triggerDisabled}={${facts.props.disabled.name} ? "" : undefined}\n      ${facts.attrs.triggerAriaDisabled}={${facts.props.disabled.name} ? "true" : undefined}\n      ${facts.attrs.triggerState}="closed"\n      ${facts.attrs.triggerNativeDisabled}={${facts.props.disabled.name} ? true : undefined}\n      {...rest}\n    >\n      <slot />\n    </${part.defaultElement}>\n  )\n}\n`;
+  // A child that is not an element cannot be the trigger, so the default element renders it.
+  const fallback = facts.trigger.asChildFallsBackToDefaultElement;
+  const childDetection = fallback
+    ? `const slotted = ${facts.props.asChild.name} ? await Astro.slots.render("default") : undefined;\nconst hasElementChild = /^\\s*(?:<!--[\\s\\S]*?-->\\s*)*<[a-z]/i.test(slotted ?? "");\n`
+    : "";
+
+  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}"> & {\n  ${facts.props.asChild.name}?: ${facts.props.asChild.type};\n  ${facts.props.disabled.name}?: ${facts.props.disabled.type};\n};\n\nconst { ${facts.props.asChild.name} = false, ${facts.props.disabled.name} = false, ...rest } = Astro.props;\n${childDetection}---\n\n{\n  ${facts.props.asChild.name}${fallback ? " && hasElementChild" : ""} ? (\n    <span\n      ${facts.attrs.trigger}\n      ${facts.attrs.triggerAsChild}\n      ${facts.attrs.triggerDisabled}={${facts.props.disabled.name} ? "" : undefined}\n      ${facts.attrs.triggerAriaDisabled}={${facts.props.disabled.name} ? "true" : undefined}\n      ${facts.attrs.triggerState}="closed"\n      {...rest}\n    >\n      ${fallback ? `<Fragment set:html={slotted} />` : "<slot />"}\n    </span>\n  ) : (\n    <${part.defaultElement}\n      type="button"\n      ${facts.attrs.trigger}\n      ${facts.attrs.triggerDisabled}={${facts.props.disabled.name} ? "" : undefined}\n      ${facts.attrs.triggerAriaDisabled}={${facts.props.disabled.name} ? "true" : undefined}\n      ${facts.attrs.triggerState}="closed"\n      ${facts.attrs.triggerNativeDisabled}={${facts.props.disabled.name} ? true : undefined}\n      {...rest}\n    >\n      ${fallback ? `{slotted === undefined ? <slot /> : <Fragment set:html={slotted} />}` : "<slot />"}\n    </${part.defaultElement}>\n  )\n}\n`;
 }
 
 function printAstroTimedFloatingOverlayAnchorTrigger(

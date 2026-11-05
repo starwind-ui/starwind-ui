@@ -30,7 +30,7 @@ const controlClassName = computed(() => carouselNext({ class: className }));
 <template>
   <CarouselPrimitive.CarouselNext
     :class="carouselControl({ variant, size, class: controlClassName })"
-    v-bind="{ ...attrs, 'aria-label': 'Next slide' } as Record<string, unknown>"
+    v-bind="{ 'aria-label': 'Next slide', ...attrs } as Record<string, unknown>"
     data-slot="carousel-next"
   >
     <slot>

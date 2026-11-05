@@ -16,8 +16,6 @@ export const vueComboboxOperations: ComboboxOperations = {
   ...base,
   root: "rootRef.value!",
   portal: "portalReference: portalReference ?? undefined,",
-  nativeInputRestoresCanceledValue: false,
-  selectedText: () => "created.getInputValue()",
   rememberLabel: () => "",
   own: (instance) => `instance = ${instance};`,
   subscribe: (instance, event, body) =>

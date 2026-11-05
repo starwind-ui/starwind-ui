@@ -27,13 +27,13 @@ const timedOverlayContext=Symbol('${plan.component} part context');
 export function getTimedOverlayContext():TimedOverlayContext|undefined{return getContext(timedOverlayContext);}
 </script>
 <script lang="ts">
-import {createPortalBinding,readyPortalBindingSnapshot,${f.runtime.factory},type ${plan.proposal.details}} from '${f.runtime.importSource}';
+import {createPortalBinding,readyPortalBindingSnapshot,${f.runtime.factory},refresh${plan.component}PortalSurface,type ${plan.proposal.details}} from '${f.runtime.importSource}';
 import {setContext,untrack,type Snippet} from 'svelte';
 import type {Attachment} from 'svelte/attachments';
 import type {HTMLAttributes} from 'svelte/elements';
 import {createRefAttachment} from '../_internal/ref-attachment.js';
-type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'>&{${fields} children?:Snippet<[boolean]>;ref?:(element:HTMLDivElement|null)=>void;onOpenChange?:(open:boolean,detail:${plan.proposal.details})=>void};
-let {${props.map((p) => (p.name === "open" ? "open=$bindable()" : `${p.name}${p.defaultValue ? `=${p.defaultValue}` : ""}`)).join(", ")},children,ref,onOpenChange,...rest}:Props=$props();
+type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'>&{${fields} children?:Snippet;ref?:(element:HTMLDivElement|null)=>void;onOpenChange?:(open:boolean,detail:${plan.proposal.details})=>void};
+let {${props.map((p) => (p.name === "open" ? "open=$bindable(),open:commandOpen" : `${p.name}${p.defaultValue ? `=${p.defaultValue}` : ""}`)).join(", ")},children,ref,onOpenChange,...rest}:Props=$props();
 ${initial}
 ${accepted}
 ${controller}
@@ -41,8 +41,10 @@ ${placement}
 let mounted=$state(false);
 const portals=new Map<symbol,{wrapper:HTMLElement;authoredParent:HTMLElement;prepare?:()=>()=>void}>();
 let binding:ReturnType<typeof createPortalBinding>|undefined,bindingRoot:HTMLDivElement|undefined;
+let surfaceRefreshQueued=false;
+function requestSurfaceRefresh():void{if(surfaceRefreshQueued)return;surfaceRefreshQueued=true;queueMicrotask(()=>{surfaceRefreshQueued=false;if(connection.instance&&bindingRoot&&authoredPlacement.size>0)refresh${plan.component}PortalSurface(bindingRoot);});}
 setContext<TimedOverlayContext>(timedOverlayContext,{get mounted(){return mounted;},
-registerPlacement,
+registerPlacement(element,attributes){const added=attributes!==null&&!authoredPlacement.has(element);registerPlacement(element,attributes);if(added)requestSurfaceRefresh();},
 registerPortal(owner,element,authoredParent,prepare){if(element&&authoredParent)portals.set(owner,{wrapper:element,authoredParent,prepare});else portals.delete(owner);binding?.publish(readyPortalBindingSnapshot(bindingRoot!,[...portals.values()]));}
 });
 ${lifecycle}
@@ -56,7 +58,7 @@ return ()=>{mounted=false;binding?.destroy();binding=undefined;bindingRoot=undef
 };
 const attachRef=createRefAttachment<HTMLDivElement>(()=>ref);
 </script>
-<div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.(renderedOpen)}</div>
+<div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>
 `;
   },
 };

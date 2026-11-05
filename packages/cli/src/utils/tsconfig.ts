@@ -256,6 +256,18 @@ export async function setupTsConfig(
   }
 }
 
+function getSourceAliasPaths(existingConfig: TsConfig): TsConfigPaths {
+  return {
+    ...(existingConfig.compilerOptions?.paths ?? {}),
+    "@/*": [
+      "./src/*",
+      ...(existingConfig.compilerOptions?.paths?.["@/*"] ?? []).filter(
+        (target) => target !== "./src/*",
+      ),
+    ],
+  };
+}
+
 export function mergeVueTsConfig(existingConfig: TsConfig, includeJavaScript = false): TsConfig {
   const compilerOptions = {
     ...(existingConfig.compilerOptions ?? {}),
@@ -268,15 +280,7 @@ export function mergeVueTsConfig(existingConfig: TsConfig, includeJavaScript = f
               : false,
         }
       : {}),
-    paths: {
-      ...(existingConfig.compilerOptions?.paths ?? {}),
-      "@/*": [
-        "./src/*",
-        ...(existingConfig.compilerOptions?.paths?.["@/*"] ?? []).filter(
-          (target) => target !== "./src/*",
-        ),
-      ],
-    },
+    paths: getSourceAliasPaths(existingConfig),
   };
   const include = existingConfig.include ?? [];
   const hasVueSources = include.some(
@@ -306,6 +310,41 @@ export async function setupVueTsConfig(includeJavaScript = false): Promise<boole
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
     p.log.error(highlighter.error(`Failed to setup Vue tsconfig: ${errorMessage}`));
+    return false;
+  }
+}
+
+export function mergeSvelteTsConfig(existingConfig: TsConfig): TsConfig {
+  return {
+    ...existingConfig,
+    compilerOptions: {
+      ...(existingConfig.compilerOptions ?? {}),
+      paths: getSourceAliasPaths(existingConfig),
+    },
+  };
+}
+
+/** Adds the source alias to the config that a Vite Svelte starter uses for its source files. */
+export async function setupSvelteTsConfig(): Promise<boolean> {
+  try {
+    let configPath = "tsconfig.json";
+    for (const candidate of ["tsconfig.app.json", "tsconfig.json", "jsconfig.json"]) {
+      if (await fileExists(candidate)) {
+        configPath = candidate;
+        break;
+      }
+    }
+    const existingConfig = (await fileExists(configPath))
+      ? ((await readJsoncFile(configPath)) as TsConfig)
+      : {};
+    const mergedConfig = mergeSvelteTsConfig(existingConfig);
+    if (JSON.stringify(mergedConfig) !== JSON.stringify(existingConfig)) {
+      await writeJsonFile(configPath, mergedConfig);
+    }
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    p.log.error(highlighter.error(`Failed to setup Svelte TypeScript aliases: ${errorMessage}`));
     return false;
   }
 }

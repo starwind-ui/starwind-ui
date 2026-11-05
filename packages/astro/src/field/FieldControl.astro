@@ -16,10 +16,10 @@ const { defaultValue, disabled = false, value, ...rest } = Astro.props;
 ---
 
 <input
+  {...rest}
   data-sw-field-control
   data-sw-input
   data-disabled={disabled ? "" : undefined}
   disabled={disabled}
   value={value ?? defaultValue}
-  {...rest}
 />

@@ -15,12 +15,12 @@ const { variant = "default", ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-toast-root
   data-state="open"
   data-variant={variant}
   role="dialog"
   aria-modal="false"
-  {...rest}
 >
   <slot />
 </div>

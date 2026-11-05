@@ -40,6 +40,8 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
   const formatControlled = transport.seed.format !== undefined;
   let controlledValue = transport.seed.value;
   let controlledFormat = transport.seed.format;
+  let commandedValue = transport.seed.value;
+  let commandedFormat = transport.seed.format;
   let active = true;
   let pending = false;
   let applied = transport.read();
@@ -76,10 +78,18 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
       const parsed = next.value === null ? (next.allowEmpty ? null : undefined) : typeof next.value === "string" ? parseColor(next.value) ?? undefined : next.value;
       if (parsed !== undefined) controlledValue = parsed;
       if (controlledValue !== undefined && !sameValue(owner.getValue(), controlledValue)) owner.setValue(controlledValue, { emit: false });
+    } else if (!Object.is(next.value, commandedValue)) {
+      // Apply a changed input once, so a stale one-way value never reverts an accepted interaction.
+      commandedValue = next.value;
+      const parsed = next.value === null ? (next.allowEmpty ? null : undefined) : typeof next.value === "string" ? parseColor(next.value) ?? undefined : next.value;
+      if (parsed !== undefined && !sameValue(owner.getValue(), parsed)) owner.setValue(parsed, { emit: false });
     }
     if (formatControlled) {
       if (next.format !== undefined) controlledFormat = next.format;
       if (controlledFormat !== undefined && owner.getFormat() !== controlledFormat) owner.setFormat(controlledFormat, { emit: false });
+    } else if (next.format !== commandedFormat) {
+      commandedFormat = next.format;
+      if (next.format !== undefined && owner.getFormat() !== next.format) owner.setFormat(next.format, { emit: false });
     }
   }
   function applyOptions(next: ColorPickerOptions): void {

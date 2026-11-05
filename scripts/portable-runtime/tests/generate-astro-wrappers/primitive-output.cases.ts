@@ -140,6 +140,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const dialogBackdrop = await readGeneratedFile(outputRoot, "dialog/DialogBackdrop.astro");
     const dialogRoot = await readGeneratedFile(outputRoot, "dialog/DialogRoot.astro");
     const dialogTrigger = await readGeneratedFile(outputRoot, "dialog/DialogTrigger.astro");
+    const dialogClose = await readGeneratedFile(outputRoot, "dialog/DialogClose.astro");
     const dialogPopup = await readGeneratedFile(outputRoot, "dialog/DialogPopup.astro");
     const dialogTitle = await readGeneratedFile(outputRoot, "dialog/DialogTitle.astro");
     const dialogIndex = await readGeneratedFile(outputRoot, "dialog/index.ts");
@@ -363,6 +364,12 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     );
     const toggleGroupIndex = await readGeneratedFile(outputRoot, "toggle-group/index.ts");
     const astroAsChildParts = [
+      alertDialogClose,
+      alertDialogTrigger,
+      dialogClose,
+      dialogTrigger,
+      drawerClose,
+      drawerTrigger,
       collapsibleTrigger,
       popoverTrigger,
       menuTrigger,
@@ -373,7 +380,6 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       previewCardTrigger,
       sidebarTrigger,
       sidebarMenuButton,
-      tooltipTrigger,
     ];
     const simpleSlottedRestPropsParts = [
       ["accordion header", accordionHeader, "data-sw-accordion-header"],
@@ -494,8 +500,8 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       buttonRoot.indexOf("<button"),
       buttonRoot.indexOf(">\n  <slot", buttonRoot.indexOf("<button")),
     );
-    expect(buttonRoot.indexOf("data-focusable-when-disabled")).toBeLessThan(
-      buttonRoot.indexOf("{...rest}"),
+    expect(buttonRoot.indexOf("{...rest}")).toBeLessThan(
+      buttonRoot.indexOf("data-focusable-when-disabled"),
     );
     expect(buttonOpeningTag).toContain("data-sw-button");
     expect(buttonOpeningTag.indexOf("{...rest}")).toBeLessThan(
@@ -609,7 +615,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(dialogPopup).toContain("data-sw-dialog-content");
     expect(dialogTrigger).toContain('HTMLAttributes<"button"> & {');
     expect(dialogTrigger).toContain("targetId?: string;");
-    expect(dialogTrigger).toContain("const { targetId, ...rest } = Astro.props;");
+    expect(dialogTrigger).toContain("const { asChild = false, targetId, ...rest } = Astro.props;");
     expect(dialogTrigger).toContain("data-sw-dialog-target-id={targetId}");
     expect(dialogTrigger).not.toContain("data-dialog-for");
     expect(dialogIndex).toContain("const Dialog =");
@@ -628,7 +634,9 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(alertDialogRoot).toContain("closeOnOutsideInteract = false");
     expect(alertDialogTrigger).toContain("data-sw-alert-dialog-trigger");
     expect(alertDialogTrigger).toContain("targetId?: string;");
-    expect(alertDialogTrigger).toContain("const { targetId, ...rest } = Astro.props;");
+    expect(alertDialogTrigger).toContain(
+      "const { asChild = false, targetId, ...rest } = Astro.props;",
+    );
     expect(alertDialogTrigger).toContain("data-sw-alert-dialog-target-id={targetId}");
     expect(alertDialogTrigger).not.toContain("data-dialog-for");
     expect(alertDialogTrigger).not.toContain("data-sw-dialog-trigger");
@@ -649,7 +657,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(drawerRoot).toContain("closeOnOutsideInteract = true");
     expect(drawerTrigger).toContain("data-sw-drawer-trigger");
     expect(drawerTrigger).toContain("targetId?: string;");
-    expect(drawerTrigger).toContain("const { targetId, ...rest } = Astro.props;");
+    expect(drawerTrigger).toContain("const { asChild = false, targetId, ...rest } = Astro.props;");
     expect(drawerTrigger).toContain("data-sw-drawer-target-id={targetId}");
     expect(drawerTrigger).not.toContain("data-dialog-for");
     expect(drawerTrigger).not.toContain("data-sw-dialog-trigger");
@@ -1058,6 +1066,9 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(navigationMenuIndex).toContain("Arrow: NavigationMenuArrow");
 
     expect(tooltipPopup).toContain('Omit<HTMLAttributes<"div">, "tabindex" | "tabIndex">');
+    expect(tooltipTrigger).toContain('await Astro.slots.render("default")');
+    expect(tooltipTrigger).toContain("asChild && hasElementChild ? (");
+    expect(tooltipTrigger).toContain("data-as-child");
     expect(tooltipPopup).toContain('role="tooltip"');
     expect(tooltipPopup).not.toContain("tabindex=");
     expect(tooltipRoot).toContain(
@@ -1255,7 +1266,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     );
     expect(toastRoot).toContain('data-state="open"');
     expect(toastRoot).toContain("data-variant={variant}");
-    expect(toastAction).toContain('<button type="button" data-sw-toast-action');
+    expect(toastAction).toContain('<button {...rest} type="button" data-sw-toast-action');
     expect(toastClose).toContain("data-sw-toast-close");
     expect(toastClose).toContain('aria-label="Close notification"');
     expect(sliderControl).toContain("data-sw-slider-control");

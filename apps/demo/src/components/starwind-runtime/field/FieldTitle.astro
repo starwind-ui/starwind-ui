@@ -9,6 +9,6 @@ type Props = HTMLAttributes<"div"> & VariantProps<typeof fieldTitle>;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={fieldTitle({ class: className })} {...rest} data-slot="field-title">
+<div {...rest} class={fieldTitle({ class: className })} data-slot="field-title">
   <slot />
 </div>

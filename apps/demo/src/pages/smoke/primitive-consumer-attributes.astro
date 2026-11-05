@@ -1,0 +1,86 @@
+---
+import AlertDialog from "@starwind-ui/astro/alert-dialog";
+import Dialog from "@starwind-ui/astro/dialog";
+import Drawer from "@starwind-ui/astro/drawer";
+
+import { Breadcrumb } from "@/components/starwind-runtime/breadcrumb";
+import {
+  Dialog as StyledDialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/starwind-runtime/dialog";
+---
+
+<html lang="en">
+  <head><title>Primitive consumer attributes</title></head>
+  <body>
+    <Dialog.Root id="dialog">
+      <Dialog.Trigger asChild>
+        <button id="dialog-trigger" type="button" class="own">Open dialog</button>
+      </Dialog.Trigger>
+      <Dialog.Backdrop />
+      <Dialog.Popup id="dialog-popup">
+        <Dialog.Title>Dialog</Dialog.Title>
+        <Dialog.Close asChild>
+          <button id="dialog-close" type="button">Close dialog</button>
+        </Dialog.Close>
+      </Dialog.Popup>
+    </Dialog.Root>
+
+    <AlertDialog.Root id="alert-dialog">
+      <AlertDialog.Trigger asChild>
+        <button id="alert-dialog-trigger" type="button">Open alert dialog</button>
+      </AlertDialog.Trigger>
+      <AlertDialog.Portal>
+        <AlertDialog.Backdrop />
+        <AlertDialog.Popup id="alert-dialog-popup">
+          <AlertDialog.Title>Alert dialog</AlertDialog.Title>
+          <AlertDialog.Close asChild>
+            <button id="alert-dialog-close" type="button">Close alert dialog</button>
+          </AlertDialog.Close>
+        </AlertDialog.Popup>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
+
+    <Drawer.Root id="drawer">
+      <Drawer.Trigger asChild>
+        <a id="drawer-trigger" href="#drawer">Open drawer</a>
+      </Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Backdrop />
+        <Drawer.Viewport>
+          <Drawer.Popup id="drawer-popup">
+            <Drawer.Title>Drawer</Drawer.Title>
+            <Drawer.Close asChild>
+              <button id="drawer-close" type="button">Close drawer</button>
+            </Drawer.Close>
+          </Drawer.Popup>
+        </Drawer.Viewport>
+      </Drawer.Portal>
+    </Drawer.Root>
+
+    <StyledDialog id="styled-dialog">
+      <DialogTrigger asChild>
+        <button id="styled-trigger" type="button">Open styled dialog</button>
+      </DialogTrigger>
+      <DialogContent id="styled-popup">
+        <DialogTitle>Styled dialog</DialogTitle>
+        <DialogClose asChild>
+          <button id="styled-close" type="button">Close styled dialog</button>
+        </DialogClose>
+      </DialogContent>
+    </StyledDialog>
+
+    <form id="override-form">
+      <Dialog.Root id="override-dialog">
+        <Dialog.Trigger id="override-trigger" type="submit" data-state="consumer">
+          Submit
+        </Dialog.Trigger>
+        <Dialog.Popup />
+      </Dialog.Root>
+    </form>
+    <Breadcrumb id="override-breadcrumb" aria-label="Consumer label">Styled override</Breadcrumb>
+  </body>
+</html>

@@ -66,6 +66,38 @@ const kitConfig =
   'import { sveltekit } from "@sveltejs/kit/vite";\nexport default { plugins: [sveltekit(), { name: "keep-provenance" }], server: { port: 4321 } };\n';
 const astroConfig =
   'import { defineConfig as config } from "astro/config";\nimport svelte from "@astrojs/svelte";\nexport default config({ integrations: [svelte()], site: "https://example.test" });\n';
+// The exact files that `sv create --template minimal --types ts` writes without a svelte.config.
+const kitPluginConfig = `import adapter from '@sveltejs/adapter-auto';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+\tplugins: [
+\t\tsveltekit({
+\t\t\tcompilerOptions: {
+\t\t\t\t// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
+\t\t\t\trunes: ({ filename }) =>
+\t\t\t\t\tfilename.split(/[/\\\\]/).includes('node_modules') ? undefined : true
+\t\t\t},
+
+\t\t\tadapter: adapter()
+\t\t})
+\t]
+});
+`;
+const kitStarterLayout = `<script lang="ts">
+\timport favicon from '#lib/assets/favicon.svg';
+\timport type { LayoutProps } from './$types';
+
+\tlet { children }: LayoutProps = $props();
+</script>
+
+<svelte:head>
+\t<link rel="icon" href={favicon} />
+</svelte:head>
+
+{@render children()}
+`;
 let root: string;
 let originalCwd: string;
 
@@ -79,7 +111,7 @@ async function fixture(kind: "vite" | "sveltekit" | "astro") {
     dependencies: {
       ...packageRanges,
       ...(kind === "sveltekit" ? { "@sveltejs/kit": "^2.70.3" } : {}),
-      ...(kind === "astro" ? { astro: "^6.4.0", "@astrojs/svelte": "^7.2.0" } : {}),
+      ...(kind === "astro" ? { astro: "^6.4.0", "@astrojs/svelte": "^8.1.2" } : {}),
     },
   };
   await write("package.json", JSON.stringify(pkg, null, 2));
@@ -115,6 +147,28 @@ async function fixture(kind: "vite" | "sveltekit" | "astro") {
   }
   return pkg;
 }
+async function kitPluginFixture(kitRange: string) {
+  const pkg = {
+    type: "module",
+    devDependencies: {
+      ...packageRanges,
+      "@sveltejs/kit": kitRange,
+      "@sveltejs/vite-plugin-svelte": "^7.2.0",
+      svelte: "^5.57.2",
+      vite: "^8.3.0",
+    },
+  };
+  await write("package.json", JSON.stringify(pkg, null, 2));
+  await write("tsconfig.json", '{ "extends": "$app/tsconfig" }\n');
+  await write("vite.config.ts", kitPluginConfig);
+  await write(
+    "src/app.html",
+    "<!doctype html><html><head>%sveltekit.head%</head><body>%sveltekit.body%</body></html>\n",
+  );
+  await write("src/routes/+layout.svelte", kitStarterLayout);
+  await write("src/routes/+page.svelte", "<main>Home</main>\n");
+  return pkg;
+}
 async function snapshot(directory = "."): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -142,6 +196,32 @@ afterEach(async () => {
 });
 
 describe("Svelte beta host initialization", () => {
+  it.each([
+    ["^5.0.0", "5.18.2", false],
+    ["^5.0.0", "5.6.2", true],
+    ["^5.0.0", undefined, false],
+    ["~5.6.0", undefined, true],
+  ] as const)(
+    "plans the Astro SVG flag for declared %s with installed %s",
+    async (declared, installed, flagged) => {
+      const pkg = await fixture("astro");
+      const astro5 = {
+        ...pkg,
+        dependencies: { ...pkg.dependencies, astro: declared, "@astrojs/svelte": "^7.2.0" },
+      };
+      await write("package.json", JSON.stringify(astro5, null, 2));
+      if (installed) {
+        await write(
+          "node_modules/astro/package.json",
+          JSON.stringify({ name: "astro", version: installed }),
+        );
+      }
+      const host = await detectPrivateHostPlan(astro5, policy);
+      await host.svelteHostProject!.setup("src/styles/starwind.css");
+      expect((await readFile("astro.config.mjs", "utf8")).includes("svg: true")).toBe(flagged);
+    },
+  );
+
   it.each(["vite", "sveltekit", "astro"] as const)(
     "initializes %s with canonical CSS and preserves repeat-init bytes",
     async (kind) => {
@@ -172,7 +252,14 @@ describe("Svelte beta host initialization", () => {
       );
       expect(await readFile("src/styles/starwind.css", "utf8")).toBe(tailwindConfig);
       expect(await readFile("package.json", "utf8")).toBe(before["package.json"]);
-      expect(await readFile("tsconfig.json", "utf8")).toBe(before["tsconfig.json"]);
+      if (kind === "vite") {
+        expect(JSON.parse(await readFile("tsconfig.json", "utf8")).compilerOptions).toEqual({
+          strict: true,
+          paths: { "@/*": ["./src/*"] },
+        });
+      } else {
+        expect(await readFile("tsconfig.json", "utf8")).toBe(before["tsconfig.json"]);
+      }
       expect(await readFile("src/styles/existing.css", "utf8")).toBe(
         before["src/styles/existing.css"],
       );
@@ -188,6 +275,19 @@ describe("Svelte beta host initialization", () => {
       expect(generatedConfig).toContain(
         kind === "astro" ? "svelte()" : kind === "sveltekit" ? "sveltekit()" : "framework()",
       );
+      if (kind === "vite") {
+        expect(generatedConfig).toContain(
+          'import { getThemeInitScript } from "@starwind-ui/svelte/theme"',
+        );
+        expect(generatedConfig.match(/starwindThemeInitPlugin\(\), /g)).toHaveLength(1);
+        expect(generatedConfig).toContain('"@custom": "/keep"');
+        expect(generatedConfig).toContain(
+          '"@": fileURLToPath(new globalThis.URL("./src", import.meta.url))',
+        );
+      } else {
+        expect(generatedConfig).not.toContain("getThemeInitScript");
+        expect(generatedConfig).not.toContain('"@":');
+      }
       if (kind === "sveltekit") {
         expect(await readFile("svelte.config.js", "utf8")).toBe(before["svelte.config.js"]);
         expect(await readFile("src/routes/+layout.svelte", "utf8")).toContain(
@@ -203,6 +303,129 @@ describe("Svelte beta host initialization", () => {
       expect(await snapshot()).toEqual(initialized);
     },
   );
+
+  it.each([
+    ["SvelteKit 3", "^3.0.0"],
+    ["a recent SvelteKit 2", "^2.63.0"],
+  ])("initializes %s with no Svelte config file", async (_name, kitRange) => {
+    const pkg = await kitPluginFixture(kitRange);
+    const host = await detectPrivateHostPlan(pkg, policy);
+    expect(host.svelteHostProject?.hostKind).toBe("sveltekit");
+
+    await init(true, { framework: "svelte", defaults: true, packageManager: "pnpm" }, dependencies);
+
+    const config = await readFile("vite.config.ts", "utf8");
+    expect(config).toContain('import tailwindcss from "@tailwindcss/vite";');
+    expect(config).toContain("plugins: [tailwindcss(), \n\t\tsveltekit({");
+    expect(config).toContain("adapter: adapter()");
+    expect(config).not.toContain("getThemeInitScript");
+    const layout = await readFile("src/routes/+layout.svelte", "utf8");
+    expect(layout).toContain('import "../styles/starwind.css";');
+    expect(layout).toContain("import favicon from '#lib/assets/favicon.svg';");
+    expect(JSON.parse(await readFile("starwind.config.json", "utf8")).componentDir).toBe(
+      "src/lib/starwind",
+    );
+    expect(await readdir(".")).not.toContain("svelte.config.js");
+
+    const initialized = await snapshot();
+    await init(true, { framework: "svelte", defaults: true, packageManager: "pnpm" }, dependencies);
+    expect(await snapshot()).toEqual(initialized);
+  });
+
+  it.each([
+    ["custom plugin routes", 'sveltekit({ files: { routes: "src/pages" } })'],
+    ["bound plugin options", "sveltekit(options)"],
+    ["spread plugin options", "sveltekit({ ...options })"],
+    ["bound plugin files", "sveltekit({ files })"],
+  ])("rejects %s with no Svelte config file before writes", async (_name, call) => {
+    await kitPluginFixture("^3.0.0");
+    await write(
+      "vite.config.ts",
+      `import { sveltekit } from "@sveltejs/kit/vite";\nimport { defineConfig } from "vite";\nexport default defineConfig({ plugins: [${call}] });\n`,
+    );
+    const before = await snapshot();
+    await expect(init(true, { framework: "svelte", defaults: true }, dependencies)).rejects.toThrow(
+      "exit:1",
+    );
+    expect(await snapshot()).toEqual(before);
+    expect(installDependencies).not.toHaveBeenCalled();
+  });
+
+  it("rejects two SvelteKit config files before writes", async () => {
+    await fixture("sveltekit");
+    await write("svelte.config.ts", "export default {};\n");
+    const before = await snapshot();
+    await expect(init(true, { framework: "svelte", defaults: true }, dependencies)).rejects.toThrow(
+      "exit:1",
+    );
+    expect(await snapshot()).toEqual(before);
+    expect(prompts.log.error).toHaveBeenCalledWith(
+      expect.stringContaining("Expected one SvelteKit config; found 2"),
+    );
+  });
+
+  it("adds the source alias to tsconfig.app.json in a Vite Svelte starter", async () => {
+    await fixture("vite");
+    const root = '{ "files": [], "references": [{ "path": "./tsconfig.app.json" }] }\n';
+    await write("tsconfig.json", root);
+    await write("tsconfig.app.json", '{ "compilerOptions": { "strict": true } }\n');
+
+    await init(true, { framework: "svelte", defaults: true }, dependencies);
+
+    expect(await readFile("tsconfig.json", "utf8")).toBe(root);
+    expect(JSON.parse(await readFile("tsconfig.app.json", "utf8")).compilerOptions.paths).toEqual({
+      "@/*": ["./src/*"],
+    });
+  });
+
+  it("adds the source alias to jsconfig.json in a JavaScript Vite Svelte starter", async () => {
+    await fixture("vite");
+    await rm("tsconfig.json");
+    await write("jsconfig.json", '{ "compilerOptions": { "checkJs": true } }\n');
+
+    await init(true, { framework: "svelte", defaults: true }, dependencies);
+
+    expect(JSON.parse(await readFile("jsconfig.json", "utf8")).compilerOptions).toEqual({
+      checkJs: true,
+      paths: { "@/*": ["./src/*"] },
+    });
+    expect(await readdir(".")).not.toContain("tsconfig.json");
+  });
+
+  it("rejects a Vite Svelte source alias that points elsewhere before writes", async () => {
+    await fixture("vite");
+    await write(
+      "vite.config.ts",
+      'import { defineConfig } from "vite";\nimport { svelte } from "@sveltejs/vite-plugin-svelte";\nexport default defineConfig({ plugins: [svelte()], resolve: { alias: { "@": "/elsewhere" } } });\n',
+    );
+    const before = await snapshot();
+    await expect(init(true, { framework: "svelte", defaults: true }, dependencies)).rejects.toThrow(
+      "exit:1",
+    );
+    expect(await snapshot()).toEqual(before);
+    expect(installDependencies).not.toHaveBeenCalled();
+  });
+
+  it("reuses a Svelte Theme plugin that the docs sample already added", async () => {
+    await fixture("vite");
+    const config = `import { getThemeInitScript } from "@starwind-ui/svelte/theme";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { defineConfig } from "vite";
+
+function starwindThemeInitPlugin() {
+  return { name: "starwind-theme-init", transformIndexHtml: () => getThemeInitScript() };
+}
+
+export default defineConfig({ plugins: [starwindThemeInitPlugin(), svelte()] });
+`;
+    await write("vite.config.ts", config);
+    await init(true, { framework: "svelte", defaults: true }, dependencies);
+    const updated = await readFile("vite.config.ts", "utf8");
+    expect(updated.match(/function starwindThemeInitPlugin/g)).toHaveLength(1);
+    expect(updated.match(/getThemeInitScript }/g)).toHaveLength(1);
+    expect(updated).toContain("plugins: [tailwindcss(), starwindThemeInitPlugin(), svelte()]");
+    expect(updated).toContain('"@": fileURLToPath(new globalThis.URL("./src", import.meta.url))');
+  });
 
   it("adds only missing stylesheet requirements and retains compatible declared ranges", async () => {
     const pkg = await fixture("vite");
@@ -434,5 +657,154 @@ describe("Svelte beta host initialization", () => {
     expect(
       addSvelteLayoutCssImport(content, "src/routes/+layout.svelte", "src/styles/starwind.css"),
     ).toContain('import "../styles/starwind.css";');
+  });
+});
+
+describe("Svelte beta initialization in a plain Astro project", () => {
+  const plainConfig =
+    'import { defineConfig } from "astro/config";\nexport default defineConfig({ site: "https://example.test" });\n';
+  const layout =
+    '---\nconst title = "Keep";\n---\n<html><head><title>{title}</title></head><body><slot /></body></html>\n';
+  const page = "---\n---\n<html><body><h1>Home</h1></body></html>\n";
+
+  async function plainFixture(dependencies: Record<string, string> = { astro: "^6.4.0" }) {
+    const pkg = { type: "module", dependencies };
+    await write("package.json", JSON.stringify(pkg, null, 2));
+    await write("astro.config.mjs", plainConfig);
+    await write("tsconfig.json", '{ "extends": "astro/tsconfigs/strict" }\n');
+    return pkg;
+  }
+  const initSvelte = () =>
+    init(true, { framework: "svelte", defaults: true, packageManager: "pnpm" }, dependencies);
+
+  it("offers Svelte as a configurable target without selecting it", async () => {
+    const pkg = await plainFixture();
+    const host = await detectPrivateHostPlan(pkg, policy);
+    expect(host.diagnostic).toBeUndefined();
+    expect(host.targets).toContainEqual({ framework: "svelte", readiness: "configurable" });
+    expect(host.targets).toContainEqual({ framework: "astro", readiness: "ready" });
+    expect(host.svelteHostProject?.hostKind).toBe("astro");
+  });
+
+  it("keeps non-Astro hosts without Svelte evidence undetected", async () => {
+    const pkg = { dependencies: { vite: "^7.3.5" } };
+    await write("package.json", JSON.stringify(pkg));
+    await write("vite.config.ts", "export default {};\n");
+    expect((await detectPrivateHostPlan(pkg, policy)).svelteHostProject).toBeUndefined();
+  });
+
+  it("installs and configures the integration and Svelte, then connects the layout", async () => {
+    await plainFixture();
+    await write("src/layouts/Layout.astro", layout);
+    await initSvelte();
+
+    expect(installDependencies).toHaveBeenCalledWith(["@astrojs/svelte@^8.1.2"], "pnpm");
+    expect(installDependencies).toHaveBeenCalledWith(
+      expect.arrayContaining(["svelte@>=5.29.0", ...starwindStylesheetPackageRequirements]),
+      "pnpm",
+      false,
+      false,
+    );
+    const config = await readFile("astro.config.mjs", "utf8");
+    expect(config).toContain('import svelte from "@astrojs/svelte";');
+    expect(config).toContain("svelte()");
+    expect(config).toContain('site: "https://example.test"');
+    expect(config.match(/tailwindcss\(\)/g)).toHaveLength(1);
+    expect(await readFile("src/layouts/Layout.astro", "utf8")).toContain(
+      'import "../styles/starwind.css";',
+    );
+    const starwind = JSON.parse(await readFile("starwind.config.json", "utf8"));
+    expect(starwind.framework).toBe("astro");
+    expect(starwind.componentDirs.svelte).toBe("src/components/starwind-svelte");
+    expect(prompts.log.error).not.toHaveBeenCalled();
+
+    // A second run finds the finished setup and changes nothing.
+    const initialized = await snapshot();
+    vi.mocked(installDependencies).mockClear();
+    await initSvelte();
+    expect(await snapshot()).toEqual(initialized);
+    expect(installDependencies).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["5", "^5.17.0", "@astrojs/svelte@^7.2.5"],
+    ["6", "^6.4.0", "@astrojs/svelte@^8.1.2"],
+    ["7", "^7.0.0", "@astrojs/svelte@^9.1.2"],
+  ])("selects the integration for Astro %s", async (_major, astro, integration) => {
+    await plainFixture({ astro });
+    await write("src/layouts/Layout.astro", layout);
+    await initSvelte();
+    expect(installDependencies).toHaveBeenCalledWith([integration], "pnpm");
+  });
+
+  it("replaces a declared integration that does not match the Astro major", async () => {
+    await plainFixture({ astro: "^6.4.0", "@astrojs/svelte": "^7.2.5", svelte: "^5.43.6" });
+    await write(
+      "astro.config.mjs",
+      'import { defineConfig } from "astro/config";\nimport svelte from "@astrojs/svelte";\nexport default defineConfig({ integrations: [svelte()] });\n',
+    );
+    await write("src/layouts/Layout.astro", layout);
+    await initSvelte();
+    expect(installDependencies).toHaveBeenCalledWith(["@astrojs/svelte@^8.1.2"], "pnpm");
+    expect((await readFile("astro.config.mjs", "utf8")).match(/svelte\(\)/g)).toHaveLength(1);
+  });
+
+  it("imports the stylesheet in the home page when no named layout exists", async () => {
+    await plainFixture();
+    await write("src/pages/index.astro", page);
+    await initSvelte();
+    expect(await readFile("src/pages/index.astro", "utf8")).toContain(
+      'import "@/styles/starwind.css";',
+    );
+    // The page import needs the "@" alias, which the Astro starter does not define.
+    expect(JSON.parse(await readFile("tsconfig.json", "utf8")).compilerOptions.paths).toEqual({
+      "@/*": ["src/*"],
+    });
+    expect(prompts.note).not.toHaveBeenCalledWith(
+      expect.any(String),
+      "Import Starwind CSS to finish setup",
+    );
+    expect(prompts.log.error).not.toHaveBeenCalled();
+  });
+
+  it("reports a manual import and finishes when no layout or page exists", async () => {
+    await plainFixture();
+    await initSvelte();
+    expect(prompts.note).toHaveBeenCalledWith(
+      expect.stringContaining('import "@/styles/starwind.css";'),
+      "Import Starwind CSS to finish setup",
+    );
+    expect(prompts.log.error).not.toHaveBeenCalled();
+    expect(prompts.cancel).not.toHaveBeenCalled();
+    expect(JSON.parse(await readFile("starwind.config.json", "utf8")).framework).toBe("astro");
+    expect(await readFile("astro.config.mjs", "utf8")).toContain("svelte()");
+  });
+
+  it("stops before any write when Astro 5 meets TypeScript 6", async () => {
+    await plainFixture({ astro: "^5.17.0", typescript: "^6.0.0" });
+    const before = await snapshot();
+    await expect(initSvelte()).rejects.toThrow("exit:1");
+    expect(prompts.log.error).toHaveBeenCalledWith(
+      expect.stringContaining("needs TypeScript ^5.3.3"),
+    );
+    expect(await snapshot()).toEqual(before);
+    expect(installDependencies).not.toHaveBeenCalled();
+  });
+
+  it("stops before any write when the Astro config cannot take the integration", async () => {
+    await plainFixture();
+    await write("astro.config.mjs", "export default makeConfig();\n");
+    const before = await snapshot();
+    await expect(initSvelte()).rejects.toThrow("exit:1");
+    expect(await snapshot()).toEqual(before);
+    expect(installDependencies).not.toHaveBeenCalled();
+  });
+
+  it("rejects a declared Svelte range outside Svelte 5.29 or later", async () => {
+    await plainFixture({ astro: "^6.4.0", svelte: "^4.2.0" });
+    const before = await snapshot();
+    await expect(initSvelte()).rejects.toThrow("exit:1");
+    expect(prompts.log.error).toHaveBeenCalledWith(expect.stringContaining(">=5.29.0 <6"));
+    expect(await snapshot()).toEqual(before);
   });
 });

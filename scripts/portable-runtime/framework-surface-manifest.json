@@ -3982,7 +3982,7 @@
             },
             {
               "name": "trigger",
-              "defaultElement": "button",
+              "defaultElement": "a",
               "runtimeHooks": ["data-sw-preview-card-trigger"]
             },
             {
@@ -9034,7 +9034,7 @@
             },
             {
               "name": "trigger",
-              "defaultElement": "button",
+              "defaultElement": "a",
               "runtimeHooks": ["data-sw-preview-card-trigger"]
             },
             {
@@ -14147,7 +14147,7 @@
             },
             {
               "name": "trigger",
-              "defaultElement": "button",
+              "defaultElement": "a",
               "runtimeHooks": ["data-sw-preview-card-trigger"]
             },
             {
@@ -17394,6 +17394,16 @@
               "classification": "runtime-facade"
             },
             {
+              "name": "TriggerChildPayload",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "TriggerChildProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "NavigationMenu",
               "kind": "value",
               "classification": "namespace"
@@ -17485,6 +17495,16 @@
               "name": "PopoverOpenChangeDetails",
               "kind": "type",
               "classification": "runtime-facade"
+            },
+            {
+              "name": "TriggerChildPayload",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "TriggerChildProps",
+              "kind": "type",
+              "classification": "helper-type"
             },
             {
               "name": "Popover",
@@ -17913,11 +17933,6 @@
               "classification": "namespace"
             },
             {
-              "name": "AnchorChildProps",
-              "kind": "type",
-              "classification": "helper-type"
-            },
-            {
               "name": "ButtonChildPayload",
               "kind": "type",
               "classification": "helper-type"
@@ -18282,6 +18297,16 @@
               "name": "TooltipOpenChangeDetails",
               "kind": "type",
               "classification": "runtime-facade"
+            },
+            {
+              "name": "TriggerChildPayload",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "TriggerChildProps",
+              "kind": "type",
+              "classification": "helper-type"
             },
             {
               "name": "Tooltip",
@@ -19265,7 +19290,7 @@
             },
             {
               "name": "trigger",
-              "defaultElement": "button",
+              "defaultElement": "a",
               "runtimeHooks": ["data-sw-preview-card-trigger"]
             },
             {

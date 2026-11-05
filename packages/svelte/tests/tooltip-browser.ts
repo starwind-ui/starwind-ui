@@ -18,6 +18,7 @@ export type TooltipCase = {
   nativeOwner?: boolean;
   nested?: boolean;
   directPopup?: boolean;
+  linkChild?: boolean;
 };
 
 /** Runs the same public model and lifecycle assertions through either generated surface. */
@@ -26,6 +27,7 @@ export async function verifyTooltipBrowser(
   configs: TooltipCase[],
   actions: string,
   styled = false,
+  expectedWarnings: readonly string[] = [],
 ) {
   await consumer.write({
     "Case.svelte": tooltipCaseSource(styled),
@@ -71,7 +73,10 @@ export async function verifyTooltipBrowser(
     const result = await page.evaluate(() =>
       JSON.parse(document.documentElement.dataset.tooltipResult!),
     );
-    assert.deepEqual(errors, []);
+    assert.deepEqual(
+      errors.filter((message) => !expectedWarnings.includes(message)),
+      [],
+    );
     assert.equal(result.error, undefined, result.stack ?? result.error);
     return { ...result, build };
   } finally {
@@ -90,7 +95,7 @@ import { createAttachmentKey, type Attachment } from "svelte/attachments";
 import Overlay from "${styled ? "./tooltip/index.js" : "@starwind-ui/svelte/tooltip"}";
 import Dialog from "@starwind-ui/svelte/dialog";
 import Primitive, { type TooltipOpenChangeDetails } from "@starwind-ui/svelte/tooltip";
-let { id, mode = "function", initial, defaultOpen, proposal = "accept", setter = "identity", missingPopup = false, disabled: initialDisabled = false, nativeOwner = false, nested = false, directPopup = false }: { id: string; mode?: string; initial?: boolean; defaultOpen?: boolean; proposal?: string; setter?: string; missingPopup?: boolean; disabled?: boolean; nativeOwner?: boolean; nested?: boolean; directPopup?: boolean } = $props();
+let { id, mode = "function", initial, defaultOpen, proposal = "accept", setter = "identity", missingPopup = false, disabled: initialDisabled = false, nativeOwner = false, nested = false, directPopup = false, linkChild = false }: { id: string; mode?: string; initial?: boolean; defaultOpen?: boolean; proposal?: string; setter?: string; missingPopup?: boolean; disabled?: boolean; nativeOwner?: boolean; nested?: boolean; directPopup?: boolean; linkChild?: boolean } = $props();
 let showSecond = $state(true), foreignSecond = $state(false), cancelSecond = $state(false);
 let model = $state<boolean | undefined>(untrack(() => initial));
 let disabled = $state(untrack(() => initialDisabled)), openDelay = $state(200), closeDelay = $state(200), disableHoverableContent = $state(false), escape = $state(true);
@@ -133,6 +138,7 @@ export function changeClass() { className = "after"; }
 export function setOwner(value: boolean) { ownerOpen = value; }
 export function cancelClosing(value: boolean) { cancelClose = value; }
 export function hide() { shown = false; }
+export function show() { shown = true; }
 export function snapshot() { return { portalError, childOpen, childCallbacks:[...childCallbacks], model: model ?? "undefined", writes: [...writes], callbacks: [...callbacks], refs: [...refs], popupRefs: [...popupRefs], attachments: [...attachments] }; }
 </script>
 {#snippet surface()}
@@ -146,9 +152,8 @@ ${styled ? "" : "</Primitive.Positioner>{/key}{/if}"}
 Tooltip description ${styled ? "" : "{#key arrowKey}<Primitive.Arrow data-arrow={id} />{/key}"}
 </Overlay.${popup}>{/key}{/if}
 {/snippet}
-{#snippet parts(accepted: boolean)}
-<output data-rendered={id}>{String(accepted)}</output>
-{#key key}<Overlay.Trigger data-trigger={id} {...forwarded} ref={second ? refB : refA} class={className}>{#snippet child({ props, children })}<button {...props}>{@render children?.()}</button>{/snippet}Show {id}</Overlay.Trigger>{/key}
+{#snippet parts()}
+{#key key}<Overlay.Trigger data-trigger={id} {...forwarded} ref={second ? refB : refA} class={className}>{#snippet child({ props, children })}{#if linkChild}<a href="#docs" {...props as any}>{@render children?.()}</a>{:else}<button {...props}>{@render children?.()}</button>{/if}{/snippet}Show {id}</Overlay.Trigger>{/key}
 {#if id.startsWith("restore-") && showSecond}<div data-sw-tooltip={foreignSecond ? "" : undefined}><Overlay.Trigger data-trigger-b={id} style="position:fixed;left:700px;top:120px;width:80px;height:30px">{#snippet child({ props, children })}<button {...props}>{@render children?.()}</button>{/snippet}Second</Overlay.Trigger></div>{/if}
 {#key portalKey}${styled ? "{@render surface()}" : "{#if directPopup}{@render surface()}{:else}<Primitive.Portal {container} disabled={disablePortal}>{@render surface()}</Primitive.Portal>{/if}"}{/key}
 {#if nested}<Primitive.Root data-child-root={id} bind:open={childOpen} onOpenChange={next => childCallbacks.push(next)} openDelay={0}><Primitive.Trigger data-child-trigger={id}>Nested help</Primitive.Trigger><Primitive.Portal><Primitive.Popup data-child-popup={id}>Nested description</Primitive.Popup></Primitive.Portal></Primitive.Root>{/if}
@@ -181,7 +186,7 @@ const hover = id => button(id).dispatchEvent(new PointerEvent("pointerenter", {p
 const trigger = async id => { document.getElementById("outside").focus(); document.dispatchEvent(new KeyboardEvent("keydown", {key:"Tab", bubbles:true})); button(id).focus(); await settle(); };
 const close = id => button(id).dispatchEvent(new FocusEvent("focusout", {relatedTarget:document.getElementById("outside"), bubbles:true}));
 const wrapper = id => popup(id)?.closest('[data-sw-tooltip-portal]');
-const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: document.querySelector('[data-rendered="' + id + '"]')?.textContent ?? null });
+const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: root(id) ? String(root(id).getAttribute("data-state") === "open") : null });
 assert(before.every(node => node.isConnected), "Tooltip hydration replaced owners");
 const result = await (async () => { ${actions} })();
 const oldCases = {...cases}, staleButtons = Object.keys(cases).map(button).filter(Boolean);
@@ -316,12 +321,11 @@ for (const id of ["cancel","unmount"]) {
 }
 root("dom").addEventListener("starwind:open-change", event => event.preventDefault(), {once:true});
 await trigger("dom"); await finish(); assert(!state("dom").visible && state("dom").writes.length === 0, "DOM cancellation");
-assert(!state("disabled").visible && state("disabled").rendered === "false", "initial disabled normalizes open");
-cases.disabled.setDisabled(false); await finish(); assert(!state("disabled").visible, "re-enable stays closed");
-await trigger("disabled"); await finish(); assert(state("disabled").visible, "re-enabled trigger opens");
+assert(!state("disabled").visible && state("disabled").rendered === "false" && state("disabled").model === true, "initial disabled normalizes open without a parent write");
+cases.disabled.setDisabled(false); await finish(); assert(state("disabled").visible, "re-enable follows the parent value");
 const disabledCallbacks = state("disabled").callbacks.length;
-cases.disabled.setDisabled(true); await finish(); assert(!state("disabled").visible && state("disabled").model === false && state("disabled").callbacks.length === disabledCallbacks, "disabled closes silently");
-cases.disabled.setModel(true); await finish(); assert(state("disabled").model === false && !state("disabled").visible, "disabled parent open normalized");
+cases.disabled.setDisabled(true); await finish(); assert(!state("disabled").visible && state("disabled").model === true && state("disabled").callbacks.length === disabledCallbacks, "disabled closes silently");
+cases.disabled.setModel(true); await finish(); assert(state("disabled").model === true && !state("disabled").visible, "disabled parent open normalized");
 button("intent").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerType:"mouse"}));
 button("intent").focus(); await wait(70); assert(!state("intent").visible,"pointer-origin focus does not bypass hover delay");
 await trigger("intent"); await settle(); assert(state("intent").visible,"keyboard focus opens immediately"); close("intent"); await finish();

@@ -16,9 +16,9 @@ const skeletonStyle = { "--skeleton-width": skeletonWidth };
 ---
 
 <div
+  {...rest}
   class={sidebarMenuSkeleton({ class: className })}
   data-sidebar="menu-skeleton"
-  {...rest}
   data-slot="sidebar-menu-skeleton"
 >
   {showIcon && <Skeleton class="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}

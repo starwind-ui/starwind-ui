@@ -26,6 +26,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-popover
   data-default-open={defaultOpen ? "true" : undefined}
   data-close-on-escape={closeOnEscape ? "true" : "false"}
@@ -34,7 +35,6 @@ const {
   data-open-on-hover={openOnHover ? "true" : undefined}
   data-close-delay={closeDelay}
   data-state={defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </div>

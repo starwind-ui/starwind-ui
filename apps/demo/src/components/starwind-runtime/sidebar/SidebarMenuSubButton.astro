@@ -13,11 +13,11 @@ const { size = "md", isActive = false, class: className, ...rest } = Astro.props
 ---
 
 <a
+  {...rest}
   class={sidebarMenuSubButton({ size, class: className })}
   data-sidebar="menu-sub-button"
   data-size={size}
   data-active={isActive}
-  {...rest}
   data-slot="sidebar-menu-sub-button"
 >
   <slot />

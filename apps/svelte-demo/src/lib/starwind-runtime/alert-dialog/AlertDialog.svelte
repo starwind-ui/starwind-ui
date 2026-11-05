@@ -18,6 +18,7 @@
     "onOpenChange": onOpenChange,
     "onCloseComplete": onCloseComplete,
     "children": children,
+    "open": commandOpen,
     ...rest
   }: AlertDialogProps = $props();
 
@@ -35,7 +36,7 @@
   {...rest}
   data-slot={"alert-dialog"}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </AlertDialogRoot>

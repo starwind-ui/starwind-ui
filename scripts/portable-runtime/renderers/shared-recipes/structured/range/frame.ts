@@ -7,6 +7,8 @@ import { type SliderOperations, sliderConnection, sliderPolicy } from "./connect
 export type SliderProjection = {
   operations: SliderOperations;
   renderRead(name: string): string;
+  /** Binding targets seed reset from an initial model before the component default. */
+  defaultFallback?(fallback: string): string;
   attribute(name: string, value: string): string;
   print(input: {
     facts: AdapterRangeControlFacts;
@@ -46,7 +48,7 @@ export function renderSlider(
     attributes: attributes.map(([name, value]) => p.attribute(name, value)).join("\n"),
     connection: sliderConnection(facts, p.operations),
     inputs: sliderPolicy.options,
-    initialDefault: `copyValue(${initialModelValue(p.renderRead("defaultValue"), facts.props.defaultValue.defaultValue ?? "0").replaceAll(" ?? ", "??")})`,
+    initialDefault: `copyValue(${initialModelValue(p.renderRead("defaultValue"), p.defaultFallback?.(facts.props.defaultValue.defaultValue ?? "0") ?? facts.props.defaultValue.defaultValue ?? "0").replaceAll(" ?? ", "??")})`,
     initialModel: `copyValue(${initialModelValue(p.renderRead("value"), "initialDefaultValue").replaceAll(" ?? ", "??")})`,
   });
 }

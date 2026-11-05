@@ -20,6 +20,8 @@ discover Astro from one target home.
 - `styled.ts` and `styled/`: styled component projection, printing, and writing for Astro
   demo/runtime wrappers.
 - `lifecycle-projection.ts`: Astro lifecycle/frontmatter/script helpers.
+- `spread-attribute-order.ts`: prints native element spreads first, so a consumer attribute beats a
+  default. Astro prints element attributes in order, and an HTML parser keeps the first duplicate.
 - `*-overlay.ts`, `engine-viewport.ts`, and related modules: specialized family projection helpers.
 
 For the renderer fragment/helper pattern future targets should follow, see

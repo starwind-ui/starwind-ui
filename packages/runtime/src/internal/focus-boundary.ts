@@ -11,6 +11,9 @@ const documentTabStopSelector = [
   "[tabindex]",
 ].join(",");
 
+// A touch release comes before the mouse events that a browser sends for the tap.
+const COMPATIBILITY_MOUSE_EVENT_WINDOW_MS = 400;
+
 export type FocusBoundaryDeparture = {
   activeElement: Element | null;
   lastFocusOwner: HTMLElement | null;
@@ -69,6 +72,8 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
   let lastFocusOwner: HTMLElement | null = null;
   let pendingCheck = false;
   let pendingCheckVersion = 0;
+  let pressActive = false;
+  let pressEndTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
   let suppressionPending = false;
   let suppressionTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
 
@@ -96,6 +101,9 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
 
     const activeElement = ownerDocument.activeElement;
     if (isDocumentNode(activeElement, ownerDocument) && containsTarget(activeElement)) return;
+    // Some browsers do not focus a pressed button, so focus falls to the document. That press is
+    // still inside the boundary. Focus that lands on another control is a real departure.
+    if (pressActive && (!activeElement || activeElement === ownerDocument.body)) return;
 
     if (suppressionPending) {
       clearSuppression();
@@ -128,6 +136,43 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
     scheduleDepartureCheck();
   };
 
+  const clearPressEndTimer = (): void => {
+    if (pressEndTimer === null) return;
+
+    globalThis.clearTimeout(pressEndTimer);
+    pressEndTimer = null;
+  };
+
+  const endPress = (delay: number): void => {
+    clearPressEndTimer();
+    pressEndTimer = globalThis.setTimeout(() => {
+      pressEndTimer = null;
+      pressActive = false;
+      ownerDocument.removeEventListener("pointerup", handlePressRelease, true);
+      ownerDocument.removeEventListener("pointercancel", handlePressRelease, true);
+      ownerDocument.removeEventListener("click", handlePressClick, true);
+    }, delay);
+  };
+
+  const handlePressRelease = (): void => endPress(COMPATIBILITY_MOUSE_EVENT_WINDOW_MS);
+  const handlePressClick = (): void => endPress(0);
+
+  const handlePointerDown = (event: PointerEvent): void => {
+    if (!isDocumentNode(event.target, ownerDocument) || !containsTarget(event.target)) return;
+
+    clearPressEndTimer();
+    pressActive = true;
+    ownerDocument.addEventListener("pointerup", handlePressRelease, true);
+    ownerDocument.addEventListener("pointercancel", handlePressRelease, true);
+    ownerDocument.addEventListener("click", handlePressClick, true);
+  };
+
+  const removeSurfaceListeners = (surface: HTMLElement): void => {
+    surface.removeEventListener("focusin", handleFocusIn);
+    surface.removeEventListener("focusout", handleFocusOut);
+    surface.removeEventListener("pointerdown", handlePointerDown, true);
+  };
+
   const setSurfaces = (surfaces: Iterable<HTMLElement | null>): void => {
     if (destroyed) return;
 
@@ -140,8 +185,7 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
 
     observedSurfaces.forEach((surface) => {
       if (nextSurfaces.has(surface)) return;
-      surface.removeEventListener("focusin", handleFocusIn);
-      surface.removeEventListener("focusout", handleFocusOut);
+      removeSurfaceListeners(surface);
       observedSurfaces.delete(surface);
     });
 
@@ -149,6 +193,7 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
       if (observedSurfaces.has(surface)) return;
       surface.addEventListener("focusin", handleFocusIn);
       surface.addEventListener("focusout", handleFocusOut);
+      surface.addEventListener("pointerdown", handlePointerDown, true);
       observedSurfaces.add(surface);
     });
   };
@@ -171,10 +216,12 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
       pendingCheck = false;
       pendingCheckVersion += 1;
       clearSuppression();
-      observedSurfaces.forEach((surface) => {
-        surface.removeEventListener("focusin", handleFocusIn);
-        surface.removeEventListener("focusout", handleFocusOut);
-      });
+      clearPressEndTimer();
+      pressActive = false;
+      ownerDocument.removeEventListener("pointerup", handlePressRelease, true);
+      ownerDocument.removeEventListener("pointercancel", handlePressRelease, true);
+      ownerDocument.removeEventListener("click", handlePressClick, true);
+      observedSurfaces.forEach(removeSurfaceListeners);
       observedSurfaces.clear();
       lastFocusOwner = null;
     },

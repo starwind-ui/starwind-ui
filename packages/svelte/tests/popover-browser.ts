@@ -169,8 +169,7 @@ ${styled ? "" : "{#key backdropKey}<Primitive.Backdrop data-backdrop={id} />{/ke
 </Overlay.${popup}>{/key}{/if}
 ${styled ? "" : "</Primitive.Positioner>{/key}</Primitive.Viewport>{/key}"}
 {/snippet}
-{#snippet parts(accepted: boolean)}
-<output data-rendered={id}>{String(accepted)}</output>
+{#snippet parts()}
 {#if showTrigger}{#key triggerKey}<Overlay.Trigger data-trigger={id} {...forwarded} ref={second ? refB : refA} class={className}>{#snippet child({ props, children })}<button {...props}>{@render children?.()}</button>{/snippet}Open {id}</Overlay.Trigger>{/key}{/if}
 {#if showSecondTrigger}<Overlay.Trigger data-second-trigger={id} style="margin-left:120px">Second trigger</Overlay.Trigger>{/if}
 {#key portalKey}${styled ? "{@render surface()}" : "<Primitive.Portal {container} disabled={disablePortal}>{@render surface()}</Primitive.Portal>"}{/key}
@@ -204,7 +203,7 @@ const button = id => document.querySelector('[data-trigger="' + id + '"]');
 const trigger = id => button(id)?.click();
 const close = id => document.querySelector('[data-close="' + id + '"]')?.click();
 const wrapper = id => popup(id)?.closest('[data-sw-popover-portal]');
-const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: document.querySelector('[data-rendered="' + id + '"]')?.textContent ?? null });
+const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: root(id) ? String(root(id).getAttribute("data-state") === "open") : null });
 const hover = id => button(id).dispatchEvent(new PointerEvent("pointerenter", {pointerType:"mouse"}));
 const leave = id => popup(id).dispatchEvent(new PointerEvent("pointerleave", {pointerType:"mouse"}));
 const locked = () => document.body.hasAttribute("data-sw-scroll-locked");

@@ -1,0 +1,24 @@
+---
+import Page from "../Page.astro";
+---
+
+<Page>
+  <main></main>
+  <script>
+    import { initStarwind } from "@starwind-ui/runtime/init-starwind";
+    import { settleFrames } from "../../shared/harness";
+
+    // The emission check renders Astro parts on the server, then connects the Runtime to that HTML
+    // here, as the real generated scripts do.
+    window.__mountAstroHtml = async (html) => {
+      const host = document.createElement("div");
+      host.innerHTML = html;
+      document.body.append(host);
+      initStarwind(host);
+      await settleFrames();
+      const mounted = host.innerHTML + document.body.innerHTML;
+      host.remove();
+      return mounted;
+    };
+  </script>
+</Page>

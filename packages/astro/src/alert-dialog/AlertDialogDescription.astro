@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"p">;
 const { ...rest } = Astro.props;
 ---
 
-<p data-sw-alert-dialog-description {...rest}>
+<p {...rest} data-sw-alert-dialog-description>
   <slot />
 </p>

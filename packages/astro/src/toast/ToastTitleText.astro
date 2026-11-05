@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"span">;
 const { ...rest } = Astro.props;
 ---
 
-<span data-sw-toast-title-text {...rest}>
+<span {...rest} data-sw-toast-title-text>
   <slot />
 </span>

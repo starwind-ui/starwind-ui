@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
+import { isSvelte557OrNewer, type DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
 import { nativeStyledImports } from "./styled-native-consumer.js";
 
@@ -68,8 +68,9 @@ const body = render(App).body; assert.equal(body, render(App).body); console.log
       await readFile(path.join(consumer.root, "node_modules/svelte/package.json"), "utf8"),
     ).version;
     assert.deepEqual(result.nativeRemoval, {
-      omitted:
-        version === "5.57.0" ? ["setup", "cleanup"] : ["setup", "cleanup", "setup", "cleanup"],
+      omitted: isSvelte557OrNewer(version)
+        ? ["setup", "cleanup"]
+        : ["setup", "cleanup", "setup", "cleanup"],
       explicit: ["setup", "cleanup", "setup", "cleanup"],
       live: 0,
     });

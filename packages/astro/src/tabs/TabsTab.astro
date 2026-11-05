@@ -14,12 +14,12 @@ const { disabled = false, value, ...rest } = Astro.props;
 ---
 
 <button
+  {...rest}
   data-sw-tabs-tab
   data-disabled={disabled ? "" : undefined}
   data-value={value}
   disabled={disabled}
   type="button"
-  {...rest}
 >
   <slot />
 </button>

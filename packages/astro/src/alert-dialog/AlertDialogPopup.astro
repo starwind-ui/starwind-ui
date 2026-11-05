@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"dialog">;
 const { ...rest } = Astro.props;
 ---
 
-<dialog data-sw-alert-dialog-popup role="alertdialog" data-state="closed" {...rest}>
+<dialog {...rest} data-sw-alert-dialog-popup role="alertdialog" data-state="closed">
   <slot />
 </dialog>

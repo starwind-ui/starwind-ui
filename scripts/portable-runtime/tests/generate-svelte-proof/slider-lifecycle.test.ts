@@ -84,7 +84,7 @@ describe("generated Svelte Slider lifecycle", () => {
         events: ["change:[21,80]:binding:[20,80]"],
         value: [20, 80],
       },
-      controlledReset: { after: [20, 80], before: [20, 70, 80] },
+      controlledReset: { after: [20, 70, 80], before: [20, 70, 80] },
       controlledSync: { inputValues: [25, 55, 85], value: [25, 55, 85] },
       disabled: { disabled: true, unchanged: true },
       dynamic: {
@@ -535,13 +535,13 @@ describe("Slider accepted models", () => {
     }
     expect(result.initial.undefined).toMatchObject({ model: [20, 80], writes: [[20, 80]] });
     expect(result.initial["single-array"]).toMatchObject({
-      model: 25,
-      writes: [25],
+      model: [23],
+      writes: [],
       initialArray: [23],
     });
     expect(result.markup).toContain('data-ssr="undefined">undefined:0');
-    expect(result.accepted).toMatchObject({ model: 20, runtime: 21, submitted: [21] });
-    expect(result.same).toMatchObject({ model: 20, runtime: 21 });
+    expect(result.accepted).toMatchObject({ model: 20, runtime: 20, submitted: [20] });
+    expect(result.same).toMatchObject({ model: 20, runtime: 20 });
     expect(result.command).toMatchObject({ model: "undefined", runtime: 50, inputs: [50] });
     expect(result.laterUndefined).toMatchObject({
       model: "undefined",
@@ -631,19 +631,16 @@ describe("Slider accepted models", () => {
   `,
     );
     expect(result.options).toMatchObject({
-      model: [20, 60],
+      model: [20, 80],
       runtime: [20, 60],
-      writes: [[20, 60]],
+      writes: [],
       callbacks: [],
       commits: [],
     });
     expect(result.command).toMatchObject({
-      model: [0, 60],
+      model: [-10, 87],
       runtime: [0, 60],
-      writes: [
-        [20, 60],
-        [0, 60],
-      ],
+      writes: [],
       callbacks: [],
       commits: [],
     });
@@ -667,10 +664,11 @@ describe("Slider accepted models", () => {
   it("normalizes the frozen normalized reset seed against changed constraints", async () => {
     const result = await runSliderModels(
       [
-        { id: "range", initial: [40, 60], defaultValue: [17, 83], initialStep: 10 },
-        { id: "scalar", initial: 40, defaultValue: 17, initialStep: 10 },
+        { id: "range", defaultValue: [17, 83], initialStep: 10 },
+        { id: "scalar", defaultValue: 17, initialStep: 10 },
       ],
       `
+   cases.range.setModel([40,60]);cases.scalar.setModel(40);await settle();
    cases.range.mutateDefault();cases.range.setOptions({step:5});await settle();
    cases.scalar.setDefault(99);cases.scalar.setOptions({step:5});await settle();
    form("range").reset();form("scalar").reset();await resetSettled();
@@ -682,24 +680,29 @@ describe("Slider accepted models", () => {
       runtime: [20, 80],
       inputs: [20, 80],
       submitted: [20, 80],
-      writes: [[20, 80]],
       callbacks: [],
       commits: [],
-      initialArray: [40, 60],
     });
+    expect(result.range.writes.at(-1)).toEqual([20, 80]);
     expect(result.scalar).toMatchObject({
       model: 20,
       runtime: 20,
       submitted: [20],
-      writes: [20],
       callbacks: [],
       commits: [],
     });
+    expect(result.scalar.writes.at(-1)).toBe(20);
   }, 120_000);
   it("resets native forms and honors canceled resets", async () => {
     const result = await runSliderModels(
-      ["reset", "cancel"].map((id) => ({ id, initial: 40, defaultValue: 20 })),
+      [
+        { id: "reset", defaultValue: 20 },
+        { id: "cancel", defaultValue: 20 },
+        { id: "parent", initial: 40, defaultValue: 20 },
+        { id: "bound-without-default", initial: 40 },
+      ],
       `
+      cases.reset.setModel(40);cases.cancel.setModel(40);await settle();
       form("cancel").addEventListener("reset",event=>event.preventDefault());
       for(const id of Object.keys(cases)) form(id).reset();
       await resetSettled();return {states:Object.fromEntries(Object.keys(cases).map(id=>[id,state(id)]))};`,
@@ -709,23 +712,30 @@ describe("Slider accepted models", () => {
       runtime: 20,
       inputs: [20],
       submitted: [20],
-      writes: [20],
       callbacks: [],
       commits: [],
     });
+    expect(result.states.reset.writes.at(-1)).toBe(20);
     expect(result.states.cancel).toMatchObject({
       model: 40,
       runtime: 40,
       inputs: [40],
       submitted: [40],
-      writes: [],
       callbacks: [],
       commits: [],
     });
+    for (const id of ["parent", "bound-without-default"])
+      expect(result.states[id]).toMatchObject({
+        model: 40,
+        runtime: 40,
+        inputs: [40],
+        submitted: [40],
+        writes: [],
+      });
   }, 120_000);
   it("publishes public silent state sync without change or commit callbacks", async () => {
     const result = await runSliderModels(
-      [{ id: "service", initial: [20, 80] }],
+      [{ id: "service", defaultValue: [20, 80] }],
       `
    runtime("service").setValue([30,70],{emit:false});await settle();const silent=state("service");
    runtime("service").setValue([40,60]);await settle();return {silent,accepted:state("service")};
@@ -734,7 +744,10 @@ describe("Slider accepted models", () => {
     expect(result.silent).toMatchObject({
       model: [30, 70],
       runtime: [30, 70],
-      writes: [[30, 70]],
+      writes: [
+        [20, 80],
+        [30, 70],
+      ],
       callbacks: [],
       commits: [],
     });
@@ -742,6 +755,7 @@ describe("Slider accepted models", () => {
       model: [40, 60],
       runtime: [40, 60],
       writes: [
+        [20, 80],
         [30, 70],
         [40, 60],
       ],

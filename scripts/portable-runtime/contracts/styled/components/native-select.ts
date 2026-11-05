@@ -117,6 +117,7 @@ export const nativeSelectStyledContract: StyledAdapterContract = {
     {
       exportName: "NativeSelect",
       forwardRef: { frameworks: ["vue"], targetType: "HTMLSelectElement" },
+      nativeModel: { name: "value", tag: "select" },
       imports: [chevronDownImport],
       props: {
         extends: [

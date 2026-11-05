@@ -114,7 +114,7 @@ export const carouselRuntimeAdapterContract = {
       kind: "option",
       targets: ["root"],
       type: "boolean",
-      unsupportedTargets: ["react"],
+      unsupportedTargets: ["react", "vue", "svelte"],
     },
   ],
   refs: [

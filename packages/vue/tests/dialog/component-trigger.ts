@@ -84,6 +84,46 @@ export function testComponentTrigger(
   });
 }
 
+/** A Close part accepts the same component child as its Trigger. */
+export function testComponentClose(
+  parts: { Root: Component; Popup: Component; Title: Component; Close: Component },
+  cleanups: Array<() => void>,
+) {
+  it("closes through a Starwind Button component as the Close child", async () => {
+    const clicked = vi.fn();
+    const errors = vi.fn();
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () =>
+        h(parts.Root, { defaultOpen: true }, () =>
+          h(parts.Popup, { id: "component-close-popup" }, () => [
+            h(parts.Title, {}, () => "Title"),
+            h(parts.Close, { asChild: true, class: "from-close" }, () =>
+              h(ButtonRoot, { id: "component-close", onClick: clicked }, () => "Done"),
+            ),
+          ]),
+        ),
+    });
+    app.config.errorHandler = errors;
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+    await nextTick();
+    const popup = host.querySelector<HTMLDialogElement>("#component-close-popup")!;
+    const close = host.querySelector<HTMLButtonElement>("#component-close")!;
+    expect(close.tagName).toBe("BUTTON");
+    expect(close.classList.contains("from-close")).toBe(true);
+    expect(popup.open).toBe(true);
+
+    close.click();
+
+    await expect.poll(() => popup.open).toBe(false);
+    expect(clicked).toHaveBeenCalledTimes(1);
+    expect(errors).not.toHaveBeenCalled();
+  });
+}
+
 export function testInitialPortalFocus(
   parts: { Root: Component; Popup: Component; Title: Component; Portal: Component },
   cleanups: Array<() => void>,

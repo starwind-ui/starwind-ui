@@ -16,7 +16,11 @@ type TabsContentDeclaredProps = {
   value: string;
   class?: ClassValue;
 } & /* @vue-ignore */ TabsContentProps;
-const { keepMounted, value, class: className } = defineProps<TabsContentDeclaredProps>();
+const {
+  keepMounted = undefined,
+  value,
+  class: className,
+} = defineProps<TabsContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();

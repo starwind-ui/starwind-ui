@@ -66,19 +66,18 @@ export function renderRadioRoot(
     throw new Error("Radio requires peer stateSync and accepted detail notifications");
   const fw = ops.fw,
     read = (name: string) => fw.readInput(name);
-  const parent = `group!==undefined || ${fw.controlled("checked")}`;
-  const controlled = fw.modelAuthority === "runtime-binding" ? "group!==undefined" : parent;
-  const publish =
-    fw.modelAuthority === "runtime-binding"
-      ? `if(group===undefined){${fw.publishModel("checked", "next")}}`
-      : "";
+  const controlled = `group!==undefined || ${fw.controlled("checked")}`;
+  const binding = fw.modelAuthority === "runtime-binding";
+  const publish = binding
+    ? `if(group===undefined&&!${fw.controlled("checked")}){${fw.publishModel("checked", "next")}}`
+    : "";
   const render = renderAcceptedState(ops, "checked", "next", "group");
   const functions: [string, string][] = [
     [
       "groupChecked",
       `group===undefined ? undefined : ${ops.groupValue("value")}===${read("value")}`,
     ],
-    ["effectiveChecked", `groupChecked() ?? ${read("checked")}`],
+    ["effectiveChecked", `groupChecked() ?? ${fw.readModel("checked")}`],
     ...["disabled", "readOnly", "required"].map(
       (name) =>
         [
@@ -104,7 +103,9 @@ export function renderRadioRoot(
     functions,
     initial: initialCheckedValue("effectiveChecked()", read("defaultChecked"), "false"),
     seed: `${read("defaultChecked")} ?? initialChecked`,
-    selected: `effectiveChecked() ?? ${ops.acceptedRead}`,
+    selected: binding
+      ? `groupChecked() ?? ${ops.acceptedRead}`
+      : `effectiveChecked() ?? ${ops.acceptedRead}`,
     reconnect: ["id", "nativeButton"],
     commands: [
       { name: "applyParent", inputs: ["checked", "groupChecked()"] },
@@ -158,7 +159,7 @@ export function renderRadioRoot(
   const code = `function disconnect(){const owned=connection.instance;if(!owned)return;connection.accepted=owned.getChecked();connection.unsubscribe?.();connection.unsubscribeSync?.();connection.instance=undefined;owned.destroy();}
 function publishRuntime(owned:ReturnType<typeof createRadio>){if(connection.instance!==owned)return;const next=owned.getChecked();connection.accepted=next;${render}${publish}}
 function connect(root:HTMLElement){disconnect();const desired=effectiveChecked()??connection.accepted;const owned=createRadio(root,{defaultChecked:resetSeed,...(${controlled}?{checked:desired}:{}),${["disabled", "form", "id", "name", "readOnly", "required", "value"].map((name) => `${name}:${read(name)}`).join(",")},onCheckedChange:(next,detail)=>{${fw.untracked(fw.proposal("onCheckedChange", "next", "detail"))}}});connection.instance=owned;connection.disabled=${read("disabled")};connection.readOnly=${read("readOnly")};if(owned.getChecked()!==desired)owned.setChecked(desired,{emit:false});
-connection.unsubscribe=owned.subscribe('checkedChange',detail=>detail.onAccepted(()=>{if(connection.instance!==owned)return;${fw.untracked(`publishRuntime(owned);${fw.modelAuthority === "parent-prop" ? fw.publishModel("checked", "detail.checked") : ""}`)}}));
+connection.unsubscribe=owned.subscribe('checkedChange',detail=>detail.onAccepted(()=>{if(connection.instance!==owned)return;${fw.untracked(`publishRuntime(owned);${binding ? `if(group===undefined&&${fw.controlled("checked")}){${fw.publishModel("checked", "detail.checked")}}` : fw.publishModel("checked", "detail.checked")}`)}}));
 connection.unsubscribeSync=owned.subscribe('stateSync',()=>{${fw.untracked("publishRuntime(owned);")}});publishRuntime(owned);}
 function applyParent(){const owned=connection.instance,next=effectiveChecked();if(!owned||next===undefined||owned.getChecked()===next)return;owned.setChecked(next,{emit:false});publishRuntime(owned);}
 function applyOwnState(){const owned=connection.instance;if(!owned)return;${["disabled", "readOnly"].map((name) => `const next${name}=${read(name)};if(next${name}!==connection.${name}){connection.${name}=next${name};owned.${name === "disabled" ? "setDisabled" : "setReadOnly"}(next${name});if(group&&next${name})owned.root.setAttribute('${name === "disabled" ? facts.attrs.disabled : facts.attrs.readOnly}','');}`).join("\n")}}

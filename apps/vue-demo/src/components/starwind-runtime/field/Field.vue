@@ -42,14 +42,14 @@ type FieldDeclaredProps = {
   orientation?: FieldProps["orientation"];
 } & /* @vue-ignore */ FieldProps;
 const {
-  dirty,
+  dirty = undefined,
   disabled = false,
   errorVisibility,
-  invalid,
+  invalid = undefined,
   name,
   orientation,
   revalidationTiming,
-  touched,
+  touched = undefined,
   validationTiming,
   class: className,
 } = defineProps<FieldDeclaredProps>();

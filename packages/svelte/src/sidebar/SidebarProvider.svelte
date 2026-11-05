@@ -16,11 +16,13 @@ persistenceKey?:string;
 persistenceStorage?:SidebarPersistenceStorage;
 persistenceMaxAge?:number;onOpenChange?:(next:boolean,detail:SidebarOpenChangeDetails)=>void;
 onMobileOpenChange?:(next:boolean,detail:SidebarMobileOpenChangeDetails)=>void;children?:Snippet;ref?:(element:HTMLDivElement|null)=>void;};
-let {children,ref,open=$bindable(),defaultOpen=true,mobileOpen=$bindable(),defaultMobileOpen=false,keyboardShortcut="b",mobileQuery="(max-width: 767.98px)",persistOpen=false,persistenceKey,persistenceStorage,persistenceMaxAge=604800,onOpenChange,onMobileOpenChange,...rest}:Props=$props();
+let {children,ref,open=$bindable(),open:commandOpen,defaultOpen=true,mobileOpen=$bindable(),mobileOpen:commandMobileOpen,defaultMobileOpen=false,keyboardShortcut="b",mobileQuery="(max-width: 767.98px)",persistOpen=false,persistenceKey,persistenceStorage,persistenceMaxAge=604800,onOpenChange,onMobileOpenChange,...rest}:Props=$props();
 const seedOpen=untrack(()=>defaultOpen);
 const initialOpen=untrack(()=>open ?? seedOpen);
+const openControlled = untrack(() => commandOpen) !== undefined;
 const seedMobileOpen=untrack(()=>defaultMobileOpen);
 const initialMobileOpen=untrack(()=>mobileOpen ?? seedMobileOpen);
+const mobileOpenControlled = untrack(() => commandMobileOpen) !== undefined;
 let acceptedOpen=$state(initialOpen);
 let acceptedMobileOpen=$state(initialMobileOpen);
 let acceptedIsMobile=$state(false);
@@ -32,9 +34,9 @@ acceptedMobileOpen=connection.accepted.mobileOpen;}
 function connectRuntime(root:HTMLDivElement):void{disconnectRuntime();
 const owned=createSidebarController(root,{
 defaultOpen:seedOpen,
-...(false?{open:open}:{}),
+...(openControlled?{open:commandOpen}:{}),
 defaultMobileOpen:seedMobileOpen,
-...(false?{mobileOpen:mobileOpen}:{}),
+...(mobileOpenControlled?{mobileOpen:commandMobileOpen}:{}),
 keyboardShortcut:keyboardShortcut,
 mobileQuery:mobileQuery,
 persistOpen:persistOpen,
@@ -49,21 +51,21 @@ readContext(owned);
 if (open !== detail.open) open = detail.open; });}),owned.subscribe('mobileOpenChange',detail=>{untrack(() => { if(connection.instance!==owned)return;
 readContext(owned);
 if (mobileOpen !== detail.open) mobileOpen = detail.open; });})];
-{const supplied=open;const reload=connection.initialized&&persistOpen&&!(false)&&supplied===connection.accepted.open;const next=reload?undefined:supplied ?? (connection.initialized?connection.accepted.open:undefined);if(next!==undefined&&owned.getOpen()!==next)owned.setOpen(next,{emit:false});}
-{const supplied=mobileOpen;const next=supplied ?? (connection.initialized?connection.accepted.mobileOpen:undefined);if(next!==undefined&&owned.getMobileOpen()!==next)owned.setMobileOpen(next,{emit:false});}
+{const supplied=commandOpen;const reload=connection.initialized&&persistOpen&&!(openControlled)&&supplied===connection.accepted.open;const next=reload?undefined:(openControlled || open === commandOpen ? commandOpen : undefined) ?? (connection.initialized?connection.accepted.open:undefined);if(next!==undefined&&owned.getOpen()!==next)owned.setOpen(next,{emit:false});}
+{const supplied=commandMobileOpen;const next=(mobileOpenControlled || mobileOpen === commandMobileOpen ? commandMobileOpen : undefined) ?? (connection.initialized?connection.accepted.mobileOpen:undefined);if(next!==undefined&&owned.getMobileOpen()!==next)owned.setMobileOpen(next,{emit:false});}
 readContext(owned);connection.initialized=true;
-untrack(() => { if (open !== connection.accepted.open) open = connection.accepted.open;
-if (mobileOpen !== connection.accepted.mobileOpen) mobileOpen = connection.accepted.mobileOpen; });}
-function applyParentCommand():void{const owned=connection.instance;if(!owned)return;{const next=open;if(next!==undefined&&owned.getOpen()!==next)owned.setOpen(next,{emit:false});}
-{const next=mobileOpen;if(next!==undefined&&owned.getMobileOpen()!==next)owned.setMobileOpen(next,{emit:false});}readContext(owned);untrack(() => { if (open !== connection.accepted.open) open = connection.accepted.open;
-if (mobileOpen !== connection.accepted.mobileOpen) mobileOpen = connection.accepted.mobileOpen; });}
+untrack(() => { if(!openControlled){if (open !== connection.accepted.open) open = connection.accepted.open;}
+if(!mobileOpenControlled){if (mobileOpen !== connection.accepted.mobileOpen) mobileOpen = connection.accepted.mobileOpen;} });}
+function applyParentCommand():void{const owned=connection.instance;if(!owned)return;{const next=(openControlled || open === commandOpen ? commandOpen : undefined);if(next!==undefined&&owned.getOpen()!==next)owned.setOpen(next,{emit:false});}
+{const next=(mobileOpenControlled || mobileOpen === commandMobileOpen ? commandMobileOpen : undefined);if(next!==undefined&&owned.getMobileOpen()!==next)owned.setMobileOpen(next,{emit:false});}readContext(owned);untrack(() => { if(!openControlled){if (open !== connection.accepted.open) open = connection.accepted.open;}
+if(!mobileOpenControlled){if (mobileOpen !== connection.accepted.mobileOpen) mobileOpen = connection.accepted.mobileOpen;} });}
 function disconnectRuntime():void{const owned=connection.instance;if(!owned)return;connection.accepted.open=owned.getOpen();
 connection.accepted.mobileOpen=owned.getMobileOpen();
 connection.unsubscribe?.forEach(stop=>stop());connection.unsubscribe=undefined;
 connection.instance=undefined;
 owned.destroy();}
-function acceptMobile(next:boolean):void{const owned=connection.instance;if(!owned)return;owned.setMobileOpen(next,{emit:false});readContext(owned);untrack(() => { if (open !== connection.accepted.open) open = connection.accepted.open;
-if (mobileOpen !== connection.accepted.mobileOpen) mobileOpen = connection.accepted.mobileOpen; });}
+function acceptMobile(next:boolean):void{const owned=connection.instance;if(!owned)return;if(mobileOpenControlled){untrack(() => { if (mobileOpen !== next) mobileOpen = next; });return;}owned.setMobileOpen(next,{emit:false});readContext(owned);untrack(() => { if(!openControlled){if (open !== connection.accepted.open) open = connection.accepted.open;}
+if(!mobileOpenControlled){if (mobileOpen !== connection.accepted.mobileOpen) mobileOpen = connection.accepted.mobileOpen;} });}
 function connectMedia(query:string):()=>void{const media=typeof window.matchMedia==='function'?window.matchMedia(query):undefined;
 const sync=()=>{acceptedIsMobile=media?.matches ?? false;};sync();
 if(media?.addEventListener)media.addEventListener('change',sync);else media?.addListener(sync);
@@ -72,7 +74,7 @@ const context:SidebarContextValue={get open(){return acceptedOpen;},get mobileOp
 const attachRuntime:Attachment<HTMLDivElement>=(root)=>{
 $effect(()=>connectMedia(mobileQuery));
 $effect(()=>{void keyboardShortcut;void mobileQuery;void persistOpen;void persistenceKey;void persistenceStorage;void persistenceMaxAge;untrack(()=>connectRuntime(root));return()=>untrack(disconnectRuntime);});
-$effect(()=>{void open;void mobileOpen;untrack(applyParentCommand);});
+$effect(()=>{void commandOpen;void commandMobileOpen;untrack(applyParentCommand);});
 };
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);

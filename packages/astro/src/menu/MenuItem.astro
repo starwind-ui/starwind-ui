@@ -14,13 +14,13 @@ const { disabled = false, closeOnClick = true, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-menu-item
   role="menuitem"
   tabindex="0"
   data-close-on-click={closeOnClick ? undefined : "false"}
   aria-disabled={disabled ? "true" : undefined}
   data-disabled={disabled ? "" : undefined}
-  {...rest}
 >
   <slot />
 </div>

@@ -14,10 +14,10 @@ const { keepMounted = false, value, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-tabs-panel
   data-keep-mounted={keepMounted ? "" : undefined}
   data-value={value}
-  {...rest}
 >
   <slot />
 </div>

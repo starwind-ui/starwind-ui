@@ -36,16 +36,24 @@ export function navigationMenuFragments(
   const construction = `const owned = ${facts.runtime.factory}(${s.root}, {
     defaultValue: ${s.capture.mode === "deferred-portal" ? "null" : s.accepted},
     ${navigationMenuPlan.options.map((name) => `${name}: ${s.input(name)},`).join("\n")}
-    ${parent ? `...(${s.input("value")} !== undefined ? { value: ${s.input("value")} } : {}),` : ""}
+    ${parent ? `...(${s.input("value")} !== undefined ? { value: ${s.input("value")} } : {}),` : `...(${s.fw.controlled("value")} ? { value: null } : {}),`}
     onValueChange: (nextValue, details) => { ${proposal} },
   });`;
   const accepted = s.observeAccepted(`if (${s.owner} !== owned || details.isCanceled) return;
-    ${parent ? `if (${s.input("value")} === undefined) { ${s.render("owned.getValue()")} }` : s.render("owned.getValue()")}
+    ${parent ? `if (${s.input("value")} === undefined) { ${s.render("owned.getValue()")} }` : `if (!${s.fw.controlled("value")}) { ${s.render("owned.getValue()")} }`}
     ${s.publish("details.value")}
-    ${s.request?.at === "accepted" ? `if (${s.input("value")} !== undefined) { ${s.request.assign("details")} void resyncControlled(details); }` : ""}`);
+    ${s.request?.at === "accepted" ? `if (${parent ? `${s.input("value")} !== undefined` : s.fw.controlled("value")}) { ${s.request.assign("details")} void resyncControlled(details); }` : ""}`);
+  const silentParentCommit = `if (owned.getValue() !== next) owned.setValue(next, { emit: ${navigationMenuPlan.parentCommandsEmit} });`;
+  // A parent commit of the accepted proposal keeps its cause, so keyboard opening can move focus.
+  const parentCommit =
+    s.request?.at === "accepted"
+      ? `const detail = ${s.request.read};
+    if (detail && Object.is(detail.value, next)) { ${s.request.clear} owned.setValue(next, ${navigationRequestOptions(facts, "detail")}); }
+    else ${silentParentCommit}`
+      : silentParentCommit;
   const parentCommand = `const owned = ${s.owner}; const next = ${s.input("value")};
     if (!owned || next === undefined) return;
-    if (owned.getValue() !== next) owned.setValue(next, { emit: ${navigationMenuPlan.parentCommandsEmit} });
+    ${parentCommit}
     ${parent ? "" : s.render("owned.getValue()")}`;
   const commitRequest =
     s.request?.at === "proposal"

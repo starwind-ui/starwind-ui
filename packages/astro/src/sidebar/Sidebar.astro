@@ -41,13 +41,13 @@ const sidebarAttributes = Object.fromEntries(
 ---
 
 <div
+  {...sidebarAttributes}
   data-sw-sidebar
   data-state={state}
   data-collapsible={state === "collapsed" ? collapsible : ""}
   data-collapsible-mode={collapsible}
   data-variant={variant}
   data-side={side}
-  {...sidebarAttributes}
 >
   <slot />
 </div>

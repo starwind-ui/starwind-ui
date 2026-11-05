@@ -34,6 +34,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-select
   data-autocomplete={autoComplete}
   data-default-open={defaultOpen ? "true" : undefined}
@@ -46,7 +47,6 @@ const {
   data-readonly={readOnly ? "" : undefined}
   data-required={required ? "" : undefined}
   data-state={defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <input
     data-sw-select-input

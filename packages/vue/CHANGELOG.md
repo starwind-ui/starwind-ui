@@ -87,8 +87,8 @@
 
 ### Patch Changes
 
-- Deliver Runtime-backed group naming and Tabs indicator geometry corrections through the first-party adapters and bundled registry. The Vue package remains on its beta release channel.
-- Remove obsolete private-release warnings from generated Vue adapters and normalize the resulting blank line in vendored Primitive indexes.
+- Select, Combobox, and Menu groups now get their name from their visible heading, so screen readers announce the group. The Tabs indicator now lines up with the selected tab when a parent element is scaled. Astro, React, and Vue get these fixes, and the CLI delivers them to installed components. The Vue package stays on its beta release channel.
+- Removed old comments from the Vue component files that said the code was internal and not for release. The CLI also removes the blank line that these comments left in the Vue Primitive `index.ts` files that it copies into your project.
 - Updated dependencies
   - @starwind-ui/runtime@1.2.1
 
@@ -96,4 +96,4 @@
 
 ### Minor Changes
 
-- Publish the initial Vue 3.5 adapter beta.
+- First beta release of `@starwind-ui/vue` for Vue 3.5.

@@ -44,11 +44,15 @@ export function renderToggle(
     read = (name: string) => fw.readInput(name);
   const render = (next: string) => fw.renderAccepted("pressed", next);
   const publish = (next: string) => fw.publishModel("pressed", next);
-  const desired = `isGroupOwned ? (groupPressed ?? ${ops.acceptedRead}) : (${initialCheckedValue(read("pressed"), ops.acceptedRead)})`;
+  const model = fw.readModel("pressed");
+  const binding = fw.modelAuthority === "runtime-binding";
+  const desired = `isGroupOwned ? (groupPressed ?? ${ops.acceptedRead}) : (${initialCheckedValue(model, ops.acceptedRead)})`;
   const projection: Projection = {
     props: Object.values(facts.props),
     initial: read("defaultPressed") + " ?? false",
-    selected: `groupPressed ?? (${initialCheckedValue(read("pressed"), ops.acceptedRead)})`,
+    selected: binding
+      ? `groupPressed ?? ${ops.acceptedRead}`
+      : `groupPressed ?? (${initialCheckedValue(model, ops.acceptedRead)})`,
     groupPressed: `${ops.groupExists} && ${read("value")}!==undefined ? ${ops.groupValue}.includes(${read("value")}!) : undefined`,
     disabled: `${read("disabled")} || (${ops.groupDisabled})`,
     attrs: [
@@ -84,11 +88,11 @@ export function renderToggle(
     ],
   };
   const code = `${cleanup}
-function publishReadback(owned:ReturnType<typeof createToggle>){if(connection.instance!==owned)return;const next=owned.getPressed();${render("next")} ${fw.modelAuthority === "runtime-binding" ? `if(!isGroupOwned){${publish("next")}if(connection.instance!==owned)return;const canonical=${read("pressed")};if(canonical!==undefined&&canonical!==next){owned.setPressed(canonical,{emit:false,sync:true});${render("owned.getPressed()")}}}` : ""}}
+function publishReadback(owned:ReturnType<typeof createToggle>){if(connection.instance!==owned)return;const next=owned.getPressed();${render("next")} ${binding ? `if(!isGroupOwned&&!${fw.controlled("pressed")}){${publish("next")}if(connection.instance!==owned)return;const canonical=${read("pressed")};if(canonical!==undefined&&canonical!==next){owned.setPressed(canonical,{emit:false,sync:true});${render("owned.getPressed()")}}}` : ""}}
 function connect(root:HTMLElement){disconnect();const desired=${desired};const owned=createToggle(root,{defaultPressed:desired,disabled:${read("disabled")},nativeButton:${read("nativeButton")},syncGroup:${read("syncGroup")},value:${read("value")},...((isGroupOwned||${fw.controlled("pressed")})?{pressed:desired}:{}),onPressedChange:(next,detail)=>{${fw.untracked(fw.proposal("onPressedChange", "next", "detail"))}}});connection.instance=owned;connection.ownDisabled=${read("disabled")};
-connection.unsubscribe=owned.subscribe('pressedChange',detail=>{if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(`publishReadback(owned);${fw.modelAuthority === "parent-prop" ? publish("detail.pressed") : ""}`)}});
+connection.unsubscribe=owned.subscribe('pressedChange',detail=>{if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(`publishReadback(owned);${binding ? `if(!isGroupOwned&&${fw.controlled("pressed")}){${publish("detail.pressed")}}` : publish("detail.pressed")}`)}});
 connection.observer=new MutationObserver(()=>{${fw.untracked("publishReadback(owned);")}});connection.observer.observe(root,{attributes:true,attributeFilter:['aria-pressed']});publishReadback(owned);}
-function applyParent(){if(isGroupOwned)return;const owned=connection.instance,next=${read("pressed")};if(!owned||next===undefined||owned.getPressed()===next)return;owned.setPressed(next,{emit:false,sync:true});publishReadback(owned);}
+function applyParent(){if(isGroupOwned)return;const owned=connection.instance,next=${model};if(!owned||next===undefined||owned.getPressed()===next)return;owned.setPressed(next,{emit:false,sync:true});publishReadback(owned);}
 function applyDisabled(){const owned=connection.instance,next=${read("disabled")};if(!owned||next===connection.ownDisabled)return;connection.ownDisabled=next;owned.setDisabled(next);if(isGroupOwned&&next)owned.root.setAttribute('data-disabled','');}`;
   return ops.frame("toggle", code, projection);
 }
@@ -103,11 +107,16 @@ export function renderToggleGroup(
     read = (name: string) => fw.readInput(name),
     render = (next: string) => fw.renderAccepted("value", next);
   const pub = (next: string) => fw.publishModel("value", next, true);
+  const model = fw.readModel("value");
+  const binding = fw.modelAuthority === "runtime-binding";
+  const controlled = fw.controlled("value");
   const inputs = ["disabled", "loopFocus", "multiple", "orientation"] as const;
   const projection: Projection = {
     props: Object.values(facts.props).filter((p): p is AdapterFamilyProp => p !== undefined),
     initial: `normalizeValue(${initialListValue(read("defaultValue")).replaceAll(" ?? ", "??")},${read("multiple")})`,
-    selected: `normalizeValue(${read("value")}??${ops.acceptedRead},${read("multiple")})`,
+    selected: binding
+      ? `normalizeValue(${ops.acceptedRead},${read("multiple")})`
+      : `normalizeValue(${model}??${ops.acceptedRead},${read("multiple")})`,
     disabled: read("disabled"),
     attrs: [
       [facts.attrs.root, '""'],
@@ -141,11 +150,11 @@ export function renderToggleGroup(
 function isModelEqual(left:string[]|undefined,right:string[]|undefined){return left===right||left!==undefined&&right!==undefined&&left.length===right.length&&left.every((entry,index)=>entry===right[index]);}
 function copyModel(value:string[]){return [...value];}
 ${cleanup}
-function publishReadback(owned:ReturnType<typeof createToggleGroup>){if(connection.instance!==owned)return;const next=owned.getValue();if(!isModelEqual(connection.accepted,next)){connection.accepted=next;${render("next")}}${fw.modelAuthority === "runtime-binding" ? `${pub("next")}if(connection.instance!==owned)return;const canonical=${read("value")};if(canonical!==undefined&&!isModelEqual(canonical,next)){owned.setValue(normalizeValue(canonical,${read("multiple")}),{emit:false});const retained=owned.getValue();connection.accepted=retained;${render("retained")}}` : ""}}
-function connect(root:HTMLDivElement){disconnect();const desired=normalizeValue(${read("value")}??initialDefault,${read("multiple")});const owned=createToggleGroup(root,{defaultValue:desired,${inputs.map((n) => `${n}:${read(n)}`).join(",")},...(${fw.controlled("value")}?{value:desired}:{}),onValueChange:(next,detail)=>{${fw.untracked(fw.proposal("onValueChange", "next", "detail"))}}});connection.instance=owned;
-connection.unsubscribe=owned.subscribe('valueChange',detail=>{if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(`publishReadback(owned);${fw.modelAuthority === "parent-prop" ? pub("detail.value") : ""}`)}});
+function publishReadback(owned:ReturnType<typeof createToggleGroup>){if(connection.instance!==owned)return;const next=owned.getValue();if(!isModelEqual(connection.accepted,next)){connection.accepted=next;${render("next")}}${binding ? `if(${controlled})return;${pub("next")}if(connection.instance!==owned)return;const canonical=${read("value")};if(canonical!==undefined&&!isModelEqual(canonical,next)){owned.setValue(normalizeValue(canonical,${read("multiple")}),{emit:false});const retained=owned.getValue();connection.accepted=retained;${render("retained")}}` : ""}}
+function connect(root:HTMLDivElement){disconnect();const desired=normalizeValue(${model}??initialDefault,${read("multiple")});const owned=createToggleGroup(root,{defaultValue:desired,${inputs.map((n) => `${n}:${read(n)}`).join(",")},...(${fw.controlled("value")}?{value:desired}:{}),onValueChange:(next,detail)=>{${fw.untracked(fw.proposal("onValueChange", "next", "detail"))}}});connection.instance=owned;
+connection.unsubscribe=owned.subscribe('valueChange',detail=>{if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(`publishReadback(owned);${binding ? `if(${controlled}){${pub("detail.value")}}` : pub("detail.value")}`)}});
 connection.observer=new MutationObserver(()=>{${fw.untracked("publishReadback(owned);")}});connection.observer.observe(root,{attributes:true,attributeFilter:['data-value']});publishReadback(owned);}
-function applyParent(){const owned=connection.instance,input=${read("value")};if(!owned||input===undefined)return;const next=normalizeValue(input,${read("multiple")});if(isModelEqual(owned.getValue(),next))return;owned.setValue(next,{emit:false});publishReadback(owned);}
+function applyParent(){const owned=connection.instance,input=${model};if(!owned||input===undefined)return;const next=normalizeValue(input,${read("multiple")});if(isModelEqual(owned.getValue(),next))return;owned.setValue(next,{emit:false});publishReadback(owned);}
 function applyOptions(){const owned=connection.instance;if(!owned)return;${recipe.commandOrder.map((command) => commands[command]).join("\n")}}`;
   return ops.frame("toggle-group", code, projection);
 }

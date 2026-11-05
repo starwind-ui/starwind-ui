@@ -40,7 +40,7 @@ type ToggleGroupItemDeclaredProps = {
 const {
   variant,
   disabled = false,
-  nativeButton,
+  nativeButton = undefined,
   value,
   class: className,
 } = defineProps<ToggleGroupItemDeclaredProps>();

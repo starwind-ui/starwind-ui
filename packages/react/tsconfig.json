@@ -16,6 +16,6 @@
     "types": ["node", "react", "react-dom"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "tsup.config.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "build/**/*.ts", "build/**/*.tsx", "tsup.config.ts"],
   "exclude": ["dist", "node_modules"]
 }

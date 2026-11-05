@@ -30,6 +30,7 @@ const initialValue = value === undefined ? defaultValue : value;
 ---
 
 <nav
+  {...rest}
   data-sw-nav-menu
   data-value={value ?? undefined}
   data-controlled-value={value === null ? "" : undefined}
@@ -40,7 +41,6 @@ const initialValue = value === undefined ? defaultValue : value;
   data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
   data-orientation={orientation}
   data-state={initialValue !== null ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </nav>

@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div"> & {
 const { "data-slot": dataSlot = "sidebar-group", class: className, ...rest } = Astro.props;
 ---
 
-<div class={sidebarGroup({ class: className })} data-sidebar="group" {...rest} data-slot={dataSlot}>
+<div {...rest} class={sidebarGroup({ class: className })} data-sidebar="group" data-slot={dataSlot}>
   <slot />
 </div>

@@ -1,20 +1,22 @@
 import type { TabsOperations } from "../../shared-recipes/selection/tabs.js";
 import { modelOperations } from "../../shared-recipes/structured/operations.js";
+
+const tabsFw = {
+  ...modelOperations("svelte", "value", "value"),
+  renderAccepted: (_name: string, next: string) => `renderedValue=${next};`,
+};
 export const tabsOperations: TabsOperations = {
   acceptedRead: "renderedValue",
-  fw: {
-    ...modelOperations("svelte", "value", "value"),
-    renderAccepted: (_name, next) => `renderedValue=${next};`,
-  },
+  fw: tabsFw,
   root(code, projection) {
     const initial = projection.initial
       .map((item) => `const ${item.name}=untrack(()=>${item.expression});`)
       .join("\n");
     const attrs = projection.attrs.map(([name, expression]) => `${name}={${expression}}`).join(" ");
     return `<script lang="ts">import {onMount,untrack,type Snippet} from 'svelte';import type {HTMLAttributes} from 'svelte/elements';import {createTabs,type TabsValue,type TabsOrientation,type TabsValueChangeDetails} from '@starwind-ui/runtime/tabs';import {setTabsContext} from './TabsContext';
- type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'> & {children?:Snippet<[TabsValue]>;value?:TabsValue;defaultValue?:TabsValue;orientation?:TabsOrientation;syncKey?:string;onValueChange?:(value:TabsValue,detail:TabsValueChangeDetails)=>void;ref?:(element:HTMLDivElement|null)=>void};let {children,value=$bindable(),defaultValue,orientation='horizontal',syncKey,onValueChange,ref,...rest}:Props=$props();${initial}let renderedValue=$state<TabsValue>(untrack(()=>${projection.seed}));let selected=$derived(${projection.selected});let rootElement=$state<HTMLDivElement>(),ready=$state(false),revision=$state(0);const connection:{instance?:ReturnType<typeof createTabs>;unsubscribe?:()=>void}={};setTabsContext({get value(){return renderedValue;},get orientation(){return orientation;},refresh(){revision+=1;}});
+ type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'> & {children?:Snippet<[TabsValue]>;value?:TabsValue;defaultValue?:TabsValue;orientation?:TabsOrientation;syncKey?:string;onValueChange?:(value:TabsValue,detail:TabsValueChangeDetails)=>void;ref?:(element:HTMLDivElement|null)=>void};let {children,value=$bindable(),value:commandValue,defaultValue,orientation='horizontal',syncKey,onValueChange,ref,...rest}:Props=$props();${initial}${tabsFw.controlledCell("value")}let renderedValue=$state<TabsValue>(untrack(()=>${projection.seed}));let selected=$derived(${projection.selected});let rootElement=$state<HTMLDivElement>(),ready=$state(false),revision=$state(0);const connection:{instance?:ReturnType<typeof createTabs>;unsubscribe?:()=>void}={};setTabsContext({get value(){return renderedValue;},get orientation(){return orientation;},refresh(){revision+=1;}});
  ${code}
- onMount(()=>{if(rootElement)untrack(()=>connect(rootElement!));ready=true;return()=>{ready=false;disconnect();};});$effect(()=>{ready;value;untrack(applyParent);});$effect(()=>{ready;${projection.refreshInputs.join(";")};revision;untrack(refresh);});$effect(()=>{const element=rootElement,callback=ref;if(!element)return;untrack(()=>callback?.(element));return()=>untrack(()=>callback?.(null));});
+ onMount(()=>{if(rootElement)untrack(()=>connect(rootElement!));ready=true;return()=>{ready=false;disconnect();};});$effect(()=>{ready;commandValue;untrack(applyParent);});$effect(()=>{ready;${projection.refreshInputs.join(";")};revision;untrack(refresh);});$effect(()=>{const element=rootElement,callback=ref;if(!element)return;untrack(()=>callback?.(element));return()=>untrack(()=>callback?.(null));});
  </script><div bind:this={rootElement} {...rest} ${attrs}>{@render children?.(renderedValue)}</div>`;
   },
   part(plan) {

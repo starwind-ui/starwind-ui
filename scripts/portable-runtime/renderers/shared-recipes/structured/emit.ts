@@ -18,7 +18,7 @@ export function order(plan: ConnectionRecipe): ConnectOperation[] {
 }
 export function emitLifecycle(plan: ConnectionRecipe, fw: FrameworkOperations): string {
   const { model } = plan;
-  const input = fw.readInput(model.name);
+  const input = fw.readModel(model.name);
   const selection = model.codec === "selection";
   const copy = (value: string) => (selection ? `copyModel(${value})` : value);
   const seed =
@@ -31,8 +31,26 @@ export function emitLifecycle(plan: ConnectionRecipe, fw: FrameworkOperations): 
   const render = (value: string) => fw.renderAccepted(model.name, copy(value));
   const publish = (value: string) =>
     `${render(value)}\n${fw.publishModel(model.name, copy(value), selection)}`;
+  const binding = fw.modelAuthority === "runtime-binding";
+  const controlled = fw.controlled(model.name);
+  const retainTrigger = plan.retainAcceptedTrigger
+    ? `\n    if (detail.${model.name} && detail.trigger instanceof HTMLElement) connection.trigger = detail.trigger;`
+    : "";
+  // A parent-controlled binding writes the proposal once. Accepted state follows the parent getter.
+  const proposeToParent = binding
+    ? `if (${controlled}) {${retainTrigger}
+      ${fw.untracked(fw.publishModel(model.name, copy(`detail.${model.name}`), selection))}
+      return;
+    }
+    `
+    : "";
+  const publishOwned = binding
+    ? fw.untracked(
+        `if (!${controlled}) { ${fw.publishModel(model.name, copy("connection.accepted"), selection)} }`,
+      )
+    : "";
   const accepted = `if (connection.instance !== owned) return;
-    connection.accepted = ${copy(`detail.${model.name}`)};${plan.retainAcceptedTrigger ? `\n    if (detail.${model.name} && detail.trigger instanceof HTMLElement) connection.trigger = detail.trigger;` : ""}
+    ${proposeToParent}connection.accepted = ${copy(`detail.${model.name}`)};${retainTrigger}
     ${fw.untracked(publish(`detail.${model.name}`))}`;
   const steps: Record<ConnectOperation, string> = {
     "retire-previous": `disconnectRuntime();\nconst desired = ${selection ? `${input} !== undefined ? ${copy(input)} : ${copy("connection.accepted")}` : `${input} ?? connection.accepted`};${plan.construction === "initial-seed-then-closed" ? "\nconst recreating = connection.initialized;" : ""}`,
@@ -52,10 +70,7 @@ export function emitLifecycle(plan: ConnectionRecipe, fw: FrameworkOperations): 
         ? `if (recreating && desired) owned.${model.setter}(desired, { emit: false });`
         : `if (${selection ? `!isModelEqual(${getter}, desired)` : `${getter} !== desired`}) owned.${model.setter}(${copy("desired")}, { emit: false${plan.retainAcceptedTrigger ? ", trigger: connection.trigger" : ""} });`,
     "render-accepted": `connection.accepted = ${copy(getter)};\n${render("connection.accepted")}`,
-    "publish-connected-model":
-      fw.modelAuthority === "runtime-binding"
-        ? fw.untracked(fw.publishModel(model.name, copy("connection.accepted"), selection))
-        : "",
+    "publish-connected-model": publishOwned,
   };
   const cleanup = {
     "retain-state": `connection.accepted = ${copy(getter)};`,
@@ -82,7 +97,7 @@ export function emitLifecycle(plan: ConnectionRecipe, fw: FrameworkOperations): 
     if (${selection ? `!isModelEqual(${getter}, next)` : `${getter} !== next`}) owned.${model.setter}(${copy("next")}, { emit: false });
     connection.accepted = ${copy(getter)};
     ${render("connection.accepted")}
-    ${fw.modelAuthority === "runtime-binding" ? fw.untracked(fw.publishModel(model.name, copy("connection.accepted"), selection)) : ""}
+    ${publishOwned}
   }
   `;
 }

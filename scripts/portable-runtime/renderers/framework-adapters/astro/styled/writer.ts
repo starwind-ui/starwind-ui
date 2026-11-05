@@ -18,9 +18,11 @@ import {
   renderProps,
   renderVariables,
 } from "./props-client.js";
+import { applyAstroNativeModel } from "./native-model.js";
 import { renderNodes } from "./render-tree.js";
 import { renderVariants } from "./variants.js";
 import { projectAstroColorPickerComponent } from "./color-picker-projection.js";
+import { moveAstroElementSpreadsFirst } from "../spread-attribute-order.js";
 
 export type GenerateStarwindAstroWrappersOptions = {
   contracts: StyledAdapterContract[];
@@ -132,18 +134,19 @@ function renderComponent(
   const destructure = renderDestructure(component.destructure);
   const variables = renderVariables(component.variables ?? [], ASTRO_FRAMEWORK);
   const script = [imports, props, destructure, variables].filter(Boolean).join("\n\n");
+  applyAstroNativeModel(component);
   let renderedNodes = renderNodes(component.render, 0, primitiveAliases);
   if (group.component === "color-picker" && component.exportName === "ColorPicker") {
     renderedNodes = renderColorPickerRootSlots(renderedNodes);
   }
   const clientScript = renderClientScript(component, runtimeImportContext);
 
-  return `${astroHeader}${script}
+  return moveAstroElementSpreadsFirst(`${astroHeader}${script}
 ---
 
 ${renderedNodes}
 ${clientScript}
-`;
+`);
 }
 
 function renderColorPickerRootSlots(renderedNodes: string): string {

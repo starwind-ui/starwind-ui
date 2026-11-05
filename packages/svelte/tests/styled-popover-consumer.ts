@@ -31,11 +31,9 @@ import Popover from "./popover/index.js";
 let open = $state<boolean | undefined>(undefined);
 </script>
 <Popover.Root bind:open onOpenChange={(next, detail) => { void next; detail.cancel(); }} onCloseComplete={(detail) => { void detail; }}>
- {#snippet children(accepted)}
  <Popover.Trigger>Open</Popover.Trigger><Popover.Content ref={(node: HTMLDivElement | null) => { void node; }}>
- <Popover.Header><Popover.Title>Confirmation</Popover.Title><Popover.Description>{String(accepted)}</Popover.Description></Popover.Header>
+ <Popover.Header><Popover.Title>Confirmation</Popover.Title><Popover.Description>{String(open)}</Popover.Description></Popover.Header>
 
 
  </Popover.Content>
- {/snippet}
 </Popover.Root>`;

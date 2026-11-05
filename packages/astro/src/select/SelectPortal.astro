@@ -14,12 +14,12 @@ const { container, disabled = false, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-select-portal
   data-container={container}
   data-disabled={disabled ? "" : undefined}
   data-sw-portal-placement="runtime"
   data-placement="pending"
-  {...rest}
 >
   <slot />
 </div>

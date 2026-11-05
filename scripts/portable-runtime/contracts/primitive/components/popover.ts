@@ -286,7 +286,9 @@ export const popoverRuntimeAdapterContract = {
     { part: "close", public: true },
     { part: "viewport", public: true },
   ],
-  asChild: [{ part: "trigger", merges: ["aria", "className", "data", "ref"] }],
+  asChild: [
+    { part: "trigger", merges: ["aria", "className", "data", "ref"], childElement: "any-element" },
+  ],
   initialMarkup: [
     {
       part: "root",

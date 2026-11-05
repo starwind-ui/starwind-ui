@@ -19,21 +19,21 @@
     ...rest
   }: FieldSeparatorProps = $props();
 
+  let hasContent = $derived(Boolean(children));
+
     let attachNativeCallback = $derived(ref);
     const attachNative: Attachment<HTMLDivElement> = (element) => {
       const callback = attachNativeCallback;
       untrack(() => callback?.(element));
       return () => untrack(() => callback?.(null));
     };
-
-  let hasContent = $derived(Boolean(children));
 </script>
 
 <div
   class={fieldSeparator({ "class": cx(className) })}
+  data-content={hasContent ? "true" : "false"}
   {...rest}
   data-slot={"field-separator"}
-  data-content={hasContent ? "true" : "false"}
   {@attach attachNative}
 >
   <Separator

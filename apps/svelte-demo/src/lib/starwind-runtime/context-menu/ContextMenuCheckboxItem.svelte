@@ -21,6 +21,7 @@
     "onCheckedChange": onCheckedChange,
     "children": children,
     "indicator": indicator,
+    "checked": commandChecked,
     ...rest
   }: ContextMenuCheckboxItemProps = $props();
 </script>
@@ -33,7 +34,7 @@
   {...rest}
   data-slot={"context-menu-checkbox-item"}
   onCheckedChange={onCheckedChange}
-  bind:checked={checked}
+  bind:checked={() => commandChecked, (next) => { checked = next; }}
 >
   {#if showIndicator}
     <ContextMenuCheckboxItemIndicator

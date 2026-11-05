@@ -53,6 +53,12 @@ it("removes owner diagnostics from every minified production component", async (
     expect(code, file).not.toMatch(
       /child props|multiple owners|console\.warn|diagnos|validationRevision|\.some\(/,
     );
+    // A button-only part does nothing on another element, so that case still reports in production.
+    if (/[\\/](?:(?:Menu|Select|Combobox)Trigger|ComboboxClear)\.svelte$/.test(file)) {
+      expect(code, file).toContain("child must be a button");
+    } else {
+      expect(code, file).not.toContain("child must be a button");
+    }
     // Anchor owners retain Sets to select the semantic element.
     if (file.includes("AnchorOwner") || file.includes("PreviewCardTrigger")) {
       expect(code, file).toContain("new Set");

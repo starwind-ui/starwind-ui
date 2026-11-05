@@ -17,7 +17,7 @@ assert.equal(globalThis.document,undefined);assert.equal(ScrollArea.Root,named.S
   });
   const { body } = JSON.parse(await consumer.run("scroll-area-ssr.mjs", { loader: true }));
   assert.match(body, /data-sw-scroll-area-viewport/);
-  assert.match(body, /overflow:scroll!important/);
+  assert.match(body, /overflow: scroll/);
   assert.match(body, /tabindex="-1"/);
   assert.match(body, /data-orientation="horizontal"/);
   assert.doesNotMatch(body, /\[object Object\]/);
@@ -84,7 +84,7 @@ import { createAttachmentKey, type Attachment } from "svelte/attachments";
 let threshold = $state<ScrollAreaOverflowEdgeThreshold | undefined>(0);
 let width = $state(600), height = $state(500), viewportKey = $state(0), barKey = $state(0), thumbKey = $state(0), contentKey = $state(0);
 let showViewport = $state(true);
-let viewportStyle = $state("width:200px;height:150px;overflow:hidden!important"), presentation = $state("initial");
+let viewportStyle = $state("width:200px;height:150px;overflow:hidden"), presentation = $state("initial");
 let auto = $state(true), customBar = $state(false), dependency = $state(0), refVersion = $state(0), attachmentVersion = $state(0);
 const refs = new Map<string, HTMLElement>(), attachments = new Map<string, HTMLElement>();
 const refLog: string[] = [], attachmentLog: string[] = [];
@@ -100,7 +100,7 @@ export function mutateThreshold() { if (typeof threshold === "object") threshold
 export function setSize(w: number, h: number) { width=w; height=h; }
 export function replacePart(name: string) { if(name==="viewport") viewportKey++; if(name==="bar") barKey++; if(name==="thumb") thumbKey++; if(name==="content") contentKey++; }
 export function setViewport(next: boolean) { showViewport=next; }
-export function updatePresentation() { viewportStyle="width:200px;height:150px;background:blue;overflow:hidden!important"; presentation="updated"; }
+export function updatePresentation() { viewportStyle="width:200px;height:150px;background:blue;overflow:hidden"; presentation="updated"; }
 export function setAuto(next: boolean) { auto=next; }
 export function setCustomBar(next: boolean) { customBar=next; }
 export function replaceRef() { refVersion++; }

@@ -97,6 +97,7 @@ const AsChildTrigger = defineComponent({
         mergeProps(attrs, {
           asChild: true,
           class: triggerClass.value,
+          "data-size": size,
           "data-slot": "select-trigger",
           ref: setElement,
         }),
@@ -113,6 +114,7 @@ const AsChildTrigger = defineComponent({
     :ref="setElement"
     v-bind="attrs"
     :class="triggerClass"
+    :data-size="size"
     data-slot="select-trigger"
   >
     <slot>

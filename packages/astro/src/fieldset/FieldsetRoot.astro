@@ -12,7 +12,7 @@ interface Props extends HTMLAttributes<"fieldset"> {
 const { disabled = false, ...rest } = Astro.props;
 ---
 
-<fieldset data-sw-fieldset data-disabled={disabled ? "" : undefined} disabled={disabled} {...rest}>
+<fieldset {...rest} data-sw-fieldset data-disabled={disabled ? "" : undefined} disabled={disabled}>
   <slot />
 </fieldset>
 

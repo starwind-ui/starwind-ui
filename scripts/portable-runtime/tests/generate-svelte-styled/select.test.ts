@@ -38,10 +38,10 @@ describe("generated Styled Select", () => {
     expect(content).toContain("view.getComputedStyle(popup).zIndex");
     expect(content).toContain('class={selectContent({ "size": size, "class": cx(className) })}');
     expect(files.find((file) => file.relativePath.endsWith("/Select.svelte"))!.content).toContain(
-      "bind:open={open}",
+      "bind:open={() => commandOpen, (next) => { open = next; }}",
     );
     expect(files.find((file) => file.relativePath.endsWith("/Select.svelte"))!.content).toContain(
-      "bind:value={value}",
+      "bind:value={() => commandValue, (next) => { value = next; }}",
     );
     expect(
       files.find((file) => file.relativePath.endsWith("/SelectValue.svelte"))!.content,
@@ -186,28 +186,28 @@ describe("generated Styled Select", () => {
     expect(result.initial.undefined).toMatchObject({
       open: true,
       value: "alpha",
-      openModel: true,
-      valueModel: "alpha",
-      openWrites: [true],
-      valueWrites: ["alpha"],
+      openModel: "undefined",
+      valueModel: "undefined",
+      openWrites: [],
+      valueWrites: [],
       openCallbacks: [],
       valueCallbacks: [],
     });
     expect(result.initial["open-undefined"]).toMatchObject({
       open: true,
       value: "alpha",
-      openModel: true,
+      openModel: "undefined",
       valueModel: "undefined",
-      openWrites: [true],
+      openWrites: [],
       valueWrites: [],
     });
     expect(result.initial["value-undefined"]).toMatchObject({
       open: false,
       value: "alpha",
       openModel: "undefined",
-      valueModel: "alpha",
+      valueModel: "undefined",
       openWrites: [],
-      valueWrites: ["alpha"],
+      valueWrites: [],
     });
     expect(result.initial.plain).toMatchObject({
       open: false,
@@ -217,8 +217,8 @@ describe("generated Styled Select", () => {
     });
     expect(result.initial.empty).toMatchObject({
       value: null,
-      valueModel: null,
-      valueWrites: [null],
+      valueModel: "",
+      valueWrites: [],
     });
     expect(result.accepted.bound).toMatchObject({
       openModel: false,
@@ -228,7 +228,7 @@ describe("generated Styled Select", () => {
     });
     expect(result.accepted.plain).toMatchObject({
       open: false,
-      value: "gamma",
+      value: "beta",
       openModel: false,
       valueModel: "beta",
     });
@@ -246,8 +246,8 @@ describe("generated Styled Select", () => {
       openWrites: [],
     });
     expect(result.accepted.undefined).toMatchObject({
-      openWrites: [true, false],
-      valueWrites: ["alpha", "beta"],
+      openWrites: [false],
+      valueWrites: ["beta"],
     });
     expect(result.retainedOpen).toMatchObject({
       open: false,
@@ -269,7 +269,7 @@ describe("generated Styled Select", () => {
       value: "alpha",
       valueModel: "alpha",
       formValue: "alpha",
-      valueWrites: ["alpha", "beta", "alpha"],
+      valueWrites: ["beta", "alpha"],
     });
     expect(result.boundReset.valueCallbacks).toHaveLength(1);
     expect(result.laterUndefined).toMatchObject({
@@ -278,15 +278,15 @@ describe("generated Styled Select", () => {
       openModel: "undefined",
       valueModel: "undefined",
     });
-    expect(result.silent.openCallbacks).toHaveLength(2);
-    expect(result.silent.valueCallbacks).toHaveLength(1);
+    expect(result.silent.openCallbacks).toHaveLength(1);
+    expect(result.silent.valueCallbacks).toHaveLength(0);
     expect(result.resetSeed).toMatchObject({
       open: false,
-      value: "alpha",
-      formValue: "alpha",
+      value: "beta",
+      formValue: "beta",
       valueModel: "beta",
     });
-    expect(result.resetSeed.valueCallbacks).toHaveLength(1);
+    expect(result.resetSeed.valueCallbacks).toHaveLength(0);
     expect(result.disabled.formValue).toBeNull();
     expect(result.readonly).toMatchObject({
       open: true,
@@ -395,12 +395,17 @@ describe("generated Styled Select", () => {
     `,
     );
     expect(result.afterClass.refs).toEqual(result.before.refs);
-    expect(result.afterClass.attachments.filter((value: string) => value.endsWith(":setup"))).toHaveLength(
-      result.afterClass.attachments.filter((value: string) => value.endsWith(":cleanup")).length + 1,
+    expect(
+      result.afterClass.attachments.filter((value: string) => value.endsWith(":setup")),
+    ).toHaveLength(
+      result.afterClass.attachments.filter((value: string) => value.endsWith(":cleanup")).length +
+        1,
     );
     expect(result.replaced.refs).toEqual(["a:BUTTON", "a:null", "b:BUTTON"]);
     expect(result.replaced.popupRefs).toEqual(["a:DIV", "a:null", "b:DIV"]);
-    expect(result.replaced.attachments.filter((value: string) => value.endsWith(":setup"))).toHaveLength(
+    expect(
+      result.replaced.attachments.filter((value: string) => value.endsWith(":setup")),
+    ).toHaveLength(
       result.replaced.attachments.filter((value: string) => value.endsWith(":cleanup")).length + 1,
     );
     expect(result.retargeted.portalParent).toBe("portal-b");

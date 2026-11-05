@@ -13,6 +13,7 @@ import {
   validateSpecializedAdapterSpec,
 } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec, SpecializedAdapterSpecPrintedFile } from "./types.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type MenuSpecializedAdapterSpec = SpecializedAdapterSpec & {
   menu: {
@@ -577,6 +578,7 @@ function getMenuCompositeOverlayFacts(
   }));
 
   return {
+    childElements: getAdapterChildElements(spec.asChild),
     attrs: {
       align: attrs.align,
       avoidCollisions: attrs.avoidCollisions,

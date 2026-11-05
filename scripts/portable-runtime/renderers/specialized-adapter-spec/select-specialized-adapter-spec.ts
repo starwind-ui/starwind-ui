@@ -10,6 +10,7 @@ import { withAcceptedModelPublications } from "../primitive-output-model/accepte
 import { createPrimitiveAttributeMap } from "../primitives/contract-helpers.js";
 import { buildBaseSpecializedAdapterSpec } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec } from "./types.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type SelectSpecializedAdapterSpec = SpecializedAdapterSpec & {
   select: {
@@ -403,6 +404,7 @@ function getSelectOptionCollectionOverlayFacts(
   ) as Record<AdapterOptionCollectionOverlayPartName, string>;
 
   return {
+    childElements: getAdapterChildElements(spec.asChild),
     attrs: {
       align: attrs.align,
       alignItemWithTrigger: attrs.alignItemWithTrigger,

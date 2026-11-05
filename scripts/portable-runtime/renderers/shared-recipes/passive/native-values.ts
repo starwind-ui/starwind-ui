@@ -1,7 +1,12 @@
+import type { StyledOutputNativeModel } from "../../styled-output-model/index.js";
+
 type NativeValuePolicy = {
-  part: "Textarea" | "NativeSelect";
   tag: "textarea" | "select";
   name: "value";
+  /** The native event that reports a new value. */
+  updateEvent: "input" | "change";
+  /** Selection controls can hold several values, which a value property cannot express. */
+  writesThrough: "value-property" | "selected-options";
   typeOmissions: readonly string[];
   declarations: readonly string[];
   declarationType?: string;
@@ -9,9 +14,10 @@ type NativeValuePolicy = {
 };
 
 export const textareaValuePolicy = {
-  part: "Textarea",
   tag: "textarea",
   name: "value",
+  updateEvent: "input",
+  writesThrough: "value-property",
   typeOmissions: ["value", "defaultValue", "defaultvalue"],
   declarations: ["value", "defaultValue", "defaultvalue"],
   declarationType: "string | null",
@@ -19,23 +25,21 @@ export const textareaValuePolicy = {
 } as const satisfies NativeValuePolicy;
 
 export const nativeSelectValuePolicy = {
-  part: "NativeSelect",
   tag: "select",
   name: "value",
+  updateEvent: "change",
+  writesThrough: "selected-options",
   typeOmissions: ["defaultValue", "defaultvalue"],
   declarations: [],
   nativeDefaults: [],
 } as const satisfies NativeValuePolicy;
 
 /** Native defaults remain browser-owned; targets choose their binding syntax. */
-export function nativeValuePolicy(component: string, part?: string): NativeValuePolicy | undefined {
-  const policy =
-    component === "textarea"
-      ? textareaValuePolicy
-      : component === "native-select"
-        ? nativeSelectValuePolicy
-        : undefined;
-  return part === undefined || policy?.part === part ? policy : undefined;
+export function nativeValuePolicy(
+  nativeModel: StyledOutputNativeModel | undefined,
+): NativeValuePolicy | undefined {
+  if (!nativeModel) return undefined;
+  return nativeModel.tag === "textarea" ? textareaValuePolicy : nativeSelectValuePolicy;
 }
 
 /** An omitted multiple value leaves selected options and reset with the browser. */

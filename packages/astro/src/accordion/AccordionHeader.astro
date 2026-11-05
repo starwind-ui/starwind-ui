@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"h3">;
 const { ...rest } = Astro.props;
 ---
 
-<h3 data-sw-accordion-header {...rest}>
+<h3 {...rest} data-sw-accordion-header>
   <slot />
 </h3>

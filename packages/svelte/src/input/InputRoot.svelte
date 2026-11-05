@@ -12,18 +12,20 @@
     onValueChange?: (value: string, detail: InputValueChangeDetails) => void;
     ref?: (element: HTMLInputElement | null) => void;
   };
-  let { value = $bindable(), defaultValue, disabled = false, type, onValueChange, ref, ...rest }: Props = $props();
+  let { value = $bindable(), value: commandValue, defaultValue, disabled = false, type, onValueChange, ref, ...rest }: Props = $props();
   const seed = untrack(() => defaultValue ?? value);
   const initialMarkup = untrack(() => type === "file" ? undefined : value ?? defaultValue);
   function connectInput(element: HTMLInputElement) {
-    const initialModel = value;
-
+    const initialModel = commandValue;
+    const controlled = initialModel !== undefined;
+    let retained = initialModel;
     let disposed = false;
     let associated: HTMLFormElement | null = null;
     let resetTimer: number | undefined;
 
     function synchronize(next: InputValue | undefined): void {
       if (next === undefined || disposed) return;
+      if (controlled) retained = next;
       const normalized = String(next);
       if (instance.getValue() === normalized && element.value === normalized) return;
       instance.setValue(next, {"emit":false});
@@ -37,7 +39,7 @@
       resetTimer = window.setTimeout(() => {
         resetTimer = undefined;
         if (disposed || event.defaultPrevented) return;
-        untrack(() => { value = instance.getValue(); });
+        untrack(() => { if (controlled) synchronize(commandValue ?? retained); else { value = instance.getValue(); } });
       }, 0);
     }
     function bindReset(): void {
@@ -56,11 +58,11 @@
       onValueChange(next, detail) { untrack(() => {
        onValueChange?.(next, detail);
        value = next;
-       synchronize(value); }); },
-
+       if (controlled) synchronize(commandValue ?? retained); else if (value === commandValue) synchronize(commandValue); }); },
+      ...(initialModel === undefined ? {} : { value: initialModel }),
     });
     synchronize(initialModel);
-    if (value === undefined || String(value) !== instance.getValue()) { value = instance.getValue(); }
+    if (!controlled && (commandValue === undefined || String(commandValue) !== instance.getValue())) { value = instance.getValue(); }
     bindReset();
     const stopDiscovery = observeFormDiscovery(element.ownerDocument, () => {
       instance.refresh();
@@ -83,7 +85,8 @@
   const attachInput: Attachment<HTMLInputElement> = (element) => {
     const connection = untrack(() => connectInput(element));
     $effect(() => {
-      const next = value;
+      const next = commandValue;
+      {const tracked=commandValue;if(Array.isArray(tracked))void [...tracked];}
       untrack(() => connection.synchronize(next));
     });
     $effect(() => {

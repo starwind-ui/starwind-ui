@@ -16,6 +16,7 @@ import {
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { ReactPortalScopeProvider, useReactPortalScope } from "../internal/portal";
+import { useClosedItemProbe } from "../internal/use-close-presence";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 import { ComboboxContext } from "./ComboboxContext";
@@ -96,6 +97,21 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
   const defaultInputValueRef = React.useRef(defaultInputValue);
   const defaultOpenRef = React.useRef(defaultOpen);
   const defaultValueRef = React.useRef(defaultValue);
+  const childrenRef = React.useRef(children);
+  useIsomorphicLayoutEffect(() => {
+    childrenRef.current = children;
+  }, [children]);
+  const selectedInputValueRef = React.useRef<{
+    inputValue: string | null;
+    value: string | null;
+  }>({ inputValue: null, value: null });
+  const resolveSelectedText = React.useCallback((nextValue: string | null) => {
+    const known = selectedInputValueRef.current;
+    return (
+      findSelectedComboboxItemText(childrenRef.current, nextValue) ??
+      (known.value === nextValue ? known.inputValue : null)
+    );
+  }, []);
   const runtimeOptionsRef = React.useRef({
     filterMode,
     highlightItemOnHover,
@@ -220,7 +236,7 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
             setUncontrolledInputValue(owned.getInputValue());
           }
 
-          const settledText = findSelectedComboboxItemText(children, owned.getValue());
+          const settledText = resolveSelectedText(owned.getValue());
           setSelectedInputValue({ inputValue: settledText, value: owned.getValue() });
           rootRef.current
             ?.querySelectorAll<HTMLElement>("[data-sw-combobox-value]")
@@ -246,11 +262,11 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
 
     const selectedInitialValue =
       valueRef.current !== undefined ? valueRef.current : (uncontrolledValueRef.current ?? null);
-    const selectedInitialInputValue = findSelectedComboboxItemText(children, selectedInitialValue);
+    const selectedInitialInputValue = resolveSelectedText(selectedInitialValue);
     const defaultRuntimeInputValue =
       uncontrolledInputValueRef.current ?? selectedInitialInputValue ?? "";
 
-    if (!portalScope.isReady()) return;
+    if (!portalScope.isReady() && !root.closest("[data-sw-field]")) return;
 
     const instance = createCombobox(root, {
       defaultValue: uncontrolledValueRef.current,
@@ -282,6 +298,7 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
       ...(selectedInitialInputValue !== null
         ? { defaultValueText: selectedInitialInputValue }
         : {}),
+      resolveValueText: (value) => resolveSelectedText(value),
 
       ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
       ...(inputValueRef.current !== undefined ? { inputValue: inputValueRef.current } : {}),
@@ -290,19 +307,20 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     instanceRef.current = instance;
     instance.subscribe("valueChange", (detail) => {
       if (instanceRef.current !== instance) return;
-      const nextText =
-        getTextFromComboboxItem(detail.item) ??
-        (detail.value === null ? null : findSelectedComboboxItemText(children, detail.value)) ??
-        instance.getInputValue();
-      setSelectedInputValue({ inputValue: nextText || null, value: detail.value });
+      setSelectedInputValue({
+        inputValue:
+          (getTextFromComboboxItem(detail.item) ??
+            (detail.value === null
+              ? null
+              : findSelectedComboboxItemText(childrenRef.current, detail.value)) ??
+            instance.getInputValue()) ||
+          null,
+        value: detail.value,
+      });
       if (inputValueRef.current === undefined) {
-        const nextInput = detail.value === null ? "" : (nextText ?? instance.getInputValue());
-        if (instance.getInputValue() !== nextInput)
-          instance.setInputValue(nextInput, { emit: false, filter: false });
-        if (inputValueRef.current === undefined) {
-          setUncontrolledInputValue(nextInput);
-        }
+        setUncontrolledInputValue(instance.getInputValue());
       }
+
       if (valueRef.current === undefined) {
         setUncontrolledValue(detail.value);
       }
@@ -459,7 +477,12 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
   }, [ensureInstance, filterMode, highlightItemOnHover, locale, modal, readOnly]);
 
   useIsomorphicLayoutEffect(() => {
-    if ((openRef.current ?? uncontrolledOpenRef.current) !== true) return;
+    // Inside a Field, start here. Field starts a control that has no controller, and that controller lacks these options.
+    if (
+      (openRef.current ?? uncontrolledOpenRef.current) !== true &&
+      !rootRef.current?.closest("[data-sw-field]")
+    )
+      return;
 
     ensureInstance();
   }, [ensureInstance, open, uncontrolledOpen]);
@@ -516,17 +539,47 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
   const selectedValue = value !== undefined ? value : (uncontrolledValue ?? null);
   useIsomorphicLayoutEffect(() => {
     const timer = window.setTimeout(() => {
-      setSelectedInputValue({
-        inputValue: findSelectedComboboxItemText(children, selectedValue),
-        value: selectedValue,
-      });
+      const inputValue = findSelectedComboboxItemText(children, selectedValue);
+      // The walk cannot see items inside a user component, so a label from a pick or a probe stays.
+      setSelectedInputValue((current) =>
+        inputValue === null && current.value === selectedValue
+          ? current
+          : { inputValue, value: selectedValue },
+      );
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, [children, selectedValue]);
 
+  selectedInputValueRef.current = selectedInputValue;
   const selectedText =
     selectedInputValue.value === selectedValue ? selectedInputValue.inputValue : null;
+  const itemProbe = useClosedItemProbe({
+    itemAttribute: "data-sw-combobox-item",
+    needed:
+      selectedValue !== null &&
+      selectedText === null &&
+      findSelectedComboboxItemText(children, selectedValue) === null,
+    onItem: (item, itemValue) => {
+      const text = getTextFromComboboxItem(item);
+      setSelectedInputValue({ inputValue: text, value: itemValue });
+      const owned = instanceRef.current;
+      if (owned) {
+        // Runtime reads the item while it is in the DOM. Text that exists already stays.
+        const before = owned.getInputValue();
+        owned.setValue(itemValue, { emit: false });
+        if (before !== "") owned.setInputValue(before, { emit: false, filter: false });
+        if (
+          text !== null &&
+          inputValueRef.current === undefined &&
+          !uncontrolledInputValueRef.current
+        ) {
+          setUncontrolledInputValue(text);
+        }
+      }
+    },
+    value: selectedValue,
+  });
   const renderedInputValue =
     inputValue !== undefined
       ? inputValue
@@ -551,6 +604,17 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     },
     [ensureInstance, disabled],
   );
+  // React reports focus after the native event. Connecting in the native capture phase lets Runtime hear the first focus.
+  useIsomorphicLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || disabled) return;
+    const connect = (event: FocusEvent) => {
+      if (event.target instanceof Element && event.target.matches("[data-sw-combobox-input]"))
+        ensureInstance();
+    };
+    root.addEventListener("focus", connect, { capture: true });
+    return () => root.removeEventListener("focus", connect, { capture: true });
+  }, [ensureInstance, disabled]);
   const contextValue = React.useMemo(
     () => ({
       disabled: disabled,
@@ -558,10 +622,20 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
       open: renderedOpen,
       readOnly: readOnly,
       required: required,
+      itemProbe,
       selectedText,
       value: selectedValue,
     }),
-    [disabled, renderedInputValue, renderedOpen, readOnly, required, selectedText, selectedValue],
+    [
+      disabled,
+      renderedInputValue,
+      renderedOpen,
+      readOnly,
+      required,
+      itemProbe,
+      selectedText,
+      selectedValue,
+    ],
   );
 
   return (

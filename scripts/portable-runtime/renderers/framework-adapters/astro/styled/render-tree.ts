@@ -119,6 +119,7 @@ function renderElementNode(
     Boolean(node.selfClosing),
     level,
     primitiveAliases,
+    node.inlineChildren,
   );
 
   return [comments, tag].filter(Boolean).join("\n");
@@ -141,10 +142,11 @@ function renderTag(
   selfClosing: boolean,
   level: number,
   primitiveAliases: Record<string, string>,
+  inlineChildren = false,
 ): string {
   const renderedAttrs = attrs.filter((attr) => isForFramework(attr, ASTRO_FRAMEWORK));
 
-  if (canRenderInlineTextTag(renderedAttrs, children, selfClosing)) {
+  if (canRenderInlineTextTag(renderedAttrs, children, selfClosing, inlineChildren)) {
     return `${indent(level)}<${tag}${renderInlineAttrs(renderedAttrs)}>${children[0].value}</${tag}>`;
   }
 
@@ -278,8 +280,14 @@ function canRenderInlineTextTag(
   attrs: StyledOutputAttribute[],
   children: StyledOutputRenderNode[],
   selfClosing: boolean,
+  inlineChildren: boolean,
 ): children is [Extract<StyledOutputRenderNode, { type: "text" }>] {
-  return !selfClosing && attrs.length <= 1 && children.length === 1 && children[0].type === "text";
+  return (
+    !selfClosing &&
+    (inlineChildren || attrs.length <= 1) &&
+    children.length === 1 &&
+    children[0].type === "text"
+  );
 }
 
 function renderInlineAttrs(attrs: StyledOutputAttribute[]): string {

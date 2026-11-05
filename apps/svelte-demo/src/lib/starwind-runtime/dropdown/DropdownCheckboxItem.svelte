@@ -21,6 +21,7 @@
     "onCheckedChange": onCheckedChange,
     "children": children,
     "indicator": indicator,
+    "checked": commandChecked,
     ...rest
   }: DropdownCheckboxItemProps = $props();
 </script>
@@ -33,7 +34,7 @@
   {...rest}
   data-slot={"dropdown-checkbox-item"}
   onCheckedChange={onCheckedChange}
-  bind:checked={checked}
+  bind:checked={() => commandChecked, (next) => { checked = next; }}
 >
   {#if showIndicator}
     <MenuCheckboxItemIndicator

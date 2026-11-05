@@ -7,7 +7,11 @@ import { once } from "node:events";
 import { createServer } from "node:http";
 import { chromium } from "playwright";
 
-/** Custom semantic owners keep each public symbol alive until that symbol or owner changes. */
+/**
+ * Custom semantic owners keep each public symbol alive until that symbol or owner changes.
+ * Removal writes an explicit undefined. From Svelte 5.57, a symbol that is left out and then
+ * restored with the same callback does not run again, on a native element too.
+ */
 export async function verifyStyledButtonAttachmentIsolation(consumer: DistConsumer) {
   await consumer.write({
     "ButtonAttachmentIsolation.svelte": APP,
@@ -94,7 +98,7 @@ function pair(){
 }
 const modes=["explicit","inferred","page","previous","next"] as const;
 const pairs={explicit:pair(),inferred:pair(),page:pair(),previous:pair(),next:pair()},native=pair();
-function symbols(value:ReturnType<typeof pair>){return present?{[firstKey]:value.first,...(secondPresent?{[secondKey]:replaced?value.replacement:value.second}:{})}:{};}
+function symbols(value:ReturnType<typeof pair>){return{[firstKey]:present?value.first:undefined,[secondKey]:present&&secondPresent?(replaced?value.replacement:value.second):undefined};}
 function props(mode:typeof modes[number]){const value=pairs[mode];return{...symbols(value),ref:secondRef?value.refB:value.refA,"data-composition":mode,title:changed?"changed":"initial",class:changed?"updated":"initial",style:"--probe: ready",tabindex:3,onpointerdown:value.onpointerdown};}
 let href=$derived(changed?"#changed":"#initial");
 let inferredProps=$derived<ButtonProps>(buttonMode?{as:"button"}:{href});

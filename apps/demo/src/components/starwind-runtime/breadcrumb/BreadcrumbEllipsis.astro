@@ -10,11 +10,11 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <span
+  {...rest}
   data-sw-breadcrumb-ellipsis
   role="presentation"
   aria-hidden="true"
   class={breadcrumbEllipsis({ class: className })}
-  {...rest}
   data-slot="breadcrumb-ellipsis"
 >
   <slot name="icon">

@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"button">;
 const { ...rest } = Astro.props;
 ---
 
-<button data-sw-carousel-next type="button" {...rest}>
+<button {...rest} data-sw-carousel-next type="button">
   <slot />
 </button>

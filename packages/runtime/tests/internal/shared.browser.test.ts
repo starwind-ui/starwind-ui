@@ -38,7 +38,7 @@ describe("shared Runtime state", () => {
     expect(value).toBeInstanceOf(WeakMap);
     expect(shared("test-value")).toBe(value);
     expect(
-      (globalThis as unknown as Record<symbol, unknown>)[Symbol.for("starwind/1/test-value")],
+      (globalThis as unknown as Record<symbol, unknown>)[Symbol.for("starwind/2/test-value")],
     ).toBe(value);
   });
 
@@ -131,10 +131,13 @@ describe("shared Runtime state", () => {
     const scrollLockCopyB = await loadSecondCopy<ScrollLockModule>(
       "../../src/internal/scroll-lock.ts",
     );
-    expect(scrollLockCopyB.lockDocumentScroll).not.toBe(scrollLockCopyA.lockDocumentScroll);
+    // A module export keeps its name, and a property access can get a short name in the built test
+    // run. The string key always reads the export.
+    const lockExport = "lockDocumentScroll" as const;
+    expect(scrollLockCopyB[lockExport]).not.toBe(scrollLockCopyA[lockExport]);
 
-    const outer = scrollLockCopyA.lockDocumentScroll(document);
-    const inner = scrollLockCopyB.lockDocumentScroll(document);
+    const outer = scrollLockCopyA[lockExport](document);
+    const inner = scrollLockCopyB[lockExport](document);
 
     outer.release();
 

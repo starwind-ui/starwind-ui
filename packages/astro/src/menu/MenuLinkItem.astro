@@ -14,6 +14,7 @@ const { disabled = false, href, closeOnClick = false, ...rest } = Astro.props;
 ---
 
 <a
+  {...rest}
   data-sw-menu-link-item
   href={disabled ? undefined : href}
   role="menuitem"
@@ -21,7 +22,6 @@ const { disabled = false, href, closeOnClick = false, ...rest } = Astro.props;
   data-close-on-click={closeOnClick ? "true" : undefined}
   aria-disabled={disabled ? "true" : undefined}
   data-disabled={disabled ? "" : undefined}
-  {...rest}
 >
   <slot />
 </a>

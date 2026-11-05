@@ -9,10 +9,10 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <nav
+  {...rest}
   role="navigation"
   aria-label="pagination"
   class={pagination({ class: className })}
-  {...rest}
   data-slot="pagination"
 >
   <slot />

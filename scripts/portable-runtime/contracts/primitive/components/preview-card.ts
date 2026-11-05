@@ -49,18 +49,16 @@ export const previewCardRuntimeAdapterContract = {
     },
     {
       name: "trigger",
-      defaultElement: "button",
+      defaultElement: "a",
       discoveryAttribute: "data-sw-preview-card-trigger",
       forwardsRef: true,
       initialAttributes: [
-        { name: "type", source: "constant", value: "button" },
         { name: "data-as-child", source: "prop" },
         { name: "data-close-delay", source: "prop" },
         { name: "data-disabled", source: "prop" },
         { name: "data-open-delay", source: "prop" },
         { name: "aria-disabled", source: "prop" },
         { name: "data-state", source: "state" },
-        { name: "disabled", source: "prop" },
       ],
     },
     {
@@ -286,8 +284,6 @@ export const previewCardRuntimeAdapterContract = {
         "data-open-delay",
         "aria-disabled",
         "data-state",
-        "disabled",
-        "type",
       ],
       reason:
         "Triggers need delay overrides, disabled state, and initial closed state before pointer/focus listeners attach.",

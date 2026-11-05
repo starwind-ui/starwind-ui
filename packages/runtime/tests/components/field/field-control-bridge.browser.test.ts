@@ -162,6 +162,96 @@ describe("field control bridge", () => {
     }
   });
 
+  describe("when a Field connects before DOMContentLoaded", () => {
+    const connect = vi.fn();
+    const loader = vi.fn(() => Promise.resolve());
+    let unregisterLoader: () => void;
+
+    function mockDocument(
+      readyState: DocumentReadyState,
+      domContentLoadedEventStart: number,
+    ): void {
+      vi.spyOn(document, "readyState", "get").mockReturnValue(readyState);
+      vi.spyOn(performance, "getEntriesByType").mockReturnValue([
+        { domContentLoadedEventStart } as PerformanceNavigationTiming,
+      ]);
+    }
+
+    function connectUnknownControl(onConnected = vi.fn()) {
+      connectFieldControl(document.createElement("div"), {
+        disabled: false,
+        onConnected,
+        shouldSyncName: false,
+      });
+      return onConnected;
+    }
+
+    beforeEach(() => {
+      connect.mockClear();
+      loader.mockClear();
+      unregisterLoader = registerFieldControlLazyBridge("unknown", loader);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      unregisterLoader();
+    });
+
+    it.each([
+      ["parsing", "loading", 0],
+      ["running module scripts", "interactive", 0],
+    ] as const)(
+      "waits while the document is %s, then loads the sibling module",
+      async (_, readyState, domContentLoadedEventStart) => {
+        mockDocument(readyState, domContentLoadedEventStart);
+
+        connectUnknownControl();
+        await waitForMacrotask();
+        expect(loader).not.toHaveBeenCalled();
+
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+        await waitForMacrotask();
+        expect(loader).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it("uses a bridge that a later control script registers, without the sibling module", async () => {
+      mockDocument("interactive", 0);
+
+      const onConnected = connectUnknownControl();
+      const unregisterBridge = registerFieldControlBridge({ kind: "unknown", connect });
+      try {
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+        await waitForMacrotask();
+
+        expect(loader).not.toHaveBeenCalled();
+        expect(connect).toHaveBeenCalledTimes(1);
+        expect(onConnected).toHaveBeenCalledTimes(1);
+      } finally {
+        unregisterBridge();
+      }
+    });
+
+    it("loads at once after DOMContentLoaded while the page keeps loading", async () => {
+      mockDocument("interactive", 1234);
+
+      connectUnknownControl();
+      await waitForMacrotask();
+
+      expect(loader).toHaveBeenCalledTimes(1);
+    });
+
+    it("loads at once when the document has no navigation entry", async () => {
+      vi.spyOn(document, "readyState", "get").mockReturnValue("interactive");
+      vi.spyOn(performance, "getEntriesByType").mockReturnValue([]);
+
+      connectUnknownControl();
+      await waitForMacrotask();
+
+      expect(loader).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("does not connect a destroyed Field when a live Field shares its lazy bridge load", async () => {
     document.body.innerHTML = `
       <div data-sw-field id="destroyed-field">

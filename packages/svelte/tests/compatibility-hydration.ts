@@ -128,8 +128,8 @@ const ref = (element: HTMLElement | null) => { if (element) refs.setups++; else 
 export function disable() { disabled = true; }
 export function snapshot() { return { clicks, checked, selectValue, selectOpen, sliderValue, colorValue: typeof colorValue==="string"?colorValue:colorValue?.toString("hex"), colorFormat, sidebarOpen, sidebarClicks, changes: { ...changes }, refs: { ...refs } }; }
 </script>
-{#snippet sidebarChild(payload:SidebarMenuButtonChildPayload)}{#if payload.kind==="anchor"}<a {...payload.props}>{@render payload.children?.()}</a>{:else}<button {...payload.props}>{@render payload.children?.()}</button>{/if}{/snippet}
-<Sidebar.Provider data-compatibility="sidebar" bind:open={sidebarOpen} {ref} onOpenChange={()=>changes.sidebarOpen++}><Sidebar.Trigger>Sidebar</Sidebar.Trigger><Sidebar.MenuButton href="#sidebar-compatibility" child={sidebarChild} onclick={()=>sidebarClicks++}>Destination</Sidebar.MenuButton></Sidebar.Provider>
+{#snippet sidebarChild(payload:SidebarMenuButtonChildPayload)}<a {...payload.props} href="#sidebar-compatibility">{@render payload.children?.()}</a>{/snippet}
+<Sidebar.Provider data-compatibility="sidebar" bind:open={sidebarOpen} {ref} onOpenChange={()=>changes.sidebarOpen++}><Sidebar.Trigger>Sidebar</Sidebar.Trigger><Sidebar.MenuButton child={sidebarChild} onclick={()=>sidebarClicks++}>Destination</Sidebar.MenuButton></Sidebar.Provider>
 <ButtonRoot data-compatibility="button" {disabled} {ref} onclick={() => clicks++}>Activate</ButtonRoot>
 <CheckboxRoot data-compatibility="checkbox" nativeButton bind:checked defaultChecked={false} {ref} onCheckedChange={() => changes.checked++} aria-label="Compatible checkbox" />
 <Select.Root data-compatibility="select" bind:open={selectOpen} bind:value={selectValue} defaultValue="alpha" {ref} onOpenChange={() => changes.selectOpen++} onValueChange={() => changes.selectValue++}>

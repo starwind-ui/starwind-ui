@@ -68,20 +68,9 @@ export function comboboxFragments(target: Target) {
       ? `if (${s.input(c.name)} === undefined) { ${s.render(c, value)} }`
       : s.render(c, value);
   const publish = (c: Channel, value: string) => s.publish(c, value);
-  const canUpdate = (c: Channel) =>
-    s.fw.modelAuthority === "runtime-binding" ? "true" : `${s.input(c.name)} === undefined`;
   const set = (c: Channel, next: string, owner = instance) =>
     `if (${owner}.${c.getter}() !== ${next}) ${owner}.${c.setter}(${next}, { emit: ${p.parentCommandsEmit}${c.name === "inputValue" ? `, filter: ${p.inputCommandsFilter}` : ""} });`;
-  const proposal = (c: Channel) =>
-    `${s.fw.untracked(s.callback(c))}${
-      c.name === "inputValue" && !s.nativeInputRestoresCanceledValue
-        ? `
-    if (detail.event?.type === "input") queueMicrotask(() => {
-      if (!detail.isCanceled || ${s.owner} !== ${instance}) return;
-      ${instance}.setInputValue(${instance}.getInputValue(), { emit: false, filter: false });
-    });`
-        : ""
-    }`;
+  const proposal = (c: Channel) => s.fw.untracked(s.callback(c));
   const lazyInitialLabel = s.resolveLazyInitialText ? "selectedInitialInputValue" : undefined;
   const effectiveInitialInput = `${s.input("inputValue")} ?? defaultRuntimeInputValue`;
   const constructorPreparation = s.resolveLazyInitialText
@@ -105,11 +94,32 @@ export function comboboxFragments(target: Target) {
       ...(${lazyInitialLabel} !== null ? {defaultValueText:${lazyInitialLabel}} : {}),`
           : ""
       }
+      ${s.resolveLazyText ? `resolveValueText: (value) => ${s.resolveLazyText("value")},` : ""}
       ${s.portal}
-      ${s.fw.modelAuthority === "parent-prop" ? p.channels.map((c) => `...(${s.input(c.name)} !== undefined ? { ${c.name}: ${s.input(c.name)} } : {}),`).join("\n") : ""}
+      ${
+        s.fw.modelAuthority === "parent-prop"
+          ? p.channels
+              .map(
+                (c) =>
+                  `...(${s.input(c.name)} !== undefined ? { ${c.name}: ${s.input(c.name)} } : {}),`,
+              )
+              .join("\n")
+          : p.channels
+              .map((c) => {
+                const retained = `${s.input(c.name)} !== undefined ? ${s.input(c.name)} : ${s.accepted(c)}`;
+                return `...(${s.fw.controlled(c.name)} ? { ${c.name}: ${c.name === "open" ? `${s.input("disabled")} ? false : (${retained})` : retained} } : {}),`;
+              })
+              .join("\n")
+      }
     });
     ${s.own(instance)}`;
   const input = p.channels[1];
+  const inputText = `${instance}.${input.getter}()`;
+  // Runtime owns text changes and their proposals. An imperative value syncs text with no input
+  // event, so accepted value handling only reads that text back into the framework model.
+  const followAcceptedValueText = `${s.rememberLabel("detail.value", "detail.item", instance)}
+      ${render(input, inputText)}
+      `;
   const subscriptions = p.channels
     .map((c) =>
       s.subscribe(
@@ -117,20 +127,16 @@ export function comboboxFragments(target: Target) {
         c.event,
         `
     if (${s.owner} !== ${instance}) return;
-    ${s.fw.untracked(`${
-      c.name === "value"
-        ? `const nextText = ${s.selectedText("detail.value", "detail.item")};
-      ${s.rememberLabel("detail.value", "nextText")}
-      if (${canUpdate(input)}) {
-        const nextInput = detail.value === null ? "" : nextText ?? ${instance}.getInputValue();
-        ${set(input, "nextInput")}
-        ${render(input, "nextInput")}
-        ${publish(input, "nextInput")}
-      }`
-        : ""
-    }
+    ${s.fw.untracked(
+      s.fw.modelAuthority === "parent-prop"
+        ? `${c.name === "value" ? followAcceptedValueText : ""}
       ${render(c, `detail.${c.name}`)}
-      ${publish(c, `detail.${c.name}`)}`)}
+      ${publish(c, `detail.${c.name}`)}`
+        : `if (${s.fw.controlled(c.name)}) { ${publish(c, `detail.${c.name}`)} }
+      else { ${c.name === "value" ? followAcceptedValueText : ""}
+      ${render(c, `detail.${c.name}`)}
+      ${publish(c, `detail.${c.name}`)} }`,
+    )}
   `,
       ),
     )
@@ -139,10 +145,12 @@ export function comboboxFragments(target: Target) {
   const synchronization = `const owned = ${s.owner}; if (!owned) return;
     ${p.channels
       .map(
-        (c) => `if (${s.input(c.name)} !== undefined) {
-      const next = ${c.name === "open" ? `${s.input("disabled")} ? false : ${s.input(c.name)}` : s.input(c.name)};
+        (
+          c,
+        ) => `{ const command = ${s.command?.(c.name) ?? s.input(c.name)}; if (command !== undefined) {
+      const next = ${c.name === "open" ? `${s.input("disabled")} ? false : command` : "command"};
       ${set(c, "next", "owned")}
-    }`,
+    } }`,
       )
       .join("\n")}
     ${p.channels.map((c) => render(c, `owned.${c.getter}()`)).join("\n")}`;
@@ -168,7 +176,7 @@ export function comboboxResetSettlement(target: Target): string {
           channels
             .map(
               (c) =>
-                `const next${upper(c.name)} = ${s.fw.modelAuthority === "parent-prop" ? `${s.input(c.name)} !== undefined ? ${s.input(c.name)} : ` : ""}event.defaultPrevented ? before${upper(c.name)} : owned.${c.getter}();`,
+                `const next${upper(c.name)} = ${s.fw.modelAuthority === "parent-prop" ? `${s.input(c.name)} !== undefined ? ${s.input(c.name)} : ` : `${s.fw.controlled(c.name)} ? (${s.input(c.name)} !== undefined ? ${s.input(c.name)} : before${upper(c.name)}) : `}event.defaultPrevented ? before${upper(c.name)} : owned.${c.getter}();`,
             )
             .join("\n") +
             "\n" +
@@ -177,7 +185,7 @@ export function comboboxResetSettlement(target: Target): string {
                 (c) => `
           owned.${c.setter}(next${upper(c.name)}, {emit:false${c.name === "inputValue" ? ",filter:false" : ""}});
           ${s.fw.modelAuthority === "parent-prop" ? `if (${s.input(c.name)} === undefined) { ${s.render(c, `owned.${c.getter}()`)} }` : s.render(c, `owned.${c.getter}()`)}
-          ${s.fw.modelAuthority === "runtime-binding" ? `if (!event.defaultPrevented) { ${s.publish(c, `owned.${c.getter}()`)} }` : ""}`,
+          ${s.fw.modelAuthority === "runtime-binding" ? `if (!event.defaultPrevented && !${s.fw.controlled(c.name)}) { ${s.publish(c, `owned.${c.getter}()`)} }` : ""}`,
               )
               .join("\n"),
         )}
@@ -197,7 +205,7 @@ export function comboboxOptionObservers(target: Target): string {
     owned.${update.setter}(${update.inputs.length === 1 ? s.input(update.inputs[0]!) : `{${update.inputs.map((name) => `${name}:${s.input(name)}`).join(",")}}`});
     ${
       "restoreOpen" in update
-        ? `const next = ${s.input("disabled")} ? false : (${s.input("open")} ?? ${s.accepted(open)});
+        ? `const next = ${s.input("disabled")} ? false : (${s.command?.("open") ?? s.input("open")} ?? ${s.accepted(open)});
       if (owned.getOpen() !== next) owned.setOpen(next,{emit:false});
       ${s.fw.modelAuthority === "parent-prop" ? `if (${s.input("open")} === undefined) { ${s.render(open, "owned.getOpen()")} }` : s.render(open, "owned.getOpen()")}`
         : ""
@@ -211,7 +219,7 @@ export function comboboxModelObservers(target: Target): string {
   const s = comboboxOperations[target];
   if (target === "svelte")
     return s.observe(
-      comboboxPlan.channels.map((c) => c.name),
+      comboboxPlan.channels.map((c) => s.input(c.name)),
       comboboxFragments(target).synchronization,
     );
   return comboboxPlan.channels

@@ -29,6 +29,27 @@ export function focusFirstElement(container: HTMLElement, options?: FocusOptions
   }
 }
 
+/**
+ * A close can finish long after it starts. Focus goes back to the trigger only when it is still in
+ * the closing surfaces, or nothing holds it. Otherwise the user has moved on, and that focus stays.
+ */
+export function canReturnFocus(
+  ownerDocument: Document,
+  closingSurfaces: Iterable<HTMLElement | null>,
+): boolean {
+  let active = ownerDocument.activeElement;
+  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+  if (!active || active === ownerDocument.body || active === ownerDocument.documentElement) {
+    return true;
+  }
+
+  for (const surface of closingSurfaces) {
+    if (surface?.contains(active)) return true;
+  }
+
+  return false;
+}
+
 export function trapTabKey(container: HTMLElement, event: KeyboardEvent): void {
   if (event.key !== "Tab") return;
 

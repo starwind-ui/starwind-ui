@@ -1,0 +1,20 @@
+---
+import "../shared/base.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Conformance fixture</title>
+  </head>
+  <body>
+    <slot />
+    <script>
+      import { captureSubmits, markReady } from "../shared/harness";
+
+      captureSubmits();
+      markReady();
+    </script>
+  </body>
+</html>

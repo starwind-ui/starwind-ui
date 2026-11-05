@@ -114,6 +114,11 @@ export function createVueAsChild(name: string, element: Ref<HTMLElement | null>)
         ref: setElement,
       },
     );
+    // A child that declares its own part keeps it, as in React, unless the part protects its slot.
+    const childSlot = child.props?.["data-slot"];
+    if (childSlot !== undefined && protectedProps["data-slot"] === undefined) {
+      mergedProps["data-slot"] = childSlot;
+    }
     return cloneVNode(child, normalizeComponentBooleanAttrs(child, mergedProps), true);
   }
 
@@ -133,6 +138,16 @@ export function useVueAsChildRuntimeOwner(
   onBeforeUnmount(() =>
     root.value?.removeEventListener(nativeTargetChangeEvent, handleNativeTargetChange),
   );
+}
+
+/** True when the slot holds the one child that `asChild` can compose. */
+export function hasVueAsChildTarget(name: string, children: readonly VNode[]): boolean {
+  try {
+    normalizeChild(name, children);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function normalizeComponentBooleanAttrs(
@@ -171,7 +186,14 @@ function normalizePropName(name: string): string {
   return name.replaceAll("-", "").toLowerCase();
 }
 
-function normalizeChild(name: string, children: readonly VNode[]): VNode {
+/** A v-if that renders nothing leaves a Comment. It is not a second child. */
+function withoutEmptyBranches<T>(children: readonly T[]): readonly T[] {
+  const rendered = children.filter((child) => !isVNode(child) || child.type !== Comment);
+  return rendered.length ? rendered : children;
+}
+
+function normalizeChild(name: string, sourceChildren: readonly VNode[]): VNode {
+  const children = withoutEmptyBranches(sourceChildren);
   if (children.length !== 1) {
     throw new TypeError(
       `${name} asChild requires exactly one child VNode; received ${children.length}.`,
@@ -182,7 +204,9 @@ function normalizeChild(name: string, children: readonly VNode[]): VNode {
   if (!isVNode(child)) throw invalidVNodeError(name, child);
 
   if (child.type === Fragment) {
-    const fragmentChildren = Array.isArray(child.children) ? child.children : [];
+    const fragmentChildren = withoutEmptyBranches(
+      Array.isArray(child.children) ? child.children : [],
+    );
     if (fragmentChildren.length !== 1) {
       throw new TypeError(
         `${name} asChild accepts one Fragment boundary with exactly one child VNode; received ${fragmentChildren.length}.`,

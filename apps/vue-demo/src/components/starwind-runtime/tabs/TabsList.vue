@@ -16,7 +16,11 @@ type TabsListDeclaredProps = {
   loopFocus?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ TabsListProps;
-const { activateOnFocus, loopFocus, class: className } = defineProps<TabsListDeclaredProps>();
+const {
+  activateOnFocus = undefined,
+  loopFocus = undefined,
+  class: className,
+} = defineProps<TabsListDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();

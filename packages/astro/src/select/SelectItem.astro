@@ -14,6 +14,7 @@ const { disabled = false, value, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-select-item
   data-value={value}
   role="option"
@@ -21,7 +22,6 @@ const { disabled = false, value, ...rest } = Astro.props;
   aria-disabled={disabled ? "true" : undefined}
   data-disabled={disabled ? "" : undefined}
   tabindex="-1"
-  {...rest}
 >
   <slot />
 </div>

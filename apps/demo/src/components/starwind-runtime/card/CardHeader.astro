@@ -8,6 +8,6 @@ type Props = HTMLAttributes<"div">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div data-sw-card-header class={cardHeader({ class: className })} {...rest} data-slot="card-header">
+<div {...rest} data-sw-card-header class={cardHeader({ class: className })} data-slot="card-header">
   <slot />
 </div>

@@ -12,9 +12,9 @@ const preserveText = Astro.slots.has("default");
 ---
 
 <span
+  {...rest}
   data-sw-progress-value
   data-preserve-text={preserveText ? "" : undefined}
-  {...rest}
   aria-hidden="true"
 >
   <slot />

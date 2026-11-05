@@ -11,6 +11,7 @@ import {
   validateSpecializedAdapterSpec,
 } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec } from "./types.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type ComboboxSpecializedAdapterSpec = SpecializedAdapterSpec & {
   combobox: {
@@ -555,6 +556,7 @@ function getComboboxEditableCollectionOverlayFacts(
   ) as Record<AdapterEditableCollectionOverlayPartName, string>;
 
   return {
+    childElements: getAdapterChildElements(spec.asChild),
     attrs: {
       align: getFloatingAttribute(spec, "align", "data-align"),
       alignOffset: getFloatingAttribute(spec, "alignOffset", "data-align-offset"),
@@ -697,6 +699,7 @@ function getComboboxEditableCollectionOverlayFacts(
       }),
     },
     inputSemantics: spec.combobox.editableInput.inputSemantics,
+    icon: { constantAttributes: { ariaHidden: getIconAriaHidden(spec) } },
     parts: Object.fromEntries(
       COMBOBOX_OUTPUT_MODEL_PARTS.map((partName) => [
         partName,
@@ -1779,6 +1782,11 @@ function assertStaticAttribute(
       `Combobox specialized adapter spec requires ${attributeName} metadata for ${partName}.`,
     );
   }
+}
+
+function getIconAriaHidden(spec: SpecializedAdapterSpec): string {
+  assertStaticAttributeValue(spec, "icon", "aria-hidden", "true");
+  return "true";
 }
 
 function assertStaticAttributeValue(

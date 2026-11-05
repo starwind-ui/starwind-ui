@@ -4,6 +4,7 @@ import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
+  readDisabledAttribute,
   resolveAsChildControl,
   uniqueElements,
 } from "../../internal/dom";
@@ -21,7 +22,7 @@ import {
   type FloatingDisclosureLifecycle,
   type FloatingDisclosurePositionOptions,
 } from "../../internal/floating-disclosure";
-import { focusFirstElement } from "../../internal/focus";
+import { canReturnFocus, focusFirstElement } from "../../internal/focus";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
@@ -127,20 +128,7 @@ const POPOVER_COLLISION_STRATEGY_ATTRIBUTE = "data-collision-strategy";
 const instances = shared<WeakMap<HTMLElement, PopoverController>>("popover");
 
 export function refreshPopoverPortalSurface(root: HTMLElement): void {
-  const controller = instances.get(root);
-  if (!controller) return;
-  const nextElements = getPopoverElements(controller.root);
-  if (nextElements.popup === controller["elements"].popup) return;
-
-  popupOwners.delete(controller["elements"].popup);
-  controller["portalSurfaceAbortController"]?.abort();
-  controller["portalSurfaceAbortController"] = new AbortController();
-  Object.assign(controller["elements"], nextElements);
-  popupOwners.set(controller["elements"].popup, controller);
-  controller["setupAccessibility"]();
-  controller["bindPortalEvents"]();
-  controller["lifecycle"].refreshSurface(controller["elements"].popup);
-  controller["reconcileOpenChildRegistrations"]();
+  instances.get(root)?.refreshPortalSurface();
 }
 const popupOwners = new WeakMap<HTMLElement, PopoverController>();
 
@@ -331,6 +319,20 @@ class PopoverController implements PopoverInstance {
     }
 
     throw new Error(`Unsupported Popover event: ${event}`);
+  }
+  refreshPortalSurface(): void {
+    const nextElements = getPopoverElements(this.root);
+    if (nextElements.popup === this.elements.popup) return;
+
+    popupOwners.delete(this.elements.popup);
+    this.portalSurfaceAbortController?.abort();
+    this.portalSurfaceAbortController = new AbortController();
+    Object.assign(this.elements, nextElements);
+    popupOwners.set(this.elements.popup, this);
+    this.setupAccessibility();
+    this.bindPortalEvents();
+    this.lifecycle.refreshSurface(this.elements.popup);
+    this.reconcileOpenChildRegistrations();
   }
 
   destroy(): void {
@@ -699,7 +701,7 @@ class PopoverController implements PopoverInstance {
         ? this.previousActiveElement
         : null;
 
-    focusTarget?.focus();
+    if (canReturnFocus(this.root.ownerDocument, [this.elements.popup])) focusTarget?.focus();
     this.previousActiveElement = null;
   }
 
@@ -961,7 +963,7 @@ function createCloseCompleteDetails(request: OpenRequest | undefined): PopoverCl
 
 function isDisabledTrigger(trigger: HTMLElement): boolean {
   return (
-    trigger.hasAttribute("disabled") ||
+    readDisabledAttribute(trigger) ||
     trigger.getAttribute("aria-disabled") === "true" ||
     trigger.hasAttribute("data-disabled")
   );

@@ -51,9 +51,9 @@ type ToggleDeclaredProps = {
 const {
   variant,
   size,
-  defaultPressed,
+  defaultPressed = undefined,
   disabled = false,
-  nativeButton,
+  nativeButton = undefined,
   pressed = undefined,
   syncGroup,
   value,

@@ -1,4 +1,5 @@
 import { setupAstroConfig } from "./astro-config.js";
+import { toHostProjectPreparation } from "./astro-framework-integration.js";
 import {
   applyAstroVueIntegration,
   inspectAstroVueConfig,
@@ -377,27 +378,12 @@ function createAstroVueHostProjectPlan(
     hostKind: "astro",
     hostLabel: "Astro",
     isSecondaryTarget: true,
-    prepare: async ({ packageManager, projectPackage, skipPrompts }) => {
-      const preparation = await prepareAstroVueIntegration({
-        packageManager,
-        projectPackage,
-        skipPrompts,
-      });
-      if (preparation.status === "cancelled" || preparation.status === "declined") {
-        return Object.freeze({ status: preparation.status });
-      }
-      if (preparation.status === "ready") {
-        return Object.freeze({ status: "prepared" as const });
-      }
-      return Object.freeze({
-        applyIntegration: async () => {
-          await applyAstroVueIntegration(preparation, packageManager);
-        },
-        integrationLabel: "Setup Astro Vue integration",
-        integrationResult: "Astro Vue integration configured",
-        status: "prepared" as const,
-      });
-    },
+    prepare: async ({ packageManager, projectPackage, skipPrompts }) =>
+      toHostProjectPreparation(
+        await prepareAstroVueIntegration({ packageManager, projectPackage, skipPrompts }),
+        (preparation) => applyAstroVueIntegration(preparation, packageManager),
+        "Vue",
+      ),
     prepareStylesheet: (content) => content,
     projectFramework: "astro",
     requirements: (requirements) =>

@@ -26,6 +26,7 @@ const hasContent = Boolean(useSlots().default);
   <div
     ref="element"
     :class="fieldSeparator({ class: className })"
+    :data-content="hasContent ? 'true' : 'false'"
     v-bind="$attrs"
     data-slot="field-separator"
   >

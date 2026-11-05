@@ -12,7 +12,7 @@
   import type { HTMLAttributes } from "svelte/elements";
 
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-    children?: Snippet<[boolean]>;
+    children?: Snippet;
     defaultOpen?: boolean;
     open?: boolean;
     closeOnEscape?: boolean;
@@ -25,9 +25,10 @@
     ref?: (element: HTMLDivElement | null) => void;
   };
 
-  let { children, defaultOpen, open = $bindable(), closeOnEscape = true, closeOnOutsideInteract = true, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
+  let { children, defaultOpen, open = $bindable(), open: commandOpen, closeOnEscape = true, closeOnOutsideInteract = true, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => open);
   const initialDefaultOpen = untrack(() => defaultOpen) ?? initialModel ?? false;
+  const openControlled = initialModel !== undefined;
   let renderedOpen = $state(initialModel ?? initialDefaultOpen);
   let surfaceReady = $state(false);
   const authoredPlacement = new Map<HTMLElement, Record<string, string>>();
@@ -68,11 +69,11 @@ owned.destroy();
   }
   function connectRuntime(root: HTMLDivElement): void {
     disconnectRuntime();
-const desired = open ?? connection.accepted;
+const desired = commandOpen ?? connection.accepted;
 const recreating = connection.initialized;
 const owned = createPopover(root, {
       defaultOpen: recreating ? false : desired,
-      ...(false ? { open: recreating ? false : desired } : {}),
+      ...(openControlled ? { open: recreating ? false : desired } : {}),
       closeOnEscape: closeOnEscape,
 closeOnOutsideInteract: closeOnOutsideInteract,
 modal: modal,
@@ -84,6 +85,10 @@ openOnHover: openOnHover,
     connection.initialized = true;
 connection.unsubscribe = owned.subscribe("openChange", detail => {
       if (connection.instance !== owned) return;
+    if (openControlled) {
+      untrack(() => { if (open !== detail.open) open = detail.open; });
+      return;
+    }
     connection.accepted = detail.open;
     untrack(() => { renderedOpen = detail.open;
 if (open !== detail.open) open = detail.open; });
@@ -91,16 +96,16 @@ if (open !== detail.open) open = detail.open; });
 if (recreating && desired) owned.setOpen(desired, { emit: false });
 connection.accepted = owned.getOpen();
 renderedOpen = connection.accepted;
-untrack(() => { if (open !== connection.accepted) open = connection.accepted; });
+untrack(() => { if (!openControlled) { if (open !== connection.accepted) open = connection.accepted; } });
   }
   function applyParentCommand(): void {
-    const next = open;
+    const next = commandOpen;
     const owned = connection.instance;
     if (next === undefined || !owned) return;
     if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
     connection.accepted = owned.getOpen();
     renderedOpen = connection.accepted;
-    untrack(() => { if (open !== connection.accepted) open = connection.accepted; });
+    untrack(() => { if (!openControlled) { if (open !== connection.accepted) open = connection.accepted; } });
   }
 
   function connectSurface(root: HTMLDivElement): void {
@@ -121,7 +126,7 @@ connectRuntime(root); } finally { for (const restore of restorers.reverse()) res
       untrack(() => connectSurface(root));
       return disconnectRuntime;
     });
-    $effect(() => { void open; untrack(applyParentCommand); });
+    $effect(() => { void commandOpen; untrack(applyParentCommand); });
     return () => { mounted = false; binding?.destroy(); binding = undefined; bindingRoot = undefined; };
   };
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
@@ -142,5 +147,5 @@ connectRuntime(root); } finally { for (const restore of restorers.reverse()) res
   {@attach attachRuntime}
   {@attach attachRef}
 >
-  {@render children?.(renderedOpen)}
+  {@render children?.()}
 </div>

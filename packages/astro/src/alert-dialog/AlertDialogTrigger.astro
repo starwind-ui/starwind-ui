@@ -6,19 +6,35 @@
 import type { HTMLAttributes } from "astro/types";
 
 type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
   targetId?: string;
 };
 
-const { targetId, ...rest } = Astro.props;
+const { asChild = false, targetId, ...rest } = Astro.props;
 ---
 
-<button
-  type="button"
-  data-sw-alert-dialog-trigger
-  aria-haspopup="dialog"
-  data-sw-alert-dialog-target-id={targetId}
-  data-state="closed"
-  {...rest}
->
-  <slot />
-</button>
+{
+  asChild ? (
+    <div
+      {...rest}
+      data-sw-alert-dialog-trigger
+      data-as-child
+      aria-haspopup="dialog"
+      data-sw-alert-dialog-target-id={targetId}
+      data-state="closed"
+    >
+      <slot />
+    </div>
+  ) : (
+    <button
+      {...rest}
+      type="button"
+      data-sw-alert-dialog-trigger
+      aria-haspopup="dialog"
+      data-sw-alert-dialog-target-id={targetId}
+      data-state="closed"
+    >
+      <slot />
+    </button>
+  )
+}

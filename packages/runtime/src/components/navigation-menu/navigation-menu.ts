@@ -21,6 +21,7 @@ import {
   createFloatingPortalSession,
   type FloatingPortalSession,
 } from "../../internal/floating-portal";
+import { canReturnFocus } from "../../internal/focus";
 import {
   type OverlayDismissalHandle,
   registerOverlayDismissal,
@@ -148,6 +149,7 @@ const NAV_MENU_DISABLED_ATTRIBUTE = "data-disabled";
 const NAV_MENU_SIDE_ATTRIBUTE = "data-side";
 const NAV_MENU_ALIGN_ATTRIBUTE = "data-align";
 const NAV_MENU_SIDE_OFFSET_ATTRIBUTE = "data-side-offset";
+const NAV_MENU_HOVER_PRESS_WINDOW_MS = 500;
 const NAV_MENU_ALIGN_OFFSET_ATTRIBUTE = "data-align-offset";
 const NAV_MENU_AVOID_COLLISIONS_ATTRIBUTE = "data-avoid-collisions";
 const NAV_MENU_VIEWPORT_PADDING_ATTRIBUTE = "data-collision-padding";
@@ -165,26 +167,7 @@ const BASE_UI_TRANSFORM_ORIGIN_PROPERTY = "--transform-origin";
 const instances = shared<WeakMap<HTMLElement, NavigationMenuInstance>>("navigation-menu");
 
 export function refreshNavigationMenuPortalSurface(root: HTMLElement): void {
-  // Another Runtime copy can own the controller, so check a field instead of the class. An inert
-  // controller for an unsupported nested root has no portal session.
-  const instance = instances.get(root) as NavigationMenuController | undefined;
-  if (!instance?.["portalSession"]) return;
-  const nextElements = getNavigationMenuElements(root);
-  if (nextElements.popup === instance["elements"].popup) return;
-
-  instance["placementRevision"] += 1;
-  instance["cancelPlacementReady"]();
-  instance["unregisterDismissal"]();
-  instance["floatingPositioner"]?.destroy();
-  instance["floatingPositioner"] = null;
-  instance["floatingReference"] = null;
-  instance["portalSurfaceAbortController"]?.abort();
-  instance["portalSurfaceAbortController"] = new AbortController();
-  Object.assign(instance["elements"], nextElements);
-  instance["setupAccessibility"]();
-  instance["bindPortalSurfaceEvents"]();
-  instance["portalSession"].mount();
-  instance["applyValueState"](instance["valueState"]);
+  (instances.get(root) as NavigationMenuController | undefined)?.refreshPortalSurface?.();
 }
 const unsupportedNestedRoots = new WeakSet<HTMLElement>();
 
@@ -252,6 +235,8 @@ class NavigationMenuController implements NavigationMenuInstance {
   private activeIndex: number | null = null;
   private activeTrigger: HTMLElement | null = null;
   private closeTimer: number | null = null;
+  private hoverPressTimer: number | null = null;
+  private hoverPressValue: NavigationMenuValue = null;
   private collectionObserver: MutationObserver | null = null;
   private collectionRefreshQueued = false;
   private dismissalHandle: OverlayDismissalHandle | null = null;
@@ -335,6 +320,26 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.requestValue(null, { reason: "imperative-action" });
   }
 
+  refreshPortalSurface(): void {
+    if (!this.portalSession) return;
+    const nextElements = getNavigationMenuElements(this.root);
+    if (nextElements.popup === this.elements.popup) return;
+
+    this.placementRevision += 1;
+    this.cancelPlacementReady();
+    this.unregisterDismissal();
+    this.floatingPositioner?.destroy();
+    this.floatingPositioner = null;
+    this.floatingReference = null;
+    this.portalSurfaceAbortController?.abort();
+    this.portalSurfaceAbortController = new AbortController();
+    Object.assign(this.elements, nextElements);
+    this.setupAccessibility();
+    this.bindPortalSurfaceEvents();
+    this.portalSession.mount();
+    this.applyValueState(this.valueState);
+  }
+
   destroy(): void {
     if (this.destroyed) return;
 
@@ -348,6 +353,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.itemAbortControllers.clear();
     this.clearCloseTimer();
     this.clearOpenTimer();
+    this.endHoverPressWindow();
     this.clearPendingKeyboardOpenFocus();
     this.cancelPlacementReady();
     this.clearBoundaryTransformFrame();
@@ -390,7 +396,7 @@ class NavigationMenuController implements NavigationMenuInstance {
 
     if (this.controlled) this.controlledValueIntent = value;
     this.valueState = this.resolveKnownValue(value);
-    this.applyValueState(this.valueState);
+    this.applyValueState(this.valueState, request);
     this.focusPendingKeyboardOpenControl(options);
   }
 
@@ -581,11 +587,26 @@ class NavigationMenuController implements NavigationMenuInstance {
           return;
         }
         event.preventDefault();
+        if (this.hoverPressValue === item.value && this.valueState === item.value) {
+          this.endHoverPressWindow();
+          return;
+        }
         this.requestValue(this.getTriggerPressValue(item), {
           event,
           reason: "trigger-press",
           trigger: item.trigger,
         });
+      },
+      { signal },
+    );
+
+    item.trigger?.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (this.hoverPressValue !== item.value) return;
+        // The window measures to the start of the press, so a slow release still counts.
+        if (isMousePointer(event)) this.startHoverPressWindow(item.value);
+        else this.endHoverPressWindow();
       },
       { signal },
     );
@@ -900,11 +921,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.clearOpenTimer();
 
     if (this.valueState !== null) {
-      this.requestValue(item.value, {
-        event,
-        reason: "trigger-hover",
-        trigger: item.trigger ?? undefined,
-      });
+      this.requestHoverOpen(item, event);
       return;
     }
 
@@ -914,11 +931,7 @@ class NavigationMenuController implements NavigationMenuInstance {
       this.openDelay,
     );
     if (delay <= 0) {
-      this.requestValue(item.value, {
-        event,
-        reason: "trigger-hover",
-        trigger: item.trigger ?? undefined,
-      });
+      this.requestHoverOpen(item, event);
       return;
     }
 
@@ -926,12 +939,37 @@ class NavigationMenuController implements NavigationMenuInstance {
       this.openTimer = null;
       if (this.destroyed || !item.trigger || isDisabledElement(item.trigger)) return;
 
-      this.requestValue(item.value, {
-        event,
-        reason: "trigger-hover",
-        trigger: item.trigger,
-      });
+      this.requestHoverOpen(item, event);
     }, delay);
+  }
+
+  private requestHoverOpen(item: NavigationMenuItem, event: PointerEvent): void {
+    const alreadyOpen = this.valueState === item.value;
+    const accepted = this.requestValue(item.value, {
+      event,
+      reason: "trigger-hover",
+      trigger: item.trigger ?? undefined,
+    });
+    if (accepted && !alreadyOpen) this.startHoverPressWindow(item.value);
+  }
+
+  /**
+   * A mouse user moves to a trigger and clicks it. Hover opens the panel before the click lands, so
+   * that click must not close it. Only a press after this window closes a panel that hover opened.
+   */
+  private startHoverPressWindow(value: NavigationMenuValue): void {
+    this.endHoverPressWindow();
+    this.hoverPressValue = value;
+    this.hoverPressTimer = window.setTimeout(() => {
+      this.endHoverPressWindow();
+    }, NAV_MENU_HOVER_PRESS_WINDOW_MS);
+  }
+
+  private endHoverPressWindow(): void {
+    this.hoverPressValue = null;
+    if (this.hoverPressTimer === null) return;
+    window.clearTimeout(this.hoverPressTimer);
+    this.hoverPressTimer = null;
   }
 
   private closeFromLinkOnlyHover(item: NavigationMenuItem, event: PointerEvent): void {
@@ -1006,6 +1044,7 @@ class NavigationMenuController implements NavigationMenuInstance {
   private applyValueState(value: NavigationMenuValue, request?: ValueRequest): void {
     this.clearCloseTimer();
     this.clearOpenTimer();
+    if (value !== this.hoverPressValue) this.endHoverPressWindow();
     this.clearSurfaceSizeFrame();
     this.clearViewportRefreshFrame();
 
@@ -1840,6 +1879,7 @@ class NavigationMenuController implements NavigationMenuInstance {
 
   private restoreTriggerFocus(): void {
     if (!this.restoreFocusTrigger?.isConnected) return;
+    if (!canReturnFocus(this.root.ownerDocument, [this.elements.popup])) return;
     this.restoreFocusTrigger.focus();
   }
 

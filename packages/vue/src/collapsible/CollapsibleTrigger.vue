@@ -26,7 +26,7 @@ const AsChildTrigger = defineComponent({
       const disabled =
         disclosure?.disabled || Boolean(attrs.disabled) || Boolean(children[0]?.props?.disabled);
       const protectedProps = {
-        disabled,
+        disabled: disabled ? true : undefined,
         "data-disabled": disabled ? "" : undefined,
         "data-sw-collapsible-trigger": "",
         "aria-expanded": "false",

@@ -1,16 +1,24 @@
 import path from "node:path";
 import fs from "fs-extra";
-import semver from "semver";
 
 import { updateAstroTailwindConfig } from "./astro-config.js";
+import { toHostProjectPreparation } from "./astro-framework-integration.js";
+import { needsExperimentalAstroSvg } from "./astro-integration-version.js";
+import {
+  applyAstroSvelteIntegration,
+  inspectAstroSvelteConfig,
+  prepareAstroSvelteIntegration,
+  updateAstroSvelteConfigContent,
+} from "./astro-svelte-integration.js";
 import { MIN_ASTRO_VERSION, PATHS } from "./constants.js";
 import type { HostEvidence, ProjectPackage } from "./host-planner.js";
 import type { HostProjectPlanBase } from "./host-project.js";
-import { LAYOUT_PATHS } from "./layout.js";
+import { type CssImportResult, LAYOUT_PATHS, setupLayoutCssImport } from "./layout.js";
 import { resolveProjectMutationPath } from "./project-path.js";
 import {
   type AstCallExpression,
   type AstNode,
+  type AstObjectExpression,
   type AstStringLiteral,
   asAstArrayExpression,
   asAstObjectExpression,
@@ -24,6 +32,8 @@ import {
   getAvailableIdentifier,
   parseSourceModule,
 } from "./source-shape.js";
+import { setupSvelteTsConfig, setupTsConfig } from "./tsconfig.js";
+import { updateSvelteViteConfigContent } from "./vite-config.js";
 import { createVuePackageRequirementPlanner, isCompatiblePublishedRange } from "./vue-project.js";
 
 const VITE_CONFIG_PATHS = [
@@ -37,6 +47,17 @@ const MAIN_PATHS = ["src/main.ts", "src/main.js"] as const;
 const KIT_CONFIG_PATHS = ["svelte.config.js", "svelte.config.ts"] as const;
 const KIT_LAYOUT = "src/routes/+layout.svelte";
 
+const ASTRO_INSTALLED_MANIFEST = "node_modules/astro/package.json";
+
+function readInstalledAstro(evidence: HostEvidence): string | undefined {
+  try {
+    const manifest = JSON.parse(evidence.projectFiles?.[ASTRO_INSTALLED_MANIFEST] ?? "{}");
+    return typeof manifest.version === "string" ? manifest.version : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function getSvelteHostEvidenceRequests(): Array<{ path: string; readContent: boolean }> {
   return [
     ...VITE_CONFIG_PATHS,
@@ -48,6 +69,7 @@ export function getSvelteHostEvidenceRequests(): Array<{ path: string; readConte
     "src/App.svelte",
     "src/app.html",
     "src/routes",
+    ASTRO_INSTALLED_MANIFEST,
   ].map((path) => ({
     path,
     readContent: path !== "src/routes",
@@ -64,7 +86,7 @@ export type SvelteHostProjectPlan = Readonly<
   }
 >;
 export type SvelteHostProjectDetection =
-  | { status: "detected"; plan: SvelteHostProjectPlan; readiness: "ready" }
+  | { status: "detected"; plan: SvelteHostProjectPlan; readiness: "configurable" | "ready" }
   | { status: "failed"; diagnostic: string; host: { kind: SvelteHostKind; label: string } };
 
 export function detectSvelteHostProject(
@@ -79,7 +101,9 @@ export function detectSvelteHostProject(
     pkg.peerDependencies,
   ];
   const deps = Object.assign({}, ...declarations.slice().reverse()) as Record<string, string>;
+  // A plain Astro project has no Svelte evidence yet, and init installs and configures it.
   if (
+    hostKind !== "astro" &&
     !deps.svelte &&
     !deps["@sveltejs/kit"] &&
     !deps["@astrojs/svelte"] &&
@@ -92,7 +116,7 @@ export function detectSvelteHostProject(
   try {
     const svelteRanges = declarations.flatMap((field) => (field?.svelte ? [field.svelte] : []));
     if (
-      !svelteRanges.length ||
+      (!svelteRanges.length && kind !== "astro") ||
       svelteRanges.some((range) => !isCompatiblePublishedRange(range, ">=5.29.0 <6"))
     ) {
       throw new Error(
@@ -112,22 +136,16 @@ export function detectSvelteHostProject(
           `Configure Astro ${MIN_ASTRO_VERSION} or later before initializing Svelte. Framework upgrades require a separate step.`,
         );
       }
-      if (!deps["@astrojs/svelte"])
-        throw new Error(
-          "Configure the official @astrojs/svelte integration before initializing Svelte in Astro.",
-        );
       configPath = selectPath(ASTRO_CONFIG_PATHS, evidence, "Astro config");
+      // Without a named layout, setupLayoutCssImport finds a page or reports a manual import.
       entryPath = LAYOUT_PATHS.find((candidate) => evidence.existingPaths.has(candidate)) ?? "";
-      if (!entryPath)
-        throw new Error(
-          "Svelte in Astro requires src/layouts/Layout.astro or src/layouts/BaseLayout.astro for the stylesheet import.",
-        );
     } else {
       if (!deps.vite) throw new Error("The Svelte host must declare Vite before initialization.");
       configPath = selectPath(VITE_CONFIG_PATHS, evidence, "Vite config");
       if (kind === "sveltekit") {
-        kitConfigPath = selectPath(KIT_CONFIG_PATHS, evidence, "SvelteKit config");
-        validateKitRoutes(evidence.projectFiles?.[kitConfigPath] ?? "");
+        // SvelteKit 3 and recent SvelteKit 2 starters keep this config in the Vite plugin options.
+        kitConfigPath = selectOptionalPath(KIT_CONFIG_PATHS, evidence, "SvelteKit config");
+        if (kitConfigPath) validateKitRoutes(evidence.projectFiles?.[kitConfigPath] ?? "");
         if (
           !evidence.existingPaths.has("src/routes") ||
           !evidence.existingPaths.has("src/app.html")
@@ -147,77 +165,117 @@ export function detectSvelteHostProject(
     const configContent = evidence.projectFiles?.[configPath];
     if (configContent === undefined)
       throw new Error(`Read ${configPath} before planning Svelte 5 beta initialization.`);
-    projectConfig(configContent, kind, deps.astro);
+    const astroInstalled = readInstalledAstro(evidence);
+    projectConfig(configContent, kind, deps.astro, astroInstalled);
     const initialEntry = evidence.projectFiles?.[entryPath];
-    if (
-      initialEntry === undefined &&
-      !(kind === "sveltekit" && !evidence.existingPaths.has(entryPath))
-    )
-      throw new Error(`Read ${entryPath} before planning Svelte 5 beta initialization.`);
-    projectEntry(initialEntry, entryPath, PATHS.LOCAL_CSS_FILE, kind);
+    if (entryPath) {
+      if (
+        initialEntry === undefined &&
+        !(kind === "sveltekit" && !evidence.existingPaths.has(entryPath))
+      )
+        throw new Error(`Read ${entryPath} before planning Svelte 5 beta initialization.`);
+      projectEntry(initialEntry, entryPath, PATHS.LOCAL_CSS_FILE, kind);
+    }
+    const astroConfigured =
+      kind === "astro" &&
+      Boolean(deps["@astrojs/svelte"]) &&
+      svelteRanges.length > 0 &&
+      inspectAstroSvelteConfig(configContent).status === "ready";
     const requirements = createVuePackageRequirementPlanner(pkg);
+    const prepare: SvelteHostProjectPlan["prepare"] =
+      kind === "astro"
+        ? async ({ packageManager, projectPackage, skipPrompts }) =>
+            toHostProjectPreparation(
+              await prepareAstroSvelteIntegration({ packageManager, projectPackage, skipPrompts }),
+              (preparation) => applyAstroSvelteIntegration(preparation, packageManager),
+              "Svelte",
+            )
+        : async () => ({ status: "prepared" as const });
     const readChanges = async (cssFile: string) => {
       if (kitConfigPath) validateKitRoutes(await fs.readFile(kitConfigPath, "utf8"));
       const config = await fs.readFile(await resolveProjectMutationPath(configPath), "utf8");
+      const changes: Array<{ path: string; before: string | undefined; after: string }> = [
+        {
+          path: configPath,
+          before: config,
+          after: projectConfig(config, kind, deps.astro, astroInstalled),
+        },
+      ];
+      if (!entryPath) return changes;
       const entryDestination = await resolveProjectMutationPath(entryPath);
       const entry = (await fs.pathExists(entryDestination))
         ? await fs.readFile(entryDestination, "utf8")
         : undefined;
       if (entry === undefined && kind !== "sveltekit")
         throw new Error(`The required host entry ${entryPath} is missing.`);
-      return [
-        { path: configPath, before: config, after: projectConfig(config, kind, deps.astro) },
-        { path: entryPath, before: entry, after: projectEntry(entry, entryPath, cssFile, kind) },
-      ];
+      changes.push({
+        path: entryPath,
+        before: entry,
+        after: projectEntry(entry, entryPath, cssFile, kind),
+      });
+      return changes;
     };
+    const base = {
+      componentDir:
+        kind === "astro"
+          ? "src/components/starwind-svelte"
+          : kind === "sveltekit"
+            ? "src/lib/starwind"
+            : "src/components/starwind",
+      cssFile: PATHS.LOCAL_CSS_FILE,
+      hostKind: kind,
+      hostLabel: label,
+      isSecondaryTarget: kind === "astro",
+      projectFramework: kind === "astro" ? ("astro" as const) : ("svelte" as const),
+      prepare,
+      prepareStylesheet: (content: string) => content,
+      requirements,
+      setup: async (cssFile: string) => {
+        const changes = await readChanges(cssFile);
+        for (const change of changes) {
+          if (change.before === change.after) continue;
+          const destination = await resolveProjectMutationPath(change.path);
+          await fs.ensureDir(path.dirname(destination));
+          await fs.writeFile(destination, change.after, "utf8");
+        }
+      },
+      setupLabel: `Configure ${label} styles`,
+      setupResult: `${label} styles configured`,
+      // SvelteKit owns its aliases, and Astro keeps its own TypeScript config.
+      setupTypeScript: async () => (kind === "vite" ? setupSvelteTsConfig() : true),
+      utilsDir: "src/lib/utils",
+      validate: async () => {
+        await readChanges(PATHS.LOCAL_CSS_FILE);
+      },
+      validateChoices: async ({
+        componentDir,
+        cssFile,
+      }: {
+        componentDir: string;
+        cssFile: string;
+      }) => {
+        if (!cssFile.endsWith(".css"))
+          throw new Error("The Starwind stylesheet path must end in .css.");
+        for (const file of [componentDir, cssFile, "package.json", "starwind.config.json"])
+          await resolveProjectMutationPath(file);
+        await readChanges(cssFile);
+      },
+    };
+    // Without a named layout the stylesheet import follows the Vue path and may be left to the user.
+    const plan: SvelteHostProjectPlan = Object.freeze(
+      kind === "astro" && !entryPath
+        ? {
+            ...base,
+            setupCss: setupAstroPageCssImport,
+            setupCssLabel: "Connecting Starwind CSS",
+            setupCssResult: "Starwind CSS connected",
+          }
+        : base,
+    );
     return {
       status: "detected",
-      readiness: "ready",
-      plan: Object.freeze({
-        componentDir:
-          kind === "astro"
-            ? "src/components/starwind-svelte"
-            : kind === "sveltekit"
-              ? "src/lib/starwind"
-              : "src/components/starwind",
-        cssFile: PATHS.LOCAL_CSS_FILE,
-        hostKind: kind,
-        hostLabel: label,
-        isSecondaryTarget: kind === "astro",
-        projectFramework: kind === "astro" ? "astro" : "svelte",
-        prepare: async () => ({ status: "prepared" as const }),
-        prepareStylesheet: (content: string) => content,
-        requirements,
-        setup: async (cssFile: string) => {
-          const changes = await readChanges(cssFile);
-          for (const change of changes) {
-            if (change.before === change.after) continue;
-            const destination = await resolveProjectMutationPath(change.path);
-            await fs.ensureDir(path.dirname(destination));
-            await fs.writeFile(destination, change.after, "utf8");
-          }
-        },
-        setupLabel: `Configure ${label} styles`,
-        setupResult: `${label} styles configured`,
-        setupTypeScript: async () => true,
-        utilsDir: "src/lib/utils",
-        validate: async () => {
-          await readChanges(PATHS.LOCAL_CSS_FILE);
-        },
-        validateChoices: async ({
-          componentDir,
-          cssFile,
-        }: {
-          componentDir: string;
-          cssFile: string;
-        }) => {
-          if (!cssFile.endsWith(".css"))
-            throw new Error("The Starwind stylesheet path must end in .css.");
-          for (const file of [componentDir, cssFile, "package.json", "starwind.config.json"])
-            await resolveProjectMutationPath(file);
-          await readChanges(cssFile);
-        },
-      }),
+      readiness: kind !== "astro" || astroConfigured ? "ready" : "configurable",
+      plan,
     };
   } catch (error) {
     return {
@@ -253,7 +311,7 @@ function validateKitRoutes(content: string): void {
   }
   const unsupportedConfig = () =>
     new Error(
-      "Private SvelteKit initialization requires a plain config object with an optional plain kit object. Resolve config spreads and kit bindings before initialization.",
+      "SvelteKit initialization requires a plain config object with an optional plain kit object. Resolve config spreads and kit bindings before initialization.",
     );
   if (!object) throw unsupportedConfig();
   const kitProperty = getAstObjectProperty(object, "kit");
@@ -261,7 +319,24 @@ function validateKitRoutes(content: string): void {
   if (kitProperty.status === "unsafe") throw unsupportedConfig();
   const kit = asAstObjectExpression(kitProperty.value);
   if (!kit) throw unsupportedConfig();
-  const filesProperty = getAstObjectProperty(kit, "files");
+  validateKitOptionRoutes(kit);
+}
+
+/** Read the options passed to the sveltekit() Vite plugin, which SvelteKit 3 requires. */
+function validateKitPluginRoutes(call: AstCallExpression): void {
+  if (call.arguments.length === 0) return;
+  const options =
+    call.arguments.length === 1 ? asAstObjectExpression(call.arguments[0]!) : undefined;
+  if (!options) {
+    throw new Error(
+      "SvelteKit initialization requires plain sveltekit() plugin options. Resolve option bindings before initialization.",
+    );
+  }
+  validateKitOptionRoutes(options);
+}
+
+function validateKitOptionRoutes(options: AstObjectExpression): void {
+  const filesProperty = getAstObjectProperty(options, "files");
   if (filesProperty.status === "missing") return;
   const files = filesProperty.status === "found" && asAstObjectExpression(filesProperty.value);
   const routes = files && getAstObjectProperty(files, "routes", { allowStringKey: true });
@@ -274,8 +349,20 @@ function validateKitRoutes(content: string): void {
   )
     return;
   throw new Error(
-    "Private SvelteKit initialization requires kit.files.routes to use src/routes. Configure the default route directory before initialization.",
+    "SvelteKit initialization requires files.routes to use src/routes. Configure the default route directory before initialization.",
   );
+}
+
+/** The shared Astro import uses the "@" alias, which the Astro starter does not define. */
+async function setupAstroPageCssImport(cssFile: string): Promise<CssImportResult> {
+  if (!(await setupTsConfig("astro"))) {
+    return {
+      status: "error",
+      message:
+        'Could not add the "@" path alias to tsconfig.json for the Starwind stylesheet import.',
+    };
+  }
+  return setupLayoutCssImport(cssFile);
 }
 
 function selectPath(paths: readonly string[], evidence: HostEvidence, label: string): string {
@@ -287,7 +374,24 @@ function selectPath(paths: readonly string[], evidence: HostEvidence, label: str
   return matches[0]!;
 }
 
-function projectConfig(content: string, kind: SvelteHostKind, astroRange?: string): string {
+function selectOptionalPath(
+  paths: readonly string[],
+  evidence: HostEvidence,
+  label: string,
+): string | undefined {
+  return paths.some((candidate) => evidence.existingPaths.has(candidate))
+    ? selectPath(paths, evidence, label)
+    : undefined;
+}
+
+function projectConfig(
+  content: string,
+  kind: SvelteHostKind,
+  astroRange?: string,
+  astroInstalled?: string,
+): string {
+  // A plain Astro project gets the official integration during init, so plan with it in place.
+  if (kind === "astro") content = updateAstroSvelteConfigContent(content) ?? content;
   const module = parseSourceModule(content);
   const configImport =
     module &&
@@ -310,6 +414,8 @@ function projectConfig(content: string, kind: SvelteHostKind, astroRange?: strin
   const property =
     object && getAstObjectProperty(object, kind === "astro" ? "integrations" : "plugins");
   const plugins = property?.status === "found" ? asAstArrayExpression(property.value) : undefined;
+  const frameworkPlugin =
+    plugins && plugin?.status === "found" ? getAstDirectCall(plugins, plugin.localName) : undefined;
   if (
     !module ||
     !object ||
@@ -321,17 +427,17 @@ function projectConfig(content: string, kind: SvelteHostKind, astroRange?: strin
         (node?.type === "CallExpression" &&
           getAstIdentifierName((node as AstCallExpression).callee)),
     ) ||
-    !getAstDirectCall(plugins, plugin.localName)
+    !frameworkPlugin
   ) {
     throw new Error(
       `The ${kind} config requires a direct object export or object-style defineConfig with its configured official Svelte plugin. Resolve dynamic, duplicate, or missing plugin entries before initialization.`,
     );
   }
+  if (kind === "sveltekit") validateKitPluginRoutes(frameworkPlugin);
   if (kind === "astro") {
-    const minimum = astroRange && semver.minVersion(astroRange);
     const updated = updateAstroTailwindConfig(
       content,
-      Boolean(minimum && semver.lt(minimum, "5.7.0")),
+      needsExperimentalAstroSvg(astroRange, astroInstalled),
       { configuredObjectExport: true },
     );
     if (updated === null)
@@ -358,6 +464,14 @@ function projectConfig(content: string, kind: SvelteHostKind, astroRange?: strin
   );
   if (tailwindCalls.length > 1)
     throw new Error("Keep one Tailwind plugin entry in the Svelte host config.");
+  if (kind === "vite") {
+    const updated = updateSvelteViteConfigContent(content);
+    if (updated === null)
+      throw new Error(
+        'The Vite Svelte config needs a plain resolve.alias object. Point "@" to src with fileURLToPath, and use one getThemeInitScript import from @starwind-ui/svelte/theme.',
+      );
+    return updated;
+  }
   if (tailwind.status === "found" && tailwindCalls.length === 1) return content;
   const range = getAstNodeRange(plugins)!;
   const updated =

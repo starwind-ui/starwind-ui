@@ -648,15 +648,8 @@ export const comboboxStyledContract: StyledAdapterContract = {
                 { name: "aria-label", value: { type: "literal", value: "Clear selection" } },
                 { name: "data-slot", value: { type: "literal", value: "combobox-clear" } },
               ],
-              children: [
-                { type: "slot" },
-                {
-                  type: "conditional",
-                  condition: "showIcon",
-                  then: [{ type: "icon", importName: "X" }],
-                  else: [],
-                },
-              ],
+              // An asChild child owns its content, as on ComboboxTrigger.
+              children: [{ type: "slot" }],
             },
           ],
           else: [

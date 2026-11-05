@@ -51,7 +51,7 @@ ${facts.index.namespaceMembers.map(({ key, name }) => `  ${key}: ${name},`).join
 };
 export { ${facts.exports.namespace}, ${facts.index.importMembers.map(({ name }) => name).join(", ")} };
 export default ${facts.exports.namespace};
-${facts.trigger.triggerKind === "button" ? 'export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";' : `export type { AnchorChildProps, AnchorChildPayload } from "./${facts.exports.trigger}.svelte";`}
+${facts.trigger.triggerKind === "button" ? 'export type { ButtonChildProps, ButtonChildPayload, TriggerChildProps, TriggerChildPayload } from "../button/ButtonRoot.svelte";' : `export type { AnchorChildProps, AnchorChildPayload } from "./${facts.exports.trigger}.svelte";`}
 export type { ${facts.index.typeExports.join(", ")} } from "${facts.runtime.typeImportSource}";
 `,
     path: file.path,
@@ -106,12 +106,13 @@ function printTrigger(facts: AdapterTimedFloatingOverlayFacts): string {
       attributes: `"${facts.attrs.trigger}": "", "${facts.attrs.triggerDisabled}": allProps.disabled ? "" : undefined, "${facts.attrs.triggerAriaDisabled}": allProps.disabled ? "true" : undefined, "${facts.attrs.triggerState}": "${timedTriggerPolicy.state}", "data-sw-part": "${facts.parts.trigger.name}", ...(allProps.openDelay === undefined ? {} : {"${facts.attrs.triggerOpenDelay}": allProps.openDelay}), ...(allProps.closeDelay === undefined ? {} : {"${facts.attrs.triggerCloseDelay}": allProps.closeDelay}),`,
     });
   return printSvelteButtonChild({
+    childElement: facts.childElements?.trigger,
     name: facts.exports.trigger,
     imports: "",
     init: "",
     register: "",
     omitEmptyRegistration: true,
-    attributes: `"${facts.attrs.trigger}": "", type: "button", "${facts.attrs.triggerDisabled}": nativeProps.disabled ? "" : undefined, "${facts.attrs.triggerAriaDisabled}": nativeProps.disabled ? "true" : undefined, "${facts.attrs.triggerState}": "${timedTriggerPolicy.state}", "data-sw-part": "${facts.parts.trigger.name}",`,
+    attributes: `"${facts.attrs.trigger}": "", type: "button", disabled: nativeProps.disabled || undefined, "${facts.attrs.triggerDisabled}": nativeProps.disabled ? "" : undefined, "${facts.attrs.triggerAriaDisabled}": nativeProps.disabled ? "true" : undefined, "${facts.attrs.triggerState}": "${timedTriggerPolicy.state}", "data-sw-part": "${facts.parts.trigger.name}",`,
   });
 }
 

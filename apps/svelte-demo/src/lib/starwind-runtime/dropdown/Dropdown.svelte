@@ -19,6 +19,7 @@
     "onOpenChange": onOpenChange,
     "onCloseComplete": onCloseComplete,
     "children": children,
+    "open": commandOpen,
     ...rest
   }: DropdownProps = $props();
 </script>
@@ -35,7 +36,7 @@
   onOpenChange={onOpenChange}
   onCloseComplete={onCloseComplete}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </MenuRoot>

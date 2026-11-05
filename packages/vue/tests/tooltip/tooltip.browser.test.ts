@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   type ComponentPublicInstance,
   createApp,
+  createSSRApp,
   defineComponent,
   h,
   nextTick,
@@ -17,6 +18,12 @@ import {
   ref,
   type VNode,
 } from "vue";
+import { renderToString } from "vue/server-renderer";
+import {
+  Tooltip as StyledTooltip,
+  TooltipContent as StyledTooltipContent,
+  TooltipTrigger as StyledTooltipTrigger,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/tooltip";
 import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
 const cleanups: Array<() => void> = [];
@@ -463,6 +470,187 @@ describe("Vue Tooltip browser contract", () => {
     cleanups.pop()?.();
     await nextTick();
     expect(document.body.querySelector("[data-sw-tooltip-portal]")).toBeNull();
+  });
+});
+
+describe("Vue Tooltip non-button triggers", () => {
+  const primitiveTree = (child: () => VNode, triggerProps: Record<string, unknown> = {}) =>
+    h(TooltipRoot, { closeDelay: 0, openDelay: 0 }, () => [
+      h(TooltipTrigger, { asChild: true, ...triggerProps }, child),
+      h(TooltipPortal, null, () =>
+        h(TooltipPositioner, null, () => h(TooltipPopup, null, () => "Details")),
+      ),
+    ]);
+  const styledTree = (child: () => unknown, triggerProps: Record<string, unknown> = {}) =>
+    h(StyledTooltip, { closeDelay: 0, openDelay: 0 }, () => [
+      h(StyledTooltipTrigger, triggerProps, child),
+      h(StyledTooltipContent, null, () => "Details"),
+    ]);
+  const expectEnabled = (trigger: Element) => {
+    expect(trigger.hasAttribute("disabled")).toBe(false);
+    expect(trigger.hasAttribute("data-disabled")).toBe(false);
+    expect(trigger.hasAttribute("data-trigger-disabled")).toBe(false);
+    expect(trigger.hasAttribute("aria-disabled")).toBe(false);
+  };
+  const expectOpens = async (trigger: Element) => {
+    pointer(trigger, "pointerenter");
+    await wait(60);
+    expect(popup().hidden).toBe(false);
+    expect(trigger.getAttribute("data-state")).toBe("open");
+  };
+  const anchor = () => h("a", { href: "#docs", id: "target" }, "Docs");
+  const span = () => h("span", { id: "target", tabindex: 0 }, "Note");
+
+  it.each([
+    ["Primitive a", () => primitiveTree(anchor)],
+    ["Primitive span", () => primitiveTree(span)],
+    ["Styled a", () => styledTree(anchor)],
+    ["Styled span", () => styledTree(span)],
+  ])("opens %s after client navigation and leaves it enabled", async (_label, render) => {
+    const host = mountRender(render);
+    await nextTick();
+    await nextTick();
+    const trigger = host.querySelector("#target")!;
+    expect(trigger.hasAttribute("data-sw-tooltip-trigger")).toBe(true);
+    expectEnabled(trigger);
+    await expectOpens(trigger);
+    expectEnabled(trigger);
+  });
+
+  it.each([
+    ["Primitive a", () => primitiveTree(anchor)],
+    ["Styled a", () => styledTree(anchor)],
+  ])("opens %s after hydration on first load", async (_label, render) => {
+    const component = { render };
+    const html = await renderToString(createSSRApp(component));
+    const host = document.createElement("div");
+    host.innerHTML = html;
+    document.body.append(host);
+    const app = createSSRApp(component);
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+    await nextTick();
+    const trigger = host.querySelector("#target")!;
+    expectEnabled(trigger);
+    await expectOpens(trigger);
+  });
+
+  it("marks a disabled link and keeps it closed", async () => {
+    const host = mountRender(() => primitiveTree(anchor, { disabled: true }));
+    await nextTick();
+    await nextTick();
+    const trigger = host.querySelector("#target")!;
+    expect(trigger.hasAttribute("data-disabled")).toBe(true);
+    expect(trigger.getAttribute("aria-disabled")).toBe("true");
+    pointer(trigger, "pointerenter");
+    await wait(60);
+    expect(popup().hidden).toBe(true);
+  });
+
+  it("keeps a child that sets its own native disabled", async () => {
+    const host = mountRender(() =>
+      primitiveTree(() => h("button", { disabled: true, id: "target" }, "Own")),
+    );
+    await nextTick();
+    expect(host.querySelector<HTMLButtonElement>("#target")!.disabled).toBe(true);
+  });
+});
+
+describe("Vue Styled TooltipTrigger with no single element child", () => {
+  const styled = (child: () => unknown) =>
+    h(StyledTooltip, { closeDelay: 0, openDelay: 0 }, () => [
+      h(StyledTooltipTrigger, { class: "own", id: "target" }, child),
+      h(StyledTooltipContent, null, () => "Details"),
+    ]);
+
+  it.each([
+    ["text", () => "Hover me", "Hover me"],
+    ["an element and text", () => [h("svg"), "Save"], "Save"],
+    ["no content", () => [], ""],
+  ])("renders a working button for %s", async (_label, child, text) => {
+    const errors: unknown[] = [];
+    const host = mountRender(() => styled(child), errors);
+    await nextTick();
+    await nextTick();
+    const trigger = host.querySelector<HTMLButtonElement>("#target")!;
+    expect(errors).toEqual([]);
+    expect(trigger.tagName).toBe("BUTTON");
+    expect(trigger.type).toBe("button");
+    expect(trigger.textContent).toBe(text);
+    expect(trigger.classList.contains("own")).toBe(true);
+    expect(trigger.getAttribute("data-slot")).toBe("tooltip-trigger");
+    pointer(trigger, "pointerenter");
+    await wait(60);
+    expect(popup().hidden).toBe(false);
+  });
+
+  it("renders the same markup through SSR and hydrates with no warning", async () => {
+    const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const component = { render: () => styled(() => "Hover me") };
+    const html = await renderToString(createSSRApp(component));
+    const host = document.createElement("div");
+    host.innerHTML = html;
+    document.body.append(host);
+    const app = createSSRApp(component);
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+    expect(host.querySelector("#target")!.tagName).toBe("BUTTON");
+    expect(warnings).not.toHaveBeenCalled();
+  });
+
+  it("follows the child when the slot changes shape", async () => {
+    const state = reactive({ link: false });
+    const host = mountRender(() =>
+      styled(() => (state.link ? h("a", { href: "#docs" }, "Docs") : "Hover me")),
+    );
+    await nextTick();
+    expect(host.querySelector("#target")!.tagName).toBe("BUTTON");
+
+    state.link = true;
+    await nextTick();
+    await nextTick();
+    await nextTick();
+    const link = host.querySelector("#target")!;
+    expect(link.tagName).toBe("A");
+    pointer(link, "pointerenter");
+    await wait(60);
+    expect(popup().hidden).toBe(false);
+  });
+});
+
+describe("Vue Tooltip popup replacement", () => {
+  it("keeps an open Tooltip visible when its Portal and Popup are replaced", async () => {
+    const state = reactive({ portalKey: 0 });
+    mountRender(() =>
+      h(
+        TooltipRoot,
+        { defaultOpen: true, openDelay: 0, closeDelay: 0 },
+        {
+          default: () => [
+            h(TooltipTrigger, null, { default: () => "Help" }),
+            h(
+              TooltipPortal,
+              { key: state.portalKey },
+              {
+                default: () =>
+                  h(TooltipPositioner, null, {
+                    default: () => h(TooltipPopup, null, { default: () => "Helpful details" }),
+                  }),
+              },
+            ),
+          ],
+        },
+      ),
+    );
+    await wait(20);
+    const previous = popup();
+    expect(previous.hidden).toBe(false);
+    state.portalKey += 1;
+    await wait(40);
+    expect(popup()).not.toBe(previous);
+    expect(popup().hidden).toBe(false);
   });
 });
 

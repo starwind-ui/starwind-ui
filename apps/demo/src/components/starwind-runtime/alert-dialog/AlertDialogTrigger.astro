@@ -12,26 +12,12 @@ const { asChild = false, targetId, class: className, ...rest } = Astro.props;
 const triggerClassName = className;
 ---
 
-{
-  asChild ? (
-    <div
-      class={triggerClassName}
-      data-as-child
-      data-sw-alert-dialog-target-id={targetId}
-      {...rest}
-      data-slot="alert-dialog-trigger"
-      data-sw-alert-dialog-trigger
-    >
-      <slot />
-    </div>
-  ) : (
-    <AlertDialogPrimitive.Trigger
-      class={triggerClassName}
-      targetId={targetId}
-      {...rest}
-      data-slot="alert-dialog-trigger"
-    >
-      <slot />
-    </AlertDialogPrimitive.Trigger>
-  )
-}
+<AlertDialogPrimitive.Trigger
+  asChild={asChild}
+  class={triggerClassName}
+  targetId={targetId}
+  {...rest}
+  data-slot="alert-dialog-trigger"
+>
+  <slot />
+</AlertDialogPrimitive.Trigger>

@@ -37,6 +37,29 @@ describe("package size bundle output", () => {
     ]);
   });
 
+  it("measures each initial and lazy chunk alone, largest first", () => {
+    const summary = summarizeInitialBundleOutput({
+      entryFilePath: "/tmp/out/entry.js",
+      gzip: (contents) => Buffer.from(contents),
+      outputFiles: [
+        outputFile("/tmp/out/entry.js", 'import{a}from"./chunks/static.js";import("./lazy.js");'),
+        outputFile("/tmp/out/chunks/static.js", "export const a=1;"),
+        outputFile("/tmp/out/lazy.js", "export const b=2;"),
+      ],
+    });
+
+    expect(summary.initialChunks).toEqual([
+      {
+        gzipBytes: Buffer.byteLength('import{a}from"./chunks/static.js";import("./lazy.js");'),
+        name: "entry.js",
+      },
+      { gzipBytes: Buffer.byteLength("export const a=1;"), name: "chunks/static.js" },
+    ]);
+    expect(summary.lazyChunks).toEqual([
+      { gzipBytes: Buffer.byteLength("export const b=2;"), name: "lazy.js" },
+    ]);
+  });
+
   it("resolves Windows-drive static chunk paths", () => {
     const summary = summarizeInitialBundleOutput({
       entryFilePath: "C:/tmp/out/entry.js",
@@ -88,7 +111,7 @@ describe("package size bundle output", () => {
       ],
     });
 
-    expect(gzipCalls).toEqual([{ level: 9 }]);
+    expect(new Set(gzipCalls.map(({ level }) => level))).toEqual(new Set([9]));
   });
 
   it("uses Brotli quality 11 for the same initial output graph", () => {

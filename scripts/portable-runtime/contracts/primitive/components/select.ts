@@ -368,7 +368,9 @@ export const selectRuntimeAdapterContract = {
     { part: "popup", public: true },
     { part: "item", public: true },
   ],
-  asChild: [{ part: "trigger", merges: ["aria", "className", "data", "ref"] }],
+  asChild: [
+    { part: "trigger", merges: ["aria", "className", "data", "ref"], childElement: "button" },
+  ],
   initialMarkup: [
     {
       part: "trigger",

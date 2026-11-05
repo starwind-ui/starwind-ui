@@ -34,7 +34,7 @@ ${f.index.namespaceMembers.map(({ key, name }) => `  ${key}: ${name},`).join("\n
 };
 export { ${f.exports.namespace}, ${f.index.importMembers.map(({ name }) => name).join(", ")} };
 export default ${f.exports.namespace};
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+export type { ButtonChildProps, ButtonChildPayload, TriggerChildProps, TriggerChildPayload } from "../button/ButtonRoot.svelte";
 export type { ${f.index.typeExports.join(", ")} } from "${f.runtime.typeImportSource}";
 `,
   };
@@ -94,7 +94,7 @@ function printRoot(f: Facts): string {
 </script>
 <script lang="ts">
   import { ${f.runtime.factory}, createPortalBinding, readyPortalBindingSnapshot, type NavigationMenuInstance, type ${event.detailsType} } from "${f.runtime.importSource}";
-  import { setContext, untrack, type Snippet } from "svelte";
+  import { setContext, tick, untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
   type Props = Omit<HTMLAttributes<HTMLElement>, "children"> & {
@@ -104,8 +104,9 @@ function printRoot(f: Facts): string {
     ${event.callbackProp}?: (value: string | null, details: ${event.detailsType}) => void;
     ref?: (element: HTMLElement | null) => void;
   };
-  let { children, value = $bindable(), defaultValue, openDelay = ${f.props.openDelay.defaultValue}, closeDelay = ${f.props.closeDelay.defaultValue}, closeOnEscape = ${f.props.closeOnEscape.defaultValue}, closeOnOutsideInteract = ${f.props.closeOnOutsideInteract.defaultValue}, orientation = ${f.props.orientation.defaultValue}, ${event.callbackProp}, ref, ...rest }: Props = $props();
+  let { children, value = $bindable(), value: commandValue, defaultValue, openDelay = ${f.props.openDelay.defaultValue}, closeDelay = ${f.props.closeDelay.defaultValue}, closeOnEscape = ${f.props.closeOnEscape.defaultValue}, closeOnOutsideInteract = ${f.props.closeOnOutsideInteract.defaultValue}, orientation = ${f.props.orientation.defaultValue}, ${event.callbackProp}, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => value);
+  const valueControlled = initialModel !== undefined;
   const initialDefault = untrack(() => defaultValue) ?? ${f.props.defaultValue.defaultValue};
   let accepted = $state<string | null>(${initial.acceptedSeed});
   let mounted = $state(false);
@@ -158,6 +159,7 @@ function printRoot(f: Facts): string {
     mounted = true;
     let alive = true;
     let queued = false;
+    let acceptedDetail: ${f.valueControl.event.detailsType} | undefined;
     let current: { instance: NavigationMenuInstance; unsubscribe: () => void; initialized: boolean; captures: NavigationMenuPart[]; options: Options } | undefined;
     type Options = { revision: number; openDelay: number; closeDelay: number; closeOnEscape: boolean; closeOnOutsideInteract: boolean };
     let desired = untrack(() => ({ revision, ${navigationMenuPlan.options.join(", ")} }));
@@ -171,6 +173,7 @@ function printRoot(f: Facts): string {
       queued = true;
       queueMicrotask(() => { queued = false; if (alive) untrack(connect); });
     }
+    async function resyncControlled(detail: ${f.valueControl.event.detailsType}): Promise<void> { ${navigationMenuFragments("svelte", f).commitRequest} }
     function connect(): void {
       if (!root.isConnected) return;
       ${navigationMenuConnection("svelte", f)}
@@ -180,21 +183,24 @@ function printRoot(f: Facts): string {
       untrack(queueConnection);
     });
     $effect(() => {
-      const next = value;
+      const next = commandValue;
       if (next !== undefined && current?.initialized && !Object.is(current.instance.${f.valueControl.state.getter}(), next)) {
-        untrack(() => { ${navigationMenuFragments("svelte", f).parentCommand} });
+        untrack(() => {
+          ${navigationMenuFragments("svelte", f).parentCommand}
+        });
       }
     });
     return () => { alive = false; disconnect(); disconnectCurrent = undefined; mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined; };
   };
 ${printSvelteRefAttachment("HTMLElement")}
 </script>
-<nav {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.openDelay}={openDelay} ${f.attrs.closeDelay}={closeDelay} ${f.attrs.closeOnEscape}={closeOnEscape} ${f.attrs.closeOnOutsideInteract}={closeOnOutsideInteract} ${f.attrs.orientation}={orientation} data-state="closed" {@attach attachRuntime} {@attach attachRef}>{@render children?.(${initial.rendered})}</nav>
+<nav {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.openDelay}={openDelay} ${f.attrs.closeDelay}={closeDelay} ${f.attrs.closeOnEscape}={closeOnEscape} ${f.attrs.closeOnOutsideInteract}={closeOnOutsideInteract} ${f.attrs.orientation}={orientation} data-state={accepted !== null ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>{@render children?.(${initial.rendered})}</nav>
 `;
 }
 
 function printTrigger(f: Facts): string {
   return printSvelteButtonChild({
+    childElement: f.childElements?.trigger,
     name: f.exports.trigger,
     imports: `import { getNavigationMenuContext, getNavigationMenuItemContext } from "./${f.exports.root}.svelte";`,
     init: `const menu = getNavigationMenuContext(); const item = getNavigationMenuItemContext();
@@ -233,25 +239,21 @@ function printPart(
       ? "value?: string;"
       : part === "link"
         ? "active?: boolean; closeOnClick?: boolean;"
-        : part === "popup"
-          ? `side?: ${f.floating.side.type}; align?: ${f.floating.align.type};`
-          : part === "positioner"
-            ? Object.entries(f.floating)
-                .map(([name, prop]) => `${name}?: ${prop.type};`)
-                .join(" ")
-            : "";
+        : part === "positioner"
+          ? Object.entries(f.floating)
+              .map(([name, prop]) => `${name}?: ${prop.type};`)
+              .join(" ")
+          : "";
   const defaults =
     part === "item"
       ? "value,"
       : part === "link"
         ? `active = ${f.link.active.prop.defaultValue}, closeOnClick = ${f.link.closeOnClick.prop.defaultValue},`
-        : part === "popup"
-          ? `side = ${f.floating.side.defaultValue}, align = ${f.floating.align.defaultValue},`
-          : part === "positioner"
-            ? Object.entries(f.floating)
-                .map(([name, prop]) => `${name} = ${prop.defaultValue}`)
-                .join(", ") + ","
-            : "";
+        : part === "positioner"
+          ? Object.entries(f.floating)
+              .map(([name, prop]) => `${name} = ${prop.defaultValue}`)
+              .join(", ") + ","
+          : "";
   const attributes =
     part === "item"
       ? `{ "${f.attrs.itemValue}": value }`
@@ -259,9 +261,7 @@ function printPart(
         ? `{ ${Object.keys(f.floating)
             .map((name) => `"${f.attrs[name as keyof Facts["attrs"]]}": String(${name})`)
             .join(", ")} }`
-        : part === "popup"
-          ? `{ "${f.attrs.side}": side, "${f.attrs.align}": align }`
-          : "{}";
+        : "{}";
   const markup =
     part === "item"
       ? `${f.attrs.itemValue}={value} data-state={open ? "open" : "closed"}`
@@ -274,7 +274,7 @@ function printPart(
                 .map((name) => `${f.attrs[name as keyof Facts["attrs"]]}={${name}}`)
                 .join(" ")}`
             : part === "popup"
-              ? `data-state="closed" ${f.attrs.side}={side} ${f.attrs.align}={align} hidden`
+              ? `data-state="closed" hidden`
               : part === "content"
                 ? `data-state={item?.open ? "open" : "closed"} hidden`
                 : part === "viewport"

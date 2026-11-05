@@ -72,11 +72,12 @@ export function printSvelteEditableCollectionOverlayComponent(
 
 function printButton(f: Facts, part: "trigger" | "clear"): string {
   return printSvelteButtonChild({
+    childElement: f.childElements?.[part],
     name: f.exports[part],
     imports: `import { getComboboxContext } from "./${f.exports.root}.svelte";`,
     init: `const combobox = getComboboxContext();`,
     register: `combobox?.registerPart(owner, { element: root, part: "${part}" }); return () => combobox?.registerPart(owner, null);`,
-    attributes: `"${f.attrs[part]}": "", type: "button", disabled: !!(allProps.disabled || combobox?.disabled), "${f.attrs.disabled}": allProps.disabled || combobox?.disabled ? "" : undefined, "data-sw-part": "${f.parts[part].name}", ${part === "trigger" ? '"aria-haspopup": "listbox", "aria-expanded": !!combobox?.open,' : '"aria-label": allProps["aria-label"] ?? "Clear selection",'}`,
+    attributes: `"${f.attrs[part]}": "", type: "button", disabled: !!(allProps.disabled || combobox?.disabled), "${f.attrs.disabled}": allProps.disabled || combobox?.disabled ? "" : undefined, "data-sw-part": "${f.parts[part].name}", ${part === "trigger" ? '"aria-haspopup": "listbox", "aria-expanded": !!combobox?.open,' : ""}`,
     independentAttachments: true,
   });
 }
@@ -123,7 +124,7 @@ function printPart(
         : part === "itemIndicator"
           ? `aria-hidden="true" ${comboboxSelectionAttributes("svelte", "indicator")}`
           : part === "icon"
-            ? 'aria-hidden="true" data-state={combobox?.open ? "open" : "closed"}'
+            ? `aria-hidden="${f.icon.constantAttributes.ariaHidden}" data-state={combobox?.open ? "open" : "closed"}`
             : part === "group"
               ? `role="${f.collection.group.role}"`
               : part === "separator"
@@ -133,7 +134,7 @@ function printPart(
                   : part === "value"
                     ? "data-placeholder={placeholder}"
                     : floating
-                      ? `${part === "popup" ? `role="${f.popupRole}" tabindex="-1" hidden` : ""} data-state="closed" ${floatingNames.map((name) => `${f.attrs[name]}={${name}}`).join(" ")}`
+                      ? `${part === "popup" ? `role="${f.popupRole}" tabindex="-1" hidden={!initialOpen}` : ""} data-state={initialOpen ? "open" : "closed"} ${floatingNames.map((name) => `${f.attrs[name]}={${name}}`).join(" ")}`
                       : "";
   return `<!-- ${NOTICE} -->
 <script lang="ts">
@@ -145,13 +146,16 @@ function printPart(
   let { ${part === "input" ? "" : "children,"} ${extraDefaults} ref, ...rest }: Props = $props();
   const combobox = getComboboxContext();
 ${
-  part === "item"
-    ? `  let selected = $derived(${comboboxSelection("combobox?.value", "value")});
+  floating
+    ? `  // First render only. Runtime owns open state and exit presence after that.
+  const initialOpen = untrack(() => combobox?.open ?? false);`
+    : part === "item"
+      ? `  let selected = $derived(${comboboxSelection("combobox?.value", "value")});
   setContext<ComboboxItemContext>(comboboxItemKey, { get value() { return value; }, get disabled() { return disabled; } });`
-    : part === "itemIndicator"
-      ? `  const item = getComboboxItemContext();
+      : part === "itemIndicator"
+        ? `  const item = getComboboxItemContext();
   let selected = $derived(${comboboxSelection("combobox?.value", "item?.value")});`
-      : ""
+        : ""
 }
 ${
   captured
@@ -206,14 +210,20 @@ ${Object.values(f.events)
   )
   .join("\n")}
   };
-  let { children, ref, autoComplete, defaultInputValue, defaultOpen, defaultValue, disabled = false, filterMode = ${f.props.filterMode.defaultValue}, form, highlightItemOnHover = ${f.props.highlightItemOnHover.defaultValue}, inputValue = $bindable(), locale, modal = ${f.props.modal.defaultValue}, name, open = $bindable(), readOnly = false, required = false, value = $bindable(), ${Object.values(
+  let { children, ref, autoComplete, defaultInputValue, defaultOpen, defaultValue, disabled = false, filterMode = ${f.props.filterMode.defaultValue}, form, highlightItemOnHover = ${f.props.highlightItemOnHover.defaultValue}, inputValue = $bindable(), inputValue: commandInputValue, locale, modal = ${f.props.modal.defaultValue}, name, open = $bindable(), open: commandOpen, readOnly = false, required = false, value = $bindable(), value: commandValue, ${Object.values(
     f.events,
   )
     .map((event) => event.callbackProp)
     .join(", ")}, ...rest }: Props = $props();
   const initialModels = untrack(() => ({ value, inputValue, open }));
+  const valueControlled = initialModels.value !== undefined;
+  const inputValueControlled = initialModels.inputValue !== undefined;
+  const openControlled = initialModels.open !== undefined;
   const initialDefaults = untrack(() => ({ value: defaultValue === undefined ? initialModels.value ?? null : defaultValue, inputValue: defaultInputValue ?? initialModels.inputValue, open: defaultOpen ?? initialModels.open ?? false }));
   let accepted = $state<{ value: string | null; inputValue: string | undefined; open: boolean }>({ value: initialModels.value === undefined ? initialDefaults.value : initialModels.value, inputValue: initialModels.inputValue ?? initialDefaults.inputValue, open: untrack(() => disabled) ? false : initialModels.open ?? initialDefaults.open });
+  // First render only. Runtime owns data-state after that.
+  const initialOpen = untrack(() => accepted.open);
+  const initialDefaultOpen = untrack(() => defaultOpen);
   let mounted = $state(false);
   let revision = $state(0);
   let rootElement: HTMLDivElement | undefined;
@@ -229,6 +239,8 @@ ${Object.values(f.events)
       untrack(() => revision++);
     },
   });
+  // A spread reads every prop through one object. A new controller must wait for a real change here.
+  const constructorInputs = $derived(JSON.stringify([${comboboxPlan.constructorOnlyInputs.join(", ")}]));
   const attachRuntime: Attachment<HTMLDivElement> = (root) => {
     rootElement = root;
     binding = createPortalBinding(root);
@@ -252,7 +264,7 @@ ${Object.values(f.events)
     }
     $effect(() => {
       revision;
-      ${comboboxPlan.constructorOnlyInputs.map((name) => `void ${name};`).join(" ")}
+      void constructorInputs;
       return untrack(() => {
         const captures = [...parts.values()];
         if (!${JSON.stringify(comboboxPlan.requiredParts)}.every(part => captures.some(capture => capture.part === part))) return;
@@ -287,7 +299,7 @@ ${Object.values(f.events)
   };
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
-<div {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={initialDefaults.value ?? undefined} ${f.attrs.defaultInputValue}={initialDefaults.inputValue} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.readOnly}={readOnly ? "" : undefined} ${f.attrs.name}={name} ${f.attrs.form}={form} ${f.attrs.required}={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
+<div {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={initialDefaults.value ?? undefined} ${f.attrs.autoComplete}={autoComplete} ${f.attrs.defaultInputValue}={initialDefaults.inputValue} ${f.attrs.defaultOpen}={initialDefaultOpen ? "true" : undefined} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.filterMode}={filterMode} ${f.attrs.highlightItemOnHover}={highlightItemOnHover ? "true" : "false"} ${f.attrs.locale}={locale} ${f.attrs.modal}={modal ? "true" : "false"} ${f.attrs.readOnly}={readOnly ? "" : undefined} ${f.attrs.name}={name} ${f.attrs.form}={form} ${f.attrs.required}={required ? "" : undefined} data-state={initialOpen ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
   <input type={required ? undefined : "hidden"} style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0" ${f.attrs.hiddenInput}="" aria-hidden="${f.hiddenInput.constantAttributes.ariaHidden}" tabindex={${f.hiddenInput.constantAttributes.tabIndex}} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
 </div>

@@ -1,8 +1,10 @@
 import type { MenuItemOperations } from "../../shared-recipes/structured/menu-item-operations.js";
 
+import { svelteCommandName } from "./recipe-framework-operations.js";
+
 const upper = (n: string) => n[0]!.toUpperCase() + n.slice(1);
 export const svelteMenuItemOperations: MenuItemOperations = {
-  input: (n) => n,
+  input: svelteCommandName,
   owner: () => "element",
   alive: () => "alive && ownerElement.isConnected",
   proposal: (n, v) => `on${upper(n)}Change?.(${v},details);`,
@@ -10,4 +12,5 @@ export const svelteMenuItemOperations: MenuItemOperations = {
   publish: (n, v) => `if (${n} !== ${v}) ${n}=${v};`,
   project: (_p, v) => `project(${v});`,
   settle: "",
+  restoreParent: "prepare();",
 };

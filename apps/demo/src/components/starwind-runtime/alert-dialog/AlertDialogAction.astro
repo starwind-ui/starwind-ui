@@ -20,9 +20,9 @@ const {
 {
   asChild ? (
     <div
+      {...rest}
       class={alertDialogActionAsChild({ variant, size, class: className })}
       data-as-child
-      {...rest}
       data-slot="alert-dialog-action"
       data-sw-alert-dialog-close
     >

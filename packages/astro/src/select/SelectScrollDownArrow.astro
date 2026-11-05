@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-select-scroll-down-arrow aria-hidden="true" {...rest}>
+<div {...rest} data-sw-select-scroll-down-arrow aria-hidden="true">
   <slot />
 </div>

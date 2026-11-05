@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"span">;
 const { ...rest } = Astro.props;
 ---
 
-<span data-sw-menu-shortcut {...rest}>
+<span {...rest} data-sw-menu-shortcut>
   <slot />
 </span>

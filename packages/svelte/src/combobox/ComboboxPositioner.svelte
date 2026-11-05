@@ -8,7 +8,8 @@
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; side?: "top" | "right" | "bottom" | "left"; align?: "start" | "center" | "end"; sideOffset?: number; alignOffset?: number; avoidCollisions?: boolean; ref?: (element: HTMLDivElement | null) => void };
   let { children, side = "bottom", align = "start", sideOffset = 6, alignOffset = 0, avoidCollisions = true, ref, ...rest }: Props = $props();
   const combobox = getComboboxContext();
-
+  // First render only. Runtime owns open state and exit presence after that.
+  const initialOpen = untrack(() => combobox?.open ?? false);
   const owner = Symbol("ComboboxPositioner owner");
   const attachPart: Attachment<HTMLDivElement> = (element) => {
     $effect(() => {
@@ -20,4 +21,4 @@
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...rest} data-sw-combobox-positioner="" data-sw-part="positioner"  data-state="closed" data-side={side} data-align={align} data-side-offset={sideOffset} data-align-offset={alignOffset} data-avoid-collisions={avoidCollisions} {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-combobox-positioner="" data-sw-part="positioner"  data-state={initialOpen ? "open" : "closed"} data-side={side} data-align={align} data-side-offset={sideOffset} data-align-offset={alignOffset} data-avoid-collisions={avoidCollisions} {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>

@@ -36,6 +36,7 @@ const ComboboxPopup = React.forwardRef<HTMLDivElement, ComboboxPopupProps>(funct
   const closePresence = useClosePresence<HTMLDivElement>({
     keepMounted,
     open: combobox.open,
+    probe: combobox.itemProbe,
   });
   const composedRef = useComposedRefs(forwardedRef, closePresence.ref);
 

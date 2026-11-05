@@ -11,9 +11,9 @@ const { "data-slot": dataSlot = "sidebar-group-content", class: className, ...re
 ---
 
 <div
+  {...rest}
   class={sidebarGroupContent({ class: className })}
   data-sidebar="group-content"
-  {...rest}
   data-slot={dataSlot}
 >
   <slot />

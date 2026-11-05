@@ -35,7 +35,6 @@ export function specializeSvelteStyledCheckboxGroup(
   return {
     imports: [
       { source: "svelte", names: ["ComponentProps"], typeOnly: true },
-      { source: "svelte", names: ["untrack"] },
       { source: "tailwind-variants", names: ["cx"] },
       { source: sveltePrimitiveImport("checkbox-group", options), names: ["CheckboxGroupRoot"] },
       { source: "./variants.js", names: group.variants.map((variant) => variant.name) },
@@ -52,17 +51,6 @@ export function specializeSvelteStyledCheckboxGroup(
       { name: "children" },
     ],
     rest: component.destructure.rest,
-    setup: [
-      `const equal = (left: string[] | undefined, right: string[] | undefined) => left === undefined || right === undefined ? left === right : left.length === right.length && left.every((entry, index) => entry === right[index]);
-let observedCommand = untrack(() => commandValue === undefined ? undefined : [...commandValue]);
-$effect(() => {
-  const next = commandValue === undefined ? undefined : [...commandValue];
-  untrack(() => {
-    if (equal(next, observedCommand)) return;
-    observedCommand = next;
-    if (!equal(next, value)) value = next;
-  });
-});`,
-    ],
+    setup: [],
   };
 }

@@ -10,6 +10,175 @@ describe("createCombobox", () => {
     vi.useRealTimers();
   });
 
+  describe("focus leaving the Combobox", () => {
+    function renderWithOutsideButton(): { outside: HTMLButtonElement; root: HTMLElement } {
+      const root = renderCombobox();
+      const outside = document.createElement("button");
+      document.body.append(outside);
+      return { outside, root };
+    }
+
+    it("closes with the focus-out reason and restores the text", async () => {
+      const { outside, root } = renderWithOutsideButton();
+      const onOpenChange = vi.fn();
+      const combobox = createCombobox(root, { onOpenChange });
+
+      getInput().focus();
+      getInput().value = "ap";
+      getInput().dispatchEvent(new Event("input", { bubbles: true }));
+      expect(combobox.getOpen()).toBe(true);
+
+      outside.focus();
+      await waitForMicrotasks();
+
+      expect(combobox.getOpen()).toBe(false);
+      expect(onOpenChange.mock.lastCall?.[1].reason).toBe("focus-out");
+      expect(document.activeElement).toBe(outside);
+      await waitForFloatingPosition();
+      expect(getInput().value).toBe("");
+    });
+
+    it("stays open while focus moves through the trigger and the clear button", async () => {
+      const { outside, root } = renderWithOutsideButton();
+      const combobox = createCombobox(root);
+
+      getInput().focus();
+      expect(combobox.getOpen()).toBe(true);
+
+      getTrigger().focus();
+      await waitForMicrotasks();
+      expect(combobox.getOpen()).toBe(true);
+
+      getClear().focus();
+      await waitForMicrotasks();
+      expect(combobox.getOpen()).toBe(true);
+
+      outside.focus();
+      await waitForMicrotasks();
+      expect(combobox.getOpen()).toBe(false);
+    });
+
+    it("stays open when a pressed button does not take focus", async () => {
+      const root = renderCombobox();
+      const combobox = createCombobox(root);
+
+      getInput().focus();
+      expect(combobox.getOpen()).toBe(true);
+
+      getClear().dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      getInput().blur();
+      await waitForMicrotasks();
+
+      expect(combobox.getOpen()).toBe(true);
+    });
+
+    it("keeps focus in the input when the close is canceled", async () => {
+      const { outside, root } = renderWithOutsideButton();
+      const combobox = createCombobox(root, {
+        onOpenChange: (open, details) => {
+          if (!open) details.cancel();
+        },
+      });
+
+      getInput().focus();
+      outside.focus();
+      await waitForMicrotasks();
+
+      expect(combobox.getOpen()).toBe(true);
+      expect(document.activeElement).toBe(getInput());
+    });
+
+    it("ignores focus leaving while closed", async () => {
+      const { outside, root } = renderWithOutsideButton();
+      const onOpenChange = vi.fn();
+      const combobox = createCombobox(root, { onOpenChange });
+
+      getInput().focus();
+      combobox.setOpen(false, { emit: false });
+      onOpenChange.mockClear();
+      outside.focus();
+      await waitForMicrotasks();
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("a parent that refuses a value with no cancel", () => {
+    it("returns the text to the held value after an item press", async () => {
+      const root = renderCombobox();
+      const texts: string[] = [];
+      const combobox = createCombobox(root, {
+        onInputValueChange: (text) => texts.push(text),
+        value: null,
+      });
+
+      getTrigger().click();
+      getItem("banana").click();
+      expect(getInput().value).toBe("Banana");
+      await waitForMicrotasks();
+
+      expect(combobox.getValue()).toBe(null);
+      expect(combobox.getInputValue()).toBe("");
+      expect(getInput().value).toBe("");
+      expect(texts).toEqual(["Banana", ""]);
+    });
+
+    it("returns the text to the held value after a clear press", async () => {
+      const root = renderCombobox();
+      const combobox = createCombobox(root, { value: "apple" });
+      expect(getInput().value).toBe("Apple");
+
+      getClear().click();
+      await waitForMicrotasks();
+
+      expect(combobox.getValue()).toBe("apple");
+      expect(getInput().value).toBe("Apple");
+    });
+
+    it("keeps the text when the parent commits the value in the same turn", async () => {
+      const root = renderCombobox();
+      const combobox = createCombobox(root, {
+        onValueChange: (value) => {
+          queueMicrotask(() => combobox.setValue(value, { emit: false }));
+        },
+        value: null,
+      });
+
+      getTrigger().click();
+      getItem("banana").click();
+      await waitForMicrotasks();
+
+      expect(combobox.getValue()).toBe("banana");
+      expect(getInput().value).toBe("Banana");
+    });
+
+    it("leaves text alone when a parent also holds the text", async () => {
+      const root = renderCombobox();
+      createCombobox(root, { inputValue: "typed", value: null });
+
+      getTrigger().click();
+      getItem("banana").click();
+      await waitForMicrotasks();
+
+      expect(getInput().value).toBe("typed");
+    });
+  });
+
+  it("does not drop a held value when an adapter can name it with no item mounted", () => {
+    const root = renderCombobox({ name: "fruit" });
+    getItem("banana").remove();
+    const combobox = createCombobox(root, {
+      resolveValueText: (value) => (value === "banana" ? "Banana" : null),
+      value: null,
+    });
+
+    combobox.setValue("banana", { emit: false });
+
+    expect(root.getAttribute("data-value")).toBe("banana");
+    expect(getHiddenInput().value).toBe("banana");
+    expect(getInput().value).toBe("Banana");
+  });
+
   it("does not lock body scroll by default while open", async () => {
     const root = renderCombobox();
     const combobox = createCombobox(root);
@@ -1531,6 +1700,42 @@ describe("createCombobox", () => {
     expect(getInput().value).toBe("");
   });
 
+  function editInMiddle(): void {
+    getInput().focus();
+    getInput().value = "abXcd";
+    getInput().setSelectionRange(3, 3);
+    getInput().dispatchEvent(new InputEvent("input", { bubbles: true }));
+  }
+
+  it("leaves typed text and its caret alone while a parent accepts the edit", async () => {
+    const root = renderCombobox({ name: "fruit" });
+    const combobox = createCombobox(root, {
+      inputValue: "abcd",
+      onInputValueChange: (next) => {
+        queueMicrotask(() => combobox.setInputValue(next, { emit: false }));
+      },
+    });
+
+    editInMiddle();
+    expect(getInput().value).toBe("abXcd");
+    await waitForFloatingPosition();
+
+    expect(combobox.getInputValue()).toBe("abXcd");
+    expect(getInput().value).toBe("abXcd");
+    expect(getInput().selectionStart).toBe(3);
+  });
+
+  it("repairs typed text that a parent refuses", async () => {
+    const root = renderCombobox({ name: "fruit" });
+    const combobox = createCombobox(root, { inputValue: "abcd" });
+
+    editInMiddle();
+    await waitForFloatingPosition();
+
+    expect(combobox.getInputValue()).toBe("abcd");
+    expect(getInput().value).toBe("abcd");
+  });
+
   it("does not locally roll back controlled input values", async () => {
     const root = renderCombobox({ defaultValue: "banana", name: "fruit" });
     const combobox = createCombobox(root, {
@@ -2436,6 +2641,104 @@ function stubNoAnimations(element: HTMLElement): void {
   });
 }
 
+describe("Combobox event order and input repair", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  function recordEvents(root: HTMLElement): string[] {
+    const events: string[] = [];
+    root.addEventListener("starwind:value-change", (event) => {
+      const { value } = (event as CustomEvent<{ value: string | null }>).detail;
+      events.push(`value:${value}`);
+    });
+    root.addEventListener("starwind:input-value-change", (event) => {
+      const { inputValue, reason } = (event as CustomEvent<{ inputValue: string; reason: string }>)
+        .detail;
+      events.push(`input:${inputValue}:${reason}`);
+    });
+    root.addEventListener("starwind:open-change", (event) => {
+      const { open } = (event as CustomEvent<{ open: boolean }>).detail;
+      events.push(`open:${open}`);
+    });
+    return events;
+  }
+
+  it("orders item press as value, input with item-press, then open", () => {
+    const root = renderCombobox();
+    const combobox = createCombobox(root, { defaultOpen: true });
+    const events = recordEvents(root);
+
+    getItem("apricot").click();
+
+    expect(events).toEqual(["value:apricot", "input:Apricot:item-press", "open:false"]);
+    expect(combobox.getInputValue()).toBe("Apricot");
+  });
+
+  it("orders clear as value, then empty input with clear", () => {
+    const root = renderCombobox({ defaultValue: "banana" });
+    createCombobox(root);
+    const events = recordEvents(root);
+
+    getClear().click();
+
+    expect(events).toEqual(["value:null", "input::clear"]);
+  });
+
+  it.each(["callback", "dom"] as const)("repairs typed text after %s cancellation", (kind) => {
+    const root = renderCombobox({ defaultValue: "banana" });
+    const combobox = createCombobox(root, {
+      defaultOpen: true,
+      ...(kind === "callback"
+        ? { onInputValueChange: (_text: string, details: { cancel(): void }) => details.cancel() }
+        : {}),
+    });
+    if (kind === "dom") {
+      root.addEventListener("starwind:input-value-change", (event) => event.preventDefault());
+    }
+
+    getInput().value = "ap";
+    getInput().dispatchEvent(new InputEvent("input", { bubbles: true }));
+
+    expect(getInput().value).toBe("Banana");
+    expect(combobox.getInputValue()).toBe("Banana");
+    expect(root.getAttribute("data-input-value")).toBe("Banana");
+  });
+
+  it("keeps canceled text when a parent commits the pressed value", () => {
+    const root = renderCombobox({ defaultValue: "banana" });
+    const combobox = createCombobox(root, {
+      defaultOpen: true,
+      onInputValueChange: (_text, details) => details.cancel(),
+      value: "banana",
+    });
+
+    getItem("apricot").click();
+    combobox.setValue("apricot", { emit: false });
+
+    expect(combobox.getValue()).toBe("apricot");
+    expect(getInput().value).toBe("Banana");
+
+    combobox.setValue("banana", { emit: false });
+    expect(getInput().value).toBe("Banana");
+    combobox.setValue("apricot", { emit: false });
+    expect(getInput().value).toBe("Apricot");
+  });
+
+  it("uses the label resolver when the selected item is not rendered", () => {
+    const root = renderCombobox();
+    const combobox = createCombobox(root, {
+      resolveValueText: (value) => (value === "lazy" ? "Lazy label" : null),
+    });
+
+    combobox.setValue("lazy", { emit: false });
+    expect(combobox.getInputValue()).toBe("Lazy label");
+
+    combobox.setValue("unknown", { emit: false });
+    expect(combobox.getInputValue()).toBe("");
+  });
+});
+
 describe("Combobox connected reset", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
@@ -2536,6 +2839,45 @@ describe("Combobox connected reset", () => {
       fixture.controller.destroy();
     },
   );
+
+  it.each([
+    { controlledInput: false, text: "Apricot" },
+    { controlledInput: true, text: "typed" },
+  ])(
+    "keeps a parent value and matching text after reset with controlled input $controlledInput",
+    async ({ controlledInput, text }) => {
+      const form = document.createElement("form");
+      document.body.append(form);
+      const root = renderCombobox({ defaultValue: "banana", name: "fruit" });
+      form.append(root);
+      const combobox = createCombobox(root, {
+        value: "apricot",
+        ...(controlledInput ? { inputValue: "typed" } : {}),
+      });
+
+      form.reset();
+      await waitForMacrotask();
+
+      expect(combobox.getValue()).toBe("apricot");
+      expect(getHiddenInput().value).toBe("apricot");
+      expect(getInput().value).toBe(text);
+    },
+  );
+
+  it("keeps a parent input value while an owned value resets", async () => {
+    const form = document.createElement("form");
+    document.body.append(form);
+    const root = renderCombobox({ defaultValue: "banana", name: "fruit" });
+    form.append(root);
+    const combobox = createCombobox(root, { inputValue: "typed" });
+    combobox.setValue("apricot", { emit: false });
+
+    form.reset();
+    await waitForMacrotask();
+
+    expect(combobox.getValue()).toBe("banana");
+    expect(getInput().value).toBe("typed");
+  });
 
   it("keeps open-only work independent and rebases Escape after effective reset", async () => {
     const fixture = editingConnectedCombobox();

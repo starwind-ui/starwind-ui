@@ -27,6 +27,6 @@ const { hidden = true, match = true, ...rest } = Astro.props;
 const serializedMatch = typeof match === "boolean" ? String(match) : match;
 ---
 
-<div data-sw-field-validity data-match={serializedMatch} hidden={hidden} {...rest}>
+<div {...rest} data-sw-field-validity data-match={serializedMatch} hidden={hidden}>
   <slot />
 </div>

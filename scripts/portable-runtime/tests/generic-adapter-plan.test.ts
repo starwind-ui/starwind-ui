@@ -441,6 +441,7 @@ describe("GenericAdapterPlan", () => {
       {
         merges: ["aria", "className", "data", "ref"],
         part: "trigger",
+        childElement: "any-element",
       },
     ]);
     expect(getGenericAdapterOutputFamilyPlanId(plan)).toBe("presence-floating-overlay");

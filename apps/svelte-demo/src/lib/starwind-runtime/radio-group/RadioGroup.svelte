@@ -1,6 +1,5 @@
 <script module lang="ts">
   import type { ComponentProps, Snippet } from "svelte";
-  import { untrack } from "svelte";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
   import { RadioGroupRoot } from "@starwind-ui/svelte/radio-group";
@@ -28,9 +27,6 @@
     "children": children,
     ...rest
   }: RadioGroupProps = $props();
-
-  let observedCommand=untrack(()=>commandValue);
-  $effect(()=>{const next=commandValue;untrack(()=>{if(Object.is(next,observedCommand))return;observedCommand=next;if(!Object.is(next,value))value=next;});});
 </script>
 
 <RadioGroupRoot
@@ -48,7 +44,7 @@
   {...rest}
   data-size={size}
   data-slot={"radio-group"}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   {#if legend}
     <div

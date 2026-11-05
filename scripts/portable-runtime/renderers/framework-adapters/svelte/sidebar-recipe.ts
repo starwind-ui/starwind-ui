@@ -1,5 +1,6 @@
 import type { SidebarProjection } from "../../shared-recipes/structured/sidebar/types.js";
 import { printSvelteRefAttachment } from "./attachments.js";
+import { svelteCommandName } from "./recipe-framework-operations.js";
 
 const upper = (value: string) => value[0]!.toUpperCase() + value.slice(1);
 export const svelteSidebarProjection: SidebarProjection = {
@@ -29,7 +30,7 @@ import type {Attachment} from 'svelte/attachments';
 import type {HTMLAttributes} from 'svelte/elements';
 import {${f.context.name},type ${f.context.typeName}} from './${f.context.name}.js';
 type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'> & {${fields}${callbacks}children?:Snippet;ref?:(element:HTMLDivElement|null)=>void;};
-let {children,ref,${props.map((p) => `${p.name}${plan.models.includes(p.name as any) ? "=$bindable()" : p.defaultValue ? `=${p.defaultValue}` : ""}`).join(",")},${plan.models.map((name) => f.events[name].callbackProp).join(",")},...rest}:Props=$props();
+let {children,ref,${props.map((p) => `${p.name}${plan.models.includes(p.name as any) ? `=$bindable(),${p.name}:${svelteCommandName(p.name)}` : p.defaultValue ? `=${p.defaultValue}` : ""}`).join(",")},${plan.models.map((name) => f.events[name].callbackProp).join(",")},...rest}:Props=$props();
 ${initial}
 ${cells}
 ${controller}
@@ -41,7 +42,7 @@ const context:${f.context.typeName}={${Object.entries(context)
 const attachRuntime:Attachment<HTMLDivElement>=(root)=>{
 $effect(()=>connectMedia(${plan.media.input}));
 $effect(()=>{${plan.constructorInputs.map((name) => `void ${name};`).join("")}untrack(()=>connectRuntime(root));return()=>untrack(disconnectRuntime);});
-$effect(()=>{${plan.models.map((name) => `void ${name};`).join("")}untrack(applyParentCommand);});
+$effect(()=>{${plan.models.map((name) => `void ${svelteCommandName(name)};`).join("")}untrack(applyParentCommand);});
 };
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>

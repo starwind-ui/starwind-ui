@@ -62,6 +62,7 @@ const providerAttributes = Object.fromEntries(
 ---
 
 <div
+  {...providerAttributes}
   data-sw-sidebar-provider
   data-default-open={defaultOpen ? "true" : undefined}
   data-default-mobile-open={defaultMobileOpen ? "true" : undefined}
@@ -73,7 +74,6 @@ const providerAttributes = Object.fromEntries(
   data-persistence-key={persistenceKey}
   data-persistence-storage={persistenceStorage === false ? "false" : persistenceStorage}
   data-persistence-max-age={persistenceMaxAge}
-  {...providerAttributes}
 >
   <slot />
 </div>

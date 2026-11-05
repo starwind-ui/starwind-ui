@@ -26,6 +26,7 @@ const initialChecked = checked ?? defaultChecked;
 ---
 
 <div
+  {...rest}
   data-sw-menu-radio-item
   data-value={value}
   data-default-checked={initialChecked ? "true" : undefined}
@@ -37,7 +38,6 @@ const initialChecked = checked ?? defaultChecked;
   data-disabled={disabled ? "" : undefined}
   data-unchecked={!initialChecked ? "" : undefined}
   tabindex="0"
-  {...rest}
 >
   <slot />
 </div>

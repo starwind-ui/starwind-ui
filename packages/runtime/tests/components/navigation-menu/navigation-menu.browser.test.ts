@@ -885,6 +885,30 @@ describe("createNavigationMenu", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it("restores trigger focus when a parent commits a controlled Escape close", () => {
+    const root = renderNavigationMenu();
+    let escape: NavigationMenuValueChangeDetails | undefined;
+    const menu = createNavigationMenu(root, {
+      value: "products",
+      onValueChange(_value, details) {
+        escape = details;
+      },
+    });
+    const trigger = getTrigger("products");
+    trigger.focus();
+    getPopup().querySelector<HTMLElement>("a")?.focus();
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+
+    expect(escape?.reason).toBe("escape-key");
+    expect(getPopup().hidden).toBe(false);
+
+    menu.setValue(null, { emit: false, event: escape?.event, reason: escape?.reason });
+
+    expect(getPopup().hidden).toBe(true);
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it("opens from Enter and Space with focus inside the popup content", () => {
     const root = renderNavigationMenuWithKeyboard();
     const menu = createNavigationMenu(root);
@@ -1717,6 +1741,133 @@ describe("createNavigationMenu", () => {
 
     expect(menu.getValue()).toBe(null);
     expect(getPopup().hidden).toBe(true);
+  });
+
+  function hoverOpen(trigger: HTMLElement): void {
+    trigger.dispatchEvent(
+      new PointerEvent("pointerenter", { bubbles: true, pointerType: "mouse" }),
+    );
+    vi.advanceTimersByTime(50);
+  }
+
+  it("keeps a hover-open panel through a press in the window, and closes after it", () => {
+    vi.useFakeTimers();
+    const menu = createNavigationMenu(renderNavigationMenuWithTiming());
+    const trigger = getTrigger("products");
+
+    hoverOpen(trigger);
+    vi.advanceTimersByTime(499);
+    trigger.click();
+    expect(menu.getValue()).toBe("products");
+
+    trigger.click();
+    expect(menu.getValue()).toBe(null);
+
+    hoverOpen(trigger);
+    vi.advanceTimersByTime(500);
+    trigger.click();
+    expect(menu.getValue()).toBe(null);
+  });
+
+  it("measures the press window to the start of a slow mouse press", () => {
+    vi.useFakeTimers();
+    const menu = createNavigationMenu(renderNavigationMenuWithTiming());
+    const trigger = getTrigger("products");
+
+    hoverOpen(trigger);
+    vi.advanceTimersByTime(400);
+    trigger.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "mouse" }));
+    vi.advanceTimersByTime(300);
+    trigger.click();
+
+    expect(menu.getValue()).toBe("products");
+  });
+
+  it("closes from a touch press right after hover opened the panel", () => {
+    vi.useFakeTimers();
+    const menu = createNavigationMenu(renderNavigationMenuWithTiming());
+    const trigger = getTrigger("products");
+
+    hoverOpen(trigger);
+    trigger.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+    trigger.click();
+
+    expect(menu.getValue()).toBe(null);
+  });
+
+  it("toggles from Enter right after hover opened the panel", () => {
+    vi.useFakeTimers();
+    const menu = createNavigationMenu(renderNavigationMenuWithTiming());
+    const trigger = getTrigger("products");
+
+    hoverOpen(trigger);
+    trigger.focus();
+    trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+
+    expect(menu.getValue()).toBe(null);
+  });
+
+  it("closes from a press after a press opened the panel and hover returned to it", () => {
+    vi.useFakeTimers();
+    const menu = createNavigationMenu(renderNavigationMenuWithTiming());
+    const trigger = getTrigger("products");
+
+    trigger.click();
+    expect(menu.getValue()).toBe("products");
+    hoverOpen(trigger);
+    trigger.click();
+
+    expect(menu.getValue()).toBe(null);
+  });
+
+  it("starts a new press window when hover moves to another trigger", () => {
+    vi.useFakeTimers();
+    const menu = createNavigationMenu(renderNavigationMenuWithTiming());
+
+    hoverOpen(getTrigger("products"));
+    vi.advanceTimersByTime(600);
+    getTrigger("company").dispatchEvent(
+      new PointerEvent("pointerenter", { bubbles: true, pointerType: "mouse" }),
+    );
+    getTrigger("company").click();
+
+    expect(menu.getValue()).toBe("company");
+  });
+
+  it("keeps a controlled hover-open panel through a press in the window", () => {
+    vi.useFakeTimers();
+    const onValueChange = vi.fn();
+    const menu = createNavigationMenu(renderNavigationMenuWithTiming(), {
+      onValueChange,
+      value: null,
+    });
+    const trigger = getTrigger("products");
+
+    hoverOpen(trigger);
+    menu.setValue("products", { emit: false });
+    trigger.click();
+
+    expect(onValueChange.mock.calls.map(([value]) => value)).toEqual(["products"]);
+    vi.advanceTimersByTime(500);
+    trigger.click();
+    expect(onValueChange.mock.calls.map(([value]) => value)).toEqual(["products", null]);
+  });
+
+  it("does not hold a press window after hover closes the panel and press opens it", () => {
+    vi.useFakeTimers();
+    const root = renderNavigationMenuWithTiming();
+    const menu = createNavigationMenu(root);
+    const trigger = getTrigger("products");
+
+    hoverOpen(trigger);
+    root.dispatchEvent(new PointerEvent("pointerleave", { bubbles: true, pointerType: "mouse" }));
+    vi.advanceTimersByTime(80);
+    expect(menu.getValue()).toBe(null);
+
+    trigger.click();
+    expect(menu.getValue()).toBe("products");
+    trigger.click();
+    expect(menu.getValue()).toBe(null);
   });
 
   it("closes an open popup when hovering a top-level link-only item", () => {

@@ -135,11 +135,8 @@ export function snapshot(){return{open,plain,empty,counts:{...counts},events:[..
 </script>
 {#snippet child({props,children}:ButtonChildPayload)}{#key childKey}{#if wrapped}<Button.Root {...props}>{@render children?.()}</Button.Root>{:else}<button {...props}>{@render children?.()}</button>{/if}{/key}<span data-child-sibling>Hint</span>{/snippet}
 <Root id="collapsible-root" bind:open defaultOpen={seed} {disabled} onOpenChange={onChange} ref={rootRef} {...rootAttrs} class={className}>
- {#snippet children(accepted)}
  {#key triggerKey}<Trigger id={triggerId} {child} disabled={ownDisabled} ref={triggerRef} {...triggerAttrs} onclick={()=>counts.clicks++}>Toggle main</Trigger>{/key}
  {#key panelKey}<Panel id={panelId} data-presence-test hiddenUntilFound={untilFound} ref={panelRef} {...panelAttrs} class={className} style={panelStyle}><p>Main content</p></Panel>{/key}
- <output data-accepted>{String(accepted)}</output>
- {/snippet}
 </Root>
 <Root id="omitted-root" onOpenChange={()=>counts.omitted++}><Trigger>Omitted</Trigger><Panel>Omitted content</Panel></Root>
 <Root id="plain-root" open={plain} defaultOpen={seed} onOpenChange={()=>counts.plain++}><Trigger>Plain</Trigger><Panel>Plain content</Panel></Root>
@@ -160,15 +157,15 @@ try{
  result.hydrationExact=before.every((node,index)=>node===[root(),trigger(),panel()][index]);
  assert(app.snapshot().open===true&&app.snapshot().empty===false,"initial undefined normalization");
  assert(app.snapshot().counts.callback===0&&app.snapshot().counts.dom===0,"initialization emitted proposals");
- assert(isOpen("collapsible-root")&&!panel().hidden&&trigger().getAttribute("aria-expanded")==="true"&&root().querySelector('[data-accepted]').textContent==="true","initial accepted state");
+ assert(isOpen("collapsible-root")&&!panel().hidden&&trigger().getAttribute("aria-expanded")==="true","initial accepted state");
  assert(!isOpen("plain-root")&&!isOpen("omitted-root")&&isOpen("nested-root")&&!isOpen("outer-root"),"initial plain/default/nested state");
  assert(app.snapshot().refs===3&&app.snapshot().attachments===3&&app.snapshot().ownersMatch&&root().querySelectorAll("button").length===1,"initial semantic owners");
   app.setOpen(false);await settle();assert(!isOpen("collapsible-root")&&panel().hidden&&app.snapshot().counts.callback===0 ,"silent parent command");
  app.setOpen(undefined);await settle();assert(!isOpen("collapsible-root")&&app.snapshot().open===undefined,"later undefined retention");
  trigger().click();await settle();assert(isOpen("collapsible-root")&&app.snapshot().open===true,"accepted bound interaction");
  assert(app.snapshot().events.slice(-2).join(",")==="callback:true:undefined:false:trigger-press,dom:true:undefined:false","proposal and DOM publication order");
- button("omitted-root").click();button("plain-root").click();await settle();assert(isOpen("omitted-root")&&isOpen("plain-root")&&app.snapshot().plain===false,"omitted and plain local interactions");
- app.setPlain(undefined);await settle();assert(isOpen("plain-root"),"plain later undefined");app.setPlain(false);await settle();assert(!isOpen("plain-root")&&app.snapshot().counts.plain===1,"plain defined silent command");
+ button("omitted-root").click();button("plain-root").click();await settle();assert(isOpen("omitted-root")&&!isOpen("plain-root")&&app.snapshot().plain===false,"omitted Runtime interaction and plain parent ownership");
+ app.setPlain(true);await settle();assert(isOpen("plain-root"),"plain defined silent command");app.setPlain(undefined);await settle();assert(isOpen("plain-root"),"plain later undefined keeps the parent value");button("plain-root").click();await settle();assert(isOpen("plain-root"),"plain stays parent-controlled");app.setPlain(false);await settle();assert(!isOpen("plain-root")&&app.snapshot().counts.plain===2,"plain later command");
  result.models=true;
  app.setOpen(true);await settle();
  app.configure("cancel");let counts=app.snapshot().counts;trigger().click();await settle();assert(isOpen("collapsible-root")&&app.snapshot().open===true&&app.snapshot().counts.callback===counts.callback+1&&app.snapshot().counts.dom===counts.dom+1&&!panel().hidden,"callback cancellation");

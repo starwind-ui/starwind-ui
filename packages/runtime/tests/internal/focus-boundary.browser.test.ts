@@ -443,6 +443,87 @@ describe("createFocusBoundary", () => {
     boundary.destroy();
   });
 
+  describe("a pointer press inside the boundary", () => {
+    function setup(): {
+      onFocusDeparture: ReturnType<typeof vi.fn>;
+      outside: HTMLButtonElement;
+      owned: HTMLButtonElement;
+    } {
+      const surface = document.createElement("div");
+      const owned = button("owned");
+      const outside = button("outside");
+      surface.append(owned);
+      document.body.append(surface, outside);
+      const onFocusDeparture = vi.fn();
+      createFocusBoundary({
+        containsTarget: (target) => surface.contains(target),
+        onFocusDeparture,
+        ownerDocument: document,
+        surfaces: [surface],
+      });
+      owned.focus();
+      return { onFocusDeparture, outside, owned };
+    }
+
+    const press = (target: HTMLElement, type: string) =>
+      target.dispatchEvent(new PointerEvent(type, { bubbles: true }));
+
+    it("does not count focus falling to the document as a departure", async () => {
+      const { onFocusDeparture, owned } = setup();
+
+      press(owned, "pointerdown");
+      owned.blur();
+      await settleFocus();
+
+      expect(onFocusDeparture).not.toHaveBeenCalled();
+    });
+
+    it("waits past a touch release for the mouse events of the tap", async () => {
+      const { onFocusDeparture, owned } = setup();
+
+      press(owned, "pointerdown");
+      press(owned, "pointerup");
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      owned.blur();
+      await settleFocus();
+
+      expect(onFocusDeparture).not.toHaveBeenCalled();
+    });
+
+    it("counts focus falling to the document after the press ends", async () => {
+      const { onFocusDeparture, owned } = setup();
+
+      press(owned, "pointerdown");
+      press(owned, "pointerup");
+      owned.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      owned.blur();
+      await settleFocus();
+
+      expect(onFocusDeparture).toHaveBeenCalledTimes(1);
+    });
+
+    it("counts focus that lands on another control during the press", async () => {
+      const { onFocusDeparture, outside, owned } = setup();
+
+      press(owned, "pointerdown");
+      outside.focus();
+      await settleFocus();
+
+      expect(onFocusDeparture).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignores a press outside the boundary", async () => {
+      const { onFocusDeparture, outside, owned } = setup();
+
+      press(outside, "pointerdown");
+      owned.blur();
+      await settleFocus();
+
+      expect(onFocusDeparture).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("cancels pending checks and active listeners when destroyed", async () => {
     const surface = document.createElement("div");
     const owned = button("owned");

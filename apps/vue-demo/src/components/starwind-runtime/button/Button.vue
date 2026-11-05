@@ -54,7 +54,7 @@ const {
   as: buttonAs,
   href,
   disabled = false,
-  focusableWhenDisabled,
+  focusableWhenDisabled = undefined,
   dataSlot = "button",
   tabindex,
   class: className,

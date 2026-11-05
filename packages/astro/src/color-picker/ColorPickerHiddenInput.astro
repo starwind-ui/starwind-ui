@@ -22,8 +22,8 @@ const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 
 <input
   {...rest}
-  type={initial ? undefined : "text"}
   {...initial?.attributes}
+  type={initial ? undefined : "text"}
   value={initial?.properties.value ?? value}
   disabled={initial?.properties.disabled ?? disabled}
   readonly={initial?.properties.readOnly ?? readOnly}

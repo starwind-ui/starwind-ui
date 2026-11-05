@@ -10,10 +10,10 @@ const { align, class: className, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   role="group"
   data-align={align}
   class={inputGroupAddon({ align, class: className })}
-  {...rest}
   data-slot="input-group-addon"
 >
   <slot />

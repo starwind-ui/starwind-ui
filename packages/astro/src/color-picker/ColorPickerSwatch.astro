@@ -32,10 +32,10 @@ const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 
 <button
   {...rest}
+  {...initial?.attributes}
   type={initial ? undefined : "button"}
   data-value={initial ? undefined : swatchValue === null ? undefined : String(swatchValue)}
   data-disabled={initial ? undefined : swatchDisabled ? "" : undefined}
-  {...initial?.attributes}
   disabled={initial?.properties.disabled ?? disabled ?? swatchDisabled}
   style={mergedStyle}
   data-sw-color-picker-swatch

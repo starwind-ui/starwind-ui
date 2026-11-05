@@ -5,6 +5,111 @@ import { createSelect } from "../../../src/components/select/select";
 import { reportPortalPlacement } from "../../../src/internal/floating-portal";
 
 describe("createSelect", () => {
+  it("keeps authored value content while the Select has no value and no placeholder", () => {
+    document.body.innerHTML = `
+      <div data-sw-select>
+        <button data-sw-select-trigger type="button">
+          <span data-sw-select-value><b>Astro</b></span>
+        </button>
+        <input data-sw-select-input type="hidden" />
+        <div data-sw-select-portal>
+          <div data-sw-select-positioner>
+            <div data-sw-select-popup role="listbox" hidden>
+              <div data-sw-select-item data-value="vue">Vue</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const root = document.querySelector<HTMLElement>("[data-sw-select]")!;
+    const value = root.querySelector<HTMLElement>("[data-sw-select-value]")!;
+    const authored = value.firstElementChild;
+
+    const select = createSelect(root);
+
+    expect(value.textContent).toBe("Astro");
+    expect(value.firstElementChild).toBe(authored);
+
+    select.setValue("vue");
+    expect(value.textContent).toBe("Vue");
+
+    select.setValue(null);
+    expect(value.textContent).toBe("Astro");
+    select.destroy();
+  });
+
+  it("restores authored value content when a Select that starts with a value clears", () => {
+    document.body.innerHTML = `
+      <div data-sw-select>
+        <button data-sw-select-trigger type="button">
+          <span data-sw-select-value>Authored</span>
+        </button>
+        <div data-sw-select-portal>
+          <div data-sw-select-positioner>
+            <div data-sw-select-popup hidden>
+              <div data-sw-select-list>
+                <div data-sw-select-item data-value="astro"><span data-sw-select-item-text>Astro</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const select = createSelect(document.querySelector<HTMLElement>("[data-sw-select]")!, {
+      defaultValue: "astro",
+    });
+    const value = document.querySelector<HTMLElement>("[data-sw-select-value]")!;
+    expect(value.textContent).toBe("Astro");
+    select.setValue(null, { emit: false });
+    expect(value.textContent).toBe("Authored");
+  });
+
+  it("treats selected label markup as no authored value content", () => {
+    document.body.innerHTML = `
+      <div data-sw-select>
+        <button data-sw-select-trigger type="button">
+          <span data-sw-select-value>Astro</span>
+        </button>
+        <div data-sw-select-portal>
+          <div data-sw-select-positioner>
+            <div data-sw-select-popup hidden>
+              <div data-sw-select-list>
+                <div data-sw-select-item data-value="astro"><span data-sw-select-item-text>Astro</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const select = createSelect(document.querySelector<HTMLElement>("[data-sw-select]")!, {
+      defaultValue: "astro",
+    });
+    select.setValue(null, { emit: false });
+    expect(document.querySelector("[data-sw-select-value]")!.textContent).toBe("");
+  });
+
+  it("prefers a declared placeholder over authored value content", () => {
+    document.body.innerHTML = `
+      <div data-sw-select>
+        <button data-sw-select-trigger type="button">
+          <span data-sw-select-value data-placeholder="Pick theme">Authored</span>
+        </button>
+        <input data-sw-select-input type="hidden" />
+        <div data-sw-select-portal>
+          <div data-sw-select-positioner>
+            <div data-sw-select-popup role="listbox" hidden></div>
+          </div>
+        </div>
+      </div>
+    `;
+    const root = document.querySelector<HTMLElement>("[data-sw-select]")!;
+
+    const select = createSelect(root);
+
+    expect(root.querySelector("[data-sw-select-value]")?.textContent).toBe("Pick theme");
+    select.destroy();
+  });
+
   beforeEach(() => {
     document.body.innerHTML = "";
     document.body.removeAttribute("style");

@@ -319,7 +319,7 @@ try {
  const settle = async () => { flushSync(); await tick(); flushSync(); };
  const finish = async () => { for(let i=0;i<8;i++){ await new Promise(requestAnimationFrame); await settle(); } };
  const popup = () => document.querySelector("[data-popup]");
- const state = () => ({ ...app.snapshot(), native: popup()?.open ?? null, rendered: document.querySelector("[data-rendered]")?.textContent ?? null, modal: popup()?.getAttribute("aria-modal") ?? null, connections: globalThis.__dialogLifecycle.connects, effects: {...effects} });
+ const state = () => ({ ...app.snapshot(), native: popup()?.open ?? null, rendered: document.querySelector("[data-sw-dialog]") ? String(document.querySelector("[data-sw-dialog]").getAttribute("data-state") === "open") : null, modal: popup()?.getAttribute("aria-modal") ?? null, connections: globalThis.__dialogLifecycle.connects, effects: {...effects} });
  const click = () => document.querySelector("[data-trigger]")?.click();
  const close = () => document.querySelector("[data-close]")?.click();
  await settle();
@@ -399,8 +399,8 @@ export function hide() { shown = false; }
 export function controls(trigger, close) { triggerKey = trigger; closeKey = close; }
 export function snapshot() { return { model: model ?? "undefined", writes: [...writes], callbacks: [...callbacks], completions: [...completions] }; }
 </script>
-{#snippet parts(accepted)}
- <output data-rendered>{String(accepted)}</output>{#if triggerKey}{#key triggerKey}<DialogTrigger data-trigger>Open</DialogTrigger>{/key}{/if}
+{#snippet parts()}
+ {#if triggerKey}{#key triggerKey}<DialogTrigger data-trigger>Open</DialogTrigger>{/key}{/if}
  <DialogPopup data-popup style="transition: opacity 40ms"><DialogTitle>Model</DialogTitle><input data-input />{#if closeKey}{#key closeKey}<DialogClose data-close>Close</DialogClose>{/key}{/if}</DialogPopup>
 {/snippet}
 {#if shown}
@@ -486,22 +486,60 @@ describe("Dialog accepted models", () => {
       if (mode === "function") expect(result.closed.writes).toEqual([false]);
     }
   }, 120_000);
-  it("publishes once and applies synchronous function binding readback", async () => {
-    for (const setter of ["identity", "retain", "invert"]) {
+  it("writes a defined function binding once and then follows its getter", async () => {
+    for (const [setter, model, native] of [
+      ["identity", true, true],
+      ["retain", false, false],
+      ["invert", false, false],
+    ] as const) {
       const result = await runDialogModel(
         { initial: false, setter },
         `click(); await finish(); return {accepted:state()};`,
       );
       expect(result.accepted).toMatchObject({
         writes: [true],
-        model: setter === "identity",
-        native: true,
-        rendered: "true",
+        model,
+        native,
+        rendered: String(native),
         connections: 1,
       });
       expect(result.accepted.callbacks).toEqual([{ next: true, previous: false }]);
     }
   }, 120_000);
+  it("holds a one-way defined model until the parent changes it", async () => {
+    const result = await runDialogModel(
+      { mode: "plain", initial: false },
+      `click(); await finish(); const refused=state(); app.setModel(true); await finish(); const opened=state(); close(); await finish(); const refusedClose=state(); app.setModel(undefined); await finish(); const released=state(); app.setModel(false); await finish(); return {refused,opened,refusedClose,released,closed:state()};`,
+    );
+    expect(result.refused).toMatchObject({ native: false, rendered: "false", model: false });
+    expect(result.refused.callbacks).toEqual([{ next: true, previous: false }]);
+    expect(result.opened).toMatchObject({ native: true, rendered: "true" });
+    expect(result.refusedClose).toMatchObject({ native: true, rendered: "true" });
+    expect(result.released).toMatchObject({ native: true, rendered: "true", connections: 1 });
+    expect(result.closed).toMatchObject({ native: false, rendered: "false", connections: 1 });
+  }, 60_000);
+  it("keeps bind:open working with a defined or undefined initial value", async () => {
+    const defined = await runDialogModel(
+      { mode: "bound", initial: false },
+      `click(); await finish(); const opened=state(); close(); await finish(); const closed=state(); app.setModel(true); await finish(); return {opened,closed,commanded:state()};`,
+    );
+    expect(defined.opened).toMatchObject({ model: true, native: true, rendered: "true" });
+    expect(defined.closed).toMatchObject({ model: false, native: false, rendered: "false" });
+    expect(defined.commanded).toMatchObject({ model: true, native: true, rendered: "true" });
+    const undefinedInitial = await runDialogModel(
+      { mode: "bound" },
+      `app.setModel(true); await finish(); const commanded=state(); close(); await finish(); return {commanded,closed:state()};`,
+    );
+    expect(undefinedInitial.commanded).toMatchObject({ model: true, native: true });
+    expect(undefinedInitial.closed).toMatchObject({ model: false, native: false });
+  }, 60_000);
+  it("keeps an undefined initial one-way model under Runtime ownership", async () => {
+    const result = await runDialogModel(
+      { mode: "plain" },
+      `click(); await finish(); return {opened:state()};`,
+    );
+    expect(result.opened).toMatchObject({ model: "undefined", native: true, rendered: "true" });
+  }, 60_000);
   it("keeps cancellation and flushed parent commands independent of proposals", async () => {
     for (const proposal of ["cancel", "unmount"]) {
       const result = await runDialogModel(

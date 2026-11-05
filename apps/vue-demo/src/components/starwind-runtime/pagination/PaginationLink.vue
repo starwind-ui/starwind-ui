@@ -19,7 +19,7 @@ type PaginationLinkDeclaredProps = {
   dataSlot?: unknown;
 } & /* @vue-ignore */ Omit<PaginationLinkProps, "data-slot">;
 const {
-  isActive,
+  isActive = undefined,
   size = "icon",
   dataSlot = "pagination-link",
   class: className,

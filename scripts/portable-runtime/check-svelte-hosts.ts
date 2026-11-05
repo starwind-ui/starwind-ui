@@ -35,10 +35,10 @@ export const SVELTEKIT_TOOLS = {
 export const ASTRO_TOOLS = {
   ...HOST_TOOLS,
   astro: "7.1.3",
-  "@astrojs/svelte": "9.0.1",
+  "@astrojs/svelte": "9.1.2",
   svelte: "5.57.0",
-  vite: "8.1.3",
-  "@sveltejs/vite-plugin-svelte": "7.3.0",
+  vite: "8.3.4",
+  "@sveltejs/vite-plugin-svelte": "7.3.1",
   typescript: "5.9.3",
 };
 export function verifyAstroToolEntries(entries: Record<string, string>) {

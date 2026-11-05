@@ -5,6 +5,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Combobox } from "../../src/combobox";
 import { createCombobox } from "@starwind-ui/runtime/combobox";
+import {
+  Combobox as StyledCombobox,
+  ComboboxClear as StyledComboboxClear,
+  ComboboxContent as StyledComboboxContent,
+  ComboboxInput as StyledComboboxInput,
+  ComboboxItem as StyledComboboxItem,
+} from "../../../../apps/react-demo/src/components/starwind-runtime/combobox";
 
 let reactRoot: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -14,6 +21,277 @@ afterEach(async () => {
   container?.remove();
   reactRoot = undefined;
   container = undefined;
+});
+
+describe("React Styled Combobox Clear", () => {
+  it("clones an asChild child with the default icon setting and adds no second button", async () => {
+    await mount(
+      <StyledCombobox>
+        <StyledComboboxInput />
+        <StyledComboboxClear asChild>
+          <button id="clear-child" type="button">
+            Clear
+          </button>
+        </StyledComboboxClear>
+        <StyledComboboxContent>
+          <StyledComboboxItem value="astro">Astro</StyledComboboxItem>
+        </StyledComboboxContent>
+      </StyledCombobox>,
+    );
+    const child = query<HTMLButtonElement>("#clear-child");
+    expect(child).toHaveAttribute("data-slot", "combobox-clear");
+    expect(child.parentElement?.closest("button")).toBeNull();
+    expect(child.querySelector("svg")).toBeNull();
+  });
+});
+
+describe("React Combobox native input", () => {
+  function typeInMiddle(input: HTMLInputElement): void {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "abXcd");
+    input.setSelectionRange(3, 3);
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, data: "X" }));
+  }
+
+  it("keeps the caret when a parent accepts typed text", async () => {
+    function Harness() {
+      const [text, setText] = React.useState("abcd");
+      return (
+        <Combobox.Root inputValue={text} onInputValueChange={setText}>
+          <Combobox.Input />
+          <Combobox.Popup keepMounted>
+            <Combobox.Item value="astro">Astro</Combobox.Item>
+          </Combobox.Popup>
+        </Combobox.Root>
+      );
+    }
+    await mount(<Harness />);
+    const input = query<HTMLInputElement>("[data-sw-combobox-input]");
+    await act(async () => input.focus());
+    await act(async () => typeInMiddle(input));
+    await flush();
+    expect(input.value).toBe("abXcd");
+    expect(input.selectionStart).toBe(3);
+  });
+
+  it("repairs typed text that a parent refuses", async () => {
+    await mount(
+      <Combobox.Root inputValue="abcd">
+        <Combobox.Input />
+        <Combobox.Popup keepMounted>
+          <Combobox.Item value="astro">Astro</Combobox.Item>
+        </Combobox.Popup>
+      </Combobox.Root>,
+    );
+    const input = query<HTMLInputElement>("[data-sw-combobox-input]");
+    await act(async () => input.focus());
+    await act(async () => typeInMiddle(input));
+    await flush();
+    expect(input.value).toBe("abcd");
+  });
+
+  it("opens from the first focus, as the Runtime does", async () => {
+    const onOpenChange = vi.fn();
+    await mount(
+      <Combobox.Root onOpenChange={onOpenChange}>
+        <Combobox.Input />
+        <Combobox.Popup>
+          <Combobox.Item value="astro">Astro</Combobox.Item>
+        </Combobox.Popup>
+      </Combobox.Root>,
+    );
+    await act(async () => query<HTMLInputElement>("[data-sw-combobox-input]").focus());
+    await flush();
+    expect(query<HTMLElement>("[data-sw-combobox]")).toHaveAttribute("data-state", "open");
+    expect(onOpenChange.mock.calls[0]?.[1]).toMatchObject({ reason: "focus" });
+  });
+});
+
+describe("React Combobox items inside a user component", () => {
+  function Parts() {
+    return (
+      <>
+        <Combobox.Input />
+        <Combobox.Trigger>Open</Combobox.Trigger>
+        <Combobox.Positioner>
+          <Combobox.Popup>
+            <Combobox.List>
+              <Combobox.Item value="a">
+                <Combobox.ItemText>Apple</Combobox.ItemText>
+              </Combobox.Item>
+              <Combobox.Item value="b">
+                <Combobox.ItemText>Banana</Combobox.ItemText>
+              </Combobox.Item>
+            </Combobox.List>
+          </Combobox.Popup>
+        </Combobox.Positioner>
+      </>
+    );
+  }
+
+  it("shows the label of a default value and keeps it after the first focus", async () => {
+    await mount(
+      <Combobox.Root defaultValue="b">
+        <Parts />
+      </Combobox.Root>,
+    );
+    await settleConnectedCombobox();
+    const input = query<HTMLInputElement>("[data-sw-combobox-input]");
+    expect(input.value).toBe("Banana");
+    expect(document.querySelector("[data-sw-combobox-item]")).toBeNull();
+
+    await act(async () => input.focus());
+    await settleConnectedCombobox();
+
+    expect(input.value).toBe("Banana");
+  });
+
+  it("keeps a default text over the label of a default value", async () => {
+    await mount(
+      <Combobox.Root defaultInputValue="typed" defaultValue="b">
+        <Parts />
+      </Combobox.Root>,
+    );
+    await settleConnectedCombobox();
+
+    expect(query<HTMLInputElement>("[data-sw-combobox-input]").value).toBe("typed");
+  });
+
+  it("keeps the form value of a parent write when the JSX holds the items", async () => {
+    let write: (value: string) => void = () => {};
+    function Parent() {
+      const [value, setValue] = React.useState<string | null>(null);
+      write = setValue;
+      return (
+        <Combobox.Root name="fruit" value={value}>
+          <Combobox.Input />
+          <Combobox.Positioner>
+            <Combobox.Popup>
+              <Combobox.List>
+                <Combobox.Item value="b">
+                  <Combobox.ItemText>Banana</Combobox.ItemText>
+                </Combobox.Item>
+              </Combobox.List>
+            </Combobox.Popup>
+          </Combobox.Positioner>
+        </Combobox.Root>
+      );
+    }
+    await mount(<Parent />);
+    const input = query<HTMLInputElement>("[data-sw-combobox-input]");
+    await act(async () => input.focus());
+    await settleConnectedCombobox();
+    await act(async () => input.blur());
+    await settleConnectedCombobox();
+
+    await act(async () => write("b"));
+    await settleConnectedCombobox();
+
+    expect(input.value).toBe("Banana");
+    expect(query<HTMLInputElement>("[data-sw-combobox-hidden-input]").value).toBe("b");
+    expect(query("[data-sw-combobox]").getAttribute("data-value")).toBe("b");
+  });
+
+  describe("a parent write before the first interaction", () => {
+    function mountControlled(asUserComponent: boolean) {
+      let write: (value: string | null) => void = () => {};
+      function Parent() {
+        const [value, setValue] = React.useState<string | null>("a");
+        write = setValue;
+        return (
+          <Combobox.Root name="fruit" value={value}>
+            {asUserComponent ? (
+              <Parts />
+            ) : (
+              <>
+                <Combobox.Input />
+                <Combobox.Positioner>
+                  <Combobox.Popup>
+                    <Combobox.List>
+                      <Combobox.Item value="a">
+                        <Combobox.ItemText>Apple</Combobox.ItemText>
+                      </Combobox.Item>
+                      <Combobox.Item value="b">
+                        <Combobox.ItemText>Banana</Combobox.ItemText>
+                      </Combobox.Item>
+                    </Combobox.List>
+                  </Combobox.Popup>
+                </Combobox.Positioner>
+              </>
+            )}
+          </Combobox.Root>
+        );
+      }
+      return { element: <Parent />, write: (value: string | null) => write(value) };
+    }
+
+    for (const asUserComponent of [true, false]) {
+      const label = asUserComponent ? "a user component" : "the JSX";
+
+      it(`moves the text to the new value when ${label} holds the items`, async () => {
+        const { element, write } = mountControlled(asUserComponent);
+        await mount(element);
+        await settleConnectedCombobox();
+        const input = query<HTMLInputElement>("[data-sw-combobox-input]");
+        expect(input.value).toBe("Apple");
+
+        await act(async () => write("b"));
+        await settleConnectedCombobox();
+
+        expect(input.value).toBe("Banana");
+        expect(query<HTMLInputElement>("[data-sw-combobox-hidden-input]").value).toBe("b");
+
+        await act(async () => input.focus());
+        await settleConnectedCombobox();
+
+        expect(input.value).toBe("Banana");
+      });
+
+      it(`clears the text with a null value when ${label} holds the items`, async () => {
+        const { element, write } = mountControlled(asUserComponent);
+        await mount(element);
+        await settleConnectedCombobox();
+        const input = query<HTMLInputElement>("[data-sw-combobox-input]");
+        expect(input.value).toBe("Apple");
+
+        await act(async () => write(null));
+        await settleConnectedCombobox();
+
+        expect(input.value).toBe("");
+        expect(query<HTMLInputElement>("[data-sw-combobox-hidden-input]").value).toBe("");
+
+        await act(async () => input.focus());
+        await settleConnectedCombobox();
+
+        expect(input.value).toBe("");
+      });
+    }
+  });
+
+  it("keeps the form value of a parent write with the popup closed", async () => {
+    let write: (value: string) => void = () => {};
+    function Parent() {
+      const [value, setValue] = React.useState<string | null>(null);
+      write = setValue;
+      return (
+        <Combobox.Root name="fruit" value={value}>
+          <Parts />
+        </Combobox.Root>
+      );
+    }
+    await mount(<Parent />);
+    const input = query<HTMLInputElement>("[data-sw-combobox-input]");
+    await act(async () => input.focus());
+    await settleConnectedCombobox();
+    await act(async () => input.blur());
+    await settleConnectedCombobox();
+
+    await act(async () => write("b"));
+    await settleConnectedCombobox();
+
+    expect(input.value).toBe("Banana");
+    expect(query<HTMLInputElement>("[data-sw-combobox-hidden-input]").value).toBe("b");
+    expect(query("[data-sw-combobox]").getAttribute("data-value")).toBe("b");
+  });
 });
 
 describe("React Combobox cancellation", () => {
@@ -224,7 +502,7 @@ describe("React Combobox connected models and reset", () => {
       fixture.form().reset();
       await settleConnectedCombobox();
       expect(new FormData(fixture.form()).get("framework")).toBe("svelte");
-      if (controlledInput) expect(fixture.input().value).toBe("rea");
+      expect(fixture.input().value).toBe(controlledInput ? "rea" : "Svelte");
     },
   );
 
@@ -262,6 +540,209 @@ describe("React Combobox connected models and reset", () => {
     expect(fixture.input().value).toBe("ast");
     expect(fixture.runtime().getInputValue()).toBe("ast");
     expect(new FormData(fixture.form()).get("framework")).toBe("svelte");
+  });
+});
+
+describe("React Combobox event order", () => {
+  type OrderProps = React.ComponentProps<typeof Combobox.Root>;
+  const items = (
+    <Combobox.Popup>
+      <Combobox.Item value="astro">Astro</Combobox.Item>
+      <Combobox.Item value="react">React</Combobox.Item>
+    </Combobox.Popup>
+  );
+  function recorder(cancelText = false) {
+    const events: string[] = [];
+    const props: OrderProps = {
+      onValueChange: (value) => events.push(`value:${value}`),
+      onInputValueChange: (text, details) => {
+        events.push(`input:${text}:${details.reason}`);
+        if (cancelText) details.cancel();
+      },
+      onOpenChange: (open) => events.push(`open:${open}`),
+    };
+    return { events, props };
+  }
+  function ControlledFixture({
+    input,
+    props,
+    value,
+  }: {
+    input?: string;
+    props: OrderProps;
+    value: string | null;
+  }) {
+    const [state, setState] = React.useState({ input, value });
+    return (
+      <Combobox.Root
+        {...props}
+        value={state.value}
+        {...(input === undefined ? {} : { inputValue: state.input })}
+        onValueChange={(next, details) => {
+          props.onValueChange?.(next, details);
+          setState((current) => ({ ...current, value: next }));
+        }}
+        onInputValueChange={(next, details) => {
+          props.onInputValueChange?.(next, details);
+          if (!details.isCanceled) setState((current) => ({ ...current, input: next }));
+        }}
+      >
+        <Combobox.Input />
+        <Combobox.Trigger>Open</Combobox.Trigger>
+        <Combobox.Clear>Clear</Combobox.Clear>
+        {items}
+      </Combobox.Root>
+    );
+  }
+  const input = () => query<HTMLInputElement>("[data-sw-combobox-input]");
+  const press = async (selector: string) => {
+    await act(() => document.querySelector<HTMLElement>(selector)!.click());
+    await settleConnectedCombobox();
+  };
+  const pressItem = async () => {
+    await press("[data-sw-combobox-trigger]");
+    await press('[data-sw-combobox-item][data-value="react"]');
+  };
+
+  it("runs item press as value, input, open with uncontrolled text", async () => {
+    const { events, props } = recorder();
+    await mount(
+      <Combobox.Root {...props} defaultValue="astro">
+        <Combobox.Input />
+        <Combobox.Trigger>Open</Combobox.Trigger>
+        {items}
+      </Combobox.Root>,
+    );
+    await pressItem();
+    expect(events).toEqual(["open:true", "value:react", "input:React:item-press", "open:false"]);
+    expect(input().value).toBe("React");
+  });
+
+  it("runs clear as value, then empty input with uncontrolled text", async () => {
+    const { events, props } = recorder();
+    await mount(
+      <Combobox.Root {...props} defaultValue="astro" defaultInputValue="Astro">
+        <Combobox.Input />
+        <Combobox.Clear>Clear</Combobox.Clear>
+        {items}
+      </Combobox.Root>,
+    );
+    await press("[data-sw-combobox-clear]");
+    expect(events).toEqual(["value:null", "input::clear"]);
+    expect(input().value).toBe("");
+  });
+
+  it("runs the same order with a controlled value and controlled text", async () => {
+    const { events, props } = recorder();
+    await mount(<ControlledFixture input="Astro" props={props} value="astro" />);
+    await pressItem();
+    expect(events).toEqual(["open:true", "value:react", "input:React:item-press", "open:false"]);
+    expect(input().value).toBe("React");
+    events.length = 0;
+    await press("[data-sw-combobox-clear]");
+    expect(events).toEqual(["value:null", "input::clear"]);
+    expect(input().value).toBe("");
+  });
+
+  it("can cancel item press text with an uncontrolled value", async () => {
+    const { events, props } = recorder(true);
+    await mount(
+      <form>
+        <Combobox.Root {...props} defaultValue="astro" defaultInputValue="Astro" name="framework">
+          <Combobox.Input />
+          <Combobox.Trigger>Open</Combobox.Trigger>
+          {items}
+        </Combobox.Root>
+      </form>,
+    );
+    await pressItem();
+    expect(events).toContain("input:React:item-press");
+    expect(input().value).toBe("Astro");
+    expect(new FormData(query<HTMLFormElement>("form")).get("framework")).toBe("react");
+  });
+
+  it("can cancel item press text with a controlled value", async () => {
+    const { props } = recorder(true);
+    await mount(<ControlledFixture props={props} value="astro" />);
+    await act(() => query<HTMLElement>("[data-sw-combobox-trigger]").click());
+    await settleConnectedCombobox();
+    const before = input().value;
+    await press('[data-sw-combobox-item][data-value="react"]');
+    expect(query<HTMLElement>("[data-sw-combobox]").getAttribute("data-value")).toBe("react");
+    expect(input().value).toBe(before);
+  });
+
+  it("can cancel clear text with a controlled value", async () => {
+    const { props } = recorder(true);
+    await mount(<ControlledFixture props={props} value="astro" />);
+    await act(() => query<HTMLElement>("[data-sw-combobox-trigger]").click());
+    await settleConnectedCombobox();
+    const before = input().value;
+    await press("[data-sw-combobox-clear]");
+    expect(query<HTMLElement>("[data-sw-combobox]").hasAttribute("data-value")).toBe(false);
+    expect(input().value).toBe(before);
+  });
+
+  it("shows the label of an imperative value while the lazy popup is closed", async () => {
+    const { events, props } = recorder();
+    await mount(
+      <Combobox.Root {...props} defaultValue="astro">
+        <Combobox.Input />
+        <Combobox.Trigger>Open</Combobox.Trigger>
+        {items}
+      </Combobox.Root>,
+    );
+    await press("[data-sw-combobox-trigger]");
+    await press("[data-sw-combobox-trigger]");
+    events.length = 0;
+    await act(() => {
+      query<HTMLElement>("[data-sw-combobox]").dispatchEvent(
+        new CustomEvent("starwind:set-value", { bubbles: true, detail: { value: "react" } }),
+      );
+    });
+    await settleConnectedCombobox();
+    expect(events).toEqual(["value:react"]);
+    expect(input().value).toBe("React");
+  });
+
+  it("shows the label of a parent value while the lazy popup is closed", async () => {
+    let setValue!: (value: string) => void;
+    function Fixture() {
+      const [value, update] = React.useState("astro");
+      setValue = update;
+      return (
+        <Combobox.Root value={value}>
+          <Combobox.Input />
+          <Combobox.Trigger>Open</Combobox.Trigger>
+          {items}
+        </Combobox.Root>
+      );
+    }
+    await mount(<Fixture />);
+    await press("[data-sw-combobox-trigger]");
+    await press("[data-sw-combobox-trigger]");
+    await act(() => setValue("react"));
+    await settleConnectedCombobox();
+    expect(input().value).toBe("React");
+  });
+
+  it("keeps text and form value together after reset with a parent value and lazy popup", async () => {
+    await mount(
+      <form>
+        <Combobox.Root defaultValue="astro" name="framework" value="react">
+          <Combobox.Input />
+          <Combobox.Trigger>Open</Combobox.Trigger>
+          {items}
+        </Combobox.Root>
+      </form>,
+    );
+    await press("[data-sw-combobox-trigger]");
+    await press("[data-sw-combobox-trigger]");
+    const form = query<HTMLFormElement>("form");
+    await act(() => form.reset());
+    await settleConnectedCombobox();
+    expect(new FormData(form).get("framework")).toBe("react");
+    expect(input().value).toBe("React");
   });
 });
 

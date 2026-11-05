@@ -18,6 +18,7 @@ const { asChild = false, disabled = false, openDelay, closeDelay, ...rest } = As
 {
   asChild ? (
     <div
+      {...rest}
       data-sw-nav-menu-trigger
       data-as-child
       data-open-delay={openDelay}
@@ -27,12 +28,12 @@ const { asChild = false, disabled = false, openDelay, closeDelay, ...rest } = As
       aria-expanded="false"
       aria-haspopup="menu"
       data-state="closed"
-      {...rest}
     >
       <slot />
     </div>
   ) : (
     <button
+      {...rest}
       type="button"
       data-sw-nav-menu-trigger
       data-open-delay={openDelay}
@@ -42,7 +43,6 @@ const { asChild = false, disabled = false, openDelay, closeDelay, ...rest } = As
       aria-haspopup="menu"
       data-state="closed"
       disabled={disabled}
-      {...rest}
     >
       <slot />
     </button>

@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"h2">;
 const { ...rest } = Astro.props;
 ---
 
-<h2 data-sw-popover-title {...rest}>
+<h2 {...rest} data-sw-popover-title>
   <slot />
 </h2>

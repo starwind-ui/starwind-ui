@@ -20,6 +20,8 @@ export function colorPickerLiveOptions(f: AdapterColorPickerFacts): string[] {
 export function printColorPickerConnection(
   f: AdapterColorPickerFacts,
   checkStructure = false,
+  /** Binding targets apply a later defined input on a Runtime-owned model as a silent command. */
+  laterCommands = false,
 ): string {
   requireColorPickerModelOwnership(Object.values(f.controlledness.states));
   if (
@@ -83,7 +85,7 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
   const valueControlled = transport.seed.value !== undefined;
   const formatControlled = transport.seed.format !== undefined;
   let controlledValue = transport.seed.value;
-  let controlledFormat = transport.seed.format;
+  let controlledFormat = transport.seed.format;${laterCommands ? "\n  let commandedValue = transport.seed.value;\n  let commandedFormat = transport.seed.format;" : ""}
   let active = true;
   let pending = false;
   let applied = transport.read();
@@ -120,10 +122,26 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
       const parsed = next.value === null ? (next.allowEmpty ? null : undefined) : typeof next.value === "string" ? parseColor(next.value) ?? undefined : next.value;
       if (parsed !== undefined) controlledValue = parsed;
       if (controlledValue !== undefined && !sameValue(owner.${value.runtimeGetter}(), controlledValue)) owner.${value.runtimeSetter}(controlledValue, { emit: false });
+    }${
+      laterCommands
+        ? ` else if (!Object.is(next.value, commandedValue)) {
+      // Apply a changed input once, so a stale one-way value never reverts an accepted interaction.
+      commandedValue = next.value;
+      const parsed = next.value === null ? (next.allowEmpty ? null : undefined) : typeof next.value === "string" ? parseColor(next.value) ?? undefined : next.value;
+      if (parsed !== undefined && !sameValue(owner.${value.runtimeGetter}(), parsed)) owner.${value.runtimeSetter}(parsed, { emit: false });
+    }`
+        : ""
     }
     if (formatControlled) {
       if (next.format !== undefined) controlledFormat = next.format;
       if (controlledFormat !== undefined && owner.${format.runtimeGetter}() !== controlledFormat) owner.${format.runtimeSetter}(controlledFormat, { emit: false });
+    }${
+      laterCommands
+        ? ` else if (next.format !== commandedFormat) {
+      commandedFormat = next.format;
+      if (next.format !== undefined && owner.${format.runtimeGetter}() !== next.format) owner.${format.runtimeSetter}(next.format, { emit: false });
+    }`
+        : ""
     }
   }
   function applyOptions(next: ColorPickerOptions): void {

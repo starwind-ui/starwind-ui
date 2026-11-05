@@ -1,6 +1,5 @@
 <script module lang="ts">
   import type { ComponentProps } from "svelte";
-  import { untrack } from "svelte";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
   import { InputRoot } from "@starwind-ui/svelte/input";
@@ -22,21 +21,6 @@
     "ref": ref,
     ...rest
   }: InputProps = $props();
-
-  // Keep incoming commands observable after the bindable model publishes locally.
-  const copyCommand = (next: InputProps["value"]) => Array.isArray(next) ? [...next] : next;
-  let observedCommand = untrack(() => copyCommand(commandValue));
-  $effect(() => {
-    const next = copyCommand(commandValue);
-    untrack(() => {
-      const previous = observedCommand;
-      if (Array.isArray(next) && Array.isArray(previous) ? next.length === previous.length && next.every((entry, index) => entry === previous[index]) : Object.is(next, previous)) return;
-      observedCommand = next;
-      const current = value;
-      if (Array.isArray(next) && Array.isArray(current) ? next.length === current.length && next.every((entry, index) => entry === current[index]) : Object.is(next, current)) return;
-      value = next;
-    });
-  });
 </script>
 
 <InputRoot
@@ -47,5 +31,5 @@
   ref={ref}
   data-slot={dataSlot}
   {...rest}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 />

@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-scroll-area-corner aria-hidden="true" {...rest}>
+<div {...rest} data-sw-scroll-area-corner aria-hidden="true">
   <slot />
 </div>

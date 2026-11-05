@@ -30,7 +30,7 @@ const controlClassName = computed(() => carouselPrevious({ class: className }));
 <template>
   <CarouselPrimitive.CarouselPrevious
     :class="carouselControl({ variant, size, class: controlClassName })"
-    v-bind="{ ...attrs, 'aria-label': 'Previous slide' } as Record<string, unknown>"
+    v-bind="{ 'aria-label': 'Previous slide', ...attrs } as Record<string, unknown>"
     data-slot="carousel-previous"
   >
     <slot>

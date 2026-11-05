@@ -24,6 +24,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-menu
   data-default-open={defaultOpen ? "true" : undefined}
   data-disabled={disabled ? "" : undefined}
@@ -31,7 +32,6 @@ const {
   data-open-on-hover={openOnHover ? "true" : undefined}
   data-close-delay={closeDelay}
   data-state={defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </div>

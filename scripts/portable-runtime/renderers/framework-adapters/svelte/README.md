@@ -113,19 +113,20 @@ The accepted Svelte model uses semantic child snippets and target-owned attachme
 | Dialog    | `open`          | `boolean`                    |
 | Slider    | `value`         | `number \| number[]`         |
 
-Declare these models with `$bindable()`. Start an omitted or undefined model from its explicit
-default, then its component default. A defined model supplies an initial command. Later observable
-prop changes supply commands while accepted interactions update local state. Bindings also receive
-accepted changes. Later `undefined` retains state. Copy arrays across both boundaries and compare
-contents. Runtime normalizes values through public setters and getters.
+Declare these models with `$bindable()` and a second read of the same prop for the parent value.
+Start an omitted or undefined model from its explicit default, then its component default. A defined
+initial input is parent-controlled for the mounted lifetime: an accepted proposal writes once, the
+adapter reads the parent getter, and a refused update keeps the prior state. An undefined initial
+input stays Runtime-owned, publishes accepted output, and treats a later defined input as a silent
+command. Later `undefined` retains state. Copy arrays across both boundaries and compare contents.
+Runtime normalizes values through public setters and getters.
 
 Detailed callbacks and cancelable DOM events observe proposals before an accepted subscription
-publishes a model. Defined parent values use direct public Runtime setters. Callback-time command
-arbitration and transformed function-binding readback are outside the target contract. For
-form-backed standalone models, freeze the reset seed at construction from the
-explicit default, initial defined model, or component default in that order. Checkbox, Select,
-and Slider use that rule. Reset applies current Runtime options and respects cancellation,
-newer inputs, and unmount.
+publishes a model. Later parent values use direct public Runtime setters. Callback-time command
+arbitration is outside the target contract. For form-backed standalone models, freeze the reset seed
+at construction from the explicit default, initial defined model, or component default in that order.
+Native reset returns a Runtime-owned model to that seed and keeps a parent-controlled value. Reset
+applies current Runtime options and respects cancellation, newer inputs, and unmount.
 
 Accordion uses its current rendered accepted value as the construction seed on each recreation.
 On the first connection, a defined initial model is applied through the public setter. Its facade
@@ -569,12 +570,10 @@ both current models before publication. Runtime retains storage access, persiste
 shortcuts, and resize behavior. The adapter owns one media subscription for reactive context and
 releases it when the query or Provider changes. SSR uses deterministic defaults without storage.
 
-Trigger accepts the existing ButtonChildPayload. MenuButton renders a button when href is absent
-and an anchor whenever href is defined, including an empty string. Its child snippet receives a
-SidebarMenuButtonChildPayload tagged with kind button or anchor. Spread the complete props onto
-one element of that type or a forwarding component. The Sidebar subpath exports its local
-AnchorChildProps; the root names that type SidebarAnchorChildProps to preserve its existing anchor
-type export. Refs follow the selected element, and attachments keep independent cleanup.
+Trigger accepts the existing ButtonChildPayload. The Primitive MenuButton renders a native button.
+It has no href prop. Its child snippet receives a SidebarMenuButtonChildPayload with element-neutral
+props, as the React and Vue asChild path allows. Spread the complete props onto one link, button, or
+forwarding component. The ref receives the rendered element, and attachments keep independent cleanup.
 
 The mobile Sheet connection uses defined Sheet model inputs from the nearest Provider context.
 Accepted Sheet binding output calls the context's silent setMobileOpen method. A Sheet attachment
@@ -627,8 +626,10 @@ Defined Provider state drives Sheet; accepted Sheet output updates the nearest P
 Close completion never writes Provider state. Native container refs apply to the desktop or none
 branch, while each forwarded attachment releases its own element on removal.
 
-MenuButton retains its href-selected native button or anchor and tagged child snippet. With a
-tooltip it supplies the public Tooltip trigger marker on that same native element. Existing Tooltip
+Styled MenuButton selects its native element through the contract Tag: an anchor for a non-empty
+href, and a button in other cases. It renders that element through the Primitive child snippet. A
+caller child snippet replaces the element. With a tooltip it supplies the public Tooltip trigger
+marker on that same native element. Existing Tooltip
 Root and Content own discovery, dismissal, portal cleanup, and accessibility. The contract stylesheet
 limits these tooltips to collapsed desktop navigation. SidebarMenuButton imports that stylesheet.
 

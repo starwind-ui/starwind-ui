@@ -1,6 +1,5 @@
 <script module lang="ts">
   import type { ComponentProps, Snippet } from "svelte";
-  import { untrack } from "svelte";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
   import { RadioRoot } from "@starwind-ui/svelte/radio";
@@ -30,11 +29,9 @@
     "ref": ref,
     "onCheckedChange": onCheckedChange,
     "icon": icon,
+    "checked": commandChecked,
     ...rest
   }: RadioGroupItemProps = $props();
-
-  let observedCommand=untrack(()=>commandValue);
-  $effect(()=>{const next=commandValue;untrack(()=>{if(Object.is(next,observedCommand))return;observedCommand=next;if(!Object.is(next,checked))checked=next;});});
 </script>
 
 <div
@@ -45,7 +42,7 @@
     class={radioItem({  })}
     {...({ ...rest, nativeButton, ref, value, defaultChecked, disabled, form, id, name, onCheckedChange, readOnly, required } as PrimitiveProps)}
     data-slot={"radio-group-item"}
-    bind:checked={checked}
+    bind:checked={() => commandChecked, (next) => { checked = next; }}
   >
     <span
       class={radioControl({ "variant": variant, "class": cx(className) })}

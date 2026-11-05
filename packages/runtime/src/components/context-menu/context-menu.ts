@@ -1,4 +1,4 @@
-import { assertHTMLElement, readBooleanAttribute } from "../../internal/dom";
+import { assertHTMLElement, readBooleanAttribute, readDisabledAttribute } from "../../internal/dom";
 import { shared } from "../../internal/shared";
 import {
   createMenu,
@@ -346,7 +346,7 @@ function positionAnchor(
 
 function isDisabledTrigger(trigger: HTMLElement): boolean {
   return (
-    trigger.hasAttribute("disabled") ||
+    readDisabledAttribute(trigger) ||
     trigger.hasAttribute("data-disabled") ||
     trigger.getAttribute("aria-disabled") === "true"
   );

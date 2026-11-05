@@ -11,9 +11,9 @@ const { "data-slot": dataSlot = "sidebar-menu-badge", class: className, ...rest 
 ---
 
 <div
+  {...rest}
   class={sidebarMenuBadge({ class: className })}
   data-sidebar="menu-badge"
-  {...rest}
   data-slot={dataSlot}
 >
   <slot />

@@ -1,3 +1,4 @@
+import { resolveStyledSvgAsset } from "../../contracts/styled/svg-assets.js";
 import type {
   AttributeContract,
   CommentContract,
@@ -13,7 +14,6 @@ import type {
   StyledComponentForwardRefContract,
   ValueExpression,
 } from "../../contracts/styled/types.js";
-import { resolveStyledSvgAsset } from "../../contracts/styled/svg-assets.js";
 import { allocateStyledPartsIdentifier } from "./default-export.js";
 import type {
   StyledOutputAttribute,
@@ -214,6 +214,7 @@ function projectStyledOutputComponent(component: StyledComponentContract): Style
       : undefined,
     exportName: component.exportName,
     forwardRef: component.forwardRef ? projectForwardRef(component.forwardRef) : undefined,
+    ...(component.nativeModel ? { nativeModel: { ...component.nativeModel } } : {}),
     imports,
     primitiveAliases: Object.entries(component.primitiveAliases ?? {}).map(
       ([primitiveComponent, alias]) => ({
@@ -253,6 +254,7 @@ function toStyledComponentContract(component: StyledOutputComponent): StyledComp
     exportName: component.exportName,
     fileName: component.sourceFileName,
     forwardRef: component.forwardRef ? toForwardRef(component.forwardRef) : undefined,
+    ...(component.nativeModel ? { nativeModel: { ...component.nativeModel } } : {}),
     imports: component.imports.map(toImport),
     primitiveAliases:
       component.primitiveAliases.length > 0
@@ -411,6 +413,7 @@ function toDestructureProp(prop: StyledOutputDestructureProp): DestructurePropCo
 function projectVariable(variable: LocalVariableContract): StyledOutputVariable {
   return {
     name: variable.name,
+    ...(variable.state ? { state: { ...variable.state } } : {}),
     targetScopes: projectTargetScopes(variable.frameworks),
     value: projectValueExpression(variable.value),
   };
@@ -420,6 +423,7 @@ function toVariable(variable: StyledOutputVariable): LocalVariableContract {
   return {
     frameworks: toFrameworkTargets(variable.targetScopes),
     name: variable.name,
+    ...(variable.state ? { state: { ...variable.state } } : {}),
     value: toValueExpression(variable.value),
   };
 }

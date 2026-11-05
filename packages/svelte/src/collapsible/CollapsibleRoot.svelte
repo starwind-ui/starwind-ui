@@ -12,11 +12,12 @@ import type { Attachment } from "svelte/attachments";
 import { createRefAttachment } from "../_internal/ref-attachment.js";
 type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { open?: boolean;
 defaultOpen?: boolean;
-disabled?: boolean; children?: Snippet<[boolean]>; ref?: (element: HTMLDivElement | null) => void; onOpenChange?: (open: boolean, detail: CollapsibleOpenChangeDetails) => void };
-let { open = $bindable(), defaultOpen, disabled = false, onOpenChange, children, ref, ...rest }: Props = $props();
+disabled?: boolean; children?: Snippet; ref?: (element: HTMLDivElement | null) => void; onOpenChange?: (open: boolean, detail: CollapsibleOpenChangeDetails) => void };
+let { open = $bindable(), open: commandOpen, defaultOpen, disabled = false, onOpenChange, children, ref, ...rest }: Props = $props();
 setContext(contextKey, { get disabled() { return disabled; } });
 const initialDefaultOpen = untrack(() => defaultOpen ?? false);
 const initialOpen = untrack(() => open ?? initialDefaultOpen);
+const openControlled = untrack(() => commandOpen) !== undefined;
 let renderedOpen = $state<boolean>(initialOpen);
 const connection: { instance?: ReturnType<typeof createCollapsible>; unsubscribe?: () => void; accepted: boolean; initialized: boolean; } = { accepted: initialOpen, initialized: false };
 
@@ -31,10 +32,10 @@ owned.destroy();
   }
   function connectRuntime(root: HTMLDivElement): void {
     disconnectRuntime();
-const desired = open ?? connection.accepted;
+const desired = commandOpen ?? connection.accepted;
 const owned = createCollapsible(root, {
       defaultOpen: desired,
-      ...(false ? { open: desired } : {}),
+      ...(openControlled ? { open: desired } : {}),
       disabled: disabled,
       onOpenChange: (next, detail) => { untrack(() => { onOpenChange?.(next, detail); }); },
     });
@@ -42,6 +43,10 @@ const owned = createCollapsible(root, {
     connection.initialized = true;
 connection.unsubscribe = owned.subscribe("openChange", detail => {
       if (connection.instance !== owned) return;
+    if (openControlled) {
+      untrack(() => { if (open !== detail.open) open = detail.open; });
+      return;
+    }
     connection.accepted = detail.open;
     untrack(() => { renderedOpen = detail.open;
 if (open !== detail.open) open = detail.open; });
@@ -49,21 +54,21 @@ if (open !== detail.open) open = detail.open; });
 if (owned.getOpen() !== desired) owned.setOpen(desired, { emit: false });
 connection.accepted = owned.getOpen();
 renderedOpen = connection.accepted;
-untrack(() => { if (open !== connection.accepted) open = connection.accepted; });
+untrack(() => { if (!openControlled) { if (open !== connection.accepted) open = connection.accepted; } });
   }
   function applyParentCommand(): void {
-    const next = open;
+    const next = commandOpen;
     const owned = connection.instance;
     if (next === undefined || !owned) return;
     if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
     connection.accepted = owned.getOpen();
     renderedOpen = connection.accepted;
-    untrack(() => { if (open !== connection.accepted) open = connection.accepted; });
+    untrack(() => { if (!openControlled) { if (open !== connection.accepted) open = connection.accepted; } });
   }
 
 const attachRuntime: Attachment<HTMLDivElement> = root => {
   $effect(() => { void [disabled]; untrack(() => connectRuntime(root)); return disconnectRuntime; });
-  $effect(() => { void open; untrack(applyParentCommand); });
+  $effect(() => { void commandOpen; untrack(applyParentCommand); });
 };
 const attachRef = createRefAttachment<HTMLDivElement>(() => ref);
 </script>
@@ -71,4 +76,4 @@ const attachRef = createRefAttachment<HTMLDivElement>(() => ref);
 data-sw-part={'root'}
 data-default-open={initialDefaultOpen ? 'true' : undefined}
 data-disabled={disabled ? '' : undefined}
-data-state={renderedOpen ? 'open' : 'closed'} {@attach attachRuntime} {@attach attachRef}>{@render children?.(renderedOpen)}</div>
+data-state={renderedOpen ? 'open' : 'closed'} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>

@@ -21,12 +21,11 @@ const AsChildTrigger = defineComponent({
   inheritAttrs: false,
   setup() {
     return () => {
-      const children = slots.default?.() ?? [];
-      const child = children[0];
       return renderAsChild({
-        children,
+        children: slots.default?.() ?? [],
         consumerProps: attrs,
         defaultNativeButtonType: "button",
+        disabled: select.disabled.value,
         protectedProps: {
           "aria-disabled": select.disabled.value ? "true" : undefined,
           "aria-expanded": select.open.value,
@@ -37,7 +36,6 @@ const AsChildTrigger = defineComponent({
           "data-state": select.open.value ? "open" : "closed",
           "data-sw-select-trigger": "",
           "data-sw-part": "trigger",
-          disabled: child?.type === "button" && select.disabled.value ? true : undefined,
           role: "combobox",
         },
       });
