@@ -57,7 +57,8 @@ async function open(target: Target, pageName: string): Promise<Opened> {
   });
   page.setDefaultTimeout(2000);
   await page.goto(pageUrl(target, pageName));
-  await page.waitForFunction(() => window.__cf?.ready === true);
+  // A cold page load on a busy CI runner can take longer than one interaction step.
+  await page.waitForFunction(() => window.__cf?.ready === true, undefined, { timeout: 15000 });
   const ui = new Ui(page, target, (name, capture) => astroReference(pageName, name, capture));
   return { ui, errors, close: () => context.close() };
 }
