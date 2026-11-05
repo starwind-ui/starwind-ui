@@ -44,7 +44,7 @@ type DropdownRadioItemDeclaredProps = {
 const {
   class: className,
   value,
-  checked,
+  checked = undefined,
   defaultChecked = false,
   closeOnClick = false,
   inset = false,

@@ -19,11 +19,13 @@ export function formatProductSizeReport({ generatedAt, react, site, vue }) {
     ...formatFramework("React", react),
     ...formatFramework("Vue", vue),
     ...formatSite(site),
+    ...formatChunks({ react, site, vue }),
     "## Method",
     "",
     "- Individual rows retain the complete component subpath surface through namespace imports. Reka UI uses all named exports with the component prefix because it publishes one package root.",
     "- Overlap rows import all matched component surfaces into one bundle. Shared code is counted once.",
     "- Synthetic bundles are minified with esbuild. Gzip uses level 9. Brotli uses quality 11.",
+    "- Size rows compress the initial chunks of a bundle as one file. The chunk tables compress each chunk alone, because a browser fetches each chunk as its own response. Lazy chunks are outside the size rows.",
     "- Competitor values come from versioned snapshots. Normal Starwind refreshes do not install or bundle competitors.",
     "- Site totals come from controlled browser entries. The Astro entry imports the named Runtime controllers that rendered Astro roots require. Astro component source runs at build time and adds no framework adapter to the browser. The React entry renders named Primitive parts and includes React plus React DOM.",
     "- Site values exclude CSS, application code, images, and network headers. Component-added values subtract the same framework's empty entry.",
@@ -136,6 +138,87 @@ function formatSite(site) {
       rows,
     ),
     "",
+  ];
+}
+
+/** Comparator snapshots have no chunk data, so these tables show Starwind rows only. */
+function formatChunks({ react, site, vue }) {
+  const frameworkRows = (label, data) => {
+    const id = `starwind-${label.toLowerCase()}`;
+    return [
+      ...Object.entries(data.overlaps).map(([overlap, values]) => [
+        formatOverlapLabel(overlap),
+        values[id],
+      ]),
+      [`${label} complete package root`, data.catalog?.[id]],
+      ...Object.entries(data.components)
+        .filter(
+          ([, values]) => values[id]?.initialChunks?.length > 1 || values[id]?.lazyChunks?.length,
+        )
+        .map(([component, values]) => [`${label} ${component}`, values[id]]),
+    ];
+  };
+  const siteRows = ["astro", "react"].flatMap((framework) =>
+    Object.entries(site[framework] ?? {}).map(([scenario, size]) => [
+      `${titleCase(framework)} site ${titleCase(scenario)}`,
+      size,
+    ]),
+  );
+  const rows = [...frameworkRows("React", react), ...frameworkRows("Vue", vue), ...siteRows].filter(
+    ([, size]) => size?.initialChunks?.length,
+  );
+  if (rows.length === 0) return [];
+
+  const sum = (chunks = []) => chunks.reduce((total, chunk) => total + chunk.gzipBytes, 0);
+  const threeWay = [
+    ["React", react.overlaps["react-exact-three-way"]?.["starwind-react"]],
+    ["Vue", vue.overlaps["vue-exact-three-way"]?.["starwind-vue"]],
+  ].filter(([, size]) => size?.initialChunks?.length);
+
+  return [
+    "## Starwind chunks",
+    "",
+    "A size row compresses the initial chunks as one file. The per-chunk sum compresses each chunk alone. A gap between the two columns means the bundle splits into many chunks that gzip cannot share across. A row with lazy chunks fetches them only when a page reaches that code.",
+    "",
+    markdownTable(
+      [
+        "Bundle",
+        "Initial chunks",
+        "Joined gzip",
+        "Per-chunk gzip sum",
+        "Largest chunk",
+        "Lazy chunks",
+      ],
+      rows.map(([name, size]) => [
+        name,
+        size.initialChunks.length,
+        formatBytes(size.gzipBytes),
+        formatBytes(sum(size.initialChunks)),
+        formatBytes(size.initialChunks[0].gzipBytes),
+        size.lazyChunks?.length ?? 0,
+      ]),
+    ),
+    "",
+    ...threeWay.flatMap(([label, size]) => [
+      `### ${label} three-way overlap chunks`,
+      "",
+      markdownTable(
+        ["Chunk", "Load", "Gzip"],
+        [
+          ...size.initialChunks.map(({ gzipBytes, name }) => [
+            `\`${name}\``,
+            "Initial",
+            formatBytes(gzipBytes),
+          ]),
+          ...(size.lazyChunks ?? []).map(({ gzipBytes, name }) => [
+            `\`${name}\``,
+            "Lazy",
+            formatBytes(gzipBytes),
+          ]),
+        ],
+      ),
+      "",
+    ]),
   ];
 }
 

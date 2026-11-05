@@ -236,7 +236,14 @@ export const tooltipRuntimeAdapterContract = {
     { part: "popup", public: true },
     { part: "arrow", public: true },
   ],
-  asChild: [{ part: "trigger", merges: ["data", "ref"] }],
+  asChild: [
+    {
+      part: "trigger",
+      merges: ["data", "ref"],
+      nonElementChild: "default-element",
+      childElement: "any-element",
+    },
+  ],
   initialMarkup: [
     {
       part: "root",

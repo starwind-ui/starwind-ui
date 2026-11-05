@@ -477,18 +477,15 @@ describe("Vue Dialog public behavior", () => {
   it.each(["Trigger", "Close"] as const)(
     "rejects invalid Styled Dialog%s asChild slot shapes",
     async (part) => {
-      const InvalidComponent = defineComponent({ render: () => h("button", "component") });
       const invalidSlots: Array<{ label: string; slot: () => VNode[] }> = [
         { label: "zero", slot: () => [] },
         { label: "multiple", slot: () => [h("button"), h("button")] },
         { label: "Text", slot: () => [h(Text, null, "text")] },
         { label: "Comment", slot: () => [h(Comment)] },
         { label: "Fragment", slot: () => [h(Fragment, null, [h("button")])] },
-        { label: "component", slot: () => [h(InvalidComponent)] },
       ];
 
       for (const { label, slot } of invalidSlots) {
-        if (part === "Trigger" && ["component"].includes(label)) continue;
         const host = appendHost();
         const app = createApp({
           render: () =>
@@ -622,8 +619,13 @@ import { testStyledControlRefresh } from "../dialog/styled-control-refresh.js";
 
 testStyledControlRefresh("dialog", { ...StyledControlParts, Close: StyledControlParts.Close });
 
-import { testComponentTrigger } from "../dialog/component-trigger.js";
+import { testComponentClose, testComponentTrigger } from "../dialog/component-trigger.js";
 testComponentTrigger(
   { Root: DialogRoot, Trigger: DialogTrigger, Popup: DialogPopup, Title: DialogTitle },
+  cleanups,
+);
+
+testComponentClose(
+  { Root: DialogRoot, Popup: DialogPopup, Title: DialogTitle, Close: DialogClose },
   cleanups,
 );

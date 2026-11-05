@@ -19,7 +19,7 @@
     onValueChange?: (value: string, detail: InputOtpValueChangeDetails) => void;
     ref?: (element: HTMLDivElement | null) => void;
   };
-  let { children, value = $bindable(), defaultValue, disabled = false, form, id, maxLength = 6, name, pattern, readOnly = false, required = false, onValueChange, ref, ...rest }: Props = $props();
+  let { children, value = $bindable(), value: commandValue, defaultValue, disabled = false, form, id, maxLength = 6, name, pattern, readOnly = false, required = false, onValueChange, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => value);
   const seed = untrack(() => defaultValue ?? initialModel ?? "");
   const initial = initialModel ?? seed;
@@ -28,19 +28,22 @@
   let connection = $state.raw<ReturnType<typeof connectOtp> | undefined>();
   let patternText = $derived((pattern instanceof RegExp ? pattern.source : pattern ?? "\\d").replace(/^\^|\$$/g, ""));
   let inputMode = $derived<"numeric" | "text">(["\\d","[0-9]","\\d+","[0-9]+"].includes(patternText) ? "numeric" : "text");
-  function readInputs() { return { value, disabled, form, id, maxLength, name, pattern: patternText, readOnly, required }; }
+  function readInputs() { return { value: commandValue, disabled, form, id, maxLength, name, pattern: patternText, readOnly, required }; }
   function connectOtp(root: HTMLElement) {
     let previous = readInputs();
-    const controlled = false;
+    const controlled = previous.value !== undefined;
+    let retained = previous.value;
     let instance: ReturnType<typeof createInputOtp>;
     let unsubscribe = () => {};
     let disposed = false;
     let associated: HTMLFormElement | null = null;
     let resetTimer: number | undefined;
     function publishCurrent(): void { const accepted = instance.getValue();
-    if (!controlled) { renderedValue = accepted; }
-    if ((readInputs()).value !== accepted) { value = accepted; } }
+    renderedValue = accepted;
+    if (!controlled && (readInputs()).value !== accepted) { value = accepted; } }
+    function proposeCurrent(): void { value = instance.getValue(); }
     function synchronize(value: string | undefined): void {
+      if (controlled) value = retained = value ?? retained;
       if (value === undefined) return;
       if (instance.getValue() !== value) instance.setValue(value, {"emit":false});
       publishCurrent();
@@ -93,8 +96,8 @@ required: options.required,
       unsubscribe = instance.subscribe('valueChange', () => { untrack(() => {
         if (disposed || owner !== instance) return;
         publishCurrent();
-
-
+        if (controlled) proposeCurrent();
+        if (controlled) queueMicrotask(() => { if (!disposed && owner === instance) synchronize((readInputs()).value); });
        }); });
       bindReset();
     }

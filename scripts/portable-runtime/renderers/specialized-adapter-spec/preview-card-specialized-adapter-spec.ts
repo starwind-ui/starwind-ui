@@ -655,6 +655,7 @@ function getPreviewCardTimedFloatingOverlayFacts(
       valueType: state.valueType,
     },
     trigger: {
+      asChildFallsBackToDefaultElement: false,
       asChildWrapperElement: triggerProjection.asChildWrapperElement,
       clickGuardWhenDisabled: true,
       delayOverrides: true,

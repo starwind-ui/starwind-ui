@@ -22,6 +22,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-preview-card-popup
   role="tooltip"
   data-state="closed"
@@ -30,7 +31,6 @@ const {
   data-side-offset={sideOffset}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
   hidden
-  {...rest}
 >
   <slot />
 </div>

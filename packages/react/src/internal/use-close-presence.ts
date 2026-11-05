@@ -11,6 +11,12 @@ const PRESENCE_ENDING_ATTRIBUTE = "data-ending-style";
 export type ClosePresenceOptions = {
   keepMounted?: boolean;
   open: boolean;
+  probe?: ClosedItemProbe;
+};
+
+export type ClosedItemProbe = {
+  active: boolean;
+  read(popup: HTMLElement | null): void;
 };
 
 export type ClosePresenceState<T extends HTMLElement> = {
@@ -19,9 +25,54 @@ export type ClosePresenceState<T extends HTMLElement> = {
   ref: React.RefCallback<T>;
 };
 
+/**
+ * A closed popup renders no items, and a walk of `children` cannot see inside a user component. When
+ * a value has no known label, the popup renders its items once, hidden, so the label comes from the
+ * DOM. The items leave again before the browser paints.
+ */
+export function useClosedItemProbe({
+  itemAttribute,
+  needed,
+  onItem,
+  value,
+}: {
+  itemAttribute: string;
+  needed: boolean;
+  onItem(item: HTMLElement, value: string): void;
+  value: string | null;
+}): ClosedItemProbe {
+  const [active, setActive] = React.useState(false);
+  const probedValueRef = React.useRef<string | null>(null);
+  const latestRef = React.useRef({ onItem, value });
+  latestRef.current = { onItem, value };
+
+  React.useEffect(() => {
+    if (probedValueRef.current !== value) probedValueRef.current = null;
+    if (!needed || value === null || probedValueRef.current === value) return;
+    probedValueRef.current = value;
+    setActive(true);
+  }, [needed, value]);
+
+  const read = React.useCallback(
+    (popup: HTMLElement | null) => {
+      setActive(false);
+      const latest = latestRef.current;
+      if (!popup || latest.value === null) return;
+      const item = Array.from(popup.querySelectorAll<HTMLElement>(`[${itemAttribute}]`)).find(
+        (candidate) => candidate.getAttribute("data-value") === latest.value,
+      );
+      if (item) latest.onItem(item, latest.value);
+    },
+    [itemAttribute],
+  );
+
+  return React.useMemo(() => ({ active, read }), [active, read]);
+}
+
 export function useClosePresence<T extends HTMLElement>({
   keepMounted = false,
   open,
+  probe,
 }: ClosePresenceOptions): ClosePresenceState<T> {
   const elementRef = React.useRef<T | null>(null);
   const tokenRef = React.useRef(0);
@@ -95,9 +146,14 @@ export function useClosePresence<T extends HTMLElement>({
     });
   }, [clearScheduledClose, keepMounted, open]);
 
+  const probeActive = probe?.active === true;
+  useIsomorphicLayoutEffect(() => {
+    if (probeActive) probe?.read(elementRef.current);
+  }, [probeActive]);
+
   return {
     hidden: open ? false : hidden,
-    present: open || keepMounted || present,
+    present: open || keepMounted || present || probeActive,
     ref,
   };
 }

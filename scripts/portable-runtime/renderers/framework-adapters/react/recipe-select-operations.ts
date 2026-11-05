@@ -18,7 +18,7 @@ export const reactSelectOperations: SelectOperations = {
   portal: "",
   publish: () => "",
   label: (value, item) =>
-    `const label = getTextFromSelectItem(${item ?? "undefined"}); if (label !== null || ${value} === null) setSelectedLabel({ label, value: ${value} });`,
+    `const label = getTextFromSelectItem(${item ?? "undefined"}); if (label !== null || ${value} === null) { if (valueRef.current === undefined) setSelectedLabel({ label, value: ${value} }); else setProposedLabel({ label, value: ${value} }); }`,
   observe: (inputs, body) =>
     `useIsomorphicLayoutEffect(() => { ${body} }, [${inputs.join(", ")}]);`,
   attribute: (name, expression) => `${name}={${expression}}`,
@@ -32,7 +32,6 @@ export const reactSelectOperations: SelectOperations = {
     initialValue: "defaultValueRef.current ?? null",
     runtime: { read: "instanceRef.current", availability: "lazy" },
     nativeControl: { value: "input.value", needsRender: "reset.needsRender" },
-    label: (value) =>
-      `setSelectedLabel({ label: findSelectedOptionText(childrenRef.current, ${value}), value: ${value} });`,
+    label: (value) => `settleSelectedLabel(${value});`,
   },
 };

@@ -11,8 +11,9 @@
     onCheckedChange?: (checked: boolean, detail: MenuCheckedChangeDetails) => void;
     ref?: (element: HTMLDivElement | null) => void;
   };
-  let { children, checked = $bindable(), defaultChecked, disabled = false, closeOnClick = false, onCheckedChange, ref, ...rest }: Props = $props();
-  const initial = untrack(() => checked);
+  let { children, checked = $bindable(), checked: commandChecked, defaultChecked, disabled = false, closeOnClick = false, onCheckedChange, ref, ...rest }: Props = $props();
+  const initial = untrack(() => commandChecked);
+  const checkedControlled = initial !== undefined;
   let accepted = $state(initial ?? untrack(() => defaultChecked) ?? false);
   const tree = getMenuTreeContext();
   const owner = Symbol("MenuCheckboxItem model");
@@ -33,7 +34,7 @@
    }
     }
     function prepare(): void {
-      if (checked !== undefined) accepted = checked;
+      if (commandChecked !== undefined) accepted = commandChecked;
       project(accepted);
     }
     function accept(): void { if (alive) accepted = element.getAttribute("aria-checked") === "true"; }
@@ -45,15 +46,15 @@
    queueMicrotask(() => {
 
      if (!(alive && ownerElement.isConnected) || details.isCanceled) return;
-     untrack(() => { accepted=details.checked;
-       if (checked !== details.checked) checked=details.checked; });
+     untrack(() => { if (checkedControlled) { if (checked !== details.checked) checked=details.checked; prepare(); }
+       else { accepted=details.checked; if (checked !== details.checked) checked=details.checked; } });
 
 
    }); }
     untrack(prepare);
     tree?.registerModel(owner, {prepare,accept});
     element.addEventListener("starwind:checked-change",handle);
-    $effect(() => { void checked; untrack(prepare); });
+    $effect(() => { void commandChecked; untrack(prepare); });
     return () => { alive = false; tree?.registerModel(owner, null); element.removeEventListener("starwind:checked-change", handle); };
   };
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";

@@ -51,10 +51,16 @@ export type SvelteStyledComponentProjection = {
   publicTypes: string;
   destructure: StyledOutputDestructureProp[];
   rest?: string;
+  // Svelte markup that precedes the projected render tree, such as a shared snippet.
+  templatePrelude?: string;
   // SSR evaluates derived expressions eagerly, so their state must be initialized first.
   initialization?: string[];
   setup: string[];
-  variables: { name: string; value: StyledOutputValueExpression }[];
+  variables: {
+    name: string;
+    state?: { acceptedFrom: string };
+    value: StyledOutputValueExpression;
+  }[];
   render: SvelteStyledRenderNode[];
 };
 export type SvelteStyledVariantAlias = StyledOutputVariantAlias & { localName: string };

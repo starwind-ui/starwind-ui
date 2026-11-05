@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-carousel-item role="group" aria-roledescription="slide" {...rest}>
+<div {...rest} data-sw-carousel-item role="group" aria-roledescription="slide">
   <slot />
 </div>

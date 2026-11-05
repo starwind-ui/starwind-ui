@@ -44,7 +44,7 @@ export function specializeSvelteStyledSlider(
   const range = component.variables.find((variable) => variable.name === "rangeStyle");
   if (!resolved || !range)
     throw new TypeError("Styled Slider requires its contracted value and range expressions.");
-  resolved.value = { type: "raw", code: "value ?? retainedValue" };
+  resolved.value = { type: "raw", code: "acceptedInput() ?? retainedValue" };
   range.value = {
     type: "raw",
     code: 'orientation === "horizontal" ? `left: ${rangeStart}%; width: ${rangeEnd - rangeStart}%` : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`',
@@ -77,21 +77,14 @@ export function specializeSvelteStyledSlider(
     rest: component.destructure.rest,
     initialization: [
       `const copy = (next: SliderValue | undefined) => Array.isArray(next) ? [...next] : next;
+const valueControlled = untrack(() => commandValue) !== undefined;
+// A parent-controlled value is read past the local value of a one-way bindable.
+const acceptedInput = () => valueControlled ? commandValue : value;
 let retainedValue = $state<SliderValue>(untrack(() => copy(value ?? defaultValue ?? 0)!));`,
     ],
     setup: [
-      `const equal = (left: SliderValue | undefined, right: SliderValue | undefined) => Array.isArray(left) && Array.isArray(right) ? left.length === right.length && left.every((value, index) => Object.is(value, right[index])) : Object.is(left, right);
-let observedCommand = untrack(() => copy(commandValue));
-$effect(() => {
-  const next = copy(commandValue);
-  untrack(() => {
-    if (equal(next, observedCommand)) return;
-    observedCommand = copy(next);
-    if (!equal(next, value)) value = copy(next);
-  });
-});
-$effect(() => {
-  const next = copy(value);
+      `$effect(() => {
+  const next = copy(acceptedInput());
   if (next !== undefined) retainedValue = next;
 });`,
     ],

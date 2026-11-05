@@ -12,6 +12,6 @@ type Props = HTMLAttributes<"dialog"> & {
 const { side = "right", ...rest } = Astro.props;
 ---
 
-<dialog data-sw-drawer-popup data-state="closed" data-side={side} {...rest}>
+<dialog {...rest} data-sw-drawer-popup data-state="closed" data-side={side}>
   <slot />
 </dialog>

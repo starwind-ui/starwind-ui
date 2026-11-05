@@ -5,13 +5,13 @@
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
   import { getNavigationMenuContext, getNavigationMenuItemContext } from "./NavigationMenuRoot.svelte";
-  type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; side?: "top" | "right" | "bottom" | "left"; align?: "start" | "center" | "end"; ref?: (element: HTMLDivElement | null) => void };
-  let { children, side = "bottom", align = "start", ref, ...rest }: Props = $props();
+  type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet;  ref?: (element: HTMLDivElement | null) => void };
+  let { children,  ref, ...rest }: Props = $props();
   const menu = getNavigationMenuContext(); const item = getNavigationMenuItemContext();
   const owner = Symbol("NavigationMenuPopup owner");
   const attachPart: Attachment<HTMLDivElement> = (element) => {
     $effect(() => {
-      const attributes = { "data-side": side, "data-align": align };
+      const attributes = {};
       untrack(() => menu?.registerPart(owner, { element, part: "popup", attributes }));
       return () => menu?.registerPart(owner, null);
     });
@@ -20,4 +20,4 @@
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...rest} data-sw-nav-menu-popup="" data-sw-part="popup" data-state="closed" data-side={side} data-align={align} hidden {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-nav-menu-popup="" data-sw-part="popup" data-state="closed" hidden {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>

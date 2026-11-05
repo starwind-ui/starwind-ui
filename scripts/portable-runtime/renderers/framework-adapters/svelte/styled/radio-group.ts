@@ -73,7 +73,6 @@ export function specializeSvelteStyledRadioGroup(
   return {
     imports: [
       { source: "svelte", names: ["ComponentProps", "Snippet"], typeOnly: true },
-      { source: "svelte", names: ["untrack"] },
       { source: "tailwind-variants", names: ["VariantProps"], typeOnly: true },
       { source: "tailwind-variants", names: ["cx"] },
       {
@@ -98,9 +97,6 @@ export type RadioGroupItemProps=WithStyledProps<PrimitiveProps>;`,
       { name: isRoot ? "children" : "icon" },
     ],
     rest: component.destructure.rest,
-    setup: [
-      `let observedCommand=untrack(()=>commandValue);
-$effect(()=>{const next=commandValue;untrack(()=>{if(Object.is(next,observedCommand))return;observedCommand=next;if(!Object.is(next,${model}))${model}=next;});});`,
-    ],
+    setup: [],
   };
 }

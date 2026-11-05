@@ -4,7 +4,7 @@
   import type { HTMLAttributes } from "svelte/elements";
   type Props = HTMLAttributes<HTMLDivElement> & { children?: Snippet; ref?: (element: HTMLDivElement | null) => void;  };
   let { children, ref, style, tabindex, ...rest }: Props = $props();
-  let viewportStyle = $derived((style ?? "") + ";overflow:scroll!important");
+  let viewportStyle = $derived([style, "overflow: scroll"].filter(Boolean).join("; "));
   const initialTabIndex = untrack(() => tabindex ?? -1);
 
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";

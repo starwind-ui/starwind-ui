@@ -11,35 +11,41 @@ export type MenuKind = "menu" | "contextMenu";
 export function menuFragments(target: Target, kind: MenuKind = "menu") {
   const p = menuPlan[kind],
     s = menuOperations[target];
+  const parentProp = s.fw.modelAuthority === "parent-prop";
+  const model = parentProp ? s.input("open") : s.fw.readModel("open");
+  const controlled = s.fw.controlled("open");
   const render = (value: string) =>
-    s.fw.modelAuthority === "parent-prop"
-      ? `if (${s.input("open")} === undefined) { ${s.render(value)} }`
-      : s.render(value);
+    parentProp ? `if (${model} === undefined) { ${s.render(value)} }` : s.render(value);
   const construction = `const owned = ${p.factory}(${s.root}, {
     defaultOpen:${s.capture.mode === "deferred-portal" ? "false" : s.acceptedOpen},
     ${p.options.map((name) => `${name}:${s.input(name)},`).join("\n")}
     onOpenChange:(next,details)=>{ ${s.fw.untracked(s.proposal("next", "details"))} },
     onCloseComplete:(details)=>{ if (${s.owner} !== owned) return; ${s.fw.untracked(s.completion("details"))} },
     ${kind === "menu" ? s.portal : ""}
-    ${s.fw.modelAuthority === "parent-prop" ? `...(${s.input("open")} !== undefined ? {open:${s.input("open")}} : {}),` : ""}
+    ${parentProp ? `...(${model} !== undefined ? {open:${model}} : {}),` : `...(${controlled} ? {open:${s.capture.mode === "deferred-portal" ? "false" : model}} : {}),`}
   });
   ${s.own("owned")}`;
   const subscriptions = s.subscribe(
     "owned",
     "openChange",
     `if (${s.owner} !== owned) return;
-    ${s.fw.untracked(`${render("details.open")}
-      ${s.fw.publishModel("open", "details.open")}`)}`,
+    ${s.fw.untracked(
+      parentProp
+        ? `${render("details.open")}
+      ${s.fw.publishModel("open", "details.open")}`
+        : `if (!${controlled}) { ${render("details.open")} }
+      ${s.fw.publishModel("open", "details.open")}`,
+    )}`,
   );
-  const parentCommand = `const owned = ${s.owner}; if (!owned || ${s.input("open")} === undefined) return;
-    const next = ${s.input("open")};
+  const parentCommand = `const owned = ${s.owner}; if (!owned || ${model} === undefined) return;
+    const next = ${model};
     if (owned.getOpen() !== next) owned.setOpen(next,{emit:${menuPlan.parentCommandsEmit}});
     ${s.fw.modelAuthority === "runtime-binding" ? s.render("owned.getOpen()") : ""}`;
-  const restore = `const desired = ${s.input("open")} ?? ${s.acceptedOpen};
+  const restore = `const desired = ${model} ?? ${s.acceptedOpen};
     if (owned.getOpen() !== desired) owned.setOpen(desired,{emit:${menuPlan.parentCommandsEmit}});
     ${render("owned.getOpen()")}`;
   const retainBeforeReconnect = `const current = ${s.owner}?.getOpen();
-    if (${s.input("open")} === undefined && current !== undefined) ${s.render("current")}`;
+    if (${model} === undefined && current !== undefined) ${s.render("current")}`;
   const cleanup = `${s.unsubscribe}
     if (${s.owner} === owned) { ${s.own("undefined")} }
     owned.destroy();`;

@@ -144,8 +144,6 @@ export const navigationMenuRuntimeAdapterContract = {
       forwardsRef: true,
       initialAttributes: [
         { name: "data-state", source: "state" },
-        { name: "data-side", source: "prop" },
-        { name: "data-align", source: "prop" },
         { name: "hidden", source: "state" },
       ],
     },
@@ -230,14 +228,14 @@ export const navigationMenuRuntimeAdapterContract = {
       defaultValue: '"bottom"',
       name: "side",
       kind: "option",
-      targets: ["positioner", "popup"],
+      targets: ["positioner"],
       type: '"top" | "right" | "bottom" | "left"',
     },
     {
       defaultValue: '"start"',
       name: "align",
       kind: "option",
-      targets: ["positioner", "popup"],
+      targets: ["positioner"],
       type: '"start" | "center" | "end"',
     },
     {
@@ -346,7 +344,13 @@ export const navigationMenuRuntimeAdapterContract = {
     { part: "viewport", public: true },
     { part: "arrow", public: true },
   ],
-  asChild: [{ part: "trigger", merges: ["aria", "className", "data", "ref", "style"] }],
+  asChild: [
+    {
+      part: "trigger",
+      merges: ["aria", "className", "data", "ref", "style"],
+      childElement: "any-element",
+    },
+  ],
   initialMarkup: [
     {
       part: "root",

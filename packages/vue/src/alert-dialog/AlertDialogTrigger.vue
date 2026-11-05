@@ -18,7 +18,7 @@ const {
   element,
   render: renderAsChild,
   setElement,
-} = useVueNativeControl("AlertDialogTrigger", () => root?.requestRefresh(), true);
+} = useVueNativeControl("AlertDialogTrigger", () => root?.requestRefresh());
 const AsChildControl = defineComponent({
   inheritAttrs: false,
   setup() {

@@ -34,7 +34,6 @@ export function specializeSvelteStyledInput(
   return {
     imports: [
       { source: "svelte", names: ["ComponentProps"], typeOnly: true },
-      { source: "svelte", names: ["untrack"] },
       { source: "tailwind-variants", names: ["VariantProps"], typeOnly: true },
       { source: "tailwind-variants", names: ["cx"] },
       { source: sveltePrimitiveImport("input", options), names: ["InputRoot"] },
@@ -52,21 +51,6 @@ export function specializeSvelteStyledInput(
       { name: "ref" },
     ],
     rest: component.destructure.rest,
-    setup: [
-      `// Keep incoming commands observable after the bindable model publishes locally.
-const copyCommand = (next: InputProps["value"]) => Array.isArray(next) ? [...next] : next;
-let observedCommand = untrack(() => copyCommand(commandValue));
-$effect(() => {
-  const next = copyCommand(commandValue);
-  untrack(() => {
-    const previous = observedCommand;
-    if (Array.isArray(next) && Array.isArray(previous) ? next.length === previous.length && next.every((entry, index) => entry === previous[index]) : Object.is(next, previous)) return;
-    observedCommand = next;
-    const current = value;
-    if (Array.isArray(next) && Array.isArray(current) ? next.length === current.length && next.every((entry, index) => entry === current[index]) : Object.is(next, current)) return;
-    value = next;
-  });
-});`,
-    ],
+    setup: [],
   };
 }

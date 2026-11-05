@@ -57,7 +57,6 @@ export function specializeSvelteStyledInputOtp(
   return {
     imports: [
       { source: "svelte", names: ["ComponentProps", "Snippet"], typeOnly: true },
-      ...(part === "Root" ? [{ source: "svelte", names: ["untrack"] }] : []),
       { source: "tailwind-variants", names: ["VariantProps"], typeOnly: true },
       { source: "tailwind-variants", names: ["cx"] },
       {
@@ -77,20 +76,6 @@ export function specializeSvelteStyledInputOtp(
     };`,
     destructure: props,
     rest: component.destructure.rest,
-    setup:
-      part === "Root"
-        ? [
-            `// Observe incoming commands after local bindable publication shadows a plain prop.
-let observedCommand = untrack(() => commandValue);
-$effect(() => {
-  const next = commandValue;
-  untrack(() => {
-    if (Object.is(next, observedCommand)) return;
-    observedCommand = next;
-    if (!Object.is(next, value)) value = next;
-  });
-});`,
-          ]
-        : [],
+    setup: [],
   };
 }

@@ -7,6 +7,12 @@ export interface FrameworkOperations {
   stableValue(expression: string): string;
   modelAuthority: "parent-prop" | "runtime-binding";
   readInput(name: string): string;
+  /** Read the parent's model input. Svelte reads past the local value of a one-way bindable. */
+  readModel(name: string): string;
+  /** The model input to apply now. Svelte reads a Runtime-owned input once per change. */
+  readCommand?(name: string): string;
+  /** Capture a target's mounted model ownership. Targets that decide on each read print nothing. */
+  controlledCell(name: string): string;
   acceptedCell(name: string, type: string, initial: string): string;
   controllerCell(type: string, initial: string): string;
   publishModel(name: string, value: string, selection?: boolean): string;
@@ -39,6 +45,8 @@ export function modelOperations(
   return {
     ...base,
     readInput: (input) => base.readInput(alias(input)),
+    readModel: (input) => base.readModel(alias(input)),
+    controlledCell: (input) => base.controlledCell(alias(input)),
     publishModel: (input, value, selection) => base.publishModel(alias(input), value, selection),
     controlled: (input) => base.controlled(alias(input)),
     observeModel: (input, reconnect) => base.observeModel(alias(input), reconnect),

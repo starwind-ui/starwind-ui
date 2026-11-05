@@ -1,28 +1,8 @@
 import type { StyledOutputComponent } from "../../../styled-output-model/index.js";
 
-type NativeOverlayControl = {
-  component: "alert-dialog" | "dialog" | "drawer";
-  part: "Close" | "Trigger";
-  slot: string;
-};
-
-const nativeOverlayControls: Record<string, NativeOverlayControl> = {
-  AlertDialogTrigger: {
-    component: "alert-dialog",
-    part: "Trigger",
-    slot: "alert-dialog-trigger",
-  },
-  DialogClose: { component: "dialog", part: "Close", slot: "dialog-close" },
-  DialogTrigger: { component: "dialog", part: "Trigger", slot: "dialog-trigger" },
-  SheetClose: { component: "drawer", part: "Close", slot: "sheet-close" },
-  SheetTrigger: { component: "drawer", part: "Trigger", slot: "sheet-trigger" },
-};
-
 export function projectNativeOverlayControl(
   component: StyledOutputComponent,
 ): StyledOutputComponent {
-  const control = nativeOverlayControls[component.exportName];
-  if (control) return projectDirectControl(component, control);
   if (component.exportName === "AlertDialogAction") {
     return projectAlertDialogButtonControl(component, "Action");
   }
@@ -48,38 +28,6 @@ export function renderAlertDialogButtonControlSetup(component: StyledOutputCompo
   props,
 });
 const asChildRest = rest as unknown as React.HTMLAttributes<HTMLDivElement>;`;
-}
-
-function projectDirectControl(
-  component: StyledOutputComponent,
-  control: NativeOverlayControl,
-): StyledOutputComponent {
-  const projected = structuredClone(component);
-  const isTrigger = control.part === "Trigger";
-  const className = isTrigger ? "triggerClassName" : "closeClassName";
-  projected.render = [
-    {
-      attrs: [
-        { name: "asChild", value: { name: "asChild", type: "variable" } },
-        { name: "class", value: { name: className, type: "variable" } },
-        ...(isTrigger
-          ? [{ name: "targetId", value: { name: "targetId", type: "variable" } } as const]
-          : []),
-        { name: "spread", value: { name: "rest", type: "variable" } },
-        { name: "data-slot", value: { type: "literal", value: control.slot } },
-      ],
-      children: [
-        isTrigger
-          ? { fallback: [], type: "slot" }
-          : { fallback: [{ type: "text", value: "Close" }], type: "slot" },
-      ],
-      component: control.component,
-      part: control.part,
-      selfClosing: false,
-      type: "primitive",
-    },
-  ];
-  return projected;
 }
 
 function projectAlertDialogButtonControl(

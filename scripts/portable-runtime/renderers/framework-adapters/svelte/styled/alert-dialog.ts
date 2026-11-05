@@ -36,7 +36,7 @@ export function specializeSvelteStyledAlertDialog(
   for (const entry of component.imports.filter((entry) => supportsSvelteScope(entry.targetScopes)))
     if (!entry.svg) fail(`unsupported AlertDialog import "${entry.source}"`);
   component.imports = [];
-  if (part === "Trigger" || button) {
+  if (button) {
     const [branch] = component.render;
     if (
       component.render.length !== 1 ||
@@ -52,6 +52,8 @@ export function specializeSvelteStyledAlertDialog(
     for (const node of nodes) {
       if (node.type === "primitive" && node.component === "alert-dialog" && node.part === part) {
         owners++;
+        // The selected Primitive owns the native button and typed child payload in both Svelte modes.
+        node.attrs = node.attrs.filter((attr) => attr.name !== "asChild");
         if (part === "Root") {
           for (const name of ["onOpenChange", "onCloseComplete"]) {
             const attr = node.attrs.find(

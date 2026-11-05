@@ -31,11 +31,9 @@ import Sheet from "./sheet/index.js";
 let open = $state<boolean | undefined>(undefined);
 </script>
 <Sheet.Root bind:open onOpenChange={(next, detail) => { void next; detail.cancel(); }} onCloseComplete={(detail) => { void detail; }}>
- {#snippet children(accepted)}
  <Sheet.Trigger>Open</Sheet.Trigger><Sheet.Content ref={(node: HTMLDialogElement | null) => { void node; }}>
- <Sheet.Header><Sheet.Title>Confirmation</Sheet.Title><Sheet.Description>{String(accepted)}</Sheet.Description></Sheet.Header>
+ <Sheet.Header><Sheet.Title>Confirmation</Sheet.Title><Sheet.Description>{String(open)}</Sheet.Description></Sheet.Header>
  <Sheet.Footer><Sheet.Close>Close</Sheet.Close></Sheet.Footer>
  <Sheet.Close>{#snippet child({ props, children })}<button {...props}>{@render children?.()}</button>{/snippet}Confirm</Sheet.Close>
  </Sheet.Content>
- {/snippet}
 </Sheet.Root>`;

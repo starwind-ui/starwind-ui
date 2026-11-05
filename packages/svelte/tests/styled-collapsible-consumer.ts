@@ -22,4 +22,4 @@ void [CollapsibleVariants.collapsible(), CollapsibleVariants.collapsibleTrigger(
 <Primitive.Root bind:open defaultOpen onOpenChange={proposal} {ref}><Primitive.Trigger {child} {...attrs} ref={buttonRef}>Toggle</Primitive.Trigger><Primitive.Panel hiddenUntilFound {ref}>Content</Primitive.Panel></Primitive.Root>
 <CollapsibleRoot open={false} {ref}><Trigger {child} ref={buttonRef}>Named</Trigger><CollapsiblePanel {ref}/></CollapsibleRoot>
 <Styled.Root bind:open {...props} onOpenChange={proposal}><Styled.Trigger child={forwarding} {...attrs} ref={buttonRef}>Styled</Styled.Trigger><Styled.Content hiddenUntilFound {ref}/></Styled.Root>
-<Collapsible bind:open={() => open, next => open=next}>{#snippet children(accepted)}<CollapsibleTrigger {child} ref={buttonRef}>Open: {accepted}</CollapsibleTrigger><CollapsibleContent {ref}>Named content</CollapsibleContent>{/snippet}</Collapsible>`;
+<Collapsible bind:open={() => open, next => open=next}><CollapsibleTrigger {child} ref={buttonRef}>Open: {open}</CollapsibleTrigger><CollapsibleContent {ref}>Named content</CollapsibleContent></Collapsible>`;

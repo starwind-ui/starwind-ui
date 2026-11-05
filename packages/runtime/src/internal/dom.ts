@@ -30,6 +30,17 @@ export function readBooleanAttribute(
   return true;
 }
 
+const NATIVE_DISABLED_ELEMENTS = "button, fieldset, input, optgroup, option, select, textarea";
+
+/**
+ * Any `disabled` attribute disables a native control. Elsewhere it is a plain attribute, so a
+ * framework that writes `disabled="false"` on a link or span leaves that element enabled.
+ */
+export function readDisabledAttribute(element: HTMLElement): boolean {
+  if (element.matches(NATIVE_DISABLED_ELEMENTS)) return element.hasAttribute("disabled");
+  return readBooleanAttribute(element, "disabled");
+}
+
 export function readNumberAttribute(element: HTMLElement, name: string, fallback: number): number {
   const value = Number.parseFloat(element.getAttribute(name) ?? "");
   return Number.isFinite(value) ? value : fallback;

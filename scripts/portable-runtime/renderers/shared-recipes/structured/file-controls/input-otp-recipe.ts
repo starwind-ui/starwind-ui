@@ -64,19 +64,22 @@ export function otpConnection(
   });
   const event = facts.event;
   const bind = ops.authority === "binding";
-  const emitAccepted = `const accepted = instance.${facts.state.getter}();
-    if (!controlled) { ${ops.writeCurrent("accepted")} }
-    ${bind ? `if ((${ops.read}).value !== accepted) { ${ops.publish("accepted")} }` : ""}`;
+  const emitAccepted = bind
+    ? `const accepted = instance.${facts.state.getter}();
+    ${ops.writeCurrent("accepted")}
+    if (!controlled && (${ops.read}).value !== accepted) { ${ops.publish("accepted")} }`
+    : `const accepted = instance.${facts.state.getter}();
+    if (!controlled) { ${ops.writeCurrent("accepted")} }`;
   return `function connectOtp(root: HTMLElement) {
     let previous = ${ops.read};
-    const controlled = ${bind ? "false" : "previous.value !== undefined"};
+    const controlled = previous.value !== undefined;${bind ? "\n    let retained = previous.value;" : ""}
     let instance: ReturnType<typeof ${facts.runtime.factory}>;
     let unsubscribe = () => {};
     let disposed = false;
     let associated: HTMLFormElement | null = null;
     let resetTimer: number | undefined;
-    function publishCurrent(): void { ${emitAccepted} }
-    function synchronize(value: string | undefined): void {
+    function publishCurrent(): void { ${emitAccepted} }${bind ? `\n    function proposeCurrent(): void { ${ops.publish(`instance.${facts.state.getter}()`)} }` : ""}
+    function synchronize(value: string | undefined): void {${bind ? "\n      if (controlled) value = retained = value ?? retained;" : ""}
       if (value === undefined) return;
       if (instance.${facts.state.getter}() !== value) instance.${facts.setter.method}(value, ${silent});
       publishCurrent();
@@ -125,7 +128,7 @@ export function otpConnection(
       unsubscribe = instance.subscribe('${event.runtimeEvent}', () => { ${ops.untrack(`
         if (disposed || owner !== instance) return;
         publishCurrent();
-        ${bind ? "" : ops.publish(`instance.${facts.state.getter}()`)}
+        ${bind ? "if (controlled) proposeCurrent();" : ops.publish(`instance.${facts.state.getter}()`)}
         ${ops.parentAcceptance === "reconcile-model" ? `if (controlled) ${ops.afterCommit(`if (!disposed && owner === instance) synchronize((${ops.read}).value);`)}` : ""}
       `)} });
       bindReset();

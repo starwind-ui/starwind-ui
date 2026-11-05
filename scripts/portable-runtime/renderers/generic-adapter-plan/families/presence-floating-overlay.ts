@@ -24,6 +24,7 @@ import {
   pluralizeDisplayName,
   toPascalCase,
 } from "./toolkit.js";
+import { getAdapterChildElements } from "../../framework-adapters/types.js";
 
 export const presenceFloatingOverlayAdapterFamilyPlan = {
   buildOutputModel: buildPresenceFloatingOverlayOutputModel,
@@ -441,6 +442,7 @@ function getPresenceFloatingOverlayFacts(
   );
 
   return {
+    childElements: getAdapterChildElements(plan.asChild),
     attrs: {
       arrow: arrowPart.discoveryAttribute,
       backdrop: backdropPart.discoveryAttribute,

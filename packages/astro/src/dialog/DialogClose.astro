@@ -5,11 +5,21 @@
  */
 import type { HTMLAttributes } from "astro/types";
 
-type Props = HTMLAttributes<"button">;
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+};
 
-const { ...rest } = Astro.props;
+const { asChild = false, ...rest } = Astro.props;
 ---
 
-<button type="button" data-sw-dialog-close {...rest}>
-  <slot />
-</button>
+{
+  asChild ? (
+    <div {...rest} data-sw-dialog-close data-as-child>
+      <slot />
+    </div>
+  ) : (
+    <button {...rest} type="button" data-sw-dialog-close>
+      <slot />
+    </button>
+  )
+}

@@ -45,7 +45,7 @@ export function printSvelteHiddenInputVisualSlotComponent(
 function printRoot(facts: AdapterHiddenInputVisualSlotFacts): string {
   const connection = otpConnection(facts, {
     authority: "binding",
-    parentAcceptance: "runtime",
+    parentAcceptance: "reconcile-model",
     read: "readInputs()",
     seed: "seed",
     current: "renderedValue",
@@ -75,7 +75,7 @@ function printRoot(facts: AdapterHiddenInputVisualSlotFacts): string {
     onValueChange?: (value: string, detail: ${facts.event.detailsType}) => void;
     ref?: (element: HTMLDivElement | null) => void;
   };
-  let { children, value = $bindable(), defaultValue, disabled = ${facts.props.disabled.defaultValue}, form, id, maxLength = ${facts.props.maxLength.defaultValue}, name, pattern, readOnly = ${facts.props.readOnly.defaultValue}, required = ${facts.props.required.defaultValue}, onValueChange, ref, ...rest }: Props = $props();
+  let { children, value = $bindable(), value: commandValue, defaultValue, disabled = ${facts.props.disabled.defaultValue}, form, id, maxLength = ${facts.props.maxLength.defaultValue}, name, pattern, readOnly = ${facts.props.readOnly.defaultValue}, required = ${facts.props.required.defaultValue}, onValueChange, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => value);
   const seed = untrack(() => ${otpInitialSeed("binding", "defaultValue", "initialModel")});
   const initial = initialModel ?? seed;
@@ -84,7 +84,7 @@ function printRoot(facts: AdapterHiddenInputVisualSlotFacts): string {
   let connection = $state.raw<ReturnType<typeof connectOtp> | undefined>();
   let patternText = $derived(${otpPattern(facts, "pattern")});
   let inputMode = $derived<"numeric" | "text">(${otpInputMode(facts, "patternText")});
-  function readInputs() { return { value, disabled, form, id, maxLength, name, pattern: patternText, readOnly, required }; }
+  function readInputs() { return { value: commandValue, disabled, form, id, maxLength, name, pattern: patternText, readOnly, required }; }
   ${connection}
   const attachRuntime: Attachment<HTMLDivElement> = (element) => {
     rootNode = element;

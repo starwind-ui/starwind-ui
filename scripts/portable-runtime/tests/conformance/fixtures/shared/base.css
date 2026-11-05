@@ -1,0 +1,9 @@
+/* Unstyled controls have no size, and a browser cannot press an element with no size. */
+[role="checkbox"],
+[role="switch"],
+[role="radio"],
+[data-sw-slider-control] {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+}

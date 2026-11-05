@@ -2477,7 +2477,7 @@ describe("SpecializedAdapterSpec", () => {
     });
     expect(spec.previewCard.anatomy.map((part) => [part.part, part.defaultElement])).toEqual([
       ["root", "div"],
-      ["trigger", "button"],
+      ["trigger", "a"],
       ["portal", "div"],
       ["positioner", "div"],
       ["popup", "div"],
@@ -2564,14 +2564,12 @@ describe("SpecializedAdapterSpec", () => {
       trigger: {
         discoveryAttribute: "data-sw-preview-card-trigger",
         initialAttributes: [
-          "type",
           "data-as-child",
           "data-close-delay",
           "data-disabled",
           "data-open-delay",
           "aria-disabled",
           "data-state",
-          "disabled",
         ],
         publicRef: true,
         role: undefined,
@@ -7428,7 +7426,7 @@ describe("SpecializedAdapterSpec", () => {
         falseValue: "false",
         prop: "autoInit",
         type: "boolean",
-        unsupportedTargets: ["react"],
+        unsupportedTargets: ["react", "vue", "svelte"],
       },
       opts: {
         attribute: "data-opts",
@@ -10732,7 +10730,7 @@ export default Menu;
       },
       popup: {
         discoveryAttribute: "data-sw-nav-menu-popup",
-        initialAttributes: ["data-state", "data-side", "data-align", "hidden"],
+        initialAttributes: ["data-state", "hidden"],
         publicRef: true,
       },
       portal: {
@@ -11332,13 +11330,13 @@ export default Menu;
           attribute: "data-side",
           defaultValue: '"bottom"',
           prop: "side",
-          targets: ["positioner", "popup"],
+          targets: ["positioner"],
         },
         {
           attribute: "data-align",
           defaultValue: '"start"',
           prop: "align",
-          targets: ["positioner", "popup"],
+          targets: ["positioner"],
         },
         {
           attribute: "data-side-offset",

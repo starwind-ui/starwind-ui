@@ -11,8 +11,9 @@
     onValueChange?: (value: string, detail: MenuValueChangeDetails) => void;
     ref?: (element: HTMLDivElement | null) => void;
   };
-  let { children, value = $bindable(), defaultValue, onValueChange, ref, ...rest }: Props = $props();
-  const initial = untrack(() => value);
+  let { children, value = $bindable(), value: commandValue, defaultValue, onValueChange, ref, ...rest }: Props = $props();
+  const initial = untrack(() => commandValue);
+  const valueControlled = initial !== undefined;
   let accepted = $state(initial ?? untrack(() => defaultValue));
   const tree = getMenuTreeContext();
   const owner = Symbol("MenuRadioGroup model");
@@ -38,7 +39,7 @@
    }
     }
     function prepare(): void {
-      if (value !== undefined) accepted = value;
+      if (commandValue !== undefined) accepted = commandValue;
       project(accepted);
     }
     function accept(): void { if (alive) accepted = element.getAttribute("data-value") ?? undefined; }
@@ -50,15 +51,15 @@
    queueMicrotask(() => {
 
      if (!(alive && ownerElement.isConnected) || details.isCanceled) return;
-     untrack(() => { accepted=details.value;
-       if (value !== details.value) value=details.value; });
+     untrack(() => { if (valueControlled) { if (value !== details.value) value=details.value; prepare(); }
+       else { accepted=details.value; if (value !== details.value) value=details.value; } });
 
 
    }); }
     untrack(prepare);
     tree?.registerModel(owner, {prepare,accept});
     element.addEventListener("starwind:value-change",handle);
-    $effect(() => { void value; untrack(prepare); });
+    $effect(() => { void commandValue; untrack(prepare); });
     return () => { alive = false; tree?.registerModel(owner, null); element.removeEventListener("starwind:value-change", handle); };
   };
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";

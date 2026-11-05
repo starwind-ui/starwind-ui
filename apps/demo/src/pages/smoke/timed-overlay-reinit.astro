@@ -1,6 +1,11 @@
 ---
 import { TooltipRoot, TooltipTrigger, TooltipPopup } from "@starwind-ui/astro/tooltip";
 import {
+  Tooltip as StyledTooltip,
+  TooltipContent as StyledTooltipContent,
+  TooltipTrigger as StyledTooltipTrigger,
+} from "@/components/starwind-runtime/tooltip";
+import {
   PreviewCardRoot,
   PreviewCardTrigger,
   PreviewCardPopup,
@@ -17,6 +22,16 @@ import {
         >Tooltip</TooltipPopup
       >
     </TooltipRoot>
+    <StyledTooltip>
+      <StyledTooltipTrigger id="styled-tooltip-text">Plain text</StyledTooltipTrigger>
+      <StyledTooltipContent>Text tooltip</StyledTooltipContent>
+    </StyledTooltip>
+    <StyledTooltip>
+      <StyledTooltipTrigger id="styled-tooltip-element-wrapper">
+        <a id="styled-tooltip-link" href="#link">Link</a>
+      </StyledTooltipTrigger>
+      <StyledTooltipContent>Link tooltip</StyledTooltipContent>
+    </StyledTooltip>
     <PreviewCardRoot id="preview-card" openDelay={0} closeDelay={0}>
       <PreviewCardTrigger id="preview-card-a" href="#a" style="position:fixed;left:100px;top:400px"
         >A</PreviewCardTrigger

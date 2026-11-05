@@ -6,6 +6,6 @@ type Props = HTMLAttributes<"li">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<li class={className} {...rest} data-slot="pagination-item">
+<li {...rest} class={className} data-slot="pagination-item">
   <slot />
 </li>

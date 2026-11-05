@@ -14,11 +14,11 @@ const { asChild = false, ...rest } = Astro.props;
 
 {
   asChild ? (
-    <div data-sw-combobox-clear data-as-child {...rest}>
+    <div {...rest} data-sw-combobox-clear data-as-child>
       <slot />
     </div>
   ) : (
-    <button type="button" data-sw-combobox-clear {...rest}>
+    <button {...rest} type="button" data-sw-combobox-clear>
       <slot />
     </button>
   )

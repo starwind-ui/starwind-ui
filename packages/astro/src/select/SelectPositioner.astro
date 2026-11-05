@@ -26,6 +26,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-select-positioner
   data-state="closed"
   data-side={side}
@@ -34,7 +35,6 @@ const {
   data-align-offset={alignOffset}
   data-align-item-with-trigger={alignItemWithTrigger ? "true" : "false"}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
-  {...rest}
 >
   <slot />
 </div>

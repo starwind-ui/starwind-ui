@@ -26,6 +26,7 @@ const valueAttribute = JSON.stringify(defaultValue ?? []);
 ---
 
 <div
+  {...rest}
   data-sw-toggle-group
   data-default-value={defaultValueAttribute}
   data-disabled={disabled ? "" : undefined}
@@ -34,7 +35,6 @@ const valueAttribute = JSON.stringify(defaultValue ?? []);
   data-orientation={orientation}
   data-value={valueAttribute}
   role="group"
-  {...rest}
 >
   <slot />
 </div>

@@ -15,23 +15,23 @@ const { asChild = false, ...rest } = Astro.props;
 {
   asChild ? (
     <div
+      {...rest}
       data-sw-menu-trigger
       data-as-child
       aria-haspopup="menu"
       aria-expanded="false"
       data-state="closed"
-      {...rest}
     >
       <slot />
     </div>
   ) : (
     <button
+      {...rest}
       type="button"
       data-sw-menu-trigger
       aria-haspopup="menu"
       aria-expanded="false"
       data-state="closed"
-      {...rest}
     >
       <slot />
     </button>

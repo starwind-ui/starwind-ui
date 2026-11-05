@@ -11,12 +11,12 @@ const { ...rest } = Astro.props;
 ---
 
 <button
+  {...rest}
   type="button"
   data-sw-sidebar-rail
   aria-expanded="false"
   data-state="expanded"
   tabindex="-1"
-  {...rest}
 >
   <slot />
 </button>

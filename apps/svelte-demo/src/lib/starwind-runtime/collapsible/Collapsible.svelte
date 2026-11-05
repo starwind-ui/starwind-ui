@@ -16,6 +16,7 @@
     "children": children,
     open = $bindable(),
     "onOpenChange": onOpenChange,
+    "open": commandOpen,
     ...rest
   }: CollapsibleProps = $props();
 </script>
@@ -28,7 +29,7 @@
   {...rest}
   data-slot={"collapsible"}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </CollapsibleRoot>

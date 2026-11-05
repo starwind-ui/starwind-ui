@@ -710,6 +710,13 @@ export async function verifyReactSelectComboboxCases({ page }) {
     );
   }
 
+  // Scripted focus opened other popups in this page. An outside press closes them, as it does for a user.
+  await page.mouse.click(1, 1);
+  await page.waitForFunction(() =>
+    Array.from(document.querySelectorAll("[data-sw-combobox-popup]")).every(
+      (popup) => popup instanceof HTMLElement && popup.hidden,
+    ),
+  );
   await page.locator("#react-runtime-combobox-fruit-input").fill("ap");
   await page.locator("#react-runtime-combobox-fruit-content").waitFor({ state: "visible" });
   await assertPublicPortalTopology(page.locator("#react-runtime-combobox-fruit-content"), {

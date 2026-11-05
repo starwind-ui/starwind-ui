@@ -248,8 +248,7 @@ export function snapshot() { return { open:openModel, checked:checkedModel, valu
  <Menu.RadioGroup defaultValue="inner" data-inner-group={id}><Menu.RadioItem value="inner" data-inner-radio={id}>Inner</Menu.RadioItem><Menu.RadioItem value="other" data-inner-other={id}>Other</Menu.RadioItem></Menu.RadioGroup>
 {/snippet}
 ${contextMenu ? "" : `{#snippet child(payload: ButtonChildPayload)}{#if childMode === "wrong"}<div {...uncheckedChild(payload)}>Wrong owner</div>{:else if childMode === "missing"}<span>Missing owner</span>{:else if childMode === "multiple"}<button {...payload.props}>First owner</button><button {...payload.props}>Second owner</button>{:else if childMode === "component"}<ForwardButton {...payload}/>{:else if childMode === "primitive"}<Button.Root {...payload.props}>{@render payload.children?.()}</Button.Root>{:else}<button {...payload.props}>{@render payload.children?.()}</button>{/if}{/snippet}`}
-{#snippet anatomy(accepted: boolean)}
- <output data-rendered={id}>{String(accepted)}</output>
+{#snippet anatomy()}
  {#if showTrigger}{#key keys.trigger}<Menu.Trigger ${contextMenu ? "disabled={triggerDisabled}" : "{child}"} data-trigger={id} class={className} title="Menu trigger" ref={secondRef ? refB : refA} {...forwarded}>Open {id}</Menu.Trigger>{/key}{/if}
  {#if showPopup}{#key keys.popup}${content(items)}{/key}{/if}
 {/snippet}
@@ -276,7 +275,7 @@ const finish = async () => { for(let i=0;i<6;i++) { await new Promise(requestAni
 await finish(); const cases = app.getCases();
 const query = (attr,id) => document.querySelector('['+attr+'="'+id+'"]');
 const root = id => query("data-case",id), popup = id => query("data-popup",id), button = id => query("data-trigger",id), checkbox = id => query("data-check",id), group = id => query("data-group",id), radio = (id,value) => query("data-radio",id+"-"+value), item = (id,value) => query("data-item",id+"-"+value);
-const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: query("data-rendered",id)?.textContent });
+const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: root(id) ? String(root(id).getAttribute("data-state") === "open") : undefined });
 const wrapper = id => popup(id)?.closest("[data-sw-menu-portal]");
 const key = (element,key,options={}) => element.dispatchEvent(new KeyboardEvent("keydown",{key,bubbles:true,cancelable:true,...options}));
 const activateTrigger = element => ${contextMenu ? 'key(element,"ContextMenu")' : "element.click()"};
@@ -446,13 +445,15 @@ ${
   contextMenu
     ? ""
     : `cases[id].compose("direct"); await finish();
-const childDiagnostics=[], originalWarn=console.warn;
+const childDiagnostics=[], childErrors=[], originalWarn=console.warn, originalError=console.error;
 console.warn=(...values) => { childDiagnostics.push(values.join(" ")); };
+console.error=(...values) => { childErrors.push(values.join(" ")); };
 try {
  for(const mode of ["wrong","missing","multiple"]) { cases[id].compose(mode); await finish(); }
  cases[id].compose("direct"); await finish();
-} finally { console.warn=originalWarn; }
-assert(childDiagnostics.length===3 && childDiagnostics[0].includes("must attach to an HTMLButtonElement") && childDiagnostics[1].includes("did not attach to a button after mount") && childDiagnostics[2].includes("multiple owners were attached"), "semantic child diagnostics identify wrong, missing and multiple owners: "+JSON.stringify(childDiagnostics));`
+} finally { console.warn=originalWarn; console.error=originalError; }
+assert(childErrors.length===1 && childErrors[0].includes("child must be a button"), "a wrong child element reports an error: "+JSON.stringify(childErrors));
+assert(childDiagnostics.length===2 && childDiagnostics[0].includes("did not attach to a button after mount") && childDiagnostics[1].includes("multiple owners were attached"), "semantic child diagnostics identify missing and multiple owners: "+JSON.stringify(childDiagnostics));`
 }
 for(const part of ["trigger","popup","item","checkbox","indicator","group","radio","sub","subtrigger","subpopup"]) {
  const retired = part === "trigger" ? button(id) : part === "popup" ? popup(id) : part === "item" ? item(id,"alpha") : part === "checkbox" ? checkbox(id) : part === "indicator" ? query("data-indicator",id) : part === "group" ? group(id) : part === "radio" ? radio(id,"alpha") : part === "sub" ? query("data-subroot",id) : part === "subtrigger" ? query("data-subtrigger",id) : popup(id+"-sub");

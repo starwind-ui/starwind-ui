@@ -49,6 +49,65 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("Vue Combobox native input", () => {
+  async function mountText(text: ReturnType<typeof ref<string>>, publish: boolean) {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp(
+      defineComponent(
+        () => () =>
+          h(
+            ComboboxRoot,
+            {
+              inputValue: text.value,
+              "onUpdate:inputValue": (next: string) => {
+                if (publish) text.value = next;
+              },
+            },
+            () => [
+              h(ComboboxInput),
+              h(ComboboxPopup, { keepMounted: true }, () =>
+                h(ComboboxItem, { value: "astro" }, () => "Astro"),
+              ),
+            ],
+          ),
+      ),
+    );
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+    return host.querySelector<HTMLInputElement>("[data-sw-combobox-input]")!;
+  }
+  function typeInMiddle(input: HTMLInputElement): void {
+    input.value = "abXcd";
+    input.setSelectionRange(3, 3);
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, data: "X" }));
+  }
+  const settle = async () => {
+    await nextTick();
+    await new Promise((resolve) => window.setTimeout(resolve, 20));
+  };
+
+  it("keeps the caret when a parent accepts typed text", async () => {
+    const input = await mountText(ref("abcd"), true);
+    input.focus();
+    await settle();
+    typeInMiddle(input);
+    await settle();
+    expect(input.value).toBe("abXcd");
+    expect(input.selectionStart).toBe(3);
+  });
+
+  it("repairs typed text that a parent refuses", async () => {
+    const input = await mountText(ref("abcd"), false);
+    input.focus();
+    await settle();
+    typeInMiddle(input);
+    await settle();
+    expect(input.value).toBe("abcd");
+  });
+});
+
 describe("Vue Combobox public behavior", () => {
   it("delegates filtering, active descendant, selection, form reset, floating and cleanup", async () => {
     const abort = vi.spyOn(AbortController.prototype, "abort");
@@ -823,6 +882,133 @@ function appendHost(): HTMLDivElement {
   document.body.append(host);
   return host;
 }
+
+describe("Vue Combobox event order", () => {
+  type Mode = "uncontrolled" | "v-model:inputValue";
+  async function mountOrder(mode: Mode, cancelText = false, valueModel = false) {
+    const host = appendHost();
+    const events: string[] = [];
+    const state = reactive({ inputValue: "Apple", value: "apple" as string | null });
+    const form = document.createElement("form");
+    document.body.append(form);
+    form.append(host);
+    const app = createApp({
+      render: () =>
+        renderCombobox({
+          name: "fruit",
+          ...(valueModel ? { modelValue: state.value } : { defaultValue: "apple" }),
+          ...(mode === "uncontrolled"
+            ? { defaultInputValue: "Apple" }
+            : { inputValue: state.inputValue }),
+          onValueChange: (value: string | null) => events.push(`value:${value}`),
+          onInputValueChange: (text: string, detail: ComboboxInputValueChangeDetails) => {
+            events.push(`input:${text}:${detail.reason}`);
+            if (cancelText) detail.cancel();
+          },
+          onOpenChange: (open: boolean) => events.push(`open:${open}`),
+          "onUpdate:modelValue": (value: string | null) => {
+            events.push(`update:value:${value}`);
+            state.value = value;
+          },
+          "onUpdate:inputValue": (text: string) => {
+            events.push(`update:input:${text}`);
+            state.inputValue = text;
+          },
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await frame();
+    const trigger = host.querySelector<HTMLElement>("[data-sw-combobox-trigger]")!;
+    trigger.click();
+    await frame();
+    events.length = 0;
+    return {
+      events,
+      form,
+      input: host.querySelector<HTMLInputElement>("[data-sw-combobox-input]")!,
+      root: host.querySelector<HTMLElement>("[data-sw-combobox]")!,
+      clear: host.querySelector<HTMLElement>("[data-sw-combobox-clear]")!,
+    };
+  }
+
+  it("publishes no stale text on item press with uncontrolled text", async () => {
+    const { events, input } = await mountOrder("uncontrolled");
+    item("banana").click();
+    await frame();
+    expect(events).toEqual([
+      "value:banana",
+      "update:value:banana",
+      "input:Banana:item-press",
+      "update:input:Banana",
+      "open:false",
+    ]);
+    expect(input.value).toBe("Banana");
+  });
+
+  it("orders clear as value, then empty input with uncontrolled text", async () => {
+    const { events, input, clear } = await mountOrder("uncontrolled");
+    clear.click();
+    await frame();
+    expect(events).toEqual(["value:null", "update:value:null", "input::clear", "update:input:"]);
+    expect(input.value).toBe("");
+  });
+
+  it("keeps the order with v-model:inputValue", async () => {
+    const { events, input, clear } = await mountOrder("v-model:inputValue");
+    item("banana").click();
+    await frame();
+    expect(events).toEqual([
+      "value:banana",
+      "update:value:banana",
+      "input:Banana:item-press",
+      "update:input:Banana",
+      "open:false",
+    ]);
+    expect(input.value).toBe("Banana");
+    events.length = 0;
+    clear.click();
+    await frame();
+    expect(events).toEqual(["value:null", "update:value:null", "input::clear", "update:input:"]);
+    expect(input.value).toBe("");
+  });
+
+  it.each([false, true])("can cancel item press text with value model %s", async (valueModel) => {
+    const { events, input, root } = await mountOrder("uncontrolled", true, valueModel);
+    item("banana").click();
+    await frame();
+    expect(events).toContain("input:Banana:item-press");
+    expect(events.some((event) => event.startsWith("update:input"))).toBe(false);
+    expect(root.getAttribute("data-value")).toBe("banana");
+    expect(input.value).toBe("Apple");
+  });
+
+  it("can cancel clear text with a value model", async () => {
+    const { input, root, clear } = await mountOrder("uncontrolled", true, true);
+    clear.click();
+    await frame();
+    expect(root.hasAttribute("data-value")).toBe(false);
+    expect(input.value).toBe("Apple");
+  });
+
+  it("keeps text and form value together after reset with a value model", async () => {
+    const { form, input, root } = await mountOrder("uncontrolled", false, true);
+    item("banana").click();
+    await frame();
+    form.reset();
+    await settleConnectedCombobox();
+    expect(root.getAttribute("data-value")).toBe("banana");
+    expect(new FormData(form).get("fruit")).toBe("banana");
+    expect(input.value).toBe("Banana");
+  });
+
+  it("marks the Icon as hidden from assistive technology", async () => {
+    await mountOrder("uncontrolled");
+    expect(document.querySelector("[data-sw-combobox-icon]")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+  });
+});
 
 describe("Vue Combobox connected models and reset", () => {
   it.each([

@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"h2">;
 const { ...rest } = Astro.props;
 ---
 
-<h2 data-sw-drawer-title {...rest}>
+<h2 {...rest} data-sw-drawer-title>
   <slot />
 </h2>

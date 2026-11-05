@@ -1,4 +1,5 @@
 import type { DisclosureRootProjection } from "../../shared-recipes/structured/disclosure/frame.js";
+import { svelteModelDestructure } from "./recipe-framework-operations.js";
 export const svelteDisclosureRoot: DisclosureRootProjection = {
   attribute: (name, expression) => (expression === undefined ? name : `${name}={${expression}}`),
   initialCell: (expression) => `untrack(() => ${expression})`,
@@ -23,8 +24,8 @@ import { setContext, untrack, type Snippet } from "svelte";
 import type { HTMLAttributes } from "svelte/elements";
 import type { Attachment } from "svelte/attachments";
 import { createRefAttachment } from "../_internal/ref-attachment.js";
-type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { ${fields} children?: Snippet<[boolean]>; ref?: (element: HTMLDivElement | null) => void; onOpenChange?: (open: boolean, detail: ${plan.proposal.details}) => void };
-let { open = $bindable(), defaultOpen, disabled = false, onOpenChange, children, ref, ...rest }: Props = $props();
+type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { ${fields} children?: Snippet; ref?: (element: HTMLDivElement | null) => void; onOpenChange?: (open: boolean, detail: ${plan.proposal.details}) => void };
+let { ${svelteModelDestructure("open")}, defaultOpen, disabled = false, onOpenChange, children, ref, ...rest }: Props = $props();
 setContext(contextKey, { get disabled() { return disabled; } });
 ${initial}
 ${accepted}
@@ -36,6 +37,6 @@ const attachRuntime: Attachment<HTMLDivElement> = root => {
 };
 const attachRef = createRefAttachment<HTMLDivElement>(() => ref);
 </script>
-<div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.(renderedOpen)}</div>
+<div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>
 `,
 };

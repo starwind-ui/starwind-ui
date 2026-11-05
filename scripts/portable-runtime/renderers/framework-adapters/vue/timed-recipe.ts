@@ -41,7 +41,8 @@ ${placement}
 const renderedOpen=computed(()=>props.open??uncontrolledOpen.value);
 const portals=new Set<symbol>();
 let disposed=false,generation=0;
-provide(${plan.component}Context,{element:rootRef,mounted,registerPlacement,registerPortal(owner,element){if(element)portals.add(owner);else portals.delete(owner);}});
+const knownPopups=new WeakSet<HTMLElement>();
+provide(${plan.component}Context,{element:rootRef,mounted,registerPlacement(element,attributes){const added=attributes!==null&&!knownPopups.has(element);registerPlacement(element,attributes);if(!added)return;knownPopups.add(element);if(mounted.value)void reconnectRuntime();},registerPortal(owner,element){if(element)portals.add(owner);else portals.delete(owner);}});
 defineExpose({element:rootRef});
 ${lifecycle}
 ${connectSurface}

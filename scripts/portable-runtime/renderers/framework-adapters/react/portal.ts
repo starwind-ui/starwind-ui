@@ -198,7 +198,7 @@ export function addReactPortalScope(
   if (usesLazyRuntime) {
     const factoryLineStart = result.lastIndexOf("\n", factoryIndex) + 1;
     const factoryIndent = result.slice(factoryLineStart, factoryIndex);
-    result = `${result.slice(0, factoryLineStart)}${factoryIndent}if (!portalScope.isReady()) return;\n\n${result.slice(factoryLineStart)}`;
+    result = `${result.slice(0, factoryLineStart)}${factoryIndent}if (!portalScope.isReady() && !root.closest("[data-sw-field]")) return;\n\n${result.slice(factoryLineStart)}`;
     factoryIndex = result.indexOf(factoryCall);
   } else {
     const lifecycleCalls = ["React.useEffect(() => {", "useIsomorphicLayoutEffect(() => {"];

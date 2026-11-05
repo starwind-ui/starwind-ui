@@ -175,44 +175,17 @@ export const dialogStyledContract: StyledAdapterContract = {
       ],
       render: [
         {
-          type: "conditional",
-          condition: "asChild",
-          then: [
-            {
-              type: "element",
-              tag: "div",
-              attrs: [
-                { name: "class", value: { type: "variable", name: "triggerClassName" } },
-                { name: "data-as-child" },
-                {
-                  name: "data-sw-dialog-target-id",
-                  value: { type: "variable", name: "targetId" },
-                },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "rest" },
-                  frameworks: ["astro"],
-                },
-                { name: "data-slot", value: { type: "literal", value: "dialog-trigger" } },
-                { name: "data-sw-dialog-trigger" },
-              ],
-              children: [{ type: "slot" }],
-            },
+          type: "primitive",
+          component: "dialog",
+          part: "Trigger",
+          attrs: [
+            { name: "asChild", value: { type: "variable", name: "asChild" } },
+            { name: "class", value: { type: "variable", name: "triggerClassName" } },
+            { name: "targetId", value: { type: "variable", name: "targetId" } },
+            { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-slot", value: { type: "literal", value: "dialog-trigger" } },
           ],
-          else: [
-            {
-              type: "primitive",
-              component: "dialog",
-              part: "Trigger",
-              attrs: [
-                { name: "class", value: { type: "variable", name: "triggerClassName" } },
-                { name: "targetId", value: { type: "variable", name: "targetId" } },
-                { name: "spread", value: { type: "variable", name: "rest" } },
-                { name: "data-slot", value: { type: "literal", value: "dialog-trigger" } },
-              ],
-              children: [{ type: "slot" }],
-            },
-          ],
+          children: [{ type: "slot" }],
         },
       ],
     },
@@ -441,39 +414,16 @@ export const dialogStyledContract: StyledAdapterContract = {
       ],
       render: [
         {
-          type: "conditional",
-          condition: "asChild",
-          then: [
-            {
-              type: "element",
-              tag: "div",
-              attrs: [
-                { name: "class", value: { type: "variable", name: "closeClassName" } },
-                { name: "data-as-child" },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "rest" },
-                  frameworks: ["astro"],
-                },
-                { name: "data-slot", value: { type: "literal", value: "dialog-close" } },
-                { name: "data-sw-dialog-close" },
-              ],
-              children: [{ type: "slot" }],
-            },
+          type: "primitive",
+          component: "dialog",
+          part: "Close",
+          attrs: [
+            { name: "asChild", value: { type: "variable", name: "asChild" } },
+            { name: "class", value: { type: "variable", name: "closeClassName" } },
+            { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-slot", value: { type: "literal", value: "dialog-close" } },
           ],
-          else: [
-            {
-              type: "primitive",
-              component: "dialog",
-              part: "Close",
-              attrs: [
-                { name: "class", value: { type: "variable", name: "closeClassName" } },
-                { name: "spread", value: { type: "variable", name: "rest" } },
-                { name: "data-slot", value: { type: "literal", value: "dialog-close" } },
-              ],
-              children: [{ type: "slot", fallback: [{ type: "text", value: "Close" }] }],
-            },
-          ],
+          children: [{ type: "slot", fallback: [{ type: "text", value: "Close" }] }],
         },
       ],
     },

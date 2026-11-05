@@ -15,9 +15,9 @@ const { asChild = false, class: className, ...rest } = Astro.props;
     <slot />
   ) : (
     <a
+      {...rest}
       data-sw-breadcrumb-link
       class={breadcrumbLink({ class: className })}
-      {...rest}
       data-slot="breadcrumb-link"
     >
       <slot />

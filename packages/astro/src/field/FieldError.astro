@@ -31,11 +31,11 @@ const serializedMatch = typeof match === "boolean" ? String(match) : match;
 ---
 
 <div
+  {...rest}
   data-sw-field-error
   data-match={serializedMatch}
   data-message-source={messageSource}
   hidden={hidden}
-  {...rest}
 >
   <slot />
 </div>

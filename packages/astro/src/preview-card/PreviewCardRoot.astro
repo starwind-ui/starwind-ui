@@ -26,6 +26,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-preview-card
   data-default-open={defaultOpen ? "true" : undefined}
   data-close-delay={closeDelay}
@@ -34,7 +35,6 @@ const {
   data-content-hoverable={!disableHoverableContent ? "true" : "false"}
   data-open-delay={openDelay}
   data-state={defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </div>

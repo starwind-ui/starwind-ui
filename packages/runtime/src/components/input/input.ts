@@ -247,7 +247,8 @@ class InputController implements InputInstance {
   private writeRootValue(value: string): void {
     if (this.root.type === "file" && value !== "") return;
 
-    this.root.value = value;
+    // An equal write can move the caret or end an IME composition in some browsers.
+    if (this.root.value !== value) this.root.value = value;
   }
 
   private emitValueChange({

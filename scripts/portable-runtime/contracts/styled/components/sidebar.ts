@@ -1141,6 +1141,11 @@ function sidebarMenuButtonComponent(): StyledComponentContract {
         value: { type: "raw", code: 'asChild ? "div" : href ? "a" : "button"' },
       },
       {
+        name: "Tag",
+        frameworks: ["svelte"],
+        value: { type: "raw", code: 'href ? "a" : "button"' },
+      },
+      {
         name: "buttonClassName",
         value: {
           type: "classVariant",

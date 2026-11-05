@@ -281,14 +281,7 @@ provide(${facts.context.rootContext}, {
   value: renderedValue,
 });
 
-defineExpose({
-  element: rootRef,
-  close: () => instance?.close(),
-  open: () => {
-    if (!props.${props.disabled.name}) instance?.open();
-  },
-  updatePosition: () => instance?.updatePosition(),
-});
+defineExpose({ element: rootRef });
 
 function readItemLabel(item: HTMLElement | undefined): string | null {
   ${selectFragments("vue").labelReader}
@@ -515,12 +508,11 @@ const AsChildTrigger = defineComponent({
   inheritAttrs: false,
   setup() {
     return () => {
-      const children = slots.default?.() ?? [];
-      const child = children[0];
       return renderAsChild({
-        children,
+        children: slots.default?.() ?? [],
         consumerProps: attrs,
         defaultNativeButtonType: "button",
+        disabled: select.disabled.value,
         protectedProps: {
         "aria-disabled": select.disabled.value ? "true" : undefined,
         "aria-expanded": select.open.value,
@@ -531,7 +523,6 @@ const AsChildTrigger = defineComponent({
         "data-state": select.open.value ? "open" : "closed",
         "${facts.attrs.trigger}": "",
         "data-sw-part": "${part.name}",
-        disabled: child?.type === "button" && select.disabled.value ? true : undefined,
         role: "${part.role ?? "combobox"}",
         },
       });

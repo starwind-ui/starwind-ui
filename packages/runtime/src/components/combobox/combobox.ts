@@ -6,6 +6,7 @@ import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
+  readDisabledAttribute,
   readNumberAttribute,
   resolveAsChildControl,
   setBooleanAttribute,
@@ -22,6 +23,7 @@ import {
   createFloatingListLifecycle,
   type FloatingListLifecycle,
 } from "../../internal/floating-list-lifecycle";
+import { createFocusBoundary, type FocusBoundaryHandle } from "../../internal/focus-boundary";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { hideNativeInput } from "../../internal/native-input";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
@@ -39,6 +41,7 @@ import { registerFieldControlBridge } from "../field/field-control-registry";
 export type ComboboxOpenChangeReason =
   | "escape-key"
   | "focus"
+  | "focus-out"
   | "imperative-action"
   | "input"
   | "item-press"
@@ -87,6 +90,8 @@ export type ComboboxOptions = {
   defaultOpen?: boolean;
   defaultValue?: string | null;
   defaultValueText?: string;
+  /** Finds the label of a value whose item is not rendered, such as in a lazy popup. */
+  resolveValueText?: (value: string) => string | null;
   disabled?: boolean;
   filterMode?: ComboboxFilterMode;
   form?: string;
@@ -157,7 +162,7 @@ type ComboboxResetIntent = {
 };
 
 type ComboboxElements = {
-  clear: HTMLElement | null;
+  clears: HTMLElement[];
   empty: HTMLElement | null;
   hiddenInput: HTMLInputElement | null;
   input: HTMLInputElement;
@@ -167,7 +172,7 @@ type ComboboxElements = {
   popup: HTMLElement;
   portal: HTMLElement | null;
   positioner: HTMLElement | null;
-  trigger: HTMLElement | null;
+  triggers: HTMLElement[];
   valueElements: HTMLElement[];
 };
 
@@ -246,32 +251,7 @@ const COMBOBOX_EMPTY_STATE_ATTRIBUTE = "data-empty";
 const instances = shared<WeakMap<HTMLElement, ComboboxController>>("combobox");
 
 export function refreshComboboxPortalSurface(root: HTMLElement): void {
-  const controller = instances.get(root);
-  if (!controller) return;
-  if (!queryRootElement(root, `[${COMBOBOX_POPUP_ATTRIBUTE}]`)) {
-    controller["stopItemObserver"]();
-    controller["lifecycle"].suspendSurface();
-    return;
-  }
-  const nextElements = getComboboxElements(root);
-  if (nextElements.popup === controller["elements"].popup) return;
-
-  controller["stopItemObserver"]();
-  controller["floatingPositioner"]?.destroy();
-  controller["floatingPositioner"] = null;
-  controller["portalSurfaceAbortController"]?.abort();
-  controller["portalSurfaceAbortController"] = new AbortController();
-  Object.assign(controller["elements"], nextElements);
-  controller["ownedList"].setRoot(nextElements.popup);
-  controller["ownedList"].clear();
-  controller["invalidateItems"]();
-  controller["setupAccessibility"]();
-  controller["bindPortalEvents"]();
-  controller["applyValueState"](controller["valueState"]);
-  controller["applyInputValueState"](controller["inputValueState"]);
-  controller["lifecycle"].refreshSurface(controller["elements"].popup, {
-    reason: "imperative-action",
-  });
+  instances.get(root)?.refreshPortalSurface();
 }
 
 registerFieldControlBridge({
@@ -304,6 +284,7 @@ class ComboboxController implements ComboboxInstance {
   private readonly controlledOpen: boolean;
   private readonly controlledValue: boolean;
   private readonly elements: ComboboxElements;
+  private readonly focusBoundary: FocusBoundaryHandle;
   private readonly inputValueSubscribers = new Set<
     (details: ComboboxInputValueChangeDetails) => void
   >();
@@ -327,8 +308,10 @@ class ComboboxController implements ComboboxInstance {
   private lifecycle: FloatingListLifecycle<OpenRequest>;
   private readonly modal: boolean;
   private readonly defaultValueText: string | null;
+  private readonly resolveValueText?: (value: string) => string | null;
   private readonly valueSubscribers = new Set<(details: ComboboxValueChangeDetails) => void>();
   private autoComplete?: string;
+  private canceledTextValue: string | null | undefined;
   private destroyed = false;
   private disabled: boolean;
   private readonly filterCollator: Intl.Collator;
@@ -387,6 +370,7 @@ class ComboboxController implements ComboboxInstance {
     this.reference = options.reference ?? null;
     this.required = options.required ?? readBooleanAttribute(root, COMBOBOX_REQUIRED_ATTRIBUTE);
     this.defaultValueText = options.defaultValueText ?? null;
+    this.resolveValueText = options.resolveValueText;
     this.openState =
       options.open ??
       options.defaultOpen ??
@@ -425,6 +409,12 @@ class ComboboxController implements ComboboxInstance {
     );
     this.initialInputValue = this.inputValueState;
     this.initialFilterValue = this.filterValueState;
+    this.focusBoundary = createFocusBoundary({
+      containsTarget: (target) => this.containsTarget(target),
+      onFocusDeparture: () => this.handleFocusDeparture(),
+      ownerDocument: root.ownerDocument,
+      surfaces: this.getFocusBoundarySurfaces(),
+    });
     this.setupAccessibility();
     this.bindEvents();
     this.applyValueState(this.valueState);
@@ -480,12 +470,13 @@ class ComboboxController implements ComboboxInstance {
       return;
     }
 
-    const previousValue = this.valueState;
+    const keepCanceledText = this.canceledTextValue === normalizedValue;
+    this.canceledTextValue = undefined;
 
     this.formResetRevision += 1;
     this.valueState = normalizedValue;
     this.applyValueState(normalizedValue);
-    this.syncInputValueFromValue(normalizedValue);
+    if (!keepCanceledText) this.syncInputValueFromValue(normalizedValue);
     this.markOpenCycleCommitted();
   }
 
@@ -504,7 +495,9 @@ class ComboboxController implements ComboboxInstance {
 
     this.formResetRevision += 1;
     this.inputValueState = inputValue;
-    this.applyInputValueState(inputValue);
+    // Equal text is a parent accepting an edit. Writing it again can move the caret in some browsers.
+    if (this.elements.input.value === inputValue) this.applyInputValueAttribute(inputValue);
+    else this.applyInputValueState(inputValue);
     if (options.filter !== false) {
       this.setFilterValue(inputValue);
     }
@@ -602,12 +595,40 @@ class ComboboxController implements ComboboxInstance {
 
     throw new Error(`Unsupported Combobox event: ${event}`);
   }
+  refreshPortalSurface(): void {
+    if (!queryRootElement(this.root, `[${COMBOBOX_POPUP_ATTRIBUTE}]`)) {
+      this.stopItemObserver();
+      this.lifecycle.suspendSurface();
+      return;
+    }
+    const nextElements = getComboboxElements(this.root);
+    if (nextElements.popup === this.elements.popup) return;
+
+    this.stopItemObserver();
+    this.floatingPositioner?.destroy();
+    this.floatingPositioner = null;
+    this.portalSurfaceAbortController?.abort();
+    this.portalSurfaceAbortController = new AbortController();
+    Object.assign(this.elements, nextElements);
+    this.focusBoundary.setSurfaces(this.getFocusBoundarySurfaces());
+    this.ownedList.setRoot(nextElements.popup);
+    this.ownedList.clear();
+    this.invalidateItems();
+    this.setupAccessibility();
+    this.bindPortalEvents();
+    this.applyValueState(this.valueState);
+    this.applyInputValueState(this.inputValueState);
+    this.lifecycle.refreshSurface(this.elements.popup, {
+      reason: "imperative-action",
+    });
+  }
 
   destroy(): void {
     if (this.destroyed) return;
 
     this.abortController.abort();
     this.portalSurfaceAbortController?.abort();
+    this.focusBoundary.destroy();
     this.detachFormResetListener();
     this.clearResetTimer();
     this.inputValueSubscribers.clear();
@@ -624,7 +645,7 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private setupAccessibility(): void {
-    const { clear, hiddenInput, input, label, popup, trigger } = this.elements;
+    const { clears, hiddenInput, input, label, popup, triggers } = this.elements;
     const popupId = ensureId(popup, "sw-combobox-popup");
     const inputId = ensureId(input, "sw-combobox-input");
 
@@ -655,7 +676,7 @@ class ComboboxController implements ComboboxInstance {
       );
     }
 
-    if (trigger) {
+    for (const trigger of triggers) {
       trigger.setAttribute("type", trigger.getAttribute("type") ?? "button");
       trigger.setAttribute("aria-controls", popupId);
       trigger.setAttribute("aria-expanded", String(this.openState));
@@ -663,7 +684,7 @@ class ComboboxController implements ComboboxInstance {
       setBooleanAttribute(trigger, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
     }
 
-    if (clear) {
+    for (const clear of clears) {
       clear.setAttribute("type", clear.getAttribute("type") ?? "button");
       setBooleanAttribute(clear, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
     }
@@ -675,7 +696,7 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private bindEvents(): void {
-    const { clear, input, inputGroup, trigger } = this.elements;
+    const { clears, input, inputGroup, triggers } = this.elements;
     const { signal } = this.abortController;
 
     this.root.addEventListener(
@@ -782,11 +803,10 @@ class ComboboxController implements ComboboxInstance {
     inputGroup?.addEventListener(
       "pointerdown",
       (event) => {
-        if (this.disabled || !(event.target instanceof Node)) return;
-        if (event.target === input || input.contains(event.target)) return;
-        if (clear?.contains(event.target) || trigger?.contains(event.target)) return;
-        if (trigger && event.target === trigger) return;
-        if (clear && event.target === clear) return;
+        const target = event.target;
+        if (this.disabled || !(target instanceof Node)) return;
+        if (input.contains(target)) return;
+        if ([...triggers, ...clears].some((control) => control.contains(target))) return;
 
         this.requestOpen(true, { event, reason: "trigger-press", trigger: inputGroup });
         input.focus();
@@ -794,38 +814,56 @@ class ComboboxController implements ComboboxInstance {
       { signal },
     );
 
-    trigger?.addEventListener(
-      "click",
-      (event) => {
-        if (this.disabled || isDisabledElement(trigger)) return;
-        event.preventDefault();
-        this.requestOpen(!this.openState, {
-          event,
-          reason: "trigger-press",
-          trigger,
-        });
-        this.focusInputWithoutOpening();
-      },
-      { signal },
-    );
-
-    clear?.addEventListener(
-      "click",
-      (event) => {
-        if (this.disabled || this.readOnly || isDisabledElement(clear)) {
+    // A press beside the input must not take focus from it. A browser that does not focus a pressed
+    // button would otherwise drop focus to the document.
+    for (const pressable of [inputGroup, ...triggers, ...clears]) {
+      pressable?.addEventListener(
+        "mousedown",
+        (event) => {
+          if (event.target instanceof Node && input.contains(event.target)) return;
+          if (this.disabled) return;
           event.preventDefault();
-          return;
-        }
-        event.preventDefault();
-        const accepted = this.requestValue({ event, reason: "clear", value: null });
-        if (!accepted) return;
+        },
+        { signal },
+      );
+    }
 
-        this.requestInputValue({ event, inputValue: "", reason: "clear" });
-        this.setFilterValue("");
-        this.focusInputWithoutOpening();
-      },
-      { signal },
-    );
+    for (const trigger of triggers) {
+      trigger.addEventListener(
+        "click",
+        (event) => {
+          if (this.disabled || isDisabledElement(trigger)) return;
+          event.preventDefault();
+          this.requestOpen(!this.openState, {
+            event,
+            reason: "trigger-press",
+            trigger,
+          });
+          this.focusInputWithoutOpening();
+        },
+        { signal },
+      );
+    }
+
+    for (const clear of clears) {
+      clear.addEventListener(
+        "click",
+        (event) => {
+          if (this.disabled || this.readOnly || isDisabledElement(clear)) {
+            event.preventDefault();
+            return;
+          }
+          event.preventDefault();
+          const accepted = this.requestValue({ event, reason: "clear", value: null });
+          if (!accepted) return;
+
+          this.requestCommittedText({ event, inputValue: "", reason: "clear" }, null);
+          this.setFilterValue("");
+          this.focusInputWithoutOpening();
+        },
+        { signal },
+      );
+    }
 
     this.bindPortalEvents();
   }
@@ -1006,8 +1044,6 @@ class ComboboxController implements ComboboxInstance {
         if (!this.controlledInputValue || request.forceApply) {
           this.inputValueState = request.inputValue;
           this.applyInputValueState(request.inputValue);
-        } else {
-          this.elements.input.value = this.inputValueState;
         }
       },
       details,
@@ -1015,6 +1051,7 @@ class ComboboxController implements ComboboxInstance {
       notifyAccepted: (acceptedDetails) => {
         this.formResetRevision += 1;
         this.notifyInputValue(acceptedDetails);
+        if (this.controlledInputValue && !request.forceApply) this.scheduleControlledInputRepair();
       },
       notifyCallback: (proposalDetails) =>
         this.onInputValueChange?.(request.inputValue, proposalDetails),
@@ -1025,8 +1062,48 @@ class ComboboxController implements ComboboxInstance {
         ) {
           this.setInputValue(details.previousInputValue, { emit: false });
         }
+        // Native typing has already changed the element.
+        this.applyInputValueState(this.inputValueState);
       },
       target: this.root,
+    });
+  }
+
+  /**
+   * A parent accepts typed text after this event. Writing the old text first would move the caret
+   * and end an IME composition, so only text the parent has not accepted gets repaired.
+   */
+  private scheduleControlledInputRepair(): void {
+    queueMicrotask(() => {
+      if (this.destroyed || this.elements.input.value === this.inputValueState) return;
+      this.elements.input.value = this.inputValueState;
+    });
+  }
+
+  /** A parent can commit the value after this event, so a canceled text must survive that commit. */
+  private requestCommittedText(request: InputValueRequest, value: string | null): void {
+    const accepted = this.requestInputValue(request);
+    this.canceledTextValue =
+      this.controlledValue && !accepted && this.inputValueState !== request.inputValue
+        ? value
+        : undefined;
+    if (accepted && this.controlledValue && !this.controlledInputValue) {
+      this.scheduleRefusedValueTextRepair(value);
+    }
+  }
+
+  /**
+   * A parent can refuse a value by keeping its own value, with no cancel. The text was written for
+   * the proposed value, so it goes back to the text of the held value.
+   */
+  private scheduleRefusedValueTextRepair(proposedValue: string | null): void {
+    queueMicrotask(() => {
+      if (this.destroyed || this.valueState === proposedValue) return;
+      this.requestInputValue({
+        forceApply: true,
+        inputValue: this.getValueText(this.valueState),
+        reason: "imperative-action",
+      });
     });
   }
 
@@ -1047,13 +1124,13 @@ class ComboboxController implements ComboboxInstance {
     setBooleanAttribute(this.elements.input, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
     this.elements.popup.setAttribute("data-state", state);
     this.elements.positioner?.setAttribute("data-state", state);
-    this.elements.trigger?.setAttribute("data-state", state);
-    this.elements.trigger?.setAttribute("aria-expanded", String(open));
-    if (this.elements.trigger) {
-      setBooleanAttribute(this.elements.trigger, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
+    for (const trigger of this.elements.triggers) {
+      trigger.setAttribute("data-state", state);
+      trigger.setAttribute("aria-expanded", String(open));
+      setBooleanAttribute(trigger, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
     }
-    if (this.elements.clear) {
-      setBooleanAttribute(this.elements.clear, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
+    for (const clear of this.elements.clears) {
+      setBooleanAttribute(clear, COMBOBOX_READONLY_ATTRIBUTE, this.readOnly);
     }
     this.renderDisabledState();
 
@@ -1077,6 +1154,7 @@ class ComboboxController implements ComboboxInstance {
           this.requestOpen(false, { event, reason: "escape-key" });
         },
         onOutsidePointerDown: (event) => {
+          this.focusBoundary.suppressNextDeparture();
           this.requestOpen(false, { event, reason: "outside-press" });
         },
       },
@@ -1161,7 +1239,7 @@ class ComboboxController implements ComboboxInstance {
       ? getItemText(selectedItem)
       : value === null
         ? null
-        : this.defaultValueText;
+        : (this.resolveValueText?.(value) ?? this.defaultValueText);
     const placeholder = this.getPlaceholder();
     const hasValue = value !== null && label !== null;
 
@@ -1185,6 +1263,10 @@ class ComboboxController implements ComboboxInstance {
 
   private applyInputValueState(inputValue: string): void {
     this.elements.input.value = inputValue;
+    this.applyInputValueAttribute(inputValue);
+  }
+
+  private applyInputValueAttribute(inputValue: string): void {
     if (inputValue) {
       this.root.setAttribute(COMBOBOX_INPUT_VALUE_ATTRIBUTE, inputValue);
     } else {
@@ -1195,14 +1277,20 @@ class ComboboxController implements ComboboxInstance {
   private syncInputValueFromValue(value: string | null): void {
     if (this.controlledInputValue) return;
 
-    const selectedItem = value === null ? null : this.getSelectedItem();
-    const inputValue = selectedItem ? getItemText(selectedItem) : "";
+    const inputValue = this.getValueText(value);
     this.inputValueState = inputValue;
     this.applyInputValueState(inputValue);
     this.filterValueState = "";
     if (this.openState) {
       this.updateFilteredItems({ clearHighlight: false });
     }
+  }
+
+  private getValueText(value: string | null): string {
+    if (value === null) return "";
+
+    const selectedItem = this.getSelectedItem();
+    return selectedItem ? getItemText(selectedItem) : (this.resolveValueText?.(value) ?? "");
   }
 
   private beginOpenCycle(): void {
@@ -1249,7 +1337,7 @@ class ComboboxController implements ComboboxInstance {
     const accepted = this.requestValue({ event, item, reason: "item-press", value });
     if (!accepted) return;
 
-    this.requestInputValue({ event, inputValue: text, reason: "item-press" });
+    this.requestCommittedText({ event, inputValue: text, reason: "item-press" }, value);
     const closeApplied = this.requestOpen(false, { event, reason: "item-press", trigger: item });
     this.filterValueState = "";
     if (!closeApplied || this.openState) {
@@ -1276,6 +1364,26 @@ class ComboboxController implements ComboboxInstance {
     }
   }
 
+  private handleFocusDeparture(): void {
+    if (!this.openState || this.destroyed) return;
+    // An owner such as a Dialog hid this Combobox, and it sends its own close request.
+    if (!this.elements.input.checkVisibility()) return;
+
+    const closed = this.requestOpen(false, { reason: "focus-out" });
+    if (closed || this.destroyed) return;
+
+    // A canceled close keeps the popup open, so focus returns to the field that drives it.
+    this.focusBoundary.suppressNextDeparture();
+    this.focusInputWithoutOpening();
+  }
+
+  private getFocusBoundarySurfaces(): HTMLElement[] {
+    const { portal, positioner, popup } = this.elements;
+    return [this.root, portal, positioner, popup].filter(
+      (surface): surface is HTMLElement => surface !== null,
+    );
+  }
+
   private getPortalElement(): HTMLElement {
     return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
@@ -1286,8 +1394,8 @@ class ComboboxController implements ComboboxInstance {
     return (
       Boolean(this.elements.inputGroup?.contains(target)) ||
       this.elements.input.contains(target) ||
-      Boolean(this.elements.clear?.contains(target)) ||
-      Boolean(this.elements.trigger?.contains(target)) ||
+      this.elements.clears.some((clear) => clear.contains(target)) ||
+      this.elements.triggers.some((trigger) => trigger.contains(target)) ||
       portalElement.contains(target) ||
       Boolean(this.elements.portal?.contains(target))
     );
@@ -1319,9 +1427,11 @@ class ComboboxController implements ComboboxInstance {
 
       const acceptedReset = intent !== undefined && intent.revision === this.formResetRevision;
       if (acceptedReset) {
-        this.valueState = this.initialValue;
-        this.inputValueState = this.initialInputValue;
-        this.filterValueState = this.initialFilterValue;
+        if (!this.controlledValue) this.valueState = this.initialValue;
+        const textFollowsValue = this.controlledValue && !this.controlledInputValue;
+        if (textFollowsValue) this.inputValueState = this.getValueText(this.valueState);
+        else if (!this.controlledInputValue) this.inputValueState = this.initialInputValue;
+        this.filterValueState = textFollowsValue ? "" : this.initialFilterValue;
         if (this.openCycleInputValue !== null) {
           this.openCycleInputValue = this.inputValueState;
           this.openCycleFilterValue = this.filterValueState;
@@ -1679,19 +1789,19 @@ class ComboboxController implements ComboboxInstance {
       this.elements.hiddenInput.disabled = this.disabled;
     }
 
-    if (this.elements.trigger) {
-      setBooleanAttribute(this.elements.trigger, COMBOBOX_DISABLED_ATTRIBUTE, this.disabled);
-      this.elements.trigger.setAttribute("aria-disabled", this.disabled ? "true" : "false");
-      if (isDisableableNativeControl(this.elements.trigger)) {
-        this.elements.trigger.disabled = this.disabled;
+    for (const trigger of this.elements.triggers) {
+      setBooleanAttribute(trigger, COMBOBOX_DISABLED_ATTRIBUTE, this.disabled);
+      trigger.setAttribute("aria-disabled", this.disabled ? "true" : "false");
+      if (isDisableableNativeControl(trigger)) {
+        trigger.disabled = this.disabled;
       }
     }
 
-    if (this.elements.clear) {
-      setBooleanAttribute(this.elements.clear, COMBOBOX_DISABLED_ATTRIBUTE, this.disabled);
-      this.elements.clear.setAttribute("aria-disabled", this.disabled ? "true" : "false");
-      if (isDisableableNativeControl(this.elements.clear)) {
-        this.elements.clear.disabled = this.disabled;
+    for (const clear of this.elements.clears) {
+      setBooleanAttribute(clear, COMBOBOX_DISABLED_ATTRIBUTE, this.disabled);
+      clear.setAttribute("aria-disabled", this.disabled ? "true" : "false");
+      if (isDisableableNativeControl(clear)) {
+        clear.disabled = this.disabled;
       }
     }
   }
@@ -1708,11 +1818,8 @@ function getComboboxElements(root: HTMLElement): ComboboxElements {
     throw new Error("Combobox requires a [data-sw-combobox-popup] element.");
   }
 
-  const trigger = queryRootElement(root, `[${COMBOBOX_TRIGGER_ATTRIBUTE}]`);
-  const clear = queryRootElement(root, `[${COMBOBOX_CLEAR_ATTRIBUTE}]`);
-
   return {
-    clear: clear ? resolveAsChildControl(clear) : null,
+    clears: queryRootElements(root, `[${COMBOBOX_CLEAR_ATTRIBUTE}]`).map(resolveAsChildControl),
     empty: queryPopupElement(popup, `[${COMBOBOX_EMPTY_ATTRIBUTE}]`),
     hiddenInput: queryRootElement(
       root,
@@ -1725,7 +1832,7 @@ function getComboboxElements(root: HTMLElement): ComboboxElements {
     popup,
     portal: queryRootElement(root, `[${COMBOBOX_PORTAL_ATTRIBUTE}]`),
     positioner: queryRootElement(root, `[${COMBOBOX_POSITIONER_ATTRIBUTE}]`),
-    trigger: trigger ? resolveAsChildControl(trigger) : null,
+    triggers: queryRootElements(root, `[${COMBOBOX_TRIGGER_ATTRIBUTE}]`).map(resolveAsChildControl),
     valueElements: queryRootElements(root, `[${COMBOBOX_VALUE_ATTRIBUTE}]`),
   };
 }
@@ -1786,7 +1893,7 @@ function createInputValueChangeDetails(
 
 function isDisabledElement(element: HTMLElement): boolean {
   return (
-    element.hasAttribute("disabled") ||
+    readDisabledAttribute(element) ||
     element.hasAttribute(COMBOBOX_DISABLED_ATTRIBUTE) ||
     element.getAttribute("aria-disabled") === "true"
   );

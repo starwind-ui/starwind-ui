@@ -15,6 +15,6 @@ const { value, defaultValue, ...rest } = Astro.props;
 const initialValue = value ?? defaultValue;
 ---
 
-<div data-sw-menu-radio-group role="group" data-value={initialValue} {...rest}>
+<div {...rest} data-sw-menu-radio-group role="group" data-value={initialValue}>
   <slot />
 </div>

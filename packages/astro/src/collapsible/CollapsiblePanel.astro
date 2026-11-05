@@ -13,11 +13,11 @@ const { hiddenUntilFound = false, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-collapsible-panel
   data-hidden-until-found={hiddenUntilFound ? "" : undefined}
   data-state="closed"
   hidden={hiddenUntilFound ? "until-found" : true}
-  {...rest}
 >
   <slot />
 </div>

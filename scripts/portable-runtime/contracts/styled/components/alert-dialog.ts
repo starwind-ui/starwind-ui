@@ -185,44 +185,17 @@ export const alertDialogStyledContract: StyledAdapterContract = {
       ],
       render: [
         {
-          type: "conditional",
-          condition: "asChild",
-          then: [
-            {
-              type: "element",
-              tag: "div",
-              attrs: [
-                { name: "class", value: { type: "variable", name: "triggerClassName" } },
-                { name: "data-as-child" },
-                {
-                  name: "data-sw-alert-dialog-target-id",
-                  value: { type: "variable", name: "targetId" },
-                },
-                {
-                  name: "spread",
-                  value: { type: "variable", name: "rest" },
-                  frameworks: ["astro"],
-                },
-                { name: "data-slot", value: { type: "literal", value: "alert-dialog-trigger" } },
-                { name: "data-sw-alert-dialog-trigger" },
-              ],
-              children: [{ type: "slot" }],
-            },
+          type: "primitive",
+          component: "alert-dialog",
+          part: "Trigger",
+          attrs: [
+            { name: "asChild", value: { type: "variable", name: "asChild" } },
+            { name: "class", value: { type: "variable", name: "triggerClassName" } },
+            { name: "targetId", value: { type: "variable", name: "targetId" } },
+            { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-slot", value: { type: "literal", value: "alert-dialog-trigger" } },
           ],
-          else: [
-            {
-              type: "primitive",
-              component: "alert-dialog",
-              part: "Trigger",
-              attrs: [
-                { name: "class", value: { type: "variable", name: "triggerClassName" } },
-                { name: "targetId", value: { type: "variable", name: "targetId" } },
-                { name: "spread", value: { type: "variable", name: "rest" } },
-                { name: "data-slot", value: { type: "literal", value: "alert-dialog-trigger" } },
-              ],
-              children: [{ type: "slot" }],
-            },
-          ],
+          children: [{ type: "slot" }],
         },
       ],
     },

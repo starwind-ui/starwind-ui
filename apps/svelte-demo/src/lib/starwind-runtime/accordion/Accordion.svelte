@@ -17,6 +17,7 @@
     "children": children,
     value = $bindable(),
     "onValueChange": onValueChange,
+    "value": commandValue,
     ...rest
   }: AccordionProps = $props();
 </script>
@@ -30,7 +31,7 @@
   {...rest}
   data-slot={"accordion"}
   children={children}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
 
 </AccordionRoot>

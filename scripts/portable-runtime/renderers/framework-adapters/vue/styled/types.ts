@@ -34,6 +34,7 @@ export type VueImportsProjection = {
 export type VueComputedProjection = {
   expression: VueComputedExpression;
   name: string;
+  state?: { acceptedFrom: string };
 };
 
 export type VuePropsProjection = {

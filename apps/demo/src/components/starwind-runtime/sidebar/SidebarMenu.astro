@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"ul"> & {
 const { "data-slot": dataSlot = "sidebar-menu", class: className, ...rest } = Astro.props;
 ---
 
-<ul class={sidebarMenu({ class: className })} data-sidebar="menu" {...rest} data-slot={dataSlot}>
+<ul {...rest} class={sidebarMenu({ class: className })} data-sidebar="menu" data-slot={dataSlot}>
   <slot />
 </ul>

@@ -47,6 +47,11 @@ export {
 };
 
 export default Popover;
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+export type {
+  ButtonChildProps,
+  ButtonChildPayload,
+  TriggerChildProps,
+  TriggerChildPayload,
+} from "../button/ButtonRoot.svelte";
 
 export type { PopoverCloseCompleteDetails, PopoverOpenChangeDetails } from "@starwind-ui/runtime";

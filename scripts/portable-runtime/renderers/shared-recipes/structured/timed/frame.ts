@@ -42,7 +42,7 @@ export function renderTimedRoot(target: Target, facts: Facts, plan = timedRecipe
     ...plan.constructorInputs.map((name) => facts.props[name as keyof Facts["props"]]),
     ...(plan.disabledSetter ? [facts.props.disabled] : []),
   ];
-  const initial = `const initialDefaultOpen = ${projection.initial(`${projection.read("defaultOpen")} ?? ${JSON.stringify(plan.model.fallback)}`)};\nconst initialOpen = ${projection.initial(`${plan.disabledSetter ? `!${projection.read("disabled")} && (` : ""}${projection.read("open")} ?? initialDefaultOpen${plan.disabledSetter ? ")" : ""}`)};`;
+  const initial = `const initialDefaultOpen = ${projection.initial(`${projection.read("defaultOpen")} ?? ${JSON.stringify(plan.model.fallback)}`)};\nconst initialOpen = ${projection.initial(`${plan.disabledSetter ? `!${projection.read("disabled")} && (` : ""}${projection.read("open")} ?? initialDefaultOpen${plan.disabledSetter ? ")" : ""}`)};${fw.controlledCell("open") && `\n${fw.controlledCell("open")}`}`;
   const disabledSync = plan.disabledSetter
     ? `function synchronizeDisabled(): void {
   const owned = connection.instance; if (!owned) return;
@@ -50,7 +50,7 @@ export function renderTimedRoot(target: Target, facts: Facts, plan = timedRecipe
   applyParentCommand();
   connection.accepted = owned.getOpen();
   ${fw.renderAccepted("open", "connection.accepted")}
-  ${fw.modelAuthority === "runtime-binding" ? fw.untracked(fw.publishModel("open", "connection.accepted")) : ""}
+  ${fw.modelAuthority === "runtime-binding" ? fw.untracked(`if (!${fw.controlled("open")}) { ${fw.publishModel("open", "connection.accepted")} }`) : ""}
 }\n${projection.observe(["disabled"], "synchronizeDisabled();")}`
     : "";
   const attrs: [string, string?][] = [

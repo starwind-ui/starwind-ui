@@ -96,11 +96,7 @@ let generation = 0;
 let acceptedDetail: NavigationMenuValueChangeDetails | undefined;
 let unsubscribeValueChange: (() => void) | undefined;
 provide(NavigationMenuRootContext, { element, mounted, orientation, value });
-defineExpose({
-  element,
-  getValue: () => instance?.getValue(),
-  setValue: (next: string | null) => instance?.setValue(next),
-});
+defineExpose({ element });
 async function resyncControlled(detail: NavigationMenuValueChangeDetails) {
   await nextTick();
   if (acceptedDetail !== detail || props.modelValue === undefined || !instance) return;
@@ -182,7 +178,16 @@ watch(
       const owned = instance;
       const next = props.modelValue;
       if (!owned || next === undefined) return;
-      if (owned.getValue() !== next) owned.setValue(next, { emit: false });
+      const detail = acceptedDetail;
+      if (detail && Object.is(detail.value, next)) {
+        acceptedDetail = undefined;
+        owned.setValue(next, {
+          emit: false,
+          event: detail.event,
+          reason: detail.reason,
+          trigger: detail.trigger,
+        });
+      } else if (owned.getValue() !== next) owned.setValue(next, { emit: false });
     }
   },
   { flush: "post" },

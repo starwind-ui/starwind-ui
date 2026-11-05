@@ -4,6 +4,7 @@ import {
   writePrimitiveOutputFiles,
 } from "../primitive-output-writer.js";
 import { astroFrameworkAdapter } from "./adapter.js";
+import { moveAstroElementSpreadsFirst } from "./spread-attribute-order.js";
 
 export type AstroAdapterOutputWriterOptions = FrameworkAdapterPrimitiveOutputWriterOptions & {
   astroHeader: string;
@@ -45,7 +46,8 @@ export async function writeAstroPrimitiveFile(
 }
 
 export function normalizeAstroPrimitiveOutput(fileName: string, contents: string): string {
-  return applyManagedControllerLifecycle(fileName, applyScopedInit(contents));
+  const normalized = applyManagedControllerLifecycle(fileName, applyScopedInit(contents));
+  return fileName.endsWith(".astro") ? moveAstroElementSpreadsFirst(normalized) : normalized;
 }
 
 export function renderAstroControllerLifecycleFile(tsHeader: string): string {

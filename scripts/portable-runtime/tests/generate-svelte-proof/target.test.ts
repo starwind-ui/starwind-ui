@@ -273,8 +273,11 @@ describe("Svelte public beta target", () => {
     expect(events.silentInputProposalCallbacks).toBe(false);
     expect(events.functionBinding.fixedPointLoops).toBe(false);
     expect(events.reentrantParent).toBe("outside-direct-model-contract");
-    expect(events.functionBinding.transformedReadback).toBe("out-of-scope");
-    expect(models.reset.inputOtp).toBe("runtime-and-dom-reset-without-external-model-publication");
+    expect(events.functionBinding.transformedReadback).toBe(
+      "defined-initial-input-reads-parent-getter",
+    );
+    expect(models.reset.parentControlled).toBe("parent-value-stays-without-binding-write");
+    expect(models.ownership.initialDefined).toBe("parent-controlled-including-function-bindings");
   });
 
   it("records the button child payload and exact composition cohort", () => {
@@ -301,9 +304,19 @@ describe("Svelte public beta target", () => {
       "attachment-symbols",
     ]);
     expect(composition.typeExports).toEqual(["ButtonChildPayload", "ButtonChildProps"]);
+    expect(composition.anyElementChild).toEqual({
+      parts: ["TooltipTrigger", "PopoverTrigger", "NavigationMenuTrigger"],
+      source: "contract-as-child-child-element",
+      typeExports: ["TriggerChildPayload", "TriggerChildProps"],
+    });
+    expect(composition.productionErrors).toEqual({
+      parts: ["MenuTrigger", "SelectTrigger", "ComboboxTrigger", "ComboboxClear"],
+      source: "contract-as-child-child-element",
+      wrongElement: "console-error",
+    });
     expect(composition.replacementWrapper).toBe(false);
     expect(composition.developmentDiagnostics).toEqual([
-      "wrong-element-type",
+      "wrong-element-type-without-a-contract-fact",
       "multiple-attached-owners",
       "missing-owner-after-settled-mount",
     ]);

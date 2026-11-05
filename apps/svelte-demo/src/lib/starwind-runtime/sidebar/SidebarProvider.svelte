@@ -25,6 +25,8 @@
     "onOpenChange": onOpenChange,
     "onMobileOpenChange": onMobileOpenChange,
     "children": children,
+    "open": commandOpen,
+    "mobileOpen": commandMobileOpen,
     ...rest
   }: SidebarProviderProps = $props();
 
@@ -48,8 +50,8 @@
   style={providerStyle}
   {...rest}
   data-slot={"sidebar-provider"}
-  bind:open={open}
-  bind:mobileOpen={mobileOpen}
+  bind:open={() => commandOpen, (next) => { open = next; }}
+  bind:mobileOpen={() => commandMobileOpen, (next) => { mobileOpen = next; }}
 >
   {@render children?.()}
 </SidebarProvider>

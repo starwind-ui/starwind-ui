@@ -49,10 +49,7 @@ export function specializeSvelteStyledColorPicker(
       if (node.type === "element" && !["input", "br", "hr", "img"].includes(node.tag))
         node.selfClosing = false;
       if (root && node.type === "primitive" && node.part === "Root") {
-        node.attrs = node.attrs.filter((attr) => !["value", "format"].includes(attr.name));
-        const callback = node.attrs.find((attr) => attr.name === "onFormatChange");
-        if (!callback) fail("missing format callback");
-        callback!.value = { type: "variable", name: "onFormatChange" };
+        node.attrs = node.attrs.filter((attr) => attr.name !== "value");
       }
       if (root && node.type === "component" && node.exportName === "Popover")
         node.attrs = node.attrs.filter((attr) => attr.name !== "open");
@@ -66,15 +63,12 @@ export function specializeSvelteStyledColorPicker(
   }
   wire(component.render);
   if (root) {
-    component.variables = component.variables.filter(
-      (variable) => !["resolvedFormat", "handleFormatChange"].includes(variable.name),
+    const resolved = component.variables.find(
+      (variable) =>
+        variable.name === "resolvedFormat" && supportsSvelteScope(variable.targetScopes),
     );
-    component.variables.unshift({
-      name: "resolvedFormat",
-      value: { type: "raw", code: 'format ?? "hex"' },
-    });
-  }
-  if (root) {
+    if (!resolved) fail("missing resolved format");
+    resolved!.value = { type: "raw", code: "commandFormatInput() ?? uncontrolledFormat" };
     const layout = component.render[0];
     if (layout?.type !== "condition" || layout.condition !== "inline")
       fail("missing layout branches");
@@ -170,7 +164,12 @@ export function specializeSvelteStyledColorPicker(
         ],
       },
       ...(part ? [{ source, names: [nativeName!] }] : []),
-      ...(root ? [{ source: "../popover/index.js", names: ["Popover"] }] : []),
+      ...(root
+        ? [
+            { source: "svelte", names: ["untrack"] },
+            { source: "../popover/index.js", names: ["Popover"] },
+          ]
+        : []),
       ...(trigger || content ? [{ source: "../popover/index.js", names: [nativeName!] }] : []),
       ...(input
         ? [

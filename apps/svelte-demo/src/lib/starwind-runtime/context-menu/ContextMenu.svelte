@@ -18,6 +18,7 @@
     "onOpenChange": onOpenChange,
     "onCloseComplete": onCloseComplete,
     "children": children,
+    "open": commandOpen,
     ...rest
   }: ContextMenuProps = $props();
 </script>
@@ -33,7 +34,7 @@
   onOpenChange={onOpenChange}
   onCloseComplete={onCloseComplete}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </ContextMenuRoot>

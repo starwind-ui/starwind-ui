@@ -1,10 +1,34 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { resolveAsChildControl, uniqueElements } from "../../src/internal/dom";
+import {
+  readDisabledAttribute,
+  resolveAsChildControl,
+  uniqueElements,
+} from "../../src/internal/dom";
 
 describe("DOM internals", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+  });
+
+  it.each([
+    ["a", null, false],
+    ["a", "", true],
+    ["a", "true", true],
+    ["a", "false", false],
+    ["span", "false", false],
+    ["div", "FALSE", false],
+    ["button", null, false],
+    ["button", "", true],
+    ["button", "false", true],
+    ["input", "false", true],
+    ["select", "false", true],
+    ["textarea", "false", true],
+    ["fieldset", "false", true],
+  ])("reads <%s disabled=%j> as %s", (tag, value, expected) => {
+    const element = document.createElement(tag);
+    if (value !== null) element.setAttribute("disabled", value);
+    expect(readDisabledAttribute(element)).toBe(expected);
   });
 
   it("resolves as-child wrappers while preserving child-owned attributes and styles", () => {

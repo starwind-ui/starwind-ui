@@ -11,7 +11,7 @@
   import type { HTMLAttributes } from "svelte/elements";
 
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-    children?: Snippet<[boolean]>;
+    children?: Snippet;
     defaultOpen?: boolean;
     open?: boolean;
     closeOnEscape?: boolean;
@@ -24,9 +24,10 @@
     ref?: (element: HTMLDivElement | null) => void;
   };
 
-  let { children, defaultOpen, open = $bindable(), closeOnEscape = true, closeOnOutsideInteract = true, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
+  let { children, defaultOpen, open = $bindable(), open: commandOpen, closeOnEscape = true, closeOnOutsideInteract = true, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => open);
   const initialDefaultOpen = untrack(() => defaultOpen) ?? initialModel ?? false;
+  const openControlled = initialModel !== undefined;
   __ACCEPTED_CELL__
   let surfaceReady = $state(false);
   __AUTHORED_PLACEMENT__
@@ -78,5 +79,5 @@
   {@attach attachRuntime}
   {@attach attachRef}
 >
-  {@render children?.(renderedOpen)}
+  {@render children?.()}
 </div>

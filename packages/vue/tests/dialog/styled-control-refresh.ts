@@ -6,6 +6,7 @@ import {
   type Component,
   type ComponentPublicInstance,
   createApp,
+  defineComponent,
   h,
   nextTick,
   reactive,
@@ -24,6 +25,46 @@ export function testStyledControlRefresh(
   name: "dialog" | "alert-dialog" | "drawer",
   parts: Parts,
 ): void {
+  it(`closes Styled ${name} through component children`, async () => {
+    const ChildButton = defineComponent({
+      inheritAttrs: false,
+      setup(_, { attrs, slots }) {
+        return () => h("button", { ...attrs, type: "button" }, slots.default?.());
+      },
+    });
+    for (const [control, id] of [
+      [parts.Close, "styled-component-close"],
+      ...(parts.Cancel ? [[parts.Cancel, "styled-component-cancel"] as const] : []),
+    ] as const) {
+      const errors = vi.fn();
+      const host = document.createElement("div");
+      document.body.append(host);
+      const app = createApp({
+        render: () =>
+          h(parts.Root, { defaultOpen: true }, () =>
+            h(parts.Content, { id: `${id}-popup` }, () => [
+              h(parts.Title, {}, () => "Title"),
+              h(control, { asChild: true }, () => h(ChildButton, { id }, () => "Done")),
+            ]),
+          ),
+      });
+      app.config.errorHandler = errors;
+      app.mount(host);
+      await nextTick();
+      await nextTick();
+      const popup = document.querySelector<HTMLDialogElement>(`#${id}-popup`);
+      const button = document.getElementById(id)!;
+      expect(popup?.open).toBe(true);
+
+      button.click();
+
+      await expect.poll(() => popup?.open).toBe(false);
+      expect(errors).not.toHaveBeenCalled();
+      app.unmount();
+      host.remove();
+    }
+  });
+
   it(`connects late Styled ${name} child controls without replacing the owner`, async () => {
     const state = reactive({ shown: false, key: 0, title: "same", veto: false });
     const nativeRef = ref<HTMLElement | null>(null);

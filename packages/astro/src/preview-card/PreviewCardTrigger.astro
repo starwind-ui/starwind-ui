@@ -31,20 +31,21 @@ const asChildTransferAttributes = {
 {
   asChild ? (
     <div
+      {...asChildTransferAttributes}
+      {...rest}
       data-sw-preview-card-trigger
       data-as-child
       data-close-delay={closeDelay}
       data-disabled={disabled ? "" : undefined}
       data-open-delay={openDelay}
       aria-disabled={disabled ? "true" : undefined}
-      {...asChildTransferAttributes}
       data-state="closed"
-      {...rest}
     >
       <slot />
     </div>
   ) : (
     <a
+      {...rest}
       data-sw-preview-card-trigger
       data-close-delay={closeDelay}
       data-disabled={disabled ? "" : undefined}
@@ -53,7 +54,6 @@ const asChildTransferAttributes = {
       href={disabled ? undefined : href}
       tabindex={disabled ? -1 : tabindex}
       data-state="closed"
-      {...rest}
     >
       <slot />
     </a>

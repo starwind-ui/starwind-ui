@@ -3,6 +3,7 @@ import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
+  readDisabledAttribute,
   resolveAsChildControl,
   setBooleanAttribute,
   uniqueElements,
@@ -202,27 +203,7 @@ const MENU_ITEM_COLLECTION_ATTRIBUTES = [
 const instances = shared<WeakMap<HTMLElement, MenuController>>("menu");
 
 export function refreshMenuPortalSurface(root: HTMLElement): void {
-  const controller = instances.get(root);
-  if (!controller) return;
-  const nextElements = getMenuElements(root);
-  if (nextElements.popup === controller["elements"].popup) return;
-
-  controller["ownedList"].stop();
-  controller["submenus"].forEach((submenu) => submenu.destroy());
-  controller["floatingPositioner"]?.destroy();
-  controller["floatingPositioner"] = null;
-  Object.assign(controller["elements"], nextElements);
-  controller["ownedList"].setRoot(nextElements.popup);
-  controller["ownedList"].clear();
-  controller["ownedList"].start();
-  controller["submenus"] = queryOwnPopupElements(
-    controller["elements"].popup,
-    `[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`,
-  ).map((submenuRoot) => new MenuSubmenuController(submenuRoot, controller, controller));
-  controller["focusBoundary"].setSurfaces(controller["getFocusBoundarySurfaces"]());
-  controller["setupAccessibility"]();
-  controller["bindEvents"]();
-  controller["lifecycle"].refreshSurface(controller["elements"].popup);
+  instances.get(root)?.refreshPortalSurface();
 }
 
 export function createMenu(root: HTMLElement, options: MenuOptions = {}): MenuInstance {
@@ -396,6 +377,27 @@ class MenuController implements MenuInstance {
     }
 
     throw new Error(`Unsupported Menu event: ${event}`);
+  }
+  refreshPortalSurface(): void {
+    const nextElements = getMenuElements(this.root);
+    if (nextElements.popup === this.elements.popup) return;
+
+    this.ownedList.stop();
+    this.submenus.forEach((submenu) => submenu.destroy());
+    this.floatingPositioner?.destroy();
+    this.floatingPositioner = null;
+    Object.assign(this.elements, nextElements);
+    this.ownedList.setRoot(nextElements.popup);
+    this.ownedList.clear();
+    this.ownedList.start();
+    this.submenus = queryOwnPopupElements(
+      this.elements.popup,
+      `[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`,
+    ).map((submenuRoot) => new MenuSubmenuController(submenuRoot, this, this));
+    this.focusBoundary.setSurfaces(this.getFocusBoundarySurfaces());
+    this.setupAccessibility();
+    this.bindEvents();
+    this.lifecycle.refreshSurface(this.elements.popup);
   }
 
   destroy(): void {
@@ -1847,7 +1849,7 @@ function resolveMenuTrigger(
 
 function isDisabledElement(element: HTMLElement): boolean {
   return (
-    element.hasAttribute("disabled") ||
+    readDisabledAttribute(element) ||
     element.hasAttribute(MENU_DISABLED_ATTRIBUTE) ||
     element.getAttribute("aria-disabled") === "true"
   );

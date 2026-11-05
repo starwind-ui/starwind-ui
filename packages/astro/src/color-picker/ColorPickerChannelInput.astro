@@ -34,8 +34,8 @@ const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 
 <input
   {...rest}
-  data-channel={initial ? undefined : channel}
   {...initial?.attributes}
+  data-channel={initial ? undefined : channel}
   value={initial?.properties.value ?? value}
   disabled={initial?.properties.disabled ?? disabled}
   readonly={initial?.properties.readOnly ?? readOnly}

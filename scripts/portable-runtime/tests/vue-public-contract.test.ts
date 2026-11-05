@@ -124,6 +124,8 @@ describe("Vue adapter public contract", () => {
       reuseVNodeInstances: false,
     });
     expect(vueAdapterPublicContract.composition.asChild).toEqual({
+      childOwnedProps: ["data-slot"],
+      ignoredSlotVNodes: ["empty-branch-comment"],
       invalidChild: "throw-descriptive-type-error",
       mergeApi: "mergeProps",
       mergeOrder: ["defaulted-props", "consumer-props", "protected-props"],

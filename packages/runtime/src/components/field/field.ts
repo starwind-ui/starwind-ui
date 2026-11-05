@@ -185,6 +185,7 @@ class FieldController implements FieldInstance {
   private readonly abortController = new AbortController();
   private readonly appliedControlDisabled = new WeakMap<HTMLElement, boolean>();
   private readonly appliedControlNames = new WeakMap<HTMLElement, string>();
+  private readonly controlsOwningName = new WeakMap<HTMLElement, boolean>();
   private readonly ownDisabled = new WeakMap<HTMLElement, boolean>();
   private readonly runtimeControlAriaDisabledPreviousValues = new WeakMap<
     HTMLElement,
@@ -381,7 +382,9 @@ class FieldController implements FieldInstance {
     const control = this.elements.control;
     if (!control) return;
 
-    const shouldSyncName = this.name !== undefined || this.appliedControlNames.has(control);
+    const shouldSyncName =
+      this.readOwnControlName(control) === undefined &&
+      (this.name !== undefined || this.appliedControlNames.has(control));
 
     control.setAttribute(FIELD_CONTROL_ATTRIBUTE, "");
     this.applyControlName(control);
@@ -399,7 +402,7 @@ class FieldController implements FieldInstance {
     const disabled = this.getEffectiveControlDisabled(control);
     connectFieldControl(control, {
       disabled,
-      name: this.name,
+      name: this.readOwnControlName(control) ?? this.name,
       onConnected: () => {
         if (!this.destroyed) {
           this.render();
@@ -410,7 +413,28 @@ class FieldController implements FieldInstance {
     });
   }
 
+  /**
+   * A name that a control has when Field first meets it wins over the Field name. Field writes over
+   * a name that appears later, and it takes the control back when the control drops its name.
+   */
+  private readOwnControlName(control: HTMLElement): string | undefined {
+    const name =
+      (isNativeFormControl(control)
+        ? control.getAttribute("name")
+        : control.getAttribute(FIELD_NAME_ATTRIBUTE)) || undefined;
+    const ownsName =
+      name !== undefined && (this.controlsOwningName.get(control) ?? name !== this.name);
+    this.controlsOwningName.set(control, ownsName);
+
+    return ownsName ? name : undefined;
+  }
+
   private applyControlName(control: HTMLElement): void {
+    if (this.readOwnControlName(control) !== undefined) {
+      this.appliedControlNames.delete(control);
+      return;
+    }
+
     if (this.name !== undefined) {
       if (isNativeFormControl(control)) {
         if (control.name !== this.name) {
@@ -502,7 +526,10 @@ class FieldController implements FieldInstance {
     if (!this.touchedControlled) {
       this.touched = false;
     }
-    this.scheduleRender();
+    // Wait one more task. A control script can run after Field, so its reset task can come later, and
+    // a render here would write its old state over the reset input.
+    this.clearRenderTimer();
+    this.renderTimer = window.setTimeout(() => this.scheduleRender(), 0);
   };
 
   private readonly handleMutations = (mutations: MutationRecord[]): void => {
@@ -585,6 +612,10 @@ class FieldController implements FieldInstance {
       return attributeName === FIELD_NAME_ATTRIBUTE || attributeName === "data-disabled";
     }
 
+    if (attributeName === "name" && this.isNativeControlMissingFieldName(mutation.target)) {
+      return true;
+    }
+
     if (mutation.target !== this.elements.control) return false;
 
     return (
@@ -595,6 +626,20 @@ class FieldController implements FieldInstance {
       attributeName === "data-readonly" ||
       attributeName === "data-required"
     );
+  }
+
+  /**
+   * A framework can write the name of a control's own input from its own props. React does this each
+   * time it commits the input, and it removes a name that its props do not hold.
+   */
+  private isNativeControlMissingFieldName(target: Node): boolean {
+    const control = this.elements.control;
+    if (this.name === undefined || !control || target === control) return false;
+    if (!(target instanceof HTMLElement) || target.getAttribute("name") === this.readFormName()) {
+      return false;
+    }
+
+    return this.getNativeControls({ includeHidden: true }).includes(target as FieldNativeControl);
   }
 
   private isFeedbackAttributeMutation(mutation: MutationRecord): boolean {
@@ -870,9 +915,12 @@ class FieldController implements FieldInstance {
   }
 
   private readFormName(): string | undefined {
+    const control = this.elements.control;
+    const ownName = control ? this.readOwnControlName(control) : undefined;
+    if (ownName !== undefined) return ownName;
+
     if (this.name !== undefined) return this.name;
 
-    const control = this.elements.control;
     if (!control) return undefined;
 
     if (isNativeFormControl(control) && control.name.length > 0) {

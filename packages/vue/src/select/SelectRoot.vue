@@ -143,14 +143,7 @@ provide(SelectContext, {
   value: renderedValue,
 });
 
-defineExpose({
-  element: rootRef,
-  close: () => instance?.close(),
-  open: () => {
-    if (!props.disabled) instance?.open();
-  },
-  updatePosition: () => instance?.updatePosition(),
-});
+defineExpose({ element: rootRef });
 
 function readItemLabel(item: HTMLElement | undefined): string | null {
   if (!item) return null;

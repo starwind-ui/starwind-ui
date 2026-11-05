@@ -30,7 +30,7 @@ export function printNativeFrame(target: Target, contract: Contract, plan: Nativ
   const destructure = projection.destructure(props);
   const callbacks = `onOpenChange?: (open: boolean, detail: ${plan.proposal.details}) => void;\nonCloseComplete?: (detail: ${plan.completion!.details}) => void;`;
   const imports = `import { create${component}, type ${plan.proposal.details}, type ${plan.completion!.details}${projection.runtimeImports(component, portal)} } from "${contract.runtime.importSource}";`;
-  const initial = `const initialDefaultOpen = ${projection.initialCell(`${projection.readProp(plan.model.default)} ?? ${JSON.stringify(plan.model.fallback)}`)};\nconst initialOpen = ${projection.initialCell(`${projection.readProp(plan.model.name)} ?? initialDefaultOpen`)};`;
+  const initial = `const initialDefaultOpen = ${projection.initialCell(`${projection.readProp(plan.model.default)} ?? ${JSON.stringify(plan.model.fallback)}`)};\nconst initialOpen = ${projection.initialCell(`${projection.readProp(plan.model.name)} ?? initialDefaultOpen`)};${fw.controlledCell("open") && `\n${fw.controlledCell("open")}`}`;
   const controller = fw.controllerCell(
     emitConnectionType(plan).replace(
       "initialized: boolean;",

@@ -24,6 +24,7 @@ if (!src && !image) {
 {
   src && (
     <img
+      {...rest}
       data-sw-avatar-image
       data-image-loading-status="idle"
       src={src}
@@ -31,7 +32,6 @@ if (!src && !image) {
       width={64}
       height={64}
       style={initialStyle}
-      {...rest}
     />
   )
 }

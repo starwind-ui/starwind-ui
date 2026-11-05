@@ -827,6 +827,11 @@ export const fieldStyledContract: StyledAdapterContract = {
           name: "hasContent",
           value: { type: "raw", code: "Boolean(children)" },
         },
+        {
+          frameworks: ["svelte"],
+          name: "hasContent",
+          value: { type: "raw", code: "Boolean(children)" },
+        },
       ],
       render: [
         {
@@ -842,7 +847,7 @@ export const fieldStyledContract: StyledAdapterContract = {
               },
             },
             {
-              frameworks: ["astro"],
+              frameworks: ["astro", "vue", "svelte"],
               name: "data-content",
               value: { type: "raw", code: 'hasContent ? "true" : "false"' },
             },

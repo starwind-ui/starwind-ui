@@ -16,12 +16,12 @@ const valueAttribute = JSON.stringify(defaultValue ?? []);
 ---
 
 <div
+  {...rest}
   data-sw-checkbox-group
   data-default-value={defaultValueAttribute}
   data-value={valueAttribute}
   data-disabled={disabled ? "" : undefined}
   role="group"
-  {...rest}
 >
   <slot />
 </div>

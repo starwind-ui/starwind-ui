@@ -11,9 +11,9 @@ const { size, class: className, ...rest } = Astro.props;
 ---
 
 <span
+  {...rest}
   aria-hidden
   class={paginationEllipsis({ size, class: className })}
-  {...rest}
   data-slot="pagination-ellipsis"
 >
   <slot name="icon">

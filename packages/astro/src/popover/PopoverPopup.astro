@@ -24,6 +24,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-popover-popup
   role="dialog"
   tabindex="-1"
@@ -34,7 +35,6 @@ const {
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
   data-collision-strategy={collisionStrategy}
   hidden
-  {...rest}
 >
   <slot />
 </div>

@@ -12,6 +12,28 @@ export async function verifyAstroTimedOverlayReinit({ page, baseUrl }) {
       document.querySelector("#tooltip-b[aria-describedby]") &&
       document.querySelector("#preview-card-b[aria-describedby]"),
   );
+  assert.deepEqual(
+    await page.evaluate(() => {
+      const text = document.getElementById("styled-tooltip-text");
+      text.focus();
+      return {
+        tag: text.tagName,
+        focused: document.activeElement === text,
+        child: text.textContent.trim(),
+        slot: text.getAttribute("data-slot"),
+        link: document.getElementById("styled-tooltip-link").closest("button") === null,
+      };
+    }),
+    {
+      tag: "BUTTON",
+      focused: true,
+      child: "Plain text",
+      slot: "tooltip-trigger",
+      link: true,
+    },
+    "Styled TooltipTrigger with plain text renders a focusable trigger",
+  );
+  await page.evaluate(() => document.getElementById("styled-tooltip-text").blur());
   const evidence = [];
   for (const family of ["tooltip", "preview-card"]) {
     await page.evaluate((family) => {

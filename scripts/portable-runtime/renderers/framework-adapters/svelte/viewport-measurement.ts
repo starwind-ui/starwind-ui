@@ -98,7 +98,7 @@ function printPart(
   let { children, ref, ${viewport ? "style, tabindex, " : ""}${scrollbar ? `${facts.props.keepMounted.name} = ${facts.props.keepMounted.defaultValue}, ${facts.props.orientation.name} = ${facts.props.orientation.defaultValue}, ` : ""}...rest }: Props = $props();
 ${
   viewport
-    ? `  let viewportStyle = $derived((style ?? "") + ";overflow:${scrollAreaRecipe.viewport.overflow}!important");
+    ? `  let viewportStyle = $derived([style, "overflow: ${scrollAreaRecipe.viewport.overflow}"].filter(Boolean).join("; "));
   const initialTabIndex = untrack(() => tabindex ?? ${scrollAreaRecipe.viewport.initialTabIndex});\n`
     : ""
 }

@@ -110,14 +110,60 @@ export default defineConfig({
     );
     await expect(
       preflightAstroVueIntegration({
-        dependencies: { "@astrojs/vue": "^5.1.5", astro: "^7", vue: "^3.5" },
+        dependencies: { "@astrojs/vue": "^7.1.2", astro: "^7", vue: "^3.5" },
       }),
     ).resolves.toEqual({ status: "ready", packages: [] });
 
     mockReadFile.mockResolvedValue(baseConfig as never);
     await expect(preflightAstroVueIntegration({ dependencies: { astro: "^7" } })).resolves.toEqual({
       status: "configurable",
-      packages: ["@astrojs/vue"],
+      packages: ["@astrojs/vue@^7.1.2"],
+    });
+  });
+
+  it.each([
+    ["^5.17.0", "@astrojs/vue@^5.1.4"],
+    ["^6.1.0", "@astrojs/vue@^6.0.1"],
+    ["^7.0.0", "@astrojs/vue@^7.1.2"],
+  ])("selects the integration major for Astro %s", async (astro, integration) => {
+    mockReadFile.mockResolvedValue(baseConfig as never);
+    await expect(
+      preflightAstroVueIntegration({ dependencies: { astro } }, async () => undefined),
+    ).resolves.toEqual({ status: "configurable", packages: [integration] });
+  });
+
+  it("prefers the installed Astro version over a declared range", async () => {
+    mockReadFile.mockResolvedValue(baseConfig as never);
+    await expect(
+      preflightAstroVueIntegration({ dependencies: { astro: ">=5" } }, async (name) =>
+        name === "astro" ? "6.2.0" : undefined,
+      ),
+    ).resolves.toEqual({ status: "configurable", packages: ["@astrojs/vue@^6.0.1"] });
+  });
+
+  it("replaces an integration that does not match the Astro major", async () => {
+    mockReadFile.mockResolvedValue(
+      'import vue from "@astrojs/vue";\nexport default defineConfig({ integrations: [vue()] });' as never,
+    );
+    await expect(
+      preflightAstroVueIntegration(
+        { dependencies: { "@astrojs/vue": "^7.1.2", astro: "^5.17.0" } },
+        async () => undefined,
+      ),
+    ).resolves.toEqual({ status: "configurable", packages: ["@astrojs/vue@^5.1.4"] });
+  });
+
+  it.each([
+    ["no Astro declaration", {}, "could not read an installed Astro version"],
+    ["a range across majors", { astro: ">=5" }, "spans multiple supported majors"],
+    ["an unsupported Astro", { astro: "^4.0.0" }, "Astro 5, 6, and 7"],
+  ])("asks for manual action with %s", async (_name, dependencies, guidance) => {
+    mockReadFile.mockResolvedValue(baseConfig as never);
+    await expect(
+      preflightAstroVueIntegration({ dependencies }, async () => undefined),
+    ).resolves.toEqual({
+      status: "manual-action-required",
+      guidance: expect.stringContaining(guidance),
     });
   });
 
@@ -129,7 +175,7 @@ export default defineConfig({
         skipPrompts: true,
       }),
     ).resolves.toEqual({ status: "configured" });
-    expect(mockInstall).toHaveBeenCalledWith(["@astrojs/vue"], "pnpm");
+    expect(mockInstall).toHaveBeenCalledWith(["@astrojs/vue@^7.1.2"], "pnpm");
     expect(mockWriteFile).toHaveBeenCalledWith(
       "astro.config.ts",
       expect.stringContaining("integrations: [vue()]"),
@@ -145,7 +191,7 @@ export default defineConfig({
       ensureAstroVueIntegration({
         packageManager: "pnpm",
         projectPackage: {
-          dependencies: { "@astrojs/vue": "^5.1.5", astro: "^7", vue: "^3.5" },
+          dependencies: { "@astrojs/vue": "^7.1.2", astro: "^7", vue: "^3.5" },
         },
         skipPrompts: true,
       }),

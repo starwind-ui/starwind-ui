@@ -1,6 +1,5 @@
 <script module lang="ts">
   import type { ComponentProps } from "svelte";
-  import { untrack } from "svelte";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
   import { ToggleGroupRoot } from "@starwind-ui/svelte/toggle-group";
@@ -30,11 +29,6 @@
   }: ToggleGroupProps = $props();
 
   let toggleGroupStyle = $derived(`--gap: ${spacing}; ${style ?? ""}`);
-
-  const copy=(next:string[]|undefined)=>next===undefined?undefined:[...next];
-  const equal=(a:string[]|undefined,b:string[]|undefined)=>a===b||a!==undefined&&b!==undefined&&a.length===b.length&&a.every((item,index)=>item===b[index]);
-  let observedCommand=untrack(()=>copy(commandValue));
-  $effect(()=>{const next=copy(commandValue);untrack(()=>{if(equal(next,observedCommand))return;observedCommand=next;if(!equal(next,value))value=next;});});
 </script>
 
 <ToggleGroupRoot
@@ -54,7 +48,7 @@
   {...rest}
   data-size={size}
   data-slot={"toggle-group"}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   {@render children?.()}
 </ToggleGroupRoot>

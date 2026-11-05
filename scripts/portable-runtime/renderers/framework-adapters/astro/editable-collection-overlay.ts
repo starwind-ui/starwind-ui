@@ -27,7 +27,12 @@ export function printAstroEditableCollectionOverlayComponent(
   if (family.part === "portal") {
     return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal);
   }
-  if (family.part === "icon") return printSimplePart(facts, "icon", 'aria-hidden="true"');
+  if (family.part === "icon")
+    return printSimplePart(
+      facts,
+      "icon",
+      `aria-hidden="${facts.icon.constantAttributes.ariaHidden}"`,
+    );
 
   return printSimplePart(facts, family.part);
 }

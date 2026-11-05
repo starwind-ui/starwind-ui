@@ -4,6 +4,7 @@ import {
   ensureId,
   getAsChildControlElement,
   readBooleanAttribute,
+  readDisabledAttribute,
   readNumberAttribute,
   setBooleanAttribute,
   uniqueElements,
@@ -137,17 +138,7 @@ const INTERACTIVE_TOOLTIP_DESCENDANT_SELECTOR = [
 const instances = shared<WeakMap<HTMLElement, TooltipController>>("tooltip");
 
 export function refreshTooltipPortalSurface(root: HTMLElement): void {
-  const controller = instances.get(root);
-  if (!controller) return;
-  const nextElements = getTooltipElements(controller.root);
-  if (nextElements.popup === controller["elements"].popup) return;
-
-  controller["portalSurfaceAbortController"]?.abort();
-  controller["portalSurfaceAbortController"] = new AbortController();
-  Object.assign(controller["elements"], nextElements);
-  controller["setupAccessibility"]();
-  controller["bindPortalEvents"]();
-  controller["lifecycle"].refreshSurface(controller["elements"].popup);
+  instances.get(root)?.refreshPortalSurface();
 }
 
 export function createTooltip(root: HTMLElement, options: TooltipOptions = {}): TooltipInstance {
@@ -304,6 +295,17 @@ class TooltipController implements TooltipInstance {
     return () => {
       this.subscribers.delete(callback);
     };
+  }
+  refreshPortalSurface(): void {
+    const nextElements = getTooltipElements(this.root);
+    if (nextElements.popup === this.elements.popup) return;
+
+    this.portalSurfaceAbortController?.abort();
+    this.portalSurfaceAbortController = new AbortController();
+    Object.assign(this.elements, nextElements);
+    this.setupAccessibility();
+    this.bindPortalEvents();
+    this.lifecycle.refreshSurface(this.elements.popup);
   }
 
   destroy(): void {
@@ -760,10 +762,10 @@ class TooltipController implements TooltipInstance {
   private isTriggerDisabled(trigger: TooltipTriggerElement): boolean {
     return (
       this.disabled ||
-      trigger.element.hasAttribute("disabled") ||
+      readDisabledAttribute(trigger.element) ||
       trigger.element.hasAttribute(TOOLTIP_DISABLED_ATTRIBUTE) ||
       trigger.element.getAttribute("aria-disabled") === "true" ||
-      trigger.target.hasAttribute("disabled") ||
+      readDisabledAttribute(trigger.target) ||
       trigger.target.hasAttribute(TOOLTIP_DISABLED_ATTRIBUTE) ||
       trigger.target.getAttribute("aria-disabled") === "true"
     );

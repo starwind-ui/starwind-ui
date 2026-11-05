@@ -32,3 +32,35 @@ return { composition: true };`,
     await consumer.dispose();
   }
 }, 60_000);
+
+it("opens on a native link child on first load and after client navigation", async () => {
+  const consumer = await createStyledTooltipConsumer(process.cwd());
+  try {
+    const result = await verifyTooltipBrowser(
+      consumer,
+      [{ id: "link", initial: false, linkChild: true }],
+      `cases.link.delays(0, 0); await settle();
+const enabled = element => !["disabled", "data-disabled", "data-trigger-disabled", "aria-disabled"].some(name => element.hasAttribute(name));
+const first = button("link");
+assert(first.tagName === "A", "The child owns the trigger");
+assert(enabled(first), "A hydrated link stays enabled");
+hover("link"); await finish();
+assert(state("link").visible, "A hydrated link opens");
+cases.link.setModel(false); await finish();
+cases.link.hide(); await finish();
+cases.link.show(); await finish();
+const next = button("link");
+assert(next !== first && next.tagName === "A", "Client navigation mounts a new link");
+assert(enabled(next), "A client-rendered link stays enabled");
+hover("link"); await finish();
+assert(state("link").visible, "A client-rendered link opens");
+return { link: true };`,
+      true,
+      // The contract says Tooltip works on any element, so a link gets no diagnostic.
+      [],
+    );
+    expect(result).toMatchObject({ link: true, hydrationExact: true, teardown: true });
+  } finally {
+    await consumer.dispose();
+  }
+}, 60_000);

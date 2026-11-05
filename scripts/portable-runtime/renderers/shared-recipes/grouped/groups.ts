@@ -53,6 +53,9 @@ export function renderFormGroup(
     copy = (value: string) => (array ? `copyModel(${value})` : value);
   const render = (next: string) => renderAcceptedState(ops, "value", next);
   const publish = (next: string) => fw.publishModel("value", next, array);
+  const model = fw.readModel("value");
+  const binding = fw.modelAuthority === "runtime-binding";
+  const controlled = fw.controlled("value");
   const props = Object.values(facts.props).filter((p): p is AdapterFamilyProp => p !== undefined);
   const live = props.filter((p) => !["value", "defaultValue"].includes(p.name)).map((p) => p.name);
   const p: GroupProjection = {
@@ -66,7 +69,10 @@ export function renderFormGroup(
     props,
     seed: copy(`${read("defaultValue")} ?? ${read("value")}${array ? " ?? []" : ""}`),
     initial: copy(initialModelValue(read("value"), "resetSeed")),
-    selected: `${read("value")} ?? ${ops.acceptedRead}`,
+    selected:
+      fw.modelAuthority === "runtime-binding"
+        ? ops.acceptedRead
+        : `${read("value")} ?? ${ops.acceptedRead}`,
     context: (facts.context?.values ?? []).map((p) => [
       p.name,
       p.name === "value" ? "selected" : read(p.name),
@@ -117,7 +123,7 @@ export function renderFormGroup(
   const equality = array
     ? "function isModelEqual(left:string[]|undefined,right:string[]|undefined){return left===right||left!==undefined&&right!==undefined&&left.length===right.length&&left.every((value,index)=>value===right[index]);}function copyModel(value:string[]){return [...value];}"
     : "function isModelEqual(left:string|undefined,right:string|undefined){return left===right;}";
-  const accepted = `if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(`publishRuntime(owned);${fw.modelAuthority === "parent-prop" ? publish("detail.value") : ""}`)}`;
+  const accepted = `if(connection.instance!==owned||detail.isCanceled)return;${fw.untracked(`publishRuntime(owned);${binding ? `if(${controlled}){${publish("detail.value")}}` : publish("detail.value")}`)}`;
   const subscription =
     facts.behavior.acceptedChangeNotification === "detail-on-accepted"
       ? `detail.onAccepted(()=>{${accepted}})`
@@ -144,12 +150,12 @@ export function renderFormGroup(
   };
   const code = `${equality}
 function disconnect(){const owned=connection.instance;connection.unsubscribe?.();connection.unsubscribeSync?.();connection.observer?.disconnect();connection.instance=undefined;owned?.destroy();}
-function publishRuntime(owned:ReturnType<typeof ${facts.runtime.factory}>){if(connection.instance!==owned)return;const next=owned.getValue();if(!isModelEqual(connection.accepted,next)){connection.accepted=${copy("next")};${render("next")}}${fw.modelAuthority === "runtime-binding" ? publish("next") : ""}}
-function connect(root:HTMLDivElement){disconnect();const desired=${read("value")}??initialValue;const owned=${facts.runtime.factory}(root,{defaultValue:${copy("resetSeed")},${live.map((name) => `${name}:${read(name)}`).join(",")},...(${fw.controlled("value")}?{value:desired}:{}),onValueChange:(${facts.behavior.callbackArguments === "details" ? "detail" : "_next,detail"})=>{${fw.untracked(fw.proposal("onValueChange", copy("detail.value"), "detail"))}}});connection.instance=owned;if(!isModelEqual(owned.getValue(),desired))owned.setValue(desired,{emit:false});
+function publishRuntime(owned:ReturnType<typeof ${facts.runtime.factory}>){if(connection.instance!==owned)return;const next=owned.getValue();if(!isModelEqual(connection.accepted,next)){connection.accepted=${copy("next")};${render("next")}}${binding ? `if(!${controlled}){${publish("next")}}` : ""}}
+function connect(root:HTMLDivElement){disconnect();const desired=${model}??initialValue;const owned=${facts.runtime.factory}(root,{defaultValue:${copy("resetSeed")},${live.map((name) => `${name}:${read(name)}`).join(",")},...(${controlled}?{value:desired}:{}),onValueChange:(${facts.behavior.callbackArguments === "details" ? "detail" : "_next,detail"})=>{${fw.untracked(fw.proposal("onValueChange", copy("detail.value"), "detail"))}}});connection.instance=owned;if(!isModelEqual(owned.getValue(),desired))owned.setValue(desired,{emit:false});
 connection.unsubscribe=owned.subscribe('valueChange',detail=>${subscription});
 ${facts.state.syncEvent ? `connection.unsubscribeSync=owned.subscribe('${facts.state.syncEvent}',()=>{${fw.untracked("publishRuntime(owned);")}});` : `connection.observer=new MutationObserver(()=>{${fw.untracked("publishRuntime(owned);")}});connection.observer.observe(root,{attributes:true,attributeFilter:['${facts.attrs.value}']});`}
 publishRuntime(owned);}
-function applyParent(){const owned=connection.instance,next=${read("value")};if(!owned||next===undefined||isModelEqual(owned.getValue(),next))return;owned.setValue(next,{emit:false});publishRuntime(owned);}
+function applyParent(){const owned=connection.instance,next=${model};if(!owned||next===undefined||isModelEqual(owned.getValue(),next))return;owned.setValue(next,{emit:false});publishRuntime(owned);}
 function applyOptions(){const owned=connection.instance;if(!owned)return;${recipe.commandOrder.map((command) => commandBodies[command]).join("\n")}}`;
   return ops.frame(code, p);
 }

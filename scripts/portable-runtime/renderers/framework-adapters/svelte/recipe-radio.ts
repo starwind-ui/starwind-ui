@@ -3,7 +3,8 @@ import type {
   RadioOperations,
   RadioProjection,
 } from "../../shared-recipes/grouped/radio.js";
-import { modelOperations } from "../../shared-recipes/structured/operations.js";
+import { modelOperations, operations } from "../../shared-recipes/structured/operations.js";
+import { svelteCommandName } from "./recipe-framework-operations.js";
 export const radioOperations: RadioOperations = {
   fw: {
     ...modelOperations("svelte", "checked", "checked"),
@@ -27,7 +28,7 @@ function frame(code: string, p: RadioProjection): string {
       (x) =>
         x.name +
         (x.name === "checked"
-          ? "=$bindable()"
+          ? `=$bindable(),${x.name}:${svelteCommandName(x.name)}`
           : x.name !== "defaultChecked" && x.defaultValue !== undefined
             ? "=" + x.defaultValue
             : ""),
@@ -40,8 +41,8 @@ function frame(code: string, p: RadioProjection): string {
     .join(
       "\n",
     )}children?:Snippet;onCheckedChange?:(checked:boolean,detail:RadioCheckedChangeDetails)=>void}&((StrictSpanProps & {nativeButton?:false;ref?:(element:HTMLSpanElement|null)=>void})|(ButtonProps & {nativeButton:true;ref?:(element:HTMLButtonElement|null)=>void}));let{children,ref,${destructure},onCheckedChange,...rest}:Props=$props();const group=getContext<RadioGroupContextValue|undefined>(RadioGroupContext);${p.functions.map(([name, expression]) => `function ${name}(){return ${expression};}`).join("\n")}
-const initialChecked=untrack(()=>${p.initial});const resetSeed=untrack(()=>${p.seed});let renderedValue=$state(initialChecked),rootElement=$state<RootElement>();const connection:{instance?:ReturnType<typeof createRadio>;accepted:boolean;unsubscribe?:()=>void;unsubscribeSync?:()=>void;disabled?:boolean;readOnly?:boolean}={accepted:initialChecked};let selected=$derived(${p.selected});${code}
-$effect(()=>{const root=rootElement;${p.reconnect.map((n) => n + ";").join("")}if(!root)return;untrack(()=>connect(root));return disconnect;});${p.commands.map((c) => `$effect(()=>{${c.inputs.map((n) => n + ";").join("")}${c.phase === "after-parent" ? `queueMicrotask(()=>untrack(${c.name}));` : `untrack(${c.name});`}});`).join("\n")}
+${operations.svelte.controlledCell("checked")}const initialChecked=untrack(()=>${p.initial});const resetSeed=untrack(()=>${p.seed});let renderedValue=$state(initialChecked),rootElement=$state<RootElement>();const connection:{instance?:ReturnType<typeof createRadio>;accepted:boolean;unsubscribe?:()=>void;unsubscribeSync?:()=>void;disabled?:boolean;readOnly?:boolean}={accepted:initialChecked};let selected=$derived(${p.selected});${code}
+$effect(()=>{const root=rootElement;${p.reconnect.map((n) => n + ";").join("")}if(!root)return;untrack(()=>connect(root));return disconnect;});${p.commands.map((c) => `$effect(()=>{${c.inputs.map((n) => (n === "checked" ? svelteCommandName(n) : n) + ";").join("")}${c.phase === "after-parent" ? `queueMicrotask(()=>untrack(${c.name}));` : `untrack(${c.name});`}});`).join("\n")}
 $effect(()=>{const node=rootElement,callback=ref as ((node:RootElement|null)=>void)|undefined;if(!node)return;untrack(()=>callback?.(node));return()=>untrack(()=>callback?.(null));});
 </script><svelte:element this={${p.element}} bind:this={rootElement} {...rest} ${attributes(p.attrs)}>{@render children?.()}{#if ${p.inputInside}}${input}{/if}</svelte:element>{#if ${p.inputOutside}}${input}{/if}`;
 }

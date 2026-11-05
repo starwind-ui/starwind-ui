@@ -189,7 +189,11 @@ try {
       `${name}: Select fits the viewport ${JSON.stringify(bounds)}`,
     );
     const triggerBounds = await trigger.boundingBox();
-    if ((await popup.getAttribute("data-align-trigger")) === "true") {
+    // The Runtime moves an aligned popup to keep 8px from the viewport edge, which ends alignment.
+    const atViewportEdge = bounds.y <= 9 || bounds.y + bounds.height >= 991;
+    const aligned = (await popup.getAttribute("data-align-trigger")) === "true";
+    if (aligned && atViewportEdge) return;
+    if (aligned) {
       const valueBounds = await trigger.locator('[data-slot="select-value"]').boundingBox();
       const selectedBounds = await popup
         .getByRole("option", { selected: true })

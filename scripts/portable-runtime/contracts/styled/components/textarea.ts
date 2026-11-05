@@ -30,6 +30,7 @@ export const textareaStyledContract: StyledAdapterContract = {
     {
       exportName: "Textarea",
       forwardRef: { frameworks: ["vue"], targetType: "HTMLTextAreaElement" },
+      nativeModel: { name: "value", tag: "textarea" },
       props: {
         declaration: "interface",
         extends: [
@@ -37,6 +38,18 @@ export const textareaStyledContract: StyledAdapterContract = {
           { type: "variantProps", variant: "textarea" },
         ],
         fields: [
+          {
+            name: "defaultValue",
+            optional: true,
+            type: "string | null",
+            frameworks: ["vue", "astro"],
+          },
+          {
+            name: "value",
+            optional: true,
+            type: "string | null",
+            frameworks: ["astro"],
+          },
           {
             name: "data-slot",
             optional: true,
@@ -54,6 +67,8 @@ export const textareaStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "size" },
+          { name: "defaultValue", frameworks: ["vue", "astro"] },
+          { name: "value", frameworks: ["astro"] },
           { name: "ref", frameworks: ["react"] },
           { name: "data-slot", alias: "dataSlot", defaultValue: '"textarea"' },
           { name: "class", alias: "className" },

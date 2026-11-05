@@ -41,10 +41,16 @@
     onOpenChange?: (value: boolean, detail: ComboboxOpenChangeDetails) => void;
     onValueChange?: (value: string | null, detail: ComboboxValueChangeDetails) => void;
   };
-  let { children, ref, autoComplete, defaultInputValue, defaultOpen, defaultValue, disabled = false, filterMode = "contains", form, highlightItemOnHover = true, inputValue = $bindable(), locale, modal = false, name, open = $bindable(), readOnly = false, required = false, value = $bindable(), onInputValueChange, onOpenChange, onValueChange, ...rest }: Props = $props();
+  let { children, ref, autoComplete, defaultInputValue, defaultOpen, defaultValue, disabled = false, filterMode = "contains", form, highlightItemOnHover = true, inputValue = $bindable(), inputValue: commandInputValue, locale, modal = false, name, open = $bindable(), open: commandOpen, readOnly = false, required = false, value = $bindable(), value: commandValue, onInputValueChange, onOpenChange, onValueChange, ...rest }: Props = $props();
   const initialModels = untrack(() => ({ value, inputValue, open }));
+  const valueControlled = initialModels.value !== undefined;
+  const inputValueControlled = initialModels.inputValue !== undefined;
+  const openControlled = initialModels.open !== undefined;
   const initialDefaults = untrack(() => ({ value: defaultValue === undefined ? initialModels.value ?? null : defaultValue, inputValue: defaultInputValue ?? initialModels.inputValue, open: defaultOpen ?? initialModels.open ?? false }));
   let accepted = $state<{ value: string | null; inputValue: string | undefined; open: boolean }>({ value: initialModels.value === undefined ? initialDefaults.value : initialModels.value, inputValue: initialModels.inputValue ?? initialDefaults.inputValue, open: untrack(() => disabled) ? false : initialModels.open ?? initialDefaults.open });
+  // First render only. Runtime owns data-state after that.
+  const initialOpen = untrack(() => accepted.open);
+  const initialDefaultOpen = untrack(() => defaultOpen);
   let mounted = $state(false);
   let revision = $state(0);
   let rootElement: HTMLDivElement | undefined;
@@ -60,6 +66,8 @@
       untrack(() => revision++);
     },
   });
+  // A spread reads every prop through one object. A new controller must wait for a real change here.
+  const constructorInputs = $derived(JSON.stringify([filterMode, highlightItemOnHover, locale, modal, readOnly]));
   const attachRuntime: Attachment<HTMLDivElement> = (root) => {
     rootElement = root;
     binding = createPortalBinding(root);
@@ -69,18 +77,18 @@
     let resetForm: HTMLFormElement | null = null;
     let resetTimer: number | undefined;
     function synchronizeModels(): void { const owned = current?.instance; if (!owned) return;
-    if (value !== undefined) {
-      const next = value;
+    { const command = (valueControlled || value === commandValue ? commandValue : undefined); if (command !== undefined) {
+      const next = command;
       if (owned.getValue() !== next) owned.setValue(next, { emit: false });
-    }
-if (inputValue !== undefined) {
-      const next = inputValue;
+    } }
+{ const command = (inputValueControlled || inputValue === commandInputValue ? commandInputValue : undefined); if (command !== undefined) {
+      const next = command;
       if (owned.getInputValue() !== next) owned.setInputValue(next, { emit: false, filter: false });
-    }
-if (open !== undefined) {
-      const next = disabled ? false : open;
+    } }
+{ const command = (openControlled || open === commandOpen ? commandOpen : undefined); if (command !== undefined) {
+      const next = disabled ? false : command;
       if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
-    }
+    } }
     accepted.value = owned.getValue();
 accepted.inputValue = owned.getInputValue();
 accepted.open = owned.getOpen(); }
@@ -98,16 +106,16 @@ accepted.open = instance.getOpen(); }
       resetTimer = window.setTimeout(() => {
         resetTimer = undefined;
         if (current?.instance !== owned) return;
-        untrack(() => { const nextValue = event.defaultPrevented ? beforeValue : owned.getValue();
-const nextInputValue = event.defaultPrevented ? beforeInputValue : owned.getInputValue();
+        untrack(() => { const nextValue = valueControlled ? (commandValue !== undefined ? commandValue : beforeValue) : event.defaultPrevented ? beforeValue : owned.getValue();
+const nextInputValue = inputValueControlled ? (commandInputValue !== undefined ? commandInputValue : beforeInputValue) : event.defaultPrevented ? beforeInputValue : owned.getInputValue();
 
           owned.setValue(nextValue, {emit:false});
           accepted.value = owned.getValue();
-          if (!event.defaultPrevented) { if (value !== owned.getValue()) value = owned.getValue(); }
+          if (!event.defaultPrevented && !valueControlled) { if (value !== owned.getValue()) value = owned.getValue(); }
 
           owned.setInputValue(nextInputValue, {emit:false,filter:false});
           accepted.inputValue = owned.getInputValue();
-          if (!event.defaultPrevented) { if (inputValue !== owned.getInputValue()) inputValue = owned.getInputValue(); } });
+          if (!event.defaultPrevented && !inputValueControlled) { if (inputValue !== owned.getInputValue()) inputValue = owned.getInputValue(); } });
 
       },0);
     }); };
@@ -120,7 +128,7 @@ const nextInputValue = event.defaultPrevented ? beforeInputValue : owned.getInpu
     }
     $effect(() => {
       revision;
-      void filterMode; void highlightItemOnHover; void locale; void modal; void readOnly;
+      void constructorInputs;
       return untrack(() => {
         const captures = [...parts.values()];
         if (!["input","popup"].every(part => captures.some(capture => capture.part === part))) return;
@@ -143,41 +151,38 @@ name: name,
 readOnly: readOnly,
 required: required,
       onValueChange: (next, detail) => { untrack(() => { onValueChange?.(next, detail); }); },
-onInputValueChange: (next, detail) => { untrack(() => { onInputValueChange?.(next, detail); });
-    if (detail.event?.type === "input") queueMicrotask(() => {
-      if (!detail.isCanceled || current?.instance !== instance) return;
-      instance.setInputValue(instance.getInputValue(), { emit: false, filter: false });
-    }); },
+onInputValueChange: (next, detail) => { untrack(() => { onInputValueChange?.(next, detail); }); },
 onOpenChange: (next, detail) => { untrack(() => { onOpenChange?.(next, detail); }); },
 
 
 
+      ...(valueControlled ? { value: commandValue !== undefined ? commandValue : accepted.value } : {}),
+...(inputValueControlled ? { inputValue: commandInputValue !== undefined ? commandInputValue : accepted.inputValue } : {}),
+...(openControlled ? { open: disabled ? false : (commandOpen !== undefined ? commandOpen : accepted.open) } : {}),
     });
     current = { instance: instance, cleanups: [] };
         current.cleanups.push(instance.subscribe("valueChange", detail => {
     if (current?.instance !== instance) return;
-    untrack(() => { const nextText = instance.getInputValue();
+    untrack(() => { if (valueControlled) { if (value !== detail.value) value = detail.value; }
+      else {
+      accepted.inputValue = instance.getInputValue();
 
-      if (true) {
-        const nextInput = detail.value === null ? "" : nextText ?? instance.getInputValue();
-        if (instance.getInputValue() !== nextInput) instance.setInputValue(nextInput, { emit: false, filter: false });
-        accepted.inputValue = nextInput;
-        if (inputValue !== nextInput) inputValue = nextInput;
-      }
       accepted.value = detail.value;
-      if (value !== detail.value) value = detail.value; });
+      if (value !== detail.value) value = detail.value; } });
    }));
 current.cleanups.push(instance.subscribe("inputValueChange", detail => {
     if (current?.instance !== instance) return;
-    untrack(() => {
+    untrack(() => { if (inputValueControlled) { if (inputValue !== detail.inputValue) inputValue = detail.inputValue; }
+      else {
       accepted.inputValue = detail.inputValue;
-      if (inputValue !== detail.inputValue) inputValue = detail.inputValue; });
+      if (inputValue !== detail.inputValue) inputValue = detail.inputValue; } });
    }));
 current.cleanups.push(instance.subscribe("openChange", detail => {
     if (current?.instance !== instance) return;
-    untrack(() => {
+    untrack(() => { if (openControlled) { if (open !== detail.open) open = detail.open; }
+      else {
       accepted.open = detail.open;
-      if (open !== detail.open) open = detail.open; });
+      if (open !== detail.open) open = detail.open; } });
    }));
         synchronizeModels();
         readAccepted();
@@ -192,25 +197,25 @@ current.cleanups.push(instance.subscribe("openChange", detail => {
         };
       });
     });
-    $effect(() => { void value; void inputValue; void open; untrack(() => { const owned = current?.instance; if (!owned) return;
-    if (value !== undefined) {
-      const next = value;
+    $effect(() => { void commandValue; void commandInputValue; void commandOpen; untrack(() => { const owned = current?.instance; if (!owned) return;
+    { const command = (valueControlled || value === commandValue ? commandValue : undefined); if (command !== undefined) {
+      const next = command;
       if (owned.getValue() !== next) owned.setValue(next, { emit: false });
-    }
-if (inputValue !== undefined) {
-      const next = inputValue;
+    } }
+{ const command = (inputValueControlled || inputValue === commandInputValue ? commandInputValue : undefined); if (command !== undefined) {
+      const next = command;
       if (owned.getInputValue() !== next) owned.setInputValue(next, { emit: false, filter: false });
-    }
-if (open !== undefined) {
-      const next = disabled ? false : open;
+    } }
+{ const command = (openControlled || open === commandOpen ? commandOpen : undefined); if (command !== undefined) {
+      const next = disabled ? false : command;
       if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
-    }
+    } }
     accepted.value = owned.getValue();
 accepted.inputValue = owned.getInputValue();
 accepted.open = owned.getOpen(); }); });
     $effect(() => { void disabled; untrack(() => { const owned = current?.instance; if (!owned) return;
     owned.setDisabled(disabled);
-    const next = disabled ? false : (open ?? accepted.open);
+    const next = disabled ? false : ((openControlled || open === commandOpen ? commandOpen : undefined) ?? accepted.open);
       if (owned.getOpen() !== next) owned.setOpen(next,{emit:false});
       accepted.open = owned.getOpen();
      }); });
@@ -230,7 +235,7 @@ $effect(() => { void autoComplete; void form; void name; void required; untrack(
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...rest} data-sw-combobox="" data-sw-part="root" data-default-value={initialDefaults.value ?? undefined} data-default-input-value={initialDefaults.inputValue} data-disabled={disabled ? "" : undefined} data-readonly={readOnly ? "" : undefined} data-name={name} data-form={form} data-required={required ? "" : undefined} data-state="closed" {@attach attachRuntime} {@attach attachRef}>
+<div {...rest} data-sw-combobox="" data-sw-part="root" data-default-value={initialDefaults.value ?? undefined} data-autocomplete={autoComplete} data-default-input-value={initialDefaults.inputValue} data-default-open={initialDefaultOpen ? "true" : undefined} data-disabled={disabled ? "" : undefined} data-filter-mode={filterMode} data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"} data-locale={locale} data-modal={modal ? "true" : "false"} data-readonly={readOnly ? "" : undefined} data-name={name} data-form={form} data-required={required ? "" : undefined} data-state={initialOpen ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
   <input type={required ? undefined : "hidden"} style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0" data-sw-combobox-hidden-input="" aria-hidden="true" tabindex={-1} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
 </div>

@@ -32,5 +32,5 @@ void [HoverCardRoot, HoverCardTrigger, HoverCardContent];
 </script>
 {#snippet anchor({props, children}: AnchorChildPayload)}<a {...props}>{@render children?.()}</a>{/snippet}
 <HoverCard.Root bind:open openDelay={600} closeDelay={300} disableHoverableContent={false} onOpenChange={(next, detail) => { void next; detail.cancel(); }}>
- {#snippet children(accepted)}<HoverCard.Trigger child={anchor} ref={(node:HTMLAnchorElement|null)=>{void node;}} href="#destination" disabled={false} openDelay={10} closeDelay={20}>Help</HoverCard.Trigger><HoverCard.Content positionerClass="custom" side="bottom" portalContainer="#portal" ref={(node: HTMLDivElement | null) => { void node; }}>{String(accepted)}</HoverCard.Content>{/snippet}
+ <HoverCard.Trigger child={anchor} ref={(node:HTMLAnchorElement|null)=>{void node;}} href="#destination" disabled={false} openDelay={10} closeDelay={20}>Help</HoverCard.Trigger><HoverCard.Content positionerClass="custom" side="bottom" portalContainer="#portal" ref={(node: HTMLDivElement | null) => { void node; }}>{String(open)}</HoverCard.Content>
 </HoverCard.Root>`;

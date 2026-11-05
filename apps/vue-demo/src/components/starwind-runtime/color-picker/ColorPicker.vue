@@ -8,6 +8,7 @@ import {
   nextTick,
   ref,
   useAttrs,
+  watch,
 } from "vue";
 import { Popover } from "../popover";
 import ColorPickerContent from "./ColorPickerContent.vue";
@@ -204,7 +205,14 @@ const emit = defineEmits<{
   "update:format": [value: import("@starwind-ui/vue/color-picker").ColorPickerFormat];
   "update:open": [value: boolean];
 }>();
-const resolvedFormat = computed(() => format ?? formats[0] ?? "hex");
+const uncontrolledFormat = ref(format ?? formats[0] ?? "hex");
+watch(
+  () => format,
+  (next) => {
+    if (next !== undefined) uncontrolledFormat.value = next;
+  },
+);
+const resolvedFormat = computed(() => format ?? uncontrolledFormat.value);
 const requestedFormats = computed(() => Array.from(new Set(formats)));
 const normalizedFormats = computed(() =>
   requestedFormats.value.includes(resolvedFormat.value)
@@ -274,7 +282,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
       :class="colorPicker({ size, class: className })"
       :model-value="modelValue"
       :default-value="defaultValue"
-      :format="format"
+      :format="resolvedFormat"
       :alpha="alpha"
       :allow-empty="clearable"
       :disabled="disabled"
@@ -288,7 +296,10 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
       :data-size="size"
       data-slot="color-picker"
       @update:model-value="emit('update:modelValue', $event)"
-      @update:format="emit('update:format', $event)"
+      @update:format="
+        uncontrolledFormat = $event;
+        emit('update:format', $event);
+      "
       @value-change="handleValueChange"
       @value-committed="handleValueCommitted"
       @format-change="handleFormatChange"
@@ -336,7 +347,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
         :class="colorPicker({ size, class: className })"
         :model-value="modelValue"
         :default-value="defaultValue"
-        :format="format"
+        :format="resolvedFormat"
         :alpha="alpha"
         :allow-empty="clearable"
         :disabled="disabled"
@@ -351,7 +362,10 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
         :data-floating-root="true"
         data-slot="color-picker"
         @update:model-value="emit('update:modelValue', $event)"
-        @update:format="emit('update:format', $event)"
+        @update:format="
+          uncontrolledFormat = $event;
+          emit('update:format', $event);
+        "
         @value-change="handleValueChange"
         @value-committed="handleValueCommitted"
         @format-change="handleFormatChange"

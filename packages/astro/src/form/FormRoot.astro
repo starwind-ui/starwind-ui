@@ -28,12 +28,12 @@ const {
 ---
 
 <form
+  {...rest}
   data-sw-form
   data-slot="form"
   data-error-visibility={dataErrorVisibility ?? errorVisibility}
   data-revalidation-timing={dataRevalidationTiming ?? revalidationTiming}
   data-validation-timing={dataValidationTiming ?? validationTiming}
-  {...rest}
 >
   <slot />
 </form>

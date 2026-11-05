@@ -5,6 +5,7 @@ import {
 } from "../../shared-recipes/structured/document-controls/input-recipe.js";
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 import { printSvelteRefAttachment } from "./attachments.js";
+import { svelteTrackModel } from "./recipe-framework-operations.js";
 
 export function printSvelteNativeInputValueIndex(file: AdapterIndexFile): AdapterPrintedFile {
   if (file.family?.kind !== "native-input-value")
@@ -28,7 +29,8 @@ export function printSvelteNativeInputValueComponent(
     throw new TypeError("Input requires native-value facts.");
   const facts = file.component.family.facts;
   const connection = nativeInputConnection(facts, {
-    model: "value",
+    model: "commandValue",
+    localModel: "value",
     defaultValue: "seed",
     disabled: "disabled",
     authority: "binding",
@@ -52,14 +54,15 @@ export function printSvelteNativeInputValueComponent(
     onValueChange?: (value: string, detail: InputValueChangeDetails) => void;
     ref?: (element: HTMLInputElement | null) => void;
   };
-  let { value = $bindable(), defaultValue, disabled = ${facts.props.disabled.defaultValue}, type, onValueChange, ref, ...rest }: Props = $props();
+  let { value = $bindable(), value: commandValue, defaultValue, disabled = ${facts.props.disabled.defaultValue}, type, onValueChange, ref, ...rest }: Props = $props();
   const seed = untrack(() => ${nativeInputSeed("defaultValue", "value")});
   const initialMarkup = untrack(() => type === "file" ? undefined : ${initialModelValue("value", "defaultValue")});
   ${connection}
   const attachInput: Attachment<HTMLInputElement> = (element) => {
     const connection = untrack(() => connectInput(element));
     $effect(() => {
-      const next = value;
+      const next = commandValue;
+      ${svelteTrackModel("value")}
       untrack(() => connection.synchronize(next));
     });
     $effect(() => {

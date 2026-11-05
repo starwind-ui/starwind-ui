@@ -12,6 +12,6 @@ type Props = HTMLAttributes<"span"> & {
 const { placeholder, ...rest } = Astro.props;
 ---
 
-<span data-sw-select-value data-placeholder={placeholder} {...rest}>
+<span {...rest} data-sw-select-value data-placeholder={placeholder}>
   <slot />
 </span>

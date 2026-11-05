@@ -9,6 +9,8 @@ export const vueFrameworkOperations: FrameworkOperations = {
   controllerCell: (type, initial) =>
     `const connection: ${type} = { accepted: ${initial}, initialized: false };`,
   readInput: (name) => `props.${name}`,
+  readModel: (name) => `props.${name}`,
+  controlledCell: () => "",
   publishModel: (name, value) => `emit("update:${name}", ${value});`,
   renderAccepted: (name, value) => `uncontrolled${upper(name)}.value = ${value};`,
   proposal: (name, value, details) =>

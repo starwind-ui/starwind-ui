@@ -8,6 +8,6 @@ type Props = HTMLAttributes<"ul">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<ul class={paginationContent({ class: className })} {...rest} data-slot="pagination-content">
+<ul {...rest} class={paginationContent({ class: className })} data-slot="pagination-content">
   <slot />
 </ul>

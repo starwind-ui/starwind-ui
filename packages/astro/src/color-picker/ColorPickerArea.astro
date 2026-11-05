@@ -31,9 +31,9 @@ const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 
 <div
   {...rest}
+  {...initial?.attributes}
   data-x-channel={initial ? undefined : xChannel}
   data-y-channel={initial ? undefined : yChannel}
-  {...initial?.attributes}
   style={mergedStyle}
   data-sw-color-picker-area
 >

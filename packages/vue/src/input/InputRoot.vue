@@ -5,7 +5,7 @@ import {
   type InputValue,
   type InputValueChangeDetails,
 } from "@starwind-ui/runtime/input";
-import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 import { observeFormDiscovery } from "../_internal/form-discovery";
 
 defineOptions({ inheritAttrs: false });
@@ -24,7 +24,8 @@ const emit = defineEmits<{
   valueChange: [value: string, detail: InputValueChangeDetails];
 }>();
 const attrs = useAttrs();
-const isControlled = modelValue.value !== undefined;
+// defineModel keeps a local copy when no parent passes a value. Only the prop is parent-owned.
+const readParentModel = () => (props as { modelValue?: InputValue }).modelValue;
 const rootRef = ref<HTMLInputElement | null>(null);
 const initialDefaultValue = props.defaultValue;
 const initialRenderedValue = modelValue.value ?? initialDefaultValue;
@@ -32,7 +33,7 @@ let connection: ReturnType<typeof connectInput> | undefined;
 defineExpose({ element: rootRef });
 function connectInput(element: HTMLInputElement) {
   const initialModel = modelValue.value;
-  const controlled = initialModel !== undefined;
+
   let disposed = false;
   let associated: HTMLFormElement | null = null;
   let resetTimer: number | undefined;
@@ -52,11 +53,10 @@ function connectInput(element: HTMLInputElement) {
     resetTimer = window.setTimeout(() => {
       resetTimer = undefined;
       if (disposed || event.defaultPrevented) return;
-      synchronize(modelValue.value);
+      synchronize(readParentModel());
     }, 0);
   }
   function bindReset(): void {
-    if (!controlled) return;
     const form = element.form;
     if (associated === form) return;
     clearReset();
@@ -69,10 +69,13 @@ function connectInput(element: HTMLInputElement) {
     defaultValue: initialDefaultValue,
     disabled: props.disabled,
     onValueChange(next, detail) {
-      const previous = modelValue.value;
       emit("valueChange", next, detail);
       modelValue.value = next;
-      if (controlled) synchronize(previous);
+      void nextTick(() => {
+        if (readParentModel() !== undefined) {
+          synchronize(modelValue.value);
+        }
+      });
     },
     ...(initialModel === undefined ? {} : { value: initialModel }),
   });
@@ -103,9 +106,9 @@ onMounted(() => {
 });
 
 watch(
-  modelValue,
+  readParentModel,
   (nextValue) => {
-    if (isControlled) connection?.synchronize(nextValue);
+    connection?.synchronize(nextValue);
   },
   { flush: "post" },
 );

@@ -66,6 +66,11 @@ expands the CLI's installable catalog and schedules a `starwind` minor.
 When one feature contains component delivery and an independent CLI capability, record separable
 release intent. Changesets will apply the highest `starwind` bump during versioning.
 
+## Next Major Checklist
+
+Before you plan a major of the Runtime, Astro, and React fixed group, read
+[next-major.md](./next-major.md). It lists approved breaking changes that wait for that major.
+
 ## CLI Major Authority
 
 An agent must never create, modify, or approve a `starwind` major Changeset unless the user gives
@@ -105,8 +110,9 @@ npm. Recovery reads the original saved plan and resumes only its remaining suffi
 
 Vue and Svelte entries in a normal plan always publish on `beta`, even when the package version has
 no SemVer prerelease suffix. Each package's `latest` stays at its captured baseline until an
-approved promotion changes it. Component versions do not set a beta package channel. Stable graduation and fixed-group
-membership require a separate approved decision. The legacy `--vue-beta` mode exists only to
+approved promotion changes it. Component versions do not set a beta package channel. Vue and Svelte
+join the fixed group when they graduate to stable, as ADR 0007 records. The graduation itself requires
+a separate approved decision. The legacy `--vue-beta` mode exists only to
 recover the frozen first `0.1.0` release; it is not an ordinary Vue release path.
 
 npm assigns `latest` to the first version of a new package, even when that publication uses

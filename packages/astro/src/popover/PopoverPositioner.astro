@@ -24,6 +24,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-popover-positioner
   data-state="closed"
   data-side={side}
@@ -31,7 +32,6 @@ const {
   data-side-offset={sideOffset}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
   data-collision-strategy={collisionStrategy}
-  {...rest}
 >
   <slot />
 </div>

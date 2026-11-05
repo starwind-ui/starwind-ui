@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-combobox-group-label {...rest}>
+<div {...rest} data-sw-combobox-group-label>
   <slot />
 </div>

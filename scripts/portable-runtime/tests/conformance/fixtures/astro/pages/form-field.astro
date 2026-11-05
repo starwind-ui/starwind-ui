@@ -1,0 +1,43 @@
+---
+import StyledField from "@conformance/styled-astro/field/Field.astro";
+import { Field } from "@starwind-ui/astro/field";
+import FieldControl from "../FieldControl.astro";
+import Page from "../Page.astro";
+
+const kinds = ["ps", "pc", "ss", "sc"] as const;
+const cases = [
+  { name: "def", defaultValue: "a" },
+  { name: "pick" },
+  { name: "kid", defaultValue: "a" },
+  { name: "own", defaultValue: "a", own: "own" },
+];
+const forms = kinds.flatMap((kind) =>
+  cases.map((entry) => ({ ...entry, kind, id: `${kind}-${entry.name}` })),
+);
+---
+
+<Page>
+  <main>
+    <button type="button" data-testid="ff-tick">Render again</button>
+    {
+      forms.map((form) => {
+        const Root = form.kind[0] === "p" ? Field.Root : StyledField;
+        return (
+          <form id={form.id}>
+            <Root name="fruit">
+              <FieldControl
+                id={form.id}
+                kind={form.kind}
+                name={form.own}
+                defaultValue={form.defaultValue}
+              />
+            </Root>
+            <button type="submit" data-testid={`${form.id}-submit`}>
+              Submit
+            </button>
+          </form>
+        );
+      })
+    }
+  </main>
+</Page>

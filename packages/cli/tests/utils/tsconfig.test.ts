@@ -12,6 +12,7 @@ import * as fsUtils from "../../src/utils/fs.js";
 import {
   createDefaultTsConfig,
   isAstroReactTsConfigReady,
+  mergeSvelteTsConfig,
   mergeTsConfig,
   mergeVueTsConfig,
   setupTsConfig,
@@ -1304,5 +1305,27 @@ describe("tsconfig", () => {
         );
       });
     });
+  });
+});
+
+describe("mergeSvelteTsConfig", () => {
+  it("adds the source alias first and keeps other settings and targets", () => {
+    expect(
+      mergeSvelteTsConfig({
+        extends: "./base.json",
+        compilerOptions: { strict: true, paths: { "@/*": ["./other/*"], "~/*": ["./x/*"] } },
+      }),
+    ).toEqual({
+      extends: "./base.json",
+      compilerOptions: {
+        strict: true,
+        paths: { "@/*": ["./src/*", "./other/*"], "~/*": ["./x/*"] },
+      },
+    });
+  });
+
+  it("changes nothing on repeat", () => {
+    const merged = mergeSvelteTsConfig({});
+    expect(mergeSvelteTsConfig(merged)).toEqual(merged);
   });
 });

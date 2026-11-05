@@ -28,7 +28,7 @@ export function renderSidebarProvider(
   const initial = models
     .map(
       (name) =>
-        `const ${seed(name)}=${p.initial(p.read(plan.defaults[name]))};\nconst initial${upper(name)}=${p.initial(`${p.read(name)} ?? ${seed(name)}`)};`,
+        `const ${seed(name)}=${p.initial(p.read(plan.defaults[name]))};\nconst initial${upper(name)}=${p.initial(`${p.read(name)} ?? ${seed(name)}`)};${fw.controlledCell(name) && `\n${fw.controlledCell(name)}`}`,
     )
     .join("\n");
   const cells = [
@@ -42,7 +42,11 @@ export function renderSidebarProvider(
     )
     .join("\n");
   const publishBinding = models
-    .map((name) => fw.publishModel(name, `connection.accepted.${name}`))
+    .map((name) =>
+      fw.modelAuthority === "runtime-binding"
+        ? `if(!${fw.controlled(name)}){${fw.publishModel(name, `connection.accepted.${name}`)}}`
+        : fw.publishModel(name, `connection.accepted.${name}`),
+    )
     .join("\n");
   const notify = (name: (typeof models)[number]) => {
     const steps = {
@@ -55,7 +59,7 @@ export function renderSidebarProvider(
   const connectSteps = {
     "retire-previous": "disconnectRuntime();",
     "create-runtime-seed": `const owned=${f.runtime.factory}(root,{
-${models.map((name) => `${plan.defaults[name]}:${seed(name)},\n...(${fw.controlled(name)}?{${name}:${fw.readInput(name)}}:{}),`).join("\n")}
+${models.map((name) => `${plan.defaults[name]}:${seed(name)},\n...(${fw.controlled(name)}?{${name}:${fw.readModel(name)}}:{}),`).join("\n")}
 ${plan.constructorInputs.map((name) => `${name}:${fw.readInput(name)},`).join("\n")}
 ${models.map((name) => `${f.events[name].callbackProp}:(next,detail)=>{${fw.untracked(fw.proposal(f.events[name].callbackProp, "next", "detail"))}},`).join("\n")}
 });connection.instance=owned;`,
@@ -63,7 +67,7 @@ ${models.map((name) => `${f.events[name].callbackProp}:(next,detail)=>{${fw.untr
     "restore-defined-or-retained": models
       .map(
         (name) =>
-          `{const supplied=${fw.readInput(name)};${name === plan.persistence.model ? `const reload=connection.initialized&&${fw.readInput(plan.persistence.enabledInput)}&&!(${fw.controlled(name)})${fw.modelAuthority === "runtime-binding" ? `&&supplied===connection.accepted.${name}` : ""};` : ""}const next=${name === plan.persistence.model ? "reload?undefined:" : ""}supplied ?? (connection.initialized?connection.accepted.${name}:undefined);if(next!==undefined&&owned.${f.state[name].getter}()!==next)owned.${f.state[name].setter}(next,{emit:false});}`,
+          `{const supplied=${fw.readModel(name)};${name === plan.persistence.model ? `const reload=connection.initialized&&${fw.readInput(plan.persistence.enabledInput)}&&!(${fw.controlled(name)})${fw.modelAuthority === "runtime-binding" ? `&&supplied===connection.accepted.${name}` : ""};` : ""}const next=${name === plan.persistence.model ? "reload?undefined:" : ""}${fw.readCommand?.(name) ?? "supplied"} ?? (connection.initialized?connection.accepted.${name}:undefined);if(next!==undefined&&owned.${f.state[name].getter}()!==next)owned.${f.state[name].setter}(next,{emit:false});}`,
       )
       .join("\n"),
     "read-context": "readContext(owned);connection.initialized=true;",
@@ -80,9 +84,9 @@ ${models.map((name) => `${f.events[name].callbackProp}:(next,detail)=>{${fw.untr
   };
   const lifecycle = `function readContext(owned:ReturnType<typeof ${f.runtime.factory}>):void{${readback}}
 function connectRuntime(root:HTMLDivElement):void{${plan.connect.map((step) => connectSteps[step]).join("\n")}}
-function applyParentCommand():void{const owned=connection.instance;if(!owned)return;${models.map((name) => `{const next=${fw.readInput(name)};if(next!==undefined&&owned.${f.state[name].getter}()!==next)owned.${f.state[name].setter}(next,{emit:false});}`).join("\n")}readContext(owned);${fw.modelAuthority === "runtime-binding" ? fw.untracked(publishBinding) : ""}}
+function applyParentCommand():void{const owned=connection.instance;if(!owned)return;${models.map((name) => `{const next=${fw.readCommand?.(name) ?? fw.readModel(name)};if(next!==undefined&&owned.${f.state[name].getter}()!==next)owned.${f.state[name].setter}(next,{emit:false});}`).join("\n")}readContext(owned);${fw.modelAuthority === "runtime-binding" ? fw.untracked(publishBinding) : ""}}
 function disconnectRuntime():void{const owned=connection.instance;if(!owned)return;${plan.cleanup.map((step) => cleanupSteps[step]).join("\n")}}
-${fw.modelAuthority === "runtime-binding" ? `function acceptMobile(next:boolean):void{const owned=connection.instance;if(!owned)return;owned.${f.state[plan.sheet.bindingModel].setter}(next,{emit:false});readContext(owned);${fw.untracked(publishBinding)}}` : ""}`;
+${fw.modelAuthority === "runtime-binding" ? `function acceptMobile(next:boolean):void{const owned=connection.instance;if(!owned)return;if(${fw.controlled(plan.sheet.bindingModel)}){${fw.untracked(fw.publishModel(plan.sheet.bindingModel, "next"))}return;}owned.${f.state[plan.sheet.bindingModel].setter}(next,{emit:false});readContext(owned);${fw.untracked(publishBinding)}}` : ""}`;
   const media = `function connectMedia(query:string):()=>void{const media=typeof window.matchMedia==='function'?window.matchMedia(query):undefined;
 const sync=()=>{${p.writeState(plan.media.context, `media?.matches ?? ${plan.media.fallback}`)}};sync();
 if(media?.addEventListener)media.addEventListener('change',sync);else media?.addListener(sync);

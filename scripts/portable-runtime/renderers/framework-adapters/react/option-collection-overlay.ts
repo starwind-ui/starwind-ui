@@ -62,7 +62,7 @@ export function printReactOptionCollectionOverlayHelper(
   const facts = family.facts;
   const context = facts.context;
 
-  return `import * as React from "react";\n\nexport type ${context.rootContextValueType} = {\n  disabled: boolean;\n  open: ${facts.props.open.type};\n  readOnly: boolean;\n  required: boolean;\n  value: ${facts.props.value.type};\n  selectedLabel: string | null;\n};\n\nexport type ${context.itemContextValueType} = {\n  value: string;\n};\n\nconst fallback${context.rootContext}: ${context.rootContextValueType} = {\n  disabled: false,\n  open: false,\n  readOnly: false,\n  required: false,\n  value: null,\n  selectedLabel: null,\n};\n\nconst fallback${context.itemContext}: ${context.itemContextValueType} = {\n  value: "",\n};\n\nexport const ${context.rootContext} = React.createContext<${context.rootContextValueType} | null>(null);\nexport const ${context.itemContext} = React.createContext<${context.itemContextValueType} | null>(null);\n\nexport function ${context.useRootContext}(): ${context.rootContextValueType} {\n  return React.useContext(${context.rootContext}) ?? fallback${context.rootContext};\n}\n\nexport function ${context.useItemContext}(): ${context.itemContextValueType} {\n  return React.useContext(${context.itemContext}) ?? fallback${context.itemContext};\n}\n`;
+  return `import * as React from "react";\nimport type { ClosedItemProbe } from "../internal/use-close-presence";\n\nexport type ${context.rootContextValueType} = {\n  disabled: boolean;\n  itemProbe?: ClosedItemProbe;\n  open: ${facts.props.open.type};\n  readOnly: boolean;\n  required: boolean;\n  value: ${facts.props.value.type};\n  selectedLabel: string | null;\n};\n\nexport type ${context.itemContextValueType} = {\n  value: string;\n};\n\nconst fallback${context.rootContext}: ${context.rootContextValueType} = {\n  disabled: false,\n  open: false,\n  readOnly: false,\n  required: false,\n  value: null,\n  selectedLabel: null,\n};\n\nconst fallback${context.itemContext}: ${context.itemContextValueType} = {\n  value: "",\n};\n\nexport const ${context.rootContext} = React.createContext<${context.rootContextValueType} | null>(null);\nexport const ${context.itemContext} = React.createContext<${context.itemContextValueType} | null>(null);\n\nexport function ${context.useRootContext}(): ${context.rootContextValueType} {\n  return React.useContext(${context.rootContext}) ?? fallback${context.rootContext};\n}\n\nexport function ${context.useItemContext}(): ${context.itemContextValueType} {\n  return React.useContext(${context.itemContext}) ?? fallback${context.itemContext};\n}\n`;
 }
 
 export function printReactOptionCollectionOverlayIndex(
@@ -99,6 +99,7 @@ function printRootWithLazyClosedContentSupport(facts: AdapterOptionCollectionOve
   type ${valueEvent.detailsType},
 } from "${facts.runtime.importSource}";
 import * as React from "react";
+import { useClosedItemProbe } from "../internal/use-close-presence";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 import { ${facts.context.rootContext} } from "./${facts.context.rootContext.replace(/Context$/, "Context")}";
@@ -176,6 +177,19 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
   const ${props.defaultValue.name}Ref = React.useRef(${props.defaultValue.name});
   const [uncontrolledOpen, setUncontrolledOpenState] = React.useState(${props.defaultOpen.name}Ref.current);
   const [uncontrolledValue, setUncontrolledValueState] = React.useState(${props.defaultValue.name}Ref.current);
+  const [selectedLabel, setSelectedLabel] = React.useState<{
+    label: string | null;
+    value: string | null;
+  }>(() => ({ label: null, value: null }));
+  // A parent can refuse a pick, so its label stays separate until the parent value matches it.
+  const [proposedLabel, setProposedLabel] = React.useState<typeof selectedLabel>(() => ({ label: null, value: null }));
+  // The walk cannot see items inside a user component, so a label from a pick or a probe stays.
+  const settleSelectedLabel = React.useCallback((nextValue: string | null) => {
+    const label = findSelectedOptionText(childrenRef.current, nextValue);
+    setSelectedLabel((current) =>
+      label === null && current.value === nextValue ? current : { label, value: nextValue },
+    );
+  }, []);
   const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
   const uncontrolledValueRef = React.useRef(uncontrolledValue);
   const pendingProgrammaticValueRef = React.useRef<{
@@ -265,10 +279,7 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
       if (!instance) {
         pendingProgrammaticValueRef.current = { emit, value: nextValue };
         if (emit !== false || ${props.value.name}Ref.current !== undefined) return;
-        setSelectedLabel({
-          label: findSelectedOptionText(children, nextValue),
-          value: nextValue,
-        });
+        settleSelectedLabel(nextValue);
         setUncontrolledValue(nextValue);
         return;
       }
@@ -276,10 +287,7 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
       instance.${facts.state.value.setter}(nextValue, { emit });
       if (emit !== false || ${props.value.name}Ref.current !== undefined) return;
 
-      setSelectedLabel({
-        label: findSelectedOptionText(children, nextValue),
-        value: nextValue,
-      });
+      settleSelectedLabel(nextValue);
       setUncontrolledValue(nextValue);
     };
 
@@ -292,7 +300,7 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
         capture: true,
       });
     };
-  }, [children, ensureInstance, setUncontrolledValue]);
+  }, [ensureInstance, settleSelectedLabel, setUncontrolledValue]);
 
   useIsomorphicLayoutEffect(() => {
     const pending = pendingProgrammaticValueRef.current;
@@ -317,7 +325,12 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
   }, []);
 
   useIsomorphicLayoutEffect(() => {
-    if ((${props.open.name}Ref.current ?? uncontrolledOpenRef.current) !== true) return;
+    // Inside a Field, start here. Field starts a control that has no controller, and that controller lacks these options.
+    if (
+      (${props.open.name}Ref.current ?? uncontrolledOpenRef.current) !== true &&
+      !rootRef.current?.closest("[data-sw-field]")
+    )
+      return;
 
     ensureInstance();
   }, [ensureInstance, ${props.open.name}, uncontrolledOpen]);
@@ -341,20 +354,11 @@ ${selectOptionObservers("react")}
   const renderedOpen = ${props.open.name} ?? uncontrolledOpen;
   const selectedValue = ${props.value.name} !== undefined ? ${props.value.name} : (uncontrolledValue ?? null);
   const renderedValue = selectedValue ?? "";
-  const [selectedLabel, setSelectedLabel] = React.useState<{
-    label: string | null;
-    value: string | null;
-  }>(() => ({ label: null, value: null }));
   React.useEffect(/* @starwind-passive-effect */ () => {
-    const timer = window.setTimeout(() => {
-      setSelectedLabel({
-        label: findSelectedOptionText(children, selectedValue),
-        value: selectedValue,
-      });
-    }, 0);
+    const timer = window.setTimeout(() => settleSelectedLabel(selectedValue), 0);
 
     return () => window.clearTimeout(timer);
-  }, [children, selectedValue]);
+  }, [children, selectedValue, settleSelectedLabel]);
   useIsomorphicLayoutEffect(() => {
     const input = inputRef.current;
     const root = rootRef.current;
@@ -378,7 +382,28 @@ ${selectOptionObservers("react")}
   });
 
   const renderedSelectedLabel =
-    selectedLabel.value === selectedValue ? selectedLabel.label : null;
+    selectedLabel.value === selectedValue && selectedLabel.label !== null
+      ? selectedLabel.label
+      : proposedLabel.value === selectedValue
+        ? proposedLabel.label
+        : null;
+  const itemProbe = useClosedItemProbe({
+    itemAttribute: "${facts.attrs.item}",
+    needed:
+      selectedValue !== null &&
+      renderedSelectedLabel === null &&
+      findSelectedOptionText(children, selectedValue) === null,
+    onItem: (item, itemValue) => {
+      setSelectedLabel({ label: getTextFromSelectItem(item), value: itemValue });
+    },
+    value: selectedValue,
+  });
+  // A closed popup has no items, so Runtime reads this label from the root once React commits it.
+  useIsomorphicLayoutEffect(() => {
+    const owned = instanceRef.current;
+    if (renderedSelectedLabel === null || owned?.${facts.state.value.getter}() !== selectedValue) return;
+    owned.${facts.state.value.setter}(selectedValue, { emit: false });
+  }, [renderedSelectedLabel]);
   const initializeFromTriggerEvent = React.useCallback(
     (event: React.SyntheticEvent<HTMLDivElement>) => {
       if (${props.disabled.name}) return;
@@ -393,6 +418,7 @@ ${selectOptionObservers("react")}
   const contextValue = React.useMemo(
     () => ({
       disabled: ${props.disabled.name},
+      itemProbe,
       open: renderedOpen,
       readOnly: ${props.readOnly.name},
       required: ${props.required.name},
@@ -401,6 +427,7 @@ ${selectOptionObservers("react")}
     }),
     [
       ${props.disabled.name},
+      itemProbe,
       renderedOpen,
       ${props.readOnly.name},
       ${props.required.name},
@@ -759,6 +786,7 @@ const ${exportName} = React.forwardRef<HTMLDivElement, ${exportName}Props>(funct
   const closePresence = useClosePresence<HTMLDivElement>({
     keepMounted,
     open: ${contextLocalName}.open,
+    probe: ${contextLocalName}.itemProbe,
   });
   const composedRef = useComposedRefs(forwardedRef, closePresence.ref);
 

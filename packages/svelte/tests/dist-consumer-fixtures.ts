@@ -17,6 +17,7 @@ export const positiveConsumer = `<script lang="ts">
 ${consumerFamilies.map((family) => `import ${names[family]}Default, { ${names[family]}, ${rootName(family)} } from "@starwind-ui/svelte/${family}";`).join("\n")}
 import * as Root from "@starwind-ui/svelte";
 import type { ButtonChildPayload, ButtonChildProps } from "@starwind-ui/svelte/button";
+import type { TriggerChildPayload } from "@starwind-ui/svelte/tooltip";
 import type { AccordionValue } from "@starwind-ui/svelte/accordion";
 import type { SliderValue } from "@starwind-ui/svelte/slider";
 import { createCarousel, type CarouselOptions } from "@starwind-ui/svelte/carousel";
@@ -29,6 +30,7 @@ let accordionValue = $state<AccordionValue | undefined>(undefined);
 let dialogOpen = $state<boolean | undefined>(undefined);
 let sliderValue = $state<SliderValue | undefined>(undefined);
 const buttonRef = (element: HTMLButtonElement | null) => { void element?.disabled; };
+const elementRef = (element: HTMLElement | null) => { void element?.tagName; };
 const childProps: ButtonChildProps = {
   type: "button", "aria-label": "Attached button", onclick: event => { void event.currentTarget.disabled; },
   [createAttachmentKey()]: (element: HTMLButtonElement) => { void element.disabled; return () => {}; },
@@ -41,6 +43,13 @@ void [${consumerFamilies.map((family) => `${names[family]}Default, ${names[famil
 {#snippet child({ props, children }: ButtonChildPayload)}
   <button {...props}>{#if children}{@render children()}{/if}</button>
 {/snippet}
+{#snippet linkChild({ props, children }: TriggerChildPayload)}
+  <a {...props} href="/docs">{#if children}{@render children()}{/if}</a>
+{/snippet}
+<Tooltip.Root><Tooltip.Trigger ref={elementRef} child={linkChild}>Link tooltip</Tooltip.Trigger></Tooltip.Root>
+<Tooltip.Root><Tooltip.Trigger ref={buttonRef} {child}>Button tooltip</Tooltip.Trigger></Tooltip.Root>
+<Popover.Root><Popover.Trigger ref={elementRef} child={linkChild}>Link popover</Popover.Trigger></Popover.Root>
+<NavigationMenu.Root><NavigationMenu.List><NavigationMenu.Item value="docs"><NavigationMenu.Trigger ref={elementRef} child={linkChild}>Link menu</NavigationMenu.Trigger></NavigationMenu.Item></NavigationMenu.List></NavigationMenu.Root>
 <Button.Root {...childProps} ref={buttonRef}>Built button</Button.Root>
 <Checkbox.Root nativeButton bind:checked defaultChecked={false} ref={(element: HTMLButtonElement | HTMLSpanElement | null) => {}} aria-label="Built checkbox"><Checkbox.Indicator keepMounted /></Checkbox.Root>
 <Select.Root bind:open={selectOpen} bind:value={selectValue} defaultValue={null}>
@@ -85,7 +94,7 @@ void [${consumerFamilies.map((family) => `${names[family]}Default, ${names[famil
 <Carousel.Root opts={carouselOptions.opts} ref={(element: HTMLDivElement | null) => {}} aria-label="Built carousel"><Carousel.Viewport><Carousel.Container><Carousel.Item>Slide</Carousel.Item></Carousel.Container></Carousel.Viewport><Carousel.Previous>Previous</Carousel.Previous><Carousel.Next>Next</Carousel.Next></Carousel.Root>
 <Toast.Viewport aria-label="Built toast"><Toast.Template ref={(element: HTMLTemplateElement | null) => {}}><Toast.Root><Toast.Content><Toast.Title><Toast.TitleText>Toast</Toast.TitleText></Toast.Title><Toast.Description>Details</Toast.Description><Toast.Action>Act</Toast.Action><Toast.Close>Close</Toast.Close></Toast.Content></Toast.Root></Toast.Template></Toast.Viewport>
 <ColorPicker.Root value="#123456" format="rgb"><ColorPicker.Label>Color</ColorPicker.Label><ColorPicker.Control><ColorPicker.ValueInput/><ColorPicker.ValueSwatch/><ColorPicker.ValueText/></ColorPicker.Control><ColorPicker.Area><ColorPicker.AreaBackground/><ColorPicker.AreaThumb/><ColorPicker.AreaInput axis="x"/><ColorPicker.AreaInput axis="y"/></ColorPicker.Area><ColorPicker.ChannelSlider><ColorPicker.ChannelSliderTrack/><ColorPicker.ChannelSliderThumb/><ColorPicker.ChannelSliderInput/></ColorPicker.ChannelSlider><ColorPicker.ChannelInput/><ColorPicker.FormatSelect><option value="hex">Hex</option></ColorPicker.FormatSelect><ColorPicker.FormatControl/><ColorPicker.TransparencyGrid/><ColorPicker.SwatchGroup><ColorPicker.Swatch swatchValue="#ff0000"/></ColorPicker.SwatchGroup><ColorPicker.EyeDropperTrigger/><ColorPicker.Clear/><ColorPicker.HiddenInput/></ColorPicker.Root>
-<Sidebar.Provider open={false} mobileOpen={false}><Sidebar.Sidebar/><Sidebar.Trigger {child}>Sidebar</Sidebar.Trigger><Sidebar.Rail/><Sidebar.MenuButton href="">Home</Sidebar.MenuButton></Sidebar.Provider>
+<Sidebar.Provider open={false} mobileOpen={false}><Sidebar.Sidebar/><Sidebar.Trigger {child}>Sidebar</Sidebar.Trigger><Sidebar.Rail/><Sidebar.MenuButton>Home</Sidebar.MenuButton></Sidebar.Provider>
 <Root.CheckboxRoot checked={true} />
 <Root.SelectRoot open={false} value={null} />
 <Root.AccordionRoot value="first" /><Root.AccordionRoot value={["first"]} /><Root.AccordionRoot value={null} />
@@ -107,20 +116,16 @@ export const negativeConsumers: Record<
     source: `<script lang="ts">import Sidebar from "@starwind-ui/svelte/sidebar";import type {Snippet} from "svelte";const child:Snippet<[string]>=null!;</script><Sidebar.Provider><Sidebar.MenuButton {child}/></Sidebar.Provider>`,
     diagnostic: /not assignable to type/,
   },
-  "SidebarAnchorRef.svelte": {
-    source: `<script lang="ts">import Sidebar from "@starwind-ui/svelte/sidebar";const ref=(node:HTMLButtonElement|null)=>{};</script><Sidebar.Provider><Sidebar.MenuButton href="" {ref}/></Sidebar.Provider>`,
-    diagnostic: /not assignable to type/,
-  },
-  "SidebarButtonRef.svelte": {
-    source: `<script lang="ts">import Sidebar from "@starwind-ui/svelte/sidebar";const ref=(node:HTMLAnchorElement|null)=>{};</script><Sidebar.Provider><Sidebar.MenuButton {ref}/></Sidebar.Provider>`,
-    diagnostic: /not assignable to type/,
-  },
-  "SidebarDisabledAnchor.svelte": {
-    source: `<script lang="ts">import Sidebar from "@starwind-ui/svelte/sidebar";</script><Sidebar.Provider><Sidebar.MenuButton href="/settings" disabled>Settings</Sidebar.MenuButton></Sidebar.Provider>`,
+  "SidebarMenuButtonHref.svelte": {
+    source: `<script lang="ts">import Sidebar from "@starwind-ui/svelte/sidebar";</script><Sidebar.Provider><Sidebar.MenuButton href="/settings">Settings</Sidebar.MenuButton></Sidebar.Provider>`,
     diagnostic: /does not exist in type/,
   },
-  "SidebarTaggedProps.svelte": {
-    source: `<script lang="ts">import Sidebar,{type SidebarMenuButtonChildPayload} from "@starwind-ui/svelte/sidebar";</script>{#snippet child(payload:SidebarMenuButtonChildPayload)}{#if payload.kind==="anchor"}<button {...payload.props}></button>{/if}{/snippet}<Sidebar.Provider><Sidebar.MenuButton href="" {child}/></Sidebar.Provider>`,
+  "NavigationMenuPopupSide.svelte": {
+    source: `<script lang="ts">import NavigationMenu from "@starwind-ui/svelte/navigation-menu";</script><NavigationMenu.Root><NavigationMenu.Popup side="top"/></NavigationMenu.Root>`,
+    diagnostic: /does not exist in type/,
+  },
+  "DialogRootSnippetArgument.svelte": {
+    source: `<script lang="ts">import Dialog from "@starwind-ui/svelte/dialog";</script><Dialog.Root>{#snippet children(open:boolean)}{open}{/snippet}</Dialog.Root>`,
     diagnostic: /not assignable to type/,
   },
 };

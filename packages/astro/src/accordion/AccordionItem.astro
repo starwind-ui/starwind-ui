@@ -14,11 +14,11 @@ const { value, disabled = false, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-accordion-item
   data-value={value}
   data-disabled={disabled ? "" : undefined}
   data-state="closed"
-  {...rest}
 >
   <slot />
 </div>

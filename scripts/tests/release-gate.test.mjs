@@ -111,6 +111,11 @@ describe("release gate checkpoints", () => {
       "candidate hosts",
     ])
       expect(index("pack")).toBeLessThan(index(stage));
+    expect(publicStages.find(([name]) => name === "target conformance")).toEqual([
+      "target conformance",
+      ["test:conformance"],
+      "demos",
+    ]);
     expect(publicStages.find(([name]) => name === "vue tests")[1]).toContain("test:all:built");
     expect(publicStages.find(([name]) => name === "vue demo")[1]).toContain("smoke:built");
     expect(publicStages.find(([name]) => name === "svelte tests")[1]).toEqual([

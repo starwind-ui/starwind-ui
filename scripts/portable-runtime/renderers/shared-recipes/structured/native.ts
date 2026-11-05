@@ -13,7 +13,6 @@ export type NativeComponent = keyof typeof nativeContracts;
 export type NativeSurfaceOperation = "activate-placement" | "connect-controller";
 export type NativeRecipe = ConnectionRecipe & {
   component: NativeComponent;
-  controlComposition: { trigger: "native-or-component-root" };
   controlRefresh: { method: "refresh"; schedule: "microtask" };
   surface: {
     connection: readonly NativeSurfaceOperation[];
@@ -49,7 +48,6 @@ export function nativeRecipe(component: NativeComponent): NativeRecipe {
     connect: popoverPlan.connect.filter((step) => step.operation !== "publish-connected-model"),
     publication: "immediate",
     cleanup: ["retain-state", "unsubscribe", "clear-owner", "destroy"],
-    controlComposition: { trigger: "native-or-component-root" },
     controlRefresh: { method: "refresh", schedule: "microtask" },
     surface: {
       connection: contract.parts.some((part) => part.name === "portal")
@@ -73,8 +71,4 @@ export function renderNativeRoot(
   if (!(component in nativeContracts))
     throw new TypeError(`Unsupported native recipe ${component}`);
   return printNativeFrame(target, nativeContracts[component as NativeComponent], plan);
-}
-
-export function nativeTriggerComposition(component: string) {
-  return nativeRecipe(component as NativeComponent).controlComposition.trigger;
 }

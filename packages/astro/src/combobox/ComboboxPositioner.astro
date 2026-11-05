@@ -24,6 +24,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-combobox-positioner
   data-state="closed"
   data-side={side}
@@ -31,7 +32,6 @@ const {
   data-side-offset={sideOffset}
   data-align-offset={alignOffset}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
-  {...rest}
 >
   <slot />
 </div>

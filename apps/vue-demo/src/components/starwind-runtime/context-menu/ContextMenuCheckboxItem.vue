@@ -40,7 +40,7 @@ type ContextMenuCheckboxItemDeclaredProps = {
 } & /* @vue-ignore */ ContextMenuCheckboxItemProps;
 const {
   class: className,
-  checked,
+  checked = undefined,
   defaultChecked = false,
   closeOnClick = false,
   inset = false,

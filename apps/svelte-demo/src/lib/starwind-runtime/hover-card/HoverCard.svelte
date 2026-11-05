@@ -19,6 +19,7 @@
     open = $bindable(),
     "onOpenChange": onOpenChange,
     "children": children,
+    "open": commandOpen,
     ...rest
   }: HoverCardProps = $props();
 </script>
@@ -35,7 +36,7 @@
   {...rest}
   data-slot={"hover-card"}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </PreviewCardRoot>

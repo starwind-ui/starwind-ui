@@ -19,11 +19,17 @@ export function summarizeInitialBundleOutput({
     params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
   }).byteLength;
   const initialOutputPaths = initialOutputFiles.map((outputFile) => outputFile.path);
+  const lazyOutputFiles = outputFiles.filter(
+    (outputFile) =>
+      !initialOutputPaths.includes(outputFile.path) && outputFile.path.endsWith(".js"),
+  );
 
   return {
     brotliBytes,
     gzipBytes,
+    initialChunks: summarizeChunks(initialOutputFiles, entryOutput.path, gzip),
     initialOutputPaths,
+    lazyChunks: summarizeChunks(lazyOutputFiles, entryOutput.path, gzip),
     metafile: metafile ? filterMetafileToOutputs(metafile, initialOutputPaths) : undefined,
     minifiedBytes,
   };
@@ -53,6 +59,20 @@ function collectInitialOutputFiles(outputFiles, entryFilePath) {
   }
 
   return [...seen].map((outputPath) => filesByPath.get(outputPath)).filter(Boolean);
+}
+
+/**
+ * Measures each chunk alone. `gzipBytes` on a bundle row compresses its initial chunks as one file,
+ * which hides the cost of many small chunks. A browser fetches each chunk as its own response.
+ */
+function summarizeChunks(outputFiles, entryFilePath, gzip) {
+  const directory = path.posix.dirname(normalizePath(entryFilePath));
+  return outputFiles
+    .map((outputFile) => ({
+      gzipBytes: gzip(Buffer.from(outputFile.contents), { level: 9 }).byteLength,
+      name: path.posix.relative(directory, normalizePath(outputFile.path)),
+    }))
+    .sort((a, b) => b.gzipBytes - a.gzipBytes || a.name.localeCompare(b.name));
 }
 
 function combineOutputContents(outputFiles) {

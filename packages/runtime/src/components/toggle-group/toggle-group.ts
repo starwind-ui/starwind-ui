@@ -5,6 +5,7 @@ import {
 import {
   assertHTMLElement,
   readBooleanAttribute,
+  readDisabledAttribute,
   readStringOrStringArrayAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
@@ -581,7 +582,7 @@ function readToggleValue(root: HTMLElement, index: number): string {
 function isToggleDisabled(root: HTMLElement): boolean {
   return (
     (root instanceof HTMLButtonElement && root.disabled) ||
-    root.hasAttribute("disabled") ||
+    readDisabledAttribute(root) ||
     root.hasAttribute("data-disabled") ||
     root.getAttribute("aria-disabled") === "true"
   );

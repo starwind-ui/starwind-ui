@@ -161,17 +161,21 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
     ${facts.props.modal.name} = true,
     ${facts.props.name.name},
     open = $bindable(),
+    open: commandOpen,
     ${facts.events.openChange.callbackProp},
     ${facts.props.readOnly.name} = false,
     ref,
     ${facts.props.required.name} = false,
     value = $bindable(),
+    value: commandValue,
     ${facts.events.valueChange.callbackProp},
     ...rest
   }: Props = $props();
 
   const initialOpenModel = untrack(() => open);
   const initialValueModel = untrack(() => value);
+  const openControlled = initialOpenModel !== undefined;
+  const valueControlled = initialValueModel !== undefined;
   const initialDefaultOpen = untrack(() => ${facts.props.defaultOpen.name}) ?? initialOpenModel ?? false;
   const initialValueDefault = untrack(() => ${facts.props.defaultValue.name});
   const initialDefaultValue = initialValueDefault !== undefined ? initialValueDefault : initialValueModel ?? null;
@@ -206,10 +210,6 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
     get value() { return renderedValue; },
   });
 
-  export function close(): void { runtimeInstance?.close(); }
-  export function show(): void { if (!${facts.props.disabled.name}) runtimeInstance?.open(); }
-  export function updatePosition(): void { runtimeInstance?.updatePosition(); }
-
   function readItemLabel(item: HTMLElement | undefined): string | null {
     ${selectFragments("svelte").labelReader}
   }
@@ -243,8 +243,8 @@ ${printSvelteRefAttachment("HTMLDivElement")}
       runtimeInstance = instance;
       ${selectFragments("svelte").commands}
       untrack(() => {
-        synchronizeValue(value !== undefined ? value : renderedValue);
-        synchronizeOpen(open ?? renderedOpen);
+        synchronizeValue(commandValue !== undefined ? commandValue : renderedValue);
+        synchronizeOpen(commandOpen ?? renderedOpen);
       });
       const popup = (ownedPortal ?? root).querySelector("[${facts.attrs.popup}]");
       const labelObserver = new MutationObserver((records) => {
@@ -271,13 +271,13 @@ ${printSvelteRefAttachment("HTMLDivElement")}
       bindReset();
       mounted = true;
       $effect(() => {
-        const next = value;
+        const next = commandValue;
         if (next === undefined) return;
         valueRevision += 1;
         untrack(() => synchronizeValue(next));
       });
       $effect(() => {
-        const next = open;
+        const next = commandOpen;
         if (next !== undefined) untrack(() => synchronizeOpen(next));
       });
 
@@ -340,11 +340,12 @@ ${selectOptionObservers("svelte")}
 
 function printTrigger(facts: AdapterOptionCollectionOverlayFacts): string {
   return printSvelteButtonChild({
+    childElement: facts.childElements?.trigger,
     name: facts.exports.trigger,
     imports: `import { ${facts.context.useRootContext} } from "./${facts.exports.root}.svelte";`,
     init: `const select = ${facts.context.useRootContext}("Trigger");`,
     register: `select.registerTrigger(owner, root); return () => select.registerTrigger(owner, null);`,
-    attributes: `"${facts.attrs.trigger}": "", "data-sw-part": "${facts.parts.trigger.name}", type: "button", role: "${facts.parts.trigger.role ?? "combobox"}", "aria-haspopup": "listbox", "aria-expanded": select.open, "aria-readonly": select.readOnly, "aria-required": select.required, "aria-disabled": select.disabled ? "true" : undefined, "data-state": select.open ? "open" : "closed", disabled: select.disabled,`,
+    attributes: `"${facts.attrs.trigger}": "", "data-sw-part": "${facts.parts.trigger.name}", type: "button", role: "${facts.parts.trigger.role ?? "combobox"}", "aria-haspopup": "listbox", "aria-expanded": select.open, "aria-readonly": select.readOnly, "aria-required": select.required, "aria-disabled": select.disabled ? "true" : "false", "data-state": select.open ? "open" : "closed", disabled: select.disabled,`,
   });
 }
 

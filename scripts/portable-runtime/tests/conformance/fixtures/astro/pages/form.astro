@@ -1,0 +1,64 @@
+---
+import { Checkbox } from "@starwind-ui/astro/checkbox";
+import { Combobox } from "@starwind-ui/astro/combobox";
+import { Input } from "@starwind-ui/astro/input";
+import { Select } from "@starwind-ui/astro/select";
+import { Slider } from "@starwind-ui/astro/slider";
+import { Switch } from "@starwind-ui/astro/switch";
+import Textarea from "@conformance/styled-astro/textarea/Textarea.astro";
+import Page from "../Page.astro";
+---
+
+<Page>
+  <main>
+    <form id="fu">
+      <Select.Root name="sel" defaultValue="a">
+        <Select.Trigger data-testid="fu-sel-trigger">
+          <Select.Value data-testid="fu-sel-value" />
+        </Select.Trigger>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.List>
+              <Select.Item value="a"><Select.ItemText>Apple</Select.ItemText></Select.Item>
+              <Select.Item value="b" data-testid="fu-sel-item-b">
+                <Select.ItemText>Banana</Select.ItemText>
+              </Select.Item>
+            </Select.List>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Root>
+      <Combobox.Root name="cmb" defaultValue="a">
+        <Combobox.InputGroup>
+          <Combobox.Input data-testid="fu-cmb-input" />
+          <Combobox.Trigger data-testid="fu-cmb-trigger">Open</Combobox.Trigger>
+        </Combobox.InputGroup>
+        <Combobox.Positioner>
+          <Combobox.Popup>
+            <Combobox.List>
+              <Combobox.Item value="a"><Combobox.ItemText>Apple</Combobox.ItemText></Combobox.Item>
+              <Combobox.Item value="b" data-testid="fu-cmb-item-b">
+                <Combobox.ItemText>Banana</Combobox.ItemText>
+              </Combobox.Item>
+            </Combobox.List>
+          </Combobox.Popup>
+        </Combobox.Positioner>
+      </Combobox.Root>
+      <Checkbox.Root name="chk" value="yes" data-testid="fu-chk"
+        ><Checkbox.Indicator /></Checkbox.Root
+      >
+      <Switch.Root name="swi" value="yes" data-testid="fu-swi"><Switch.Thumb /></Switch.Root>
+      <Slider.Root name="sld" defaultValue={20}>
+        <Slider.Control>
+          <Slider.Track>
+            <Slider.Indicator />
+            <Slider.Thumb data-testid="fu-sld-thumb" />
+          </Slider.Track>
+        </Slider.Control>
+      </Slider.Root>
+      <Input.Root name="inp" defaultValue="hello" data-testid="fu-inp" />
+      <Textarea name="txt" defaultValue="notes" data-testid="fu-txt" />
+      <Textarea name="txe" data-testid="fu-txe" />
+      <button type="submit" data-testid="fu-submit">Submit</button>
+    </form>
+  </main>
+</Page>

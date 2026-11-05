@@ -193,7 +193,7 @@ let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
 
 provide(${f.context.rootContext}, { disabled, element: rootRef, inputValue: renderedInputValue, mounted, open: renderedOpen, readOnly, registerPortal(owner, element) { if (element) { portalOwner = owner; portalReference = element; } else if (portalOwner === owner) { portalOwner = undefined; portalReference = null; } }, required, value: renderedValue });
-defineExpose({ element: rootRef, close: () => instance?.close(), open: () => { if (!props.disabled) instance?.open(); }, updatePosition: () => instance?.updatePosition() });
+defineExpose({ element: rootRef });
 
 function unbindReset(): void { if (resetTimer !== undefined) window.clearTimeout(resetTimer); resetTimer = undefined; resetForm?.removeEventListener("reset", handleReset); resetForm = null; }
 function handleReset(event: Event): void { ${comboboxResetSettlement("vue")} }
@@ -382,7 +382,12 @@ function printSimplePart(
   >,
 ): string {
   const p = f.parts[name];
-  const extra = name === "group" ? ` role="${f.collection.group.role}"` : "";
+  const extra =
+    name === "group"
+      ? ` role="${f.collection.group.role}"`
+      : name === "icon"
+        ? ` aria-hidden="${f.icon.constantAttributes.ariaHidden}"`
+        : "";
   return simpleSfc(
     f.exports[name],
     elementType(p.defaultElement),

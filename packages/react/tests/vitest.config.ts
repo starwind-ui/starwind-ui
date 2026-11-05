@@ -9,10 +9,12 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const resolve = {
   alias: [
     ...createSourceBackedRuntimeAliases(repoRoot),
-    ...["alert-dialog", "button", "dialog", "drawer", "sidebar"].map((component) => ({
-      find: `@starwind-ui/react/${component}`,
-      replacement: path.join(repoRoot, `packages/react/src/${component}/index.ts`),
-    })),
+    ...["alert-dialog", "button", "combobox", "dialog", "drawer", "field", "input", "sidebar"].map(
+      (component) => ({
+        find: `@starwind-ui/react/${component}`,
+        replacement: path.join(repoRoot, `packages/react/src/${component}/index.ts`),
+      }),
+    ),
     {
       find: "@starwind-ui/react/color-picker",
       replacement: path.join(repoRoot, "packages/react/src/color-picker/index.ts"),

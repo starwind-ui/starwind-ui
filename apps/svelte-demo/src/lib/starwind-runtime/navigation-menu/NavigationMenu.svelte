@@ -30,6 +30,7 @@
     value = $bindable(),
     "onValueChange": onValueChange,
     "children": consumerChildren,
+    "value": commandValue,
     ...rest
   }: NavigationMenuProps = $props();
 </script>
@@ -46,7 +47,7 @@
   data-size={size}
   data-slot={"navigation-menu"}
   onValueChange={onValueChange}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   {#snippet children(acceptedValue)}
     {@render consumerChildren?.(acceptedValue)}

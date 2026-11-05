@@ -564,7 +564,7 @@ export async function init(
     // ================================================================
     //                Prepare TypeScript config file setup
     // ================================================================
-    if (!svelteHostProject)
+    if (!svelteHostProject || svelteHostProject.hostKind === "vite")
       configTasks.push({
         title: "Setup TypeScript path aliases",
         task: async () => {

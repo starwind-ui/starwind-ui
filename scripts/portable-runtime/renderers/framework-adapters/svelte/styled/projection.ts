@@ -5,6 +5,7 @@ import {
 } from "../../../shared-recipes/passive/native-values.js";
 import { sidebarSheetBindings } from "../../../shared-recipes/structured/sidebar/sheet.js";
 import type {
+  StyledOutputAttribute,
   StyledOutputComponent,
   StyledOutputComponentGroup,
   StyledOutputRenderNode,
@@ -40,6 +41,7 @@ import { specializeSvelteStyledNavigationMenu } from "./navigation-menu.js";
 import { specializeSvelteStyledPopover } from "./popover.js";
 import { specializeSvelteStyledProgress } from "./progress.js";
 import { specializeSvelteStyledRadioGroup } from "./radio-group.js";
+import { renderSvelteStyledValue } from "./render.js";
 import { supportsSvelteScope } from "./scope.js";
 import { specializeSvelteStyledScrollArea } from "./scroll-area.js";
 import { specializeSvelteStyledSelect } from "./select.js";
@@ -172,8 +174,8 @@ export function projectSvelteStyledComponent(
     group.component === "avatar" &&
     ["Avatar", "AvatarImage", "AvatarFallback"].includes(component.exportName);
   const isVideo = group.component === "video";
-  const valuePolicy = nativeValuePolicy(group.component, component.exportName);
-  const isNativeForm = Boolean(nativeValuePolicy(group.component));
+  const valuePolicy = nativeValuePolicy(component.nativeModel);
+  const isNativeForm = group.components.some((candidate) => candidate.nativeModel);
   const isSpinner = group.component === "spinner";
   const isNavigation = ["button-group", "pagination"].includes(group.component);
   const isBreadcrumb = group.component === "breadcrumb";
@@ -241,6 +243,7 @@ export function projectSvelteStyledComponent(
     | "semanticNativeTag"
     | "semanticNativeSlot"
     | "typeExports"
+    | "templatePrelude"
   > = isCombobox
     ? specializeSvelteStyledCombobox(group, component, options)
     : isNavigationMenu
@@ -617,7 +620,7 @@ export function projectSvelteStyledComponent(
             ? {
                 bindings: [
                   { name: "value", expression: "value" },
-                  { name: "format", expression: "format" },
+                  takeAcceptedStateBinding("format", attrs, component.variables),
                 ],
               }
             : {}),
@@ -1000,6 +1003,28 @@ export function projectSvelteStyledComponent(
     fileName: `${component.exportName}.svelte`,
     variables,
     render,
+  };
+}
+
+/** Reads the contract binding. An accepted publication writes the declared state and the model. */
+function takeAcceptedStateBinding(
+  name: string,
+  attrs: StyledOutputAttribute[],
+  variables: StyledOutputComponent["variables"],
+): { name: string; expression: string } {
+  const index = attrs.findIndex((attr) => attr.name === name);
+  const value = attrs[index]?.value;
+  const state = variables.find(
+    (variable) =>
+      supportsSvelteScope(variable.targetScopes) && variable.state?.acceptedFrom === name,
+  );
+  if (!value || !state) {
+    throw new TypeError(`Svelte Styled ${name} binding requires its contract value and state.`);
+  }
+  attrs.splice(index, 1);
+  return {
+    name,
+    expression: `() => ${renderSvelteStyledValue(value)}, (next) => { if (next !== undefined && !${name}Controlled) ${state.name} = next; ${name} = next; }`,
   };
 }
 

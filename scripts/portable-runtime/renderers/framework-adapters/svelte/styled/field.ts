@@ -110,15 +110,6 @@ export function specializeSvelteStyledField(
     base =
       'Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; ref?: (element: HTMLDivElement | null) => void; "data-slot"?: string }';
   }
-  const separator = component.exportName === "FieldSeparator";
-  if (separator) {
-    component.variables = [];
-    root.attrs = root.attrs.filter((attr) => attr.name !== "data-content");
-    root.attrs.push({
-      name: "data-content",
-      value: { type: "raw", code: 'hasContent ? "true" : "false"' },
-    });
-  }
   return {
     imports,
     publicTypes: `export type ${component.exportName}Props = ${variantType ? `Omit<${base}, "size"> & ${variantType}` : base};`,
@@ -128,10 +119,7 @@ export function specializeSvelteStyledField(
       { name: "ref" },
     ],
     rest: component.destructure.rest,
-    setup: [
-      ...(native ? [printInlineNativeRefAttachment()] : []),
-      ...(separator ? ["let hasContent = $derived(Boolean(children));"] : []),
-    ],
+    setup: native ? [printInlineNativeRefAttachment()] : [],
     ...(native ? { semanticNativeTag: root.tag } : {}),
   };
 }

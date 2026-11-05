@@ -22,6 +22,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-context-menu
   data-sw-menu
   data-default-open={defaultOpen ? "true" : undefined}
@@ -29,7 +30,6 @@ const {
   data-modal={modal ? "true" : "false"}
   data-close-delay={closeDelay}
   data-state={defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </div>

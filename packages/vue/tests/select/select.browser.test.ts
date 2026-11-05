@@ -27,6 +27,7 @@ import {
   type ComponentPublicInstance,
   createApp,
   createSSRApp,
+  defineComponent,
   h,
   nextTick,
   reactive,
@@ -590,6 +591,114 @@ describe("Vue Select public behavior", () => {
     expect(overlays.children).toHaveLength(0);
   });
 
+  it("shows authored Select.Value content until a value exists", async () => {
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect(
+          { modelValue: selected.value },
+          [{ label: "Vue", value: "vue" }],
+          { disabled: true },
+          () =>
+            h(SelectTrigger, null, {
+              default: () => h(SelectValue, null, { default: () => "Astro" }),
+            }),
+        ),
+    });
+    const selected = ref<string | null | undefined>(undefined);
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+    await nextTick();
+    const value = host.querySelector<HTMLElement>("[data-sw-select-value]")!;
+    expect(value.textContent).toBe("Astro");
+
+    selected.value = "vue";
+    await nextTick();
+    await nextTick();
+    expect(value.textContent).toBe("Vue");
+
+    selected.value = null;
+    await nextTick();
+    await nextTick();
+    expect(value.textContent).toBe("Astro");
+  });
+
+  it("restores authored Value content when a Select that starts with a value clears", async () => {
+    const selected = ref<string | null>("vue");
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect(
+          { modelValue: selected.value },
+          [{ label: "Vue", value: "vue" }],
+          { disabled: true },
+          () =>
+            h(SelectTrigger, null, {
+              default: () => h(SelectValue, null, { default: () => "Pick one" }),
+            }),
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+    await nextTick();
+    const value = host.querySelector<HTMLElement>("[data-sw-select-value]")!;
+    expect(value.textContent).toBe("Vue");
+
+    selected.value = null;
+    await nextTick();
+    await nextTick();
+    expect(value.textContent).toBe("Pick one");
+  });
+
+  it("opens through a component child in Primitive and Styled Trigger", async () => {
+    const ChildButton = defineComponent({
+      inheritAttrs: false,
+      setup(_, { attrs, slots }) {
+        return () => h("button", { ...attrs, type: "button" }, slots.default?.());
+      },
+    });
+    const errors = vi.fn();
+    const host = appendHost();
+    const app = createApp({
+      render: () => [
+        renderSelect({}, [], { disabled: true }, () =>
+          h(
+            SelectTrigger,
+            { asChild: true },
+            { default: () => h(ChildButton, { id: "primitive-component" }, () => "Choose") },
+          ),
+        ),
+        h(StyledSelect, null, {
+          default: () => [
+            h(
+              StyledSelectTrigger,
+              { asChild: true },
+              { default: () => h(ChildButton, { id: "styled-component" }, () => "Choose") },
+            ),
+            h(StyledSelectContent),
+          ],
+        }),
+      ],
+    });
+    app.config.errorHandler = errors;
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    for (const id of ["primitive-component", "styled-component"]) {
+      const trigger = host.querySelector<HTMLElement>(`#${id}`)!;
+      expect(trigger.hasAttribute("data-sw-select-trigger")).toBe(true);
+      trigger.click();
+      await frame();
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      trigger.click();
+      await frame();
+    }
+    expect(errors).not.toHaveBeenCalled();
+  });
+
   it("rebinds a direct Primitive composed trigger after native child replacement", async () => {
     type ExposedElement = ComponentPublicInstance & { element: HTMLElement | null };
     const replacement = ref(false);
@@ -706,6 +815,39 @@ describe("Vue Select public behavior", () => {
     await nextTick();
     expect(child).toBeNull();
     expect(retained.element).toBeNull();
+  });
+
+  it("disables a component child while the Select is disabled", async () => {
+    const ChildButton = defineComponent({
+      inheritAttrs: false,
+      setup(_, { attrs, slots }) {
+        return () => h("button", { ...attrs, type: "button" }, slots.default?.());
+      },
+    });
+    const state = reactive({ disabled: true });
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect({ disabled: state.disabled }, [], { disabled: true }, () =>
+          h(
+            SelectTrigger,
+            { asChild: true },
+            { default: () => h(ChildButton, { id: "disabled-component" }, () => "Choose") },
+          ),
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    const trigger = host.querySelector<HTMLButtonElement>("#disabled-component")!;
+    expect(trigger.disabled).toBe(true);
+    expect(trigger.getAttribute("aria-disabled")).toBe("true");
+
+    state.disabled = false;
+    await frame();
+    expect(trigger.disabled).toBe(false);
+    expect(trigger.getAttribute("aria-disabled")).toBe("false");
   });
 
   it("keeps native disabled off a composed anchor while retaining disabled state", async () => {

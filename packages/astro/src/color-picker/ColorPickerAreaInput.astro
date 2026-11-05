@@ -33,10 +33,10 @@ const mergedStyle = mergeColorPickerInitialStyles(style, initial);
 
 <input
   {...rest}
+  {...initial?.attributes}
   type={initial ? undefined : "range"}
   data-axis={initial ? undefined : axis}
   data-step={initial ? undefined : step}
-  {...initial?.attributes}
   value={initial?.properties.value ?? value}
   disabled={initial?.properties.disabled ?? disabled}
   readonly={initial?.properties.readOnly ?? readOnly}

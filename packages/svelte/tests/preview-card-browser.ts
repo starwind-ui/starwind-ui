@@ -163,8 +163,7 @@ ${styled ? "" : "{#key backdropKey}<Primitive.Backdrop data-backdrop={id} />{/ke
 </Overlay.${popup}>{/key}{/if}
 ${styled ? "" : "</Primitive.Positioner>{/key}</Primitive.Viewport>{/key}"}
 {/snippet}
-{#snippet parts(accepted: boolean)}
-<output data-rendered={id}>{String(accepted)}</output>
+{#snippet parts()}
 {#key key}<Overlay.Trigger href={"#destination-" + id} {disabled} openDelay={triggerOpenDelay} closeDelay={triggerCloseDelay} data-trigger={id} data-open-delay={rawOpenDelay} data-close-delay={rawCloseDelay} title={"Profile " + id} tabindex={2} onclick={() => clicks++} {...reactiveProps} {...forwarded} ref={second ? refB : refA} class={className}>{#snippet child({ props, children })}{#if componentChild}<LocalAnchor {...props}>{@render children?.()}</LocalAnchor>{:else}<a {...props}>{@render children?.()}</a>{/if}{/snippet}Show {id}</Overlay.Trigger>{/key}
 {#if id.startsWith("restore-") && showSecond}<div data-sw-preview-card={foreignSecond ? "" : undefined}><Overlay.Trigger data-trigger-b={id} style="position:fixed;left:700px;top:120px;width:80px;height:30px">{#snippet child({ props, children })}<a {...props}>{@render children?.()}</a>{/snippet}Second</Overlay.Trigger></div>{/if}
 {#key portalKey}${styled ? "{@render surface()}" : "<Primitive.Portal {container} disabled={disablePortal}>{@render surface()}</Primitive.Portal>"}{/key}
@@ -198,7 +197,7 @@ const hover = id => button(id).dispatchEvent(new PointerEvent("pointerenter", {p
 const trigger = async id => { document.getElementById("outside").focus(); document.dispatchEvent(new KeyboardEvent("keydown", {key:"Tab", bubbles:true})); button(id).focus(); await wait(650); };
 const close = id => button(id).dispatchEvent(new FocusEvent("focusout", {relatedTarget:document.getElementById("outside"), bubbles:true}));
 const wrapper = id => popup(id)?.closest('[data-sw-preview-card-portal]');
-const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: document.querySelector('[data-rendered="' + id + '"]')?.textContent ?? null });
+const state = id => ({ ...cases[id].snapshot(), visible: popup(id) ? !popup(id).hidden : null, rendered: root(id) ? String(root(id).getAttribute("data-state") === "open") : null });
 assert(before.every(node => node.isConnected), "PreviewCard hydration replaced owners");
 const result = await (async () => { ${actions} })();
 const oldCases = {...cases}, staleButtons = Object.keys(cases).map(button).filter(Boolean);

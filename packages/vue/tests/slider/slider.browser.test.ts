@@ -219,6 +219,26 @@ describe("Vue Slider public behavior", () => {
     expect(input.disabled).toBe(true);
   });
 
+  it("passes the hidden range input to inputRef", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const inputRef = vi.fn();
+    const app = createApp({
+      render: () =>
+        h(SliderRoot, { defaultValue: 30 }, () =>
+          h(SliderControl, null, () => [h(SliderTrack), h(SliderThumb, { index: 0, inputRef })]),
+        ),
+    });
+    app.mount(host);
+    await nextTick();
+
+    const input = host.querySelector<HTMLInputElement>("[data-sw-slider-input]");
+    expect(input).toBeInstanceOf(HTMLInputElement);
+    expect(inputRef.mock.calls[0]?.[0]).toBe(input);
+    app.unmount();
+    expect(inputRef).toHaveBeenLastCalledWith(null, expect.anything());
+  });
+
   it("preserves Styled slots, orientation, attrs, refs, and cleanup", async () => {
     const abort = vi.spyOn(AbortController.prototype, "abort");
     const host = document.createElement("div");

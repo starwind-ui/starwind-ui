@@ -40,7 +40,7 @@ type DropdownCheckboxItemDeclaredProps = {
 } & /* @vue-ignore */ DropdownCheckboxItemProps;
 const {
   class: className,
-  checked,
+  checked = undefined,
   defaultChecked = false,
   closeOnClick = false,
   inset = false,

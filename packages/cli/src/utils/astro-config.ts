@@ -1,10 +1,13 @@
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
-import semver from "semver";
 
 import { readJsonFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 
+import {
+  defaultInstalledVersionReader,
+  needsExperimentalAstroSvg,
+} from "./astro-integration-version.js";
 import { fileExists } from "./fs.js";
 import {
   type AstArrayExpression,
@@ -170,10 +173,10 @@ function addIntegrationEdit(
   });
 }
 
-async function getAstroVersion(): Promise<string | null> {
+async function getAstroRange(): Promise<string | null> {
   try {
     const pkg = await readJsonFile("package.json");
-    if (pkg.dependencies?.astro) return pkg.dependencies.astro.replace(/^\^|~/, "");
+    if (pkg.dependencies?.astro) return pkg.dependencies.astro;
     p.log.error(
       highlighter.error(
         "Astro seems not installed in your project, please check your package.json",
@@ -199,8 +202,10 @@ export async function setupAstroConfig(): Promise<boolean> {
         'import { defineConfig } from "astro/config";\n\nexport default defineConfig({});\n';
     }
 
-    const astroVersion = await getAstroVersion();
-    const includeSvg = Boolean(astroVersion && semver.lt(astroVersion, "5.7.0"));
+    const astroRange = await getAstroRange();
+    const includeSvg =
+      astroRange !== null &&
+      needsExperimentalAstroSvg(astroRange, await defaultInstalledVersionReader("astro"));
     const updated = updateAstroTailwindConfig(content, includeSvg);
     if (updated === null) return false;
     await fs.writeFile(configPath, updated, "utf-8");

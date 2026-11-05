@@ -1,6 +1,5 @@
 <script module lang="ts">
   import type { ComponentProps, Snippet } from "svelte";
-  import { untrack } from "svelte";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
   import { InputOtpRoot as PrimitivePart } from "@starwind-ui/svelte/input-otp";
@@ -30,17 +29,6 @@
     "children": children,
     ...rest
   }: InputOtpProps = $props();
-
-  // Observe incoming commands after local bindable publication shadows a plain prop.
-  let observedCommand = untrack(() => commandValue);
-  $effect(() => {
-    const next = commandValue;
-    untrack(() => {
-      if (Object.is(next, observedCommand)) return;
-      observedCommand = next;
-      if (!Object.is(next, value)) value = next;
-    });
-  });
 </script>
 
 <InputOtpRoot
@@ -59,7 +47,7 @@
   {...rest}
   data-size={size}
   data-slot={"input-otp"}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   {@render children?.()}
 </InputOtpRoot>

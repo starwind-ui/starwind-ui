@@ -170,6 +170,10 @@ const basicCases = [
   ]),
   { id: "form", defaultValue: "astro", external: true },
   { id: "reset", defaultValue: "astro", defaultInputValue: "Seed query" },
+  { id: "order-omitted", mode: "omitted", defaultValue: "astro" },
+  { id: "order-bound", mode: "bound", defaultValue: "astro" },
+  { id: "order-cancel", mode: "bound", defaultValue: "astro" },
+  { id: "first-open", defaultValue: "astro", defaultOpen: true },
 ];
 
 export async function verifyStyledComboboxComposition(consumer: DistConsumer) {
@@ -268,6 +272,23 @@ for(const model of models){
  await finish();assert(Object.is(domOwner.snapshot()[model],domBefore[model]),"later DOM cancellation preserves "+model);
  if(model==="inputValue")assert(el("input",domId).value===(domBefore.inputValue??""),"later DOM cancellation repairs visible native text");
 }
+const ssrMarkup=new DOMParser().parseFromString(ssr,"text/html"),ssrRoot=ssrMarkup.querySelector('[data-root="first-open"]'),ssrPopup=ssrMarkup.querySelector('[data-popup="first-open"]'),ssrPositioner=ssrPopup?.parentElement;
+assert(ssrRoot.getAttribute("data-state")==="open"&&ssrRoot.getAttribute("data-default-open")==="true","first render shows the open Root");
+assert(!ssrPopup||(!ssrPopup.hasAttribute("hidden")&&ssrPopup.getAttribute("data-state")==="open"&&ssrPositioner.getAttribute("data-state")==="open"),"first render shows the open Popup and Positioner");
+assert(ssrRoot.getAttribute("data-filter-mode")==="contains"&&ssrRoot.getAttribute("data-highlight-item-on-hover")==="true"&&ssrRoot.getAttribute("data-modal")==="false"&&ssrRoot.getAttribute("data-locale")==="en","first render carries Root options");
+assert(el("root","first-open").getAttribute("data-state")==="open"&&!el("popup","first-open").hidden,"hydrated default open stays open");
+assert(el("clear","omitted").hasAttribute("aria-label")===${styled},"only Styled Clear supplies an English label");
+const recordOrder=root=>{const order=[];root.addEventListener("starwind:value-change",event=>order.push("value:"+event.detail.value));root.addEventListener("starwind:input-value-change",event=>order.push("input:"+event.detail.inputValue+":"+event.detail.reason));root.addEventListener("starwind:open-change",event=>order.push("open:"+event.detail.open));return order;};
+for(const id of ["order-omitted","order-bound"]){
+ const owner=cases[id];click(el("trigger",id));await settle();const order=recordOrder(owner.root());
+ click(el("item",id+"-react"));await finish();assert(order.join()==="value:react,input:React:item-press,open:false",id+" item press order: "+order.join());assert(el("input",id).value==="React",id+" item press text");
+ if(id==="order-bound")assert(owner.snapshot().inputValue==="React",id+" item press binding");
+ order.length=0;click(el("clear",id));await finish();assert(order.join()==="value:null,input::clear",id+" clear order: "+order.join());assert(el("input",id).value==="",id+" clear text");
+ if(id==="order-bound")assert(owner.snapshot().inputValue==="",id+" clear binding");
+}
+const orderCancel=cases["order-cancel"];click(el("trigger","order-cancel"));await settle();orderCancel.proposals(["inputValue"]);await settle();const canceledOrder=recordOrder(orderCancel.root());click(el("item","order-cancel-react"));await finish();
+assert(canceledOrder.join()==="value:react,input:React:item-press,open:false","canceled text keeps the order: "+canceledOrder.join());assert(orderCancel.snapshot().value==="react"&&orderCancel.snapshot().inputValue===undefined&&el("input","order-cancel").value==="Astro","item press text can be canceled");
+orderCancel.proposals([]);await settle();
 const coupled=cases.coupled;coupled.setModel("open",true);await settle();type("coupled","rea");await settle();coupled.proposals(["inputValue"]);await settle();click(el("item","coupled-react"));await finish();
 assert(coupled.snapshot().value==="react"&&coupled.snapshot().inputValue==="rea"&&!coupled.snapshot().open,"selection acceptance is independent from text cancellation");
 assert(coupled.root().querySelector("[data-sw-combobox-hidden-input]").value==="react","accepted selection participates in forms after text cancellation");

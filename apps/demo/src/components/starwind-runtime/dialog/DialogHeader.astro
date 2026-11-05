@@ -8,6 +8,6 @@ type Props = HTMLAttributes<"div">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={dialogHeader({ class: className })} {...rest} data-slot="dialog-header">
+<div {...rest} class={dialogHeader({ class: className })} data-slot="dialog-header">
   <slot />
 </div>

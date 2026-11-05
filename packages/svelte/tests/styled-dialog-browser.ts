@@ -128,8 +128,7 @@ export function changeClass() { className = "after"; }
 export function hide() { shown = false; }
 export function snapshot() { return { model: model ?? "undefined", selected: selected ?? null, selectOpen: selectOpen ?? false, writes: [...writes], callbacks: [...callbacks], completions: [...completions], refs: [...refs], closeRefs: [...closeRefs], popupRefs: [...popupRefs], headerRefs: [...headerRefs], attachments: [...attachments], headerAttachments: [...headerAttachments] }; }
 </script>
-{#snippet parts(accepted: boolean)}
-  <output data-rendered={id}>{String(accepted)}</output>
+{#snippet parts()}
   <Dialog.Trigger data-trigger={id} {...forwarded} ref={second ? refB : refA} class={className}>
     {#snippet child({ props, children })}<Button {...props}>{@render children?.()}</Button>{/snippet}Open {id}
   </Dialog.Trigger>
@@ -174,7 +173,7 @@ const popup = (id) => document.querySelector('[data-popup="' + id + '"]');
 const button = (id) => document.querySelector('[data-trigger="' + id + '"]');
 const trigger = (id) => button(id)?.click();
 const close = (id) => document.querySelector('[data-close="' + id + '"]')?.click();
-const state = (id) => ({ ...cases[id].snapshot(), native: popup(id)?.open ?? null, topLayer: popup(id)?.matches(":modal") ?? false, rendered: document.querySelector('[data-rendered="' + id + '"]')?.textContent ?? null });
+const state = (id) => ({ ...cases[id].snapshot(), native: popup(id)?.open ?? null, topLayer: popup(id)?.matches(":modal") ?? false, rendered: root(id) ? String(root(id).getAttribute("data-state") === "open") : null });
 assert(before.every((node,index) => node === target.querySelectorAll("[data-trigger]")[index]), "Dialog hydration replaced trigger owners");
 assert(before.every((node) => node.tagName === "BUTTON" && node.hasAttribute("data-sw-button") && node.querySelectorAll("button").length === 0 && node.getAttribute("data-slot") === "dialog-trigger"), "Dialog Styled Button composition ownership");
 const result = await (async () => { ${actions} })();

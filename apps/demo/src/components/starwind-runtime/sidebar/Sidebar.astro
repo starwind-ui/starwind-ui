@@ -30,13 +30,13 @@ const mobileStyle = { "--sidebar-width": "18rem" };
 {
   collapsible === "none" ? (
     <div
+      {...rest}
       class={[
         "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
-      {...rest}
       data-slot="sidebar"
     >
       <slot />
@@ -55,7 +55,7 @@ const mobileStyle = { "--sidebar-width": "18rem" };
       >
         <div data-slot="sidebar-gap" class={sidebarGap({ variant })} />
 
-        <div class={sidebarContainer({ side, variant })} {...rest} data-slot="sidebar-container">
+        <div {...rest} class={sidebarContainer({ side, variant })} data-slot="sidebar-container">
           <div data-sidebar="sidebar" data-slot="sidebar-inner" class={sidebarInner({ variant })}>
             <slot />
           </div>

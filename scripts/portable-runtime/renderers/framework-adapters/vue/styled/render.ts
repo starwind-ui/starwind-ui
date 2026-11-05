@@ -10,7 +10,7 @@ import type {
 import { renderVueComputedExpression, renderVueExpression } from "./expressions.js";
 import { renderVueImports } from "./imports.js";
 import { projectVueStyledComponent } from "./projection.js";
-import { renderVuePropKey } from "./props.js";
+import { isVueBooleanCastType, renderVuePropKey } from "./props.js";
 import { getVueNativeAttributesType } from "./public-contracts.js";
 import { renderExposedRef } from "./ref-bridges.js";
 import { escapeVueAttribute, toVueAttributeName } from "./render-tree.js";
@@ -441,19 +441,28 @@ function renderSetup(projection: VueStyledComponentProjection): string {
   );
   const slots = `defineSlots<{\n${slotLines.join("\n")}\n}>();`;
   const destructuredNames = new Set(props.destructure.map((prop) => prop.name));
+  const booleanCastNames = new Set(
+    props.declared.fields
+      .filter((field) => field.optional && isVueBooleanCastType(field.type))
+      .map((field) => field.name),
+  );
   const projectedDestructureProps = [
-    ...props.destructure.map((prop) => {
-      const model = projection.models.find((candidate) => candidate.name === prop.name);
-      return model?.type === "boolean" && prop.defaultValue === undefined
+    ...props.destructure.map((prop) =>
+      booleanCastNames.has(prop.name) && prop.defaultValue === undefined
         ? { ...prop, defaultValue: "undefined" }
-        : prop;
-    }),
-    ...projection.models
-      .filter((model) => !destructuredNames.has(model.name))
-      .map((model) => ({
+        : prop,
+    ),
+    ...props.declared.fields
+      .filter(
+        (field) =>
+          !destructuredNames.has(field.name) &&
+          (booleanCastNames.has(field.name) ||
+            projection.models.some((model) => model.name === field.name)),
+      )
+      .map((field) => ({
         alias: undefined,
-        defaultValue: model.type === "boolean" ? "undefined" : undefined,
-        name: model.name,
+        defaultValue: booleanCastNames.has(field.name) ? "undefined" : undefined,
+        name: field.name,
       })),
   ];
   const propBindings = new Set(projectedDestructureProps.map((prop) => prop.alias ?? prop.name));
@@ -520,7 +529,9 @@ function renderSetup(projection: VueStyledComponentProjection): string {
   const variables = projection.computed
     .map((variable) => {
       const expression = renderVueComputedExpression(variable.expression);
-      return `const ${variable.name} = computed(() => ${expression});`;
+      return variable.state
+        ? `const ${variable.name} = ref(${expression});\nwatch(() => ${variable.state.acceptedFrom}, (next) => {\n  if (next !== undefined) ${variable.name}.value = next;\n});`
+        : `const ${variable.name} = computed(() => ${expression});`;
     })
     .join("\n");
 
@@ -600,7 +611,15 @@ function renderNode(
             primitiveAliases,
             attrsBinding,
           )
-        : renderTag(node.tag, node.attrs, node.children, level, primitiveAliases, attrsBinding);
+        : renderTag(
+            node.tag,
+            node.attrs,
+            node.children,
+            level,
+            primitiveAliases,
+            attrsBinding,
+            node.inlineChildren,
+          );
     case "fragment":
       return renderNodes(node.children, level, primitiveAliases, attrsBinding);
     case "icon":
@@ -671,6 +690,7 @@ function renderTag(
   level: number,
   primitiveAliases: Record<string, string>,
   attrsBinding: string,
+  inlineChildren = false,
 ): string {
   const pad = "  ".repeat(level);
   const renderedAttrs = attrs
@@ -680,6 +700,9 @@ function renderTag(
     ? `${pad}<${tag}\n${renderedAttrs.map((attr) => `${pad}  ${attr}`).join("\n")}\n${pad}>`
     : `${pad}<${tag}>`;
   if (!children.length) return `${open.slice(0, -1)} />`;
+  if (inlineChildren) {
+    return `${open}${renderNodes(children, 0, primitiveAliases, attrsBinding)}</${tag}>`;
+  }
   return `${open}\n${renderNodes(children, level + 1, primitiveAliases, attrsBinding)}\n${pad}</${tag}>`;
 }
 
@@ -823,6 +846,7 @@ const AsChildTrigger = defineComponent({
       mergeProps(attrs, {
         asChild: true,
         class: triggerClass.value,
+        "data-size": size,
         "data-slot": "select-trigger",
         ref: setElement,
       }),
@@ -836,6 +860,7 @@ const AsChildTrigger = defineComponent({
     :ref="setElement"
     v-bind="attrs"
     :class="triggerClass"
+    :data-size="size"
     data-slot="select-trigger"
   >
     <slot>

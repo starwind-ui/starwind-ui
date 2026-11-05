@@ -1,0 +1,96 @@
+---
+import {
+  Combobox as StyledCombobox,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxInputGroup,
+  ComboboxItem,
+  ComboboxTrigger,
+} from "@conformance/styled-astro/combobox";
+import {
+  Select as StyledSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@conformance/styled-astro/select";
+import { Combobox } from "@starwind-ui/astro/combobox";
+import { Select } from "@starwind-ui/astro/select";
+
+const { id, kind, name, defaultValue } = Astro.props;
+---
+
+{
+  kind === "ps" && (
+    <Select.Root name={name} defaultValue={defaultValue}>
+      <Select.Trigger data-testid={`${id}-trigger`}>
+        <Select.Value />
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup>
+          <Select.List>
+            <Select.Item value="a">
+              <Select.ItemText>Apple</Select.ItemText>
+            </Select.Item>
+            <Select.Item value="b" data-testid={`${id}-item-b`}>
+              <Select.ItemText>Banana</Select.ItemText>
+            </Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+  )
+}
+{
+  kind === "pc" && (
+    <Combobox.Root name={name} defaultValue={defaultValue}>
+      <Combobox.InputGroup>
+        <Combobox.Input />
+        <Combobox.Trigger data-testid={`${id}-trigger`}>Open</Combobox.Trigger>
+      </Combobox.InputGroup>
+      <Combobox.Positioner>
+        <Combobox.Popup>
+          <Combobox.List>
+            <Combobox.Item value="a">
+              <Combobox.ItemText>Apple</Combobox.ItemText>
+            </Combobox.Item>
+            <Combobox.Item value="b" data-testid={`${id}-item-b`}>
+              <Combobox.ItemText>Banana</Combobox.ItemText>
+            </Combobox.Item>
+          </Combobox.List>
+        </Combobox.Popup>
+      </Combobox.Positioner>
+    </Combobox.Root>
+  )
+}
+{
+  kind === "ss" && (
+    <StyledSelect name={name} defaultValue={defaultValue}>
+      <SelectTrigger data-testid={`${id}-trigger`}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="a">Apple</SelectItem>
+        <SelectItem value="b" data-testid={`${id}-item-b`}>
+          Banana
+        </SelectItem>
+      </SelectContent>
+    </StyledSelect>
+  )
+}
+{
+  kind === "sc" && (
+    <StyledCombobox name={name} defaultValue={defaultValue}>
+      <ComboboxInputGroup>
+        <ComboboxInput showTrigger={false} />
+        <ComboboxTrigger data-testid={`${id}-trigger`} />
+      </ComboboxInputGroup>
+      <ComboboxContent>
+        <ComboboxItem value="a">Apple</ComboboxItem>
+        <ComboboxItem value="b" data-testid={`${id}-item-b`}>
+          Banana
+        </ComboboxItem>
+      </ComboboxContent>
+    </StyledCombobox>
+  )
+}

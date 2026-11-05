@@ -14,11 +14,11 @@ const { defaultOpen = false, disabled = false, ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-collapsible
   data-default-open={defaultOpen ? "true" : undefined}
   data-disabled={disabled ? "" : undefined}
   data-state={defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </div>

@@ -8,6 +8,6 @@ type Props = HTMLAttributes<"span">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<span class={inputGroupText({ class: className })} {...rest}>
+<span {...rest} class={inputGroupText({ class: className })}>
   <slot />
 </span>

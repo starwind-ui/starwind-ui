@@ -25,10 +25,12 @@ export const simpleRecipeOperations: CommandOperations = {
     return `${
       kind === "button"
         ? `<script module lang="ts">
-import type {HTMLButtonAttributes as ChildButtonAttributes} from 'svelte/elements';
+import type {HTMLAttributes as ChildAttributes, HTMLButtonAttributes as ChildButtonAttributes} from 'svelte/elements';
 import type {Snippet as ChildSnippet} from 'svelte';
 export type ButtonChildProps = Omit<ChildButtonAttributes, "children" | "disabled"> & {disabled?:boolean};
 export type ButtonChildPayload = {props:ButtonChildProps; children?:ChildSnippet};
+export type TriggerChildProps = Omit<ChildAttributes<HTMLElement>, "children"> & Pick<ButtonChildProps, "disabled" | "type">;
+export type TriggerChildPayload = {props:TriggerChildProps; children?:ChildSnippet};
 </script>`
         : ""
     }

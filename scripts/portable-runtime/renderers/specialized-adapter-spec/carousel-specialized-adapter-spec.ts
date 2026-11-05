@@ -80,7 +80,7 @@ type CarouselOptionsRecipe = {
     falseValue: "false";
     prop: "autoInit";
     type: "boolean";
-    unsupportedTargets: ["react"];
+    unsupportedTargets: ["react", "vue", "svelte"];
   };
   opts: {
     attribute: "data-opts";
@@ -594,7 +594,7 @@ function buildOptionsRecipe(
       falseValue: "false",
       prop: "autoInit",
       type: autoInit.type as "boolean",
-      unsupportedTargets: getUnsupportedTargets(sourceAutoInit) as ["react"],
+      unsupportedTargets: getUnsupportedTargets(sourceAutoInit) as ["react", "vue", "svelte"],
     },
     opts: {
       attribute: getStaticAttributeName(spec, "root", "data-opts") as "data-opts",

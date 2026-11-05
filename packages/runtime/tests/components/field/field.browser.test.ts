@@ -525,6 +525,74 @@ describe("createField", () => {
     expect(new FormData(form).get("code")).toBe("3");
   });
 
+  const namedSelectMarkup = (fieldName: string, ownName = "") => `
+    <form>
+      <div data-sw-field data-name="${fieldName}">
+        <div data-sw-select data-default-value="dark" ${ownName && `data-name="${ownName}"`}>
+          <button data-sw-select-trigger type="button">
+            <span data-sw-select-value></span>
+          </button>
+          <input data-sw-select-input ${ownName && `name="${ownName}"`} />
+          <div data-sw-select-positioner>
+            <div data-sw-select-popup hidden>
+              <div data-sw-select-list>
+                <div data-sw-select-item data-value="dark">
+                  <span data-sw-select-item-text>Dark</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  `;
+
+  it("gives its name back when a framework removes it from a control input", async () => {
+    document.body.innerHTML = namedSelectMarkup("theme");
+    createField(document.querySelector<HTMLElement>("[data-sw-field]")!);
+    const input = document.querySelector<HTMLInputElement>("[data-sw-select-input]")!;
+    expect(input.name).toBe("theme");
+
+    // React runs this each time it commits an input whose props hold no name.
+    input.removeAttribute("name");
+    await Promise.resolve();
+
+    expect(new FormData(document.querySelector("form")!).get("theme")).toBe("dark");
+  });
+
+  it("keeps a name that the control has over the field name", async () => {
+    document.body.innerHTML = namedSelectMarkup("theme", "own");
+    const field = createField(document.querySelector<HTMLElement>("[data-sw-field]")!);
+    const select = document.querySelector<HTMLElement>("[data-sw-select]")!;
+    const form = document.querySelector("form")!;
+
+    expect(select.getAttribute("data-name")).toBe("own");
+    expect(field.getFormRegistration().name).toBe("own");
+    expect(Array.from(new FormData(form).entries())).toEqual([["own", "dark"]]);
+
+    // The field name applies again after the control gives up its own name.
+    createSelect(select).setFormOptions({ name: undefined });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(field.getFormRegistration().name).toBe("theme");
+    expect(Array.from(new FormData(form).entries())).toEqual([["theme", "dark"]]);
+  });
+
+  it("keeps a name that a native input has over the field name", () => {
+    document.body.innerHTML = `
+      <form>
+        <div data-sw-field data-name="profile"><input name="own" value="a" /></div>
+      </form>
+    `;
+    const field = createField(document.querySelector<HTMLElement>("[data-sw-field]")!);
+
+    expect(field.getFormRegistration().name).toBe("own");
+    expect(Array.from(new FormData(document.querySelector("form")!).entries())).toEqual([
+      ["own", "a"],
+    ]);
+  });
+
   it("applies field names and disabled state to preinitialized select and combobox controls", () => {
     document.body.innerHTML = `
       <div data-sw-field data-name="theme">
@@ -1118,7 +1186,8 @@ async function waitForMacrotask(): Promise<void> {
 async function waitFor(assertion: () => void): Promise<void> {
   let lastError: unknown;
 
-  for (let attempt = 0; attempt < 100; attempt += 1) {
+  // The first Field that meets an unloaded control imports every sibling control through Vite.
+  for (let attempt = 0; attempt < 1000; attempt += 1) {
     try {
       assertion();
       return;

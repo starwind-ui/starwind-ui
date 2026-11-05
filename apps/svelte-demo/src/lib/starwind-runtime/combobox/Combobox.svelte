@@ -31,6 +31,9 @@
     "onOpenChange": onOpenChange,
     "onValueChange": onValueChange,
     "children": children,
+    "inputValue": commandInputValue,
+    "open": commandOpen,
+    "value": commandValue,
     ...rest
   }: ComboboxProps = $props();
 </script>
@@ -55,9 +58,9 @@
   onInputValueChange={onInputValueChange}
   onOpenChange={onOpenChange}
   onValueChange={onValueChange}
-  bind:inputValue={inputValue}
-  bind:open={open}
-  bind:value={value}
+  bind:inputValue={() => commandInputValue, (next) => { inputValue = next; }}
+  bind:open={() => commandOpen, (next) => { open = next; }}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
   {@render children?.()}
 </ComboboxRoot>

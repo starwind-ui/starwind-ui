@@ -49,6 +49,8 @@ describe("generated Vue component-rooted asChild support", () => {
     expect(nativeControl).toContain("mergeProps");
     expect(nativeControl).not.toContain('from "./as-child"');
     expect(nativeControl).toContain('typeof child.type !== "string"');
+    expect(nativeControl).toContain('typeof child.type !== "object"');
+    expect(nativeControl).not.toContain("allowComponentRoot");
     expect(nativeControl).not.toContain("Fragment");
     expect(nativeControl).not.toContain("patchFlag");
     expect(nativeControl).toContain('child.type === "button"');
@@ -92,8 +94,12 @@ describe("generated Vue component-rooted asChild support", () => {
     ];
     for (const relativePath of asChildParts) {
       const source = await readFile(path.join(outputRoot, relativePath), "utf8");
-      expect(source, relativePath).toContain(
-        'import { createVueAsChild } from "../_internal/as-child";',
+      expect(source, relativePath).toMatch(
+        /import \{ createVueAsChild(?:, hasVueAsChildTarget)? \} from "\.\.\/_internal\/as-child";/,
+      );
+      // Only a contract fact lets a part fall back to its default element.
+      expect(source.includes("hasVueAsChildTarget"), relativePath).toBe(
+        relativePath === "tooltip/TooltipTrigger.vue",
       );
       expect(source, relativePath).not.toContain("useVueNativeControl");
       expect(source, relativePath).not.toMatch(/\b(?:cloneVNode|isVNode|mergeProps)\b/);

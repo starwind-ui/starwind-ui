@@ -16,11 +16,11 @@ const { keepMounted = false, orientation = "vertical", ...rest } = Astro.props;
 ---
 
 <div
+  {...rest}
   data-sw-scroll-area-scrollbar
   data-keep-mounted={keepMounted ? "" : undefined}
   data-orientation={orientation}
   aria-hidden="true"
-  {...rest}
 >
   <slot />
 </div>

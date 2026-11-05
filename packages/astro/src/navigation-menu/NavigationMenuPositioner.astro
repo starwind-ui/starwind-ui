@@ -26,6 +26,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-nav-menu-positioner
   data-state="closed"
   data-side={side}
@@ -34,7 +35,6 @@ const {
   data-align-offset={alignOffset}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
   data-collision-padding={collisionPadding}
-  {...rest}
 >
   <slot />
 </div>

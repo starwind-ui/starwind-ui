@@ -18,7 +18,7 @@ const {
   element,
   render: renderAsChild,
   setElement,
-} = useVueNativeControl("DrawerTrigger", () => root?.requestRefresh(), true);
+} = useVueNativeControl("DrawerTrigger", () => root?.requestRefresh());
 const AsChildControl = defineComponent({
   inheritAttrs: false,
   setup() {

@@ -1,0 +1,162 @@
+---
+import { Checkbox as StyledCheckbox } from "@conformance/styled-astro/checkbox";
+import {
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxInputGroup,
+  ComboboxItem,
+  ComboboxTrigger,
+  Combobox as StyledCombobox,
+} from "@conformance/styled-astro/combobox";
+import { Input as StyledInput } from "@conformance/styled-astro/input";
+import {
+  RadioGroupItem,
+  RadioGroup as StyledRadioGroup,
+} from "@conformance/styled-astro/radio-group";
+import {
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Select as StyledSelect,
+} from "@conformance/styled-astro/select";
+import { Slider as StyledSlider } from "@conformance/styled-astro/slider";
+import { Switch as StyledSwitch } from "@conformance/styled-astro/switch";
+import { Checkbox } from "@starwind-ui/astro/checkbox";
+import { Combobox } from "@starwind-ui/astro/combobox";
+import { Input } from "@starwind-ui/astro/input";
+import { Radio } from "@starwind-ui/astro/radio";
+import { RadioGroup } from "@starwind-ui/astro/radio-group";
+import { Select } from "@starwind-ui/astro/select";
+import { Slider } from "@starwind-ui/astro/slider";
+import { Switch } from "@starwind-ui/astro/switch";
+
+const { id, kind, styled } = Astro.props;
+const root = `${id}-root`;
+---
+
+{
+  !styled && kind === "sel" && (
+    <Select.Root data-testid={root} defaultValue="a">
+      <Select.Trigger data-testid={`${id}-trigger`}>
+        <Select.Value data-testid={`${id}-value`} />
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup>
+          <Select.List>
+            <Select.Item value="a">
+              <Select.ItemText>Apple</Select.ItemText>
+            </Select.Item>
+            <Select.Item value="b" data-testid={`${id}-item-b`}>
+              <Select.ItemText>Banana</Select.ItemText>
+            </Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+  )
+}
+{
+  !styled && kind === "cmb" && (
+    <Combobox.Root data-testid={root} defaultValue="a">
+      <Combobox.InputGroup>
+        <Combobox.Input data-testid={`${id}-input`} />
+        <Combobox.Trigger data-testid={`${id}-trigger`}>Open</Combobox.Trigger>
+      </Combobox.InputGroup>
+      <Combobox.Positioner>
+        <Combobox.Popup>
+          <Combobox.List>
+            <Combobox.Item value="a">
+              <Combobox.ItemText>Apple</Combobox.ItemText>
+            </Combobox.Item>
+            <Combobox.Item value="b" data-testid={`${id}-item-b`}>
+              <Combobox.ItemText>Banana</Combobox.ItemText>
+            </Combobox.Item>
+          </Combobox.List>
+        </Combobox.Popup>
+      </Combobox.Positioner>
+    </Combobox.Root>
+  )
+}
+{
+  !styled && kind === "chk" && (
+    <Checkbox.Root data-testid={root} value="yes">
+      <Checkbox.Indicator />
+    </Checkbox.Root>
+  )
+}
+{
+  !styled && kind === "swi" && (
+    <Switch.Root data-testid={root} value="yes">
+      <Switch.Thumb />
+    </Switch.Root>
+  )
+}
+{
+  !styled && kind === "sld" && (
+    <Slider.Root data-testid={root} defaultValue={20}>
+      <Slider.Control>
+        <Slider.Track>
+          <Slider.Indicator />
+          <Slider.Thumb />
+        </Slider.Track>
+      </Slider.Control>
+    </Slider.Root>
+  )
+}
+{
+  !styled && kind === "rad" && (
+    <RadioGroup.Root data-testid={root} defaultValue="a">
+      <Radio.Root value="a">
+        <Radio.Indicator />
+      </Radio.Root>
+      <Radio.Root value="b" data-testid={`${id}-item-b`}>
+        <Radio.Indicator />
+      </Radio.Root>
+    </RadioGroup.Root>
+  )
+}
+{!styled && kind === "inp" && <Input.Root data-testid={root} defaultValue="hello" />}
+{
+  styled && kind === "sel" && (
+    <StyledSelect data-testid={root} defaultValue="a">
+      <SelectTrigger data-testid={`${id}-trigger`}>
+        <SelectValue data-testid={`${id}-value`} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="a">Apple</SelectItem>
+        <SelectItem value="b" data-testid={`${id}-item-b`}>
+          Banana
+        </SelectItem>
+      </SelectContent>
+    </StyledSelect>
+  )
+}
+{
+  styled && kind === "cmb" && (
+    <StyledCombobox data-testid={root} defaultValue="a">
+      <ComboboxInputGroup>
+        <ComboboxInput data-testid={`${id}-input`} showTrigger={false} />
+        <ComboboxTrigger data-testid={`${id}-trigger`} />
+      </ComboboxInputGroup>
+      <ComboboxContent>
+        <ComboboxItem value="a">Apple</ComboboxItem>
+        <ComboboxItem value="b" data-testid={`${id}-item-b`}>
+          Banana
+        </ComboboxItem>
+      </ComboboxContent>
+    </StyledCombobox>
+  )
+}
+{styled && kind === "chk" && <StyledCheckbox data-testid={root} value="yes" />}
+{styled && kind === "swi" && <StyledSwitch data-testid={root} value="yes" />}
+{styled && kind === "sld" && <StyledSlider data-testid={root} defaultValue={20} />}
+{
+  styled && kind === "rad" && (
+    <StyledRadioGroup data-testid={root} defaultValue="a">
+      <RadioGroupItem value="a" />
+      <RadioGroupItem value="b" data-testid={`${id}-item-b`} />
+    </StyledRadioGroup>
+  )
+}
+{styled && kind === "inp" && <StyledInput data-testid={root} defaultValue="hello" />}

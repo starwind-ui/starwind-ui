@@ -141,11 +141,7 @@ export {
   SidebarContext,
   useSidebarContext,
 } from "./sidebar/index.js";
-export type {
-  SidebarContextValue,
-  SidebarMenuButtonChildPayload,
-  AnchorChildProps as SidebarAnchorChildProps,
-} from "./sidebar/index.js";
+export type { SidebarContextValue, SidebarMenuButtonChildPayload } from "./sidebar/index.js";
 export * from "./slider/index.js";
 export * from "./switch/index.js";
 export * from "./tabs/index.js";

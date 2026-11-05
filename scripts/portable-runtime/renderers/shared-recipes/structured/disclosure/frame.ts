@@ -33,7 +33,7 @@ export function renderCollapsibleRoot(
 ): string {
   const fw = operations[target];
   const projection = projections[target];
-  const initial = `const initialDefaultOpen = ${projection.initialCell(`${projection.readInput(plan.model.default)} ?? ${JSON.stringify(plan.model.fallback)}`)};\nconst initialOpen = ${projection.initialCell(`${projection.readInput(plan.model.name)} ?? initialDefaultOpen`)};`;
+  const initial = `const initialDefaultOpen = ${projection.initialCell(`${projection.readInput(plan.model.default)} ?? ${JSON.stringify(plan.model.fallback)}`)};\nconst initialOpen = ${projection.initialCell(`${projection.readInput(plan.model.name)} ?? initialDefaultOpen`)};${fw.controlledCell(plan.model.name) && `\n${fw.controlledCell(plan.model.name)}`}`;
   const attributes = [
     projection.attribute(contract.parts[0].discoveryAttribute),
     projection.attribute("data-sw-part", "'root'"),

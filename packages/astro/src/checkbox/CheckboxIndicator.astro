@@ -13,11 +13,11 @@ const { keepMounted = false, ...rest } = Astro.props;
 ---
 
 <span
+  {...rest}
   data-sw-checkbox-indicator
   data-keep-mounted={keepMounted ? "true" : undefined}
   data-unchecked
   hidden={!keepMounted}
-  {...rest}
 >
   <slot />
 </span>

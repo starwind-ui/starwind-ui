@@ -179,7 +179,7 @@ export function specializeSvelteStyledNative(
   }
   const owner = nativeStyledOwners[group.component]?.[component.exportName];
   if (!owner) return fail("missing native projection owner");
-  const valuePolicy = nativeValuePolicy(group.component, component.exportName);
+  const valuePolicy = nativeValuePolicy(component.nativeModel);
   let [root] = component.render;
   if (owner.container) {
     if (
@@ -319,6 +319,8 @@ export function specializeSvelteStyledNative(
     supportsSvelteScope(prop.targetScopes),
   );
   if (valuePolicy) destructure.push({ name: valuePolicy.name, defaultValue: "$bindable()" });
+  const keepsDefaultOnParent = valuePolicy?.writesThrough === "value-property";
+  if (keepsDefaultOnParent) destructure.push({ name: valuePolicy.name, alias: "commandValue" });
   destructure.push(
     { name: "ref", defaultValue: "$bindable()" },
     ...snippets.map((name) => ({ name })),
@@ -343,6 +345,7 @@ export function specializeSvelteStyledNative(
         : undefined,
     imports: [
       ...(snippets.length ? [{ source: "svelte", names: ["Snippet"], typeOnly: true }] : []),
+      ...(keepsDefaultOnParent ? [{ source: "svelte", names: ["untrack"] }] : []),
       { source: "svelte/elements", names: ["SvelteHTMLElements"], typeOnly: true },
       { source: "tailwind-variants", names: ["VariantProps"], typeOnly: true },
       { source: "tailwind-variants", names: ["cx"] },
@@ -361,6 +364,16 @@ export function specializeSvelteStyledNative(
           ]
         : []),
       ...svelteNativeSetup(rest, owner.element, omitted),
+      ...(keepsDefaultOnParent
+        ? [
+            `// Native reset restores the default, so a parent-owned value stays the default. An authored default still wins.
+const parentOwned = untrack(() => commandValue) !== undefined;
+$effect(() => {
+  if (!parentOwned || !ref || commandValue === undefined || (${rest}.defaultValue ?? ${rest}.defaultvalue) != null) return;
+  ref.defaultValue = commandValue ?? "";
+});`,
+          ]
+        : []),
     ],
   };
 }

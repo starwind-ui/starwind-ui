@@ -39,7 +39,7 @@ const {
 const normalizedFormats = Array.from(new Set(formats));
 ---
 
-<div class={colorPickerInput({ class: className })} {...rest} data-slot="color-picker-input">
+<div {...rest} class={colorPickerInput({ class: className })} data-slot="color-picker-input">
   <ColorPickerPrimitive.ValueInput
     initial={initial?.valueInput.initial}
     class={[colorPickerValueInput(), colorPickerValueInputLayout()].filter(Boolean).join(" ")}

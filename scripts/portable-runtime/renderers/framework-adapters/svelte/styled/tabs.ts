@@ -54,7 +54,6 @@ export function specializeSvelteStyledTabs(
   return {
     imports: [
       { source: "svelte", names: ["ComponentProps"], typeOnly: true },
-      ...(part === "Root" ? [{ source: "svelte", names: ["untrack"] }] : []),
       { source: "tailwind-variants", names: ["cx"] },
       { source: sveltePrimitiveImport("tabs", options), names: [`Tabs${part} as PrimitivePart`] },
       { source: "./variants.js", names: group.variants.map((variant) => variant.name) },
@@ -62,12 +61,6 @@ export function specializeSvelteStyledTabs(
     publicTypes: `export type ${component.exportName}Props = ComponentProps<typeof PrimitivePart>;`,
     destructure: props,
     rest: component.destructure.rest,
-    setup:
-      part === "Root"
-        ? [
-            `let observedCommand=untrack(()=>commandValue);
-$effect(()=>{const next=commandValue;untrack(()=>{if(Object.is(next,observedCommand))return;observedCommand=next;if(!Object.is(next,value))value=next;});});`,
-          ]
-        : [],
+    setup: [],
   };
 }

@@ -43,7 +43,7 @@ export function printColorPickerRoot(f: AdapterColorPickerFacts): string {
   const initialProjection = untrack(() => projectColorPickerInitialPart(context.initialState, { part: "root" }));
   let rootProps = $derived(mergeProjection(initialProjection, rest, { "${f.parts.root.discoveryAttribute}": "", "data-sw-part": "root", role: "group" }));
 
-  ${printColorPickerConnection(f)}
+  ${printColorPickerConnection(f, false, true)}
   const attachRuntime: Attachment<HTMLDivElement> = (root) => {
     let alive = true, refreshRevision = 0;
     let connection: ReturnType<typeof connectColorPicker> | undefined;

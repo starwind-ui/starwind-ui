@@ -254,7 +254,7 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(textarea).toContain("textarea({ size, class: className })");
   expect(textarea).toContain('"data-slot": dataSlot = "textarea"');
   expect(textarea).toContain("data-slot={dataSlot}");
-  expect(textarea).toMatch(/data-slot=\{dataSlot\}[\s\S]*\{\.\.\.rest\}/);
+  expect(textarea).toMatch(/\{\.\.\.rest\}[\s\S]*data-slot=\{dataSlot\}/);
   expect(textarea).not.toContain("ref={ref}");
   expect(textarea).not.toContain("@starwind-ui/runtime");
   expect(textareaVariants).toContain("border-input dark:bg-input/30");

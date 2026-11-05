@@ -15,7 +15,7 @@
 - Fixed the CLI installing packages with npm in Bun projects. It did not recognize `bun.lock`, the lockfile Bun creates by default since version 1.2. The CLI now uses Bun when it finds `bun.lock` or the older `bun.lockb`. In a project with no lockfile, it also now uses Bun when you run the CLI through Bun.
 - Fixed Vue and Svelte projects saving loose Starwind package versions. With npm, the CLI saved `@starwind-ui/vue@0.3.0` as `^0.3.0`. It now saves the exact version with every supported package manager. Ranges for other packages stay as ranges.
 
-  Vue and Svelte components and Primitives that need `@starwind-ui/runtime` now install the same exact Runtime version as their adapter. Before, a later Runtime release could install a second copy of Runtime beside the adapter's copy.
+  Vue and Svelte components and Primitives that need `@starwind-ui/runtime` now install the same exact Runtime version as their `@starwind-ui/vue` or `@starwind-ui/svelte` package. Before, a later Runtime release could install a second copy of Runtime beside the copy that this package uses.
 
   If your `package.json` lists one of these packages with a range such as `^1.4.0`, or with a version newer than the one the CLI expects, the next `add` or `update` command that needs the package replaces it with the exact version.
 
@@ -73,7 +73,7 @@
 
   Checkbox and Radio now get their name from a `<label for="...">` that points at their `id`. Before, screen readers read these controls with no name.
 
-- Refresh the CLI's runtime dependencies and build tools with upstream fixes. The public API is unchanged.
+- Updated the CLI's dependencies and build tools to get upstream fixes. The CLI works the same way.
 - Fixed form reset in Svelte apps that render on the server. Before, a reset after the page hydrated cleared Checkbox, Switch, and Input. Now a reset puts Checkbox and Switch back to their default checked state. Input goes back to its default value, and so do Field controls that use Input.
 
 ## 3.4.0
@@ -172,44 +172,42 @@
 
 ### Patch Changes
 
-- Deliver Runtime-backed group naming and Tabs indicator geometry corrections through the first-party adapters and bundled registry. The Vue package remains on its beta release channel.
-- Remove obsolete private-release warnings from generated Vue adapters and normalize the resulting blank line in vendored Primitive indexes.
-- Remove unused internal portal methods and retired CLI helpers. Keep public behavior and component source unchanged.
-- Simplify component name validation during `add` while preserving request order and warnings for unknown names.
+- Select, Combobox, and Menu groups now get their name from their visible heading, so screen readers announce the group. The Tabs indicator now lines up with the selected tab when a parent element is scaled. Astro, React, and Vue get these fixes, and the CLI delivers them to installed components. The Vue package stays on its beta release channel.
+- Removed old comments from the Vue component files that said the code was internal and not for release. The CLI also removes the blank line that these comments left in the Vue Primitive `index.ts` files that it copies into your project.
+- Internal maintenance. Removed unused internal portal methods and old CLI helpers. Components work the same way, and the component files that the CLI installs do not change.
+- Internal maintenance of how `starwind add` checks component names. It still adds components in the order that you give, and it still warns about unknown names.
 
 ## 3.3.1
 
 ### Patch Changes
 
-- Stop adding the deprecated baseUrl option when setting up Vue TypeScript aliases. New Vue projects
-  can build with TypeScript 6 while existing user configuration is preserved.
+- The CLI no longer adds the deprecated `baseUrl` option when it sets up TypeScript path aliases in a Vue project. New Vue projects can now build with TypeScript 6. The CLI keeps your existing settings.
 
 ## 3.3.0
 
 ### Minor Changes
 
-- Add the public Vue 3.5 beta workflow to the CLI.
+- The CLI now supports Vue 3.5 as a public beta. You can use it to set up a Vue project and add Vue components.
 
 ## 3.2.0
 
 ### Minor Changes
 
-- Track canonical source versions separately from delivered component versions, and preserve
-  customized files during behavior-only Styled and Primitive updates.
+- A component can now get a behavior fix without new component files. The CLI now tracks the version of a component's files apart from the version of its behavior. When an update changes only the behavior of a Styled component or Primitive, `starwind update` keeps your customized files.
 
 ### Patch Changes
 
 - Move Pagination sizing from the root to each link. Page links now default to the Starwind icon button size, previous and next controls default to the normal medium button size, and every control accepts direct Button size overrides. Keep the direction chevrons static on hover.
-- Add portable portal container and inline-mode controls to generated floating Styled components.
-- Keep touch Select triggers and popup items inside the active focus boundary so trigger taps close an open popup and item taps commit their values on mobile browsers.
-- Expose the Toast imperative API from generated local Toast component barrels.
+- Styled popup components, such as Popover, Select, Combobox, Tooltip, and Dropdown, now accept `portalContainer` to set where the popup renders and `disablePortal` to render it in place.
+- On mobile browsers, a tap on the Select button now closes an open Select list, and a tap on an option now selects it.
+- You can now import the `toast` function and its types from the Toast component in your project, from the same file as the Toast parts.
 
 ## 3.1.0
 
 ### Minor Changes
 
-- Add Positioner class overrides to Tooltip and Hover Card, and place their default stacking level on the Positioner.
-- Add `--starwind-ui-version` to select and validate the frozen Starwind Pro V2 registry for legacy Astro projects.
+- Tooltip and Hover Card now let you add classes to their Positioner. Their default stacking level (`z-index`) is now on the Positioner.
+- Added the `--starwind-ui-version` option for older Astro projects. It selects the Starwind Pro V2 registry, which no longer changes, and checks that the version is valid.
 
 ### Patch Changes
 
@@ -219,28 +217,25 @@
 
 ### Patch Changes
 
-- Promote every Runtime-backed Primitive vendoring version to the stable `1.0.0` baseline and enable normal post-1.0 SemVer intents.
+- Every Primitive that the CLI copies into your project now starts at version `1.0.0`. Later Primitive updates use normal patch, minor, and major versions.
 
 ## 3.0.0
 
 ### Major Changes
 
-- Release the Runtime-aware Starwind CLI and the v2 bundled styled-component registry.
+- New major version of the Starwind CLI. It works with Starwind Runtime and includes version 2 of the styled component registry.
 
-  The CLI now installs styled components for Astro and React, provides explicit Primitive source add, update, list, search, and preview workflows, tracks mixed framework and registry sources, supports native Starwind Pro registry installs, and safely migrates existing projects to Runtime-backed components.
+  The CLI now installs styled components for Astro and React. It has commands to add, update, list, search, and preview Primitive source files. It keeps track of projects that mix frameworks and registries. It installs Starwind Pro components directly, and it moves existing projects to components that use Runtime in a safe way.
 
-  This release also makes component removal framework-aware, detects styled dependency cycles and local file conflicts, validates registry package specifications and configuration before mutation, confines managed paths to the project root, and restricts authenticated registry credentials to trusted origins.
+  `starwind remove` now knows which framework each component uses. The CLI finds styled components that depend on each other in a loop, and it finds conflicts with your local files. It checks registry package versions and your configuration before it changes any files. It keeps the files that it manages inside your project folder, and it sends registry credentials only to trusted sites.
 
 ### Minor Changes
 
-- Add a styled `DropdownLinkItem` for native anchor navigation while keeping `DropdownItem` focused
-  on menu actions.
-- Coordinate Card section gaps and insets through an overridable `--card-spacing` variable, with
-  default and small size presets that keep Astro and React styled output in sync.
-- Centralize styled component sizing around one explicit owner per visual scope. Existing `sm`, `md`,
-  and `lg` size families continue to default to `md`.
+- Added a styled `DropdownLinkItem` for links that go to another page. Use `DropdownItem` for menu actions.
+- Card section gaps and padding now come from one `--card-spacing` CSS variable that you can override. The default and small sizes set this variable in the same way in Astro and React.
+- Each styled component now has one clear place where you set its size. The `sm`, `md`, and `lg` sizes still default to `md`.
 
-  Migrate compound components by moving child sizes to their root:
+  To update components with child parts, move the child size to the root:
 
   ```diff
   -<PaginationLink size="sm" />
@@ -256,8 +251,7 @@
   +<ToggleGroup size="lg"><ToggleGroupItem value="bold" /></ToggleGroup>
   ```
 
-  Select and Combobox controls remain independently sizeable from their portaled content. Set both
-  props when they should match, or set them differently on purpose:
+  You still set the size of Select and Combobox controls apart from their popup content. Set both props when they should match, or set different sizes on purpose:
 
   ```astro
   <SelectTrigger size="sm" />
@@ -267,10 +261,7 @@
   <ComboboxContent size="lg">...</ComboboxContent>
   ```
 
-  Color Picker now owns trigger-side and inline sizing on `ColorPicker`, while
-  `ColorPickerContent` independently owns the portaled editor. Remove `size` from inner Color Picker
-  parts. For a custom `ColorPickerInput`, use `formatContentSize` only when its nested Select popup
-  needs an explicit size:
+  For Color Picker, set the size of the trigger and of the inline editor on `ColorPicker`. Set the size of the popup editor on `ColorPickerContent`. Remove `size` from the inner Color Picker parts. For a custom `ColorPickerInput`, use `formatContentSize` only when its format Select popup needs its own size:
 
   ```diff
   -<ColorPicker size="sm"><ColorPickerTrigger size="sm" /></ColorPicker>
@@ -280,158 +271,96 @@
   +<ColorPickerInput formatContentSize="sm" />
   ```
 
-- Add installable styled Color Picker components to the Astro and React CLI registries, including
-  stable bottom/start Popover placement, fade-only exit motion, shared Input styling, thin channel
-  tracks, swatch-only trigger composition, and all required component dependencies.
-  Popover collision handling also keeps floating content from shifting across and covering its trigger.
-  When vertical space is constrained, the Color Picker uses Popover's measured available height and
-  scrolls its own content instead of overlapping the trigger or escaping the viewport.
-  Polish the generator-canonical Astro and React composition with endpoint-safe framed areas and
-  sliders, compact size-aware controls, an icon-only EyeDropper action, composite value swatches, and
-  footer separators and Clear actions that reflect actual Runtime eligibility.
-  Migrate legacy Color Picker installations to the Runtime-backed styled component and migrate their
-  Select dependency normally instead of retaining the obsolete compatibility bridge.
-- Add `sm` and `md` sizing to the styled Navigation Menu. `size` controls native triggers,
-  List spacing, indicators, and Links using `navigationMenuTriggerStyle()`. `contentSize` controls the
-  shared portaled popup and defaults to the resolved `size`, so matching sizes require one prop while
-  intentional root/content mismatches remain possible.
+- You can now install the styled Color Picker for Astro and React with the CLI, together with all of the components that it needs. Its Popover opens below the trigger, aligned to the start, and it only fades when it closes. Its inputs use the same style as Input. It has thin channel tracks and a trigger that shows only a swatch.
 
-  Correct the styled `NavigationMenuTrigger asChild` visual-ownership contract. A native Trigger still
-  receives Navigation Menu's complete trigger recipe and generated chevron. A composed control now
-  keeps its own markup and complete appearance while preserving the existing Primitive composition
-  behavior, child-owned attribute precedence, and consumer-provided Trigger class.
+  When a Popover shifts to stay on screen, it no longer moves over its trigger. When there is little vertical space, the Color Picker uses the height that Popover measures and scrolls its own content. It does not cover the trigger or go off screen.
 
-  Migration: styled composed controls no longer receive Navigation Menu's default trigger recipe,
-  root sizing, or generated chevron. Style the child directly and place any desired icon inside it.
+  The Astro and React Color Picker also look better. The color area and sliders have frames, and their thumbs stay fully visible at the ends. The controls are compact and follow the size. The EyeDropper button shows only an icon. Value swatches draw the color and the checkerboard as one background. The footer has dividers, and the Clear button shows only when Clear is allowed.
 
-- Normalize the standard Card, Item, and Sidebar menu button size name from `default` to `md`.
-  Omitting `size` continues to select the same medium styling; pass `size="md"` when an explicit
-  medium size is useful.
-- Simplify the styled Color Picker around a complete zero-child default and a smaller advanced
-  composition API. `ColorPicker` now renders either the popup shell or, with `inline`, the inline
-  editor; alpha remains enabled by default. Common customization moves to `formatControl`, `formats`,
-  `showEyeDropper`, `showValueText`, `clearable`, `swatches`, and `label` props.
+  The CLI moves older Color Picker installs to the new styled Color Picker, which uses Runtime. It updates their Select dependency in the normal way, and it no longer keeps the old compatibility layer.
 
-  Migrate `ColorPickerRoot` to `<ColorPicker inline>`. Use `label` or an authored label instead of
-  `ColorPickerLabel`, and an authored container instead of `ColorPickerControl`. `ColorPickerArea`
-  now includes its thumb, `ColorPickerInput` includes the value input and accepts
-  `formatControl="select" | "native" | "none"`, and `ColorPicker` always renders its hidden form
-  input. Replace `allowEmpty` plus `showClear` with `clearable`, and pass swatch data through the
-  `swatches` array for the default editor.
+- Added `sm` and `md` sizes to the styled Navigation Menu. `size` sets the size of native triggers, List spacing, indicators, and Links that use `navigationMenuTriggerStyle()`. `contentSize` sets the size of the shared popup. It defaults to `size`, so one prop is enough when the sizes match. You can still set a different `contentSize` on purpose.
 
-  The styled API no longer supports requesting a visible Clear action while empty values are
-  forbidden, or replacing only the internal area thumb, format-selector anatomy, or hidden input.
-  Use the Color Picker Primitive when those raw anatomy customizations are required. Popup, inline,
-  input-only, swatch-only, native-select, forms, and custom channel layouts remain supported.
+  Fixed how the styled `NavigationMenuTrigger` looks with `asChild`. A native Trigger still gets all of the Navigation Menu trigger styles and its chevron icon. A child control that you pass with `asChild` now keeps its own markup and look. It still works in the same way as before. Its own attributes still win, and the class that you set on the Trigger still applies.
+
+  Migration: a child control that you pass with `asChild` no longer gets the default Navigation Menu trigger styles, the root size, or the chevron icon. Style the child directly, and put any icon that you want inside it.
+
+- Renamed the standard size of Card, Item, and Sidebar menu button from `default` to `md`. If you leave out `size`, you get the same medium style as before. Pass `size="md"` when you want to set the medium size in your code.
+- Made the styled Color Picker simpler. `<ColorPicker />` with no children now renders a complete picker, and fewer parts are needed for advanced layouts. `ColorPicker` renders the popup picker, or the inline editor when you set `inline`. Alpha is still on by default. Use these props for common changes: `formatControl`, `formats`, `showEyeDropper`, `showValueText`, `clearable`, `swatches`, and `label`.
+
+  Replace `ColorPickerRoot` with `<ColorPicker inline>`. Replace `ColorPickerLabel` with the `label` prop or your own label element. Replace `ColorPickerControl` with your own container element. `ColorPickerArea` now includes its thumb. `ColorPickerInput` includes the value input and accepts `formatControl="select" | "native" | "none"`. `ColorPicker` always renders its hidden form input. Replace `allowEmpty` plus `showClear` with `clearable`. For the default editor, pass swatch data in the `swatches` array.
+
+  The styled Color Picker no longer lets you show a Clear button when empty values are not allowed. You also can no longer replace only the area thumb, the parts of the format selector, or the hidden input. Use the Color Picker Primitive when you need to change those parts. The styled Color Picker still supports popup, inline, input-only, swatch-only, native select, form, and custom channel layouts.
 
 ### Patch Changes
 
-- Default Accordions to collapsible while preserving `collapsible={false}` as the required-open override.
-- Apply divider borders only to non-last Accordion items in generated Astro and React components.
-- Correct styled Hover Card, Popover, and Tooltip Trigger composition so composed children no longer
-  receive the Trigger's native recipe or display classes. Native Trigger rendering remains unchanged.
+- Accordions now let you close the open item by default. To keep one item open at all times, set `collapsible={false}`.
+- In Astro and React, Accordion now shows a divider border on every item except the last one.
+- Fixed styled Hover Card, Popover, and Tooltip triggers with `asChild`. A child control that you pass no longer gets the styles or display classes of the native Trigger. A native Trigger looks the same as before.
 
-  Migration: if a composed child relied on those native Trigger classes for its appearance, style the
-  child directly instead.
+  Migration: if your child control used those Trigger classes for its look, style the child directly.
 
-- Keep Avatar images eligible for native lazy loading while the Runtime conceals their loading and
-  error states, including Astro images rendered from imported assets.
-- Fix generated React Color Picker source and the Astro Spinner SVG prop contract. Detect Astro and
-  React projects during default CLI initialization, and add a non-interactive remove option. Add
-  packed Astro and React release-candidate tests across supported framework versions and package
-  managers.
-- Complete CLI command lifecycles, alphabetize component lists, and detect supported host targets
-  during initialization. Configure React as an Astro secondary target and supply Vite React
-  JavaScript projects with TypeScript settings for generated TSX. Name generated Styled aggregate
-  default exports for clean framework tooling output.
-- Narrow Button Runtime to opted-in focusable-disabled native buttons, synchronize mutable disabled
-  state through generated Astro and React adapters, and refresh vendored Primitive artifacts and
-  documentation for the native-only boundary.
+- Avatar images now work with the browser's lazy loading. Starwind still hides an image while it loads and when it fails to load. This includes Astro images from imported assets.
+- Fixed the React Color Picker source code and the props that Astro Spinner passes to its SVG. With default options, `starwind init` now detects Astro and React projects. `starwind remove` has a new option to run without questions. Before each release, new tests now install the packed Astro and React packages with each supported framework version and package manager.
+- CLI commands now finish all of their steps, including the final summary, before the CLI exits. Component lists are in alphabetical order. `starwind init` now detects the supported frameworks in your project. In an Astro project, it can set up React as a second framework. In a Vite React project that uses JavaScript, it adds the TypeScript settings that the installed TSX components need. The default export in each styled component's `index.ts` now has a name, such as `AccordionParts`, so framework tools show a clear name.
+- Button now adds its script only to a native `<button>` that sets `focusableWhenDisabled`. A plain button, enabled or disabled, uses only HTML. In Astro and React, a `focusableWhenDisabled` button can now change between enabled and disabled and keep focus. Button Runtime now supports native buttons only. The docs and the Primitive files that the CLI copies are updated to match.
 - Remove directional sliding from the styled Combobox closing animation while preserving its fade and
   scale motion.
-- Render canonical and CLI-installed Avatar roots as inline flex containers so the existing small,
-  medium, and large size variants produce exact circular geometry while preserving image and fallback
-  visibility.
-- Prevent Styled Progress indicators from animating across incompatible determinate and indeterminate
-  geometries while preserving normal determinate value transitions and reduced-motion behavior.
-- Normalize installed Astro and React Progress components consistently with Runtime for reversed,
-  equal, invalid, and non-finite ranges and values.
+- Avatar now uses an inline flex layout, so it is a true circle at the small, medium, and large sizes. This also applies to Avatars that you install with the CLI. Images and fallbacks still show as before.
+- Styled Progress no longer animates when it changes between a set value and the indeterminate (loading) state. Normal value changes still animate, and reduced-motion settings still apply.
+- The Astro and React Progress components that the CLI installs now handle unusual inputs in the same way as Runtime. This covers a `min` that is larger than `max`, a `min` that is equal to `max`, and values that are not valid or not finite numbers.
 - Use the `default` style when Radio Group items and Progress indicators omit their color variant.
-- Keep dialog-owned floating layers visible and interactive above native modal dialogs across Runtime, Astro, React, and CLI-installed consumers.
-- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
-  hidden indicators.
-- Keep dependency installation under one progress renderer during project initialization.
-- Detect the project package manager for dependency installs when no override is provided, and show
-  progress while package updates are running.
-- Keep the styled Color Picker area usable in constrained viewports by preserving a minimum height,
-  choosing the best fitting Popover side before sizing, and scrolling content when neither side fits.
-  Expose the compatible Popover collision strategy through generated Astro and React Primitive
-  adapters, and continue the styled Color Picker registry version from its legacy release history.
-- Keep Color Picker area dragging two-dimensional on touch devices by routing pointer hit-testing through the area while preserving keyboard controls.
+- Popups inside a native modal Dialog, such as menus and tooltips, now show above the Dialog and respond to clicks. This applies to Runtime, Astro, React, and components that you install with the CLI.
+- Fixed the React Checkbox indicator in the Primitive files that the CLI copies into your project. The indicator now renders when the checkbox is checked or when you keep it mounted. It does not render when it is inactive or hidden.
+- `starwind init` now shows one progress spinner while it installs dependencies, and not one spinner inside another.
+- When you do not choose a package manager, the CLI now uses the one that your project uses to install dependencies. It also shows progress while it updates packages.
+- The styled Color Picker area now stays usable on small screens. It keeps a minimum height. Its Popover opens on the side with the most space, and the content scrolls when neither side has enough space. The Astro and React Popover Primitives now let you use this collision setting. In the CLI, the styled Color Picker version continues from the versions of the older Color Picker.
+- On touch devices, you can now drag in the Color Picker area in all directions. The keyboard controls work as before.
 - Ensure Color Picker value and format controls follow the selected small, medium, or large size instead of retaining the shared input's medium dimensions.
-- Fix generated Astro and React styled Color Picker swatch normalization so public JavaScript and TypeScript consumers can use raw color values and labeled swatch descriptors without compile errors.
-- Stage Dialog, Alert Dialog, and Sheet entry styles through native top-layer presentation so their opening animations remain complete under main-thread load.
-- Dismiss floating overlays when pointer interactions occur in unrelated composition-root space while
-  preserving interactions with nested portaled overlays. This corrects Color Picker Popover dismissal
-  in both Astro and React and applies the same explicit boundary behavior to other floating controls.
-- Keep ancestor submenus open while the pointer moves into a nested submenu portal.
-- Initialize React Select state from silent programmatic value commands so Color Picker format controls show their configured format with selected-value styling before interaction. Synchronize the corrected Select Primitive source in the CLI registry.
-- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
-  React adapter.
-- Replace additive Form validation timing with before- and after-submit policies, add the imperative
-  validation, visibility, reset, and external-error APIs, and refresh generated adapters and vendored
-  Primitive artifacts.
+- Fixed build errors in the Astro and React styled Color Picker when you pass swatches as plain color values or as objects with a label, in JavaScript and TypeScript.
+- Dialog, Alert Dialog, and Sheet now play their full opening animation, even when the page is busy.
+- A popup now closes when you click inside its component's root element but outside its trigger and popup. A click in a nested popup still keeps the parent open. This fixes Color Picker Popover closing in Astro and React. Other popups, such as Select, Menu, and Tooltip, now follow the same rule.
+- Submenus now stay open while you move the pointer into a nested submenu.
+- React Select now picks up a value that code sets without a change event. Because of this, the Color Picker format control shows its set format, with the selected style, before anyone uses it. The CLI includes the fixed React Select Primitive files.
+- Fixed React Select items with an empty label in the Primitive files that the CLI copies into your project. An item with an empty label now keeps that empty label. Its value is still sent with the form while the list is closed.
+- Changed the Form validation timing options. `validationTiming` sets when fields check before the first submit, and `revalidationTiming` sets when they check after it. Form also has new methods to validate fields, show errors, reset validation, and set errors from outside the form, such as server errors. The Astro and React packages and the Primitive files that the CLI copies include these changes.
 
-  For the beta migration, both the previous `input` timing and the previous committed-only meaning of
-  `change` map to semantic `change`, which runs for every accepted value revision. Committed-only
-  validation timing is no longer available. Defaults remain validation on `submit`, revalidation on
-  `change`, and error visibility on `submit`; after the first submission attempt,
-  `revalidationTiming` replaces `validationTiming` instead of being additive.
+  To update from the beta: the old `input` timing and the old `change` timing both become `change`. The old `change` timing ran only after the user finished a change. The new `change` runs on every accepted change to the value. A timing that runs only after the user finishes a change is no longer available. The defaults stay the same: validation on `submit`, revalidation on `change`, and errors shown on `submit`. After the first submit, `revalidationTiming` replaces `validationTiming`. The two no longer add together.
 
-- Add framework-aware initialization for Vite React, Next.js App Router, and TanStack Start. Preserve React client boundaries and add server-rendered theme bootstrap support.
-- Support React Router framework mode and Next.js Pages Router initialization. Route Pages component styles through its global stylesheet so installed interactive components compile under Next.js.
-- Install framework-specific setup dependencies from bundled registry metadata during initialization.
-- Normalize cancelable Runtime state proposals so callbacks and DOM events share one details object before accepted state commits. Update React Primitive adapters to preserve pre-commit cancellation, accepted-only synchronization, Combobox command cancellation, and Switch native form association. Synchronize the affected vendored React Primitive sources in the CLI.
-- Improve the secondary Button hover state with a theme-relative color mix.
-- Use Tailwind CSS v4 custom-property shorthand throughout the installed Color Picker classes. This
-  keeps the generated CSS and visual behavior unchanged while removing redundant `var(...)`
-  arbitrary-value wrappers.
-- Synchronize the vendored React Radio and Radio Group primitives with accepted Runtime transitions
-  and external state synchronization.
-- Synchronize vendored React Toggle Group primitives with the generated context provider output.
+- `starwind init` now sets up Vite React, Next.js App Router, and TanStack Start projects to match each framework. It keeps React client boundaries in place, and it adds a theme setup that works with server rendering.
+- `starwind init` now supports React Router in framework mode and the Next.js Pages Router. In a Pages Router project, component styles go through the global stylesheet, so the installed interactive components build with Next.js.
+- `starwind init` now installs the setup packages that your framework needs. The CLI includes the list of these packages.
+- A change that you can cancel now gives the same `details` object to the callback and to the DOM event. The callback runs first, then the DOM event. The component changes only if neither one canceled the change. In React, you can still cancel a change before it applies, and React gets only the changes that apply. You can cancel React Combobox commands, and React Switch keeps its connection to its native form. The CLI copies the fixed React Primitive files into your project.
+- Improved the hover color of the secondary Button. It now mixes colors from your theme.
+- The installed Color Picker classes now use the short Tailwind CSS v4 syntax for CSS variables, without extra `var(...)` wrappers. The CSS output and the look stay the same.
+- Updated the React Radio and Radio Group Primitive files that the CLI copies into your project. They now change only after Runtime accepts a change, and they follow value changes that come from outside the component.
+- Updated the React Toggle Group Primitive files that the CLI copies into your project. They now include the Toggle Group context provider.
 
 ## 3.0.0-beta.8
 
 ### Patch Changes
 
-- Complete CLI command lifecycles, alphabetize component lists, and detect supported host targets
-  during initialization. Configure React as an Astro secondary target and supply Vite React
-  JavaScript projects with TypeScript settings for generated TSX. Name generated Styled aggregate
-  default exports for clean framework tooling output.
-- Keep dependency installation under one progress renderer during project initialization.
-- Fix generated Astro and React styled Color Picker swatch normalization so public JavaScript and TypeScript consumers can use raw color values and labeled swatch descriptors without compile errors.
-- Initialize React Select state from silent programmatic value commands so Color Picker format controls show their configured format with selected-value styling before interaction. Synchronize the corrected Select Primitive source in the CLI registry.
-- Add framework-aware initialization for Vite React, Next.js App Router, and TanStack Start. Preserve React client boundaries and add server-rendered theme bootstrap support.
-- Support React Router framework mode and Next.js Pages Router initialization. Route Pages component styles through its global stylesheet so installed interactive components compile under Next.js.
-- Normalize cancelable Runtime state proposals so callbacks and DOM events share one details object before accepted state commits. Update React Primitive adapters to preserve pre-commit cancellation, accepted-only synchronization, Combobox command cancellation, and Switch native form association. Synchronize the affected vendored React Primitive sources in the CLI.
+- CLI commands now finish all of their steps, including the final summary, before the CLI exits. Component lists are in alphabetical order. `starwind init` now detects the supported frameworks in your project. In an Astro project, it can set up React as a second framework. In a Vite React project that uses JavaScript, it adds the TypeScript settings that the installed TSX components need. The default export in each styled component's `index.ts` now has a name, such as `AccordionParts`, so framework tools show a clear name.
+- `starwind init` now shows one progress spinner while it installs dependencies, and not one spinner inside another.
+- Fixed build errors in the Astro and React styled Color Picker when you pass swatches as plain color values or as objects with a label, in JavaScript and TypeScript.
+- React Select now picks up a value that code sets without a change event. Because of this, the Color Picker format control shows its set format, with the selected style, before anyone uses it. The CLI includes the fixed React Select Primitive files.
+- `starwind init` now sets up Vite React, Next.js App Router, and TanStack Start projects to match each framework. It keeps React client boundaries in place, and it adds a theme setup that works with server rendering.
+- `starwind init` now supports React Router in framework mode and the Next.js Pages Router. In a Pages Router project, component styles go through the global stylesheet, so the installed interactive components build with Next.js.
+- A change that you can cancel now gives the same `details` object to the callback and to the DOM event. The callback runs first, then the DOM event. The component changes only if neither one canceled the change. In React, you can still cancel a change before it applies, and React gets only the changes that apply. You can cancel React Combobox commands, and React Switch keeps its connection to its native form. The CLI copies the fixed React Primitive files into your project.
 
 ## 3.0.0-beta.7
 
 ### Patch Changes
 
-- Fix generated React Color Picker source and the Astro Spinner SVG prop contract. Detect Astro and
-  React projects during default CLI initialization, and add a non-interactive remove option. Add
-  packed Astro and React release-candidate tests across supported framework versions and package
-  managers.
+- Fixed the React Color Picker source code and the props that Astro Spinner passes to its SVG. With default options, `starwind init` now detects Astro and React projects. `starwind remove` has a new option to run without questions. Before each release, new tests now install the packed Astro and React packages with each supported framework version and package manager.
 
 ## 3.0.0-beta.6
 
 ### Minor Changes
 
-- Centralize styled component sizing around one explicit owner per visual scope. Existing `sm`, `md`,
-  and `lg` size families continue to default to `md`.
+- Each styled component now has one clear place where you set its size. The `sm`, `md`, and `lg` sizes still default to `md`.
 
-  Migrate compound components by moving child sizes to their root:
+  To update components with child parts, move the child size to the root:
 
   ```diff
   -<PaginationLink size="sm" />
@@ -447,8 +376,7 @@
   +<ToggleGroup size="lg"><ToggleGroupItem value="bold" /></ToggleGroup>
   ```
 
-  Select and Combobox controls remain independently sizeable from their portaled content. Set both
-  props when they should match, or set them differently on purpose:
+  You still set the size of Select and Combobox controls apart from their popup content. Set both props when they should match, or set different sizes on purpose:
 
   ```astro
   <SelectTrigger size="sm" />
@@ -458,10 +386,7 @@
   <ComboboxContent size="lg">...</ComboboxContent>
   ```
 
-  Color Picker now owns trigger-side and inline sizing on `ColorPicker`, while
-  `ColorPickerContent` independently owns the portaled editor. Remove `size` from inner Color Picker
-  parts. For a custom `ColorPickerInput`, use `formatContentSize` only when its nested Select popup
-  needs an explicit size:
+  For Color Picker, set the size of the trigger and of the inline editor on `ColorPicker`. Set the size of the popup editor on `ColorPickerContent`. Remove `size` from the inner Color Picker parts. For a custom `ColorPickerInput`, use `formatContentSize` only when its format Select popup needs its own size:
 
   ```diff
   -<ColorPicker size="sm"><ColorPickerTrigger size="sm" /></ColorPicker>
@@ -471,138 +396,86 @@
   +<ColorPickerInput formatContentSize="sm" />
   ```
 
-- Add `sm` and `md` sizing to the styled Navigation Menu. `size` controls native triggers,
-  List spacing, indicators, and Links using `navigationMenuTriggerStyle()`. `contentSize` controls the
-  shared portaled popup and defaults to the resolved `size`, so matching sizes require one prop while
-  intentional root/content mismatches remain possible.
+- Added `sm` and `md` sizes to the styled Navigation Menu. `size` sets the size of native triggers, List spacing, indicators, and Links that use `navigationMenuTriggerStyle()`. `contentSize` sets the size of the shared popup. It defaults to `size`, so one prop is enough when the sizes match. You can still set a different `contentSize` on purpose.
 
-  Correct the styled `NavigationMenuTrigger asChild` visual-ownership contract. A native Trigger still
-  receives Navigation Menu's complete trigger recipe and generated chevron. A composed control now
-  keeps its own markup and complete appearance while preserving the existing Primitive composition
-  behavior, child-owned attribute precedence, and consumer-provided Trigger class.
+  Fixed how the styled `NavigationMenuTrigger` looks with `asChild`. A native Trigger still gets all of the Navigation Menu trigger styles and its chevron icon. A child control that you pass with `asChild` now keeps its own markup and look. It still works in the same way as before. Its own attributes still win, and the class that you set on the Trigger still applies.
 
-  Migration: styled composed controls no longer receive Navigation Menu's default trigger recipe,
-  root sizing, or generated chevron. Style the child directly and place any desired icon inside it.
+  Migration: a child control that you pass with `asChild` no longer gets the default Navigation Menu trigger styles, the root size, or the chevron icon. Style the child directly, and put any icon that you want inside it.
 
-- Normalize the standard Card, Item, and Sidebar menu button size name from `default` to `md`.
-  Omitting `size` continues to select the same medium styling; pass `size="md"` when an explicit
-  medium size is useful.
-- Simplify the styled Color Picker around a complete zero-child default and a smaller advanced
-  composition API. `ColorPicker` now renders either the popup shell or, with `inline`, the inline
-  editor; alpha remains enabled by default. Common customization moves to `formatControl`, `formats`,
-  `showEyeDropper`, `showValueText`, `clearable`, `swatches`, and `label` props.
+- Renamed the standard size of Card, Item, and Sidebar menu button from `default` to `md`. If you leave out `size`, you get the same medium style as before. Pass `size="md"` when you want to set the medium size in your code.
+- Made the styled Color Picker simpler. `<ColorPicker />` with no children now renders a complete picker, and fewer parts are needed for advanced layouts. `ColorPicker` renders the popup picker, or the inline editor when you set `inline`. Alpha is still on by default. Use these props for common changes: `formatControl`, `formats`, `showEyeDropper`, `showValueText`, `clearable`, `swatches`, and `label`.
 
-  Migrate `ColorPickerRoot` to `<ColorPicker inline>`. Use `label` or an authored label instead of
-  `ColorPickerLabel`, and an authored container instead of `ColorPickerControl`. `ColorPickerArea`
-  now includes its thumb, `ColorPickerInput` includes the value input and accepts
-  `formatControl="select" | "native" | "none"`, and `ColorPicker` always renders its hidden form
-  input. Replace `allowEmpty` plus `showClear` with `clearable`, and pass swatch data through the
-  `swatches` array for the default editor.
+  Replace `ColorPickerRoot` with `<ColorPicker inline>`. Replace `ColorPickerLabel` with the `label` prop or your own label element. Replace `ColorPickerControl` with your own container element. `ColorPickerArea` now includes its thumb. `ColorPickerInput` includes the value input and accepts `formatControl="select" | "native" | "none"`. `ColorPicker` always renders its hidden form input. Replace `allowEmpty` plus `showClear` with `clearable`. For the default editor, pass swatch data in the `swatches` array.
 
-  The styled API no longer supports requesting a visible Clear action while empty values are
-  forbidden, or replacing only the internal area thumb, format-selector anatomy, or hidden input.
-  Use the Color Picker Primitive when those raw anatomy customizations are required. Popup, inline,
-  input-only, swatch-only, native-select, forms, and custom channel layouts remain supported.
+  The styled Color Picker no longer lets you show a Clear button when empty values are not allowed. You also can no longer replace only the area thumb, the parts of the format selector, or the hidden input. Use the Color Picker Primitive when you need to change those parts. The styled Color Picker still supports popup, inline, input-only, swatch-only, native select, form, and custom channel layouts.
 
 ### Patch Changes
 
-- Correct styled Hover Card, Popover, and Tooltip Trigger composition so composed children no longer
-  receive the Trigger's native recipe or display classes. Native Trigger rendering remains unchanged.
+- Fixed styled Hover Card, Popover, and Tooltip triggers with `asChild`. A child control that you pass no longer gets the styles or display classes of the native Trigger. A native Trigger looks the same as before.
 
-  Migration: if a composed child relied on those native Trigger classes for its appearance, style the
-  child directly instead.
+  Migration: if your child control used those Trigger classes for its look, style the child directly.
 
-- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
-  hidden indicators.
+- Fixed the React Checkbox indicator in the Primitive files that the CLI copies into your project. The indicator now renders when the checkbox is checked or when you keep it mounted. It does not render when it is inactive or hidden.
 - Ensure Color Picker value and format controls follow the selected small, medium, or large size instead of retaining the shared input's medium dimensions.
-- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
-  React adapter.
-- Use Tailwind CSS v4 custom-property shorthand throughout the installed Color Picker classes. This
-  keeps the generated CSS and visual behavior unchanged while removing redundant `var(...)`
-  arbitrary-value wrappers.
+- Fixed React Select items with an empty label in the Primitive files that the CLI copies into your project. An item with an empty label now keeps that empty label. Its value is still sent with the form while the list is closed.
+- The installed Color Picker classes now use the short Tailwind CSS v4 syntax for CSS variables, without extra `var(...)` wrappers. The CSS output and the look stay the same.
 
 ## 3.0.0-beta.5
 
 ### Patch Changes
 
-- Keep Color Picker area dragging two-dimensional on touch devices by routing pointer hit-testing through the area while preserving keyboard controls.
-- Synchronize the vendored React Radio and Radio Group primitives with accepted Runtime transitions
-  and external state synchronization.
-- Synchronize vendored React Toggle Group primitives with the generated context provider output.
+- On touch devices, you can now drag in the Color Picker area in all directions. The keyboard controls work as before.
+- Updated the React Radio and Radio Group Primitive files that the CLI copies into your project. They now change only after Runtime accepts a change, and they follow value changes that come from outside the component.
+- Updated the React Toggle Group Primitive files that the CLI copies into your project. They now include the Toggle Group context provider.
 
 ## 3.0.0-beta.4
 
 ### Patch Changes
 
-- Keep Avatar images eligible for native lazy loading while the Runtime conceals their loading and
-  error states, including Astro images rendered from imported assets.
-- Keep dialog-owned floating layers visible and interactive above native modal dialogs across Runtime, Astro, React, and CLI-installed consumers.
-- Detect the project package manager for dependency installs when no override is provided, and show
-  progress while package updates are running.
-- Keep the styled Color Picker area usable in constrained viewports by preserving a minimum height,
-  choosing the best fitting Popover side before sizing, and scrolling content when neither side fits.
-  Expose the compatible Popover collision strategy through generated Astro and React Primitive
-  adapters, and continue the styled Color Picker registry version from its legacy release history.
-- Stage Dialog, Alert Dialog, and Sheet entry styles through native top-layer presentation so their opening animations remain complete under main-thread load.
-- Dismiss floating overlays when pointer interactions occur in unrelated composition-root space while
-  preserving interactions with nested portaled overlays. This corrects Color Picker Popover dismissal
-  in both Astro and React and applies the same explicit boundary behavior to other floating controls.
-- Keep ancestor submenus open while the pointer moves into a nested submenu portal.
-- Replace additive Form validation timing with before- and after-submit policies, add the imperative
-  validation, visibility, reset, and external-error APIs, and refresh generated adapters and vendored
-  Primitive artifacts.
+- Avatar images now work with the browser's lazy loading. Starwind still hides an image while it loads and when it fails to load. This includes Astro images from imported assets.
+- Popups inside a native modal Dialog, such as menus and tooltips, now show above the Dialog and respond to clicks. This applies to Runtime, Astro, React, and components that you install with the CLI.
+- When you do not choose a package manager, the CLI now uses the one that your project uses to install dependencies. It also shows progress while it updates packages.
+- The styled Color Picker area now stays usable on small screens. It keeps a minimum height. Its Popover opens on the side with the most space, and the content scrolls when neither side has enough space. The Astro and React Popover Primitives now let you use this collision setting. In the CLI, the styled Color Picker version continues from the versions of the older Color Picker.
+- Dialog, Alert Dialog, and Sheet now play their full opening animation, even when the page is busy.
+- A popup now closes when you click inside its component's root element but outside its trigger and popup. A click in a nested popup still keeps the parent open. This fixes Color Picker Popover closing in Astro and React. Other popups, such as Select, Menu, and Tooltip, now follow the same rule.
+- Submenus now stay open while you move the pointer into a nested submenu.
+- Changed the Form validation timing options. `validationTiming` sets when fields check before the first submit, and `revalidationTiming` sets when they check after it. Form also has new methods to validate fields, show errors, reset validation, and set errors from outside the form, such as server errors. The Astro and React packages and the Primitive files that the CLI copies include these changes.
 
-  For the beta migration, both the previous `input` timing and the previous committed-only meaning of
-  `change` map to semantic `change`, which runs for every accepted value revision. Committed-only
-  validation timing is no longer available. Defaults remain validation on `submit`, revalidation on
-  `change`, and error visibility on `submit`; after the first submission attempt,
-  `revalidationTiming` replaces `validationTiming` instead of being additive.
+  To update from the beta: the old `input` timing and the old `change` timing both become `change`. The old `change` timing ran only after the user finished a change. The new `change` runs on every accepted change to the value. A timing that runs only after the user finishes a change is no longer available. The defaults stay the same: validation on `submit`, revalidation on `change`, and errors shown on `submit`. After the first submit, `revalidationTiming` replaces `validationTiming`. The two no longer add together.
 
-- Install framework-specific setup dependencies from bundled registry metadata during initialization.
+- `starwind init` now installs the setup packages that your framework needs. The CLI includes the list of these packages.
 
 ## 3.0.0-beta.3
 
 ### Minor Changes
 
-- Add a styled `DropdownLinkItem` for native anchor navigation while keeping `DropdownItem` focused
-  on menu actions.
-- Coordinate Card section gaps and insets through an overridable `--card-spacing` variable, with
-  default and small size presets that keep Astro and React styled output in sync.
+- Added a styled `DropdownLinkItem` for links that go to another page. Use `DropdownItem` for menu actions.
+- Card section gaps and padding now come from one `--card-spacing` CSS variable that you can override. The default and small sizes set this variable in the same way in Astro and React.
 
 ### Patch Changes
 
-- Apply divider borders only to non-last Accordion items in generated Astro and React components.
-- Render canonical and CLI-installed Avatar roots as inline flex containers so the existing small,
-  medium, and large size variants produce exact circular geometry while preserving image and fallback
-  visibility.
-- Prevent Styled Progress indicators from animating across incompatible determinate and indeterminate
-  geometries while preserving normal determinate value transitions and reduced-motion behavior.
-- Normalize installed Astro and React Progress components consistently with Runtime for reversed,
-  equal, invalid, and non-finite ranges and values.
+- In Astro and React, Accordion now shows a divider border on every item except the last one.
+- Avatar now uses an inline flex layout, so it is a true circle at the small, medium, and large sizes. This also applies to Avatars that you install with the CLI. Images and fallbacks still show as before.
+- Styled Progress no longer animates when it changes between a set value and the indeterminate (loading) state. Normal value changes still animate, and reduced-motion settings still apply.
+- The Astro and React Progress components that the CLI installs now handle unusual inputs in the same way as Runtime. This covers a `min` that is larger than `max`, a `min` that is equal to `max`, and values that are not valid or not finite numbers.
 
 ## 3.0.0-beta.2
 
 ### Minor Changes
 
-- Add installable styled Color Picker components to the Astro and React CLI registries, including
-  stable bottom/start Popover placement, fade-only exit motion, shared Input styling, thin channel
-  tracks, swatch-only trigger composition, and all required component dependencies.
-  Popover collision handling also keeps floating content from shifting across and covering its trigger.
-  When vertical space is constrained, the Color Picker uses Popover's measured available height and
-  scrolls its own content instead of overlapping the trigger or escaping the viewport.
-  Polish the generator-canonical Astro and React composition with endpoint-safe framed areas and
-  sliders, compact size-aware controls, an icon-only EyeDropper action, composite value swatches, and
-  footer separators and Clear actions that reflect actual Runtime eligibility.
-  Migrate legacy Color Picker installations to the Runtime-backed styled component and migrate their
-  Select dependency normally instead of retaining the obsolete compatibility bridge.
+- You can now install the styled Color Picker for Astro and React with the CLI, together with all of the components that it needs. Its Popover opens below the trigger, aligned to the start, and it only fades when it closes. Its inputs use the same style as Input. It has thin channel tracks and a trigger that shows only a swatch.
+
+  When a Popover shifts to stay on screen, it no longer moves over its trigger. When there is little vertical space, the Color Picker uses the height that Popover measures and scrolls its own content. It does not cover the trigger or go off screen.
+
+  The Astro and React Color Picker also look better. The color area and sliders have frames, and their thumbs stay fully visible at the ends. The controls are compact and follow the size. The EyeDropper button shows only an icon. Value swatches draw the color and the checkerboard as one background. The footer has dividers, and the Clear button shows only when Clear is allowed.
+
+  The CLI moves older Color Picker installs to the new styled Color Picker, which uses Runtime. It updates their Select dependency in the normal way, and it no longer keeps the old compatibility layer.
 
 ### Patch Changes
 
-- Default Accordions to collapsible while preserving `collapsible={false}` as the required-open override.
-- Narrow Button Runtime to opted-in focusable-disabled native buttons, synchronize mutable disabled
-  state through generated Astro and React adapters, and refresh vendored Primitive artifacts and
-  documentation for the native-only boundary.
-- Improve the secondary Button hover state with a theme-relative color mix.
+- Accordions now let you close the open item by default. To keep one item open at all times, set `collapsible={false}`.
+- Button now adds its script only to a native `<button>` that sets `focusableWhenDisabled`. A plain button, enabled or disabled, uses only HTML. In Astro and React, a `focusableWhenDisabled` button can now change between enabled and disabled and keep focus. Button Runtime now supports native buttons only. The docs and the Primitive files that the CLI copies are updated to match.
+- Improved the hover color of the secondary Button. It now mixes colors from your theme.
 
 ## 2.0.1
 
@@ -617,12 +490,12 @@
 
 ### Major Changes
 
-- a170442: chore: update required node version to minimum v22.12.0 to reflect Astro v6 requirements
+- a170442: The CLI now needs Node.js 22.12.0 or newer, the same as Astro 6.
 
 ### Minor Changes
 
-- 87f35ec: feat(cli): add search command
-- 72b3b89: feat(cli): add docs command
+- 87f35ec: Added the `search` command.
+- 72b3b89: Added the `docs` command.
 
 ### Patch Changes
 
@@ -642,7 +515,7 @@
 
 ### Patch Changes
 
-- 8c5d9e7: fix: remove confusion around pro component installation via shadcn
+- 8c5d9e7: Made it clearer how to install Starwind Pro components with shadcn.
   - @starwind-ui/core@1.16.2
 
 ## 1.16.1
@@ -657,12 +530,12 @@
 
 ### Minor Changes
 
-- a662227: feat: add cli support for utility files
-- 4118e32: feat: add theme toggle code snippet for vscode during init process
+- a662227: The CLI can now install utility files.
+- 4118e32: `starwind init` now adds a VS Code code snippet for the theme toggle.
 
 ### Patch Changes
 
-- d7e6e8e: style: update default secondary styles
+- d7e6e8e: Updated the default secondary styles.
 - Updated dependencies [4ea7955]
 - Updated dependencies [6a3b754]
 - Updated dependencies [7bc43d2]
@@ -676,7 +549,7 @@
 
 ### Patch Changes
 
-- e179b78: feat(cli): add setup command for adding starwind pro to existing starwind ui projects
+- e179b78: Added the `setup` command. It adds Starwind Pro to an existing Starwind UI project.
   - @starwind-ui/core@1.15.5
 
 ## 1.15.4
@@ -690,7 +563,7 @@
 
 ### Patch Changes
 
-- 734f2e9: feat(cli): add --yes and --package-manager commands to add and update commands
+- 734f2e9: Added the `--yes` and `--package-manager` options to the `add` and `update` commands.
   - @starwind-ui/core@1.15.3
 
 ## 1.15.2
@@ -705,7 +578,7 @@
 
 ### Patch Changes
 
-- a6c2f2c: feat: add sidebar variables to starwind css file
+- a6c2f2c: Added sidebar CSS variables to the Starwind CSS file.
 - Updated dependencies [2a7b70e]
 - Updated dependencies [c667fb9]
 - Updated dependencies [225ceb1]
@@ -718,8 +591,8 @@
 
 ### Minor Changes
 
-- be76e48: feat(cli): automatically create ".env.local" with demo "STARWIND_LICENSE_KEY" variable, and add file to .gitignore during "starwind init --pro" command
-- b8e37af: feat(cli): automatically add import of starwind css file and set up tsconfig path aliases during "starwind init" command
+- be76e48: `starwind init --pro` now creates `.env.local` with a demo `STARWIND_LICENSE_KEY` variable, and it adds the file to `.gitignore`.
+- b8e37af: `starwind init` now imports the Starwind CSS file and sets up tsconfig path aliases for you.
 
 ### Patch Changes
 
@@ -730,8 +603,8 @@
 
 ### Patch Changes
 
-- 8ae0c3e: Add additional detail to add command message to provide more detail to users
-- 676a68a: feat(cli): improve cli add component flow
+- 8ae0c3e: The `add` command message now gives more detail.
+- 676a68a: Improved the steps of the `add` command.
 - Updated dependencies [708806e]
 - Updated dependencies [c3e979a]
 - Updated dependencies [0662058]
@@ -747,7 +620,7 @@
 
 ### Patch Changes
 
-- 13b7c60: Unlock package versions for potential dependency bug fixes
+- 13b7c60: The CLI now allows newer dependency versions, so you can get their bug fixes.
 - Updated dependencies [13b7c60]
   - @starwind-ui/core@1.12.4
 
@@ -755,7 +628,7 @@
 
 ### Patch Changes
 
-- 9a1108f: fix windows package installation and usage
+- 9a1108f: Fixed package installs and CLI use on Windows.
   - @starwind-ui/core@1.12.2
 
 ## 1.12.1
@@ -770,7 +643,7 @@
 
 ### Patch Changes
 
-- faf85f1: fix: correctly handle adding extra commas as necessary when starwind init command adjusts the astro config file
+- faf85f1: `starwind init` now adds commas correctly when it changes your Astro config file.
 - Updated dependencies [2320eaf]
 - Updated dependencies [7b43fcb]
 - Updated dependencies [fb5651f]
@@ -791,7 +664,7 @@
 
 ### Patch Changes
 
-- 873a1b6: add --primary-accent and --secondary-accent color variables, and adjust default css file to align closer to shadcn
+- 873a1b6: Added the `--primary-accent` and `--secondary-accent` color variables. The default CSS file is now closer to shadcn.
 - Updated dependencies [e2e411c]
 - Updated dependencies [b255995]
   - @starwind-ui/core@1.11.1
@@ -815,8 +688,8 @@
 
 ### Minor Changes
 
-- cffaf7e: Update initial starwind css file to match new component styles
-- 21ca5de: update tailwind-variants package install to v3
+- cffaf7e: The starting Starwind CSS file now matches the new component styles.
+- 21ca5de: The CLI now installs version 3 of tailwind-variants.
 
 ### Patch Changes
 
@@ -831,13 +704,13 @@
 
 ### Minor Changes
 
-- 3e30f0b: add private registry installation capability and automated setup to `init` and `add` commands
-- 26821d2: feat: enable registry dependency installation and upgrading
+- 3e30f0b: `init` and `add` can now install from a private registry and set it up for you.
+- 26821d2: The CLI can now install and upgrade the registry dependencies of a component.
 
 ### Patch Changes
 
-- c4aea05: improve npm dependency installation handling for starwind components
-- 9da60b2: update default css radius variable to 0.625 rem to match shadcn
+- c4aea05: Improved how the CLI installs npm dependencies for Starwind components.
+- 9da60b2: Changed the default CSS radius variable to 0.625rem to match shadcn.
 - Updated dependencies [ef55ef6]
 - Updated dependencies [432168d]
 - Updated dependencies [b83b5d5]
@@ -851,7 +724,7 @@
 
 ### Minor Changes
 
-- 8044e1f: update init command installed packages to better control versions and add install of tailwind-merge. Closes #42
+- 8044e1f: `starwind init` now has better control of the versions of the packages that it installs, and it also installs tailwind-merge. Closes #42
 
 ### Patch Changes
 

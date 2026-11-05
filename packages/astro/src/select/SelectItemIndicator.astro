@@ -11,12 +11,12 @@ const { ...rest } = Astro.props;
 ---
 
 <span
+  {...rest}
   data-sw-select-item-indicator
   aria-hidden="true"
   data-state="unchecked"
   data-hidden
   hidden
-  {...rest}
 >
   <slot />
 </span>

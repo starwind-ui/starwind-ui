@@ -47,6 +47,7 @@ function isNumericPattern(pattern: string): boolean {
 ---
 
 <div
+  {...rest}
   data-sw-input-otp
   data-default-value={defaultValue}
   data-disabled={disabled ? "" : undefined}
@@ -60,7 +61,6 @@ function isNumericPattern(pattern: string): boolean {
   data-value={initialValue}
   aria-disabled={disabled ? "true" : "false"}
   tabindex={disabled ? -1 : 0}
-  {...rest}
 >
   <input
     data-sw-input-otp-input

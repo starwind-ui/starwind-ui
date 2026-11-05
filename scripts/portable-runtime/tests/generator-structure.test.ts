@@ -193,8 +193,11 @@ const FUTURE_FRAMEWORK_TRACER_SHIPPING_SURFACE_PATTERNS = [
     pattern: /@starwind-ui\/(?:solid|svelte|vue)/g,
   },
 ] as const;
-const PUBLIC_VUE_PACKAGE_SURFACE_PATHS = new Set([
+// Vue and Svelte are public beta targets, so CLI host setup may name their packages.
+const PUBLIC_ADAPTER_PACKAGE_SURFACE_PATHS = new Set([
   "packages/cli/src/utils/framework-target-policy.ts",
+  "packages/cli/src/utils/svelte-host-project.ts",
+  "packages/cli/src/utils/vite-config.ts",
   "packages/cli/src/registry/bundled-registry.json",
 ]);
 
@@ -961,7 +964,7 @@ describe("portable runtime generator structure", () => {
       .map((file) => {
         const labels = getFutureFrameworkTracerShippingSurfaceLabels(file.source);
         return {
-          labels: PUBLIC_VUE_PACKAGE_SURFACE_PATHS.has(file.relativePath)
+          labels: PUBLIC_ADAPTER_PACKAGE_SURFACE_PATHS.has(file.relativePath)
             ? labels.filter((label) => label !== "future package surface")
             : labels,
           path: file.relativePath,
@@ -981,6 +984,36 @@ describe("portable runtime generator structure", () => {
     ).toEqual(["future fixture path", "future package surface"]);
 
     expect(offenders).toEqual([]);
+  });
+
+  it("keeps imperative Runtime methods out of the Vue and Svelte component surface", async () => {
+    const vueFiles = await readFilesRecursively(
+      path.join(process.cwd(), "packages/vue/src"),
+      process.cwd(),
+    );
+    const svelteFiles = await readFilesRecursively(
+      path.join(process.cwd(), "packages/svelte/src"),
+      process.cwd(),
+    );
+    const vueOffenders = vueFiles
+      .filter((file) => file.relativePath.endsWith(".vue"))
+      .filter((file) =>
+        [...file.source.matchAll(/defineExpose\(\{([\s\S]*?)\}\);/g)].some((match) =>
+          /\b(?:open|close|show|updatePosition|getValue|setValue)\s*[:(,]/.test(match[1] ?? ""),
+        ),
+      )
+      .map((file) => file.relativePath);
+    const svelteOffenders = svelteFiles
+      .filter((file) => file.relativePath.endsWith(".svelte"))
+      .filter((file) =>
+        /\bexport function (?:open|close|show|updatePosition|getValue|setValue)\b/.test(
+          file.source,
+        ),
+      )
+      .map((file) => file.relativePath);
+
+    expect(vueOffenders).toEqual([]);
+    expect(svelteOffenders).toEqual([]);
   });
 
   it("keeps the Generic Adapter Plan barrel target-neutral", async () => {

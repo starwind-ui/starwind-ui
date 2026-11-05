@@ -13,7 +13,7 @@ import type { Attachment } from "svelte/attachments";
 import type { HTMLAttributes } from "svelte/elements";
 import { createRefAttachment } from "../_internal/ref-attachment.js";
 import { discoverOverlayCaptures } from "../_internal/overlay-capture.js";
-type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet<[boolean]>; open?: boolean;
+type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; open?: boolean;
 defaultOpen?: boolean;
 closeOnEscape?: boolean;
 closeOnOutsideInteract?: boolean;
@@ -21,9 +21,10 @@ modal?: boolean;
 onOpenChange?: (open: boolean, detail: DrawerOpenChangeDetails) => void;
 onCloseComplete?: (detail: DrawerCloseCompleteDetails) => void;
 ref?: (element: HTMLDivElement | null) => void; };
-let { children, open = $bindable(), defaultOpen, closeOnEscape = true, closeOnOutsideInteract = true, modal = true, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
+let { children, open = $bindable(), open: commandOpen, defaultOpen, closeOnEscape = true, closeOnOutsideInteract = true, modal = true, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
 const initialDefaultOpen = untrack(() => defaultOpen ?? false);
 const initialOpen = untrack(() => open ?? initialDefaultOpen);
+const openControlled = untrack(() => commandOpen) !== undefined;
 let renderedOpen = $state<boolean>(initialOpen);
 const connection: { instance?: ReturnType<typeof createDrawer>; unsubscribe?: () => void; accepted: boolean; initialized: boolean; refreshPending?: boolean; } = { accepted: initialOpen, initialized: false };
 function refreshControls(): void {
@@ -47,11 +48,11 @@ owned.destroy();
   }
   function connectRuntime(root: HTMLDivElement): void {
     disconnectRuntime();
-const desired = open ?? connection.accepted;
+const desired = commandOpen ?? connection.accepted;
 const recreating = connection.initialized;
 const owned = createDrawer(root, {
       defaultOpen: recreating ? false : desired,
-      ...(false ? { open: recreating ? false : desired } : {}),
+      ...(openControlled ? { open: recreating ? false : desired } : {}),
       closeOnEscape: closeOnEscape,
 closeOnOutsideInteract: closeOnOutsideInteract,
 modal: modal,
@@ -62,6 +63,10 @@ modal: modal,
     connection.initialized = true;
 connection.unsubscribe = owned.subscribe("openChange", detail => {
       if (connection.instance !== owned) return;
+    if (openControlled) {
+      untrack(() => { if (open !== detail.open) open = detail.open; });
+      return;
+    }
     connection.accepted = detail.open;
     untrack(() => { renderedOpen = detail.open;
 if (open !== detail.open) open = detail.open; });
@@ -71,13 +76,13 @@ connection.accepted = owned.getOpen();
 renderedOpen = connection.accepted;
   }
   function applyParentCommand(): void {
-    const next = open;
+    const next = commandOpen;
     const owned = connection.instance;
     if (next === undefined || !owned) return;
     if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
     connection.accepted = owned.getOpen();
     renderedOpen = connection.accepted;
-    untrack(() => { if (open !== connection.accepted) open = connection.accepted; });
+    untrack(() => { if (!openControlled) { if (open !== connection.accepted) open = connection.accepted; } });
   }
 
 let mounted = $state(false);
@@ -116,7 +121,7 @@ try { connectRuntime(root); } finally { for (const restore of restorers.reverse(
 });
 return disconnectRuntime;
 });
-$effect(() => { void open; untrack(applyParentCommand); });
+$effect(() => { void commandOpen; untrack(applyParentCommand); });
 return () => { mounted = false; scanParts = undefined; binding?.destroy(); binding = undefined; bindingRoot = undefined; };
 };
 const attachRef = createRefAttachment<HTMLDivElement>(() => ref);
@@ -127,4 +132,4 @@ data-default-open={initialDefaultOpen ? 'true' : undefined}
 data-close-on-escape={String(closeOnEscape)}
 data-close-on-outside-interact={String(closeOnOutsideInteract)}
 data-modal={String(modal)}
-data-state={renderedOpen ? 'open' : 'closed'} {@attach attachRuntime} {@attach attachRef}>{@render children?.(renderedOpen)}</div>
+data-state={renderedOpen ? 'open' : 'closed'} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>

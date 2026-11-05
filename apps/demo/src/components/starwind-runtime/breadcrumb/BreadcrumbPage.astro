@@ -9,12 +9,12 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <span
+  {...rest}
   data-sw-breadcrumb-page
   role="link"
   aria-disabled="true"
   aria-current="page"
   class={breadcrumbPage({ class: className })}
-  {...rest}
   data-slot="breadcrumb-page"
 >
   <slot />

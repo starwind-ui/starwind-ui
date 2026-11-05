@@ -11,20 +11,6 @@ const { asChild = false, class: className, ...rest } = Astro.props;
 const closeClassName = className;
 ---
 
-{
-  asChild ? (
-    <div
-      class={closeClassName}
-      data-as-child
-      {...rest}
-      data-slot="dialog-close"
-      data-sw-dialog-close
-    >
-      <slot />
-    </div>
-  ) : (
-    <DialogPrimitive.Close class={closeClassName} {...rest} data-slot="dialog-close">
-      <slot>Close</slot>
-    </DialogPrimitive.Close>
-  )
-}
+<DialogPrimitive.Close asChild={asChild} class={closeClassName} {...rest} data-slot="dialog-close">
+  <slot>Close</slot>
+</DialogPrimitive.Close>

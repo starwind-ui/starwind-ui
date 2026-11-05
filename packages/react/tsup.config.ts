@@ -2,6 +2,8 @@ import { existsSync, readdirSync } from "node:fs";
 
 import { defineConfig } from "tsup";
 
+import { productionPartsPlugin } from "./build/production-parts";
+
 export function createReactEntryPoints(componentDirectories: Iterable<string>) {
   return Object.fromEntries([
     ["index", "src/index.ts"],
@@ -30,4 +32,5 @@ export default defineConfig({
   target: "es2022",
   outDir: "dist",
   external: ["@starwind-ui/runtime", "react", "react-dom"],
+  esbuildPlugins: [productionPartsPlugin()],
 });

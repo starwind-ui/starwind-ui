@@ -175,8 +175,13 @@ describe("Svelte Styled typed projection", () => {
     const root = files.find(
       (file) => file.relativePath === "color-picker/ColorPicker.svelte",
     )!.content;
-    for (const name of ["value", "format", "open"])
-      expect(root).toContain(`bind:${name}={${name}}`);
+    for (const name of ["value", "open"])
+      expect(root).toContain(
+        `bind:${name}={() => command${name[0]!.toUpperCase()}${name.slice(1)}, (next) => { ${name} = next; }}`,
+      );
+    expect(root).toContain("bind:format={() => resolvedFormat, (next) => {");
+    expect(root).toContain('$state(untrack(() => format ?? formats[0] ?? "hex"))');
+    expect(root).toContain("$derived(commandFormatInput() ?? uncontrolledFormat)");
     const content = files.find(
       (file) => file.relativePath === "color-picker/ColorPickerContent.svelte",
     )!.content;

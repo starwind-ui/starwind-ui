@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   addReactCssImport,
+  addViteThemeInit,
   addVueCssImport,
+  updateSvelteViteConfigContent,
   updateViteConfigContent,
   updateVueViteConfigContent,
 } from "../../src/utils/vite-config.js";
@@ -41,6 +43,102 @@ export default defineConfig({
   });
 });
 
+describe("shared Vite Theme setup", () => {
+  it.each([
+    ["@starwind-ui/react/theme", 'import react from "@vitejs/plugin-react";', "react()"],
+    ["@starwind-ui/vue/theme", 'import vue from "@vitejs/plugin-vue";', "vue()"],
+    [
+      "@starwind-ui/svelte/theme",
+      'import { svelte } from "@sveltejs/vite-plugin-svelte";',
+      "svelte()",
+    ],
+  ])("writes one prepaint plugin from %s", (themeModule, frameworkImport, frameworkCall) => {
+    const source = `import { defineConfig } from "vite";\n${frameworkImport}\n\nexport default defineConfig({\n  plugins: [${frameworkCall}],\n});\n`;
+
+    const updated = addViteThemeInit(source, themeModule);
+
+    expect(updated).toContain(`import { getThemeInitScript } from "${themeModule}";`);
+    expect(updated).toContain(`plugins: [starwindThemeInitPlugin(), ${frameworkCall}]`);
+    expect(updated).toContain("transformIndexHtml()");
+    expect(updated).toContain("children: getThemeInitScript()");
+    expect(addViteThemeInit(updated!, themeModule)).toBe(updated);
+  });
+
+  it("uses free names when the host already uses the default names", () => {
+    const updated = addViteThemeInit(
+      'import { defineConfig } from "vite";\nconst getThemeInitScript = 1;\nexport default defineConfig({ plugins: [] });\n',
+      "@starwind-ui/svelte/theme",
+    );
+
+    expect(updated).toContain(
+      'import { getThemeInitScript as starwindGetThemeInitScript } from "@starwind-ui/svelte/theme";',
+    );
+    expect(updated).toContain("children: starwindGetThemeInitScript()");
+  });
+
+  it("accepts a direct object export and an aliased defineConfig", () => {
+    expect(
+      addViteThemeInit("export default { plugins: [] };\n", "@starwind-ui/vue/theme"),
+    ).toContain("plugins: [starwindThemeInitPlugin(), ]");
+    expect(
+      addViteThemeInit(
+        'import { defineConfig as config } from "vite";\nexport default config({ plugins: [] });\n',
+        "@starwind-ui/vue/theme",
+      ),
+    ).toContain("plugins: [starwindThemeInitPlugin(), ]");
+  });
+
+  it.each([
+    ["no plugins array", "export default {};\n"],
+    ["a function config", "export default defineConfig(() => ({ plugins: [] }));\n"],
+    [
+      "a type-only Theme import",
+      'import type { getThemeInitScript } from "@starwind-ui/vue/theme";\nexport default { plugins: [] };\n',
+    ],
+  ])("returns null for %s", (_name, source) => {
+    expect(addViteThemeInit(source, "@starwind-ui/vue/theme")).toBeNull();
+  });
+});
+
+describe("Svelte Vite setup", () => {
+  const template = `import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { defineConfig } from 'vite'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [svelte()],
+})
+`;
+
+  it("adds Tailwind, Theme prepaint, and the source alias idempotently", () => {
+    const updated = updateSvelteViteConfigContent(template);
+
+    expect(updated).toContain('import tailwindcss from "@tailwindcss/vite"');
+    expect(updated).toContain('getThemeInitScript } from "@starwind-ui/svelte/theme"');
+    expect(updated).toContain('fileURLToPath } from "node:url"');
+    expect(updated).toContain("plugins: [starwindThemeInitPlugin(), tailwindcss(), svelte()]");
+    expect(updated).toContain('"@": fileURLToPath(new globalThis.URL("./src", import.meta.url))');
+    expect(updateSvelteViteConfigContent(updated!)).toBe(updated);
+  });
+
+  it("accepts a direct object export", () => {
+    const updated = updateSvelteViteConfigContent(
+      'import { svelte } from "@sveltejs/vite-plugin-svelte";\nexport default { plugins: [svelte()] };\n',
+    );
+
+    expect(updated).toContain("plugins: [starwindThemeInitPlugin(), tailwindcss(), svelte()]");
+    expect(updated).toContain('resolve: { alias: { "@":');
+  });
+
+  it("returns null when the source alias points elsewhere", () => {
+    expect(
+      updateSvelteViteConfigContent(
+        'export default { plugins: [], resolve: { alias: { "@": "/elsewhere" } } };\n',
+      ),
+    ).toBeNull();
+  });
+});
+
 describe("Vue Vite setup", () => {
   const template = `import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
@@ -57,7 +155,9 @@ export default defineConfig({
 
     expect(updated).not.toBeNull();
     expect(updated).toContain('import tailwindcss from "@tailwindcss/vite"');
-    expect(updated).toContain("plugins: [tailwindcss(), vue()]");
+    expect(updated).toContain("plugins: [starwindThemeInitPlugin(), tailwindcss(), vue()]");
+    expect(updated).toContain('getThemeInitScript } from "@starwind-ui/vue/theme"');
+    expect(updated).not.toContain("@starwind-ui/react/theme");
     expect(updated).toContain('"@": fileURLToPath(new globalThis.URL("./src", import.meta.url))');
     expect(updated).toContain("server: { port: 4173 }");
     expect(updateVueViteConfigContent(updated!)).toBe(updated);
@@ -86,7 +186,7 @@ export default defineConfig({
     expect(updated).not.toBeNull();
     expect(updated).toContain("server: { plugins: [], resolve: { alias: {} } }");
     expect(updated).toContain("const decoy = { plugins: [], resolve: { alias: {} } }");
-    expect(updated).toContain("plugins: [tailwindcss(), vue()]");
+    expect(updated).toContain("plugins: [starwindThemeInitPlugin(), tailwindcss(), vue()]");
     expect(updated).toContain(
       'export default defineConfig({\n  resolve: { alias: { "@": fileURLToPath',
     );
@@ -151,7 +251,7 @@ export default defineConfig({
     expect(updated).not.toBeNull();
     expect(updated).toContain('import starwindTailwindcss from "@tailwindcss/vite"');
     expect(updated).toContain('import { fileURLToPath as starwindFileURLToPath } from "node:url"');
-    expect(updated).toContain("plugins: [starwindTailwindcss(), vue()]");
+    expect(updated).toContain("plugins: [starwindThemeInitPlugin(), starwindTailwindcss(), vue()]");
     expect(updated).toContain(
       '"@": starwindFileURLToPath(new globalThis.URL("./src", import.meta.url))',
     );

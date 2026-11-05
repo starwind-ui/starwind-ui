@@ -133,7 +133,7 @@ export function defineReactUncontrolledDefaultOutputTests(getTempRoot: GetTempRo
     );
     expect(compactCode(selectRoot)).toContain(compactCode("window.clearTimeout(reset.timer)"));
     expect(compactCode(selectRoot)).toContain(
-      compactCode("findSelectedOptionText(childrenRef.current, acceptedValue)"),
+      compactCode("settleSelectedLabel(acceptedValue)"),
     );
     expect(compactCode(selectRoot)).not.toContain(compactCode("MutationObserver"));
 

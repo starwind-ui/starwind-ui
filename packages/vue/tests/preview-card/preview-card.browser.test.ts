@@ -354,6 +354,43 @@ describe("Vue Preview Card browser contract", () => {
   });
 });
 
+describe("Vue Preview Card popup replacement", () => {
+  it("keeps an open Preview Card visible when its Portal and Popup are replaced", async () => {
+    const state = reactive({ portalKey: 0 });
+    mountRender(() =>
+      h(
+        PreviewCardRoot,
+        { defaultOpen: true, openDelay: 0, closeDelay: 0 },
+        {
+          default: () => [
+            h(PreviewCardTrigger, { href: "#profile" }, { default: () => "Profile" }),
+            h(
+              PreviewCardPortal,
+              { key: state.portalKey },
+              {
+                default: () =>
+                  h(PreviewCardPositioner, null, {
+                    default: () => h(PreviewCardPopup, null, { default: () => "Details" }),
+                  }),
+              },
+            ),
+          ],
+        },
+      ),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await nextTick();
+    const read = () => document.body.querySelector<HTMLElement>("[data-sw-preview-card-popup]")!;
+    const previous = read();
+    expect(previous.hidden).toBe(false);
+    state.portalKey += 1;
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    await nextTick();
+    expect(read()).not.toBe(previous);
+    expect(read().hidden).toBe(false);
+  });
+});
+
 function tree(
   root: Record<string, unknown> = {},
   floating: Record<string, unknown> = {},

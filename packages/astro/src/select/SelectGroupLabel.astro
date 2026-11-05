@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-select-group-label {...rest}>
+<div {...rest} data-sw-select-group-label>
   <slot />
 </div>

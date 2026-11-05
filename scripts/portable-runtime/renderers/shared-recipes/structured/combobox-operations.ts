@@ -8,11 +8,12 @@ export interface ComboboxOperations extends SelectOperations {
     channel: import("./select-operations.js").SelectChannel & { getter: string },
     body: string,
   ): string;
+  /** The model input to apply now. Defaults to the input itself. */
+  command?(name: string): string;
   settleLabel(value: string): string;
   resolveLazyInitialText?(value: string): string;
-  nativeInputRestoresCanceledValue: boolean;
-  rememberLabel(value: string, text: string): string;
-  selectedText(value: string, item: string): string;
+  resolveLazyText?(value: string): string;
+  rememberLabel(value: string, item: string, instance: string): string;
   own(instance: string): string;
   subscribe(instance: string, event: string, body: string): string;
 }

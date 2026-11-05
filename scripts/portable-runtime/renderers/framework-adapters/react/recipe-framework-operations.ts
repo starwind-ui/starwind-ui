@@ -9,6 +9,8 @@ export const reactFrameworkOperations: FrameworkOperations = {
   controllerCell: (type, initial) =>
     `const connection = React.useRef<${type}>({ accepted: ${initial}, initialized: false }).current;`,
   readInput: (name) => `inputs.current.${name}`,
+  readModel: (name) => `inputs.current.${name}`,
+  controlledCell: () => "",
   publishModel: () => "",
   renderAccepted: (name, value, inputName = name) =>
     `if (inputs.current.${inputName} === undefined) setRendered${upper(name)}(${value});`,

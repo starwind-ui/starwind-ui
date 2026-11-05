@@ -22,7 +22,7 @@ import {
   requestDialogOwnedFloatingPortalClose,
   resolvePortalPlacement,
 } from "../../internal/floating-portal";
-import { focusFirstElement, trapTabKey } from "../../internal/focus";
+import { canReturnFocus, focusFirstElement, trapTabKey } from "../../internal/focus";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
@@ -152,32 +152,7 @@ export function refreshExistingDialog(root: HTMLElement): DialogInstance | undef
 }
 
 export function refreshDialogPortalSurface(root: HTMLElement): void {
-  const controller = instances.get(root);
-  if (!controller) return;
-  const nextElements = getDialogElements(controller.root);
-  if (nextElements.content === controller["elements"].content) return;
-
-  const previousContent = controller["elements"].content;
-  requestDialogOwnedFloatingPortalClose(previousContent);
-  demoteDialogOwnedFloatingPortals(previousContent);
-  if (previousContent.open) previousContent.close();
-  controller["topLayerHost"].destroy();
-  controller["portalSurfaceAbortController"]?.abort();
-  controller["portalSurfaceAbortController"] = new AbortController();
-  controller["unregisterOwnedSurfaces"]();
-  Object.assign(controller["elements"], nextElements);
-  controller["registerOwnedSurfaces"]();
-  controller["topLayerHost"] = createDialogTopLayerHost(controller["elements"].content);
-  controller["reconcileControlBindings"]();
-  controller["setupAccessibility"]();
-  controller["bindPortalSurfaceEvents"]();
-  controller["portalSession"]?.mount();
-  controller["stateApplied"] = false;
-  if (controller["openState"]) {
-    controller["runOpenTransaction"]({ reason: "imperative-action" }, false);
-  } else {
-    controller["applyOpenState"](false, { reason: "imperative-action" });
-  }
+  instances.get(root)?.refreshPortalSurface();
 }
 
 function createDialogInternal(
@@ -232,6 +207,7 @@ class DialogController implements DialogInstance {
   private portalSurfaceAbortController: AbortController | null = null;
   private openState: boolean;
   private previousActiveElement: HTMLElement | null = null;
+  private focusToKeep: HTMLElement | null = null;
   private closeAbortController: AbortController | null = null;
   private pendingControlledCloseRequest: OpenRequest | null = null;
   private bodyScrollLock: DocumentScrollLock | null = null;
@@ -382,6 +358,32 @@ class DialogController implements DialogInstance {
 
     {
       throw new Error(`Unsupported Dialog event: ${event}`);
+    }
+  }
+  refreshPortalSurface(): void {
+    const nextElements = getDialogElements(this.root);
+    if (nextElements.content === this.elements.content) return;
+
+    const previousContent = this.elements.content;
+    requestDialogOwnedFloatingPortalClose(previousContent);
+    demoteDialogOwnedFloatingPortals(previousContent);
+    if (previousContent.open) previousContent.close();
+    this.topLayerHost.destroy();
+    this.portalSurfaceAbortController?.abort();
+    this.portalSurfaceAbortController = new AbortController();
+    this.unregisterOwnedSurfaces();
+    Object.assign(this.elements, nextElements);
+    this.registerOwnedSurfaces();
+    this.topLayerHost = createDialogTopLayerHost(this.elements.content);
+    this.reconcileControlBindings();
+    this.setupAccessibility();
+    this.bindPortalSurfaceEvents();
+    this.portalSession?.mount();
+    this.stateApplied = false;
+    if (this.openState) {
+      this.runOpenTransaction({ reason: "imperative-action" }, false);
+    } else {
+      this.applyOpenState(false, { reason: "imperative-action" });
     }
   }
 
@@ -901,8 +903,18 @@ class DialogController implements DialogInstance {
     this.topLayerHost.hide();
     if (!content.open) return;
 
+    // A native close moves focus by itself, so the check for a late focus return comes first.
+    const ownerDocument = this.root.ownerDocument;
+    this.focusToKeep = canReturnFocus(ownerDocument, [content])
+      ? null
+      : getActiveHTMLElement(ownerDocument);
+
     if (typeof content.close === "function") {
       content.close();
+      // WebKit returns focus on every native close, even when the user has moved on.
+      if (this.focusToKeep && ownerDocument.activeElement !== this.focusToKeep) {
+        this.focusToKeep.focus();
+      }
     } else {
       content.removeAttribute("open");
     }
@@ -1001,10 +1013,11 @@ class DialogController implements DialogInstance {
   }
 
   private restoreFocus(): void {
-    if (this.previousActiveElement?.isConnected) {
+    if (this.previousActiveElement?.isConnected && !this.focusToKeep) {
       this.previousActiveElement.focus();
     }
     this.previousActiveElement = null;
+    this.focusToKeep = null;
   }
 
   private registerOpenLayer(): void {

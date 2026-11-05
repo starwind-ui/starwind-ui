@@ -62,7 +62,7 @@ const {
   mobileQuery = "(max-width: 767.98px)",
   persistOpen = false,
   persistenceKey,
-  persistenceStorage,
+  persistenceStorage = undefined,
   persistenceMaxAge = 604800,
   style,
   class: className,

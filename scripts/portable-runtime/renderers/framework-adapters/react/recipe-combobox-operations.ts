@@ -9,7 +9,7 @@ export const reactComboboxOperations: ComboboxOperations = {
     if (!owned) return;
     ${body}
   }, [${c.name}${c.name === "open" ? ", disabled, ensureInstance" : ""}]);`,
-  settleLabel: (value) => `const settledText = findSelectedComboboxItemText(children, ${value});
+  settleLabel: (value) => `const settledText = resolveSelectedText(${value});
     setSelectedInputValue({inputValue:settledText,value:${value}});
     rootRef.current?.querySelectorAll<HTMLElement>("[data-sw-combobox-value]").forEach(element => {
       element.textContent = settledText ?? element.getAttribute("data-placeholder") ?? "";
@@ -22,12 +22,10 @@ export const reactComboboxOperations: ComboboxOperations = {
       ? `${name}Ref.current`
       : name,
   accepted: (channel) => `uncontrolled${upper(channel.name)}Ref.current`,
-  resolveLazyInitialText: (value) => `findSelectedComboboxItemText(children, ${value})`,
-  nativeInputRestoresCanceledValue: true,
-  selectedText: (value, item) =>
-    `getTextFromComboboxItem(${item}) ?? (${value} === null ? null : findSelectedComboboxItemText(children, ${value})) ?? instance.getInputValue()`,
-  rememberLabel: (value, text) =>
-    `setSelectedInputValue({inputValue: ${text} || null,value:${value}});`,
+  resolveLazyInitialText: (value) => `resolveSelectedText(${value})`,
+  resolveLazyText: (value) => `resolveSelectedText(${value})`,
+  rememberLabel: (value, item, instance) =>
+    `setSelectedInputValue({inputValue: (getTextFromComboboxItem(${item}) ?? (${value} === null ? null : findSelectedComboboxItemText(childrenRef.current, ${value})) ?? ${instance}.getInputValue()) || null,value:${value}});`,
   own: (instance) => `instanceRef.current = ${instance};`,
   subscribe: (instance, event, body) => `${instance}.subscribe("${event}", detail => { ${body} });`,
 };

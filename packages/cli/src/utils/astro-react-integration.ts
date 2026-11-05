@@ -2,6 +2,15 @@ import * as p from "@clack/prompts";
 import semver from "semver";
 
 import { inspectAstroReactConfigFile, setupAstroReactConfig } from "./astro-config.js";
+import {
+  ASTRO_INTEGRATION_RANGES,
+  defaultInstalledVersionReader,
+  getMinimumVersion,
+  type InstalledVersionReader,
+  meetsIntegrationPolicyFloor,
+  resolveAstroMajor,
+  type SupportedAstroMajor,
+} from "./astro-integration-version.js";
 import { readJsonFile } from "./fs.js";
 import { installDependencies, type PackageManager } from "./package-manager.js";
 import { isAstroReactTsConfigReady, setupAstroReactTsConfig } from "./tsconfig.js";
@@ -36,13 +45,7 @@ type AstroReactPreflightOptions = {
   readInstalledVersion?: InstalledVersionReader;
 };
 
-export type InstalledVersionReader = (packageName: string) => Promise<string | undefined>;
-
-const INTEGRATION_BY_ASTRO_MAJOR = {
-  5: "^4.4.2",
-  6: "^5.0.7",
-  7: "^6.0.2",
-} as const;
+export type { InstalledVersionReader };
 
 const REACT_18_DEFAULTS = {
   react: "^18.3.1",
@@ -68,7 +71,7 @@ export async function preflightAstroReactIntegration(
     ...pkg.dependencies,
   };
   const readInstalledVersion = options.readInstalledVersion ?? defaultInstalledVersionReader;
-  const astroMajor = await resolveAstroMajor(dependencies.astro, readInstalledVersion);
+  const astroMajor = await resolveAstroMajor(dependencies.astro, readInstalledVersion, "React");
   if (typeof astroMajor !== "number") {
     return {
       status: "manual-action-required",
@@ -145,7 +148,7 @@ export async function ensureAstroReactIntegration(
 
 function resolveAstroReactPackages(
   dependencies: Record<string, string>,
-  astroMajor: keyof typeof INTEGRATION_BY_ASTRO_MAJOR,
+  astroMajor: SupportedAstroMajor,
   installedVersions: {
     integration: string | undefined;
     react: string | undefined;
@@ -223,7 +226,7 @@ function resolveAstroReactPackages(
   const defaults = selectedReactMajor === 18 ? REACT_18_DEFAULTS : REACT_19_DEFAULTS;
   const production: string[] = [];
   const development: string[] = [];
-  const integrationRange = INTEGRATION_BY_ASTRO_MAJOR[astroMajor];
+  const integrationRange = ASTRO_INTEGRATION_RANGES["@astrojs/react"][astroMajor];
 
   if (
     !meetsIntegrationPolicyFloor(
@@ -286,71 +289,7 @@ function meetsReactMajorPolicy(
   return declaredMajors.length === 1 && declaredMajors[0] === selectedMajor;
 }
 
-function getMinimumVersion(range: string | undefined): semver.SemVer | undefined {
-  if (!range || /^(?:file|link|portal|workspace):/i.test(range)) return undefined;
-  return semver.minVersion(range) ?? undefined;
-}
-
 function satisfiesMajor(range: string | undefined, major: number): boolean {
   const version = getMinimumVersion(range);
   return Boolean(version && version.major === major);
 }
-
-async function resolveAstroMajor(
-  declaredRange: string | undefined,
-  readInstalledVersion: InstalledVersionReader,
-): Promise<keyof typeof INTEGRATION_BY_ASTRO_MAJOR | string> {
-  const installedVersion = getMinimumVersion(await readInstalledVersion("astro"));
-  if (installedVersion) {
-    if (installedVersion.major in INTEGRATION_BY_ASTRO_MAJOR) {
-      return installedVersion.major as keyof typeof INTEGRATION_BY_ASTRO_MAJOR;
-    }
-    return "Starwind supports automatic Astro React setup for installed Astro 5, 6, and 7. Install a supported Astro version or configure the official React integration manually.";
-  }
-
-  if (!declaredRange) {
-    return "Starwind could not read an installed Astro version. Install Astro 5, 6, or 7 before configuring the React integration.";
-  }
-
-  const matchingMajors = ([5, 6, 7] as const).filter((major) => {
-    try {
-      return semver.intersects(declaredRange, `>=${major}.0.0 <${major + 1}.0.0`);
-    } catch {
-      return false;
-    }
-  });
-  if (matchingMajors.length === 1) return matchingMajors[0]!;
-  if (matchingMajors.length > 1) {
-    return "Starwind could not read the installed Astro version, and the declared Astro range spans multiple supported majors. Install dependencies or configure the matching React integration manually.";
-  }
-  return "Starwind supports automatic Astro React setup for Astro 5, 6, and 7. Install a supported Astro version or configure the official React integration manually.";
-}
-
-function meetsIntegrationPolicyFloor(
-  declaredRange: string | undefined,
-  installedVersion: string | undefined,
-  requiredRange: string,
-): boolean {
-  const requiredFloor = semver.minVersion(requiredRange);
-  if (!requiredFloor) return false;
-  const installed = getMinimumVersion(installedVersion);
-  if (installed) {
-    return installed.major === requiredFloor.major && semver.gte(installed, requiredFloor);
-  }
-  const declaredFloor = getMinimumVersion(declaredRange);
-  return Boolean(
-    declaredFloor &&
-    declaredFloor.major === requiredFloor.major &&
-    semver.gte(declaredFloor, requiredFloor),
-  );
-}
-
-const defaultInstalledVersionReader: InstalledVersionReader = async (packageName) => {
-  try {
-    const packagePath = `node_modules/${packageName}/package.json`;
-    const pkg = (await readJsonFile(packagePath)) as { version?: string };
-    return pkg.version;
-  } catch {
-    return undefined;
-  }
-};

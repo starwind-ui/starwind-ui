@@ -338,6 +338,33 @@ describe("Vue Collapsible public behavior", () => {
     );
   });
 
+  it("keeps an enabled asChild link free of the disabled attribute and still toggles it", async () => {
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(CollapsibleRoot, null, {
+          default: () => [
+            h(
+              CollapsibleTrigger,
+              { asChild: true, disabled: false },
+              { default: () => h("a", { href: "#details" }, "Details") },
+            ),
+            h(CollapsiblePanel),
+          ],
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
+
+    const link = host.querySelector<HTMLAnchorElement>("a")!;
+    expect(link.hasAttribute("disabled")).toBe(false);
+    expect(link.hasAttribute("data-disabled")).toBe(false);
+    link.click();
+    await nextTick();
+    expect(link.getAttribute("aria-expanded")).toBe("true");
+  });
+
   it("isolates multiple instances and destroys exact owners across remounts", async () => {
     const abort = vi.spyOn(AbortController.prototype, "abort");
     const show = ref(true);

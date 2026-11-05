@@ -455,16 +455,16 @@ describe("Accordion accepted models", () => {
     });
     expect(result.initial.bound).toMatchObject({ model: ["beta"], runtime: ["beta"] });
     expect(result.initial["array-single"]).toMatchObject({
-      model: "alpha",
+      model: ["alpha", "beta"],
       runtime: "alpha",
-      writes: ["alpha"],
+      writes: [],
       initialArray: ["alpha", "beta"],
     });
     expect(result.initial.null).toMatchObject({ model: null, runtime: null, writes: [] });
     expect(result.initial["empty-array"]).toMatchObject({
-      model: null,
+      model: [],
       runtime: null,
-      writes: [null],
+      writes: [],
       initialArray: [],
     });
     expect(result.initial["empty-string"]).toMatchObject({
@@ -474,11 +474,11 @@ describe("Accordion accepted models", () => {
     });
     expect(result.plainAccepted).toMatchObject({
       model: "alpha",
-      runtime: "beta",
-      rendered: "beta",
-      expanded: ["beta"],
+      runtime: "alpha",
+      rendered: "alpha",
+      expanded: ["alpha"],
     });
-    expect(result.plainUndefined).toMatchObject({ model: "undefined", runtime: "beta" });
+    expect(result.plainUndefined).toMatchObject({ model: "undefined", runtime: "alpha" });
     expect(result.plainCommand).toMatchObject({ model: "gamma", runtime: "gamma" });
     expect(result.undefinedLater).toMatchObject({ model: "undefined", runtime: ["alpha"] });
     expect(result.serverMarkup).toContain('data-model-ssr="undefined">undefined:0');
@@ -550,7 +550,7 @@ describe("Accordion accepted models", () => {
     );
     expect(result.accepted).toMatchObject({ model: ["beta"], runtime: ["beta"] });
     expect(result.single).toMatchObject({
-      model: "beta",
+      model: ["beta"],
       runtime: "beta",
       initialArray: ["alpha"],
     });

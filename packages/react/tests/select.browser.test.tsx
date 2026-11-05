@@ -260,6 +260,154 @@ describe("React Select lazy selected labels", () => {
   });
 });
 
+describe("React Select items inside a user component", () => {
+  function Items({ onMount }: { onMount?: () => void }) {
+    React.useEffect(() => onMount?.(), [onMount]);
+    return (
+      <>
+        <Select.Item value="a">
+          <Select.ItemText>Apple</Select.ItemText>
+        </Select.Item>
+        <Select.Item value="b">
+          <Select.ItemText>Banana</Select.ItemText>
+        </Select.Item>
+      </>
+    );
+  }
+
+  function Parts({ onMount }: { onMount?: () => void }) {
+    return (
+      <>
+        <Select.Trigger>
+          <Select.Value placeholder="Pick" />
+        </Select.Trigger>
+        <Select.Positioner>
+          <Select.Popup>
+            <Items onMount={onMount} />
+          </Select.Popup>
+        </Select.Positioner>
+      </>
+    );
+  }
+
+  const valueText = () =>
+    document.querySelector<HTMLElement>("[data-sw-select-value]")?.textContent;
+
+  it("names a default value, then removes the items again", async () => {
+    await mount(
+      <Select.Root defaultValue="b">
+        <Parts />
+      </Select.Root>,
+    );
+    await waitForMacrotask();
+
+    expect(valueText()).toBe("Banana");
+    expect(document.querySelector("[data-sw-select-item]")).toBeNull();
+  });
+
+  it("keeps the label of a pick when the parent renders again", async () => {
+    let rerender: () => void = () => {};
+    function Parent() {
+      const [, setTick] = React.useState(0);
+      rerender = () => setTick((tick) => tick + 1);
+      return (
+        <Select.Root>
+          <Parts />
+        </Select.Root>
+      );
+    }
+    await mount(<Parent />);
+    await click(document.querySelector<HTMLElement>("[data-sw-select-trigger]")!);
+    await waitForMacrotask();
+    await click(document.querySelector<HTMLElement>('[data-sw-select-item][data-value="a"]')!);
+    await waitForMacrotask();
+    expect(valueText()).toBe("Apple");
+
+    await act(async () => rerender());
+    await waitForMacrotask();
+
+    expect(valueText()).toBe("Apple");
+  });
+
+  it("renders the items once per written value, not once per parent render", async () => {
+    const onMount = vi.fn();
+    let write: (value: string) => void = () => {};
+    let rerender: () => void = () => {};
+    function Parent() {
+      const [value, setValue] = React.useState<string | null>(null);
+      const [, setTick] = React.useState(0);
+      write = setValue;
+      rerender = () => setTick((tick) => tick + 1);
+      return (
+        <Select.Root value={value}>
+          <Parts onMount={onMount} />
+        </Select.Root>
+      );
+    }
+    await mount(<Parent />);
+    await waitForMacrotask();
+    expect(onMount).not.toHaveBeenCalled();
+
+    await act(async () => write("b"));
+    await waitForMacrotask();
+    expect(valueText()).toBe("Banana");
+    expect(onMount).toHaveBeenCalledTimes(1);
+
+    await act(async () => rerender());
+    await waitForMacrotask();
+    expect(onMount).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders no items for a value that has no item, more than once", async () => {
+    const onMount = vi.fn();
+    let rerender: () => void = () => {};
+    function Parent() {
+      const [, setTick] = React.useState(0);
+      rerender = () => setTick((tick) => tick + 1);
+      return (
+        <Select.Root value="missing">
+          <Parts onMount={onMount} />
+        </Select.Root>
+      );
+    }
+    await mount(<Parent />);
+    await waitForMacrotask();
+    await act(async () => rerender());
+    await waitForMacrotask();
+
+    expect(onMount).toHaveBeenCalledTimes(1);
+    expect(valueText()).toBe("Pick");
+  });
+
+  it("does not render a closed popup when the walk can name the value", async () => {
+    await mount(
+      <Select.Root defaultValue="b">
+        <Select.Trigger>
+          <Select.Value placeholder="Pick" />
+        </Select.Trigger>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="b">
+              <Select.ItemText>Banana</Select.ItemText>
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Root>,
+    );
+    const seen: Element[] = [];
+    const observer = new MutationObserver(() => {
+      const item = document.querySelector("[data-sw-select-item]");
+      if (item) seen.push(item);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    await waitForMacrotask();
+    observer.disconnect();
+
+    expect(valueText()).toBe("Banana");
+    expect(seen).toEqual([]);
+  });
+});
+
 describe("React Select group labels", () => {
   it("keeps the group name synchronized with a dynamic heading", async () => {
     let setHeading!: React.Dispatch<React.SetStateAction<string>>;
@@ -325,6 +473,54 @@ async function click(element: HTMLElement): Promise<void> {
     element.click();
   });
 }
+
+describe("React Select parent ownership", () => {
+  it("keeps the selected label when a parent refuses a pick and shows it when a parent accepts", async () => {
+    let accept = false;
+    function Harness() {
+      const [value, setValue] = React.useState("astro");
+      return (
+        <Select.Root
+          value={value}
+          onValueChange={(next) => {
+            if (accept && next !== null) setValue(next);
+          }}
+        >
+          <Select.Trigger>
+            <Select.Value placeholder="Pick one" />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner>
+              <Select.Popup keepMounted>
+                <Select.Item value="astro">
+                  <Select.ItemText>Astro</Select.ItemText>
+                </Select.Item>
+                <Select.Item value="react">
+                  <Select.ItemText>React</Select.ItemText>
+                </Select.Item>
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      );
+    }
+    await mount(<Harness />);
+    await waitForMacrotask();
+    const label = () => document.querySelector<HTMLElement>("[data-sw-select-value]")!.textContent;
+    expect(label()).toBe("Astro");
+    await click(document.querySelector<HTMLElement>("[data-sw-select-trigger]")!);
+    await waitForMacrotask();
+    await click(document.querySelector<HTMLElement>('[data-sw-select-item][data-value="react"]')!);
+    await waitForMacrotask();
+    expect(label()).toBe("Astro");
+    accept = true;
+    await click(document.querySelector<HTMLElement>("[data-sw-select-trigger]")!);
+    await waitForMacrotask();
+    await click(document.querySelector<HTMLElement>('[data-sw-select-item][data-value="react"]')!);
+    await waitForMacrotask();
+    expect(label()).toBe("React");
+  });
+});
 
 describe("React Select native reset", () => {
   it("keeps one lazy form listener through Strict Mode and removes all reset listeners on teardown", async () => {

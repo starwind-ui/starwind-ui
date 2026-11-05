@@ -29,6 +29,7 @@
     checked = $bindable(),
     "ref": ref,
     "onCheckedChange": onCheckedChange,
+    "checked": commandChecked,
     ...rest
   }: SwitchProps = $props();
 
@@ -66,7 +67,7 @@
     {...rest}
     aria-label={ariaLabel}
     data-slot={"switch-button"}
-    bind:checked={checked}
+    bind:checked={() => commandChecked, (next) => { checked = next; }}
   >
     <SwitchThumb
       class={switchToggle({ "size": size })}

@@ -19,12 +19,12 @@ const defaultValueAttribute = Array.isArray(defaultValue)
 ---
 
 <div
+  {...rest}
   data-sw-accordion
   data-type={type}
   data-default-value={defaultValueAttribute}
   data-collapsible={String(collapsible)}
   data-state="closed"
-  {...rest}
 >
   <slot />
 </div>

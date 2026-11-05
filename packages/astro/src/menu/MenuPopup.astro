@@ -22,6 +22,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-menu-popup
   role="menu"
   tabindex="-1"
@@ -31,7 +32,6 @@ const {
   data-side-offset={sideOffset}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
   hidden
-  {...rest}
 >
   <slot />
 </div>

@@ -10,11 +10,11 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <li
+  {...rest}
   data-sw-breadcrumb-separator
   role="presentation"
   aria-hidden="true"
   class={breadcrumbSeparator({ class: className })}
-  {...rest}
   data-slot="breadcrumb-separator"
 >
   <slot>

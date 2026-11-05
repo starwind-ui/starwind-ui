@@ -14,6 +14,7 @@
     "class": className,
     value = $bindable(),
     "children": children,
+    "value": commandValue,
     ...rest
   }: SidebarInputProps = $props();
 </script>
@@ -24,7 +25,7 @@
   data-sidebar={"input"}
   {...rest}
   data-slot={"sidebar-input"}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
 
 </Input>

@@ -1,4 +1,7 @@
-// Target-owned printer for compound parts that forward one native button.
+import type { AdapterChildElements } from "../types.js";
+
+// Target-owned printer for compound parts that forward one native button, or any element when the
+// contract says Runtime works on it.
 export function printSvelteButtonChild({
   name,
   imports,
@@ -9,7 +12,10 @@ export function printSvelteButtonChild({
   register,
   omitEmptyRegistration = false,
   independentAttachments = false,
+  childElement,
 }: {
+  /** The contract fact for this part. Without one, a wrong element gets only a development warning. */
+  childElement?: AdapterChildElements[string];
   name: string;
   imports: string;
   init: string;
@@ -21,20 +27,24 @@ export function printSvelteButtonChild({
   independentAttachments?: boolean;
 }): string {
   void independentAttachments;
+  const anyElement = childElement === "any-element";
+  const noun = anyElement ? "element" : "button";
+  const elementType = anyElement ? "HTMLElement" : "HTMLButtonElement";
+  const payload = anyElement ? "TriggerChildPayload" : "ButtonChildPayload";
   return `<!-- Svelte 5 public beta adapter output. -->
 <script module lang="ts">
-  export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+  export type { ButtonChildProps, ButtonChildPayload${anyElement ? ", TriggerChildProps, TriggerChildPayload" : ""} } from "../button/ButtonRoot.svelte";
 </script>
 <script lang="ts">
   import { onMount, tick, untrack, type Snippet } from "svelte";
   import { createAttachmentKey, type Attachment } from "svelte/attachments";
-  import type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+  import type { ButtonChildProps, ${payload}${anyElement ? ", TriggerChildProps" : ""} } from "../button/ButtonRoot.svelte";
   ${imports}
 
   type Props = ButtonChildProps & {
-    child?: Snippet<[ButtonChildPayload]>;
+    child?: Snippet<[${payload}]>;
     children?: Snippet;
-    ref?: (element: HTMLButtonElement | null) => void;${extraProps ? `\n    ${extraProps}` : ""}
+    ${anyElement ? "ref?(element: HTMLElement | null): void;" : "ref?: (element: HTMLButtonElement | null) => void;"}${extraProps ? `\n    ${extraProps}` : ""}
   };
   let allProps: Props = $props();
   let child = $derived(allProps.child);
@@ -46,7 +56,7 @@ export function printSvelteButtonChild({
   });
   ${init}
 ${register || !omitEmptyRegistration ? `  const owner = Symbol("${name} owner");` : ""}
-  let currentElement = $state.raw<HTMLButtonElement | null>(null);
+  let currentElement = $state.raw<${elementType} | null>(null);
   let attachmentRevision = 0;
   let mounted = false;
   // Svelte removes this setup in production; bundlers then remove the unset callback calls.
@@ -59,12 +69,12 @@ ${register || !omitEmptyRegistration ? `  const owner = Symbol("${name} owner");
       const revision = ++validationRevision;
       void tick().then(() => {
         if (!mounted || revision !== validationRevision) return;
-        const message = [...owners].some((element) => !(element instanceof HTMLButtonElement))
+        const message = ${childElement ? "" : `[...owners].some((element) => !(element instanceof HTMLButtonElement))
           ? "${name} child props must attach to an HTMLButtonElement."
-          : owners.size > 1
-            ? "${name} child props must attach to exactly one button; multiple owners were attached."
+          : `}owners.size > 1
+            ? "${name} child props must attach to exactly one ${noun}; multiple owners were attached."
             : owners.size === 0
-              ? "${name} child props did not attach to a button after mount. Spread the whole props object onto one button."
+              ? "${name} child props did not attach to ${anyElement ? "an element" : "a button"} after mount. Spread the whole props object onto one ${noun}."
               : null;
         if (message !== diagnostic) {
           diagnostic = message;
@@ -103,7 +113,8 @@ ${register ? `    $effect(() => untrack(() => {
   const attachOwner: Attachment<Element> = (root) => {
     diagnoseOwner?.(root, true);
     attachmentRevision += 1;
-    if (root instanceof HTMLButtonElement) currentElement = root;
+    if (root instanceof ${elementType}) currentElement = root;${childElement === "button" ? `
+    else console.error("${name} child must be a button. It does nothing on another element.");` : ""}
     return () => {
       diagnoseOwner?.(root, false);
       if (!root.isConnected) {
@@ -126,7 +137,7 @@ ${register ? `    $effect(() => untrack(() => {
 </script>
 
 {#if child}
-  {@render child({ props: buttonProps, children })}
+  {@render child({ props: ${anyElement ? "buttonProps as TriggerChildProps" : "buttonProps"}, children })}
 {:else}
   <button {...buttonProps}>{@render children?.()}</button>
 {/if}

@@ -57,6 +57,7 @@ function normalizeOverflowEdgeThresholdValue(value: number | undefined): number 
 ---
 
 <div
+  {...rest}
   data-sw-scroll-area
   data-overflow-edge-threshold={thresholdAttributes.shared}
   data-overflow-edge-threshold-x-end={thresholdAttributes.xEnd}
@@ -64,7 +65,6 @@ function normalizeOverflowEdgeThresholdValue(value: number | undefined): number 
   data-overflow-edge-threshold-y-end={thresholdAttributes.yEnd}
   data-overflow-edge-threshold-y-start={thresholdAttributes.yStart}
   role="presentation"
-  {...rest}
 >
   <slot />
 </div>

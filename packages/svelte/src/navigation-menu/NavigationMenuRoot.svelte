@@ -20,7 +20,7 @@
 </script>
 <script lang="ts">
   import { createNavigationMenu, createPortalBinding, readyPortalBindingSnapshot, type NavigationMenuInstance, type NavigationMenuValueChangeDetails } from "@starwind-ui/runtime/navigation-menu";
-  import { setContext, untrack, type Snippet } from "svelte";
+  import { setContext, tick, untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
   type Props = Omit<HTMLAttributes<HTMLElement>, "children"> & {
@@ -30,8 +30,9 @@
     onValueChange?: (value: string | null, details: NavigationMenuValueChangeDetails) => void;
     ref?: (element: HTMLElement | null) => void;
   };
-  let { children, value = $bindable(), defaultValue, openDelay = 50, closeDelay = 50, closeOnEscape = true, closeOnOutsideInteract = true, orientation = "horizontal", onValueChange, ref, ...rest }: Props = $props();
+  let { children, value = $bindable(), value: commandValue, defaultValue, openDelay = 50, closeDelay = 50, closeOnEscape = true, closeOnOutsideInteract = true, orientation = "horizontal", onValueChange, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => value);
+  const valueControlled = initialModel !== undefined;
   const initialDefault = untrack(() => defaultValue) ?? null;
   let accepted = $state<string | null>(initialModel === undefined ? initialDefault : initialModel);
   let mounted = $state(false);
@@ -84,6 +85,7 @@
     mounted = true;
     let alive = true;
     let queued = false;
+    let acceptedDetail: NavigationMenuValueChangeDetails | undefined;
     let current: { instance: NavigationMenuInstance; unsubscribe: () => void; initialized: boolean; captures: NavigationMenuPart[]; options: Options } | undefined;
     type Options = { revision: number; openDelay: number; closeDelay: number; closeOnEscape: boolean; closeOnOutsideInteract: boolean };
     let desired = untrack(() => ({ revision, openDelay, closeDelay, closeOnEscape, closeOnOutsideInteract }));
@@ -101,6 +103,12 @@
       queued = true;
       queueMicrotask(() => { queued = false; if (alive) untrack(connect); });
     }
+    async function resyncControlled(detail: NavigationMenuValueChangeDetails): Promise<void> {
+    await tick();
+    if (acceptedDetail !== detail || commandValue === undefined || !current?.instance) return;
+    acceptedDetail = undefined;
+    current?.instance.setValue(commandValue, { emit: false, event: detail.event, reason: detail.reason, trigger: detail.trigger });
+     }
     function connect(): void {
       if (!root.isConnected) return;
       const captures = [...parts.values()].filter(({ element }) => element.isConnected);
@@ -121,17 +129,17 @@ const owned = createNavigationMenu(root, {
 closeDelay: desired.closeDelay,
 closeOnEscape: desired.closeOnEscape,
 closeOnOutsideInteract: desired.closeOnOutsideInteract,
-
+    ...(valueControlled ? { value: null } : {}),
     onValueChange: (nextValue, details) => {  untrack(() => { onValueChange?.(nextValue, details); }); },
   });
 const connection = { instance: owned, unsubscribe: () => {}, initialized: false, captures, options: desired } as NonNullable<typeof current>; current = connection;
 connection.unsubscribe = owned.subscribe("valueChange", details => { untrack(() => { if (current?.instance !== owned || details.isCanceled) return;
-    accepted = owned.getValue();
+    if (!valueControlled) { accepted = owned.getValue(); }
     if (value !== details.value) value = details.value;
-     }); });
+    if (valueControlled) { acceptedDetail = details; void resyncControlled(details); } }); });
 queueMicrotask(() => { untrack(() => {
     if (current?.instance !== owned || !root.isConnected) return;
-    const next = value === undefined ? accepted : value;
+    const next = commandValue === undefined ? accepted : commandValue;
     if (owned.getValue() !== next) owned.setValue(next, { emit: false });
     accepted = owned.getValue();
 connection.initialized = true;
@@ -142,12 +150,16 @@ connection.initialized = true;
       untrack(queueConnection);
     });
     $effect(() => {
-      const next = value;
+      const next = commandValue;
       if (next !== undefined && current?.initialized && !Object.is(current.instance.getValue(), next)) {
-        untrack(() => { const owned = current?.instance; const next = value;
+        untrack(() => {
+          const owned = current?.instance; const next = commandValue;
     if (!owned || next === undefined) return;
-    if (owned.getValue() !== next) owned.setValue(next, { emit: false });
-    accepted = owned.getValue(); });
+    const detail = acceptedDetail;
+    if (detail && Object.is(detail.value, next)) { acceptedDetail = undefined; owned.setValue(next, { emit: false, event: detail.event, reason: detail.reason, trigger: detail.trigger }); }
+    else if (owned.getValue() !== next) owned.setValue(next, { emit: false });
+    accepted = owned.getValue();
+        });
       }
     });
     return () => { alive = false; disconnect(); disconnectCurrent = undefined; mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined; };
@@ -155,4 +167,4 @@ connection.initialized = true;
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLElement>(() => ref);
 </script>
-<nav {...rest} data-sw-nav-menu="" data-sw-part="root" data-open-delay={openDelay} data-close-delay={closeDelay} data-close-on-escape={closeOnEscape} data-close-on-outside-interact={closeOnOutsideInteract} data-orientation={orientation} data-state="closed" {@attach attachRuntime} {@attach attachRef}>{@render children?.(accepted)}</nav>
+<nav {...rest} data-sw-nav-menu="" data-sw-part="root" data-open-delay={openDelay} data-close-delay={closeDelay} data-close-on-escape={closeOnEscape} data-close-on-outside-interact={closeOnOutsideInteract} data-orientation={orientation} data-state={accepted !== null ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>{@render children?.(accepted)}</nav>

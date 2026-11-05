@@ -11,9 +11,9 @@ const { "data-slot": dataSlot = "sidebar-footer", class: className, ...rest } = 
 ---
 
 <div
+  {...rest}
   class={sidebarFooter({ class: className })}
   data-sidebar="footer"
-  {...rest}
   data-slot={dataSlot}
 >
   <slot />

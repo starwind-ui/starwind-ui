@@ -64,6 +64,8 @@ function mountGenerated(target: Target, plan: PopoverPlan) {
     const createPopover = factory;
     let cancelNext = false;
     let open: boolean | undefined;
+    let commandOpen: boolean | undefined;
+    const openControlled = false;
     let renderedOpen = false;
     const closeOnEscape = true, closeOnOutsideInteract = true, modal = false, openOnHover = false;
     const onOpenChange = (next: boolean, detail: {cancel(): void}) => { events.push('proposal:' + next); if (cancelNext) detail.cancel(); };
@@ -82,7 +84,7 @@ function mountGenerated(target: Target, plan: PopoverPlan) {
     return {
       connect: () => connectRuntime({} as HTMLDivElement),
       dispose: disconnectRuntime,
-      command: (value: boolean) => { open = value; props.open = value; applyParentCommand(); },
+      command: (value: boolean) => { open = value; commandOpen = value; props.open = value; applyParentCommand(); },
       cancel: (value: boolean) => { cancelNext = value; },
       read: () => ({ rendered: ${target === "svelte" ? "renderedOpen" : "props.open ?? renderedOpen"}, model: open, accepted: connection.instance?.getOpen() }),
     };

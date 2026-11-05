@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-preview-card-viewport data-state="closed" {...rest}>
+<div {...rest} data-sw-preview-card-viewport data-state="closed">
   <slot />
 </div>

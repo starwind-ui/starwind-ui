@@ -7,6 +7,7 @@ import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
+  readDisabledAttribute,
   readNumberAttribute,
   resolveAsChildControl,
   setBooleanAttribute,
@@ -222,40 +223,11 @@ const SELECT_SCROLL_ARROW_STEP = 24;
 const SELECT_SCROLL_ARROW_INTERVAL = 32;
 
 const instances = shared<WeakMap<HTMLElement, SelectController>>("select");
+// Module scope, since an adapter can recreate the controller while the same value element stays.
+const authoredValueText = new WeakMap<HTMLElement, string>();
 
 export function refreshSelectPortalSurface(root: HTMLElement): void {
-  const controller = instances.get(root);
-  if (!controller) return;
-  if (!queryRootElement(root, `[${SELECT_POPUP_ATTRIBUTE}]`)) {
-    controller["stopItemObserver"]();
-    controller["lifecycle"].suspendSurface();
-    return;
-  }
-  const nextElements = getSelectElements(root);
-  if (nextElements.popup === controller["elements"].popup) return;
-
-  controller["stopItemObserver"]();
-  controller["stopScrollArrow"]();
-  controller["clearAlignedPositionRetry"]();
-  controller["stopAlignedAutoUpdate"]();
-  controller["floatingPositioner"]?.destroy();
-  controller["floatingPositioner"] = null;
-  controller["portalSurfaceAbortController"]?.abort();
-  controller["portalSurfaceAbortController"] = new AbortController();
-  Object.assign(controller["elements"], nextElements);
-  controller["ownedList"].setRoot(nextElements.popup);
-  controller["authoredPlacementAttributes"] = readPlacementAttributes(
-    controller["elements"].positioner ?? controller["elements"].popup,
-  );
-  controller["ownedList"].clear();
-  controller["invalidateItems"]();
-  controller["focusBoundary"].setSurfaces(controller["getFocusBoundarySurfaces"]());
-  controller["setupAccessibility"]();
-  controller["bindPortalEvents"]();
-  controller["applyValueState"](controller["valueState"]);
-  controller["lifecycle"].refreshSurface(controller["elements"].popup, {
-    reason: "imperative-action",
-  });
+  instances.get(root)?.refreshPortalSurface();
 }
 
 registerFieldControlBridge({
@@ -548,6 +520,38 @@ class SelectController implements SelectInstance {
 
     throw new Error(`Unsupported Select event: ${event}`);
   }
+  refreshPortalSurface(): void {
+    if (!queryRootElement(this.root, `[${SELECT_POPUP_ATTRIBUTE}]`)) {
+      this.stopItemObserver();
+      this.lifecycle.suspendSurface();
+      return;
+    }
+    const nextElements = getSelectElements(this.root);
+    if (nextElements.popup === this.elements.popup) return;
+
+    this.stopItemObserver();
+    this.stopScrollArrow();
+    this.clearAlignedPositionRetry();
+    this.stopAlignedAutoUpdate();
+    this.floatingPositioner?.destroy();
+    this.floatingPositioner = null;
+    this.portalSurfaceAbortController?.abort();
+    this.portalSurfaceAbortController = new AbortController();
+    Object.assign(this.elements, nextElements);
+    this.ownedList.setRoot(nextElements.popup);
+    this.authoredPlacementAttributes = readPlacementAttributes(
+      this.elements.positioner ?? this.elements.popup,
+    );
+    this.ownedList.clear();
+    this.invalidateItems();
+    this.focusBoundary.setSurfaces(this.getFocusBoundarySurfaces());
+    this.setupAccessibility();
+    this.bindPortalEvents();
+    this.applyValueState(this.valueState);
+    this.lifecycle.refreshSurface(this.elements.popup, {
+      reason: "imperative-action",
+    });
+  }
 
   destroy(): void {
     if (this.destroyed) return;
@@ -677,9 +681,6 @@ class SelectController implements SelectInstance {
       "pointerdown",
       (event) => {
         this.pointerTypeForOpen = event.pointerType;
-        if (this.openState && event.pointerType === "touch") {
-          this.focusBoundary.suppressNextDeparture();
-        }
       },
       { signal },
     );
@@ -1163,7 +1164,14 @@ class SelectController implements SelectInstance {
     setBooleanAttribute(this.elements.trigger, SELECT_PLACEHOLDER_ATTRIBUTE, !hasValue);
 
     this.elements.valueElements.forEach((element) => {
-      element.textContent = hasValue ? label : placeholder;
+      // Authored content stands in for a placeholder. An adapter may render the selected label
+      // into this element first, and that label is not authored content.
+      if (!authoredValueText.has(element)) {
+        const text = element.textContent ?? "";
+        authoredValueText.set(element, hasValue && text.trim() === label ? "" : text);
+      }
+      const text = hasValue ? label : placeholder || authoredValueText.get(element)!;
+      if (element.textContent !== text) element.textContent = text;
     });
   }
 
@@ -2016,7 +2024,7 @@ function readBooleanCommandDetail<K extends string>(
 
 function isDisabledElement(element: HTMLElement): boolean {
   return (
-    element.hasAttribute("disabled") ||
+    readDisabledAttribute(element) ||
     element.hasAttribute(SELECT_DISABLED_ATTRIBUTE) ||
     element.getAttribute("aria-disabled") === "true"
   );

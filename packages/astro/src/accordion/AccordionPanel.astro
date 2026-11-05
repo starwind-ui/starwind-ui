@@ -11,6 +11,6 @@ const { style, ...rest } = Astro.props;
 const panelStyle = ["animation: none", style].filter(Boolean).join("; ");
 ---
 
-<div data-sw-accordion-content data-state="closed" hidden style={panelStyle} {...rest}>
+<div {...rest} data-sw-accordion-content data-state="closed" hidden style={panelStyle}>
   <slot />
 </div>

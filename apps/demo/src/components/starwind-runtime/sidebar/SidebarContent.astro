@@ -11,9 +11,9 @@ const { "data-slot": dataSlot = "sidebar-content", class: className, ...rest } =
 ---
 
 <div
+  {...rest}
   class={sidebarContent({ class: className })}
   data-sidebar="content"
-  {...rest}
   data-slot={dataSlot}
 >
   <slot />

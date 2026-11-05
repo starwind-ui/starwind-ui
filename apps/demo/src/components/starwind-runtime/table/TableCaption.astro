@@ -8,6 +8,6 @@ type Props = HTMLAttributes<"caption">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<caption class={tableCaption({ class: className })} {...rest} data-slot="table-caption">
+<caption {...rest} class={tableCaption({ class: className })} data-slot="table-caption">
   <slot />
 </caption>

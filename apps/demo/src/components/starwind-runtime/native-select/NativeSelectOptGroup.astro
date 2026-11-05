@@ -7,8 +7,8 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <optgroup
-  class={["bg-[Canvas] text-[CanvasText]", className].filter(Boolean).join(" ")}
   {...rest}
+  class={["bg-[Canvas] text-[CanvasText]", className].filter(Boolean).join(" ")}
   data-slot="native-select-optgroup"
 >
   <slot />

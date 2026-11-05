@@ -14,6 +14,6 @@
 /* @__NO_SIDE_EFFECTS__ */
 export function shared<T extends WeakMap<object, unknown>>(key: string): T {
   // biome-ignore lint/suspicious/noAssignInExpressions: the expression form is the smallest output in every entry.
-  return ((globalThis as unknown as Record<symbol, T>)[Symbol.for("starwind/1/" + key)] ??=
+  return ((globalThis as unknown as Record<symbol, T>)[Symbol.for("starwind/2/" + key)] ??=
     new WeakMap() as T);
 }

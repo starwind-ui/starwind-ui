@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-field-item {...rest}>
+<div {...rest} data-sw-field-item>
   <slot />
 </div>

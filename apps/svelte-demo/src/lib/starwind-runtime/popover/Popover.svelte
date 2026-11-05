@@ -20,6 +20,7 @@
     "onOpenChange": onOpenChange,
     "onCloseComplete": onCloseComplete,
     "children": children,
+    "open": commandOpen,
     ...rest
   }: PopoverProps = $props();
 </script>
@@ -37,7 +38,7 @@
   {...rest}
   data-slot={"popover"}
   children={children}
-  bind:open={open}
+  bind:open={() => commandOpen, (next) => { open = next; }}
 >
 
 </PopoverRoot>

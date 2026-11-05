@@ -402,6 +402,41 @@ describe("createTooltip", () => {
     expect(getPopup().hidden).toBe(false);
   });
 
+  it.each(["a", "span"])(
+    "opens a <%s disabled=false> trigger and leaves it enabled",
+    async (tag) => {
+      const root = renderTooltip({ openDelay: 0 });
+      const native = getTrigger(root);
+      const trigger = document.createElement(tag);
+      trigger.setAttribute("data-sw-tooltip-trigger", "");
+      trigger.setAttribute("disabled", "false");
+      native.replaceWith(trigger);
+
+      const controller = createTooltip(root);
+
+      expect(trigger.hasAttribute("data-disabled")).toBe(false);
+      expect(trigger.hasAttribute("data-trigger-disabled")).toBe(false);
+      trigger.dispatchEvent(new PointerEvent("pointerenter", { pointerType: "mouse" }));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(controller.getOpen()).toBe(true);
+      controller.destroy();
+    },
+  );
+
+  it("keeps a native button with disabled=false disabled, as HTML does", async () => {
+    const root = renderTooltip({ openDelay: 0 });
+    const trigger = getTrigger(root);
+    trigger.setAttribute("disabled", "false");
+
+    const controller = createTooltip(root);
+
+    expect(trigger.hasAttribute("data-trigger-disabled")).toBe(true);
+    trigger.dispatchEvent(new PointerEvent("pointerenter", { pointerType: "mouse" }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(controller.getOpen()).toBe(false);
+    controller.destroy();
+  });
+
   it("keeps disabled tooltips closed across initial, imperative, and controlled open paths", () => {
     const defaultOpenRoot = renderTooltip();
     const defaultOpenTooltip = createTooltip(defaultOpenRoot, {

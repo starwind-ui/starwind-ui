@@ -9,9 +9,9 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <p
+  {...rest}
   data-sw-alert-description
   class={alertDescription({ class: className })}
-  {...rest}
   data-slot="alert-description"
 >
   <slot />

@@ -38,6 +38,7 @@ const initialPressed = pressed ?? defaultPressed ?? false;
 ---
 
 <button
+  {...rest}
   class={themeToggle({ variant, size, class: className })}
   type="button"
   disabled={disabled}
@@ -54,7 +55,6 @@ const initialPressed = pressed ?? defaultPressed ?? false;
   data-pressed={initialPressed ? "" : undefined}
   data-unpressed={initialPressed ? undefined : ""}
   data-disabled={disabled ? "" : undefined}
-  {...rest}
   data-slot={dataSlot}
 >
   <slot>

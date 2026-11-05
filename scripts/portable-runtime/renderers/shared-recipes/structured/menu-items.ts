@@ -31,8 +31,13 @@ export function menuItemHandler(target: Target, part: MenuItemKind): string {
    queueMicrotask(${target === "vue" ? "async " : ""}() => {
      ${s.settle}
      if (!(${s.alive(part)}) || details.isCanceled${fw.modelAuthority === "parent-prop" ? ` || ${input} !== inputAtDispatch` : ""}) return;
-     ${fw.untracked(`${fw.modelAuthority === "parent-prop" ? `if (${input} === undefined) { ${s.render(p.model, `details.${p.model}`)} }` : s.render(p.model, `details.${p.model}`)}
-       ${s.publish(p.model, `details.${p.model}`)}`)}
+     ${fw.untracked(
+       fw.modelAuthority === "parent-prop"
+         ? `if (${input} === undefined) { ${s.render(p.model, `details.${p.model}`)} }
+       ${s.publish(p.model, `details.${p.model}`)}`
+         : `if (${fw.controlled(p.model)}) { ${s.publish(p.model, `details.${p.model}`)} ${s.restoreParent} }
+       else { ${s.render(p.model, `details.${p.model}`)} ${s.publish(p.model, `details.${p.model}`)} }`,
+     )}
      ${s.settle}
      ${fw.modelAuthority === "parent-prop" ? `if (${s.alive(part)} && ${input} !== undefined) { ${s.project(part, input)} }` : ""}
    });`;

@@ -14,7 +14,7 @@ collapsible?: boolean;
   onValueChange?: (value: AccordionValue, detail: AccordionValueChangeDetails) => void;
   ref?: (element: HTMLDivElement | null) => void;
 };
-let { children, value = $bindable(), defaultValue, type = "single", collapsible = true, onValueChange, ref, ...rest }: Props = $props();
+let { children, value = $bindable(), value: commandValue, defaultValue, type = "single", collapsible = true, onValueChange, ref, ...rest }: Props = $props();
 const initialValue = untrack(() => {
   const initialModel = copyModel(value);
 const initialDefault = copyModel(defaultValue);
@@ -22,6 +22,7 @@ const initialValue = initialModel !== undefined ? initialModel : initialDefault 
   return copyModel(initialValue);
 });
 const defaultValueAttribute = Array.isArray(initialValue) ? JSON.stringify(initialValue) : initialValue;
+const valueControlled = untrack(() => commandValue) !== undefined;
 let renderedValue = $state<AccordionValue>(copyModel(initialValue));
 const connection: { instance?: ReturnType<typeof createAccordion>; unsubscribe?: () => void; accepted: AccordionValue; initialized: boolean; } = { accepted: copyModel(initialValue), initialized: false };
 
@@ -36,10 +37,10 @@ owned.destroy();
   }
   function connectRuntime(root: HTMLDivElement): void {
     disconnectRuntime();
-const desired = value !== undefined ? copyModel(value) : copyModel(connection.accepted);
+const desired = commandValue !== undefined ? copyModel(commandValue) : copyModel(connection.accepted);
 const owned = createAccordion(root, {
       defaultValue: copyModel(desired),
-      ...(false ? { value: copyModel(desired) } : {}),
+      ...(valueControlled ? { value: copyModel(desired) } : {}),
       type: type,
 collapsible: collapsible,
       onValueChange: detail => { untrack(() => { onValueChange?.(copyModel(detail.value), detail); }); },
@@ -48,6 +49,10 @@ collapsible: collapsible,
     connection.initialized = true;
 connection.unsubscribe = owned.subscribe("valueChange", detail => {
       if (connection.instance !== owned) return;
+    if (valueControlled) {
+      untrack(() => { if (!isModelEqual(value, copyModel(detail.value))) value = copyModel(copyModel(detail.value)); });
+      return;
+    }
     connection.accepted = copyModel(detail.value);
     untrack(() => { renderedValue = copyModel(detail.value);
 if (!isModelEqual(value, copyModel(detail.value))) value = copyModel(copyModel(detail.value)); });
@@ -55,16 +60,16 @@ if (!isModelEqual(value, copyModel(detail.value))) value = copyModel(copyModel(d
 if (!isModelEqual(owned.getValue(), desired)) owned.setValue(copyModel(desired), { emit: false });
 connection.accepted = copyModel(owned.getValue());
 renderedValue = copyModel(connection.accepted);
-untrack(() => { if (!isModelEqual(value, copyModel(connection.accepted))) value = copyModel(copyModel(connection.accepted)); });
+untrack(() => { if (!valueControlled) { if (!isModelEqual(value, copyModel(connection.accepted))) value = copyModel(copyModel(connection.accepted)); } });
   }
   function applyParentCommand(): void {
-    const next = value;
+    const next = commandValue;
     const owned = connection.instance;
     if (next === undefined || !owned) return;
     if (!isModelEqual(owned.getValue(), next)) owned.setValue(copyModel(next), { emit: false });
     connection.accepted = copyModel(owned.getValue());
     renderedValue = copyModel(connection.accepted);
-    untrack(() => { if (!isModelEqual(value, copyModel(connection.accepted))) value = copyModel(copyModel(connection.accepted)); });
+    untrack(() => { if (!valueControlled) { if (!isModelEqual(value, copyModel(connection.accepted))) value = copyModel(copyModel(connection.accepted)); } });
   }
 
 const attachRuntime: Attachment<HTMLDivElement> = root => {
@@ -73,7 +78,7 @@ const attachRuntime: Attachment<HTMLDivElement> = root => {
     untrack(() => connectRuntime(root));
     return disconnectRuntime;
   });
-  $effect(() => { void value; untrack(applyParentCommand); });
+  $effect(() => { {const tracked=commandValue;if(Array.isArray(tracked))void [...tracked];} void commandValue; untrack(applyParentCommand); });
 };
 const attachRef = createRefAttachment<HTMLDivElement>(() => ref);
 function copyModel(value: AccordionValue): AccordionValue;

@@ -67,12 +67,13 @@ function printThumb(facts: AdapterRangeControlFacts): string {
   const part = facts.parts.thumb;
 
   return `<script setup lang="ts">
-import { ref } from "vue";
+import { ref, type VNodeRef } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 defineProps<{
   ${props.index.name}?: ${props.index.type};
+  ${facts.inputRefPropName}?: (element: HTMLInputElement | null) => void;
 }>();
 const element = ref<HTMLDivElement | null>(null);
 
@@ -88,6 +89,7 @@ defineExpose({ element });
   >
     <slot />
     <input
+      :ref="${facts.inputRefPropName} as VNodeRef | undefined"
       ${facts.attrs.input}
       ${facts.attrs.inputAriaHidden}="${facts.thumbInput.hiddenRangeInput.ariaHiddenValue}"
       :style="{

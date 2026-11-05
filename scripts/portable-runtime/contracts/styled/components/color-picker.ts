@@ -280,11 +280,8 @@ function colorPickerRootNode(floating: boolean, inline: boolean): RenderNode {
         value: variable("onValueCommitted"),
         frameworks: ["react", "vue", "svelte"],
       },
-      {
-        name: "onFormatChange",
-        value: variable("handleFormatChange"),
-        frameworks: ["react", "vue", "svelte"],
-      },
+      { name: "onFormatChange", value: variable("handleFormatChange"), frameworks: ["react"] },
+      { name: "onFormatChange", value: variable("onFormatChange"), frameworks: ["vue", "svelte"] },
       { name: "spread", value: variable("rest") },
       { name: "data-size", value: variable("size") },
       ...(floating ? [{ name: "data-floating-root", value: literal(true) }] : []),
@@ -998,18 +995,19 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           value: { type: "raw", code: "uncontrolledFormatState[1]" },
         },
         {
+          name: "uncontrolledFormat",
+          frameworks: ["vue", "svelte"],
+          state: { acceptedFrom: "format" },
+          value: { type: "raw", code: 'format ?? formats[0] ?? "hex"' },
+        },
+        {
           name: "resolvedFormat",
-          frameworks: ["react"],
+          frameworks: ["react", "vue", "svelte"],
           value: { type: "raw", code: "format ?? uncontrolledFormat" },
         },
         {
           name: "resolvedFormat",
           frameworks: ["astro"],
-          value: { type: "raw", code: 'format ?? formats[0] ?? "hex"' },
-        },
-        {
-          name: "resolvedFormat",
-          frameworks: ["vue"],
           value: { type: "raw", code: 'format ?? formats[0] ?? "hex"' },
         },
         {

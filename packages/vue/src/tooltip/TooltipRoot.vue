@@ -64,10 +64,17 @@ const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
 const portals = new Set<symbol>();
 let disposed = false,
   generation = 0;
+const knownPopups = new WeakSet<HTMLElement>();
 provide(TooltipContext, {
   element: rootRef,
   mounted,
-  registerPlacement,
+  registerPlacement(element, attributes) {
+    const added = attributes !== null && !knownPopups.has(element);
+    registerPlacement(element, attributes);
+    if (!added) return;
+    knownPopups.add(element);
+    if (mounted.value) void reconnectRuntime();
+  },
   registerPortal(owner, element) {
     if (element) portals.add(owner);
     else portals.delete(owner);

@@ -37,12 +37,18 @@ export type StyledOutputComponent = {
   exportName: string;
   forwardRef?: StyledOutputForwardRef;
   imports: StyledOutputImport[];
+  nativeModel?: StyledOutputNativeModel;
   primitiveAliases: StyledOutputPrimitiveAlias[];
   props?: StyledOutputProps;
   render: StyledOutputRenderNode[];
   sourceFileName?: string;
   targetScopes?: StyledOutputTargetScope[];
   variables: StyledOutputVariable[];
+};
+
+export type StyledOutputNativeModel = {
+  name: "value";
+  tag: "select" | "textarea";
 };
 
 export type StyledOutputForwardRef = {
@@ -149,6 +155,7 @@ export type StyledOutputDestructureProp = {
 
 export type StyledOutputVariable = {
   name: string;
+  state?: { acceptedFrom: string };
   targetScopes?: StyledOutputTargetScope[];
   value: StyledOutputValueExpression;
 };
@@ -213,6 +220,8 @@ export type StyledOutputElementNode = {
   attrs: StyledOutputAttribute[];
   children: StyledOutputRenderNode[];
   comments: StyledOutputComment[];
+  /** Whitespace around the children is part of the element value. */
+  inlineChildren?: true;
   selfClosing: boolean;
   tag: string;
   tagBinding?: true;

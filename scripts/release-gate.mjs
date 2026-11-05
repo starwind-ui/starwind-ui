@@ -48,6 +48,8 @@ export function releaseGateStages() {
     ["react demo", ["react-demo:smoke"], "demos"],
     ["vue demo", ["--filter=vue-demo", "smoke:built"], "demos"],
     ["svelte demo", ["svelte:demo:test"], "demos"],
+    // Builds its Astro fixtures from apps/demo, so it shares the demo lane with that app's build.
+    ["target conformance", ["test:conformance"], "demos"],
     ["bundle sizes", ["runtime:size:check:prepared"], "demos"],
     [
       "Vue hosts",

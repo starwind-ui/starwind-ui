@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"button">;
 const { ...rest } = Astro.props;
 ---
 
-<button type="button" data-sw-accordion-trigger aria-expanded="false" data-state="closed" {...rest}>
+<button {...rest} type="button" data-sw-accordion-trigger aria-expanded="false" data-state="closed">
   <slot />
 </button>

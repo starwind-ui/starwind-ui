@@ -25,13 +25,8 @@ export function formLifecycle(plan: FormControlPlan, fw: FormTargetOperations): 
       : name === "disabled"
         ? "effectiveDisabled()"
         : fw.readInput(name);
-  const parent = `(${fw.controlled("checked")}${grouped ? " || groupCheckedValue() !== undefined" : ""})`;
-  const controlled =
-    fw.modelAuthority === "runtime-binding"
-      ? grouped
-        ? "groupCheckedValue() !== undefined"
-        : "false"
-      : parent;
+  const controlled = `(${fw.controlled("checked")}${grouped ? " || groupCheckedValue() !== undefined" : ""})`;
+  const binding = fw.modelAuthority === "runtime-binding";
   const render = `${fw.renderAccepted("checked", "connection.accepted")}\n${plan.mixed ? fw.renderMixed() : ""}`;
   const modelPublication = fw.publishModel("checked", "connection.accepted");
   const publish = modelPublication
@@ -39,6 +34,8 @@ export function formLifecycle(plan: FormControlPlan, fw: FormTargetOperations): 
       ? `if (groupCheckedValue() === undefined) { ${modelPublication} }`
       : modelPublication
     : "";
+  const parentOwned = `${fw.controlled("checked")}${grouped ? " && groupCheckedValue() === undefined" : ""}`;
+  const publishOwned = modelPublication ? `if (!(${parentOwned})) { ${publish} }` : "";
   const mixedAfter = plan.mixed
     ? `if (${fw.readInput("indeterminate")} && connection.input && !connection.input.indeterminate) owned.setIndeterminate(true, { emit: false });`
     : "";
@@ -46,7 +43,7 @@ export function formLifecycle(plan: FormControlPlan, fw: FormTargetOperations): 
     retire: `disconnectRuntime();\nconst desired = ${read("checked")} ?? connection.accepted;`,
     create: `const owned = ${plan.factory}(root, {
       defaultChecked: resetSeed,
-      ${controlled === "false" ? "" : `...(${controlled} ? { checked: desired } : {}),`}
+      ...(${controlled} ? { checked: desired } : {}),
       ${plan.constructorInputs.map((name) => `${name}: ${read(name)},`).join("\n")}
       onCheckedChange: (next, detail) => { ${fw.untracked(fw.proposal("onCheckedChange", "next", "detail"))} },
     });
@@ -61,11 +58,11 @@ export function formLifecycle(plan: FormControlPlan, fw: FormTargetOperations): 
     restore: `if (owned.getChecked() !== desired) owned.setChecked(desired, { emit: false });`,
     subscribe: `connection.unsubscribe = owned.subscribe("checkedChange", detail => {
       if (connection.instance !== owned || detail.isCanceled) return;
-      ${fw.untracked(`${mixedAfter}\nrenderRuntimeState(detail.checked);\n${publish}`)}
+      ${binding ? `if (${parentOwned}) { ${fw.untracked(`${mixedAfter}\n${fw.publishModel("checked", "detail.checked")}`)} return; }\n` : ""}${fw.untracked(`${mixedAfter}\nrenderRuntimeState(detail.checked);\n${publish}`)}
     });`,
     "bind-reset": "bindFormReset();",
     render: "renderRuntimeState();",
-    "publish-binding": fw.modelAuthority === "runtime-binding" ? fw.untracked(publish) : "",
+    "publish-binding": binding ? fw.untracked(publishOwned) : "",
   };
   const cleanup = {
     retain: "connection.accepted = owned.getChecked();",
@@ -137,7 +134,7 @@ function handleFormReset(event: Event): void {
   // Runtime registers its reset task first. Read public state after it settles.
   connection.resetTimer = window.setTimeout(() => {
     connection.resetTimer = undefined;
-    if (event.defaultPrevented || !owned || connection.instance !== owned${controlled === "false" ? "" : ` || ${controlled}`}) return;
+    if (event.defaultPrevented || !owned || connection.instance !== owned || ${controlled}) return;
     ${fw.untracked(`${mixedAfter}\nrenderRuntimeState(owned.getChecked());\n${publish}`)}
   }, 0);
 }

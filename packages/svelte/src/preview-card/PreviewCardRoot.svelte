@@ -6,7 +6,7 @@ const timedOverlayContext=Symbol('PreviewCard part context');
 export function getTimedOverlayContext():TimedOverlayContext|undefined{return getContext(timedOverlayContext);}
 </script>
 <script lang="ts">
-import {createPortalBinding,readyPortalBindingSnapshot,createPreviewCard,type PreviewCardOpenChangeDetails} from '@starwind-ui/runtime/preview-card';
+import {createPortalBinding,readyPortalBindingSnapshot,createPreviewCard,refreshPreviewCardPortalSurface,type PreviewCardOpenChangeDetails} from '@starwind-ui/runtime/preview-card';
 import {setContext,untrack,type Snippet} from 'svelte';
 import type {Attachment} from 'svelte/attachments';
 import type {HTMLAttributes} from 'svelte/elements';
@@ -17,10 +17,11 @@ closeDelay?: number;
 closeOnEscape?: boolean;
 closeOnOutsideInteract?: boolean;
 disableHoverableContent?: boolean;
-openDelay?: number; children?:Snippet<[boolean]>;ref?:(element:HTMLDivElement|null)=>void;onOpenChange?:(open:boolean,detail:PreviewCardOpenChangeDetails)=>void};
-let {defaultOpen=false, open=$bindable(), closeDelay=300, closeOnEscape=true, closeOnOutsideInteract=true, disableHoverableContent=false, openDelay=600,children,ref,onOpenChange,...rest}:Props=$props();
+openDelay?: number; children?:Snippet;ref?:(element:HTMLDivElement|null)=>void;onOpenChange?:(open:boolean,detail:PreviewCardOpenChangeDetails)=>void};
+let {defaultOpen=false, open=$bindable(),open:commandOpen, closeDelay=300, closeOnEscape=true, closeOnOutsideInteract=true, disableHoverableContent=false, openDelay=600,children,ref,onOpenChange,...rest}:Props=$props();
 const initialDefaultOpen = untrack(() => defaultOpen ?? false);
 const initialOpen = untrack(() => open ?? initialDefaultOpen);
+const openControlled = untrack(() => commandOpen) !== undefined;
 let renderedOpen = $state<boolean>(initialOpen);
 const connection: { instance?: ReturnType<typeof createPreviewCard>; unsubscribe?: () => void; accepted: boolean; initialized: boolean; trigger?: HTMLElement; } = { accepted: initialOpen, initialized: false };
 const authoredPlacement = new Map<HTMLElement, Record<string, string>>();
@@ -33,8 +34,10 @@ function registerPlacement(element: HTMLElement, attributes: Record<string, stri
 let mounted=$state(false);
 const portals=new Map<symbol,{wrapper:HTMLElement;authoredParent:HTMLElement;prepare?:()=>()=>void}>();
 let binding:ReturnType<typeof createPortalBinding>|undefined,bindingRoot:HTMLDivElement|undefined;
+let surfaceRefreshQueued=false;
+function requestSurfaceRefresh():void{if(surfaceRefreshQueued)return;surfaceRefreshQueued=true;queueMicrotask(()=>{surfaceRefreshQueued=false;if(connection.instance&&bindingRoot&&authoredPlacement.size>0)refreshPreviewCardPortalSurface(bindingRoot);});}
 setContext<TimedOverlayContext>(timedOverlayContext,{get mounted(){return mounted;},
-registerPlacement,
+registerPlacement(element,attributes){const added=attributes!==null&&!authoredPlacement.has(element);registerPlacement(element,attributes);if(added)requestSurfaceRefresh();},
 registerPortal(owner,element,authoredParent,prepare){if(element&&authoredParent)portals.set(owner,{wrapper:element,authoredParent,prepare});else portals.delete(owner);binding?.publish(readyPortalBindingSnapshot(bindingRoot!,[...portals.values()]));}
 });
 
@@ -49,10 +52,10 @@ owned.destroy();
   }
   function connectRuntime(root: HTMLDivElement): void {
     disconnectRuntime();
-const desired = open ?? connection.accepted;
+const desired = commandOpen ?? connection.accepted;
 const owned = createPreviewCard(root, {
       defaultOpen: false,
-      ...(false ? { open: false } : {}),
+      ...(openControlled ? { open: false } : {}),
       closeDelay: closeDelay,
 closeOnEscape: closeOnEscape,
 closeOnOutsideInteract: closeOnOutsideInteract,
@@ -64,6 +67,11 @@ openDelay: openDelay,
     connection.initialized = true;
 connection.unsubscribe = owned.subscribe("openChange", detail => {
       if (connection.instance !== owned) return;
+    if (openControlled) {
+    if (detail.open && detail.trigger instanceof HTMLElement) connection.trigger = detail.trigger;
+      untrack(() => { if (open !== detail.open) open = detail.open; });
+      return;
+    }
     connection.accepted = detail.open;
     if (detail.open && detail.trigger instanceof HTMLElement) connection.trigger = detail.trigger;
     untrack(() => { renderedOpen = detail.open;
@@ -72,16 +80,16 @@ if (open !== detail.open) open = detail.open; });
 if (owned.getOpen() !== desired) owned.setOpen(desired, { emit: false, trigger: connection.trigger });
 connection.accepted = owned.getOpen();
 renderedOpen = connection.accepted;
-untrack(() => { if (open !== connection.accepted) open = connection.accepted; });
+untrack(() => { if (!openControlled) { if (open !== connection.accepted) open = connection.accepted; } });
   }
   function applyParentCommand(): void {
-    const next = open;
+    const next = commandOpen;
     const owned = connection.instance;
     if (next === undefined || !owned) return;
     if (owned.getOpen() !== next) owned.setOpen(next, { emit: false });
     connection.accepted = owned.getOpen();
     renderedOpen = connection.accepted;
-    untrack(() => { if (open !== connection.accepted) open = connection.accepted; });
+    untrack(() => { if (!openControlled) { if (open !== connection.accepted) open = connection.accepted; } });
   }
 
 function connectSurface(root: HTMLDivElement): void {
@@ -94,7 +102,7 @@ connectRuntime(root); } finally { for (const restore of restorers.reverse()) res
 const attachRuntime:Attachment<HTMLDivElement>=root=>{
 bindingRoot=root;binding=createPortalBinding(root);binding.publish(readyPortalBindingSnapshot(root,[...portals.values()]));mounted=true;
 $effect(()=>{void [closeDelay, closeOnEscape, closeOnOutsideInteract, disableHoverableContent, openDelay];untrack(()=>{connectSurface(root);});return disconnectRuntime;});
-$effect(() => { void open; untrack(applyParentCommand); });
+$effect(() => { void commandOpen; untrack(applyParentCommand); });
 
 return ()=>{mounted=false;binding?.destroy();binding=undefined;bindingRoot=undefined;};
 };
@@ -108,4 +116,4 @@ data-close-on-escape={String(closeOnEscape)}
 data-close-on-outside-interact={String(closeOnOutsideInteract)}
 data-content-hoverable={String(!disableHoverableContent)}
 data-open-delay={openDelay}
-data-state={renderedOpen ? 'open' : 'closed'} {@attach attachRuntime} {@attach attachRef}>{@render children?.(renderedOpen)}</div>
+data-state={renderedOpen ? 'open' : 'closed'} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>

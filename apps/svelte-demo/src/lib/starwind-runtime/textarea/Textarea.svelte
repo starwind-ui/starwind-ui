@@ -1,4 +1,5 @@
 <script module lang="ts">
+  import { untrack } from "svelte";
   import type { SvelteHTMLElements } from "svelte/elements";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
@@ -13,6 +14,7 @@
     "data-slot": dataSlot = "textarea",
     "class": className,
     value = $bindable(),
+    "value": commandValue,
     ref = $bindable(),
     ...rest
   }: TextareaProps = $props();
@@ -21,6 +23,13 @@
     const props = { ...rest };
     for (const key of ["children","value"]) delete (props as Record<string, unknown>)[key];
     return props;
+  });
+
+  // Native reset restores the default, so a parent-owned value stays the default. An authored default still wins.
+  const parentOwned = untrack(() => commandValue) !== undefined;
+  $effect(() => {
+    if (!parentOwned || !ref || commandValue === undefined || (rest.defaultValue ?? rest.defaultvalue) != null) return;
+    ref.defaultValue = commandValue ?? "";
   });
 </script>
 

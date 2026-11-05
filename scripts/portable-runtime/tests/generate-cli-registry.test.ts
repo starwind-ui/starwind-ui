@@ -2710,13 +2710,9 @@ function assertRegistryTriggerTargetId(options: {
 
     expect(file, `${options.component} ${framework} trigger`).toBeDefined();
     expect(file?.content).toContain("targetId?: string");
-    if (framework === "astro") {
-      expect(file?.content).toContain(options.targetAttribute);
-    } else {
-      expect(file?.content).toContain(`<${options.reactPrimitive}.Trigger`);
-      expect(file?.content).toContain("targetId={targetId}");
-      expect(file?.content).not.toContain(options.targetAttribute);
-    }
+    expect(file?.content).toContain(`<${options.reactPrimitive}.Trigger`);
+    expect(file?.content).toContain("targetId={targetId}");
+    expect(file?.content).not.toContain(options.targetAttribute);
     expect(file?.content).not.toContain("data-dialog-for");
     expect(file?.content).not.toContain("dialogFor");
     expect(file?.content).not.toContain("for?: string");

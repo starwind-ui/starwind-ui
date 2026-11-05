@@ -83,7 +83,7 @@ jobs:
   browser-adapter-tests:
     name: Browser adapter tests
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -98,12 +98,14 @@ jobs:
           cache: pnpm
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright Chromium and WebKit
+        run: pnpm exec playwright install --with-deps chromium webkit
       - name: Run browser suites
-        run: pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci
+        run: pnpm runtime:test:browser && pnpm runtime:test:webkit && pnpm react:test:browser && pnpm vue:test:browser:ci
       - name: Check Form parity across frameworks
         run: pnpm test:form-parity
+      - name: Check target conformance
+        run: pnpm test:conformance
 
   build-drift:
     name: Build and generated drift

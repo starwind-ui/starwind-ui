@@ -12,6 +12,6 @@ type Props = HTMLAttributes<"div"> & {
 const { closeDelay = 200, ...rest } = Astro.props;
 ---
 
-<div data-sw-menu-submenu-root data-close-delay={closeDelay} data-state="closed" {...rest}>
+<div {...rest} data-sw-menu-submenu-root data-close-delay={closeDelay} data-state="closed">
   <slot />
 </div>

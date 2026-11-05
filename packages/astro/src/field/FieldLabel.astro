@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"label">;
 const { for: htmlFor, ...rest } = Astro.props;
 ---
 
-<label data-sw-field-label for={htmlFor} {...rest}>
+<label {...rest} data-sw-field-label for={htmlFor}>
   <slot />
 </label>

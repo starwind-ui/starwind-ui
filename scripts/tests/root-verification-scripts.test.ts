@@ -216,6 +216,7 @@ describe("root verification scripts", () => {
       "pnpm react:test:browser",
       "pnpm vue:test:browser:ci",
       "pnpm test:form-parity",
+      "pnpm test:conformance",
       "pnpm runtime:generate:all",
       "pnpm runtime:registry:generate",
       "git diff --exit-code",

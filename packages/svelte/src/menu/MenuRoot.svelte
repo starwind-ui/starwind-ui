@@ -31,14 +31,15 @@
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-    children?: Snippet<[boolean]>; open?: boolean; defaultOpen?: boolean;
+    children?: Snippet; open?: boolean; defaultOpen?: boolean;
     disabled?: boolean; modal?: boolean; openOnHover?: boolean; closeDelay?: number;
     onOpenChange?: (open: boolean, detail: MenuOpenChangeDetails) => void;
     onCloseComplete?: (detail: MenuCloseCompleteDetails) => void;
     ref?: (element: HTMLDivElement | null) => void;
   };
-  let { children, open = $bindable(), defaultOpen, disabled = false, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
+  let { children, open = $bindable(), open: commandOpen, defaultOpen, disabled = false, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => open);
+  const openControlled = initialModel !== undefined;
   const initialDefault = untrack(() => defaultOpen) ?? initialModel ?? false;
   let accepted = $state(initialModel ?? initialDefault);
   let mounted = $state(false);
@@ -89,16 +90,16 @@ closeDelay:closeDelay,
     onOpenChange:(next,details)=>{ untrack(() => { onOpenChange?.(next,details); }); },
     onCloseComplete:(details)=>{ if (instance !== owned) return; untrack(() => { onCloseComplete?.(details); }); },
 
-
+    ...(openControlled ? {open:false} : {}),
   });
   instance=owned;
 const unsubscribeOpenChange = owned.subscribe("openChange", details=>{ if (instance !== owned) return;
-    untrack(() => { accepted=details.open;
+    untrack(() => { if (!openControlled) { accepted=details.open; }
       if (open !== details.open) open = details.open; }); });
 queueMicrotask(() => {
       untrack(() => { if (instance !== owned || !root.isConnected) return;
 for (const model of models.values()) model.accept();
-const desired = open ?? accepted;
+const desired = commandOpen ?? accepted;
     if (owned.getOpen() !== desired) owned.setOpen(desired,{emit:false});
     accepted=owned.getOpen(); });
     });
@@ -107,8 +108,8 @@ const desired = open ?? accepted;
     owned.destroy(); };
       });
     });
-    $effect(() => { void open; untrack(() => { const owned = instance; if (!owned || open === undefined) return;
-    const next = open;
+    $effect(() => { void commandOpen; untrack(() => { const owned = instance; if (!owned || commandOpen === undefined) return;
+    const next = commandOpen;
     if (owned.getOpen() !== next) owned.setOpen(next,{emit:false});
     accepted=owned.getOpen(); }); });
     return () => { mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined; };
@@ -117,5 +118,5 @@ const desired = open ?? accepted;
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
 <div {...rest} data-sw-menu="" data-sw-part="root" data-default-open={initialDefault ? "true" : undefined} data-disabled={disabled ? "" : undefined} data-modal={String(modal)} data-open-on-hover={openOnHover ? "" : undefined} data-close-delay={closeDelay} data-state={accepted ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
-  {@render children?.(accepted)}
+  {@render children?.()}
 </div>

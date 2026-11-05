@@ -1,6 +1,5 @@
 <script module lang="ts">
   import type { ComponentProps } from "svelte";
-  import { untrack } from "svelte";
   import { cx } from "tailwind-variants";
   import { TabsRoot as PrimitivePart } from "@starwind-ui/svelte/tabs";
   import { tabs, tabsContent, tabsList, tabsTrigger } from "./variants.js";
@@ -22,9 +21,6 @@
     "onValueChange": onValueChange,
     ...rest
   }: TabsProps = $props();
-
-  let observedCommand=untrack(()=>commandValue);
-  $effect(()=>{const next=commandValue;untrack(()=>{if(Object.is(next,observedCommand))return;observedCommand=next;if(!Object.is(next,value))value=next;});});
 </script>
 
 <TabsRoot
@@ -37,7 +33,7 @@
   {...rest}
   data-slot={"tabs"}
   children={children}
-  bind:value={value}
+  bind:value={() => commandValue, (next) => { value = next; }}
 >
 
 </TabsRoot>

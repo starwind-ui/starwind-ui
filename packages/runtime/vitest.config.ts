@@ -24,6 +24,19 @@ export default defineConfig({
           },
         },
       },
+      {
+        // WebKit moves focus differently on a pointer press, so these files run there as well.
+        test: {
+          include: ["tests/cross-browser/**/*.browser.test.ts"],
+          name: "webkit",
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [{ browser: "webkit" }],
+          },
+        },
+      },
     ],
   },
 });

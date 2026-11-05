@@ -39,7 +39,7 @@ type FieldValidityDeclaredProps = {
     | "valueMissing";
   class?: ClassValue;
 } & /* @vue-ignore */ FieldValidityProps;
-const { match, class: className } = defineProps<FieldValidityDeclaredProps>();
+const { match = undefined, class: className } = defineProps<FieldValidityDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();

@@ -1026,14 +1026,14 @@ describe("Select accepted models", () => {
       openCallbacks: [],
     });
     expect(result.plainAccepted).toMatchObject({
-      open: false,
-      value: "gamma",
+      open: true,
+      value: "beta",
       openModel: true,
       valueModel: "beta",
-      formValue: "gamma",
+      formValue: "beta",
     });
-    expect(result.samePlainCommand).toMatchObject({ value: "gamma", valueModel: "beta" });
-    expect(result.plainUndefined).toMatchObject({ value: "gamma", valueModel: "undefined" });
+    expect(result.samePlainCommand).toMatchObject({ value: "beta", valueModel: "beta" });
+    expect(result.plainUndefined).toMatchObject({ value: "beta", valueModel: "undefined" });
     expect(result.omittedLater).toMatchObject({
       open: true,
       value: "beta",
@@ -1167,28 +1167,10 @@ describe("Select accepted models", () => {
   it("resets the frozen value seed while preserving cancellation and newer state", async () => {
     const result = await runSelectModelCases(
       [
-        {
-          id: "seed",
-          mode: "function",
-          initialOpen: false,
-          initialValue: "beta",
-          defaultValue: "alpha",
-        },
+        { id: "seed", mode: "function", initialOpen: false, defaultValue: "alpha" },
         { id: "model-seed", mode: "function", initialOpen: false, initialValue: "gamma" },
-        {
-          id: "null-seed",
-          mode: "function",
-          initialOpen: false,
-          initialValue: "beta",
-          defaultValue: null,
-        },
-        {
-          id: "empty-seed",
-          mode: "function",
-          initialOpen: false,
-          initialValue: "beta",
-          defaultValue: "",
-        },
+        { id: "null-seed", mode: "function", initialOpen: false, defaultValue: null },
+        { id: "empty-seed", mode: "function", initialOpen: false, defaultValue: "" },
         {
           id: "cancel",
           mode: "function",
@@ -1226,9 +1208,9 @@ describe("Select accepted models", () => {
         },
       ],
       `
-      cases.seed.setDefault("gamma"); await settle(); reset("seed"); await resetSettled();
+      choose("seed", "beta"); await settle(); cases.seed.setDefault("gamma"); await settle(); reset("seed"); await resetSettled();
       cases["model-seed"].setValue("beta"); await settle(); reset("model-seed"); await resetSettled();
-      reset("null-seed"); reset("empty-seed"); await resetSettled();
+      choose("null-seed", "beta"); choose("empty-seed", "beta"); await settle(); reset("null-seed"); reset("empty-seed"); await resetSettled();
       form("cancel").addEventListener("reset", (event) => event.preventDefault()); reset("cancel"); await resetSettled();
       reset("parent"); cases.parent.setValue("gamma"); flushSync(); await resetSettled();
       reset("interaction"); choose("interaction", "beta"); await resetSettled();
@@ -1241,21 +1223,17 @@ describe("Select accepted models", () => {
       value: "alpha",
       valueModel: "alpha",
       formValue: "alpha",
-      valueWrites: ["alpha"],
-      valueCallbacks: [],
     });
+    expect(result.states.seed.valueWrites.at(-1)).toBe("alpha");
     expect(result.states["model-seed"]).toMatchObject({
-      value: "gamma",
-      valueModel: "gamma",
-      valueWrites: ["gamma"],
+      value: "beta",
+      valueModel: "beta",
+      valueWrites: [],
     });
-    for (const id of ["null-seed", "empty-seed"])
-      expect(result.states[id]).toMatchObject({
-        value: null,
-        valueModel: null,
-        valueWrites: [null],
-        formValue: "",
-      });
+    for (const id of ["null-seed", "empty-seed"]) {
+      expect(result.states[id]).toMatchObject({ value: null, valueModel: null, formValue: "" });
+      expect(result.states[id].valueWrites.at(-1)).toBe(null);
+    }
     expect(result.states.cancel).toMatchObject({
       value: "beta",
       valueModel: "beta",
@@ -1274,8 +1252,8 @@ describe("Select accepted models", () => {
     expect(result.states["open-only"]).toMatchObject({
       open: true,
       openModel: true,
-      value: "alpha",
-      valueWrites: ["alpha"],
+      value: "beta",
+      valueWrites: [],
       openWrites: [],
     });
     expect(result.states.unmount).toMatchObject({

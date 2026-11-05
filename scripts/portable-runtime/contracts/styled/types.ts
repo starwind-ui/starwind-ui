@@ -62,6 +62,8 @@ export type StyledComponentContract = {
   exportName: string;
   fileName?: string;
   forwardRef?: StyledComponentForwardRefContract;
+  /** The native control whose value is this component's public framework model. */
+  nativeModel?: StyledNativeModelContract;
   primitiveAliases?: Record<string, string>;
   props?: ComponentPropsContract;
   destructure?: DestructureContract;
@@ -73,6 +75,11 @@ export type StyledComponentContract = {
 export type StyledComponentForwardRefContract = {
   frameworks?: FrameworkTarget[];
   targetType: string;
+};
+
+export type StyledNativeModelContract = {
+  name: "value";
+  tag: "select" | "textarea";
 };
 
 export type StyledComponentClientContract = {
@@ -124,6 +131,11 @@ export type DestructurePropContract = {
 export type LocalVariableContract = {
   frameworks?: FrameworkTarget[];
   name: string;
+  /**
+   * Local state seeded once from value. It keeps the last accepted value of the named model, so a
+   * later undefined model keeps that value, and it holds the value when no parent owns the model.
+   */
+  state?: { acceptedFrom: string };
   value: ValueExpression;
 };
 

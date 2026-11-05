@@ -11,9 +11,9 @@ const { "data-slot": dataSlot = "sidebar-menu-item", class: className, ...rest }
 ---
 
 <li
+  {...rest}
   class={sidebarMenuItem({ class: className })}
   data-sidebar="menu-item"
-  {...rest}
   data-slot={dataSlot}
 >
   <slot />

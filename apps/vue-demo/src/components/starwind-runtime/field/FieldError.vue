@@ -40,7 +40,11 @@ type FieldErrorDeclaredProps = {
   messageSource?: "children" | "validation";
   class?: ClassValue;
 } & /* @vue-ignore */ FieldErrorProps;
-const { match, messageSource, class: className } = defineProps<FieldErrorDeclaredProps>();
+const {
+  match = undefined,
+  messageSource,
+  class: className,
+} = defineProps<FieldErrorDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();

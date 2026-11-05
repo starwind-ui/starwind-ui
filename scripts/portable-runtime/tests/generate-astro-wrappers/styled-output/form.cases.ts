@@ -163,7 +163,7 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxInputGroup).toContain('size = "md"');
   expect(comboboxInputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(comboboxInputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-slot="combobox-input-group"/);
-  expect(inputGroup).toMatch(/data-slot="input-group"[\s\S]*\{\.\.\.rest\}/);
+  expect(inputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-slot="input-group"/);
   expect(comboboxVariants).toContain("[&>[data-align=inline-end]:has(>div>button)]:mr-[-0.3rem]");
   expect(comboboxInput).toContain(
     'import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";',

@@ -1,4 +1,5 @@
 import type { NativeRootProjection } from "../../shared-recipes/structured/native-frame-types.js";
+import { svelteModelDestructure } from "./recipe-framework-operations.js";
 
 /** Native overlay svelte projection. Portal transport is a named target exception. */
 export const svelteNativeRootProjection: NativeRootProjection = {
@@ -10,7 +11,7 @@ export const svelteNativeRootProjection: NativeRootProjection = {
     props
       .map((prop) =>
         prop.name === "open"
-          ? "open = $bindable()"
+          ? svelteModelDestructure("open")
           : `${prop.name}${prop.defaultValue && prop.name !== "defaultOpen" ? ` = ${prop.defaultValue}` : ""}`,
       )
       .join(", "),
@@ -49,7 +50,7 @@ import type { Attachment } from "svelte/attachments";
 import type { HTMLAttributes } from "svelte/elements";
 import { createRefAttachment } from "../_internal/ref-attachment.js";
 ${portal ? 'import { discoverOverlayCaptures } from "../_internal/overlay-capture.js";' : ""}
-type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet<[boolean]>; ${fields}\n${callbacks}\nref?: (element: HTMLDivElement | null) => void; };
+type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; ${fields}\n${callbacks}\nref?: (element: HTMLDivElement | null) => void; };
 let { children, ${destructure}, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
 ${initial}
 ${accepted}
@@ -117,7 +118,7 @@ ${portal ? "return () => { mounted = false; scanParts = undefined; binding?.dest
 };
 const attachRef = createRefAttachment<HTMLDivElement>(() => ref);
 </script>
-<div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.(renderedOpen)}</div>
+<div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>
 `;
   },
 };

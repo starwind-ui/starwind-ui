@@ -3,6 +3,7 @@ import {
   getStyledPartsIdentifier,
   type StyledOutputValueExpression,
 } from "../../../styled-output-model/index.js";
+import { svelteCommandName } from "../recipe-framework-operations.js";
 import type {
   SvelteStyledComponentProjection,
   SvelteStyledFile,
@@ -112,31 +113,73 @@ function renderComponent(component: SvelteStyledComponentProjection, styleImport
       ? `${prop.name} = ${prop.defaultValue}`
       : `${JSON.stringify(prop.name)}${prop.alias ? `: ${prop.alias}` : `: ${prop.name}`}${prop.defaultValue ? ` = ${prop.defaultValue}` : ""}`,
   );
+  // Forward a model through the parent getter so a one-way parent keeps ownership past this wrapper.
+  const models = new Set(
+    component.destructure
+      .filter((prop) => prop.defaultValue?.startsWith("$bindable(") && prop.name !== "ref")
+      .map((prop) => prop.name),
+  );
+  const markup = [
+    ...(component.templatePrelude ? [component.templatePrelude] : []),
+    ...component.render.map((node) => renderNode(node, models)),
+  ].join("\n");
+  for (const model of models) {
+    const command = svelteCommandName(model);
+    if (
+      markup.includes(`={() => ${command},`) &&
+      !component.destructure.some((prop) => prop.alias === command)
+    )
+      props.push(`${JSON.stringify(model)}: ${command}`);
+  }
+  for (const variable of component.variables) {
+    const model = variable.state?.acceptedFrom;
+    if (model) props.push(`${JSON.stringify(model)}: ${svelteCommandName(model)}`);
+  }
   if (component.rest) props.push(`...${component.rest}`);
   const instance = [
     `let {\n${indent(props.join(",\n"))}\n}: ${component.exportName}Props = $props();`,
     ...(component.initialization ?? []),
-    ...component.variables.map(
-      (variable) => `let ${variable.name} = $derived(${renderSvelteStyledValue(variable.value)});`,
+    ...component.variables.map((variable) =>
+      variable.state
+        ? renderAcceptedState(
+            variable.name,
+            variable.state.acceptedFrom,
+            renderSvelteStyledValue(variable.value),
+          )
+        : `let ${variable.name} = $derived(${renderSvelteStyledValue(variable.value)});`,
     ),
     ...component.setup,
   ].join("\n\n");
-  return `<script module lang="ts">\n${indent([...imports, "", component.publicTypes].join("\n"))}\n</script>\n\n<script lang="ts">\n${indent(instance)}\n</script>\n\n${component.render.map((node) => renderNode(node)).join("\n")}\n`;
+  return `<script module lang="ts">\n${indent([...imports, "", component.publicTypes].join("\n"))}\n</script>\n\n<script lang="ts">\n${indent(instance)}\n</script>\n\n${markup}\n`;
 }
 
-function renderNode(node: SvelteStyledRenderNode): string {
+/** A parent-controlled input is read past the local value of a one-way bindable. */
+function renderAcceptedState(name: string, model: string, initial: string): string {
+  const command = svelteCommandName(model);
+  return `const ${model}Controlled = untrack(() => ${command}) !== undefined;
+const ${command}Input = () => ${model}Controlled ? ${command} : ${model};
+let ${name} = $state(untrack(() => ${initial}));
+$effect.pre(() => {
+  const input = ${command}Input();
+  if (input !== undefined) ${name} = input;
+});`;
+}
+
+function renderNode(node: SvelteStyledRenderNode, models: ReadonlySet<string>): string {
+  const renderAll = (nodes: SvelteStyledRenderNode[]) =>
+    nodes.map((child) => renderNode(child, models)).join("\n");
   switch (node.type) {
     case "condition":
-      return `{#if ${node.condition}}\n${indent(node.then.map(renderNode).join("\n"))}${node.else.length ? `\n{:else}\n${indent(node.else.map(renderNode).join("\n"))}` : ""}\n{/if}`;
+      return `{#if ${node.condition}}\n${indent(renderAll(node.then))}${node.else.length ? `\n{:else}\n${indent(renderAll(node.else))}` : ""}\n{/if}`;
     case "each":
-      return `{#each ${node.each} as ${node.item}, ${node.index} (${node.key})}\n${indent(node.children.map(renderNode).join("\n"))}\n{/each}`;
+      return `{#each ${node.each} as ${node.item}, ${node.index} (${node.key})}\n${indent(renderAll(node.children))}\n{/each}`;
     case "fragment":
-      return node.children.map(renderNode).join("\n");
+      return renderAll(node.children);
     case "snippet-definition":
-      return `{#snippet ${node.name}(${node.parameters.join(", ")})}\n${indent(node.children.map(renderNode).join("\n"))}\n{/snippet}`;
+      return `{#snippet ${node.name}(${node.parameters.join(", ")})}\n${indent(renderAll(node.children))}\n{/snippet}`;
     case "snippet":
       return node.fallback.length
-        ? `{#if ${node.name}}{@render ${node.name}(${node.args?.join(", ") ?? ""})}{:else}${node.fallback.map(renderNode).join("\n")}{/if}`
+        ? `{#if ${node.name}}{@render ${node.name}(${node.args?.join(", ") ?? ""})}{:else}${renderAll(node.fallback)}{/if}`
         : `{@render ${node.name}?.(${node.args?.join(", ") ?? ""})}`;
     case "expression":
       return `{${node.value}}`;
@@ -152,7 +195,12 @@ function renderNode(node: SvelteStyledRenderNode): string {
             : attr.name,
       );
       for (const binding of node.bindings ?? [])
-        attrs.push(`bind:${binding.name}={${binding.expression}}`);
+        attrs.push(
+          // Textarea keeps native element semantics, so its one-way value stays editable.
+          node.type === "component" && node.name !== "Textarea" && models.has(binding.expression)
+            ? `bind:${binding.name}={() => ${svelteCommandName(binding.expression)}, (next) => { ${binding.expression} = next; }}`
+            : `bind:${binding.name}={${binding.expression}}`,
+        );
       if (node.attachment) attrs.push(`{@attach ${node.attachment}}`);
       const start = `<${node.name}${attrs.length ? "\n" + indent(attrs.join("\n")) + "\n" : ""}`;
       // Whitespace inside an empty textarea becomes its initial native value.
@@ -160,7 +208,7 @@ function renderNode(node: SvelteStyledRenderNode): string {
         return `${start}></textarea>`;
       return node.selfClosing
         ? `${start}/>`
-        : `${start}>\n${indent(node.children.map(renderNode).join("\n"))}\n</${node.name}>`;
+        : `${start}>\n${indent(renderAll(node.children))}\n</${node.name}>`;
     }
   }
 }

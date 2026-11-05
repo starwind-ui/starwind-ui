@@ -63,7 +63,7 @@ const {
   variant = "default",
   size = "md",
   checked = undefined,
-  defaultChecked,
+  defaultChecked = undefined,
   disabled = false,
   form,
   id,

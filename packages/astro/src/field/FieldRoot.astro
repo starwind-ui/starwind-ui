@@ -38,6 +38,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-field
   data-dirty={dirty ? "" : undefined}
   data-disabled={disabled ? "" : undefined}
@@ -47,7 +48,6 @@ const {
   data-revalidation-timing={dataRevalidationTiming ?? revalidationTiming}
   data-touched={touched ? "" : undefined}
   data-validation-timing={dataValidationTiming ?? validationTiming}
-  {...rest}
 >
   <slot />
 </div>

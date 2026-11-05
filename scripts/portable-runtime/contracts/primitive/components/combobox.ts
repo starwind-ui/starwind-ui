@@ -426,8 +426,12 @@ export const comboboxRuntimeAdapterContract = {
     { part: "item", public: true },
   ],
   asChild: [
-    { part: "clear", merges: ["aria", "className", "data", "events", "ref"] },
-    { part: "trigger", merges: ["aria", "className", "data", "ref"] },
+    {
+      part: "clear",
+      merges: ["aria", "className", "data", "events", "ref"],
+      childElement: "button",
+    },
+    { part: "trigger", merges: ["aria", "className", "data", "ref"], childElement: "button" },
   ],
   initialMarkup: [
     {

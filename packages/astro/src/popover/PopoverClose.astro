@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"button">;
 const { ...rest } = Astro.props;
 ---
 
-<button type="button" data-sw-popover-close {...rest}>
+<button {...rest} type="button" data-sw-popover-close>
   <slot />
 </button>

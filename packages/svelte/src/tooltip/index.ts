@@ -28,5 +28,10 @@ export {
   TooltipTrigger,
 };
 export default Tooltip;
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+export type {
+  ButtonChildProps,
+  ButtonChildPayload,
+  TriggerChildProps,
+  TriggerChildPayload,
+} from "../button/ButtonRoot.svelte";
 export type { TooltipOpenChangeDetails } from "@starwind-ui/runtime";

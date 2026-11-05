@@ -24,6 +24,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-select-popup
   role="listbox"
   tabindex="-1"
@@ -34,7 +35,6 @@ const {
   data-align-offset={alignOffset}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
   hidden
-  {...rest}
 >
   <slot />
 </div>

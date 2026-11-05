@@ -189,6 +189,48 @@ describe("product package-size report", () => {
     expect(report).not.toContain("emitted lazy");
   });
 
+  it("shows the chunks behind a joined size for Starwind rows", () => {
+    const react = comparisonFixture("react");
+    react.overlaps["react-exact-three-way"]["starwind-react"] = {
+      ...size(300, 2048, 200),
+      initialChunks: [
+        { gzipBytes: 2048, name: "entry.js" },
+        { gzipBytes: 1024, name: "chunks/shared-abc.js" },
+      ],
+      lazyChunks: [{ gzipBytes: 512, name: "chunks/lazy-def.js" }],
+    };
+
+    const report = formatProductSizeReport({
+      generatedAt: "2026-11-01T00:00:00.000Z",
+      react,
+      vue: comparisonFixture("vue"),
+      site: {
+        astro: {
+          select: { ...size(30, 20, 18), initialChunks: [{ gzipBytes: 20, name: "entry.js" }] },
+        },
+      },
+    });
+
+    expect(report).toContain(
+      "| React three-way category overlap | 2 | 2.0 KiB | 3.0 KiB | 2.0 KiB | 1 |",
+    );
+    expect(report).toContain("| Astro site Select | 1 |");
+    expect(report).toContain("### React three-way overlap chunks");
+    expect(report).toContain("| `chunks/shared-abc.js` | Initial | 1.0 KiB |");
+    expect(report).toContain("| `chunks/lazy-def.js` | Lazy | 0.5 KiB |");
+  });
+
+  it("omits the chunk section when evidence has no chunk data", () => {
+    const report = formatProductSizeReport({
+      generatedAt: "2026-11-01T00:00:00.000Z",
+      react: comparisonFixture("react"),
+      vue: comparisonFixture("vue"),
+      site: {},
+    });
+
+    expect(report).not.toContain("## Starwind chunks");
+  });
+
   it("formats internal exact-overlap source attribution separately from the product report", () => {
     const report = formatProductAttributionReport({
       generatedAt: "2026-08-18T00:00:00.000Z",

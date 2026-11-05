@@ -10,6 +10,6 @@ type Props = HTMLAttributes<"div">;
 const { ...rest } = Astro.props;
 ---
 
-<div data-sw-progress-indicator {...rest}>
+<div {...rest} data-sw-progress-indicator>
   <slot />
 </div>

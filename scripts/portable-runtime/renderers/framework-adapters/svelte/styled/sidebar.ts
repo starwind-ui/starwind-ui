@@ -46,7 +46,13 @@ export function specializeSvelteStyledSidebar(
   options: SvelteStyledRenderOptions,
 ): Pick<
   SvelteStyledComponentProjection,
-  "imports" | "publicTypes" | "destructure" | "rest" | "setup" | "semanticNativeTag"
+  | "imports"
+  | "publicTypes"
+  | "destructure"
+  | "rest"
+  | "setup"
+  | "semanticNativeTag"
+  | "templatePrelude"
 > {
   assertStyledSidebarConnection(group);
   const name = component.exportName,
@@ -68,7 +74,9 @@ export function specializeSvelteStyledSidebar(
     (prop) => supportsSvelteScope(prop.targetScopes) && !["ref", "asChild"].includes(prop.name),
   );
   component.variables = component.variables.filter(
-    (variable) => !["Tag", "providerStyle", "mobileStyle", "skeletonStyle"].includes(variable.name),
+    (variable) =>
+      (menu || variable.name !== "Tag") &&
+      !["providerStyle", "mobileStyle", "skeletonStyle"].includes(variable.name),
   );
   const variable = (name: string, code: string) =>
     component.variables.push({ name, value: { type: "raw", code } });
@@ -90,6 +98,7 @@ export function specializeSvelteStyledSidebar(
   if (name === "SidebarInput") props.push({ name: "value", defaultValue: "$bindable()" });
   if (native || sidebar) props.push({ name: "ref", defaultValue: "$bindable()" });
   if (trigger) props.push({ name: "icon" });
+  if (menu) props.push({ name: "child" });
   props.push({ name: "children" });
   if (trigger) {
     const root = component.render[0];
@@ -129,11 +138,14 @@ export function specializeSvelteStyledSidebar(
           if (!menuPropsAdded) {
             variable(
               "menuProps",
-              `({ ${node.attrs.map((attr) => (attr.name === "spread" ? `...${renderSvelteStyledValue(attr.value!)}` : `${JSON.stringify(attr.name)}: ${attr.value ? renderSvelteStyledValue(attr.value) : "true"}`)).join(", ")} }) as ComponentProps<typeof SidebarMenuButton>`,
+              `({ ${node.attrs.map((attr) => (attr.name === "spread" ? `...${renderSvelteStyledValue(attr.value!)}` : `${JSON.stringify(attr.name)}: ${attr.value ? renderSvelteStyledValue(attr.value) : "true"}`)).join(", ")} }) as unknown as ComponentProps<typeof SidebarMenuButton>`,
             );
             menuPropsAdded = true;
           }
-          node.attrs = [{ name: "spread", value: { type: "variable", name: "menuProps" } }];
+          node.attrs = [
+            { name: "spread", value: { type: "variable", name: "menuProps" } },
+            { name: "child", value: { type: "raw", code: "child ?? nativeControl" } },
+          ];
           node.children = element.children;
         }
         if ("children" in node) node.children = replace(node.children);
@@ -183,11 +195,13 @@ export function specializeSvelteStyledSidebar(
     ? "ComponentProps<typeof SidebarProvider>"
     : sidebar
       ? 'Omit<ComponentProps<typeof SidebarComponent>, "collapsible" | "ref">'
-      : part
-        ? `ComponentProps<typeof Sidebar${part}>`
-        : dependency
-          ? `ComponentProps<typeof ${dependency[1]}>`
-          : `SvelteHTMLElements[${JSON.stringify(native![0])}]`;
+      : menu
+        ? `((ButtonChildProps & { href?: undefined; ref?: (element: HTMLButtonElement | null) => void }) | (Omit<HTMLAnchorAttributes, "children"> & { href: string; ref?: (element: HTMLAnchorElement | null) => void })) & { child?: Snippet<[SidebarMenuButtonChildPayload]> }`
+        : part
+          ? `ComponentProps<typeof Sidebar${part}>`
+          : dependency
+            ? `ComponentProps<typeof ${dependency[1]}>`
+            : `SvelteHTMLElements[${JSON.stringify(native![0])}]`;
   const fields = (component.props?.fields ?? [])
     .filter(
       (field) =>
@@ -214,8 +228,25 @@ export function specializeSvelteStyledSidebar(
       ...(native || sidebar
         ? [{ source: "svelte/elements", names: ["SvelteHTMLElements"], typeOnly: true }]
         : []),
+      ...(menu
+        ? [
+            { source: "svelte/elements", names: ["HTMLAnchorAttributes"], typeOnly: true },
+            {
+              source,
+              names: ["ButtonChildProps", "SidebarMenuButtonChildPayload"],
+              typeOnly: true,
+            },
+          ]
+        : []),
     ],
     publicTypes: `export type ${name}Props = ${inherited}${variants}${trigger ? " & VariantProps<typeof button>" : ""} & {children?:Snippet; ${fields} ${trigger ? "icon?:Snippet;" : ""} ${native || sidebar ? `ref?:${native?.[1] ?? "HTMLDivElement"};` : ""}};`,
+    ...(menu
+      ? {
+          templatePrelude: `{#snippet nativeControl({ props, children: content }: SidebarMenuButtonChildPayload)}
+  <svelte:element this={Tag} {...props} {...{ type: Tag === "button" ? "button" : undefined }}>{@render content?.()}</svelte:element>
+{/snippet}`,
+        }
+      : {}),
     destructure: props,
     rest: component.destructure?.rest,
     setup: [

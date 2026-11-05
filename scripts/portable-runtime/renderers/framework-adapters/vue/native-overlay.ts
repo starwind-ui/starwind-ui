@@ -1,8 +1,4 @@
-import {
-  nativeRecipe,
-  nativeTriggerComposition,
-  renderNativeRoot,
-} from "../../shared-recipes/structured/native.js";
+import { nativeRecipe, renderNativeRoot } from "../../shared-recipes/structured/native.js";
 import { getVueAcceptedModelEvent } from "./accepted-model-publication.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
@@ -140,7 +136,6 @@ function printTrigger(facts: AdapterNativeOverlayFacts): string {
   const targetId = facts.props.targetId.name;
 
   return printPart({
-    composition: nativeTriggerComposition(facts.displayName),
     asChildProtectedProps: [
       `"${facts.attrs.trigger}": ""`,
       `"data-sw-part": "${part.name}"`,
@@ -263,7 +258,6 @@ function printPart({
   part,
   props,
   reservedAlertDialogControl = false,
-  composition,
 }: {
   asChildProtectedProps?: string[];
   controlContext?: { name: string; root: string };
@@ -273,9 +267,7 @@ function printPart({
   part: { defaultElement: string; name: string };
   props?: string;
   reservedAlertDialogControl?: boolean;
-  composition?: "native-or-component-root";
 }): string {
-  const componentRoot = composition === "native-or-component-root";
   const composed = Boolean(controlContext && asChildProtectedProps);
   const reservedHook = reservedAlertDialogControl
     ? `<script lang="ts">
@@ -304,7 +296,7 @@ export function __useAlertDialogControl(name: string) {
       : "defineProps<NativeElementProps>();";
   const compositionSetup = composed
     ? `const attrs = useAttrs();
-${reservedAlertDialogControl ? "" : `const root = inject(${controlContext!.name}, undefined);\n`}const { element, render: renderAsChild, setElement } = ${reservedAlertDialogControl ? `__useAlertDialogControl("${exportName}")` : `useVueNativeControl("${exportName}", () => root?.requestRefresh()${componentRoot ? ", true" : ""})`};
+${reservedAlertDialogControl ? "" : `const root = inject(${controlContext!.name}, undefined);\n`}const { element, render: renderAsChild, setElement } = ${reservedAlertDialogControl ? `__useAlertDialogControl("${exportName}")` : `useVueNativeControl("${exportName}", () => root?.requestRefresh())`};
 const AsChildControl = defineComponent({
   inheritAttrs: false,
   setup() {

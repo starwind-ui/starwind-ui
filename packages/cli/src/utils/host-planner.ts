@@ -168,7 +168,7 @@ export function getPrivateHostPlan<TFramework extends CliFrameworkTarget>(
   return {
     ...publicPlan,
     host: { kind: detection.plan.hostKind, label: detection.plan.hostLabel },
-    targets: [...targets, { framework: "svelte" as TFramework, readiness: "ready" }],
+    targets: [...targets, { framework: "svelte" as TFramework, readiness: detection.readiness }],
     svelteHostProject: detection.plan,
   };
 }

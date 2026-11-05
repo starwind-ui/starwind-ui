@@ -12,6 +12,7 @@ import {
   validateSpecializedAdapterSpec,
 } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec } from "./types.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type TooltipSpecializedAdapterSpec = SpecializedAdapterSpec & {
   sourcePrimitiveContract: RuntimeAdapterContract;
@@ -525,6 +526,7 @@ function getTooltipTimedFloatingOverlayFacts(
   };
 
   return {
+    childElements: getAdapterChildElements(spec.asChild),
     attrs: {
       align: getTooltipFloatingAttribute(spec, props.align.name, "data-align"),
       arrow: anatomy.arrow.discoveryAttribute,
@@ -623,6 +625,8 @@ function getTooltipTimedFloatingOverlayFacts(
       valueType: state.valueType,
     },
     trigger: {
+      asChildFallsBackToDefaultElement:
+        getAsChild(spec, "trigger").nonElementChild === "default-element",
       asChildWrapperElement: spec.tooltip.asChildTrigger.wrapperElement,
       clickGuardWhenDisabled: false,
       delayOverrides: false,

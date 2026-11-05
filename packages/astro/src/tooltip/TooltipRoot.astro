@@ -28,6 +28,7 @@ const {
 ---
 
 <div
+  {...rest}
   data-sw-tooltip
   data-default-open={defaultOpen ? "true" : undefined}
   data-close-delay={closeDelay}
@@ -37,7 +38,6 @@ const {
   data-disabled={disabled ? "" : undefined}
   data-open-delay={openDelay}
   data-state={!disabled && defaultOpen ? "open" : "closed"}
-  {...rest}
 >
   <slot />
 </div>

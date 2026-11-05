@@ -23,6 +23,7 @@ import type {
 import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteButtonChild } from "./button-child.js";
 import { printSvelteOverlayPortal } from "./overlay-portal.js";
+import { svelteCommandName } from "./recipe-framework-operations.js";
 
 const NOTICE = "Svelte 5 public beta adapter output.";
 type Facts = AdapterCompositeMenuOverlayFacts;
@@ -130,14 +131,15 @@ ${
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-    children?: Snippet<[boolean]>; open?: boolean; defaultOpen?: boolean;
+    children?: Snippet; open?: boolean; defaultOpen?: boolean;
     disabled?: boolean; modal?: boolean; ${hover ? "openOnHover?: boolean; " : ""}closeDelay?: number;
     ${openEvent.callbackProp}?: (open: boolean, detail: ${openEvent.detailsType}) => void;
     ${closeEvent.callbackProp}?: (detail: ${closeEvent.detailsType}) => void;
     ref?: (element: HTMLDivElement | null) => void;
   };
-  let { children, open = $bindable(), defaultOpen, disabled = ${f.props.disabled.defaultValue}, modal = ${f.props.modal.defaultValue}, ${hover ? `openOnHover = ${hover.props.openOnHover.defaultValue}, ` : ""}closeDelay = ${f.props.closeDelay.defaultValue}, ${openEvent.callbackProp}, ${closeEvent.callbackProp}, ref, ...rest }: Props = $props();
+  let { children, open = $bindable(), open: commandOpen, defaultOpen, disabled = ${f.props.disabled.defaultValue}, modal = ${f.props.modal.defaultValue}, ${hover ? `openOnHover = ${hover.props.openOnHover.defaultValue}, ` : ""}closeDelay = ${f.props.closeDelay.defaultValue}, ${openEvent.callbackProp}, ${closeEvent.callbackProp}, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => open);
+  const openControlled = initialModel !== undefined;
   const initialDefault = ${initial.defaultSeed};
   let accepted = $state(${initial.acceptedSeed});
   let mounted = $state(false);
@@ -175,19 +177,20 @@ ${
         return () => { ${menuFragments("svelte", contextMenu ? "contextMenu" : "menu").cleanup} };
       });
     });
-    $effect(() => { void open; untrack(() => { ${menuFragments("svelte", contextMenu ? "contextMenu" : "menu").parentCommand} }); });
+    $effect(() => { void commandOpen; untrack(() => { ${menuFragments("svelte", contextMenu ? "contextMenu" : "menu").parentCommand} }); });
     return () => { mounted = false; binding?.destroy(); binding = undefined; rootElement = undefined; };
   };
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
 <div {...rest} ${f.attrs.root}="" ${contextMenu ? `${contextMenu.attrs.menuRoot}="" ` : ""}data-sw-part="${f.parts.root.name}" ${f.attrs.defaultOpen}={initialDefault ? "true" : undefined} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.modal}={String(modal)} ${hover ? `${hover.attrs.openOnHover}={openOnHover ? "" : undefined} ` : ""}${f.attrs.closeDelay}={closeDelay} data-state={${initial.rendered} ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
-  {@render children?.(accepted)}
+  {@render children?.()}
 </div>
 `;
 }
 
 function printTrigger(f: Facts): string {
   return printSvelteButtonChild({
+    childElement: f.childElements?.trigger,
     name: f.exports.trigger,
     imports: `import { getMenuTreeContext, getMenuOwnerContext } from "./${f.exports.root}.svelte";`,
     init: "const tree = getMenuTreeContext(); const menu = getMenuOwnerContext();",
@@ -241,6 +244,7 @@ function printItemModel(f: Facts, part: "checkboxItem" | "radioGroup"): string {
   const recipe = checkbox ? f.checkboxItem : f.radioGroup;
   const event = recipe.event;
   const model = checkbox ? "checked" : "value";
+  const command = svelteCommandName(model);
   const type = checkbox ? "boolean" : "string";
   const fallback = checkbox ? " ?? false" : "";
   const read = checkbox
@@ -258,8 +262,9 @@ function printItemModel(f: Facts, part: "checkboxItem" | "radioGroup"): string {
     ${event.callbackProp}?: (${model}: ${type}, detail: ${event.detailsType}) => void;
     ref?: (element: HTMLDivElement | null) => void;
   };
-  let { children, ${model} = $bindable(), ${checkbox ? "defaultChecked, disabled = false, closeOnClick = false" : "defaultValue"}, ${event.callbackProp}, ref, ...rest }: Props = $props();
-  const initial = untrack(() => ${model});
+  let { children, ${model} = $bindable(), ${model}: ${command}, ${checkbox ? "defaultChecked, disabled = false, closeOnClick = false" : "defaultValue"}, ${event.callbackProp}, ref, ...rest }: Props = $props();
+  const initial = untrack(() => ${command});
+  const ${model}Controlled = initial !== undefined;
   let accepted = $state(${initialModelValue("initial", `untrack(() => ${checkbox ? "defaultChecked" : "defaultValue"})`)}${fallback});
   const tree = getMenuTreeContext();
   const owner = Symbol("${f.exports[part]} model");
@@ -276,7 +281,7 @@ function printItemModel(f: Facts, part: "checkboxItem" | "radioGroup"): string {
       }
     }
     function prepare(): void {
-      if (${model} !== undefined) accepted = ${model};
+      if (${command} !== undefined) accepted = ${command};
       project(accepted);
     }
     function accept(): void { if (alive) accepted = ${read}; }
@@ -284,7 +289,7 @@ function printItemModel(f: Facts, part: "checkboxItem" | "radioGroup"): string {
     untrack(prepare);
     tree?.registerModel(owner, {prepare,accept});
     element.addEventListener("${event.domEvent}",handle);
-    $effect(() => { void ${model}; untrack(prepare); });
+    $effect(() => { void ${command}; untrack(prepare); });
     return () => { alive = false; tree?.registerModel(owner, null); element.removeEventListener("${event.domEvent}", handle); };
   };
 ${printSvelteRefAttachment("HTMLDivElement")}
@@ -379,9 +384,8 @@ function printPart(
           'data-disabled={disabled ? "" : undefined}',
         ]
       : []),
-    ...(name === "item" || name === "linkItem"
-      ? ["data-close-on-click={String(closeOnClick)}"]
-      : []),
+    ...(name === "item" ? ['data-close-on-click={closeOnClick ? undefined : "false"}'] : []),
+    ...(name === "linkItem" ? ['data-close-on-click={closeOnClick ? "true" : undefined}'] : []),
     ...(name === "submenuTrigger"
       ? ['role="menuitem"', 'aria-haspopup="menu"', 'aria-expanded="false"', 'data-state="closed"']
       : []),

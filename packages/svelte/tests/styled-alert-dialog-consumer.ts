@@ -31,10 +31,8 @@ import AlertDialog from "./alert-dialog/index.js";
 let open = $state<boolean | undefined>(undefined);
 </script>
 <AlertDialog.Root bind:open onOpenChange={(next, detail) => { void next; detail.cancel(); }} onCloseComplete={(detail) => { void detail; }}>
- {#snippet children(accepted)}
  <AlertDialog.Trigger>Open</AlertDialog.Trigger><AlertDialog.Content ref={(node: HTMLDialogElement | null) => { void node; }}>
- <AlertDialog.Header><AlertDialog.Title>Confirmation</AlertDialog.Title><AlertDialog.Description>{String(accepted)}</AlertDialog.Description></AlertDialog.Header>
+ <AlertDialog.Header><AlertDialog.Title>Confirmation</AlertDialog.Title><AlertDialog.Description>{String(open)}</AlertDialog.Description></AlertDialog.Header>
  <AlertDialog.Footer><AlertDialog.Cancel variant="outline" size="sm">Cancel</AlertDialog.Cancel><AlertDialog.Action href="#confirmed" target="_self">Confirm</AlertDialog.Action></AlertDialog.Footer>
  </AlertDialog.Content>
- {/snippet}
 </AlertDialog.Root>`;

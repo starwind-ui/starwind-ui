@@ -137,8 +137,8 @@
 
 ### Patch Changes
 
-- Deliver Runtime-backed group naming and Tabs indicator geometry corrections through the first-party adapters and bundled registry. The Vue package remains on its beta release channel.
-- Remove unused internal portal methods and retired CLI helpers. Keep public behavior and component source unchanged.
+- Select, Combobox, and Menu groups now get their name from their visible heading, so screen readers announce the group. The Tabs indicator now lines up with the selected tab when a parent element is scaled. Astro, React, and Vue get these fixes, and the CLI delivers them to installed components. The Vue package stays on its beta release channel.
+- Internal maintenance. Removed unused internal portal methods and old CLI helpers. Components work the same way, and the component files that the CLI installs do not change.
 - Updated dependencies
   - @starwind-ui/runtime@1.2.1
 
@@ -146,10 +146,8 @@
 
 ### Minor Changes
 
-- Use deterministic Portal bindings across framework adapters. Keep React wrappers under
-  framework-owned placement, retain Runtime movement for Astro, and use one Dialog-owned top-layer
-  host for nested floating content.
-- Add optional portable portal container, disabled, and placement props to Astro overlay adapters. Add the shared Runtime placement handshake so framework adapters can report when their public portal wrapper reaches its resolved target.
+- Portals now place popups in the same way every time, in every framework. React places its portal popups itself. In Astro, Starwind still moves popups into place on the page. Each Dialog now has one top layer for all of the popups inside it, such as menus and tooltips.
+- Astro overlay portals, such as `PopoverPortal`, now accept optional `container` and `disabled` props, and they show their placement in data attributes. `container` sets the element that holds the popup. `disabled` keeps the popup in place. Runtime also has a new shared step that each framework uses to tell when a portal has reached its target element.
 
 ### Patch Changes
 
@@ -160,7 +158,7 @@
 
 ### Patch Changes
 
-- Improve npm metadata and clarify package roles in the public READMEs.
+- Improved the package details on npm. The READMEs now tell more clearly what each package does.
 - Updated dependencies
   - @starwind-ui/runtime@1.1.0
 
@@ -168,80 +166,48 @@
 
 ### Major Changes
 
-- Release the first stable Runtime adapter line for Astro and React.
+- First stable release of the Starwind Runtime packages for Astro and React.
 
 ### Minor Changes
 
-- Narrow Button Runtime to opted-in focusable-disabled native buttons, synchronize mutable disabled
-  state through generated Astro and React adapters, and refresh vendored Primitive artifacts and
-  documentation for the native-only boundary.
-- Replace additive Form validation timing with before- and after-submit policies, add the imperative
-  validation, visibility, reset, and external-error APIs, and refresh generated adapters and vendored
-  Primitive artifacts.
+- Button now adds its script only to a native `<button>` that sets `focusableWhenDisabled`. A plain button, enabled or disabled, uses only HTML. In Astro and React, a `focusableWhenDisabled` button can now change between enabled and disabled and keep focus. Button Runtime now supports native buttons only. The docs and the Primitive files that the CLI copies are updated to match.
+- Changed the Form validation timing options. `validationTiming` sets when fields check before the first submit, and `revalidationTiming` sets when they check after it. Form also has new methods to validate fields, show errors, reset validation, and set errors from outside the form, such as server errors. The Astro and React packages and the Primitive files that the CLI copies include these changes.
 
-  For the beta migration, both the previous `input` timing and the previous committed-only meaning of
-  `change` map to semantic `change`, which runs for every accepted value revision. Committed-only
-  validation timing is no longer available. Defaults remain validation on `submit`, revalidation on
-  `change`, and error visibility on `submit`; after the first submission attempt,
-  `revalidationTiming` replaces `validationTiming` instead of being additive.
+  To update from the beta: the old `input` timing and the old `change` timing both become `change`. The old `change` timing ran only after the user finished a change. The new `change` runs on every accepted change to the value. A timing that runs only after the user finishes a change is no longer available. The defaults stay the same: validation on `submit`, revalidation on `change`, and errors shown on `submit`. After the first submit, `revalidationTiming` replaces `validationTiming`. The two no longer add together.
 
-- Introduce the public Starwind Runtime architecture and its lockstep Astro and React Primitive adapter packages.
+- First public release of Starwind Runtime, with Astro and React Primitive packages that always release together with the same version.
 
-  This release moves interactive behavior into framework-agnostic Runtime controllers, adds generated first-party Primitive adapters for Astro and React, and hardens controller teardown, client-navigation cleanup, callback refs, Theme prepaint serialization, and large-collection highlighting.
+  Component behavior now lives in Runtime, which works with any framework. The Astro and React Primitive packages connect that behavior to each framework. This release also makes these areas more reliable: cleanup when a component is removed, cleanup after client-side navigation, callback refs, the Theme setting that applies before the first paint, and highlighting in large option lists.
 
-- Add the Runtime-backed Color Picker controller and generated Astro and React Primitive adapters,
-  including popup positioning, format controls, channel inputs, swatches, keyboard interaction, and
-  form integration. Preserve interaction-derived HSB saturation at zero brightness so captured area
-  dragging stays aligned at black and restores color when brightness rises, and keep Clear hidden and
-  disabled until the root explicitly allows empty values.
+- Added Color Picker to Runtime and to the Astro and React Primitive packages. It includes popup positioning, format controls, inputs for each color channel, swatches, keyboard support, and form support. When you drag the color area down to black, the picker keeps the saturation that you picked. The thumb stays under the pointer, and the color comes back when the brightness goes up. The Clear button stays hidden and disabled until you allow empty values on the root.
 
 ### Patch Changes
 
-- Make Accordion root value-change proposals synchronously cancelable before uncontrolled state commits.
-- Default Accordions to collapsible while preserving `collapsible={false}` as the required-open override.
-- Keep Avatar images eligible for native lazy loading while the Runtime conceals their loading and
-  error states, including Astro images rendered from imported assets.
-- Fix generated React Color Picker source and the Astro Spinner SVG prop contract. Detect Astro and
-  React projects during default CLI initialization, and add a non-interactive remove option. Add
-  packed Astro and React release-candidate tests across supported framework versions and package
-  managers.
-- Synchronize Checkbox Group state with native form resets across controlled, uncontrolled, external,
-  and dynamically reassociated form ownership while cleaning up reset listeners and observers.
-- Distinguish accepted Radio ownership transitions from immediate commits, and keep controlled Radio
-  Group keyboard focus aligned when framework prop reconciliation completes or supersedes a proposal.
-- Keep dialog-owned floating layers visible and interactive above native modal dialogs across Runtime, Astro, React, and CLI-installed consumers.
-- Present Dialog-family popups with coherent open visual state so Dialog and Sheet entry animations play completely for quick and held trigger releases.
-- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
-  hidden indicators.
-- Keep the styled Color Picker area usable in constrained viewports by preserving a minimum height,
-  choosing the best fitting Popover side before sizing, and scrolling content when neither side fits.
-  Expose the compatible Popover collision strategy through generated Astro and React Primitive
-  adapters, and continue the styled Color Picker registry version from its legacy release history.
-- Stage Dialog, Alert Dialog, and Sheet entry styles through native top-layer presentation so their opening animations remain complete under main-thread load.
-- Dismiss floating overlays when pointer interactions occur in unrelated composition-root space while
-  preserving interactions with nested portaled overlays. This corrects Color Picker Popover dismissal
-  in both Astro and React and applies the same explicit boundary behavior to other floating controls.
-- Keep nested Accordion roots independent by limiting Runtime item discovery, part rendering, and
-  delegated trigger interactions to the controller that owns their nearest Accordion root.
-- Keep ancestor submenus open while the pointer moves into a nested submenu portal.
-- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
-  React adapter.
-- Restore uncontrolled Slider values after native form reset while preserving accepted controlled
-  values and keeping Runtime state, rendered parts, and submitted form data synchronized.
-- Refresh Navigation Menu item and list ownership when its DOM collection changes.
-- Keep Navigation Menu positioners inside a connected explicit floating root that already owns the
-  portal, while preserving trigger-derived dialog ownership, nested dialog roots, and body fallback.
-- Preserve the pending starting-style release when an open element receives a repeated presence
-  refresh before the next animation frame.
-- Make Radio and Radio Group changes cancelable before state commitment, synchronize accepted state
-  with adapters, and preserve controlled and uncontrolled values through native form resets.
-- Preserve uncontrolled Input OTP authored defaults when Field reconnects during native form reset.
-- Keep Combobox and Navigation Menu explicit portal targets compatible with their active dialog owner.
-- Publish payloadless Slider state synchronization after silent Runtime settlement so generated
-  adapters can read back normalized uncontrolled values without duplicating form-reset behavior.
-- Restore the previous active Toast manager when a newer manager is destroyed so global toast calls
-  continue to route through a mounted provider.
-- Expose the generated React Toggle Group context and provide normalized group state to descendants.
+- You can now cancel an Accordion value change from its change event. When Accordion manages its own value, a canceled change does not open or close any item.
+- Accordions now let you close the open item by default. To keep one item open at all times, set `collapsible={false}`.
+- Avatar images now work with the browser's lazy loading. Starwind still hides an image while it loads and when it fails to load. This includes Astro images from imported assets.
+- Fixed the React Color Picker source code and the props that Astro Spinner passes to its SVG. With default options, `starwind init` now detects Astro and React projects. `starwind remove` has a new option to run without questions. Before each release, new tests now install the packed Astro and React packages with each supported framework version and package manager.
+- Checkbox Group now goes back to its starting selection when its form resets. This works when your app controls the value and when the group manages it. It also works when the form is outside the group, and when the group moves to another form. Starwind removes its reset listeners when the group is removed.
+- Fixed keyboard focus in a Radio Group that your app controls. When the user presses an arrow key, focus now follows the value that your app sets. If your app keeps the old value or sets another one, focus does not stay on the radio that the user tried to select.
+- Popups inside a native modal Dialog, such as menus and tooltips, now show above the Dialog and respond to clicks. This applies to Runtime, Astro, React, and components that you install with the CLI.
+- Dialog and Sheet now play their full opening animation, both after a quick click and when you hold the trigger down.
+- Fixed the React Checkbox indicator in the Primitive files that the CLI copies into your project. The indicator now renders when the checkbox is checked or when you keep it mounted. It does not render when it is inactive or hidden.
+- The styled Color Picker area now stays usable on small screens. It keeps a minimum height. Its Popover opens on the side with the most space, and the content scrolls when neither side has enough space. The Astro and React Popover Primitives now let you use this collision setting. In the CLI, the styled Color Picker version continues from the versions of the older Color Picker.
+- Dialog, Alert Dialog, and Sheet now play their full opening animation, even when the page is busy.
+- A popup now closes when you click inside its component's root element but outside its trigger and popup. A click in a nested popup still keeps the parent open. This fixes Color Picker Popover closing in Astro and React. Other popups, such as Select, Menu, and Tooltip, now follow the same rule.
+- Fixed nested Accordions. Each Accordion now finds, renders, and opens only its own items. The items of an Accordion inside it are no longer affected.
+- Submenus now stay open while you move the pointer into a nested submenu.
+- Fixed React Select items with an empty label in the Primitive files that the CLI copies into your project. An item with an empty label now keeps that empty label. Its value is still sent with the form while the list is closed.
+- Slider now goes back to its starting value when its form resets, if the Slider manages its own value. A value that your app controls stays as your app set it. The thumb, the other parts on the page, and the value sent with the form all match the Slider value.
+- Navigation Menu now updates its items and lists when you add, remove, or move them on the page.
+- Fixed Navigation Menu popups when you set your own portal target. The popup now stays in the target element that you set while that element is on the page. Navigation Menus inside a Dialog, nested Dialogs, and the default placement in the page body still work as before.
+- Fixed an open element that could stay in its starting animation style. If the element was shown again before the next animation frame, its starting style was not removed. Now it is removed on the next frame.
+- You can now cancel a Radio or Radio Group change before it applies. The Astro and React packages get only the changes that apply. Values that your app controls and values that Radio manages now stay correct after a form reset.
+- Input OTP inside a Field now keeps the default value that you set after a form reset, if Input OTP manages its own value.
+- Combobox and Navigation Menu inside a Dialog now work with a portal target that you set. If that target is outside the open Dialog, the popup stays inside the Dialog.
+- Slider now sends a notice when Runtime changes its value without a user action, such as when it corrects a value or resets with its form. The framework packages then read the new value from Runtime. They no longer need their own copy of the form reset code.
+- Toast calls such as `toast()` now keep working when you remove a newer Toaster. The calls go back to the Toaster that is still on the page.
+- React Toggle Group now exports `ToggleGroupContext` and `useToggleGroupContext`. Components inside a Toggle Group can read the group's current state from this context.
 - Updated dependencies
   - @starwind-ui/runtime@1.0.0
 
@@ -256,19 +222,13 @@
 
 ### Patch Changes
 
-- Fix generated React Color Picker source and the Astro Spinner SVG prop contract. Detect Astro and
-  React projects during default CLI initialization, and add a non-interactive remove option. Add
-  packed Astro and React release-candidate tests across supported framework versions and package
-  managers.
-- Refresh Navigation Menu item and list ownership when its DOM collection changes.
-- Keep Navigation Menu positioners inside a connected explicit floating root that already owns the
-  portal, while preserving trigger-derived dialog ownership, nested dialog roots, and body fallback.
-- Preserve the pending starting-style release when an open element receives a repeated presence
-  refresh before the next animation frame.
-- Preserve uncontrolled Input OTP authored defaults when Field reconnects during native form reset.
-- Keep Combobox and Navigation Menu explicit portal targets compatible with their active dialog owner.
-- Restore the previous active Toast manager when a newer manager is destroyed so global toast calls
-  continue to route through a mounted provider.
+- Fixed the React Color Picker source code and the props that Astro Spinner passes to its SVG. With default options, `starwind init` now detects Astro and React projects. `starwind remove` has a new option to run without questions. Before each release, new tests now install the packed Astro and React packages with each supported framework version and package manager.
+- Navigation Menu now updates its items and lists when you add, remove, or move them on the page.
+- Fixed Navigation Menu popups when you set your own portal target. The popup now stays in the target element that you set while that element is on the page. Navigation Menus inside a Dialog, nested Dialogs, and the default placement in the page body still work as before.
+- Fixed an open element that could stay in its starting animation style. If the element was shown again before the next animation frame, its starting style was not removed. Now it is removed on the next frame.
+- Input OTP inside a Field now keeps the default value that you set after a form reset, if Input OTP manages its own value.
+- Combobox and Navigation Menu inside a Dialog now work with a portal target that you set. If that target is outside the open Dialog, the popup stays inside the Dialog.
+- Toast calls such as `toast()` now keep working when you remove a newer Toaster. The calls go back to the Toaster that is still on the page.
 - Updated dependencies
   - @starwind-ui/runtime@0.1.0-beta.7
 
@@ -276,16 +236,11 @@
 
 ### Patch Changes
 
-- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
-  hidden indicators.
-- Keep nested Accordion roots independent by limiting Runtime item discovery, part rendering, and
-  delegated trigger interactions to the controller that owns their nearest Accordion root.
-- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
-  React adapter.
-- Restore uncontrolled Slider values after native form reset while preserving accepted controlled
-  values and keeping Runtime state, rendered parts, and submitted form data synchronized.
-- Publish payloadless Slider state synchronization after silent Runtime settlement so generated
-  adapters can read back normalized uncontrolled values without duplicating form-reset behavior.
+- Fixed the React Checkbox indicator in the Primitive files that the CLI copies into your project. The indicator now renders when the checkbox is checked or when you keep it mounted. It does not render when it is inactive or hidden.
+- Fixed nested Accordions. Each Accordion now finds, renders, and opens only its own items. The items of an Accordion inside it are no longer affected.
+- Fixed React Select items with an empty label in the Primitive files that the CLI copies into your project. An item with an empty label now keeps that empty label. Its value is still sent with the form while the list is closed.
+- Slider now goes back to its starting value when its form resets, if the Slider manages its own value. A value that your app controls stays as your app set it. The thumb, the other parts on the page, and the value sent with the form all match the Slider value.
+- Slider now sends a notice when Runtime changes its value without a user action, such as when it corrects a value or resets with its form. The framework packages then read the new value from Runtime. They no longer need their own copy of the form reset code.
 - Updated dependencies
   - @starwind-ui/runtime@0.1.0-beta.6
 
@@ -293,14 +248,11 @@
 
 ### Patch Changes
 
-- Make Accordion root value-change proposals synchronously cancelable before uncontrolled state commits.
-- Synchronize Checkbox Group state with native form resets across controlled, uncontrolled, external,
-  and dynamically reassociated form ownership while cleaning up reset listeners and observers.
-- Distinguish accepted Radio ownership transitions from immediate commits, and keep controlled Radio
-  Group keyboard focus aligned when framework prop reconciliation completes or supersedes a proposal.
-- Make Radio and Radio Group changes cancelable before state commitment, synchronize accepted state
-  with adapters, and preserve controlled and uncontrolled values through native form resets.
-- Expose the generated React Toggle Group context and provide normalized group state to descendants.
+- You can now cancel an Accordion value change from its change event. When Accordion manages its own value, a canceled change does not open or close any item.
+- Checkbox Group now goes back to its starting selection when its form resets. This works when your app controls the value and when the group manages it. It also works when the form is outside the group, and when the group moves to another form. Starwind removes its reset listeners when the group is removed.
+- Fixed keyboard focus in a Radio Group that your app controls. When the user presses an arrow key, focus now follows the value that your app sets. If your app keeps the old value or sets another one, focus does not stay on the radio that the user tried to select.
+- You can now cancel a Radio or Radio Group change before it applies. The Astro and React packages get only the changes that apply. Values that your app controls and values that Radio manages now stay correct after a form reset.
+- React Toggle Group now exports `ToggleGroupContext` and `useToggleGroupContext`. Components inside a Toggle Group can read the group's current state from this context.
 - Updated dependencies
   - @starwind-ui/runtime@0.1.0-beta.5
 
@@ -308,30 +260,18 @@
 
 ### Minor Changes
 
-- Replace additive Form validation timing with before- and after-submit policies, add the imperative
-  validation, visibility, reset, and external-error APIs, and refresh generated adapters and vendored
-  Primitive artifacts.
+- Changed the Form validation timing options. `validationTiming` sets when fields check before the first submit, and `revalidationTiming` sets when they check after it. Form also has new methods to validate fields, show errors, reset validation, and set errors from outside the form, such as server errors. The Astro and React packages and the Primitive files that the CLI copies include these changes.
 
-  For the beta migration, both the previous `input` timing and the previous committed-only meaning of
-  `change` map to semantic `change`, which runs for every accepted value revision. Committed-only
-  validation timing is no longer available. Defaults remain validation on `submit`, revalidation on
-  `change`, and error visibility on `submit`; after the first submission attempt,
-  `revalidationTiming` replaces `validationTiming` instead of being additive.
+  To update from the beta: the old `input` timing and the old `change` timing both become `change`. The old `change` timing ran only after the user finished a change. The new `change` runs on every accepted change to the value. A timing that runs only after the user finishes a change is no longer available. The defaults stay the same: validation on `submit`, revalidation on `change`, and errors shown on `submit`. After the first submit, `revalidationTiming` replaces `validationTiming`. The two no longer add together.
 
 ### Patch Changes
 
-- Keep Avatar images eligible for native lazy loading while the Runtime conceals their loading and
-  error states, including Astro images rendered from imported assets.
-- Keep dialog-owned floating layers visible and interactive above native modal dialogs across Runtime, Astro, React, and CLI-installed consumers.
-- Keep the styled Color Picker area usable in constrained viewports by preserving a minimum height,
-  choosing the best fitting Popover side before sizing, and scrolling content when neither side fits.
-  Expose the compatible Popover collision strategy through generated Astro and React Primitive
-  adapters, and continue the styled Color Picker registry version from its legacy release history.
-- Stage Dialog, Alert Dialog, and Sheet entry styles through native top-layer presentation so their opening animations remain complete under main-thread load.
-- Dismiss floating overlays when pointer interactions occur in unrelated composition-root space while
-  preserving interactions with nested portaled overlays. This corrects Color Picker Popover dismissal
-  in both Astro and React and applies the same explicit boundary behavior to other floating controls.
-- Keep ancestor submenus open while the pointer moves into a nested submenu portal.
+- Avatar images now work with the browser's lazy loading. Starwind still hides an image while it loads and when it fails to load. This includes Astro images from imported assets.
+- Popups inside a native modal Dialog, such as menus and tooltips, now show above the Dialog and respond to clicks. This applies to Runtime, Astro, React, and components that you install with the CLI.
+- The styled Color Picker area now stays usable on small screens. It keeps a minimum height. Its Popover opens on the side with the most space, and the content scrolls when neither side has enough space. The Astro and React Popover Primitives now let you use this collision setting. In the CLI, the styled Color Picker version continues from the versions of the older Color Picker.
+- Dialog, Alert Dialog, and Sheet now play their full opening animation, even when the page is busy.
+- A popup now closes when you click inside its component's root element but outside its trigger and popup. A click in a nested popup still keeps the parent open. This fixes Color Picker Popover closing in Astro and React. Other popups, such as Select, Menu, and Tooltip, now follow the same rule.
+- Submenus now stay open while you move the pointer into a nested submenu.
 - Updated dependencies
   - @starwind-ui/runtime@0.1.0-beta.4
 
@@ -346,18 +286,12 @@
 
 ### Minor Changes
 
-- Narrow Button Runtime to opted-in focusable-disabled native buttons, synchronize mutable disabled
-  state through generated Astro and React adapters, and refresh vendored Primitive artifacts and
-  documentation for the native-only boundary.
-- Add the Runtime-backed Color Picker controller and generated Astro and React Primitive adapters,
-  including popup positioning, format controls, channel inputs, swatches, keyboard interaction, and
-  form integration. Preserve interaction-derived HSB saturation at zero brightness so captured area
-  dragging stays aligned at black and restores color when brightness rises, and keep Clear hidden and
-  disabled until the root explicitly allows empty values.
+- Button now adds its script only to a native `<button>` that sets `focusableWhenDisabled`. A plain button, enabled or disabled, uses only HTML. In Astro and React, a `focusableWhenDisabled` button can now change between enabled and disabled and keep focus. Button Runtime now supports native buttons only. The docs and the Primitive files that the CLI copies are updated to match.
+- Added Color Picker to Runtime and to the Astro and React Primitive packages. It includes popup positioning, format controls, inputs for each color channel, swatches, keyboard support, and form support. When you drag the color area down to black, the picker keeps the saturation that you picked. The thumb stays under the pointer, and the color comes back when the brightness goes up. The Clear button stays hidden and disabled until you allow empty values on the root.
 
 ### Patch Changes
 
-- Default Accordions to collapsible while preserving `collapsible={false}` as the required-open override.
-- Present Dialog-family popups with coherent open visual state so Dialog and Sheet entry animations play completely for quick and held trigger releases.
+- Accordions now let you close the open item by default. To keep one item open at all times, set `collapsible={false}`.
+- Dialog and Sheet now play their full opening animation, both after a quick click and when you hold the trigger down.
 - Updated dependencies
   - @starwind-ui/runtime@0.1.0-beta.2

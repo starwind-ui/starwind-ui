@@ -21,7 +21,7 @@ const attrs = useAttrs();
   <SidebarPrimitive.SidebarRail
     :class="sidebarRail({ class: className })"
     data-sidebar="rail"
-    v-bind="{ ...attrs, 'aria-label': 'Toggle Sidebar' } as Record<string, unknown>"
+    v-bind="{ 'aria-label': 'Toggle Sidebar', ...attrs } as Record<string, unknown>"
     data-slot="sidebar-rail"
   />
 </template>

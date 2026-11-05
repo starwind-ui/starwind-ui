@@ -11,20 +11,6 @@ const { asChild = false, class: className, ...rest } = Astro.props;
 const closeClassName = className;
 ---
 
-{
-  asChild ? (
-    <div
-      class={closeClassName}
-      data-as-child
-      {...rest}
-      data-slot="sheet-close"
-      data-sw-drawer-close
-    >
-      <slot />
-    </div>
-  ) : (
-    <SheetPrimitive.Close class={closeClassName} {...rest} data-slot="sheet-close">
-      <slot>Close</slot>
-    </SheetPrimitive.Close>
-  )
-}
+<SheetPrimitive.Close asChild={asChild} class={closeClassName} {...rest} data-slot="sheet-close">
+  <slot>Close</slot>
+</SheetPrimitive.Close>

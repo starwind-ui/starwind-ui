@@ -160,8 +160,7 @@ ${styled ? "</Overlay.Header>" : ""}
 </Overlay.${popup}>{/key}{/if}
 ${styled ? "" : "</Overlay.Viewport>{/key}"}
 {/snippet}
-{#snippet parts(accepted: boolean)}
-<output data-rendered={id}>{String(accepted)}</output>
+{#snippet parts()}
 {#key triggerKey}<Overlay.Trigger data-trigger={id} {...forwarded} ref={second ? refB : refA} class={className}>{#snippet child({ props, children })}<button {...props}>{@render children?.()}</button>{/snippet}Open {id}</Overlay.Trigger>{/key}
 {#if portal}{#key portalKey}<DrawerPortal data-portal={id} {container} disabled={disablePortal}>{@render surface()}</DrawerPortal>{/key}{:else}{@render surface()}{/if}
 {/snippet}
@@ -190,7 +189,7 @@ const popup = (id) => document.querySelector('[data-popup="' + id + '"]');
 const button = (id) => document.querySelector('[data-trigger="' + id + '"]');
 const trigger = (id) => button(id)?.click();
 const close = (id) => document.querySelector('[data-close="' + id + '"]')?.click();
-const state = (id) => ({ ...cases[id].snapshot(), native: popup(id)?.open ?? null, topLayer: popup(id)?.matches(":modal") ?? false, rendered: document.querySelector('[data-rendered="' + id + '"]')?.textContent ?? null });
+const state = (id) => ({ ...cases[id].snapshot(), native: popup(id)?.open ?? null, topLayer: popup(id)?.matches(":modal") ?? false, rendered: root(id) ? String(root(id).getAttribute("data-state") === "open") : null });
 assert(before.every(node => node.isConnected), "Drawer hydration replaced owners");
 const result = await (async () => { ${actions} })();
 const oldCases = { ...cases }, staleButtons = Object.keys(cases).map(button).filter(Boolean), stalePopups = Object.keys(cases).map(popup).filter(Boolean);

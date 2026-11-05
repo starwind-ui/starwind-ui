@@ -101,6 +101,80 @@ describe("Vue Navigation Menu", () => {
     expect(replacement.getAttribute("data-state")).toBe("open");
   });
 
+  it("moves keyboard open focus into Content under v-model", async () => {
+    const model = ref<string | null>(null);
+    const state = reactive({
+      cancel: false,
+      orientation: "horizontal" as MenuState["orientation"],
+      showCompany: false,
+    });
+    const { host } = mountMenu(state, {
+      modelValue: () => model.value,
+      onValueUpdate: (next) => {
+        model.value = next;
+      },
+    });
+    await frame();
+
+    const button = trigger(host, "products");
+    button.focus();
+    button.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowDown" }),
+    );
+    for (let index = 0; index < 12; index += 1) await frame();
+
+    expect(model.value).toBe("products");
+    expect(document.activeElement).toBe(content("products").querySelector("a"));
+  });
+
+  it("keeps focus on the trigger when the parent refuses a keyboard open under v-model", async () => {
+    const model = ref<string | null>(null);
+    const state = reactive({
+      cancel: false,
+      orientation: "horizontal" as MenuState["orientation"],
+      showCompany: false,
+    });
+    const { host } = mountMenu(state, {
+      modelValue: () => model.value,
+      onValueUpdate: () => {},
+    });
+    await frame();
+
+    const button = trigger(host, "products");
+    button.focus();
+    button.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowDown" }),
+    );
+    for (let index = 0; index < 4; index += 1) await frame();
+
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("does not move focus when the parent opens the menu without a keyboard request", async () => {
+    const model = ref<string | null>(null);
+    const state = reactive({
+      cancel: false,
+      orientation: "horizontal" as MenuState["orientation"],
+      showCompany: false,
+    });
+    const { host } = mountMenu(state, {
+      modelValue: () => model.value,
+      onValueUpdate: (next) => {
+        model.value = next;
+      },
+    });
+    await frame();
+
+    const button = trigger(host, "products");
+    button.focus();
+    model.value = "products";
+    for (let index = 0; index < 4; index += 1) await frame();
+
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    expect(document.activeElement).toBe(button);
+  });
+
   it("projects accepted model events and reactive list orientation", async () => {
     const events: string[] = [];
     const state = reactive({
@@ -223,17 +297,15 @@ describe("Vue Navigation Menu", () => {
   });
 
   it("keeps an initially open menu dialog-safe after Teleport activates", async () => {
-    let rootApi: NavigationMenuPublic | null = null;
     const fixture = createOpenDialogHost();
     const state = reactive({
       cancel: false,
       orientation: "horizontal" as const,
       showCompany: false,
     });
-    mountMenu(state, {
+    const { host } = mountMenu(state, {
       defaultValue: "products",
       hostParent: fixture.content,
-      rootRef: (value) => (rootApi = value),
     });
 
     await frame();
@@ -246,7 +318,7 @@ describe("Vue Navigation Menu", () => {
 
     fixture.dialog.close();
     await frame();
-    expect(rootApi?.getValue()).toBeNull();
+    expect(openTriggerValue(host)).toBeNull();
     expect(fixture.content.querySelector("[data-sw-nav-menu-portal]")).toBe(portal);
     expect(fixture.content.querySelector("[data-sw-floating-portal]")).toBeNull();
   });
@@ -291,22 +363,21 @@ describe("Vue Navigation Menu", () => {
   });
 
   it("reads back a silent uncontrolled close after a later Vue render", async () => {
-    let rootApi: NavigationMenuPublic | null = null;
     const state = reactive({
       cancel: false,
       orientation: "horizontal" as const,
       revision: 0,
       showCompany: true,
     });
-    const { host } = mountMenu(state, { rootRef: (value) => (rootApi = value) });
+    const { host } = mountMenu(state);
     await frame();
     clickTrigger(host, "company");
     await frame();
-    expect(rootApi?.getValue()).toBe("company");
+    expect(openTriggerValue(host)).toBe("company");
 
     state.showCompany = false;
     await frame();
-    expect(rootApi?.getValue()).toBeNull();
+    expect(openTriggerValue(host)).toBeNull();
     state.showCompany = true;
     state.revision += 1;
     await frame();
@@ -317,11 +388,10 @@ describe("Vue Navigation Menu", () => {
     expect(
       trigger(host, "company").querySelector("[data-sw-nav-menu-icon]")?.getAttribute("data-state"),
     ).toBe("closed");
-    expect(rootApi?.getValue()).toBeNull();
+    expect(openTriggerValue(host)).toBeNull();
   });
 
   it("preserves controlled intent through initial Portal activation", async () => {
-    let rootApi: NavigationMenuPublic | null = null;
     const updates: Array<string | null> = [];
     const state = reactive({
       cancel: false,
@@ -332,16 +402,15 @@ describe("Vue Navigation Menu", () => {
     const { host } = mountMenu(state, {
       modelValue: () => state.modelValue,
       onValueUpdate: (value) => updates.push(value),
-      rootRef: (value) => (rootApi = value),
     });
 
     await frame();
-    expect(rootApi?.getValue()).toBeNull();
+    expect(openTriggerValue(host)).toBeNull();
     expect(document.querySelector<HTMLElement>("[data-sw-nav-menu-popup]")!.hidden).toBe(true);
 
     state.showCompany = true;
     await frame();
-    expect(rootApi?.getValue()).toBe("company");
+    expect(openTriggerValue(host)).toBe("company");
     expect(trigger(host, "company").getAttribute("aria-expanded")).toBe("true");
     expect(
       document.querySelector("[data-sw-nav-menu-viewport]")?.contains(content("company")),
@@ -423,7 +492,6 @@ type MenuState = {
   revision?: number;
   showCompany: boolean;
 };
-type NavigationMenuPublic = { getValue(): string | null | undefined };
 const PublicRootButton = defineComponent({
   inheritAttrs: false,
   props: { as: { default: "button", type: String } },
@@ -439,7 +507,6 @@ type Options = {
   onValueChange?: (value: string | null, detail: NavigationMenuValueChangeDetails) => void;
   onValueUpdate?: (value: string | null) => void;
   portalDisabled?: () => boolean;
-  rootRef?: (value: NavigationMenuPublic | null) => void;
   triggerChild?: () => VNode;
   triggerProps?: Record<string, unknown>;
 };
@@ -491,7 +558,6 @@ function renderMenu(state: MenuState, options: Options) {
       "data-revision": state.revision,
       orientation: state.orientation,
       openDelay: state.openDelay ?? 0,
-      ref: options.rootRef,
       onValueChange: options.onValueChange,
       "onUpdate:modelValue": options.onValueUpdate,
     },
@@ -524,6 +590,13 @@ function renderMenu(state: MenuState, options: Options) {
 
 function trigger(host: HTMLElement, value: string): HTMLElement {
   return host.querySelector<HTMLElement>(`[data-test="${value}"]`)!;
+}
+function openTriggerValue(host: HTMLElement): string | null {
+  return (
+    host
+      .querySelector('[data-sw-nav-menu-trigger][aria-expanded="true"]')
+      ?.getAttribute("data-test") ?? null
+  );
 }
 function content(value: string): HTMLElement {
   return document.querySelector<HTMLElement>(`[data-content="${value}"]`)!;

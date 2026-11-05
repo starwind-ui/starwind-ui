@@ -6,10 +6,12 @@
 "use client";
 
 import * as React from "react";
+import type { ClosedItemProbe } from "../internal/use-close-presence";
 
 export type ComboboxContextValue = {
   disabled: boolean;
   inputValue: string;
+  itemProbe?: ClosedItemProbe;
   open: boolean;
   readOnly: boolean;
   required: boolean;

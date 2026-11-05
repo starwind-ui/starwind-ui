@@ -1,0 +1,46 @@
+---
+import StyledField from "@conformance/styled-astro/field/Field.astro";
+import { Field } from "@starwind-ui/astro/field";
+import FieldHeldControl from "../FieldHeldControl.astro";
+import Page from "../Page.astro";
+
+const kinds = ["sel", "cmb", "chk", "swi", "sld", "rad", "inp"] as const;
+const forms = (["p", "s"] as const).flatMap((style) =>
+  kinds.map((kind) => ({ style, kind, id: `${style}${kind}-u` })),
+);
+---
+
+<Page>
+  <main>
+    {
+      forms.map((form) => {
+        const Root = form.style === "p" ? Field.Root : StyledField;
+        return (
+          <form id={form.id}>
+            <Root name="f">
+              <FieldHeldControl id={form.id} kind={form.kind} styled={form.style === "s"} />
+            </Root>
+            <button type="submit" data-testid={`${form.id}-submit`}>
+              Submit
+            </button>
+          </form>
+        );
+      })
+    }
+  </main>
+  <script>
+    import { listen } from "../../shared/harness";
+
+    document.querySelectorAll<HTMLElement>('[data-testid$="-u-root"]').forEach((root) => {
+      const id = root.getAttribute("data-testid")!.replace(/-root$/, "");
+      const checks = root.hasAttribute("data-sw-checkbox") || root.hasAttribute("data-sw-switch");
+      listen(
+        `[data-testid="${id}-root"]`,
+        id,
+        checks
+          ? { "starwind:checked-change": { event: "change", value: "checked" } }
+          : { "starwind:value-change": { event: "change", value: "value" } },
+      );
+    });
+  </script>
+</Page>

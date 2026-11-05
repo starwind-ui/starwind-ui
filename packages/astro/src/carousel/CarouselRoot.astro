@@ -16,13 +16,13 @@ const { orientation = "horizontal", opts = {}, autoInit = true, ...rest } = Astr
 ---
 
 <div
+  {...rest}
   data-sw-carousel
   role="region"
   aria-roledescription="carousel"
   data-axis={orientation === "vertical" ? "y" : "x"}
   data-opts={JSON.stringify(opts)}
   data-auto-init={autoInit ? undefined : "false"}
-  {...rest}
 >
   <slot />
 </div>

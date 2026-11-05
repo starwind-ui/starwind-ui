@@ -2,6 +2,7 @@ import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
+  readDisabledAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
@@ -423,7 +424,7 @@ class TogglePressedChangeDetailsImpl implements TogglePressedChangeDetails {
 function isDisabled(element: HTMLElement): boolean {
   return (
     (element instanceof HTMLButtonElement && element.disabled) ||
-    element.hasAttribute("disabled") ||
+    readDisabledAttribute(element) ||
     element.hasAttribute(TOGGLE_DISABLED_ATTRIBUTE) ||
     element.getAttribute("aria-disabled") === "true"
   );

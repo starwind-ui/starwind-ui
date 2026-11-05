@@ -10,6 +10,7 @@ import {
   asAstArrayExpression,
   asAstObjectExpression,
   getAstDefaultExportCallObject,
+  getAstDefaultExportObject,
   getAstDefaultExportRange,
   getAstDefaultImportBinding,
   getAstNamedImportBinding,
@@ -36,110 +37,18 @@ const REACT_ENTRY_PATHS = ["src/main.tsx", "src/main.jsx", "src/main.ts", "src/m
 
 type TextEdit = { end: number; start: number; text: string };
 
+const REACT_THEME_MODULE = "@starwind-ui/react/theme";
+const VUE_THEME_MODULE = "@starwind-ui/vue/theme";
+const SVELTE_THEME_MODULE = "@starwind-ui/svelte/theme";
+
 export function updateViteConfigContent(content: string): string | null {
   const module = parseSourceModule(content);
   if (!module) return null;
   const shape = getViteConfigShape(module);
   if (!shape) return null;
 
-  const tailwindImport = getAstDefaultImportBinding(module, "@tailwindcss/vite");
-  const themeImport = getAstNamedImportBinding(
-    module,
-    "@starwind-ui/react/theme",
-    "getThemeInitScript",
-  );
-  const fileUrlImport = getAstNamedImportBinding(module, "node:url", "fileURLToPath");
-  if (
-    tailwindImport.status === "unsafe" ||
-    themeImport.status === "unsafe" ||
-    fileUrlImport.status === "unsafe"
-  ) {
-    return null;
-  }
-
-  const tailwindName =
-    tailwindImport.status === "found"
-      ? tailwindImport.localName
-      : getAvailableIdentifier(
-          content,
-          ["tailwindcss", "starwindTailwindcss"],
-          "starwindTailwindcss",
-        );
-  const themeInitName =
-    themeImport.status === "found"
-      ? themeImport.localName
-      : getAvailableIdentifier(
-          content,
-          ["getThemeInitScript", "starwindGetThemeInitScript"],
-          "starwindGetThemeInitScript",
-        );
-  const fileUrlName =
-    fileUrlImport.status === "found"
-      ? fileUrlImport.localName
-      : getAvailableIdentifier(
-          content,
-          ["fileURLToPath", "starwindFileURLToPath"],
-          "starwindFileURLToPath",
-        );
-  const existingThemePlugin = hasAstTopLevelFunction(module, "starwindThemeInitPlugin");
-  const themePluginName = existingThemePlugin
-    ? "starwindThemeInitPlugin"
-    : getAvailableIdentifier(
-        content,
-        ["starwindThemeInitPlugin", "starwindThemePlugin"],
-        "starwindThemePlugin",
-      );
-
-  const aliasState = getSourceAliasState(shape.alias, fileUrlImport, fileUrlName, false);
-  if (aliasState === "unsafe") return null;
-
-  const edits: TextEdit[] = [];
-  const imports: string[] = [];
-  if (tailwindImport.status === "missing") {
-    imports.push(`import ${tailwindName} from "@tailwindcss/vite";\n`);
-  }
-  if (themeImport.status === "missing") {
-    const binding =
-      themeInitName === "getThemeInitScript"
-        ? "getThemeInitScript"
-        : `getThemeInitScript as ${themeInitName}`;
-    imports.push(`import { ${binding} } from "@starwind-ui/react/theme";\n`);
-  }
-  if (fileUrlImport.status === "missing") {
-    const binding =
-      fileUrlName === "fileURLToPath" ? "fileURLToPath" : `fileURLToPath as ${fileUrlName}`;
-    imports.push(`import { ${binding} } from "node:url";\n`);
-  }
-  if (imports.length > 0) edits.push({ end: 0, start: 0, text: imports.join("") });
-
-  if (!existingThemePlugin) {
-    const exportRange = getAstDefaultExportRange(module);
-    if (!exportRange) return null;
-    edits.push({
-      end: exportRange.start,
-      start: exportRange.start,
-      text: `${getThemePluginSource(themePluginName, themeInitName)}\n\n`,
-    });
-  }
-
-  const pluginsToAdd = [
-    hasAstDirectCall(shape.plugins, themePluginName) ? undefined : `${themePluginName}()`,
-    hasAstDirectCall(shape.plugins, tailwindName) ? undefined : `${tailwindName}()`,
-  ].filter((value): value is string => value !== undefined);
-  if (pluginsToAdd.length > 0) {
-    const pluginsRange = getAstNodeRange(shape.plugins);
-    if (!pluginsRange) return null;
-    edits.push({
-      end: pluginsRange.start + 1,
-      start: pluginsRange.start + 1,
-      text: `${pluginsToAdd.join(", ")}, `,
-    });
-  }
-
-  if (aliasState === "missing") {
-    addAliasEdit(edits, shape, fileUrlName, false);
-  }
-  return applyTextEdits(content, edits);
+  const updated = addViteTailwindAndAlias(content, module, shape, false);
+  return updated === null ? null : addViteThemeInit(updated, REACT_THEME_MODULE);
 }
 
 /** Updates the object-style config emitted by the official Vite Vue starter. */
@@ -153,6 +62,92 @@ export function updateVueViteConfigContent(content: string): string | null {
   if (vueImport.status !== "found" || !hasAstDirectCall(shape.plugins, vueImport.localName)) {
     return null;
   }
+  const updated = addViteTailwindAndAlias(content, module, shape, true);
+  return updated === null ? null : addViteThemeInit(updated, VUE_THEME_MODULE);
+}
+
+/** Updates a Vite Svelte config. The host validates the official Svelte plugin first. */
+export function updateSvelteViteConfigContent(content: string): string | null {
+  const module = parseSourceModule(content);
+  if (!module) return null;
+  const shape = getViteConfigShape(module, { allowDirectObject: true });
+  if (!shape) return null;
+
+  const updated = addViteTailwindAndAlias(content, module, shape, true);
+  return updated === null ? null : addViteThemeInit(updated, SVELTE_THEME_MODULE);
+}
+
+/**
+ * Adds the Theme prepaint plugin to a Vite config. Vite React, Vue, and Svelte hosts all use this
+ * edit, so a saved theme applies before first paint in each of them.
+ */
+export function addViteThemeInit(content: string, themeModule: string): string | null {
+  const module = parseSourceModule(content);
+  if (!module) return null;
+  const config = getDirectOrDefinedConfig(module);
+  const pluginsProperty = config && getAstObjectProperty(config, "plugins");
+  const plugins =
+    pluginsProperty?.status === "found" ? asAstArrayExpression(pluginsProperty.value) : undefined;
+  if (!plugins) return null;
+
+  const themeImport = getAstNamedImportBinding(module, themeModule, "getThemeInitScript");
+  if (themeImport.status === "unsafe") return null;
+  const themeInitName =
+    themeImport.status === "found"
+      ? themeImport.localName
+      : getAvailableIdentifier(
+          content,
+          ["getThemeInitScript", "starwindGetThemeInitScript"],
+          "starwindGetThemeInitScript",
+        );
+  const existingThemePlugin = hasAstTopLevelFunction(module, "starwindThemeInitPlugin");
+  const themePluginName = existingThemePlugin
+    ? "starwindThemeInitPlugin"
+    : getAvailableIdentifier(
+        content,
+        ["starwindThemeInitPlugin", "starwindThemePlugin"],
+        "starwindThemePlugin",
+      );
+
+  const edits: TextEdit[] = [];
+  if (themeImport.status === "missing") {
+    const binding =
+      themeInitName === "getThemeInitScript"
+        ? "getThemeInitScript"
+        : `getThemeInitScript as ${themeInitName}`;
+    edits.push({
+      end: 0,
+      start: 0,
+      text: `import { ${binding} } from ${JSON.stringify(themeModule)};\n`,
+    });
+  }
+  if (!existingThemePlugin) {
+    const exportRange = getAstDefaultExportRange(module);
+    if (!exportRange) return null;
+    edits.push({
+      end: exportRange.start,
+      start: exportRange.start,
+      text: `${getThemePluginSource(themePluginName, themeInitName)}\n\n`,
+    });
+  }
+  if (!hasAstDirectCall(plugins, themePluginName)) {
+    const pluginsRange = getAstNodeRange(plugins);
+    if (!pluginsRange) return null;
+    edits.push({
+      end: pluginsRange.start + 1,
+      start: pluginsRange.start + 1,
+      text: `${themePluginName}(), `,
+    });
+  }
+  return applyTextEdits(content, edits);
+}
+
+function addViteTailwindAndAlias(
+  content: string,
+  module: ParsedSourceModule,
+  shape: ViteConfigShape,
+  useGlobalThisUrl: boolean,
+): string | null {
   const tailwindImport = getAstDefaultImportBinding(module, "@tailwindcss/vite");
   const fileUrlImport = getAstNamedImportBinding(module, "node:url", "fileURLToPath");
   if (tailwindImport.status === "unsafe" || fileUrlImport.status === "unsafe") return null;
@@ -173,7 +168,7 @@ export function updateVueViteConfigContent(content: string): string | null {
           ["fileURLToPath", "starwindFileURLToPath"],
           "starwindFileURLToPath",
         );
-  const aliasState = getSourceAliasState(shape.alias, fileUrlImport, fileUrlName, true);
+  const aliasState = getSourceAliasState(shape.alias, fileUrlImport, fileUrlName, useGlobalThisUrl);
   if (aliasState === "unsafe") return null;
 
   const edits: TextEdit[] = [];
@@ -197,7 +192,7 @@ export function updateVueViteConfigContent(content: string): string | null {
       text: `${tailwindName}(), `,
     });
   }
-  if (aliasState === "missing") addAliasEdit(edits, shape, fileUrlName, true);
+  if (aliasState === "missing") addAliasEdit(edits, shape, fileUrlName, useGlobalThisUrl);
   return applyTextEdits(content, edits);
 }
 
@@ -210,10 +205,12 @@ type ViteConfigShape = {
 
 function getViteConfigShape(
   module: ParsedSourceModule,
-  options: { rejectRegularExpression?: boolean } = {},
+  options: { allowDirectObject?: boolean; rejectRegularExpression?: boolean } = {},
 ): ViteConfigShape | undefined {
   if (options.rejectRegularExpression && module.hasRegularExpression) return undefined;
-  const config = getAstDefaultExportCallObject(module, "defineConfig");
+  const config = options.allowDirectObject
+    ? getDirectOrDefinedConfig(module)
+    : getAstDefaultExportCallObject(module, "defineConfig");
   if (!config) return undefined;
   const pluginsProperty = getAstObjectProperty(config, "plugins");
   if (pluginsProperty.status !== "found") return undefined;
@@ -231,6 +228,14 @@ function getViteConfigShape(
   if (aliasProperty.status === "missing") return { config, plugins, resolve };
   const alias = asAstObjectExpression(aliasProperty.value);
   return alias ? { alias, config, plugins, resolve } : undefined;
+}
+
+function getDirectOrDefinedConfig(module: ParsedSourceModule): AstObjectExpression | undefined {
+  const defineConfig = getAstNamedImportBinding(module, "vite", "defineConfig");
+  return getAstDefaultExportObject(
+    module,
+    defineConfig.status === "found" ? defineConfig.localName : "defineConfig",
+  );
 }
 
 function getSourceAliasState(

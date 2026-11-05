@@ -1,6 +1,5 @@
 <script module lang="ts">
   import type { ComponentProps } from "svelte";
-  import { untrack } from "svelte";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
   import { ToggleRoot } from "@starwind-ui/svelte/toggle";
@@ -24,11 +23,9 @@
     "ref": ref,
     "onPressedChange": onPressedChange,
     "children": children,
+    "pressed": commandPressed,
     ...rest
   }: ToggleGroupItemProps = $props();
-
-  let observedCommand=untrack(()=>commandValue);
-  $effect(()=>{const next=commandValue;untrack(()=>{if(Object.is(next,observedCommand))return;observedCommand=next;if(!Object.is(next,pressed))pressed=next;});});
 </script>
 
 <ToggleRoot
@@ -36,7 +33,7 @@
   data-variant={variant}
   {...({ ...rest, nativeButton, ref, value, defaultPressed, disabled, onPressedChange } as PrimitiveProps)}
   data-slot={"toggle-group-item"}
-  bind:pressed={pressed}
+  bind:pressed={() => commandPressed, (next) => { pressed = next; }}
 >
   {@render children?.()}
 </ToggleRoot>

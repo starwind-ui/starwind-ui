@@ -73,17 +73,21 @@
     modal = true,
     name,
     open = $bindable(),
+    open: commandOpen,
     onOpenChange,
     readOnly = false,
     ref,
     required = false,
     value = $bindable(),
+    value: commandValue,
     onValueChange,
     ...rest
   }: Props = $props();
 
   const initialOpenModel = untrack(() => open);
   const initialValueModel = untrack(() => value);
+  const openControlled = initialOpenModel !== undefined;
+  const valueControlled = initialValueModel !== undefined;
   const initialDefaultOpen = untrack(() => defaultOpen) ?? initialOpenModel ?? false;
   const initialValueDefault = untrack(() => defaultValue);
   const initialDefaultValue = initialValueDefault !== undefined ? initialValueDefault : initialValueModel ?? null;
@@ -117,10 +121,6 @@
     get selectedLabel() { return selectedLabel; },
     get value() { return renderedValue; },
   });
-
-  export function close(): void { runtimeInstance?.close(); }
-  export function show(): void { if (!disabled) runtimeInstance?.open(); }
-  export function updatePosition(): void { runtimeInstance?.updatePosition(); }
 
   function readItemLabel(item: HTMLElement | undefined): string | null {
     if (!item) return null;
@@ -167,7 +167,8 @@ required: required,
     onOpenChange: (next, detail) => { untrack(() => { onOpenChange?.(next, detail); }); },
 onValueChange: (next, detail) => { untrack(() => { onValueChange?.(next, detail); }); },
     portalReference: ownedPortal ?? undefined,
-
+    ...(openControlled ? { open: disabled ? false : (commandOpen) } : {}),
+...(valueControlled ? { value: commandValue } : {}),
   }); }
         finally { restorePortal?.(); }
       });
@@ -185,8 +186,8 @@ function synchronizeValue(next: string | null): void {
 renderedValue = instance.getValue();
   }
       untrack(() => {
-        synchronizeValue(value !== undefined ? value : renderedValue);
-        synchronizeOpen(open ?? renderedOpen);
+        synchronizeValue(commandValue !== undefined ? commandValue : renderedValue);
+        synchronizeOpen(commandOpen ?? renderedOpen);
       });
       const popup = (ownedPortal ?? root).querySelector("[data-sw-select-popup]");
       const labelObserver = new MutationObserver((records) => {
@@ -200,14 +201,14 @@ renderedValue = instance.getValue();
       if (popup) labelObserver.observe(popup, { childList: true, characterData: true, subtree: true });
       const unsubscribeOpen = owned.subscribe("openChange", detail => {
     if (runtimeInstance !== owned) return;
-    untrack(() => { renderedOpen = detail.open;
-if (open !== detail.open) open = detail.open; });
+    untrack(() => { if (openControlled) { if (open !== detail.open) open = detail.open; } else { renderedOpen = detail.open;
+if (open !== detail.open) open = detail.open; } });
   });
 const unsubscribeValue = owned.subscribe("valueChange", detail => {
     if (runtimeInstance !== owned) return;
-    untrack(() => { syncSelectedLabel(root, detail.value, detail.item);
+    untrack(() => { if (valueControlled) { if (value !== detail.value) value = detail.value; } else { syncSelectedLabel(root, detail.value, detail.item);
 renderedValue = detail.value;
-if (value !== detail.value) value = detail.value; });
+if (value !== detail.value) value = detail.value; } });
   });
       let valueRevision = 0;
       const handleReset = (event: Event) => {
@@ -220,7 +221,7 @@ if (value !== detail.value) value = detail.value; });
         untrack(() => { const superseded = revision !== valueRevision;
           const before = renderedValue;
           const initialResetValue = initialDefaultValue;
-          const next = event.defaultPrevented || superseded ? before : initialResetValue;
+          const next = valueControlled ? (commandValue !== undefined ? commandValue : before) : event.defaultPrevented || superseded ? before : initialResetValue;
           const resetOwner = instance;
     resetOwner.setValue(next, { emit: false });
     const acceptedValue = resetOwner.getValue();
@@ -228,7 +229,7 @@ if (value !== detail.value) value = detail.value; });
     renderedValue = acceptedValue;
 
     syncSelectedLabel(root, acceptedValue);
-    if (!event.defaultPrevented && !superseded) { if (value !== acceptedValue) value = acceptedValue; } });
+    if (!event.defaultPrevented && !superseded && !valueControlled) { if (value !== acceptedValue) value = acceptedValue; } });
       }, 0);
     });
       };
@@ -242,19 +243,19 @@ if (value !== detail.value) value = detail.value; });
       bindReset();
       mounted = true;
       $effect(() => {
-        const next = value;
+        const next = commandValue;
         if (next === undefined) return;
         valueRevision += 1;
         untrack(() => synchronizeValue(next));
       });
       $effect(() => {
-        const next = open;
+        const next = commandOpen;
         if (next !== undefined) untrack(() => synchronizeOpen(next));
       });
 
 $effect(() => { void disabled; untrack(() => { const owned = runtimeInstance; if (!owned) return;
       owned.setDisabled(disabled);
-      const desired = disabled ? false : (open ?? renderedOpen);
+      const desired = disabled ? false : (commandOpen ?? renderedOpen);
       if (owned.getOpen() !== desired) owned.setOpen(desired, { emit: false });
       renderedOpen = owned.getOpen();
        }); });

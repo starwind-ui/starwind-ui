@@ -41,7 +41,9 @@ export function printFormProjection(projection: FormProjection): string {
   });
   // A rendered native default stops Svelte hydration from removing the server checked or value
   // attribute, so a form reset restores the reset seed.
-  const input = `<input ${inputAttrs} checked={initialChecked} defaultChecked={resetSeed} ${Object.entries(inputData)
+  const input = `<input ${inputAttrs} checked={initialChecked} defaultChecked={resetSeed} ${Object.entries(
+    inputData,
+  )
     .map(([key, value]) => `${key}={${value}}`)
     .join(
       " ",
@@ -72,6 +74,7 @@ let groupChecked = $derived(${groupExpressions.checked});`
 }
 let effectiveDisabledValue = $derived(${groupExpressions.disabled});
 ${groupFunction}
+${fw.controlledCell("checked")}
 const initial = untrack(() => { ${initial} return { checked: initialChecked, reset: resetSeed }; });
 const initialChecked = initial.checked;
 const resetSeed = initial.reset;
@@ -103,7 +106,7 @@ function observe(plan: FormControlPlan): string {
   const root = untrack(() => ${root});
   if (!(root instanceof HTMLElement)) throw new TypeError("Form input requires its semantic root.");
   $effect(() => { void [${plan.reconstructionInputs.filter((name) => name !== "nativeButton").join(", ")}]; untrack(() => connectRuntime(root, input)); return disconnectRuntime; });
-  $effect(() => { void checked; ${grouped ? "void groupChecked;" : ""} untrack(applyParentCommand); });
+  $effect(() => { void ${operations.svelte.readModel("checked")}; ${grouped ? "void groupChecked;" : ""} untrack(applyParentCommand); });
   ${plan.live.map((live, i) => `$effect(() => { void [${deps(live.inputs)}]; untrack(applyLive${i}); });`).join("\n")}
 };`;
 }

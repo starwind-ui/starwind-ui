@@ -32,6 +32,7 @@ const renderedValue = value ?? defaultValue;
 ---
 
 <div
+  {...rest}
   data-sw-radio-group
   data-default-value={defaultValue}
   data-form={form}
@@ -46,7 +47,6 @@ const renderedValue = value ?? defaultValue;
   data-readonly={readOnly ? "" : undefined}
   data-required={required ? "" : undefined}
   role="radiogroup"
-  {...rest}
 >
   <slot />
 </div>
