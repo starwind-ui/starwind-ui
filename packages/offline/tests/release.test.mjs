@@ -7,6 +7,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { assertNoUnfinishedPublication } from "../src/build.mjs";
 import { resolveKitRelease } from "../src/kit-channel.mjs";
 import { SUPPORTED_PLATFORMS } from "../src/platforms.mjs";
 import {
@@ -167,6 +168,15 @@ describe("CLI archive requirements", () => {
   it("reports no offline support for a CLI without the requirements file", async () => {
     expect(await readCliArchiveRequirements(await packedArchive("starwind", "3.5.0"))).toBe(
       undefined,
+    );
+  });
+
+  it("stops on a requirements file without the CLI functions", async () => {
+    const archive = await packedArchive("starwind", "3.6.0", {
+      "dist/offline-requirements.js": "export const getOfflineCodeRequirements = () => [];",
+    });
+    await expect(readCliArchiveRequirements(archive)).rejects.toThrow(
+      /does not export the offline requirement functions/,
     );
   });
 
@@ -354,6 +364,30 @@ describe("offline kit preparation", () => {
     await expect(prepareOfflineKitRelease(inputs)).rejects.toThrow(/other CLI requirements/);
     expect(inputs.build).not.toHaveBeenCalled();
   });
+
+  it("builds a new kit version over an abandoned publication of another version", async () => {
+    const inputs = await releaseInputs({ beta: { version: "0.2.0", tag: "beta" } });
+    await mkdir(inputs.outputDirectory, { recursive: true });
+    await writeFile(
+      path.join(inputs.outputDirectory, "publication-started.json"),
+      JSON.stringify({ kitVersion: "0.1.0" }),
+    );
+    const prepared = await prepareOfflineKitRelease(inputs);
+    expect(prepared).toMatchObject({ skip: false, kitVersion: "0.2.0", tag: "beta" });
+    expect(inputs.build).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a build directory with an unfinished publication from the build command", async () => {
+    const directory = await temporaryDirectory();
+    await expect(assertNoUnfinishedPublication(directory)).resolves.toBeUndefined();
+    await writeFile(
+      path.join(directory, "publication-started.json"),
+      JSON.stringify({ kitVersion: "0.1.0" }),
+    );
+    await expect(assertNoUnfinishedPublication(directory)).rejects.toThrow(
+      /unfinished offline kit publication of 0\.1\.0/,
+    );
+  });
 });
 
 /** A prepared kit in a temporary build directory. */
@@ -453,6 +487,27 @@ describe("offline kit publication", () => {
         { interactive: true },
       ]),
     );
+    // Every package is on npm, so the next kit version may replace the build.
+    expect(existsSync(path.join(prepared.outputDirectory, "publication-started.json"))).toBe(false);
+  });
+
+  it("keeps the publication marker when an upload fails", async () => {
+    const prepared = await preparedKit();
+    const npm = fakeNpm();
+    const runNpm = vi.fn(async (args, options) => {
+      if (args[0] === "publish" && args[1].endsWith(tarballName("offline"))) {
+        throw new Error("npm publish failed");
+      }
+      return npm(args, options);
+    });
+    await expect(
+      publishOfflineKitRelease(prepared, {
+        dryRun: false,
+        createFetcher: () => registry(NPM),
+        runNpm,
+        log: () => {},
+      }),
+    ).rejects.toThrow("npm publish failed");
     expect(existsSync(path.join(prepared.outputDirectory, "publication-started.json"))).toBe(true);
   });
 

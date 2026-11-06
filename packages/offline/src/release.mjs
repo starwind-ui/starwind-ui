@@ -10,7 +10,12 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
 import semver from "semver";
-import { buildOfflineKit, DEFAULT_OUTPUT_DIRECTORY } from "./build.mjs";
+import {
+  buildOfflineKit,
+  DEFAULT_OUTPUT_DIRECTORY,
+  PUBLICATION_MARKER,
+  readPublicationMarker,
+} from "./build.mjs";
 import { KIT_BETA, releaseTag, resolveKitRelease } from "./kit-channel.mjs";
 import {
   createNpmPackumentFetcher,
@@ -83,7 +88,17 @@ export async function readCliArchiveRequirements(archive) {
     const entry = path.join(directory, "offline-requirements.mjs");
     await writeFile(entry, source);
     const requirementsModule = await import(pathToFileURL(entry).href);
-    if (!requirementsModule.getOfflineRegistryRequirements?.()) return undefined;
+    // The file marks offline support, so a broken module must stop the release instead of skipping
+    // the kit.
+    const registryRequirements = requirementsModule.getOfflineRegistryRequirements?.();
+    if (
+      typeof requirementsModule.getOfflineCodeRequirements !== "function" ||
+      !Array.isArray(registryRequirements)
+    ) {
+      throw new Error(
+        `${member} in ${archive} does not export the offline requirement functions of the starwind CLI.`,
+      );
+    }
     return await loadRootRequirements({ requirementsModule });
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -230,10 +245,6 @@ export function planPublication({ kitVersion, platforms, mainDirectory, platform
   ];
 }
 
-// Written before the first kit upload. A later run must publish the same build, even when npm does
-// not list the uploaded packages yet.
-const PUBLICATION_MARKER = "publication-started.json";
-
 function kitPackageNames(platforms) {
   return [...platforms.map((platform) => platformPackageName(platform.key)), MAIN_PACKAGE_NAME];
 }
@@ -317,7 +328,10 @@ export async function prepareOfflineKitRelease({
   for (const name of kitPackageNames(platforms)) {
     if (await npmHasVersion(fetchPackument, name, kitVersion)) partlyPublished.push(name);
   }
-  const publicationStarted = existsSync(path.join(outputDirectory, PUBLICATION_MARKER));
+  // A marker of another kit version belongs to an abandoned publication, which this kit replaces.
+  const marker = await readPublicationMarker(outputDirectory);
+  const publicationStarted =
+    marker !== undefined && (marker.kitVersion === undefined || marker.kitVersion === kitVersion);
   const keepBuild = partlyPublished.length > 0 || publicationStarted;
   let result = await readExistingBuild(outputDirectory, kitVersion, platforms, cliVersion);
   // A saved build from other CLI requirements could miss a package the published CLI installs.
@@ -452,6 +466,8 @@ export async function publishOfflineKitRelease(
     await runNpm(args, { interactive: !dryRun });
     published.push(`${entry.name}@${entry.version}`);
   }
+  // Every kit package is on npm, so the build may be replaced by the next kit version.
+  if (!dryRun) await rm(path.join(prepared.outputDirectory, PUBLICATION_MARKER), { force: true });
   log(
     dryRun
       ? `Dry run passed for ${published.length} offline kit packages.`
