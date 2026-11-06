@@ -1,0 +1,16 @@
+{
+  "name": "@starwind-ui/offline-builder",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Builds the @starwind-ui/offline kit packages. The routine release publishes them; this workspace package is not published.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build:kit": "node src/build.mjs",
+    "test": "vitest run --root ../.. --project=offline-kit",
+    "acceptance": "node src/acceptance.mjs"
+  },
+  "dependencies": {
+    "semver": "^7.8.5"
+  }
+}

@@ -3,6 +3,7 @@ import path from "node:path";
 import fs from "fs-extra";
 
 import { fileExists } from "./fs.js";
+import { NEXT_TAILWIND_POSTCSS_REQUIREMENT } from "./install-defaults.js";
 import { resolveProjectMutationPath } from "./project-path.js";
 import { addReactCssImport, updateViteConfigContent } from "./vite-config.js";
 
@@ -176,7 +177,7 @@ export function getReactPackageRequirements(requirements: string[], kind: ReactH
     (requirement) => !requirement.startsWith("@tailwindcss/vite@"),
   );
   if (!nextRequirements.some((requirement) => requirement.startsWith("@tailwindcss/postcss@"))) {
-    nextRequirements.push("@tailwindcss/postcss@^4");
+    nextRequirements.push(NEXT_TAILWIND_POSTCSS_REQUIREMENT);
   }
   return nextRequirements;
 }

@@ -49,6 +49,7 @@ import {
   validateReactProjectSetup,
 } from "@/utils/react-project.js";
 import { loadRegistry, type StarwindRegistryFor } from "@/utils/registry.js";
+import { isOfflineMode, offlineHostFrameworkMessage } from "@/utils/offline.js";
 import { getRuntimeSetupPlan } from "@/utils/runtime-setup.js";
 import { sleep } from "@/utils/sleep.js";
 import { setupSnippets } from "@/utils/snippets.js";
@@ -215,6 +216,46 @@ async function setupProForExistingRuntime(options: { withinAdd: boolean }): Prom
   }
 }
 
+/** Lowest version that a declared range allows, or undefined for a range that is not semver. */
+function declaredMinimumVersion(range: string | undefined): string | undefined {
+  if (!range || !semver.validRange(range)) return undefined;
+  return semver.minVersion(range)?.version;
+}
+
+/**
+ * Reads an installed package version from the nearest `node_modules`, walking up to a workspace
+ * root where npm and Yarn hoist dependencies. Returns undefined when it is not installed.
+ */
+async function readInstalledPackageVersion(packageName: string): Promise<string | undefined> {
+  let directory = process.cwd();
+  for (;;) {
+    try {
+      const manifest = (await readJsonFile(
+        path.join(directory, "node_modules", packageName, "package.json"),
+      )) as { version?: unknown };
+      if (typeof manifest.version === "string" && semver.valid(manifest.version)) {
+        return manifest.version;
+      }
+    } catch {
+      // Not installed at this level.
+    }
+    const parent = path.dirname(directory);
+    if (parent === directory) return undefined;
+    directory = parent;
+  }
+}
+
+/** True when this folder or a parent holds a Yarn Plug'n'Play map. */
+async function usesYarnPnp(): Promise<boolean> {
+  let directory = process.cwd();
+  for (;;) {
+    if (await fileExists(path.join(directory, ".pnp.cjs"))) return true;
+    const parent = path.dirname(directory);
+    if (parent === directory) return false;
+    directory = parent;
+  }
+}
+
 export function init(withinAdd?: boolean, options?: InitOptions): Promise<void>;
 export function init(
   withinAdd: boolean,
@@ -320,6 +361,24 @@ export async function init(
     const projectFramework: CliFrameworkTarget =
       hostProject?.projectFramework ?? (isAstroReactTarget ? "astro" : defaultFramework);
     const reactProjectPlan: ReactProjectPlan | undefined = hostPlan.reactProject;
+    if (projectFramework === "astro" && isOfflineMode()) {
+      // The offline kit has no host frameworks, so stop before any setup step runs a package manager.
+      // Offline work needs Astro installed, so the installed version decides, not the declared range.
+      const installedAstro =
+        (await readInstalledPackageVersion("astro")) ??
+        ((await usesYarnPnp())
+          ? // Yarn Plug'n'Play keeps packages in zip archives, so use the declared range there.
+            declaredMinimumVersion(
+              pkg.dependencies?.astro ??
+                pkg.devDependencies?.astro ??
+                pkg.optionalDependencies?.astro,
+            )
+          : undefined);
+      if (!installedAstro || semver.lt(installedAstro, MIN_ASTRO_VERSION)) {
+        p.cancel(offlineHostFrameworkMessage("astro", MIN_ASTRO_VERSION));
+        return process.exit(1);
+      }
+    }
     if (isAstroReactTarget) {
       const setupOutcome = await ensureAstroReactIntegration({
         packageManager: pm,
@@ -757,7 +816,8 @@ export async function init(
       },
     });
 
-    if (projectFramework === "astro" && !svelteHostProject) {
+    // In offline mode the early check already confirmed an installed, supported Astro.
+    if (projectFramework === "astro" && !svelteHostProject && !isOfflineMode()) {
       if (pkg.dependencies?.astro) {
         const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
         if (!semver.gte(astroVersion, MIN_ASTRO_VERSION)) {

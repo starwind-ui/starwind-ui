@@ -12,6 +12,7 @@ import {
   type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { highlighter } from "@/utils/highlighter.js";
+import { assertOnlineFeature, isOfflineMode } from "@/utils/offline.js";
 import type {
   PrimitiveVendoringArtifact,
   PrimitiveVendoringArtifactSet,
@@ -85,13 +86,18 @@ export async function search(
 
     // Category / plan filters imply a Pro-only search
     const proOnly = !!(options?.category || options?.plan);
+    if (proOnly) assertOnlineFeature("Starwind Pro search");
     const registrySource = parseRegistrySource(options?.registry) ?? { type: "bundled" as const };
 
     let proBlocks: ManifestBlock[] = [];
     let matchedComponents: ComponentFor<CliFrameworkTarget>[] = [];
+    // The offline kit cannot reach the Pro manifest, so a mixed search lists core components only.
+    const skipProSearch = isOfflineMode() && !proOnly;
+    const findProBlocks: typeof searchProBlocks = (searchOptions) =>
+      skipProSearch ? Promise.resolve([]) : searchProBlocks(searchOptions);
 
     if (options?.json) {
-      proBlocks = await searchProBlocks({
+      proBlocks = await findProBlocks({
         query,
         category: options?.category,
         plan: options?.plan,
@@ -118,7 +124,8 @@ export async function search(
         {
           title: "Searching Starwind Pro blocks",
           task: async () => {
-            proBlocks = await searchProBlocks({
+            if (skipProSearch) return "Skipped Pro blocks, which need a network connection";
+            proBlocks = await findProBlocks({
               query,
               category: options?.category,
               plan: options?.plan,

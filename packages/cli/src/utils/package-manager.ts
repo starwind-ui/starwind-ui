@@ -1,9 +1,27 @@
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
+import path, { resolve } from "node:path";
 
 import * as p from "@clack/prompts";
 import { execa } from "execa";
 
+import {
+  assertOfflinePackagesAvailable,
+  bunOfflineMessage,
+  detectYarnMajor,
+  explainOfflineInstallFailure,
+  getOfflinePackageManagerEnv,
+  getOfflineStoreDirectories,
+  getYarnBerryIsolationEnv,
+  loadOfflineStore,
+  repairOfflineLockfiles,
+  startOfflineRegistry,
+  OfflineInstallInterruptedError,
+  OfflineKitError,
+  withOfflineLockfileRepair,
+  yarnClassicOfflineMessage,
+} from "./offline.js";
 import { isExactPackageSpec, parsePackageSpec } from "./package-spec.js";
 
 export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
@@ -133,6 +151,24 @@ export function detectPackageManager(options: PackageManagerOptions = {}): Packa
     }
   }
 
+  // The offline kit runs as its own command, so no package manager user agent names the project
+  // manager. A workspace member keeps its lockfile at the workspace root.
+  if (getOfflineStoreDirectories()) {
+    let directory = resolve(cwd);
+    for (
+      let parent = path.dirname(directory);
+      parent !== directory;
+      parent = path.dirname(parent)
+    ) {
+      directory = parent;
+      for (const pm of packageManagers) {
+        if (LOCK_FILES[pm].some((lockFile) => existsSync(resolve(directory, lockFile)))) {
+          return { name: pm, ...PACKAGE_MANAGER_COMMANDS[pm] };
+        }
+      }
+    }
+  }
+
   // Fall back to the invoking package manager for projects without a lockfile.
   const current = getCurrentPackageManager();
   if (current) {
@@ -164,9 +200,61 @@ export async function installDependencies(
   force = false,
 ): Promise<void> {
   const packageManager = pm ?? detectPackageManager().name;
-  for (const args of buildInstallDependencyCommands(packages, packageManager, dev, force)) {
-    await execa(packageManager, args);
+  const commands = buildInstallDependencyCommands(packages, packageManager, dev, force);
+  const offlineStoreDirectories = getOfflineStoreDirectories();
+  if (!offlineStoreDirectories) {
+    for (const args of commands) {
+      await execa(packageManager, args);
+    }
+    return;
   }
+
+  // The offline kit serves its archives from a loopback registry for this install only.
+  const store = loadOfflineStore(offlineStoreDirectories);
+  assertOfflinePackagesAvailable(store, packages);
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  const runYarn = async (args: string[]) => (await execa("yarn", args, { env })).stdout;
+  const yarnMajor = packageManager === "yarn" ? await detectYarnMajor(runYarn) : undefined;
+  if (yarnMajor !== undefined && yarnMajor < 2)
+    throw new OfflineKitError(yarnClassicOfflineMessage());
+  if (packageManager === "bun") throw new OfflineKitError(bunOfflineMessage());
+
+  const registry = await startOfflineRegistry(store);
+  let interruptedExitCode: number | undefined;
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "starwind-offline-"));
+  try {
+    Object.assign(env, getOfflinePackageManagerEnv(registry.origin));
+    if (yarnMajor !== undefined) {
+      Object.assign(env, await getYarnBerryIsolationEnv(runYarn, temporaryDirectory));
+    }
+    await withOfflineLockfileRepair(registry.origin, async (cancelSignal) => {
+      for (const args of commands) {
+        try {
+          await execa(packageManager, args, { env, cancelSignal });
+        } catch (error) {
+          throw explainOfflineInstallFailure(registry.missingPackages, error) ?? error;
+        } finally {
+          await repairOfflineLockfiles(registry.origin);
+        }
+      }
+    });
+  } catch (error) {
+    if (!(error instanceof OfflineInstallInterruptedError)) throw error;
+    interruptedExitCode = error.exitCode;
+  } finally {
+    // Ignore further interrupts while the registry stops and the temporary folder goes away.
+    const holdInterrupts = () => {};
+    process.on("SIGINT", holdInterrupts);
+    process.on("SIGTERM", holdInterrupts);
+    try {
+      await registry.close();
+      await rm(temporaryDirectory, { recursive: true, force: true });
+    } finally {
+      process.removeListener("SIGINT", holdInterrupts);
+      process.removeListener("SIGTERM", holdInterrupts);
+    }
+  }
+  if (interruptedExitCode !== undefined) process.exit(interruptedExitCode);
 }
 
 /**

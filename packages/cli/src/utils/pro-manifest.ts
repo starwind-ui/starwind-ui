@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { assertOnlineFeature } from "./offline.js";
+
 /**
  * Pro manifest types and search utilities for Starwind Pro blocks.
  */
@@ -56,6 +58,7 @@ export async function getProManifest(): Promise<{
   manifest: Manifest;
   source: "cache" | "network";
 }> {
+  assertOnlineFeature("Starwind Pro search");
   if (manifestCache && Date.now() < manifestCache.expiresAt) {
     return { manifest: manifestCache.data, source: "cache" };
   }

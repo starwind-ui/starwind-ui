@@ -66,6 +66,19 @@ expands the CLI's installable catalog and schedules a `starwind` minor.
 When one feature contains component delivery and an independent CLI capability, record separable
 release intent. Changesets will apply the highest `starwind` bump during versioning.
 
+## Offline Kit
+
+The `@starwind-ui/offline` kit and its `@starwind-ui/offline-<platform>` packages are generated
+from `packages/offline`, which is a private workspace package, and Changesets does not version
+them. `packages/offline/src/kit-channel.mjs` sets their version. During the beta, the kit has its
+own version on the `beta` tag, starting at `0.1.0`. After the beta, the kit carries the `starwind`
+version that it contains. `pnpm publish:release` publishes the kit after the routine packages
+whenever npm does not have that kit version.
+The kit reads its package list from the packed `starwind` archive, so CLI code changes reach the
+kit with no separate step. Its archives are the bytes that npm serves, so offline installs record
+the same integrity as online installs. A CLI change that affects offline use follows the CLI rows
+above.
+
 ## Next Major Checklist
 
 Before you plan a major of the Runtime, Astro, and React fixed group, read

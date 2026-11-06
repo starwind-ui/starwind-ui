@@ -42,6 +42,13 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: "offline-kit",
+          include: ["packages/offline/tests/**/*.test.mjs"],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: "portable-runtime",
           include: [
             "scripts/portable-runtime/**/*.test.ts",

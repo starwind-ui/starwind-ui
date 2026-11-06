@@ -11,6 +11,7 @@ import {
 } from "./config.js";
 import { PATHS } from "./constants.js";
 import { filterUninstalledDependencies } from "./dependency-resolver.js";
+import { assertOnlineFeature } from "./offline.js";
 import { installDependenciesWithProgress, type PackageManager } from "./package-manager.js";
 import { parsePackageSpec } from "./package-spec.js";
 import { resolveProjectMutationPath, resolveProjectPathLexically } from "./project-path.js";
@@ -174,6 +175,7 @@ export async function installProRegistryItems(
   itemRefs: string[],
   options: InstallProRegistryItemsOptions,
 ): Promise<ProRegistryInstallSummary> {
+  assertOnlineFeature("Installing Starwind Pro components");
   const summary: ProRegistryInstallSummary = {
     failed: [],
     installed: [],
