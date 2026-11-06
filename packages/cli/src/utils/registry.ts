@@ -4,18 +4,19 @@ import semver from "semver";
 import { z } from "zod";
 
 import runtimeBundledRegistry from "../registry/bundled-registry.json" with { type: "json" };
-import { DEFAULT_STYLED_REGISTRY_REFERENCE } from "./config.js";
 import type { StarwindConfigFor } from "./config.js";
+import { DEFAULT_STYLED_REGISTRY_REFERENCE } from "./config.js";
 import {
   type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   isRegistryTarget,
   isSetupTarget,
-  type PublicCliFrameworkTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
   type RegistryTargetFor,
 } from "./framework-target-policy.js";
 import { readJsonFile } from "./fs.js";
+import { assertOnlineFeature } from "./offline.js";
 import { parsePackageName } from "./package-spec.js";
 import { assertSafePathSegment } from "./project-path.js";
 
@@ -523,6 +524,7 @@ async function readRegistrySource(source: RegistrySource): Promise<unknown> {
     case "local":
       return readJsonFile(source.path);
     case "remote": {
+      assertOnlineFeature("A remote Starwind registry");
       const response = await fetch(source.url);
 
       if (!response.ok) {
@@ -734,6 +736,7 @@ async function readRegistryArtifact<TFramework extends CliFrameworkTarget>(
       case "local":
         return await readJsonFile(source.path);
       case "remote": {
+        assertOnlineFeature("A remote Starwind registry");
         const response = await fetch(source.url);
 
         if (!response.ok) {

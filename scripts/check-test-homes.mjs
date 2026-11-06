@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 export const approvedTestHomePrefixes = [
   "apps/svelte-demo/tests/",
   "packages/cli/tests/",
+  "packages/offline/tests/",
   "packages/react/tests/",
   "packages/runtime/tests/",
   "packages/svelte/tests/",
@@ -47,6 +48,10 @@ export const testSuiteOwners = [
   {
     name: "cli",
     prefixes: ["packages/cli/tests/"],
+  },
+  {
+    name: "offline-kit",
+    prefixes: ["packages/offline/tests/"],
   },
   {
     name: "react",

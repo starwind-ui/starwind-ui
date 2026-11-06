@@ -12,6 +12,7 @@ import {
   type SupportedAstroMajor,
 } from "./astro-integration-version.js";
 import { readJsonFile } from "./fs.js";
+import { REACT_18_DEFAULTS, REACT_19_DEFAULTS } from "./install-defaults.js";
 import { installDependencies, type PackageManager } from "./package-manager.js";
 import { isAstroReactTsConfigReady, setupAstroReactTsConfig } from "./tsconfig.js";
 
@@ -46,20 +47,6 @@ type AstroReactPreflightOptions = {
 };
 
 export type { InstalledVersionReader };
-
-const REACT_18_DEFAULTS = {
-  react: "^18.3.1",
-  "react-dom": "^18.3.1",
-  "@types/react": "^18.3.20",
-  "@types/react-dom": "^18.3.7",
-} as const;
-
-const REACT_19_DEFAULTS = {
-  react: "^19.2.0",
-  "react-dom": "^19.2.0",
-  "@types/react": "^19.2.0",
-  "@types/react-dom": "^19.2.0",
-} as const;
 
 export async function preflightAstroReactIntegration(
   options: AstroReactPreflightOptions = {},

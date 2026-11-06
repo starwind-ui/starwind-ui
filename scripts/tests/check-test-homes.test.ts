@@ -145,6 +145,9 @@ describe("test file home guardrail", () => {
     expect(findTestSuiteOwners("packages/svelte/tests/package-build.ssr.test.ts")).toEqual([
       "svelte",
     ]);
+    expect(findTestSuiteOwners("packages/offline/tests/builder.test.mjs")).toEqual([
+      "offline-kit",
+    ]);
   });
 
   it("assigns the private Svelte demo and Styled tests to their dedicated suites", () => {

@@ -1328,6 +1328,80 @@ describe("release package tooling", () => {
     expect(finalizations).toBe(1);
   });
 
+  it("publishes the offline kit after the routine packages and finalization", async () => {
+    const steps: string[] = [];
+    await executeReleasePublication({
+      dryRun: false,
+      finalize: async () => {
+        steps.push("finalize");
+      },
+      publishCommands: createPublishCommands({ tag: "latest" }),
+      publishOfflineKit: async () => {
+        steps.push("offline kit");
+      },
+      runPublish: async (_command, _args, options) => {
+        steps.push(options.packageName);
+      },
+    });
+    expect(steps).toEqual([
+      ...RELEASE_PACKAGE_SET.map((entry) => entry.name),
+      "finalize",
+      "offline kit",
+    ]);
+  });
+
+  it("never publishes the offline kit after a routine publish failure", async () => {
+    let kitRuns = 0;
+    await expect(
+      executeReleasePublication({
+        dryRun: false,
+        finalize: async () => {},
+        publishCommands: createPublishCommands({ tag: "latest" }),
+        publishOfflineKit: async () => {
+          kitRuns += 1;
+        },
+        runPublish: async () => {
+          throw new Error("publish failed");
+        },
+      }),
+    ).rejects.toThrow(/publish failed/);
+    expect(kitRuns).toBe(0);
+  });
+
+  it("tells the publisher to run the same command again after an offline kit failure", async () => {
+    await expect(
+      executeReleasePublication({
+        dryRun: false,
+        finalize: async () => {},
+        publishCommands: createPublishCommands({ tag: "latest" }),
+        publishOfflineKit: async () => {
+          throw new Error("npm error code EOTP");
+        },
+        runPublish: async () => {},
+      }),
+    ).rejects.toThrow(
+      /routine packages are published, but the offline kit failed: npm error code EOTP\nRun the same publication command again/,
+    );
+  });
+
+  it("checks the offline kit in a dry run without finalizing", async () => {
+    const steps: string[] = [];
+    await executeReleasePublication({
+      dryRun: true,
+      finalize: async () => {
+        steps.push("finalize");
+      },
+      publishCommands: createPublishCommands({ dryRun: true, tag: "latest" }),
+      publishOfflineKit: async () => {
+        steps.push("offline kit");
+      },
+      runPublish: async (_command, _args, options) => {
+        steps.push(options.packageName);
+      },
+    });
+    expect(steps).toEqual([...RELEASE_PACKAGE_SET.map((entry) => entry.name), "offline kit"]);
+  });
+
   it("generates the exact user-operated publication handoff", () => {
     expect(createUserPublishHandoff({ tag: "beta" })).toMatchObject({
       command: "pnpm publish:beta",

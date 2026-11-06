@@ -117,7 +117,7 @@ async function readBetaLatest(registry, packageName, label) {
   return tags.latest ?? null;
 }
 
-async function validateRecovery(plan, registry, resumeFrom) {
+async function validateRecovery(plan, registry, resumeFrom, allowComplete) {
   let firstMissingIndex = plan.packages.length;
   for (const [index, entry] of plan.packages.entries()) {
     const exists = await exactVersionExists(entry, registry);
@@ -129,6 +129,7 @@ async function validateRecovery(plan, registry, resumeFrom) {
     }
   }
   if (plan.packages.length && firstMissingIndex === plan.packages.length) {
+    if (allowComplete) return true;
     throw new Error("All planned versions are already published. Run pnpm release:finalize.");
   }
   const firstMissing = plan.packages[firstMissingIndex]?.name;
@@ -140,6 +141,7 @@ async function validateRecovery(plan, registry, resumeFrom) {
   if (!resumeFrom && firstMissingIndex > 0) {
     throw new Error(`Resume the original publication with --resume-from ${firstMissing}.`);
   }
+  return false;
 }
 
 export async function preparePublicationPlan({
@@ -150,6 +152,8 @@ export async function preparePublicationPlan({
   repoRoot = ROOT_DIR,
   dryRun = false,
   resumeFrom,
+  // The release command runs again after a later step failed. It then finishes those steps.
+  allowComplete = false,
 }) {
   if (dryRun && resumeFrom) throw new Error("--resume-from is available only for a real publish.");
   if (!registry?.capture)
@@ -164,8 +168,8 @@ export async function preparePublicationPlan({
       if (resumeFrom || error.cause?.code !== "ENOENT") throw error;
     }
     if (saved) {
-      await validateRecovery(saved, registry, resumeFrom);
-      return saved;
+      const complete = await validateRecovery(saved, registry, resumeFrom, allowComplete);
+      return complete ? { ...saved, complete } : saved;
     }
   }
 

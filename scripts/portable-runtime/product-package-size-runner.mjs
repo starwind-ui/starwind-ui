@@ -49,10 +49,10 @@ const ATTRIBUTION_REPORT_PATH = path.join(
   "docs/portable-runtime/diagnostics/product-package-size-attribution.md",
 );
 const COMPARATOR_VERSIONS = Object.freeze({
-  "ark-react": "5.39.1",
-  "ark-vue": "5.39.1",
-  "base-react": "1.8.0",
-  "reka-vue": "2.10.4",
+  "ark-react": "5.40.0",
+  "ark-vue": "5.40.0",
+  "base-react": "1.9.0",
+  "reka-vue": "2.11.0",
 });
 
 const peerExternals = [

@@ -1,19 +1,15 @@
 import semver from "semver";
 
 import { readJsonFile } from "./fs.js";
+import { ASTRO_INTEGRATION_RANGES } from "./install-defaults.js";
+
+export { ASTRO_INTEGRATION_RANGES };
 
 export type InstalledVersionReader = (packageName: string) => Promise<string | undefined>;
 
 export type SupportedAstroMajor = 5 | 6 | 7;
 
 const SUPPORTED_ASTRO_MAJORS = [5, 6, 7] as const;
-
-/** Each official integration major supports one Astro major, so npm rejects any other pairing. */
-export const ASTRO_INTEGRATION_RANGES = {
-  "@astrojs/react": { 5: "^4.4.2", 6: "^5.0.7", 7: "^6.0.2" },
-  "@astrojs/svelte": { 5: "^7.2.5", 6: "^8.1.2", 7: "^9.1.2" },
-  "@astrojs/vue": { 5: "^5.1.4", 6: "^6.0.1", 7: "^7.1.2" },
-} as const satisfies Record<string, Record<SupportedAstroMajor, string>>;
 
 export function getMinimumVersion(range: string | undefined): semver.SemVer | undefined {
   if (!range || /^(?:file|link|portal|workspace):/i.test(range)) return undefined;

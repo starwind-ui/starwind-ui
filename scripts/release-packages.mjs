@@ -608,6 +608,7 @@ export async function executeReleasePublication({
   dryRun,
   finalize,
   publishCommands,
+  publishOfflineKit,
   runPublish = runCommand,
 }) {
   for (const publishCommand of publishCommands) {
@@ -620,6 +621,38 @@ export async function executeReleasePublication({
     });
   }
   if (!dryRun && publishCommands.length > 0) await finalize();
+  // Finalization waits until npm lists the routine versions, which the kit archives come from.
+  if (publishOfflineKit) {
+    try {
+      await publishOfflineKit();
+    } catch (error) {
+      if (dryRun) throw error;
+      throw new Error(
+        `The routine packages are published, but the offline kit failed: ${error.message}\nRun the same publication command again to finish the offline kit.`,
+        { cause: error },
+      );
+    }
+  }
+}
+
+/**
+ * Prepares the offline kit with the starwind CLI of this release before any package is published.
+ * The kit release steps and its version channel live in `packages/offline`.
+ */
+export async function prepareOfflineKit({ packageManifests, releaseArchives = [] }) {
+  const cli = packageManifests.find(({ entry }) => entry.name === "starwind");
+  if (!cli) throw new Error("The routine release inventory has no starwind CLI.");
+  const kit = await import("../packages/offline/src/release.mjs");
+  const prepared = await kit.prepareOfflineKitRelease({
+    cliVersion: cli.manifest.version,
+    releaseArchives,
+  });
+  return {
+    prepared,
+    publish: prepared.skip
+      ? undefined
+      : ({ dryRun, otp }) => kit.publishOfflineKitRelease(prepared, { dryRun, otp }),
+  };
 }
 
 async function main() {
@@ -636,6 +669,7 @@ async function main() {
   } = await import("./release-finalization.mjs");
   let releasePlan = VUE_BETA_RELEASE_PLAN;
   let archives;
+  let publishOfflineKit;
   if (vueBeta && gitState) {
     await captureVueBetaRegistryBaseline({ head: gitState.head, resumeFrom });
   }
@@ -649,11 +683,17 @@ async function main() {
       registry: system,
       dryRun,
       resumeFrom,
+      allowComplete: true,
     });
-    if (plan.packages.length === 0) {
+    if (plan.complete || plan.packages.length === 0) {
       console.log(
-        "[publish-plan] All current package versions already exist on npm; nothing to publish.",
+        plan.complete
+          ? "[publish-plan] Every planned package is on npm. Finishing the release."
+          : "[publish-plan] All current package versions already exist on npm; nothing to publish.",
       );
+      if (plan.complete) await runReleaseFinalization({ vueBeta: false });
+      const kit = await prepareOfflineKit({ packageManifests: metadata.packageManifests });
+      await kit.publish?.({ dryRun, otp });
       return;
     }
     const selected = metadata.packageManifests
@@ -682,6 +722,18 @@ async function main() {
     );
     console.log("[publish-plan] Routine release order:");
     for (const target of formatPublishPlan(selected)) console.log(`- ${target}`);
+    // A kit problem stops the release here, before npm has any of its packages.
+    const kit = await prepareOfflineKit({
+      packageManifests: metadata.packageManifests,
+      releaseArchives: releasePlan.map(({ name }) => archives[name]),
+    });
+    if (kit.publish) {
+      const kitVersion = kit.prepared.kitVersion;
+      console.log(
+        `- @starwind-ui/offline and its platform packages@${kitVersion} -> npm tag ${kit.prepared.tag}, after the routine packages`,
+      );
+      publishOfflineKit = () => kit.publish({ dryRun, otp });
+    }
   } else {
     console.log("[publish-plan] Approved Vue beta release order:");
     for (const target of formatPublishPlan(metadata.packageManifests)) console.log(`- ${target}`);
@@ -689,6 +741,7 @@ async function main() {
   await executeReleasePublication({
     dryRun,
     finalize: () => runReleaseFinalization({ vueBeta }),
+    publishOfflineKit,
     publishCommands: createPublishCommands({
       archives,
       dryRun,

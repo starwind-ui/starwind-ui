@@ -194,6 +194,32 @@ describe("search command", () => {
     });
   });
 
+  it("searches core components only when the offline kit runs the CLI", async () => {
+    vi.stubEnv("STARWIND_OFFLINE_STORE", "/offline-kit/store");
+    try {
+      await search("card");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(mockSearchProBlocks).not.toHaveBeenCalled();
+    expect(getLogOutput(mockLog.info)).toContain("starwind add card");
+  });
+
+  it("reports that a Pro-only search needs a network connection offline", async () => {
+    vi.stubEnv("STARWIND_OFFLINE_STORE", "/offline-kit/store");
+    try {
+      await expect(search("pricing", { category: "pricing" })).rejects.toThrow(
+        "process.exit called",
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(mockSearchProBlocks).not.toHaveBeenCalled();
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("Starwind Pro search needs a network connection"),
+    );
+  });
+
   it("filters core components by query", async () => {
     await search("card");
     expect(mockLoadRegistry).toHaveBeenCalled();

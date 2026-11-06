@@ -126,6 +126,20 @@ describe("routine publication planning", () => {
     await expect(preparePublicationPlan(input)).rejects.toThrow(/release:finalize/);
   });
 
+  it("lets the release command finish a fully published saved plan", async () => {
+    const input = await fixture(names.slice(0, 3));
+    const first = await preparePublicationPlan(input);
+    names.forEach((name) => input.published.add(name));
+    expect(await preparePublicationPlan({ ...input, allowComplete: true })).toEqual({
+      ...first,
+      complete: true,
+    });
+    // A resumed command also runs again after a later step failed.
+    expect(
+      await preparePublicationPlan({ ...input, allowComplete: true, resumeFrom: "starwind" }),
+    ).toEqual({ ...first, complete: true });
+  });
+
   it("rejects changed snapshots and a saved subset outside the original order", async () => {
     const input = await fixture();
     await preparePublicationPlan(input);

@@ -1,417 +1,572 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-09-28T14:46:07.468Z",
+  "capturedAt": "2026-11-05T12:10:31.521Z",
   "catalog": {
-    "brotliBytes": 133577,
-    "gzipBytes": 162809,
-    "minifiedBytes": 486988
+    "brotliBytes": 148663,
+    "gzipBytes": 183051,
+    "initialChunks": [
+      {
+        "gzipBytes": 183051,
+        "name": "entry.js"
+      }
+    ],
+    "lazyChunks": [],
+    "minifiedBytes": 556295
   },
   "comparatorId": "base-react",
   "components": {
     "accordion": {
-      "brotliBytes": 8468,
-      "gzipBytes": 9418,
-      "minifiedBytes": 24610
+      "brotliBytes": 8967,
+      "gzipBytes": 9948,
+      "initialChunks": [
+        {
+          "gzipBytes": 9948,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 26339
     },
     "alert-dialog": {
-      "brotliBytes": 21196,
-      "gzipBytes": 23541,
-      "minifiedBytes": 68792
+      "brotliBytes": 21793,
+      "gzipBytes": 24247,
+      "initialChunks": [
+        {
+          "gzipBytes": 24247,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 71119
     },
     "avatar": {
-      "brotliBytes": 3982,
-      "gzipBytes": 4397,
-      "minifiedBytes": 11163
+      "brotliBytes": 4080,
+      "gzipBytes": 4510,
+      "initialChunks": [
+        {
+          "gzipBytes": 4510,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 11448
     },
     "button": {
-      "brotliBytes": 2957,
-      "gzipBytes": 3239,
-      "minifiedBytes": 7848
+      "brotliBytes": 2978,
+      "gzipBytes": 3254,
+      "initialChunks": [
+        {
+          "gzipBytes": 3254,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 7872
     },
     "checkbox": {
-      "brotliBytes": 7364,
-      "gzipBytes": 8142,
-      "minifiedBytes": 20179
+      "brotliBytes": 7884,
+      "gzipBytes": 8700,
+      "initialChunks": [
+        {
+          "gzipBytes": 8700,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 21761
     },
     "checkbox-group": {
-      "brotliBytes": 4027,
-      "gzipBytes": 4395,
-      "minifiedBytes": 10575
+      "brotliBytes": 4052,
+      "gzipBytes": 4409,
+      "initialChunks": [
+        {
+          "gzipBytes": 4409,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 10702
     },
     "collapsible": {
-      "brotliBytes": 6767,
-      "gzipBytes": 7475,
-      "minifiedBytes": 19259
+      "brotliBytes": 7164,
+      "gzipBytes": 7911,
+      "initialChunks": [
+        {
+          "gzipBytes": 7911,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 20654
     },
     "combobox": {
-      "brotliBytes": 45385,
-      "gzipBytes": 51431,
-      "minifiedBytes": 145565
+      "brotliBytes": 46862,
+      "gzipBytes": 53265,
+      "initialChunks": [
+        {
+          "gzipBytes": 53265,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 150342
     },
     "context-menu": {
-      "brotliBytes": 46072,
-      "gzipBytes": 53196,
-      "minifiedBytes": 154417
+      "brotliBytes": 55274,
+      "gzipBytes": 63439,
+      "initialChunks": [
+        {
+          "gzipBytes": 63439,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 187653
     },
     "dialog": {
-      "brotliBytes": 21251,
-      "gzipBytes": 23623,
-      "minifiedBytes": 68754
+      "brotliBytes": 21849,
+      "gzipBytes": 24350,
+      "initialChunks": [
+        {
+          "gzipBytes": 24350,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 71051
     },
     "drawer": {
-      "brotliBytes": 34012,
-      "gzipBytes": 38264,
-      "minifiedBytes": 110362
+      "brotliBytes": 34952,
+      "gzipBytes": 39302,
+      "initialChunks": [
+        {
+          "gzipBytes": 39302,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 113454
     },
     "field": {
-      "brotliBytes": 8719,
-      "gzipBytes": 9623,
-      "minifiedBytes": 25347
+      "brotliBytes": 9255,
+      "gzipBytes": 10243,
+      "initialChunks": [
+        {
+          "gzipBytes": 10243,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 27606
     },
     "input": {
-      "brotliBytes": 8791,
-      "gzipBytes": 9656,
-      "minifiedBytes": 25485
+      "brotliBytes": 9020,
+      "gzipBytes": 9920,
+      "initialChunks": [
+        {
+          "gzipBytes": 9920,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 26249
     },
     "input-otp": {
-      "brotliBytes": 8010,
-      "gzipBytes": 8813,
-      "minifiedBytes": 22077
+      "brotliBytes": 8865,
+      "gzipBytes": 9827,
+      "initialChunks": [
+        {
+          "gzipBytes": 9827,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 24543
     },
     "menu": {
-      "brotliBytes": 45501,
-      "gzipBytes": 52400,
-      "minifiedBytes": 151619
+      "brotliBytes": 54562,
+      "gzipBytes": 62771,
+      "initialChunks": [
+        {
+          "gzipBytes": 62771,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 185357
     },
     "navigation-menu": {
-      "brotliBytes": 34090,
-      "gzipBytes": 38590,
-      "minifiedBytes": 109199
+      "brotliBytes": 34983,
+      "gzipBytes": 39644,
+      "initialChunks": [
+        {
+          "gzipBytes": 39644,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 112041
     },
     "popover": {
-      "brotliBytes": 36289,
-      "gzipBytes": 41265,
-      "minifiedBytes": 118383
+      "brotliBytes": 37201,
+      "gzipBytes": 41979,
+      "initialChunks": [
+        {
+          "gzipBytes": 41979,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 121416
     },
     "preview-card": {
-      "brotliBytes": 29643,
-      "gzipBytes": 33392,
-      "minifiedBytes": 94922
+      "brotliBytes": 30248,
+      "gzipBytes": 33875,
+      "initialChunks": [
+        {
+          "gzipBytes": 33875,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 96956
     },
     "progress": {
-      "brotliBytes": 3013,
-      "gzipBytes": 3363,
-      "minifiedBytes": 8076
+      "brotliBytes": 3170,
+      "gzipBytes": 3555,
+      "initialChunks": [
+        {
+          "gzipBytes": 3555,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 8960
     },
     "radio": {
-      "brotliBytes": 7017,
-      "gzipBytes": 7777,
-      "minifiedBytes": 19303
+      "brotliBytes": 7509,
+      "gzipBytes": 8348,
+      "initialChunks": [
+        {
+          "gzipBytes": 8348,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 20832
     },
     "radio-group": {
-      "brotliBytes": 6827,
-      "gzipBytes": 7589,
-      "minifiedBytes": 19543
+      "brotliBytes": 6890,
+      "gzipBytes": 7635,
+      "initialChunks": [
+        {
+          "gzipBytes": 7635,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 19752
     },
     "scroll-area": {
-      "brotliBytes": 7194,
-      "gzipBytes": 8010,
-      "minifiedBytes": 20412
+      "brotliBytes": 7630,
+      "gzipBytes": 8532,
+      "initialChunks": [
+        {
+          "gzipBytes": 8532,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 22524
     },
     "select": {
-      "brotliBytes": 39796,
-      "gzipBytes": 44889,
-      "minifiedBytes": 126394
+      "brotliBytes": 41157,
+      "gzipBytes": 46473,
+      "initialChunks": [
+        {
+          "gzipBytes": 46473,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 131018
     },
     "slider": {
-      "brotliBytes": 13012,
-      "gzipBytes": 14426,
-      "minifiedBytes": 36254
+      "brotliBytes": 13750,
+      "gzipBytes": 15312,
+      "initialChunks": [
+        {
+          "gzipBytes": 15312,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 39479
     },
     "switch": {
-      "brotliBytes": 5516,
-      "gzipBytes": 6108,
-      "minifiedBytes": 14781
+      "brotliBytes": 5872,
+      "gzipBytes": 6509,
+      "initialChunks": [
+        {
+          "gzipBytes": 6509,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 15997
     },
     "tabs": {
-      "brotliBytes": 12264,
-      "gzipBytes": 13537,
-      "minifiedBytes": 36071
+      "brotliBytes": 12662,
+      "gzipBytes": 13974,
+      "initialChunks": [
+        {
+          "gzipBytes": 13974,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 37482
     },
     "toast": {
-      "brotliBytes": 23854,
-      "gzipBytes": 26530,
-      "minifiedBytes": 72881
+      "brotliBytes": 24379,
+      "gzipBytes": 27020,
+      "initialChunks": [
+        {
+          "gzipBytes": 27020,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 74385
     },
     "toggle": {
-      "brotliBytes": 4436,
-      "gzipBytes": 4880,
-      "minifiedBytes": 11833
+      "brotliBytes": 4519,
+      "gzipBytes": 4964,
+      "initialChunks": [
+        {
+          "gzipBytes": 4964,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 12073
     },
     "toggle-group": {
-      "brotliBytes": 5531,
-      "gzipBytes": 6161,
-      "minifiedBytes": 15943
+      "brotliBytes": 5577,
+      "gzipBytes": 6203,
+      "initialChunks": [
+        {
+          "gzipBytes": 6203,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 16074
     },
     "tooltip": {
-      "brotliBytes": 30565,
-      "gzipBytes": 34473,
-      "minifiedBytes": 98295
+      "brotliBytes": 31019,
+      "gzipBytes": 34745,
+      "initialChunks": [
+        {
+          "gzipBytes": 34745,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 99843
     }
   },
   "environment": {
-    "esbuild": "0.27.7",
-    "node": "24.20.0"
+    "esbuild": "0.28.2",
+    "node": "24.22.1"
   },
   "fixtureRevision": 2,
   "measurementEntries": {
     "catalog": [
       {
-        "exports": [
-          "*"
-        ],
+        "exports": ["*"],
         "specifier": "@base-ui/react"
       }
     ],
     "components": {
       "accordion": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/accordion"
         }
       ],
       "alert-dialog": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/alert-dialog"
         }
       ],
       "avatar": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/avatar"
         }
       ],
       "button": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/button"
         }
       ],
       "checkbox": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/checkbox"
         }
       ],
       "checkbox-group": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/checkbox-group"
         }
       ],
       "collapsible": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/collapsible"
         }
       ],
       "combobox": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/combobox"
         }
       ],
       "context-menu": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/context-menu"
         }
       ],
       "dialog": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/dialog"
         }
       ],
       "drawer": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/drawer"
         }
       ],
       "field": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/field"
         }
       ],
       "input": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/input"
         }
       ],
       "input-otp": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/otp-field"
         }
       ],
       "menu": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/menu"
         }
       ],
       "navigation-menu": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/navigation-menu"
         }
       ],
       "popover": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/popover"
         }
       ],
       "preview-card": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/preview-card"
         }
       ],
       "progress": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/progress"
         }
       ],
       "radio": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/radio"
         }
       ],
       "radio-group": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/radio-group"
         }
       ],
       "scroll-area": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/scroll-area"
         }
       ],
       "select": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/select"
         }
       ],
       "slider": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/slider"
         }
       ],
       "switch": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/switch"
         }
       ],
       "tabs": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/tabs"
         }
       ],
       "toast": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/toast"
         }
       ],
       "toggle": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/toggle"
         }
       ],
       "toggle-group": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/toggle-group"
         }
       ],
       "tooltip": [
         {
-          "exports": [
-            "*"
-          ],
+          "exports": ["*"],
           "specifier": "@base-ui/react/tooltip"
         }
       ]
@@ -483,19 +638,33 @@
   },
   "overlaps": {
     "react-exact-three-way": {
-      "brotliBytes": 125504,
-      "gzipBytes": 152085,
-      "minifiedBytes": 457779
+      "brotliBytes": 139980,
+      "gzipBytes": 171354,
+      "initialChunks": [
+        {
+          "gzipBytes": 171354,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 521308
     },
     "react-base-react-overlap": {
-      "brotliBytes": 125534,
-      "gzipBytes": 152161,
-      "minifiedBytes": 458295
+      "brotliBytes": 140324,
+      "gzipBytes": 171558,
+      "initialChunks": [
+        {
+          "gzipBytes": 171558,
+          "name": "entry.js"
+        }
+      ],
+      "lazyChunks": [],
+      "minifiedBytes": 522179
     }
   },
   "package": {
-    "integrity": "sha512-P0/1sxo6SBVZOklKMIedvTWqw2s2IQzi9x5bIVsXu980cuSOD4NeuRSs+/L7LZQfDkZP/uRZyGPyfFl/B1oH+Q==",
+    "integrity": "sha512-S8CSYosASBKtpL8SWUfS78rFElfLijiCgA7oHOK22jCJ95FULsYyKwBNFOgudt0RA+/7yNc7F81bOvQnRgbBiQ==",
     "name": "@base-ui/react",
-    "version": "1.8.0"
+    "version": "1.9.0"
   }
 }
