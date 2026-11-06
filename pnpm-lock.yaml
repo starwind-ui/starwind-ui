@@ -458,7 +458,7 @@ importers:
   packages/svelte:
     dependencies:
       '@starwind-ui/runtime':
-        specifier: 1.4.0
+        specifier: 1.5.0
         version: link:../runtime
     devDependencies:
       '@sveltejs/package':
@@ -489,7 +489,7 @@ importers:
   packages/vue:
     dependencies:
       '@starwind-ui/runtime':
-        specifier: 1.4.0
+        specifier: 1.5.0
         version: link:../runtime
     devDependencies:
       '@types/node':
