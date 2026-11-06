@@ -21,6 +21,39 @@ export const DEFAULT_OUTPUT_DIRECTORY = path.join(
   "node_modules/.cache/starwind-offline/kit",
 );
 
+// The release writes this file before the first kit upload and removes it after the last one. A
+// later run must publish the same build, even when npm does not list the uploaded packages yet.
+export const PUBLICATION_MARKER = "publication-started.json";
+
+/**
+ * Reads the unfinished kit publication in a build directory. Returns undefined when there is none.
+ * A marker without a readable version blocks every kit version.
+ */
+export async function readPublicationMarker(outputDirectory) {
+  let source;
+  try {
+    source = await readFile(path.join(outputDirectory, PUBLICATION_MARKER), "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") return undefined;
+    throw error;
+  }
+  try {
+    const { kitVersion } = JSON.parse(source);
+    return { kitVersion: typeof kitVersion === "string" ? kitVersion : undefined };
+  } catch {
+    return { kitVersion: undefined };
+  }
+}
+
+/** A build replaces its directory, which would delete the files an unfinished release needs. */
+export async function assertNoUnfinishedPublication(outputDirectory) {
+  const marker = await readPublicationMarker(outputDirectory);
+  if (!marker) return;
+  throw new Error(
+    `${outputDirectory} holds an unfinished offline kit publication${marker.kitVersion ? ` of ${marker.kitVersion}` : ""}. Run the publication command again to finish it, or build somewhere else with --output.`,
+  );
+}
+
 export function selectPlatforms(value) {
   if (!value || value === "all") return [...SUPPORTED_PLATFORMS];
   if (value === "current") {
@@ -99,8 +132,10 @@ async function main() {
       "local-archive": { type: "string", multiple: true },
     },
   });
+  const outputDirectory = values.output ? path.resolve(values.output) : DEFAULT_OUTPUT_DIRECTORY;
+  await assertNoUnfinishedPublication(outputDirectory);
   await buildOfflineKit({
-    outputDirectory: values.output ? path.resolve(values.output) : DEFAULT_OUTPUT_DIRECTORY,
+    outputDirectory,
     platforms: selectPlatforms(values.platforms),
     localArchives: (values["local-archive"] ?? []).map((file) => path.resolve(file)),
   });
