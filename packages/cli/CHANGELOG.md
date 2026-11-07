@@ -1,5 +1,154 @@
 # starwind
 
+## 3.6.0
+
+### Minor Changes
+
+- `starwind init --framework svelte` in an Astro project now installs and configures `@astrojs/svelte` for you. Before, it stopped and asked you to set up the integration first. The CLI picks the `@astrojs/svelte` version that matches Astro 5, 6, or 7, and adds `svelte` if the project does not have it.
+
+  On Astro 5, `@astrojs/svelte` needs TypeScript in the `^5` range. If your project uses another TypeScript version, `init` stops and tells you to change TypeScript, upgrade Astro, or configure the integration yourself.
+
+  `init` no longer requires `src/layouts/Layout.astro` or `src/layouts/BaseLayout.astro` for Svelte in Astro. Without a named layout, it connects the stylesheet through a page, or tells you which import to add by hand.
+
+- `starwind init` now works on a new SvelteKit 3 project, and on a recent SvelteKit 2 project with no `svelte.config` file. It reads `files.routes` from the `sveltekit()` plugin options. Older SvelteKit 2 projects with a config file keep working.
+
+  `starwind init` now adds the theme script to Vite Vue and Vite Svelte projects, as it does for Vite React. A saved dark theme applies before the first paint.
+
+  `starwind init` now adds the `@` alias to the Vite config and `tsconfig` of a Vite Svelte project.
+
+- The CLI now works without a network connection through the new `@starwind-ui/offline` kit, in
+  beta. Install the kit once while you are online with
+  `npm install --global @starwind-ui/offline@beta`. Then run
+  `starwind-offline init` or `starwind-offline add <component>` with the same options as `starwind`.
+  The kit installs packages through your project's own package manager: npm, pnpm, or Yarn 2 or
+  later.
+  Your lockfile keeps the public npm registry URLs, so later online installs work as usual.
+
+  Install your project's own dependencies, such as Astro, before you work offline. Starwind Pro and
+  remote registries still need a network connection.
+
+### Patch Changes
+
+- Fixed Astro components ignoring an attribute that you set when the component already sets the same attribute. For example, your `role` or `aria-label` lost to the component's default, because the browser keeps the first copy of a repeated attribute. Your value now wins, as it does in React.
+
+  Styled Combobox Input Group in Astro now renders `data-slot="combobox-input-group"`, as it does in React.
+
+- Astro Primitive Dialog, Alert Dialog, and Drawer `Trigger` and `Close` parts now accept `asChild`, so you can use your own button inside them. Before, a button child inside one of these parts made a control that did nothing.
+
+  Astro `TooltipTrigger` with plain text and `asChild` now renders a button, so keyboard users can focus it. The Styled `TooltipTrigger` uses `asChild` by default, so this also fixes plain text in the Styled component.
+
+- Astro `Textarea` and `InputGroupTextarea` now show `defaultValue` and `value` as the text in the field. Before, the field was empty. A form reset puts this text back.
+- Fixed `starwind init` for Vue on Astro 5 and Astro 6. The CLI installed the newest `@astrojs/vue`, which needs Astro 7, and npm stopped with an `ERESOLVE` error. The CLI now picks the `@astrojs/vue` version that matches your Astro major.
+
+  Fixed `starwind init` on Astro 5 projects with a low declared range such as `"astro": "^5.0.0"` and a current Astro installed. The CLI wrote `experimental.svg`, and `astro build` then failed. The CLI now reads the installed Astro version. This also applies to Svelte on Astro.
+
+- Combobox now closes when focus leaves it. Before, the list stayed open after you typed and pressed Tab or Shift+Tab. The list stays open while focus moves between the input, the trigger, and the clear button, and it closes when focus moves past them. Pressing the trigger, the clear button, or another part of the input group keeps focus in the input in every browser, including Safari.
+
+  This close uses the new `focus-out` reason. Call `cancel()` in `onOpenChange` to keep the list open. Focus then goes back to the input. Text you typed but did not pick goes back to the previous text, as it does after Escape or a press outside the list.
+
+  When your code controls the Combobox `value` and keeps it without calling `cancel()`, the input text now shows the label of the value you kept. Before, the input kept the label of the item that was pressed. The text change that restores the input uses the `imperative-action` reason.
+
+- Fixed a Combobox that has more than one `ComboboxClear`. Before, only the first one worked. Pressing another one did not clear the selection or the text, and inside the input group it opened the list. Now every `ComboboxClear` clears the selection and the text, and each one shows the disabled state.
+- Fixed a Combobox that has a `ComboboxTrigger` you added yourself. Styled `ComboboxInput` already renders its own trigger, and only that first trigger worked. Pressing your trigger a second time did not close the list, and outside the input group your trigger did nothing. Now every trigger opens and closes the list, and each one shows the open and disabled state.
+- React `Select` and `Combobox` inside a `Field` with a `name` now send their value when the form submits. Before, the form often left the value out, because React removed the name from the hidden input each time it rendered. React `Input OTP` gets the same fix.
+
+  React `Select` and `Combobox` inside a `Field` now call `onValueChange`, `onOpenChange`, and `onInputValueChange`, and they follow a parent that holds `value`. Before, these callbacks did not run. The parent kept the old value while the control showed the new one, and the form sent the old one.
+
+  Astro `Checkbox` and `Switch` inside a `Field` now clear when the form resets. Before, they stayed checked.
+
+  A `name` on the control now wins over the `name` on its `Field`, in all frameworks. For example, `<Field name="fruit"><Select name="own">` submits `own`. Before, the `Field` name usually won. If you set different names on a `Field` and its control, and your server reads the `Field` name, remove the `name` from the control.
+
+- Fixed a Navigation Menu panel that flashed and closed when you moved the mouse to a trigger and clicked it. Hover opened the panel first, and the click then closed it. Now a click that starts within 500 ms after hover opened the panel keeps it open. A second click, a later click, the keyboard, and touch still close it.
+- React `Select` and `Combobox` now show the selected label when your own component renders the items. Before, a `Select` pick went back to the placeholder, and a `Combobox` value from a parent or from `defaultValue` showed no text.
+
+  To find a label, a closed list renders its items once, hidden, and removes them before the browser paints. Effects in your item component run during that render. This happens once for each value, and only when the root's own `children` do not show the item. If your items load later, a value has no label until someone opens the list and picks an item.
+
+  React `Combobox` also keeps `data-value` on the root when a parent changes the value while the list is closed. Before, the attribute went away after the first use of the Combobox.
+
+- Combobox now sends its events in the same order in Astro, React, Vue, and Svelte. Pressing an item gives the value change, then the input text change with the `item-press` reason, then the open change. Clearing gives the value change, then the input text change to `""` with the `clear` reason. You can cancel the input text change in every framework.
+
+  When you cancel a typed change, the input text goes back to the previous text. This now also works in Astro.
+
+  When your code controls `inputValue`, typing in the middle of the text now keeps the caret where it is. Before, the caret moved to the end after each key. Text that your code does not accept still goes back to your value.
+
+  React `Combobox` now opens on the first focus of its input, as it does in Astro, Vue, and Svelte.
+
+  Styled `ComboboxClear` with `asChild` now uses your child as the button. Before, the default icon made a button inside a button in Vue and React, and a hydration mismatch in Nuxt. Add your own icon to the child if you want one.
+
+  A form reset now keeps a value that your code controls, and the input text follows that value.
+
+  If you use Runtime directly and your items render only when the list opens, pass the new `resolveValueText` option to `createCombobox`. It returns the label for a selected value whose item is not rendered.
+
+- Fixed triggers on links and spans that stayed disabled when a framework wrote `disabled="false"`. This affected Tooltip, Hover Card, Popover, Menu, Context Menu, Toggle, Toggle Group, and Theme Toggle. On a native form control, any `disabled` attribute still disables it.
+- Popover, Navigation Menu, and non-modal Dialog no longer take focus back when you have moved on. Before, if you moved to another control while the popup was closing, focus jumped back to the old trigger when the closing animation ended. This also closed a Combobox that you had just opened. Focus now goes back to the trigger only when it is still inside the popup or no control has focus.
+
+  Popover also keeps focus on a field that you press outside the popup. Before, focus went to the Popover trigger when the closing animation ended.
+
+  Pressing the trigger of an open Select in Safari now closes the list. Before, the list closed and opened again.
+
+- Fixed Input writing an unchanged value back into the field. In some browsers this moved the caret or ended an IME composition.
+
+  Vue Input now keeps the caret during a normal edit, puts the old text back when the parent refuses a change, and follows a `v-model` that starts as `undefined`.
+
+- Fixed a blank Select trigger in Astro and Vue when `Select.Value` has its own content and no `placeholder`. For example, `<Select.Value>Astro</Select.Value>` now shows "Astro" until a value is chosen, and shows it again when the value clears. React already did this. This also works when the Select starts with a value and clears later.
+
+  Fixed React Select showing the placeholder after a parent refused a pick. The trigger now keeps the label of the parent value, as it does in Vue and Svelte.
+
+- Svelte components now follow a parent value the same way React and Vue do. If you pass a defined value when the component mounts, your state owns that value while the component stays mounted. This applies to `open`, `value`, `checked`, and the other model props on Accordion, Alert Dialog, Checkbox, Checkbox Group, Collapsible, Color Picker, Combobox, Context Menu, Dialog, Drawer, Field, Input, Input OTP, Menu, Navigation Menu, Popover, Hover Card, Radio, Radio Group, Select, Sidebar, Slider, Switch, Tabs, Toggle, Toggle Group, and Tooltip. A form reset keeps your value. If you pass `undefined` at mount, the component keeps its own state, and a form reset returns it to its default.
+
+  If you pass a one-way prop such as `open={open}` and expect the component to change on its own, use `bind:open={open}` or update your state in the change callback. `bind:` keeps working with no change.
+
+  Checkbox Group, Toggle Group, Accordion, and Input now follow `push()` and `splice()` on a `$state` array, through `bind:value` or `value`.
+
+  If a prop starts as `undefined` and gets a value later, the component keeps its own state and applies the new value when it arrives. Edits made after that stay until your state sets another value. Before, each Input edit went back to the supplied value, and a Combobox or Sidebar went back to that value when another model on the same component changed, such as `bind:open`.
+
+  A Combobox that gets its props through a spread, such as `{...props}`, now shows the new label when your state changes `value`. Before, the text field kept the old label while the form sent the new value.
+
+  Fixed a bound Slider that reset to 0. The first render of Navigation Menu now follows the initial value.
+
+- Fixed several Svelte components so that they match React and Vue:
+  - Tooltip now opens on a native link or span.
+  - `Combobox.Root` now renders option attributes such as `data-modal` and `data-filter-mode`, and its first render shows the open state.
+  - The Primitive `Combobox.Clear` no longer adds an English `aria-label`. Set your own label.
+  - Textarea and Input Group Textarea now keep your value after a form reset. Before, the field went blank and `bind:value` received `""`. A Textarea with `defaultValue` still resets to that default.
+  - Color Picker with `formats` and no `format` now starts on the first listed format. Before, it added a HEX option to the list.
+  - The Scroll Area viewport no longer adds `!important` to its `overflow` style, so your own `style="overflow: hidden !important"` on the viewport now applies.
+  - `Menu.Item` and `Menu.LinkItem` render `data-close-on-click` only when you change the default. If your CSS or tests read `data-close-on-click="true"` on a default `Menu.Item`, update them.
+
+- Removed Svelte APIs that no other framework has:
+  - Select no longer exports `show`, `close`, or `updatePosition`.
+  - The `children` snippet on Alert Dialog, Collapsible, Context Menu, Dialog, Drawer, Menu, Popover, Hover Card, and Tooltip roots no longer receives `open`.
+  - Primitive `Sidebar.MenuButton` no longer takes `href`.
+  - Navigation Menu `Popup` no longer takes `side` or `align`.
+
+  If you use one of these, update your code. Use `bind:open` or `bind:value` in place of the Select methods and the snippet `open` argument. Use the `child` snippet to render a link from `Sidebar.MenuButton`. Styled `SidebarMenuButton` keeps `href`. Move `side` and `align` to Navigation Menu `Positioner`.
+
+- Svelte Tooltip, Popover, and Navigation Menu triggers now accept a link in `child`. These triggers already worked on a link, but they warned in development, type checks rejected the link, and `ref` did not run. Now the warning is gone and `ref` receives the link. Use the new `TriggerChildPayload` type for your snippet. Snippets typed with `ButtonChildPayload` keep working.
+
+  Svelte `Menu.Trigger`, `Select.Trigger`, `Combobox.Trigger`, and `Combobox.Clear` still need a button in `child`. With another element, these controls do nothing. They now log a console error in production as well as in development, so you can find the cause.
+
+- Removed the undocumented `open`, `close`, `updatePosition`, `getValue`, and `setValue` methods from the template refs of the Vue Menu, Context Menu, Select, Combobox, and Navigation Menu roots. These refs now expose only `element`.
+
+  If you call one of these methods through a template ref, use `v-model` on the root instead. For example, put `v-model:open="open"` on the root and change `menu.value.open()` to `open.value = true`.
+
+- Vue `Slider.Thumb` now accepts `inputRef`, as it does in React and Svelte. Pass a function to receive the hidden range input.
+- Fixed several Vue components so that they match React:
+  - A Boolean prop that you leave out of a Styled component no longer becomes `false`. The default of the underlying component applies instead.
+  - `v-model` now works on Textarea, Native Select, and Input Group Textarea. It waits until IME composition ends, as native `v-model` does.
+  - Textarea and Input Group Textarea keep a `v-model` value after a form reset, and they accept `default-value`. With both `v-model` and `default-value`, a reset puts the default into the field and the model, as in Svelte.
+  - `Close` parts and `Select.Trigger` with `asChild` now accept a component as the child.
+  - Styled `ComboboxTrigger` and `ComboboxClear` with `asChild` accept a child.
+  - Styled `TooltipTrigger` with text now renders a working trigger.
+  - Tooltip now opens on a native link or span. Collapsible link triggers no longer get `disabled="false"`.
+  - Color Picker with `formats` and no `format` now starts on the first listed format. Before, the format selector was blank.
+  - Navigation Menu now moves keyboard focus into its content when you use `v-model`.
+  - Styled `SelectTrigger` renders `data-size`, and `FieldSeparator` renders `data-content`.
+  - `SidebarMenuButton` with `tooltip` keeps `data-slot="sidebar-menu-button"`.
+  - `CarouselNext`, `CarouselPrevious`, and `SidebarRail` keep your `aria-label`.
+  - `Combobox.Icon` now has `aria-hidden`.
+
+- Fixed Tooltip and Hover Card in Vue and Svelte staying hidden when their popup is replaced while open, for example when the `key` on the content changes.
+
 ## 3.5.0
 
 ### Minor Changes
