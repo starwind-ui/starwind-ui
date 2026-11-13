@@ -11713,13 +11713,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-align",
             value: "inline-end",
-            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pr-1.5",
+            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pe-1.5",
             source: "variant-class",
           },
           {
             attribute: "data-align",
             value: "inline-start",
-            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:pl-1.5",
+            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:ps-1.5",
             source: "variant-class",
           },
           {
@@ -11796,13 +11796,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "input-group-control",
-            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pr-1.5",
+            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pe-1.5",
             source: "variant-class",
           },
           {
             attribute: "data-slot",
             value: "input-group-control",
-            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:pl-1.5",
+            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:ps-1.5",
             source: "variant-class",
           },
         ],

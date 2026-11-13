@@ -66,7 +66,7 @@ export const sheetStyledContract: StyledAdapterContract = {
     },
     sheetCloseButton: {
       base: [
-        "absolute top-4 right-4 rounded-xs [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+        "absolute top-4 end-4 rounded-xs [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
         "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
       ],
     },

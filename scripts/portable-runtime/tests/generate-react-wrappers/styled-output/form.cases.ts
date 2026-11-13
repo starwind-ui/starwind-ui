@@ -140,7 +140,7 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(selectVariants).not.toContain("side: {");
   expect(selectVariants).not.toContain("align: {");
   expect(selectVariants).not.toContain("compoundVariants:");
-  expect(selectVariants).toContain("rounded-sm py-1.5 pr-8 pl-2 outline-none");
+  expect(selectVariants).toContain("rounded-sm py-1.5 pe-8 ps-2 outline-none");
   expect(selectVariants).toContain('md: "h-11 px-3 text-base"');
   expect(selectIndex).toContain("SelectTrigger");
   expect(selectIndex).toContain("SelectItemIndicator");
@@ -397,7 +397,7 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(inputGroupVariants).toContain(
     "has-[[data-slot][data-error-visible]]:border-error has-[[data-slot][data-error-visible]]:ring-error/40 has-[[data-slot][data-error-visible]]:ring-3",
   );
-  expect(inputGroupVariants).toContain("order-last pr-2.5 has-[>button]:mr-[-0.3rem]");
+  expect(inputGroupVariants).toContain("order-last pe-2.5 has-[>button]:me-[-0.3rem]");
   expect(inputGroupVariants).toContain('"icon-sm": "size-8 p-0 has-[>svg]:p-0"');
   expect(inputGroupIndex).toContain("Root: InputGroup");
   expect(inputGroupIndex).toContain("Button: InputGroupButton");

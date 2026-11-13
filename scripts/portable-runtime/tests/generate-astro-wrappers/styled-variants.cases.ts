@@ -150,7 +150,7 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
       "data-error-visible:border-error data-error-visible:focus-visible:ring-error/40 data-error-visible:focus-visible:ring-3",
     );
     expect(nativeSelectVariants).toContain("text-foreground pointer-events-none absolute");
-    expect(nativeSelectVariants).toContain('md: "right-3 size-4"');
+    expect(nativeSelectVariants).toContain('md: "end-3 size-4"');
   });
 
   it("keeps Pagination sizing owned by its links", () => {
