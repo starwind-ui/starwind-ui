@@ -8,14 +8,14 @@ export const card = tv({
     "*:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
   ],
   variants: {
+    size: {
+      default: "gap-6 py-6",
+      sm: "gap-4 py-4 text-sm",
+    },
     variant: {
       default: "",
       media: "gap-0 overflow-hidden py-0",
       flat: "ring-0 border border-border/60 shadow-none",
-    },
-    size: {
-      default: "gap-6 py-6",
-      sm: "gap-4 py-4 text-sm",
     },
   },
   defaultVariants: {
