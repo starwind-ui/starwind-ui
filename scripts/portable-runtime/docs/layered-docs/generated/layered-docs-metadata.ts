@@ -8410,13 +8410,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "aspect-ratio",
-            selector: "has-[>[data-slot=aspect-ratio]]:pt-0",
+            selector: "has-[>[data-slot=aspect-ratio]:first-child]:pt-0",
             source: "variant-class",
           },
           {
             attribute: "data-slot",
             value: "aspect-ratio-wrapper",
-            selector: "has-[>[data-slot=aspect-ratio-wrapper]]:pt-0",
+            selector: "has-[>[data-slot=aspect-ratio-wrapper]:first-child]:pt-0",
             source: "variant-class",
           },
           {

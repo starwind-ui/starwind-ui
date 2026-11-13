@@ -420,8 +420,8 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(card).toContain("<div");
   expect(card).toContain("VariantProps<typeof card>");
   expect(card).toContain("ref?: React.Ref<HTMLDivElement>;");
-  expect(card).toContain('const { size = "md", ref, className, children, ...rest } = props;');
-  expect(card).toContain("card({ size, class: className })");
+  expect(card).toContain('const { variant, size = "md", ref, className, children, ...rest } = props;');
+  expect(card).toContain("card({ variant, size, class: className })");
   expect(card).toContain("data-size={size}");
   expect(card).toContain("ref={ref}");
   expect(card).toContain('data-slot="card"');

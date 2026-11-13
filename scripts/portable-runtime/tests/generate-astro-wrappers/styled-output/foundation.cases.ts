@@ -403,7 +403,7 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(card).toContain("<div");
   expect(card).toContain("VariantProps<typeof card>");
   expect(card).toContain('size = "md"');
-  expect(card).toContain("card({ size, class: className })");
+  expect(card).toContain("card({ variant, size, class: className })");
   expect(card).toContain("data-size={size}");
   expect(card).toContain('data-slot="card"');
   expect(cardHeader).toContain("<div");
