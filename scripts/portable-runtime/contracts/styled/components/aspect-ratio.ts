@@ -81,7 +81,7 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
         {
           frameworks: ["vue"],
           name: "wrapperStyle",
-          value: { type: "raw", code: "{ aspectRatio: `" + aspectRatioValue() + "` }" },
+          value: { type: "raw", code: "{ aspectRatio: `${ratio}` }" },
         },
       ],
       render: [
