@@ -58,6 +58,10 @@ export const alertDialogActionAsChild = tv({
       outline:
         "dark:border-input focus-visible:ring-outline/50 bg-background dark:bg-input/30 focus-visible:border-outline hover:bg-muted dark:hover:bg-input/50 hover:text-foreground border shadow-xs",
       ghost: "hover:bg-muted hover:text-foreground focus-visible:ring-outline/50",
+      "outline-inverse":
+        "border border-white/30 bg-transparent text-white shadow-xs hover:border-white/50 hover:bg-white/15 hover:text-white focus-visible:border-white focus-visible:ring-white/40",
+      "ghost-inverse":
+        "bg-transparent text-white hover:bg-white/15 hover:text-white focus-visible:ring-white/40",
       info: "bg-info text-info-foreground hover:bg-info/90 focus-visible:ring-info/50",
       success:
         "bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success/50",
@@ -103,6 +107,10 @@ export const alertDialogCancelAsChild = tv({
       outline:
         "dark:border-input focus-visible:ring-outline/50 bg-background dark:bg-input/30 focus-visible:border-outline hover:bg-muted dark:hover:bg-input/50 hover:text-foreground border shadow-xs",
       ghost: "hover:bg-muted hover:text-foreground focus-visible:ring-outline/50",
+      "outline-inverse":
+        "border border-white/30 bg-transparent text-white shadow-xs hover:border-white/50 hover:bg-white/15 hover:text-white focus-visible:border-white focus-visible:ring-white/40",
+      "ghost-inverse":
+        "bg-transparent text-white hover:bg-white/15 hover:text-white focus-visible:ring-white/40",
       info: "bg-info text-info-foreground hover:bg-info/90 focus-visible:ring-info/50",
       success:
         "bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success/50",
