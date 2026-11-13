@@ -35,7 +35,7 @@ const body = render(App).body; assert.equal(body, render(App).body); console.log
     "build-dynamic.mjs": BROWSER_BUILD,
   });
   const { body, voidBody } = JSON.parse(await consumer.run("dynamic-ssr.mjs", { loader: true }));
-  assert.match(body, /padding-bottom: 100%/);
+  assert.match(body, /aspect-ratio: 1(;|")/);
   assert.match(body, /data-slot="aspect-ratio-wrapper"/);
   assert.match(body, /role="list"/);
   assert.match(body, /role="separator"/);
@@ -164,11 +164,11 @@ for (const { name, tag, slot } of parts) {
 assert(Object.values(app.snapshot().calls).every((value) => value === 1) && Object.keys(app.snapshot().calls).length === 12, "native handlers must fire once on each owner");
 const container = part("AspectRatio").parentElement;
 assert(container.dataset.slot === "aspect-ratio-wrapper" && container.children.length === 1 && !container.hasAttribute("title") && !container.hasAttribute("data-dynamic-part"), "AspectRatio wrapper took native props");
-assert(container.style.paddingBottom === "100%" && !part("AspectRatio").style.paddingBottom && !container.style.color, "ratio default and style ownership");
+assert(container.style.aspectRatio === "1" && !part("AspectRatio").style.aspectRatio && !container.style.color, "ratio default and style ownership");
 assert(part("Badge").classList.contains("bg-primary") && !part("Badge").classList.contains("cursor-pointer"), "legacy Badge variant");
 assert(part("ItemGroup").getAttribute("role") === "list" && part("ItemSeparator").getAttribute("role") === "separator" && part("ItemSeparator").getAttribute("aria-orientation") === "horizontal", "Item Separator composition");
 app.changeProps(); await settle();
-assert(container.style.paddingBottom === "56.25%", "ratio numeric change");
+assert(Math.abs(Number(container.style.aspectRatio) - 16 / 9) < 1e-6, "ratio numeric change");
 assert(part("Badge").classList.contains("bg-success/10") && !part("Badge").classList.contains("bg-primary"), "tone must select composed soft default");
 assert(part("Item").classList.contains("gap-4") && part("ItemMedia").dataset.variant === "image" && part("ItemSeparator").getAttribute("aria-orientation") === "vertical", "Item reactive variants and separator props");
 app.appearanceOnly(); await settle();
@@ -189,7 +189,7 @@ for (const { name } of branchOwners) dispatch(before[parts.findIndex((entry) => 
 assert(changed.every((name) => app.snapshot().calls[name] === 2), "branch handlers or retired owner handler");
 app.restoreBranches(); await settle(); const restored = elements();
 assert(changed.every((name) => part(name).tagName === "DIV"), "branch restoration");
-assert(container.style.paddingBottom === "100%", "ratio undefined restores default");
+assert(container.style.aspectRatio === "1", "ratio undefined restores default");
 assert(!part("Badge").classList.contains("cursor-pointer"), "empty href uses div branch");
 for (const name of changed) dispatch(part(name));
 for (const { name } of branchOwners) dispatch(branched[parts.findIndex((entry) => entry.name === name)]);
