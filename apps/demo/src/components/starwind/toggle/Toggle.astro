@@ -16,14 +16,22 @@ type Props = VariantProps<typeof toggle> &
     syncGroup?: string;
   };
 
-const { class: className, defaultPressed = false, syncGroup, variant, size, ...rest } = Astro.props;
+const {
+  class: className,
+  defaultPressed = false,
+  syncGroup,
+  variant,
+  size,
+  shape,
+  ...rest
+} = Astro.props;
 
 const dataState = defaultPressed ? "on" : "off";
 ---
 
 <button
   type="button"
-  class={toggle({ variant, size, class: `starwind-toggle ${className || ""}` })}
+  class={toggle({ variant, size, shape, class: `starwind-toggle ${className || ""}` })}
   data-state={dataState}
   data-sync-group={syncGroup}
   aria-pressed={defaultPressed}

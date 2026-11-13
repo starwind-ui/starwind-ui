@@ -28,6 +28,7 @@ function Toggle(props: ToggleProps) {
   const {
     variant,
     size,
+    shape,
     defaultPressed,
     disabled = false,
     nativeButton,
@@ -44,7 +45,7 @@ function Toggle(props: ToggleProps) {
 
   return (
     <TogglePrimitive.Root
-      className={toggle({ variant, size, class: className })}
+      className={toggle({ variant, size, shape, class: className })}
       defaultPressed={defaultPressed}
       disabled={disabled}
       nativeButton={nativeButton}

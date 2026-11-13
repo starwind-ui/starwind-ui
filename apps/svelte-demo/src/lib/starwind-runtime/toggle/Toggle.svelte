@@ -14,6 +14,7 @@
   let {
     "variant": variant,
     "size": size,
+    "shape": shape,
     "defaultPressed": defaultPressed,
     "disabled": disabled = false,
     "nativeButton": nativeButton,
@@ -32,7 +33,7 @@
 </script>
 
 <ToggleRoot
-  class={toggle({ "variant": variant, "size": size, "class": cx(className) })}
+  class={toggle({ "variant": variant, "size": size, "shape": shape, "class": cx(className) })}
   {...({ ...rest, nativeButton, ref, value, defaultPressed, disabled, onPressedChange, syncGroup } as PrimitiveProps)}
   data-slot={dataSlot}
   bind:pressed={() => commandPressed, (next) => { pressed = next; }}

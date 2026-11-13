@@ -47,10 +47,12 @@ type ToggleDeclaredProps = {
   class?: ClassValue;
   variant?: ToggleProps["variant"];
   size?: ToggleProps["size"];
+  shape?: ToggleProps["shape"];
 } & /* @vue-ignore */ Omit<ToggleProps, "data-slot">;
 const {
   variant,
   size,
+  shape,
   defaultPressed = undefined,
   disabled = false,
   nativeButton = undefined,
@@ -102,7 +104,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
 <template>
   <TogglePrimitive.ToggleRoot
     :ref="setElement"
-    :class="toggle({ variant, size, class: className })"
+    :class="toggle({ variant, size, shape, class: className })"
     :default-pressed="defaultPressed"
     :disabled="disabled"
     :native-button="nativeButton"

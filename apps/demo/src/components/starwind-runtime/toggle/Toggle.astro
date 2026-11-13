@@ -21,6 +21,7 @@ type Props = Omit<
 const {
   variant,
   size,
+  shape,
   defaultPressed,
   disabled = false,
   nativeButton,
@@ -34,7 +35,7 @@ const {
 ---
 
 <TogglePrimitive.Root
-  class={toggle({ variant, size, class: className })}
+  class={toggle({ variant, size, shape, class: className })}
   defaultPressed={defaultPressed}
   disabled={disabled}
   nativeButton={nativeButton}

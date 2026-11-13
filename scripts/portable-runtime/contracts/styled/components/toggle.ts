@@ -9,9 +9,9 @@ export const toggleStyledContract: StyledAdapterContract = {
   variants: {
     toggle: {
       base: [
-        "inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap",
+        "inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap",
         "disabled:pointer-events-none disabled:opacity-50",
-        "data-[state=on]:bg-muted data-[state=on]:text-foreground",
+        "data-[state=on]:bg-muted data-[state=on]:text-foreground data-[state=on]:hover:bg-muted data-[state=on]:hover:text-foreground",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "focus-visible:border-outline focus-visible:ring-outline/50 focus-visible:ring-3",
         "transition-colors outline-none",
@@ -19,19 +19,25 @@ export const toggleStyledContract: StyledAdapterContract = {
       ],
       variants: {
         variant: {
-          default: "hover:bg-muted hover:text-foreground bg-transparent",
+          default:
+            "data-[state=off]:hover:bg-muted data-[state=off]:hover:text-foreground bg-transparent",
           outline:
-            "border-input hover:bg-muted hover:text-foreground border bg-transparent shadow-xs",
+          "border-input data-[state=off]:hover:bg-muted data-[state=off]:hover:text-foreground border bg-transparent shadow-xs",
         },
         size: {
           sm: "h-9 min-w-9 px-2 text-sm",
           md: "h-11 min-w-11 px-2.5 text-base",
           lg: "h-12 min-w-12 px-3 text-lg",
         },
+        shape: {
+          default: "rounded-md",
+          pill: "rounded-full px-4",
+        },
       },
       defaultVariants: {
         variant: "default",
         size: "md",
+        shape: "default",
       },
     },
   },
@@ -74,6 +80,7 @@ export const toggleStyledContract: StyledAdapterContract = {
         props: [
           { name: "variant" },
           { name: "size" },
+          { name: "shape" },
           { name: "defaultPressed" },
           { name: "disabled", defaultValue: "false" },
           { name: "nativeButton" },
@@ -98,7 +105,7 @@ export const toggleStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "toggle",
-                args: { variant: "variant", size: "size", class: "className" },
+                args: { variant: "variant", size: "size", shape: "shape", class: "className" },
               },
             },
             { name: "defaultPressed", value: { type: "variable", name: "defaultPressed" } },
