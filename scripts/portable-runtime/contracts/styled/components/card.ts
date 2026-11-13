@@ -26,7 +26,7 @@ export const cardStyledContract: StyledAdapterContract = {
       base: [
         "bg-card text-card-foreground group/card ring-border flex flex-col gap-(--card-spacing) rounded-xl py-(--card-spacing) ring-1",
         "has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0",
-        "has-[>[data-slot=aspect-ratio]]:pt-0 has-[>[data-slot=aspect-ratio-wrapper]]:pt-0",
+        "has-[>[data-slot=aspect-ratio]:first-child]:pt-0 has-[>[data-slot=aspect-ratio-wrapper]:first-child]:pt-0",
         "*:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
       ],
       variants: {
