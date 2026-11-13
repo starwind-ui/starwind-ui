@@ -10,7 +10,7 @@ export const inputStyledContract: StyledAdapterContract = {
     input: {
       base: [
         "border-input dark:bg-input/30 text-foreground w-full rounded-md border bg-transparent shadow-xs",
-        "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3 focus-visible:transition-none",
+        "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3 focus-visible:transition-none",
         "file:text-foreground file:my-auto file:mr-4 file:h-full file:border-0 file:bg-transparent file:text-sm file:font-medium",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-error-visible:border-error data-error-visible:focus-visible:ring-error/40",
