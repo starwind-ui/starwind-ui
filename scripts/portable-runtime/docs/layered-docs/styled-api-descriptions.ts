@@ -127,6 +127,7 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   revalidationTiming:
     "Replaces validationTiming after an owning Form submission attempt with semantic change, blur, submit, or manual validation; defaults to change.",
   setApi: "Receives the initialized carousel API.",
+  shape: "Selects the component's corner shape.",
   showClear: "Shows the generated clear-value control.",
   showEyeDropper: "Shows the EyeDropper action when the browser supports it.",
   showIcon: "Shows the component's generated icon.",

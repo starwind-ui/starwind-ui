@@ -74,14 +74,14 @@ export async function assertAstroStyledStateOutput(outputRoot: string): Promise<
   expect(toggleComponent).toContain("value?: string;");
   expect(toggleComponent).toContain("nativeButton={nativeButton}");
   expect(toggleComponent).toContain("syncGroup={syncGroup}");
-  expect(toggleComponent).toContain("toggle({ variant, size, class: className })");
+  expect(toggleComponent).toContain("toggle({ variant, size, shape, class: className })");
   expect(toggleComponent).toContain('"data-slot": dataSlot = "toggle"');
   expect(toggleComponent).toContain("data-slot={dataSlot}");
   expect(toggleComponent).not.toContain("@starwind-ui/runtime");
   expect(toggleVariants).not.toContain("starwind-runtime-toggle");
   expect(toggleVariants).toContain("inline-flex items-center");
   expect(toggleVariants).toContain("data-[state=on]:bg-muted");
-  expect(toggleVariants).toContain("hover:bg-muted hover:text-foreground");
+  expect(toggleVariants).toContain("data-[state=off]:hover:bg-muted");
   expect(toggleVariants).toContain("h-11 min-w-11 px-2.5 text-base");
   expect(toggleIndex).toContain("export default Toggle;");
   expect(toggleIndex).not.toContain("Root: Toggle");

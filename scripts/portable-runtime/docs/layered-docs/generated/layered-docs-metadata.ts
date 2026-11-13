@@ -16245,7 +16245,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "toggle",
             exportName: "ToggleVariants",
-            baseClassCount: 21,
+            baseClassCount: 22,
             options: [
               {
                 name: "variant",
@@ -16264,6 +16264,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 ],
                 defaultValue: "md",
               },
+              {
+                name: "shape",
+                values: [
+                  "default",
+                  "pill",
+                ],
+                defaultValue: "default",
+              },
             ],
             compoundVariantCount: 0,
           },
@@ -16274,8 +16282,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         stateSelectors: [
           {
             attribute: "data-state",
+            value: "off",
+            selector: "data-[state=off]:hover:bg-muted",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-state",
+            value: "off",
+            selector: "data-[state=off]:hover:text-foreground",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-state",
             value: "on",
             selector: "data-[state=on]:bg-muted",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-state",
+            value: "on",
+            selector: "data-[state=on]:hover:bg-muted",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-state",
+            value: "on",
+            selector: "data-[state=on]:hover:text-foreground",
             source: "variant-class",
           },
           {
@@ -37180,6 +37212,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "catalog",
                 },
                 {
+                  name: "shape",
+                  type: "\"default\" | \"pill\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"default\"",
+                  values: [
+                    "default",
+                    "pill",
+                  ],
+                  description: "Selects the component's corner shape.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "size",
                   type: "\"sm\" | \"md\" | \"lg\"",
                   required: false,
@@ -37270,6 +37315,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   },
                   displayType: "(pressed: boolean, details: TogglePressedChangeDetails) => void",
                   description: "Runs when the pressed state changes.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "shape",
+                  type: "\"default\" | \"pill\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"default\"",
+                  values: [
+                    "default",
+                    "pill",
+                  ],
+                  description: "Selects the component's corner shape.",
                   descriptionSource: "catalog",
                 },
                 {
