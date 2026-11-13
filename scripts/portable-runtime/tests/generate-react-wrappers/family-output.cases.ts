@@ -396,7 +396,7 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(aspectRatio)).toContain(compactCode("ratio = 1"));
     expect(compactCode(aspectRatio)).toContain(compactCode('as: Tag = "div"'));
     expect(compactCode(aspectRatio)).toContain(
-      compactCode("{ paddingBottom: `${100 / ratio}%` } as React.CSSProperties"),
+      compactCode("{ aspectRatio: `${ratio}` } as React.CSSProperties"),
     );
     expect(compactCode(aspectRatio)).toContain(compactCode("aspectRatioWrapper()"));
     expect(compactCode(aspectRatio)).toContain(compactCode("style={wrapperStyle}"));

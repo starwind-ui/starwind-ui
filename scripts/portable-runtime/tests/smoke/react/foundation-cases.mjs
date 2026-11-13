@@ -514,7 +514,7 @@ export async function verifyReactFoundationCases({ page }) {
     aspectRatioState.wrapperCount !== 2 ||
     aspectRatioState.wrapperSlot !== "aspect-ratio-wrapper" ||
     aspectRatioState.wrapperClass?.includes("relative w-full") !== true ||
-    aspectRatioState.wrapperStyle?.includes("56.25%") !== true ||
+    aspectRatioState.wrapperStyle?.includes("aspect-ratio") !== true ||
     aspectRatioState.innerSlot !== "aspect-ratio" ||
     aspectRatioState.innerClass?.includes("absolute") !== true ||
     aspectRatioState.innerClass?.includes("inset-0") !== true ||
@@ -523,7 +523,7 @@ export async function verifyReactFoundationCases({ page }) {
     aspectRatioState.imageAlt !== "Layered abstract landscape" ||
     aspectRatioState.imageClass?.includes("object-cover") !== true ||
     aspectRatioState.squareTagName !== "ARTICLE" ||
-    aspectRatioState.squareWrapperStyle?.includes("100%") !== true ||
+    aspectRatioState.squareWrapperStyle?.includes("aspect-ratio: 1") !== true ||
     aspectRatioState.squareClass?.includes("justify-end") !== true ||
     aspectRatioState.squareText?.includes("The default ratio renders as a square.") !== true
   ) {

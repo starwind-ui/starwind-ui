@@ -1,4 +1,4 @@
-import { aspectRatioPercentage } from "../../../shared-recipes/passive/aspect-ratio.js";
+import { aspectRatioValue } from "../../../shared-recipes/passive/aspect-ratio.js";
 import { nativeValuePolicy } from "../../../shared-recipes/passive/native-values.js";
 import type {
   StyledOutputComponent,
@@ -259,7 +259,7 @@ export function specializeSvelteStyledNative(
   if (group.component === "aspect-ratio") {
     component.variables.push({
       name: "wrapperStyle",
-      value: { type: "raw", code: "`padding-bottom: " + aspectRatioPercentage() + "`" },
+      value: { type: "raw", code: "`aspect-ratio: " + aspectRatioValue() + "`" },
     });
   }
   if (root.type === "element") root.selfClosing = false;

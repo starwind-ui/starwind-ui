@@ -12,7 +12,7 @@ export type AspectRatioProps = React.ComponentPropsWithoutRef<"div"> &
 function AspectRatio(props: AspectRatioProps) {
   const { ratio = 1, as: Tag = "div", ref, className, children, ...rest } = props;
 
-  const wrapperStyle = { paddingBottom: `${100 / ratio}%` } as React.CSSProperties;
+  const wrapperStyle = { aspectRatio: `${ratio}` } as React.CSSProperties;
 
   return (
     <div className={aspectRatioWrapper()} style={wrapperStyle} data-slot="aspect-ratio-wrapper">

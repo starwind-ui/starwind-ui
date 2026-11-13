@@ -21,7 +21,7 @@ defineSlots<{
   default?: () => unknown;
 }>();
 const attrs = useAttrs();
-const wrapperStyle = computed(() => ({ paddingBottom: `${100 / ratio}%` }));
+const wrapperStyle = computed(() => ({ aspectRatio: `${ratio}` }));
 </script>
 
 <template>

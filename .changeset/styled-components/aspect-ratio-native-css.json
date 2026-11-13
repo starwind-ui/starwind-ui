@@ -1,0 +1,6 @@
+{
+  "components": {
+    "aspect-ratio": "patch"
+  },
+  "impact": "source"
+}
