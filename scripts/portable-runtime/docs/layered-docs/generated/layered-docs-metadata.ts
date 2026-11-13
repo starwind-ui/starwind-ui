@@ -8315,8 +8315,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "card",
             exportName: "CardVariants",
-            baseClassCount: 14,
+            baseClassCount: 16,
             options: [
+              {
+                name: "variant",
+                values: [
+                  "default",
+                  "media",
+                  "flat",
+                ],
+                defaultValue: "default",
+              },
               {
                 name: "size",
                 values: [
@@ -8396,6 +8405,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-size",
             value: "sm",
             selector: "group-data-[size=sm]/card:text-sm",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "aspect-ratio",
+            selector: "has-[>[data-slot=aspect-ratio]]:pt-0",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "aspect-ratio-wrapper",
+            selector: "has-[>[data-slot=aspect-ratio-wrapper]]:pt-0",
             source: "variant-class",
           },
           {
@@ -19547,6 +19568,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Selects the component's visual size.",
                   descriptionSource: "catalog",
                 },
+                {
+                  name: "variant",
+                  type: "\"default\" | \"media\" | \"flat\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"default\"",
+                  values: [
+                    "default",
+                    "media",
+                    "flat",
+                  ],
+                  description: "Selects the component's visual variant.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -19655,6 +19690,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "md",
                   ],
                   description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "variant",
+                  type: "\"default\" | \"media\" | \"flat\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"default\"",
+                  values: [
+                    "default",
+                    "media",
+                    "flat",
+                  ],
+                  description: "Selects the component's visual variant.",
                   descriptionSource: "catalog",
                 },
               ],

@@ -8,12 +8,12 @@ export type CardProps = React.ComponentPropsWithoutRef<"div"> &
   };
 
 function Card(props: CardProps) {
-  const { size = "md", ref, className, children, ...rest } = props;
+  const { variant, size = "md", ref, className, children, ...rest } = props;
 
   return (
     <div
       data-sw-card
-      className={card({ size, class: className })}
+      className={card({ variant, size, class: className })}
       {...rest}
       data-size={size}
       ref={ref}

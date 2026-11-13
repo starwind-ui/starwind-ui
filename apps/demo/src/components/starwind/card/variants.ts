@@ -4,15 +4,22 @@ export const card = tv({
   base: [
     "bg-card text-card-foreground group/card ring-border flex flex-col rounded-xl ring-1",
     "has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0",
+    "has-[>[data-slot=aspect-ratio]]:pt-0 has-[>[data-slot=aspect-ratio-wrapper]]:pt-0",
     "*:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
   ],
   variants: {
+    variant: {
+      default: "",
+      media: "gap-0 overflow-hidden py-0",
+      flat: "ring-0 border border-border/60 shadow-none",
+    },
     size: {
       default: "gap-6 py-6",
       sm: "gap-4 py-4 text-sm",
     },
   },
   defaultVariants: {
+    variant: "default",
     size: "default",
   },
 });

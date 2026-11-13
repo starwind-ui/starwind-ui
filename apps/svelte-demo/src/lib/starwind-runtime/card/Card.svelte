@@ -9,6 +9,7 @@
 
 <script lang="ts">
   let {
+    "variant": variant,
     "size": size = "md",
     "class": className,
     ref = $bindable(),
@@ -19,7 +20,7 @@
 
 <div
   data-sw-card
-  class={card({ "size": size, "class": cx(className) })}
+  class={card({ "variant": variant, "size": size, "class": cx(className) })}
   {...rest}
   data-size={size}
   data-slot={"card"}

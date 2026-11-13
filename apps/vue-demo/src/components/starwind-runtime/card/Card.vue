@@ -11,9 +11,10 @@ export type CardProps = Omit<HTMLAttributes, "class"> &
   };
 type CardDeclaredProps = {
   class?: ClassValue;
+  variant?: CardProps["variant"];
   size?: CardProps["size"];
 } & /* @vue-ignore */ CardProps;
-const { size = "md", class: className } = defineProps<CardDeclaredProps>();
+const { variant, size = "md", class: className } = defineProps<CardDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
@@ -25,7 +26,7 @@ defineExpose({ element });
   <div
     ref="element"
     data-sw-card
-    :class="card({ size, class: className })"
+    :class="card({ variant, size, class: className })"
     v-bind="$attrs"
     :data-size="size"
     data-slot="card"
