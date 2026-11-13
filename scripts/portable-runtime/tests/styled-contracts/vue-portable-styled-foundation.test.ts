@@ -91,7 +91,7 @@ describe("Vue portable foundational Styled contracts", () => {
     expect(aspectRatio?.variables).toContainEqual({
       frameworks: ["vue"],
       name: "wrapperStyle",
-      value: { type: "raw", code: "{ paddingBottom: `${100 / ratio}%` }" },
+      value: { type: "raw", code: "{ aspectRatio: `${ratio}` }" },
     });
     expect(aspectRatio?.render[0]).toMatchObject({
       children: [{ tag: "Tag", tagBinding: true, type: "element" }],
