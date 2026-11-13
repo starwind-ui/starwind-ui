@@ -8,7 +8,7 @@ export const skeletonStyledContract: StyledAdapterContract = {
   variantCollectionName: "SkeletonVariants",
   variants: {
     skeleton: {
-      base: "bg-muted animate-pulse rounded-md",
+      base: "bg-muted animate-pulse rounded-md motion-reduce:animate-none",
     },
   },
   components: [

@@ -14963,7 +14963,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "skeleton",
             exportName: "SkeletonVariants",
-            baseClassCount: 3,
+            baseClassCount: 4,
             options: [],
             compoundVariantCount: 0,
           },
