@@ -25,7 +25,7 @@ export const dialogContent = tv({
 export const dialogCloseButton = tv({
   base: [
     "starwind-dialog-close text-muted-foreground",
-    "absolute top-5.5 right-5.5 rounded-sm [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+    "absolute top-5.5 end-5.5 rounded-sm [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
     "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
   ],
 });
@@ -34,7 +34,7 @@ export const dialogDescription = tv({ base: "text-muted-foreground" });
 
 export const dialogFooter = tv({ base: "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end" });
 
-export const dialogHeader = tv({ base: "flex flex-col space-y-2 text-center sm:text-left" });
+export const dialogHeader = tv({ base: "flex flex-col space-y-2 text-center sm:text-start" });
 
 export const dialogTitle = tv({
   base: "font-heading text-xl leading-none font-semibold tracking-tight",

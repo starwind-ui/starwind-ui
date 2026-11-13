@@ -44,7 +44,7 @@ export const switchStyledContract: StyledAdapterContract = {
       defaultVariants: { size: "md" },
     },
     switchLabel: {
-      base: "text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      base: "text-foreground ms-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       variants: { size: { sm: "text-sm", md: "text-base", lg: "text-lg" } },
       defaultVariants: { size: "md" },
     },

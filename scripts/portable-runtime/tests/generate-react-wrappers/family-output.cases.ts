@@ -192,7 +192,7 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(nativeSelectVariants)).toContain(
       compactCode("text-foreground pointer-events-none absolute"),
     );
-    expect(compactCode(nativeSelectVariants)).toContain(compactCode('md: "right-3 size-4"'));
+    expect(compactCode(nativeSelectVariants)).toContain(compactCode('md: "end-3 size-4"'));
   });
 
   it("generates Pagination styled React wrappers", async () => {

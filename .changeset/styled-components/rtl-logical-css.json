@@ -1,0 +1,14 @@
+{
+  "components": {
+    "accordion": "patch",
+    "dialog": "patch",
+    "input": "patch",
+    "input-group": "patch",
+    "native-select": "patch",
+    "select": "patch",
+    "sheet": "patch",
+    "switch": "patch",
+    "table": "patch"
+  },
+  "impact": "source"
+}

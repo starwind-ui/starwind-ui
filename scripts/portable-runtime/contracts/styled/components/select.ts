@@ -55,19 +55,19 @@ export const selectStyledContract: StyledAdapterContract = {
     selectGroup: { base: "" },
     selectItem: {
       base: [
-        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 outline-none select-none",
+        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pe-8 ps-2 outline-none select-none",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "group/select-item [&>svg]:size-4 [&>svg]:shrink-0",
       ],
       variants: {
-        inset: { true: "pl-8" },
+        inset: { true: "ps-8" },
         disabled: { true: "pointer-events-none opacity-50" },
       },
       defaultVariants: { inset: false, disabled: false },
     },
     selectItemIndicator: {
       base: [
-        "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+        "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
         "data-[state=checked]:opacity-100 data-visible:opacity-100 data-hidden:opacity-0",
         "[&>svg]:size-4 [&>svg]:shrink-0",
       ],
@@ -96,7 +96,7 @@ export const selectStyledContract: StyledAdapterContract = {
       },
       defaultVariants: { size: "md" },
     },
-    selectValue: { base: "pointer-events-none flex flex-1 text-left" },
+    selectValue: { base: "pointer-events-none flex flex-1 text-start" },
   },
   components: [
     {

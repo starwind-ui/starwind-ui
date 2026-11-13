@@ -13,9 +13,9 @@ export const selectContent = tv({
       top: "slide-in-from-bottom-2 slide-out-to-bottom-2 bottom-full",
     },
     align: {
-      start: "slide-in-from-left-1 slide-out-to-left-1 left-0",
+      start: "slide-in-from-left-1 slide-out-to-left-1 start-0",
       center: "left-1/2 -translate-x-1/2",
-      end: "slide-in-from-right-1 slide-out-to-right-1 right-0",
+      end: "slide-in-from-right-1 slide-out-to-right-1 end-0",
     },
     size: {
       sm: "text-sm [&_[data-slot=select-label]]:text-xs",
@@ -32,7 +32,7 @@ export const selectContentInner = tv({
 
 export const selectItem = tv({
   base: [
-    "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 outline-none select-none",
+    "relative flex w-full cursor-default items-center rounded-sm py-1.5 pe-8 ps-2 outline-none select-none",
     "data-active:bg-accent data-active:text-accent-foreground",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
     "not-aria-selected:[&_svg]:hidden aria-selected:[&_svg]:flex",
@@ -40,10 +40,10 @@ export const selectItem = tv({
 });
 
 export const selectItemIcon = tv({
-  base: "absolute right-2 flex size-4 items-center justify-center",
+  base: "absolute end-2 flex size-4 items-center justify-center",
 });
 
-export const selectLabel = tv({ base: "text-muted-foreground py-1.5 pr-8 pl-2" });
+export const selectLabel = tv({ base: "text-muted-foreground py-1.5 pe-8 ps-2" });
 
 export const selectSearch = tv({
   base: [

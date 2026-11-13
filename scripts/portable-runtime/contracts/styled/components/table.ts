@@ -98,13 +98,13 @@ export const tableStyledContract: StyledAdapterContract = {
       base: "text-muted-foreground mt-4 text-sm",
     },
     tableCell: {
-      base: "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      base: "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pe-0 [&>[role=checkbox]]:translate-y-[2px]",
     },
     tableFoot: {
       base: "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
     },
     tableHead: {
-      base: "text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      base: "text-muted-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pe-0 [&>[role=checkbox]]:translate-y-[2px]",
     },
     tableHeader: {
       base: "[&_tr]:border-b",

@@ -32,13 +32,13 @@ export const selectGroup = tv({
 
 export const selectItem = tv({
   base: [
-    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 outline-none select-none",
+    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 ps-2 pe-8 outline-none select-none",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
     "group/select-item [&>svg]:size-4 [&>svg]:shrink-0",
   ],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
     disabled: {
       true: "pointer-events-none opacity-50",
@@ -52,7 +52,7 @@ export const selectItem = tv({
 
 export const selectItemIndicator = tv({
   base: [
-    "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+    "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
     "data-hidden:opacity-0 data-visible:opacity-100 data-[state=checked]:opacity-100",
     "[&>svg]:size-4 [&>svg]:shrink-0",
   ],
@@ -99,5 +99,5 @@ export const selectTrigger = tv({
 });
 
 export const selectValue = tv({
-  base: "pointer-events-none flex flex-1 text-left",
+  base: "pointer-events-none flex flex-1 text-start",
 });

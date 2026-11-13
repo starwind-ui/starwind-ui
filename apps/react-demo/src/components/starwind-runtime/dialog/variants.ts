@@ -26,7 +26,7 @@ export const dialogContent = tv({
 export const dialogCloseButton = tv({
   base: [
     "text-muted-foreground",
-    "absolute top-5.5 right-5.5 rounded-sm [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+    "absolute end-5.5 top-5.5 rounded-sm [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
     "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
   ],
 });
@@ -40,7 +40,7 @@ export const dialogFooter = tv({
 });
 
 export const dialogHeader = tv({
-  base: "flex flex-col space-y-2 text-center sm:text-left",
+  base: "flex flex-col space-y-2 text-center sm:text-start",
 });
 
 export const dialogTitle = tv({

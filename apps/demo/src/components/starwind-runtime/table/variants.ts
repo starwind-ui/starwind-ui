@@ -13,7 +13,7 @@ export const tableCaption = tv({
 });
 
 export const tableCell = tv({
-  base: "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+  base: "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pe-0 [&>[role=checkbox]]:translate-y-[2px]",
 });
 
 export const tableFoot = tv({
@@ -21,7 +21,7 @@ export const tableFoot = tv({
 });
 
 export const tableHead = tv({
-  base: "text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+  base: "text-muted-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pe-0 [&>[role=checkbox]]:translate-y-[2px]",
 });
 
 export const tableHeader = tv({
