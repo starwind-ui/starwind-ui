@@ -42,11 +42,9 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
     private storageKey: string;
     private valueToTriggerMap: Map<string, HTMLButtonElement>;
     private valueToContentMap: Map<string, HTMLElement>;
-    private parentHandler: TabsHandler | null = null;
 
-    constructor(tabs: HTMLElement, idx: number, parentHandler: TabsHandler | null = null) {
+    constructor(tabs: HTMLElement, idx: number) {
       this.tabs = tabs;
-      this.parentHandler = parentHandler;
       this.triggers = Array.from(
         tabs.querySelectorAll(":scope > [data-tabs-list] > [data-tabs-trigger]"),
       );
@@ -241,7 +239,7 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
           // Skip tabs that already have instances
           if (!tabInstances.has(nestedTab)) {
             const uniqueIdx = 1000 + nestedIdx;
-            const handler = new TabsHandler(nestedTab, uniqueIdx, this);
+            const handler = new TabsHandler(nestedTab, uniqueIdx);
             tabInstances.set(nestedTab, handler);
           }
         });

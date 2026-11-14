@@ -556,7 +556,7 @@
             },
             {
               "path": "src/components/starwind/skeleton/variants.ts",
-              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md\",\n});\n"
+              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md motion-reduce:animate-none\",\n});\n"
             }
           ],
           "componentDependencies": [],
@@ -578,7 +578,7 @@
             },
             {
               "path": "src/components/starwind/skeleton/variants.ts",
-              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md\",\n});\n"
+              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md motion-reduce:animate-none\",\n});\n"
             }
           ],
           "componentDependencies": [],
@@ -600,7 +600,7 @@
             },
             {
               "path": "src/components/starwind/skeleton/variants.ts",
-              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md\",\n});\n"
+              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md motion-reduce:animate-none\",\n});\n"
             }
           ],
           "componentDependencies": [],
@@ -622,7 +622,7 @@
             },
             {
               "path": "src/components/starwind/skeleton/variants.ts",
-              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md\",\n});\n"
+              "content": "import { tv } from \"tailwind-variants\";\n\nexport const skeleton = tv({\n  base: \"bg-muted animate-pulse rounded-md motion-reduce:animate-none\",\n});\n"
             }
           ],
           "componentDependencies": [],
