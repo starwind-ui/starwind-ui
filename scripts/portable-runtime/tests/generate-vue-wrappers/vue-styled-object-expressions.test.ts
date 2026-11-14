@@ -104,7 +104,7 @@ describe("generic Vue Styled object expressions", () => {
     const source = await readFile(path.join(outputRoot, "aspect-ratio", "AspectRatio.vue"), "utf8");
 
     expect(compactCode(source)).toContain(
-      compactCode("const wrapperStyle = computed(() => ({ paddingBottom: `${100 / ratio}%` }));"),
+      compactCode("const wrapperStyle = computed(() => ({ aspectRatio: `${ratio}` }));"),
     );
     await expectVueTypecheck(root, outputRoot);
   });

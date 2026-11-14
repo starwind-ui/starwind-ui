@@ -81,7 +81,7 @@ describe("Vue portable foundational Styled generation", () => {
       /error[\s\S]+warning[\s\S]+alert[\s\S]+status/,
     );
     await expect(read("aspect-ratio", "AspectRatio.vue")).resolves.toMatch(
-      /paddingBottom[\s\S]+<component/,
+      /aspectRatio[\s\S]+<component/,
     );
     await expect(read("badge", "Badge.vue")).resolves.toMatch(
       /attrs\.href[\s\S]+<component[\s\S]+badge\(/,

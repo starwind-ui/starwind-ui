@@ -1,4 +1,4 @@
-import { aspectRatioPercentage } from "../../../renderers/shared-recipes/passive/aspect-ratio.js";
+import { aspectRatioValue } from "../../../renderers/shared-recipes/passive/aspect-ratio.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const aspectRatioStyledContract: StyledAdapterContract = {
@@ -68,20 +68,20 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
         {
           frameworks: ["astro"],
           name: "wrapperStyle",
-          value: { type: "raw", code: "`padding-bottom: " + aspectRatioPercentage() + "`" },
+          value: { type: "raw", code: "`aspect-ratio: " + aspectRatioValue() + "`" },
         },
         {
           frameworks: ["react"],
           name: "wrapperStyle",
           value: {
             type: "raw",
-            code: "{ paddingBottom: `" + aspectRatioPercentage() + "` } as React.CSSProperties",
+            code: "{ aspectRatio: `" + aspectRatioValue() + "` } as React.CSSProperties",
           },
         },
         {
           frameworks: ["vue"],
           name: "wrapperStyle",
-          value: { type: "raw", code: "{ paddingBottom: `" + aspectRatioPercentage() + "` }" },
+          value: { type: "raw", code: "{ aspectRatio: `${ratio}` }" },
         },
       ],
       render: [

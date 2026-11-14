@@ -11,7 +11,7 @@ type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> &
 
 const { ratio = 1, as: Tag = "div", class: className, ...rest } = Astro.props;
 
-const wrapperStyle = `padding-bottom: ${100 / ratio}%`;
+const wrapperStyle = `aspect-ratio: ${ratio}`;
 ---
 
 <div class={aspectRatioWrapper()} style={wrapperStyle} data-slot="aspect-ratio-wrapper">

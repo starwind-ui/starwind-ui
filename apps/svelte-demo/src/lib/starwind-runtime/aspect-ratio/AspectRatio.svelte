@@ -17,7 +17,7 @@
     ...rest
   }: AspectRatioProps = $props();
 
-  let wrapperStyle = $derived(`padding-bottom: ${100 / ratio}%`);
+  let wrapperStyle = $derived(`aspect-ratio: ${ratio}`);
 
   let nativeIsVoid = $derived(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].includes(Tag));
 </script>

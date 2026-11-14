@@ -336,7 +336,7 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
     expect(aspectRatio).toContain("type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }>");
     expect(aspectRatio).toContain("ratio = 1");
     expect(aspectRatio).toContain('as: Tag = "div"');
-    expect(aspectRatio).toContain("`padding-bottom: ${100 / ratio}%`");
+    expect(aspectRatio).toContain("`aspect-ratio: ${ratio}`");
     expect(aspectRatio).toContain("aspectRatioWrapper()");
     expect(aspectRatio).toContain("style={wrapperStyle}");
     expect(aspectRatio).toContain('data-slot="aspect-ratio-wrapper"');
