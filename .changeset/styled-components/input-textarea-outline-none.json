@@ -1,0 +1,7 @@
+{
+  "components": {
+    "input": "patch",
+    "textarea": "patch"
+  },
+  "impact": "source"
+}

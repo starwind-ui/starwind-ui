@@ -11541,7 +11541,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "input",
             exportName: "InputVariants",
-            baseClassCount: 27,
+            baseClassCount: 28,
             options: [
               {
                 name: "size",
@@ -15547,7 +15547,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "textarea",
             exportName: "TextareaVariants",
-            baseClassCount: 26,
+            baseClassCount: 27,
             options: [
               {
                 name: "size",
