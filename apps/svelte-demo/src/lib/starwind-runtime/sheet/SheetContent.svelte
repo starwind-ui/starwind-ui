@@ -13,6 +13,7 @@
   let {
     "class": className,
     "side": side = "right",
+    "closeLabel": closeLabel = "Close sheet",
     "children": children,
     "backdrop": backdrop,
     "icon": icon,
@@ -38,6 +39,7 @@
     variant={"ghost"}
     size={"icon-sm"}
     class={sheetCloseButton({  })}
+    aria-label={closeLabel}
     data-slot={"sheet-close"}
     data-sw-drawer-close
   >
@@ -67,7 +69,7 @@
     <span
       class={"sr-only"}
     >
-      Close sheet
+      {closeLabel}
     </span>
   </Button>
   <div

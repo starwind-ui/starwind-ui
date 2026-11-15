@@ -19,6 +19,7 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   autoplay: "Starts media playback automatically when supported by the browser.",
   avoidCollisions: "Repositions floating content to keep it inside the collision boundary.",
   checked: "Controls whether the choice is checked.",
+  closeLabel: "Sets the accessible label for the built-in close button.",
   closeDelay: "Sets the delay in milliseconds before closing.",
   closeOnClick: "Closes the containing surface after the item is activated.",
   closeOnEscape: "Allows the surface to close when Escape is pressed.",

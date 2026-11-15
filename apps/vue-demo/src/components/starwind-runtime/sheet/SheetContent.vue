@@ -7,15 +7,21 @@ import { sheetBackdrop, sheetCloseButton, sheetContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
-export type SheetContentProps = Omit<HTMLAttributes, "class" | "side"> & {
+export type SheetContentProps = Omit<HTMLAttributes, "class" | "closeLabel" | "side"> & {
   side?: "top" | "right" | "bottom" | "left";
+  closeLabel?: string;
   class?: ClassValue;
 };
 type SheetContentDeclaredProps = {
   side?: "top" | "right" | "bottom" | "left";
+  closeLabel?: string;
   class?: ClassValue;
 } & /* @vue-ignore */ SheetContentProps;
-const { class: className, side = "right" } = defineProps<SheetContentDeclaredProps>();
+const {
+  class: className,
+  side = "right",
+  closeLabel = "Close sheet",
+} = defineProps<SheetContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
   backdrop?: () => unknown;
@@ -68,6 +74,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
       variant="ghost"
       size="icon-sm"
       :class="sheetCloseButton()"
+      :aria-label="closeLabel"
       data-slot="sheet-close"
       data-sw-drawer-close
     >
@@ -88,7 +95,9 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
           <path d="M6 6l12 12" />
         </svg>
       </slot>
-      <span class="sr-only"> Close sheet </span>
+      <span class="sr-only">
+        {{ closeLabel }}
+      </span>
     </Button>
     <div class="pointer-events-none fixed inset-0" data-floating-root data-slot="floating-root" />
   </SheetPrimitive.DrawerPopup>

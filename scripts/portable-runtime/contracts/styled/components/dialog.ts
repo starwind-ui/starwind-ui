@@ -193,9 +193,15 @@ export const dialogStyledContract: StyledAdapterContract = {
       exportName: "DialogContent",
       primitiveAliases: { dialog: "DialogPrimitive" },
       imports: [{ type: "default", importName: "X", source: "@tabler/icons/outline/x.svg" }],
-      props: { extends: [{ type: "htmlAttributes", element: "dialog" }] },
+      props: {
+        extends: [{ type: "htmlAttributes", element: "dialog" }],
+        fields: [{ name: "closeLabel", optional: true, type: "string" }],
+      },
       destructure: {
-        props: [{ name: "class", alias: "className" }],
+        props: [
+          { name: "class", alias: "className" },
+          { name: "closeLabel", defaultValue: '"Close dialog"' },
+        ],
         rest: "rest",
       },
       render: [
@@ -244,7 +250,7 @@ export const dialogStyledContract: StyledAdapterContract = {
                 { name: "variant", value: { type: "literal", value: "ghost" } },
                 { name: "size", value: { type: "literal", value: "icon-sm" } },
                 { name: "class", value: { type: "classVariant", variant: "dialogCloseButton" } },
-                { name: "aria-label", value: { type: "literal", value: "Close dialog" } },
+                { name: "aria-label", value: { type: "variable", name: "closeLabel" } },
                 { name: "data-slot", value: { type: "literal", value: "dialog-close" } },
                 { name: "data-sw-dialog-close" },
               ],
@@ -269,7 +275,7 @@ export const dialogStyledContract: StyledAdapterContract = {
                   type: "element",
                   tag: "span",
                   attrs: [{ name: "class", value: { type: "literal", value: "sr-only" } }],
-                  children: [{ type: "text", value: "Close" }],
+                  children: [{ type: "text", value: "{closeLabel}" }],
                 },
               ],
             },

@@ -13,6 +13,7 @@
 <script lang="ts">
   let {
     "class": className,
+    "closeLabel": closeLabel = "Close dialog",
     "children": children,
     "backdrop": backdrop,
     "icon": icon,
@@ -37,7 +38,7 @@
     variant={"ghost"}
     size={"icon-sm"}
     class={dialogCloseButton({  })}
-    aria-label={"Close dialog"}
+    aria-label={closeLabel}
     data-slot={"dialog-close"}
     data-sw-dialog-close
   >
@@ -67,7 +68,7 @@
     <span
       class={"sr-only"}
     >
-      Close
+      {closeLabel}
     </span>
   </Button>
 </DialogPopup>

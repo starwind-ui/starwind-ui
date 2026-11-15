@@ -8,12 +8,21 @@ import { sheetBackdrop, sheetCloseButton, sheetContent } from "./variants";
 
 export type SheetContentProps = React.ComponentPropsWithoutRef<"dialog"> & {
   side?: "top" | "right" | "bottom" | "left";
+  closeLabel?: string;
   backdrop?: React.ReactNode;
   icon?: React.ReactNode;
 };
 
 function SheetContent(props: SheetContentProps) {
-  const { className, side = "right", children, backdrop, icon, ...rest } = props;
+  const {
+    className,
+    side = "right",
+    closeLabel = "Close sheet",
+    children,
+    backdrop,
+    icon,
+    ...rest
+  } = props;
 
   return (
     <>
@@ -39,12 +48,13 @@ function SheetContent(props: SheetContentProps) {
           variant="ghost"
           size="icon-sm"
           className={sheetCloseButton()}
+          aria-label={closeLabel}
           data-slot="sheet-close"
           data-sw-drawer-close
         >
           {icon ?? <X className="size-5 transition-opacity" />}
 
-          <span className="sr-only">Close sheet</span>
+          <span className="sr-only">{closeLabel}</span>
         </Button>
 
         <div

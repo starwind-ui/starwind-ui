@@ -8,12 +8,13 @@ import { Button } from "../button";
 import { dialogBackdrop, dialogCloseButton, dialogContent } from "./variants";
 
 export type DialogContentProps = React.ComponentPropsWithoutRef<"dialog"> & {
+  closeLabel?: string;
   backdrop?: React.ReactNode;
   icon?: React.ReactNode;
 };
 
 function DialogContent(props: DialogContentProps) {
-  const { className, children, backdrop, icon, ...rest } = props;
+  const { className, closeLabel = "Close dialog", children, backdrop, icon, ...rest } = props;
 
   return (
     <>
@@ -38,13 +39,13 @@ function DialogContent(props: DialogContentProps) {
           variant="ghost"
           size="icon-sm"
           className={dialogCloseButton()}
-          aria-label="Close dialog"
+          aria-label={closeLabel}
           data-slot="dialog-close"
           data-sw-dialog-close
         >
           {icon ?? <X className="size-5 transition-opacity" />}
 
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{closeLabel}</span>
         </Button>
       </DialogPrimitive.Popup>
     </>

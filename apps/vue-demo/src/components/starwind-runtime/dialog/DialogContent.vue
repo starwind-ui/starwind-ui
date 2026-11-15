@@ -8,13 +8,15 @@ import { dialogBackdrop, dialogCloseButton, dialogContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
-export type DialogContentProps = Omit<HTMLAttributes, "class"> & {
+export type DialogContentProps = Omit<HTMLAttributes, "class" | "closeLabel"> & {
+  closeLabel?: string;
   class?: ClassValue;
 };
 type DialogContentDeclaredProps = {
+  closeLabel?: string;
   class?: ClassValue;
 } & /* @vue-ignore */ DialogContentProps;
-const { class: className } = defineProps<DialogContentDeclaredProps>();
+const { class: className, closeLabel = "Close dialog" } = defineProps<DialogContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
   backdrop?: () => unknown;
@@ -66,7 +68,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
       variant="ghost"
       size="icon-sm"
       :class="dialogCloseButton()"
-      aria-label="Close dialog"
+      :aria-label="closeLabel"
       data-slot="dialog-close"
       data-sw-dialog-close
     >
@@ -87,7 +89,9 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
           <path d="M6 6l12 12" />
         </svg>
       </slot>
-      <span class="sr-only"> Close </span>
+      <span class="sr-only">
+        {{ closeLabel }}
+      </span>
     </Button>
   </DialogPrimitive.DialogPopup>
 </template>

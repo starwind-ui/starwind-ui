@@ -212,12 +212,16 @@ export const sheetStyledContract: StyledAdapterContract = {
       imports: [{ type: "default", importName: "X", source: "@tabler/icons/outline/x.svg" }],
       props: {
         extends: [{ type: "htmlAttributes", element: "dialog" }],
-        fields: [{ name: "side", optional: true, type: '"top" | "right" | "bottom" | "left"' }],
+        fields: [
+          { name: "side", optional: true, type: '"top" | "right" | "bottom" | "left"' },
+          { name: "closeLabel", optional: true, type: "string" },
+        ],
       },
       destructure: {
         props: [
           { name: "class", alias: "className" },
           { name: "side", defaultValue: '"right"' },
+          { name: "closeLabel", defaultValue: '"Close sheet"' },
         ],
         rest: "rest",
       },
@@ -268,6 +272,7 @@ export const sheetStyledContract: StyledAdapterContract = {
                 { name: "variant", value: { type: "literal", value: "ghost" } },
                 { name: "size", value: { type: "literal", value: "icon-sm" } },
                 { name: "class", value: { type: "classVariant", variant: "sheetCloseButton" } },
+                { name: "aria-label", value: { type: "variable", name: "closeLabel" } },
                 { name: "data-slot", value: { type: "literal", value: "sheet-close" } },
                 { name: "data-sw-drawer-close" },
               ],
@@ -292,7 +297,7 @@ export const sheetStyledContract: StyledAdapterContract = {
                   type: "element",
                   tag: "span",
                   attrs: [{ name: "class", value: { type: "literal", value: "sr-only" } }],
-                  children: [{ type: "text", value: "Close sheet" }],
+                  children: [{ type: "text", value: "{closeLabel}" }],
                 },
               ],
             },

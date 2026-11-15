@@ -1,0 +1,7 @@
+{
+  "components": {
+    "dialog": "minor",
+    "sheet": "minor"
+  },
+  "impact": "source"
+}
