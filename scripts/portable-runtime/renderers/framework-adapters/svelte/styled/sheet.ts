@@ -86,6 +86,10 @@ export function specializeSvelteStyledSheet(
   const nativeType = native
     ? "HTMLAttributes<HTMLDivElement> & { ref?: (element: HTMLDivElement | null) => void; children?: Snippet }"
     : `ComponentProps<typeof Drawer${part}>`;
+  const publicMembers = [
+    ...(part === "Popup" ? ["closeLabel?: string;"] : []),
+    ...snippets.map((name) => `${name}?: Snippet;`),
+  ];
   return {
     imports: [
       { source: "svelte", names: ["ComponentProps", "Snippet"], typeOnly: true },
@@ -99,7 +103,7 @@ export function specializeSvelteStyledSheet(
       { source: "tailwind-variants", names: ["cx"] },
       { source: "./variants.js", names: group.variants.map((variant) => variant.name) },
     ],
-    publicTypes: `export type ${component.exportName}Props = ${nativeType}${snippets.length ? ` & { ${snippets.map((name) => `${name}?: Snippet;`).join(" ")} }` : ""};`,
+    publicTypes: `export type ${component.exportName}Props = ${nativeType}${publicMembers.length ? ` & { ${publicMembers.join(" ")} }` : ""};`,
     destructure: props,
     rest: component.destructure?.rest,
     setup: native ? [nativeOwnership] : [],

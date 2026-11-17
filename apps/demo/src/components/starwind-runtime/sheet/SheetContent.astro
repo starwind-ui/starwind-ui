@@ -7,9 +7,10 @@ import { sheetBackdrop, sheetCloseButton, sheetContent } from "./variants";
 
 type Props = HTMLAttributes<"dialog"> & {
   side?: "top" | "right" | "bottom" | "left";
+  closeLabel?: string;
 };
 
-const { class: className, side = "right", ...rest } = Astro.props;
+const { class: className, side = "right", closeLabel = "Close sheet", ...rest } = Astro.props;
 ---
 
 <slot name="backdrop">
@@ -34,6 +35,7 @@ const { class: className, side = "right", ...rest } = Astro.props;
     variant="ghost"
     size="icon-sm"
     class={sheetCloseButton()}
+    aria-label={closeLabel}
     data-slot="sheet-close"
     data-sw-drawer-close
   >
@@ -41,7 +43,7 @@ const { class: className, side = "right", ...rest } = Astro.props;
       <X class="size-5 transition-opacity" />
     </slot>
 
-    <span class="sr-only">Close sheet</span>
+    <span class="sr-only">{closeLabel}</span>
   </Button>
 
   <div class="pointer-events-none fixed inset-0" data-floating-root data-slot="floating-root"></div>

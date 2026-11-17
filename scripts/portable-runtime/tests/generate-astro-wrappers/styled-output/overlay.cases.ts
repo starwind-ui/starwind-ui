@@ -199,7 +199,9 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(sheetContent).toContain('data-slot="sheet-backdrop"');
   expect(sheetContent).toContain('data-slot="sheet-content"');
   expect(sheetContent).toContain('data-slot="sheet-close"');
-  expect(sheetContent).toContain('<span class="sr-only">Close sheet</span>');
+  expect(sheetContent).toContain('closeLabel = "Close sheet"');
+  expect(sheetContent).toContain("aria-label={closeLabel}");
+  expect(sheetContent).toContain('<span class="sr-only">{closeLabel}</span>');
   expect(sheetContent).not.toContain('aria-label="Close dialog"');
   expect(sheetClose).toContain("asChild?: boolean;");
   expect(sheetClose).toContain("asChild={asChild}");

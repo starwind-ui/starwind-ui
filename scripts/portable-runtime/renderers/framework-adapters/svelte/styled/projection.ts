@@ -504,7 +504,9 @@ export function projectSvelteStyledComponent(
               ? { type: "expression", value: "legend" }
               : (isCheckbox || isSwitch) && node.value === "{label}"
                 ? { type: "expression", value: "label" }
-                : node;
+                : node.value === "{closeLabel}"
+                  ? { type: "expression", value: "closeLabel" }
+                  : node;
       case "primitive":
       case "component":
       case "element": {

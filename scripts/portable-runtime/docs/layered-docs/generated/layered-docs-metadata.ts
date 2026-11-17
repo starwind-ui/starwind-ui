@@ -24688,7 +24688,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "DialogContent",
-              props: [],
+              props: [
+                {
+                  name: "closeLabel",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "\"Close dialog\"",
+                  description: "Sets the accessible label for the built-in close button.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:dialog",
@@ -24858,7 +24868,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "DialogContent",
-              props: [],
+              props: [
+                {
+                  name: "closeLabel",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "\"Close dialog\"",
+                  description: "Sets the accessible label for the built-in close button.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:dialog",
@@ -33282,7 +33302,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "SheetContent",
-              props: [],
+              props: [
+                {
+                  name: "closeLabel",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "\"Close sheet\"",
+                  description: "Sets the accessible label for the built-in close button.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:dialog",
@@ -33452,7 +33482,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "SheetContent",
-              props: [],
+              props: [
+                {
+                  name: "closeLabel",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "\"Close sheet\"",
+                  description: "Sets the accessible label for the built-in close button.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:dialog",

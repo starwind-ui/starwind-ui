@@ -6,13 +6,14 @@
   import { DrawerBackdrop } from "@starwind-ui/svelte/drawer";
   import { Button } from "../button/index.js";
 
-  export type SheetContentProps = ComponentProps<typeof DrawerPopup> & { backdrop?: Snippet; icon?: Snippet; };
+  export type SheetContentProps = ComponentProps<typeof DrawerPopup> & { closeLabel?: string; backdrop?: Snippet; icon?: Snippet; };
 </script>
 
 <script lang="ts">
   let {
     "class": className,
     "side": side = "right",
+    "closeLabel": closeLabel = "Close sheet",
     "children": children,
     "backdrop": backdrop,
     "icon": icon,
@@ -38,6 +39,7 @@
     variant={"ghost"}
     size={"icon-sm"}
     class={sheetCloseButton({  })}
+    aria-label={closeLabel}
     data-slot={"sheet-close"}
     data-sw-drawer-close
   >
@@ -67,7 +69,7 @@
     <span
       class={"sr-only"}
     >
-      Close sheet
+      {closeLabel}
     </span>
   </Button>
   <div
