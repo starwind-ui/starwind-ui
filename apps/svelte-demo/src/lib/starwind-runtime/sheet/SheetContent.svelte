@@ -6,7 +6,7 @@
   import { DrawerBackdrop } from "@starwind-ui/svelte/drawer";
   import { Button } from "../button/index.js";
 
-  export type SheetContentProps = ComponentProps<typeof DrawerPopup> & { backdrop?: Snippet; icon?: Snippet; };
+  export type SheetContentProps = ComponentProps<typeof DrawerPopup> & { closeLabel?: string; backdrop?: Snippet; icon?: Snippet; };
 </script>
 
 <script lang="ts">

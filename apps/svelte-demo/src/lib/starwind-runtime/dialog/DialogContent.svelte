@@ -7,7 +7,7 @@
   import { Button } from "../button/index.js";
   import "./styles.css";
 
-  export type DialogContentProps = ComponentProps<typeof DialogPopup> & { backdrop?: Snippet; icon?: Snippet; };
+  export type DialogContentProps = ComponentProps<typeof DialogPopup> & { closeLabel?: string; backdrop?: Snippet; icon?: Snippet; };
 </script>
 
 <script lang="ts">
