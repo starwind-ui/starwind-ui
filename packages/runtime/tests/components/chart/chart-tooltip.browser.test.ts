@@ -154,6 +154,14 @@ function leave(chart: Mounted): void {
   svg(chart).parentElement!.dispatchEvent(new MouseEvent("mouseleave"));
 }
 
+/**
+ * Expects the tooltip center at the pointer. A text height or width with a fraction, as Linux fonts
+ * give, can move the placed center by up to one pixel.
+ */
+function expectCentered(actual: number, expected: number): void {
+  expect(Math.abs(actual - expected)).toBeLessThanOrEqual(1);
+}
+
 /** Expects the tooltip to show at the place TanStack set, with no motion offset left. */
 function expectAtTarget(): void {
   const box = tip().getBoundingClientRect();
@@ -243,7 +251,7 @@ describe("chart tooltip placement", () => {
     await pointAt(chart, feb.center - 20, middle);
     let box = await shown();
     expect(box.left).toBeCloseTo(client(chart, feb.right, 0).x + GAP, 0);
-    expect(box.top + box.height / 2).toBeCloseTo(client(chart, 0, middle).y, 0);
+    expectCentered(box.top + box.height / 2, client(chart, 0, middle).y);
 
     await pointAt(chart, feb.center + 20, middle + 30);
     expectEased("translate");
@@ -251,7 +259,7 @@ describe("chart tooltip placement", () => {
     box = tip().getBoundingClientRect();
     expectAtTarget();
     expect(box.left).toBeCloseTo(client(chart, feb.right, 0).x + GAP, 0);
-    expect(box.top + box.height / 2).toBeCloseTo(client(chart, 0, middle + 30).y, 0);
+    expectCentered(box.top + box.height / 2, client(chart, 0, middle + 30).y);
   });
 
   it("keeps a bar tooltip inside the plot vertically", async () => {
@@ -613,14 +621,14 @@ describe("chart tooltip placement", () => {
     await pointAt(chart, x - 10, middle);
     let box = await shown();
     expect(box.left).toBeCloseTo(client(chart, x, 0).x + GAP, 0);
-    expect(box.top + box.height / 2).toBeCloseTo(client(chart, 0, middle).y, 0);
+    expectCentered(box.top + box.height / 2, client(chart, 0, middle).y);
 
     await pointAt(chart, x + 10, middle - 25);
     expectEased("translate");
     await settle();
     box = tip().getBoundingClientRect();
     expect(box.left).toBeCloseTo(client(chart, x, 0).x + GAP, 0);
-    expect(box.top + box.height / 2).toBeCloseTo(client(chart, 0, middle - 25).y, 0);
+    expectCentered(box.top + box.height / 2, client(chart, 0, middle - 25).y);
   });
 
   it("places a keyboard area tooltip at the same x as the pointer", async () => {
@@ -701,14 +709,14 @@ describe("chart tooltip placement for horizontal bars, radial bars and nested pi
     await pointAt(chart, center, jan.center - 10);
     let box = await shown();
     expect(box.top).toBeCloseTo(client(chart, 0, jan.bottom).y + GAP, 0);
-    expect(box.left + box.width / 2).toBeCloseTo(client(chart, center, 0).x, 0);
+    expectCentered(box.left + box.width / 2, client(chart, center, 0).x);
 
     await pointAt(chart, center + 30, jan.center + 10);
     expectEased("translate");
     await settle();
     box = tip().getBoundingClientRect();
     expect(box.top).toBeCloseTo(client(chart, 0, jan.bottom).y + GAP, 0);
-    expect(box.left + box.width / 2).toBeCloseTo(client(chart, center + 30, 0).x, 0);
+    expectCentered(box.left + box.width / 2, client(chart, center + 30, 0).x);
   });
 
   it("flips a horizontal bar tooltip above the band near the plot bottom", async () => {
@@ -950,10 +958,11 @@ describe("chart tooltip first frame and repositions", () => {
   it("places the tooltip from the latest geometry when TanStack places it again", async () => {
     // A CSS scale changes the client size with no resize, so TanStack does not repaint. A window
     // resize event then makes its portal place the tooltip again from the context it kept.
+    // January leaves room for the tooltip on its right with any font, so it does not flip.
     const chart = mount(visitorBars, "400px", MARGIN);
     await frame();
-    const feb = band(chart, "February");
-    moveTo(chart, feb.center, plot(chart).y + plot(chart).height / 2);
+    const jan = band(chart, "January");
+    moveTo(chart, jan.center, plot(chart).y + plot(chart).height / 2);
     await settle();
 
     chart.root.style.transformOrigin = "0 0";
@@ -962,7 +971,7 @@ describe("chart tooltip first frame and repositions", () => {
     await settle();
 
     expect(tip().hidden).toBe(false);
-    expect(tip().getBoundingClientRect().left).toBeCloseTo(client(chart, feb.right, 0).x + GAP, 0);
+    expect(tip().getBoundingClientRect().left).toBeCloseTo(client(chart, jan.right, 0).x + GAP, 0);
   });
 
   for (const placement of ["left", "right"] as const) {
@@ -1021,7 +1030,7 @@ describe("chart tooltip first frame and repositions", () => {
       if (placement === "bottom") expect(box.top).toBeCloseTo(pointer.y + GAP, 0);
       else expect(box.bottom).toBeCloseTo(pointer.y - GAP, 0);
       if (placement === "top-right") expect(box.left).toBeCloseTo(pointer.x + GAP, 0);
-      else expect(box.left + box.width / 2).toBeCloseTo(pointer.x, 0);
+      else expectCentered(box.left + box.width / 2, pointer.x);
     });
   }
 
