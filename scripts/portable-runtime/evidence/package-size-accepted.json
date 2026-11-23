@@ -7,7 +7,7 @@
     "workingTreeDirty": false,
     "esbuildVersion": "0.28.2",
     "lockfileSha256": "67571337ef27e48d486fe98b8538fa89e54573ad6726afe9e5da23cfc6c1bc4a",
-    "reason": "Accepted main's RTL and arrow growth after merging main into the charts branch, captured twice from a clean tree with identical measurements. main's own size check passes. Four rows fail here only against the stricter baseline the chart branch captured in November: React Tooltip 19,414 B to 21,566 B, Vue Tooltip 20,216 B to 22,312 B, Runtime root 133,734 B to 138,287 B and init-starwind 132,386 B to 136,884 B. The Runtime catalog row measures the same root bundle as the Runtime root row, so it moves to 138,287 B with it. Only those five rows were updated. The chart rows changed by 2 B or less and stay as accepted. On 2026-11-22 the chart contract alignment moved chart visibility into the Runtime controller and added a shared tooltip layout helper. init-starwind moved from 136,884 B to 136,893 B (+9 B). The chart rows grew within their thresholds and stay as accepted. On 2026-11-22 the stable fix lanes changed Runtime pointer-press, Tab dismissal, Menu radio ARIA and Navigation Menu default handling. A clean rebuild measured Runtime root and the Runtime catalog at 138,312 B (+25 B) and init-starwind at 136,909 B (+16 B). Only those three rows were updated."
+    "reason": "Accepted main's RTL and arrow growth after merging main into the charts branch, captured twice from a clean tree with identical measurements. main's own size check passes. Four rows fail here only against the stricter baseline the chart branch captured in November: React Tooltip 19,414 B to 21,566 B, Vue Tooltip 20,216 B to 22,312 B, Runtime root 133,734 B to 138,287 B and init-starwind 132,386 B to 136,884 B. The Runtime catalog row measures the same root bundle as the Runtime root row, so it moves to 138,287 B with it. Only those five rows were updated. The chart rows changed by 2 B or less and stay as accepted. On 2026-11-22 the chart contract alignment moved chart visibility into the Runtime controller and added a shared tooltip layout helper. init-starwind moved from 136,884 B to 136,893 B (+9 B). The chart rows grew within their thresholds and stay as accepted. On 2026-11-22 the stable fix lanes changed Runtime pointer-press, Tab dismissal, Menu radio ARIA and Navigation Menu default handling. A clean rebuild measured Runtime root and the Runtime catalog at 138,312 B (+25 B) and init-starwind at 136,909 B (+16 B). Only those three rows were updated. On 2026-11-23 the public checkout measured Runtime root at 138,316 B (+4 B) from a byte-identical Runtime bundle. Chunk names in the measured bundle change with the install paths, so the private and public trees can differ by a few bytes. Runtime root and the Runtime catalog moved to 138,316 B."
   },
   "measurements": [
     {
@@ -272,7 +272,7 @@
       "id": "runtime.catalog",
       "label": "@starwind-ui/runtime",
       "kind": "aggregate",
-      "gzipBytes": 138312
+      "gzipBytes": 138316
     },
     {
       "id": "runtime.chart",
@@ -296,7 +296,7 @@
       "id": "runtime.root",
       "label": "@starwind-ui/runtime root",
       "kind": "aggregate",
-      "gzipBytes": 138312
+      "gzipBytes": 138316
     },
     {
       "id": "vue.accordion",
