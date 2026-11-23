@@ -67,17 +67,36 @@ const linkTriggers: Scenario[] = [
   },
 ];
 
+// The Runtime keeps a hover-opened panel open for a mouse press that starts within 500 ms of the
+// open. A busy machine can take longer than that between two harness steps, so these scenarios stop
+// the page clock and move it by exact amounts.
+const NAV_OPEN_DELAY_MS = 50;
+const NAV_HOVER_PRESS_WINDOW_MS = 500;
+
+/** Stops page time, then hovers the trigger and runs the open delay. Page time is then the open time. */
+async function hoverOpenWithPausedClock(ui: Ui): Promise<void> {
+  await ui.page.clock.install();
+  // A far target, so a slow call cannot land after it. No fixture reads the absolute time.
+  await ui.page.clock.pauseAt(Date.now() + 3_600_000);
+  await ui.t("ln-trigger").hover();
+  await ui.page.clock.runFor(NAV_OPEN_DELAY_MS);
+  await ui.expectVisible("ln-content");
+}
+
 const navigationPresses: Scenario[] = [
   {
     id: "navigation menu trigger: a press soon after hover keeps the panel, the next press closes",
     page: "triggers",
     async run(ui) {
-      await ui.t("ln-trigger").hover();
-      await ui.expectVisible("ln-content");
+      await hoverOpenWithPausedClock(ui);
+      await ui.page.clock.runFor(NAV_HOVER_PRESS_WINDOW_MS - 50);
       await ui.t("ln-trigger").click();
-      await ui.settle();
+      await ui.page.clock.runFor(32);
       await ui.expectVisible("ln-content");
+      // Keep the clock paused. If the first press failed to end the window, a slow second press
+      // could otherwise land after it and close the panel for the wrong reason.
       await ui.t("ln-trigger").click();
+      await ui.page.clock.runFor(32);
       await ui.expectVisible("ln-content", false);
     },
   },
@@ -85,11 +104,11 @@ const navigationPresses: Scenario[] = [
     id: "navigation menu trigger: a later press after hover closes the panel",
     page: "triggers",
     async run(ui) {
-      await ui.t("ln-trigger").hover();
-      await ui.expectVisible("ln-content");
-      await ui.page.waitForTimeout(700);
+      await hoverOpenWithPausedClock(ui);
+      await ui.page.clock.runFor(NAV_HOVER_PRESS_WINDOW_MS + 50);
       await ui.expectVisible("ln-content");
       await ui.t("ln-trigger").click();
+      await ui.page.clock.runFor(32);
       await ui.expectVisible("ln-content", false);
     },
   },

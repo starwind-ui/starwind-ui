@@ -34,6 +34,7 @@ describe("Vue package foundation", () => {
       "avatar",
       "button",
       "carousel",
+      "chart",
       "checkbox",
       "checkbox-group",
       "collapsible",
@@ -73,6 +74,7 @@ describe("Vue package foundation", () => {
       "avatar",
       "button",
       "carousel",
+      "chart",
       "checkbox",
       "checkbox-group",
       "collapsible",
@@ -112,6 +114,7 @@ describe("Vue package foundation", () => {
       "avatar",
       "button",
       "carousel",
+      "chart",
       "checkbox",
       "checkbox-group",
       "collapsible",
@@ -169,6 +172,7 @@ describe("Vue package foundation", () => {
       "./avatar",
       "./button",
       "./carousel",
+      "./chart",
       "./checkbox",
       "./checkbox-group",
       "./collapsible",
@@ -233,6 +237,8 @@ describe("Vue package foundation", () => {
   it("reports actionable subpath, condition-key, path, and source inventory drift", () => {
     const packageExports = structuredClone(vuePackageExports);
     delete packageExports["./button"];
+    // The metadata subpath is allowed beside the Primitive entries.
+    (packageExports as Record<string, unknown>)["./package.json"] = "./package.json";
     packageExports["./extra"] = {
       import: "./dist/extra.js",
       types: "./dist/extra.d.ts",
@@ -287,7 +293,7 @@ describe("Vue package foundation", () => {
     );
   });
 
-  it("pins the exact generated source file inventory for the public-beta cohort", async () => {
+  it("pins the exact generated source file inventory for the stable package", async () => {
     expect(
       (await readdir("packages/vue/src", { recursive: true, withFileTypes: true }))
         .filter((entry) => entry.isFile())
@@ -297,11 +303,8 @@ describe("Vue package foundation", () => {
     ).toEqual(vueGeneratedSourceFiles);
   });
 
-  it("pins a public-beta package with exact ESM and declaration exports", async () => {
-    const [packageJson, runtimePackageJson] = await Promise.all([
-      readFile("packages/vue/package.json", "utf8").then(JSON.parse),
-      readFile("packages/runtime/package.json", "utf8").then(JSON.parse),
-    ]);
+  it("pins a stable package with exact ESM and declaration exports", async () => {
+    const packageJson = await readFile("packages/vue/package.json", "utf8").then(JSON.parse);
     const packageMetadataSources =
       vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? [];
 
@@ -317,26 +320,27 @@ describe("Vue package foundation", () => {
 
     expect(packageJson.name).toBe("@starwind-ui/vue");
     expect(packageJson.private).toBeUndefined();
-    expect(packageJson.description).toContain("Public-beta Vue 3.5");
+    expect(packageJson.description).toContain("Vue 3.5");
+    expect(packageJson.description).not.toMatch(/beta/i);
     expect(packageJson.type).toBe("module");
-    expect(packageJson.exports).toEqual(vuePackageExports);
-    for (const contract of Object.values(packageJson.exports) as Array<{
+    // Tools read the package metadata through the "./package.json" subpath.
+    const { "./package.json": metadataExport, ...componentExports } = packageJson.exports;
+    expect(metadataExport).toBe("./package.json");
+    expect(componentExports).toEqual(vuePackageExports);
+    for (const contract of Object.values(componentExports) as Array<{
       import: string;
       types: string;
     }>) {
       expect(contract.import).toMatch(/^\.\/dist\/.+\.js$/);
       expect(contract.types).toMatch(/^\.\/dist\/.+\.d\.ts$/);
     }
-    expect(packageJson.dependencies).toEqual({
-      "@starwind-ui/runtime": runtimePackageJson.version,
-    });
-    expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5" });
+    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "workspace:*" });
+    expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5.21" });
 
     const readme = await readFile("packages/vue/README.md", "utf8");
-    expect(readme).toContain("public beta");
-    expect(readme).toContain("Vue 3.5 or newer");
-    expect(readme).toContain("@starwind-ui/vue@beta");
-    expect(readme).not.toMatch(/\bstable support\b/i);
+    expect(readme).toContain("Vue 3.5.21 or newer");
+    expect(readme).toContain("npm install @starwind-ui/vue vue@^3.5.21");
+    expect(readme).not.toMatch(/public beta|@beta/);
   });
 
   it("uses exact multi-entry precompiled output with Vue and Runtime externalized", async () => {
@@ -368,19 +372,25 @@ describe("Vue package foundation", () => {
     expect(output).not.toMatch(/vue\/compiler-sfc|vue\.esm-bundler|\bcompile\s*\(/);
   });
 
-  it("exposes Vue as public beta through public generation and release verification", async () => {
+  it("exposes Vue as stable through public generation and release verification", async () => {
     const vuePackageJson = JSON.parse(await readFile("packages/vue/package.json", "utf8"));
     expect(vueFrameworkAdapterTarget.publicSupport).toEqual({
       cliRegistry: true,
       demoIntegration: true,
       packageExports: true,
       publicDocsClaim: true,
-      status: "public-beta",
+      status: "shipping",
     });
 
     const changesetConfig = JSON.parse(await readFile(".changeset/config.json", "utf8"));
     expect(changesetConfig.fixed).toEqual([
-      ["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"],
+      [
+        "@starwind-ui/runtime",
+        "@starwind-ui/astro",
+        "@starwind-ui/react",
+        "@starwind-ui/vue",
+        "@starwind-ui/svelte",
+      ],
     ]);
     expect(changesetConfig.ignore).toContain("vue-demo");
     expect(changesetConfig.ignore).not.toContain("@starwind-ui/svelte");
@@ -394,8 +404,11 @@ describe("Vue package foundation", () => {
       await readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
     );
     expect(bundledRegistry.setup.vue).toEqual({
-      adapterPackage: { name: "@starwind-ui/vue", range: vuePackageJson.version },
-      packageRequirements: [{ name: "vue", range: ">=3.5" }],
+      adapterPackage: { name: "@starwind-ui/vue", range: `^${vuePackageJson.version}` },
+      packageRequirements: [
+        { name: "tailwind-merge", range: "^3.7.0" },
+        { name: "vue", range: ">=3.5.21" },
+      ],
     });
     const vueRegistryComponents = bundledRegistry.components.filter(
       (component: { targets: Record<string, unknown> }) => component.targets.vue,
@@ -405,7 +418,7 @@ describe("Vue package foundation", () => {
     );
     for (const component of vueRegistryComponents) {
       expect(component.targets.vue.packageRequirements).toEqual(
-        expect.arrayContaining([{ name: "@starwind-ui/vue", range: vuePackageJson.version }]),
+        expect.arrayContaining([{ name: "@starwind-ui/vue", range: `^${vuePackageJson.version}` }]),
       );
     }
     const svelteRegistryComponents = bundledRegistry.components.filter(

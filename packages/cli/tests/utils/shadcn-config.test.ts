@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
+import { type StarwindConfig, updateConfig } from "../../src/utils/config.js";
 import {
   addStarwindProRegistry,
   componentsJsonExists,
@@ -13,7 +13,6 @@ import {
   setupShadcnProConfig,
   writeComponentsJson,
 } from "../../src/utils/shadcn-config.js";
-import { updateConfig, type StarwindConfig } from "../../src/utils/config.js";
 
 // Mock fs-extra
 vi.mock("fs-extra");

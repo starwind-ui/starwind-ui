@@ -1,87 +1,63 @@
-import { styledSidebarPositive } from "./styled-sidebar-consumer.js";
-import { styledColorPickerPositive } from "./styled-color-picker-consumer.js";
-import { toastPositive } from "./styled-toast-consumer.js";
-import { carouselPositive } from "./styled-carousel-consumer.js";
-import { positiveStyledButtonConsumer } from "./styled-button-consumer.js";
-import { positiveStyledCheckboxConsumer } from "./styled-checkbox-consumer.js";
-import { positiveStyledDialogConsumer } from "./styled-dialog-consumer.js";
-import { positiveStyledSelectConsumer } from "./styled-select-consumer.js";
-import { positiveStyledComboboxConsumer } from "./styled-combobox-consumer.js";
-
-import { positiveStyledNavigationMenuConsumer } from "./styled-navigation-menu-consumer.js";
-
-import { positiveStyledContextMenuConsumer } from "./styled-context-menu-consumer.js";
-
-import { positiveStyledDropdownConsumer } from "./styled-dropdown-consumer.js";
-
-import { positiveStyledHoverCardConsumer } from "./styled-hover-card-consumer.js";
-
-import { positiveStyledTooltipConsumer } from "./styled-tooltip-consumer.js";
-
-import { positiveStyledPopoverConsumer } from "./styled-popover-consumer.js";
-
-import { positiveStyledSheetConsumer } from "./styled-sheet-consumer.js";
-
-import { positiveStyledAlertDialogConsumer } from "./styled-alert-dialog-consumer.js";
-
-import { tabsPositive } from "./styled-tabs-consumer.js";
-
-import { sliderPositive } from "./styled-slider-consumer.js";
-
 import { accordionPositive } from "./styled-accordion-consumer.js";
-
-import { dropzonePositive } from "./styled-dropzone-consumer.js";
-
-import { inputOtpPositive } from "./styled-input-otp-consumer.js";
-
-import { fieldPositive } from "./styled-field-consumer.js";
-
-import { togglePositive } from "./styled-toggle-consumer.js";
-
-import { radioGroupPositive } from "./styled-radio-group-consumer.js";
-
+import { positiveStyledAlertDialogConsumer } from "./styled-alert-dialog-consumer.js";
+import { avatarPositive } from "./styled-avatar-consumer.js";
+import { BREADCRUMB_ROUTER_LINK, breadcrumbPositive } from "./styled-breadcrumb-consumer.js";
+import { positiveStyledButtonConsumer } from "./styled-button-consumer.js";
+import { carouselPositive } from "./styled-carousel-consumer.js";
+import { chartNegatives, chartPositive } from "./styled-chart-consumer.js";
+import { positiveStyledCheckboxConsumer } from "./styled-checkbox-consumer.js";
 import { checkboxGroupPositive } from "./styled-checkbox-group-consumer.js";
-
-import { switchPositive } from "./styled-switch-consumer.js";
-
+import { collapsiblePositive } from "./styled-collapsible-consumer.js";
+import { styledColorPickerPositive } from "./styled-color-picker-consumer.js";
+import { positiveStyledComboboxConsumer } from "./styled-combobox-consumer.js";
+import { positiveStyledContextMenuConsumer } from "./styled-context-menu-consumer.js";
+import { positiveStyledDialogConsumer } from "./styled-dialog-consumer.js";
+import { positiveStyledDropdownConsumer } from "./styled-dropdown-consumer.js";
+import { dropzonePositive } from "./styled-dropzone-consumer.js";
+import { dynamicStyledPositive } from "./styled-dynamic-consumer.js";
+import { fieldPositive } from "./styled-field-consumer.js";
+import { formPositive } from "./styled-form-consumer.js";
+import { positiveStyledHoverCardConsumer } from "./styled-hover-card-consumer.js";
+import { inputPositive } from "./styled-input-consumer.js";
 import { inputGroupPositive } from "./styled-input-group-consumer.js";
 
-import { formPositive } from "./styled-form-consumer.js";
-
-import { inputPositive } from "./styled-input-consumer.js";
-
-import { collapsiblePositive } from "./styled-collapsible-consumer.js";
-
-import { scrollAreaPositive } from "./styled-scroll-area-consumer.js";
-
-import { progressPositive } from "./styled-progress-consumer.js";
-
-import { avatarPositive } from "./styled-avatar-consumer.js";
-
-import { videoPositive } from "./styled-video-consumer.js";
-
-import { nativeFormPositive } from "./styled-native-form-consumer.js";
-
-import { proseSpinnerPositive } from "./styled-prose-spinner-consumer.js";
-
-import { navigationPositive } from "./styled-navigation-consumer.js";
-
-import { breadcrumbPositive, BREADCRUMB_ROUTER_LINK } from "./styled-breadcrumb-consumer.js";
-
-import { dynamicStyledPositive } from "./styled-dynamic-consumer.js";
-
-import { staticStyledPositive } from "./styled-static-consumer.js";
-
+import { inputOtpPositive } from "./styled-input-otp-consumer.js";
 import { nativeStyledPositive } from "./styled-native-consumer.js";
+import { nativeFormPositive } from "./styled-native-form-consumer.js";
+import { navigationPositive } from "./styled-navigation-consumer.js";
+import { positiveStyledNavigationMenuConsumer } from "./styled-navigation-menu-consumer.js";
+import { positiveStyledPopoverConsumer } from "./styled-popover-consumer.js";
+import { progressPositive } from "./styled-progress-consumer.js";
+import { proseSpinnerPositive } from "./styled-prose-spinner-consumer.js";
+import { radioGroupPositive } from "./styled-radio-group-consumer.js";
+import { scrollAreaPositive } from "./styled-scroll-area-consumer.js";
+import { positiveStyledSelectConsumer } from "./styled-select-consumer.js";
+import { positiveStyledSheetConsumer } from "./styled-sheet-consumer.js";
+import { styledSidebarPositive } from "./styled-sidebar-consumer.js";
+import { sliderPositive } from "./styled-slider-consumer.js";
+import { staticStyledPositive } from "./styled-static-consumer.js";
+import { switchPositive } from "./styled-switch-consumer.js";
+import { tabsPositive } from "./styled-tabs-consumer.js";
+import { toastPositive } from "./styled-toast-consumer.js";
+import { togglePositive } from "./styled-toggle-consumer.js";
+import { positiveStyledTooltipConsumer } from "./styled-tooltip-consumer.js";
+import { videoPositive } from "./styled-video-consumer.js";
 
 /** One negative witness per generated API shape or specialized branch. */
 export const styledNegativeConsumers: Record<string, string> = {
+  ...chartNegatives,
   "StyledButtonOwnChild.svelte": `<script lang="ts">import {Button} from "./button/index.js";</script>{#snippet child()}Invalid{/snippet}<Button {child}>Invalid</Button>`,
   "StyledSidebarModels.svelte": `<script lang="ts">import S from "./sidebar/index.js";</script><S.Root open="true" onMobileOpenChange={(next:string)=>{void next;}}/>`,
   "StyledSidebarAnchorRef.svelte": `<script lang="ts">import S from "./sidebar/index.js";</script><S.MenuButton href="" ref={(node:HTMLButtonElement|null)=>{void node;}}/>`,
   "StyledSidebarChild.svelte": `<script lang="ts">import S from "./sidebar/index.js";import type {Snippet} from "svelte";const child:Snippet<[string]>=null!;</script><S.MenuButton href="#page" {child}/>`,
   "StyledDialogRootSnippetArgument.svelte": `<script lang="ts">import Dialog from "./dialog/index.js";</script><Dialog.Root>{#snippet children(open:boolean)}{open}{/snippet}</Dialog.Root>`,
   "StyledCollapsibleRootSnippetArgument.svelte": `<script lang="ts">import {Collapsible} from "./collapsible/index.js";</script><Collapsible>{#snippet children(open:boolean)}{open}{/snippet}</Collapsible>`,
+  "StyledNavigationMenuSnippetArgument.svelte": `<script lang="ts">import NavigationMenu from "./navigation-menu/index.js";</script><NavigationMenu.Root>{#snippet children(value:string|null)}{value}{/snippet}</NavigationMenu.Root>`,
+  "StyledTabsRootSnippetArgument.svelte": `<script lang="ts">import Tabs from "./tabs/index.js";import type {TabsValue} from "@starwind-ui/svelte/tabs";</script><Tabs.Root>{#snippet children(value:TabsValue)}{value}{/snippet}</Tabs.Root>`,
+  "StyledTabsTriggerSnippetArgument.svelte": `<script lang="ts">import Tabs from "./tabs/index.js";</script><Tabs.Root><Tabs.List><Tabs.Trigger value="a">{#snippet children(active:boolean)}{active}{/snippet}</Tabs.Trigger></Tabs.List></Tabs.Root>`,
+  "StyledTabsContentSnippetArgument.svelte": `<script lang="ts">import Tabs from "./tabs/index.js";</script><Tabs.Root><Tabs.Content value="a">{#snippet children(active:boolean)}{active}{/snippet}</Tabs.Content></Tabs.Root>`,
+  "StyledAccordionSnippetArgument.svelte": `<script lang="ts">import Accordion from "./accordion/index.js";import type {AccordionValue} from "@starwind-ui/svelte/accordion";</script><Accordion.Root>{#snippet children(value:AccordionValue)}{value}{/snippet}</Accordion.Root>`,
+  "StyledSelectValueSnippetArgument.svelte": `<script lang="ts">import Select from "./select/index.js";</script><Select.Root><Select.Value>{#snippet children(label:string|null,value:string|null)}{label}{value}{/snippet}</Select.Value></Select.Root>`,
   "StyledColorPickerFormat.svelte": `<script lang="ts">import Picker from "./color-picker/index.js";</script><Picker.Root format="cmyk"/>`,
   "StyledColorPickerCallback.svelte": `<script lang="ts">import Picker from "./color-picker/index.js";</script><Picker.Root onOpenChange={(value:string)=>{void value;}}/>`,
   "StyledColorPickerRecipe.svelte": `<script lang="ts">import {ColorPickerVariants} from "./color-picker/index.js";ColorPickerVariants.colorPickerChannelInput({size:"invalid"});</script>`,
@@ -149,6 +125,10 @@ export const styledNegativeConsumers: Record<string, string> = {
     '<script lang="ts">import AlertParts, { Alert, type AlertProps, AlertTitle, type AlertTitleProps, AlertDescription, type AlertDescriptionProps, AlertVariants } from "./alert/index.js";\nimport CardParts, { Card, type CardProps, CardHeader, type CardHeaderProps, CardTitle, type CardTitleProps, CardDescription, type CardDescriptionProps, CardContent, type CardContentProps, CardFooter, type CardFooterProps, CardAction, type CardActionProps, CardVariants } from "./card/index.js";\nimport KbdParts, { Kbd, type KbdProps, KbdGroup, type KbdGroupProps, KbdVariants } from "./kbd/index.js";\nimport TableParts, { Table, type TableProps, TableHeader, type TableHeaderProps, TableBody, type TableBodyProps, TableFoot, type TableFootProps, TableRow, type TableRowProps, TableHead, type TableHeadProps, TableCell, type TableCellProps, TableCaption, type TableCaptionProps, TableVariants } from "./table/index.js";</script><Card size="lg" />',
   "DynamicAspectRatioSvg.svelte":
     '<script lang="ts">import AspectRatioDefault, { AspectRatio, type AspectRatioProps, AspectRatioVariants } from "./aspect-ratio/index.js";\nimport BadgeDefault, { Badge, type BadgeProps, BadgeVariants } from "./badge/index.js";\nimport ItemParts, { Item, type ItemProps, ItemActions, type ItemActionsProps, ItemContent, type ItemContentProps, ItemDescription, type ItemDescriptionProps, ItemFooter, type ItemFooterProps, ItemGroup, type ItemGroupProps, ItemHeader, type ItemHeaderProps, ItemMedia, type ItemMediaProps, ItemSeparator, type ItemSeparatorProps, ItemTitle, type ItemTitleProps, ItemVariants } from "./item/index.js";</script><AspectRatio as="svg" />',
+  "DynamicAspectRatioDefaultHref.svelte":
+    '<script lang="ts">import { AspectRatio } from "./aspect-ratio/index.js";</script><AspectRatio href="#details" />',
+  "DynamicAspectRatioImgHref.svelte":
+    '<script lang="ts">import { AspectRatio } from "./aspect-ratio/index.js";</script><AspectRatio as="img" href="#details" />',
   "DynamicBadgeAs.svelte":
     '<script lang="ts">import AspectRatioDefault, { AspectRatio, type AspectRatioProps, AspectRatioVariants } from "./aspect-ratio/index.js";\nimport BadgeDefault, { Badge, type BadgeProps, BadgeVariants } from "./badge/index.js";\nimport ItemParts, { Item, type ItemProps, ItemActions, type ItemActionsProps, ItemContent, type ItemContentProps, ItemDescription, type ItemDescriptionProps, ItemFooter, type ItemFooterProps, ItemGroup, type ItemGroupProps, ItemHeader, type ItemHeaderProps, ItemMedia, type ItemMediaProps, ItemSeparator, type ItemSeparatorProps, ItemTitle, type ItemTitleProps, ItemVariants } from "./item/index.js";</script><Badge as="button" />',
   "DynamicBadgeHref.svelte":
@@ -250,6 +230,7 @@ export const styledPositiveConsumers: Record<string, string> = {
   "ToastPositive.svelte": toastPositive,
   "StyledColorPickerPositive.svelte": styledColorPickerPositive,
   "CarouselPositive.svelte": carouselPositive,
+  "ChartPositive.svelte": chartPositive,
   "ThemePositive.svelte": `<script lang="ts">
 import ThemeToggle, { ThemeToggleVariants, type ThemeToggleProps } from "./theme-toggle/index.js";
 const props: ThemeToggleProps = { pressed: false, defaultPressed: true, syncGroup: "theme", value: "appearance", disabled: false, class: ["demo", { active: true }], variant: "outline", size: "sm" };

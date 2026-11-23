@@ -1,85 +1,3 @@
-import {
-  printSvelteSidebarComponent,
-  printSvelteSidebarIndex,
-  printSvelteSidebarHelper,
-} from "./sidebar.js";
-import {
-  printSvelteColorPickerComponent,
-  printSvelteColorPickerIndex,
-  printSvelteColorPickerHelper,
-} from "./color-picker.js";
-import {
-  printSvelteEditableCollectionOverlayComponent,
-  printSvelteEditableCollectionOverlayIndex,
-} from "./editable-collection-overlay.js";
-import {
-  printSvelteSharedViewportNavigationComponent,
-  printSvelteSharedViewportNavigationIndex,
-} from "./shared-viewport-navigation.js";
-import {
-  printSvelteAnchoredMenuOverlayComponent,
-  printSvelteAnchoredMenuOverlayIndex,
-} from "./anchored-menu-overlay.js";
-import {
-  printSvelteCompositeMenuOverlayComponent,
-  printSvelteCompositeMenuOverlayIndex,
-} from "./composite-menu-overlay.js";
-import {
-  printSvelteTimedFloatingOverlayComponent,
-  printSvelteTimedFloatingOverlayIndex,
-} from "./timed-floating-overlay.js";
-import {
-  printSveltePresenceFloatingOverlayComponent,
-  printSveltePresenceFloatingOverlayIndex,
-} from "./presence-floating-overlay.js";
-import {
-  printSvelteControlledValuePresenceComponent,
-  printSvelteControlledValuePresenceIndex,
-  printSvelteControlledValuePresenceHelper,
-} from "./controlled-value-presence.js";
-import {
-  printSvelteFileDropControlComponent,
-  printSvelteFileDropControlIndex,
-} from "./file-drop-control.js";
-import {
-  printSvelteFieldCompositionComponent,
-  printSvelteFieldCompositionIndex,
-} from "./field-composition.js";
-import {
-  printSvelteHiddenInputVisualSlotComponent,
-  printSvelteHiddenInputVisualSlotIndex,
-} from "./hidden-input-visual-slot.js";
-import { printSvelteToggleComponent, printSvelteToggleIndex } from "./toggle.js";
-import { printSvelteToggleGroupComponent, printSvelteToggleGroupIndex } from "./toggle-group.js";
-import { printSvelteRadioComponent, printSvelteRadioIndex } from "./radio.js";
-import { printSvelteRadioGroupComponent, printSvelteRadioGroupIndex } from "./radio-group.js";
-import {
-  printSvelteCheckboxGroupComponent,
-  printSvelteCheckboxGroupIndex,
-} from "./checkbox-group.js";
-import { printSvelteSwitchComponent, printSvelteSwitchIndex } from "./switch.js";
-import {
-  printSvelteFormFieldCoordinatorComponent,
-  printSvelteFormFieldCoordinatorIndex,
-} from "./form-field-coordinator.js";
-import {
-  printSvelteNativeDisabledComponent,
-  printSvelteNativeDisabledIndex,
-} from "./native-disabled.js";
-import {
-  printSvelteNativeInputValueComponent,
-  printSvelteNativeInputValueIndex,
-} from "./native-input-value.js";
-import {
-  printSvelteDisclosurePresenceComponent,
-  printSvelteDisclosurePresenceIndex,
-} from "./disclosure-presence.js";
-import {
-  printSvelteViewportMeasurementComponent,
-  printSvelteViewportMeasurementIndex,
-} from "./viewport-measurement.js";
-import { printSvelteRangeStatusComponent, printSvelteRangeStatusIndex } from "./range-status.js";
-import { printSvelteMediaStatusComponent, printSvelteMediaStatusIndex } from "./media-status.js";
 import { defineFrameworkAdapter } from "../conformance.js";
 import {
   defineFrameworkAdapterReadiness,
@@ -91,35 +9,121 @@ import {
   printSvelteActionSurfaceIndex,
 } from "./action-surface.js";
 import {
+  printSvelteAnchoredMenuOverlayComponent,
+  printSvelteAnchoredMenuOverlayIndex,
+} from "./anchored-menu-overlay.js";
+import {
   printSvelteBooleanFormControlComponent,
   printSvelteBooleanFormControlIndex,
 } from "./boolean-form-control.js";
+import {
+  isSvelteChartSurfaceProjection,
+  printSvelteChartSurfaceComponent,
+  printSvelteChartSurfaceHelper,
+  printSvelteChartSurfaceIndex,
+} from "./chart-surface.js";
+import {
+  printSvelteCheckboxGroupComponent,
+  printSvelteCheckboxGroupIndex,
+} from "./checkbox-group.js";
+import {
+  printSvelteColorPickerComponent,
+  printSvelteColorPickerHelper,
+  printSvelteColorPickerIndex,
+} from "./color-picker.js";
+import {
+  printSvelteCompositeMenuOverlayComponent,
+  printSvelteCompositeMenuOverlayIndex,
+} from "./composite-menu-overlay.js";
+import {
+  printSvelteControlledValuePresenceComponent,
+  printSvelteControlledValuePresenceHelper,
+  printSvelteControlledValuePresenceIndex,
+} from "./controlled-value-presence.js";
+import {
+  printSvelteDisclosurePresenceComponent,
+  printSvelteDisclosurePresenceIndex,
+} from "./disclosure-presence.js";
+import {
+  printSvelteEditableCollectionOverlayComponent,
+  printSvelteEditableCollectionOverlayIndex,
+} from "./editable-collection-overlay.js";
 import {
   printSvelteEngineViewportComponent,
   printSvelteEngineViewportIndex,
 } from "./engine-viewport.js";
 import {
-  printSvelteOptionCollectionOverlayComponent,
-  printSvelteOptionCollectionOverlayIndex,
-} from "./option-collection-overlay.js";
+  printSvelteFieldCompositionComponent,
+  printSvelteFieldCompositionIndex,
+} from "./field-composition.js";
+import {
+  printSvelteFileDropControlComponent,
+  printSvelteFileDropControlIndex,
+} from "./file-drop-control.js";
+import {
+  printSvelteFormFieldCoordinatorComponent,
+  printSvelteFormFieldCoordinatorIndex,
+} from "./form-field-coordinator.js";
+import { printSvelteGroupContextHelper } from "./group-context.js";
+import {
+  printSvelteHiddenInputVisualSlotComponent,
+  printSvelteHiddenInputVisualSlotIndex,
+} from "./hidden-input-visual-slot.js";
+import { printSvelteMediaStatusComponent, printSvelteMediaStatusIndex } from "./media-status.js";
+import {
+  printSvelteNativeDisabledComponent,
+  printSvelteNativeDisabledIndex,
+} from "./native-disabled.js";
+import {
+  printSvelteNativeInputValueComponent,
+  printSvelteNativeInputValueIndex,
+} from "./native-input-value.js";
+import {
+  printSvelteNativeOverlayComponent,
+  printSvelteNativeOverlayIndex,
+} from "./native-overlay.js";
 import {
   printSvelteNotificationSystemComponent,
   printSvelteNotificationSystemIndex,
 } from "./notification-system.js";
 import {
-  printSvelteNativeOverlayComponent,
-  printSvelteNativeOverlayIndex,
-} from "./native-overlay.js";
+  printSvelteOptionCollectionOverlayComponent,
+  printSvelteOptionCollectionOverlayIndex,
+} from "./option-collection-overlay.js";
+import {
+  printSveltePresenceFloatingOverlayComponent,
+  printSveltePresenceFloatingOverlayIndex,
+} from "./presence-floating-overlay.js";
+import { svelteAdapterPublicContract } from "./public-contract.js";
+import { printSvelteRadioComponent, printSvelteRadioIndex } from "./radio.js";
+import { printSvelteRadioGroupComponent, printSvelteRadioGroupIndex } from "./radio-group.js";
+import { printSvelteRangeControlComponent, printSvelteRangeControlIndex } from "./range-control.js";
+import { printSvelteRangeStatusComponent, printSvelteRangeStatusIndex } from "./range-status.js";
 import {
   printSvelteRepeatedDisclosureComponent,
   printSvelteRepeatedDisclosureHelper,
   printSvelteRepeatedDisclosureIndex,
 } from "./repeated-disclosure.js";
 import {
-  printSvelteGroupContextHelper,
-} from "./group-context.js";
-import { svelteAdapterPublicContract } from "./public-contract.js";
-import { printSvelteRangeControlComponent, printSvelteRangeControlIndex } from "./range-control.js";
+  printSvelteSharedViewportNavigationComponent,
+  printSvelteSharedViewportNavigationIndex,
+} from "./shared-viewport-navigation.js";
+import {
+  printSvelteSidebarComponent,
+  printSvelteSidebarHelper,
+  printSvelteSidebarIndex,
+} from "./sidebar.js";
+import { printSvelteSwitchComponent, printSvelteSwitchIndex } from "./switch.js";
+import {
+  printSvelteTimedFloatingOverlayComponent,
+  printSvelteTimedFloatingOverlayIndex,
+} from "./timed-floating-overlay.js";
+import { printSvelteToggleComponent, printSvelteToggleIndex } from "./toggle.js";
+import { printSvelteToggleGroupComponent, printSvelteToggleGroupIndex } from "./toggle-group.js";
+import {
+  printSvelteViewportMeasurementComponent,
+  printSvelteViewportMeasurementIndex,
+} from "./viewport-measurement.js";
 
 export const svelteFrameworkAdapterReadiness = defineFrameworkAdapterReadiness({
   booleanAttributeStrategy: "svelte-boolean-attribute",
@@ -150,6 +154,8 @@ export const svelteFrameworkAdapter = defineFrameworkAdapter({
       });
   },
   printComponentFile(file) {
+    if (isSvelteChartSurfaceProjection(file.component.family))
+      return printSvelteChartSurfaceComponent(file);
     if (file.component.family?.kind === "sidebar") return printSvelteSidebarComponent(file);
     if (file.component.family?.kind === "color-picker")
       return printSvelteColorPickerComponent(file);
@@ -229,6 +235,7 @@ export const svelteFrameworkAdapter = defineFrameworkAdapter({
     throw unsupportedOutput("component", undefined);
   },
   printIndexFile(file) {
+    if (isSvelteChartSurfaceProjection(file.family)) return printSvelteChartSurfaceIndex(file);
     if (file.family?.kind === "sidebar") return printSvelteSidebarIndex(file);
     if (file.family?.kind === "color-picker") return printSvelteColorPickerIndex(file);
     if (file.family?.kind === "editable-collection-overlay")
@@ -292,6 +299,8 @@ export const svelteFrameworkAdapter = defineFrameworkAdapter({
     throw unsupportedOutput("index", undefined);
   },
   printHelperFile(file) {
+    const chartHelper = printSvelteChartSurfaceHelper(file);
+    if (chartHelper) return chartHelper;
     if ((file.family as { kind?: string } | undefined)?.kind === "svelte-group-context") {
       return printSvelteGroupContextHelper(file);
     }

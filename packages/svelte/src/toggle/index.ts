@@ -4,7 +4,9 @@
  */
 
 import ToggleRoot from "./ToggleRoot.svelte";
+
 const Toggle = { Root: ToggleRoot };
+
 export { Toggle, ToggleRoot };
 export default Toggle;
 

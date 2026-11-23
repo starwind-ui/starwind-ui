@@ -105,6 +105,21 @@ In source, the target styled flow is `targetRegistration.styled.project(...)` fo
 `targetRegistration.styled.write(...)`. The project step creates target-scoped Styled Output Model
 groups; the write step sends those groups to target-local styled writer modules.
 
+Styled contracts can declare `typeParameters` with a name, constraint, and default. React
+`forwardRef` and Astro polymorphic `as` do not support these parameters. Vue supports them on
+generic components only. A generic Svelte projection declares all props inline in one
+`export type XProps = ...` declaration, without type parameters or helper aliases; the writer adds
+the parameters. The optional `slots` field names slots and the frameworks that support them.
+
+Svelte chart output uses an internal `ChartContextProvider` to pass context into mounted tooltip
+snippets. Surface snippets receive a `ChartTooltipBody` argument. The Styled container spreads
+`rest as any` because its public props carry the Root union; Root checks invalid combinations at
+runtime.
+
+Astro chart pages import the chart module in frontmatter and in a client script. An inline factory
+stays `pending` until a page script calls `createChart`. Two Vue charts in separate Astro
+`client:only` islands need explicit ids because each Vue app numbers ids separately.
+
 Primitive adapters own the functional composition that connects alternate control children to a
 Runtime controller. This includes wrapper selection, ref cleanup, control observation, and Runtime
 refresh after the composed control structure changes. Styled facades delegate that work to the
@@ -183,8 +198,8 @@ runtime data attributes, or CLI commands as part of this vocabulary cleanup.
 
 ## Current Buckets
 
-The current source-owned Runtime-backed Primitive surface contains 36 component families: 19 use
-Adapter Family Plans and 17 use Specialized Adapter Specs.
+The current source-owned Runtime-backed Primitive surface contains 37 component families: 19 use
+Adapter Family Plans and 18 use Specialized Adapter Specs.
 
 Adapter Family Plan components:
 
@@ -211,6 +226,7 @@ Adapter Family Plan components:
 Specialized Adapter Spec components:
 
 - `carousel`
+- `chart`
 - `field`
 - `slider`
 - `tabs`

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createAlertDialogConsumer } from "../../../../packages/svelte/tests/alert-dialog-consumer.js";
 import { verifyAlertDialogLifecycle } from "../../../../packages/svelte/tests/alert-dialog-browser.js";
+import { createAlertDialogConsumer } from "../../../../packages/svelte/tests/alert-dialog-consumer.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

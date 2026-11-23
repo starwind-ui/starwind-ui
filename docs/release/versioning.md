@@ -59,6 +59,8 @@ do not require browser tests or new performance captures.
 | Breaking CLI command, option, configuration, output, default, or automation contract | none                            | major with express user consent |
 | Tests, internal tooling, documentation, or private adapter work                      | none                            | none                            |
 
+Removing an API that existed only in a beta adapter, such as the Vue or Svelte beta before 1.6.0, is a minor component bump. The release notes list each removed name and the migration.
+
 An existing component change always schedules at least a `starwind` patch so users can receive the
 new bundled registry payload. The component bump does not set the CLI bump. A new stable component
 expands the CLI's installable catalog and schedules a `starwind` minor.
@@ -81,7 +83,7 @@ above.
 
 ## Next Major Checklist
 
-Before you plan a major of the Runtime, Astro, and React fixed group, read
+Before you plan a major of the Runtime fixed group, read
 [next-major.md](./next-major.md). It lists approved breaking changes that wait for that major.
 
 ## CLI Major Authority
@@ -115,33 +117,64 @@ shared version advance even when their files stay unchanged. Their adapter npm p
 release solely because Vue changed. Changes to shared Runtime behavior still follow the fixed-group
 rules below.
 
-Vue and Svelte have separate beta version histories outside the Runtime, Astro, and React fixed
-group. A normal `pnpm publish:release:dry-run` previews a manifest-derived selection for Runtime,
-Astro, React, Vue, Svelte, and CLI. A user-run `pnpm publish:release` saves that selection as an immutable
+### Vue and Svelte in the fixed group
+
+Vue and Svelte left the public beta and joined the Runtime, Astro, and React Changesets fixed group in
+the 1.6.0 release, as ADR 0007 records. Changesets
+sets every fixed-group package to the highest current group version and then applies the highest
+pending bump. Vue moved from `0.4.0` and Svelte moved from `0.3.0` straight to `1.6.0`. Neither
+package publishes a separate `1.0.0`. The first stable Vue and Svelte version is `1.6.0`.
+
+Until Changesets versions the graduation release, `main` keeps Vue `0.4.0` and Svelte `0.3.0` beside
+the group at `1.5.0`. Release metadata accepts that state only when both adapters still hold those
+exact versions and the rest of the group is at `1.5.0`. A merge that puts the beta versions back
+beside a group at `1.6.0` fails. The publisher refuses the pending state before it saves a plan or
+prepares the offline kit, because npm already has both beta versions and a plan would leave the
+adapters out. `GRADUATION_PENDING_VERSIONS` and `GRADUATION_START_GROUP_VERSION` in
+`scripts/runtime-release-policy.mjs` hold the allowance; remove them after the 1.6.0 release.
+
+A normal `pnpm publish:release:dry-run` previews a manifest-derived selection for Runtime, Astro,
+React, Vue, Svelte, and CLI. A user-run `pnpm publish:release` saves that selection as an immutable
 plan before its first npm publication. A new selection omits an exact version that already exists on
 npm. Recovery reads the original saved plan and resumes only its remaining suffix.
 
-Vue and Svelte entries in a normal plan always publish on `beta`, even when the package version has
-no SemVer prerelease suffix. Each package's `latest` stays at its captured baseline until an
-approved promotion changes it. Component versions do not set a beta package channel. Vue and Svelte
-join the fixed group when they graduate to stable, as ADR 0007 records. The graduation itself requires
-a separate approved decision. The legacy `--vue-beta` mode exists only to
-recover the frozen first `0.1.0` release; it is not an ordinary Vue release path.
+All five packages publish on the tag that the release state gives. A stable release uses `latest`.
+When a stable Vue or Svelte version publishes, finalization points that package's old `beta`
+dist-tag at the new stable version and reads it back. A `beta` tag that points at a newer
+prerelease stays. Pointing the tag keeps `npm install @starwind-ui/vue@beta` from older guides
+working, and it installs the stable package. Removing the tag would make those commands fail. A
+prerelease on another channel keeps the captured `latest` baseline.
+
+The tag moves again on every stable release, for both packages. Each move is an npm write, so npm
+can ask for a one-time password or a web login partway through `pnpm publish:release`, after the
+packages publish. If the move fails, the Git tag, the GitHub release and the offline kit wait. Run
+the same publication command again. It skips a `beta` tag that already matches and finishes the
+remaining steps.
+
+Vue and Svelte depend on `@starwind-ui/runtime` through `workspace:*`, as Astro and React do. pnpm
+publishes that as the exact Runtime version of the same release. The CLI registry gives every
+target the same caret ranges: `^<group version>` for the adapter package and for direct Runtime
+requirements, vendored Primitives included.
+
+Publishing the group together does not make a project resolve one Runtime. A fresh install gets the
+adapter and Runtime from the same release, so the adapter's exact Runtime pin dedupes to one copy.
+A project whose lockfile holds an older adapter can still get a second copy. For example, Vue
+`1.6.0` pins Runtime `1.6.0`, and a direct `^1.6.0` Runtime requirement can resolve `1.6.1`. Two
+copies do not share Runtime state such as overlay dismissal. The CLI keeps the registry range for a
+direct Runtime requirement. To align a project by hand, update the adapter and the Runtime in one command, for
+example `pnpm add @starwind-ui/vue@^1.6.1 @starwind-ui/runtime@^1.6.1`.
+
+### Beta history
+
+Before graduation, Vue and Svelte had separate beta version histories and published on `beta`, even
+for versions without a SemVer prerelease suffix. Saved plans from that period record those tags and
+each package's `latest` baseline, and recovery still reads them. The legacy `--vue-beta` mode exists
+only to recover the frozen first `0.1.0` release; it is not an ordinary Vue release path.
 
 npm assigns `latest` to the first version of a new package, even when that publication uses
-`--tag beta`. The plan records the missing `latest` baseline before a first publication.
-Finalization then accepts `latest` at the published version for an approved first beta version.
-The approved versions are Vue `0.1.0` and Svelte `0.1.0`.
-
-The first Vue publication is historical: it published Vue `0.1.0` on `beta` and set `latest` to
-`0.1.0` because no prior `latest` existed. It also published CLI `3.3.0`. The first Svelte
-publication is `0.1.0` on `beta`, and npm sets its `latest` to `0.1.0` for the same reason. Later
-beta publications must preserve the existing `latest` value.
-
-Vue and Svelte each pin `@starwind-ui/runtime` to one exact version. The CLI registry uses that pin
-for every direct Runtime requirement on these targets, including vendored Primitives. A wider range
-could install a newer Runtime beside the copy that the adapter uses. Astro and React keep caret
-requirements because their adapter ranges and Runtime move together in the fixed group.
+`--tag beta`. Finalization accepts `latest` at the published version for the approved first beta
+versions, Vue `0.1.0` and Svelte `0.1.0`. The first Vue publication published Vue `0.1.0` on `beta`
+and CLI `3.3.0`.
 
 ## Release preparation and verification
 
@@ -158,6 +191,10 @@ archives under `node_modules/.cache/starwind-release/packs/`. Each archive has i
 manifest and SHA-256 recorded in `manifest.json`. Both complete host matrices use these archives
 with two workers. Vue hosts run in separate processes. Use `--concurrency 1` on either acceptance
 command when diagnosing a host failure.
+
+The gate also runs the Chart suites. The parity and Styled browser suites run in the tests lane with
+four browser workers. The gallery check runs last in the demo lane and uses the gate build. CI does
+not run these suites.
 
 The gate writes stage timings and completed checks to
 `node_modules/.cache/starwind-release/gate.json`. A later invocation reuses a completed prefix only
@@ -188,15 +225,15 @@ publication.
 
 ## Publication plans and GitHub releases
 
-The saved plan records package order, exact versions, tags, and each beta package's `latest` baseline before the
-first npm publication. It is stored under
+The saved plan records package order, exact versions, tags, and the `latest` baseline of each Vue
+or Svelte entry on a channel other than `latest` before the first npm publication. It is stored under
 `node_modules/.cache/starwind-release/publication-plans/<head>.json`. A plan can contain any changed
 subset of Runtime, Astro, React, Vue, Svelte, and CLI. Older Vue-only plans retain their original snapshot.
 
 Finalization creates one GitHub release from the same plan. A plan with a CLI package uses
 `v<cli-version>`. A plan with Runtime and no CLI uses `runtime-v<runtime-version>`. Vue-only and
-Svelte-only plans use `vue-v<vue-version>` and `svelte-v<svelte-version>`. Both create a prerelease
-GitHub release with `latest` set to `false`.
+Svelte-only plans use `vue-v<vue-version>` and `svelte-v<svelte-version>`. A plan on a channel other
+than `latest` creates a prerelease GitHub release with `latest` set to `false`.
 The publisher finalizes automatically after all plan entries publish. Use standalone
 `pnpm release:finalize` only when npm publication completed but finalization failed.
 

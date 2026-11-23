@@ -45,6 +45,7 @@ const {
 </div>
 
 <script>
+  import { keepPortalDirection, readDirection } from "@/lib/utils/starwind/direction";
   import {
     type FloatingAlign,
     type FloatingSide,
@@ -88,6 +89,7 @@ const {
   };
 
   class PopoverHandler {
+    private releaseDirection?: ReturnType<typeof keepPortalDirection>;
     private popover: HTMLElement;
     private trigger: HTMLElement | null;
     private content: HTMLElement | null;
@@ -125,7 +127,7 @@ const {
       }
 
       this.openOnHover = this.popover.getAttribute("data-open-on-hover") === "true";
-      const closeDelay = parseInt(this.popover.getAttribute("data-close-delay") || "200");
+      const closeDelay = Number.parseInt(this.popover.getAttribute("data-close-delay") || "200");
       if (Number.isFinite(closeDelay) && closeDelay >= 0) {
         this.hoverCloseDelay = closeDelay;
       }
@@ -146,9 +148,9 @@ const {
 
       const animationDurationString = this.content.style.animationDuration;
       if (animationDurationString.endsWith("ms")) {
-        this.animationDuration = parseFloat(animationDurationString);
+        this.animationDuration = Number.parseFloat(animationDurationString);
       } else if (animationDurationString.endsWith("s")) {
-        this.animationDuration = parseFloat(animationDurationString) * 1000;
+        this.animationDuration = Number.parseFloat(animationDurationString) * 1000;
       }
 
       const contentSide = this.content.getAttribute("data-side");
@@ -166,7 +168,9 @@ const {
         this.align = contentAlign;
       }
 
-      const contentSideOffset = parseFloat(this.content.getAttribute("data-side-offset") || "4");
+      const contentSideOffset = Number.parseFloat(
+        this.content.getAttribute("data-side-offset") || "4",
+      );
       if (Number.isFinite(contentSideOffset)) {
         this.sideOffset = contentSideOffset;
       }
@@ -651,6 +655,9 @@ const {
       this.contentPlaceholder = document.createComment("popover-content-placeholder");
       this.content.parentNode?.insertBefore(this.contentPlaceholder, this.content);
 
+      this.releaseDirection = keepPortalDirection(this.popover, this.content, () =>
+        this.positionContent(),
+      );
       portalTarget.appendChild(this.content);
       this.portalTarget = portalTarget;
 
@@ -677,6 +684,8 @@ const {
     }
 
     private unportalContent() {
+      this.releaseDirection?.destroy();
+      this.releaseDirection = undefined;
       if (!this.content) return;
 
       this.cleanupAutoUpdate?.();
@@ -706,7 +715,10 @@ const {
       const viewportHeight = window.innerHeight;
       const viewportPadding = 8;
 
+      this.releaseDirection?.sync();
+      const direction = readDirection(this.content);
       const resolvedPlacement = resolvePlacement({
+        direction,
         side: this.side,
         align: this.align,
         sideOffset: this.sideOffset,
@@ -735,6 +747,7 @@ const {
       this.content.style.transformOrigin = getTransformOrigin(
         resolvedPlacement.side,
         resolvedPlacement.align,
+        direction,
       );
       this.content.setAttribute("data-side", resolvedPlacement.side);
       this.content.setAttribute("data-align", resolvedPlacement.align);

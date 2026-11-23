@@ -63,6 +63,28 @@ describe("generated Vue Sidebar Primitive", () => {
     expect(adapter).not.toMatch(/componentName[^\n]*sidebar|sidebar[^\n]*componentName/i);
   });
 
+  it("returns null outside a Provider and keeps the part fallback internal", async () => {
+    const output = await generateSidebar();
+    const context = output.get("SidebarContext.ts")!;
+    const index = output.get("index.ts")!;
+
+    expect(context).not.toContain("throw");
+    expect(compactCode(context)).toContain(
+      compactCode("const useSidebarContext = (): SidebarContextValue | null =>"),
+    );
+    expect(context).toMatch(/export \{ SidebarContext, useSidebarContext \};/);
+    expect(index).not.toContain("useSidebarState");
+    for (const name of [
+      "Sidebar.vue",
+      "SidebarTrigger.vue",
+      "SidebarRail.vue",
+      "SidebarMenuButton.vue",
+    ]) {
+      expect(output.get(name), name).toContain("useSidebarState()");
+      expect(output.get(name), name).not.toContain("useSidebarContext");
+    }
+  });
+
   async function generateSidebar(): Promise<Map<string, string>> {
     const outputRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-sidebar-"));
     temporaryRoots.push(outputRoot);

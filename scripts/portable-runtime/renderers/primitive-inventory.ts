@@ -1,5 +1,5 @@
-import { runtimeAdapterContracts } from "../contracts/primitive/representatives.js";
 import { colorPickerRuntimeFacade } from "../contracts/primitive/color-picker.js";
+import { runtimeAdapterContracts } from "../contracts/primitive/representatives.js";
 import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
 import type { PrimitiveGeneratorSource } from "./primitive-generator-types.js";
 
@@ -9,6 +9,12 @@ export type PrimitiveRuntimeFacadeInventory = {
   types?: readonly string[];
   values?: readonly string[];
 };
+
+/**
+ * Framework targets that generate a primitive before every target supports it. Omit it for a
+ * primitive that every target generates. Remove a target limit when that target gains support.
+ */
+export type PrimitiveInventoryTargetGate = readonly string[];
 
 export type PrimitiveRuntimeAdapterInventoryEntry = {
   cliVendoring: true;
@@ -21,6 +27,7 @@ export type PrimitiveRuntimeAdapterInventoryEntry = {
   kind: "runtime-adapter-contract";
   packageExport: true;
   runtimeFacades?: PrimitiveRuntimeFacadeInventory;
+  targets?: PrimitiveInventoryTargetGate;
 };
 
 export type PrimitiveManualHelperFacadeInventoryEntry = {
@@ -43,6 +50,7 @@ type PrimitiveRuntimeAdapterInventoryFact = {
   component: string;
   generation: PrimitiveRuntimeAdapterInventoryEntry["generation"];
   runtimeFacades?: PrimitiveRuntimeFacadeInventory;
+  targets?: PrimitiveInventoryTargetGate;
 };
 
 const primitiveRuntimeAdapterFacts = [
@@ -76,6 +84,12 @@ const primitiveRuntimeAdapterFacts = [
       types: ["CarouselInstance", "CarouselOptions"],
       values: ["createCarousel"],
     },
+  },
+  {
+    // Chart helper types live on the `@starwind-ui/runtime/chart` subpath, so the chart index
+    // exports them itself instead of through root runtime facades.
+    component: "chart",
+    generation: { source: "specialized-adapter-spec", strategy: "specialized-adapter-spec" },
   },
   {
     component: "checkbox",
@@ -332,6 +346,7 @@ const primitiveVendoringComponentOrder: readonly string[] = [
   "combobox",
   "color-picker",
   "toast",
+  "chart",
 ] as const;
 
 const runtimeAdapterContractByComponent = new Map<string, RuntimeAdapterContract>(
@@ -390,6 +405,23 @@ export function getPrimitiveHelperExportNames(): string[] {
 
 export function getPrimitivePackageExportNames(): string[] {
   return primitiveInventory.filter((entry) => entry.packageExport).map((entry) => entry.component);
+}
+
+/** Whether a framework target generates the primitive. A primitive without a target gate is everywhere. */
+export function isPrimitiveInventoryComponentAvailableForTarget(
+  component: string,
+  target: string,
+): boolean {
+  const entry = getPrimitiveInventoryEntry(component);
+  if (!entry || entry.kind !== "runtime-adapter-contract" || !entry.targets) return true;
+  return entry.targets.includes(target);
+}
+
+/** Package export names that a framework target generates, in inventory order. */
+export function getPrimitivePackageExportNamesForTarget(target: string): string[] {
+  return getPrimitivePackageExportNames().filter((component) =>
+    isPrimitiveInventoryComponentAvailableForTarget(component, target),
+  );
 }
 
 export function getPrimitiveRuntimeFacadeTypeNames(component: string): string[] {

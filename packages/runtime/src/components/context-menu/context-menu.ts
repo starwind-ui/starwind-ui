@@ -1,3 +1,4 @@
+import { readDirection } from "../../internal/direction";
 import { assertHTMLElement, readBooleanAttribute, readDisabledAttribute } from "../../internal/dom";
 import { shared } from "../../internal/shared";
 import {
@@ -187,7 +188,8 @@ class ContextMenuController implements ContextMenuInstance {
 
           event.preventDefault();
           const rect = trigger.getBoundingClientRect();
-          this.openAtPoint(rect.left, rect.bottom, { event, focusFirstItem: true, trigger });
+          const inlineStart = readDirection(trigger) === "rtl" ? rect.right : rect.left;
+          this.openAtPoint(inlineStart, rect.bottom, { event, focusFirstItem: true, trigger });
         },
         { signal },
       );

@@ -1,4 +1,7 @@
+import { ButtonRoot } from "@starwind-ui/vue/button";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type ComponentPublicInstance,
   createApp,
   createSSRApp,
   defineComponent,
@@ -6,12 +9,8 @@ import {
   nextTick,
   reactive,
   ref,
-  type ComponentPublicInstance,
 } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import { ButtonRoot } from "@starwind-ui/vue/button";
 
 type ButtonExposed = ComponentPublicInstance & {
   element: HTMLButtonElement | null;

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type FloatingPositioner } from "../../src/internal/floating";
+import type { FloatingPositioner } from "../../src/internal/floating";
 import { createFloatingDisclosureLifecycle } from "../../src/internal/floating-disclosure";
 import {
   reportPortalPlacement,

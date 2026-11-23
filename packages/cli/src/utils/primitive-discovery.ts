@@ -1,10 +1,10 @@
+import { sortComponentPresentationByName } from "./component-presentation.js";
 import {
   getConfigState,
   type StarwindConfigFor,
   type StarwindConfigStateFor,
   type StarwindFramework,
 } from "./config.js";
-import { sortComponentPresentationByName } from "./component-presentation.js";
 import {
   type CliFrameworkTarget,
   type FrameworkTargetPolicy,

@@ -9,10 +9,10 @@
 
 <script lang="ts">
   let {
-    "align": align,
+    align,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: InputGroupAddonProps = $props();
 </script>

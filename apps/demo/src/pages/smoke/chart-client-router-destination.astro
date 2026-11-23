@@ -1,0 +1,23 @@
+---
+import { ClientRouter } from "astro:transitions";
+
+import ChartExamples from "@/components/demos/chart/ChartExamples.astro";
+import "@/styles/global.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Chart client router smoke destination</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <main class="mx-auto max-w-5xl p-6">
+      <h1>Chart client router smoke destination</h1>
+      <a href="/smoke/chart-client-router-start/">Back to the start page</a>
+      <ChartExamples />
+    </main>
+  </body>
+</html>

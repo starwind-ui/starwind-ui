@@ -15,7 +15,7 @@ const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(function TabsLi
   { children, activateOnFocus = false, loopFocus = true, ...rest },
   ref,
 ) {
-  const { orientation, value: selected } = useTabsContext();
+  const { orientation } = useTabsContext();
   return (
     <div
       {...rest}

@@ -4,6 +4,7 @@ import type {
   AdapterPresenceFloatingOverlayComponentProjection,
   AdapterPresenceFloatingOverlayFacts,
 } from "../../framework-adapters/types.js";
+import { getAdapterChildElements } from "../../framework-adapters/types.js";
 import { withAcceptedModelPublications } from "../../primitive-output-model/accepted-model-publication.js";
 import type { AdapterOutputFamilyPlan } from "../adapter-family-plans.js";
 import type { GenericAdapterPlan } from "../types.js";
@@ -24,7 +25,6 @@ import {
   pluralizeDisplayName,
   toPascalCase,
 } from "./toolkit.js";
-import { getAdapterChildElements } from "../../framework-adapters/types.js";
 
 export const presenceFloatingOverlayAdapterFamilyPlan = {
   buildOutputModel: buildPresenceFloatingOverlayOutputModel,

@@ -6,13 +6,13 @@ import type {
   AdapterTimedFloatingOverlayComponentProjection,
   AdapterTimedFloatingOverlayFacts,
 } from "../framework-adapters/index.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 import { withAcceptedModelPublications } from "../primitive-output-model/accepted-model-publication.js";
 import {
   buildBaseSpecializedAdapterSpec,
   validateSpecializedAdapterSpec,
 } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec } from "./types.js";
-import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type TooltipSpecializedAdapterSpec = SpecializedAdapterSpec & {
   sourcePrimitiveContract: RuntimeAdapterContract;

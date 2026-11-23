@@ -452,6 +452,209 @@ describe.sequential("runtime component installs", () => {
     );
   });
 
+  describe("chart tokens", () => {
+    const chartRegistry: NormalizedStarwindRegistry = {
+      ...registryFixture,
+      components: [
+        ...registryFixture.components,
+        {
+          ...registryFixture.components[0]!,
+          name: "chart",
+          version: "1.0.0",
+          sourceVersion: "1.0.0",
+          targets: {
+            react: {
+              files: [
+                {
+                  path: "src/components/starwind/chart/index.tsx",
+                  content: "export function ChartContainer() { return null; }\n",
+                },
+              ],
+              componentDependencies: [],
+              packageRequirements: [{ name: "@starwind-ui/react", range: "^1.0.0" }],
+            },
+          },
+        },
+      ],
+    };
+    const cssPath = "src/styles/starwind.css";
+    const legacyCss = ":root {\n  --background: white;\n}\n";
+
+    beforeEach(async () => {
+      mockLoadRegistry.mockResolvedValue(chartRegistry);
+      await mkdir(join(tempDir, "src", "styles"), { recursive: true });
+    });
+
+    it("adds missing chart tokens after installing chart and reports them", async () => {
+      await writeFile(cssPath, legacyCss, "utf-8");
+
+      const result = await installRuntimeComponents(["chart"], {
+        config: runtimeConfig,
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+
+      expect(result.installed).toEqual([{ name: "chart", status: "installed", version: "1.0.0" }]);
+      expect(result.chartTokens).toEqual({
+        status: "added",
+        cssPath,
+        added: [
+          {
+            block: "@theme inline",
+            tokens: [
+              "--color-chart-1",
+              "--color-chart-2",
+              "--color-chart-3",
+              "--color-chart-4",
+              "--color-chart-5",
+            ],
+          },
+          {
+            block: ":root",
+            tokens: ["--chart-1", "--chart-2", "--chart-3", "--chart-4", "--chart-5"],
+          },
+          {
+            block: ".dark",
+            tokens: ["--chart-1", "--chart-2", "--chart-3", "--chart-4", "--chart-5"],
+          },
+        ],
+      });
+      const css = await readFile(cssPath, "utf-8");
+      expect(
+        css.startsWith(":root {\n  --background: white;\n\n  --chart-1: var(--color-blue-300);"),
+      ).toBe(true);
+
+      const second = await installRuntimeComponents(["chart"], {
+        config: runtimeConfig,
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+      expect(second.chartTokens).toEqual({ status: "unchanged", cssPath });
+      await expect(readFile(cssPath, "utf-8")).resolves.toBe(css);
+    });
+
+    it("keeps the Next Pages style import and the chart tokens in the same stylesheet", async () => {
+      await writeFile(
+        "package.json",
+        JSON.stringify({ dependencies: { next: "^16.3.0", react: "^19.2.0" } }),
+        "utf-8",
+      );
+      await mkdir("pages", { recursive: true });
+      await mkdir("styles", { recursive: true });
+      await writeFile(
+        "pages/_app.tsx",
+        'import "@/styles/globals.css";\nexport default function App() { return null; }\n',
+        "utf-8",
+      );
+      await writeFile("styles/globals.css", '@import "./starwind.css";\n', "utf-8");
+      const stylesheet =
+        '@import "tailwindcss";\n@import "tw-animate-css";\n:root {\n  --background: white;\n}\n';
+      await writeFile("styles/starwind.css", stylesheet, "utf-8");
+      mockLoadRegistry.mockResolvedValue({
+        ...chartRegistry,
+        components: [
+          {
+            ...chartRegistry.components[1]!,
+            targets: {
+              react: {
+                files: [
+                  {
+                    path: "src/components/starwind/chart/Chart.tsx",
+                    content:
+                      '"use client";\n\nimport "./styles.css";\nexport function ChartContainer() { return null; }\n',
+                  },
+                  {
+                    path: "src/components/starwind/chart/styles.css",
+                    content: "[data-slot=chart] { display: block; }\n",
+                  },
+                ],
+                componentDependencies: [],
+                packageRequirements: [{ name: "@starwind-ui/react", range: "^1.0.0" }],
+              },
+            },
+          },
+        ],
+      });
+
+      const result = await installRuntimeComponents(["chart"], {
+        config: {
+          ...runtimeConfig,
+          tailwind: { ...runtimeConfig.tailwind, css: "styles/starwind.css" },
+          componentDir: "components/starwind",
+          utilsDir: "lib/utils",
+        },
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+
+      expect(result.failed).toEqual([]);
+      expect(result.chartTokens?.status).toBe("added");
+      const css = await readFile("styles/starwind.css", "utf-8");
+      expect(css).toContain('@import "../components/starwind/chart/styles.css";');
+      expect(css).toContain("  --background: white;\n\n  --chart-1: var(--color-blue-300);");
+      expect(css).toContain("@theme inline {\n  --color-chart-1: var(--chart-1);");
+      expect(css).toContain(".dark {\n  --chart-1: var(--color-blue-300);");
+    });
+
+    it("does not touch the CSS file when chart is not installed", async () => {
+      await writeFile(cssPath, legacyCss, "utf-8");
+
+      const result = await installRuntimeComponents(["button"], {
+        config: runtimeConfig,
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+
+      expect(result.chartTokens).toBeUndefined();
+      await expect(readFile(cssPath, "utf-8")).resolves.toBe(legacyCss);
+    });
+
+    it("skips the token step when the chart install is skipped", async () => {
+      await writeFile(cssPath, legacyCss, "utf-8");
+      const destination = join(tempDir, "src", "components", "starwind", "chart", "index.tsx");
+      await mkdir(dirname(destination), { recursive: true });
+      await writeFile(destination, "export const locallyCustomized = true;\n", "utf-8");
+
+      const result = await installRuntimeComponents(["chart"], {
+        config: runtimeConfig,
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+
+      expect(result.skipped.map(({ name }) => name)).toEqual(["chart"]);
+      expect(result.chartTokens).toBeUndefined();
+      await expect(readFile(cssPath, "utf-8")).resolves.toBe(legacyCss);
+    });
+
+    it("finishes the chart install and returns the token block when the CSS cannot be parsed", async () => {
+      const brokenCss = ":root {\n  --background: white;\n";
+      await writeFile(cssPath, brokenCss, "utf-8");
+
+      const result = await installRuntimeComponents(["chart"], {
+        config: runtimeConfig,
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+
+      expect(result.installed.map(({ name }) => name)).toEqual(["chart"]);
+      expect(result.chartTokens).toMatchObject({
+        status: "failed",
+        cssPath,
+        error: "The CSS file has an unclosed block.",
+      });
+      expect(result.chartTokens?.status === "failed" && result.chartTokens.block).toContain(
+        "--chart-5: var(--color-blue-800);",
+      );
+      await expect(readFile(cssPath, "utf-8")).resolves.toBe(brokenCss);
+      expect(mockUpdateConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          components: [expect.objectContaining({ name: "chart", version: "1.0.0" })],
+        }),
+        { appendComponents: true },
+      );
+    });
+  });
+
   it("installs metadata without rewriting byte-identical styled files", async () => {
     const destination = join(tempDir, "src", "components", "starwind", "button", "index.tsx");
     await mkdir(dirname(destination), { recursive: true });
@@ -2404,7 +2607,7 @@ describe.sequential("runtime component installs", () => {
     );
   });
 
-  it("installs the exact generated Vue representative payload and dependency closure", async () => {
+  it("installs the generated Vue representative payload and dependency closure", async () => {
     const vueConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> = {
       ...runtimeConfig,
       framework: "astro",
@@ -2448,9 +2651,9 @@ describe.sequential("runtime component installs", () => {
       file.path.endsWith("/ThemeToggle.vue"),
     )!.content!;
     expect(themeToggle.targets!.vue!.packageRequirements).toEqual([
-      { name: "@starwind-ui/vue", range: vuePackage.version },
+      { name: "@starwind-ui/vue", range: `^${vuePackage.version}` },
       { name: "tailwind-variants", range: "^3.2.2" },
-      { name: "vue", range: ">=3.5" },
+      { name: "vue", range: ">=3.5.21" },
     ]);
     expect(themeToggleSource).toContain('from "@starwind-ui/vue/theme"');
     expect(themeToggleSource).toContain(":data-slot=\"dataSlot || 'theme-toggle'\"");
@@ -2469,7 +2672,13 @@ describe.sequential("runtime component installs", () => {
     ).toContain('from "@starwind-ui/vue/combobox"');
 
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      [`@starwind-ui/vue@${vuePackage.version}`, "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      [
+        `@starwind-ui/vue@^${vuePackage.version}`,
+        "tailwind-variants@^3.2.2",
+        "vue@>=3.5.21",
+        // Only the closure members with logical classes declare the tailwind-merge floor.
+        "tailwind-merge@^3.7.0",
+      ],
       "pnpm",
     );
     expect(mockUpdateConfig).toHaveBeenCalledWith(

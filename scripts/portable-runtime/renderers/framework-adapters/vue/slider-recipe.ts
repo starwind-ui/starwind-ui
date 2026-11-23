@@ -32,7 +32,7 @@ const props=withDefaults(defineProps<{${props
 const modelValue=defineModel<SliderValue>();const emit=defineEmits<{valueChange:[value:SliderValue,detail:SliderValueChangeDetails];valueCommitted:[value:SliderValue,detail:SliderValueCommitDetails]}>();
 const attrs=useAttrs(),element=ref<HTMLDivElement|null>(null);defineExpose({element});
 const initialDefaultValue=${initialDefault},localValue=ref<SliderValue>(${initialModel});
-const renderedValue=computed(()=>modelValue.value??localValue.value);
+const owned=modelValue.value===undefined,renderedValue=computed(()=>owned?localValue.value:modelValue.value??localValue.value);
 let connection:ReturnType<typeof connectSlider>|undefined;
 ${connection}
 onMounted(()=>{if(element.value)connection=connectSlider(element.value);});

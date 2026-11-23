@@ -8,8 +8,6 @@ import type {
 } from "../types.js";
 import { printSvelteRefAttachment } from "./attachments.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 export function printSvelteRangeControlIndex(file: AdapterIndexFile): AdapterPrintedFile {
   const family = file.family;
   if (family?.kind !== "range-control") {
@@ -24,8 +22,7 @@ export function printSvelteRangeControlIndex(file: AdapterIndexFile): AdapterPri
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -84,8 +81,7 @@ function printSimplePart(
 function printThumb(facts: AdapterRangeControlFacts): string {
   const part = facts.parts.thumb;
   const index = facts.props.index.name;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
@@ -139,8 +135,7 @@ function printPart({
   htmlType: string;
   part: { defaultElement: string; name: string };
 }): string {
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";

@@ -141,6 +141,28 @@ export const fieldRuntimeAdapterContract = {
       targets: ["error"],
       type: '"children" | "validation"',
     },
+    // Control renders the Input element, so Input owns its value props.
+    {
+      name: "value",
+      kind: "control",
+      targets: ["control"],
+      forwardedTo: { component: "input", part: "root" },
+      type: "InputValue",
+    },
+    {
+      name: "defaultValue",
+      kind: "control",
+      targets: ["control"],
+      forwardedTo: { component: "input", part: "root" },
+      type: "InputValue",
+    },
+    {
+      name: "onValueChange",
+      kind: "callback",
+      targets: ["control"],
+      forwardedTo: { component: "input", part: "root" },
+      type: "InputValueChangeDetails",
+    },
   ],
   stateModels: [
     {

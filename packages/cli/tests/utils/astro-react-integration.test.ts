@@ -2,13 +2,13 @@ import * as p from "@clack/prompts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as astroConfig from "../../src/utils/astro-config.js";
-import * as fsUtils from "../../src/utils/fs.js";
-import * as packageManager from "../../src/utils/package-manager.js";
-import * as tsconfig from "../../src/utils/tsconfig.js";
 import {
   ensureAstroReactIntegration,
   preflightAstroReactIntegration,
 } from "../../src/utils/astro-react-integration.js";
+import * as fsUtils from "../../src/utils/fs.js";
+import * as packageManager from "../../src/utils/package-manager.js";
+import * as tsconfig from "../../src/utils/tsconfig.js";
 
 vi.mock("@clack/prompts");
 vi.mock("../../src/utils/astro-config.js");

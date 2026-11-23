@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createDistConsumer, type DistConsumer } from "./dist-consumer.js";
@@ -49,7 +49,7 @@ void SelectVariants.selectTrigger;
 <Select.Root {...options} bind:open bind:value onOpenChange={(next, detail) => { const flag: boolean = next; void flag; detail.cancel(); }} onValueChange={(next, detail) => { const selected: string | null = next; void selected; detail.cancel(); }}>
   <Select.Trigger {ref} popovertarget="target" size="lg" onclick={(event) => { const button: HTMLButtonElement = event.currentTarget; void button; }}>
     {#snippet child({ props, children })}<Button {...props} variant="outline">{@render children?.()}</Button>{/snippet}
-    <Select.Value placeholder="Choose">{#snippet children(label, selected)}{label ?? selected ?? "Empty"}{/snippet}</Select.Value>
+    <Select.Value placeholder="Choose">{value ?? "Empty"}</Select.Value>
   </Select.Trigger>
   <Select.Trigger>{#snippet icon()}<span>⌄</span>{/snippet}</Select.Trigger>
   <Select.Content {...placement}>

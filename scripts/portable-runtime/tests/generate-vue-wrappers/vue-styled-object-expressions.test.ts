@@ -99,12 +99,12 @@ describe("generic Vue Styled object expressions", () => {
     await expectVueTypecheck(root, outputRoot);
   });
 
-  it("uses the same object-expression projection for Aspect Ratio", async () => {
+  it("keeps the caller style after the reactive Aspect Ratio default", async () => {
     const { outputRoot, root } = await generate([aspectRatioStyledContract]);
     const source = await readFile(path.join(outputRoot, "aspect-ratio", "AspectRatio.vue"), "utf8");
 
     expect(compactCode(source)).toContain(
-      compactCode("const wrapperStyle = computed(() => ({ paddingBottom: `${100 / ratio}%` }));"),
+      compactCode('const ratioStyle = computed(() => [{ "--ratio": ratio }, style]);'),
     );
     await expectVueTypecheck(root, outputRoot);
   });

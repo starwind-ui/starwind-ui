@@ -3,9 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import ts from "typescript";
 import { defineConfig } from "vitest/config";
-
-import { compileVueSfc } from "../tsup.config.js";
 import { vuePrimitiveComponents } from "../../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.js";
+import { compileVueSfc } from "../tsup.config.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const vueSubpathPattern = vuePrimitiveComponents.map(escapeRegExp).join("|");

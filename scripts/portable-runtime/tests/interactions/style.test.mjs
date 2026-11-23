@@ -8,7 +8,7 @@ const stylesheet = readFileSync(
 );
 
 it("removes hidden items from layout and restores their 32-pixel flex rows when shown", async () => {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await page.setContent(`

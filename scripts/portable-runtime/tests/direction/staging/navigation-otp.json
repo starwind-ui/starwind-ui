@@ -1,0 +1,9 @@
+{
+  "cohort": "navigation-otp",
+  "caseIds": [
+    "navigation-otp-raw-input-otp",
+    "navigation-otp-raw-navigation-menu",
+    "navigation-otp-styled-input-otp",
+    "navigation-otp-styled-navigation-menu"
+  ]
+}

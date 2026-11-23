@@ -3,10 +3,11 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
+    // Path aliases pull Runtime sources from ../runtime, so sources span packages/.
+    "rootDir": "..",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
       "@starwind-ui/runtime": ["../runtime/src/index.ts"],
       "@starwind-ui/runtime/init-starwind": ["../runtime/src/init-starwind.ts"],

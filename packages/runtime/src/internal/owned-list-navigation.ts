@@ -198,7 +198,7 @@ export function createOwnedListNavigation(
     }: { direction?: 1 | -1; focus?: boolean; force?: boolean } = {},
   ): HTMLElement | null {
     const currentItems = getItems({ force });
-    if (currentItems.length === 0 || currentItems.every((item) => !isNavigable(item))) return null;
+    if (currentItems.every((item) => !isNavigable(item))) return null;
 
     let nextIndex = normalizeIndex(index, currentItems.length);
     for (let offset = 0; offset < currentItems.length; offset += 1) {

@@ -10,15 +10,15 @@
 
 <script lang="ts">
   let {
-    "defaultValue": defaultValue,
-    "orientation": orientation = "horizontal",
-    "syncKey": syncKey,
+    defaultValue,
+    orientation = "horizontal",
+    syncKey,
     "class": className,
-    "ref": ref,
-    "children": children,
+    ref,
+    children,
     value = $bindable(),
     "value": commandValue,
-    "onValueChange": onValueChange,
+    onValueChange,
     ...rest
   }: TabsProps = $props();
 </script>

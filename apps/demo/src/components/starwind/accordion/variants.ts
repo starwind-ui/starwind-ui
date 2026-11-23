@@ -19,7 +19,7 @@ export const accordionTrigger = tv({
   base: [
     "starwind-accordion-trigger",
     "flex w-full items-center justify-between gap-4 rounded-md py-4",
-    "hover:text-muted-foreground text-left font-medium transition-all",
+    "hover:text-muted-foreground text-start font-medium transition-all",
     "[&[data-state=open]>svg]:rotate-180",
     "focus-visible:border-outline focus-visible:ring-outline/50 outline-none focus-visible:ring-3",
   ],

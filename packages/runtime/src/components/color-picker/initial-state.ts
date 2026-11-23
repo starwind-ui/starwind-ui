@@ -1,8 +1,8 @@
 import {
   COLOR_PICKER_FORMATS,
-  parseColor,
   type ColorPickerColor,
   type ColorPickerFormat,
+  parseColor,
 } from "./color-picker";
 
 export const COLOR_PICKER_INITIAL_PARTS = [
@@ -689,8 +689,8 @@ function projection(
       ...normalizeProjectedAttributes(values.attributes),
       ...(marker === undefined ? {} : { [COLOR_PICKER_INITIAL_OWNERSHIP_ATTRIBUTE]: marker }),
     }),
-    properties: Object.freeze({ ...(values.properties ?? {}) }),
-    styles: Object.freeze({ ...(values.styles ?? {}) }),
+    properties: Object.freeze({ ...values.properties }),
+    styles: Object.freeze({ ...values.styles }),
     ownership,
     ...(values.text === undefined ? {} : { text: values.text }),
   });

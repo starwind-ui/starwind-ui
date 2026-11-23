@@ -11,8 +11,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "placeholder": placeholder,
-    "children": children,
+    placeholder,
+    children,
     ...rest
   }: ComboboxValueProps = $props();
 </script>

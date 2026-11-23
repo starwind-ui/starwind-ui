@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as PopoverPrimitive from "@starwind-ui/vue/popover";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { popoverTitle } from "./variants";
 
 defineOptions({ inheritAttrs: false });

@@ -2,6 +2,7 @@
   import ColorPickerReview from "$lib/review/ColorPickerReview.svelte";
   import ToastReview from "$lib/review/ToastReview.svelte";
   import CarouselReview from "$lib/review/CarouselReview.svelte";
+  import ChartReview from "$lib/review/ChartReview.svelte";
   import ComboboxReview from "$lib/review/ComboboxReview.svelte";
   import NavigationMenuReview from "$lib/review/NavigationMenuReview.svelte";
   import ContextMenuReview from "$lib/review/ContextMenuReview.svelte";
@@ -60,6 +61,7 @@
     "color-picker": ColorPickerReview,
     toast: ToastReview,
     carousel: CarouselReview,
+    chart: ChartReview,
     combobox: ComboboxReview,
     "navigation-menu": NavigationMenuReview,
     "context-menu": ContextMenuReview,
@@ -130,6 +132,7 @@
       Use Tab to check focus, then try each labeled example.
     </p>
     <a href="/review/portals/">Explore portal compositions ↗</a>
+    <a href="/review/charts/area/">Open the chart gallery ↗</a>
     <nav class="catalog-nav" aria-label="Styled components">
       {#each data.catalog as entry (entry.component)}
         <a href={`#${entry.component}-review`} data-styled-component={entry.component}>

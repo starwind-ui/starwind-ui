@@ -12,10 +12,10 @@
 <script lang="ts">
   let {
     "class": className,
-    "side": side = "right",
-    "children": children,
-    "backdrop": backdrop,
-    "icon": icon,
+    side = "right",
+    children,
+    backdrop,
+    icon,
     ...rest
   }: SheetContentProps = $props();
 </script>

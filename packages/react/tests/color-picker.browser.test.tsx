@@ -386,7 +386,14 @@ describe("React Color Picker mounted lifecycle", () => {
     expect(outer.hasAttribute("data-name")).toBe(false);
     expect(outer.hasAttribute("data-form")).toBe(false);
     expect(outer.hasAttribute("data-locale")).toBe(false);
-    expect(outer.hasAttribute("dir")).toBe(false);
+    expect(outer.dir).toBe("rtl");
+    outer.parentElement!.dir = "ltr";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await vi.waitFor(() => expect(outer.dir).toBe("ltr"));
+    expect(inner.dir).toBe("rtl");
+    outer.parentElement!.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await vi.waitFor(() => expect(outer.dir).toBe("rtl"));
     expect(outerHidden.name).toBe("");
     expect(innerHidden.name).toBe("inner");
     expect(innerHidden.value).toBe("#0000ff");
@@ -663,9 +670,10 @@ it.each([
     await mount(
       picker(valueControlled ? "#0000ff" : undefined, formatControlled ? "hex" : undefined),
     );
+    // A later defined input is a controlled update or a silent Runtime command.
     await render(picker("#00ff00", "rgb"));
-    expect(color()).toBe(valueControlled ? "#00ff00" : "#0000ff");
-    expect(query<HTMLSelectElement>("select").value).toBe(formatControlled ? "rgb" : "hex");
+    expect(color()).toBe("#00ff00");
+    expect(query<HTMLSelectElement>("select").value).toBe("rgb");
     await render(picker(undefined, undefined));
     await act(() => query<HTMLButtonElement>("button").click());
     expect(color()).toBe(valueControlled ? "#00ff00" : "#ff0000");
@@ -677,7 +685,7 @@ it.each([
     expect(query<HTMLSelectElement>("select").value).toBe(formatControlled ? "rgb" : "hsl");
     await render(picker("#ff0000", "hsb"));
     expect(color()).toBe("#ff0000");
-    expect(query<HTMLSelectElement>("select").value).toBe(formatControlled ? "hsb" : "hsl");
+    expect(query<HTMLSelectElement>("select").value).toBe("hsb");
     await render(picker("#00ff00", "rgb", 1));
     expect(color()).toBe("#00ff00");
     expect(query<HTMLSelectElement>("select").value).toBe("rgb");
@@ -756,3 +764,78 @@ it.each(["invalid", null])(
     expect(query<HTMLElement>("[data-sw-color-picker]").dataset.value).toContain("0000ff");
   },
 );
+it.each(["value", "format"] as const)(
+  "applies a later defined %s on a Runtime-owned model as a silent command",
+  async (model) => {
+    const valueChanged = vi.fn();
+    const formatChanged = vi.fn();
+    const picker = (input: string | undefined, name = "accent") => (
+      <ColorPicker.Root
+        defaultValue="#0000ff"
+        name={name}
+        value={model === "value" ? input : undefined}
+        format={model === "format" ? (input as "hex" | "hsl" | "rgb" | undefined) : undefined}
+        onValueChange={valueChanged}
+        onFormatChange={formatChanged}
+      >
+        <ColorPicker.Swatch swatchValue="#ff0000">Red</ColorPicker.Swatch>
+        <ColorPicker.FormatSelect>
+          <option value="hex">Hex</option>
+          <option value="hsl">HSL</option>
+          <option value="rgb">RGB</option>
+        </ColorPicker.FormatSelect>
+      </ColorPicker.Root>
+    );
+    const shown = () =>
+      model === "value"
+        ? parseColor(query<HTMLElement>("[data-sw-color-picker]").dataset.value!)?.toString("hex")
+        : query<HTMLSelectElement>("[data-sw-color-picker-format-select]").value;
+    const later = model === "value" ? "#00ff00" : "hsl";
+
+    await mount(picker(undefined));
+    await render(picker(later));
+    expect(shown()).toBe(later);
+    expect(valueChanged).not.toHaveBeenCalled();
+    expect(formatChanged).not.toHaveBeenCalled();
+
+    await act(() => {
+      if (model === "value") query<HTMLButtonElement>("[data-sw-color-picker-swatch]").click();
+      else {
+        const select = query<HTMLSelectElement>("[data-sw-color-picker-format-select]");
+        select.value = "rgb";
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    await flush();
+    const interacted = model === "value" ? "#ff0000" : "rgb";
+    expect(shown()).toBe(interacted);
+    expect(model === "value" ? valueChanged : formatChanged).toHaveBeenCalledOnce();
+
+    // A stale parent input must not revert the accepted interaction.
+    await render(picker(later, "accent-2"));
+    expect(shown()).toBe(interacted);
+  },
+);
+it("treats an equal fresh color object as the same stale late input", async () => {
+  const valueChanged = vi.fn();
+  const picker = (input: string | undefined, name = "accent") => (
+    <ColorPicker.Root
+      defaultValue="#0000ff"
+      name={name}
+      value={input === undefined ? undefined : parseColor(input)}
+      onValueChange={valueChanged}
+    >
+      <ColorPicker.Swatch swatchValue="#ff0000">Red</ColorPicker.Swatch>
+    </ColorPicker.Root>
+  );
+  const color = () =>
+    parseColor(query<HTMLElement>("[data-sw-color-picker]").dataset.value!)?.toString("hex");
+  await mount(picker(undefined));
+  await render(picker("#00ff00"));
+  expect(color()).toBe("#00ff00");
+  await act(() => query<HTMLButtonElement>("[data-sw-color-picker-swatch]").click());
+  expect(color()).toBe("#ff0000");
+  expect(valueChanged).toHaveBeenCalledOnce();
+  await render(picker("#00ff00", "accent-2"));
+  expect(color()).toBe("#ff0000");
+});

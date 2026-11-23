@@ -1,6 +1,6 @@
-import { it, expect } from "vitest";
-import { createStyledHoverCardConsumer } from "../../../../packages/svelte/tests/styled-hover-card-consumer.js";
+import { expect, it } from "vitest";
 import { verifyPreviewCardBrowser } from "../../../../packages/svelte/tests/preview-card-browser.js";
+import { createStyledHoverCardConsumer } from "../../../../packages/svelte/tests/styled-hover-card-consumer.js";
 
 it("forwards Styled HoverCard bindings, semantic children, and portal composition", async () => {
   const consumer = await createStyledHoverCardConsumer(process.cwd());

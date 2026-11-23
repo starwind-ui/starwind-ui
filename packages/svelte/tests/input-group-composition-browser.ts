@@ -1,12 +1,12 @@
-import { verifyInputLifecycle } from "./input-native-model-browser.js";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
+import type { DistConsumer } from "./dist-consumer.js";
+import { verifyInputLifecycle } from "./input-native-model-browser.js";
 
 export async function verifyInputGroupParts(consumer: DistConsumer) {
   await consumer.write({

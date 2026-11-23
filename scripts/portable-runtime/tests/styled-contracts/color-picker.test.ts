@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { colorPickerStyledContract } from "../../contracts/styled/components/color-picker.js";
@@ -5,8 +8,8 @@ import { inputStyledContract } from "../../contracts/styled/components/input.js"
 import { nativeSelectStyledContract } from "../../contracts/styled/components/native-select.js";
 import { popoverStyledContract } from "../../contracts/styled/components/popover.js";
 import { selectStyledContract } from "../../contracts/styled/components/select.js";
-import { validateStyledAdapterContracts } from "../../contracts/styled/validation.js";
 import type { RenderNode } from "../../contracts/styled/types.js";
+import { validateStyledAdapterContracts } from "../../contracts/styled/validation.js";
 
 const PUBLIC_EXPORTS = [
   "ColorPicker",
@@ -200,12 +203,26 @@ describe("styled Color Picker contract", () => {
     }
     const areaThumb = String(colorPickerStyledContract.variants?.colorPickerAreaThumb?.base);
     expect(areaThumb).toContain("bg-(--sw-color-picker-area-thumb-color)");
-    expect(areaThumb).toContain("left-[clamp(1px");
+    expect(areaThumb).toContain("start-(--sw-color-picker-area-x)");
+    expect(areaThumb).toContain("top-(--sw-color-picker-area-y)");
+    expect(areaThumb).toContain("-translate-x-1/2");
+    expect(areaThumb).toContain("rtl:translate-x-1/2");
     expect(areaThumb).toContain("z-10");
     const channelThumb = String(
       colorPickerStyledContract.variants?.colorPickerChannelSliderThumb?.base,
     );
-    expect(channelThumb).toContain("left-(--sw-color-picker-channel-position)");
+    expect(channelThumb).toContain(
+      "group-data-[orientation=horizontal]/color-picker-channel-slider:start-(--sw-color-picker-channel-position)",
+    );
+    expect(channelThumb).toContain(
+      "group-data-[orientation=horizontal]/color-picker-channel-slider:rtl:translate-x-1/2",
+    );
+    expect(channelThumb).toContain(
+      "group-data-[orientation=vertical]/color-picker-channel-slider:top-[calc(100%-var(--sw-color-picker-channel-position))]",
+    );
+    expect(channelThumb).toContain(
+      "group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2",
+    );
     expect(channelThumb).toContain("z-10");
     expect(String(colorPickerStyledContract.variants?.colorPickerSwatch?.base)).toContain(
       "size-(--sw-color-picker-swatch-size)",
@@ -219,6 +236,28 @@ describe("styled Color Picker contract", () => {
     expect(colorPickerStyledContract.styles?.content).toContain(
       '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }',
     );
+  });
+
+  it("delivers logical thumb positions and direction-specific centering to every target", async () => {
+    const targetFiles = [
+      "apps/demo/src/components/starwind-runtime/color-picker/variants.ts",
+      "apps/react-demo/src/components/starwind-runtime/color-picker/variants.ts",
+      "apps/vue-demo/src/components/starwind-runtime/color-picker/variants.ts",
+      "apps/svelte-demo/src/lib/starwind-runtime/color-picker/variants.ts",
+    ];
+
+    for (const relativePath of targetFiles) {
+      const source = await readFile(path.join(process.cwd(), relativePath), "utf8");
+      expect(source, relativePath).toContain("start-(--sw-color-picker-area-x)");
+      expect(source, relativePath).toContain("rtl:translate-x-1/2");
+      expect(source, relativePath).toContain(
+        "group-data-[orientation=horizontal]/color-picker-channel-slider:start-(--sw-color-picker-channel-position)",
+      );
+      expect(source, relativePath).toContain(
+        "group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2",
+      );
+      expect(source, relativePath).not.toContain("left-[clamp(1px");
+    }
   });
 
   it("keeps placement on Content and popup state on ColorPicker", () => {

@@ -50,6 +50,17 @@ These overlays may flip or reposition while attached. If no valid attached place
 runtime keeps the overlay at the best anchored position instead of shifting it into a detached
 viewport-visible position.
 
+Tooltip and Navigation Menu content may also slide along the trigger edge to stay inside the
+viewport padding. Floating UI `limitShift()` stops the slide before the content leaves its trigger,
+and the content keeps its side. Popover uses the same mode.
+
+When the popup has an arrow part, Floating UI `arrow()` places it with 6px padding from the popup
+edges. The floating element gets the arrow's left or top offset as `--sw-floating-arrow-x` for a top or
+bottom side, or `--sw-floating-arrow-y` for a left or right side. `limitShift()` then keeps half the
+arrow size plus the viewport padding of overlap with the trigger, so the arrow can still point at
+it. The Base UI Tooltip and Navigation Menu positioners use the same shift, limit and arrow
+middleware. Base UI uses 5px arrow padding.
+
 ## Adapter Contract Surface
 
 The approved public modal option is `modal` / `data-modal`; Starwind does not expose a separate

@@ -1,4 +1,3 @@
-import { aspectRatioPercentage } from "../../../shared-recipes/passive/aspect-ratio.js";
 import { nativeValuePolicy } from "../../../shared-recipes/passive/native-values.js";
 import type {
   StyledOutputComponent,
@@ -13,6 +12,8 @@ type NativeStyledOwner = {
   element: string;
   container?: "div";
   dynamic?: "as" | "href";
+  // The public props follow the `as` element. The body reads them with wide element types.
+  elementTypedAs?: true;
   svgAsset?: true;
   snippets?: readonly string[];
   fallbackSlots?: readonly string[];
@@ -70,7 +71,7 @@ export const nativeStyledOwners: Readonly<
     },
   },
   "aspect-ratio": {
-    AspectRatio: { tag: "Tag", element: "HTMLElement", container: "div", dynamic: "as" },
+    AspectRatio: { tag: "Tag", element: "HTMLElement", dynamic: "as", elementTypedAs: true },
   },
   badge: {
     Badge: { tag: "Tag", element: "HTMLDivElement | HTMLAnchorElement", dynamic: "href" },
@@ -130,6 +131,7 @@ export function specializeSvelteStyledNative(
   component: StyledOutputComponent,
 ): Pick<
   SvelteStyledComponentProjection,
+  | "generics"
   | "imports"
   | "publicTypes"
   | "destructure"
@@ -190,32 +192,10 @@ export function specializeSvelteStyledNative(
       root.children.length !== 1
     )
       return fail("requires one fixed native container");
-    if (group.component === "aspect-ratio") {
-      const names = root.attrs
-        .filter((attr) => supportsSvelteScope(attr.targetScopes))
-        .map((attr) => attr.name)
-        .sort();
-      if (names.join(",") !== "class,data-slot,style")
-        return fail("ratio container must own only class, slot, and layout style");
-    }
     if (
       root.attrs
         .filter((attr) => supportsSvelteScope(attr.targetScopes))
-        .some((attr) => {
-          if (group.component === "aspect-ratio")
-            return !(
-              (attr.name === "class" &&
-                attr.value?.type === "class-variant" &&
-                attr.value.variant === "aspectRatioWrapper") ||
-              (attr.name === "style" &&
-                attr.value?.type === "variable" &&
-                attr.value.name === "wrapperStyle") ||
-              (attr.name === "data-slot" &&
-                attr.value?.type === "literal" &&
-                attr.value.value === "aspect-ratio-wrapper")
-            );
-          return attr.value?.type !== "literal" || ["spread", "ref"].includes(attr.name);
-        })
+        .some((attr) => attr.value?.type !== "literal" || ["spread", "ref"].includes(attr.name))
     )
       return fail("native container must not own forwarded props");
     root = root.children[0];
@@ -256,12 +236,7 @@ export function specializeSvelteStyledNative(
     if (as?.alias !== "Tag" || as.defaultValue !== '"div"')
       return fail("requires native as with div default");
   }
-  if (group.component === "aspect-ratio") {
-    component.variables.push({
-      name: "wrapperStyle",
-      value: { type: "raw", code: "`padding-bottom: " + aspectRatioPercentage() + "`" },
-    });
-  }
+  if (owner.elementTypedAs && owner.dynamic !== "as") return fail("element typing requires as");
   if (root.type === "element") root.selfClosing = false;
   const omitted = new Set<string>();
   let nativeCount = 0;
@@ -272,7 +247,9 @@ export function specializeSvelteStyledNative(
         if (!owner.dynamic && entry.element !== owner.tag)
           return fail("native attribute type differs from semantic owner");
         nativeCount++;
-        const base = `SvelteHTMLElements[${JSON.stringify(entry.element)}]`;
+        if (owner.elementTypedAs && entry.element !== "div")
+          return fail("element typing requires div attributes");
+        const base = `SvelteHTMLElements[${owner.elementTypedAs ? "T" : JSON.stringify(entry.element)}]`;
         const keys = [
           ...(entry.kind === "omit-element-attributes" ? entry.keys : []),
           ...(owner.svgAsset ? ["children"] : []),
@@ -292,7 +269,10 @@ export function specializeSvelteStyledNative(
     });
   if (nativeCount !== (group.component === "badge" || component.exportName === "Item" ? 2 : 1))
     return fail("requires one native attribute type");
+  if (owner.elementTypedAs && omitted.size) return fail("element typing omits no attributes");
   if (omitted.size) spreads[0].value = { type: "variable", name: "nativeProps" };
+  // Generic rest props sent to a generic call, such as $derived or the element, are too complex.
+  if (owner.elementTypedAs) spreads[0].value = { type: "raw", code: "nativeProps()" };
   const fields = (component.props?.fields ?? []).filter((field) =>
     supportsSvelteScope(field.targetScopes),
   );
@@ -313,11 +293,11 @@ export function specializeSvelteStyledNative(
       `{ ${valuePolicy.declarations.map((name) => `${name}?: ${valuePolicy.declarationType};`).join(" ")} }`,
     );
   bases.push(
-    `{ ${owner.svgAsset ? "[key: symbol]: unknown; " : ""}${owner.dynamic === "as" ? "as?: keyof HTMLElementTagNameMap; " : ""}ref?: ${owner.element}; ${fields.map((field) => `${JSON.stringify(field.name)}${field.optional ? "?" : ""}: ${field.type};`).join(" ")}${snippets.map((name) => ` ${name}?: Snippet;`).join("")} }`,
+    `{ ${owner.svgAsset ? "[key: symbol]: unknown; " : ""}${owner.dynamic === "as" ? `as?: ${owner.elementTypedAs ? "T" : "keyof HTMLElementTagNameMap"}; ` : ""}ref?: ${owner.element}; ${fields.map((field) => `${JSON.stringify(field.name)}${field.optional ? "?" : ""}: ${field.type};`).join(" ")}${snippets.map((name) => ` ${name}?: Snippet;`).join("")} }`,
   );
-  const destructure = component.destructure.props.filter((prop) =>
-    supportsSvelteScope(prop.targetScopes),
-  );
+  const destructure = component.destructure.props
+    .filter((prop) => supportsSvelteScope(prop.targetScopes))
+    .map((prop) => (owner.elementTypedAs && prop.name === "as" ? { name: "as" } : prop));
   if (valuePolicy) destructure.push({ name: valuePolicy.name, defaultValue: "$bindable()" });
   const keepsDefaultOnParent = valuePolicy?.writesThrough === "value-property";
   if (keepsDefaultOnParent) destructure.push({ name: valuePolicy.name, alias: "commandValue" });
@@ -346,7 +326,13 @@ export function specializeSvelteStyledNative(
     imports: [
       ...(snippets.length ? [{ source: "svelte", names: ["Snippet"], typeOnly: true }] : []),
       ...(keepsDefaultOnParent ? [{ source: "svelte", names: ["untrack"] }] : []),
-      { source: "svelte/elements", names: ["SvelteHTMLElements"], typeOnly: true },
+      {
+        source: "svelte/elements",
+        names: owner.elementTypedAs
+          ? ["HTMLAttributes", "SvelteHTMLElements"]
+          : ["SvelteHTMLElements"],
+        typeOnly: true,
+      },
       { source: "tailwind-variants", names: ["VariantProps"], typeOnly: true },
       { source: "tailwind-variants", names: ["cx"] },
       {
@@ -354,10 +340,26 @@ export function specializeSvelteStyledNative(
         names: collectStyledOutputVariantReferences(component, { target: "svelte" }),
       },
     ],
-    publicTypes: `export type ${component.exportName}Props = ${bases.join(" & ")};`,
+    publicTypes: `export type ${component.exportName}Props${
+      owner.elementTypedAs ? `<T extends keyof HTMLElementTagNameMap = "div">` : ""
+    } = ${bases.join(" & ")};`,
+    ...(owner.elementTypedAs
+      ? {
+          generics: {
+            declaration: "T extends keyof HTMLElementTagNameMap = 'div'",
+            arguments: "<T>",
+          },
+        }
+      : {}),
     destructure,
     rest,
     setup: [
+      ...(owner.elementTypedAs
+        ? [
+            'let Tag: keyof HTMLElementTagNameMap = $derived(as ?? "div");',
+            `const nativeProps = () => ${rest} as HTMLAttributes<HTMLElement>;`,
+          ]
+        : []),
       ...(owner.dynamic
         ? [
             'let nativeIsVoid = $derived(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].includes(Tag));',
@@ -384,15 +386,13 @@ export function svelteNativeSetup(
   _element: string,
   omitted: ReadonlySet<string> = new Set(),
 ): string[] {
-  return [
-    ...(omitted.size
-      ? [
-          `let nativeProps = $derived.by(() => {
+  return omitted.size
+    ? [
+        `let nativeProps = $derived.by(() => {
   const props = { ...${rest} };
   for (const key of ${JSON.stringify([...omitted])}) delete (props as Record<string, unknown>)[key];
   return props;
 });`,
-        ]
-      : []),
-  ];
+      ]
+    : [];
 }

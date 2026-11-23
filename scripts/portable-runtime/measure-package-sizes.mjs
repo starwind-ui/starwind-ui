@@ -41,7 +41,6 @@ import {
 import {
   checkVueBaselineEvidence,
   runVueBaselineCapture,
-  VUE_BASELINE_REQUIRED_ROW_IDS,
 } from "./package-size-vue-baseline-runner.mjs";
 import {
   buildStarwindVueBrowserMeasurementRows,
@@ -158,6 +157,7 @@ const starwindSupportMappings = [
     note: "Base UI has a button primitive; Zag has no button machine.",
   },
   { starwind: "carousel", zag: ["@zag-js/carousel"], note: "No Base UI carousel export." },
+  { starwind: "chart", note: "No comparable chart primitive." },
   { starwind: "checkbox", zag: ["@zag-js/checkbox"], base: "checkbox" },
   {
     starwind: "checkbox-group",
@@ -435,7 +435,24 @@ const bundleRows = [
   {
     group: "Starwind",
     label: "@starwind-ui/runtime",
+    excludeChart: true,
+    required: true,
     entry: 'import * as runtime from "@starwind-ui/runtime"; console.log(runtime);',
+    plugins: [starwindRuntimeAlias],
+  },
+  {
+    group: "Starwind",
+    label: "@starwind-ui/runtime/init-starwind",
+    excludeChart: true,
+    required: true,
+    entry:
+      'import { initStarwind } from "@starwind-ui/runtime/init-starwind"; console.log(initStarwind);',
+    plugins: [starwindRuntimeAlias],
+  },
+  {
+    group: "Starwind",
+    label: "@starwind-ui/runtime/chart",
+    entry: 'import * as chart from "@starwind-ui/runtime/chart"; console.log(chart);',
     plugins: [starwindRuntimeAlias],
   },
   {
@@ -772,7 +789,7 @@ export async function runPackageSizeMeasurements({
         group: "Private Vue package payload",
         label: "@starwind-ui/vue",
         packageDir: path.join(REPO_ROOT, "packages/vue"),
-        note: "Private built Vue Primitive package payload. Declaration totals are separate from browser bundle rows.",
+        note: "Private built Vue Primitive package payload, excluding installed docs. Declaration totals are separate from browser bundle rows.",
       })
     : undefined;
   const vueStyledPayload = includePrivateVue
@@ -1215,6 +1232,17 @@ export function validateInstalledPublicComparators(installRoot) {
   return resolvedVersions;
 }
 
+export function assertNoChartInputs(metafile) {
+  if (!metafile?.inputs) throw new Error("Missing bundle inputs for chart exclusion check");
+  if (
+    Object.keys(metafile.inputs).some((input) =>
+      /(?:^|[\\/])(?:@tanstack[\\/]charts|chart(?:\.js|[\\/]))/.test(input),
+    )
+  ) {
+    throw new Error("Chart code entered a Runtime root bundle");
+  }
+}
+
 export async function measureBundle(row, provenance, { build = esbuild.build } = {}) {
   const measuredRow = withVueSourceContribution(row);
   const sourceContribution = measuredRow.sourceContribution;
@@ -1238,7 +1266,7 @@ export async function measureBundle(row, provenance, { build = esbuild.build } =
       },
       bundle: true,
       chunkNames: "chunks/[name]-[hash]",
-      metafile: Boolean(sourceContribution),
+      metafile: Boolean(sourceContribution || measuredRow.excludeChart),
       minify: true,
       outdir: outputDir,
       splitting: true,
@@ -1254,6 +1282,7 @@ export async function measureBundle(row, provenance, { build = esbuild.build } =
       write: false,
       entryNames: "entry",
     });
+    if (measuredRow.excludeChart) assertNoChartInputs(result.metafile);
     const summary = summarizeInitialBundleOutput({
       entryFilePath,
       metafile: sourceContribution ? result.metafile : undefined,
@@ -1836,7 +1865,7 @@ export function formatDiagnosticPackageSizeReport({
     "",
     "## Starwind Published Source Payloads",
     "",
-    "These rows measure the published package's own runtime-bearing source files after minification. They are useful for `@starwind-ui/astro`, whose package ships `.astro` source files rather than a JS bundle entry.",
+    "These rows measure the published package's own runtime-bearing source files after minification. They are useful for `@starwind-ui/astro`, whose package ships `.astro` source files rather than a JS bundle entry. The npm tarball and unpacked columns exclude the installed Markdown docs in `docs/`. The release pack step measures those docs against a separate budget.",
     "",
     "| Package | Version | Minified source payload | Minified + gzip | npm tarball gzip | npm unpacked | Notes |",
     "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
@@ -1906,7 +1935,7 @@ function formatPrivateVueDiagnosticMarkdown({
     "",
     "## Private Vue Cold Imports",
     "",
-    "The first 36 rows are Runtime-backed Primitive families. Theme is a separate helper facade.",
+    "The first 37 rows are Runtime-backed Primitive families. Theme is a separate helper facade.",
     "",
     "| Component | Minified | Minified + gzip |",
     "| --- | ---: | ---: |",
@@ -1919,7 +1948,7 @@ function formatPrivateVueDiagnosticMarkdown({
     "",
     "| Runtime-backed families | Theme helper | Minified | Minified + gzip |",
     "| ---: | --- | ---: | ---: |",
-    `| 36 | included at package root | ${formatBytes(catalog?.minifiedBytes)} | ${formatBytes(catalog?.gzipBytes)} |`,
+    `| 37 | included at package root | ${formatBytes(catalog?.minifiedBytes)} | ${formatBytes(catalog?.gzipBytes)} |`,
     "",
     "## Private Vue Matched Zag Support",
     "",
@@ -1934,7 +1963,7 @@ function formatPrivateVueDiagnosticMarkdown({
     "",
     "## Private Vue Package Payload",
     "",
-    "Declarations are package payload only. They are excluded from browser min+gzip claims.",
+    "Declarations are package payload only. They are excluded from browser min+gzip claims. The tarball, unpacked, and category totals exclude the installed Markdown docs in `docs/`, so the packed-tarball ceiling keeps its original scope. The release pack step measures those docs against a separate budget.",
     "",
     "| Package | Version | Tarball gzip | Unpacked | Runtime-bearing minified | Runtime-bearing gzip | Declarations | Declaration gzip |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
@@ -1975,7 +2004,7 @@ function formatPrivateVueDiagnosticMarkdown({
     "",
     "## Private Vue Measurement Limitations",
     "",
-    "- Vue is a public beta; these rows are internal size diagnostics.",
+    "- The Vue rows are internal size diagnostics.",
     "- Package payload gzip measures the packed archive. It is separate from browser gzip and from copied Styled source gzip.",
     "- The Styled tree is copied application source. It is not included in the Primitive package payload.",
   ];
@@ -2178,7 +2207,7 @@ export function writePackageSizeReports(
       },
     ],
     evidence: evidence.runs,
-    requiredRowIds: VUE_BASELINE_REQUIRED_ROW_IDS,
+    requiredRowIds: evidence.stability.requiredRowIds,
     ...publicationOptions,
   });
   return true;

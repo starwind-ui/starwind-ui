@@ -3,12 +3,13 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import ScrollAreaRoot from "./ScrollAreaRoot.svelte";
-import ScrollAreaViewport from "./ScrollAreaViewport.svelte";
 import ScrollAreaContent from "./ScrollAreaContent.svelte";
+import ScrollAreaCorner from "./ScrollAreaCorner.svelte";
+import ScrollAreaRoot from "./ScrollAreaRoot.svelte";
 import ScrollAreaScrollbar from "./ScrollAreaScrollbar.svelte";
 import ScrollAreaThumb from "./ScrollAreaThumb.svelte";
-import ScrollAreaCorner from "./ScrollAreaCorner.svelte";
+import ScrollAreaViewport from "./ScrollAreaViewport.svelte";
+
 const ScrollArea = {
   Root: ScrollAreaRoot,
   Viewport: ScrollAreaViewport,
@@ -17,14 +18,15 @@ const ScrollArea = {
   Thumb: ScrollAreaThumb,
   Corner: ScrollAreaCorner,
 };
+
+export type { ScrollAreaOverflowEdgeThreshold } from "./ScrollAreaRoot.svelte";
 export {
   ScrollArea,
-  ScrollAreaRoot,
-  ScrollAreaViewport,
   ScrollAreaContent,
+  ScrollAreaCorner,
+  ScrollAreaRoot,
   ScrollAreaScrollbar,
   ScrollAreaThumb,
-  ScrollAreaCorner,
+  ScrollAreaViewport,
 };
-export type { ScrollAreaOverflowEdgeThreshold } from "./ScrollAreaRoot.svelte";
 export default ScrollArea;

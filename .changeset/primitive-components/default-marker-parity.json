@@ -1,0 +1,16 @@
+{
+  "impact": "source",
+  "primitives": {
+    "avatar": "patch",
+    "combobox": "patch",
+    "context-menu": "patch",
+    "field": "patch",
+    "form": "patch",
+    "menu": "patch",
+    "navigation-menu": "patch",
+    "popover": "patch",
+    "select": "patch",
+    "toggle": "patch",
+    "toggle-group": "patch"
+  }
+}

@@ -16,11 +16,11 @@
 <script lang="ts">
   let {
     "class": className,
-    "disabled": disabled = false,
-    "size": size = "md",
-    "showClear": showClear = false,
-    "showTrigger": showTrigger = true,
-    "children": children,
+    disabled = false,
+    size = "md",
+    showClear = false,
+    showTrigger = true,
+    children,
     ...rest
   }: ComboboxInputProps = $props();
 </script>

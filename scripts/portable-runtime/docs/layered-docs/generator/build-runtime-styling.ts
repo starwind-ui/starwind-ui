@@ -1,38 +1,37 @@
-import { publicFrameworks } from "./public-frameworks.js";
-import { type RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
-import { starwindStyledContracts } from "../../../contracts/styled/components/index.js";
-import {
-  type AttributeContract,
-  type ClassVariantDefinition,
-  type FrameworkTarget as ContractFrameworkTarget,
-  type RenderNode,
-  type StyledAdapterContract,
-  type StyledComponentContract,
-  type StyledComponentStylesContract,
-  type ValueExpression,
-} from "../../../contracts/styled/types.js";
-import {
-  type ComponentGroupMetadata,
-  type FrameworkAvailability,
-  type PrimitiveDocsMetadata,
-  type PrimitiveRuntimeOptionLifecycle,
-  type RuntimeDocsMetadata,
-  type RuntimeExportReferenceMetadata,
-  type RuntimeFactoryMetadata,
-  type RuntimeFactoryReferenceMetadata,
-  type RuntimeRawHtmlInitializerMetadata,
-  type StyledComponentDocsMetadata,
-  type StyledDocsAnnotation,
-  type StyledFrameworkTarget,
-  type PublicFrameworkTarget,
-  type StylingComponentMetadata,
-  type StylingDocsMetadata,
-  type StylingLocalStylesMetadata,
-  type StylingStateSelectorMetadata,
-  type StylingThemeMetadata,
-  type StylingVariantCollectionMetadata,
-} from "../types.js";
 import fs from "node:fs";
+import type { RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
+import { starwindStyledContracts } from "../../../contracts/styled/components/index.js";
+import type {
+  AttributeContract,
+  ClassVariantDefinition,
+  FrameworkTarget as ContractFrameworkTarget,
+  RenderNode,
+  StyledAdapterContract,
+  StyledComponentContract,
+  StyledComponentStylesContract,
+  ValueExpression,
+} from "../../../contracts/styled/types.js";
+import type {
+  ComponentGroupMetadata,
+  FrameworkAvailability,
+  PrimitiveDocsMetadata,
+  PrimitiveRuntimeOptionLifecycle,
+  PublicFrameworkTarget,
+  RuntimeDocsMetadata,
+  RuntimeExportReferenceMetadata,
+  RuntimeFactoryMetadata,
+  RuntimeFactoryReferenceMetadata,
+  RuntimeRawHtmlInitializerMetadata,
+  StyledComponentDocsMetadata,
+  StyledDocsAnnotation,
+  StyledFrameworkTarget,
+  StylingComponentMetadata,
+  StylingDocsMetadata,
+  StylingLocalStylesMetadata,
+  StylingStateSelectorMetadata,
+  StylingThemeMetadata,
+  StylingVariantCollectionMetadata,
+} from "../types.js";
 import { buildEmptyStyledApiMetadata } from "./build-styled-api.js";
 import {
   FOUNDATION_LABELS,
@@ -48,7 +47,9 @@ import {
   runtimeInitStarwindPath,
   runtimePackageJsonPath,
   themeTemplatePath,
+  toRuntimeComponentSubpathSourcePath,
 } from "./paths.js";
+import { publicFrameworks } from "./public-frameworks.js";
 import { dedupe, formatError, toKebabCase, toTitle } from "./shared.js";
 
 export const buildRuntimeDocsMetadata = (
@@ -488,7 +489,7 @@ export const buildPlaceholderStyledComponentMetadata = (
   ...(contract.variantCollectionName
     ? { variantCollectionName: contract.variantCollectionName }
     : {}),
-  variantNames: [...Object.keys(contract.variants ?? {})].sort(),
+  variantNames: Object.keys(contract.variants ?? {}).sort(),
   slots: collectSlots(contract),
   aliases: collectStyledAliases(contract, new Map(), groups, annotations, [], []),
   styledApi: buildEmptyStyledApiMetadata(),
@@ -644,6 +645,72 @@ const collectRuntimeInitializerNotes = (initializerBody: string) => {
 
 const getPrimitiveRootDiscoveryAttribute = (primitive: PrimitiveDocsMetadata) =>
   primitive.parts.find((part) => part.name === primitive.runtime.rootPart)?.discoveryAttribute;
+
+export type RuntimeFactoryExportKind = "root" | "subpath-only" | "missing";
+
+export type RuntimeFactoryExportSources = {
+  readonly runtimeIndexSource: string;
+  readonly initStarwindSource: string;
+  readonly loadSubpathSource?: (subpathName: string) => string | undefined;
+};
+
+const hasIdentifier = (source: string, identifier: string) =>
+  new RegExp(`\\b${identifier}\\b`).test(source);
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Whether a source imports the subpath or its component module, statically, as a re-export or
+ * dynamically: `./components/<name>`, `./components/<name>/...` or `@starwind-ui/runtime/<name>`.
+ */
+const importsRuntimeSubpath = (source: string, subpathName: string) => {
+  const name = escapeRegExp(subpathName);
+  const specifier = `["'](?:\\.{1,2}/)*(?:components/${name}(?:/[^"']*)?|@starwind-ui/runtime/${name})["']`;
+  return new RegExp(`(?:\\bfrom\\s*|\\bimport\\s*\\(?\\s*)${specifier}`).test(source);
+};
+
+export const loadRuntimeComponentSubpathSource = (subpathName: string) => {
+  try {
+    return fs.readFileSync(toRuntimeComponentSubpathSourcePath(subpathName), "utf8");
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Classify where a Primitive's Runtime factory is published.
+ *
+ * A "root" factory is re-exported by `packages/runtime/src/index.ts`. A "subpath-only" family keeps
+ * its whole Runtime API on its own subpath: its subpath entry exports the factory, the root index
+ * does not, and `initStarwind` never imports the subpath or its component module (chart, so pages
+ * without charts load no TanStack code). Any other shape is "missing", so a family that only forgot its root re-export still fails.
+ */
+export const classifyRuntimeFactoryExport = (
+  runtime: { readonly factory: string; readonly importSource: string },
+  sources: RuntimeFactoryExportSources,
+): RuntimeFactoryExportKind => {
+  if (sources.runtimeIndexSource.includes(runtime.factory)) {
+    return "root";
+  }
+
+  const exportPath = toRuntimePackageExportPath(runtime.importSource);
+  if (exportPath === ".") return "missing";
+  const subpathName = exportPath.slice(2);
+  if (
+    hasIdentifier(sources.initStarwindSource, runtime.factory) ||
+    importsRuntimeSubpath(sources.initStarwindSource, subpathName)
+  ) {
+    return "missing";
+  }
+
+  const subpathSource = (sources.loadSubpathSource ?? loadRuntimeComponentSubpathSource)(
+    subpathName,
+  );
+
+  return subpathSource && hasIdentifier(subpathSource, runtime.factory)
+    ? "subpath-only"
+    : "missing";
+};
 
 export const toRuntimePackageExportPath = (importSource: string) => {
   if (importSource === "@starwind-ui/runtime") {

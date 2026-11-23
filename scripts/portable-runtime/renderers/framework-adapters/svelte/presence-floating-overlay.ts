@@ -15,8 +15,6 @@ import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteButtonChild } from "./button-child.js";
 import { printSvelteOverlayPortal } from "./overlay-portal.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 export function printSveltePresenceFloatingOverlayIndex(
   file: AdapterIndexFile,
 ): AdapterPrintedFile {
@@ -35,8 +33,7 @@ export function printSveltePresenceFloatingOverlayIndex(
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -218,8 +215,7 @@ function printPart({
 }): string {
   const elementImport =
     htmlType === "HTMLButtonAttributes" ? "HTMLButtonAttributes" : "HTMLAttributes";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${elementImport} } from "svelte/elements";

@@ -4,7 +4,9 @@
  */
 
 import RadioGroupRoot from "./RadioGroupRoot.svelte";
+
 const RadioGroup = { Root: RadioGroupRoot };
+
 export { RadioGroup, RadioGroupRoot };
 export default RadioGroup;
 

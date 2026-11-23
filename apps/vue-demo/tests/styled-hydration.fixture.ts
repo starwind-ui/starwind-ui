@@ -1,9 +1,14 @@
-import { createSSRApp, defineComponent, h, nextTick, ref } from "vue";
 import { initThemeController } from "@starwind-ui/vue/theme";
-
-import { Avatar, AvatarFallback, AvatarImage } from "../src/components/starwind-runtime/avatar";
+import { createSSRApp, defineComponent, h, nextTick, ref } from "vue";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../src/components/starwind-runtime/accordion";
 import { Alert, AlertDescription, AlertTitle } from "../src/components/starwind-runtime/alert";
 import { AspectRatio } from "../src/components/starwind-runtime/aspect-ratio";
+import { Avatar, AvatarFallback, AvatarImage } from "../src/components/starwind-runtime/avatar";
 import { Badge } from "../src/components/starwind-runtime/badge";
 import {
   Breadcrumb,
@@ -14,6 +19,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "../src/components/starwind-runtime/breadcrumb";
+import { Button } from "../src/components/starwind-runtime/button";
 import {
   ButtonGroup,
   ButtonGroupSeparator,
@@ -29,72 +35,13 @@ import {
   CardTitle,
 } from "../src/components/starwind-runtime/card";
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-  InputGroupText,
-  InputGroupTextarea,
-} from "../src/components/starwind-runtime/input-group";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemFooter,
-  ItemGroup,
-  ItemHeader,
-  ItemMedia,
-  ItemSeparator,
-  ItemTitle,
-} from "../src/components/starwind-runtime/item";
-import { Kbd, KbdGroup } from "../src/components/starwind-runtime/kbd";
-import { Label } from "../src/components/starwind-runtime/label";
-import {
-  NativeSelect,
-  NativeSelectOptGroup,
-  NativeSelectOption,
-} from "../src/components/starwind-runtime/native-select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "../src/components/starwind-runtime/pagination";
-import { Prose } from "../src/components/starwind-runtime/prose";
-import { Separator } from "../src/components/starwind-runtime/separator";
-import { Skeleton } from "../src/components/starwind-runtime/skeleton";
-import { Spinner } from "../src/components/starwind-runtime/spinner";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFoot,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../src/components/starwind-runtime/table";
-import { Textarea } from "../src/components/starwind-runtime/textarea";
-import { Video } from "../src/components/starwind-runtime/video";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../src/components/starwind-runtime/accordion";
-import { Button } from "../src/components/starwind-runtime/button";
-import { Checkbox } from "../src/components/starwind-runtime/checkbox";
-import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
 } from "../src/components/starwind-runtime/carousel";
+import { Checkbox } from "../src/components/starwind-runtime/checkbox";
 import { ColorPicker } from "../src/components/starwind-runtime/color-picker";
 import {
   Combobox,
@@ -119,8 +66,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../src/components/starwind-runtime/dialog";
-import { Input } from "../src/components/starwind-runtime/input";
-import { Dropzone } from "../src/components/starwind-runtime/dropzone";
 import {
   Dropdown,
   DropdownContent,
@@ -130,6 +75,7 @@ import {
   DropdownSubTrigger,
   DropdownTrigger,
 } from "../src/components/starwind-runtime/dropdown";
+import { Dropzone } from "../src/components/starwind-runtime/dropzone";
 import {
   Field,
   FieldControl,
@@ -139,16 +85,44 @@ import {
   FieldValidity,
 } from "../src/components/starwind-runtime/field";
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../src/components/starwind-runtime/hover-card";
+import { Input } from "../src/components/starwind-runtime/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from "../src/components/starwind-runtime/input-group";
+import {
   InputOtp,
   InputOtpGroup,
   InputOtpSeparator,
   InputOtpSlot,
 } from "../src/components/starwind-runtime/input-otp";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../src/components/starwind-runtime/hover-card";
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemGroup,
+  ItemHeader,
+  ItemMedia,
+  ItemSeparator,
+  ItemTitle,
+} from "../src/components/starwind-runtime/item";
+import { Kbd, KbdGroup } from "../src/components/starwind-runtime/kbd";
+import { Label } from "../src/components/starwind-runtime/label";
+import {
+  NativeSelect,
+  NativeSelectOptGroup,
+  NativeSelectOption,
+} from "../src/components/starwind-runtime/native-select";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -158,6 +132,15 @@ import {
   NavigationMenuTrigger,
 } from "../src/components/starwind-runtime/navigation-menu";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../src/components/starwind-runtime/pagination";
+import {
   Popover,
   PopoverContent,
   PopoverDescription,
@@ -165,14 +148,16 @@ import {
   PopoverTrigger,
 } from "../src/components/starwind-runtime/popover";
 import { Progress } from "../src/components/starwind-runtime/progress";
+import { Prose } from "../src/components/starwind-runtime/prose";
 import { RadioGroup, RadioGroupItem } from "../src/components/starwind-runtime/radio-group";
 import { ScrollArea } from "../src/components/starwind-runtime/scroll-area";
-import { Slider } from "../src/components/starwind-runtime/slider";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarProvider,
-} from "../src/components/starwind-runtime/sidebar";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "../src/components/starwind-runtime/select";
+import { Separator } from "../src/components/starwind-runtime/separator";
 import {
   Sheet,
   SheetContent,
@@ -181,21 +166,35 @@ import {
   SheetTrigger,
 } from "../src/components/starwind-runtime/sheet";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "../src/components/starwind-runtime/select";
-import { ThemeToggle } from "../src/components/starwind-runtime/theme-toggle";
+  Sidebar,
+  SidebarContent,
+  SidebarProvider,
+} from "../src/components/starwind-runtime/sidebar";
+import { Skeleton } from "../src/components/starwind-runtime/skeleton";
+import { Slider } from "../src/components/starwind-runtime/slider";
+import { Spinner } from "../src/components/starwind-runtime/spinner";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFoot,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../src/components/starwind-runtime/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../src/components/starwind-runtime/tabs";
+import { Textarea } from "../src/components/starwind-runtime/textarea";
+import { ThemeToggle } from "../src/components/starwind-runtime/theme-toggle";
+import { Toaster } from "../src/components/starwind-runtime/toast";
 import { Toggle } from "../src/components/starwind-runtime/toggle";
 import { ToggleGroup, ToggleGroupItem } from "../src/components/starwind-runtime/toggle-group";
-import { Toaster } from "../src/components/starwind-runtime/toast";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "../src/components/starwind-runtime/tooltip";
+import { Video } from "../src/components/starwind-runtime/video";
 
 const PORTABLE_CLOSURE_EXPORTS = [
   "Alert",
@@ -424,6 +423,15 @@ export async function runStyledHydrationChecks() {
   const host = document.querySelector<HTMLElement>("#styled-hydration-host");
   assert(host, "Styled hydration host is missing");
   assertPortableClosureExports(host, "SSR");
+  const serverAspectRatio = host.querySelector<HTMLElement>('[data-closure-export="AspectRatio"]');
+  assert(serverAspectRatio, "Aspect Ratio SSR owner is missing");
+  assertAspectRatioOwner(serverAspectRatio, 16 / 9, "red");
+  const serverAspectImage = host.querySelector<HTMLImageElement>("#hydrated-aspect-ratio-image");
+  assert(
+    serverAspectImage?.tagName === "IMG" && serverAspectImage.childNodes.length === 0,
+    "Aspect Ratio void SSR owner drifted",
+  );
+  assert(serverAspectImage.dataset.slot === "aspect-ratio", "Aspect Ratio slot ownership drifted");
   assert(
     Array.from(host.querySelectorAll("[data-sw-button]")).filter(
       (element) => !element.closest("#hydrated-portable-styled-closure"),
@@ -579,6 +587,59 @@ export async function runStyledHydrationChecks() {
   try {
     app.mount(host);
     assertPortableClosureExports(host, "hydration");
+    assert(
+      host.querySelector("#hydrated-aspect-ratio-image") === serverAspectImage &&
+        serverAspectImage.childNodes.length === 0 &&
+        serverAspectImage.dataset.slot === "aspect-ratio",
+      "Aspect Ratio void hydration changed its native owner",
+    );
+    assert(
+      host.querySelector('[data-closure-export="AspectRatio"]') === serverAspectRatio,
+      "Aspect Ratio hydration replaced its owner",
+    );
+    assertAspectRatioOwner(serverAspectRatio, 16 / 9, "red");
+    host.querySelector<HTMLButtonElement>("#hydrated-aspect-ratio-update")!.click();
+    await frame();
+    assertAspectRatioOwner(serverAspectRatio, 4 / 3, "blue");
+    host.querySelector<HTMLButtonElement>("#hydrated-aspect-ratio-override")!.click();
+    await frame();
+    assertAspectRatioOwner(serverAspectRatio, 2, "green");
+    host.querySelector<HTMLButtonElement>("#hydrated-aspect-ratio-remove-style")!.click();
+    await frame();
+    assertAspectRatioOwner(serverAspectRatio, 3, "", "");
+    for (const tag of ["FIGURE", "SECTION", "IMG", "FIGURE"]) {
+      const owner = host.querySelector<HTMLElement>('[data-closure-export="AspectRatio"]');
+      assert(
+        owner?.tagName === tag && owner.dataset.slot === "aspect-ratio",
+        `Aspect Ratio dynamic owner expected ${tag}`,
+      );
+      host.querySelector<HTMLButtonElement>("#hydrated-aspect-ratio-inspect-ref")!.click();
+      await frame();
+      assert(
+        host.querySelector("#hydrated-aspect-ratio-ref")?.textContent === tag,
+        "Aspect Ratio component ref lost its native $el",
+      );
+      assert(
+        owner.parentElement?.id === "hydrated-portable-styled-closure" &&
+          owner.style.getPropertyValue("--ratio").trim() === "3" &&
+          owner.title === "Media frame",
+        "Aspect Ratio tag change lost native attributes",
+      );
+      assert(
+        tag === "IMG"
+          ? owner.childNodes.length === 0
+          : owner.textContent === "Hydrated aspect ratio",
+        "Aspect Ratio tag change lost the slot or void shape",
+      );
+      owner.click();
+      await frame();
+      host.querySelector<HTMLButtonElement>("#hydrated-aspect-ratio-change-tag")!.click();
+      await frame();
+    }
+    assert(
+      host.querySelector("#hydrated-aspect-ratio-clicks")?.textContent === "4",
+      "Aspect Ratio event did not reach each native owner once",
+    );
     const hydratedToggle = host.querySelector<HTMLButtonElement>("#hydrated-styled-toggle");
     assert(hydratedToggle, "Styled Toggle root is missing after hydration mount");
     assert(
@@ -1025,6 +1086,100 @@ function closureProps(exportName: string, props: Record<string, unknown> = {}) {
   return { ...props, "data-closure-export": exportName };
 }
 
+const HydratedAspectRatioFixture = defineComponent({
+  setup() {
+    const ratio = ref(16 / 9);
+    const tag = ref("figure");
+    const owner = ref<{ $el: HTMLElement } | null>(null);
+    const clicks = ref(0);
+    const inspectedTag = ref("");
+    const style = ref<import("vue").StyleValue>("color: red; --caller-style: ready");
+    return () => [
+      h(
+        AspectRatio,
+        closureProps("AspectRatio", {
+          as: tag.value,
+          ref: owner,
+          onClick: (event: MouseEvent) => {
+            if (event.currentTarget === owner.value?.$el) clicks.value += 1;
+          },
+          ratio: ratio.value,
+          style: style.value,
+          "data-slot": "caller-slot",
+          title: "Media frame",
+          class: "caller-ratio",
+        }),
+        tag.value === "img" ? undefined : () => "Hydrated aspect ratio",
+      ),
+      h("output", { id: "hydrated-aspect-ratio-ref" }, inspectedTag.value),
+      h(
+        "button",
+        {
+          id: "hydrated-aspect-ratio-inspect-ref",
+          onClick: () => {
+            inspectedTag.value = owner.value?.$el?.tagName ?? "missing";
+          },
+        },
+        "Inspect ratio ref",
+      ),
+      h("output", { id: "hydrated-aspect-ratio-clicks" }, String(clicks.value)),
+      h(
+        "button",
+        {
+          id: "hydrated-aspect-ratio-change-tag",
+          onClick: () => {
+            tag.value =
+              tag.value === "figure" ? "section" : tag.value === "section" ? "img" : "figure";
+          },
+        },
+        "Change ratio element",
+      ),
+      h(AspectRatio, {
+        id: "hydrated-aspect-ratio-image",
+        as: "img",
+        alt: "Media preview",
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E",
+        "data-slot": "caller-image-slot",
+      }),
+      h(
+        "button",
+        {
+          id: "hydrated-aspect-ratio-update",
+          onClick: () => {
+            ratio.value = 4 / 3;
+            style.value = { color: "blue", "--caller-style": "ready" };
+          },
+        },
+        "Update ratio",
+      ),
+      h(
+        "button",
+        {
+          id: "hydrated-aspect-ratio-override",
+          onClick: () => {
+            ratio.value = 3;
+            style.value = [
+              "color: red",
+              { color: "green", "--ratio": 2, "--caller-style": "ready" },
+            ];
+          },
+        },
+        "Override ratio",
+      ),
+      h(
+        "button",
+        {
+          id: "hydrated-aspect-ratio-remove-style",
+          onClick: () => {
+            style.value = undefined;
+          },
+        },
+        "Remove caller style",
+      ),
+    ];
+  },
+});
+
 const PortableStyledClosureFixture = defineComponent({
   name: "PortableStyledClosureFixture",
   setup: () => () =>
@@ -1035,11 +1190,7 @@ const PortableStyledClosureFixture = defineComponent({
           h(AlertDescription, closureProps("AlertDescription"), () => "Portable status"),
         ],
       }),
-      h(
-        AspectRatio,
-        closureProps("AspectRatio", { as: "figure", ratio: 16 / 9 }),
-        () => "Hydrated aspect ratio",
-      ),
+      h(HydratedAspectRatioFixture),
       h(Badge, closureProps("Badge", { variant: "success" }), () => "Ready"),
       h(Breadcrumb, closureProps("Breadcrumb", { "aria-label": "Hydrated path" }), () =>
         h(BreadcrumbList, closureProps("BreadcrumbList"), () => [
@@ -1672,4 +1823,34 @@ function assertPortableClosureExports(root: ParentNode, phase: string): void {
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
+}
+
+function assertAspectRatioOwner(
+  owner: HTMLElement,
+  ratio: number,
+  color: string,
+  callerStyle = "ready",
+): void {
+  assert(
+    owner.tagName === "FIGURE" && owner.dataset.slot === "aspect-ratio",
+    "Aspect Ratio semantic owner drifted",
+  );
+  assert(
+    owner.parentElement?.id === "hydrated-portable-styled-closure",
+    "Aspect Ratio gained a wrapper",
+  );
+  assert(
+    owner.classList.contains("caller-ratio") && owner.title === "Media frame",
+    "Aspect Ratio native attributes moved",
+  );
+  assert(
+    owner.style.getPropertyValue("--ratio").trim() === String(ratio),
+    "Aspect Ratio style lost ratio or caller precedence",
+  );
+  assert(
+    owner.style.color === color &&
+      owner.style.getPropertyValue("--caller-style").trim() === callerStyle,
+    "Aspect Ratio caller style drifted",
+  );
+  assert(owner.textContent === "Hydrated aspect ratio", "Aspect Ratio slot content drifted");
 }

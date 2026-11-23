@@ -79,7 +79,7 @@ describe("generated Vue Styled Progress", () => {
     expect(variants).toContain('base: "bg-muted h-2 w-full overflow-hidden rounded-full"');
     expect(variants).toContain("data-instant:transition-none");
     expect(variants).toContain("motion-reduce:transition-none");
-    expect(variants).toContain('indeterminate: "absolute inset-y-0 start-0 w-3/4"');
+    expect(variants).toContain('indeterminate: "absolute inset-y-0 left-0 w-3/4"');
     expect(variants).toContain('success: "bg-success"');
     expect(variants).toContain('error: "bg-error"');
   });

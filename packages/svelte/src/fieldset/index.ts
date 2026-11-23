@@ -5,6 +5,8 @@
 
 import FieldsetLegend from "./FieldsetLegend.svelte";
 import FieldsetRoot from "./FieldsetRoot.svelte";
+
 const Fieldset = { Legend: FieldsetLegend, Root: FieldsetRoot };
+
 export { Fieldset, FieldsetLegend, FieldsetRoot };
 export default Fieldset;

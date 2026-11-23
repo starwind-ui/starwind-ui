@@ -888,6 +888,7 @@ describe("GenericAdapterPlan", () => {
       "combobox",
       "color-picker",
       "toast",
+      "chart",
     ]);
     expect(
       classifications.filter((entry) => entry.strategy === "future-framework-tracer").length,
@@ -1129,7 +1130,7 @@ describe("GenericAdapterPlan", () => {
     expect(report).not.toContain("static-adapter-plan");
     expect(report).toMatch(/^\| Adapter Family Plan \(`adapter-family-plan`\)\s+\|\s+19 \|$/m);
     expect(report).toMatch(
-      /^\| Specialized Adapter Spec \(`specialized-adapter-spec`\)\s+\|\s+17 \|$/m,
+      /^\| Specialized Adapter Spec \(`specialized-adapter-spec`\)\s+\|\s+18 \|$/m,
     );
     expect(report).toMatch(/^\| Manual Island Escape Hatch \(`custom-island`\)\s+\|\s+0 \|$/m);
 
@@ -1245,7 +1246,7 @@ function normalizePrintedComparison(contents: string): string {
   if (!contents.trimStart().startsWith("---")) return normalizeTypeScriptSource(contents);
   return contents
     .replace(/\s+/g, " ")
-    .replace(/\s*([(){}\[\],;])\s*/g, "$1")
+    .replace(/\s*([(){}[\],;])\s*/g, "$1")
     .replace(/,([)\]}])/g, "$1");
 }
 

@@ -2328,7 +2328,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain('const Tag = nativeButton ? "button" : "span";');
     expect(astroRoot).toContain("const initialPressed = pressed ?? defaultPressed;");
     expect(astroRoot).toContain(
-      'const defaultPressedAttribute = pressed === undefined && defaultPressed ? "true" : undefined;',
+      'const defaultPressedAttribute = defaultPressed ? "true" : undefined;',
     );
     expect(astroRoot).toContain('aria-pressed={initialPressed ? "true" : "false"}');
     expect(astroRoot).toContain('data-state={initialPressed ? "on" : "off"}');
@@ -4581,7 +4581,7 @@ function normalizePrintedComparison(contents: string): string {
       'import { observeFormDiscovery } from "../internal/form-discovery";\nimport { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
     )
     .replace(/\s+/g, " ")
-    .replace(/\s*([(){}\[\],;])\s*/g, "$1")
+    .replace(/\s*([(){}[\],;])\s*/g, "$1")
     .replace(/,([)\]}])/g, "$1");
 }
 
@@ -4616,10 +4616,10 @@ async function formatGeneratedOutput(contents: string, filepath: string): Promis
     );
   }
   const config = await resolveConfig(filepath);
-  return format(contents, { ...(config ?? {}), filepath });
+  return format(contents, { ...config, filepath });
 }
 
 async function readFormattedOutput(filepath: string): Promise<string> {
   const config = await resolveConfig(filepath);
-  return format(readFileSync(filepath, "utf8"), { ...(config ?? {}), filepath });
+  return format(readFileSync(filepath, "utf8"), { ...config, filepath });
 }

@@ -94,6 +94,15 @@ const rootProps = computed(() =>
 defineExpose({ element });
 
 let connection: ReturnType<typeof connectColorPicker> | undefined;
+let directionCapture: ReturnType<typeof captureProjectedDirection>;
+const vProjectedDirection = {
+  beforeMount(root: HTMLElement) {
+    directionCapture = captureProjectedDirection(root, initialRootProjection.attributes.dir);
+  },
+  beforeUnmount() {
+    directionCapture?.disconnect();
+  },
+};
 function readOptions(): ColorPickerOptions {
   return {
     value: props.modelValue,
@@ -118,6 +127,7 @@ function readOptions(): ColorPickerOptions {
 type ColorPickerConnectionTransport = {
   seed: Pick<ColorPickerOptions, "value" | "defaultValue" | "format">;
   read(): ColorPickerOptions;
+  projectedDirection?: ReturnType<typeof captureProjectedDirection>;
   restoreAuthoredOwnership?(): void;
   captureAuthoredOwnership?(): void;
   own?(instance: ReturnType<typeof createColorPicker> | undefined): void;
@@ -127,11 +137,47 @@ type ColorPickerConnectionTransport = {
   afterUpdate(run: () => void): void;
 };
 
+// Start at native-node attachment, before consumer refs and mounted callbacks.
+function captureProjectedDirection(root: HTMLElement, projected: unknown) {
+  const owned = root
+    .getAttribute("data-sw-color-picker-initial-owned")
+    ?.split(",")
+    .includes("a:dir");
+  if (
+    !owned ||
+    (projected !== "ltr" && projected !== "rtl") ||
+    root.getAttribute("dir") !== projected
+  )
+    return undefined;
+  let active = true;
+  let authored = false;
+  const Observer = root.ownerDocument.defaultView?.MutationObserver ?? MutationObserver;
+  const observer = new Observer(() => {
+    authored = true;
+  });
+  observer.observe(root, { attributes: true, attributeFilter: ["dir"] });
+  return {
+    disconnect() {
+      active = false;
+      observer.disconnect();
+    },
+    handoff() {
+      if (!active) return;
+      active = false;
+      const touched = authored || observer.takeRecords().length > 0;
+      observer.disconnect();
+      if (!touched && root.getAttribute("dir") === projected) root.removeAttribute("dir");
+    },
+  };
+}
+
 function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionTransport) {
   const valueControlled = transport.seed.value !== undefined;
   const formatControlled = transport.seed.format !== undefined;
   let controlledValue = transport.seed.value;
   let controlledFormat = transport.seed.format;
+  let commandedValue = transport.seed.value;
+  let commandedFormat = transport.seed.format;
   let active = true;
   let pending = false;
   let applied = transport.read();
@@ -140,6 +186,7 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
   const initialOptions = { ...applied, ...transport.seed };
   // Runtime captures value ownership from property presence at construction.
   if (!valueControlled) delete initialOptions.value;
+  transport.projectedDirection?.handoff();
   const owner = createColorPicker(root, {
     ...initialOptions,
     onValueChange(next, details) {
@@ -186,11 +233,28 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
       if (parsed !== undefined) controlledValue = parsed;
       if (controlledValue !== undefined && !sameValue(owner.getValue(), controlledValue))
         owner.setValue(controlledValue, { emit: false });
+    } else if (!sameValue(next.value, commandedValue)) {
+      // Apply a changed input once, so a stale one-way value never reverts an accepted interaction.
+      commandedValue = next.value;
+      const parsed =
+        next.value === null
+          ? next.allowEmpty
+            ? null
+            : undefined
+          : typeof next.value === "string"
+            ? (parseColor(next.value) ?? undefined)
+            : next.value;
+      if (parsed !== undefined && !sameValue(owner.getValue(), parsed))
+        owner.setValue(parsed, { emit: false });
     }
     if (formatControlled) {
       if (next.format !== undefined) controlledFormat = next.format;
       if (controlledFormat !== undefined && owner.getFormat() !== controlledFormat)
         owner.setFormat(controlledFormat, { emit: false });
+    } else if (next.format !== commandedFormat) {
+      commandedFormat = next.format;
+      if (next.format !== undefined && owner.getFormat() !== next.format)
+        owner.setFormat(next.format, { emit: false });
     }
   }
   function applyOptions(next: ColorPickerOptions): void {
@@ -395,6 +459,7 @@ onMounted(() => {
   connection = connectColorPicker(rootElement, {
     seed,
     read: readOptions,
+    projectedDirection: directionCapture,
     restoreAuthoredOwnership: structure.restoreOwnership,
     captureAuthoredOwnership: structure.captureOwnership,
     observe: (value, format) => {
@@ -442,5 +507,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="element" v-bind="rootProps"><slot /></div>
+  <div ref="element" v-projected-direction v-bind="rootProps"><slot /></div>
 </template>

@@ -40,6 +40,7 @@ function ContextMenuContent(props: ContextMenuContentProps) {
         avoidCollisions={avoidCollisions}
         {...rest}
         data-slot="context-menu-content"
+        data-sw-context-menu-entry
       >
         {children}
       </ContextMenuPrimitive.Popup>

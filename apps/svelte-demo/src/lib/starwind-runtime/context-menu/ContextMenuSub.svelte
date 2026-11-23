@@ -10,8 +10,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "closeDelay": closeDelay = 200,
-    "children": children,
+    closeDelay = 200,
+    children,
     ...rest
   }: ContextMenuSubProps = $props();
 </script>

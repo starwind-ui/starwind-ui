@@ -14,13 +14,13 @@
   let {
     "class": className,
     "iconClass": iconClassName,
-    "placeholder": placeholder,
-    "showIcon": showIcon = true,
-    "size": size = "md",
+    placeholder,
+    showIcon = true,
+    size = "md",
     "valueClass": valueClassName,
-    "child": child,
-    "children": children,
-    "icon": icon,
+    child,
+    children,
+    icon,
     ...rest
   }: SelectTriggerProps = $props();
 </script>

@@ -11,11 +11,11 @@
 
 <script lang="ts">
   let {
-    "label": label,
-    "value": value = null,
-    "max": max = 100,
-    "min": min = 0,
-    "variant": variant = "default",
+    label,
+    value = null,
+    max = 100,
+    min = 0,
+    variant = "default",
     "class": className,
     ...rest
   }: ProgressProps = $props();

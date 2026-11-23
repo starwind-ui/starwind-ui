@@ -11,8 +11,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "children": children,
-    "icon": icon,
+    children,
+    icon,
     ...rest
   }: AccordionTriggerProps = $props();
 </script>

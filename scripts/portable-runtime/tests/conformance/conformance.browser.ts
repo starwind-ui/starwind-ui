@@ -3,12 +3,14 @@
 // difference and every known defect, so a new difference fails the suite until someone names it.
 import { type Browser, chromium, firefox, type Page, webkit } from "playwright";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
-import { intendedDifferences, knownDefects } from "./differences";
+import { allowedConsoleErrors, intendedDifferences, knownDefects } from "./differences";
 import { attributeScenarios } from "./scenarios/attributes";
 import { eventScenarios, parentScenarios } from "./scenarios/events";
 import { fieldControlScenarios } from "./scenarios/field-controls";
 import { formScenarios } from "./scenarios/form";
 import { interactionScenarios } from "./scenarios/interaction";
+import { lateWriteScenarios } from "./scenarios/late-writes";
+import { markerScenarios } from "./scenarios/markers";
 import { triggerScenarios } from "./scenarios/triggers";
 import type { Scenario } from "./scenarios/types";
 import { TARGETS, type Target, Ui } from "./ui";
@@ -16,11 +18,13 @@ import { TARGETS, type Target, Ui } from "./ui";
 const scenarios: Scenario[] = [
   ...eventScenarios,
   ...parentScenarios,
+  ...lateWriteScenarios,
   ...formScenarios,
   ...fieldControlScenarios,
   ...interactionScenarios,
   ...triggerScenarios,
   ...attributeScenarios,
+  ...markerScenarios,
 ];
 
 function pageUrl(target: Target, page: string): string {
@@ -31,11 +35,13 @@ function pageUrl(target: Target, page: string): string {
 let browser: Browser;
 
 beforeAll(async () => {
-  // Chromium is the default. Set CONFORMANCE_BROWSER to play a scenario in another engine.
+  // Chrome is the default. Set CONFORMANCE_BROWSER to play a scenario in another engine.
   const { CONFORMANCE_BROWSER: engine } = process.env;
-  browser = await (
-    engine === "firefox" ? firefox : engine === "webkit" ? webkit : chromium
-  ).launch();
+  browser = await (engine === "firefox"
+    ? firefox.launch()
+    : engine === "webkit"
+      ? webkit.launch()
+      : chromium.launch({ channel: "chrome" }));
 });
 
 afterAll(async () => {
@@ -90,7 +96,13 @@ async function play(target: Target, scenario: Scenario): Promise<void> {
   const opened = await open(target, scenario.page);
   try {
     await scenario.run(opened.ui);
-    expect(opened.errors).toEqual([]);
+    const allowed = allowedConsoleErrors.filter(
+      (entry) => entry.targets.includes(target) && entry.scenarios.test(scenario.id),
+    );
+    const errors = opened.errors.filter(
+      (error) => !allowed.some((entry) => entry.errors.test(String(error))),
+    );
+    expect(errors).toEqual([]);
   } finally {
     await opened.close();
   }

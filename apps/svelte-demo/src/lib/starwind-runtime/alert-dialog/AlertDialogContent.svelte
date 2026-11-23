@@ -11,8 +11,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "children": children,
-    "backdrop": backdrop,
+    children,
+    backdrop,
     ...rest
   }: AlertDialogContentProps = $props();
 </script>

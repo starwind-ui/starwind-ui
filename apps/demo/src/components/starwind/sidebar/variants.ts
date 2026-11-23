@@ -1,7 +1,7 @@
 import { tv } from "tailwind-variants";
 
 export const sidebar = tv({
-  base: "starwind-sidebar group peer text-sidebar-foreground hidden md:block",
+  base: "starwind-sidebar group peer text-sidebar-foreground hidden data-[side=left]:order-(--sw-sidebar-left-order) data-[side=right]:order-(--sw-sidebar-right-order) md:block",
 });
 
 export const sidebarGap = tv({
@@ -105,9 +105,8 @@ export const sidebarInput = tv({
 export const sidebarInset = tv({
   base: [
     "bg-background relative flex w-full flex-1 flex-col",
-    "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0",
+    "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=left]:ml-0 md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=right]:mr-0",
     "md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm",
-    "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
   ],
 });
 
@@ -118,7 +117,7 @@ export const sidebarMenu = tv({
 export const sidebarMenuAction = tv({
   base: [
     "text-sidebar-foreground ring-sidebar-outline",
-    "absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0",
+    "absolute end-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0",
     "outline-hidden transition-transform",
     "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
     "peer-hover/menu-button:text-sidebar-accent-foreground",
@@ -143,7 +142,7 @@ export const sidebarMenuAction = tv({
 
 export const sidebarMenuBadge = tv({
   base: [
-    "text-sidebar-foreground pointer-events-none absolute right-1 flex h-5 min-w-5",
+    "text-sidebar-foreground pointer-events-none absolute end-1 flex h-5 min-w-5",
     "items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums select-none",
     "peer-hover/menu-button:text-sidebar-accent-foreground",
     "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
@@ -156,14 +155,16 @@ export const sidebarMenuBadge = tv({
 
 export const sidebarMenuButton = tv({
   base: [
-    "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2.5 text-left",
+    "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2.5 text-start",
     "ring-sidebar-outline outline-hidden transition-[width,height,padding]",
     "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
     "focus-visible:ring-2",
     "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
     "disabled:pointer-events-none disabled:opacity-50",
     "aria-disabled:pointer-events-none aria-disabled:opacity-50",
-    "group-has-data-[sidebar=menu-action]/menu-item:pr-8",
+    "group-has-data-[sidebar=menu-action]/menu-item:pe-(--sw-sidebar-menu-end-padding) group-has-data-[sidebar=menu-action]/menu-item:[--sw-sidebar-menu-end-padding:calc(var(--spacing)*8)]",
+    "group-has-data-[sidebar=menu-action]/menu-item:transition-[width,height,padding-block,--sw-sidebar-menu-end-padding]",
+    "group-data-[collapsible=icon]:[--sw-sidebar-menu-end-padding:calc(var(--spacing)*2.5)]! group-data-[collapsible=icon]:group-has-data-[sidebar=menu-action]/menu-item:pe-(--sw-sidebar-menu-end-padding)!",
     "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
     "data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground",
     "group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2.5!",
@@ -199,7 +200,7 @@ export const sidebarMenuSkeleton = tv({
 
 export const sidebarMenuSub = tv({
   base: [
-    "border-sidebar-border mx-4.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5",
+    "border-sidebar-border mx-4.5 flex min-w-0 translate-x-px flex-col gap-1 border-s px-2.5 py-0.5 rtl:-translate-x-px",
     "group-data-[collapsible=icon]:hidden",
   ],
 });
@@ -230,6 +231,7 @@ export const sidebarMenuSubButton = tv({
 
 export const sidebarProvider = tv({
   base: [
+    "[--sw-sidebar-left-order:-1] [--sw-sidebar-right-order:1] rtl:[--sw-sidebar-left-order:1] rtl:[--sw-sidebar-right-order:-1]",
     "starwind-sidebar-provider",
     "group/sidebar-wrapper flex min-h-svh w-full",
     "has-data-[variant=inset]:bg-sidebar",

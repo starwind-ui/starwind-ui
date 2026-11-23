@@ -1,18 +1,17 @@
 export {
   COLOR_PICKER_FORMATS,
-  parseColor,
   type ColorPickerColor,
   type ColorPickerFormat,
-  type ColorPickerHsbChannelUpdates,
   type ColorPickerHsbChannels,
-  type ColorPickerHslChannelUpdates,
+  type ColorPickerHsbChannelUpdates,
   type ColorPickerHslChannels,
-  type ColorPickerRgbChannelUpdates,
+  type ColorPickerHslChannelUpdates,
   type ColorPickerRgbChannels,
+  type ColorPickerRgbChannelUpdates,
   type ColorPickerStringFormat,
+  parseColor,
 } from "./color-picker";
 export {
-  createColorPicker,
   type ColorPickerChannel,
   type ColorPickerDirection,
   type ColorPickerFormatChangeDetails,
@@ -24,10 +23,9 @@ export {
   type ColorPickerValueChangeDetails,
   type ColorPickerValueChangeReason,
   type ColorPickerValueCommitDetails,
+  createColorPicker,
 } from "./controller";
 export {
-  createColorPickerInitialState,
-  projectColorPickerInitialPart,
   type ColorPickerInitialAxis,
   type ColorPickerInitialChannel,
   type ColorPickerInitialDirection,
@@ -38,4 +36,6 @@ export {
   type ColorPickerInitialState,
   type ColorPickerInitialStateOptions,
   type ColorPickerInitialValue,
+  createColorPickerInitialState,
+  projectColorPickerInitialPart,
 } from "./initial-state";

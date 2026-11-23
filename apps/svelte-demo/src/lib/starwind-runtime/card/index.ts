@@ -1,10 +1,10 @@
 import Card from "./Card.svelte";
+import CardAction from "./CardAction.svelte";
+import CardContent from "./CardContent.svelte";
+import CardDescription from "./CardDescription.svelte";
+import CardFooter from "./CardFooter.svelte";
 import CardHeader from "./CardHeader.svelte";
 import CardTitle from "./CardTitle.svelte";
-import CardDescription from "./CardDescription.svelte";
-import CardContent from "./CardContent.svelte";
-import CardFooter from "./CardFooter.svelte";
-import CardAction from "./CardAction.svelte";
 import {
   card,
   cardAction,
@@ -14,13 +14,15 @@ import {
   cardHeader,
   cardTitle,
 } from "./variants.js";
+
 export type { CardProps } from "./Card.svelte";
+export type { CardActionProps } from "./CardAction.svelte";
+export type { CardContentProps } from "./CardContent.svelte";
+export type { CardDescriptionProps } from "./CardDescription.svelte";
+export type { CardFooterProps } from "./CardFooter.svelte";
 export type { CardHeaderProps } from "./CardHeader.svelte";
 export type { CardTitleProps } from "./CardTitle.svelte";
-export type { CardDescriptionProps } from "./CardDescription.svelte";
-export type { CardContentProps } from "./CardContent.svelte";
-export type { CardFooterProps } from "./CardFooter.svelte";
-export type { CardActionProps } from "./CardAction.svelte";
+
 const CardVariants = {
   card,
   cardAction,
@@ -39,6 +41,7 @@ const CardParts = {
   Content: CardContent,
   Action: CardAction,
 };
+
 export {
   Card,
   CardAction,

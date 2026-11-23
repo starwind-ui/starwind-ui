@@ -26,16 +26,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     {
       target: "vue",
       label: "Vue",
-      maturity: "beta",
+      maturity: "stable",
       packageName: "@starwind-ui/vue",
-      installSpecifier: "@starwind-ui/vue@beta",
+      installSpecifier: "@starwind-ui/vue",
     },
     {
       target: "svelte",
       label: "Svelte",
-      maturity: "beta",
+      maturity: "stable",
       packageName: "@starwind-ui/svelte",
-      installSpecifier: "@starwind-ui/svelte@beta",
+      installSpecifier: "@starwind-ui/svelte",
     },
   ],
   runtime: {
@@ -887,6 +887,144 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         docsPath: "/docs/runtime/#create-carousel",
         stateModels: [],
         events: [],
+        setters: [],
+      },
+      {
+        primitiveId: "chart",
+        factory: "createChart",
+        importSource: "@starwind-ui/runtime/chart",
+        rootPart: "root",
+        optionProps: [
+          "chart",
+          "definition",
+          "host",
+          "onVisibleChange",
+        ],
+        optionPropLifecycles: {
+          chart: "setter-backed",
+          definition: "setter-backed",
+          host: "setter-backed",
+          onVisibleChange: "setter-backed",
+        },
+        destroys: true,
+        docsPath: "/docs/runtime/#create-chart",
+        stateModels: [
+          {
+            name: "visible",
+            controlledProp: "visible",
+            defaultProp: "defaultVisible",
+            valueType: "string[]",
+            runtimeGetter: "getVisible",
+            runtimeSetter: "setVisible",
+            description: "Tracks the visible state for Chart.",
+            descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use visible for controlled state and defaultVisible for default state, and onVisibleChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "visible",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultVisible",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onVisibleChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use visible or defaultVisible for initial state, listen for starwind-chart:visible-change, and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "visible",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultVisible",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind-chart:visible-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setVisible",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "listen for starwind-chart:visible-change and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                apis: [
+                  {
+                    kind: "dom-event",
+                    name: "starwind-chart:visible-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setVisible",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        events: [
+          {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
+            name: "visibleChange",
+            callbackProp: "onVisibleChange",
+            detailsType: "ChartVisibleChangeDetails",
+            domEvent: "starwind-chart:visible-change",
+            emitsFrom: "root",
+            stateModel: "visible",
+            valueProperty: "visible",
+            valueType: "string[]",
+            description: "Fires when the visible changes for Chart.",
+            descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
+          },
+        ],
         setters: [],
       },
       {
@@ -6566,6 +6704,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             name: "dark",
             selector: "(&:where(.dark, .dark *))",
           },
+          {
+            name: "rtl",
+            selector: "(&:where([dir=\"rtl\"], [dir=\"rtl\"] *:not([dir=\"rtl\"] [dir=\"ltr\"], [dir=\"rtl\"] [dir=\"ltr\"] *)))",
+          },
+          {
+            name: "ltr",
+            selector: "(&:where(:not([dir=\"rtl\"], [dir=\"rtl\"] *:not([dir=\"rtl\"] [dir=\"ltr\"], [dir=\"rtl\"] [dir=\"ltr\"] *))))",
+          },
         ],
       },
       tokens: [
@@ -6790,6 +6936,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           scope: "theme-inline",
         },
         {
+          name: "--color-chart-1",
+          value: "var(--chart-1)",
+          scope: "theme-inline",
+        },
+        {
+          name: "--color-chart-2",
+          value: "var(--chart-2)",
+          scope: "theme-inline",
+        },
+        {
+          name: "--color-chart-3",
+          value: "var(--chart-3)",
+          scope: "theme-inline",
+        },
+        {
+          name: "--color-chart-4",
+          value: "var(--chart-4)",
+          scope: "theme-inline",
+        },
+        {
+          name: "--color-chart-5",
+          value: "var(--chart-5)",
+          scope: "theme-inline",
+        },
+        {
           name: "--background",
           value: "var(--color-white)",
           scope: "root",
@@ -6970,6 +7141,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           scope: "root",
         },
         {
+          name: "--chart-1",
+          value: "var(--color-blue-300)",
+          scope: "root",
+        },
+        {
+          name: "--chart-2",
+          value: "var(--color-blue-500)",
+          scope: "root",
+        },
+        {
+          name: "--chart-3",
+          value: "var(--color-blue-600)",
+          scope: "root",
+        },
+        {
+          name: "--chart-4",
+          value: "var(--color-blue-700)",
+          scope: "root",
+        },
+        {
+          name: "--chart-5",
+          value: "var(--color-blue-800)",
+          scope: "root",
+        },
+        {
           name: "--background",
           value: "var(--color-neutral-950)",
           scope: "dark",
@@ -7142,6 +7338,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         {
           name: "--sidebar-outline",
           value: "var(--color-neutral-600)",
+          scope: "dark",
+        },
+        {
+          name: "--chart-1",
+          value: "var(--color-blue-300)",
+          scope: "dark",
+        },
+        {
+          name: "--chart-2",
+          value: "var(--color-blue-500)",
+          scope: "dark",
+        },
+        {
+          name: "--chart-3",
+          value: "var(--color-blue-600)",
+          scope: "dark",
+        },
+        {
+          name: "--chart-4",
+          value: "var(--color-blue-700)",
+          scope: "dark",
+        },
+        {
+          name: "--chart-5",
+          value: "var(--color-blue-800)",
           scope: "dark",
         },
       ],
@@ -7356,7 +7577,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "alertDialogContent",
             exportName: "AlertDialogVariants",
-            baseClassCount: 26,
+            baseClassCount: 27,
             options: [],
             compoundVariantCount: 0,
           },
@@ -7561,13 +7782,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
         variantCollections: [
           {
-            name: "aspectRatioWrapper",
-            exportName: "AspectRatioVariants",
-            baseClassCount: 2,
-            options: [],
-            compoundVariantCount: 0,
-          },
-          {
             name: "aspectRatio",
             exportName: "AspectRatioVariants",
             baseClassCount: 2,
@@ -7577,7 +7791,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
         slots: [
           "aspect-ratio",
-          "aspect-ratio-wrapper",
         ],
         stateSelectors: [],
       },
@@ -8062,7 +8275,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         stateSelectors: [
           {
             attribute: "data-as-child",
-            selector: "[&>*:not(:first-child)_>_[data-as-child]_>_*]:border-l-0",
+            selector: "[&>*:not(:first-child)_>_[data-as-child]_>_*]:border-s-0",
             source: "variant-class",
           },
           {
@@ -8072,7 +8285,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-as-child",
-            selector: "[&>*:not(:first-child)_>_[data-as-child]_>_*]:rounded-l-none",
+            selector: "[&>*:not(:first-child)_>_[data-as-child]_>_*]:rounded-s-none",
             source: "variant-class",
           },
           {
@@ -8087,7 +8300,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-as-child",
-            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-as-child]_>_*]:rounded-r-none",
+            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-as-child]_>_*]:rounded-e-none",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-as-child",
+            selector: "[&>*>[data-as-child]>.transition-all]:transition",
             source: "variant-class",
           },
           {
@@ -8110,7 +8328,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "dropdown",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:border-l-0",
+            selector: "[&>[data-slot=dropdown]>[data-sw-menu-trigger].transition-all]:transition",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "dropdown",
+            selector: "[&>[data-slot=dropdown]>*>[data-sw-menu-trigger].transition-all]:transition",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "dropdown",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:border-s-0",
             source: "variant-class",
           },
           {
@@ -8122,7 +8352,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "dropdown",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-l-none",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-s-none",
             source: "variant-class",
           },
           {
@@ -8134,7 +8364,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "dropdown",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:border-l-0",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:border-s-0",
             source: "variant-class",
           },
           {
@@ -8146,7 +8376,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "dropdown",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-l-none",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-s-none",
             source: "variant-class",
           },
           {
@@ -8164,7 +8394,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "dropdown",
-            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-r-none",
+            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-e-none",
             source: "variant-class",
           },
           {
@@ -8176,7 +8406,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "dropdown",
-            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-r-none",
+            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-e-none",
             source: "variant-class",
           },
           {
@@ -8188,7 +8418,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "select-trigger",
-            selector: "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:border-l-0",
+            selector: "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:border-s-0",
             source: "variant-class",
           },
           {
@@ -8200,7 +8430,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "select-trigger",
-            selector: "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:rounded-l-none",
+            selector: "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:rounded-s-none",
             source: "variant-class",
           },
           {
@@ -8218,12 +8448,28 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "select-trigger",
-            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-slot=select-trigger]]:rounded-r-none",
+            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-slot=select-trigger]]:rounded-e-none",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "select-trigger",
+            selector: "[&>*>[data-slot=select-trigger].transition-all]:transition",
             source: "variant-class",
           },
           {
             attribute: "data-sw-menu-trigger",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:border-l-0",
+            selector: "[&>[data-slot=dropdown]>[data-sw-menu-trigger].transition-all]:transition",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sw-menu-trigger",
+            selector: "[&>[data-slot=dropdown]>*>[data-sw-menu-trigger].transition-all]:transition",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sw-menu-trigger",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:border-s-0",
             source: "variant-class",
           },
           {
@@ -8233,7 +8479,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-menu-trigger",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-l-none",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-s-none",
             source: "variant-class",
           },
           {
@@ -8243,7 +8489,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-menu-trigger",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:border-l-0",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:border-s-0",
             source: "variant-class",
           },
           {
@@ -8253,7 +8499,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-menu-trigger",
-            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-l-none",
+            selector: "[&>*:not(:first-child)[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-s-none",
             source: "variant-class",
           },
           {
@@ -8268,7 +8514,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-menu-trigger",
-            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-r-none",
+            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_[data-sw-menu-trigger]]:rounded-e-none",
             source: "variant-class",
           },
           {
@@ -8278,7 +8524,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-menu-trigger",
-            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-r-none",
+            selector: "[&>*:not(:last-child):not(:has(+_script:last-child))[data-slot=dropdown]_>_*_>_[data-sw-menu-trigger]]:rounded-e-none",
             source: "variant-class",
           },
         ],
@@ -8450,7 +8696,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "carousel",
             exportName: "CarouselVariants",
-            baseClassCount: 2,
+            baseClassCount: 21,
             options: [],
             compoundVariantCount: 0,
           },
@@ -8478,14 +8724,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "carouselNext",
             exportName: "CarouselVariants",
-            baseClassCount: 10,
+            baseClassCount: 6,
             options: [],
             compoundVariantCount: 0,
           },
           {
             name: "carouselPrevious",
             exportName: "CarouselVariants",
-            baseClassCount: 10,
+            baseClassCount: 6,
             options: [],
             compoundVariantCount: 0,
           },
@@ -8502,85 +8748,292 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-axis",
             value: "x",
-            selector: "group-data-[axis=x]/carousel:-left-12",
+            selector: "rtl:data-[axis=x]:[--sw-carousel-icon-turn:180deg]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "x",
-            selector: "group-data-[axis=x]/carousel:-ml-4",
+            selector: "rtl:data-[axis=x]:[--sw-carousel-next:50%_auto_auto_var(--sw-carousel-outside)]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "x",
-            selector: "group-data-[axis=x]/carousel:-right-12",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-axis",
-            value: "x",
-            selector: "group-data-[axis=x]/carousel:-translate-y-1/2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-axis",
-            value: "x",
-            selector: "group-data-[axis=x]/carousel:pl-4",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-axis",
-            value: "x",
-            selector: "group-data-[axis=x]/carousel:top-1/2",
+            selector: "rtl:data-[axis=x]:[--sw-carousel-previous:50%_var(--sw-carousel-outside)_auto_auto]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "y",
-            selector: "group-data-[axis=y]/carousel:-bottom-12",
+            selector: "data-[axis=y]:[--sw-carousel-block-gap:calc(var(--spacing)*4)]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "y",
-            selector: "group-data-[axis=y]/carousel:-mt-4",
+            selector: "data-[axis=y]:[--sw-carousel-flow:column]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "y",
-            selector: "group-data-[axis=y]/carousel:-top-12",
+            selector: "data-[axis=y]:[--sw-carousel-inline-gap:0px]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "y",
-            selector: "group-data-[axis=y]/carousel:-translate-x-1/2",
+            selector: "data-[axis=y]:[--sw-carousel-next:auto_auto_var(--sw-carousel-outside)_50%]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "y",
-            selector: "group-data-[axis=y]/carousel:flex-col",
+            selector: "data-[axis=y]:[--sw-carousel-previous:var(--sw-carousel-outside)_auto_auto_50%]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "y",
-            selector: "group-data-[axis=y]/carousel:left-1/2",
+            selector: "data-[axis=y]:[--sw-carousel-shift:-50%_0]",
             source: "variant-class",
           },
           {
             attribute: "data-axis",
             value: "y",
-            selector: "group-data-[axis=y]/carousel:pt-4",
+            selector: "data-[axis=y]:[--sw-carousel-turn:90deg]",
+            source: "variant-class",
+          },
+        ],
+      },
+      {
+        id: "chart",
+        title: "Chart",
+        docsPath: "/docs/components/chart/",
+        primitiveDocsPaths: [
+          "/docs/primitives/chart/",
+        ],
+        publicExports: [
+          "ChartContainer",
+          "ChartTooltip",
+          "ChartTooltipContent",
+          "ChartLegend",
+          "ChartLegendContent",
+        ],
+        frameworkAvailability: {
+          astro: {
+            status: "available",
+          },
+          react: {
+            status: "available",
+          },
+          vue: {
+            status: "available",
+          },
+          svelte: {
+            status: "available",
+          },
+        },
+        variantCollections: [
+          {
+            name: "chartContainer",
+            exportName: "ChartVariants",
+            baseClassCount: 20,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipContent",
+            exportName: "ChartVariants",
+            baseClassCount: 14,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipLabel",
+            exportName: "ChartVariants",
+            baseClassCount: 1,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipItem",
+            exportName: "ChartVariants",
+            baseClassCount: 8,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipIndicator",
+            exportName: "ChartVariants",
+            baseClassCount: 11,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipIcon",
+            exportName: "ChartVariants",
+            baseClassCount: 7,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipName",
+            exportName: "ChartVariants",
+            baseClassCount: 5,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipValue",
+            exportName: "ChartVariants",
+            baseClassCount: 8,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartTooltipCustom",
+            exportName: "ChartVariants",
+            baseClassCount: 4,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartLegend",
+            exportName: "ChartVariants",
+            baseClassCount: 6,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartLegendItem",
+            exportName: "ChartVariants",
+            baseClassCount: 10,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartLegendSwatch",
+            exportName: "ChartVariants",
+            baseClassCount: 3,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
+            name: "chartLegendIcon",
+            exportName: "ChartVariants",
+            baseClassCount: 6,
+            options: [],
+            compoundVariantCount: 0,
+          },
+        ],
+        slots: [
+          "chart",
+          "chart-legend",
+          "chart-tooltip-content",
+        ],
+        stateSelectors: [
+          {
+            attribute: "data-indicator",
+            value: "dashed",
+            selector: "group-data-[indicator=dashed]/chart-tooltip:bg-transparent",
             source: "variant-class",
           },
           {
-            attribute: "data-axis",
-            value: "y",
-            selector: "group-data-[axis=y]/carousel:rotate-90",
+            attribute: "data-indicator",
+            value: "dashed",
+            selector: "group-data-[indicator=dashed]/chart-tooltip:border-[1.5px]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indicator",
+            value: "dashed",
+            selector: "group-data-[indicator=dashed]/chart-tooltip:border-dashed",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indicator",
+            value: "dashed",
+            selector: "group-data-[indicator=dashed]/chart-tooltip:items-stretch",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indicator",
+            value: "dashed",
+            selector: "group-data-[indicator=dashed]/chart-tooltip:w-0",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indicator",
+            value: "dashed",
+            selector: "group-data-[nested=true]/chart-tooltip:group-data-[indicator=dashed]/chart-tooltip:my-0.5",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indicator",
+            value: "dot",
+            selector: "group-data-[indicator=dot]/chart-tooltip:size-2.5",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indicator",
+            value: "line",
+            selector: "group-data-[indicator=line]/chart-tooltip:items-stretch",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-indicator",
+            value: "line",
+            selector: "group-data-[indicator=line]/chart-tooltip:w-1",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-nested",
+            value: "true",
+            selector: "group-data-[nested=true]/chart-tooltip:[&>[data-slot=chart-tooltip-label]]:text-popover-foreground",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-nested",
+            value: "true",
+            selector: "group-data-[nested=true]/chart-tooltip:gap-1.5",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-nested",
+            value: "true",
+            selector: "group-data-[nested=true]/chart-tooltip:grid",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-nested",
+            value: "true",
+            selector: "group-data-[nested=true]/chart-tooltip:group-data-[indicator=dashed]/chart-tooltip:my-0.5",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-nested",
+            value: "true",
+            selector: "group-data-[nested=true]/chart-tooltip:self-end",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "chart-surface",
+            selector: "[&_[data-slot=chart-surface]]:min-w-0",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-slot",
+            value: "chart-tooltip-label",
+            selector: "group-data-[nested=true]/chart-tooltip:[&>[data-slot=chart-tooltip-label]]:text-popover-foreground",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-state",
+            value: "off",
+            selector: "data-[state=off]:opacity-40",
             source: "variant-class",
           },
         ],
@@ -9192,7 +9645,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "colorPickerAreaThumb",
             exportName: "ColorPickerVariants",
-            baseClassCount: 21,
+            baseClassCount: 22,
             options: [],
             compoundVariantCount: 0,
           },
@@ -9234,7 +9687,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "colorPickerChannelSliderThumb",
             exportName: "ColorPickerVariants",
-            baseClassCount: 22,
+            baseClassCount: 23,
             options: [],
             compoundVariantCount: 0,
           },
@@ -9429,6 +9882,24 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-orientation",
+            value: "horizontal",
+            selector: "[data-slot=\"color-picker-channel-slider\"][data-orientation=\"horizontal\"]:where([dir=\"rtl\"], [dir=\"rtl\"] *:not([dir=\"rtl\"] [dir=\"ltr\"], [dir=\"rtl\"] [dir=\"ltr\"] *)) { --sw-color-picker-channel-gradient-direction: to left; }",
+            source: "local-style",
+          },
+          {
+            attribute: "data-orientation",
+            value: "horizontal",
+            selector: "group-data-[orientation=horizontal]/color-picker-channel-slider:rtl:translate-x-1/2",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-orientation",
+            value: "horizontal",
+            selector: "group-data-[orientation=horizontal]/color-picker-channel-slider:start-(--sw-color-picker-channel-position)",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-orientation",
             value: "vertical",
             selector: "[data-slot=\"color-picker-channel-slider\"][data-orientation=\"vertical\"] { --sw-color-picker-channel-gradient-direction: to top; }",
             source: "local-style",
@@ -9524,7 +9995,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "color-picker-area-background",
-            selector: "[data-slot=\"color-picker-area-background\"] { background: var(--sw-color-picker-area-background-overlay, linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent)), var(--sw-color-picker-area-background, hsl(var(--sw-color-picker-hue) 100% 50%)); }",
+            selector: "[data-slot=\"color-picker-area-background\"] { background: var(--sw-color-picker-area-background-overlay, linear-gradient(to top, #000, transparent), linear-gradient(var(--sw-color-picker-area-gradient-direction, to right), #fff, transparent)), var(--sw-color-picker-area-background, hsl(var(--sw-color-picker-hue) 100% 50%)); }",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
+            value: "color-picker-area-background",
+            selector: "[data-slot=\"color-picker-area-background\"]:where([dir=\"rtl\"], [dir=\"rtl\"] *:not([dir=\"rtl\"] [dir=\"ltr\"], [dir=\"rtl\"] [dir=\"ltr\"] *)) { --sw-color-picker-area-gradient-direction: to left; }",
             source: "local-style",
           },
           {
@@ -9591,6 +10068,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-slot",
             value: "color-picker-channel-slider",
             selector: "[data-slot=\"color-picker-channel-slider\"][data-channel=\"saturation\"] { --sw-color-picker-channel-gradient: linear-gradient(var(--sw-color-picker-channel-gradient-direction), hsl(var(--sw-color-picker-hue, 0) 0% 50%), hsl(var(--sw-color-picker-hue, 0) 100% 50%)); }",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
+            value: "color-picker-channel-slider",
+            selector: "[data-slot=\"color-picker-channel-slider\"][data-orientation=\"horizontal\"]:where([dir=\"rtl\"], [dir=\"rtl\"] *:not([dir=\"rtl\"] [dir=\"ltr\"], [dir=\"rtl\"] [dir=\"ltr\"] *)) { --sw-color-picker-channel-gradient-direction: to left; }",
             source: "local-style",
           },
           {
@@ -9974,7 +10457,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-align",
             value: "inline-end",
-            selector: "[&>[data-align=inline-end]:has(>div>button)]:mr-[-0.3rem]",
+            selector: "[&>[data-align=inline-end]:has(>div>button)]:me-[-0.3rem]",
             source: "variant-class",
           },
           {
@@ -10209,7 +10692,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "contextMenuContent",
             exportName: "ContextMenuVariants",
-            baseClassCount: 31,
+            baseClassCount: 36,
             options: [],
             compoundVariantCount: 0,
           },
@@ -10373,6 +10856,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-side",
+            value: "bottom",
+            selector: "data-sw-context-menu-entry:data-[side=bottom]:[--tw-enter-translate-y:calc(-1*var(--sw-context-menu-entry-distance))]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
             value: "left",
             selector: "data-[side=left]:slide-in-from-right-2",
             source: "variant-class",
@@ -10381,6 +10870,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-side",
             value: "left",
             selector: "data-[side=left]:slide-out-to-right-2",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
+            value: "left",
+            selector: "data-sw-context-menu-entry:data-[side=left]:[--tw-enter-translate-x:var(--sw-context-menu-entry-distance)]",
             source: "variant-class",
           },
           {
@@ -10397,6 +10892,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-side",
+            value: "right",
+            selector: "data-sw-context-menu-entry:data-[side=right]:[--tw-enter-translate-x:calc(-1*var(--sw-context-menu-entry-distance))]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
             value: "top",
             selector: "data-[side=top]:slide-in-from-bottom-2",
             source: "variant-class",
@@ -10405,6 +10906,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-side",
             value: "top",
             selector: "data-[side=top]:slide-out-to-bottom-2",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
+            value: "top",
+            selector: "data-sw-context-menu-entry:data-[side=top]:[--tw-enter-translate-y:var(--sw-context-menu-entry-distance)]",
             source: "variant-class",
           },
           {
@@ -10429,6 +10936,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-state",
             value: "open",
             selector: "data-[state=open]:animate-in",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sw-context-menu-entry",
+            selector: "data-sw-context-menu-entry:[--sw-context-menu-entry-distance:min(calc(var(--spacing)*2),var(--sw-context-menu-entry-room,100vmax))]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sw-context-menu-entry",
+            selector: "data-sw-context-menu-entry:data-[side=bottom]:[--tw-enter-translate-y:calc(-1*var(--sw-context-menu-entry-distance))]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sw-context-menu-entry",
+            selector: "data-sw-context-menu-entry:data-[side=left]:[--tw-enter-translate-x:var(--sw-context-menu-entry-distance)]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sw-context-menu-entry",
+            selector: "data-sw-context-menu-entry:data-[side=right]:[--tw-enter-translate-x:calc(-1*var(--sw-context-menu-entry-distance))]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sw-context-menu-entry",
+            selector: "data-sw-context-menu-entry:data-[side=top]:[--tw-enter-translate-y:var(--sw-context-menu-entry-distance)]",
             source: "variant-class",
           },
           {
@@ -10480,7 +11012,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "dialogContent",
             exportName: "DialogVariants",
-            baseClassCount: 30,
+            baseClassCount: 31,
             options: [],
             compoundVariantCount: 0,
           },
@@ -11330,7 +11862,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         stateSelectors: [
           {
             attribute: "data-sw-form-error-summary-item",
-            selector: "[&_[data-sw-form-error-summary-item]]:text-left",
+            selector: "[&_[data-sw-form-error-summary-item]]:text-start",
             source: "variant-class",
           },
           {
@@ -11713,13 +12245,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-align",
             value: "inline-end",
-            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pr-1.5",
+            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pe-1.5",
             source: "variant-class",
           },
           {
             attribute: "data-align",
             value: "inline-start",
-            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:pl-1.5",
+            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:ps-1.5",
             source: "variant-class",
           },
           {
@@ -11796,13 +12328,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "input-group-control",
-            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pr-1.5",
+            selector: "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pe-1.5",
             source: "variant-class",
           },
           {
             attribute: "data-slot",
             value: "input-group-control",
-            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:pl-1.5",
+            selector: "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:ps-1.5",
             source: "variant-class",
           },
         ],
@@ -11859,7 +12391,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "inputOtpSlot",
             exportName: "InputOtpVariants",
-            baseClassCount: 34,
+            baseClassCount: 33,
             options: [],
             compoundVariantCount: 0,
           },
@@ -12455,7 +12987,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "navigationMenuContent",
             exportName: "NavigationMenuVariants",
-            baseClassCount: 15,
+            baseClassCount: 16,
             options: [],
             compoundVariantCount: 0,
           },
@@ -12627,7 +13159,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-size",
             value: "md",
-            selector: "group-data-[size=md]/nav-menu:ml-1.5",
+            selector: "group-data-[size=md]/nav-menu:ms-1.5",
             source: "variant-class",
           },
           {
@@ -13054,7 +13586,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "progressTrack",
             exportName: "ProgressVariants",
-            baseClassCount: 2,
+            baseClassCount: 3,
             options: [],
             compoundVariantCount: 0,
           },
@@ -13470,13 +14002,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-orientation",
             value: "vertical",
-            selector: "data-[orientation=vertical]:border-l",
+            selector: "data-[orientation=vertical]:border-s",
             source: "variant-class",
           },
           {
             attribute: "data-orientation",
             value: "vertical",
-            selector: "data-[orientation=vertical]:border-l-transparent",
+            selector: "data-[orientation=vertical]:border-s-transparent",
             source: "variant-class",
           },
           {
@@ -14139,7 +14671,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "sidebar",
             exportName: "SidebarVariants",
-            baseClassCount: 5,
+            baseClassCount: 7,
             options: [],
             compoundVariantCount: 0,
           },
@@ -14296,7 +14828,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "sidebarMenuButton",
             exportName: "SidebarVariants",
-            baseClassCount: 32,
+            baseClassCount: 36,
             options: [
               {
                 name: "variant",
@@ -14335,7 +14867,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "sidebarMenuSub",
             exportName: "SidebarVariants",
-            baseClassCount: 11,
+            baseClassCount: 12,
             options: [],
             compoundVariantCount: 0,
           },
@@ -14372,7 +14904,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "sidebarProvider",
             exportName: "SidebarVariants",
-            baseClassCount: 5,
+            baseClassCount: 9,
             options: [],
             compoundVariantCount: 0,
           },
@@ -14466,7 +14998,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-collapsible",
             value: "icon",
+            selector: "data-[size=lg]:group-data-[collapsible=icon]:[--sw-sidebar-menu-end-padding:0px]!",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-collapsible",
+            value: "icon",
             selector: "group-data-[collapsible=icon]:-mt-10",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-collapsible",
+            value: "icon",
+            selector: "group-data-[collapsible=icon]:[--sw-sidebar-menu-end-padding:calc(var(--spacing)*2.5)]!",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-collapsible",
+            value: "icon",
+            selector: "group-data-[collapsible=icon]:group-has-data-[sidebar=menu-action]/menu-item:pe-(--sw-sidebar-menu-end-padding)!",
             source: "variant-class",
           },
           {
@@ -14612,6 +15162,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-side",
             value: "left",
+            selector: "data-[side=left]:order-(--sw-sidebar-left-order)",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
+            value: "left",
             selector: "group-data-[side=left]:-right-4",
             source: "variant-class",
           },
@@ -14629,6 +15185,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-side",
+            value: "left",
+            selector: "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=left]:ml-0",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
             value: "right",
             selector: "[[data-side=right][data-collapsible=offcanvas]_&]:-left-2",
             source: "variant-class",
@@ -14637,6 +15199,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-side",
             value: "right",
             selector: "[[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
+            value: "right",
+            selector: "data-[side=right]:order-(--sw-sidebar-right-order)",
             source: "variant-class",
           },
           {
@@ -14661,6 +15229,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-side",
             value: "right",
             selector: "in-data-[side=right]:cursor-e-resize",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-side",
+            value: "right",
+            selector: "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=right]:mr-0",
             source: "variant-class",
           },
           {
@@ -14726,7 +15300,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-sidebar",
             value: "menu-action",
-            selector: "group-has-data-[sidebar=menu-action]/menu-item:pr-8",
+            selector: "group-data-[collapsible=icon]:group-has-data-[sidebar=menu-action]/menu-item:pe-(--sw-sidebar-menu-end-padding)!",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sidebar",
+            value: "menu-action",
+            selector: "group-has-data-[sidebar=menu-action]/menu-item:[--sw-sidebar-menu-end-padding:calc(var(--spacing)*8)]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sidebar",
+            value: "menu-action",
+            selector: "group-has-data-[sidebar=menu-action]/menu-item:pe-(--sw-sidebar-menu-end-padding)",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-sidebar",
+            value: "menu-action",
+            selector: "group-has-data-[sidebar=menu-action]/menu-item:transition-[width,height,padding-block,--sw-sidebar-menu-end-padding]",
             source: "variant-class",
           },
           {
@@ -14821,6 +15413,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-size",
             value: "lg",
+            selector: "data-[size=lg]:group-data-[collapsible=icon]:[--sw-sidebar-menu-end-padding:0px]!",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-size",
+            value: "lg",
             selector: "peer-data-[size=lg]/menu-button:top-2.5",
             source: "variant-class",
           },
@@ -14856,8 +15454,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-state",
-            value: "collapsed",
-            selector: "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+            value: "expanded",
+            selector: "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=left]:ml-0",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-state",
+            value: "expanded",
+            selector: "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=right]:mr-0",
             source: "variant-class",
           },
           {
@@ -14908,13 +15512,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-variant",
             value: "inset",
-            selector: "md:peer-data-[variant=inset]:ml-0",
+            selector: "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=left]:ml-0",
             source: "variant-class",
           },
           {
             attribute: "data-variant",
             value: "inset",
-            selector: "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+            selector: "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=right]:mr-0",
             source: "variant-class",
           },
           {
@@ -14934,7 +15538,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           importFrom: [
             "SidebarMenuButton",
           ],
-          selectorCount: 1,
+          selectorCount: 2,
         },
       },
       {
@@ -15043,7 +15647,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "sliderThumb",
             exportName: "SliderVariants",
-            baseClassCount: 22,
+            baseClassCount: 23,
             options: [
               {
                 name: "variant",
@@ -15117,6 +15721,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-orientation",
             value: "horizontal",
             selector: "data-[orientation=horizontal]:h-full",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-orientation",
+            value: "horizontal",
+            selector: "data-[orientation=horizontal]:rtl:translate-x-1/2",
             source: "variant-class",
           },
           {
@@ -15267,7 +15877,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "switchToggle",
             exportName: "SwitchVariants",
-            baseClassCount: 7,
+            baseClassCount: 9,
             options: [
               {
                 name: "size",
@@ -15317,6 +15927,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             source: "variant-class",
           },
         ],
+        localStyles: {
+          importFrom: [
+            "Switch",
+          ],
+          selectorCount: 1,
+        },
       },
       {
         id: "table",
@@ -16348,34 +16964,34 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-horizontal",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-l-lg",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-s-lg",
             source: "variant-class",
           },
           {
             attribute: "data-horizontal",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-l-0",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-s-0",
             source: "variant-class",
           },
           {
             attribute: "data-horizontal",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-l",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-s",
             source: "variant-class",
           },
           {
             attribute: "data-horizontal",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-r-lg",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-e-lg",
             source: "variant-class",
           },
           {
             attribute: "data-icon",
             value: "inline-end",
-            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5",
+            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pe-1.5",
             source: "variant-class",
           },
           {
             attribute: "data-icon",
             value: "inline-start",
-            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5",
+            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:ps-1.5",
             source: "variant-class",
           },
           {
@@ -16469,13 +17085,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-spacing",
             value: "0",
-            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5",
+            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pe-1.5",
             source: "variant-class",
           },
           {
             attribute: "data-spacing",
             value: "0",
-            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5",
+            selector: "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:ps-1.5",
             source: "variant-class",
           },
           {
@@ -16493,25 +17109,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-spacing",
             value: "0",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-l-lg",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-s-lg",
             source: "variant-class",
           },
           {
             attribute: "data-spacing",
             value: "0",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-l-0",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-s-0",
             source: "variant-class",
           },
           {
             attribute: "data-spacing",
             value: "0",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-l",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-s",
             source: "variant-class",
           },
           {
             attribute: "data-spacing",
             value: "0",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-r-lg",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-e-lg",
             source: "variant-class",
           },
           {
@@ -16612,13 +17228,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-variant",
             value: "outline",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-l-0",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-s-0",
             source: "variant-class",
           },
           {
             attribute: "data-variant",
             value: "outline",
-            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-l",
+            selector: "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-s",
             source: "variant-class",
           },
           {
@@ -16721,7 +17337,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "tooltipCaret",
             exportName: "TooltipVariants",
-            baseClassCount: 28,
+            baseClassCount: 24,
             options: [],
             compoundVariantCount: 0,
           },
@@ -16744,19 +17360,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-side",
             value: "bottom",
-            selector: "group-data-[side=bottom]:-translate-x-1/2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
-            value: "bottom",
             selector: "group-data-[side=bottom]:-translate-y-[calc(50%+1px)]",
             source: "variant-class",
           },
           {
             attribute: "data-side",
             value: "bottom",
-            selector: "group-data-[side=bottom]:left-1/2",
+            selector: "group-data-[side=bottom]:left-[var(--sw-floating-arrow-x,calc(50%-0.5rem))]",
             source: "variant-class",
           },
           {
@@ -16774,12 +17384,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-side",
             value: "left",
-            selector: "group-data-[side=left]:-translate-y-1/2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
-            value: "left",
             selector: "group-data-[side=left]:right-0",
             source: "variant-class",
           },
@@ -16792,7 +17396,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-side",
             value: "left",
-            selector: "group-data-[side=left]:top-1/2",
+            selector: "group-data-[side=left]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))]",
             source: "variant-class",
           },
           {
@@ -16822,19 +17426,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-side",
             value: "right",
-            selector: "group-data-[side=right]:-translate-y-1/2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
-            value: "right",
             selector: "group-data-[side=right]:left-0",
             source: "variant-class",
           },
           {
             attribute: "data-side",
             value: "right",
-            selector: "group-data-[side=right]:top-1/2",
+            selector: "group-data-[side=right]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))]",
             source: "variant-class",
           },
           {
@@ -16846,19 +17444,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-side",
             value: "top",
-            selector: "group-data-[side=top]:-translate-x-1/2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
-            value: "top",
             selector: "group-data-[side=top]:bottom-0",
             source: "variant-class",
           },
           {
             attribute: "data-side",
             value: "top",
-            selector: "group-data-[side=top]:left-1/2",
+            selector: "group-data-[side=top]:left-[var(--sw-floating-arrow-x,calc(50%-0.5rem))]",
             source: "variant-class",
           },
           {
@@ -17991,11 +18583,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       variantCollectionName: "AspectRatioVariants",
       variantNames: [
         "aspectRatio",
-        "aspectRatioWrapper",
       ],
       slots: [
         "aspect-ratio",
-        "aspect-ratio-wrapper",
       ],
       aliases: [
         "aspect-ratio",
@@ -20195,6 +20785,265 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "element-attributes",
                   displayName: "button attributes",
                   element: "button",
+                  omittedProps: [],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    },
+    {
+      id: "chart",
+      title: "Chart",
+      groupId: "content-media",
+      docsPage: {
+        status: "published",
+        path: "/docs/components/chart/",
+      },
+      foundation: {
+        type: "direct-primitive",
+        label: "Direct primitive",
+      },
+      frameworkAvailability: {
+        astro: {
+          status: "available",
+        },
+        react: {
+          status: "available",
+        },
+        vue: {
+          status: "available",
+        },
+        svelte: {
+          status: "available",
+        },
+      },
+      primitiveIds: [
+        "chart",
+      ],
+      runtimeFactories: [
+        {
+          primitiveId: "chart",
+          factory: "createChart",
+          importSource: "@starwind-ui/runtime/chart",
+        },
+      ],
+      publicExports: [
+        "ChartContainer",
+        "ChartTooltip",
+        "ChartTooltipContent",
+        "ChartLegend",
+        "ChartLegendContent",
+      ],
+      defaultExport: {
+        Container: "ChartContainer",
+        Tooltip: "ChartTooltip",
+        TooltipContent: "ChartTooltipContent",
+        Legend: "ChartLegend",
+        LegendContent: "ChartLegendContent",
+      },
+      variantCollectionName: "ChartVariants",
+      variantNames: [
+        "chartContainer",
+        "chartLegend",
+        "chartLegendIcon",
+        "chartLegendItem",
+        "chartLegendSwatch",
+        "chartTooltipContent",
+        "chartTooltipCustom",
+        "chartTooltipIcon",
+        "chartTooltipIndicator",
+        "chartTooltipItem",
+        "chartTooltipLabel",
+        "chartTooltipName",
+        "chartTooltipValue",
+      ],
+      slots: [
+        "chart",
+        "chart-legend",
+        "chart-tooltip-content",
+      ],
+      aliases: [
+        "chart",
+        "Chart",
+        "ChartContainer",
+        "ChartTooltip",
+        "ChartTooltipContent",
+        "ChartLegend",
+        "ChartLegendContent",
+        "Container",
+        "Tooltip",
+        "TooltipContent",
+        "Legend",
+        "LegendContent",
+        "ChartVariants",
+        "Content & Media",
+        "content",
+        "media",
+        "astro",
+        "react",
+        "Direct primitive",
+        "TanStack Charts",
+        "graph",
+        "data visualization",
+      ],
+      styledApi: {
+        astro: {
+          framework: "astro",
+          exports: [
+            {
+              exportName: "ChartContainer",
+              props: [
+                {
+                  name: "tooltip",
+                  type: "boolean | \"native\"",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Provides tooltip content for the control.",
+                  descriptionSource: "catalog",
+                },
+              ],
+              inheritance: [
+                {
+                  key: "raw:import(\"@starwind-ui/runtime\").ChartRootProps<T, D, X, Y>",
+                  kind: "raw",
+                  displayName: "import(\"@starwind-ui/runtime\").ChartRootProps<T, D, X, Y>",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "ChartTooltip",
+              props: [],
+              inheritance: [],
+            },
+            {
+              exportName: "ChartTooltipContent",
+              props: [
+                {
+                  name: "labelClass",
+                  type: "string",
+                  required: false,
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "chart",
+                    part: "TooltipName",
+                    propName: "labelClass",
+                  },
+                  description: "Adds classes to the tooltip label heading.",
+                  descriptionSource: "annotation",
+                },
+              ],
+              inheritance: [
+                {
+                  key: "raw:Omit<import(\"@starwind-ui/runtime\").ChartTooltipContentProps<T>, \"children\">",
+                  kind: "raw",
+                  displayName: "Omit<import(\"@starwind-ui/runtime\").ChartTooltipContentProps<T>, \"children\">",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "ChartLegend",
+              props: [],
+              inheritance: [
+                {
+                  key: "component:chart.ChartLegendContent",
+                  kind: "component-props",
+                  displayName: "ChartLegendContent props",
+                  componentId: "chart",
+                  exportName: "ChartLegendContent",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "ChartLegendContent",
+              props: [],
+              inheritance: [
+                {
+                  key: "raw:Omit<import(\"@starwind-ui/runtime\").ChartLegendProps, \"children\" | \"content\">",
+                  kind: "raw",
+                  displayName: "Omit<import(\"@starwind-ui/runtime\").ChartLegendProps, \"children\" | \"content\">",
+                  omittedProps: [],
+                },
+              ],
+            },
+          ],
+        },
+        react: {
+          framework: "react",
+          exports: [
+            {
+              exportName: "ChartContainer",
+              props: [
+                {
+                  name: "tooltip",
+                  type: "React.ReactNode | false | \"native\"",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Provides tooltip content for the control.",
+                  descriptionSource: "catalog",
+                },
+              ],
+              inheritance: [
+                {
+                  key: "raw:import(\"@starwind-ui/runtime\").ChartRootProps<T, D, X, Y>",
+                  kind: "raw",
+                  displayName: "import(\"@starwind-ui/runtime\").ChartRootProps<T, D, X, Y>",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "ChartTooltip",
+              props: [],
+              inheritance: [],
+            },
+            {
+              exportName: "ChartTooltipContent",
+              props: [
+                {
+                  name: "labelClassName",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Adds classes to the tooltip label heading.",
+                  descriptionSource: "annotation",
+                },
+              ],
+              inheritance: [
+                {
+                  key: "raw:Omit<import(\"@starwind-ui/runtime\").ChartTooltipContentProps<T>, \"children\">",
+                  kind: "raw",
+                  displayName: "Omit<import(\"@starwind-ui/runtime\").ChartTooltipContentProps<T>, \"children\">",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "ChartLegend",
+              props: [],
+              inheritance: [
+                {
+                  key: "component:chart.ChartLegendContent",
+                  kind: "component-props",
+                  displayName: "ChartLegendContent props",
+                  componentId: "chart",
+                  exportName: "ChartLegendContent",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "ChartLegendContent",
+              props: [],
+              inheritance: [
+                {
+                  key: "raw:Omit<import(\"@starwind-ui/runtime\").ChartLegendProps, \"children\" | \"content\">",
+                  kind: "raw",
+                  displayName: "Omit<import(\"@starwind-ui/runtime\").ChartLegendProps, \"children\" | \"content\">",
                   omittedProps: [],
                 },
               ],
@@ -24061,7 +24910,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
                   required: false,
                   classification: "primitive-override",
-                  defaultValue: "\"right\"",
                   primitive: {
                     primitiveId: "context-menu",
                     part: "Popup",
@@ -24498,7 +25346,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
                   required: false,
                   classification: "primitive-override",
-                  defaultValue: "\"right\"",
                   primitive: {
                     primitiveId: "context-menu",
                     part: "Popup",
@@ -25517,7 +26364,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
                   required: false,
                   classification: "primitive-override",
-                  defaultValue: "\"right\"",
                   primitive: {
                     primitiveId: "menu",
                     part: "Popup",
@@ -26002,7 +26848,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
                   required: false,
                   classification: "primitive-override",
-                  defaultValue: "\"right\"",
                   primitive: {
                     primitiveId: "menu",
                     part: "Popup",
@@ -26616,7 +27461,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "defaultValue",
                   type: "string | number | string[]",
                   required: false,
-                  classification: "wrapper",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Control",
+                    propName: "defaultValue",
+                  },
                   description: "Sets the initial value when the component is uncontrolled.",
                   descriptionSource: "catalog",
                 },
@@ -26638,7 +27488,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "value",
                   type: "string | number | string[]",
                   required: false,
-                  classification: "wrapper",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Control",
+                    propName: "value",
+                  },
                   description: "Controls or identifies the component value.",
                   descriptionSource: "catalog",
                 },
@@ -26946,7 +27801,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "defaultValue",
                   type: "import(\"@starwind-ui/runtime\").InputValue",
                   required: false,
-                  classification: "wrapper",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Control",
+                    propName: "defaultValue",
+                  },
                   displayType: "InputValue",
                   description: "Sets the initial value when the component is uncontrolled.",
                   descriptionSource: "catalog",
@@ -26955,7 +27815,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "onValueChange",
                   type: "(value: string, details: import(\"@starwind-ui/runtime\").InputValueChangeDetails) => void",
                   required: false,
-                  classification: "wrapper",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Control",
+                    propName: "onValueChange",
+                  },
                   displayType: "(value: string, details: InputValueChangeDetails) => void",
                   description: "Runs when the component value changes.",
                   descriptionSource: "catalog",
@@ -26978,7 +27843,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "value",
                   type: "import(\"@starwind-ui/runtime\").InputValue",
                   required: false,
-                  classification: "wrapper",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Control",
+                    propName: "value",
+                  },
                   displayType: "InputValue",
                   description: "Controls or identifies the component value.",
                   descriptionSource: "catalog",
@@ -38232,13 +39102,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/accordion",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/accordion",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -38610,7 +39480,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Accordion is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Use Accordion to organize a set of sections that readers can expand. The headers open their panels and support keyboard navigation between sections.",
+        liveDemo: {
+          componentName: "AccordionPrimitiveDemo",
+          importPath: "@/components/demos/primitives/AccordionPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/AccordionPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -38653,6 +39528,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Accordion.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Accordion } from \"@starwind-ui/svelte/accordion\";\n</script>\n\n<Accordion.Root>\n  <Accordion.Item value=\"details\">\n    <Accordion.Header>\n      <Accordion.Trigger>Toggle details</Accordion.Trigger>\n    </Accordion.Header>\n    <Accordion.Panel>Accordion panel content</Accordion.Panel>\n  </Accordion.Item>\n</Accordion.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#accordion-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Accordion.",
@@ -38668,6 +39552,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -39494,13 +40379,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/alert-dialog",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/alert-dialog",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -39994,7 +40879,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Alert Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
+        summary: "Use Alert Dialog when someone must respond before continuing, such as confirming a deletion. It keeps focus inside the dialog while the person makes that choice.",
+        liveDemo: {
+          componentName: "AlertDialogPrimitiveDemo",
+          importPath: "@/components/demos/primitives/AlertDialogPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/AlertDialogPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -40037,6 +40927,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build AlertDialog.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { AlertDialog } from \"@starwind-ui/svelte/alert-dialog\";\n</script>\n\n<AlertDialog.Root>\n  <AlertDialog.Trigger>Delete item</AlertDialog.Trigger>\n  <AlertDialog.Backdrop />\n  <AlertDialog.Viewport>\n    <AlertDialog.Popup>\n      <AlertDialog.Title>Delete item?</AlertDialog.Title>\n      <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>\n      <AlertDialog.Close>Cancel</AlertDialog.Close>\n    </AlertDialog.Popup>\n  </AlertDialog.Viewport>\n</AlertDialog.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#alert-dialog-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build AlertDialog.",
@@ -40052,6 +40951,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -41038,13 +41938,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/avatar",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/avatar",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -41310,7 +42210,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Avatar is a Starwind Runtime primitive in the static-semantic contract family.",
+        summary: "Use Avatar to show a person or account image. The fallback can show initials while the image loads or when it fails to load.",
+        liveDemo: {
+          componentName: "AvatarPrimitiveDemo",
+          importPath: "@/components/demos/primitives/AvatarPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/AvatarPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -41353,6 +42258,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Avatar.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Avatar } from \"@starwind-ui/svelte/avatar\";\n</script>\n\n<Avatar.Root>\n  <Avatar.Image alt=\"Starwind UI\" src=\"/avatar.png\" />\n  <Avatar.Fallback>SW</Avatar.Fallback>\n</Avatar.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#avatar-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Avatar.",
@@ -41368,6 +42282,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -41923,13 +42838,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/button",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/button",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -42034,7 +42949,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Button uses native button semantics by default and adds Runtime behavior only for focusable-disabled state.",
+        summary: "Use Button to run an action or submit a form. It behaves like a native button and can keep a disabled button in the tab order when you need to explain why it is disabled.",
+        liveDemo: {
+          componentName: "ButtonPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ButtonPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ButtonPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -42081,6 +43001,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Button.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Button } from \"@starwind-ui/svelte/button\";\n</script>\n\n<Button.Root type=\"button\" focusableWhenDisabled={true}>Button</Button.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#button-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Button.",
@@ -42096,6 +43025,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -42285,13 +43215,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/carousel",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/carousel",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -42573,7 +43503,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Carousel is a Starwind Runtime primitive in the viewport-measurement contract family.",
+        summary: "Use Carousel to browse a row of images or cards. The previous and next buttons move through the slides and update as you reach either end.",
+        liveDemo: {
+          componentName: "CarouselPrimitiveDemo",
+          importPath: "@/components/demos/primitives/CarouselPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/CarouselPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -42616,6 +43551,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Carousel.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Carousel } from \"@starwind-ui/svelte/carousel\";\n</script>\n\n<Carousel.Root>\n  <Carousel.Viewport>\n    <Carousel.Container>\n      <Carousel.Item>Slide 1</Carousel.Item>\n    </Carousel.Container>\n  </Carousel.Viewport>\n  <Carousel.Previous>Previous</Carousel.Previous>\n  <Carousel.Next>Next</Carousel.Next>\n</Carousel.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#carousel-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Carousel.",
@@ -42631,6 +43575,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -43075,6 +44020,2502 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       ],
     },
     {
+      id: "chart",
+      displayName: "Chart",
+      category: "viewport-measurement",
+      registryVersion: "1.0.0",
+      packages: [
+        {
+          framework: "astro",
+          packageName: "@starwind-ui/astro",
+          importSource: "@starwind-ui/astro/chart",
+          installSpecifier: "@starwind-ui/astro",
+        },
+        {
+          framework: "react",
+          packageName: "@starwind-ui/react",
+          importSource: "@starwind-ui/react/chart",
+          installSpecifier: "@starwind-ui/react",
+        },
+        {
+          framework: "vue",
+          packageName: "@starwind-ui/vue",
+          importSource: "@starwind-ui/vue/chart",
+          installSpecifier: "@starwind-ui/vue",
+        },
+        {
+          framework: "svelte",
+          packageName: "@starwind-ui/svelte",
+          importSource: "@starwind-ui/svelte/chart",
+          installSpecifier: "@starwind-ui/svelte",
+        },
+      ],
+      runtime: {
+        primitiveId: "chart",
+        factory: "createChart",
+        importSource: "@starwind-ui/runtime/chart",
+        rootPart: "root",
+        optionProps: [
+          "chart",
+          "definition",
+          "host",
+          "onVisibleChange",
+        ],
+        optionPropLifecycles: {
+          chart: "setter-backed",
+          definition: "setter-backed",
+          host: "setter-backed",
+          onVisibleChange: "setter-backed",
+        },
+        destroys: true,
+      },
+      parts: [
+        {
+          name: "root",
+          discoveryAttribute: "data-sw-chart",
+          defaultElement: "div",
+          forwardsRef: false,
+          ownsRuntime: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart",
+            },
+            {
+              name: "data-chart",
+              source: "prop",
+            },
+          ],
+        },
+        {
+          name: "style",
+          discoveryAttribute: "data-sw-chart-style",
+          defaultElement: "style",
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-style",
+            },
+          ],
+        },
+        {
+          name: "surface",
+          discoveryAttribute: "data-sw-chart-surface",
+          defaultElement: "div",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-surface",
+            },
+            {
+              name: "style",
+              source: "runtime",
+            },
+          ],
+        },
+        {
+          name: "tooltip",
+          discoveryAttribute: "data-sw-chart-tooltip",
+          defaultElement: "template",
+        },
+        {
+          name: "tooltipContent",
+          discoveryAttribute: "data-sw-chart-tooltip-content",
+          defaultElement: "div",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-tooltip-content",
+            },
+            {
+              name: "data-chart",
+              source: "state",
+            },
+            {
+              name: "data-indicator",
+              source: "state",
+            },
+            {
+              name: "data-nested",
+              source: "state",
+            },
+          ],
+        },
+        {
+          name: "tooltipLabel",
+          discoveryAttribute: "data-sw-chart-tooltip-label",
+          defaultElement: "div",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-tooltip-label",
+            },
+          ],
+        },
+        {
+          name: "tooltipItems",
+          discoveryAttribute: "data-sw-chart-tooltip-row",
+          defaultElement: "template",
+        },
+        {
+          name: "tooltipItem",
+          discoveryAttribute: "data-sw-chart-tooltip-item",
+          defaultElement: "div",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-tooltip-item",
+            },
+            {
+              name: "aria-hidden",
+              source: "constant",
+              value: "true",
+            },
+            {
+              name: "data-active",
+              source: "state",
+            },
+            {
+              name: "data-key",
+              source: "state",
+            },
+          ],
+        },
+        {
+          name: "tooltipIndicator",
+          discoveryAttribute: "data-sw-chart-tooltip-indicator",
+          defaultElement: "span",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-tooltip-indicator",
+            },
+          ],
+        },
+        {
+          name: "tooltipIcon",
+          discoveryAttribute: "data-sw-chart-tooltip-icon",
+          defaultElement: "span",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-tooltip-icon",
+            },
+            {
+              name: "aria-hidden",
+              source: "constant",
+              value: "true",
+            },
+          ],
+        },
+        {
+          name: "tooltipName",
+          discoveryAttribute: "data-sw-chart-tooltip-name",
+          defaultElement: "span",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-tooltip-name",
+            },
+          ],
+        },
+        {
+          name: "tooltipValue",
+          discoveryAttribute: "data-sw-chart-tooltip-value",
+          defaultElement: "span",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-tooltip-value",
+            },
+          ],
+        },
+        {
+          name: "legend",
+          discoveryAttribute: "data-sw-chart-legend",
+          defaultElement: "div",
+          role: "group",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-legend",
+            },
+            {
+              name: "role",
+              source: "constant",
+              value: "group",
+            },
+            {
+              name: "aria-label",
+              source: "prop",
+            },
+          ],
+        },
+        {
+          name: "legendItems",
+          discoveryAttribute: "data-sw-chart-legend-template",
+          defaultElement: "template",
+        },
+        {
+          name: "legendItem",
+          discoveryAttribute: "data-sw-chart-legend-item",
+          defaultElement: "button",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-legend-item",
+            },
+            {
+              name: "type",
+              source: "constant",
+              value: "button",
+            },
+            {
+              name: "aria-pressed",
+              source: "state",
+            },
+            {
+              name: "data-state",
+              source: "state",
+            },
+            {
+              name: "data-key",
+              source: "prop",
+            },
+          ],
+        },
+        {
+          name: "legendSwatch",
+          discoveryAttribute: "data-sw-chart-legend-swatch",
+          defaultElement: "span",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-legend-swatch",
+            },
+            {
+              name: "aria-hidden",
+              source: "constant",
+              value: "true",
+            },
+          ],
+        },
+        {
+          name: "legendIcon",
+          discoveryAttribute: "data-sw-chart-legend-icon",
+          defaultElement: "span",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-legend-icon",
+            },
+            {
+              name: "aria-hidden",
+              source: "constant",
+              value: "true",
+            },
+          ],
+        },
+        {
+          name: "legendLabel",
+          discoveryAttribute: "data-sw-chart-legend-label",
+          defaultElement: "span",
+          forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-slot",
+              source: "constant",
+              value: "chart-legend-label",
+            },
+          ],
+        },
+      ],
+      props: [
+        {
+          name: "id",
+          kind: "attribute",
+          targets: [
+            "root",
+          ],
+          type: "string",
+        },
+        {
+          name: "chart",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "ChartSource<T, D, X, Y>",
+        },
+        {
+          name: "definition",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "DomChartDefinition<D, X, Y>",
+        },
+        {
+          name: "data",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "readonly T[]",
+        },
+        {
+          name: "config",
+          kind: "option",
+          required: true,
+          targets: [
+            "root",
+          ],
+          type: "ChartConfig",
+        },
+        {
+          name: "params",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "Record<string, unknown>",
+        },
+        {
+          name: "theme",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "ChartInput[\"theme\"]",
+        },
+        {
+          name: "host",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "NativeHostOptions<D, X, Y>",
+        },
+        {
+          defaultValue: "false",
+          name: "disableTooltip",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "boolean",
+        },
+        {
+          name: "visible",
+          kind: "control",
+          targets: [
+            "root",
+          ],
+          type: "readonly string[]",
+        },
+        {
+          name: "defaultVisible",
+          kind: "control",
+          targets: [
+            "root",
+          ],
+          type: "readonly string[]",
+        },
+        {
+          name: "onVisibleChange",
+          kind: "callback",
+          targets: [
+            "root",
+          ],
+          type: "(visible: string[], details: ChartVisibleChangeDetails) => void",
+        },
+        {
+          name: "children",
+          kind: "children",
+          targets: [
+            "tooltip",
+          ],
+          type: "framework content",
+        },
+        {
+          name: "tooltip",
+          kind: "rendering",
+          targets: [
+            "surface",
+          ],
+          type: "framework content",
+        },
+        {
+          name: "fallbackTooltip",
+          kind: "rendering",
+          targets: [
+            "surface",
+          ],
+          type: "framework content",
+        },
+        {
+          defaultValue: "false",
+          name: "nativeTooltip",
+          kind: "option",
+          targets: [
+            "surface",
+          ],
+          type: "boolean",
+        },
+        {
+          name: "indicator",
+          kind: "option",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "\"dot\" | \"line\" | \"dashed\"",
+        },
+        {
+          name: "hideLabel",
+          kind: "option",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "boolean",
+        },
+        {
+          name: "hideIndicator",
+          kind: "option",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "boolean",
+        },
+        {
+          name: "label",
+          kind: "rendering",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "string | framework content",
+        },
+        {
+          name: "labelKey",
+          kind: "option",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "string",
+        },
+        {
+          name: "nameKey",
+          kind: "option",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "string",
+        },
+        {
+          name: "valueKey",
+          kind: "option",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "string",
+        },
+        {
+          name: "color",
+          kind: "option",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "string",
+        },
+        {
+          name: "formatter",
+          kind: "callback",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "(value: unknown, name: string, item: TooltipItem<T>, index: number, payload: T) => string | framework content",
+        },
+        {
+          name: "labelFormatter",
+          kind: "callback",
+          targets: [
+            "tooltipContent",
+          ],
+          type: "(label: unknown, payload: readonly TooltipItem<T>[]) => string | framework content",
+        },
+        {
+          name: "children",
+          kind: "children",
+          targets: [
+            "tooltipItems",
+          ],
+          type: "framework content",
+        },
+        {
+          name: "customClass",
+          kind: "attribute",
+          targets: [
+            "tooltipItem",
+          ],
+          type: "string",
+        },
+        {
+          name: "labelClass",
+          kind: "attribute",
+          targets: [
+            "tooltipName",
+          ],
+          type: "string",
+        },
+        {
+          defaultValue: "false",
+          name: "hideIcon",
+          kind: "option",
+          targets: [
+            "legend",
+          ],
+          type: "boolean",
+        },
+        {
+          name: "children",
+          kind: "children",
+          targets: [
+            "legendItems",
+          ],
+          type: "framework content",
+        },
+        {
+          name: "value",
+          kind: "option",
+          targets: [
+            "legendItem",
+          ],
+          type: "string",
+        },
+        {
+          name: "interactive",
+          kind: "option",
+          targets: [
+            "legendItem",
+          ],
+          type: "boolean",
+        },
+        {
+          defaultValue: "true",
+          unsupportedTargets: [
+            "react",
+            "vue",
+            "svelte",
+          ],
+          name: "interactive",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "boolean",
+        },
+        {
+          unsupportedTargets: [
+            "react",
+            "vue",
+            "svelte",
+          ],
+          name: "labels",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "Record<string, string>",
+        },
+        {
+          unsupportedTargets: [
+            "react",
+            "vue",
+            "svelte",
+          ],
+          name: "icons",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "Record<string, string>",
+        },
+        {
+          unsupportedTargets: [
+            "react",
+            "vue",
+            "svelte",
+          ],
+          name: "config",
+          kind: "option",
+          targets: [
+            "legend",
+          ],
+          type: "ChartConfig",
+        },
+        {
+          unsupportedTargets: [
+            "react",
+            "vue",
+            "svelte",
+          ],
+          name: "visible",
+          kind: "option",
+          targets: [
+            "legend",
+          ],
+          type: "readonly string[]",
+        },
+      ],
+      stateModels: [
+        {
+          name: "visible",
+          controlledProp: "visible",
+          defaultProp: "defaultVisible",
+          valueType: "string[]",
+          runtimeGetter: "getVisible",
+          runtimeSetter: "setVisible",
+          description: "Tracks the visible state for Chart.",
+          descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use visible for controlled state and defaultVisible for default state, and onVisibleChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "visible",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultVisible",
+                },
+                {
+                  kind: "callback",
+                  name: "onVisibleChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use visible or defaultVisible for initial state, listen for starwind-chart:visible-change, and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "visible",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultVisible",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind-chart:visible-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setVisible",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "listen for starwind-chart:visible-change and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+              apis: [
+                {
+                  kind: "dom-event",
+                  name: "starwind-chart:visible-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setVisible",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      events: [
+        {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
+          name: "visibleChange",
+          callbackProp: "onVisibleChange",
+          detailsType: "ChartVisibleChangeDetails",
+          domEvent: "starwind-chart:visible-change",
+          emitsFrom: "root",
+          stateModel: "visible",
+          valueProperty: "visible",
+          valueType: "string[]",
+          description: "Fires when the visible changes for Chart.",
+          descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
+        },
+      ],
+      setters: [],
+      context: [],
+      refs: [
+        {
+          part: "surface",
+          public: true,
+        },
+        {
+          part: "tooltipContent",
+          public: true,
+        },
+        {
+          part: "tooltipLabel",
+          public: true,
+        },
+        {
+          part: "tooltipItem",
+          public: true,
+        },
+        {
+          part: "tooltipIndicator",
+          public: true,
+        },
+        {
+          part: "tooltipIcon",
+          public: true,
+        },
+        {
+          part: "tooltipName",
+          public: true,
+        },
+        {
+          part: "tooltipValue",
+          public: true,
+        },
+        {
+          part: "legend",
+          public: true,
+        },
+        {
+          part: "legendItem",
+          public: true,
+        },
+        {
+          part: "legendSwatch",
+          public: true,
+        },
+        {
+          part: "legendIcon",
+          public: true,
+        },
+        {
+          part: "legendLabel",
+          public: true,
+        },
+      ],
+      asChild: [],
+      initialMarkup: [
+        {
+          part: "root",
+          attributes: [
+            "data-slot",
+            "data-chart",
+          ],
+          reason: "The chart root carries the chart id that scopes config colors and becomes the native id prefix.",
+        },
+        {
+          part: "surface",
+          attributes: [
+            "data-sw-chart-surface",
+            "data-slot",
+            "style",
+          ],
+          reason: "The surface holds the server-rendered SVG and reserves its size, so the Runtime controller adopts it without a second render.",
+        },
+      ],
+      frameworkNotes: {
+        astro: [
+          "Astro has no component context, so part components write markers and the Root fills them from chart data: the prerendered surface, config styles, legend items and the winning tooltip template.",
+          "The Root renders a wire payload and tooltip and legend templates that the Runtime fills, and renders the lifecycle script only for an interactive chart module, so a static chart loads no script.",
+        ],
+        react: [
+          "Prerender the surface SVG on the server and on the first client render, then create the Runtime controller in a layout effect so it adopts that SVG. React never writes the surface content again.",
+          "Portal the registered tooltip body into the controller's tooltip body target and sync the accessible status label after each body render.",
+          "Legend items call the controller toggle from their own click handler, so a consumer handler that calls preventDefault cancels the toggle.",
+        ],
+      },
+      docsReference: {
+        summary: "Use Chart to draw a TanStack Charts chart from your data and series config. People can read values in a tooltip with the pointer or the keyboard, and the legend can hide a series.",
+        liveDemo: {
+          componentName: "ChartPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ChartPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ChartPrimitiveDemo.astro",
+        },
+        frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
+        frameworkTargets: [
+          "raw-html",
+          "astro",
+          "react",
+          "solid",
+          "svelte",
+          "vue",
+        ],
+        behaviorNotes: [
+          "A Legend toggles series only when a Surface renders under the same Root, because the Surface starts the Runtime controller. Without a Surface, legend items show the visible keys, and a click changes nothing.",
+        ],
+        usageGuidelines: [],
+        sections: [],
+        examples: [
+          {
+            id: "basic",
+            framework: "raw-html",
+            title: "Raw HTML",
+            summary: "Render the Chart data-sw-* contract yourself, then initialize createChart.",
+            language: "html",
+            code: "<div data-sw-chart data-slot=\"chart\" data-chart=\"visitors\" data-chart-module=\"visitors\">\n  <div data-sw-chart-surface data-slot=\"chart-surface\"></div>\n</div>\n\n<script type=\"module\">\n  import { barY, defineChart, group } from \"@tanstack/charts\";\n  import { scaleBand } from \"@tanstack/charts/scales/band\";\n  import { scaleLinear } from \"@tanstack/charts/scales/linear\";\n  import { createChart } from \"@starwind-ui/runtime/chart\";\n  import { defineChartModule } from \"@starwind-ui/runtime/chart\";\n\n  const data = [\n    { month: \"January\", desktop: 186, mobile: 80 },\n    { month: \"February\", desktop: 305, mobile: 200 },\n    { month: \"March\", desktop: 237, mobile: 120 },\n  ];\n\n  const config = {\n    desktop: { label: \"Desktop\", color: \"var(--chart-1)\" },\n    mobile: { label: \"Mobile\", color: \"var(--chart-2)\" },\n  };\n\n  const visitors = defineChartModule({\n    id: \"visitors\",\n    ariaLabel: \"Visitors by month\",\n    create: (ctx) =>\n      defineChart(\n        {\n          marks: [\n            barY(\n              ctx.data.flatMap((row) =>\n                ctx.visible.map((series) => ({\n                  id: `${row.month}-${series}`,\n                  month: row.month,\n                  series,\n                  value: row[series],\n                })),\n              ),\n              { x: \"month\", y: \"value\", color: \"series\", key: \"id\", layout: group({ padding: 0.15 }) },\n            ),\n          ],\n          scales: {\n            x: { scale: () => scaleBand().domain(ctx.data.map((row) => row.month)) },\n            y: { scale: scaleLinear, nice: true },\n          },\n          color: ctx.color,\n          theme: ctx.theme,\n        },\n        { tooltip: ctx.tooltip({ labelKey: \"month\" }) },\n      ),\n  });\n\n  const root = document.querySelector(\"[data-sw-chart]\");\n  if (root) {\n    // The root names the registered module, so pass only the input.\n    createChart(root, { input: { data, config } });\n  }\n</script>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#chart-basic-raw-html",
+          },
+          {
+            id: "basic",
+            framework: "astro",
+            title: "Astro",
+            summary: "Use the Astro primitive adapter to render Chart anatomy with the Runtime wiring included.",
+            language: "astro",
+            code: "// src/charts/visitors.ts\nimport { barY, defineChart, group } from \"@tanstack/charts\";\nimport { scaleBand } from \"@tanstack/charts/scales/band\";\nimport { scaleLinear } from \"@tanstack/charts/scales/linear\";\nimport { type ChartConfig, defineChartModule } from \"@starwind-ui/runtime/chart\";\n\ntype VisitorRow = { month: string; desktop: number; mobile: number };\n\nexport const data: VisitorRow[] = [\n  { month: \"January\", desktop: 186, mobile: 80 },\n  { month: \"February\", desktop: 305, mobile: 200 },\n  { month: \"March\", desktop: 237, mobile: 120 },\n];\n\nexport const config = {\n  desktop: { label: \"Desktop\", color: \"var(--chart-1)\" },\n  mobile: { label: \"Mobile\", color: \"var(--chart-2)\" },\n} satisfies ChartConfig;\n\nexport const visitors = defineChartModule<VisitorRow>({\n  id: \"visitors\",\n  ariaLabel: \"Visitors by month\",\n  create: (ctx) =>\n    defineChart(\n      {\n        marks: [\n          barY(\n            ctx.data.flatMap((row) =>\n              ctx.visible.map((series) => ({\n                id: `${row.month}-${series}`,\n                month: row.month,\n                series,\n                value: row[series as \"desktop\" | \"mobile\"],\n              })),\n            ),\n            { x: \"month\", y: \"value\", color: \"series\", key: \"id\", layout: group({ padding: 0.15 }) },\n          ),\n        ],\n        scales: {\n          x: { scale: () => scaleBand<string>().domain(ctx.data.map((row) => row.month)) },\n          y: { scale: scaleLinear, nice: true },\n        },\n        color: ctx.color,\n        theme: ctx.theme,\n      },\n      { tooltip: ctx.tooltip({ labelKey: \"month\" }) },\n    ),\n});\n\n// src/pages/example.astro\n---\nimport { Chart } from \"@starwind-ui/astro/chart\";\nimport { visitors, data, config } from \"../charts/visitors\";\n---\n\n<Chart.Root id=\"visitors\" chart={visitors} data={data} config={config}>\n  <Chart.Style />\n  <Chart.Surface />\n</Chart.Root>\n\n<script>\n  import \"../charts/visitors\";\n</script>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#chart-basic-astro",
+          },
+          {
+            id: "basic",
+            framework: "react",
+            title: "React",
+            summary: "Use the React primitive adapter when Chart state participates in React rendering.",
+            language: "tsx",
+            code: "import { barY, defineChart, group } from \"@tanstack/charts\";\nimport { scaleBand } from \"@tanstack/charts/scales/band\";\nimport { scaleLinear } from \"@tanstack/charts/scales/linear\";\nimport { Chart } from \"@starwind-ui/react/chart\";\nimport type { ChartConfig } from \"@starwind-ui/react/chart\";\nimport { defineChartModule } from \"@starwind-ui/runtime/chart\";\n\ntype VisitorRow = { month: string; desktop: number; mobile: number };\n\nconst data: VisitorRow[] = [\n  { month: \"January\", desktop: 186, mobile: 80 },\n  { month: \"February\", desktop: 305, mobile: 200 },\n  { month: \"March\", desktop: 237, mobile: 120 },\n];\n\nconst config = {\n  desktop: { label: \"Desktop\", color: \"var(--chart-1)\" },\n  mobile: { label: \"Mobile\", color: \"var(--chart-2)\" },\n} satisfies ChartConfig;\n\nconst visitors = defineChartModule<VisitorRow>({\n  id: \"visitors\",\n  ariaLabel: \"Visitors by month\",\n  create: (ctx) =>\n    defineChart(\n      {\n        marks: [\n          barY(\n            ctx.data.flatMap((row) =>\n              ctx.visible.map((series) => ({\n                id: `${row.month}-${series}`,\n                month: row.month,\n                series,\n                value: row[series as \"desktop\" | \"mobile\"],\n              })),\n            ),\n            { x: \"month\", y: \"value\", color: \"series\", key: \"id\", layout: group({ padding: 0.15 }) },\n          ),\n        ],\n        scales: {\n          x: { scale: () => scaleBand<string>().domain(ctx.data.map((row) => row.month)) },\n          y: { scale: scaleLinear, nice: true },\n        },\n        color: ctx.color,\n        theme: ctx.theme,\n      },\n      { tooltip: ctx.tooltip({ labelKey: \"month\" }) },\n    ),\n});\n\nexport function Example() {\n  return (\n    <Chart.Root id=\"visitors\" chart={visitors} data={data} config={config}>\n      <Chart.Style />\n      <Chart.Surface />\n    </Chart.Root>\n  );\n}",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#chart-basic-react",
+          },
+          {
+            id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Chart.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { barY, defineChart, group } from \"@tanstack/charts\";\n  import { scaleBand } from \"@tanstack/charts/scales/band\";\n  import { scaleLinear } from \"@tanstack/charts/scales/linear\";\n  import { Chart } from \"@starwind-ui/svelte/chart\";\n  import { type ChartConfig, defineChartModule } from \"@starwind-ui/runtime/chart\";\n\n  type VisitorRow = { month: string; desktop: number; mobile: number };\n\n  const data: VisitorRow[] = [\n    { month: \"January\", desktop: 186, mobile: 80 },\n    { month: \"February\", desktop: 305, mobile: 200 },\n    { month: \"March\", desktop: 237, mobile: 120 },\n  ];\n\n  const config = {\n    desktop: { label: \"Desktop\", color: \"var(--chart-1)\" },\n    mobile: { label: \"Mobile\", color: \"var(--chart-2)\" },\n  } satisfies ChartConfig;\n\n  const visitors = defineChartModule<VisitorRow>({\n    id: \"visitors\",\n    ariaLabel: \"Visitors by month\",\n    create: (ctx) =>\n      defineChart(\n        {\n          marks: [\n            barY(\n              ctx.data.flatMap((row) =>\n                ctx.visible.map((series) => ({\n                  id: `${row.month}-${series}`,\n                  month: row.month,\n                  series,\n                  value: row[series as \"desktop\" | \"mobile\"],\n                })),\n              ),\n              { x: \"month\", y: \"value\", color: \"series\", key: \"id\", layout: group({ padding: 0.15 }) },\n            ),\n          ],\n          scales: {\n            x: { scale: () => scaleBand<string>().domain(ctx.data.map((row) => row.month)) },\n            y: { scale: scaleLinear, nice: true },\n          },\n          color: ctx.color,\n          theme: ctx.theme,\n        },\n        { tooltip: ctx.tooltip({ labelKey: \"month\" }) },\n      ),\n  });\n</script>\n\n<Chart.Root id=\"visitors\" chart={visitors} {data} {config}>\n  <Chart.Style />\n  <Chart.Surface />\n</Chart.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#chart-basic-svelte",
+          },
+          {
+            id: "basic",
+            framework: "vue",
+            title: "Vue",
+            summary: "Use the Vue components to build Chart.",
+            language: "vue",
+            code: "<script setup lang=\"ts\">\nimport { barY, defineChart, group } from \"@tanstack/charts\";\nimport { scaleBand } from \"@tanstack/charts/scales/band\";\nimport { scaleLinear } from \"@tanstack/charts/scales/linear\";\nimport Chart from \"@starwind-ui/vue/chart\";\nimport { type ChartConfig, defineChartModule } from \"@starwind-ui/runtime/chart\";\n\ntype VisitorRow = { month: string; desktop: number; mobile: number };\n\nconst data: VisitorRow[] = [\n  { month: \"January\", desktop: 186, mobile: 80 },\n  { month: \"February\", desktop: 305, mobile: 200 },\n  { month: \"March\", desktop: 237, mobile: 120 },\n];\n\nconst config = {\n  desktop: { label: \"Desktop\", color: \"var(--chart-1)\" },\n  mobile: { label: \"Mobile\", color: \"var(--chart-2)\" },\n} satisfies ChartConfig;\n\nconst visitors = defineChartModule<VisitorRow>({\n  id: \"visitors\",\n  ariaLabel: \"Visitors by month\",\n  create: (ctx) =>\n    defineChart(\n      {\n        marks: [\n          barY(\n            ctx.data.flatMap((row) =>\n              ctx.visible.map((series) => ({\n                id: `${row.month}-${series}`,\n                month: row.month,\n                series,\n                value: row[series as \"desktop\" | \"mobile\"],\n              })),\n            ),\n            { x: \"month\", y: \"value\", color: \"series\", key: \"id\", layout: group({ padding: 0.15 }) },\n          ),\n        ],\n        scales: {\n          x: { scale: () => scaleBand<string>().domain(ctx.data.map((row) => row.month)) },\n          y: { scale: scaleLinear, nice: true },\n        },\n        color: ctx.color,\n        theme: ctx.theme,\n      },\n      { tooltip: ctx.tooltip({ labelKey: \"month\" }) },\n    ),\n});\n</script>\n\n<template>\n  <Chart.Root id=\"visitors\" :chart=\"visitors\" :data=\"data\" :config=\"config\">\n    <Chart.Style />\n    <Chart.Surface />\n  </Chart.Root>\n</template>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#chart-basic-vue",
+          },
+        ],
+        authoredExamples: [],
+        exampleCoverage: {
+          requiredTargets: [
+            "raw-html",
+            "astro",
+            "react",
+            "vue",
+            "svelte",
+          ],
+          missingTargets: [],
+          allowedMissingTargets: [],
+        },
+        anatomy: {
+          importSource: "@starwind-ui/react/chart",
+          namespace: "Chart",
+          parts: [
+            "root",
+            "style",
+            "surface",
+            "tooltip",
+            "tooltipContent",
+            "tooltipLabel",
+            "tooltipItems",
+            "tooltipItem",
+            "tooltipIndicator",
+            "tooltipIcon",
+            "tooltipName",
+            "tooltipValue",
+            "legend",
+            "legendItems",
+            "legendItem",
+            "legendSwatch",
+            "legendIcon",
+            "legendLabel",
+          ],
+          code: "import { Chart } from \"@starwind-ui/react/chart\";\n\n<Chart.Root>\n  <Chart.Surface />\n  <Chart.TooltipContent />\n  <Chart.TooltipLabel />\n  <Chart.TooltipItem />\n  <Chart.TooltipIndicator />\n  <Chart.TooltipIcon />\n  <Chart.TooltipName />\n  <Chart.TooltipValue />\n  <Chart.Legend />\n  <Chart.LegendItem />\n  <Chart.LegendSwatch />\n  <Chart.LegendIcon />\n  <Chart.LegendLabel />\n</Chart.Root>",
+        },
+        apiReference: {
+          runtimeFactory: {
+            primitiveId: "chart",
+            factory: "createChart",
+            importSource: "@starwind-ui/runtime/chart",
+            docsPath: "/docs/runtime/#create-chart",
+          },
+          parts: [
+            {
+              part: "root",
+              description: "The main element that owns the Chart Runtime instance.",
+              descriptionSource: "authored",
+              defaultElement: "div",
+              discoveryAttribute: "data-sw-chart",
+              props: [
+                {
+                  name: "id",
+                  kind: "attribute",
+                  targets: [
+                    "root",
+                  ],
+                  type: "string",
+                  description: "Names the chart. Leave it out to get a generated id that matches on server and client.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "chart",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "ChartSource<T, D, X, Y>",
+                  description: "The chart module or factory that draws the chart from the data and the visible keys.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "definition",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "DomChartDefinition<D, X, Y>",
+                  description: "A static native TanStack definition. It owns its visibility, so the legend is passive.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "readonly T[]",
+                  description: "The data rows that the chart module reads.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "config",
+                  kind: "option",
+                  required: true,
+                  targets: [
+                    "root",
+                  ],
+                  type: "ChartConfig",
+                  description: "The series labels, colors and icons, keyed by series.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "params",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "Record<string, unknown>",
+                  description: "Extra values that the chart module reads.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "theme",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "ChartInput[\"theme\"]",
+                  description: "Overrides the native TanStack chart theme.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "host",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "NativeHostOptions<D, X, Y>",
+                  description: "Native TanStack host options, such as the focus and select callbacks.",
+                  descriptionSource: "authored",
+                },
+                {
+                  defaultValue: "false",
+                  name: "disableTooltip",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "boolean",
+                  description: "Turns the tooltip off.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "visible",
+                  kind: "control",
+                  targets: [
+                    "root",
+                  ],
+                  type: "readonly string[]",
+                  description: "Controls the visible state for Chart.",
+                  descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use visible for controlled state and defaultVisible for default state, and onVisibleChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onVisibleChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use visible or defaultVisible for initial state, listen for starwind-chart:visible-change, and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind-chart:visible-change and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  name: "defaultVisible",
+                  kind: "control",
+                  targets: [
+                    "root",
+                  ],
+                  type: "readonly string[]",
+                  description: "Controls the default visible state for Chart.",
+                  descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use visible for controlled state and defaultVisible for default state, and onVisibleChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onVisibleChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use visible or defaultVisible for initial state, listen for starwind-chart:visible-change, and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind-chart:visible-change and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  name: "onVisibleChange",
+                  kind: "callback",
+                  targets: [
+                    "root",
+                  ],
+                  type: "(visible: string[], details: ChartVisibleChangeDetails) => void",
+                  displayType: "(visible: string[], details: ChartVisibleChangeDetails) => void",
+                  description: "Receives proposed visible keys before the cancelable starwind-chart:visible-change event. Call details.cancel() to keep the current keys.",
+                  descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use visible for controlled state and defaultVisible for default state, and onVisibleChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onVisibleChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use visible or defaultVisible for initial state, listen for starwind-chart:visible-change, and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind-chart:visible-change and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  defaultValue: "true",
+                  unsupportedTargets: [
+                    "react",
+                    "vue",
+                    "svelte",
+                  ],
+                  name: "interactive",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "boolean",
+                  description: "Renders the wire payload, the tooltip and legend templates and, for a chart module, the lifecycle script. `false` renders a static chart that loads no script.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "react",
+                    "vue",
+                    "svelte",
+                  ],
+                  name: "labels",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "Record<string, string>",
+                  description: "Rich label HTML per config key, for a wrapper that renders its own `label-<key>` slots. A `label-<key>` slot on the Root wins.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "react",
+                    "vue",
+                    "svelte",
+                  ],
+                  name: "icons",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "Record<string, string>",
+                  description: "Icon HTML per config key, for a wrapper that renders its own `icon-<key>` slots.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart",
+                  source: "runtime",
+                  description: "Marks the Root part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart",
+                  description: "Identifies Root metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-chart",
+                  source: "prop",
+                  description: "Reflects the chart prop on the Root part.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [
+                {
+                  name: "visible",
+                  controlledProp: "visible",
+                  defaultProp: "defaultVisible",
+                  valueType: "string[]",
+                  runtimeGetter: "getVisible",
+                  runtimeSetter: "setVisible",
+                  description: "Tracks the visible state for Chart.",
+                  descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use visible for controlled state and defaultVisible for default state, and onVisibleChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onVisibleChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use visible or defaultVisible for initial state, listen for starwind-chart:visible-change, and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "visible",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultVisible",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind-chart:visible-change and call setVisible(next, { emit: false }) for silent updates, because a legend toggle commits on its own.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind-chart:visible-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setVisible",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+              events: [
+                {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
+                  name: "visibleChange",
+                  callbackProp: "onVisibleChange",
+                  detailsType: "ChartVisibleChangeDetails",
+                  domEvent: "starwind-chart:visible-change",
+                  emitsFrom: "root",
+                  stateModel: "visible",
+                  valueProperty: "visible",
+                  valueType: "string[]",
+                  description: "Fires when the visible changes for Chart.",
+                  descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
+                },
+              ],
+              setters: [],
+              context: [],
+              refs: [],
+              asChild: [],
+              initialMarkup: [
+                {
+                  part: "root",
+                  attributes: [
+                    "data-slot",
+                    "data-chart",
+                  ],
+                  reason: "The chart root carries the chart id that scopes config colors and becomes the native id prefix.",
+                },
+              ],
+            },
+            {
+              part: "style",
+              description: "Provides the Style part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "style",
+              discoveryAttribute: "data-sw-chart-style",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-style",
+                  source: "runtime",
+                  description: "Marks the Style part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-style",
+                  description: "Identifies Style metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "surface",
+              description: "Provides the Surface part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "div",
+              discoveryAttribute: "data-sw-chart-surface",
+              props: [
+                {
+                  name: "tooltip",
+                  kind: "rendering",
+                  targets: [
+                    "surface",
+                  ],
+                  type: "framework content",
+                  description: "Tooltip body content. It wins over a registered Tooltip.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "fallbackTooltip",
+                  kind: "rendering",
+                  targets: [
+                    "surface",
+                  ],
+                  type: "framework content",
+                  description: "Tooltip body content when no Tooltip is registered.",
+                  descriptionSource: "authored",
+                },
+                {
+                  defaultValue: "false",
+                  name: "nativeTooltip",
+                  kind: "option",
+                  targets: [
+                    "surface",
+                  ],
+                  type: "boolean",
+                  description: "Uses the native TanStack tooltip body.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-surface",
+                  source: "runtime",
+                  description: "Marks the Surface part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-surface",
+                  description: "Identifies Surface metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "surface",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [
+                {
+                  part: "surface",
+                  attributes: [
+                    "data-sw-chart-surface",
+                    "data-slot",
+                    "style",
+                  ],
+                  reason: "The surface holds the server-rendered SVG and reserves its size, so the Runtime controller adopts it without a second render.",
+                },
+              ],
+            },
+            {
+              part: "tooltip",
+              description: "Provides the Tooltip part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "template",
+              discoveryAttribute: "data-sw-chart-tooltip",
+              props: [
+                {
+                  name: "children",
+                  kind: "children",
+                  targets: [
+                    "tooltip",
+                  ],
+                  type: "framework content",
+                  description: "Tooltip body content.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip",
+                  source: "runtime",
+                  description: "Marks the Tooltip part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipContent",
+              description: "Provides the Tooltip Content part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "div",
+              discoveryAttribute: "data-sw-chart-tooltip-content",
+              props: [
+                {
+                  name: "indicator",
+                  kind: "option",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "\"dot\" | \"line\" | \"dashed\"",
+                  description: "Configures the indicator option for the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "hideLabel",
+                  kind: "option",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "boolean",
+                  description: "Configures the hide label option for the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "hideIndicator",
+                  kind: "option",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "boolean",
+                  description: "Configures the hide indicator option for the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "label",
+                  kind: "rendering",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "string | framework content",
+                  description: "Replaces the heading before labelFormatter runs.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "labelKey",
+                  kind: "option",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "string",
+                  description: "Configures the label key option for the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "nameKey",
+                  kind: "option",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "string",
+                  description: "Configures the name key option for the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "valueKey",
+                  kind: "option",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "string",
+                  description: "Configures the value key option for the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "color",
+                  kind: "option",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "string",
+                  description: "Overrides each row's indicator color.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "formatter",
+                  kind: "callback",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "(value: unknown, name: string, item: TooltipItem<T>, index: number, payload: T) => string | framework content",
+                  displayType: "(value: unknown, name: string, item: TooltipItem<T>, index: number, payload: T) => string | framework content",
+                  description: "Returns the complete row view, with shadcn's argument order. `payload` is the native datum.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "labelFormatter",
+                  kind: "callback",
+                  targets: [
+                    "tooltipContent",
+                  ],
+                  type: "(label: unknown, payload: readonly TooltipItem<T>[]) => string | framework content",
+                  displayType: "(label: unknown, payload: readonly TooltipItem<T>[]) => string | framework content",
+                  description: "Returns the complete heading view.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-content",
+                  source: "runtime",
+                  description: "Marks the Tooltip Content part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-tooltip-content",
+                  description: "Identifies Tooltip Content metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-chart",
+                  source: "state",
+                  description: "Reflects the chart state on the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-indicator",
+                  source: "state",
+                  description: "Reflects the indicator state on the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-nested",
+                  source: "state",
+                  description: "Reflects the nested state on the Tooltip Content part.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "tooltipContent",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipLabel",
+              description: "Provides the Tooltip Label part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "div",
+              discoveryAttribute: "data-sw-chart-tooltip-label",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-label",
+                  source: "runtime",
+                  description: "Marks the Tooltip Label part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-tooltip-label",
+                  description: "Identifies Tooltip Label metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "tooltipLabel",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipItems",
+              description: "Provides the Tooltip Items part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "template",
+              discoveryAttribute: "data-sw-chart-tooltip-row",
+              props: [
+                {
+                  name: "children",
+                  kind: "children",
+                  targets: [
+                    "tooltipItems",
+                  ],
+                  type: "framework content",
+                  description: "Rendered once per tooltip row, with that row in context.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-row",
+                  source: "runtime",
+                  description: "Marks the Tooltip Items part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipItem",
+              description: "Provides the Tooltip Item part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "div",
+              discoveryAttribute: "data-sw-chart-tooltip-item",
+              props: [
+                {
+                  name: "customClass",
+                  kind: "attribute",
+                  targets: [
+                    "tooltipItem",
+                  ],
+                  type: "string",
+                  description: "The class for a row that a tooltip formatter replaced. React names it `customClassName`.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-item",
+                  source: "runtime",
+                  description: "Marks the Tooltip Item part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-tooltip-item",
+                  description: "Identifies Tooltip Item metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-active",
+                  source: "state",
+                  description: "Reflects the active state on the Tooltip Item part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-key",
+                  source: "state",
+                  description: "Reflects the key state on the Tooltip Item part.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "tooltipItem",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipIndicator",
+              description: "Provides the Tooltip Indicator part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "span",
+              discoveryAttribute: "data-sw-chart-tooltip-indicator",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-indicator",
+                  source: "runtime",
+                  description: "Marks the Tooltip Indicator part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-tooltip-indicator",
+                  description: "Identifies Tooltip Indicator metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "tooltipIndicator",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipIcon",
+              description: "Provides the Tooltip Icon part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "span",
+              discoveryAttribute: "data-sw-chart-tooltip-icon",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-icon",
+                  source: "runtime",
+                  description: "Marks the Tooltip Icon part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-tooltip-icon",
+                  description: "Identifies Tooltip Icon metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "tooltipIcon",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipName",
+              description: "Provides the Tooltip Name part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "span",
+              discoveryAttribute: "data-sw-chart-tooltip-name",
+              props: [
+                {
+                  name: "labelClass",
+                  kind: "attribute",
+                  targets: [
+                    "tooltipName",
+                  ],
+                  type: "string",
+                  description: "The class of the heading that one line or dashed row nests inside its name. React names it `labelClassName`.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-name",
+                  source: "runtime",
+                  description: "Marks the Tooltip Name part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-tooltip-name",
+                  description: "Identifies Tooltip Name metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "tooltipName",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "tooltipValue",
+              description: "Provides the Tooltip Value part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "span",
+              discoveryAttribute: "data-sw-chart-tooltip-value",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-tooltip-value",
+                  source: "runtime",
+                  description: "Marks the Tooltip Value part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-tooltip-value",
+                  description: "Identifies Tooltip Value metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "tooltipValue",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "legend",
+              description: "Legend text for the Chart fieldset.",
+              descriptionSource: "authored",
+              defaultElement: "div",
+              discoveryAttribute: "data-sw-chart-legend",
+              role: "group",
+              props: [
+                {
+                  defaultValue: "false",
+                  name: "hideIcon",
+                  kind: "option",
+                  targets: [
+                    "legend",
+                  ],
+                  type: "boolean",
+                  description: "Uses the swatch even when config supplies an icon.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "react",
+                    "vue",
+                    "svelte",
+                  ],
+                  name: "config",
+                  kind: "option",
+                  targets: [
+                    "legend",
+                  ],
+                  type: "ChartConfig",
+                  description: "Renders the legend from this config. Leave it out inside a chart Root, which fills the legend with its own config, visibility and rich label slots.",
+                  descriptionSource: "authored",
+                },
+                {
+                  unsupportedTargets: [
+                    "react",
+                    "vue",
+                    "svelte",
+                  ],
+                  name: "visible",
+                  kind: "option",
+                  targets: [
+                    "legend",
+                  ],
+                  type: "readonly string[]",
+                  description: "Visible keys for a legend that takes `config`.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-legend",
+                  source: "runtime",
+                  description: "Marks the Legend part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-legend",
+                  description: "Identifies Legend metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "legend",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "legendItems",
+              description: "Provides the Legend Items part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "template",
+              discoveryAttribute: "data-sw-chart-legend-template",
+              props: [
+                {
+                  name: "children",
+                  kind: "children",
+                  targets: [
+                    "legendItems",
+                  ],
+                  type: "framework content",
+                  description: "Rendered once per config key, with that key in context.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-legend-template",
+                  source: "runtime",
+                  description: "Marks the Legend Items part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "legendItem",
+              description: "Provides the Legend Item part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "button",
+              discoveryAttribute: "data-sw-chart-legend-item",
+              props: [
+                {
+                  name: "value",
+                  kind: "option",
+                  targets: [
+                    "legendItem",
+                  ],
+                  type: "string",
+                  description: "The config key this item shows or hides. Defaults to the key from LegendItems.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "interactive",
+                  kind: "option",
+                  targets: [
+                    "legendItem",
+                  ],
+                  type: "boolean",
+                  description: "Defaults to false for a static native definition. A passive item renders a span.",
+                  descriptionSource: "authored",
+                },
+              ],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-legend-item",
+                  source: "runtime",
+                  description: "Marks the Legend Item part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-legend-item",
+                  description: "Identifies Legend Item metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-state",
+                  source: "state",
+                  description: "Reflects the current state on the Legend Item part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-key",
+                  source: "prop",
+                  description: "Reflects the key prop on the Legend Item part.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "legendItem",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "legendSwatch",
+              description: "Provides the Legend Swatch part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "span",
+              discoveryAttribute: "data-sw-chart-legend-swatch",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-legend-swatch",
+                  source: "runtime",
+                  description: "Marks the Legend Swatch part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-legend-swatch",
+                  description: "Identifies Legend Swatch metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "legendSwatch",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "legendIcon",
+              description: "Provides the Legend Icon part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "span",
+              discoveryAttribute: "data-sw-chart-legend-icon",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-legend-icon",
+                  source: "runtime",
+                  description: "Marks the Legend Icon part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-legend-icon",
+                  description: "Identifies Legend Icon metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "legendIcon",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+            {
+              part: "legendLabel",
+              description: "Provides the Legend Label part for Chart.",
+              descriptionSource: "authored",
+              defaultElement: "span",
+              discoveryAttribute: "data-sw-chart-legend-label",
+              props: [],
+              dataAttributes: [
+                {
+                  name: "data-sw-chart-legend-label",
+                  source: "runtime",
+                  description: "Marks the Legend Label part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-slot",
+                  source: "constant",
+                  value: "chart-legend-label",
+                  description: "Identifies Legend Label metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+              ],
+              stateModels: [],
+              events: [],
+              setters: [],
+              context: [],
+              refs: [
+                {
+                  part: "legendLabel",
+                  public: true,
+                },
+              ],
+              asChild: [],
+              initialMarkup: [],
+            },
+          ],
+          exportGroups: [
+            {
+              label: "Runtime",
+              importSource: "@starwind-ui/runtime/chart",
+              exports: [
+                "createChart",
+              ],
+            },
+            {
+              label: "Astro Primitive",
+              importSource: "@starwind-ui/astro/chart",
+              exports: [
+                "Chart",
+                "ChartRoot",
+                "ChartSurface",
+                "ChartTooltipContent",
+                "ChartTooltipLabel",
+                "ChartTooltipItem",
+                "ChartTooltipIndicator",
+                "ChartTooltipIcon",
+                "ChartTooltipName",
+                "ChartTooltipValue",
+                "ChartLegend",
+                "ChartLegendItem",
+                "ChartLegendSwatch",
+                "ChartLegendIcon",
+                "ChartLegendLabel",
+              ],
+            },
+            {
+              label: "React Primitive",
+              importSource: "@starwind-ui/react/chart",
+              exports: [
+                "Chart",
+                "ChartRoot",
+                "ChartSurface",
+                "ChartTooltipContent",
+                "ChartTooltipLabel",
+                "ChartTooltipItem",
+                "ChartTooltipIndicator",
+                "ChartTooltipIcon",
+                "ChartTooltipName",
+                "ChartTooltipValue",
+                "ChartLegend",
+                "ChartLegendItem",
+                "ChartLegendSwatch",
+                "ChartLegendIcon",
+                "ChartLegendLabel",
+              ],
+            },
+          ],
+          canonicalNames: [
+            {
+              kind: "namespace",
+              name: "Chart",
+            },
+            {
+              kind: "runtime-factory",
+              name: "createChart",
+            },
+            {
+              kind: "part",
+              name: "Chart.Root",
+            },
+            {
+              kind: "part",
+              name: "Chart.Surface",
+            },
+            {
+              kind: "part",
+              name: "Chart.TooltipContent",
+            },
+            {
+              kind: "part",
+              name: "Chart.TooltipLabel",
+            },
+            {
+              kind: "part",
+              name: "Chart.TooltipItem",
+            },
+            {
+              kind: "part",
+              name: "Chart.TooltipIndicator",
+            },
+            {
+              kind: "part",
+              name: "Chart.TooltipIcon",
+            },
+            {
+              kind: "part",
+              name: "Chart.TooltipName",
+            },
+            {
+              kind: "part",
+              name: "Chart.TooltipValue",
+            },
+            {
+              kind: "part",
+              name: "Chart.Legend",
+            },
+            {
+              kind: "part",
+              name: "Chart.LegendItem",
+            },
+            {
+              kind: "part",
+              name: "Chart.LegendSwatch",
+            },
+            {
+              kind: "part",
+              name: "Chart.LegendIcon",
+            },
+            {
+              kind: "part",
+              name: "Chart.LegendLabel",
+            },
+          ],
+          relatedStyledComponents: [
+            {
+              id: "chart",
+              title: "Chart",
+              docsPath: "/docs/components/chart/",
+              foundationType: "direct-primitive",
+            },
+          ],
+        },
+      },
+      docsPage: {
+        status: "published",
+        path: "/docs/primitives/chart/",
+      },
+      aliases: [
+        "chart",
+        "Chart",
+        "createChart",
+        "viewport-measurement",
+      ],
+    },
+    {
       id: "checkbox",
       displayName: "Checkbox",
       category: "single-boolean-control",
@@ -43096,13 +46537,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/checkbox",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/checkbox",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -43611,7 +47052,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Checkbox coordinates a visible boolean control, indicator presence, and hidden form inputs for boolean form state.",
+        summary: "Use Checkbox to let someone opt in or out of a choice. It shows the checked state and can show a mixed state for a group of choices.",
+        liveDemo: {
+          componentName: "CheckboxPrimitiveDemo",
+          importPath: "@/components/demos/primitives/CheckboxPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/CheckboxPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -43631,8 +47077,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             description: "Use Checkbox when users can turn a single option on or off without choosing from a required set.",
           },
           {
-            title: "Use the hidden input parts for form submission.",
-            description: "The runtime synchronizes the hidden native input and unchecked input so unchecked and checked states can submit predictable values.",
+            title: "Set the form field name on the root.",
+            description: "Checkbox synchronizes its native input with the checked state. Set an unchecked value when the form also needs to submit a value for the unchecked state.",
           },
         ],
         sections: [],
@@ -43666,6 +47112,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Checkbox.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Checkbox } from \"@starwind-ui/svelte/checkbox\";\n</script>\n\n<Checkbox.Root>\n  <Checkbox.Indicator />\n</Checkbox.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Checkbox.",
@@ -43681,6 +47136,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -44592,13 +48048,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/checkbox-group",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/checkbox-group",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -44840,7 +48296,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Checkbox Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Use Checkbox Group to let someone choose any number of options. The group collects the checked values and can disable its checkboxes together.",
+        liveDemo: {
+          componentName: "CheckboxGroupPrimitiveDemo",
+          importPath: "@/components/demos/primitives/CheckboxGroupPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/CheckboxGroupPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -44883,6 +48344,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build CheckboxGroup.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { CheckboxGroup } from \"@starwind-ui/svelte/checkbox-group\";\n</script>\n\n<CheckboxGroup.Root />",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#checkbox-group-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build CheckboxGroup.",
@@ -44898,6 +48368,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -45428,13 +48899,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/collapsible",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/collapsible",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -45757,7 +49228,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Collapsible is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
+        summary: "Use Collapsible to reveal details beneath a single trigger. The trigger tracks whether its content is open.",
+        liveDemo: {
+          componentName: "CollapsiblePrimitiveDemo",
+          importPath: "@/components/demos/primitives/CollapsiblePrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/CollapsiblePrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -45800,6 +49276,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Collapsible.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Collapsible } from \"@starwind-ui/svelte/collapsible\";\n</script>\n\n<Collapsible.Root>\n  <Collapsible.Trigger>Toggle details</Collapsible.Trigger>\n  <Collapsible.Panel>Collapsible content</Collapsible.Panel>\n</Collapsible.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#collapsible-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Collapsible.",
@@ -45815,6 +49300,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -46479,13 +49965,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/color-picker",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/color-picker",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -47742,7 +51228,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Color Picker coordinates color parsing, two-dimensional area input, channel controls, editable values, presets, and native form submission.",
+        summary: "Use Color Picker to choose a color from an area, enter a value, or pick a preset. Each control updates the same color.",
+        liveDemo: {
+          componentName: "ColorPickerPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ColorPickerPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ColorPickerPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -47828,6 +51319,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Color Picker.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { ColorPicker } from \"@starwind-ui/svelte/color-picker\";\n</script>\n\n<ColorPicker.Root>\n  <ColorPicker.Label>Color</ColorPicker.Label>\n  <ColorPicker.Control>\n    <ColorPicker.ValueSwatch />\n    <ColorPicker.ValueInput />\n    <ColorPicker.ValueText />\n  </ColorPicker.Control>\n  <ColorPicker.Area xChannel=\"saturation\" yChannel=\"brightness\">\n    <ColorPicker.AreaBackground />\n    <ColorPicker.AreaThumb />\n    <ColorPicker.AreaInput axis=\"x\" />\n    <ColorPicker.AreaInput axis=\"y\" />\n  </ColorPicker.Area>\n  <ColorPicker.ChannelSlider channel=\"hue\">\n    <ColorPicker.ChannelSliderTrack />\n    <ColorPicker.ChannelSliderThumb />\n    <ColorPicker.ChannelSliderInput />\n  </ColorPicker.ChannelSlider>\n  <ColorPicker.ChannelInput channel=\"hue\" />\n  <ColorPicker.FormatSelect />\n  <ColorPicker.FormatControl />\n  <ColorPicker.TransparencyGrid />\n  <ColorPicker.SwatchGroup>\n    <ColorPicker.Swatch swatchValue=\"#3b82f6\" />\n  </ColorPicker.SwatchGroup>\n  <ColorPicker.EyeDropperTrigger>Pick from screen</ColorPicker.EyeDropperTrigger>\n  <ColorPicker.Clear>Clear</ColorPicker.Clear>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Color Picker.",
@@ -47853,6 +51353,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 language: "vue",
                 source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-composite-format-control-vue",
                 code: "<script setup lang=\"ts\">\nimport { ColorPicker } from \"@starwind-ui/vue/color-picker\";\nimport { Select } from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatControl>\n    <Select.Root defaultValue=\"hex\">\n      <Select.Trigger aria-label=\"Color format\">\n        <Select.Value>HEX</Select.Value>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup>\n          <Select.List>\n            <Select.Item value=\"hex\"><Select.ItemText>HEX</Select.ItemText></Select.Item>\n            <Select.Item value=\"rgb\"><Select.ItemText>RGB</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsl\"><Select.ItemText>HSL</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsb\"><Select.ItemText>HSB</Select.ItemText></Select.Item>\n          </Select.List>\n        </Select.Popup>\n      </Select.Positioner>\n    </Select.Root>\n  </ColorPicker.FormatControl>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>\n</template>",
+              },
+              {
+                framework: "svelte",
+                language: "svelte",
+                source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-composite-format-control-svelte",
+                code: "<script lang=\"ts\">\n  import { ColorPicker } from \"@starwind-ui/svelte/color-picker\";\n  import { Select } from \"@starwind-ui/svelte/select\";\n</script>\n\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatControl>\n    <Select.Root defaultValue=\"hex\">\n      <Select.Trigger aria-label=\"Color format\">\n        <Select.Value>HEX</Select.Value>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup>\n          <Select.List>\n            <Select.Item value=\"hex\"><Select.ItemText>HEX</Select.ItemText></Select.Item>\n            <Select.Item value=\"rgb\"><Select.ItemText>RGB</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsl\"><Select.ItemText>HSL</Select.ItemText></Select.Item>\n            <Select.Item value=\"hsb\"><Select.ItemText>HSB</Select.ItemText></Select.Item>\n          </Select.List>\n        </Select.Popup>\n      </Select.Positioner>\n    </Select.Root>\n  </ColorPicker.FormatControl>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>",
               },
               {
                 framework: "react",
@@ -47886,6 +51392,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 code: "<script setup lang=\"ts\">\nimport { ColorPicker } from \"@starwind-ui/vue/color-picker\";\n</script>\n\n<template>\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatSelect aria-label=\"Color format\">\n    <option value=\"hex\">HEX</option>\n    <option value=\"rgb\">RGB</option>\n    <option value=\"hsl\">HSL</option>\n    <option value=\"hsb\">HSB</option>\n  </ColorPicker.FormatSelect>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>\n</template>",
               },
               {
+                framework: "svelte",
+                language: "svelte",
+                source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-native-format-select-svelte",
+                code: "<script lang=\"ts\">\n  import { ColorPicker } from \"@starwind-ui/svelte/color-picker\";\n</script>\n\n<ColorPicker.Root defaultValue=\"#3b82f6\" format=\"hex\" name=\"accent\">\n  <ColorPicker.ValueInput />\n  <ColorPicker.FormatSelect aria-label=\"Color format\">\n    <option value=\"hex\">HEX</option>\n    <option value=\"rgb\">RGB</option>\n    <option value=\"hsl\">HSL</option>\n    <option value=\"hsb\">HSB</option>\n  </ColorPicker.FormatSelect>\n  <ColorPicker.HiddenInput />\n</ColorPicker.Root>",
+              },
+              {
                 framework: "react",
                 language: "tsx",
                 source: "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-native-format-select-react",
@@ -47906,6 +51418,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -50129,13 +53642,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/combobox",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/combobox",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -51249,7 +54762,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Combobox is a Starwind Runtime primitive in the floating-value-control contract family.",
+        summary: "Use Combobox when someone needs to type to find an option. It opens a list beside the input and lets the person choose a match with the keyboard.",
+        liveDemo: {
+          componentName: "ComboboxPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ComboboxPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ComboboxPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -51269,7 +54787,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Raw HTML",
             summary: "Render the Combobox data-sw-* contract yourself, then initialize createCombobox.",
             language: "html",
-            code: "<div data-sw-combobox>\n  <div data-sw-combobox-label>Choose a framework</div>\n  <div data-sw-combobox-input-group>\n    <input data-sw-combobox-input role=\"combobox\" aria-autocomplete=\"list\" autocomplete=\"off\" placeholder=\"Search frameworks\" />\n    <button data-sw-combobox-trigger aria-haspopup=\"listbox\">Open</button>\n    <button data-sw-combobox-clear type=\"button\">Clear</button>\n  </div>\n  <div data-sw-combobox-positioner>\n    <div data-sw-combobox-popup role=\"listbox\" hidden tabindex=\"-1\">\n      <div data-sw-combobox-empty hidden>No results</div>\n      <div data-sw-combobox-list>\n        <div data-sw-combobox-item role=\"option\" data-value=\"astro\">\n          <span data-sw-combobox-item-text>Astro</span>\n          <span data-sw-combobox-item-indicator aria-hidden=\"true\" hidden></span>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n\n<script type=\"module\">\n  import { createCombobox } from \"@starwind-ui/runtime/combobox\";\n\n  const root = document.querySelector(\"[data-sw-combobox]\");\n  if (root) {\n    createCombobox(root);\n  }\n</script>",
+            code: "<div data-sw-combobox>\n  <div data-sw-combobox-label>Choose a framework</div>\n  <div data-sw-combobox-input-group>\n    <input data-sw-combobox-input role=\"combobox\" aria-autocomplete=\"list\" autocomplete=\"off\" placeholder=\"Search frameworks\" />\n    <button data-sw-combobox-trigger aria-haspopup=\"listbox\">Open</button>\n    <button data-sw-combobox-clear type=\"button\">Clear</button>\n  </div>\n  <div data-sw-combobox-positioner>\n    <div data-sw-combobox-popup role=\"listbox\" hidden tabindex=\"-1\">\n      <div data-sw-combobox-empty hidden>No results</div>\n      <div data-sw-combobox-list>\n        <div data-sw-combobox-item role=\"option\" data-value=\"astro\">\n          <span data-sw-combobox-item-text>Astro</span>\n          <span data-sw-combobox-item-indicator aria-hidden=\"true\" hidden></span>\n        </div>\n        <div data-sw-combobox-item role=\"option\" data-value=\"react\">\n          <span data-sw-combobox-item-text>React</span>\n          <span data-sw-combobox-item-indicator aria-hidden=\"true\" hidden></span>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n\n<script type=\"module\">\n  import { createCombobox } from \"@starwind-ui/runtime/combobox\";\n\n  const root = document.querySelector(\"[data-sw-combobox]\");\n  if (root) {\n    createCombobox(root);\n  }\n</script>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-raw-html",
           },
           {
@@ -51278,7 +54796,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Astro",
             summary: "Use the Astro primitive adapter to render Combobox anatomy with the Runtime wiring included.",
             language: "astro",
-            code: "---\nimport { Combobox } from \"@starwind-ui/astro/combobox\";\n---\n\n<Combobox.Root>\n  <Combobox.Label>Choose a framework</Combobox.Label>\n  <Combobox.InputGroup>\n    <Combobox.Input placeholder=\"Search frameworks\" />\n    <Combobox.Trigger>Open</Combobox.Trigger>\n    <Combobox.Clear>Clear</Combobox.Clear>\n  </Combobox.InputGroup>\n  <Combobox.Positioner>\n    <Combobox.Popup>\n      <Combobox.Empty>No results</Combobox.Empty>\n    </Combobox.Popup>\n  </Combobox.Positioner>\n</Combobox.Root>",
+            code: "---\nimport { Combobox } from \"@starwind-ui/astro/combobox\";\n---\n\n<Combobox.Root>\n  <Combobox.Label>Choose a framework</Combobox.Label>\n  <Combobox.InputGroup>\n    <Combobox.Input placeholder=\"Search frameworks\" />\n    <Combobox.Trigger>Open</Combobox.Trigger>\n    <Combobox.Clear>Clear</Combobox.Clear>\n  </Combobox.InputGroup>\n  <Combobox.Positioner>\n    <Combobox.Popup>\n      <Combobox.Empty>No results</Combobox.Empty>\n      <Combobox.List>\n        <Combobox.Item value=\"astro\">\n          <Combobox.ItemText>Astro</Combobox.ItemText>\n          <Combobox.ItemIndicator />\n        </Combobox.Item>\n        <Combobox.Item value=\"react\">\n          <Combobox.ItemText>React</Combobox.ItemText>\n          <Combobox.ItemIndicator />\n        </Combobox.Item>\n      </Combobox.List>\n    </Combobox.Popup>\n  </Combobox.Positioner>\n</Combobox.Root>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-astro",
           },
           {
@@ -51287,8 +54805,17 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "React",
             summary: "Use the React primitive adapter when Combobox state participates in React rendering.",
             language: "tsx",
-            code: "import { Combobox } from \"@starwind-ui/react/combobox\";\n\nexport function Example() {\n  return (\n    <Combobox.Root>\n      <Combobox.Label>Choose a framework</Combobox.Label>\n      <Combobox.InputGroup>\n        <Combobox.Input placeholder=\"Search frameworks\" />\n        <Combobox.Trigger>Open</Combobox.Trigger>\n        <Combobox.Clear>Clear</Combobox.Clear>\n      </Combobox.InputGroup>\n      <Combobox.Positioner>\n        <Combobox.Popup>\n          <Combobox.Empty>No results</Combobox.Empty>\n        </Combobox.Popup>\n      </Combobox.Positioner>\n    </Combobox.Root>\n  );\n}",
+            code: "import { Combobox } from \"@starwind-ui/react/combobox\";\n\nexport function Example() {\n  return (\n    <Combobox.Root>\n      <Combobox.Label>Choose a framework</Combobox.Label>\n      <Combobox.InputGroup>\n        <Combobox.Input placeholder=\"Search frameworks\" />\n        <Combobox.Trigger>Open</Combobox.Trigger>\n        <Combobox.Clear>Clear</Combobox.Clear>\n      </Combobox.InputGroup>\n      <Combobox.Positioner>\n        <Combobox.Popup>\n          <Combobox.Empty>No results</Combobox.Empty>\n          <Combobox.List>\n            <Combobox.Item value=\"astro\">\n              <Combobox.ItemText>Astro</Combobox.ItemText>\n              <Combobox.ItemIndicator />\n            </Combobox.Item>\n            <Combobox.Item value=\"react\">\n              <Combobox.ItemText>React</Combobox.ItemText>\n              <Combobox.ItemIndicator />\n            </Combobox.Item>\n          </Combobox.List>\n        </Combobox.Popup>\n      </Combobox.Positioner>\n    </Combobox.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-react",
+          },
+          {
+            id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Combobox.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Combobox } from \"@starwind-ui/svelte/combobox\";\n</script>\n\n<Combobox.Root>\n  <Combobox.Label>Choose a framework</Combobox.Label>\n  <Combobox.InputGroup>\n    <Combobox.Input placeholder=\"Search frameworks\" />\n    <Combobox.Trigger>Open</Combobox.Trigger>\n    <Combobox.Clear>Clear</Combobox.Clear>\n  </Combobox.InputGroup>\n  <Combobox.Positioner>\n    <Combobox.Popup>\n      <Combobox.Empty>No results</Combobox.Empty>\n      <Combobox.List>\n        <Combobox.Item value=\"astro\">\n          <Combobox.ItemText>Astro</Combobox.ItemText>\n          <Combobox.ItemIndicator />\n        </Combobox.Item>\n        <Combobox.Item value=\"react\">\n          <Combobox.ItemText>React</Combobox.ItemText>\n          <Combobox.ItemIndicator />\n        </Combobox.Item>\n      </Combobox.List>\n    </Combobox.Popup>\n  </Combobox.Positioner>\n</Combobox.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-svelte",
           },
           {
             id: "basic",
@@ -51296,7 +54823,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Vue",
             summary: "Use the Vue components to build Combobox.",
             language: "vue",
-            code: "<script setup lang=\"ts\">\nimport Combobox from \"@starwind-ui/vue/combobox\";\n</script>\n\n<template>\n  <Combobox.Root>\n    <Combobox.Label>Choose a framework</Combobox.Label>\n    <Combobox.InputGroup>\n      <Combobox.Input placeholder=\"Search frameworks\" />\n      <Combobox.Trigger>Open</Combobox.Trigger>\n      <Combobox.Clear>Clear</Combobox.Clear>\n    </Combobox.InputGroup>\n    <Combobox.Positioner>\n      <Combobox.Popup>\n        <Combobox.Empty>No results</Combobox.Empty>\n      </Combobox.Popup>\n    </Combobox.Positioner>\n  </Combobox.Root>\n</template>",
+            code: "<script setup lang=\"ts\">\nimport Combobox from \"@starwind-ui/vue/combobox\";\n</script>\n\n<template>\n  <Combobox.Root>\n    <Combobox.Label>Choose a framework</Combobox.Label>\n    <Combobox.InputGroup>\n      <Combobox.Input placeholder=\"Search frameworks\" />\n      <Combobox.Trigger>Open</Combobox.Trigger>\n      <Combobox.Clear>Clear</Combobox.Clear>\n    </Combobox.InputGroup>\n    <Combobox.Positioner>\n      <Combobox.Popup>\n        <Combobox.Empty>No results</Combobox.Empty>\n        <Combobox.List>\n          <Combobox.Item value=\"astro\">\n            <Combobox.ItemText>Astro</Combobox.ItemText>\n            <Combobox.ItemIndicator />\n          </Combobox.Item>\n          <Combobox.Item value=\"react\">\n            <Combobox.ItemText>React</Combobox.ItemText>\n            <Combobox.ItemIndicator />\n          </Combobox.Item>\n        </Combobox.List>\n      </Combobox.Popup>\n    </Combobox.Positioner>\n  </Combobox.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#combobox-basic-vue",
           },
         ],
@@ -51307,6 +54834,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -53576,13 +57104,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/context-menu",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/context-menu",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -54847,7 +58375,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Context Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
+        summary: "Use Context Menu to offer actions for a specific item, such as renaming a file. It opens at the point where the person requests the menu.",
+        liveDemo: {
+          componentName: "ContextMenuPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ContextMenuPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ContextMenuPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -54890,6 +58423,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build ContextMenu.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { ContextMenu } from \"@starwind-ui/svelte/context-menu\";\n</script>\n\n<ContextMenu.Root>\n  <ContextMenu.Trigger>Right click</ContextMenu.Trigger>\n  <ContextMenu.Positioner>\n    <ContextMenu.Popup>\n      <ContextMenu.Item>Copy</ContextMenu.Item>\n    </ContextMenu.Popup>\n  </ContextMenu.Positioner>\n</ContextMenu.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#context-menu-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build ContextMenu.",
@@ -54905,6 +58447,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -57783,13 +61326,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/dialog",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/dialog",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -58238,7 +61781,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
+        summary: "Use Dialog to give a task its own space, such as editing settings. It moves focus into the dialog and returns focus when it closes.",
+        liveDemo: {
+          componentName: "DialogPrimitiveDemo",
+          importPath: "@/components/demos/primitives/DialogPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/DialogPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -58256,36 +61804,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             id: "basic",
             framework: "raw-html",
             title: "Raw HTML",
-            summary: "Render the Dialog data-sw-* contract yourself, then initialize createDialog.",
+            summary: "Select **Open settings**, then press Escape or select **Close**. Focus returns to the trigger.",
             language: "html",
-            code: "<div data-sw-dialog>\n  <button data-sw-dialog-trigger type=\"button\" aria-haspopup=\"dialog\">Open dialog</button>\n  <div data-sw-dialog-overlay hidden></div>\n  <dialog data-sw-dialog-content role=\"dialog\">\n    <h2 data-sw-dialog-title>Dialog title</h2>\n    <p data-sw-dialog-description>Dialog description</p>\n    <button data-sw-dialog-close type=\"button\">Close</button>\n  </dialog>\n</div>\n\n<script type=\"module\">\n  import { createDialog } from \"@starwind-ui/runtime/dialog\";\n\n  const root = document.querySelector(\"[data-sw-dialog]\");\n  if (root) {\n    createDialog(root);\n  }\n</script>",
+            code: "<div data-sw-dialog>\n  <button data-sw-dialog-trigger type=\"button\" aria-haspopup=\"dialog\">Open settings</button>\n  <div data-sw-dialog-overlay hidden></div>\n  <dialog data-sw-dialog-content role=\"dialog\">\n    <h2 data-sw-dialog-title>Settings</h2>\n    <p data-sw-dialog-description>Review your settings.</p>\n    <button data-sw-dialog-close type=\"button\">Close</button>\n  </dialog>\n</div>\n\n<script type=\"module\">\n  import { createDialog } from \"@starwind-ui/runtime/dialog\";\n\n  const root = document.querySelector(\"[data-sw-dialog]\");\n  if (root) {\n    createDialog(root);\n  }\n</script>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-raw-html",
           },
           {
             id: "basic",
             framework: "astro",
             title: "Astro",
-            summary: "Use the Astro primitive adapter to render Dialog anatomy with the Runtime wiring included.",
+            summary: "Select **Open settings**, then press Escape or select **Close**. Focus returns to the trigger.",
             language: "astro",
-            code: "---\nimport { Dialog } from \"@starwind-ui/astro/dialog\";\n---\n\n<Dialog.Root>\n  <Dialog.Trigger>Open dialog</Dialog.Trigger>\n  <Dialog.Backdrop />\n  <Dialog.Popup>\n    <Dialog.Title>Dialog title</Dialog.Title>\n    <Dialog.Description>Dialog description</Dialog.Description>\n    <Dialog.Close>Close</Dialog.Close>\n  </Dialog.Popup>\n</Dialog.Root>",
+            code: "---\nimport { Dialog } from \"@starwind-ui/astro/dialog\";\n---\n\n<Dialog.Root>\n  <Dialog.Trigger>Open settings</Dialog.Trigger>\n  <Dialog.Backdrop />\n  <Dialog.Popup>\n    <Dialog.Title>Settings</Dialog.Title>\n    <Dialog.Description>Review your settings.</Dialog.Description>\n    <Dialog.Close>Close</Dialog.Close>\n  </Dialog.Popup>\n</Dialog.Root>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-astro",
           },
           {
             id: "basic",
             framework: "react",
             title: "React",
-            summary: "Use the React primitive adapter when Dialog state participates in React rendering.",
+            summary: "Select **Open settings**, then press Escape or select **Close**. Focus returns to the trigger.",
             language: "tsx",
-            code: "import { Dialog } from \"@starwind-ui/react/dialog\";\n\nexport function Example() {\n  return (\n    <Dialog.Root>\n      <Dialog.Trigger>Open dialog</Dialog.Trigger>\n      <Dialog.Backdrop />\n      <Dialog.Popup>\n        <Dialog.Title>Dialog title</Dialog.Title>\n        <Dialog.Description>Dialog description</Dialog.Description>\n        <Dialog.Close>Close</Dialog.Close>\n      </Dialog.Popup>\n    </Dialog.Root>\n  );\n}",
+            code: "import { Dialog } from \"@starwind-ui/react/dialog\";\n\nexport function Example() {\n  return (\n    <Dialog.Root>\n      <Dialog.Trigger>Open settings</Dialog.Trigger>\n      <Dialog.Backdrop />\n      <Dialog.Popup>\n        <Dialog.Title>Settings</Dialog.Title>\n        <Dialog.Description>Review your settings.</Dialog.Description>\n        <Dialog.Close>Close</Dialog.Close>\n      </Dialog.Popup>\n    </Dialog.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-react",
+          },
+          {
+            id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Select **Open settings**, then press Escape or select **Close**. Focus returns to the trigger.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Dialog } from \"@starwind-ui/svelte/dialog\";\n</script>\n\n<Dialog.Root>\n  <Dialog.Trigger>Open settings</Dialog.Trigger>\n  <Dialog.Backdrop />\n  <Dialog.Popup>\n    <Dialog.Title>Settings</Dialog.Title>\n    <Dialog.Description>Review your settings.</Dialog.Description>\n    <Dialog.Close>Close</Dialog.Close>\n  </Dialog.Popup>\n</Dialog.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-svelte",
           },
           {
             id: "basic",
             framework: "vue",
             title: "Vue",
-            summary: "Use the Vue components to build Dialog.",
+            summary: "Select **Open settings**, then press Escape or select **Close**. Focus returns to the trigger.",
             language: "vue",
-            code: "<script setup lang=\"ts\">\nimport Dialog from \"@starwind-ui/vue/dialog\";\n</script>\n\n<template>\n  <Dialog.Root>\n    <Dialog.Trigger>Open dialog</Dialog.Trigger>\n    <Dialog.Backdrop />\n    <Dialog.Popup>\n      <Dialog.Title>Dialog title</Dialog.Title>\n      <Dialog.Description>Dialog description</Dialog.Description>\n      <Dialog.Close>Close</Dialog.Close>\n    </Dialog.Popup>\n  </Dialog.Root>\n</template>",
+            code: "<script setup lang=\"ts\">\nimport Dialog from \"@starwind-ui/vue/dialog\";\n</script>\n\n<template>\n  <Dialog.Root>\n    <Dialog.Trigger>Open settings</Dialog.Trigger>\n    <Dialog.Backdrop />\n    <Dialog.Popup>\n      <Dialog.Title>Settings</Dialog.Title>\n      <Dialog.Description>Review your settings.</Dialog.Description>\n      <Dialog.Close>Close</Dialog.Close>\n    </Dialog.Popup>\n  </Dialog.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dialog-basic-vue",
           },
         ],
@@ -58296,6 +61853,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -59185,13 +62743,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/drawer",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/drawer",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -59693,7 +63251,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Drawer is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
+        summary: "Use Drawer to show a panel along the edge of the screen. It manages opening, closing, and focus while the panel is active.",
+        liveDemo: {
+          componentName: "DrawerPrimitiveDemo",
+          importPath: "@/components/demos/primitives/DrawerPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/DrawerPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -59736,6 +63299,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Drawer.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Drawer } from \"@starwind-ui/svelte/drawer\";\n</script>\n\n<Drawer.Root>\n  <Drawer.Trigger>Open drawer</Drawer.Trigger>\n  <Drawer.Backdrop />\n  <Drawer.Viewport>\n    <Drawer.Popup>\n      <Drawer.Title>Drawer title</Drawer.Title>\n      <Drawer.Description>Drawer description</Drawer.Description>\n      <Drawer.Close>Close</Drawer.Close>\n    </Drawer.Popup>\n  </Drawer.Viewport>\n</Drawer.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#drawer-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Drawer.",
@@ -59751,6 +63323,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -60754,13 +64327,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/dropzone",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/dropzone",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -61150,7 +64723,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Dropzone is a Starwind Runtime primitive in the form-value-control contract family.",
+        summary: "Use Dropzone to collect files by dropping them onto a page or opening a file picker. It checks the files against the limits you set.",
+        liveDemo: {
+          componentName: "DropzonePrimitiveDemo",
+          importPath: "@/components/demos/primitives/DropzonePrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/DropzonePrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -61193,6 +64771,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Dropzone.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Dropzone } from \"@starwind-ui/svelte/dropzone\";\n</script>\n\n<Dropzone.Root>\n  <Dropzone.Input />\n  <Dropzone.UploadIndicator>Drop files here</Dropzone.UploadIndicator>\n  <Dropzone.LoadingIndicator>Uploading...</Dropzone.LoadingIndicator>\n  <Dropzone.FilesList />\n</Dropzone.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#dropzone-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Dropzone.",
@@ -61208,6 +64795,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -62051,13 +65639,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/field",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/field",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -62287,6 +65875,30 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           ],
           type: "\"children\" | \"validation\"",
         },
+        {
+          name: "value",
+          kind: "control",
+          targets: [
+            "control",
+          ],
+          type: "InputValue",
+        },
+        {
+          name: "defaultValue",
+          kind: "control",
+          targets: [
+            "control",
+          ],
+          type: "InputValue",
+        },
+        {
+          name: "onValueChange",
+          kind: "callback",
+          targets: [
+            "control",
+          ],
+          type: "InputValueChangeDetails",
+        },
       ],
       stateModels: [
         {
@@ -62504,7 +66116,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Field is a Starwind Runtime primitive in the field-control-coordinator contract family.",
+        summary: "Use Field to give an input a label, a description, and a place to show errors. It connects those parts to the control and tracks when to validate it.",
+        liveDemo: {
+          componentName: "FieldPrimitiveDemo",
+          importPath: "@/components/demos/primitives/FieldPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/FieldPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -62554,6 +66171,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Field.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Field } from \"@starwind-ui/svelte/field\";\n</script>\n\n<Field.Root>\n  <Field.Label>Email</Field.Label>\n  <Field.Control />\n  <Field.Description>Use your work email.</Field.Description>\n  <Field.Error>Enter a valid email.</Field.Error>\n</Field.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#field-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Field.",
@@ -62569,6 +66195,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -63033,7 +66660,39 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               descriptionSource: "authored",
               defaultElement: "input",
               discoveryAttribute: "data-sw-field-control",
-              props: [],
+              props: [
+                {
+                  name: "value",
+                  kind: "control",
+                  targets: [
+                    "control",
+                  ],
+                  type: "InputValue",
+                  description: "Controls the current Field value.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "defaultValue",
+                  kind: "control",
+                  targets: [
+                    "control",
+                  ],
+                  type: "InputValue",
+                  description: "Sets the initial Field value for uncontrolled usage.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "onValueChange",
+                  kind: "callback",
+                  targets: [
+                    "control",
+                  ],
+                  type: "InputValueChangeDetails",
+                  displayType: "InputValueChangeDetails",
+                  description: "Runs when the Field value changes.",
+                  descriptionSource: "authored",
+                },
+              ],
               dataAttributes: [
                 {
                   name: "data-sw-field-control",
@@ -63374,13 +67033,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/fieldset",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/fieldset",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -63473,7 +67132,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Fieldset is a Starwind Runtime primitive in the field-control-coordinator contract family.",
+        summary: "Use Fieldset when several inputs answer the same question, such as a shipping address. A legend gives the group a name.",
+        liveDemo: {
+          componentName: "FieldsetPrimitiveDemo",
+          importPath: "@/components/demos/primitives/FieldsetPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/FieldsetPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -63516,6 +67180,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Fieldset.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Fieldset } from \"@starwind-ui/svelte/fieldset\";\n</script>\n\n<Fieldset.Root>\n  <Fieldset.Legend>Preferences</Fieldset.Legend>\n</Fieldset.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#fieldset-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Fieldset.",
@@ -63531,6 +67204,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -63736,13 +67410,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/form",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/form",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -63961,7 +67635,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Form coordinates native constraints, custom and asynchronous validators, schema results, error visibility, and submission across its Fields.",
+        summary: "Use Form to validate inputs before submitting them. It runs native constraints and your own validators, then lets you choose when to show errors.",
+        liveDemo: {
+          componentName: "FormPrimitiveDemo",
+          importPath: "@/components/demos/primitives/FormPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/FormPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -64015,6 +67694,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Form.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Form } from \"@starwind-ui/svelte/form\";\n</script>\n\n<Form.Root>\n  <Form.ErrorSummary>Please fix the highlighted fields.</Form.ErrorSummary>\n</Form.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#form-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Form.",
@@ -64030,6 +67718,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -64362,13 +68051,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/input",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/input",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -64587,7 +68276,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Input is a Starwind Runtime primitive in the form-value-control contract family.",
+        summary: "Use Input to collect a short text value such as an email address. It uses a native input and can share its state with a Field.",
+        liveDemo: {
+          componentName: "InputPrimitiveDemo",
+          importPath: "@/components/demos/primitives/InputPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/InputPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -64630,6 +68324,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Input.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Input } from \"@starwind-ui/svelte/input\";\n</script>\n\n<Input.Root placeholder=\"Email\" />",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Input.",
@@ -64645,6 +68348,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -65129,13 +68833,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/input-otp",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/input-otp",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -65717,7 +69421,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Input OTP is a Starwind Runtime primitive in the form-value-control contract family.",
+        summary: "Use Input OTP to enter a short code across visible slots. One input receives typing and paste so the slots represent a single value.",
+        liveDemo: {
+          componentName: "InputOtpPrimitiveDemo",
+          importPath: "@/components/demos/primitives/InputOtpPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/InputOtpPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -65760,6 +69469,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build InputOtp.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { InputOtp } from \"@starwind-ui/svelte/input-otp\";\n</script>\n\n<InputOtp.Root>\n  <InputOtp.Group>\n    <InputOtp.Slot index={0} />\n    <InputOtp.Separator />\n    <InputOtp.Slot index={1} />\n  </InputOtp.Group>\n</InputOtp.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#input-otp-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build InputOtp.",
@@ -65775,6 +69493,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -66691,13 +70410,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/menu",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/menu",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -68040,7 +71759,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
+        summary: "Use Menu to offer a short list of actions from a button. It opens a popup and lets the person move between items with the keyboard.",
+        liveDemo: {
+          componentName: "MenuPrimitiveDemo",
+          importPath: "@/components/demos/primitives/MenuPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/MenuPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -68088,6 +71812,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Menu.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Menu } from \"@starwind-ui/svelte/menu\";\n</script>\n\n<Menu.Root>\n  <Menu.Trigger>Open menu</Menu.Trigger>\n  <Menu.Positioner>\n    <Menu.Popup>\n      <Menu.Item>Edit</Menu.Item>\n    </Menu.Popup>\n  </Menu.Positioner>\n</Menu.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#menu-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Menu.",
@@ -68103,6 +71836,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -71033,13 +74767,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/navigation-menu",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/navigation-menu",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -71816,7 +75550,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Navigation Menu coordinates a single active top-level item, shared viewport content, hover timing, keyboard movement, and link close behavior for site navigation.",
+        summary: "Use Navigation Menu for top-level links and panels, such as the sections of a product site. Each trigger opens its panel in a shared space.",
+        liveDemo: {
+          componentName: "NavigationMenuPrimitiveDemo",
+          importPath: "@/components/demos/primitives/NavigationMenuPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/NavigationMenuPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -71877,6 +75616,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build NavigationMenu.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { NavigationMenu } from \"@starwind-ui/svelte/navigation-menu\";\n</script>\n\n<NavigationMenu.Root>\n  <NavigationMenu.List>\n    <NavigationMenu.Item value=\"products\">\n      <NavigationMenu.Trigger>\n        <NavigationMenu.Icon>v</NavigationMenu.Icon>\n      </NavigationMenu.Trigger>\n      <NavigationMenu.Content>\n        <NavigationMenu.Link href=\"/docs\">Docs</NavigationMenu.Link>\n      </NavigationMenu.Content>\n    </NavigationMenu.Item>\n  </NavigationMenu.List>\n  <NavigationMenu.Portal>\n    <NavigationMenu.Positioner>\n      <NavigationMenu.Popup>\n        <NavigationMenu.Viewport />\n        <NavigationMenu.Arrow />\n      </NavigationMenu.Popup>\n    </NavigationMenu.Positioner>\n  </NavigationMenu.Portal>\n</NavigationMenu.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#navigation-menu-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build NavigationMenu.",
@@ -71892,6 +75640,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -72576,7 +76325,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               discoveryAttribute: "data-sw-nav-menu-trigger",
               props: [
                 {
-                  defaultValue: "50",
                   name: "openDelay",
                   kind: "option",
                   targets: [
@@ -72588,7 +76336,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "authored",
                 },
                 {
-                  defaultValue: "50",
                   name: "closeDelay",
                   kind: "option",
                   targets: [
@@ -73339,13 +77086,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/popover",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/popover",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -74034,7 +77781,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Popover is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
+        summary: "Use Popover to show a small panel next to a trigger, such as filters. It positions the panel and handles dismissal when someone presses Escape or clicks outside.",
+        liveDemo: {
+          componentName: "PopoverPrimitiveDemo",
+          importPath: "@/components/demos/primitives/PopoverPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/PopoverPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -74077,6 +77829,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Popover.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Popover } from \"@starwind-ui/svelte/popover\";\n</script>\n\n<Popover.Root>\n  <Popover.Trigger>Open popover</Popover.Trigger>\n  <Popover.Backdrop />\n  <Popover.Positioner>\n    <Popover.Popup>\n      <Popover.Title>Popover title</Popover.Title>\n      <Popover.Description>Popover description</Popover.Description>\n      <Popover.Close>Close</Popover.Close>\n      <Popover.Arrow />\n    </Popover.Popup>\n  </Popover.Positioner>\n</Popover.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#popover-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Popover.",
@@ -74092,6 +77853,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -75378,13 +79140,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/preview-card",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/preview-card",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -75638,6 +79400,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           defaultValue: "300",
           name: "closeDelay",
           kind: "option",
+          targets: [
+            "root",
+            "trigger",
+          ],
           type: "number",
         },
         {
@@ -75665,6 +79431,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           defaultValue: "600",
           name: "openDelay",
           kind: "option",
+          targets: [
+            "root",
+            "trigger",
+          ],
           type: "number",
         },
         {
@@ -76019,7 +79789,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Preview Card is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
+        summary: "Use Preview Card to show a short preview when someone hovers over or focuses a link. It opens near the trigger and closes when the person moves away.",
+        liveDemo: {
+          componentName: "PreviewCardPrimitiveDemo",
+          importPath: "@/components/demos/primitives/PreviewCardPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/PreviewCardPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -76062,6 +79837,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build PreviewCard.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { PreviewCard } from \"@starwind-ui/svelte/preview-card\";\n</script>\n\n<PreviewCard.Root>\n  <PreviewCard.Trigger>Preview profile</PreviewCard.Trigger>\n  <PreviewCard.Positioner>\n    <PreviewCard.Popup>\n      <PreviewCard.Arrow />\n    </PreviewCard.Popup>\n  </PreviewCard.Positioner>\n</PreviewCard.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#preview-card-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build PreviewCard.",
@@ -76077,6 +79861,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -76262,6 +80047,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   defaultValue: "300",
                   name: "closeDelay",
                   kind: "option",
+                  targets: [
+                    "root",
+                    "trigger",
+                  ],
                   type: "number",
                   description: "Sets how long Preview Card waits before closing.",
                   descriptionSource: "authored",
@@ -76297,6 +80086,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   defaultValue: "600",
                   name: "openDelay",
                   kind: "option",
+                  targets: [
+                    "root",
+                    "trigger",
+                  ],
                   type: "number",
                   description: "Sets how long Preview Card waits before opening.",
                   descriptionSource: "authored",
@@ -76594,6 +80387,28 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               defaultElement: "a",
               discoveryAttribute: "data-sw-preview-card-trigger",
               props: [
+                {
+                  name: "closeDelay",
+                  kind: "option",
+                  targets: [
+                    "root",
+                    "trigger",
+                  ],
+                  type: "number",
+                  description: "Overrides the root close delay for this trigger.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "openDelay",
+                  kind: "option",
+                  targets: [
+                    "root",
+                    "trigger",
+                  ],
+                  type: "number",
+                  description: "Overrides the root open delay for this trigger.",
+                  descriptionSource: "authored",
+                },
                 {
                   name: "asChild",
                   kind: "rendering",
@@ -77251,13 +81066,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/progress",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/progress",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -77555,7 +81370,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Progress is a Starwind Runtime primitive in the static-semantic contract family.",
+        summary: "Use Progress to show how much of a task has finished. It updates the indicator as the value changes and supports tasks with an unknown total.",
+        liveDemo: {
+          componentName: "ProgressPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ProgressPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ProgressPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -77598,6 +81418,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Progress.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Progress } from \"@starwind-ui/svelte/progress\";\n</script>\n\n<Progress.Root>\n  <Progress.Label>Upload progress</Progress.Label>\n  <Progress.Track>\n    <Progress.Indicator />\n  </Progress.Track>\n  <Progress.Value>Selected value</Progress.Value>\n</Progress.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#progress-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Progress.",
@@ -77613,6 +81442,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -78138,13 +81968,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/radio",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/radio",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -78569,7 +82399,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Radio is a Starwind Runtime primitive in the single-boolean-control contract family.",
+        summary: "Use Radio inside a Radio Group to present one option. Its indicator shows when that option is selected.",
+        liveDemo: {
+          componentName: "RadioPrimitiveDemo",
+          importPath: "@/components/demos/primitives/RadioPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/RadioPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -78612,6 +82447,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Radio.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Radio } from \"@starwind-ui/svelte/radio\";\n</script>\n\n<Radio.Root value=\"option-one\">\n  <Radio.Indicator />\n</Radio.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Radio.",
@@ -78627,6 +82471,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -79400,13 +83245,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/radio-group",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/radio-group",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -79773,7 +83618,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Radio Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Use Radio Group when someone can pick one option from a visible list. The arrow keys move between choices.",
+        liveDemo: {
+          componentName: "RadioGroupPrimitiveDemo",
+          importPath: "@/components/demos/primitives/RadioGroupPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/RadioGroupPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -79816,6 +83666,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build RadioGroup.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { RadioGroup } from \"@starwind-ui/svelte/radio-group\";\n</script>\n\n<RadioGroup.Root />",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#radio-group-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build RadioGroup.",
@@ -79831,6 +83690,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -80484,13 +84344,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/scroll-area",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/scroll-area",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -80720,7 +84580,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Scroll Area is a Starwind Runtime primitive in the viewport-measurement contract family.",
+        summary: "Use Scroll Area when a region needs to scroll within a fixed space. The scrollbar and thumb follow the position of the content.",
+        liveDemo: {
+          componentName: "ScrollAreaPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ScrollAreaPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ScrollAreaPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -80763,6 +84628,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build ScrollArea.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { ScrollArea } from \"@starwind-ui/svelte/scroll-area\";\n</script>\n\n<ScrollArea.Root>\n  <ScrollArea.Viewport>\n    <ScrollArea.Content>Scrollable content</ScrollArea.Content>\n  </ScrollArea.Viewport>\n  <ScrollArea.Scrollbar>\n    <ScrollArea.Thumb />\n  </ScrollArea.Scrollbar>\n  <ScrollArea.Corner />\n</ScrollArea.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#scroll-area-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build ScrollArea.",
@@ -80778,6 +84652,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -81203,13 +85078,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/select",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/select",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -82086,7 +85961,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Select is a Starwind Runtime primitive in the floating-value-control contract family.",
+        summary: "Use Select to pick one option from a popup list. It handles opening the list, moving between options with the keyboard, and submitting the chosen value when the control has a name.",
+        liveDemo: {
+          componentName: "SelectPrimitiveDemo",
+          importPath: "@/components/demos/primitives/SelectPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/SelectPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -82118,36 +85998,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             id: "basic",
             framework: "raw-html",
             title: "Raw HTML",
-            summary: "Render the Select data-sw-* contract yourself, then initialize createSelect.",
+            summary: "Open the Framework list and choose React. The list closes and the trigger shows React.",
             language: "html",
-            code: "<div data-sw-select>\n  <div data-sw-select-label>Choose a framework</div>\n  <button data-sw-select-trigger role=\"combobox\" aria-haspopup=\"listbox\">\n    <span data-sw-select-value>Astro</span>\n    <span data-sw-select-icon aria-hidden=\"true\">v</span>\n  </button>\n  <div data-sw-select-positioner>\n    <div data-sw-select-popup role=\"listbox\" hidden tabindex=\"-1\">\n      <div data-sw-select-list>\n        <div data-sw-select-item role=\"option\" data-value=\"astro\">\n          <span data-sw-select-item-text>Astro</span>\n          <span data-sw-select-item-indicator aria-hidden=\"true\" hidden></span>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n\n<script type=\"module\">\n  import { createSelect } from \"@starwind-ui/runtime/select\";\n\n  const root = document.querySelector(\"[data-sw-select]\");\n  if (root) {\n    createSelect(root);\n  }\n</script>",
+            code: "<div data-sw-select data-default-value=\"astro\" data-name=\"framework\">\n  <input data-sw-select-input type=\"hidden\" />\n  <div data-sw-select-label>Framework</div>\n  <button data-sw-select-trigger role=\"combobox\" aria-haspopup=\"listbox\" type=\"button\">\n    <span data-sw-select-value>Astro</span>\n  </button>\n  <div data-sw-select-positioner>\n    <div data-sw-select-popup role=\"listbox\" hidden tabindex=\"-1\">\n      <div data-sw-select-list>\n        <div data-sw-select-item role=\"option\" data-value=\"astro\">\n          <span data-sw-select-item-text>Astro</span>\n        </div>\n        <div data-sw-select-item role=\"option\" data-value=\"react\">\n          <span data-sw-select-item-text>React</span>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n\n<script type=\"module\">\n  import { createSelect } from \"@starwind-ui/runtime/select\";\n\n  const root = document.querySelector(\"[data-sw-select]\");\n  if (root) {\n    createSelect(root);\n  }\n</script>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-raw-html",
           },
           {
             id: "basic",
             framework: "astro",
             title: "Astro",
-            summary: "Use the Astro primitive adapter to render Select anatomy with the Runtime wiring included.",
+            summary: "Open the Framework list and choose React. The list closes and the trigger shows React.",
             language: "astro",
-            code: "---\nimport { Select } from \"@starwind-ui/astro/select\";\n---\n\n<Select.Root>\n  <Select.Label>Choose a framework</Select.Label>\n  <Select.Trigger>\n    <Select.Value>Astro</Select.Value>\n    <Select.Icon>v</Select.Icon>\n  </Select.Trigger>\n  <Select.Positioner>\n    <Select.Popup />\n  </Select.Positioner>\n</Select.Root>",
+            code: "---\nimport { Select } from \"@starwind-ui/astro/select\";\n---\n\n<Select.Root defaultValue=\"astro\" name=\"framework\">\n  <Select.Label>Framework</Select.Label>\n  <Select.Trigger type=\"button\">\n    <Select.Value>Astro</Select.Value>\n  </Select.Trigger>\n  <Select.Positioner>\n    <Select.Popup>\n      <Select.List>\n        <Select.Item value=\"astro\">\n          <Select.ItemText>Astro</Select.ItemText>\n        </Select.Item>\n        <Select.Item value=\"react\">\n          <Select.ItemText>React</Select.ItemText>\n        </Select.Item>\n      </Select.List>\n    </Select.Popup>\n  </Select.Positioner>\n</Select.Root>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-astro",
           },
           {
             id: "basic",
             framework: "react",
             title: "React",
-            summary: "Use the React primitive adapter when Select state participates in React rendering.",
+            summary: "Open the Framework list and choose React. The list closes and the trigger shows React.",
             language: "tsx",
-            code: "import { Select } from \"@starwind-ui/react/select\";\n\nexport function Example() {\n  return (\n    <Select.Root>\n      <Select.Label>Choose a framework</Select.Label>\n      <Select.Trigger>\n        <Select.Value>Astro</Select.Value>\n        <Select.Icon>v</Select.Icon>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup />\n      </Select.Positioner>\n    </Select.Root>\n  );\n}",
+            code: "import { Select } from \"@starwind-ui/react/select\";\n\nexport function Example() {\n  return (\n    <Select.Root defaultValue=\"astro\" name=\"framework\">\n      <Select.Label>Framework</Select.Label>\n      <Select.Trigger type=\"button\">\n        <Select.Value>Astro</Select.Value>\n      </Select.Trigger>\n      <Select.Positioner>\n        <Select.Popup>\n          <Select.List>\n            <Select.Item value=\"astro\">\n              <Select.ItemText>Astro</Select.ItemText>\n            </Select.Item>\n            <Select.Item value=\"react\">\n              <Select.ItemText>React</Select.ItemText>\n            </Select.Item>\n          </Select.List>\n        </Select.Popup>\n      </Select.Positioner>\n    </Select.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-react",
+          },
+          {
+            id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Open the Framework list and choose React. The list closes and the trigger shows React.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Select } from \"@starwind-ui/svelte/select\";\n</script>\n\n<Select.Root defaultValue=\"astro\" name=\"framework\">\n  <Select.Label>Framework</Select.Label>\n  <Select.Trigger type=\"button\">\n    <Select.Value>Astro</Select.Value>\n  </Select.Trigger>\n  <Select.Positioner>\n    <Select.Popup>\n      <Select.List>\n        <Select.Item value=\"astro\">\n          <Select.ItemText>Astro</Select.ItemText>\n        </Select.Item>\n        <Select.Item value=\"react\">\n          <Select.ItemText>React</Select.ItemText>\n        </Select.Item>\n      </Select.List>\n    </Select.Popup>\n  </Select.Positioner>\n</Select.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-svelte",
           },
           {
             id: "basic",
             framework: "vue",
             title: "Vue",
-            summary: "Use the Vue components to build Select.",
+            summary: "Open the Framework list and choose React. The list closes and the trigger shows React.",
             language: "vue",
-            code: "<script setup lang=\"ts\">\nimport Select from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n  <Select.Root>\n    <Select.Label>Choose a framework</Select.Label>\n    <Select.Trigger>\n      <Select.Value>Astro</Select.Value>\n      <Select.Icon>v</Select.Icon>\n    </Select.Trigger>\n    <Select.Positioner>\n      <Select.Popup />\n    </Select.Positioner>\n  </Select.Root>\n</template>",
+            code: "<script setup lang=\"ts\">\nimport Select from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n  <Select.Root defaultValue=\"astro\" name=\"framework\">\n    <Select.Label>Framework</Select.Label>\n    <Select.Trigger type=\"button\">\n      <Select.Value>Astro</Select.Value>\n    </Select.Trigger>\n    <Select.Positioner>\n      <Select.Popup>\n        <Select.List>\n          <Select.Item value=\"astro\">\n            <Select.ItemText>Astro</Select.ItemText>\n          </Select.Item>\n          <Select.Item value=\"react\">\n            <Select.ItemText>React</Select.ItemText>\n          </Select.Item>\n        </Select.List>\n      </Select.Popup>\n    </Select.Positioner>\n  </Select.Root>\n</template>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#select-basic-vue",
           },
         ],
@@ -82155,7 +86044,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             id: "positioned-select",
             title: "Positioned Select",
-            summary: "Render Select with a positioned popup across Astro, React, Vue, and HTML surfaces.",
+            summary: "Compose the positioning parts around the Select popup.",
             frameworks: [
               {
                 framework: "astro",
@@ -82176,6 +86065,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 code: "<script setup lang=\"ts\">\nimport { Select } from \"@starwind-ui/vue/select\";\n</script>\n\n<template>\n  <Select.Root defaultValue=\"astro\">\n    <Select.Label>Framework</Select.Label>\n    <Select.Trigger>\n      <Select.Value>Astro</Select.Value>\n      <Select.Icon>v</Select.Icon>\n    </Select.Trigger>\n    <Select.Positioner>\n      <Select.Popup>\n        <Select.List>\n          <Select.Item value=\"astro\">\n            <Select.ItemText>Astro</Select.ItemText>\n            <Select.ItemIndicator />\n          </Select.Item>\n          <Select.Item value=\"react\">\n            <Select.ItemText>React</Select.ItemText>\n            <Select.ItemIndicator />\n          </Select.Item>\n        </Select.List>\n      </Select.Popup>\n    </Select.Positioner>\n  </Select.Root>\n</template>\n",
               },
               {
+                framework: "svelte",
+                language: "svelte",
+                source: "scripts/portable-runtime/docs/layered-docs/primitives/select/examples/positioned-select.svelte",
+                code: "<script lang=\"ts\">\n  import { Select } from \"@starwind-ui/svelte/select\";\n</script>\n\n<Select.Root defaultValue=\"astro\">\n  <Select.Label>Framework</Select.Label>\n  <Select.Trigger>\n    <Select.Value>Astro</Select.Value>\n    <Select.Icon>v</Select.Icon>\n  </Select.Trigger>\n  <Select.Positioner>\n    <Select.Popup>\n      <Select.List>\n        <Select.Item value=\"astro\">\n          <Select.ItemText>Astro</Select.ItemText>\n          <Select.ItemIndicator />\n        </Select.Item>\n        <Select.Item value=\"react\">\n          <Select.ItemText>React</Select.ItemText>\n          <Select.ItemIndicator />\n        </Select.Item>\n      </Select.List>\n    </Select.Popup>\n  </Select.Positioner>\n</Select.Root>\n",
+              },
+              {
                 framework: "raw-html",
                 language: "html",
                 source: "scripts/portable-runtime/docs/layered-docs/primitives/select/examples/positioned-select.html",
@@ -82190,6 +86085,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -83994,13 +87890,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/sidebar",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/sidebar",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -84652,7 +88548,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Sidebar is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
+        summary: "Use Sidebar for navigation that stays beside the main content. Its trigger can expand or collapse the panel.",
+        liveDemo: {
+          componentName: "SidebarPrimitiveDemo",
+          importPath: "@/components/demos/primitives/SidebarPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/SidebarPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -84695,6 +88596,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Sidebar.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Sidebar } from \"@starwind-ui/svelte/sidebar\";\n</script>\n\n<Sidebar.Provider>\n  <Sidebar.Sidebar>\n    <Sidebar.MenuButton>Dashboard</Sidebar.MenuButton>\n  </Sidebar.Sidebar>\n  <Sidebar.Trigger>Toggle sidebar</Sidebar.Trigger>\n  <Sidebar.Rail />\n</Sidebar.Provider>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#sidebar-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Sidebar.",
@@ -84710,6 +88620,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -85939,13 +89850,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/slider",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/slider",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -86435,7 +90346,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Slider is a Starwind Runtime primitive in the form-value-control contract family.",
+        summary: "Use Slider to choose a value in a range, such as a volume level. Move the thumb with the pointer or arrow keys.",
+        liveDemo: {
+          componentName: "SliderPrimitiveDemo",
+          importPath: "@/components/demos/primitives/SliderPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/SliderPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -86478,6 +90394,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Slider.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Slider } from \"@starwind-ui/svelte/slider\";\n</script>\n\n<Slider.Root>\n  <Slider.Label>Volume</Slider.Label>\n  <Slider.Control>\n    <Slider.Track>\n      <Slider.Indicator />\n      <Slider.Thumb />\n    </Slider.Track>\n  </Slider.Control>\n</Slider.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#slider-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Slider.",
@@ -86493,6 +90418,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -87425,13 +91351,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/switch",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/switch",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -87850,7 +91776,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Switch is a Starwind Runtime primitive in the single-boolean-control contract family.",
+        summary: "Use Switch to turn a setting on or off. Its thumb and accessible state follow the current value.",
+        liveDemo: {
+          componentName: "SwitchPrimitiveDemo",
+          importPath: "@/components/demos/primitives/SwitchPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/SwitchPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -87893,6 +91824,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Switch.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Switch } from \"@starwind-ui/svelte/switch\";\n</script>\n\n<Switch.Root>\n  <Switch.Thumb />\n</Switch.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#switch-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Switch.",
@@ -87908,6 +91848,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -88683,13 +92624,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/tabs",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/tabs",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -89170,7 +93111,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Tabs is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Use Tabs to show one panel at a time in the same space. Each tab names a panel, and the arrow keys move between tabs.",
+        liveDemo: {
+          componentName: "TabsPrimitiveDemo",
+          importPath: "@/components/demos/primitives/TabsPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/TabsPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -89226,6 +93172,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Tabs.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Tabs } from \"@starwind-ui/svelte/tabs\";\n</script>\n\n<Tabs.Root defaultValue=\"account\">\n  <Tabs.List>\n    <Tabs.Tab value=\"account\">Account</Tabs.Tab>\n  </Tabs.List>\n  <Tabs.Panel value=\"account\">Account settings</Tabs.Panel>\n</Tabs.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tabs-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Tabs.",
@@ -89241,6 +93196,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -90247,13 +94203,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/toast",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/toast",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -90509,7 +94465,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Toast is a Starwind Runtime primitive in the notification-system contract family.",
+        summary: "Use Toast to report a result without interrupting the current task. It shows the message for a limited time and can offer a way to dismiss it.",
+        liveDemo: {
+          componentName: "ToastPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ToastPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ToastPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -90552,6 +94513,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Toast.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Toast } from \"@starwind-ui/svelte/toast\";\n</script>\n\n<Toast.Viewport>\n  <Toast.Root>\n    <Toast.Content>\n      <Toast.Title>Saved</Toast.Title>\n      <Toast.Description>Your changes were saved.</Toast.Description>\n    </Toast.Content>\n    <Toast.Close>Dismiss</Toast.Close>\n  </Toast.Root>\n</Toast.Viewport>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toast-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Toast.",
@@ -90567,6 +94537,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -91100,13 +95071,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/toggle",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/toggle",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -91399,7 +95370,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Toggle is a Starwind Runtime primitive in the single-boolean-control contract family.",
+        summary: "Use Toggle for a button with a pressed state, such as Bold in a toolbar. Activating the button flips that state.",
+        liveDemo: {
+          componentName: "TogglePrimitiveDemo",
+          importPath: "@/components/demos/primitives/TogglePrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/TogglePrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -91442,6 +95418,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Toggle.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Toggle } from \"@starwind-ui/svelte/toggle\";\n</script>\n\n<Toggle.Root>Toggle</Toggle.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Toggle.",
@@ -91457,6 +95442,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -92048,13 +96034,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/toggle-group",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/toggle-group",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -92353,7 +96339,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Toggle Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Use Toggle Group to arrange related toggle buttons in a toolbar. The group manages which buttons are pressed and supports arrow-key navigation.",
+        liveDemo: {
+          componentName: "ToggleGroupPrimitiveDemo",
+          importPath: "@/components/demos/primitives/ToggleGroupPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/ToggleGroupPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -92396,6 +96387,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build ToggleGroup.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { ToggleGroup } from \"@starwind-ui/svelte/toggle-group\";\n</script>\n\n<ToggleGroup.Root />",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#toggle-group-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build ToggleGroup.",
@@ -92411,6 +96411,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],
@@ -93007,13 +97008,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           framework: "vue",
           packageName: "@starwind-ui/vue",
           importSource: "@starwind-ui/vue/tooltip",
-          installSpecifier: "@starwind-ui/vue@beta",
+          installSpecifier: "@starwind-ui/vue",
         },
         {
           framework: "svelte",
           packageName: "@starwind-ui/svelte",
           importSource: "@starwind-ui/svelte/tooltip",
-          installSpecifier: "@starwind-ui/svelte@beta",
+          installSpecifier: "@starwind-ui/svelte",
         },
       ],
       runtime: {
@@ -93603,7 +97604,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "Tooltip is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
+        summary: "Use Tooltip to add a short hint to a control. It appears on hover or keyboard focus and closes when the person moves away or presses Escape.",
+        liveDemo: {
+          componentName: "TooltipPrimitiveDemo",
+          importPath: "@/components/demos/primitives/TooltipPrimitiveDemo.astro",
+          sourcePath: "src/components/demos/primitives/TooltipPrimitiveDemo.astro",
+        },
         frameworkCoordination: "Astro, React, Vue, and Svelte components use the same underlying interactions. Each framework has its own way to read and update state. See the examples and your installed package's types for the available props and events. Plain HTML uses DOM events and Runtime methods.",
         frameworkTargets: [
           "raw-html",
@@ -93646,6 +97652,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             id: "basic",
+            framework: "svelte",
+            title: "Svelte",
+            summary: "Use the Svelte components to build Tooltip.",
+            language: "svelte",
+            code: "<script lang=\"ts\">\n  import { Tooltip } from \"@starwind-ui/svelte/tooltip\";\n</script>\n\n<Tooltip.Root>\n  <Tooltip.Trigger>Hover me</Tooltip.Trigger>\n  <Tooltip.Portal>\n    <Tooltip.Positioner>\n      <Tooltip.Popup>\n        <Tooltip.Arrow />\n      </Tooltip.Popup>\n    </Tooltip.Positioner>\n  </Tooltip.Portal>\n</Tooltip.Root>",
+            source: "scripts/portable-runtime/docs/layered-docs/examples.ts#tooltip-basic-svelte",
+          },
+          {
+            id: "basic",
             framework: "vue",
             title: "Vue",
             summary: "Use the Vue components to build Tooltip.",
@@ -93661,6 +97676,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "astro",
             "react",
             "vue",
+            "svelte",
           ],
           missingTargets: [],
           allowedMissingTargets: [],

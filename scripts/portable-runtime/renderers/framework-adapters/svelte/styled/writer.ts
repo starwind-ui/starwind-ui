@@ -1,19 +1,18 @@
-import { assertStyledContractFiles } from "../../../styled-output-model/contract-guard.js";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-
 import { format, resolveConfig } from "prettier";
 import { compile } from "svelte/compiler";
-
-import type {
-  FrameworkAdapterTargetStyledProjectArgs,
-  FrameworkAdapterTargetStyledWriteArgs,
-} from "../../types.js";
+import { formatGeneratedOutput } from "../../../../format-generated-output.js";
 import { getRelativeImportPath } from "../../../shared.js";
+import { assertStyledContractFiles } from "../../../styled-output-model/contract-guard.js";
 import {
   projectStyledOutputModel,
   type StyledOutputModel,
 } from "../../../styled-output-model/index.js";
+import type {
+  FrameworkAdapterTargetStyledProjectArgs,
+  FrameworkAdapterTargetStyledWriteArgs,
+} from "../../types.js";
 import { getImplementedSvelteStyledRoots } from "../inventory.js";
 import { projectSvelteStyledGroup } from "./projection.js";
 import { renderSvelteStyledFiles } from "./render.js";
@@ -128,5 +127,18 @@ export async function writeSvelteStyledOutput(
     const destination = path.join(args.outputRoot, file.relativePath);
     await mkdir(path.dirname(destination), { recursive: true });
     await writeFile(destination, file.content, "utf8");
+  }
+  await formatGeneratedOutput(
+    model.componentGroups.map((group) => path.join(args.outputRoot, group.component)),
+    process.cwd(),
+    { prettier: false },
+  );
+  // Biome can rejoin a sorted import past the line width. Prettier gets the last word on TypeScript;
+  // CSS keeps its contract text.
+  for (const file of formatted.filter((entry) => entry.relativePath.endsWith(".ts"))) {
+    const destination = path.join(args.outputRoot, file.relativePath);
+    const sorted = await readFile(destination, "utf8");
+    const reformatted = await format(sorted, { ...prettier, parser: "typescript" });
+    if (reformatted !== sorted) await writeFile(destination, reformatted, "utf8");
   }
 }

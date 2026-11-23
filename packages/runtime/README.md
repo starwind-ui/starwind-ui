@@ -79,6 +79,13 @@ Use `@starwind-ui/astro` or `@starwind-ui/react` when you need framework Primiti
 
 The package requires Node 22.12 or newer.
 
+## Installed documentation
+
+The package includes Markdown docs for its exact version. After you install it, open
+`node_modules/@starwind-ui/runtime/docs/README.md`. Coding agents can start from
+`node_modules/@starwind-ui/runtime/docs/llms.txt`. Each controller has a reference page with its
+options, state, events, methods, parts, and data attributes.
+
 ## Starwind UI ecosystem
 
 - [Website](https://starwind.dev/)

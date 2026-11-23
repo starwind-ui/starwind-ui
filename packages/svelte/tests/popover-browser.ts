@@ -250,6 +250,31 @@ return { ordinaryModel: true };
   return { result, build };
 }
 
+/** Default markers state only `defaultOpen`, before and after hydration and later parent writes. */
+export async function verifyPopoverDefaultMarkers(consumer: DistConsumer, styled = false) {
+  const { build, ...result } = await verifyPopoverBrowser(
+    consumer,
+    [
+      { id: "marker-held", mode: "bound", initial: true },
+      { id: "marker-default", mode: "omitted", defaultOpen: true },
+      { id: "marker-both", mode: "bound", initial: false, defaultOpen: true },
+    ],
+    `
+await finish();
+const marker = id => root(id).getAttribute("data-default-open");
+assert(marker("marker-held") === null && state("marker-held").rendered === "true", "a held open renders open with no default marker");
+assert(marker("marker-default") === "true" && marker("marker-both") === "true", "defaultOpen prints the default marker");
+assert(state("marker-both").rendered === "false", "a held closed value wins over defaultOpen");
+assert(["marker-held", "marker-default", "marker-both"].every(id => !root(id).hasAttribute("data-open-on-hover")), "a false openOnHover prints no attribute");
+cases["marker-held"].setModel(false); cases["marker-both"].setModel(true); await finish();
+assert(marker("marker-held") === null && marker("marker-both") === "true", "later parent writes keep the default markers");
+return { defaultMarkers: true };
+`,
+    styled,
+  );
+  return { result, build };
+}
+
 export async function verifyPopoverOwnerOrdinary(consumer: DistConsumer, styled = false) {
   const { build, ...result } = await verifyPopoverBrowser(
     consumer,

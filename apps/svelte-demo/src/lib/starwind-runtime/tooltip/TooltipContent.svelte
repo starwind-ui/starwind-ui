@@ -13,15 +13,15 @@
 <script lang="ts">
   let {
     "class": className,
-    "side": side = "top",
-    "align": align = "center",
-    "sideOffset": sideOffset = 8,
-    "avoidCollisions": avoidCollisions = true,
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "positionerClass": positionerClass,
-    "icon": icon,
-    "children": children,
+    side = "top",
+    align = "center",
+    sideOffset = 8,
+    avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
+    positionerClass,
+    icon,
+    children,
     ...rest
   }: TooltipContentProps = $props();
 </script>

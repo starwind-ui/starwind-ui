@@ -1,17 +1,4 @@
 import {
-  createApp,
-  createSSRApp,
-  defineComponent,
-  h,
-  nextTick,
-  ref,
-  type ComponentPublicInstance,
-} from "vue";
-import { renderToString } from "vue/server-renderer";
-import { userEvent } from "vitest/browser";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import {
   ScrollAreaContent,
   ScrollAreaCorner,
   ScrollAreaRoot,
@@ -19,6 +6,18 @@ import {
   ScrollAreaThumb,
   ScrollAreaViewport,
 } from "@starwind-ui/vue/scroll-area";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  createSSRApp,
+  defineComponent,
+  h,
+  nextTick,
+  ref,
+} from "vue";
+import { renderToString } from "vue/server-renderer";
 
 type ExposedElement<T extends HTMLElement> = ComponentPublicInstance & { element: T | null };
 
@@ -111,7 +110,7 @@ describe("Vue Scroll Area public behavior", () => {
 
   it("releases an active thumb drag and every owned resource when unmounted", async () => {
     const abort = vi.spyOn(AbortController.prototype, "abort");
-    const mutationDisconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
+    const checkObserverCleanup = trackScrollObservers();
     const resizeDisconnect = vi.spyOn(ResizeObserver.prototype, "disconnect");
     const host = document.createElement("div");
     document.body.append(host);
@@ -161,7 +160,7 @@ describe("Vue Scroll Area public behavior", () => {
     const scrollTopAfterUnmount = viewport.scrollTop;
     expect(root.isConnected).toBe(false);
     expect(abort).toHaveBeenCalledTimes(2);
-    expect(mutationDisconnect).toHaveBeenCalledTimes(1);
+    checkObserverCleanup(root);
     expect(resizeDisconnect).toHaveBeenCalledTimes(1);
 
     document.dispatchEvent(
@@ -246,7 +245,7 @@ describe("Vue Scroll Area public behavior", () => {
     document.body.append(host);
     const warnings: string[] = [];
     const abort = vi.spyOn(AbortController.prototype, "abort");
-    const mutationDisconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
+    const checkObserverCleanup = trackScrollObservers();
     const resizeDisconnect = vi.spyOn(ResizeObserver.prototype, "disconnect");
     const app = createSSRApp({ render: tree });
     app.config.warnHandler = (message) => warnings.push(message);
@@ -261,9 +260,10 @@ describe("Vue Scroll Area public behavior", () => {
     expect(host.querySelectorAll("[data-sw-scroll-area-thumb]")).toHaveLength(2);
     expect(host.querySelectorAll("[data-sw-scroll-area-corner]")).toHaveLength(1);
 
+    const root = host.querySelector<HTMLElement>("#hydrated-scroll-area")!;
     app.unmount();
     expect(abort).toHaveBeenCalledTimes(1);
-    expect(mutationDisconnect).toHaveBeenCalledTimes(1);
+    checkObserverCleanup(root);
     expect(resizeDisconnect).toHaveBeenCalledTimes(1);
     expect(host.children).toHaveLength(0);
 
@@ -272,14 +272,32 @@ describe("Vue Scroll Area public behavior", () => {
     remount.mount(host);
     await waitForLayout();
     expect(remountRefs.root.value?.element).toBeInstanceOf(HTMLDivElement);
+    const remountedRoot = remountRefs.root.value!.element!;
     remount.unmount();
     expect(Object.values(remountRefs).every((partRef) => partRef.value === null)).toBe(true);
     expect(abort).toHaveBeenCalledTimes(2);
-    expect(mutationDisconnect).toHaveBeenCalledTimes(2);
+    checkObserverCleanup(remountedRoot);
     expect(resizeDisconnect).toHaveBeenCalledTimes(2);
   });
 });
 
+function trackScrollObservers() {
+  const observe = vi.spyOn(MutationObserver.prototype, "observe");
+  const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
+  return (root: HTMLElement) => {
+    expect(observe).toHaveBeenCalledTimes(1);
+    expect(observe).toHaveBeenCalledWith(root, {
+      characterData: true,
+      childList: true,
+      subtree: true,
+    });
+    expect(new Set(observe.mock.contexts).size).toBe(1);
+    expect(disconnect).toHaveBeenCalledTimes(1);
+    expect(new Set(disconnect.mock.contexts)).toEqual(new Set(observe.mock.contexts));
+    observe.mockClear();
+    disconnect.mockClear();
+  };
+}
 function createPartRefs() {
   return {
     content: ref<ExposedElement<HTMLDivElement> | null>(null),

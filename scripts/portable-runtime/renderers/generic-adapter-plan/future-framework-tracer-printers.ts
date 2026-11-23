@@ -3,10 +3,7 @@ import {
   getFutureFrameworkTracerClassifications,
   getFutureFrameworkTracerTarget,
 } from "../framework-adapters/future-framework-tracer.js";
-import type {
-  GenericAdapterPlan,
-  GenericAdapterPlanPrintedFile,
-} from "./types.js";
+import type { GenericAdapterPlan, GenericAdapterPlanPrintedFile } from "./types.js";
 
 export type { FutureFrameworkTracerTarget };
 

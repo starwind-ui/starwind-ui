@@ -1,15 +1,3 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  createApp,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-  type VNode,
-} from "vue";
-
 import { createDialog } from "@starwind-ui/runtime/dialog";
 import type { NavigationMenuValueChangeDetails } from "@starwind-ui/runtime/navigation-menu";
 import {
@@ -25,6 +13,17 @@ import {
   NavigationMenuTrigger,
   NavigationMenuViewport,
 } from "@starwind-ui/vue/navigation-menu";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  defineComponent,
+  h,
+  nextTick,
+  reactive,
+  ref,
+  type VNode,
+} from "vue";
 
 const cleanups: Array<() => void> = [];
 

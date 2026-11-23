@@ -6,9 +6,9 @@ import type { HTMLAttributes } from "svelte/elements";
 import { getFieldRefresh } from "../form/FormFieldContext.js";
 const refresh = getFieldRefresh();
 const attachPart: Attachment<HTMLParagraphElement> = () => { refresh?.(); return () => refresh?.(); };
-type Props = Omit<HTMLAttributes<HTMLParagraphElement>, "children"> & { children?: Snippet; ref?: (element: HTMLParagraphElement | null) => void; "data-slot"?: string;   };
-let { children, ref, "data-slot": dataSlot = "field-description",   ...rest }: Props = $props();
+type Props = Omit<HTMLAttributes<HTMLParagraphElement>, "children"> & { children?: Snippet; ref?: (element: HTMLParagraphElement | null) => void;   };
+let { children, ref,   ...rest }: Props = $props();
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLParagraphElement>(() => ref);
 </script>
-<p {...rest} data-sw-field-description="" data-slot={dataSlot}   {@attach attachPart} {@attach attachRef}>{@render children?.()}</p>
+<p {...rest} data-sw-field-description=""   {@attach attachPart} {@attach attachRef}>{@render children?.()}</p>

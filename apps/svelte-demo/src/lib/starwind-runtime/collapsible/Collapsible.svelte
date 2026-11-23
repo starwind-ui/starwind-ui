@@ -10,12 +10,12 @@
 
 <script lang="ts">
   let {
-    "defaultOpen": defaultOpen = false,
-    "disabled": disabled = false,
+    defaultOpen = false,
+    disabled = false,
     "class": className,
-    "children": children,
+    children,
     open = $bindable(),
-    "onOpenChange": onOpenChange,
+    onOpenChange,
     "open": commandOpen,
     ...rest
   }: CollapsibleProps = $props();

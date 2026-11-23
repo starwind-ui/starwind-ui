@@ -10,11 +10,11 @@
 
 <script lang="ts">
   let {
-    "activateOnFocus": activateOnFocus,
-    "loopFocus": loopFocus,
+    activateOnFocus,
+    loopFocus,
     "class": className,
-    "ref": ref,
-    "children": children,
+    ref,
+    children,
     ...rest
   }: TabsListProps = $props();
 </script>

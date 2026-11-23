@@ -39,9 +39,9 @@ npm install @starwind-ui/astro
 # or
 npm install @starwind-ui/react
 # or, for Vue
-npm install @starwind-ui/vue@beta vue@^3.5
+npm install @starwind-ui/vue vue@^3.5.21
 # or, for Svelte
-npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
+npm install @starwind-ui/svelte "svelte@>=5.29.0 <6"
 \`\`\`
 
 You can also copy Primitive adapter source into your project with \`starwind primitives add\`. See
@@ -104,22 +104,40 @@ sidebar:
 ---
 
 ${GENERATED_MDX_COMMENT}
-
+${renderPrimitiveLiveDemoImport(primitive)}
 ${renderBaseUiStylePrimitiveReferenceMarkdown(primitive)}
 `;
+
+const renderPrimitiveLiveDemoImport = (primitive: PrimitiveDocsMetadata) => {
+  const liveDemo = primitive.docsReference.liveDemo;
+
+  return liveDemo
+    ? `\nimport ${liveDemo.componentName} from ${JSON.stringify(liveDemo.importPath)};\n`
+    : "";
+};
+
+const renderPrimitiveLiveDemo = (primitive: PrimitiveDocsMetadata) => {
+  const liveDemo = primitive.docsReference.liveDemo;
+
+  // Blank lines around the block keep MDX from reading it as part of the intro paragraph.
+  return liveDemo
+    ? `\n<PrimitiveLiveDemo docId="primitives/${primitive.id}">\n  <${liveDemo.componentName} />\n</PrimitiveLiveDemo>\n`
+    : undefined;
+};
 
 const renderBaseUiStylePrimitiveReferenceMarkdown = (primitive: PrimitiveDocsMetadata) =>
   joinMarkdownSections([
     primitive.docsReference.summary,
     "",
-    primitive.docsReference.frameworkCoordination,
-    "",
-    "",
-    renderPrimitiveUsageGuidelines(primitive),
+    renderPrimitiveLiveDemo(primitive),
     "",
     "## Anatomy",
     "",
     renderPrimitiveDocsExamplesTabs(primitive),
+    "",
+    primitive.docsReference.frameworkCoordination,
+    "",
+    renderPrimitiveUsageGuidelines(primitive),
     "",
     renderPrimitiveAuthoredSections(primitive),
     "",
@@ -559,11 +577,7 @@ export const getPrimitiveAuthoredExampleFrameworksInDisplayOrder = <
 ) => getPrimitiveDocsExamplesInDisplayOrder(frameworks);
 
 const getPrimitiveDocsFrameworkLabel = (framework: PrimitiveDocsFrameworkTarget) =>
-  framework === "raw-html"
-    ? "HTML"
-    : framework === "vue"
-      ? "Vue"
-      : toDisplayTitle(framework);
+  framework === "raw-html" ? "HTML" : framework === "vue" ? "Vue" : toDisplayTitle(framework);
 
 export const isPrimitiveDocsFrameworkTarget = (
   value: string,

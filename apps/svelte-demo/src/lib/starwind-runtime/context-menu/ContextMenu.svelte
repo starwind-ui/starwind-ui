@@ -9,15 +9,15 @@
 
 <script lang="ts">
   let {
-    "defaultOpen": defaultOpen,
-    "disabled": disabled = false,
-    "modal": modal = true,
-    "closeDelay": closeDelay = 200,
+    defaultOpen,
+    disabled = false,
+    modal = true,
+    closeDelay = 200,
     "class": className,
     open = $bindable(),
-    "onOpenChange": onOpenChange,
-    "onCloseComplete": onCloseComplete,
-    "children": children,
+    onOpenChange,
+    onCloseComplete,
+    children,
     "open": commandOpen,
     ...rest
   }: ContextMenuProps = $props();

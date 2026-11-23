@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const sliderStyledContract: StyledAdapterContract = {
   component: "slider",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: ["Slider"],
   defaultExport: { Root: "Slider" },
   defaultExportMode: "component",
@@ -37,7 +39,7 @@ export const sliderStyledContract: StyledAdapterContract = {
         "transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden",
         "data-error-visible:border-error data-error-visible:ring-error/50",
         "disabled:pointer-events-none disabled:opacity-50",
-        "data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:-translate-x-1/2 data-[orientation=horizontal]:-translate-y-1/2",
+        "data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:-translate-x-1/2 data-[orientation=horizontal]:rtl:translate-x-1/2 data-[orientation=horizontal]:-translate-y-1/2",
         "data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:-translate-x-1/2 data-[orientation=vertical]:translate-y-1/2",
       ],
       variants: {
@@ -148,17 +150,30 @@ export const sliderStyledContract: StyledAdapterContract = {
           value: { type: "raw", code: "value ?? defaultValue" },
         },
         {
-          name: "values",
+          name: "getPaintValues",
           value: {
             type: "raw",
-            code: "Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue]",
+            code: `(input: number | number[]) => {
+              const items = Array.isArray(input) ? input : [input];
+              if (!items.length) return [min];
+              const precision = (String(step).split(".")[1] ?? "").length;
+              return items.map((item) => {
+                if (!Number.isFinite(item)) return min;
+                const snapped = step > 0 ? Number((Math.round((item - min) / step) * step + min).toFixed(precision)) : item;
+                return Math.min(Math.max(snapped, min), max);
+              }).sort((left, right) => left - right);
+            }`,
           },
+        },
+        {
+          name: "values",
+          value: { type: "raw", code: "getPaintValues(resolvedValue)" },
         },
         {
           name: "getPercentage",
           value: {
             type: "raw",
-            code: "(item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100)",
+            code: "(item: number) => (max <= min ? 0 : ((item - min) / (max - min)) * 100)",
           },
         },
         {
@@ -179,7 +194,7 @@ export const sliderStyledContract: StyledAdapterContract = {
           name: "rangeStyle",
           value: {
             type: "raw",
-            code: 'orientation === "horizontal" ? { left: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` } : { bottom: `${rangeStart}%`, height: `${rangeEnd - rangeStart}%` }',
+            code: 'orientation === "horizontal" ? { insetInlineStart: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` } : { bottom: `${rangeStart}%`, height: `${rangeEnd - rangeStart}%` }',
           },
         },
       ],
@@ -302,7 +317,7 @@ export const sliderStyledContract: StyledAdapterContract = {
                           name: "style",
                           value: {
                             type: "raw",
-                            code: 'orientation === "horizontal" ? { left: `${getPercentage(values[index] ?? min)}%` } : { bottom: `${getPercentage(values[index] ?? min)}%` }',
+                            code: 'orientation === "horizontal" ? { insetInlineStart: `${getPercentage(values[index] ?? min)}%` } : { bottom: `${getPercentage(values[index] ?? min)}%` }',
                           },
                         },
                         {

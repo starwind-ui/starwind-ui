@@ -1,11 +1,15 @@
-import type {
-  StyledOutputAttribute,
-  StyledOutputComponent,
-  StyledOutputComponentGroup,
-  StyledOutputIconNode,
-  StyledOutputPropExtend,
-  StyledOutputRenderNode,
-  StyledOutputValueExpression,
+import { alertDialogStyledControlHelper } from "../../../../contracts/styled/components/alert-dialog.js";
+import {
+  renderStyledTypeParameterArguments,
+  renderStyledTypeParameterDeclarations,
+  type StyledOutputAttribute,
+  type StyledOutputComponent,
+  type StyledOutputComponentGroup,
+  type StyledOutputIconNode,
+  type StyledOutputPropExtend,
+  type StyledOutputRenderNode,
+  type StyledOutputTypeParameter,
+  type StyledOutputValueExpression,
 } from "../../../styled-output-model/index.js";
 import { renderVueComputedExpression, renderVueExpression } from "./expressions.js";
 import { renderVueImports } from "./imports.js";
@@ -30,6 +34,11 @@ export function renderVueComponent(
   options: RenderVueComponentOptions,
 ): string {
   const projection = projectVueStyledComponent(group, component, options);
+  if (projection.typeParameters && projection.specialization.kind !== "generic") {
+    throw new TypeError(
+      `Vue Styled ${group.component}/${component.exportName}: type parameters are not supported by the ${projection.specialization.kind} specialization.`,
+    );
+  }
   if (projection.specialization.kind === "alert-dialog-as-child") {
     return serializeVueSfc(projectAlertDialogAsChildSfc(projection));
   }
@@ -51,7 +60,7 @@ export function renderVueComponent(
     projection.attributeAccess?.templateBinding ?? "attrs",
   );
   const imports = renderVueImports(projection.imports);
-  const props = renderProps(projection.props);
+  const props = renderProps(projection.props, projection.typeParameters);
   const exposedRefs = projection.exposedRefs.map(renderExposedRef);
   const setup = `${renderSetup(projection)}${
     exposedRefs.length ? `\n${exposedRefs.join("\n\n")}` : ""
@@ -59,7 +68,16 @@ export function renderVueComponent(
   const optionsDeclaration = projection.manuallyForwardsAttrs
     ? "defineOptions({ inheritAttrs: false });\n\n"
     : "";
-  return serializeVueSfc({ imports, options: optionsDeclaration, props, setup, template });
+  return serializeVueSfc({
+    ...(projection.typeParameters
+      ? { generic: renderStyledTypeParameterDeclarations(projection.typeParameters) }
+      : {}),
+    imports,
+    options: optionsDeclaration,
+    props,
+    setup,
+    template,
+  });
 }
 
 function projectAlertDialogAsChildSfc(projection: VueStyledComponentProjection): VueSfcSections {
@@ -117,7 +135,7 @@ ${baseImports}`
   useAttrs,
   type VNode,
 } from "vue";
-import { __useAlertDialogControl } from ${JSON.stringify(primitiveSource)};
+import { ${alertDialogStyledControlHelper} } from ${JSON.stringify(primitiveSource)};
 ${baseImports}`;
   const classExpression = isTrigger
     ? "className"
@@ -209,7 +227,7 @@ const attrs = useAttrs();
 const forwardedAttrs = computed(() => ({ ...attrs, class: undefined }));
 const mergedClass = computed(() => ${classExpression});
 const { element, render: renderAsChild, setElement } =
-  __useAlertDialogControl("${componentName}");
+  ${alertDialogStyledControlHelper}("${componentName}");
 
 ${projection.setup.join("\n")}
 
@@ -373,7 +391,16 @@ const AsChild${part} = defineComponent({
   };
 }
 
-function renderProps(props: VuePropsProjection): string {
+function renderProps(
+  props: VuePropsProjection,
+  typeParameters?: readonly StyledOutputTypeParameter[],
+): string {
+  const declarations = typeParameters
+    ? `<${renderStyledTypeParameterDeclarations(typeParameters)}>`
+    : "";
+  const typeArguments = typeParameters
+    ? `<${renderStyledTypeParameterArguments(typeParameters)}>`
+    : "";
   const ownedKeys = [...new Set(props.public.fields.map((field) => field.name))].sort();
   const extendsParts = props.public.extends.map((propExtend) =>
     renderPropExtend(propExtend, ownedKeys),
@@ -387,15 +414,17 @@ function renderProps(props: VuePropsProjection): string {
     .map((field) => `  ${JSON.stringify(field.name)}${field.optional ? "?" : ""}: ${field.type};`)
     .join("\n");
 
-  const publicExtensionType = props.declared.replacedPublicSourceFields.length
-    ? `Omit<${props.public.name}, ${props.declared.replacedPublicSourceFields
-        .map((name) => JSON.stringify(name))
-        .join(" | ")}>`
-    : props.public.name;
+  const publicExtensionType = props.declared.publicExtension
+    ? `(${props.declared.publicExtension})`
+    : props.declared.replacedPublicSourceFields.length
+      ? `Omit<${props.public.name}${typeArguments}, ${props.declared.replacedPublicSourceFields
+          .map((name) => JSON.stringify(name))
+          .join(" | ")}>`
+      : `${props.public.name}${typeArguments}`;
   const publicExtension = props.declared.extendsPublic
     ? ` & /* @vue-ignore */ ${publicExtensionType}`
     : "";
-  return `export type ${props.public.name} = ${type};\ntype ${props.declared.name} = {\n${declaredFields}\n}${publicExtension};`;
+  return `export type ${props.public.name}${declarations} = ${type};\ntype ${props.declared.name}${declarations} = {\n${declaredFields}\n}${publicExtension};`;
 }
 
 function renderPropExtend(
@@ -435,7 +464,7 @@ function renderOmit(type: string, keys: readonly string[]): string {
 }
 
 function renderSetup(projection: VueStyledComponentProjection): string {
-  const { filtersComponentAttrs, props, usesAttrs } = projection;
+  const { filtersComponentAttrs, props } = projection;
   const slotLines = projection.slots.map(
     (slot) => `  ${JSON.stringify(slot.name)}?: ${slot.signature};`,
   );
@@ -498,9 +527,14 @@ function renderSetup(projection: VueStyledComponentProjection): string {
     const alias = prop.alias && prop.alias !== prop.name ? `: ${prop.alias}` : "";
     return `  ${key}${alias}${prop.defaultValue ? ` = ${prop.defaultValue}` : ""},`;
   });
+  const declaredProps = `${projection.props.declared.name}${
+    projection.typeParameters
+      ? `<${renderStyledTypeParameterArguments(projection.typeParameters)}>`
+      : ""
+  }`;
   const propsDeclaration = destructureProps.length
-    ? `const {\n${destructureProps.join("\n")}\n} = defineProps<${projection.props.declared.name}>();`
-    : `defineProps<${projection.props.declared.name}>();`;
+    ? `const {\n${destructureProps.join("\n")}\n} = defineProps<${declaredProps}>();`
+    : `defineProps<${declaredProps}>();`;
   const modelEmits = projection.models.map((model) => ({
     name: model.updateEvent,
     parameters: [{ name: "value", type: model.type }],
@@ -746,7 +780,10 @@ export function renderIcon(
     .filter((attribute) => !asset.omittedAttributes?.includes(attribute.name))
     .filter(isForVue)
     .map((attribute) => renderAttribute(attribute, attrsBinding));
-  return `${pad}<svg\n${[...asset.attributes.map(renderSvgAttribute), ...renderedAttrs]
+  return `${pad}<svg\n${[
+    ...asset.attributes.filter(isForVue).map(renderSvgAttribute),
+    ...renderedAttrs,
+  ]
     .map((attr) => `${pad}  ${attr}`)
     .join("\n")}\n${pad}>\n${asset.children
     .map(
@@ -932,23 +969,13 @@ defineSlots<{
 }>();
 const attrs = useAttrs();`;
   const template = `  <SelectPrimitive.SelectValue
-    v-if="$slots.default"
     :class="selectValue({ class: className })"
     :placeholder="placeholder"
     v-bind="attrs"
     data-slot="select-value"
   >
-    <template #default="slotProps">
-      <slot v-bind="slotProps" />
-    </template>
-  </SelectPrimitive.SelectValue>
-  <SelectPrimitive.SelectValue
-    v-else
-    :class="selectValue({ class: className })"
-    :placeholder="placeholder"
-    v-bind="attrs"
-    data-slot="select-value"
-  />`;
+    <slot />
+  </SelectPrimitive.SelectValue>`;
   return {
     imports,
     options: "defineOptions({ inheritAttrs: false });\n\n",

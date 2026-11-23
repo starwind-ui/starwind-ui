@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { createBrowserBuildScript } from "./compatibility-hydration.js";
 import { chromium } from "playwright";
+import { createBrowserBuildScript } from "./compatibility-hydration.js";
 import type { DistConsumer } from "./dist-consumer.js";
 
 export type DrawerCase = {

@@ -86,9 +86,8 @@ export function menuInitialProjection(
 ) {
   const binding = menuOperations[target].fw.modelAuthority === "runtime-binding";
   return {
-    defaultSeed: binding
-      ? `${reads.readDefault} ?? ${reads.readModel} ?? ${reads.fallback}`
-      : reads.readDefault,
+    // The default marker states only the default prop. A held model seeds `acceptedSeed`.
+    defaultSeed: binding ? `${reads.readDefault} ?? ${reads.fallback}` : reads.readDefault,
     acceptedSeed: binding
       ? `${reads.readModel} ?? ${reads.readDefaultCell}`
       : reads.readDefaultCell,

@@ -1,9 +1,8 @@
+import { ToggleRoot } from "@starwind-ui/vue/toggle";
+import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
-import { ToggleRoot } from "@starwind-ui/vue/toggle";
 import {
   ToggleGroup as StyledToggleGroup,
   ToggleGroupItem as StyledToggleGroupItem,

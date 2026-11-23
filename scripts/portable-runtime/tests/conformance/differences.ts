@@ -20,6 +20,15 @@ export type KnownDefect = {
   reproduction: string;
 };
 
+/** A console error that a target logs by design. The scenario still runs, and only this error is allowed. */
+export type AllowedConsoleError = {
+  name: string;
+  targets: readonly Target[];
+  scenarios: RegExp;
+  errors: RegExp;
+  reason: string;
+};
+
 /** A difference in the attributes of one part, compared with Astro. */
 export type AttributeDifference = {
   name: string;
@@ -40,6 +49,34 @@ export const intendedDifferences: IntendedDifference[] = [
       "Astro renders once on the server. No parent re-renders props, so only Runtime DOM events and cancellation exist there.",
   },
   {
+    name: "astro-has-no-late-parent-input",
+    targets: ["astro"],
+    scenarios: /^late write /,
+    reason:
+      "Astro renders once on the server. No parent input can arrive after mount, so the late-write rule for React, Vue, and Svelte does not apply.",
+  },
+  {
+    name: "late-value-makes-the-model-parent-controlled",
+    targets: ["react"],
+    scenarios: /^late write (select|combobox|input), one-way parent: /,
+    reason:
+      "After a late value, these adapters render the prop whenever it is defined, so the parent owns the model. A parent that mirrors the change callback works. A one-way parent with no change handler keeps its value, as React treats a value prop with no handler.",
+  },
+  {
+    name: "late-value-makes-the-model-parent-controlled",
+    targets: ["vue"],
+    scenarios: /^late write (select|combobox|input|accordion|checkbox|switch), one-way parent: /,
+    reason:
+      "After a late value, these adapters render the prop whenever it is defined, so the parent owns the model. A v-model parent works. A one-way parent with no update handler keeps its value.",
+  },
+  {
+    name: "group-late-value-compares-with-runtime-state",
+    targets: ["react", "vue", "svelte"],
+    scenarios: /^late write (checkbox group|toggle group), one-way parent: /,
+    reason:
+      "These adapters compare a new array with Runtime state, not with the last input. A parent that mirrors the change works, and so does a one-way parent that keeps the same array. Only a one-way parent that builds an equal new array on each render loses the interaction.",
+  },
+  {
     name: "astro-has-no-ref-callback",
     targets: ["astro"],
     scenarios: /^link child ref:/,
@@ -55,6 +92,17 @@ export const intendedDifferences: IntendedDifference[] = [
 ];
 
 export const knownDefects: KnownDefect[] = [];
+
+export const allowedConsoleErrors: AllowedConsoleError[] = [
+  {
+    name: "react-input-warns-like-a-native-input",
+    targets: ["react"],
+    scenarios: /^late write input: /,
+    errors: /^console: A component is changing an uncontrolled input to be controlled\./,
+    reason:
+      "React Input renders a native input. React logs its uncontrolled-to-controlled warning when the value prop goes from undefined to defined, the same as for any native input. The late value still shows silently.",
+  },
+];
 
 export const attributeDifferences: AttributeDifference[] = [
   {

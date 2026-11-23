@@ -5,6 +5,11 @@ import {
 } from "../../shared-recipes/structured/disclosure/recipe.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
+/** A bare `disabled` attribute reaches Vue attrs as "". It still means disabled. */
+function bareDisabled(value: string): string {
+  return `${value} === '' || ${value}`;
+}
+
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
@@ -74,7 +79,7 @@ const AsChildTrigger = defineComponent({
   setup() {
     return () => {
       const children = slots.default?.() ?? [];
-      const disabled = ${disclosureDisabled("disclosure?.disabled", "attrs.disabled", "children[0]?.props?.disabled")};
+      const disabled = ${disclosureDisabled("disclosure?.disabled", bareDisabled("attrs.disabled"), bareDisabled("children[0]?.props?.disabled"))};
       const protectedProps = {
         disabled: disabled ? true : undefined,
         "data-disabled": disabled ? "" : undefined,
@@ -103,8 +108,8 @@ const AsChildTrigger = defineComponent({
     ${facts.attrs.trigger}
     data-sw-part="${facts.parts.trigger.name}"
     type="button"
-    :disabled="${disclosureDisabled("disclosure?.disabled", "attrs.disabled")}"
-    :data-disabled="(${disclosureDisabled("disclosure?.disabled", "attrs.disabled")}) ? '' : undefined"
+    :disabled="${disclosureDisabled("disclosure?.disabled", bareDisabled("attrs.disabled"))}"
+    :data-disabled="(${disclosureDisabled("disclosure?.disabled", bareDisabled("attrs.disabled"))}) ? '' : undefined"
     ${facts.attrs.triggerExpanded}="${collapsibleParts.trigger.expanded}"
     ${facts.attrs.triggerState}="${collapsibleParts.trigger.state}"
   >
@@ -149,12 +154,4 @@ defineExpose({ element });
   </div>
 </template>
 `;
-}
-
-function printOptions(options: Record<string, boolean | number | string> | undefined): string {
-  if (!options || Object.keys(options).length === 0) return "";
-  const fields = Object.entries(options)
-    .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-    .join(", ");
-  return `, { ${fields} }`;
 }

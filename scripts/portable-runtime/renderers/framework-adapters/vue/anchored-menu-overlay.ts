@@ -51,17 +51,16 @@ function printComponent(
     throw new TypeError(`Vue ${facts.displayName} component requires anchored-menu-overlay facts.`);
   }
 
+  // Validate that the root publishes its accepted open model through a controller subscription.
+  if (family.part === "root") getVueAcceptedModelEvent(file, "open");
   return {
-    contents:
-      family.part === "root"
-        ? printRoot(facts, getVueAcceptedModelEvent(file, "open"))
-        : printTrigger(facts),
+    contents: family.part === "root" ? printRoot(facts) : printTrigger(facts),
     path: `${file.path}.vue`,
   };
 }
 
-function printRoot(facts: AdapterAnchoredMenuOverlayFacts, acceptedEvent: string): string {
-  const { attrs, events, props, runtime, state } = facts;
+function printRoot(facts: AdapterAnchoredMenuOverlayFacts): string {
+  const { attrs, events, props, runtime } = facts;
   const initial = menuInitialProjection("vue", {
     readModel: `props.${props.open.name}`,
     readDefault: `props.${props.defaultOpen.name}`,
@@ -202,12 +201,6 @@ function printIndex(facts: AdapterAnchoredMenuOverlayFacts): string {
 
 function getDefault(prop: { defaultValue?: string }, fallback: string): string {
   return prop.defaultValue ?? fallback;
-}
-
-function formatOptions(options: Record<string, boolean | number | string> | undefined): string {
-  const entries = Object.entries(options ?? {});
-  if (entries.length === 0) return "{}";
-  return `{ ${entries.map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join(", ")} }`;
 }
 
 function toVueStyleProperty(property: string): string {

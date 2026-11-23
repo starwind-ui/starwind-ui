@@ -1,5 +1,10 @@
 import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
+  type DirectionSubscription,
+  readDirection,
+  subscribeDirection,
+} from "../../internal/direction";
+import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
@@ -29,14 +34,14 @@ import {
   type OverlayOpenChangeShellResult,
   runOverlayOpenChangeShell,
 } from "../../internal/overlay-open-change";
-import { showElement } from "../../internal/presence";
-import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
-import { lockDocumentScroll } from "../../internal/scroll-lock";
 import {
   createOwnedListNavigation,
   createRovingFocusNavigationAdapter,
   type OwnedListNavigation,
 } from "../../internal/owned-list-navigation";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
+import { showElement } from "../../internal/presence";
+import { lockDocumentScroll } from "../../internal/scroll-lock";
 import { shared } from "../../internal/shared";
 
 export type MenuOpenChangeReason =
@@ -184,6 +189,7 @@ const MENU_MODAL_ATTRIBUTE = "data-modal";
 const MENU_CLOSE_DELAY_ATTRIBUTE = "data-close-delay";
 const MENU_CLOSE_ON_CLICK_ATTRIBUTE = "data-close-on-click";
 const MENU_SIDE_ATTRIBUTE = "data-side";
+const MENU_SIDE_INTENT_ATTRIBUTE = "data-sw-menu-side-intent";
 const MENU_ALIGN_ATTRIBUTE = "data-align";
 const MENU_SIDE_OFFSET_ATTRIBUTE = "data-side-offset";
 const MENU_AVOID_COLLISIONS_ATTRIBUTE = "data-avoid-collisions";
@@ -326,7 +332,6 @@ class MenuController implements MenuInstance {
       return;
     }
 
-    const previousOpen = this.openState;
     const request = this.resolveSetOpenRequest(open, options);
     this.openState = open;
     this.applyOpenState(open, request);
@@ -563,6 +568,8 @@ class MenuController implements MenuInstance {
       "keydown",
       (event) => {
         if (!this.openState) return;
+        if (isNativeTextEditTarget(event.target) && event.key !== "Escape" && event.key !== "Tab")
+          return;
 
         switch (event.key) {
           case "Tab":
@@ -578,7 +585,9 @@ class MenuController implements MenuInstance {
               this.activeIndex < 0 ? this.elements.items.length - 1 : this.activeIndex - 1,
             );
             break;
+          case "ArrowLeft":
           case "ArrowRight": {
+            if (event.key !== getInlineEndKey(this.root)) break;
             const target = event.target instanceof Element ? event.target : null;
             const submenu = this.getSubmenuByTriggerTarget(target);
             if (!submenu) break;
@@ -597,6 +606,8 @@ class MenuController implements MenuInstance {
             this.focusItem(this.elements.items.length - 1);
             break;
           case "Escape":
+            // An open submenu already handled this Escape.
+            if (event.defaultPrevented) break;
             event.preventDefault();
             this.requestOpen(false, { event, reason: "escape-key" });
             break;
@@ -767,6 +778,7 @@ class MenuController implements MenuInstance {
           }
         },
       },
+      getPointerPassThroughWrapper: () => this.elements.positioner,
       popup: this.elements.popup,
       portal: {
         clearFloatingStyles: () => this.clearFloatingStyles(),
@@ -1118,6 +1130,9 @@ class MenuSubmenuController {
   readonly root: HTMLElement;
 
   private readonly abortController = new AbortController();
+  private readonly directionSubscription: DirectionSubscription;
+  private authoredSide: FloatingSide | undefined;
+  private readonly sideIntentObserver: MutationObserver;
   private readonly elements: MenuSubmenuElements;
   private readonly focusBoundary: FocusBoundaryHandle;
   private readonly lifecycle: FloatingListLifecycle<undefined>;
@@ -1140,6 +1155,12 @@ class MenuSubmenuController {
     this.owner = owner;
     this.parent = parent;
     this.elements = getSubmenuElements(root);
+    const placementElement = this.elements.positioner ?? this.elements.popup;
+    this.sideIntentObserver = new MutationObserver(() => this.refreshPlacement());
+    this.sideIntentObserver.observe(placementElement, {
+      attributes: true,
+      attributeFilter: [MENU_SIDE_INTENT_ATTRIBUTE],
+    });
     this.ownedList = createMenuOwnedListNavigation(this.elements.popup);
     this.ownedList.start();
     this.closeDelay = readNumberAttribute(root, MENU_CLOSE_DELAY_ATTRIBUTE, 200);
@@ -1160,6 +1181,8 @@ class MenuSubmenuController {
     this.setupAccessibility();
     this.bindEvents();
     this.applyOpenState(false);
+    this.syncRequestedSide();
+    this.directionSubscription = subscribeDirection(owner.root, () => this.refreshPlacement());
   }
 
   private get activeIndex(): number {
@@ -1177,6 +1200,11 @@ class MenuSubmenuController {
     this.cancelPendingHoverClose();
     this.parent.closeSiblingSubmenus(this);
     if (!this.openState) {
+      // A side intent hook resolves inline-end. Read direction first, so a `dir` change with no
+      // event rewrites `data-side` before the entry styles start.
+      const placementElement = this.elements.positioner ?? this.elements.popup;
+      if (placementElement.hasAttribute(MENU_SIDE_INTENT_ATTRIBUTE))
+        this.directionSubscription.get();
       this.openState = true;
       this.applyOpenState(true);
     }
@@ -1209,6 +1237,8 @@ class MenuSubmenuController {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.directionSubscription.destroy();
+    this.sideIntentObserver.disconnect();
     this.focusBoundary.destroy();
     this.clearHoverCloseTimer();
     this.clearTypeaheadTimer();
@@ -1314,7 +1344,11 @@ class MenuSubmenuController {
       (event) => {
         if (isDisabledElement(this.elements.trigger)) return;
 
-        if (event.key === "ArrowRight" || event.key === "Enter" || event.key === " ") {
+        if (
+          event.key === getInlineEndKey(this.owner.root) ||
+          event.key === "Enter" ||
+          event.key === " "
+        ) {
           event.preventDefault();
           this.open({ event, focusFirstItem: true });
         }
@@ -1370,6 +1404,8 @@ class MenuSubmenuController {
       "keydown",
       (event) => {
         if (!this.openState) return;
+        if (isNativeTextEditTarget(event.target) && event.key !== "Escape" && event.key !== "Tab")
+          return;
 
         switch (event.key) {
           case "Tab":
@@ -1386,10 +1422,12 @@ class MenuSubmenuController {
             );
             break;
           case "ArrowLeft":
-            event.preventDefault();
-            this.close({ focusTrigger: true });
-            break;
           case "ArrowRight": {
+            if (event.key !== getInlineEndKey(this.owner.root)) {
+              event.preventDefault();
+              this.close({ focusTrigger: true });
+              break;
+            }
             const target = event.target instanceof Element ? event.target : null;
             const submenu = this.getSubmenuByTriggerTarget(target);
             if (!submenu) break;
@@ -1460,6 +1498,7 @@ class MenuSubmenuController {
         createPositioner: () => this.getFloatingPositionerForLifecycle(),
         getReference: () => this.elements.trigger,
       },
+      getPointerPassThroughWrapper: () => this.elements.positioner,
       popup: this.elements.popup,
       portal: {
         clearFloatingStyles: () => this.clearFloatingStyles(),
@@ -1548,6 +1587,30 @@ class MenuSubmenuController {
     this.lifecycle.updatePosition();
   }
 
+  private refreshPlacement(): void {
+    this.floatingPositioner?.destroy();
+    this.floatingPositioner = null;
+    if (this.openState) this.lifecycle.refreshSurface(this.elements.popup);
+    else {
+      this.lifecycle.suspendSurface();
+      this.syncRequestedSide();
+    }
+  }
+
+  /**
+   * A side intent hook lets styled wrappers request the inline-end side. Write the requested
+   * side before the first open, so entry styles start from the right side in either direction.
+   */
+  private syncRequestedSide(): void {
+    const placementElement = this.elements.positioner ?? this.elements.popup;
+    if (!placementElement.hasAttribute(MENU_SIDE_INTENT_ATTRIBUTE)) return;
+
+    const side = this.getRequestedSide(placementElement);
+    for (const element of new Set([placementElement, this.elements.popup])) {
+      element.setAttribute(MENU_SIDE_ATTRIBUTE, side);
+    }
+  }
+
   private getFloatingPositioner(): FloatingPositioner | null {
     if (this.floatingPositioner) return this.floatingPositioner;
 
@@ -1565,7 +1628,7 @@ class MenuSubmenuController {
           true,
         ),
         preserveAnchor: true,
-        side: readSideAttribute(placementElement.getAttribute(MENU_SIDE_ATTRIBUTE), "right"),
+        side: this.getRequestedSide(placementElement),
         sideOffset: readNumberAttribute(placementElement, MENU_SIDE_OFFSET_ATTRIBUTE, 4),
       }),
       placementStateElements,
@@ -1573,6 +1636,21 @@ class MenuSubmenuController {
     });
 
     return this.floatingPositioner;
+  }
+
+  private getRequestedSide(placementElement: HTMLElement): FloatingSide {
+    const sideIntent = placementElement.getAttribute(MENU_SIDE_INTENT_ATTRIBUTE);
+    if (sideIntent !== null) {
+      const inlineEnd = readDirection(this.owner.root) === "rtl" ? "left" : "right";
+      return readSideAttribute(sideIntent, inlineEnd);
+    }
+
+    // Without the hook, the authored side is read once, before Runtime writes resolved sides.
+    this.authoredSide ??= readSideAttribute(
+      placementElement.getAttribute(MENU_SIDE_ATTRIBUTE),
+      "right",
+    );
+    return this.authoredSide;
   }
 
   private getFloatingPositionerForLifecycle(): FloatingPositioner {
@@ -1882,6 +1960,18 @@ function readSideAttribute(value: string | null, fallback: FloatingSide = "botto
   return fallback;
 }
 
+function getInlineEndKey(owner: Element): "ArrowLeft" | "ArrowRight" {
+  return readDirection(owner) === "rtl" ? "ArrowLeft" : "ArrowRight";
+}
+
+function isNativeTextEditTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  );
+}
+
 function readNumberAttribute(element: HTMLElement, name: string, fallback: number): number {
   const value = Number.parseFloat(element.getAttribute(name) ?? "");
   return Number.isFinite(value) ? value : fallback;
@@ -2017,9 +2107,10 @@ function getRadioGroupItems(group: HTMLElement): HTMLElement[] {
   );
 }
 
+/** Explicit ARIA state decides, as for checkbox items. The default marker is the raw DOM fallback. */
 function isInitialRadioItemChecked(item: HTMLElement): boolean {
+  if (item.hasAttribute("aria-checked")) return item.getAttribute("aria-checked") === "true";
   return (
-    item.getAttribute("aria-checked") === "true" ||
     item.hasAttribute("data-checked") ||
     readBooleanAttribute(item, MENU_DEFAULT_CHECKED_ATTRIBUTE, false)
   );

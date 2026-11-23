@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -9,7 +9,7 @@ import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc
 import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import {
-  CONTROL_GROUPS,
+  type CONTROL_GROUPS,
   CONTROL_OUTPUT_FILES,
 } from "../styled-contracts/vue-portable-styled-controls.test.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";

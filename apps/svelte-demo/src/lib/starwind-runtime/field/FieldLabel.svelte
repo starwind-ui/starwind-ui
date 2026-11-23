@@ -11,10 +11,10 @@
 
 <script lang="ts">
   let {
-    "size": size,
+    size,
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldLabelProps = $props();
 </script>

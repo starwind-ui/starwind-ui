@@ -20,8 +20,11 @@ export default ${namespace};\n`,
   };
 }
 
-// The rendered `defaultValue` stops Svelte hydration from removing the server value attribute,
-// so a form reset restores the reset seed.
+// The explicit `defaultValue` attribute stops Svelte hydration from removing the server value
+// attribute, so a form reset restores the reset seed. Svelte 5.29 checks for it in the template.
+// Without an initial value, `value` stays out of the spread and `defaultValue` is undefined.
+// Svelte would otherwise read the `value` attribute that `defaultValue` sets and clear the
+// typed text on each later spread update.
 export function printSvelteNativeInputValueComponent(
   file: AdapterComponentFile,
 ): AdapterPrintedFile {
@@ -57,6 +60,7 @@ export function printSvelteNativeInputValueComponent(
   let { value = $bindable(), value: commandValue, defaultValue, disabled = ${facts.props.disabled.defaultValue}, type, onValueChange, ref, ...rest }: Props = $props();
   const seed = untrack(() => ${nativeInputSeed("defaultValue", "value")});
   const initialMarkup = untrack(() => type === "file" ? undefined : ${initialModelValue("value", "defaultValue")});
+  const markupValue = initialMarkup === undefined ? {} : { value: initialMarkup };
   ${connection}
   const attachInput: Attachment<HTMLInputElement> = (element) => {
     const connection = untrack(() => connectInput(element));
@@ -80,7 +84,7 @@ export function printSvelteNativeInputValueComponent(
   };
 ${printSvelteRefAttachment("HTMLInputElement")}
 </script>
-<input {...rest} {type} value={initialMarkup} defaultValue={String(seed ?? "")} {disabled} ${facts.attrs.root}="" ${facts.attrs.stateDisabled}={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />
+<input {...rest} {type} {...markupValue} defaultValue={initialMarkup === undefined ? undefined : String(seed ?? "")} {disabled} ${facts.attrs.root}="" ${facts.attrs.stateDisabled}={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />
 `,
   };
 }

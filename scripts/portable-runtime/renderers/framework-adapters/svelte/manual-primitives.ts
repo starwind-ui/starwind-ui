@@ -1,7 +1,6 @@
 import path from "node:path";
-
-import type { FrameworkAdapterTargetManualPrimitiveGenerators } from "../types.js";
 import { writeGeneratedFile } from "../../shared.js";
+import type { FrameworkAdapterTargetManualPrimitiveGenerators } from "../types.js";
 
 export const svelteManualPrimitiveGenerators = {
   theme: async ({ moduleHeader, outputRoot }) => {

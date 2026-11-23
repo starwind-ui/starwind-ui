@@ -7,9 +7,9 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { generateVuePrimitiveWrappers } from "../../generate-vue-wrappers.js";
-import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { vueFutureFrameworkTracer } from "../../renderers/framework-adapters/vue/future-framework-tracer.js";
 import { vueStyledComponents } from "../../renderers/framework-adapters/vue/inventory.js";
+import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const VUE_TSC_TIMEOUT_MS = 30_000;
@@ -37,6 +37,7 @@ describe("Vue Primitive package generation", () => {
         "avatar",
         "button",
         "carousel",
+        "chart",
         "checkbox",
         "checkbox-group",
         "collapsible",
@@ -158,14 +159,14 @@ describe("Vue Primitive package generation", () => {
   });
 
   it("typechecks a selected composite Vue Styled mini-tree in isolation", async () => {
-    const outputRoot = await generateSelectedVueStyledGroups({
+    await generateSelectedVueStyledGroups({
       format: true,
       groups: ["alert-dialog"],
       outputDir: "styled",
       repoRoot: tempRoot,
     });
 
-    await expectSelectedStyledMiniTreeTypechecks(tempRoot, outputRoot);
+    await expectSelectedStyledMiniTreeTypechecks(tempRoot);
   });
 
   it("rejects an unknown Vue Styled group before generation", async () => {
@@ -179,10 +180,7 @@ describe("Vue Primitive package generation", () => {
   });
 });
 
-async function expectSelectedStyledMiniTreeTypechecks(
-  root: string,
-  outputRoot: string,
-): Promise<void> {
+async function expectSelectedStyledMiniTreeTypechecks(root: string): Promise<void> {
   const fixturePath = path.join(root, "alert-dialog-action.fixture.vue");
   await writeFile(
     fixturePath,

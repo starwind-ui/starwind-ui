@@ -120,3 +120,33 @@ export function captureSubmits(): void {
     ]);
   });
 }
+
+const RUNTIME_EVENTS = [
+  "starwind:value-change",
+  "starwind:value-committed",
+  "starwind:format-change",
+  "starwind:checked-change",
+  "starwind:pressed-change",
+  "starwind:input-value-change",
+  "starwind-input-otp:change",
+  "starwind-toggle:change",
+];
+
+/**
+ * Records each Runtime DOM change event as `dom:<type>` on the instance whose root carries the
+ * `<instance>-root` test id. A capture listener on the document sees every one of them.
+ */
+export function captureRuntimeEvents(): void {
+  for (const type of RUNTIME_EVENTS) {
+    document.addEventListener(
+      type,
+      (event) => {
+        const root = (event.target as Element | null)?.closest?.('[data-testid$="-root"]');
+        const id = root?.getAttribute("data-testid")?.slice(0, -"-root".length);
+        if (id)
+          state().events.push({ instance: id, event: `dom:${type}`, value: null, fields: [] });
+      },
+      true,
+    );
+  }
+}

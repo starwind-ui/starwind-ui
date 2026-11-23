@@ -23,7 +23,7 @@ function CarouselNext(props: CarouselNextProps) {
     >
       {children ?? (
         <>
-          <ChevronRight aria-hidden={true} />
+          <ChevronRight className="rotate-(--sw-carousel-icon-turn)" aria-hidden={true} />
 
           <span className="sr-only">Next slide</span>
         </>

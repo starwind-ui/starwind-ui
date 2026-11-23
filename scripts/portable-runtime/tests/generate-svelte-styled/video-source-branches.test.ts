@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { compile } from "svelte/compiler";
+import { describe, expect, it } from "vitest";
 import { videoStyledContract } from "../../contracts/styled/components/video.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 describe("Video source branches", () => {
   it("projects and compiles the contract's video and iframe owners", () => {
@@ -27,11 +27,12 @@ describe("Video source branches", () => {
   });
 });
 
-import { afterEach } from "vitest";
 import path from "node:path";
+import { afterEach } from "vitest";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
-import { createStyledVideoConsumer } from "../../../../packages/svelte/tests/styled-video-consumer.js";
 import { verifyStyledVideoBrowser } from "../../../../packages/svelte/tests/styled-video-browser.js";
+import { createStyledVideoConsumer } from "../../../../packages/svelte/tests/styled-video-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));
@@ -45,11 +46,12 @@ it("server-renders source branches and hydrates native media with balanced repla
   await verifyStyledVideoBrowser(await consumer());
 }, 60000);
 
-import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("serializes three deterministic files from the unchanged source expressions", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-video-output-"));
   try {

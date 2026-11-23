@@ -1,15 +1,15 @@
-import { type RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
-import {
-  type PrimitiveDocsAuthoredExampleFrameworkMetadata,
-  type PrimitiveDocsAuthoredExampleMetadata,
-  type PrimitiveDocsEnrichment,
-  type PrimitiveDocsExampleRegistry,
-  type PrimitiveDocsSectionMetadata,
-  type PrimitiveDocsUsageGuidelineMetadata,
-} from "../types.js";
 import fs from "node:fs";
 import path from "node:path";
 import * as ts from "typescript";
+import type { RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
+import type {
+  PrimitiveDocsAuthoredExampleFrameworkMetadata,
+  PrimitiveDocsAuthoredExampleMetadata,
+  PrimitiveDocsEnrichment,
+  PrimitiveDocsExampleRegistry,
+  PrimitiveDocsSectionMetadata,
+  PrimitiveDocsUsageGuidelineMetadata,
+} from "../types.js";
 import { isPrimitivePropTargetedAtPart } from "./descriptions/primitive-reference.js";
 import {
   getPrimitiveAuthoredExampleFrameworksInDisplayOrder,
@@ -41,6 +41,7 @@ const PRIMITIVE_AUTHORED_EXAMPLE_MANIFEST_FRAMEWORK_TARGETS = {
   astro: { framework: "astro", language: "astro" },
   react: { framework: "react", language: "tsx" },
   vue: { framework: "vue", language: "vue" },
+  svelte: { framework: "svelte", language: "svelte" },
   html: { framework: "raw-html", language: "html" },
 } as const satisfies Readonly<
   Record<string, Pick<PrimitiveDocsAuthoredExampleFrameworkMetadata, "framework" | "language">>

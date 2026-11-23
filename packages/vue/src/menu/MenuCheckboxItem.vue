@@ -21,6 +21,7 @@ const emit = defineEmits<{
 defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
+const initialDefaultChecked = props.defaultChecked;
 const uncontrolledChecked = ref(props.defaultChecked);
 const checked = computed(() => props.checked ?? uncontrolledChecked.value);
 provide(MenuCheckboxItemContext, { checked });
@@ -93,7 +94,7 @@ watch(
     data-sw-part="checkboxItem"
     role="menuitemcheckbox"
     tabindex="0"
-    :data-default-checked="props.defaultChecked ? 'true' : undefined"
+    :data-default-checked="initialDefaultChecked ? 'true' : undefined"
     :data-close-on-click="props.closeOnClick ? 'true' : undefined"
     :aria-checked="checked"
     :data-checked="checked ? '' : undefined"

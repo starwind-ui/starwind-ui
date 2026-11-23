@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -16,7 +17,14 @@ vi.mock("@clack/prompts", () => ({
   tasks: vi.fn(async (tasks: Array<{ task: () => Promise<unknown> }>) => {
     for (const task of tasks) await task.task();
   }),
-  log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  log: {
+    error: vi.fn(),
+    info: vi.fn(),
+    message: vi.fn(),
+    step: vi.fn(),
+    success: vi.fn(),
+    warn: vi.fn(),
+  },
 }));
 vi.mock("../../src/utils/package-manager.js", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/utils/package-manager.js")>()),
@@ -25,7 +33,9 @@ vi.mock("../../src/utils/package-manager.js", async (importOriginal) => ({
 vi.mock("../../src/utils/sleep.js", () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
 import * as prompts from "@clack/prompts";
+import { add } from "../../src/commands/add.js";
 import { init } from "../../src/commands/init.js";
+import { setup } from "../../src/commands/setup.js";
 import {
   starwindStylesheetPackageRequirements,
   tailwindConfig,
@@ -100,6 +110,8 @@ const kitStarterLayout = `<script lang="ts">
 `;
 let root: string;
 let originalCwd: string;
+let originalFetch: typeof fetch;
+let originalLicenseKey: string | undefined;
 
 async function write(file: string, content: string) {
   await mkdir(path.dirname(file), { recursive: true });
@@ -181,6 +193,8 @@ async function snapshot(directory = "."): Promise<Record<string, string>> {
 
 beforeEach(async () => {
   originalCwd = process.cwd();
+  originalFetch = globalThis.fetch;
+  originalLicenseKey = process.env.STARWIND_LICENSE_KEY;
   root = await mkdtemp(path.join(tmpdir(), "starwind-svelte-init-"));
   process.chdir(root);
   vi.clearAllMocks();
@@ -191,11 +205,14 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   process.chdir(originalCwd);
+  globalThis.fetch = originalFetch;
+  if (originalLicenseKey === undefined) delete process.env.STARWIND_LICENSE_KEY;
+  else process.env.STARWIND_LICENSE_KEY = originalLicenseKey;
   vi.restoreAllMocks();
   await rm(root, { recursive: true, force: true });
 });
 
-describe("Svelte beta host initialization", () => {
+describe("Svelte host initialization", () => {
   it.each([
     ["^5.0.0", "5.18.2", false],
     ["^5.0.0", "5.6.2", true],
@@ -251,6 +268,12 @@ describe("Svelte beta host initialization", () => {
             : "src/components/starwind",
       );
       expect(await readFile("src/styles/starwind.css", "utf8")).toBe(tailwindConfig);
+      for (const direction of ["rtl", "ltr"] as const)
+        expect(
+          (await readFile("src/styles/starwind.css", "utf8")).match(
+            new RegExp(`@custom-variant ${direction}\\b`, "g"),
+          ),
+        ).toHaveLength(1);
       expect(await readFile("package.json", "utf8")).toBe(before["package.json"]);
       if (kind === "vite") {
         expect(JSON.parse(await readFile("tsconfig.json", "utf8")).compilerOptions).toEqual({
@@ -263,7 +286,22 @@ describe("Svelte beta host initialization", () => {
       expect(await readFile("src/styles/existing.css", "utf8")).toBe(
         before["src/styles/existing.css"],
       );
-      expect(installDependencies).not.toHaveBeenCalled();
+      // SvelteKit moves stylesheet packages from dependencies, at their declared ranges.
+      if (kind === "sveltekit")
+        expect(vi.mocked(installDependencies).mock.calls).toEqual([
+          [
+            [
+              "tailwindcss@^4.3.0",
+              "@tailwindcss/vite@4.3.0",
+              "tw-animate-css@^1.4.0",
+              "@tailwindcss/forms@~0.5.11",
+            ],
+            "pnpm",
+            true,
+            false,
+          ],
+        ]);
+      else expect(installDependencies).not.toHaveBeenCalled();
       const configPath =
         kind === "astro"
           ? "astro.config.mjs"
@@ -450,6 +488,99 @@ export default defineConfig({ plugins: [starwindThemeInitPlugin(), svelte()] });
     expect(await readFile("package.json", "utf8")).toBe(JSON.stringify(reduced));
   });
 
+  // adapter-node 6 leaves production dependencies external to the SSR build. Tailwind then
+  // resolves `@import "tw-animate-css"` with Node conditions, and the SvelteKit 3 build fails.
+  it.each([
+    ["Vite Svelte", "vite", false],
+    ["SvelteKit", "sveltekit", true],
+  ] as const)(
+    "installs the stylesheet build packages for %s as dev dependencies: %s",
+    async (_name, kind, dev) => {
+      const pkg = kind === "vite" ? await fixture("vite") : await kitPluginFixture("^3.0.0");
+      const field = kind === "vite" ? "dependencies" : "devDependencies";
+      const declared = { ...(pkg as unknown as Record<string, Record<string, string>>)[field] };
+      for (const requirement of starwindStylesheetPackageRequirements)
+        delete declared[requirement.slice(0, requirement.lastIndexOf("@"))];
+      await write("package.json", JSON.stringify({ ...pkg, [field]: declared }));
+
+      await init(
+        true,
+        { framework: "svelte", defaults: true, packageManager: "pnpm" },
+        dependencies,
+      );
+
+      expect(vi.mocked(installDependencies).mock.calls).toEqual([
+        [[...starwindStylesheetPackageRequirements], "pnpm", dev, false],
+      ]);
+    },
+  );
+
+  it.each([
+    ["pnpm", true],
+    ["npm", true],
+    ["yarn", false],
+    ["bun", false],
+  ] as const)(
+    "plans a %s dev install that moves SvelteKit 3 stylesheet packages out of dependencies",
+    async (packageManager, moves) => {
+      const pkg = await kitPluginFixture("^3.0.0");
+      const devDependencies = { ...pkg.devDependencies } as Record<string, string>;
+      delete devDependencies.tailwindcss;
+      delete devDependencies["tw-animate-css"];
+      await write(
+        "package.json",
+        JSON.stringify({
+          ...pkg,
+          dependencies: { tailwindcss: "^4.3.0", "tw-animate-css": "~1.4.0" },
+          devDependencies,
+        }),
+      );
+
+      await init(true, { framework: "svelte", defaults: true, packageManager }, dependencies);
+
+      // The declared ranges stay, so the move does not change the selected versions.
+      expect(vi.mocked(installDependencies).mock.calls).toEqual([
+        [["tailwindcss@^4.3.0", "tw-animate-css@~1.4.0"], packageManager, moves, false],
+      ]);
+      if (moves) expect(prompts.log.warn).not.toHaveBeenCalled();
+      else
+        expect(prompts.log.warn).toHaveBeenCalledWith(
+          expect.stringContaining(
+            "Move tailwindcss, tw-animate-css from dependencies to devDependencies.",
+          ),
+        );
+    },
+  );
+
+  it("leaves Vite Svelte stylesheet packages in dependencies", async () => {
+    const pkg = await fixture("vite");
+    await write("package.json", JSON.stringify(pkg));
+    await init(true, { framework: "svelte", defaults: true, packageManager: "pnpm" }, dependencies);
+    expect(installDependencies).not.toHaveBeenCalled();
+  });
+
+  it("raises an older tailwind-merge declaration through the bundled Svelte setup", async () => {
+    const bundled = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
+    const pkg = await fixture("vite");
+    await write(
+      "package.json",
+      JSON.stringify({ ...pkg, dependencies: { ...pkg.dependencies, "tailwind-merge": "^3.4.0" } }),
+    );
+
+    await init(
+      true,
+      { framework: "svelte", defaults: true, packageManager: "pnpm" },
+      { targetPolicy: policy, registry: { ...registry, setup: { svelte: bundled.setup.svelte } } },
+    );
+
+    // Generated Svelte Styled components import tailwind-variants, which imports tailwind-merge.
+    expect(vi.mocked(installDependencies).mock.calls.flatMap(([specs]) => specs)).toContain(
+      "tailwind-merge@^3.7.0",
+    );
+  });
+
   it("uses custom directories and preserves an existing stylesheet when overwrite is declined", async () => {
     await fixture("sveltekit");
     await write("src/theme/site.css", "/* user CSS */\n");
@@ -580,14 +711,71 @@ export default defineConfig({ plugins: [starwindThemeInitPlugin(), svelte()] });
     expect(installDependencies).not.toHaveBeenCalled();
   });
 
-  it("rejects Pro setup for a detected Svelte host before project mutation", async () => {
+  it.each([
+    ["vite", "src/components/starwind-pro/hero-01/Hero1.astro"],
+    ["sveltekit", "src/lib/starwind-pro/hero-01/Hero1.astro"],
+    ["astro", "src/components/starwind-pro/hero-01/Hero1.astro"],
+  ] as const)("runs Pro init, setup, and add in a %s Svelte host", async (kind, blockPath) => {
+    await fixture(kind);
+
+    await init(true, { framework: "svelte", defaults: true, pro: true }, dependencies);
+
+    const config = JSON.parse(await readFile("starwind.config.json", "utf8"));
+    expect(config.framework).toBe(kind === "astro" ? "astro" : "svelte");
+    expect(config.pro.registry.headers.Authorization).toBe("Bearer ${STARWIND_LICENSE_KEY}");
+    expect(await readFile(".env.local", "utf8")).toContain("STARWIND_LICENSE_KEY=");
+
+    await rm(".env.local");
+    await init(true, { defaults: true, pro: true }, dependencies);
+    expect(await readFile(".env.local", "utf8")).toContain("STARWIND_LICENSE_KEY=");
+
+    await rm(".env.local");
+    await setup({ pro: true });
+    expect(await readFile(".env.local", "utf8")).toContain("STARWIND_LICENSE_KEY=");
+
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      headers: new Headers(),
+      json: async () => ({
+        name: "hero-01",
+        type: "registry:block",
+        dependencies: [],
+        registryDependencies: [],
+        files: [
+          {
+            path: "blocks/Hero1.astro",
+            type: "registry:block",
+            target: "components/starwind-pro/hero-01/Hero1.astro",
+            content: "---\n---\n<section>Hero</section>\n",
+          },
+        ],
+        meta: {
+          plan: "free",
+          version: "1.0.0",
+          framework: "astro",
+          starwindUiMajor: 3,
+          starwindUiDependencies: [],
+        },
+      }),
+    })) as unknown as typeof fetch;
+    process.env.STARWIND_LICENSE_KEY = "test-key";
+
+    await add(["@starwind-pro/hero-01"], { packageManager: "pnpm", yes: true }, dependencies);
+
+    expect(globalThis.fetch).toHaveBeenCalled();
+    expect(await readFile(blockPath, "utf8")).toBe("---\n---\n<section>Hero</section>\n");
+  });
+
+  it("runs Pro init for a detected Svelte host without a framework flag", async () => {
     await fixture("vite");
-    const before = await snapshot();
 
-    await expect(init(true, { defaults: true, pro: true }, dependencies)).rejects.toThrow("exit:1");
+    await init(true, { defaults: true, pro: true }, dependencies);
 
-    expect(await snapshot()).toEqual(before);
-    expect(installDependencies).not.toHaveBeenCalled();
+    const config = JSON.parse(await readFile("starwind.config.json", "utf8"));
+    expect(config.framework).toBe("svelte");
+    expect(config.pro.registry.headers.Authorization).toBe("Bearer ${STARWIND_LICENSE_KEY}");
   });
 
   it("rejects a symlink stylesheet before any project mutation", async () => {
@@ -660,7 +848,7 @@ export default defineConfig({ plugins: [starwindThemeInitPlugin(), svelte()] });
   });
 });
 
-describe("Svelte beta initialization in a plain Astro project", () => {
+describe("Svelte initialization in a plain Astro project", () => {
   const plainConfig =
     'import { defineConfig } from "astro/config";\nexport default defineConfig({ site: "https://example.test" });\n';
   const layout =

@@ -1,13 +1,11 @@
-import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { createServer } from "node:http";
 import { createRequire } from "node:module";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-
+import { ButtonRoot } from "@starwind-ui/vue/button";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-
-import { ButtonRoot } from "@starwind-ui/vue/button";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const repoRoot = path.resolve(packageRoot, "../..");
@@ -86,7 +84,7 @@ if (!address || typeof address === "string")
   throw new Error("Button test server did not bind a port.");
 let browser;
 try {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage();
   await page.goto(`http://127.0.0.1:${address.port}/`);
   await page.waitForFunction(() => window.__STARWIND_BUTTON_RESULT__ !== undefined);

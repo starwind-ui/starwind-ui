@@ -1,8 +1,8 @@
 import { afterEach, it } from "vitest";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyRadioGroupLifecycle } from "../../../../packages/svelte/tests/radio-and-radio-group-browser.js";
 import { createStyledRadioGroupConsumer } from "../../../../packages/svelte/tests/styled-radio-group-consumer.js";
 
-import { verifyRadioGroupLifecycle } from "../../../../packages/svelte/tests/radio-and-radio-group-browser.js";
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

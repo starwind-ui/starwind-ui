@@ -2,9 +2,9 @@ import { copyFile, mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promis
 import path from "node:path";
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { chromium, type Browser } from "playwright";
-import { afterEach, describe, expect, it } from "vitest";
+import { type Browser, chromium } from "playwright";
 import { createServer, type ViteDevServer } from "vite";
+import { afterEach, describe, expect, it } from "vitest";
 
 const temporaryRoots: string[] = [];
 const servers: ViteDevServer[] = [];

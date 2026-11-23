@@ -16,12 +16,12 @@
 
 <script lang="ts">
   let {
-    "side": side = "left",
-    "variant": variant = "sidebar",
-    "collapsible": collapsible = "offcanvas",
+    side = "left",
+    variant = "sidebar",
+    collapsible = "offcanvas",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: SidebarProps = $props();
 
@@ -30,8 +30,9 @@
 
 {#if collapsible === "none"}
   <div
-    class={["bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col", className].filter(Boolean).join(" ")}
+    class={["bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col data-[sw-sidebar-side=left]:order-(--sw-sidebar-left-order) data-[sw-sidebar-side=right]:order-(--sw-sidebar-right-order)", className].filter(Boolean).join(" ")}
     {...rest}
+    data-sw-sidebar-side={side}
     data-slot={"sidebar"}
     bind:this={ref}
   >
@@ -78,6 +79,7 @@
       side={side}
       class={sidebarMobileContent({  })}
       style={mobileStyle}
+      data-sw-sidebar-side={side}
       data-sidebar={"sidebar"}
       data-slot={"sidebar-mobile-content"}
     >

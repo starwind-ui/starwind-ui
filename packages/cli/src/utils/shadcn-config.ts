@@ -1,4 +1,3 @@
-import { PATHS } from "./constants.js";
 import {
   resolveStarwindProRegistryConfig,
   type StarwindConfig,
@@ -6,6 +5,7 @@ import {
   type StarwindProRegistryConfig,
   updateConfig,
 } from "./config.js";
+import { PATHS } from "./constants.js";
 import { fileExists, readJsonFile, writeJsonFile } from "./fs.js";
 
 export interface ShadcnRegistry {

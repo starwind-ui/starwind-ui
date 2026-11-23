@@ -1,0 +1,25 @@
+---
+/**
+ * Applies the saved demo reading direction before first paint.
+ * A `?dir=rtl` or `?dir=ltr` query parameter overrides and saves the choice.
+ */
+---
+
+<script is:inline data-demo-direction-init>
+  (() => {
+    const key = "starwind-demo-dir";
+    let dir = null;
+    try {
+      const param = new URLSearchParams(location.search).get("dir");
+      if (param === "rtl" || param === "ltr") {
+        dir = param;
+        localStorage.setItem(key, param);
+      } else {
+        dir = localStorage.getItem(key);
+      }
+    } catch {
+      // Storage can be unavailable. The page stays LTR.
+    }
+    if (dir === "rtl" || dir === "ltr") document.documentElement.dir = dir;
+  })();
+</script>

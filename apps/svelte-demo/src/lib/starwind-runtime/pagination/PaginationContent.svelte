@@ -11,7 +11,7 @@
   let {
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: PaginationContentProps = $props();
 </script>

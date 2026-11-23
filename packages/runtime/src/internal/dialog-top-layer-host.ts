@@ -72,4 +72,5 @@ export function createDialogTopLayerHost(owner: HTMLDialogElement): DialogTopLay
   hosts.set(owner, result);
   return result;
 }
+
 import { registerDialogTopLayerFloatingRoot } from "./portal-target-policy";

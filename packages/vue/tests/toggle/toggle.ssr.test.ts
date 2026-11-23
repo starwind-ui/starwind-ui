@@ -1,8 +1,7 @@
+import { ToggleRoot } from "@starwind-ui/vue/toggle";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { ToggleRoot } from "@starwind-ui/vue/toggle";
 import { Toggle as StyledToggle } from "../../../../apps/vue-demo/src/components/starwind-runtime/toggle";
 
 describe("Vue Toggle SSR", () => {

@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { compile } from "svelte/compiler";
+import { describe, expect, it } from "vitest";
 import { scrollAreaStyledContract } from "../../contracts/styled/components/scroll-area.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 describe("Scroll Area vertical", () => {
   it("projects the complete contract anatomy and stylesheet for client and SSR", () => {
@@ -27,8 +27,9 @@ describe("Scroll Area vertical", () => {
 
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("generates Scroll Area deterministically from the contract", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-scroll-area-output-"));
   try {
@@ -59,16 +60,4 @@ it("rejects unsupported anatomy, stylesheet owners, native bases and public fiel
   }
 });
 
-import { afterEach } from "vitest";
 import path from "node:path";
-import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
-import { createStyledScrollAreaConsumer } from "../../../../packages/svelte/tests/styled-scroll-area-consumer.js";
-const consumers: DistConsumer[] = [];
-afterEach(async () => {
-  await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));
-});
-async function consumer() {
-  const result = await createStyledScrollAreaConsumer(process.cwd());
-  consumers.push(result);
-  return result;
-}

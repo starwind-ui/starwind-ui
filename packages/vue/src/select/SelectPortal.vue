@@ -3,7 +3,7 @@
 import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/select";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
-import { useSelectContext } from "./SelectRoot.vue";
+import { useSelectInternalContext } from "./SelectRoot.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
@@ -14,7 +14,7 @@ const props = withDefaults(
 );
 defineSlots<{ default?: () => unknown }>();
 const portalRef = ref<HTMLDivElement | null>(null);
-const select = useSelectContext("Portal");
+const select = useSelectInternalContext("Portal");
 const owner = Symbol("SelectPortalOwner");
 const placement = useVuePortalPlacement({
   active: () => select.mounted.value,

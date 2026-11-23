@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
+    // Tests import adapter contracts from scripts/, so sources span the repo root.
+    "rootDir": "../..",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "types": ["node", "vitest/globals", "vitest/browser"],

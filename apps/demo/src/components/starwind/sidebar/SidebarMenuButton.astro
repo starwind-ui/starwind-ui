@@ -78,6 +78,11 @@ const buttonDataAttrs = {
 }
 
 <style is:global>
+  @property --sw-sidebar-menu-end-padding {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
   :root:not([data-starwind-sidebar-tooltips="enabled"]) .starwind-sidebar-tooltip-content {
     display: none !important;
   }

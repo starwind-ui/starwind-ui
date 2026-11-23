@@ -1,12 +1,11 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   CollapsiblePanel,
   CollapsibleRoot,
   CollapsibleTrigger,
 } from "@starwind-ui/vue/collapsible";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Collapsible as StyledCollapsible,
   CollapsibleContent as StyledCollapsibleContent,
@@ -118,5 +117,36 @@ describe("Vue Collapsible SSR", () => {
     expect(html).toContain("styled-root");
     expect(html).toContain("styled-trigger");
     expect(html).toContain("styled-content");
+  });
+
+  it("renders a bare disabled attribute as disabled on the native and asChild triggers", async () => {
+    // The template compiler passes a bare `<CollapsibleTrigger disabled>` attribute as "".
+    const render = (trigger: () => unknown) =>
+      renderToString(
+        createSSRApp({
+          render: () =>
+            h(CollapsibleRoot, null, { default: () => [trigger(), h(CollapsiblePanel)] }),
+        }),
+      );
+
+    const native = await render(() =>
+      h(CollapsibleTrigger, { disabled: "" }, { default: () => "Details" }),
+    );
+    expect(native).toMatch(/<button[^>]* disabled[\s>=][^>]*data-disabled/);
+
+    const asChild = await render(() =>
+      h(
+        CollapsibleTrigger,
+        { asChild: true, disabled: "" },
+        { default: () => h("button", "Details") },
+      ),
+    );
+    expect(asChild).toMatch(/<button[^>]* disabled[\s>=]/);
+    expect(asChild).toContain("data-disabled");
+
+    const disabledChild = await render(() =>
+      h(CollapsibleTrigger, { asChild: true }, { default: () => h("button", { disabled: "" }) }),
+    );
+    expect(disabledChild).toContain("data-disabled");
   });
 });

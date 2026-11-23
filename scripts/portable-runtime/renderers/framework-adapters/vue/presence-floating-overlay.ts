@@ -260,11 +260,3 @@ defineExpose({ element });
 </template>
 `;
 }
-
-function printOptions(options: Record<string, boolean | number | string> | undefined): string {
-  if (!options || Object.keys(options).length === 0) return "";
-  const fields = Object.entries(options)
-    .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-    .join(", ");
-  return `, { ${fields} }`;
-}

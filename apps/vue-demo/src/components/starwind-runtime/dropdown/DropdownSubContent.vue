@@ -35,7 +35,7 @@ type DropdownSubContentDeclaredProps = {
 } & /* @vue-ignore */ DropdownSubContentProps;
 const {
   class: className,
-  side = "right",
+  side,
   align = "start",
   sideOffset = 0,
   avoidCollisions = true,
@@ -56,10 +56,11 @@ const subContentClassName = computed(() => className);
   >
     <MenuPrimitive.MenuPopup
       :class="dropdownContent({ class: subContentClassName })"
-      :side="side"
+      :side="side ?? 'right'"
       :align="align"
       :side-offset="sideOffset"
       :avoid-collisions="avoidCollisions"
+      :data-sw-menu-side-intent="side ?? ''"
       v-bind="$attrs"
       data-slot="dropdown-sub-content"
     >

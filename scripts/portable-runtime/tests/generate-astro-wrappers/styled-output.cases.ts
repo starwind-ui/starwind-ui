@@ -1,9 +1,9 @@
+import { toastStyledContract } from "../../contracts/styled/components/toast.js";
 import {
   assertNoStarwindClassHooksInSource,
   assertNoStarwindClassHooksInStyledContracts,
   assertNoStarwindClassHooksInTree,
 } from "../../starwind-class-guard.js";
-import { toastStyledContract } from "../../contracts/styled/components/toast.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -168,7 +168,12 @@ export function defineAstroStyledOutputTests(getTempRoot: GetTempRoot): void {
     expect(carouselVariants).toContain("defaultVariants: {");
     expect(carouselVariants).toContain('variant: "outline"');
     expect(carouselVariants).toContain('size: "icon"');
-    expect(carouselVariants).toContain('"absolute size-8 rounded-full"');
+    expect(carouselVariants).toContain(
+      'export const carouselNext = tv({\n  base: "absolute inset-(--sw-carousel-next) size-8 [translate:var(--sw-carousel-shift)] rotate-(--sw-carousel-turn) rounded-full"',
+    );
+    expect(carouselVariants).toContain(
+      'export const carouselPrevious = tv({\n  base: "absolute inset-(--sw-carousel-previous) size-8 [translate:var(--sw-carousel-shift)] rotate-(--sw-carousel-turn) rounded-full"',
+    );
     expect(carouselNext).toContain("const controlClassName = carouselNext({ class: className });");
     expect(carouselNext).toContain(
       "class={carouselControl({ variant, size, class: controlClassName })}",

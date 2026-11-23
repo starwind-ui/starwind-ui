@@ -7,8 +7,8 @@ import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  primitivesUpdate,
   type PrivatePrimitiveCommandDependencies,
+  primitivesUpdate,
 } from "../../src/commands/primitives.js";
 import { update } from "../../src/commands/update.js";
 import {

@@ -60,9 +60,6 @@ function isModelEqual(left: string[] | undefined, right: string[] | undefined) {
       left.every((entry, index) => entry === right[index]))
   );
 }
-function copyModel(value: string[]) {
-  return [...value];
-}
 function disconnect() {
   const owned = connection.instance;
   connection.observer?.disconnect();

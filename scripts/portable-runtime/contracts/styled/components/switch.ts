@@ -1,11 +1,23 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const switchStyledContract: StyledAdapterContract = {
   component: "switch",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: ["Switch"],
   defaultExport: { Root: "Switch" },
   defaultExportMode: "component",
   variantCollectionName: "SwitchVariants",
+  styles: {
+    importFrom: ["Switch"],
+    content: [
+      "@property --sw-switch-thumb-offset {",
+      '  syntax: "<length>";',
+      "  inherits: false;",
+      "  initial-value: 0px;",
+      "}",
+    ],
+  },
   variants: {
     switchWrapper: {
       base: "flex items-center",
@@ -37,14 +49,15 @@ export const switchStyledContract: StyledAdapterContract = {
     },
     switchToggle: {
       base: [
-        "bg-foreground inline-block transform rounded-full transition-transform",
-        "group-aria-checked:translate-x-(--translation) group-aria-[checked=false]:translate-x-[calc(var(--padding)-var(--border-offset))]",
+        "bg-foreground inline-block rounded-full transition-[--sw-switch-thumb-offset] motion-reduce:transition-none",
+        "translate-x-(--sw-switch-thumb-offset) rtl:-translate-x-(--sw-switch-thumb-offset)",
+        "group-aria-checked:[--sw-switch-thumb-offset:var(--translation)] group-aria-[checked=false]:[--sw-switch-thumb-offset:calc(var(--padding)-var(--border-offset))]",
       ],
       variants: { size: { sm: "size-4", md: "size-5", lg: "size-6" } },
       defaultVariants: { size: "md" },
     },
     switchLabel: {
-      base: "text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      base: "text-foreground ms-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       variants: { size: { sm: "text-sm", md: "text-base", lg: "text-lg" } },
       defaultVariants: { size: "md" },
     },

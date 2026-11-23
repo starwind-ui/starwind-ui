@@ -1,7 +1,7 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-11-05T12:10:37.686Z",
+  "capturedAt": "2026-11-21T20:19:46.152Z",
   "catalog": {
     "brotliBytes": 241004,
     "gzipBytes": 306009,
@@ -385,188 +385,250 @@
   "measurementEntries": {
     "catalog": [
       {
-        "exports": ["*"],
+        "exports": [
+          "*"
+        ],
         "specifier": "@ark-ui/react"
       }
     ],
     "components": {
       "accordion": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/accordion"
         }
       ],
       "alert-dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/dialog"
         }
       ],
       "avatar": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/avatar"
         }
       ],
       "carousel": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/carousel"
         }
       ],
       "checkbox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/checkbox"
         }
       ],
       "checkbox-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/checkbox"
         }
       ],
       "collapsible": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/collapsible"
         }
       ],
       "combobox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/combobox"
         }
       ],
       "context-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/menu"
         }
       ],
       "dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/dialog"
         }
       ],
       "drawer": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/drawer"
         }
       ],
       "dropzone": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/file-upload"
         }
       ],
       "field": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/field"
         }
       ],
       "input-otp": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/pin-input"
         }
       ],
       "menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/menu"
         }
       ],
       "navigation-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/navigation-menu"
         }
       ],
       "popover": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/popover"
         }
       ],
       "preview-card": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/hover-card"
         }
       ],
       "progress": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/progress"
         }
       ],
       "radio": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/radio-group"
         }
       ],
       "radio-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/radio-group"
         }
       ],
       "scroll-area": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/scroll-area"
         }
       ],
       "select": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/select"
         }
       ],
       "slider": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/slider"
         }
       ],
       "switch": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/switch"
         }
       ],
       "tabs": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/tabs"
         }
       ],
       "toast": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/toast"
         }
       ],
       "toggle": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/toggle"
         }
       ],
       "toggle-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/toggle-group"
         }
       ],
       "tooltip": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/react/tooltip"
         }
       ]

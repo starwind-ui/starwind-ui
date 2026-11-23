@@ -3,11 +3,13 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+import CollapsiblePanel from "./CollapsiblePanel.svelte";
 import CollapsibleRoot from "./CollapsibleRoot.svelte";
 import CollapsibleTrigger from "./CollapsibleTrigger.svelte";
-import CollapsiblePanel from "./CollapsiblePanel.svelte";
+
 const Collapsible = { Root: CollapsibleRoot, Trigger: CollapsibleTrigger, Panel: CollapsiblePanel };
-export { Collapsible, CollapsibleRoot, CollapsibleTrigger, CollapsiblePanel };
+
+export { Collapsible, CollapsiblePanel, CollapsibleRoot, CollapsibleTrigger };
 export default Collapsible;
 export type { CollapsibleOpenChangeDetails } from "@starwind-ui/runtime";
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";

@@ -6,17 +6,17 @@ import type {
   StyledOutputRenderNode,
   StyledOutputRepeatNode,
   StyledOutputValueExpression,
-} from '../../../styled-output-model/index.js';
-import { getComponentReferenceName } from './component-discovery.js';
-import { ASTRO_FRAMEWORK } from './constants.js';
+} from "../../../styled-output-model/index.js";
+import { getComponentReferenceName } from "./component-discovery.js";
+import { ASTRO_FRAMEWORK } from "./constants.js";
 import {
   escapeTemplateText,
   formatObjectKey,
   indent,
   isForFramework,
   isIdentifier,
-} from './formatting.js';
-import { getPrimitiveAliasForNode } from './primitive-helpers.js';
+} from "./formatting.js";
+import { getPrimitiveAliasForNode } from "./primitive-helpers.js";
 
 export function renderNodes(
   nodes: StyledOutputRenderNode[],
@@ -75,7 +75,8 @@ function renderRepeatNode(
   primitiveAliases: Record<string, string>,
 ): string {
   const renderedChildren = renderNodes(node.children, level + 2, primitiveAliases);
-  const indexParameter = node.index && renderedChildren.includes(node.index) ? `, ${node.index}` : "";
+  const indexParameter =
+    node.index && renderedChildren.includes(node.index) ? `, ${node.index}` : "";
 
   return `${indent(level)}{
 ${indent(level + 1)}${node.each}.map((${node.item}${indexParameter}) => (
@@ -125,10 +126,7 @@ function renderElementNode(
   return [comments, tag].filter(Boolean).join("\n");
 }
 
-function renderLeadingComments(
-  comments: StyledOutputComment[],
-  level: number,
-): string {
+function renderLeadingComments(comments: StyledOutputComment[], level: number): string {
   return comments
     .filter((comment) => isForFramework(comment, ASTRO_FRAMEWORK))
     .map((comment) => `${indent(level)}{/* ${comment.value} */}`)

@@ -500,7 +500,9 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   );
   expect(breadcrumbSeparator).toContain('role="presentation"');
   expect(breadcrumbSeparator).toContain('aria-hidden="true"');
-  expect(breadcrumbSeparator).toContain("<ChevronRight />");
+  expect(breadcrumbSeparator).toMatch(
+    /\{children \?\? \(\s*<ChevronRight\s+className="rtl:rotate-180"\s*\/>\s*\)\}/,
+  );
   expect(breadcrumbEllipsis).toContain('import { IconDots as Dots } from "@tabler/icons-react";');
   expect(breadcrumbEllipsis).toContain("icon?: React.ReactNode;");
   expect(breadcrumbEllipsis).toContain("icon ??");

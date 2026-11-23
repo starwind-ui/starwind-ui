@@ -238,7 +238,7 @@ try {
   await unmount(app); await settle();
   detachedRoot.setAttribute("data-value","2"); await pause(60);
   snapshot = app.snapshot();
-  assert(snapshot.refs === 0 && snapshot.attachments === 0 && target.children.length === 0,"unmount owners");
+  assert(snapshot.refs === 0 && snapshot.attachments === 0 && target.children.length === 0 && calls.destroy === 1,"unmount owners and Runtime controller");
   assert(!detachedIndicator.hasAttribute("data-instant") && detachedIndicator.style.transform === transform && detachedValue.textContent === text,"observer or frame cleanup");
   result.cleanup = true;
 } catch(error) { result.error = error.stack ?? String(error); }

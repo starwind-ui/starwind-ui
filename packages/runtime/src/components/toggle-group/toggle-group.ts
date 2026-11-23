@@ -1,7 +1,9 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   type DynamicCollectionObserver,
   observeDynamicCollection,
 } from "../../internal/collection";
+import { readDirection, spatialDelta } from "../../internal/direction";
 import {
   assertHTMLElement,
   readBooleanAttribute,
@@ -9,7 +11,6 @@ import {
   readStringOrStringArrayAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { shared } from "../../internal/shared";
 import { createToggle, type ToggleInstance, type TogglePressedChangeDetails } from "../toggle";
 
@@ -398,7 +399,7 @@ class ToggleGroupController implements ToggleGroupInstance {
     if (key === "Home") return enabledIndexes[0] ?? -1;
     if (key === "End") return enabledIndexes.at(-1) ?? -1;
 
-    const direction = getKeyboardDirection(this.orientation, key);
+    const direction = getKeyboardDirection(this.orientation, key, readDirection(this.root));
     if (direction === 0) return -1;
 
     const enabledPosition = enabledIndexes.indexOf(currentIndex);
@@ -588,14 +589,18 @@ function isToggleDisabled(root: HTMLElement): boolean {
   );
 }
 
-function getKeyboardDirection(orientation: ToggleGroupOrientation, key: string): -1 | 0 | 1 {
+function getKeyboardDirection(
+  orientation: ToggleGroupOrientation,
+  key: string,
+  direction: "ltr" | "rtl",
+): -1 | 0 | 1 {
   if (orientation === "vertical") {
     if (key === "ArrowDown") return 1;
     if (key === "ArrowUp") return -1;
     return 0;
   }
 
-  if (key === "ArrowRight") return 1;
-  if (key === "ArrowLeft") return -1;
+  if (key === "ArrowRight") return spatialDelta(1, direction, "horizontal") as -1 | 1;
+  if (key === "ArrowLeft") return spatialDelta(-1, direction, "horizontal") as -1 | 1;
   return 0;
 }

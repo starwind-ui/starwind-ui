@@ -1,5 +1,5 @@
+import { type AlertDialogCase, verifyAlertDialogBrowser } from "./alert-dialog-browser.js";
 import type { DistConsumer } from "./dist-consumer.js";
-import { verifyAlertDialogBrowser, type AlertDialogCase } from "./alert-dialog-browser.js";
 
 export function verifyStyledAlertDialogBrowser(
   consumer: DistConsumer,

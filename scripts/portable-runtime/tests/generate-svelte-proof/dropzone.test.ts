@@ -21,9 +21,9 @@ it("generates all five contracted Dropzone parts", async () => {
   }
 });
 
+import { verifyDropzone } from "../../../../packages/svelte/tests/dropzone-browser.js";
 import { createStyledDropzoneConsumer } from "../../../../packages/svelte/tests/styled-dropzone-consumer.js";
 
-import { verifyDropzone } from "../../../../packages/svelte/tests/dropzone-browser.js";
 it("hydrates Dropzone files, native events, capture replacement and Field subscriptions", async () => {
   const consumer = await createStyledDropzoneConsumer(process.cwd());
   try {

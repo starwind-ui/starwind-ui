@@ -33,16 +33,22 @@ const PopoverPopup = React.forwardRef<HTMLDivElement, PopoverPopupProps>(functio
   const composedRef = useComposedRefs(forwardedRef, element);
   useIsomorphicLayoutEffect(() => {
     const node = element.current;
-    if (!node) return;
-    owner?.registerPlacement(node, {
-      "data-side": String(side),
-      "data-align": String(align),
-      "data-side-offset": String(sideOffset),
-      "data-avoid-collisions": String(avoidCollisions),
-      "data-collision-strategy": String(collisionStrategy),
-    });
-    return () => owner?.registerPlacement(node, null);
+    if (node)
+      owner?.registerPlacement(node, {
+        "data-side": String(side),
+        "data-align": String(align),
+        "data-side-offset": String(sideOffset),
+        "data-avoid-collisions": String(avoidCollisions),
+        "data-collision-strategy": String(collisionStrategy),
+      });
   }, [owner, side, align, sideOffset, avoidCollisions, collisionStrategy]);
+  // Unregister only on unmount so a placement change keeps the Runtime connection.
+  useIsomorphicLayoutEffect(() => {
+    const node = element.current;
+    return () => {
+      if (node) owner?.registerPlacement(node, null);
+    };
+  }, [owner]);
   return (
     <div
       {...props}

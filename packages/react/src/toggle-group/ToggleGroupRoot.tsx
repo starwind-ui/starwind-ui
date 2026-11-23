@@ -97,9 +97,6 @@ const ToggleGroupRoot = React.forwardRef<HTMLDivElement, ToggleGroupRootProps>(
           left.every((entry, index) => entry === right[index]))
       );
     }
-    function copyModel(value: string[]) {
-      return [...value];
-    }
     function disconnect() {
       const owned = connection.instance;
       connection.observer?.disconnect();

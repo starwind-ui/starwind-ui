@@ -8,6 +8,8 @@ import type {
 } from "../../../styled-output-model/index.js";
 import {
   collectStyledOutputNamedSlots,
+  getStyledOutputTypeParameters,
+  renderStyledTypeParameterDeclarations,
   usesStyledOutputDefaultSlot,
 } from "../../../styled-output-model/index.js";
 import type { RuntimeImportRewriteContext } from "../../../styled-runtime-imports.js";
@@ -25,15 +27,87 @@ import {
   mapReactPropName,
   toReactSlotPropName,
 } from "./formatting.js";
-import { collectPrimitiveComponents } from "./primitive-helpers.js";
 import { renderAlertDialogButtonControlSetup } from "./native-overlay.js";
+import { collectPrimitiveComponents } from "./primitive-helpers.js";
 import { renderReturn, renderValueExpression } from "./render-tree.js";
+
+/** Admitted components whose props follow the `as` element. Item keeps its fixed attribute types. */
+const ELEMENT_TYPED_AS_COMPONENTS = new Set(["AspectRatio"]);
+
+/** The default `as` element when the props follow the `as` element, else undefined. */
+export function getReactElementTypedAsDefault(
+  component: StyledOutputComponent,
+): string | undefined {
+  if (!ELEMENT_TYPED_AS_COMPONENTS.has(component.exportName)) return undefined;
+  const fail = (detail: string): never => {
+    throw new TypeError(`React Styled ${component.exportName}: ${detail}.`);
+  };
+  const field = component.props?.fields.find(
+    (entry) => entry.name === "as" && isForFramework(entry, REACT_FRAMEWORK),
+  );
+  const as = component.destructure?.props.find(
+    (entry) => entry.name === "as" && isForFramework(entry, REACT_FRAMEWORK),
+  );
+  const bases = (component.props?.extends ?? []).filter(
+    (entry) =>
+      isForFramework(entry, REACT_FRAMEWORK) &&
+      (entry.kind === "element-attributes" || entry.kind === "omit-element-attributes"),
+  );
+  if (field?.type !== "React.ElementType") fail("as must be a React.ElementType field");
+  if (!as?.defaultValue) fail("as needs a default element");
+  if (
+    bases.length !== 1 ||
+    bases[0]?.kind !== "element-attributes" ||
+    JSON.stringify(bases[0].element) !== as?.defaultValue
+  )
+    fail("the element attributes must match the default as element");
+  return as!.defaultValue;
+}
+
+/** Element attributes and the `as` field follow the type parameter T. */
+function projectElementTypedAsProps(props: StyledOutputProps): StyledOutputProps {
+  const ownKeys = props.fields
+    .filter((field) => isForFramework(field, REACT_FRAMEWORK))
+    .map((field) => JSON.stringify(field.name))
+    .join(" | ");
+  return {
+    ...props,
+    extends: props.extends.map((entry) =>
+      entry.kind === "element-attributes" && isForFramework(entry, REACT_FRAMEWORK)
+        ? {
+            kind: "raw",
+            code: `Omit<React.ComponentPropsWithoutRef<T>, ${ownKeys}>`,
+            targetScopes: entry.targetScopes,
+          }
+        : entry,
+    ),
+    fields: props.fields.map((field) =>
+      field.name === "as" && isForFramework(field, REACT_FRAMEWORK)
+        ? { ...field, type: "T" }
+        : field,
+    ),
+  };
+}
 
 export function renderProps(
   component: StyledOutputComponent,
   runtimeImportContext: RuntimeImportRewriteContext,
 ): string {
-  const props = component.props;
+  const asDefault = getReactElementTypedAsDefault(component);
+  const typeParameters = getStyledOutputTypeParameters(component);
+  if (asDefault && typeParameters)
+    throw new TypeError(
+      `React Styled ${component.exportName}: as typing cannot combine with type parameters.`,
+    );
+  const props =
+    asDefault && component.props ? projectElementTypedAsProps(component.props) : component.props;
+  const typeName = `${component.exportName}Props${
+    asDefault
+      ? `<T extends React.ElementType = ${asDefault}>`
+      : typeParameters
+        ? `<${renderStyledTypeParameterDeclarations(typeParameters)}>`
+        : ""
+  }`;
   const extendsParts = props ? renderPropsExtends(props, runtimeImportContext) : [];
   const extendsClause = extendsParts.join(" & ");
   const fieldLines = [
@@ -41,7 +115,7 @@ export function renderProps(
       .filter((field) => isForFramework(field, REACT_FRAMEWORK))
       .map(
         (field) =>
-          `  ${formatObjectKey(field.name)}${field.optional ? "?" : ""}: ${rewriteRuntimeTypeImportReferences(
+          `${field.comment ? `  // ${field.comment}\n` : ""}  ${formatObjectKey(field.name)}${field.optional ? "?" : ""}: ${rewriteRuntimeTypeImportReferences(
             field.type,
             runtimeImportContext,
           )};`,
@@ -52,22 +126,22 @@ export function renderProps(
   ];
 
   if (fieldLines.length === 0) {
-    const inlineType = `export type ${component.exportName}Props = ${extendsClause || "{}"};`;
+    const inlineType = `export type ${typeName} = ${extendsClause || "{}"};`;
     if (inlineType.length <= 100 || extendsParts.length === 0) return inlineType;
 
-    return `export type ${component.exportName}Props =
+    return `export type ${typeName} =
   ${renderWrappedExtends(extendsParts)};`;
   }
 
   const fields = `{\n${fieldLines.join("\n")}\n}`;
-  const inlineType = `export type ${component.exportName}Props = ${[extendsClause, fields]
+  const inlineType = `export type ${typeName} = ${[extendsClause, fields]
     .filter(Boolean)
     .join(" & ")};`;
 
   if (inlineType.length <= 100) return inlineType;
 
   if (extendsParts.length === 1) {
-    return `export type ${component.exportName}Props = ${extendsParts[0]} & {
+    return `export type ${typeName} = ${extendsParts[0]} & {
 ${fieldLines.join("\n")}
 };`;
   }
@@ -75,7 +149,7 @@ ${fieldLines.join("\n")}
   if (extendsParts.length > 0) {
     const fieldBody = fieldLines.map((line) => `  ${line}`).join("\n");
 
-    return `export type ${component.exportName}Props = ${renderWrappedExtends(extendsParts)} & {
+    return `export type ${typeName} = ${renderWrappedExtends(extendsParts)} & {
 ${fieldBody}
   };`;
   }

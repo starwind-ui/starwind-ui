@@ -1,6 +1,6 @@
-import { createSSRApp, h, type Component } from "vue";
-import { renderToString } from "vue/server-renderer";
 import { describe, expect, it } from "vitest";
+import { type Component, createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 import {
   ScrollArea,

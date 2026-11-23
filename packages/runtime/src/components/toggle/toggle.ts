@@ -1,3 +1,4 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
@@ -6,7 +7,6 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { shared } from "../../internal/shared";
 
 export type TogglePressedChangeReason = "none";

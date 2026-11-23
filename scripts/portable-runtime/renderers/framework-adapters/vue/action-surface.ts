@@ -1,7 +1,4 @@
 import { renderSimpleRoot } from "../../shared-recipes/simple/frame.js";
-import { projectVueAttributeAccess } from "./public-contract.js";
-
-const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 import { printVueFamilyIndex } from "./primitive/shared-fragments.js";

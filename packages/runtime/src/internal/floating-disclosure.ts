@@ -34,6 +34,8 @@ export type FloatingDisclosureLifecycleOptions<TRequest> = {
   ) => FloatingPositioner;
   getFloatingReference: () => HTMLElement | null;
   getOpen: () => boolean;
+  /** Returns the placement wrapper that must also pass pointer input through while closing. */
+  getPointerPassThroughWrapper?: () => HTMLElement | null;
   getPortalElement?: () => HTMLElement;
   getPortalTarget: () => HTMLElement;
   isOpenControlled?: () => boolean;
@@ -83,6 +85,11 @@ export function createFloatingDisclosureLifecycle<TRequest>(
     },
     root: options.root,
   });
+  portalSession.onDirectionChange(() => {
+    if (options.getOpen() && !options.isDestroyed()) {
+      void floatingPositioner?.update();
+    }
+  });
 
   const unregisterDismissal = () => {
     dismissalHandle?.destroy();
@@ -123,12 +130,14 @@ export function createFloatingDisclosureLifecycle<TRequest>(
   const position = (positionOptions: FloatingDisclosurePositionOptions = {}) => {
     if (!options.getOpen() || !portalSession.isReady()) return;
 
+    portalSession.syncDirection();
     void getFloatingPositioner(positionOptions)?.update();
   };
 
   const setupAutoUpdate = () => {
     if (!portalSession.isReady()) return;
-    getFloatingPositioner()?.startAutoUpdate();
+    // Scroll and resize recomputes copy the owner direction first.
+    getFloatingPositioner()?.startAutoUpdate({ onUpdate: portalSession.syncDirection });
   };
 
   const registerDismissal = () => {
@@ -236,6 +245,8 @@ export function createFloatingDisclosureLifecycle<TRequest>(
         options.renderState(false, nextCloseAbortController.signal);
         hideElementAfterAnimations(options.popup, {
           signal: nextCloseAbortController.signal,
+          passThroughPointerWhileEnding: true,
+          pointerPassThroughWrapper: options.getPointerPassThroughWrapper?.(),
           onHidden: () => {
             if (nextCloseAbortController.signal.aborted) return;
             floatingPositioner?.stopAutoUpdate();

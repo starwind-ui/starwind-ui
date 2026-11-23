@@ -8,7 +8,7 @@ export const simpleRecipeOperations: CommandOperations = {
     (prop.attribute ?? prop.name).replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase()),
   attribute: (name, expression) => `:${name}='${expression}'`,
   declareOwner: (factory) => `let owned: ReturnType<typeof ${factory}> | undefined;`,
-  lifecycle({ recipe, declaration, dispose, create, condition, commands }) {
+  lifecycle({ declaration, dispose, create, condition, commands }) {
     return `${declaration}
     function dispose() { ${dispose} }
     function connect() { dispose(); const element = rootRef.value; if (!element${condition ? ` || !${condition}` : ""}) return; ${create} }
@@ -16,7 +16,7 @@ export const simpleRecipeOperations: CommandOperations = {
     ${condition ? `watch(() => ${condition}, connect, { flush: 'post' });` : ""}
     ${commands.map((c) => `watch([${c.reads.map((r) => `() => ${r}`).join(", ")}], () => { ${c.body} }, { flush: 'post' });`).join("\n")}`;
   },
-  frame({ recipe, name, imports, fields, destructure, attrs, code }) {
+  frame({ recipe, imports, fields, attrs, code }) {
     return `<script setup lang="ts">
 import { ${imports} } from '@starwind-ui/runtime/${recipe.runtime}';
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { spinner } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -24,7 +24,6 @@ defineSlots<{}>();
     stroke-width="2"
     stroke-linecap="round"
     stroke-linejoin="round"
-    aria-hidden="true"
     role="status"
     aria-label="Loading"
     :class="spinner({ class: className })"

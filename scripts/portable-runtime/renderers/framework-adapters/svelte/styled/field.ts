@@ -2,10 +2,10 @@ import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
 } from "../../../styled-output-model/index.js";
-import type { SvelteStyledComponentProjection, SvelteStyledRenderOptions } from "./types.js";
 import { sveltePrimitiveImport } from "./imports.js";
-import { supportsSvelteScope } from "./scope.js";
 import { specializeSvelteStyledInput } from "./input.js";
+import { supportsSvelteScope } from "./scope.js";
+import type { SvelteStyledComponentProjection, SvelteStyledRenderOptions } from "./types.js";
 export function specializeSvelteStyledField(
   group: StyledOutputComponentGroup,
   component: StyledOutputComponent,

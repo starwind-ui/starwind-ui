@@ -39,6 +39,7 @@ import {
   Select as StyledSelect,
   SelectContent as StyledSelectContent,
   SelectTrigger as StyledSelectTrigger,
+  SelectValue as StyledSelectValue,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/select";
 import { testAcceptedModelPublication } from "../accepted-model-publication.js";
 
@@ -97,6 +98,49 @@ describe("Vue Select public behavior", () => {
       expect(events).not.toHaveBeenCalled();
     },
   );
+
+  it("shows the selected label or placeholder through the Styled Select Value", async () => {
+    const items = [
+      { label: "Apple", value: "apple" },
+      { label: "Banana", value: "banana" },
+    ];
+    const tree = (rootProps: Record<string, unknown>) => () =>
+      renderSelect(rootProps, items, { disabled: true }, () =>
+        h(SelectTrigger, null, () => h(StyledSelectValue, { placeholder: "Pick fruit" })),
+      );
+    const styledValue = (host: HTMLElement) =>
+      host.querySelector<HTMLElement>('[data-slot="select-value"]')!;
+    const mount = (render: () => VNode, host: HTMLElement, hydrate: boolean) => {
+      const app = hydrate ? createSSRApp({ render }) : createApp({ render });
+      const warnings: string[] = [];
+      app.config.warnHandler = (message) => warnings.push(message);
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      return warnings;
+    };
+
+    const emptyHtml = await renderToString(createSSRApp({ render: tree({}) }));
+    expect(emptyHtml).toMatch(/data-slot="select-value"[^>]*>(?:<!--\[-->)?Pick fruit/);
+
+    const hydrated = appendHost();
+    hydrated.innerHTML = await renderToString(
+      createSSRApp({ render: tree({ defaultValue: "banana" }) }),
+    );
+    const warnings = mount(tree({ defaultValue: "banana" }), hydrated, true);
+    await frame();
+    expect(styledValue(hydrated).textContent).toBe("Banana");
+    expect(warnings).toEqual([]);
+
+    const clientSelected = appendHost();
+    mount(tree({ defaultValue: "banana" }), clientSelected, false);
+    await frame();
+    expect(styledValue(clientSelected).textContent).toBe("Banana");
+
+    const clientEmpty = appendHost();
+    mount(tree({}), clientEmpty, false);
+    await frame();
+    expect(styledValue(clientEmpty).textContent).toBe("Pick fruit");
+  });
 
   it("refreshes selected text owned by a nested component", async () => {
     const text = ref("Apple");

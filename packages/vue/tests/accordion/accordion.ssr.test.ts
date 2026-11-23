@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   AccordionHeader,
   AccordionItem,
@@ -9,6 +5,9 @@ import {
   AccordionRoot,
   AccordionTrigger,
 } from "@starwind-ui/vue/accordion";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Accordion as StyledAccordion,
   AccordionContent as StyledAccordionContent,

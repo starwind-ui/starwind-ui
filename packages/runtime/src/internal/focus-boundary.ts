@@ -87,7 +87,7 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
   const handleFocusIn = (event: FocusEvent): void => {
     if (!isDocumentNode(event.target, ownerDocument) || !containsTarget(event.target)) return;
     cancelPendingCheck();
-    if (!(event.target instanceof (ownerDocument.defaultView?.HTMLElement ?? HTMLElement))) return;
+    if (!isDocumentHTMLElement(event.target, ownerDocument)) return;
 
     const focusOwner = event.target as HTMLElement;
     if (isEligibleFocusOwner(focusOwner, ownerDocument, { allowNegativeTabIndex: true })) {
@@ -143,19 +143,36 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
     pressEndTimer = null;
   };
 
+  const removePressListeners = (): void => {
+    ownerDocument.removeEventListener("pointerup", handlePressRelease, true);
+    ownerDocument.removeEventListener("pointercancel", handlePressRelease, true);
+    ownerDocument.removeEventListener("click", handlePressClick, true);
+    ownerDocument.removeEventListener("keydown", handlePressKeyDown, true);
+  };
+
+  const finishPress = (): void => {
+    if (!pressActive) return;
+
+    clearPressEndTimer();
+    pressActive = false;
+    removePressListeners();
+  };
+
   const endPress = (delay: number): void => {
     clearPressEndTimer();
     pressEndTimer = globalThis.setTimeout(() => {
       pressEndTimer = null;
-      pressActive = false;
-      ownerDocument.removeEventListener("pointerup", handlePressRelease, true);
-      ownerDocument.removeEventListener("pointercancel", handlePressRelease, true);
-      ownerDocument.removeEventListener("click", handlePressClick, true);
+      finishPress();
     }, delay);
   };
 
   const handlePressRelease = (): void => endPress(COMPATIBILITY_MOUSE_EVENT_WINDOW_MS);
   const handlePressClick = (): void => endPress(0);
+  // A browser can send key input before the timer that ends a press. A key press means the press
+  // is over, so a keyboard focus move that follows it is a real departure.
+  const handlePressKeyDown = (event: KeyboardEvent): void => {
+    if (!event.repeat) finishPress();
+  };
 
   const handlePointerDown = (event: PointerEvent): void => {
     if (!isDocumentNode(event.target, ownerDocument) || !containsTarget(event.target)) return;
@@ -165,6 +182,7 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
     ownerDocument.addEventListener("pointerup", handlePressRelease, true);
     ownerDocument.addEventListener("pointercancel", handlePressRelease, true);
     ownerDocument.addEventListener("click", handlePressClick, true);
+    ownerDocument.addEventListener("keydown", handlePressKeyDown, true);
   };
 
   const removeSurfaceListeners = (surface: HTMLElement): void => {
@@ -216,11 +234,7 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
       pendingCheck = false;
       pendingCheckVersion += 1;
       clearSuppression();
-      clearPressEndTimer();
-      pressActive = false;
-      ownerDocument.removeEventListener("pointerup", handlePressRelease, true);
-      ownerDocument.removeEventListener("pointercancel", handlePressRelease, true);
-      ownerDocument.removeEventListener("click", handlePressClick, true);
+      finishPress();
       observedSurfaces.forEach(removeSurfaceListeners);
       observedSurfaces.clear();
       lastFocusOwner = null;
@@ -300,5 +314,19 @@ function isSequentialRadioTabStop(element: HTMLElement, ownerDocument: Document)
 
 function isDocumentNode(value: EventTarget | null, ownerDocument: Document): value is Node {
   const NodeConstructor = ownerDocument.defaultView?.Node ?? Node;
-  return value instanceof NodeConstructor;
+  return (
+    (value instanceof NodeConstructor || value instanceof Node) &&
+    (value === ownerDocument || value.ownerDocument === ownerDocument)
+  );
+}
+
+function isDocumentHTMLElement(
+  value: EventTarget | null,
+  ownerDocument: Document,
+): value is HTMLElement {
+  const HTMLElementConstructor = ownerDocument.defaultView?.HTMLElement ?? HTMLElement;
+  return (
+    (value instanceof HTMLElementConstructor || value instanceof HTMLElement) &&
+    value.ownerDocument === ownerDocument
+  );
 }

@@ -5,17 +5,14 @@ import vm from "node:vm";
 import { describe, expect, it } from "vitest";
 
 import {
-  ZAG_VUE_COMPARATOR_VERSION,
-  getZagVueSizeComparatorPlan,
-  zagVueLiveExpectedResolvedVersions,
-  validateLiveZagVueResolvedVersions,
-  STARWIND_VUE_MEASUREMENT_LABELS,
   buildNamespaceImportEntry,
-  buildStarwindVueEntry,
   buildStarwindVueBrowserMeasurementRows,
+  buildStarwindVueEntry,
   buildStarwindVueRootEntry,
   buildZagVueEntry,
   existingPublicSupportMappingSnapshot,
+  getZagVueSizeComparatorPlan,
+  STARWIND_VUE_MEASUREMENT_LABELS,
   starwindVueColdImportRows,
   starwindVueManualFacades,
   starwindVueRootHeadlineComponents,
@@ -24,14 +21,17 @@ import {
   starwindVueStyledExclusions,
   starwindVueThemeHelperRow,
   starwindZagVueOverlapMappings,
+  validateLiveZagVueResolvedVersions,
+  validateZagVueResolvedVersions,
+  ZAG_VUE_COMPARATOR_VERSION,
+  zagVueAdapterPlusMachineRows,
   zagVueComparatorInstallSpecifiers,
   zagVueComparatorPackages,
   zagVueExpectedResolvedVersions,
-  zagVueAdapterPlusMachineRows,
   zagVueInfrastructurePackages,
+  zagVueLiveExpectedResolvedVersions,
   zagVueMachinePackages,
   zagVueMatchedSupportRow,
-  validateZagVueResolvedVersions,
 } from "../package-size-vue-plan.mjs";
 import {
   vueManualPrimitiveComponents,
@@ -47,7 +47,7 @@ const packageManifest = JSON.parse(
 
 describe("Starwind Vue size plan", () => {
   it("matches the authoritative Primitive inventory and package exports", () => {
-    expect(starwindVueRuntimeComponents).toHaveLength(36);
+    expect(starwindVueRuntimeComponents).toHaveLength(37);
     expect(starwindVueRuntimeComponents).toEqual([...vueRuntimePrimitiveComponents].sort());
     expect(starwindVueManualFacades).toEqual(["theme"]);
     expect(starwindVueManualFacades).toEqual([...vueManualPrimitiveComponents].sort());
@@ -61,14 +61,14 @@ describe("Starwind Vue size plan", () => {
       .filter((subpath) => subpath !== ".")
       .sort();
     const manifestSubpaths = Object.keys(packageManifest.exports)
-      .filter((subpath) => subpath !== ".")
+      .filter((subpath) => subpath !== "." && subpath !== "./package.json")
       .sort();
     expect(plannedSubpaths).toEqual(inventorySubpaths);
     expect(plannedSubpaths).toEqual(manifestSubpaths);
   });
 
   it("defines one cold import per Runtime family and a separate Theme helper", () => {
-    expect(starwindVueColdImportRows).toHaveLength(36);
+    expect(starwindVueColdImportRows).toHaveLength(37);
     expect(starwindVueColdImportRows.map(({ component }) => component)).toEqual(
       starwindVueRuntimeComponents,
     );
@@ -91,7 +91,7 @@ describe("Starwind Vue size plan", () => {
       STARWIND_VUE_MEASUREMENT_LABELS.combined,
       STARWIND_VUE_MEASUREMENT_LABELS.completeCatalog,
     ]);
-    expect(rows.coldImportRows).toHaveLength(37);
+    expect(rows.coldImportRows).toHaveLength(38);
     expect(rows.coldImportRows.slice(0, -1).map(({ component }) => component)).toEqual(
       starwindVueRuntimeComponents,
     );
@@ -101,8 +101,8 @@ describe("Starwind Vue size plan", () => {
     expect(rows.matchedRows.at(-1).componentCount).toBe(30);
   });
 
-  it("matches all 54 Styled roots and records Image as Astro-only", () => {
-    expect(starwindVueStyledComponents).toHaveLength(54);
+  it("matches all 55 Styled roots and records Image as Astro-only", () => {
+    expect(starwindVueStyledComponents).toHaveLength(55);
     expect(starwindVueStyledComponents).toEqual([...vueStyledComponents].sort());
     expect(starwindVueStyledExclusions).toEqual([
       { component: "image", reason: "Astro-only Styled contract" },
@@ -263,7 +263,7 @@ describe("existing public comparison map", () => {
         ...(base ? { base } : {}),
       }));
     expect(currentMappings).toEqual(existingPublicSupportMappingSnapshot);
-    expect(currentMappings).toHaveLength(31);
+    expect(currentMappings).toHaveLength(32);
     expect(currentMappings.filter(({ zag }) => zag)).toHaveLength(28);
   });
 });

@@ -3,7 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
 import NavigationMenuArrow from "./NavigationMenuArrow.svelte";
 import NavigationMenuContent from "./NavigationMenuContent.svelte";
 import NavigationMenuIcon from "./NavigationMenuIcon.svelte";
@@ -16,6 +15,7 @@ import NavigationMenuPositioner from "./NavigationMenuPositioner.svelte";
 import NavigationMenuRoot from "./NavigationMenuRoot.svelte";
 import NavigationMenuTrigger from "./NavigationMenuTrigger.svelte";
 import NavigationMenuViewport from "./NavigationMenuViewport.svelte";
+
 const NavigationMenu = {
   Arrow: NavigationMenuArrow,
   Content: NavigationMenuContent,
@@ -30,6 +30,7 @@ const NavigationMenu = {
   Trigger: NavigationMenuTrigger,
   Viewport: NavigationMenuViewport,
 };
+
 export {
   NavigationMenu,
   NavigationMenuArrow,
@@ -46,10 +47,10 @@ export {
   NavigationMenuViewport,
 };
 export default NavigationMenu;
-export type {
-  ButtonChildProps,
-  ButtonChildPayload,
-  TriggerChildProps,
-  TriggerChildPayload,
-} from "../button/ButtonRoot.svelte";
 export type { NavigationMenuValue, NavigationMenuValueChangeDetails } from "@starwind-ui/runtime";
+export type {
+  ButtonChildPayload,
+  ButtonChildProps,
+  TriggerChildPayload,
+  TriggerChildProps,
+} from "../button/ButtonRoot.svelte";

@@ -9,12 +9,12 @@
 
 <script lang="ts">
   let {
-    "orientation": orientation = "horizontal",
-    "opts": opts,
-    "plugins": plugins,
-    "setApi": setApi,
+    orientation = "horizontal",
+    opts,
+    plugins,
+    setApi,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: CarouselProps = $props();
 </script>

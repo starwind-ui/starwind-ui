@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 import type { TabsValue, TabsValueChangeDetails } from "@starwind-ui/vue/tabs";
 import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTab } from "@starwind-ui/vue/tabs";
+import { ref } from "vue";
 import {
   Tabs as StyledTabs,
   TabsContent as StyledTabsContent,

@@ -1,4 +1,5 @@
 import { printSvelteRefAttachment } from "./attachments.js";
+
 type OverlayPortalFacts = {
   displayName: string;
   parts: { portal?: { name: string } };
@@ -6,7 +7,6 @@ type OverlayPortalFacts = {
   exports: { root: string };
   attrs: { root: string; portal?: string };
 };
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
 
 export function printSvelteOverlayPortal(
   facts: OverlayPortalFacts,
@@ -15,8 +15,7 @@ export function printSvelteOverlayPortal(
   preserveFocus = false,
 ): string {
   const part = facts.parts.portal!;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { createPortalPlacement } from "../_internal/portal-placement.js";
   import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
   import { untrack, type Snippet } from "svelte";

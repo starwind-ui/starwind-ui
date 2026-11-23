@@ -6,7 +6,6 @@
 "use client";
 
 import * as React from "react";
-import type { RefCapableElementProps } from "../internal/compose-refs";
 import {
   getAsChildElement,
   getElementRef,

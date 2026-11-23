@@ -12,20 +12,20 @@
 
 <script lang="ts">
   let {
-    "variant": variant,
-    "size": size,
-    "defaultPressed": defaultPressed,
-    "disabled": disabled = false,
-    "nativeButton": nativeButton,
-    "syncGroup": syncGroup,
-    "value": value,
+    variant,
+    size,
+    defaultPressed,
+    disabled = false,
+    nativeButton,
+    syncGroup,
+    value,
     "data-slot": dataSlot = "toggle",
     "class": className,
     pressed = $bindable(),
     "pressed": commandValue,
-    "ref": ref,
-    "onPressedChange": onPressedChange,
-    "children": children,
+    ref,
+    onPressedChange,
+    children,
     "pressed": commandPressed,
     ...rest
   }: ToggleProps = $props();

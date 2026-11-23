@@ -11,10 +11,10 @@
 
 <script lang="ts">
   let {
-    "variant": variant,
+    variant,
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldLegendProps = $props();
 </script>

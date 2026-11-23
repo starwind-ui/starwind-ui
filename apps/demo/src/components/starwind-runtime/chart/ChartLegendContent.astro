@@ -1,0 +1,20 @@
+---
+import ChartPrimitive from "@starwind-ui/astro/chart";
+import { chartLegend, chartLegendIcon, chartLegendItem, chartLegendSwatch } from "./variants";
+
+type Props = Omit<import("@starwind-ui/astro/chart").ChartLegendProps, "children" | "content">;
+
+const { class: className, slot: _slot, ...rest } = Astro.props;
+---
+
+<ChartPrimitive.Legend {...rest} class={chartLegend({ class: className })} data-slot="chart-legend">
+  <ChartPrimitive.LegendItems>
+    <ChartPrimitive.LegendItem class={chartLegendItem()}>
+      <ChartPrimitive.LegendIcon class={chartLegendIcon()} />
+
+      <ChartPrimitive.LegendSwatch class={chartLegendSwatch()} />
+
+      <ChartPrimitive.LegendLabel />
+    </ChartPrimitive.LegendItem>
+  </ChartPrimitive.LegendItems>
+</ChartPrimitive.Legend>

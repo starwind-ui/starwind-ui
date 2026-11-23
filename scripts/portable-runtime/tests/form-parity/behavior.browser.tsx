@@ -1,26 +1,26 @@
+import {
+  createForm,
+  type FormExternalErrorOptions,
+  type FormExternalErrors,
+  type FormOptions,
+} from "@starwind-ui/runtime/form";
 import * as React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { createApp, h, shallowRef, nextTick } from "vue";
-import { mount, unmount, tick } from "svelte";
-import { describe, it, expect, vi } from "vitest";
+import { mount, tick, unmount } from "svelte";
+import { describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick, shallowRef } from "vue";
+import ReactStyled from "../../../../apps/react-demo/src/components/starwind-runtime/form/Form";
+import VueStyled from "../../../../apps/vue-demo/src/components/starwind-runtime/form/Form.vue";
 import {
   FormRoot as ReactForm,
   FormErrorSummary as ReactSummary,
 } from "../../../../packages/react/src/form";
-import ReactStyled from "../../../../apps/react-demo/src/components/starwind-runtime/form/Form";
 import {
   FormRoot as VueForm,
   FormErrorSummary as VueSummary,
 } from "../../../../packages/vue/src/form";
-import VueStyled from "../../../../apps/vue-demo/src/components/starwind-runtime/form/Form.vue";
 import SvelteFixture from "./Fixture.svelte";
-import {
-  createForm,
-  type FormOptions,
-  type FormExternalErrors,
-  type FormExternalErrorOptions,
-} from "@starwind-ui/runtime/form";
 
 type Props = {
   options?: FormOptions;
@@ -182,7 +182,9 @@ for (const framework of ["react", "vue", "svelte"])
           expect(nativeSubmit).toHaveBeenCalledTimes(1);
           expect(submitted).toHaveBeenCalledTimes(1);
           await update({ errors: { email: "Reset clears server error" } });
-          await vi.waitFor(() => expect(summary.textContent).toContain("Reset clears server error"));
+          await vi.waitFor(() =>
+            expect(summary.textContent).toContain("Reset clears server error"),
+          );
           form.reset();
           await flushFormTasks();
           await vi.waitFor(() => expect(summary.hidden).toBe(true));

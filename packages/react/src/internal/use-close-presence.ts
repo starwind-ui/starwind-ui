@@ -165,7 +165,7 @@ function waitForElementAnimations(
 ): void {
   const animations = getElementAnimations(element);
   if (animations.length > 0) {
-    Promise.allSettled(animations.map((animation) => animation.finished)).then(onComplete);
+    void Promise.allSettled(animations.map((animation) => animation.finished)).then(onComplete);
     return;
   }
 

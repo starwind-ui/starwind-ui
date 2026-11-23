@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as TooltipPrimitive from "@starwind-ui/vue/tooltip";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { tooltipCaret, tooltipContent, tooltipPositioner } from "./variants";
 
 defineOptions({ inheritAttrs: false });

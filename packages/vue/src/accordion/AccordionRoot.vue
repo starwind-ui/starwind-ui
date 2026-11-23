@@ -5,7 +5,7 @@ import {
   type AccordionValueChangeDetails,
   createAccordion,
 } from "@starwind-ui/runtime/accordion";
-import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
@@ -21,7 +21,7 @@ const emit = defineEmits<{
   valueChange: [value: AccordionValue, detail: AccordionValueChangeDetails];
   "update:modelValue": [value: AccordionValue];
 }>();
-defineSlots<{ default?: (props: { value: AccordionValue }) => unknown }>();
+defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 const initialModel = copyModel(props.modelValue);
@@ -32,9 +32,6 @@ const defaultValueAttribute = Array.isArray(initialValue)
   ? JSON.stringify(initialValue)
   : initialValue;
 const uncontrolledValue = ref<AccordionValue>(copyModel(initialValue));
-const renderedValue = computed(() =>
-  props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value,
-);
 const connection: {
   instance?: ReturnType<typeof createAccordion>;
   unsubscribe?: () => void;
@@ -125,6 +122,6 @@ function isModelEqual(
     :data-collapsible="String(props.collapsible)"
     data-state="closed"
   >
-    <slot :value="renderedValue" />
+    <slot />
   </div>
 </template>

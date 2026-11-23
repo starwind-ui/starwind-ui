@@ -53,6 +53,8 @@ import {
   TooltipDemo,
   VideoDemo,
 } from "@/components/demos";
+import DirectionInitScript from "@/components/nav/DirectionInitScript.astro";
+import DirectionToggle from "@/components/nav/DirectionToggle.astro";
 import {
   Collapsible,
   CollapsibleContent,
@@ -148,6 +150,7 @@ const projects = [
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <ThemeInitScript />
+    <DirectionInitScript />
   </head>
 
   <body class="min-h-lvh">
@@ -255,6 +258,7 @@ const projects = [
           <div class="flex-1">
             <h1 class="text-lg font-semibold">Nested Menus Demo</h1>
           </div>
+          <DirectionToggle />
           <ThemeToggle />
         </header>
 

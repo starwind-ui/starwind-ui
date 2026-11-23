@@ -1,0 +1,12 @@
+{
+  "impact": "source",
+  "primitives": {
+    "alert-dialog": "minor",
+    "checkbox": "minor",
+    "combobox": "minor",
+    "dialog": "minor",
+    "drawer": "minor",
+    "select": "minor",
+    "tabs": "minor"
+  }
+}

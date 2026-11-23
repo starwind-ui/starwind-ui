@@ -1,3 +1,8 @@
+import { execFile } from "node:child_process";
+import { symlink } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { promisify } from "node:util";
+
 import {
   comboboxRuntimeAdapterContract,
   contextMenuRuntimeAdapterContract,
@@ -24,6 +29,7 @@ import {
   expect,
   expectAttributeCount,
   generateAstroPrimitiveWrappers,
+  generateStarwindAstroWrappers,
   it,
   mkdir,
   path,
@@ -32,6 +38,7 @@ import {
   readGeneratedFile,
   readGeneratedTree,
   removedAttr,
+  starwindStyledContracts,
   writeFile,
 } from "./shared.js";
 
@@ -93,6 +100,73 @@ async function writeAstroContextMenuSpecializedAdapterSpec(
 }
 
 export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void {
+  it("typechecks generated Astro Toast templates with optional native direction", async () => {
+    const root = getTempRoot();
+    await generateAstroPrimitiveWrappers({ outputDir: "primitive", repoRoot: root });
+    await generateStarwindAstroWrappers({
+      contracts: starwindStyledContracts.filter(({ component }) => component === "toast"),
+      outputDir: "styled",
+      primitiveOutputDir: "primitive",
+      repoRoot: root,
+    });
+    const demo = createRequire(path.resolve("apps/demo/package.json"));
+    for (const name of [
+      "astro",
+      "@astrojs/check",
+      "typescript",
+      "@tabler/icons",
+      "tailwind-variants",
+    ]) {
+      const dest = path.join(root, "node_modules", name);
+      await mkdir(path.dirname(dest), { recursive: true });
+      await symlink(path.resolve("apps/demo/node_modules", name), dest, "junction");
+    }
+    await writeFile(
+      path.join(root, "tsconfig.json"),
+      JSON.stringify({
+        extends: "astro/tsconfigs/strict",
+        include: [
+          ".astro/types.d.ts",
+          "src/**/*.astro",
+          "primitive/toast/**/*.astro",
+          "styled/toast/**/*.astro",
+        ],
+        compilerOptions: {
+          paths: {
+            "@starwind-ui/runtime": [path.resolve("packages/runtime/src/index.ts")],
+            "@starwind-ui/runtime/*": [path.resolve("packages/runtime/src/components/*/index.ts")],
+          },
+        },
+      }),
+    );
+    await mkdir(path.join(root, "src/pages"), { recursive: true });
+    await writeFile(
+      path.join(root, "src/pages/index.astro"),
+      `---
+import ToastPrimitive from "../../primitive/toast";
+import ToastTemplate from "../../styled/toast/ToastTemplate.astro";
+import Toaster from "../../styled/toast/Toaster.astro";
+---
+<ToastPrimitive.Template />
+<ToastPrimitive.Template dir="ltr" />
+<ToastPrimitive.Template dir="rtl" />
+<ToastPrimitive.Template dir="auto" />
+<ToastTemplate />
+<ToastTemplate dir="ltr" />
+<ToastTemplate dir="rtl" />
+<ToastTemplate dir="auto" />
+<Toaster />
+`,
+    );
+    const astro = path.join(path.dirname(demo.resolve("astro/package.json")), "bin/astro.mjs");
+    const { stdout } = await promisify(execFile)(process.execPath, [astro, "check"], {
+      cwd: root,
+    }).catch((error) => {
+      throw new Error(error.stdout + error.stderr, { cause: error });
+    });
+    expect(stdout).toContain("0 errors");
+  });
+
   it("generates unstyled Astro primitive wrappers for framework-level runtime parts", async () => {
     const tempRoot = getTempRoot();
     const staleBadgeDir = path.join(tempRoot, "generated/primitives/astro/badge");
@@ -244,6 +318,13 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const progressLabel = await readGeneratedFile(outputRoot, "progress/ProgressLabel.astro");
     const progressIndex = await readGeneratedFile(outputRoot, "progress/index.ts");
     const menuRoot = await readGeneratedFile(outputRoot, "menu/MenuRoot.astro");
+    // Primitive Menu floating parts keep the bottom side default and emit no side intent hook.
+    for (const file of ["menu/MenuPopup.astro", "menu/MenuPositioner.astro"]) {
+      const floatingPart = await readGeneratedFile(outputRoot, file);
+      expect(floatingPart).toContain('side = "bottom"');
+      expect(floatingPart).toContain("data-side={side}");
+      expect(floatingPart).not.toContain("data-sw-menu-side-intent");
+    }
     const menuTrigger = await readGeneratedFile(outputRoot, "menu/MenuTrigger.astro");
     const menuItem = await readGeneratedFile(outputRoot, "menu/MenuItem.astro");
     const menuLinkItem = await readGeneratedFile(outputRoot, "menu/MenuLinkItem.astro");
@@ -435,6 +516,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       "avatar",
       "button",
       "carousel",
+      "chart",
       "checkbox",
       "checkbox-group",
       "collapsible",
@@ -1259,7 +1341,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(toastViewport).toContain("data-limit={limit}");
     expect(toastViewport).toContain("data-duration={duration}");
     expect(toastViewport).toContain('aria-live="polite"');
-    expect(toastTemplate).toContain("<template data-sw-toast-template={variant}>");
+    expect(toastTemplate).toContain("<template data-sw-toast-template={variant} dir={dir}>");
     expect(toastRoot).toContain("data-sw-toast-root");
     expect(toastRoot).toContain(
       'type Variant = "default" | "error" | "info" | "loading" | "success" | "warning";',
@@ -1358,7 +1440,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     );
     expect(toggleRoot).toContain("data-sw-toggle");
     expect(toggleRoot).toContain(
-      'const defaultPressedAttribute = pressed === undefined && defaultPressed ? "true" : undefined;',
+      'const defaultPressedAttribute = defaultPressed ? "true" : undefined;',
     );
     expect(toggleRoot).toContain("data-default-pressed={defaultPressedAttribute}");
     expect(toggleRoot).toContain("data-default-pressed");
@@ -1579,7 +1661,9 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       createTsHeader(generatedBy),
     );
     expect(
-      withoutMenuRuntimeTypeFacade(await readGeneratedTree(path.join(specOutputRoot, "menu"))),
+      withoutMenuRuntimeTypeFacade(
+        await readFormattedGeneratedTree(path.join(specOutputRoot, "menu")),
+      ),
     ).toEqual(withoutMenuRuntimeTypeFacade(checkedInMenuTree));
 
     await generateAstroPrimitiveWrappers({
@@ -1587,7 +1671,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       repoRoot: tempRoot,
     });
     const generatedMenuDir = path.join(generatedOutputRoot, "menu");
-    const generatedMenuTree = await readGeneratedTree(generatedMenuDir);
+    const generatedMenuTree = await readFormattedGeneratedTree(generatedMenuDir);
     expect(withoutMenuRuntimeTypeFacade(generatedMenuTree)).toEqual(
       withoutMenuRuntimeTypeFacade(checkedInMenuTree),
     );

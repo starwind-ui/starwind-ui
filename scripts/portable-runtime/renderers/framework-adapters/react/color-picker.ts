@@ -326,9 +326,14 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
   );
   const contextValue = React.useMemo(() => ({ initialState }), [initialState]);
 
+  const directionCapture = React.useRef<ReturnType<typeof captureProjectedDirection>>(undefined);
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
+      if (!connectionRef.current) {
+        directionCapture.current?.disconnect();
+        directionCapture.current = node ? captureProjectedDirection(node, initialRootProjectionRef.current?.attributes.dir) : undefined;
+      }
       return setRef(forwardedRef, node);
     },
     [forwardedRef],
@@ -341,6 +346,7 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
     const structure = structureRef.current ??= colorPickerStructure(root);
     const connection = connectColorPicker(root, {
       seed: seedRef.current,
+      projectedDirection: directionCapture.current,
       read: () => incomingRef.current,
       restoreAuthoredOwnership: structure.restoreOwnership,
       captureAuthoredOwnership: structure.captureOwnership,

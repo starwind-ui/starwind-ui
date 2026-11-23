@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
-import { getPrimitiveDiscoveryResults } from "../../src/utils/primitive-discovery.js";
 import * as primitives from "../../src/utils/primitive-component.js";
+import { getPrimitiveDiscoveryResults } from "../../src/utils/primitive-discovery.js";
 
 vi.mock("../../src/utils/primitive-component.js");
 

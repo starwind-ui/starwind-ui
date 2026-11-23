@@ -151,10 +151,7 @@ const ToggleRoot = React.forwardRef<HTMLButtonElement | HTMLSpanElement, ToggleR
         ...{
           "data-sw-toggle": "",
           "data-sw-part": "root",
-          "data-default-pressed":
-            !isGroupOwned && inputs.current.pressed === undefined && initialDefault
-              ? "true"
-              : undefined,
+          "data-default-pressed": !isGroupOwned && initialDefault ? "true" : undefined,
           "data-native": inputs.current.nativeButton ? undefined : "false",
           "data-sync-group": inputs.current.syncGroup,
           "data-value": inputs.current.value,

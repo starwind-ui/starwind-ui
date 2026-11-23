@@ -2,6 +2,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import semver from "semver";
 
 import { createSpawnCommand } from "./command-process.mjs";
 import {
@@ -11,6 +12,7 @@ import {
   loadVueBetaRegistryBaseline,
 } from "./release-packages.mjs";
 import { loadPublicationPlan } from "./release-publication-plan.mjs";
+import { GRADUATED_BETA_PACKAGES } from "./runtime-release-policy.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
@@ -64,7 +66,26 @@ export function createCommandSystem({ cwd = ROOT_DIR, spawnProcess = spawn } = {
     }
   }
 
-  return { capture, run };
+  // npm writes such as dist-tag changes can ask for a one-time password, so they keep the terminal.
+  async function runInteractive(command, args) {
+    const executable = process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
+    const shape = createSpawnCommand(executable, args);
+    await new Promise((resolve, reject) => {
+      const child = spawnProcess(shape.command, shape.args, {
+        cwd,
+        env: process.env,
+        stdio: "inherit",
+      });
+      child.on("error", reject);
+      child.on("close", (code) => {
+        if (code === 0) resolve();
+        else
+          reject(new Error(`${[command, ...args].join(" ")} failed with exit code ${code ?? 1}.`));
+      });
+    });
+  }
+
+  return { capture, run, runInteractive };
 }
 
 export function deriveReleaseIdentity(packageManifests, npmTag, head) {
@@ -246,6 +267,85 @@ export async function verifyPublishedPackages(release, system, options = {}) {
   }
 }
 
+/**
+ * Lists the graduated packages whose old `beta` dist-tag a stable entry retires. A `beta` that
+ * already points at a newer version belongs to a later prerelease, so it stays.
+ */
+export function selectBetaRetirements(release) {
+  return release.packages.filter(
+    (entry) =>
+      GRADUATED_BETA_PACKAGES.includes(entry.name) &&
+      entry.tag === "latest" &&
+      semver.valid(entry.version) === entry.version &&
+      semver.prerelease(entry.version) === null,
+  );
+}
+
+async function readDistTags(system, packageName) {
+  const result = await system.capture("npm", ["view", packageName, "dist-tags", "--json"]);
+  if (result.code !== 0) return { result };
+  try {
+    const tags = JSON.parse(result.stdout);
+    if (!tags || typeof tags !== "object" || Array.isArray(tags)) throw new Error("not an object");
+    return { result, tags };
+  } catch {
+    throw new Error(`${packageName} dist-tags returned invalid JSON.`);
+  }
+}
+
+/**
+ * Points the old `beta` dist-tag of each graduated package at its new stable version, then reads
+ * it back. Copied `@beta` installs then get the stable package instead of the last beta. A retry
+ * repeats this safely: a `beta` that already matches needs no write.
+ */
+export async function retireGraduatedBetaDistTags(release, system, options = {}) {
+  const attempts = options.attempts ?? DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS;
+  const retryDelayMs = options.retryDelayMs ?? DEFAULT_REGISTRY_RETRY_DELAY_MS;
+  const waitForRetry = options.wait ?? wait;
+  const finalizeCommand = release.finalizeCommand ?? "pnpm release:finalize";
+  const log = options.log ?? ((message) => console.log(message));
+  const retired = [];
+  for (const entry of selectBetaRetirements(release)) {
+    const { result, tags } = await readDistTags(system, entry.name);
+    if (!tags) {
+      throw new Error(
+        `${entry.name} dist-tags could not be read before the beta tag moved: ${result.stderr || result.stdout}`,
+      );
+    }
+    const currentBeta = tags.beta ?? null;
+    if (currentBeta === entry.version) continue;
+    if (currentBeta === null) continue;
+    if (semver.valid(currentBeta) && semver.gt(currentBeta, entry.version)) continue;
+    log(`[finalize] Pointing ${entry.name} dist-tag beta from ${currentBeta} to ${entry.version}.`);
+    const args = ["dist-tag", "add", `${entry.name}@${entry.version}`, "beta"];
+    try {
+      if (system.runInteractive) await system.runInteractive("npm", args);
+      else await system.run("npm", args);
+    } catch (error) {
+      throw new Error(
+        `${entry.name} dist-tag beta could not move to ${entry.version}: ${error.message}\n` +
+          `The packages are published. Run the same publication command again, or ${finalizeCommand}, to finish the release.`,
+        { cause: error },
+      );
+    }
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const check = await readDistTags(system, entry.name);
+      if (check.tags?.beta === entry.version) break;
+      if (attempt < attempts) {
+        await waitForRetry(retryDelayMs);
+        continue;
+      }
+      throw createRegistryPropagationError(
+        `${entry.name} dist-tag beta must point to ${entry.version}, found ${check.tags?.beta ?? "nothing"}`,
+        attempt,
+        finalizeCommand,
+      );
+    }
+    retired.push({ name: entry.name, from: currentBeta, to: entry.version });
+  }
+  return retired;
+}
+
 function firstSha(output) {
   return output.trim().split(/\s+/)[0] || undefined;
 }
@@ -405,17 +505,21 @@ export async function runReleaseFinalization({
   if (vueBeta) {
     release.finalizeCommand = "pnpm release:vue-beta:finalize";
   }
+  // Saved beta-channel plans, and prereleases after graduation, keep the captured latest.
   const preservedDistTags = {};
-  if (release.packages.some((entry) => entry.name === "@starwind-ui/vue" && entry.tag === "beta")) {
-    preservedDistTags["@starwind-ui/vue"] = { latest: baseline.vueLatest };
+  if (
+    release.packages.some((entry) => entry.name === "@starwind-ui/vue" && entry.tag !== "latest")
+  ) {
+    preservedDistTags["@starwind-ui/vue"] = { latest: baseline.vueLatest ?? null };
   }
   if (
-    release.packages.some((entry) => entry.name === "@starwind-ui/svelte" && entry.tag === "beta")
+    release.packages.some((entry) => entry.name === "@starwind-ui/svelte" && entry.tag !== "latest")
   ) {
-    preservedDistTags["@starwind-ui/svelte"] = { latest: baseline.svelteLatest };
+    preservedDistTags["@starwind-ui/svelte"] = { latest: baseline.svelteLatest ?? null };
   }
   if (Object.keys(preservedDistTags).length > 0) release.preservedDistTags = preservedDistTags;
   await verifyPublishedPackages(release, system, registryVerificationOptions);
+  if (!vueBeta) await retireGraduatedBetaDistTags(release, system, registryVerificationOptions);
   await finalizeVerifiedRelease(release, system);
   return release;
 }

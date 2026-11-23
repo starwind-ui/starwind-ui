@@ -1,6 +1,15 @@
 import type { NativeRootProjection } from "../../shared-recipes/structured/native-frame-types.js";
 import { svelteModelDestructure } from "./recipe-framework-operations.js";
 
+/**
+ * Styled Alert Dialog Action and Cancel spread this attachment on their Button. React and Vue
+ * Styled files import a helper with the same name.
+ */
+const alertDialogControlHelper = `export function __useAlertDialogControl() {
+  const requestRefresh = getDialogButtonContext()?.requestRefresh;
+  return { [createAttachmentKey()]: () => { requestRefresh?.(); return () => requestRefresh?.(); } };
+}`;
+
 /** Native overlay svelte projection. Portal transport is a named target exception. */
 export const svelteNativeRootProjection: NativeRootProjection = {
   surfaceOperations: { "activate-placement": "", "connect-controller": "connectRuntime(root);" },
@@ -22,7 +31,6 @@ export const svelteNativeRootProjection: NativeRootProjection = {
     plan,
     portal,
     popup,
-    props,
     fields,
     destructure,
     callbacks,
@@ -38,10 +46,10 @@ export const svelteNativeRootProjection: NativeRootProjection = {
   }) {
     return `<script module lang="ts">
 import { getContext } from "svelte";
-type DialogButtonContext = { readonly open: boolean; requestRefresh(): void; ${portal ? "readonly mounted: boolean; registerPortal(owner: symbol, element: HTMLElement | null, authoredParent?: HTMLElement, prepare?: () => () => void): void;" : ""} };
+${component === "AlertDialog" ? 'import { createAttachmentKey } from "svelte/attachments";\n' : ""}type DialogButtonContext = { readonly open: boolean; requestRefresh(): void; ${portal ? "readonly mounted: boolean; registerPortal(owner: symbol, element: HTMLElement | null, authoredParent?: HTMLElement, prepare?: () => () => void): void;" : ""} };
 const dialogButtonContext = Symbol("Dialog button context");
 export function getDialogButtonContext(): DialogButtonContext | undefined { return getContext(dialogButtonContext); }
-${component === "AlertDialog" ? "export function getAlertDialogControlRefresh() { return getDialogButtonContext()?.requestRefresh; }" : ""}
+${component === "AlertDialog" ? alertDialogControlHelper : ""}
 </script>
 <script lang="ts">
 ${imports}

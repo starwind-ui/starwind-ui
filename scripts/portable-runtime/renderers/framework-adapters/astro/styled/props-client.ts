@@ -1,32 +1,43 @@
-import type {
-  FrameworkTarget,
-} from '../../../../contracts/styled/types.js';
-import type {
-  StyledOutputComponent,
-  StyledOutputDestructure,
-  StyledOutputPropExtend,
-  StyledOutputProps,
-  StyledOutputVariable,
-} from '../../../styled-output-model/index.js';
-import type { RuntimeImportRewriteContext } from '../../../styled-runtime-imports.js';
+import type { FrameworkTarget } from "../../../../contracts/styled/types.js";
+import {
+  renderStyledTypeParameterDeclarations,
+  type StyledOutputComponent,
+  type StyledOutputDestructure,
+  type StyledOutputPropExtend,
+  type StyledOutputProps,
+  type StyledOutputTypeParameter,
+  type StyledOutputVariable,
+} from "../../../styled-output-model/index.js";
+import type { RuntimeImportRewriteContext } from "../../../styled-runtime-imports.js";
 import {
   rewriteRuntimeImportReferences,
   rewriteRuntimeTypeImportReferences,
-} from '../../../styled-runtime-imports.js';
-import { getComponentReferenceName } from './component-discovery.js';
-import { ASTRO_FRAMEWORK } from './constants.js';
-import { formatObjectKey, isForFramework, isIdentifier } from './formatting.js';
-import { renderValueExpression } from './render-tree.js';
+} from "../../../styled-runtime-imports.js";
+import { getComponentReferenceName } from "./component-discovery.js";
+import { ASTRO_FRAMEWORK } from "./constants.js";
+import { formatObjectKey, isForFramework, isIdentifier } from "./formatting.js";
+import { renderValueExpression } from "./render-tree.js";
 
 export function renderProps(
   props: StyledOutputProps | undefined,
   runtimeImportContext: RuntimeImportRewriteContext,
+  typeParameters?: readonly StyledOutputTypeParameter[],
 ): string {
   if (!props) return "";
 
   if (hasAstroPolymorphicAsProp(props)) {
+    if (typeParameters) {
+      throw new TypeError(
+        "Astro Styled type parameters cannot combine with a polymorphic as prop.",
+      );
+    }
     return renderAstroPolymorphicProps(props, runtimeImportContext);
   }
+
+  // Astro infers Props generics from the attributes passed at the call site.
+  const propsName = typeParameters
+    ? `Props<${renderStyledTypeParameterDeclarations(typeParameters)}>`
+    : "Props";
 
   const interfaceExtendsClause = renderPropsExtends(props, ", ", runtimeImportContext);
   const typeExtendsClause = renderPropsExtends(props, " & ", runtimeImportContext);
@@ -41,29 +52,29 @@ export function renderProps(
 
   if (props.declaration === "interface") {
     if (fieldLines.length === 0) {
-      return `type Props = ${typeExtendsClause || "Record<string, never>"};`;
+      return `type ${propsName} = ${typeExtendsClause || "Record<string, never>"};`;
     }
 
     if (interfaceExtendsClause) {
-      const inlineHeader = `interface Props extends ${interfaceExtendsClause} {`;
+      const inlineHeader = `interface ${propsName} extends ${interfaceExtendsClause} {`;
       const header =
         inlineHeader.length > 100
-          ? `interface Props\n  extends ${interfaceExtendsClause} {`
+          ? `interface ${propsName}\n  extends ${interfaceExtendsClause} {`
           : inlineHeader;
 
       return `${header}\n${fieldLines.join("\n")}\n}`;
     }
 
-    return `interface Props {\n${fieldLines.join("\n")}\n}`;
+    return `interface ${propsName} {\n${fieldLines.join("\n")}\n}`;
   }
 
   if (fieldLines.length === 0) {
-    return `type Props = ${typeExtendsClause || "Record<string, never>"};`;
+    return `type ${propsName} = ${typeExtendsClause || "Record<string, never>"};`;
   }
 
   const fieldType = `{\n${fieldLines.join("\n")}\n}`;
 
-  return `type Props = ${[typeExtendsClause, fieldType].filter(Boolean).join(" & ")};`;
+  return `type ${propsName} = ${[typeExtendsClause, fieldType].filter(Boolean).join(" & ")};`;
 }
 
 function renderAstroPolymorphicProps(

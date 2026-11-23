@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { compile } from "svelte/compiler";
+import { describe, expect, it } from "vitest";
 import { progressStyledContract } from "../../contracts/styled/components/progress.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 describe("Progress vertical", () => {
   it("projects the composed Progress contract and compiles its indicator styles", () => {
@@ -22,24 +22,12 @@ describe("Progress vertical", () => {
   });
 });
 
-import { afterEach } from "vitest";
-import path from "node:path";
-import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
-import { createStyledProgressConsumer } from "../../../../packages/svelte/tests/styled-progress-consumer.js";
-const consumers: DistConsumer[] = [];
-afterEach(async () => {
-  await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));
-});
-async function consumer() {
-  const result = await createStyledProgressConsumer(process.cwd());
-  consumers.push(result);
-  return result;
-}
-
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+import path from "node:path";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("generates Progress deterministically from its contract", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-progress-output-"));
   try {

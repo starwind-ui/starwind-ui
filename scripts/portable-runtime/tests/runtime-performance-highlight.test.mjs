@@ -9,7 +9,7 @@ const { chromium } = require("playwright");
 let browser;
 
 beforeAll(async () => {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
 });
 afterAll(async () => {
   await browser?.close();

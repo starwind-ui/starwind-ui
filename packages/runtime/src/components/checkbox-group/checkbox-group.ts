@@ -1,3 +1,4 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   type DynamicCollectionObserver,
   observeDynamicCollection,
@@ -8,7 +9,6 @@ import {
   readStringOrStringArrayAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { shared } from "../../internal/shared";
 import {

@@ -11,17 +11,17 @@
 
 <script lang="ts">
   let {
-    "align": align = "start",
-    "alignOffset": alignOffset = 0,
-    "alignItemWithTrigger": alignItemWithTrigger = true,
-    "avoidCollisions": avoidCollisions = true,
+    align = "start",
+    alignOffset = 0,
+    alignItemWithTrigger = true,
+    avoidCollisions = true,
     "class": className,
-    "side": side = "bottom",
-    "sideOffset": sideOffset = 4,
-    "size": size = "md",
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "children": children,
+    side = "bottom",
+    sideOffset = 4,
+    size = "md",
+    portalContainer,
+    disablePortal = false,
+    children,
     ...rest
   }: SelectContentProps = $props();
 

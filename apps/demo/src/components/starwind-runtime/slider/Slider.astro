@@ -38,14 +38,27 @@ const {
 } = Astro.props;
 
 const resolvedValue = value ?? defaultValue;
-const values = Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue];
-const getPercentage = (item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100);
+const getPaintValues = (input: number | number[]) => {
+  const items = Array.isArray(input) ? input : [input];
+  if (!items.length) return [min];
+  const precision = (String(step).split(".")[1] ?? "").length;
+  return items
+    .map((item) => {
+      if (!Number.isFinite(item)) return min;
+      const snapped =
+        step > 0 ? Number((Math.round((item - min) / step) * step + min).toFixed(precision)) : item;
+      return Math.min(Math.max(snapped, min), max);
+    })
+    .sort((left, right) => left - right);
+};
+const values = getPaintValues(resolvedValue);
+const getPercentage = (item: number) => (max <= min ? 0 : ((item - min) / (max - min)) * 100);
 const rangeStart = values.length > 1 ? getPercentage(Math.min(...values)) : 0;
 const rangeEnd =
   values.length > 1 ? getPercentage(Math.max(...values)) : getPercentage(values[0] ?? min);
 const rangeStyle =
   orientation === "horizontal"
-    ? { left: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` }
+    ? { insetInlineStart: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` }
     : { bottom: `${rangeStart}%`, height: `${rangeEnd - rangeStart}%` };
 ---
 
@@ -89,7 +102,7 @@ const rangeStyle =
           index={index}
           style={
             orientation === "horizontal"
-              ? { left: `${getPercentage(values[index] ?? min)}%` }
+              ? { insetInlineStart: `${getPercentage(values[index] ?? min)}%` }
               : { bottom: `${getPercentage(values[index] ?? min)}%` }
           }
           data-orientation={orientation}

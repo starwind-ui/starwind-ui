@@ -83,4 +83,4 @@ async function clean() {
 }
 
 // Run the clean script
-clean();
+await clean();

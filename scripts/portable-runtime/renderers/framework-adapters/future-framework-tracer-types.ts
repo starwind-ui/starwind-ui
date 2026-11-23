@@ -4,7 +4,10 @@ import type {
   GenericAdapterPlanPrintedFile,
 } from "../generic-adapter-plan/types.js";
 import type { SelectSpecializedAdapterSpec } from "../specialized-adapter-spec/select-specialized-adapter-spec.js";
-import type { SpecializedAdapterSpec, SpecializedAdapterSpecPrintedFile } from "../specialized-adapter-spec/types.js";
+import type {
+  SpecializedAdapterSpec,
+  SpecializedAdapterSpecPrintedFile,
+} from "../specialized-adapter-spec/types.js";
 
 export type FutureFrameworkTracerTarget = "solid" | "vue";
 

@@ -39,4 +39,3 @@ export { Drawer };
 export default Drawer;
 
 export type { DrawerCloseCompleteDetails, DrawerOpenChangeDetails } from "@starwind-ui/runtime";
-export { DrawerContext } from "./DrawerRoot.vue";

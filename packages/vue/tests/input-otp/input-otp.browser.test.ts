@@ -171,6 +171,73 @@ describe("Vue Input OTP public behavior", () => {
     expect(root).toHaveAttribute("data-value", "12");
   });
 
+  it.each(["one-way", "v-model", "no-listener"] as const)(
+    "applies a later defined %s model as a silent command and keeps later typing",
+    async (mode) => {
+      const vModel = mode === "v-model";
+      const model = ref<string | undefined>(undefined);
+      const id = ref("first");
+      const events: string[] = [];
+      const host = appendHost();
+      const app = createApp({
+        render: () =>
+          h("form", null, [
+            otpTree(InputOtpRoot, InputOtpGroup, InputOtpSlot, {
+              modelValue: model.value,
+              id: id.value,
+              name: "code",
+              onValueChange: (value: string) => events.push(`change:${value}`),
+              ...(mode === "no-listener"
+                ? {}
+                : {
+                    "onUpdate:modelValue": (value: string) => {
+                      events.push(`update:${value}`);
+                      if (vModel) model.value = value;
+                    },
+                  }),
+            }),
+          ]),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await settle();
+      const form = host.querySelector("form")!;
+      const root = host.querySelector<HTMLElement>("[data-sw-input-otp]")!;
+      const input = host.querySelector<HTMLInputElement>("[data-sw-input-otp-input]")!;
+      const slots = () =>
+        [...host.querySelectorAll("[data-sw-input-otp-char]")]
+          .map((slot) => slot.textContent)
+          .join("");
+
+      model.value = "1234";
+      await settle();
+      expect(input.value).toBe("1234");
+      expect(new FormData(form).get("code")).toBe("1234");
+      expect(root).toHaveAttribute("data-value", "1234");
+      expect(slots()).toBe("1234");
+      expect(events).toEqual([]);
+
+      root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "5" }));
+      await settle();
+      expect(input.value).toBe("12345");
+      if (!vModel) {
+        id.value = "second";
+        await settle();
+      }
+      expect(input.value).toBe("12345");
+      expect(new FormData(form).get("code")).toBe("12345");
+      expect(root).toHaveAttribute("data-value", "12345");
+      expect(slots()).toBe("12345");
+      expect(events).toEqual(
+        mode === "no-listener" ? ["change:12345"] : ["change:12345", "update:12345"],
+      );
+      form.reset();
+      await settle();
+      expect(input.value).toBe("");
+      expect(new FormData(form).get("code")).toBe("");
+    },
+  );
+
   it("delegates navigation, deletion, paste filtering, and full-length reasons to Runtime", async () => {
     const details: InputOtpValueChangeDetails[] = [];
     const host = mountOtp({

@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   ScrollAreaContent,
   ScrollAreaCorner,
@@ -10,6 +6,9 @@ import {
   ScrollAreaThumb,
   ScrollAreaViewport,
 } from "@starwind-ui/vue/scroll-area";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 describe("Vue Scroll Area SSR", () => {
   it("server-renders deterministic complete anatomy without browser globals", async () => {

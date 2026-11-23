@@ -108,6 +108,7 @@ export * from "./alert-dialog";
 export * from "./avatar";
 export * from "./button";
 export * from "./carousel";
+export * from "./chart";
 export * from "./checkbox";
 export * from "./checkbox-group";
 export * from "./collapsible";

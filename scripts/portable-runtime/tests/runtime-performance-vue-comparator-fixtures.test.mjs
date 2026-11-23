@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
-
+import { zagVueComparatorInstallSpecifiers } from "../package-size-vue-plan.mjs";
 import {
   buildVueComparatorFixture,
   buildVueComparatorFixtures,
@@ -12,7 +12,6 @@ import {
   vueComparatorFixtureRows,
   vueComparatorInstallSpecifiers,
 } from "../runtime-performance/vue-comparator-fixtures.mjs";
-import { zagVueComparatorInstallSpecifiers } from "../package-size-vue-plan.mjs";
 import {
   REKA_UI_COMPARATOR_VERSION,
   rekaUiAuditedNamedExportsByScenario,

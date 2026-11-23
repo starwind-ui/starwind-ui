@@ -13,9 +13,9 @@
 <script lang="ts">
   let {
     "class": className,
-    "children": children,
-    "backdrop": backdrop,
-    "icon": icon,
+    children,
+    backdrop,
+    icon,
     ...rest
   }: DialogContentProps = $props();
 </script>

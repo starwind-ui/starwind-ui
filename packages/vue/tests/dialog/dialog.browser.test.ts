@@ -15,7 +15,6 @@ import {
   type ComponentPublicInstance,
   createApp,
   createVNode,
-  defineComponent,
   Fragment,
   h,
   nextTick,
@@ -482,7 +481,11 @@ describe("Vue Dialog public behavior", () => {
         { label: "multiple", slot: () => [h("button"), h("button")] },
         { label: "Text", slot: () => [h(Text, null, "text")] },
         { label: "Comment", slot: () => [h(Comment)] },
-        { label: "Fragment", slot: () => [h(Fragment, null, [h("button")])] },
+        { label: "two-child Fragment", slot: () => [h(Fragment, null, [h("button"), h("a")])] },
+        {
+          label: "nested Fragment",
+          slot: () => [h(Fragment, null, [h(Fragment, null, [h("button")])])],
+        },
       ];
 
       for (const { label, slot } of invalidSlots) {
@@ -509,22 +512,34 @@ describe("Vue Dialog public behavior", () => {
     },
   );
 
-  it("rejects a compiler-marked Fragment at the native control composition boundary", () => {
+  it("composes through one compiler-marked Fragment at the native control boundary", async () => {
     const host = appendHost();
     const app = createApp({
       render: () =>
-        h(
-          DialogTrigger,
-          { asChild: true },
-          { default: () => createVNode(Fragment, null, [h("button")], 64) },
-        ),
+        h(DialogRoot, null, {
+          default: () => [
+            h(
+              DialogTrigger,
+              { asChild: true },
+              {
+                default: () =>
+                  createVNode(Fragment, null, [h("button", { class: "fragment-child" })], 64),
+              },
+            ),
+            h(DialogPopup),
+          ],
+        }),
     });
     app.config.errorHandler = (error) => {
       throw error;
     };
-    app.config.warnHandler = () => {};
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await nextTick();
 
-    expect(() => app.mount(host)).toThrowError(/DialogTrigger asChild/);
+    const button = host.querySelector<HTMLButtonElement>("button.fragment-child")!;
+    expect(button.hasAttribute("data-sw-dialog-trigger")).toBe(true);
+    expect(button.getAttribute("type")).toBe("button");
   });
 });
 
@@ -620,6 +635,7 @@ import { testStyledControlRefresh } from "../dialog/styled-control-refresh.js";
 testStyledControlRefresh("dialog", { ...StyledControlParts, Close: StyledControlParts.Close });
 
 import { testComponentClose, testComponentTrigger } from "../dialog/component-trigger.js";
+
 testComponentTrigger(
   { Root: DialogRoot, Trigger: DialogTrigger, Popup: DialogPopup, Title: DialogTitle },
   cleanups,

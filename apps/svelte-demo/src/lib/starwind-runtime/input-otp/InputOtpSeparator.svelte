@@ -12,8 +12,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "ref": ref,
-    "icon": icon,
+    ref,
+    icon,
     ...rest
   }: InputOtpSeparatorProps = $props();
 </script>

@@ -1,44 +1,50 @@
 import {
+  type DialogOwnedPortal,
   registerDialogOwnedPortal,
   requestDialogOwnedFloatingPortalClose,
   resumeDialogOwnedFloatingPortals,
   suspendDialogOwnedFloatingPortals,
-  type DialogOwnedPortal,
 } from "./dialog-portal-owner";
 import {
   createPortalBinding,
   getReportedPortalPlacement,
+  type PortalBinding,
+  type PortalBindingSnapshot,
   pendingPortalBindingSnapshot,
+  type ReportPortalPlacementOptions,
+  type RuntimePartScope,
   readyPortalBindingSnapshot,
   reportPortalPlacement,
   subscribeToReportedPortalPlacement,
-  type ReportPortalPlacementOptions,
-  type PortalBinding,
-  type PortalBindingSnapshot,
-  type RuntimePartScope,
 } from "./portal-binding";
+import {
+  createPortalDirectionSession,
+  type PortalDirectionSession,
+  prepareFrameworkPortalDirection,
+} from "./portal-direction";
 import { createRuntimePortalPlacement } from "./portal-runtime-placement";
 import {
-  resolveFloatingPortalOwner,
-  resolveFloatingPortalTarget,
-  resolveFloatingPortalTargetOwner,
+  isDocumentHTMLElement,
   type PortalPlacementFacts,
   type PortalPlacementMode,
   type ResolvePortalPlacementOptions,
+  resolveFloatingPortalOwner,
+  resolveFloatingPortalTarget,
+  resolveFloatingPortalTargetOwner,
 } from "./portal-target-policy";
 
 export {
   createPortalBinding,
-  pendingPortalBindingSnapshot,
-  readyPortalBindingSnapshot,
-  reportPortalPlacement,
   type PortalBinding,
   type PortalBindingSnapshot,
-  type RuntimePartScope,
-  type ReportPortalPlacementOptions,
   type PortalPlacementFacts,
   type PortalPlacementMode,
+  pendingPortalBindingSnapshot,
+  type ReportPortalPlacementOptions,
   type ResolvePortalPlacementOptions,
+  type RuntimePartScope,
+  readyPortalBindingSnapshot,
+  reportPortalPlacement,
 };
 
 export type FloatingPortalSession = {
@@ -47,7 +53,10 @@ export type FloatingPortalSession = {
   mount(): boolean;
   onReady(callback: () => void): () => void;
   onReadyChange(callback: (ready: boolean) => void): () => void;
+  onDirectionChange(callback: () => void): () => void;
   restore(): void;
+  /** Copy the owner's direction to the open portal before a position compute. */
+  syncDirection(): void;
 };
 
 export type FloatingPortalSessionOptions = {
@@ -57,6 +66,12 @@ export type FloatingPortalSessionOptions = {
   onOwnerCloseRequest?: () => void;
   root: HTMLElement;
 };
+
+// A floating Color Picker wraps its DOM owner in a Popover. More deeply nested
+// overlays use their own reference so an authored local direction still applies.
+function colorPickerDirectionOwner<T extends Element>(reference: T, picker: HTMLElement | null) {
+  return picker && reference.contains(picker) ? picker : reference;
+}
 
 export function resolvePortalPlacement(
   wrapper: HTMLElement,
@@ -68,6 +83,8 @@ export function resolvePortalPlacement(
   // ColorPicker delegates input events through its DOM root. Its editors and
   // nested overlays must retain that owner in every framework.
   const domOwner = wrapper.closest<HTMLElement>("[data-sw-color-picker]");
+  if (mode === "framework" && !disabled)
+    prepareFrameworkPortalDirection(wrapper, colorPickerDirectionOwner(reference, domOwner));
   const attributeContainer = wrapper.getAttribute("data-container");
   const container = options.container ?? attributeContainer;
   const hasExplicitContainerIntent =
@@ -77,6 +94,7 @@ export function resolvePortalPlacement(
   const resolvedContainer = resolvePortalContainer(wrapper.ownerDocument, container);
   const explicitTarget =
     resolvedContainer &&
+    resolvedContainer.isConnected &&
     !wrapper.contains(resolvedContainer) &&
     (!domOwner || resolvedContainer.closest("[data-sw-color-picker]") === domOwner)
       ? resolvedContainer
@@ -84,7 +102,7 @@ export function resolvePortalPlacement(
   const fallbackTarget =
     domOwner ?? options.fallbackTarget ?? resolveFloatingPortalTarget(reference);
   const resolvedExplicitTarget = explicitTarget
-    ? domOwner && explicitTarget instanceof HTMLElement
+    ? domOwner
       ? explicitTarget
       : resolveFloatingPortalTarget(reference, { explicitTargets: [explicitTarget] })
     : null;
@@ -126,9 +144,12 @@ export function createFloatingPortalSession(
   let placementReady = false;
   let portalTarget: HTMLElement | null = null;
   let mountedPortalElement: HTMLElement | null = null;
+  let directionSession: PortalDirectionSession | null = null;
+  let directionOwner: HTMLElement | null = null;
   let pointerEvents: { element: HTMLElement; priority: string; value: string } | null = null;
   const readyCallbacks = new Set<() => void>();
   const readinessChangeCallbacks = new Set<(ready: boolean) => void>();
+  const directionChangeCallbacks = new Set<() => void>();
   const initialPortalElement = options.getPortalElement();
   const runtimePlacement = createRuntimePortalPlacement(
     readPortalPlacementMode(initialPortalElement) === "runtime" ? initialPortalElement : undefined,
@@ -166,7 +187,14 @@ export function createFloatingPortalSession(
       readinessChangeCallbacks.add(callback);
       return () => readinessChangeCallbacks.delete(callback);
     },
+    onDirectionChange(callback) {
+      directionChangeCallbacks.add(callback);
+      return () => directionChangeCallbacks.delete(callback);
+    },
     restore,
+    syncDirection: () => {
+      directionSession?.sync();
+    },
   };
 
   function mount(): boolean {
@@ -193,6 +221,8 @@ export function createFloatingPortalSession(
         portalTarget !== placement.target ||
         owner !== nextOwner);
     if (changed) {
+      directionSession?.destroy();
+      directionSession = null;
       runtimePlacement.restore();
       frameworkPlacementCleanup?.();
       frameworkPlacementCleanup = null;
@@ -200,6 +230,19 @@ export function createFloatingPortalSession(
     }
 
     mountedPortalElement = portalElement;
+    const source = colorPickerDirectionOwner(
+      options.root,
+      portalElement.closest<HTMLElement>("[data-sw-color-picker]"),
+    );
+    if (source !== directionOwner) {
+      directionSession?.destroy();
+      directionSession = null;
+      directionOwner = source;
+    }
+    directionSession ??= createPortalDirectionSession(source, portalElement, () => {
+      if (placementReady) directionChangeCallbacks.forEach((callback) => callback());
+    });
+    directionSession.sync();
     portalTarget = placement.target;
     mounted = true;
     if (!wasMounted || changed) setPhysicalPlacementReady(false, portalElement);
@@ -219,6 +262,7 @@ export function createFloatingPortalSession(
     }
 
     runtimePlacement.move(portalElement, placement.target);
+    directionSession.sync();
     preservePointerEvents(portalElement);
     setPhysicalPlacementReady(true, portalElement);
     return true;
@@ -227,7 +271,22 @@ export function createFloatingPortalSession(
   function subscribeToFrameworkPlacement(portalElement: HTMLElement): void {
     if (frameworkPlacementCleanup) return;
     frameworkPlacementCleanup = subscribeToReportedPortalPlacement(portalElement, () => {
-      if (mounted) mount();
+      if (!mounted) return;
+      if (options.getPortalElement() !== portalElement) {
+        mount();
+        return;
+      }
+      if (!portalElement.isConnected) {
+        // Release the old direction lease and keep this listener for a later ready report.
+        directionSession?.destroy();
+        directionSession = null;
+        directionOwner = null;
+        setPhysicalPlacementReady(false, portalElement);
+        registerOwner(null);
+        restorePointerEvents();
+        return;
+      }
+      mount();
     });
   }
 
@@ -295,6 +354,9 @@ export function createFloatingPortalSession(
   function restore(): void {
     const portalElement = mountedPortalElement ?? options.getPortalElement();
     runtimePlacement.restore();
+    directionSession?.destroy();
+    directionSession = null;
+    directionOwner = null;
     portalTarget = null;
     mountedPortalElement = null;
     mounted = false;
@@ -308,6 +370,7 @@ export function createFloatingPortalSession(
   function destroy(): void {
     if (destroyed) return;
     restore();
+    directionChangeCallbacks.clear();
     destroyed = true;
   }
 
@@ -348,16 +411,14 @@ function resolveFrameworkReportedTarget(
 function resolvePortalContainer(
   ownerDocument: Document,
   container: Element | string | null | undefined,
-): Element | null {
+): HTMLElement | null {
   if (typeof container !== "string") {
-    if (!container) return null;
-    const ElementConstructor = ownerDocument.defaultView?.Element;
-    if (ElementConstructor) return container instanceof ElementConstructor ? container : null;
-    return container.ownerDocument === ownerDocument && container.nodeType === 1 ? container : null;
+    return isDocumentHTMLElement(container, ownerDocument) ? container : null;
   }
   if (!container) return null;
   try {
-    return ownerDocument.querySelector(container);
+    const target = ownerDocument.querySelector(container);
+    return isDocumentHTMLElement(target, ownerDocument) ? target : null;
   } catch {
     return null;
   }

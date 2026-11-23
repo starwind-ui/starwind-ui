@@ -13,13 +13,14 @@ import {
 } from "../../../../scripts/portable-runtime/generate-cli-registry.js";
 import { svelteFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/svelte/index.js";
 import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
+import {
+  getPrimitiveVendoringContracts,
+  isPrimitiveInventoryComponentAvailableForTarget,
+} from "../../../../scripts/portable-runtime/renderers/primitive-inventory.js";
 import type { StarwindConfig } from "../../src/utils/config.js";
 import * as config from "../../src/utils/config.js";
 import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
-import {
-  type CliFrameworkTarget,
-  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
-} from "../../src/utils/framework-target-policy.js";
+import type { CliFrameworkTarget } from "../../src/utils/framework-target-policy.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import {
   getPrimitiveComponents,
@@ -895,7 +896,11 @@ describe.sequential("primitive component vendoring", () => {
         artifacts,
         framework: "svelte",
       });
-    expect(read()).toHaveLength(36);
+    expect(read()).toHaveLength(
+      getPrimitiveVendoringContracts().filter(({ component }) =>
+        isPrimitiveInventoryComponentAvailableForTarget(component, "svelte"),
+      ).length,
+    );
     expect(generated.integrity).toBeUndefined();
     expect(generated.validation).toBeUndefined();
   }, 30_000);

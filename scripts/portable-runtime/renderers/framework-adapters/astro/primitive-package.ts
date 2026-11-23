@@ -8,7 +8,7 @@ import { createAstroHeader } from "./headers.js";
 import { renderAstroControllerLifecycleFile } from "./primitive-output-writer.js";
 
 export const generateAstroPrimitivePackage: FrameworkAdapterTargetPrimitivePackageGenerator =
-  async ({ generatePrimitiveEntries, generatedBy, outputRoot }) => {
+  async ({ components, generatePrimitiveEntries, generatedBy, outputRoot }) => {
     const componentHeader = createAstroHeader(generatedBy);
     const moduleHeader = createTsHeader(generatedBy);
 
@@ -30,8 +30,8 @@ export const generateAstroPrimitivePackage: FrameworkAdapterTargetPrimitivePacka
         "ColorPickerRenderProjection.ts",
         renderAstroColorPickerRenderProjectionFile(moduleHeader),
       ),
-      writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader)),
+      writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader, components)),
     ]);
 
-    await appendRuntimeTypeFacades(outputRoot);
+    await appendRuntimeTypeFacades(outputRoot, components);
   };

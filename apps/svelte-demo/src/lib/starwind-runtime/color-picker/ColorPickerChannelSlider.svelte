@@ -15,11 +15,11 @@
 
 <script lang="ts">
   let {
-    "step": step,
-    "channel": channel,
-    "orientation": orientation = "horizontal",
+    step,
+    channel,
+    orientation = "horizontal",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: ColorPickerChannelSliderProps = $props();
 </script>

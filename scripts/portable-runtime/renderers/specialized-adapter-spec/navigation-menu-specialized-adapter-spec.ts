@@ -6,12 +6,12 @@ import type {
   AdapterSharedViewportNavigationFacts,
   AdapterSharedViewportNavigationPartName,
 } from "../framework-adapters/index.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 import {
   buildBaseSpecializedAdapterSpec,
   validateSpecializedAdapterSpec,
 } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec, SpecializedAdapterSpecPrintedFile } from "./types.js";
-import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type NavigationMenuSpecializedAdapterSpec = SpecializedAdapterSpec & {
   navigationMenu: {

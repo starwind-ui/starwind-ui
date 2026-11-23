@@ -9,15 +9,15 @@
 
 <script lang="ts">
   let {
-    "defaultOpen": defaultOpen = false,
-    "closeOnEscape": closeOnEscape = true,
-    "closeOnOutsideInteract": closeOnOutsideInteract = true,
-    "modal": modal = true,
+    defaultOpen = false,
+    closeOnEscape = true,
+    closeOnOutsideInteract = true,
+    modal = true,
     "class": className,
     open = $bindable(),
-    "onOpenChange": onOpenChange,
-    "onCloseComplete": onCloseComplete,
-    "children": children,
+    onOpenChange,
+    onCloseComplete,
+    children,
     "open": commandOpen,
     ...rest
   }: SheetProps = $props();

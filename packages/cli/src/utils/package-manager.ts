@@ -15,10 +15,10 @@ import {
   getOfflineStoreDirectories,
   getYarnBerryIsolationEnv,
   loadOfflineStore,
-  repairOfflineLockfiles,
-  startOfflineRegistry,
   OfflineInstallInterruptedError,
   OfflineKitError,
+  repairOfflineLockfiles,
+  startOfflineRegistry,
   withOfflineLockfileRepair,
   yarnClassicOfflineMessage,
 } from "./offline.js";
@@ -200,7 +200,7 @@ export async function installDependencies(
   force = false,
 ): Promise<void> {
   const packageManager = pm ?? detectPackageManager().name;
-  const commands = buildInstallDependencyCommands(packages, packageManager, dev, force);
+  const commands = resolveInstallDependencyCommands(packages, packageManager, dev, force);
   const offlineStoreDirectories = getOfflineStoreDirectories();
   if (!offlineStoreDirectories) {
     for (const args of commands) {
@@ -279,6 +279,31 @@ export async function installDependenciesWithProgress(
 }
 
 /**
+ * pnpm refuses `pnpm add` at a workspace root unless `-w` is set. pnpm 9 refuses with any
+ * `packages` glob, and pnpm 10 and newer refuse with two or more globs. With pnpm 10 and newer,
+ * `-w` has no effect at the root of a settings-only `pnpm-workspace.yaml`. pnpm 9 rejects a
+ * settings-only file with or without `-w`. pnpm rejects `-w` when no workspace file exists.
+ * A workspace package keeps its own `package.json`, so a command run inside it never gets `-w`.
+ */
+export function isPnpmWorkspaceRoot(pm: PackageManager, cwd: string = process.cwd()): boolean {
+  return pm === "pnpm" && existsSync(resolve(cwd, "pnpm-workspace.yaml"));
+}
+
+/**
+ * Builds the install commands for the project in `cwd`. Use this for both the commands the CLI runs
+ * and the commands it prints, so that both include the workspace root flag when pnpm needs it.
+ */
+export function resolveInstallDependencyCommands(
+  packages: string[],
+  pm: PackageManager,
+  dev = false,
+  force = false,
+  cwd: string = process.cwd(),
+): string[][] {
+  return buildInstallDependencyCommands(packages, pm, dev, force, isPnpmWorkspaceRoot(pm, cwd));
+}
+
+/**
  * npm saves `name@1.2.3` as `^1.2.3` unless `--save-exact` is set, and that flag also freezes every
  * range in the same command. npm therefore installs a mixed list in two commands. Ranges go first
  * so an adapter finds its framework peer. pnpm, Yarn, and Bun already save each spec as written.
@@ -288,6 +313,7 @@ export function buildInstallDependencyCommands(
   pm: PackageManager,
   dev = false,
   force = false,
+  workspaceRoot = false,
 ): string[][] {
   const exactPackages = packages.filter((packageSpec) =>
     isExactPackageSpec(parsePackageSpec(packageSpec, "package dependency")),
@@ -295,17 +321,18 @@ export function buildInstallDependencyCommands(
   const otherPackages = packages.filter((packageSpec) => !exactPackages.includes(packageSpec));
 
   if (pm !== "npm" || exactPackages.length === 0 || otherPackages.length === 0) {
-    return [buildInstallDependencyArgs(packages, pm, dev, force)];
+    return [buildInstallDependencyArgs(packages, pm, dev, force, workspaceRoot)];
   }
 
   return [
-    buildInstallDependencyArgs(otherPackages, pm, dev, force),
-    buildInstallDependencyArgs(exactPackages, pm, dev, force),
+    buildInstallDependencyArgs(otherPackages, pm, dev, force, workspaceRoot),
+    buildInstallDependencyArgs(exactPackages, pm, dev, force, workspaceRoot),
   ];
 }
 
 /**
- * Builds one command. Use buildInstallDependencyCommands for a list that can mix exact versions
+ * Builds one command. Set `workspaceRoot` to add pnpm's `-w` flag; other managers ignore it.
+ * Use buildInstallDependencyCommands for a list that can mix exact versions
  * with ranges, because npm cannot save both correctly in one command.
  */
 export function buildInstallDependencyArgs(
@@ -313,11 +340,13 @@ export function buildInstallDependencyArgs(
   pm: PackageManager,
   dev = false,
   force = false,
+  workspaceRoot = false,
 ): string[] {
   const validatedPackages = packages.map((packageSpec) =>
     parsePackageSpec(packageSpec, "package dependency"),
   );
   const managerOptions = [
+    workspaceRoot && pm === "pnpm" ? "-w" : undefined,
     dev ? (pm === "npm" || pm === "pnpm" ? "-D" : "--dev") : undefined,
     force ? "--force" : undefined,
     pm === "npm" && validatedPackages.length > 0 && validatedPackages.every(isExactPackageSpec)

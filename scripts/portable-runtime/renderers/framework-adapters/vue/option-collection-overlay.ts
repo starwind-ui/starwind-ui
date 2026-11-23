@@ -72,12 +72,12 @@ function printComponent(
     AdapterOptionCollectionOverlayPartName,
     (facts: AdapterOptionCollectionOverlayFacts) => string
   > = {
-    root: (value) =>
-      printRoot(
-        value,
-        getVueAcceptedModelEvent(file, "open"),
-        getVueAcceptedModelEvent(file, "value"),
-      ),
+    root: (value) => {
+      // Validate that both root models publish through controller subscriptions.
+      getVueAcceptedModelEvent(file, "open");
+      getVueAcceptedModelEvent(file, "value");
+      return printRoot(value);
+    },
     label: (value) => printSimplePart(value, "label"),
     trigger: printTrigger,
     value: printValue,
@@ -103,8 +103,20 @@ function printComponent(
   };
 }
 
+function internalRootContext(facts: AdapterOptionCollectionOverlayFacts): string {
+  return `${facts.displayName}InternalContext`;
+}
+
+function useInternalRootContext(facts: AdapterOptionCollectionOverlayFacts): string {
+  return `use${facts.displayName}InternalContext`;
+}
+
 function printContextModule(facts: AdapterOptionCollectionOverlayFacts): string {
   const context = facts.context;
+  const internalKey = internalRootContext(facts);
+  const internalType = `${facts.displayName}InternalContextValue`;
+  // The public context type and key carry state only, as React does. Parts read the Runtime
+  // wiring through the internal accessor, which the family index does not export.
   return `<script lang="ts">
 import {
   type ComputedRef,
@@ -115,15 +127,18 @@ import {
 
 export type ${context.rootContextValueType} = Readonly<{
   disabled: ComputedRef<boolean>;
-  element: Readonly<Ref<HTMLElement | null>>;
-  mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
-  requestRefresh(): void;
-  registerPortal(owner: symbol, element: HTMLElement | null): void;
   required: ComputedRef<boolean>;
   selectedLabel: ComputedRef<string | null>;
   value: ComputedRef<string | null>;
+}>;
+
+export type ${internalType} = ${context.rootContextValueType} & Readonly<{
+  element: Readonly<Ref<HTMLElement | null>>;
+  mounted: Readonly<Ref<boolean>>;
+  requestRefresh(): void;
+  registerPortal(owner: symbol, element: HTMLElement | null): void;
 }>;
 
 export type ${context.itemContextValueType} = Readonly<{
@@ -131,13 +146,18 @@ export type ${context.itemContextValueType} = Readonly<{
   value: ComputedRef<string>;
 }>;
 
-export const ${context.rootContext}: InjectionKey<${context.rootContextValueType}> = Symbol("Starwind${context.rootContext}");
+export const ${internalKey}: InjectionKey<${internalType}> = Symbol("Starwind${context.rootContext}");
+export const ${context.rootContext}: InjectionKey<${context.rootContextValueType}> = ${internalKey};
 export const ${context.itemContext}: InjectionKey<${context.itemContextValueType}> = Symbol("Starwind${context.itemContext}");
 
-export function ${context.useRootContext}(part = "part"): ${context.rootContextValueType} {
-  const value = inject(${context.rootContext});
+export function ${useInternalRootContext(facts)}(part = "part"): ${internalType} {
+  const value = inject(${internalKey});
   if (!value) throw new Error(\`${facts.displayName}.\${part} requires an owning ${facts.displayName}.Root.\`);
   return value;
+}
+
+export function ${context.useRootContext}(part = "part"): ${context.rootContextValueType} {
+  return ${useInternalRootContext(facts)}(part);
 }
 
 export function ${context.useItemContext}(part = "part"): ${context.itemContextValueType} {
@@ -148,18 +168,12 @@ export function ${context.useItemContext}(part = "part"): ${context.itemContextV
 </script>`;
 }
 
-function printRoot(
-  facts: AdapterOptionCollectionOverlayFacts,
-  acceptedOpenEvent: string,
-  acceptedValueEvent: string,
-): string {
+function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   const { attrs, events, props, runtime, state } = facts;
   const openModel = requireModel(facts, "open");
   const valueModel = requireModel(facts, "value");
   const label = facts.collection.selectedLabel;
   const itemAttribute = facts.attrs[label.itemPart];
-  const itemTextAttribute = facts.attrs[label.itemTextPart];
-  const setters = facts.lifecycle.updateSetters;
   if (!openModel.event.cancelable || !valueModel.event.cancelable) {
     throw new TypeError(`Vue ${facts.displayName} projection requires cancelable model events.`);
   }
@@ -258,7 +272,7 @@ let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
 let refreshPending = false;
 
-provide(${facts.context.rootContext}, {
+provide(${internalRootContext(facts)}, {
   disabled,
   element: rootRef,
   mounted,
@@ -492,14 +506,14 @@ function printTrigger(facts: AdapterOptionCollectionOverlayFacts): string {
   return `<script setup lang="ts">
 import { defineComponent, type HTMLAttributes, useAttrs, type VNode } from "vue";
 import { useVueNativeControl } from "../_internal/native-control";
-import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
+import { ${useInternalRootContext(facts)} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 type NativeElementProps = /* @vue-ignore */ HTMLAttributes;
 const props = withDefaults(defineProps<{ ${facts.props.asChild.name}?: ${facts.props.asChild.type} } & NativeElementProps>(), { ${facts.props.asChild.name}: false });
 const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
-const select = ${facts.context.useRootContext}("Trigger");
+const select = ${useInternalRootContext(facts)}("Trigger");
 const { element, render: renderAsChild, setElement } = useVueNativeControl(
   "${facts.exports.trigger}",
   select.requestRefresh,
@@ -560,13 +574,13 @@ function printValue(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.value;
   return `<script setup lang="ts">
 import { ref } from "vue";
-import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
+import { ${useInternalRootContext(facts)} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = defineProps<{ placeholder?: string }>();
-defineSlots<{ default?: (props: { label: string | null; value: string | null }) => unknown }>();
+defineSlots<{ default?: () => unknown }>();
 const valueRef = ref<HTMLSpanElement | null>(null);
-const select = ${facts.context.useRootContext}("Value");
+const select = ${useInternalRootContext(facts)}("Value");
 defineExpose({ element: valueRef });
 </script>
 
@@ -578,7 +592,7 @@ defineExpose({ element: valueRef });
     data-sw-part="${part.name}"
     :data-placeholder="props.placeholder"
   >
-    <slot :label="select.selectedLabel.value" :value="select.value.value">{{
+    <slot>{{
       ${selectValueFallback("select.selectedLabel.value", "props.placeholder")}
     }}</slot>
   </span>
@@ -592,7 +606,7 @@ function printPortal(facts: AdapterOptionCollectionOverlayFacts): string {
 import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
-import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
+import { ${useInternalRootContext(facts)} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), {
@@ -600,7 +614,7 @@ const props = withDefaults(defineProps<{ container?: string | HTMLElement; disab
 });
 defineSlots<{ default?: () => unknown }>();
 const portalRef = ref<HTMLDivElement | null>(null);
-const select = ${facts.context.useRootContext}("Portal");
+const select = ${useInternalRootContext(facts)}("Portal");
 const owner = Symbol("SelectPortalOwner");
 const placement = useVuePortalPlacement({
   active: () => select.mounted.value,
@@ -639,7 +653,6 @@ function printFloatingPart(
   partName: "popup" | "positioner",
 ): string {
   const part = facts.parts[partName];
-  const exportName = facts.exports[partName];
   const isPopup = partName === "popup";
   const alignItemWithTrigger = isPopup
     ? ""
@@ -652,7 +665,7 @@ function printFloatingPart(
     : `\n    :${facts.attrs.alignItemWithTrigger}="props.${facts.props.alignItemWithTrigger.name} ? 'true' : 'false'"`;
   return `<script setup lang="ts">
 import { ref } from "vue";
-import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
+import { ${useInternalRootContext(facts)} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
@@ -673,7 +686,7 @@ ${alignItemDefault}    ${facts.props.avoidCollisions.name}: ${facts.floating.avo
 );
 defineSlots<{ default?: () => unknown }>();
 const elementRef = ref<HTMLDivElement | null>(null);
-const select = ${facts.context.useRootContext}("${part.namespaceKey}");
+const select = ${useInternalRootContext(facts)}("${part.namespaceKey}");
 const initialOpen = select.open.value;
 defineExpose({ element: elementRef });
 </script>
@@ -704,14 +717,14 @@ function printItem(facts: AdapterOptionCollectionOverlayFacts): string {
 import { computed, provide, ref } from "vue";
 import {
   ${facts.context.itemContext},
-  ${facts.context.useRootContext},
+  ${useInternalRootContext(facts)},
 } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ disabled?: boolean; ${identity.prop}: string }>(), { disabled: false });
 defineSlots<{ default?: () => unknown }>();
 const itemRef = ref<HTMLDivElement | null>(null);
-const select = ${facts.context.useRootContext}("Item");
+const select = ${useInternalRootContext(facts)}("Item");
 const value = computed(() => props.${identity.prop});
 const disabled = computed(() => props.disabled);
 const selected = computed(() => ${selectSelection("select.value.value", "value.value")});
@@ -743,14 +756,14 @@ function printItemIndicator(facts: AdapterOptionCollectionOverlayFacts): string 
   return `<script setup lang="ts">
 import { computed, ref } from "vue";
 import {
-  ${facts.context.useRootContext},
+  ${useInternalRootContext(facts)},
   ${facts.context.useItemContext},
 } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
 const indicatorRef = ref<HTMLSpanElement | null>(null);
-const select = ${facts.context.useRootContext}("ItemIndicator");
+const select = ${useInternalRootContext(facts)}("ItemIndicator");
 const item = ${facts.context.useItemContext}("ItemIndicator");
 const selected = computed(() => ${selectSelection("select.value.value", "item.value.value")});
 defineExpose({ element: indicatorRef });

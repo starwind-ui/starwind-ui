@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
-
-import { compileScript, parse } from "vue/compiler-sfc";
 import { defineConfig, type Options } from "tsup";
+import { compileScript, parse } from "vue/compiler-sfc";
 
 import { vueBuildEntryPoints } from "../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.js";
 

@@ -46,7 +46,7 @@ describe("Nuxt project setup", () => {
     ],
   ] as const)("plans the bounded Nuxt %s starter layout", (nuxt, paths, expected) => {
     expect(
-      getNuxtProjectPlan({ dependencies: { nuxt, vue: "^3.5.0" } }, new Set<string>(paths)),
+      getNuxtProjectPlan({ dependencies: { nuxt, vue: "^3.5.21" } }, new Set<string>(paths)),
     ).toMatchObject({
       ...expected,
       kind: "nuxt",

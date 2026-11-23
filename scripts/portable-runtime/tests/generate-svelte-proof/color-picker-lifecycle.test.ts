@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createColorPickerConsumer } from "../../../../packages/svelte/tests/color-picker-consumer.js";
 import { verifyColorPickerLifecycle } from "../../../../packages/svelte/tests/color-picker-browser.js";
+import { createColorPickerConsumer } from "../../../../packages/svelte/tests/color-picker-consumer.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

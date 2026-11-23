@@ -19,8 +19,6 @@ export const reactNativeRootProjection: NativeRootProjection = {
     component,
     plan,
     portal,
-    popup,
-    props,
     fields,
     destructure,
     callbacks,

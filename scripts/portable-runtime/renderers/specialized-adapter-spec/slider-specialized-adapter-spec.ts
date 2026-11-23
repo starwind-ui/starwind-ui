@@ -629,6 +629,7 @@ function getSliderRangeControlFacts(spec: SliderSpecializedAdapterSpec): Adapter
     },
     state: {
       getter: valueControl.state.getter,
+      laterDefined: getRequiredState(spec, "value").ownership?.laterDefined,
       name: valueControl.state.name,
       syncEvent: valueControl.state.syncEvent,
       type: valueControl.state.valueType,

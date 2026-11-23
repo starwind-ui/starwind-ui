@@ -277,6 +277,68 @@ describe("createTabs", () => {
     expect(getPanel(root, "password").hidden).toBe(false);
   });
 
+  it("uses RTL keys and physical indicator geometry after a live direction change", async () => {
+    const scope = document.createElement("div");
+    scope.dir = "rtl";
+    const root = renderTabs({ defaultValue: "account", withIndicator: true });
+    scope.append(root);
+    document.body.append(scope);
+    const account = getTab(root, "account");
+    const password = getTab(root, "password");
+    const onValueChange = vi.fn();
+    const tabs = createTabs(root, { onValueChange });
+
+    account.focus();
+    account.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowLeft" }));
+    expect(document.activeElement).toBe(password);
+    expect(tabs.getValue()).toBe("account");
+
+    scope.dir = "ltr";
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    account.focus();
+    account.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    expect(document.activeElement).toBe(password);
+    expect(onValueChange).toHaveBeenCalledTimes(0);
+    const expectedLeft =
+      account.getBoundingClientRect().left -
+      getList(root).getBoundingClientRect().left -
+      getList(root).clientLeft;
+    expect(
+      Math.abs(
+        Number.parseFloat(getIndicator(root).style.getPropertyValue("--active-tab-left")) -
+          expectedLeft,
+      ),
+    ).toBeLessThan(1);
+
+    scope.dir = "rtl";
+    root.style.display = "none";
+    tabs.setValue("password", { emit: false });
+    expect(root.getAttribute("data-activation-direction")).toBe("left");
+    tabs.destroy();
+  });
+
+  it("falls back to RTL order when one tab is hidden and uses measured physical motion otherwise", () => {
+    const root = renderTabs({ defaultValue: "account" });
+    root.dir = "rtl";
+    const account = getTab(root, "account");
+    const password = getTab(root, "password");
+    account.style.display = "none";
+    const tabs = createTabs(root);
+
+    tabs.setValue("password", { emit: false });
+    expect(root.getAttribute("data-activation-direction")).toBe("left");
+
+    account.style.display = "";
+    password.style.transform = "translateX(200px)";
+    expect(password.getBoundingClientRect().left).toBeGreaterThan(
+      account.getBoundingClientRect().left,
+    );
+    tabs.setValue("account", { emit: false });
+    tabs.setValue("password", { emit: false });
+    expect(root.getAttribute("data-activation-direction")).toBe("right");
+    tabs.destroy();
+  });
+
   it("does not wrap focus when loop focus is disabled", () => {
     const root = renderTabs({
       defaultValue: "account",

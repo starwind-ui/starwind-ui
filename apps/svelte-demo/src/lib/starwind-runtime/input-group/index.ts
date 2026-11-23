@@ -12,12 +12,14 @@ import {
   inputGroupText,
   inputGroupTextarea,
 } from "./variants.js";
+
 export type { InputGroupProps } from "./InputGroup.svelte";
 export type { InputGroupAddonProps } from "./InputGroupAddon.svelte";
 export type { InputGroupButtonProps } from "./InputGroupButton.svelte";
 export type { InputGroupInputProps } from "./InputGroupInput.svelte";
 export type { InputGroupTextProps } from "./InputGroupText.svelte";
 export type { InputGroupTextareaProps } from "./InputGroupTextarea.svelte";
+
 const InputGroupVariants = {
   inputGroup,
   inputGroupAddon,
@@ -34,6 +36,7 @@ const InputGroupParts = {
   Text: InputGroupText,
   Textarea: InputGroupTextarea,
 };
+
 export {
   InputGroup,
   InputGroupAddon,

@@ -23,7 +23,7 @@ function CarouselPrevious(props: CarouselPreviousProps) {
     >
       {children ?? (
         <>
-          <ChevronLeft aria-hidden={true} />
+          <ChevronLeft className="rotate-(--sw-carousel-icon-turn)" aria-hidden={true} />
 
           <span className="sr-only">Previous slide</span>
         </>

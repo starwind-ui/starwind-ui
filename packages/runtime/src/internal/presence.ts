@@ -3,6 +3,18 @@ export const PRESENCE_ENDING_ATTRIBUTE = "data-ending-style";
 
 type HideElementOptions = {
   animationDiscovery?: "immediate" | "next-frame";
+  /**
+   * Makes a closing element and all its descendants inert while its exit animation runs, so a
+   * click reaches the content below it. The runtime removes only the `inert` it added, when the
+   * element hides, opens again, or the close aborts. An `inert` the app sets or removes during
+   * the exit stays as the app left it.
+   */
+  passThroughPointerWhileEnding?: boolean;
+  /**
+   * A placement wrapper, such as a positioner, that also becomes inert while the element closes.
+   * Its box covers the popup, so it would catch the click otherwise.
+   */
+  pointerPassThroughWrapper?: HTMLElement | null;
   signal?: AbortSignal;
   onHidden?: () => void;
 };
@@ -13,6 +25,60 @@ type ShowElementOptions = {
 
 const presenceTokens = new WeakMap<HTMLElement, object>();
 
+/** An `inert` attribute the runtime added. The app takes it over when it writes `inert` itself. */
+type InertClaim = { target: HTMLElement; observer: MutationObserver | null; released: boolean };
+
+const endingInertClaims = new WeakMap<HTMLElement, InertClaim[]>();
+
+function getPassThroughTargets(element: HTMLElement, wrapper?: HTMLElement | null): HTMLElement[] {
+  if (!wrapper || wrapper === element) return [element];
+  // Inert covers the whole subtree, so a wrapper around the popup is enough.
+  if (wrapper.contains(element)) return [wrapper];
+  return [element, wrapper];
+}
+
+function claimInert(target: HTMLElement): InertClaim | null {
+  // The app made this element inert. It keeps that value, and the runtime owns nothing.
+  if (target.hasAttribute("inert")) return null;
+
+  target.setAttribute("inert", "");
+  const claim: InertClaim = { target, observer: null, released: false };
+  if (typeof MutationObserver === "function") {
+    claim.observer = new MutationObserver(() => releaseInertClaim(claim));
+    claim.observer.observe(target, { attributes: true, attributeFilter: ["inert"] });
+  }
+  return claim;
+}
+
+function releaseInertClaim(claim: InertClaim): void {
+  claim.released = true;
+  claim.observer?.disconnect();
+  claim.observer = null;
+}
+
+function passThroughPointerWhileEnding(element: HTMLElement, wrapper?: HTMLElement | null): void {
+  restoreEndingPointerPassThrough(element);
+  const claims = getPassThroughTargets(element, wrapper)
+    .map(claimInert)
+    .filter((claim): claim is InertClaim => claim !== null);
+  if (claims.length > 0) endingInertClaims.set(element, claims);
+}
+
+function restoreEndingPointerPassThrough(element: HTMLElement): void {
+  const claims = endingInertClaims.get(element);
+  if (!claims) return;
+
+  endingInertClaims.delete(element);
+  for (const claim of claims) {
+    // Records not yet delivered still show an app write of `inert` during the exit.
+    if (claim.observer && claim.observer.takeRecords().length > 0) releaseInertClaim(claim);
+    if (claim.released) continue;
+
+    releaseInertClaim(claim);
+    claim.target.removeAttribute("inert");
+  }
+}
+
 export function showElement(element: HTMLElement, options: ShowElementOptions = {}): void {
   const wasHidden = element.hidden;
   const isStarting = element.hasAttribute(PRESENCE_STARTING_ATTRIBUTE);
@@ -20,6 +86,7 @@ export function showElement(element: HTMLElement, options: ShowElementOptions = 
   element.hidden = false;
   element.classList.remove("hidden");
   element.removeAttribute(PRESENCE_ENDING_ATTRIBUTE);
+  restoreEndingPointerPassThrough(element);
 
   if (!wasHidden && isStarting) return;
 
@@ -52,6 +119,7 @@ export function hideElementAfterAnimations(
     element.classList.add("hidden");
     element.removeAttribute(PRESENCE_STARTING_ATTRIBUTE);
     element.removeAttribute(PRESENCE_ENDING_ATTRIBUTE);
+    restoreEndingPointerPassThrough(element);
     options.onHidden?.();
     return;
   }
@@ -60,6 +128,16 @@ export function hideElementAfterAnimations(
   presenceTokens.set(element, token);
   element.removeAttribute(PRESENCE_STARTING_ATTRIBUTE);
   element.setAttribute(PRESENCE_ENDING_ATTRIBUTE, "");
+  if (options.passThroughPointerWhileEnding) {
+    passThroughPointerWhileEnding(element, options.pointerPassThroughWrapper);
+    options.signal?.addEventListener(
+      "abort",
+      () => {
+        if (presenceTokens.get(element) === token) restoreEndingPointerPassThrough(element);
+      },
+      { once: true },
+    );
+  }
 
   const discoverAnimations = () => {
     if (options.signal?.aborted || presenceTokens.get(element) !== token) return;
@@ -70,6 +148,7 @@ export function hideElementAfterAnimations(
       element.hidden = true;
       element.classList.add("hidden");
       element.removeAttribute(PRESENCE_ENDING_ATTRIBUTE);
+      restoreEndingPointerPassThrough(element);
       options.onHidden?.();
     });
   };
@@ -84,7 +163,7 @@ export function hideElementAfterAnimations(
 function waitForElementAnimations(element: HTMLElement, onComplete: () => void): void {
   const animations = getElementAnimations(element);
   if (animations.length > 0) {
-    Promise.allSettled(animations.map((animation) => animation.finished)).then(onComplete);
+    void Promise.allSettled(animations.map((animation) => animation.finished)).then(onComplete);
     return;
   }
 

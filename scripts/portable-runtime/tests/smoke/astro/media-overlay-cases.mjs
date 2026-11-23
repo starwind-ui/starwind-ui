@@ -413,6 +413,16 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
       const root = document.querySelector(`#${id}`);
       const indicator = root?.querySelector("[data-sw-progress-indicator]");
       const track = root?.querySelector("[data-sw-progress-track]");
+      const trackRect = track?.getBoundingClientRect();
+      const indicatorRect = indicator?.getBoundingClientRect();
+      const visibleWidth =
+        trackRect && indicatorRect
+          ? Math.max(
+              0,
+              Math.min(trackRect.right, indicatorRect.right) -
+                Math.max(trackRect.left, indicatorRect.left),
+            )
+          : null;
 
       return {
         ariaLabel: root?.getAttribute("aria-label"),
@@ -427,11 +437,15 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
         dataStatus: root?.getAttribute("data-status"),
         dataValue: root?.getAttribute("data-value"),
         indicatorClassName: indicator?.getAttribute("class"),
-        indicatorSlot: indicator?.getAttribute("data-slot"),
         indicatorTransform: indicator instanceof HTMLElement ? indicator.style.transform : null,
+        indicatorSlot: indicator?.getAttribute("data-slot"),
         role: root?.getAttribute("role"),
         trackClassName: track?.getAttribute("class"),
         trackSlot: track?.getAttribute("data-slot"),
+        visiblePercent:
+          visibleWidth !== null && trackRect && trackRect.width > 0
+            ? Math.round((visibleWidth / trackRect.width) * 1000) / 10
+            : null,
       };
     };
 
@@ -456,6 +470,13 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     document.querySelector("#runtime-progress-updating")?.setAttribute("data-value", "75");
     await Promise.resolve();
     await Promise.resolve();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const updatedIndicator = document.querySelector(
+      "#runtime-progress-updating [data-sw-progress-indicator]",
+    );
+    await Promise.all(
+      updatedIndicator?.getAnimations().map((animation) => animation.finished) ?? [],
+    );
 
     return {
       initial,
@@ -476,17 +497,26 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     progressState.initial.default.indicatorSlot !== "progress-indicator" ||
     progressState.initial.default.trackSlot !== "progress-track" ||
     progressState.initial.default.indicatorTransform !== "translateX(-60%)" ||
+    progressState.initial.default.visiblePercent === null ||
+    Math.abs(progressState.initial.default.visiblePercent - 40) > 1 ||
     progressState.initial.indeterminate.dataIndeterminate !== true ||
     progressState.initial.indeterminate.ariaLabel !== "Runtime sync progress" ||
     progressState.initial.indeterminate.ariaNow !== null ||
     progressState.initial.indeterminate.indicatorTransform !== "" ||
+    progressState.initial.indeterminate.visiblePercent === null ||
+    Math.abs(progressState.initial.indeterminate.visiblePercent - 75) > 1 ||
     progressState.initial.indeterminate.className?.includes("relative") !== true ||
     progressState.initial.indeterminate.indicatorClassName?.includes("absolute") !== true ||
     progressState.initial.updating.ariaNow !== "25" ||
     progressState.initial.updating.ariaLabel !== "Runtime processing progress" ||
+    progressState.initial.updating.indicatorTransform !== "translateX(-75%)" ||
+    progressState.initial.updating.visiblePercent === null ||
+    Math.abs(progressState.initial.updating.visiblePercent - 25) > 1 ||
     progressState.updated.ariaNow !== "75" ||
     progressState.updated.ariaText !== "75%" ||
-    progressState.updated.indicatorTransform !== "translateX(-25%)"
+    progressState.updated.indicatorTransform !== "translateX(-25%)" ||
+    progressState.updated.visiblePercent === null ||
+    Math.abs(progressState.updated.visiblePercent - 75) > 1
   ) {
     throw new Error(
       `Expected Astro Progress runtime styling, ARIA, and data-value updates, got ${JSON.stringify(
@@ -495,10 +525,10 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     );
   }
   const expectedAdversarialProgress = {
-    "equal-complete": ["10", "10", "10", "complete", "translateX(0%)"],
-    "equal-progressing": ["10", "10", "10", "complete", "translateX(0%)"],
-    "invalid-bounds": ["0", "100", "25", "progressing", "translateX(-75%)"],
-    reversed: ["0", "100", "25", "progressing", "translateX(-75%)"],
+    "equal-complete": ["10", "10", "10", "complete", "translateX(0%)", 100],
+    "equal-progressing": ["10", "10", "10", "complete", "translateX(0%)", 100],
+    "invalid-bounds": ["0", "100", "25", "progressing", "translateX(-75%)", 25],
+    reversed: ["0", "100", "25", "progressing", "translateX(-75%)", 25],
   };
   for (const [name, expected] of Object.entries(expectedAdversarialProgress)) {
     const actual = progressState.initial.adversarial[name];
@@ -509,7 +539,11 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
       actual.dataStatus,
       actual.indicatorTransform,
     ];
-    if (JSON.stringify(received) !== JSON.stringify(expected)) {
+    if (
+      JSON.stringify(received) !== JSON.stringify(expected.slice(0, 5)) ||
+      actual.visiblePercent === null ||
+      Math.abs(actual.visiblePercent - expected[5]) > 1
+    ) {
       throw new Error(`Expected normalized Astro Progress ${name}, got ${JSON.stringify(actual)}.`);
     }
   }
@@ -520,7 +554,9 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
       actual.ariaNow !== null ||
       actual.dataValue !== null ||
       actual.dataStatus !== "indeterminate" ||
-      actual.indicatorTransform !== ""
+      actual.indicatorTransform !== "" ||
+      actual.visiblePercent === null ||
+      Math.abs(actual.visiblePercent - 75) > 1
     ) {
       throw new Error(
         `Expected indeterminate Astro Progress ${name}, got ${JSON.stringify(actual)}.`,

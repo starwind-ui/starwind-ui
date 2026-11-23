@@ -3,7 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
 import PreviewCardArrow from "./PreviewCardArrow.svelte";
 import PreviewCardBackdrop from "./PreviewCardBackdrop.svelte";
 import PreviewCardPopup from "./PreviewCardPopup.svelte";
@@ -12,6 +11,7 @@ import PreviewCardPositioner from "./PreviewCardPositioner.svelte";
 import PreviewCardRoot from "./PreviewCardRoot.svelte";
 import PreviewCardTrigger from "./PreviewCardTrigger.svelte";
 import PreviewCardViewport from "./PreviewCardViewport.svelte";
+
 const PreviewCard = {
   Root: PreviewCardRoot,
   Trigger: PreviewCardTrigger,
@@ -22,6 +22,7 @@ const PreviewCard = {
   Backdrop: PreviewCardBackdrop,
   Viewport: PreviewCardViewport,
 };
+
 export {
   PreviewCard,
   PreviewCardArrow,
@@ -34,5 +35,5 @@ export {
   PreviewCardViewport,
 };
 export default PreviewCard;
-export type { AnchorChildProps, AnchorChildPayload } from "./PreviewCardTrigger.svelte";
 export type { PreviewCardOpenChangeDetails } from "@starwind-ui/runtime";
+export type { AnchorChildPayload, AnchorChildProps } from "./PreviewCardTrigger.svelte";

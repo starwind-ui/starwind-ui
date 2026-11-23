@@ -10,11 +10,11 @@
 
 <script lang="ts">
   let {
-    "size": size = "md",
-    "isActive": isActive = false,
+    size = "md",
+    isActive = false,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: SidebarMenuSubButtonProps = $props();
 </script>

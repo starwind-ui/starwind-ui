@@ -1,9 +1,11 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 const primitiveAlias = { "scroll-area": "ScrollAreaPrimitive" };
 
 export const scrollAreaStyledContract: StyledAdapterContract = {
   component: "scroll-area",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "ScrollArea",
     "ScrollAreaContent",
@@ -51,7 +53,7 @@ export const scrollAreaStyledContract: StyledAdapterContract = {
       base: [
         "absolute z-10 flex touch-none p-px transition-colors select-none",
         "data-[orientation=horizontal]:inset-x-0 data-[orientation=horizontal]:bottom-0 data-[orientation=horizontal]:h-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:border-t data-[orientation=horizontal]:border-t-transparent",
-        "data-[orientation=vertical]:inset-y-0 data-[orientation=vertical]:end-0 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2.5 data-[orientation=vertical]:border-l data-[orientation=vertical]:border-l-transparent",
+        "data-[orientation=vertical]:inset-y-0 data-[orientation=vertical]:end-0 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2.5 data-[orientation=vertical]:border-s data-[orientation=vertical]:border-s-transparent",
       ],
     },
     scrollAreaThumb: {

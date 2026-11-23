@@ -80,6 +80,7 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
   function connectOtp(root: HTMLElement) {
     let previous = inputs.current;
     const controlled = previous.value !== undefined;
+    let retained = previous.value;
     let instance: ReturnType<typeof createInputOtp>;
     let unsubscribe = () => {};
     let disposed = false;
@@ -93,6 +94,8 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
       }
     }
     function synchronize(value: string | undefined): void {
+      // A later undefined keeps the last controlled value for the mounted lifetime.
+      if (controlled) value = retained = value ?? retained;
       if (value === undefined) return;
       if (instance.getValue() !== value) instance.setValue(value, { emit: false });
       publishCurrent();
@@ -148,6 +151,11 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
       unsubscribe = instance.subscribe("valueChange", () => {
         if (disposed || owner !== instance) return;
         publishCurrent();
+
+        if (controlled)
+          queueMicrotask(() => {
+            if (!disposed && owner === instance) synchronize(inputs.current.value);
+          });
       });
       bindReset();
     }
@@ -180,7 +188,8 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
             ...(next.required !== previous.required ? { required: next.required } : {}),
           });
         }
-        if (controlled) synchronize(next.value);
+        // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
+        if (next.value !== previous.value || controlled) synchronize(next.value);
         publishCurrent();
         bindReset();
         previous = next;
@@ -212,7 +221,8 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
   useIsomorphicLayoutEffect(() => {
     connectionRef.current?.update();
   });
-  const renderedValue = value ?? current;
+  const owned = React.useRef(value === undefined).current;
+  const renderedValue = owned ? current : (value ?? current);
   return (
     <div
       ref={composedRef}

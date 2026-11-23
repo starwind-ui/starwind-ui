@@ -1,3 +1,4 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { RenderNode, StyledAdapterContract } from "../types.js";
 
 type ToastVariant = "default" | "error" | "info" | "loading" | "success" | "warning";
@@ -227,6 +228,7 @@ function renderDefaultTemplate(variant: ToastVariant): RenderNode {
 
 export const toastStyledContract: StyledAdapterContract = {
   component: "toast",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Toaster",
     "ToastAction",
@@ -340,7 +342,7 @@ export const toastStyledContract: StyledAdapterContract = {
       ],
     },
     toastClose: {
-      base: "text-muted-foreground hover:text-foreground absolute top-2 right-2 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none",
+      base: "text-muted-foreground hover:text-foreground absolute top-2 end-2 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none",
     },
     toastContent: {
       base: "grid gap-1 transition-opacity duration-200 data-behind:opacity-0 data-expanded:opacity-100",
@@ -349,7 +351,7 @@ export const toastStyledContract: StyledAdapterContract = {
       base: "text-muted-foreground text-sm",
     },
     toastItem: {
-      base: "bg-popover text-popover-foreground pointer-events-auto absolute inset-x-0 bottom-0 flex w-full origin-bottom flex-col gap-1 overflow-hidden rounded-lg border bg-clip-padding p-4 pr-10 shadow-lg transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-limited:pointer-events-none data-limited:opacity-0",
+      base: "bg-popover text-popover-foreground pointer-events-auto absolute inset-x-0 bottom-0 flex w-full origin-bottom flex-col gap-1 overflow-hidden rounded-lg border bg-clip-padding p-4 pe-10 shadow-lg transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-limited:pointer-events-none data-limited:opacity-0",
       variants: {
         variant: {
           default: "border-border",
@@ -432,7 +434,7 @@ export const toastStyledContract: StyledAdapterContract = {
           name: "viewportStyle",
           value: {
             type: "raw",
-            code: '{ "--gap": gap, "--peek": peek, ...(style ?? {}) } as React.CSSProperties & Record<"--gap" | "--peek", string>',
+            code: '{ "--gap": gap, "--peek": peek, ...style } as React.CSSProperties & Record<"--gap" | "--peek", string>',
           },
         },
         {

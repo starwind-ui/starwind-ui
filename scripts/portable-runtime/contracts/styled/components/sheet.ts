@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const sheetStyledContract: StyledAdapterContract = {
   component: "sheet",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Sheet",
     "SheetClose",
@@ -66,7 +68,7 @@ export const sheetStyledContract: StyledAdapterContract = {
     },
     sheetCloseButton: {
       base: [
-        "absolute top-4 right-4 rounded-xs [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+        "absolute top-4 end-4 rounded-xs [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
         "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
       ],
     },

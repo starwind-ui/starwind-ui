@@ -14,8 +14,10 @@ export type ValidatedPackageSpec = string & {
 const MAX_PACKAGE_NAME_LENGTH = 214;
 const PACKAGE_NAME_SEGMENT = /^[a-z0-9](?:[a-z0-9._~-]*[a-z0-9])?$/;
 const DIST_TAG = /^[a-z][a-z0-9._-]{0,127}$/;
+/* oxlint-disable eslint/no-control-regex -- npm specs reject control characters. */
 const CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/;
 const PACKAGE_NAME_WHITESPACE_OR_CONTROL = /[\s\u0000-\u001f\u007f]/;
+/* oxlint-enable eslint/no-control-regex */
 
 function invalidPackageValue(field: string, expected: string): Error {
   return new Error(`Invalid ${field}: ${expected}.`);

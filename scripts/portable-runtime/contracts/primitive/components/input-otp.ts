@@ -161,6 +161,12 @@ export const inputOtpRuntimeAdapterContract = {
       runtimeSetter: "setValue",
       valueType: "string",
       controlledStateSync: "unsupported",
+      ownership: {
+        controlledWhen: "initial-defined",
+        lifetime: "mount",
+        laterUndefined: "retain-controlled-value",
+        laterDefined: "silent-command",
+      },
     },
   ],
   events: [

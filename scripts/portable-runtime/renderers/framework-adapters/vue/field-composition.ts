@@ -13,7 +13,6 @@ import type {
   AdapterFormControlCompositionComponentProjection,
   AdapterFormControlCompositionFacts,
   AdapterFormControlCompositionIndexProjection,
-  AdapterFormControlCompositionPartName,
 } from "../types.js";
 
 export function printVueFieldCompositionComponent(

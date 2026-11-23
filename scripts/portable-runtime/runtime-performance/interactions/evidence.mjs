@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { inventory, sourceInventory } from "./build.mjs";
-import { buildCaptureSchedule, buildLegacyCaptureSchedule } from "./plan.mjs";
-import { buildCaptureReport, renderCaptureReport } from "./report.mjs";
 import {
   buildCaptureReport as buildLegacyCaptureReport,
   renderCaptureReport as renderLegacyCaptureReport,
 } from "./legacy-report.mjs";
+import { buildCaptureSchedule, buildLegacyCaptureSchedule } from "./plan.mjs";
+import { buildCaptureReport, renderCaptureReport } from "./report.mjs";
 
 const json = (filename) => JSON.parse(readFileSync(filename, "utf8"));
 const hash = (content) => createHash("sha256").update(content).digest("hex");

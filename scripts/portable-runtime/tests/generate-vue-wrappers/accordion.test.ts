@@ -48,6 +48,13 @@ describe("generated Vue Accordion", () => {
     expect(first["index.ts"]).toContain("AccordionValueChangeDetails");
   });
 
+  it("passes no slot props from the root", async () => {
+    const root = (await generateAccordion())["AccordionRoot.vue"];
+    expect(root).not.toMatch(/<slot\s+:/);
+    expect(compactCode(root)).toContain(compactCode("defineSlots<{ default?: () => unknown }>()"));
+    expect(root).not.toContain("renderedValue");
+  });
+
   it("generates Styled Accordion with the default value model and canonical slots", async () => {
     const repoRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-styled-accordion-"));
     temporaryRoots.push(repoRoot);

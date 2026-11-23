@@ -44,12 +44,12 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "src"
+    "src",
+    "docs"
   ],
   "scripts": {
+    "prepack": "tsx ../../scripts/portable-runtime/generate-package-docs.ts --package astro",
     "typecheck": "astro check",
-    "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{astro,ts,md,json}\"",
-    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{astro,ts,md,json}\" --cache",
     "publish:beta": "pnpm publish --tag beta --access public",
     "publish:next": "pnpm publish --tag next --access public",
     "publish:release": "pnpm publish --access public"

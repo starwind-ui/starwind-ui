@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-
 import {
   DrawerBackdrop,
   DrawerClose,
@@ -12,6 +10,7 @@ import {
   DrawerTrigger,
   DrawerViewport,
 } from "@starwind-ui/vue/drawer";
+import { computed, ref } from "vue";
 
 const side = ref<"top" | "right" | "bottom" | "left">("right");
 const open = ref(false);

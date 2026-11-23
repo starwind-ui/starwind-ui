@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
+import { verifyFieldOwnership } from "../../../../packages/svelte/tests/field-and-form-ownership-browser.js";
 import { createStyledFieldConsumer } from "../../../../packages/svelte/tests/styled-field-consumer.js";
 
-import { verifyFieldOwnership } from "../../../../packages/svelte/tests/field-and-form-ownership-browser.js";
 it("hydrates Field with stable Form ownership, removal, overrides and controls", async () => {
   const consumer = await createStyledFieldConsumer(process.cwd());
   try {
@@ -14,9 +14,10 @@ it("hydrates Field with stable Form ownership, removal, overrides and controls",
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { fieldStyledContract } from "../../contracts/styled/components/field.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("regenerates every Field export and its stock Separator dependency", async () => {
   const outputRoot = await mkdtemp(path.join(os.tmpdir(), "svelte-field-output-"));
   try {

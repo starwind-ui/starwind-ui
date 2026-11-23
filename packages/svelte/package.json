@@ -1,7 +1,7 @@
 {
   "name": "@starwind-ui/svelte",
   "version": "0.3.0",
-  "description": "Public-beta Svelte 5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
+  "description": "Accessible Svelte 5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",
   "author": {
@@ -29,8 +29,7 @@
     "runtime",
     "tailwindcss",
     "design-system",
-    "typescript",
-    "beta"
+    "typescript"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -51,6 +50,11 @@
       "types": "./dist/carousel/index.d.ts",
       "svelte": "./dist/carousel/index.js",
       "default": "./dist/carousel/index.js"
+    },
+    "./chart": {
+      "types": "./dist/chart/index.d.ts",
+      "svelte": "./dist/chart/index.js",
+      "default": "./dist/chart/index.js"
     },
     "./checkbox": {
       "types": "./dist/checkbox/index.d.ts",
@@ -226,20 +230,23 @@
       "types": "./dist/combobox/index.d.ts",
       "svelte": "./dist/combobox/index.js",
       "default": "./dist/combobox/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "sideEffects": false,
   "scripts": {
+    "prepack": "tsx ../../scripts/portable-runtime/generate-package-docs.ts --package svelte",
     "build": "svelte-package -i src -o dist --tsconfig tsconfig.json",
     "test:run": "vitest run --config tests/vitest.config.ts",
     "test:all": "pnpm --filter=@starwind-ui/runtime build && pnpm build && pnpm test:run",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@starwind-ui/runtime": "1.5.0"
+    "@starwind-ui/runtime": "workspace:*"
   },
   "peerDependencies": {
     "svelte": ">=5.29.0 <6"

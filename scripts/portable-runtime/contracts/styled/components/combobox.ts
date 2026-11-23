@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const comboboxStyledContract: StyledAdapterContract = {
   component: "combobox",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Combobox",
     "ComboboxClear",
@@ -72,7 +74,7 @@ export const comboboxStyledContract: StyledAdapterContract = {
     comboboxGroupLabel: { base: "text-muted-foreground px-2 py-1.5 font-medium" },
     comboboxInput: {
       base: [
-        "placeholder:text-muted-foreground text-foreground flex h-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent py-1 pr-1 pl-3 shadow-none outline-none ring-0",
+        "placeholder:text-muted-foreground text-foreground flex h-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent py-1 pe-1 ps-3 shadow-none outline-none ring-0",
         "focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50",
         "data-error-visible:text-error data-error-visible:ring-0",
       ],
@@ -81,7 +83,7 @@ export const comboboxStyledContract: StyledAdapterContract = {
       base: [
         "w-auto transition-[color,box-shadow] focus-within:border-outline focus-within:ring-outline/50 focus-within:transition-none focus-within:ring-3",
         "has-[[data-slot=combobox-input][data-error-visible]]:border-error has-[[data-slot=combobox-input][data-error-visible]]:ring-error/40",
-        "[&>[data-align=inline-end]:has(>div>button)]:mr-[-0.3rem]",
+        "[&>[data-align=inline-end]:has(>div>button)]:me-[-0.3rem]",
       ],
       variants: {
         size: {
@@ -94,19 +96,19 @@ export const comboboxStyledContract: StyledAdapterContract = {
     },
     comboboxItem: {
       base: [
-        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 outline-none select-none",
+        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pe-8 ps-2 outline-none select-none",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "group/combobox-item [&>svg]:size-4 [&>svg]:shrink-0",
       ],
       variants: {
-        inset: { true: "pl-8" },
+        inset: { true: "ps-8" },
         disabled: { true: "pointer-events-none opacity-50" },
       },
       defaultVariants: { inset: false, disabled: false },
     },
     comboboxItemIndicator: {
       base: [
-        "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+        "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
         "data-[state=checked]:opacity-100 data-visible:opacity-100 data-hidden:opacity-0",
         "[&>svg]:size-4 [&>svg]:shrink-0",
       ],

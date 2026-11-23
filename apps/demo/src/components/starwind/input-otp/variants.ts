@@ -15,8 +15,8 @@ export const inputOtpSeparator = tv({
 export const inputOtpSlot = tv({
   base: [
     "border-input dark:bg-input/30 text-foreground border bg-transparent text-center shadow-xs",
-    "relative flex items-center justify-center border-y border-r text-sm transition-all outline-none",
-    "first:rounded-l-md first:border-l last:rounded-r-md disabled:cursor-not-allowed disabled:opacity-50",
+    "relative flex items-center justify-center border-y border-e text-sm transition outline-none",
+    "first:rounded-s-md first:border-s last:rounded-e-md disabled:cursor-not-allowed disabled:opacity-50",
     "data-[active=true]:border-outline data-[active=true]:ring-outline/50 data-[active=true]:z-10 data-[active=true]:ring-3",
     "data-[active=true]:aria-invalid:ring-error/40",
     "aria-invalid:border-error data-[active=true]:aria-invalid:border-error",

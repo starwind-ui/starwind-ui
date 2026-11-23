@@ -7,7 +7,6 @@ import {
   comboboxItems,
   menuItems,
   selectItems,
-  pageItems,
   parentItems,
   childItems,
   createSelectPage,

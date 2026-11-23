@@ -20,7 +20,7 @@ function PaginationNext(props: PaginationNextProps) {
     >
       {children}
 
-      {icon ?? <ChevronRight />}
+      {icon ?? <ChevronRight className="rtl:rotate-180" />}
     </PaginationLink>
   );
 }

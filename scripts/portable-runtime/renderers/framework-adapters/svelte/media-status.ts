@@ -3,7 +3,9 @@ import {
   avatarRecipe,
   avatarRefresh,
   avatarRefreshInputs,
+  avatarRootEventFilter,
   avatarSubscription,
+  avatarUnsubscribe,
 } from "../../shared-recipes/media/avatar.js";
 import type {
   AdapterComponentFile,
@@ -121,14 +123,20 @@ ${image ? `  import type { ${f.state.type}, ${f.event.detailsType} } from "${f.r
   $effect(() => {
     const controller = context?.instance;
     if (!controller) return;
+    const root = controller.root;
     const notify = (details: ${f.event.detailsType}) => untrack(() => ${f.event.callbackProp}?.(details.${f.event.valueProperty}, details));
-    ${avatarSubscription({
-      listen: `const unsubscribe = controller.subscribe("${f.event.name}", notify);`,
+    const handleLoadingStatusChange = (event: Event) => {
+      ${avatarRootEventFilter("root")}
+      notify((event as CustomEvent<${f.event.detailsType}>).detail);
+    };
+    ${avatarSubscription(f, {
+      root: "root",
+      handler: "handleLoadingStatusChange",
       read: `controller.${f.state.getter}()`,
       notify: `notify({ previousStatus: "${avatarRecipe.initialStatus}", status });`,
       untracked: (body) => `untrack(() => { ${body} });`,
     })}
-    return unsubscribe;
+    return () => ${avatarUnsubscribe(f, "root", "handleLoadingStatusChange").slice(0, -1)};
   });`
       : `const attachPart: Attachment<HTMLSpanElement> = (element) => {
     $effect(() => { ${avatarRefreshInputs(f, "fallback")

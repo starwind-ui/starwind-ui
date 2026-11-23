@@ -1,18 +1,18 @@
-import path from 'node:path';
+import path from "node:path";
 
-import { getRelativeImportPath } from '../../../shared.js';
+import { getRelativeImportPath } from "../../../shared.js";
 import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
   StyledOutputImport,
-} from '../../../styled-output-model/index.js';
-import type { RuntimeImportRewriteContext } from '../../../styled-runtime-imports.js';
-import { rewriteRuntimeImportSource } from '../../../styled-runtime-imports.js';
-import { collectComponentVariants, renderComposedComponentImports } from './component-discovery.js';
-import { ASTRO_FRAMEWORK } from './constants.js';
-import { isForFramework } from './formatting.js';
-import { collectPrimitiveComponents, getAstroPrimitiveAliases } from './primitive-helpers.js';
-import { hasAstroPolymorphicAsProp } from './props-client.js';
+} from "../../../styled-output-model/index.js";
+import type { RuntimeImportRewriteContext } from "../../../styled-runtime-imports.js";
+import { rewriteRuntimeImportSource } from "../../../styled-runtime-imports.js";
+import { collectComponentVariants, renderComposedComponentImports } from "./component-discovery.js";
+import { ASTRO_FRAMEWORK } from "./constants.js";
+import { isForFramework } from "./formatting.js";
+import { collectPrimitiveComponents, getAstroPrimitiveAliases } from "./primitive-helpers.js";
+import { hasAstroPolymorphicAsProp } from "./props-client.js";
 
 export function renderComponentImports(
   group: StyledOutputComponentGroup,
@@ -34,8 +34,7 @@ export function renderComponentImports(
     (propExtend) =>
       isForFramework(propExtend, ASTRO_FRAMEWORK) &&
       !usesAstroPolymorphic &&
-      (propExtend.kind === "element-attributes" ||
-        propExtend.kind === "omit-element-attributes"),
+      (propExtend.kind === "element-attributes" || propExtend.kind === "omit-element-attributes"),
   );
   const usesComponentProps = component.props?.extends?.some(
     (propExtend) =>
@@ -64,19 +63,38 @@ export function renderComponentImports(
     sideEffectImports.push(`import "./${group.styles.sourceFileName ?? "styles.css"}";`);
   }
 
+  // Value positions of the component. A named import that none of them reads is a type import.
+  const valueText = JSON.stringify([
+    component.variables,
+    component.render,
+    component.client,
+    component.destructure,
+  ]);
+  const primitiveComponents = collectPrimitiveComponents(component.render);
+  // A named import from the Runtime subpath of a rendered Primitive reads that Primitive's index,
+  // so it joins the Primitive import in package and local output alike.
+  const primitiveNamed = new Map<string, string[]>();
   for (const importContract of (component.imports ?? []).filter((importContract) =>
     isForFramework(importContract, ASTRO_FRAMEWORK),
   )) {
-    externalValueImports.push(renderImport(importContract, runtimeImportContext));
+    const subpath = /^@starwind-ui\/runtime\/(.+)$/.exec(importContract.source)?.[1];
+    if (importContract.kind === "named" && subpath && primitiveComponents.includes(subpath)) {
+      const specifier = importContract.localName
+        ? `${importContract.importName} as ${importContract.localName}`
+        : importContract.importName;
+      primitiveNamed.set(subpath, [...(primitiveNamed.get(subpath) ?? []), specifier]);
+      continue;
+    }
+    externalValueImports.push(renderImport(importContract, runtimeImportContext, valueText));
   }
 
-  for (const primitiveComponent of collectPrimitiveComponents(component.render)) {
+  for (const primitiveComponent of primitiveComponents) {
     const alias = primitiveAliases[primitiveComponent];
     const importPath = primitiveImportBase
       ? `${primitiveImportBase}/${primitiveComponent}`
       : getRelativeImportPath(dir, path.join(primitiveOutputRoot, primitiveComponent));
-
-    const importLine = `import ${alias} from "${importPath}";`;
+    const named = primitiveNamed.get(primitiveComponent);
+    const importLine = `import ${alias}${named ? `, { ${named.join(", ")} }` : ""} from "${importPath}";`;
     if (primitiveImportBase && !hasStyleSideEffect) {
       externalValueImports.push(importLine);
     } else {
@@ -84,9 +102,7 @@ export function renderComponentImports(
     }
   }
 
-  relativeValueImports.push(
-    ...renderComposedComponentImports(group, component, outputRoot, dir),
-  );
+  relativeValueImports.push(...renderComposedComponentImports(group, component, outputRoot, dir));
 
   const usedVariants = collectComponentVariants(component, ASTRO_FRAMEWORK);
   if (usedVariants.size > 0) {
@@ -106,15 +122,18 @@ export function renderComponentImports(
 function renderImport(
   importContract: StyledOutputImport,
   runtimeImportContext: RuntimeImportRewriteContext,
+  valueText: string,
 ): string {
   const source = rewriteRuntimeImportSource(importContract.source, runtimeImportContext);
 
   if (importContract.kind === "named") {
+    const localName = importContract.localName ?? importContract.importName;
     const specifier = importContract.localName
       ? `${importContract.importName} as ${importContract.localName}`
       : importContract.importName;
+    const typeOnly = !new RegExp(`\\b${localName}\\b`).test(valueText);
 
-    return `import { ${specifier} } from "${source}";`;
+    return `import ${typeOnly ? "type " : ""}{ ${specifier} } from "${source}";`;
   }
 
   return `import ${importContract.importName} from "${source}";`;

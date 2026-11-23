@@ -14,8 +14,7 @@ export function printSvelteAnchorChild({
   register: string;
   omitEmptyRegistration?: boolean;
 }): string {
-  return `<!-- Svelte 5 public beta adapter output. -->
-<script module lang="ts">
+  return `<script module lang="ts">
   import type { Snippet } from "svelte";
   import type { HTMLAnchorAttributes } from "svelte/elements";
   export type AnchorChildProps = Omit<HTMLAnchorAttributes, "children">;
@@ -82,11 +81,15 @@ ${register || !omitEmptyRegistration ? `  const owner = Symbol("${name} owner");
     const root = currentElement;
     if (!root) return;
     $effect(() => { const callback = refCallback; untrack(() => callback?.(root)); return () => untrack(() => callback?.(null)); });
-${register || !omitEmptyRegistration ? `    $effect(() => {
+${
+  register || !omitEmptyRegistration
+    ? `    $effect(() => {
       // Changed disabled input retires interaction work while refs keep the same semantic owner.
       const disabled = disabledInput;
       return untrack(() => { void disabled; ${register} });
-    });` : ""}
+    });`
+    : ""
+}
   });
   const attachOwner: Attachment<Element> = (root) => {
     owners.add(root);

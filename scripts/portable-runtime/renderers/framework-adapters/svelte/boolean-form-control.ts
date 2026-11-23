@@ -10,8 +10,6 @@ import type {
 } from "../types.js";
 import { printSvelteRefAttachment } from "./attachments.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 export function printSvelteBooleanFormControlComponent(
   file: AdapterComponentFile,
 ): AdapterPrintedFile {
@@ -41,9 +39,8 @@ export function printSvelteBooleanFormControlIndex(file: AdapterIndexFile): Adap
   }
   const { facts } = family;
   const indicator = requireFact(facts.exports.stateIndicator, "state indicator export");
-  const groupContext = `${facts.exports.namespace}GroupContext`;
-  const groupContextType = `${groupContext}Value`;
 
+  // The group context key stays internal: Checkbox Root reads it from its sibling module.
   return {
     contents: `import ${facts.exports.root} from "./${facts.exports.root}.svelte";
 import ${indicator} from "./${indicator}.svelte";
@@ -51,9 +48,6 @@ import ${indicator} from "./${indicator}.svelte";
 const ${facts.exports.namespace} = { Root: ${facts.exports.root}, Indicator: ${indicator} };
 export { ${facts.exports.namespace}, ${facts.exports.root}, ${indicator} };
 export default ${facts.exports.namespace};
-
-export { ${groupContext} } from "./${groupContext}.svelte.js";
-export type { ${groupContextType} } from "./${groupContext}.svelte.js";
 `,
     path: file.path,
   };
@@ -63,7 +57,7 @@ function printRoot(
   file: AdapterComponentFile,
   facts: AdapterBooleanFormControlFacts,
 ): AdapterPrintedFile {
-  const indicator = requireFact(facts.parts.stateIndicator, "state indicator part");
+  requireFact(facts.parts.stateIndicator, "state indicator part");
   const indeterminate = requireFact(facts.props.indeterminate, "indeterminate prop");
   const form = requireFact(facts.props.form, "form prop");
   const id = requireFact(facts.props.id, "id prop");
@@ -92,15 +86,11 @@ function printRoot(
   const disabled = facts.props.disabled.name;
   const nativeButton = facts.props.nativeButton.name;
   const callback = facts.event.callbackProp;
-  const keepMountedAttribute = requireFact(
-    facts.attrs.stateIndicatorKeepMounted,
-    "state indicator keep-mounted attribute",
-  );
+  requireFact(facts.attrs.stateIndicatorKeepMounted, "state indicator keep-mounted attribute");
   const uncheckedInput = requireFact(facts.parts.uncheckedInput, "unchecked input part");
 
   return {
-    contents: `<!-- ${NON_SHIPPING_COMMENT} -->
-<script module lang="ts">
+    contents: `<script module lang="ts">
   export type ${indicatorContextType} = Readonly<{
     checked: boolean;
     disabled: boolean;
@@ -461,8 +451,7 @@ function printIndicator(
     hidden: "hidden",
   });
   return {
-    contents: `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+    contents: `<script lang="ts">
   import { getContext, untrack, type Snippet } from "svelte";
   import type { HTMLAttributes } from "svelte/elements";
   import { ${context}, type ${contextType} } from "./${facts.exports.root}.svelte";

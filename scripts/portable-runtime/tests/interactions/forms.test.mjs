@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { chromium } from "playwright";
+import { describe, expect, it } from "vitest";
 import {
   validateFilteredResults,
   validateFormOutcome,
@@ -20,7 +20,7 @@ const validForm = {
 
 describe("form fixture endpoints", () => {
   it("waits for a delayed popup to stop intercepting the trusted submit click", async () => {
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       await page.setContent(`
@@ -45,8 +45,11 @@ describe("form fixture endpoints", () => {
               bench: event.target.closest("[data-bench]")?.getAttribute("data-bench") ?? null,
               item: event.target.closest("[data-item]")?.getAttribute("data-item") ?? null,
             });
+            // The popup closes a moment after the first click, so page setup time cannot hide it
+            // before that click lands.
+            if (window.clicks.length === 1)
+              setTimeout(() => document.querySelector('[data-bench="popup"]').hidden = true, 120);
           }, true);
-          setTimeout(() => document.querySelector('[data-bench="popup"]').hidden = true, 120);
         </script>
       `);
       const button = await page.locator('[data-bench="submit"]').boundingBox();

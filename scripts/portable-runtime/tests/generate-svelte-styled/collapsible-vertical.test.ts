@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { compile } from "svelte/compiler";
+import { describe, expect, it } from "vitest";
 import { collapsibleStyledContract } from "../../contracts/styled/components/collapsible.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 describe("Collapsible vertical", () => {
   it("projects Root, Trigger and Content with accepted model and semantic child syntax", () => {
@@ -23,14 +23,16 @@ describe("Collapsible vertical", () => {
 });
 
 import { verifyCollapsibleLifecycle } from "../../../../packages/svelte/tests/collapsible-lifecycle-browser.js";
+
 it("hydrates accepted models, semantic Trigger ownership and Runtime presence", async () => {
   await verifyCollapsibleLifecycle(await consumer(), true);
 }, 60000);
 
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("generates Collapsible deterministically from its contract", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-collapsible-output-"));
   try {
@@ -66,10 +68,11 @@ it("rejects unsupported anatomy, native bases, callbacks and child projection", 
   }
 });
 
-import { afterEach } from "vitest";
 import path from "node:path";
+import { afterEach } from "vitest";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
 import { createStyledCollapsibleConsumer } from "../../../../packages/svelte/tests/styled-collapsible-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

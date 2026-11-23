@@ -10,9 +10,9 @@
 
 <script lang="ts">
   let {
-    "channel": channel,
+    channel,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: ColorPickerChannelInputProps = $props();
 </script>

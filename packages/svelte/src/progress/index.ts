@@ -8,6 +8,7 @@ import ProgressLabel from "./ProgressLabel.svelte";
 import ProgressRoot from "./ProgressRoot.svelte";
 import ProgressTrack from "./ProgressTrack.svelte";
 import ProgressValueComponent from "./ProgressValue.svelte";
+
 const ProgressValue = ProgressValueComponent;
 type ProgressValue = import("@starwind-ui/runtime").ProgressValue;
 const Progress = {
@@ -17,5 +18,6 @@ const Progress = {
   Value: ProgressValue,
   Label: ProgressLabel,
 };
+
 export { Progress, ProgressIndicator, ProgressLabel, ProgressRoot, ProgressTrack, ProgressValue };
 export default Progress;

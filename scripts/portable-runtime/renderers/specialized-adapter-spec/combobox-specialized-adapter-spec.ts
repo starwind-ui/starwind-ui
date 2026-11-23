@@ -6,12 +6,12 @@ import type {
   AdapterIndexFile,
   AdapterOutputModel,
 } from "../framework-adapters/index.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 import {
   buildBaseSpecializedAdapterSpec,
   validateSpecializedAdapterSpec,
 } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec } from "./types.js";
-import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type ComboboxSpecializedAdapterSpec = SpecializedAdapterSpec & {
   combobox: {

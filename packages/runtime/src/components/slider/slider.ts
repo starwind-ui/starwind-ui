@@ -1,3 +1,9 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
+import {
+  type DirectionSubscription,
+  spatialRatio,
+  subscribeDirection,
+} from "../../internal/direction";
 import {
   assertHTMLElement,
   ensureId,
@@ -5,7 +11,6 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
@@ -171,6 +176,7 @@ class SliderController implements SliderInstance {
   private readonly boundThumbElements = new WeakSet<HTMLElement>();
   private readonly boundThumbInputs = new WeakSet<HTMLInputElement>();
   private readonly controlled: boolean;
+  private readonly direction: DirectionSubscription;
   private formBridgeObserver: MutationObserver | undefined;
   private resetForm: HTMLFormElement | null = null;
   private resetTimer: number | undefined;
@@ -189,6 +195,8 @@ class SliderController implements SliderInstance {
   private destroyed = false;
   private disabled: boolean;
   private dragging = false;
+  private dragDocument: Document | undefined;
+  private dragPointerId: number | undefined;
   private focusedThumbIndex = -1;
   private interactionChanged = false;
   private interactionPreviousValue: SliderValue | undefined;
@@ -238,6 +246,10 @@ class SliderController implements SliderInstance {
     this.elements = getSliderElements(root);
     this.values = this.readInitialValues(options);
     this.initialResetValues = [...this.values];
+    this.direction = subscribeDirection(root, () => {
+      if (this.dragging) this.cancelDrag();
+      this.render();
+    });
 
     this.setupInputs();
     this.bindEvents();
@@ -250,6 +262,7 @@ class SliderController implements SliderInstance {
     if (this.destroyed) return;
 
     this.stopDocumentDraggingListeners();
+    this.direction.destroy();
     this.clearResetTimer();
     this.detachFormResetListener();
     this.abortController.abort();
@@ -266,6 +279,7 @@ class SliderController implements SliderInstance {
   }
 
   refresh(): void {
+    this.direction.refresh();
     const currentValue = this.getValue();
     this.readOptionsFromAttributes();
     this.elements = getSliderElements(this.root);
@@ -284,8 +298,7 @@ class SliderController implements SliderInstance {
 
     this.disabled = disabled;
     if (disabled) {
-      this.activeThumbIndex = -1;
-      this.dragging = false;
+      if (this.dragging) this.cancelDrag();
     }
     this.render();
   }
@@ -687,12 +700,14 @@ class SliderController implements SliderInstance {
     if (this.orientation === "vertical") {
       indicator.style.bottom = `${start}%`;
       indicator.style.height = `${end - start}%`;
+      indicator.style.insetInlineStart = "";
       indicator.style.left = "";
       indicator.style.width = "";
       return;
     }
 
-    indicator.style.left = `${start}%`;
+    indicator.style.insetInlineStart = `${start}%`;
+    indicator.style.left = "";
     indicator.style.width = `${end - start}%`;
     indicator.style.bottom = "";
     indicator.style.height = "";
@@ -741,9 +756,11 @@ class SliderController implements SliderInstance {
 
       if (this.orientation === "vertical") {
         thumb.element.style.bottom = `${percentage}%`;
+        thumb.element.style.insetInlineStart = "";
         thumb.element.style.left = "";
       } else {
-        thumb.element.style.left = `${percentage}%`;
+        thumb.element.style.insetInlineStart = `${percentage}%`;
+        thumb.element.style.left = "";
         thumb.element.style.bottom = "";
       }
 
@@ -798,6 +815,7 @@ class SliderController implements SliderInstance {
   private readonly handlePointerDown = (event: PointerEvent): void => {
     if (this.disabled || event.defaultPrevented || event.button !== 0) return;
 
+    this.direction.get();
     const target = event.target instanceof Element ? event.target : null;
     const targetThumb = target
       ? this.elements.thumbs.find((thumb) => thumb.element.contains(target))
@@ -816,6 +834,7 @@ class SliderController implements SliderInstance {
     this.lastInteractionReason = targetThumb ? "drag" : "track-press";
     this.lastInteractionRevisionSource = undefined;
     this.lastInteractionTrigger = activeThumb.element;
+    this.dragPointerId = event.pointerId;
     activeThumb.element.focus();
 
     setPointerCapture(this.elements.control, event.pointerId);
@@ -831,9 +850,11 @@ class SliderController implements SliderInstance {
       });
     }
 
-    document.addEventListener("pointermove", this.handlePointerMove, { passive: true });
-    document.addEventListener("pointerup", this.handlePointerUp, { once: true });
-    document.addEventListener("pointercancel", this.handlePointerCancel, { once: true });
+    const ownerDocument = this.root.ownerDocument;
+    this.dragDocument = ownerDocument;
+    ownerDocument.addEventListener("pointermove", this.handlePointerMove, { passive: true });
+    ownerDocument.addEventListener("pointerup", this.handlePointerUp, { once: true });
+    ownerDocument.addEventListener("pointercancel", this.handlePointerCancel, { once: true });
   };
 
   private readonly handlePointerMove = (event: PointerEvent): void => {
@@ -844,6 +865,7 @@ class SliderController implements SliderInstance {
     }
 
     const nextValue = this.getValueFromPosition(event.clientX, event.clientY);
+    if (!this.dragging) return;
     this.requestThumbValue(this.activeThumbIndex, nextValue, {
       activeThumbIndex: this.activeThumbIndex,
       event,
@@ -853,6 +875,8 @@ class SliderController implements SliderInstance {
   };
 
   private readonly handlePointerUp = (event: PointerEvent): void => {
+    if (!this.dragging) return;
+    this.direction.get();
     if (!this.dragging) return;
 
     const activeThumbIndex = this.activeThumbIndex;
@@ -883,10 +907,13 @@ class SliderController implements SliderInstance {
 
   private readonly handlePointerCancel = (event: PointerEvent): void => {
     if (!this.dragging) return;
-
-    this.stopDocumentDraggingListeners();
-    releasePointerCapture(this.elements.control, event.pointerId);
+    this.cancelDrag(event.pointerId);
   };
+
+  private cancelDrag(pointerId = this.dragPointerId): void {
+    this.stopDocumentDraggingListeners();
+    if (pointerId !== undefined) releasePointerCapture(this.elements.control, pointerId);
+  }
 
   private readonly handleFocusIn = (event: FocusEvent): void => {
     const thumb = this.findThumbFromTarget(event.target);
@@ -1019,14 +1046,18 @@ class SliderController implements SliderInstance {
   private getKeyboardValue(index: number, event: KeyboardEvent): number | undefined {
     const value = this.values[index] ?? this.min;
     const smallStep = event.shiftKey ? this.largeStep : this.step;
+    const horizontalSign =
+      this.orientation === "horizontal" && this.direction.get() === "rtl" ? -1 : 1;
 
     switch (event.key) {
       case "ArrowUp":
-      case "ArrowRight":
         return value + smallStep;
       case "ArrowDown":
-      case "ArrowLeft":
         return value - smallStep;
+      case "ArrowRight":
+        return value + smallStep * horizontalSign;
+      case "ArrowLeft":
+        return value - smallStep * horizontalSign;
       case "PageUp":
         return value + this.largeStep;
       case "PageDown":
@@ -1061,11 +1092,15 @@ class SliderController implements SliderInstance {
     const size = this.orientation === "vertical" ? rect.height : rect.width;
     if (size <= 0) return this.min;
 
-    const rawPercentage =
+    const physicalPercentage =
       this.orientation === "vertical"
         ? 1 - (clientY - rect.top) / size
         : (clientX - rect.left) / size;
-    const percentage = clamp(rawPercentage, 0, 1);
+    const percentage = clamp(
+      spatialRatio(physicalPercentage, this.direction.get(), this.orientation),
+      0,
+      1,
+    );
 
     return this.snapToStep(this.min + percentage * (this.max - this.min));
   }
@@ -1170,9 +1205,12 @@ class SliderController implements SliderInstance {
   }
 
   private stopDocumentDraggingListeners(): void {
-    document.removeEventListener("pointermove", this.handlePointerMove);
-    document.removeEventListener("pointerup", this.handlePointerUp);
-    document.removeEventListener("pointercancel", this.handlePointerCancel);
+    const ownerDocument = this.dragDocument ?? this.root.ownerDocument;
+    ownerDocument.removeEventListener("pointermove", this.handlePointerMove);
+    ownerDocument.removeEventListener("pointerup", this.handlePointerUp);
+    ownerDocument.removeEventListener("pointercancel", this.handlePointerCancel);
+    this.dragDocument = undefined;
+    this.dragPointerId = undefined;
     this.activeThumbIndex = -1;
     this.dragging = false;
     this.interactionChanged = false;
@@ -1284,7 +1322,7 @@ function getOrCreateInput(thumb: HTMLElement): HTMLInputElement {
   const input = thumb.querySelector<HTMLInputElement>(SLIDER_INPUT_SELECTOR);
   if (input) return input;
 
-  const newInput = document.createElement("input");
+  const newInput = thumb.ownerDocument.createElement("input");
   newInput.setAttribute(SLIDER_INPUT_ATTRIBUTE, "");
   thumb.append(newInput);
   return newInput;

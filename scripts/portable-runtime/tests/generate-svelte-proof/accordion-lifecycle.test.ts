@@ -2,9 +2,9 @@ import { copyFile, mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promis
 import path from "node:path";
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { chromium, type Browser } from "playwright";
-import { afterEach, describe, expect, it } from "vitest";
+import { type Browser, chromium } from "playwright";
 import { createServer, type ViteDevServer } from "vite";
+import { afterEach, describe, expect, it } from "vitest";
 
 const temporaryRoots: string[] = [];
 const servers: ViteDevServer[] = [];
@@ -292,7 +292,6 @@ try {
     const element = root(id);
     return { ...cases[id].snapshot(), exists: Boolean(element),
       runtime: element ? globalThis.__accordionInstances.get(element)?.getValue() : null,
-      rendered: element ? JSON.parse(element.querySelector("[data-model-rendered]").textContent) : null,
       type: element?.getAttribute("data-type") ?? null,
       collapsible: element?.getAttribute("data-collapsible") ?? null,
       expanded: Array.from(element?.querySelectorAll('[aria-expanded="true"][data-model-trigger]') ?? []).map((node) => node.getAttribute("data-model-trigger")),
@@ -381,8 +380,7 @@ export function snapshot() { return {
   publicationAliasedProposal: lastPublication !== undefined && lastPublication === lastProposal,
 }; }
 </script>
-{#snippet parts(accepted)}
-  <output data-model-rendered={id}>{JSON.stringify(accepted)}</output>
+{#snippet parts()}
   {#each ["alpha", "beta", "gamma", ""] as item (item)}
     <AccordionItem value={item}><AccordionTrigger data-model-trigger={item}>{item || "Empty"}</AccordionTrigger><AccordionPanel>{item} panel</AccordionPanel></AccordionItem>
   {/each}
@@ -447,7 +445,7 @@ describe("Accordion accepted models", () => {
       return { initial, plainAccepted, plainUndefined, plainCommand, undefinedLater, bound: state("bound") };
     `,
     );
-    expect(result.initial.component).toMatchObject({ runtime: [], rendered: [], callbacks: [] });
+    expect(result.initial.component).toMatchObject({ runtime: [], expanded: [], callbacks: [] });
     expect(result.initial.undefined).toMatchObject({
       model: ["alpha"],
       runtime: ["alpha"],
@@ -457,6 +455,7 @@ describe("Accordion accepted models", () => {
     expect(result.initial["array-single"]).toMatchObject({
       model: ["alpha", "beta"],
       runtime: "alpha",
+      expanded: ["alpha"],
       writes: [],
       initialArray: ["alpha", "beta"],
     });
@@ -475,14 +474,20 @@ describe("Accordion accepted models", () => {
     expect(result.plainAccepted).toMatchObject({
       model: "alpha",
       runtime: "alpha",
-      rendered: "alpha",
       expanded: ["alpha"],
     });
     expect(result.plainUndefined).toMatchObject({ model: "undefined", runtime: "alpha" });
     expect(result.plainCommand).toMatchObject({ model: "gamma", runtime: "gamma" });
     expect(result.undefinedLater).toMatchObject({ model: "undefined", runtime: ["alpha"] });
     expect(result.serverMarkup).toContain('data-model-ssr="undefined">undefined:0');
-    expect(result.serverMarkup).toContain('data-model-rendered="array-single">["alpha","beta"]');
+    // The server seeds the root from the array model. The Runtime opens the item after hydration,
+    // so server triggers render closed, as in React.
+    const arraySingleRoot = result.serverMarkup.match(/<div data-case="array-single"[^>]*>/)?.[0];
+    expect(arraySingleRoot).toContain('data-default-value="[&quot;alpha&quot;,&quot;beta&quot;]"');
+    expect(arraySingleRoot).toContain('data-type="single"');
+    expect(result.serverMarkup).toMatch(
+      /data-case="array-single"[^]*?<button data-model-trigger="alpha"[^>]*aria-expanded="false"/,
+    );
   }, 60_000);
 
   it("handles ordinary callback and DOM cancellation plus later parent commands", async () => {

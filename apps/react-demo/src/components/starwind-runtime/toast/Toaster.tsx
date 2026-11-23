@@ -48,7 +48,7 @@ function Toaster(props: ToasterProps) {
     ...rest
   } = props;
 
-  const viewportStyle = { "--gap": gap, "--peek": peek, ...(style ?? {}) } as React.CSSProperties &
+  const viewportStyle = { "--gap": gap, "--peek": peek, ...style } as React.CSSProperties &
     Record<"--gap" | "--peek", string>;
 
   return (

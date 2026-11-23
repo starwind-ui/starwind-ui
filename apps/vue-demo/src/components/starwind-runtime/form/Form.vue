@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FormPrimitive from "@starwind-ui/vue/form";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type FormHTMLAttributes } from "vue";
+import type { FormHTMLAttributes } from "vue";
 import { form } from "./variants";
 
 defineOptions({ inheritAttrs: false });

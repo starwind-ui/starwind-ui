@@ -22,12 +22,16 @@ export type FloatingListLifecycle<TRequest> = {
   stopAutoUpdate(): void;
   syncScrollLock(request: TRequest | undefined): void;
   updatePosition(): void;
+  /** Copy the owner's direction to the open portal before a position compute. */
+  syncDirection(): void;
 };
 
 export type FloatingListLifecycleOptions<TRequest> = {
   dismissal?: FloatingListDismissalOptions;
   floating?: FloatingListFloatingOptions;
   hooks?: FloatingListLifecycleHooks<TRequest>;
+  /** Returns the placement wrapper that must also pass pointer input through while closing. */
+  getPointerPassThroughWrapper?: () => HTMLElement | null;
   popup: HTMLElement;
   portal: FloatingListPortalOptions;
   root: HTMLElement;
@@ -150,6 +154,11 @@ export function createFloatingListLifecycle<TRequest>(
     },
     root: options.root,
   });
+  portalSession.onDirectionChange(() => {
+    if (options.state.getOpen() && !options.state.isDestroyed()) {
+      void floatingPositioner?.update();
+    }
+  });
 
   const unregisterDismissal = () => {
     dismissalHandle?.destroy();
@@ -197,6 +206,7 @@ export function createFloatingListLifecycle<TRequest>(
   const updatePosition = () => {
     if (!options.state.getOpen() || !portalSession.isReady()) return;
 
+    portalSession.syncDirection();
     void getFloatingPositioner()?.update();
   };
 
@@ -268,7 +278,7 @@ export function createFloatingListLifecycle<TRequest>(
           registerDismissal();
           options.hooks?.onAfterOpen?.({ request });
           updatePosition();
-          getFloatingPositioner()?.startAutoUpdate();
+          getFloatingPositioner()?.startAutoUpdate({ onUpdate: portalSession.syncDirection });
           requestAnimationFrame(() => {
             if (
               destroyed ||
@@ -320,6 +330,8 @@ export function createFloatingListLifecycle<TRequest>(
       options.state.render(false, nextCloseAbortController.signal);
       hideElementAfterAnimations(options.popup, {
         signal: nextCloseAbortController.signal,
+        passThroughPointerWhileEnding: true,
+        pointerPassThroughWrapper: options.getPointerPassThroughWrapper?.(),
         onHidden: () => {
           if (nextCloseAbortController.signal.aborted) return;
 
@@ -371,12 +383,13 @@ export function createFloatingListLifecycle<TRequest>(
     },
     startAutoUpdate() {
       if (!portalSession.isReady()) return;
-      getFloatingPositioner()?.startAutoUpdate();
+      getFloatingPositioner()?.startAutoUpdate({ onUpdate: portalSession.syncDirection });
     },
     stopAutoUpdate,
     syncScrollLock(request) {
       syncBodyScrollLock(request);
     },
     updatePosition,
+    syncDirection: portalSession.syncDirection,
   };
 }

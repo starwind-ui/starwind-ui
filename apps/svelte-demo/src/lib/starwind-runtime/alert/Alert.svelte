@@ -9,11 +9,11 @@
 
 <script lang="ts">
   let {
-    "variant": variant,
-    "role": role,
+    variant,
+    role,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: AlertProps = $props();
 

@@ -9,14 +9,14 @@
 
 <script lang="ts">
   let {
-    "variant": variant,
-    "tone": tone,
-    "appearance": appearance,
-    "eyebrow": eyebrow,
-    "size": size,
+    variant,
+    tone,
+    appearance,
+    eyebrow,
+    size,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: BadgeProps = $props();
 

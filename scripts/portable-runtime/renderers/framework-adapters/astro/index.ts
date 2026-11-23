@@ -45,7 +45,7 @@ export const astroFrameworkAdapterTarget = defineFrameworkAdapterTarget({
       { name: "@tabler/icons", range: "^3" },
       { name: "@tailwindcss/forms", range: "^0.5" },
       { name: "@tailwindcss/vite", range: "^4" },
-      { name: "tailwind-merge", range: "^3" },
+      { name: "tailwind-merge", range: "^3.7.0" },
       { name: "tailwind-variants", range: "^3" },
       { name: "tailwindcss", range: "^4" },
       { name: "tw-animate-css", range: "^1" },

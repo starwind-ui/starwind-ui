@@ -37,7 +37,7 @@ describe("Vue adapter public contract", () => {
         initialDefined: "parent-controlled",
         initialUndefined: "runtime-owned",
         laterUndefined: "retain-last-controlled-value",
-        laterDefined: "ignored-by-initially-uncontrolled-model",
+        laterDefined: "silent-command",
       },
       acceptedUncontrolledValue: "latest-accepted-value",
       controlledWhen: "model-prop-is-not-undefined",
@@ -205,19 +205,19 @@ describe("Vue adapter public contract", () => {
       serverRender: "disabled",
     });
     expect(vueAdapterPublicContract.framework).toEqual({
-      minimumVersion: "3.5",
+      minimumVersion: "3.5.21",
       packageIntent: "@starwind-ui/vue",
       vuePeerExternalized: true,
     });
   });
 
-  it("keeps every public-beta support flag enabled and agrees with readiness metadata", () => {
+  it("keeps every stable support flag enabled and agrees with readiness metadata", () => {
     expect(vueAdapterPublicContract.publicSupport).toEqual({
       cliRegistry: true,
       demoIntegration: true,
       packageExports: true,
       publicDocsClaim: true,
-      status: "public-beta",
+      status: "shipping",
     });
     expect(vueAdapterPublicContract.publicSupport).toEqual(
       vueFrameworkAdapterReadiness.publicSupport,

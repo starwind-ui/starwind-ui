@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Exact published Starwind CLI version (for example, 3.0.0-beta.2 or 3.0.0)
+        description: Exact published Starwind CLI version (for example, 3.7.0)
         required: true
         type: string
       vue_version:
-        description: Exact published @starwind-ui/vue beta version
+        description: Exact published @starwind-ui/vue version
         required: true
         type: string
       svelte_version:
-        description: Exact published @starwind-ui/svelte beta version
+        description: Exact published @starwind-ui/svelte version
         required: true
         type: string
 
@@ -49,8 +49,8 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Google Chrome
+        run: pnpm exec playwright install --with-deps chrome
 
       - name: Test Published Release
         run: pnpm test:published-release -- --version "${{ inputs.version }}" --vue-version "${{ inputs.vue_version }}" --svelte-version "${{ inputs.svelte_version }}" --artifacts .artifacts/published-release

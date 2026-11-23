@@ -6,7 +6,7 @@ import type { HTMLAttributes } from "svelte/elements";
 import type { Attachment } from "svelte/attachments";
 import { createRefAttachment } from "../_internal/ref-attachment.js";
 type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-  children?: Snippet<[AccordionValue]>;
+  children?: Snippet;
   value?: AccordionValue;
 defaultValue?: AccordionValue;
 type?: "single" | "multiple";
@@ -96,5 +96,5 @@ data-type={type}
 data-default-value={defaultValueAttribute}
 data-collapsible={String(collapsible)}
 data-state="closed" {@attach attachRuntime} {@attach attachRef}>
-  {@render children?.(copyModel(renderedValue))}
+  {@render children?.()}
 </div>

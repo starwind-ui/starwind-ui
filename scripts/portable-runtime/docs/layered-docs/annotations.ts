@@ -148,6 +148,26 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     docsPage: componentPage("carousel"),
     foundation: { type: "direct-primitive" },
   },
+  chart: {
+    groupId: "content-media",
+    docsPage: componentPage("chart"),
+    foundation: { type: "direct-primitive" },
+    aliases: ["TanStack Charts", "graph", "data visualization"],
+    styledApi: {
+      ChartTooltipContent: {
+        props: {
+          labelClassName: {
+            description: "Adds classes to the tooltip label heading.",
+            frameworks: ["react"],
+          },
+          labelClass: {
+            description: "Adds classes to the tooltip label heading.",
+            frameworks: ["astro"],
+          },
+        },
+      },
+    },
+  },
   card: {
     groupId: "layout-structure",
     docsPage: componentPage("card"),
@@ -646,9 +666,171 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
 };
 
 export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = {
-  button: {
+  accordion: {
+    liveDemo: true,
     summary:
-      "Button uses native button semantics by default and adds Runtime behavior only for focusable-disabled state.",
+      "Use Accordion to organize a set of sections that readers can expand. The headers open their panels and support keyboard navigation between sections.",
+  },
+  "alert-dialog": {
+    liveDemo: true,
+    summary:
+      "Use Alert Dialog when someone must respond before continuing, such as confirming a deletion. It keeps focus inside the dialog while the person makes that choice.",
+  },
+  avatar: {
+    liveDemo: true,
+    summary:
+      "Use Avatar to show a person or account image. The fallback can show initials while the image loads or when it fails to load.",
+  },
+  carousel: {
+    liveDemo: true,
+    summary:
+      "Use Carousel to browse a row of images or cards. The previous and next buttons move through the slides and update as you reach either end.",
+  },
+  chart: {
+    liveDemo: true,
+    summary:
+      "Use Chart to draw a TanStack Charts chart from your data and series config. People can read values in a tooltip with the pointer or the keyboard, and the legend can hide a series.",
+    behaviorNotes: [
+      "A Legend toggles series only when a Surface renders under the same Root, because the Surface starts the Runtime controller. Without a Surface, legend items show the visible keys, and a click changes nothing.",
+    ],
+  },
+  "checkbox-group": {
+    liveDemo: true,
+    summary:
+      "Use Checkbox Group to let someone choose any number of options. The group collects the checked values and can disable its checkboxes together.",
+  },
+  collapsible: {
+    liveDemo: true,
+    summary:
+      "Use Collapsible to reveal details beneath a single trigger. The trigger tracks whether its content is open.",
+  },
+  combobox: {
+    liveDemo: true,
+    summary:
+      "Use Combobox when someone needs to type to find an option. It opens a list beside the input and lets the person choose a match with the keyboard.",
+  },
+  "context-menu": {
+    liveDemo: true,
+    summary:
+      "Use Context Menu to offer actions for a specific item, such as renaming a file. It opens at the point where the person requests the menu.",
+  },
+  dialog: {
+    liveDemo: true,
+    summary:
+      "Use Dialog to give a task its own space, such as editing settings. It moves focus into the dialog and returns focus when it closes.",
+  },
+  drawer: {
+    liveDemo: true,
+    summary:
+      "Use Drawer to show a panel along the edge of the screen. It manages opening, closing, and focus while the panel is active.",
+  },
+  dropzone: {
+    liveDemo: true,
+    summary:
+      "Use Dropzone to collect files by dropping them onto a page or opening a file picker. It checks the files against the limits you set.",
+  },
+  fieldset: {
+    liveDemo: true,
+    summary:
+      "Use Fieldset when several inputs answer the same question, such as a shipping address. A legend gives the group a name.",
+  },
+  input: {
+    liveDemo: true,
+    summary:
+      "Use Input to collect a short text value such as an email address. It uses a native input and can share its state with a Field.",
+  },
+  "input-otp": {
+    liveDemo: true,
+    summary:
+      "Use Input OTP to enter a short code across visible slots. One input receives typing and paste so the slots represent a single value.",
+  },
+  popover: {
+    liveDemo: true,
+    summary:
+      "Use Popover to show a small panel next to a trigger, such as filters. It positions the panel and handles dismissal when someone presses Escape or clicks outside.",
+  },
+  "preview-card": {
+    liveDemo: true,
+    summary:
+      "Use Preview Card to show a short preview when someone hovers over or focuses a link. It opens near the trigger and closes when the person moves away.",
+    parts: {
+      trigger: {
+        props: {
+          openDelay: "Overrides the root open delay for this trigger.",
+          closeDelay: "Overrides the root close delay for this trigger.",
+        },
+      },
+    },
+  },
+  progress: {
+    liveDemo: true,
+    summary:
+      "Use Progress to show how much of a task has finished. It updates the indicator as the value changes and supports tasks with an unknown total.",
+  },
+  radio: {
+    liveDemo: true,
+    summary:
+      "Use Radio inside a Radio Group to present one option. Its indicator shows when that option is selected.",
+  },
+  "radio-group": {
+    liveDemo: true,
+    summary:
+      "Use Radio Group when someone can pick one option from a visible list. The arrow keys move between choices.",
+  },
+  "scroll-area": {
+    liveDemo: true,
+    summary:
+      "Use Scroll Area when a region needs to scroll within a fixed space. The scrollbar and thumb follow the position of the content.",
+  },
+  select: {
+    liveDemo: true,
+    summary:
+      "Use Select to pick one option from a popup list. It handles opening the list, moving between options with the keyboard, and submitting the chosen value when the control has a name.",
+  },
+  sidebar: {
+    liveDemo: true,
+    summary:
+      "Use Sidebar for navigation that stays beside the main content. Its trigger can expand or collapse the panel.",
+  },
+  slider: {
+    liveDemo: true,
+    summary:
+      "Use Slider to choose a value in a range, such as a volume level. Move the thumb with the pointer or arrow keys.",
+  },
+  switch: {
+    liveDemo: true,
+    summary:
+      "Use Switch to turn a setting on or off. Its thumb and accessible state follow the current value.",
+  },
+  tabs: {
+    liveDemo: true,
+    summary:
+      "Use Tabs to show one panel at a time in the same space. Each tab names a panel, and the arrow keys move between tabs.",
+  },
+  toast: {
+    liveDemo: true,
+    summary:
+      "Use Toast to report a result without interrupting the current task. It shows the message for a limited time and can offer a way to dismiss it.",
+  },
+  toggle: {
+    liveDemo: true,
+    summary:
+      "Use Toggle for a button with a pressed state, such as Bold in a toolbar. Activating the button flips that state.",
+  },
+  "toggle-group": {
+    liveDemo: true,
+    summary:
+      "Use Toggle Group to arrange related toggle buttons in a toolbar. The group manages which buttons are pressed and supports arrow-key navigation.",
+  },
+  tooltip: {
+    liveDemo: true,
+    summary:
+      "Use Tooltip to add a short hint to a control. It appears on hover or keyboard focus and closes when the person moves away or presses Escape.",
+  },
+  button: {
+    liveDemo: true,
+    summary:
+      "Use Button to run an action or submit a form. It behaves like a native button and can keep a disabled button in the tab order when you need to explain why it is disabled.",
     behaviorNotes: [
       "Render a native button with an explicit type. Ordinary enabled and disabled buttons rely on HTML without a Button controller.",
       "Opt into Runtime with focusableWhenDisabled when a disabled button must retain focus, then synchronize later disabled changes through setDisabled.",
@@ -679,8 +861,9 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
     },
   },
   form: {
+    liveDemo: true,
     summary:
-      "Form coordinates native constraints, custom and asynchronous validators, schema results, error visibility, and submission across its Fields.",
+      "Use Form to validate inputs before submitting them. It runs native constraints and your own validators, then lets you choose when to show errors.",
     behaviorNotes: [
       "Validation timing and error visibility are separate policies: a field can be validated before its errors are revealed.",
       "Policies set on Form apply to every nested Field unless that Field supplies its own timing attributes.",
@@ -715,6 +898,9 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
     },
   },
   field: {
+    liveDemo: true,
+    summary:
+      "Use Field to give an input a label, a description, and a place to show errors. It connects those parts to the control and tracks when to validate it.",
     behaviorNotes: [
       "Field timing props override the owning Form for one field. Omit them when the Form-wide policy should apply.",
     ],
@@ -745,8 +931,9 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
     },
   },
   "color-picker": {
+    liveDemo: true,
     summary:
-      "Color Picker coordinates color parsing, two-dimensional area input, channel controls, editable values, presets, and native form submission.",
+      "Use Color Picker to choose a color from an area, enter a value, or pick a preset. Each control updates the same color.",
     behaviorNotes: [
       "Runtime owns parsing, immutable color values, editing drafts, pointer and keyboard interactions, accessibility reflection, and form synchronization.",
       "Value changes are cancellable before commit; committed-value and format events run after the accepted state is reflected.",
@@ -930,8 +1117,9 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
     },
   },
   checkbox: {
+    liveDemo: true,
     summary:
-      "Checkbox coordinates a visible boolean control, indicator presence, and hidden form inputs for boolean form state.",
+      "Use Checkbox to let someone opt in or out of a choice. It shows the checked state and can show a mixed state for a group of choices.",
     behaviorNotes: [
       "The Runtime owns checked and indeterminate state after hydration.",
       "Checkbox can consume Checkbox Group context for disabled state and submitted values.",
@@ -993,6 +1181,9 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
     },
   },
   menu: {
+    liveDemo: true,
+    summary:
+      "Use Menu to offer a short list of actions from a button. It opens a popup and lets the person move between items with the keyboard.",
     sections: [
       {
         title: "Menu Behavior",
@@ -1002,8 +1193,9 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
     ],
   },
   "navigation-menu": {
+    liveDemo: true,
     summary:
-      "Navigation Menu coordinates a single active top-level item, shared viewport content, hover timing, keyboard movement, and link close behavior for site navigation.",
+      "Use Navigation Menu for top-level links and panels, such as the sections of a product site. Each trigger opens its panel in a shared space.",
     behaviorNotes: [
       "Use explicit item values when controlling state, using defaultValue, or writing stable tests.",
       "The Runtime moves active content into one shared viewport and reflects activation direction for transitions.",

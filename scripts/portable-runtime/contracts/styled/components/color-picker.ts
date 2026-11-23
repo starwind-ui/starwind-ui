@@ -1,3 +1,4 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type {
   AttributeContract,
   RenderNode,
@@ -98,11 +99,10 @@ function simplePart(
     exportName,
     primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
     props: {
-      extends: [
-        ...(omitHtmlAttributes.length > 0
+      extends:
+        omitHtmlAttributes.length > 0
           ? [{ type: "omitHtmlAttributes" as const, element, keys: omitHtmlAttributes }]
-          : [{ type: "htmlAttributes" as const, element }]),
-      ],
+          : [{ type: "htmlAttributes" as const, element }],
       fields,
     },
     destructure: {
@@ -663,7 +663,10 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       "Inside Dialog, render content beneath the Dialog-local floating root so dismissal and focus return remain in the nested overlay.",
     ],
   },
-  dependencies: { styledComponents: ["popover", "select", "native-select", "input"] },
+  dependencies: {
+    packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT],
+    styledComponents: ["popover", "select", "native-select", "input"],
+  },
   publicExports: [
     "ColorPicker",
     "ColorPickerInput",
@@ -734,8 +737,10 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       '[data-slot="color-picker"][data-size="sm"], [data-sw-color-picker-content][data-size="sm"] { --sw-color-picker-font-size: 0.875rem; --sw-color-picker-label-font-size: 0.75rem; --sw-color-picker-gap: 0.75rem; --sw-color-picker-compact-gap: 0.375rem; --sw-color-picker-control-height: 2.25rem; --sw-color-picker-control-padding: 0.5rem; --sw-color-picker-content-width: 16rem; --sw-color-picker-content-gap: 0.5rem; --sw-color-picker-content-padding: 0.5rem; --sw-color-picker-area-height: 150px; --sw-color-picker-area-thumb-size: 0.875rem; --sw-color-picker-slider-gap: 0.5rem; --sw-color-picker-slider-size: 0.625rem; --sw-color-picker-slider-vertical-size: 10rem; --sw-color-picker-slider-thumb-size: 0.75rem; --sw-color-picker-input-width: 4rem; --sw-color-picker-swatch-size: 1.5rem; --sw-color-picker-value-swatch-size: 1rem; --sw-color-picker-value-swatch-radius: 4.5px; --sw-color-picker-format-width: 5rem; }',
       '[data-slot="color-picker"][data-size="md"], [data-sw-color-picker-content][data-size="md"] { --sw-color-picker-font-size: 1rem; --sw-color-picker-label-font-size: 0.875rem; --sw-color-picker-gap: 0.75rem; --sw-color-picker-compact-gap: 0.5rem; --sw-color-picker-control-height: 2.75rem; --sw-color-picker-control-padding: 0.75rem; --sw-color-picker-content-width: 18rem; --sw-color-picker-content-gap: 0.75rem; --sw-color-picker-content-padding: 0.75rem; --sw-color-picker-area-height: 175px; --sw-color-picker-area-thumb-size: 1rem; --sw-color-picker-slider-gap: 0.75rem; --sw-color-picker-slider-size: 0.75rem; --sw-color-picker-slider-vertical-size: 12rem; --sw-color-picker-slider-thumb-size: 1rem; --sw-color-picker-input-width: 5rem; --sw-color-picker-swatch-size: 1.75rem; --sw-color-picker-value-swatch-size: 1.25rem; --sw-color-picker-value-swatch-radius: 5.5px; --sw-color-picker-format-width: 6rem; }',
       '[data-slot="color-picker"][data-size="lg"], [data-sw-color-picker-content][data-size="lg"] { --sw-color-picker-font-size: 1.125rem; --sw-color-picker-label-font-size: 1rem; --sw-color-picker-gap: 0.75rem; --sw-color-picker-compact-gap: 0.625rem; --sw-color-picker-control-height: 3rem; --sw-color-picker-control-padding: 1rem; --sw-color-picker-content-width: 20rem; --sw-color-picker-content-gap: 1rem; --sw-color-picker-content-padding: 1rem; --sw-color-picker-area-height: 200px; --sw-color-picker-area-thumb-size: 1.25rem; --sw-color-picker-slider-gap: 1rem; --sw-color-picker-slider-size: 1rem; --sw-color-picker-slider-vertical-size: 14rem; --sw-color-picker-slider-thumb-size: 1.25rem; --sw-color-picker-input-width: 6rem; --sw-color-picker-swatch-size: 2rem; --sw-color-picker-value-swatch-size: 1.5rem; --sw-color-picker-value-swatch-radius: 6.5px; --sw-color-picker-format-width: 6rem; }',
-      '[data-slot="color-picker-area-background"] { background: var(--sw-color-picker-area-background-overlay, linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent)), var(--sw-color-picker-area-background, hsl(var(--sw-color-picker-hue) 100% 50%)); }',
+      '[data-slot="color-picker-area-background"] { background: var(--sw-color-picker-area-background-overlay, linear-gradient(to top, #000, transparent), linear-gradient(var(--sw-color-picker-area-gradient-direction, to right), #fff, transparent)), var(--sw-color-picker-area-background, hsl(var(--sw-color-picker-hue) 100% 50%)); }',
+      '[data-slot="color-picker-area-background"]:where([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)) { --sw-color-picker-area-gradient-direction: to left; }',
       '[data-slot="color-picker-channel-slider"] { --sw-color-picker-channel-gradient-direction: to right; --sw-color-picker-channel-gradient: linear-gradient(var(--sw-color-picker-channel-gradient-direction), transparent, var(--sw-color-picker-color, #000)); }',
+      '[data-slot="color-picker-channel-slider"][data-orientation="horizontal"]:where([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)) { --sw-color-picker-channel-gradient-direction: to left; }',
       '[data-slot="color-picker-channel-slider"][data-orientation="vertical"] { --sw-color-picker-channel-gradient-direction: to top; }',
       '[data-slot="color-picker-channel-slider"][data-channel="hue"] { --sw-color-picker-channel-gradient: linear-gradient(var(--sw-color-picker-channel-gradient-direction), #f00 0%, #ff0 16.67%, #0f0 33.33%, #0ff 50%, #00f 66.67%, #f0f 83.33%, #f00 100%); }',
       '[data-slot="color-picker-channel-slider"][data-channel="alpha"] { --sw-color-picker-channel-gradient: linear-gradient(var(--sw-color-picker-channel-gradient-direction), rgb(from var(--sw-color-picker-color, #000) r g b / 0), rgb(from var(--sw-color-picker-color, #000) r g b / 1)); }',
@@ -785,7 +790,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       base: "group/color-picker-area border-outline relative h-(--sw-color-picker-area-height) min-h-32 w-full shrink-0 cursor-crosshair touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
     },
     colorPickerAreaThumb: {
-      base: "group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-outline/60 pointer-events-none absolute top-[clamp(1px,var(--sw-color-picker-area-y),calc(100%_-_1px))] left-[clamp(1px,var(--sw-color-picker-area-x),calc(100%_-_1px))] z-10 size-(--sw-color-picker-area-thumb-size) -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-(--sw-color-picker-area-thumb-color) shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-3 focus-visible:ring-3 data-disabled:opacity-50 data-dragging:scale-110",
+      base: "group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-outline/60 pointer-events-none absolute top-(--sw-color-picker-area-y) start-(--sw-color-picker-area-x) z-10 size-(--sw-color-picker-area-thumb-size) -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-(--sw-color-picker-area-thumb-color) shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-3 focus-visible:ring-3 data-disabled:opacity-50 data-dragging:scale-110",
     },
     colorPickerSliders: {
       base: "flex flex-col gap-(--sw-color-picker-slider-gap) px-2",
@@ -803,7 +808,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       base: "group/color-picker-channel-slider bg-border relative h-(--sw-color-picker-slider-size) touch-none rounded-full data-[orientation=vertical]:h-(--sw-color-picker-slider-vertical-size) data-[orientation=vertical]:w-(--sw-color-picker-slider-size) [&>[data-slot=color-picker-channel-slider-track]]:inset-px [&>[data-slot=color-picker-channel-slider-track]]:size-auto [&>[data-slot=color-picker-transparency-grid]]:inset-px [&>[data-slot=color-picker-transparency-grid]]:size-auto",
     },
     colorPickerChannelSliderThumb: {
-      base: "group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-outline/60 pointer-events-none absolute top-1/2 left-(--sw-color-picker-channel-position) z-10 size-(--sw-color-picker-slider-thumb-size) -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-white shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-3 group-data-[orientation=vertical]/color-picker-channel-slider:top-[calc(100%-var(--sw-color-picker-channel-position))] group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2 data-disabled:opacity-50 data-dragging:scale-110",
+      base: "group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-outline/60 pointer-events-none absolute top-1/2 group-data-[orientation=horizontal]/color-picker-channel-slider:start-(--sw-color-picker-channel-position) group-data-[orientation=horizontal]/color-picker-channel-slider:rtl:translate-x-1/2 z-10 size-(--sw-color-picker-slider-thumb-size) -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-white shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-3 group-data-[orientation=vertical]/color-picker-channel-slider:top-[calc(100%-var(--sw-color-picker-channel-position))] group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2 data-disabled:opacity-50 data-dragging:scale-110",
     },
     colorPickerChannelInputLayout: {
       base: "h-(--sw-color-picker-control-height) w-(--sw-color-picker-input-width) px-(--sw-color-picker-control-padding) text-center text-(length:--sw-color-picker-font-size) data-invalid:border-error data-invalid:focus-visible:ring-error/40",

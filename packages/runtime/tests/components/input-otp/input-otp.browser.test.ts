@@ -374,6 +374,72 @@ describe("createInputOtp", () => {
     expect(getSlots()[2]!.getAttribute("data-active")).toBe("true");
   });
 
+  it("moves between measured slots in the arrow direction and keeps code data stable", () => {
+    for (const direction of ["ltr", "rtl"] as const) {
+      document.body.innerHTML = `<form dir="rtl">${createInputOtpMarkup({ defaultValue: "12", maxLength: 4, name: "code" })}</form>`;
+      const form = document.querySelector("form")!;
+      const root = form.querySelector<HTMLElement>("[data-sw-input-otp]")!;
+      root.dir = direction;
+      const group = root.querySelector<HTMLElement>("[data-sw-input-otp-group]")!;
+      group.style.display = "flex";
+      getSlots().forEach((slot) => {
+        slot.style.width = "24px";
+        slot.style.height = "24px";
+      });
+      const instance = createInputOtp(root);
+      const centers = getSlots().map((slot) => {
+        const bounds = slot.getBoundingClientRect();
+        return bounds.left + bounds.width / 2;
+      });
+      expect(centers[0] !== centers[1]).toBe(true);
+      expect(Math.sign(centers[1]! - centers[0]!)).toBe(direction === "rtl" ? -1 : 1);
+
+      root.click();
+      expect(getSlots()[2]!.getAttribute("data-active")).toBe("true");
+      pressKey(root, "ArrowLeft");
+      const leftIndex = direction === "rtl" ? 3 : 1;
+      expect(getSlots()[leftIndex]!.getAttribute("data-active")).toBe("true");
+      expect(centers[leftIndex]!).toBeLessThan(centers[2]!);
+
+      root.click();
+      pressKey(root, "ArrowRight");
+      const rightIndex = direction === "rtl" ? 1 : 3;
+      expect(getSlots()[rightIndex]!.getAttribute("data-active")).toBe("true");
+      expect(centers[rightIndex]!).toBeGreaterThan(centers[2]!);
+      expect(instance.getValue()).toBe("12");
+      expect(new FormData(form).get("code")).toBe("12");
+      instance.destroy();
+    }
+  });
+
+  it("uses inherited RTL on the next arrow after a mounted LTR code changes direction", () => {
+    document.body.innerHTML = `<form dir="ltr">${createInputOtpMarkup({ defaultValue: "12", maxLength: 4, name: "code" })}</form>`;
+    const form = document.querySelector("form")!;
+    const root = form.querySelector<HTMLElement>("[data-sw-input-otp]")!;
+    const group = root.querySelector<HTMLElement>("[data-sw-input-otp-group]")!;
+    group.style.display = "flex";
+    getSlots().forEach((slot) => {
+      slot.style.width = "24px";
+      slot.style.height = "24px";
+    });
+    const instance = createInputOtp(root);
+    expect(root.hasAttribute("dir")).toBe(false);
+
+    root.click();
+    pressKey(root, "ArrowRight");
+    expect(getSlots()[3]!.getAttribute("data-active")).toBe("true");
+
+    root.click();
+    form.dir = "rtl";
+    const startX = getSlots()[2]!.getBoundingClientRect().x;
+    pressKey(root, "ArrowLeft");
+    const destinationX = getSlots()[3]!.getBoundingClientRect().x;
+    expect(destinationX).toBeLessThan(startX);
+    expect(getSlots()[3]!.getAttribute("data-active")).toBe("true");
+    expect(instance.getValue()).toBe("12");
+    expect(new FormData(form).get("code")).toBe("12");
+  });
+
   it("pastes filtered characters from the current slot", () => {
     const root = renderInputOtp({ defaultValue: "1", maxLength: 4 });
     const instance = createInputOtp(root);

@@ -279,7 +279,7 @@ export function createOfflinePackument(
   installed: InstalledPackageVersion[] = [],
 ): Record<string, unknown> {
   const versions: Record<string, unknown> = {};
-  const time: Record<string, string> = { ...(record?.time ?? {}) };
+  const time: Record<string, string> = { ...record?.time };
   for (const [version, entry] of Object.entries(record?.versions ?? {})) {
     versions[version] = {
       ...entry.manifest,
@@ -305,7 +305,7 @@ export function createOfflinePackument(
     };
     time[entry.version] = INSTALLED_VERSION_TIME;
   }
-  const distTags = { ...(record?.distTags ?? {}) };
+  const distTags = { ...record?.distTags };
   if (!distTags.latest) {
     const latest = semver.maxSatisfying(Object.keys(versions), "*", { includePrerelease: true });
     if (latest) distTags.latest = latest;

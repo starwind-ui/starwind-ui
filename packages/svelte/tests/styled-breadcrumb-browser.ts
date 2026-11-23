@@ -1,17 +1,17 @@
-import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
 import { createBrowserBuildScript } from "./compatibility-hydration.js";
+import type { DistConsumer } from "./dist-consumer.js";
 import {
+  BREADCRUMB_ROUTER_LINK,
   breadcrumbImports,
   breadcrumbParts,
-  BREADCRUMB_ROUTER_LINK,
 } from "./styled-breadcrumb-consumer.js";
+import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 
 export async function verifyStyledBreadcrumbBrowser(consumer: DistConsumer) {
   await consumer.write({

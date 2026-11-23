@@ -1,15 +1,15 @@
 # `@starwind-ui/svelte`
 
-This package contains the public beta of the generated Svelte 5 Primitive adapters for Starwind UI.
-It provides the lower-level accessible behavior and framework-native component layer through the
-shared framework-neutral Runtime.
+This package contains the generated Svelte 5 Primitive adapters for Starwind UI. It provides the
+lower-level accessible behavior and framework-native component layer through the shared
+framework-neutral Runtime.
 
-Starwind UI ships 54 source-owned styled components for Svelte. Developers install these styled
+Starwind UI ships 55 source-owned styled components for Svelte. Developers install these styled
 components as editable application source with the Starwind CLI. The Svelte Primitive adapters use
 the same Runtime as the Astro, React, and Vue adapters.
 
-The package supports Svelte 5.29 and newer versions before Svelte 6. Svelte support is in public
-beta, and its API can change during the `0.x` release series.
+The package supports Svelte 5.29 and newer versions before Svelte 6. It is stable and follows SemVer.
+It shares one version with `@starwind-ui/runtime` and the other first-party adapters.
 
 ## Start with the CLI
 
@@ -26,11 +26,10 @@ SvelteKit, and Astro with Svelte.
 
 ## Install the Primitive adapters
 
-Install this package directly when you need to build with the lower-level Primitive parts. Beta
-releases use the `beta` npm tag:
+Install this package directly when you need to build with the lower-level Primitive parts:
 
 ```bash
-npm install @starwind-ui/svelte@beta "svelte@>=5.29.0 <6"
+npm install @starwind-ui/svelte "svelte@>=5.29.0 <6"
 ```
 
 ## Use an adapter
@@ -56,10 +55,17 @@ Use `getThemeInitScript` from `@starwind-ui/svelte/theme` to apply the stored th
 paint. The [dark mode guide](https://starwind.dev/docs/getting-started/dark-mode/) shows the setup
 for Vite, SvelteKit, and Astro projects.
 
-## Beta feedback
+## Feedback
 
-Report Svelte beta issues through the
+Report Svelte issues through the
 [Starwind UI issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
+
+## Installed documentation
+
+The package includes Markdown docs for its exact version. After you install it, open
+`node_modules/@starwind-ui/svelte/docs/README.md`. Coding agents can start from
+`node_modules/@starwind-ui/svelte/docs/llms.txt`. Each Primitive has a reference page with its
+parts, props, bindings, callbacks, and data attributes.
 
 ## Starwind UI ecosystem
 

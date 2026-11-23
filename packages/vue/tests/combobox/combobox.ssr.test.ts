@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   ComboboxInput,
   ComboboxInputGroup,
@@ -14,6 +10,9 @@ import {
   ComboboxRoot,
   ComboboxValue,
 } from "@starwind-ui/vue/combobox";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 describe("Vue Combobox SSR", () => {
   it("renders deterministic local portal, form, collection and presence markup", async () => {

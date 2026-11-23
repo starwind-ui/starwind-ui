@@ -1,8 +1,7 @@
+import { RadioRoot } from "@starwind-ui/vue/radio";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { RadioRoot } from "@starwind-ui/vue/radio";
 
 describe("Vue Radio SSR", () => {
   it("renders deterministic standalone state without browser globals", async () => {

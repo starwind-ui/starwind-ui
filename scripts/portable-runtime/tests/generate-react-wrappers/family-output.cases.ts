@@ -1,3 +1,5 @@
+import { symlink, writeFile } from "node:fs/promises";
+import * as ts from "typescript";
 import { compactCode } from "../source-comparison.js";
 import type { GetTempRoot } from "./shared.js";
 import { expect, generateStarwindReactWrappers, it, path, readGeneratedFile } from "./shared.js";
@@ -192,7 +194,7 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(nativeSelectVariants)).toContain(
       compactCode("text-foreground pointer-events-none absolute"),
     );
-    expect(compactCode(nativeSelectVariants)).toContain(compactCode('md: "right-3 size-4"'));
+    expect(compactCode(nativeSelectVariants)).toContain(compactCode('md: "end-3 size-4"'));
   });
 
   it("generates Pagination styled React wrappers", async () => {
@@ -280,7 +282,9 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(paginationPrevious)).toContain(
       compactCode('data-slot="pagination-previous"'),
     );
-    expect(compactCode(paginationPrevious)).toContain(compactCode("<ChevronLeft />"));
+    expect(compactCode(paginationPrevious)).toContain(
+      compactCode('{icon ?? (<ChevronLeft className="rtl:rotate-180" />)}'),
+    );
     expect(compactCode(paginationPrevious)).not.toContain(compactCode("group-hover:"));
     expect(compactCode(paginationPrevious)).not.toContain(compactCode("transition-transform"));
     expect(compactCode(paginationPrevious)).toContain(compactCode("className={className}"));
@@ -289,7 +293,9 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(paginationNext)).toContain(compactCode('size = "md"'));
     expect(compactCode(paginationNext)).toContain(compactCode("size={size}"));
     expect(compactCode(paginationNext)).toContain(compactCode('data-slot="pagination-next"'));
-    expect(compactCode(paginationNext)).toContain(compactCode("<ChevronRight />"));
+    expect(compactCode(paginationNext)).toContain(
+      compactCode('{icon ?? (<ChevronRight className="rtl:rotate-180" />)}'),
+    );
     expect(compactCode(paginationNext)).not.toContain(compactCode("group-hover:"));
     expect(compactCode(paginationNext)).not.toContain(compactCode("transition-transform"));
     expect(compactCode(paginationEllipsis)).toContain(compactCode("IconDots as Dots"));
@@ -396,17 +402,73 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(aspectRatio)).toContain(compactCode("ratio = 1"));
     expect(compactCode(aspectRatio)).toContain(compactCode('as: Tag = "div"'));
     expect(compactCode(aspectRatio)).toContain(
-      compactCode("{ paddingBottom: `${100 / ratio}%` } as React.CSSProperties"),
+      compactCode('{ "--ratio": ratio, ...style } as React.CSSProperties'),
     );
-    expect(compactCode(aspectRatio)).toContain(compactCode("aspectRatioWrapper()"));
-    expect(compactCode(aspectRatio)).toContain(compactCode("style={wrapperStyle}"));
-    expect(compactCode(aspectRatio)).toContain(compactCode('data-slot="aspect-ratio-wrapper"'));
+    expect(aspectRatio).not.toContain("aspectRatioWrapper");
+    expect(compactCode(aspectRatio)).toContain(compactCode("style={ratioStyle}"));
+    expect(aspectRatio).not.toContain('data-slot="aspect-ratio-wrapper"');
     expect(compactCode(aspectRatio)).toContain(compactCode("aspectRatio({ class: className })"));
     expect(compactCode(aspectRatio)).toContain(compactCode('data-slot="aspect-ratio"'));
     expect(compactCode(aspectRatio)).toContain(compactCode("ref={ref}"));
     expect(compactCode(aspectRatioIndex)).toContain(compactCode("export default AspectRatio;"));
     expect(compactCode(aspectRatioIndex)).not.toContain(compactCode("Root: AspectRatio"));
-    expect(compactCode(aspectRatioVariants)).toContain(compactCode("relative w-full"));
-    expect(compactCode(aspectRatioVariants)).toContain(compactCode("absolute inset-0"));
+    expect(compactCode(aspectRatioVariants)).toContain(compactCode("relative aspect-(--ratio)"));
+    expect(aspectRatioVariants).not.toContain("aspectRatioWrapper");
+  });
+
+  it("types Aspect Ratio props from the as element", async () => {
+    const tempRoot = getTempRoot();
+    await generateStarwindReactWrappers({
+      outputDir: "generated",
+      primitiveOutputDir: "generated/primitives/react",
+      repoRoot: tempRoot,
+    });
+    // The React demo owns react and tailwind-variants for the generated files.
+    await symlink(
+      path.join(process.cwd(), "apps/react-demo/node_modules"),
+      path.join(tempRoot, "node_modules"),
+      "dir",
+    );
+    const entry = path.join(tempRoot, "aspect-ratio-consumer.tsx");
+    await writeFile(
+      entry,
+      `import type * as React from "react";
+import AspectRatio from "./generated/aspect-ratio";
+import type { AspectRatioProps } from "./generated/aspect-ratio/AspectRatio";
+function Link(props: { to: string; className?: string; children?: React.ReactNode }) {
+  return <a href={props.to} className={props.className}>{props.children}</a>;
+}
+declare const tag: "a" | "div";
+const attrs: AspectRatioProps = { title: "Photo" };
+export const accepted = [
+  <AspectRatio {...attrs} ratio={16 / 9}>Photo</AspectRatio>,
+  <AspectRatio as="img" src="/photo.png" alt="" ratio={2} />,
+  <AspectRatio as="a" href="#details">Details</AspectRatio>,
+  <AspectRatio as="section" ref={(node: HTMLElement | null) => void node} />,
+  <AspectRatio as={Link} to="/details">Details</AspectRatio>,
+  <AspectRatio as={tag}>Photo</AspectRatio>,
+];
+export const rejected = [
+  // @ts-expect-error The div default has no href.
+  <AspectRatio href="#details">Details</AspectRatio>,
+  // @ts-expect-error An img has no href.
+  <AspectRatio as="img" href="#details" />,
+];
+`,
+    );
+    const program = ts.createProgram([entry], {
+      jsx: ts.JsxEmit.ReactJSX,
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      noEmit: true,
+      skipLibCheck: true,
+      strict: true,
+      target: ts.ScriptTarget.ES2022,
+      types: [],
+    });
+    const diagnostics = ts
+      .getPreEmitDiagnostics(program)
+      .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
+    expect(diagnostics).toEqual([]);
   });
 }

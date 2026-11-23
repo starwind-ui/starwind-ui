@@ -96,4 +96,24 @@ export const emissionExceptions: EmissionException[] = [
     reason:
       "Astro prints this only for a null value, which marks a closed menu. Framework targets hold the same fact in their model, so no attribute exists there.",
   },
+  {
+    name: "chart-tooltip-body-parts",
+    kind: "intended",
+    targets: ALL,
+    family: /^chart$/,
+    part: /^tooltip(Content|Label|Item|Indicator|Icon|Name|Value)$/,
+    fact: /^(data-slot|data-chart|data-indicator|data-nested|data-active|data-key|aria-hidden)$/,
+    reason:
+      "Tooltip content parts render only inside the tooltip body that the Runtime opens on hover or keyboard focus. Render and mount open no tooltip. The chart browser suites check these attributes on every target.",
+  },
+  {
+    name: "astro-chart-formatters-come-from-the-module",
+    kind: "intended",
+    targets: ["astro"],
+    family: /^chart$/,
+    part: /^tooltipContent$/,
+    fact: /^(formatter|labelFormatter)$/,
+    reason:
+      "Functions cannot cross from the server to the browser, so Astro takes tooltip formatters from the chart module's domPresentation (spec SPEC-AC-12).",
+  },
 ];

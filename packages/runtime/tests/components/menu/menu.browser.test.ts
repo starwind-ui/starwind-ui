@@ -559,6 +559,36 @@ describe("createMenu", () => {
     dialog.destroy();
   });
 
+  it("closes only the submenu when Escape comes from inside the menu", async () => {
+    const menuRoot = renderMenuWithSubmenu();
+    const submenuTrigger = menuRoot.querySelector<HTMLElement>("[data-sw-menu-submenu-trigger]")!;
+    const submenuRoot = menuRoot.querySelector<HTMLElement>("[data-sw-menu-submenu-root]")!;
+    const submenuItem = submenuRoot.querySelector<HTMLElement>("[data-sw-menu-item]")!;
+    const menu = createMenu(menuRoot);
+    const escapeFrom = (target: HTMLElement) =>
+      target.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+    menu.open();
+    submenuTrigger.click();
+    submenuTrigger.focus();
+    escapeFrom(submenuTrigger);
+
+    expect(submenuRoot.getAttribute("data-state")).toBe("closed");
+    expect(menu.getOpen()).toBe(true);
+
+    submenuTrigger.click();
+    submenuItem.focus();
+    escapeFrom(submenuItem);
+
+    expect(submenuRoot.getAttribute("data-state")).toBe("closed");
+    expect(menu.getOpen()).toBe(true);
+
+    escapeFrom(document.activeElement as HTMLElement);
+    expect(menu.getOpen()).toBe(false);
+  });
+
   it("orders Dialog, root Menu, and submenu Escape ownership without duplicate callbacks", async () => {
     const dialogRoot = renderDialogOwner();
     const dialogTrigger = dialogRoot.querySelector<HTMLElement>("[data-sw-dialog-trigger]")!;
@@ -1924,6 +1954,25 @@ describe("createMenu", () => {
     expect(getRadioItem("spacious").getAttribute("aria-checked")).toBe("false");
   });
 
+  it("lets explicit radio item ARIA state decide over the default marker", async () => {
+    const root = renderMenuWithRadioGroup();
+    const group = getRadioGroup();
+    group.removeAttribute("data-value");
+    const compact = getRadioItem("compact");
+    const spacious = getRadioItem("spacious");
+    compact.setAttribute("aria-checked", "false");
+    compact.setAttribute("data-default-checked", "true");
+    spacious.setAttribute("aria-checked", "true");
+
+    createMenu(root);
+    getTrigger().click();
+    await waitForFloatingPosition();
+
+    expect(group.getAttribute("data-value")).toBe("spacious");
+    expect(compact.getAttribute("aria-checked")).toBe("false");
+    expect(spacious.getAttribute("aria-checked")).toBe("true");
+  });
+
   it("lets radio value change cancellation prevent state commits", async () => {
     const root = renderMenuWithRadioGroup();
     const group = getRadioGroup();
@@ -2035,6 +2084,221 @@ describe("createMenu", () => {
     expect(getSubmenuPopup().hidden).toBe(true);
     expect(getSubmenuTrigger().getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(getSubmenuTrigger());
+  });
+
+  it.each(["ltr", "rtl"] as const)(
+    "opens an authored bottom submenu below its trigger in %s without a side intent",
+    async (dir) => {
+      const root = renderMenuWithSubmenu();
+      root.dir = dir;
+      root.style.cssText = "position:fixed;left:300px;top:100px;width:200px";
+      const submenuTrigger = getSubmenuTrigger();
+      const popup = getSubmenuPopup();
+      popup.setAttribute("data-side", "bottom");
+      popup.setAttribute("data-avoid-collisions", "false");
+      const menu = createMenu(root);
+      expect(popup.getAttribute("data-side")).toBe("bottom");
+      getTrigger().click();
+      submenuTrigger.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Enter" }),
+      );
+      await waitForFloatingPosition();
+      expect(popup.hidden).toBe(false);
+      expect(popup.getAttribute("data-side")).toBe("bottom");
+      const triggerRect = submenuTrigger.getBoundingClientRect();
+      expect(popup.getBoundingClientRect().top).toBeGreaterThanOrEqual(triggerRect.bottom);
+      menu.destroy();
+    },
+  );
+
+  it.each([
+    ["ltr", "right"],
+    ["rtl", "left"],
+  ] as const)(
+    "writes the inline-end side for an empty side intent in %s before opening",
+    (dir, side) => {
+      const root = renderMenuWithSubmenu();
+      root.dir = dir;
+      const popup = getSubmenuPopup();
+      popup.setAttribute("data-side", "bottom");
+      popup.setAttribute("data-sw-menu-side-intent", "");
+      const menu = createMenu(root);
+      expect(popup.getAttribute("data-side")).toBe(side);
+      menu.destroy();
+    },
+  );
+
+  it("keeps a physical side intent physical in RTL", async () => {
+    const root = renderMenuWithSubmenu();
+    root.dir = "rtl";
+    root.style.cssText = "position:fixed;left:500px;top:100px;width:200px";
+    const popup = getSubmenuPopup();
+    popup.setAttribute("data-side", "bottom");
+    popup.setAttribute("data-sw-menu-side-intent", "right");
+    popup.setAttribute("data-avoid-collisions", "false");
+    const menu = createMenu(root);
+    expect(popup.getAttribute("data-side")).toBe("right");
+    getTrigger().click();
+    getSubmenuTrigger().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowLeft" }),
+    );
+    await waitForFloatingPosition();
+    expect(popup.getAttribute("data-side")).toBe("right");
+    menu.destroy();
+  });
+
+  it("uses owner direction for submenu keys and an empty side intent across a signalled flip", async () => {
+    const root = renderMenuWithSubmenu();
+    root.dir = "rtl";
+    root.style.cssText = "position:fixed;left:500px;top:100px;width:200px";
+    const popup = getSubmenuPopup();
+    popup.setAttribute("data-sw-menu-side-intent", "");
+    popup.setAttribute("data-avoid-collisions", "false");
+    popup.dir = "ltr";
+    const menu = createMenu(root);
+    getTrigger().click();
+    await waitForFloatingPosition();
+
+    getSubmenuTrigger().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowLeft" }),
+    );
+    await waitForFloatingPosition();
+    expect(popup.hidden).toBe(false);
+    expect(popup.getAttribute("data-side")).toBe("left");
+    expect(getComputedStyle(popup).direction).toBe("ltr");
+
+    root.dir = "ltr";
+    await waitForFloatingPosition();
+    expect(popup.getAttribute("data-side")).toBe("left");
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await waitForFloatingPosition();
+    expect(popup.hidden).toBe(false);
+    expect(popup.getAttribute("data-side")).toBe("right");
+    popup.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowLeft" }),
+    );
+    expect(popup.hidden).toBe(true);
+    expect(document.activeElement).toBe(getSubmenuTrigger());
+    menu.destroy();
+  });
+
+  it.each(["pointer hover", "pointer click", "keyboard"] as const)(
+    "reads direction before a %s opens a side intent submenu after a dir change with no event",
+    async (method) => {
+      const root = renderMenuWithSubmenu();
+      root.dir = "ltr";
+      root.style.cssText = "position:fixed;left:500px;top:100px;width:200px";
+      const submenuTrigger = getSubmenuTrigger();
+      const popup = getSubmenuPopup();
+      popup.setAttribute("data-sw-menu-side-intent", "");
+      popup.setAttribute("data-avoid-collisions", "false");
+      const menu = createMenu(root);
+      expect(popup.getAttribute("data-side")).toBe("right");
+      getTrigger().click();
+      await waitForFloatingPosition();
+
+      root.dir = "rtl";
+      // Record every attribute write on the parts that carry the side or the open state, in order.
+      const observer = new MutationObserver(() => {});
+      const submenuRoot = submenuTrigger.closest<HTMLElement>("[data-sw-menu-submenu-root]")!;
+      for (const part of [popup, submenuRoot, submenuTrigger]) {
+        observer.observe(part, { attributes: true, attributeOldValue: true });
+      }
+      if (method === "pointer hover") {
+        submenuTrigger.dispatchEvent(
+          new PointerEvent("pointerenter", { bubbles: true, pointerType: "mouse" }),
+        );
+      } else if (method === "pointer click") {
+        submenuTrigger.click();
+      } else {
+        submenuTrigger.dispatchEvent(
+          new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowLeft" }),
+        );
+      }
+      // Read the records of the open step before any other task runs.
+      const openRecords = observer.takeRecords();
+      expect(popup.hidden).toBe(false);
+      expect(popup.getAttribute("data-side")).toBe("left");
+      const sideWrite = openRecords.findIndex(
+        (record) =>
+          record.target === popup &&
+          record.attributeName === "data-side" &&
+          record.oldValue === "right",
+      );
+      const openWrite = openRecords.findIndex(
+        (record) =>
+          (record.attributeName === "data-state" && record.oldValue !== "open") ||
+          (record.attributeName === "aria-expanded" && record.oldValue !== "true") ||
+          (record.target === popup && record.attributeName === "hidden"),
+      );
+      expect(sideWrite).toBeGreaterThanOrEqual(0);
+      expect(openWrite).toBeGreaterThanOrEqual(0);
+      expect(sideWrite).toBeLessThan(openWrite);
+      await waitForFloatingPosition();
+      const laterSideWrites = observer
+        .takeRecords()
+        .filter((record) => record.target === popup && record.attributeName === "data-side");
+      observer.disconnect();
+      expect(laterSideWrites.every((record) => record.oldValue === "left")).toBe(true);
+      expect(popup.getAttribute("data-side")).toBe("left");
+      expect(popup.getBoundingClientRect().right).toBeLessThanOrEqual(
+        submenuTrigger.getBoundingClientRect().left + 1,
+      );
+      menu.destroy();
+    },
+  );
+
+  it("keeps an authored physical submenu side with RTL keyboard keys", async () => {
+    const root = renderMenuWithSubmenu();
+    root.dir = "rtl";
+    root.style.cssText = "position:fixed;left:500px;top:100px;width:200px";
+    const popup = getSubmenuPopup();
+    popup.setAttribute("data-avoid-collisions", "false");
+    const menu = createMenu(root);
+    getTrigger().click();
+    getSubmenuTrigger().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowLeft" }),
+    );
+    await waitForFloatingPosition();
+    expect(popup.getAttribute("data-side")).toBe("right");
+    popup.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowRight" }),
+    );
+    expect(popup.hidden).toBe(true);
+    menu.destroy();
+  });
+
+  it("keeps RTL branch keys after collision flips an authored physical side", async () => {
+    const root = renderMenuWithSubmenu();
+    root.dir = "rtl";
+    const submenuTrigger = getSubmenuTrigger();
+    const popup = getSubmenuPopup();
+    popup.setAttribute("data-side", "right");
+    mockRect(submenuTrigger, () => ({ height: 30, width: 20, x: window.innerWidth - 24, y: 160 }));
+    popup.style.cssText = "width:160px;height:80px";
+    const input = document.createElement("input");
+    input.value = "draft";
+    popup.append(input);
+    const menu = createMenu(root);
+    getTrigger().click();
+    submenuTrigger.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowLeft" }),
+    );
+    await waitForFloatingPosition();
+    expect(popup.getAttribute("data-side")).toBe("left");
+
+    input.focus();
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowRight" }),
+    );
+    expect(popup.hidden).toBe(false);
+    expect(input.value).toBe("draft");
+    popup.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowRight" }),
+    );
+    expect(popup.hidden).toBe(true);
+    expect(document.activeElement).toBe(submenuTrigger);
+    menu.destroy();
   });
 
   it("closes one submenu on Shift+Tab and returns focus without closing the root", () => {

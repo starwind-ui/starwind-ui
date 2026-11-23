@@ -5,6 +5,7 @@ import type {
   RenderNode,
   StyledAdapterContract,
   StyledComponentContract,
+  ValueExpression,
 } from "../../../contracts/styled/types.js";
 import { resolveStyledVariantDefinition } from "../../../contracts/styled/variant-resolution.js";
 import { commonStyledPropDescriptions } from "../styled-api-descriptions.js";
@@ -603,6 +604,11 @@ const collectInheritance = (
   return [...inheritance.values()].sort((left, right) => left.key.localeCompare(right.key));
 };
 
+// A raw `prop ?? fallback` value still forwards the prop, with a Styled fallback.
+const forwardsProp = (value: ValueExpression | undefined, propName: string) =>
+  (value?.type === "variable" && value.name === propName) ||
+  (value?.type === "raw" && value.code.startsWith(`${propName} ?? `));
+
 const findForwardedPrimitiveProp = (
   propName: string,
   primitiveParts: readonly PrimitivePartReference[],
@@ -626,8 +632,7 @@ const findForwardedPrimitiveProp = (
           (attr) =>
             attr.name === propName &&
             isInFramework(attr.frameworks, framework) &&
-            attr.value?.type === "variable" &&
-            attr.value.name === propName,
+            forwardsProp(attr.value, propName),
         ),
     );
     const reference = prop.targets

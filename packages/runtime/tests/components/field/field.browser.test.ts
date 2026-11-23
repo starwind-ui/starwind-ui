@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { createCheckbox } from "../../../src/components/checkbox";
 import { createCombobox } from "../../../src/components/combobox";
+import { createField } from "../../../src/components/field/field";
 import { createInputOtp } from "../../../src/components/input-otp";
 import { createRadioGroup } from "../../../src/components/radio-group";
 import { createSelect } from "../../../src/components/select";
 import { createSlider } from "../../../src/components/slider";
 import { createSwitch } from "../../../src/components/switch";
-import { createField } from "../../../src/components/field/field";
 
 describe("createField", () => {
   beforeEach(() => {

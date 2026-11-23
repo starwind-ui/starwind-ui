@@ -1,8 +1,7 @@
+import { AvatarFallback, AvatarImage, AvatarRoot } from "@starwind-ui/vue/avatar";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { AvatarFallback, AvatarImage, AvatarRoot } from "@starwind-ui/vue/avatar";
 
 describe("Vue Avatar SSR", () => {
   it("server-renders deterministic semantic markup without browser globals", async () => {

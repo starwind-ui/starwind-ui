@@ -27,6 +27,7 @@ import {
   isPreviewTreeAlive,
   isVueHydrationMismatchWarning,
   parseArgs,
+  prepareVueHostManifest,
   prepareVueHostPackages,
   runCleanupOperations,
   runVueHostWorkers,
@@ -45,6 +46,25 @@ const packages = {
 };
 
 describe("production Vue CLI host acceptance", () => {
+  it("pins the CLI-supported Vue integration for the Astro 7.0 host", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "starwind-astro-vue-manifest-"));
+    try {
+      await writeFile(
+        path.join(directory, "package.json"),
+        JSON.stringify({ dependencies: { "existing-package": "^1.0.0" } }),
+      );
+      await prepareVueHostManifest({ directory, host: "astro" }, packages, "http://127.0.0.1:1234");
+      const manifest = JSON.parse(await readFile(path.join(directory, "package.json"), "utf8"));
+      expect(manifest.dependencies).toMatchObject({
+        "@astrojs/vue": "7.1.2",
+        astro: "7.0.0",
+        "existing-package": "^1.0.0",
+      });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("plans exact beta packages and includes Vue in public candidate acceptance", () => {
     const betaPlan = createVueBetaPackPlan({ outputDirectory: path.join(root, "packs") });
     const publicPlan = createPackPlan({ outputDirectory: path.join(root, "public-packs") });
@@ -204,6 +224,7 @@ describe("production Vue CLI host acceptance", () => {
         expect.arrayContaining([
           "@tailwindcss/forms",
           "@tailwindcss/vite",
+          "tailwind-merge",
           "tailwindcss",
           "tw-animate-css",
         ]),
@@ -395,6 +416,11 @@ export const StarwindCollapsibleHelper: typeof import('../app/components/starwin
       expect(await readFile(path.join(quasar.directory, "index.html"), "utf8")).toContain(
         "<!-- quasar:entry-point -->",
       );
+      for (const project of [quasar, quasarSsr]) {
+        expect(await readFile(path.join(project.directory, "index.html"), "utf8")).toContain(
+          '<link rel="icon" href="data:," />',
+        );
+      }
       const quasarManifest = JSON.parse(
         await readFile(path.join(quasar.directory, "package.json"), "utf8"),
       );
@@ -765,7 +791,7 @@ export const StarwindCollapsibleHelper: typeof import('../app/components/starwin
     expect(isPreviewTreeAlive({ child })).toBe(false);
   });
 
-  it("uses public Commander choices and checked-in Vue beta registry artifacts", async () => {
+  it("uses public Commander choices and checked-in Vue registry artifacts", async () => {
     const [program, registry, primitives, vueManifest] = await Promise.all([
       readFile("packages/cli/src/program.ts", "utf8"),
       readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
@@ -777,7 +803,7 @@ export const StarwindCollapsibleHelper: typeof import('../app/components/starwin
     expect(program).not.toContain("PRIVATE_VUE_FRAMEWORK_TARGET_POLICY");
     expect(JSON.parse(registry).setup.vue.adapterPackage).toEqual({
       name: "@starwind-ui/vue",
-      range: JSON.parse(vueManifest).version,
+      range: `^${JSON.parse(vueManifest).version}`,
     });
     expect(
       JSON.parse(primitives).primitives.some(

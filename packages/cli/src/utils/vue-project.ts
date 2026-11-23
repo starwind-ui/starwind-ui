@@ -1,8 +1,8 @@
 import fs from "fs-extra";
 import semver from "semver";
-
-import { resolveProjectMutationPath } from "./project-path.js";
 import { starwindStylesheetPackageRequirements } from "@/templates/starwind.css.js";
+import { VUE_VERSION_FLOOR } from "./install-defaults.js";
+import { resolveProjectMutationPath } from "./project-path.js";
 import { addVueCssImport, updateVueViteConfigContent } from "./vite-config.js";
 
 type ProjectPackage = {
@@ -48,7 +48,7 @@ export function getVueProjectPlan(
     ...pkg.dependencies,
   };
   if (!dependencies.vue) {
-    throw new Error("The Vue project must declare Vue 3.5 or later.");
+    throw new Error(`The Vue project must declare Vue ${VUE_VERSION_FLOOR} or later.`);
   }
   if (!dependencies["@vitejs/plugin-vue"]) {
     throw new Error("The Vite Vue project must declare the official @vitejs/plugin-vue plugin.");
@@ -78,7 +78,7 @@ export function meetsVueVersionFloor(range: string): boolean {
   if (/^(?:file|link|portal|workspace):/i.test(range)) return false;
   try {
     const minimum = semver.minVersion(range);
-    return Boolean(minimum && semver.gte(minimum, "3.5.0"));
+    return Boolean(minimum && semver.gte(minimum, VUE_VERSION_FLOOR));
   } catch {
     return false;
   }

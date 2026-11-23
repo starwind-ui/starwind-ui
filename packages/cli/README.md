@@ -47,7 +47,7 @@ npx starwind@latest init --framework vue
 npx starwind@latest init --framework svelte
 ```
 
-Vue 3.5 and Svelte 5 support are in public beta. The
+Starwind supports Vue 3.5 and Svelte 5. The
 [framework guides](https://starwind.dev/docs/getting-started/installation/#choose-your-framework)
 walk you through setup for your app.
 

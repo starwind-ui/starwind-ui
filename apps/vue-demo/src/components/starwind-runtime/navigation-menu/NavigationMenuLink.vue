@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as NavigationMenuPrimitive from "@starwind-ui/vue/navigation-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type AnchorHTMLAttributes } from "vue";
+import type { AnchorHTMLAttributes } from "vue";
 import { navigationMenuLink } from "./variants";
 
 defineOptions({ inheritAttrs: false });

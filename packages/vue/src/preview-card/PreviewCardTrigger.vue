@@ -22,10 +22,11 @@ const element = ref<HTMLElement | null>(null);
 const asChild = createVueAsChild("PreviewCardTrigger", element);
 const { setElement } = asChild;
 defineExpose({ element });
+// While disabled, this capture listener runs before every consumer click listener.
 function handleClick(event: MouseEvent): void {
   if (!props.disabled) return;
   event.preventDefault();
-  event.stopPropagation();
+  event.stopImmediatePropagation();
 }
 function protectedProps() {
   return {
@@ -35,8 +36,7 @@ function protectedProps() {
     "data-state": "closed",
     "data-close-delay": props.closeDelay,
     "data-open-delay": props.openDelay,
-    ...(props.disabled ? { href: undefined, tabindex: -1 } : {}),
-    onClick: handleClick,
+    ...(props.disabled ? { href: undefined, tabindex: -1, onClickCapture: handleClick } : {}),
     "data-sw-part": "trigger",
   };
 }
@@ -70,7 +70,7 @@ const AsChildTrigger = defineComponent({
     :data-open-delay="props.openDelay"
     :href="props.disabled ? undefined : (attrs.href as string | undefined)"
     :tabindex="props.disabled ? -1 : (attrs.tabindex as number | undefined)"
-    @click="handleClick"
+    v-on="props.disabled ? { clickCapture: handleClick } : {}"
   >
     <slot />
   </a>

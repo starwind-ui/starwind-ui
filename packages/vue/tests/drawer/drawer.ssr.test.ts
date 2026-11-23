@@ -1,8 +1,7 @@
+import * as Drawer from "@starwind-ui/vue/drawer";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import * as Drawer from "@starwind-ui/vue/drawer";
 import {
   Sheet,
   SheetContent,

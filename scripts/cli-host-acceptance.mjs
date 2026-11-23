@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -185,7 +186,7 @@ function packageCommand(directory, args) {
   return { args, cwd: directory };
 }
 
-export function createCliHostAcceptancePlan({ packages, root }) {
+export function createCliHostAcceptancePlan({ packages, root, includeChartHost = false }) {
   const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
   const packedDependencies = {
     "@starwind-ui/react": packages.react,
@@ -198,11 +199,41 @@ export function createCliHostAcceptancePlan({ packages, root }) {
   });
   const astroDirectory = path.join(root, "astro-react");
   const viteDirectory = path.join(root, "vite-react-js");
+  const chartDirectory = path.join(root, "astro-5-chart");
 
   return {
     cliEntrypoint,
     packages,
     projects: [
+      ...(includeChartHost
+        ? [
+            {
+              add: cli(chartDirectory, ["add", "chart", "--yes"]),
+              build: packageCommand(chartDirectory, ["build"]),
+              check: packageCommand(chartDirectory, ["exec", "astro", "check"]),
+              directory: chartDirectory,
+              framework: "astro",
+              host: "astro",
+              id: "astro-5-chart",
+              init: cli(chartDirectory, ["init", "--defaults", "--framework", "astro"]),
+              packedDependencies: {},
+              primitiveAdd: cli(chartDirectory, ["primitives", "add", "chart", "--yes"]),
+              scaffold: {
+                args: [
+                  "create",
+                  "astro@5.2.2",
+                  "astro-5-chart",
+                  "--template",
+                  "minimal",
+                  "--no-install",
+                  "--no-git",
+                  "--yes",
+                ],
+                cwd: root,
+              },
+            },
+          ]
+        : []),
       {
         add: cli(astroDirectory, ["add", "button", "--framework", "react", "--yes"]),
         build: packageCommand(astroDirectory, ["build"]),
@@ -295,7 +326,10 @@ async function prepareManifest(project) {
   const manifestFile = path.join(project.directory, "package.json");
   const manifest = JSON.parse(await readFile(manifestFile, "utf8"));
   if (project.host === "astro") {
-    manifest.dependencies = { ...manifest.dependencies, astro: ASTRO_VERSION };
+    manifest.dependencies = {
+      ...manifest.dependencies,
+      astro: project.id === "astro-5-chart" ? "5.2.2" : ASTRO_VERSION,
+    };
     manifest.devDependencies = {
       ...manifest.devDependencies,
       "@astrojs/check": "^0.9.8",
@@ -453,6 +487,41 @@ function assertPackedFileReference(packageName, reference, expectedFile, lockfil
 }
 
 async function writeFixture(project) {
+  if (project.id === "astro-5-chart") {
+    await mkdir(path.join(project.directory, "src/pages"), { recursive: true });
+    await writeFile(
+      path.join(project.directory, "src/chart.ts"),
+      `import { defineChartModule } from "./components/starwind/chart";
+import { barY, defineChart } from "@tanstack/charts";
+import { scaleBand } from "@tanstack/charts/scales/band";
+import { scaleLinear } from "@tanstack/charts/scales/linear";
+export const chart = defineChartModule<{ month: string; value: number }>({ id: "host-chart", ariaLabel: "Host chart", create: (ctx) => defineChart({
+  marks: [barY(ctx.data, { x: "month", y: "value" })],
+  scales: { x: { scale: scaleBand }, y: { scale: scaleLinear } },
+}) });
+`,
+      "utf8",
+    );
+    const frontmatter = `---
+import { ChartContainer } from "../components/starwind/chart";
+import { chart } from "../chart";
+const data = [{ month: "Jan", value: 10 }];
+const config = { value: { label: "Value", color: "red" } };
+---
+`;
+    await writeFile(
+      path.join(project.directory, "src/pages/chart.astro"),
+      frontmatter +
+        `<ChartContainer {chart} {data} {config} /><script>import "../chart";</script>\n`,
+      "utf8",
+    );
+    await writeFile(
+      path.join(project.directory, "src/pages/static-chart.astro"),
+      frontmatter + `<ChartContainer {chart} {data} {config} interactive={false} />\n`,
+      "utf8",
+    );
+    return;
+  }
   const relativeFile = project.host === "astro" ? "src/pages/index.astro" : "src/App.jsx";
   const file = path.join(project.directory, relativeFile);
   await mkdir(path.dirname(file), { recursive: true });
@@ -461,6 +530,75 @@ async function writeFixture(project) {
     project.host === "astro" ? getAstroPageFixture() : getViteAppFixture(),
     "utf8",
   );
+}
+
+async function verifyAstroChartDependencies(project) {
+  const projectManifest = JSON.parse(
+    await readFile(path.join(project.directory, "package.json"), "utf8"),
+  );
+  const sourceRuntime = JSON.parse(
+    await readFile(path.join(REPO_ROOT, "packages/runtime/package.json"), "utf8"),
+  );
+  assert.ok(
+    projectManifest.dependencies?.["@tanstack/charts"],
+    "primitives add chart installs TanStack Charts directly",
+  );
+  const astroManifest = await realpath(
+    path.join(project.directory, "node_modules/@starwind-ui/astro/package.json"),
+  );
+  const runtimeManifest = JSON.parse(
+    await readFile(
+      path.resolve(path.dirname(astroManifest), "..", "runtime", "package.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(runtimeManifest.version, sourceRuntime.version, "packed Runtime version");
+  assert.ok(runtimeManifest.exports?.["./chart"], "packed Runtime exports chart");
+}
+
+async function verifyAstroChart(project) {
+  const require = createRequire(import.meta.url);
+  const { chromium } = require("playwright");
+  const server = spawn(
+    getPnpmCommand(),
+    ["exec", "astro", "preview", "--host", "127.0.0.1", "--port", "4329"],
+    {
+      cwd: project.directory,
+      stdio: "ignore",
+    },
+  );
+  let browser;
+  try {
+    browser = await chromium.launch({ channel: "chrome", headless: true });
+    const page = await browser.newPage();
+    let response;
+    for (let attempt = 0; attempt < 50; attempt++) {
+      try {
+        response = await page.goto("http://127.0.0.1:4329/chart/");
+        break;
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+    }
+    assert.ok(response?.ok(), "Astro 5 chart page must load");
+    assert.match(await response.text(), /data-state="pending"/, "server chart starts pending");
+    await page.locator('[data-slot="chart"][data-state="active"]').waitFor();
+    const scripts = [];
+    page.on("request", (request) => {
+      if (request.resourceType() === "script") scripts.push(request.url());
+    });
+    await page.goto("http://127.0.0.1:4329/static-chart/");
+    assert.equal(
+      await page.locator('script:not([type="application/json"])').count(),
+      0,
+      "static chart emits no executable script",
+    );
+    assert.deepEqual(scripts, [], "static chart loads no scripts");
+    console.log("[cli-host] Astro 5 chart lifecycle and static page passed");
+  } finally {
+    await browser?.close();
+    await terminateProcessTree(server.pid);
+  }
 }
 
 export async function runWithTemporaryHostRoot({ keepTemp = false } = {}, operation) {
@@ -496,7 +634,7 @@ export async function runCliHostAcceptance({ keepTemp = false } = {}) {
           path.join(packsDirectory, entry.file),
         ]),
       );
-      const plan = createCliHostAcceptancePlan({ packages, root });
+      const plan = createCliHostAcceptancePlan({ packages, root, includeChartHost: true });
       const rootLogs = path.join(root, "logs");
       await writeFile(
         path.join(root, "package.json"),
@@ -527,11 +665,16 @@ export async function runCliHostAcceptance({ keepTemp = false } = {}) {
         );
         await runLoggedCommand("02-install", packageCommand(project.directory, ["install"]), logs);
         await runLoggedCommand("03-init", project.init, logs);
+        if (project.primitiveAdd) {
+          await runLoggedCommand("03a-primitive-add", project.primitiveAdd, logs);
+          await verifyAstroChartDependencies(project);
+        }
         await runLoggedCommand("04-add", project.add, logs);
         await writeFixture(project);
-        await verifyPackedProvenance(project);
+        if (project.id !== "astro-5-chart") await verifyPackedProvenance(project);
         await runLoggedCommand("05-check", project.check, logs);
         await runLoggedCommand("06-build", project.build, logs);
+        if (project.id === "astro-5-chart") await verifyAstroChart(project);
       }
       console.log("[cli-host] focused packed Astro and Vite host acceptance passed");
       return { root };

@@ -1,7 +1,6 @@
 <script module lang="ts">
   import type { ComponentProps, Snippet } from "svelte";
-  import { createAttachmentKey } from "svelte/attachments";
-  import { getAlertDialogControlRefresh } from "@starwind-ui/svelte/alert-dialog";
+  import { __useAlertDialogControl } from "@starwind-ui/svelte/alert-dialog";
   import { cx } from "tailwind-variants";
   import { alertDialogBackdrop, alertDialogContent, alertDialogDescription, alertDialogFooter, alertDialogHeader, alertDialogTitle, alertDialogAction, alertDialogActionAsChild, alertDialogCancel, alertDialogCancelAsChild } from "./variants.js";
   import { Button } from "../button/index.js";
@@ -11,18 +10,14 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "outline",
-    "size": size = "md",
+    variant = "outline",
+    size = "md",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: AlertDialogCancelProps = $props();
 
-  const requestRefresh = getAlertDialogControlRefresh();
-  const controlAttachment = { [createAttachmentKey()]: () => {
-    requestRefresh?.();
-    return () => requestRefresh?.();
-  } };
+  const controlAttachment = __useAlertDialogControl();
 </script>
 
 <Button

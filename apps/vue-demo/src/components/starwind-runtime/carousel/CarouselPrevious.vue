@@ -43,6 +43,7 @@ const controlClassName = computed(() => carouselPrevious({ class: className }));
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
+        class="rotate-(--sw-carousel-icon-turn)"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M15 6l-6 6l6 6" />

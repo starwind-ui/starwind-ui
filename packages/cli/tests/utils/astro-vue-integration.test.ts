@@ -3,8 +3,6 @@ import fs from "fs-extra";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as astroConfig from "../../src/utils/astro-config.js";
-import * as packageManager from "../../src/utils/package-manager.js";
-import * as projectPath from "../../src/utils/project-path.js";
 import {
   ensureAstroVueIntegration,
   inspectAstroVueConfig,
@@ -12,6 +10,8 @@ import {
   setupAstroVueConfig,
   updateAstroVueConfigContent,
 } from "../../src/utils/astro-vue-integration.js";
+import * as packageManager from "../../src/utils/package-manager.js";
+import * as projectPath from "../../src/utils/project-path.js";
 
 vi.mock("@clack/prompts");
 vi.mock("fs-extra");
@@ -110,7 +110,7 @@ export default defineConfig({
     );
     await expect(
       preflightAstroVueIntegration({
-        dependencies: { "@astrojs/vue": "^7.1.2", astro: "^7", vue: "^3.5" },
+        dependencies: { "@astrojs/vue": "^7.1.2", astro: "^7", vue: "^3.5.21" },
       }),
     ).resolves.toEqual({ status: "ready", packages: [] });
 
@@ -191,7 +191,7 @@ export default defineConfig({
       ensureAstroVueIntegration({
         packageManager: "pnpm",
         projectPackage: {
-          dependencies: { "@astrojs/vue": "^7.1.2", astro: "^7", vue: "^3.5" },
+          dependencies: { "@astrojs/vue": "^7.1.2", astro: "^7", vue: "^3.5.21" },
         },
         skipPrompts: true,
       }),

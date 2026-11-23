@@ -9,10 +9,10 @@
 
 <script lang="ts">
   let {
-    "size": size,
+    size,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: LabelProps = $props();
 </script>

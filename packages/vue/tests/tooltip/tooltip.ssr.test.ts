@@ -1,8 +1,7 @@
+import * as Tooltip from "@starwind-ui/vue/tooltip";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import * as Tooltip from "@starwind-ui/vue/tooltip";
 
 describe("Vue Tooltip SSR", () => {
   it("renders deterministic inline portal anatomy without browser work", async () => {

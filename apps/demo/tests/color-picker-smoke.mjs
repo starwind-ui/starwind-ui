@@ -33,7 +33,7 @@ server?.stderr.on("data", (chunk) => (serverOutput += chunk));
 
 let browser;
 try {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -266,7 +266,15 @@ try {
     "true",
     "invalid whole-value draft should set aria-invalid",
   );
+  // The first Escape restores the draft and keeps the Popover open with focus in the input.
   await popupValue.press("Escape");
+  assert.equal(
+    await popupValue.getAttribute("aria-invalid"),
+    "false",
+    "Escape should restore the invalid whole-value draft",
+  );
+  assert.ok(await popup.isVisible(), "Escape with a draft should keep the popup open");
+  await expectFocused(popupValue);
   await popupValue.fill("#123456");
   const beforeValidDraftCommit = await readEventCounts(page);
   await popupValue.press("Enter");
@@ -519,8 +527,14 @@ try {
     "28px",
   );
   await page.keyboard.press("Escape");
+  // Closing returns focus to the trigger, and that focus scrolls the page. Wait for it first.
+  await canonicalPopup.waitFor({ state: "hidden" });
+  await expectFocused(canonicalTrigger);
 
   const advancedTrigger = page.getByTestId("canonical-color-picker-trigger");
+  // This popup sets avoidCollisions={false}, so it never flips. Center the trigger first, so the
+  // popup has room below it at any home page scroll position.
+  await advancedTrigger.evaluate((element) => element.scrollIntoView({ block: "center" }));
   await advancedTrigger.click();
   const advancedPopup = page.getByTestId("canonical-color-picker-content");
   await advancedPopup.waitFor();

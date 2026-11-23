@@ -11,18 +11,18 @@
 
 <script lang="ts">
   let {
-    "dirty": dirty,
-    "disabled": disabled = false,
-    "errorVisibility": errorVisibility,
-    "invalid": invalid,
-    "name": name,
-    "orientation": orientation,
-    "revalidationTiming": revalidationTiming,
-    "touched": touched,
-    "validationTiming": validationTiming,
+    dirty,
+    disabled = false,
+    errorVisibility,
+    invalid,
+    name,
+    orientation,
+    revalidationTiming,
+    touched,
+    validationTiming,
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldProps = $props();
 </script>

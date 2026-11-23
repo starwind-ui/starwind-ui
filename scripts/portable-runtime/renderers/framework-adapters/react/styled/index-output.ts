@@ -1,11 +1,10 @@
 import path from "node:path";
-
+import { getRelativeImportPath } from "../../../shared.js";
 import {
   assertStyledPartsIdentifier,
   getStyledPartsIdentifier,
   type StyledOutputComponentGroup,
 } from "../../../styled-output-model/index.js";
-import { getRelativeImportPath } from "../../../shared.js";
 import { renderNamedExport, renderNamedImport } from "./formatting.js";
 import { renderIdentifierObject } from "./render-tree.js";
 

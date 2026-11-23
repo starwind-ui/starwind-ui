@@ -6,12 +6,12 @@ import {
   progressRuntimeAdapterContract,
   toggleRuntimeAdapterContract,
 } from "../contracts/primitive/representatives.js";
+import { printLegacyVueCollapsibleTracerFixture } from "../renderers/framework-adapters/vue/generic-future-framework-tracer.js";
 import {
   buildGenericAdapterPlan,
   genericAdapterFutureFrameworkTracerClassifications,
   printFutureFrameworkTracerPlan,
 } from "../renderers/generic-adapter-plan/index.js";
-import { printLegacyVueCollapsibleTracerFixture } from "../renderers/framework-adapters/vue/generic-future-framework-tracer.js";
 
 describe("GenericAdapterPlan future framework tracer printers", () => {
   it("prints deterministic unsupported-only Vue Toggle contract evidence", () => {

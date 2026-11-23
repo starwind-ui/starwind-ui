@@ -3,5 +3,5 @@ import { SelectValue } from "#styled/select";
 </script>
 
 <template>
-  <SelectValue v-slot="{ missing }">{{ missing }}</SelectValue>
+  <SelectValue v-slot="{ label }">{{ label }}</SelectValue>
 </template>

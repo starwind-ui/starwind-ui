@@ -1,3 +1,4 @@
+import { alertDialogStyledControlHelper } from "../../../../contracts/styled/components/alert-dialog.js";
 import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
@@ -114,10 +115,9 @@ export function specializeSvelteStyledAlertDialog(
           ]
         : button
           ? [
-              { source: "svelte/attachments", names: ["createAttachmentKey"] },
               {
                 source: sveltePrimitiveImport("alert-dialog", options),
-                names: ["getAlertDialogControlRefresh"],
+                names: [alertDialogStyledControlHelper],
               },
             ]
           : [
@@ -135,13 +135,7 @@ export function specializeSvelteStyledAlertDialog(
     setup: native
       ? [nativeOwnership]
       : button
-        ? [
-            `const requestRefresh = getAlertDialogControlRefresh();
-const controlAttachment = { [createAttachmentKey()]: () => {
-  requestRefresh?.();
-  return () => requestRefresh?.();
-} };`,
-          ]
+        ? [`const controlAttachment = ${alertDialogStyledControlHelper}();`]
         : [],
   };
 }

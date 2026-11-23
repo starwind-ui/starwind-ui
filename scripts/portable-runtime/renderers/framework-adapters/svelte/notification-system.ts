@@ -7,8 +7,6 @@ import type {
 } from "../types.js";
 import { printSvelteRefAttachment } from "./attachments.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 export function printSvelteNotificationSystemComponent(
   file: AdapterComponentFile,
 ): AdapterPrintedFile {
@@ -45,8 +43,7 @@ export function printSvelteNotificationSystemIndex(file: AdapterIndexFile): Adap
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -70,8 +67,7 @@ export { ${facts.index.valueExports.join(", ")} } from "${facts.index.valueExpor
 function printViewport(facts: AdapterNotificationSystemFacts): string {
   const options = facts.viewportOptions;
   const semantics = facts.viewportSemantics;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
@@ -121,8 +117,7 @@ ${printSvelteRefAttachment("HTMLDivElement")}
 
 function printTemplate(facts: AdapterNotificationSystemFacts): string {
   const variant = facts.template.variant;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { HTMLTemplateAttributes } from "svelte/elements";
 
@@ -202,8 +197,7 @@ function printPart(
   const typeDeclaration = extraTypes ? `  ${extraTypes}\n` : "";
   const propDeclaration = extraProps ? `    ${extraProps}\n` : "";
   const destructuredProps = extraDestructure ? ` ${extraDestructure}` : " ";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${htmlImport} } from "svelte/elements";

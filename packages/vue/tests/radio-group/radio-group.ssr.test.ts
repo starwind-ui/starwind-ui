@@ -1,9 +1,8 @@
+import { RadioRoot } from "@starwind-ui/vue/radio";
+import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
-import { RadioRoot } from "@starwind-ui/vue/radio";
 import { RadioGroup as StyledRadioGroup } from "../../../../apps/vue-demo/src/components/starwind-runtime/radio-group";
 
 describe("Vue Radio Group SSR", () => {

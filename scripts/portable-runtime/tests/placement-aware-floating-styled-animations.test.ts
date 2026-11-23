@@ -100,7 +100,7 @@ describe("placement-aware floating styled animations", () => {
       for (const subContent of [astroSubContent, reactSubContent]) {
         expect(subContent).toContain(testCase.subContentClassCall);
         expect(subContent).not.toContain("side, align");
-        expect(subContent).toContain("side={side}");
+        expect(subContent).toContain('side={side ?? "right"}');
         expect(subContent).toContain("align={align}");
         expect(subContent).toContain("sideOffset={sideOffset}");
         expect(subContent).toContain("avoidCollisions={avoidCollisions}");
@@ -261,14 +261,8 @@ describe("placement-aware floating styled animations", () => {
 
     const astroOutputRoot = path.join(tempRoot, "generated/astro");
     const reactOutputRoot = path.join(tempRoot, "generated/react");
-    const astroContent = await readGeneratedFile(
-      astroOutputRoot,
-      "combobox/ComboboxContent.astro",
-    );
-    const reactContent = await readGeneratedFile(
-      reactOutputRoot,
-      "combobox/ComboboxContent.tsx",
-    );
+    const astroContent = await readGeneratedFile(astroOutputRoot, "combobox/ComboboxContent.astro");
+    const reactContent = await readGeneratedFile(reactOutputRoot, "combobox/ComboboxContent.tsx");
     const astroVariants = await readGeneratedFile(astroOutputRoot, "combobox/variants.ts");
     const reactVariants = await readGeneratedFile(reactOutputRoot, "combobox/variants.ts");
 
@@ -378,8 +372,12 @@ describe("placement-aware floating styled animations", () => {
       expect(tooltipContentVariant).not.toContain("align: {");
       expect(tooltipCaretVariant).toContain("group-data-[side=top]:bottom-0");
       expect(tooltipCaretVariant).toContain("group-data-[side=bottom]:top-0");
-      expect(tooltipCaretVariant).toContain("group-data-[side=left]:top-1/2");
-      expect(tooltipCaretVariant).toContain("group-data-[side=right]:top-1/2");
+      expect(tooltipCaretVariant).toContain(
+        "group-data-[side=left]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))]",
+      );
+      expect(tooltipCaretVariant).toContain(
+        "group-data-[side=right]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))]",
+      );
     }
 
     for (const variants of [astroHoverCardVariants, reactHoverCardVariants]) {

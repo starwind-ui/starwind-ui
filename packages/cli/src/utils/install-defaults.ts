@@ -22,6 +22,12 @@ export const REACT_19_DEFAULTS = {
   "@types/react-dom": "^19.2.0",
 } as const;
 
+/**
+ * Vue 3.5.21 is the lowest Vue that hydrates and unmounts Starwind portal parts and accepts the
+ * packed declarations. The release gate checks it as the exact peer floor.
+ */
+export const VUE_VERSION_FLOOR = "3.5.21";
+
 /** Next.js projects use the PostCSS plugin instead of the Vite plugin. */
 export const NEXT_TAILWIND_POSTCSS_REQUIREMENT = "@tailwindcss/postcss@^4";
 

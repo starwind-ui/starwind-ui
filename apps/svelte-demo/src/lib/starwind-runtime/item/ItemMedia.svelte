@@ -9,10 +9,10 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "default",
+    variant = "default",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: ItemMediaProps = $props();
 </script>

@@ -1,6 +1,6 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 
 import Progress from "../../../../apps/vue-demo/src/components/starwind-runtime/progress/Progress.vue";
 

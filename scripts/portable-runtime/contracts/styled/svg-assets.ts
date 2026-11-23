@@ -43,7 +43,7 @@ const filled = (...children: ReturnType<typeof path>[]): SvgAsset => ({
 });
 
 const theme = (...children: ReturnType<typeof path>[]): SvgAsset => ({
-  attributes: [...outlineAttributes.filter(({ name }) => name !== "aria-hidden")],
+  attributes: outlineAttributes.filter(({ name }) => name !== "aria-hidden"),
   children,
 });
 

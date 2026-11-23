@@ -1,3 +1,4 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract, StyledComponentContract } from "../types.js";
 
 type NativeSelectNativePartOptions = {
@@ -69,6 +70,7 @@ function nativeSelectNativePart({
 
 export const nativeSelectStyledContract: StyledAdapterContract = {
   component: "native-select",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: ["NativeSelect", "NativeSelectOptGroup", "NativeSelectOption"],
   defaultExport: {
     Root: "NativeSelect",
@@ -90,9 +92,9 @@ export const nativeSelectStyledContract: StyledAdapterContract = {
       ],
       variants: {
         size: {
-          sm: "h-9 pr-8 pl-2 text-sm",
-          md: "h-11 pr-9 pl-3 text-base",
-          lg: "h-12 pr-10 pl-4 text-lg",
+          sm: "h-9 pe-8 ps-2 text-sm",
+          md: "h-11 pe-9 ps-3 text-base",
+          lg: "h-12 pe-10 ps-4 text-lg",
         },
       },
       defaultVariants: {
@@ -103,9 +105,9 @@ export const nativeSelectStyledContract: StyledAdapterContract = {
       base: ["text-foreground pointer-events-none absolute top-1/2 -translate-y-1/2 opacity-50"],
       variants: {
         size: {
-          sm: "right-2 size-3.5",
-          md: "right-3 size-4",
-          lg: "right-4 size-5",
+          sm: "end-2 size-3.5",
+          md: "end-3 size-4",
+          lg: "end-4 size-5",
         },
       },
       defaultVariants: {

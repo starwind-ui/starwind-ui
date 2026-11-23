@@ -68,7 +68,8 @@ async function mount(initial: InputOtpRootProps = {}) {
         .join(""),
     ).toBe(value);
   };
-  return { form, input, root, change, configure, reset, expectValue };
+  const setProps = (props: InputOtpRootProps) => update((previous) => ({ ...previous, ...props }));
+  return { form, input, root, change, configure, setProps, reset, expectValue };
 }
 
 describe("React Input OTP reset baseline and fixed slots", () => {
@@ -150,6 +151,79 @@ describe("React Input OTP reset baseline and fixed slots", () => {
     expect([...container!.querySelectorAll("[data-sw-input-otp-slot]")]).toEqual(slots);
     await otp.reset();
     otp.expectValue("1234");
+  });
+
+  it("applies a later defined value as a silent command and keeps later typing", async () => {
+    const onValueChange = vi.fn();
+    const otp = await mount({ onValueChange });
+    await otp.configure({ value: "1234" });
+    otp.expectValue("1234");
+    expect(otp.root.getAttribute("data-value")).toBe("1234");
+    expect(onValueChange).not.toHaveBeenCalled();
+    await otp.change("12345");
+    otp.expectValue("12345");
+    await otp.configure({ readOnly: false });
+    otp.expectValue("12345");
+    expect(otp.root.getAttribute("data-value")).toBe("12345");
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    await otp.reset();
+    otp.expectValue("");
+  });
+
+  it("keeps a refused change out of the input and form data", async () => {
+    const onValueChange = vi.fn();
+    const otp = await mount({ value: "12", onValueChange });
+    await otp.change("34");
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    otp.expectValue("12");
+    expect(otp.root.getAttribute("data-value")).toBe("12");
+  });
+
+  it("keeps the last controlled value after the prop becomes undefined", async () => {
+    const onValueChange = vi.fn();
+    const otp = await mount({ value: "12", onValueChange });
+    await otp.configure({ value: undefined });
+    otp.expectValue("12");
+    expect(otp.root.getAttribute("data-value")).toBe("12");
+    await otp.change("34");
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    otp.expectValue("12");
+    expect(otp.root.getAttribute("data-value")).toBe("12");
+    await otp.configure({ readOnly: false });
+    otp.expectValue("12");
+    expect(otp.root.getAttribute("data-value")).toBe("12");
+  });
+
+  it("keeps a parent-accepted change made outside act", async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = false;
+    try {
+      let accept: (value: string) => void = () => undefined;
+      const onValueChange = vi.fn((value: string) => accept(value));
+      const otp = await mount({ value: "12", onValueChange });
+      accept = (value) => otp.setProps({ value });
+      otp.input.value = "34";
+      otp.input.dispatchEvent(
+        new InputEvent("input", { bubbles: true, inputType: "insertText", data: "34" }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(onValueChange).toHaveBeenCalledTimes(1);
+      otp.expectValue("34");
+      expect(otp.root.getAttribute("data-value")).toBe("34");
+    } finally {
+      (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    }
+  });
+
+  it("keeps each change a parent accepts", async () => {
+    let accept: (value: string) => void = () => undefined;
+    const onValueChange = vi.fn((value: string) => accept(value));
+    const otp = await mount({ value: "12", onValueChange });
+    accept = (value) => otp.setProps({ value });
+    await otp.change("123");
+    await otp.change("1234");
+    expect(onValueChange).toHaveBeenCalledTimes(2);
+    otp.expectValue("1234");
+    expect(otp.root.getAttribute("data-value")).toBe("1234");
   });
 
   it("retires pending reset work when a Strict Mode owner unmounts", async () => {

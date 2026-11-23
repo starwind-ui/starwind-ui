@@ -11,10 +11,10 @@
 
 <script lang="ts">
   let {
-    "keepMounted": keepMounted = false,
-    "orientation": orientation = "vertical",
+    keepMounted = false,
+    orientation = "vertical",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: ScrollBarProps = $props();
 </script>

@@ -4,12 +4,12 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
 import { verifyConsumerTypes } from "./consumer-types.js";
+import type { DistConsumer } from "./dist-consumer.js";
+import { verifyForwardedAttachmentIsolation } from "./forwarded-attachments-browser.js";
 import { verifyStyledNativeBrowser } from "./styled-native-browser.js";
 import { verifyStyledNativeFormBrowser } from "./styled-native-form-browser.js";
-import { verifyForwardedAttachmentIsolation } from "./forwarded-attachments-browser.js";
 
 /** Explicit compiler compatibility probes. Component suites own their behavior regressions. */
 export const STYLED_COMPATIBILITY_ROOTS = [
@@ -145,7 +145,7 @@ export function snapshot() { return { clicks, checked, open, value, selectOpen, 
   <Dialog.Content data-test="dialog" {ref}>
     <Dialog.Header><Dialog.Title>Compatible dialog</Dialog.Title><Dialog.Description>Choose an item</Dialog.Description></Dialog.Header>
     <Select.Root bind:value bind:open={selectOpen} defaultValue="alpha" onValueChange={() => callbacks.value++} onOpenChange={() => callbacks.select++}>
-      <Select.Trigger data-test="select" {ref}>{#snippet child({ props, children })}<Button {...props}>{@render children?.()}</Button>{/snippet}<Select.Value placeholder="Choose">{#snippet children(label, selected)}{label ?? selected}{/snippet}</Select.Value></Select.Trigger>
+      <Select.Trigger data-test="select" {ref}>{#snippet child({ props, children })}<Button {...props}>{@render children?.()}</Button>{/snippet}<Select.Value placeholder="Choose" /></Select.Trigger>
       <Select.Content><Select.Item value="alpha">Alpha</Select.Item><Select.Item value="beta">Beta</Select.Item></Select.Content>
     </Select.Root>
     <Dialog.Footer><Dialog.Close data-test="close">Close</Dialog.Close></Dialog.Footer>

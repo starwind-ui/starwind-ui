@@ -3,6 +3,7 @@ import EmblaCarousel, {
   type EmblaOptionsType,
   type EmblaPluginType,
 } from "embla-carousel";
+import { readDirection, watchDirection } from "@/lib/utils/starwind/direction";
 
 export type CarouselApi = EmblaCarouselType;
 
@@ -35,9 +36,12 @@ export function initCarousel(
   }
 
   // Find content element - Embla expects the viewport element, not the container
-  const viewportElement = carouselElement.querySelector(
-    '[data-slot="carousel-content"]',
-  ) as HTMLElement;
+  function ownedPart<T extends HTMLElement>(selector: string) {
+    return [...carouselElement.querySelectorAll<T>(selector)].find(
+      (el) => el.closest(".starwind-carousel") === carouselElement,
+    );
+  }
+  const viewportElement = ownedPart('[data-slot="carousel-content"]');
   if (!viewportElement) {
     console.warn("Carousel content element not found");
     return null;
@@ -68,9 +72,23 @@ export function initCarousel(
   const emblaOptions: EmblaOptionsType = {
     axis,
     ...dataOpts,
-    ...(options.opts || {}),
+    ...options.opts,
   };
 
+  const followsOwner = emblaOptions.direction === undefined && emblaOptions.axis !== "y";
+  if (followsOwner) emblaOptions.direction = readDirection(carouselElement);
+
+  const watchDrag = emblaOptions.watchDrag;
+  if (watchDrag !== false) {
+    emblaOptions.watchDrag = (api, event) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest(".starwind-carousel") !== carouselElement
+      )
+        return false;
+      return typeof watchDrag === "function" ? watchDrag(api, event) : true;
+    };
+  }
   // Handle plugins - EmblaCarousel expects undefined when no plugins, not empty array
   const plugins = options.plugins && options.plugins.length > 0 ? options.plugins : undefined;
 
@@ -79,10 +97,8 @@ export function initCarousel(
   // console.log("Options:", emblaOptions);
 
   // Find navigation buttons
-  const prevButton = carouselElement.querySelector(
-    ".starwind-carousel-previous",
-  ) as HTMLButtonElement;
-  const nextButton = carouselElement.querySelector(".starwind-carousel-next") as HTMLButtonElement;
+  const prevButton = ownedPart<HTMLButtonElement>(".starwind-carousel-previous");
+  const nextButton = ownedPart<HTMLButtonElement>(".starwind-carousel-next");
 
   // Initialize Embla
   let emblaApi: EmblaCarouselType;
@@ -112,7 +128,12 @@ export function initCarousel(
   const prevClickHandler = () => emblaApi.scrollPrev();
   const nextClickHandler = () => emblaApi.scrollNext();
   const keydownHandler = (event: KeyboardEvent) => {
-    if (axis === "y") {
+    if (
+      event.target instanceof Element &&
+      event.target.closest(".starwind-carousel") !== carouselElement
+    )
+      return;
+    if (emblaOptions.axis === "y") {
       // Vertical axis: ArrowUp = previous, ArrowDown = next
       if (event.key === "ArrowUp") {
         event.preventDefault();
@@ -123,10 +144,10 @@ export function initCarousel(
       }
     } else {
       // Horizontal axis (default): ArrowLeft = previous, ArrowRight = next
-      if (event.key === "ArrowLeft") {
+      if (event.key === (emblaOptions.direction === "rtl" ? "ArrowRight" : "ArrowLeft")) {
         event.preventDefault();
         emblaApi.scrollPrev();
-      } else if (event.key === "ArrowRight") {
+      } else if (event.key === (emblaOptions.direction === "rtl" ? "ArrowLeft" : "ArrowRight")) {
         event.preventDefault();
         emblaApi.scrollNext();
       }
@@ -164,6 +185,16 @@ export function initCarousel(
     updateButtons();
   });
 
+  const stopDirection = followsOwner
+    ? watchDirection(carouselElement, () => {
+        emblaOptions.direction = readDirection(carouselElement);
+        emblaApi.reInit({
+          direction: emblaOptions.direction,
+          startIndex: emblaApi.selectedScrollSnap(),
+        });
+      })
+    : undefined;
+
   // Return manager interface
   return {
     api: emblaApi,
@@ -181,8 +212,10 @@ export function initCarousel(
       }
       carouselElement.removeEventListener("keydown", keydownHandler);
 
+      stopDirection?.();
       // Destroy the Embla instance
       emblaApi.destroy();
+      delete carouselElement.dataset.initialized;
     },
   };
 }

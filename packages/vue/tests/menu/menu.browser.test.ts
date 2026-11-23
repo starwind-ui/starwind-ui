@@ -293,6 +293,54 @@ describe("Vue Menu", () => {
     expect(overlays.children).toHaveLength(0);
   });
 
+  it.each(["ltr", "rtl"] as const)(
+    "opens a submenu with no side below its trigger in %s",
+    async (dir) => {
+      const host = appendHost();
+      host.dir = dir;
+      host.style.cssText = "position:fixed;left:450px;top:80px;width:200px";
+      const app = createApp({
+        render: () =>
+          h(MenuRoot, { modal: false }, () => [
+            h(MenuTrigger, null, () => "Open"),
+            h(MenuPortal, null, () =>
+              h(MenuPopup, { avoidCollisions: false }, () =>
+                h(MenuSubmenuRoot, null, () => [
+                  h(MenuSubmenuTrigger, null, () => "More"),
+                  h(MenuPortal, null, () =>
+                    h(MenuPopup, { "data-sub-popup": "", avoidCollisions: false }, () =>
+                      h(MenuItem, null, () => "Child"),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ]),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await frame();
+
+      const subPopup = document.querySelector<HTMLElement>("[data-sub-popup]")!;
+      expect(subPopup.getAttribute("data-side")).toBe("bottom");
+      expect(subPopup.hasAttribute("data-sw-menu-side-intent")).toBe(false);
+      host.querySelector<HTMLButtonElement>("[data-sw-menu-trigger]")!.click();
+      await frame();
+      const submenuTrigger = document.querySelector<HTMLElement>("[data-sw-menu-submenu-trigger]")!;
+      submenuTrigger.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Enter" }),
+      );
+      await frame();
+      await frame();
+
+      expect(subPopup.hidden).toBe(false);
+      expect(subPopup.getAttribute("data-side")).toBe("bottom");
+      expect(subPopup.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+        submenuTrigger.getBoundingClientRect().bottom,
+      );
+    },
+  );
+
   it("restores controlled checkbox and radio item plus indicator state after accepted requests", async () => {
     const host = appendHost();
     const app = createApp({

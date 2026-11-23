@@ -1,0 +1,50 @@
+---
+import ChartPrimitive, { collectChartViews } from "@starwind-ui/astro/chart";
+import type { ChartValue } from "@tanstack/charts";
+import ChartTooltipContent from "./ChartTooltipContent.astro";
+import { chartContainer } from "./variants";
+
+type Props<
+  T = unknown,
+  D = unknown,
+  X extends ChartValue = ChartValue,
+  Y extends ChartValue = ChartValue,
+> = import("@starwind-ui/astro/chart").ChartRootProps<T, D, X, Y> & {
+  tooltip?: boolean | "native";
+};
+
+const { tooltip, theme, class: className, ...rest } = Astro.props;
+
+const sceneTheme = {
+  foreground: "var(--muted-foreground)",
+  muted: "var(--muted-foreground)",
+  grid: "var(--border)",
+  background: "transparent",
+  ...theme,
+};
+const views = await collectChartViews(Astro.slots, rest.config, rest.labels, rest.icons);
+const tooltipContent =
+  tooltip === false || tooltip === "native" || !Astro.slots.has("tooltip")
+    ? undefined
+    : await Astro.slots.render("tooltip");
+---
+
+<ChartPrimitive.Root
+  {...rest}
+  theme={sceneTheme}
+  disableTooltip={tooltip === false}
+  labels={views.labels}
+  icons={views.icons}
+  class={chartContainer({ class: className })}
+  data-slot="chart"
+>
+  <ChartPrimitive.Style />
+
+  <ChartPrimitive.Surface
+    tooltip={tooltipContent}
+    fallbackTooltip={ChartTooltipContent}
+    nativeTooltip={tooltip === "native"}
+  />
+
+  <slot />
+</ChartPrimitive.Root>

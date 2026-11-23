@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 
 import path from "node:path";
 import { valid as validSemver } from "semver";
@@ -6,14 +6,6 @@ import { valid as validSemver } from "semver";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { getPrimitivePackageExportNames } from "../../renderers/primitive-inventory.js";
-import { supportsSvelteScope } from "../../renderers/framework-adapters/svelte/styled/scope.js";
-
-import {
-  getPrimitiveFrameworkAdapterTarget,
-  getPrimitiveFrameworkAdapterTargetNames,
-  resolvePrimitiveFrameworkAdapterTargetComponents,
-} from "../../renderers/framework-adapters/target-registry.js";
 import {
   SVELTE_PRIMITIVE_COMPONENTS,
   svelteAdapterPublicContract,
@@ -21,16 +13,22 @@ import {
   svelteFrameworkAdapterTarget,
   sveltePackageExports,
 } from "../../renderers/framework-adapters/svelte/index.js";
-
 import {
-  svelteInventory,
+  getImplementedSvelteStyledRoots,
   SVELTE_MANUAL_FACADES,
   SVELTE_PACKAGE_COMPONENTS,
   SVELTE_STYLED_ROOTS,
-  getImplementedSvelteStyledRoots,
-  validateSvelteInventory,
   type SvelteInventory,
+  svelteInventory,
+  validateSvelteInventory,
 } from "../../renderers/framework-adapters/svelte/inventory.js";
+import { supportsSvelteScope } from "../../renderers/framework-adapters/svelte/styled/scope.js";
+import {
+  getPrimitiveFrameworkAdapterTarget,
+  getPrimitiveFrameworkAdapterTargetNames,
+  resolvePrimitiveFrameworkAdapterTargetComponents,
+} from "../../renderers/framework-adapters/target-registry.js";
+import { getPrimitivePackageExportNames } from "../../renderers/primitive-inventory.js";
 
 function expectSliderRuntimeOwnership(implementation: string): void {
   const withoutResetObserver = implementation.replace(
@@ -42,8 +40,8 @@ function expectSliderRuntimeOwnership(implementation: string): void {
   );
 }
 
-describe("Svelte public beta target", () => {
-  it("registers the current inventory as public beta", () => {
+describe("Svelte stable target", () => {
+  it("registers the current inventory as stable", () => {
     expect(getPrimitiveFrameworkAdapterTargetNames()).toContain("svelte");
     expect(getPrimitiveFrameworkAdapterTarget("svelte")).toBe(svelteFrameworkAdapterTarget);
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("svelte")).toEqual([
@@ -60,7 +58,7 @@ describe("Svelte public beta target", () => {
       demoIntegration: true,
       packageExports: true,
       publicDocsClaim: true,
-      status: "public-beta",
+      status: "shipping",
     });
     expect(svelteFrameworkAdapterReadiness.publicSupport).toBe(
       svelteAdapterPublicContract.publicSupport,
@@ -74,14 +72,14 @@ describe("Svelte public beta target", () => {
       manualFacades: Object.keys(svelteFrameworkAdapterTarget.primitive.manualPrimitives ?? {}),
     });
     expect(SVELTE_MANUAL_FACADES).toEqual(["theme"]);
-    expect(SVELTE_PRIMITIVE_COMPONENTS).toHaveLength(36);
+    expect(SVELTE_PRIMITIVE_COMPONENTS).toHaveLength(37);
     expect(svelteInventory.primitives.filter((entry) => entry.kind === "primitive")).toHaveLength(
-      36,
+      37,
     );
     expect(
       svelteInventory.primitives.filter((entry) => entry.kind === "manual-facade"),
     ).toHaveLength(1);
-    expect(getImplementedSvelteStyledRoots()).toHaveLength(54);
+    expect(getImplementedSvelteStyledRoots()).toHaveLength(55);
     expect(getImplementedSvelteStyledRoots()).toEqual(SVELTE_STYLED_ROOTS);
     expect(SVELTE_PACKAGE_COMPONENTS).toEqual([...SVELTE_PRIMITIVE_COMPONENTS, "theme"]);
     expect([...SVELTE_PACKAGE_COMPONENTS].sort()).toEqual(getPrimitivePackageExportNames().sort());
@@ -483,7 +481,7 @@ describe("Svelte public beta target", () => {
     );
   });
 
-  it("keeps Svelte public-beta metadata isolated from unrelated manifests", async () => {
+  it("keeps Svelte metadata isolated from unrelated manifests", async () => {
     const nonSvelteManifests = [
       "apps/demo/package.json",
       "apps/react-demo/package.json",
@@ -508,7 +506,10 @@ describe("Svelte public beta target", () => {
     });
     expect(packageManifest.private).not.toBe(true);
     expect(validSemver(packageManifest.version)).toBe(packageManifest.version);
-    expect(packageManifest.exports).toEqual(sveltePackageExports);
+    expect(packageManifest.exports).toEqual({
+      ...sveltePackageExports,
+      "./package.json": "./package.json",
+    });
     for (const component of SVELTE_PACKAGE_COMPONENTS) {
       expect(packageManifest.exports[`./${component}`], component).toEqual({
         types: `./dist/${component}/index.d.ts`,
@@ -523,10 +524,10 @@ describe("Svelte public beta target", () => {
     const packageReadme = (
       await readFile(path.join(process.cwd(), "packages/svelte/README.md"), "utf8")
     ).replace(/\s+/g, " ");
-    expect(packageReadme).toContain("public beta");
+    expect(packageReadme).not.toContain("public beta");
     expect(packageReadme).toContain("Svelte 5.29 and newer versions before Svelte 6");
-    expect(packageReadme).toContain('@starwind-ui/svelte@beta "svelte@>=5.29.0 <6"');
-    expect(packageReadme).not.toMatch(/\bstable support\b/i);
+    expect(packageReadme).toContain('npm install @starwind-ui/svelte "svelte@>=5.29.0 <6"');
+    expect(packageReadme).not.toContain("@beta");
     expect(packageReadme).not.toContain("scripts/portable-runtime");
     expect(packageManifest).toMatchObject({
       bugs: { url: "https://github.com/starwind-ui/starwind-ui/issues" },
@@ -554,7 +555,7 @@ describe("Svelte public beta target", () => {
     ).toContain("@starwind-ui/svelte");
 
     expect(await readFile(path.join(process.cwd(), "README.md"), "utf8")).toContain(
-      "@starwind-ui/svelte",
+      "npx starwind@latest init --framework svelte",
     );
     for (const publicReadme of [
       "packages/astro/README.md",

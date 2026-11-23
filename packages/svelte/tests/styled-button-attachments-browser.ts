@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import type { DistConsumer } from "./dist-consumer.js";
-import { createBrowserBuildScript } from "./compatibility-hydration.js";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import path from "node:path";
 import { chromium } from "playwright";
+import { createBrowserBuildScript } from "./compatibility-hydration.js";
+import type { DistConsumer } from "./dist-consumer.js";
 
 /**
  * Custom semantic owners keep each public symbol alive until that symbol or owner changes.

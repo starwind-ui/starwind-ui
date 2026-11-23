@@ -118,7 +118,7 @@ describe("page phase inventories", () => {
     );
   });
   it("observes initialized body placement once per context and rejects stale submenu opening", async () => {
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       await page.setContent('<div id="root"></div>');

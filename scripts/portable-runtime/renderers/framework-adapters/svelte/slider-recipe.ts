@@ -25,7 +25,7 @@ export const svelteSliderProjection: SliderProjection = {
 import{tick,untrack,type Snippet}from 'svelte';import type{Attachment}from 'svelte/attachments';import type{HTMLAttributes}from 'svelte/elements';
 import{createSlider,type SliderValue,type SliderOrientation,type SliderValueChangeDetails,type SliderValueCommitDetails}from '${f.runtime.importSource}';
 import{createRefAttachment}from '../_internal/ref-attachment.js';
-type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'>&{${props.map((p) => `${p.name}?:${p.type};`).join("")}children?:Snippet<[SliderValue]>;ref?:(node:HTMLDivElement|null)=>void;onValueChange?:(value:SliderValue,detail:SliderValueChangeDetails)=>void;onValueCommitted?:(value:SliderValue,detail:SliderValueCommitDetails)=>void;};
+type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'>&{${props.map((p) => `${p.name}?:${p.type};`).join("")}children?:Snippet;ref?:(node:HTMLDivElement|null)=>void;onValueChange?:(value:SliderValue,detail:SliderValueChangeDetails)=>void;onValueCommitted?:(value:SliderValue,detail:SliderValueCommitDetails)=>void;};
 let{${props.map((p) => (p.name === "value" ? "value=$bindable(),value:commandValue" : `${p.name}${p.defaultValue === undefined || p.name === "defaultValue" ? "" : `=${p.defaultValue}`}`)).join(",")},children,ref,onValueChange,onValueCommitted,...rest}:Props=$props();
 const initialDefaultValue=untrack(()=>${initialDefault});let localValue=$state<SliderValue>(untrack(()=>${initialModel}));let renderedValue=$derived(localValue);
 ${connection}
@@ -34,5 +34,5 @@ $effect(()=>{void[${inputs.join(",")}];untrack(connection.syncOptions);});
 $effect(()=>{const next=commandValue;if(Array.isArray(next))void [...next];untrack(connection.syncModel);});
 $effect(()=>{void renderedValue;void tick().then(connection.refresh);});
 return connection.destroy;};const attachRef=createRefAttachment<HTMLDivElement>(()=>ref);
-</script><div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.(copyValue(renderedValue))}</div>`,
+</script><div {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>`,
 };

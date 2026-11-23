@@ -1,8 +1,7 @@
+import { InputRoot } from "@starwind-ui/vue/input";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { InputRoot } from "@starwind-ui/vue/input";
 import { Input as StyledInput } from "../../../../apps/vue-demo/src/components/starwind-runtime/input";
 
 describe("Vue Input SSR", () => {

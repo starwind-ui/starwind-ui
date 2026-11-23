@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 import {
   DialogBackdrop,
   DialogClose,
@@ -10,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@starwind-ui/vue/dialog";
+import { ref } from "vue";
 
 const open = ref(false);
 const cancelNextOpen = ref(true);

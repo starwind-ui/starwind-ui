@@ -5,8 +5,12 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { add } from "../../src/commands/add.js";
+import { update } from "../../src/commands/update.js";
 import { ensureAstroReactIntegration } from "../../src/utils/astro-react-integration.js";
-import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import {
+  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "../../src/utils/framework-target-policy.js";
 import type { StarwindRegistryFor } from "../../src/utils/registry.js";
 
 vi.mock("@clack/prompts", () => ({
@@ -343,7 +347,7 @@ describe.sequential("add command integration", () => {
     expect(mockInstallDependencies).toHaveBeenCalledWith(["@starwind-ui/react@^1.0.0"], "npm");
   });
 
-  it("installs the exact generated Vue payload while preserving mixed framework records", async () => {
+  it("installs the generated Vue payload while preserving mixed framework records", async () => {
     const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
     config.framework = "astro";
     config.components = [
@@ -387,10 +391,60 @@ describe.sequential("add command integration", () => {
       'from "@starwind-ui/vue/button"',
     );
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      [`@starwind-ui/vue@${vuePackage.version}`, "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      [`@starwind-ui/vue@^${vuePackage.version}`, "tailwind-variants@^3.2.2", "vue@>=3.5.21"],
       "pnpm",
     );
     expect(mockLoadRegistry).not.toHaveBeenCalled();
+  });
+
+  async function writeProjectWithOldTailwindMerge(components: { name: string; version: string }[]) {
+    const bundledBadge = vueRegistryFixture.components.find(({ name }) => name === "badge")!;
+    const adapter = bundledBadge.targets!.react!.packageRequirements.find(
+      ({ name }) => name === "@starwind-ui/react",
+    )!;
+    await writeFile(
+      "package.json",
+      JSON.stringify({
+        dependencies: {
+          "@starwind-ui/react": adapter.range,
+          react: "^19.0.0",
+          "tailwind-merge": "^3.4.0",
+          "tailwind-variants": "^3.2.2",
+        },
+      }),
+      "utf-8",
+    );
+    const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    config.components = components.map((component) => ({
+      ...component,
+      framework: "react",
+      registry: "default",
+    }));
+    await writeFile("starwind.config.json", JSON.stringify(config, null, 2) + "\n", "utf-8");
+  }
+
+  it("raises tailwind-merge ^3.4.0 to ^3.7.0 when a logical-class Styled component is added", async () => {
+    await writeProjectWithOldTailwindMerge([]);
+
+    await add(
+      ["input"],
+      { packageManager: "pnpm", yes: true },
+      { registry: vueRegistryFixture, targetPolicy: PUBLIC_FRAMEWORK_TARGET_POLICY },
+    );
+
+    expect(mockInstallDependencies).toHaveBeenCalledWith(["tailwind-merge@^3.7.0"], "pnpm");
+  });
+
+  it("raises tailwind-merge ^3.4.0 to ^3.7.0 when a logical-class Styled component is updated", async () => {
+    await writeProjectWithOldTailwindMerge([{ name: "input", version: "1.0.0" }]);
+
+    await update(
+      ["input"],
+      { packageManager: "pnpm", yes: true },
+      { registry: vueRegistryFixture, targetPolicy: PUBLIC_FRAMEWORK_TARGET_POLICY },
+    );
+
+    expect(mockInstallDependencies).toHaveBeenCalledWith(["tailwind-merge@^3.7.0"], "pnpm");
   });
 
   it("reports styled file conflicts without recording installation metadata", async () => {
@@ -935,26 +989,30 @@ describe.sequential("add command integration", () => {
     ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
-  it("rejects Pro blocks for Svelte before config or component writes", async () => {
-    const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
-    config.framework = "svelte";
-    await writeFile("starwind.config.json", JSON.stringify(config, null, 2) + "\n", "utf-8");
-    const savedConfig = await readFile("starwind.config.json", "utf-8");
-    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+  it.each([
+    ["Vite Svelte", "svelte", "src/components/starwind", "src/components/starwind-pro"],
+    ["SvelteKit", "svelte", "src/lib/starwind", "src/lib/starwind-pro"],
+    ["Astro with Svelte", "astro", "src/components/starwind", "src/components/starwind-pro"],
+  ] as const)(
+    "installs Pro blocks in a %s project",
+    async (_host, framework, componentDir, proDir) => {
+      const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+      config.framework = framework;
+      config.componentDir = componentDir;
+      if (framework === "astro")
+        config.componentDirs = { svelte: "src/components/starwind-svelte" };
+      await writeFile("starwind.config.json", JSON.stringify(config, null, 2) + "\n", "utf-8");
+      mockProResponse(archivedProItem({ dependencies: [], major: 3 }));
 
-    await expect(
-      add(["@starwind-pro/hero-01"], { packageManager: "pnpm", yes: true }),
-    ).rejects.toThrow("process.exit called");
+      await add(["@starwind-pro/hero-01"], { packageManager: "pnpm", yes: true });
 
-    expect(mockPromptLog.error).toHaveBeenCalledWith(
-      "Svelte 5 beta does not support Starwind Pro setup.",
-    );
-    expect(globalThis.fetch).not.toHaveBeenCalled();
-    await expect(readFile("starwind.config.json", "utf-8")).resolves.toBe(savedConfig);
-    await expect(
-      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
-    ).rejects.toMatchObject({ code: "ENOENT" });
-  });
+      expect(mockPromptLog.error).not.toHaveBeenCalled();
+      expect(globalThis.fetch).toHaveBeenCalled();
+      await expect(readFile(`${proDir}/hero-01/Hero1.astro`, "utf-8")).resolves.toBe(
+        "---\n---\n<section>Archived hero</section>\n",
+      );
+    },
+  );
 
   it("rejects mixed V2 Pro and base names before fetches and writes", async () => {
     await writeLegacyConfig({ components: [{ name: "button", version: "2.1.0" }] });

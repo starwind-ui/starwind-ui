@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   DropzoneFilesList,
   DropzoneInput,
@@ -9,6 +5,9 @@ import {
   DropzoneRoot,
   DropzoneUploadIndicator,
 } from "@starwind-ui/vue/dropzone";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Dropzone as StyledDropzone,
   DropzoneFilesList as StyledDropzoneFilesList,

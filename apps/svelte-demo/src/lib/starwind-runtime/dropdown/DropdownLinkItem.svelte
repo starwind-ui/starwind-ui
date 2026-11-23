@@ -10,10 +10,10 @@
 <script lang="ts">
   let {
     "class": className,
-    "closeOnClick": closeOnClick = false,
-    "inset": inset = false,
-    "disabled": disabled = false,
-    "children": children,
+    closeOnClick = false,
+    inset = false,
+    disabled = false,
+    children,
     ...rest
   }: DropdownLinkItemProps = $props();
 </script>

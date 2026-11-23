@@ -62,7 +62,7 @@ import {
 
 function expectedVueHostRequirements(includeVue = false) {
   return [
-    ...(includeVue ? ["vue@>=3.5"] : []),
+    ...(includeVue ? ["vue@>=3.5.21"] : []),
     "tailwindcss@^4.1",
     "@tailwindcss/vite@^4",
     "tw-animate-css@^1",
@@ -113,7 +113,7 @@ describe("private Vue host-project interface", () => {
 
   it("returns adapter-owned failed identity for a near-match host", () => {
     const detection = detectVueHostProject(
-      { dependencies: { nuxt: "^4.2.0", vue: "^3.5.0" } },
+      { dependencies: { nuxt: "^4.2.0", vue: "^3.5.21" } },
       { existingPaths: new Set(["nuxt.config.ts", "app.vue"]) },
       "unknown",
     );
@@ -133,7 +133,7 @@ describe("private Vue host-project interface", () => {
   it("hides official Vite paths behind one frozen common plan", async () => {
     const detection = detectVueHostProject(
       {
-        dependencies: { vue: "^3.5.0" },
+        dependencies: { vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
       },
       { existingPaths: new Set(["vite.config.ts", "src/main.ts", "src/App.vue"]) },
@@ -172,7 +172,7 @@ describe("private Vue host-project interface", () => {
       "src/styles/starwind.css",
     );
     expect(mocks.setupVueTsConfig).toHaveBeenCalledWith(false);
-    expect(getDetectedPlan(detection).requirements(["vue@>=3.5", "tailwindcss@^4.1"])).toEqual(
+    expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21", "tailwindcss@^4.1"])).toEqual(
       expectedVueHostRequirements(),
     );
   });
@@ -189,7 +189,7 @@ describe("private Vue host-project interface", () => {
     );
     projectPackage.dependencies.vue = "workspace:*";
 
-    expect(getDetectedPlan(detection).requirements(["vue@>=3.5"])).not.toContain("vue@>=3.5");
+    expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21"])).not.toContain("vue@>=3.5.21");
   });
 
   it("requires the private registry to correct an unsupported Vue version", () => {
@@ -207,11 +207,29 @@ describe("private Vue host-project interface", () => {
       plan: { vueUpgradeRequired: true },
     });
     expect(() => getDetectedPlan(detection).requirements(["tailwindcss@^4"])).toThrow(
-      "The private Vue registry must require Vue 3.5 or later.",
+      "The private Vue registry must require Vue 3.5.21 or later.",
     );
-    expect(getDetectedPlan(detection).requirements(["vue@>=3.5", "tailwindcss@^4"])).toContain(
+    expect(() => getDetectedPlan(detection).requirements(["vue@>=3.5", "tailwindcss@^4"])).toThrow(
+      "The private Vue registry must require Vue 3.5.21 or later.",
+    );
+    expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21", "tailwindcss@^4"])).toContain(
       "@tailwindcss/vite@^4",
     );
+  });
+
+  // Vue 3.5.20 and older throw on unmount after they hydrate a portal part.
+  it("requires a Vue upgrade for a project that declares ~3.5.13", () => {
+    const detection = detectVueHostProject(
+      {
+        dependencies: { vue: "~3.5.13" },
+        devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
+      },
+      { existingPaths: new Set(["vite.config.ts", "src/main.ts", "src/App.vue"]) },
+      "unknown",
+    );
+
+    expect(detection).toMatchObject({ plan: { vueUpgradeRequired: true } });
+    expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21"])).toContain("vue@>=3.5.21");
   });
 
   it("prepares Astro integration before exposing its deferred mutation", async () => {
@@ -266,7 +284,7 @@ describe("private Vue host-project interface", () => {
     expect(mocks.setupAstroConfig).toHaveBeenCalledOnce();
     expect(mocks.setupTsConfig).toHaveBeenCalledWith("astro");
     expect(mocks.setupLayoutCssImport).toHaveBeenCalledWith("src/styles/starwind.css");
-    expect(getDetectedPlan(detection).requirements(["vue@>=3.5", "tailwindcss@^4.1"])).toEqual(
+    expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21", "tailwindcss@^4.1"])).toEqual(
       expectedVueHostRequirements(true),
     );
   });
@@ -285,7 +303,7 @@ describe("private Vue host-project interface", () => {
     mocks.getLaravelInertiaVueProjectPlan.mockReturnValue(laravelProject);
 
     const detection = detectVueHostProject(
-      { dependencies: { vue: "^3.5.13" } },
+      { dependencies: { vue: "^3.5.21" } },
       { existingPaths: new Set(["artisan"]) },
       "unknown",
     );
@@ -313,7 +331,7 @@ describe("private Vue host-project interface", () => {
       laravelProject,
       "resources/css/starwind.css",
     );
-    expect(getDetectedPlan(detection).requirements(["vue@>=3.5", "tailwindcss@^4.1"])).toEqual(
+    expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21", "tailwindcss@^4.1"])).toEqual(
       expectedVueHostRequirements(),
     );
   });
@@ -333,7 +351,7 @@ describe("private Vue host-project interface", () => {
       mocks.getQuasarProjectPlan.mockReturnValue(quasarProject);
 
       const detection = detectVueHostProject(
-        { dependencies: { vue: "^3.5.13" } },
+        { dependencies: { vue: "^3.5.21" } },
         { existingPaths: new Set(["quasar.config.ts", "src-ssr"]) },
         "unknown",
       );
@@ -355,7 +373,7 @@ describe("private Vue host-project interface", () => {
       expect(await getDetectedPlan(detection).setupTypeScript()).toBe(true);
       expect(mocks.validateQuasarProjectSetup).toHaveBeenCalledWith(quasarProject);
       expect(mocks.setupQuasarProject).toHaveBeenCalledWith(quasarProject, "src/css/starwind.css");
-      expect(getDetectedPlan(detection).requirements(["vue@>=3.5", "tailwindcss@^4.1"])).toEqual(
+      expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21", "tailwindcss@^4.1"])).toEqual(
         expectedVueHostRequirements(),
       );
     },
@@ -382,7 +400,7 @@ describe("private Vue host-project interface", () => {
     "hides Nuxt %s paths and ownership behind the common plan",
     (nuxt, paths, hostLabel, componentDir, cssFile, utilsDir) => {
       const detection = detectVueHostProject(
-        { dependencies: { nuxt, vue: "^3.5.0" } },
+        { dependencies: { nuxt, vue: "^3.5.21" } },
         { existingPaths: new Set<string>(paths) },
         "unknown",
       );
@@ -403,7 +421,7 @@ describe("private Vue host-project interface", () => {
       });
       expect(Object.isFrozen(getDetectedPlan(detection))).toBe(true);
       expect(getDetectedPlan(detection).setupCss).toBeUndefined();
-      expect(getDetectedPlan(detection).requirements(["vue@>=3.5", "tailwindcss@^4.1"])).toEqual(
+      expect(getDetectedPlan(detection).requirements(["vue@>=3.5.21", "tailwindcss@^4.1"])).toEqual(
         expectedVueHostRequirements(),
       );
     },

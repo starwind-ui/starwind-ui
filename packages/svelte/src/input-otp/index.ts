@@ -7,12 +7,14 @@ import InputOtpGroup from "./InputOtpGroup.svelte";
 import InputOtpRoot from "./InputOtpRoot.svelte";
 import InputOtpSeparator from "./InputOtpSeparator.svelte";
 import InputOtpSlot from "./InputOtpSlot.svelte";
+
 const InputOtp = {
   Root: InputOtpRoot,
   Group: InputOtpGroup,
   Separator: InputOtpSeparator,
   Slot: InputOtpSlot,
 };
+
 export { InputOtp, InputOtpGroup, InputOtpRoot, InputOtpSeparator, InputOtpSlot };
 export default InputOtp;
 export type { InputOtpValueChangeDetails } from "@starwind-ui/runtime";

@@ -73,17 +73,13 @@ if (rest["aria-label"]) {
       "--padding": `${newPadding}px`,
       "--height": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2))`,
       "--width": `calc((var(--spacing) * ${sizeMultiplier} * 2) + (var(--padding) * 3))`,
+      "--translation": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2) - var(--border-offset))`,
       "--border-offset": "1px",
     }}
     {...rest}
     data-slot="switch-button"
   >
-    <span
-      class={switchToggle({ size })}
-      data-slot="switch-toggle"
-      style={{
-        "--translation": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2) - var(--border-offset))`,
-      }}></span>
+    <span class={switchToggle({ size })} data-slot="switch-toggle"></span>
   </button>
   {
     label && (

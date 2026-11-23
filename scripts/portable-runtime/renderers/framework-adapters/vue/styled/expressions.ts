@@ -1,5 +1,5 @@
-import type { StyledOutputValueExpression } from "../../../styled-output-model/index.js";
 import ts from "typescript";
+import type { StyledOutputValueExpression } from "../../../styled-output-model/index.js";
 
 import { renderVuePropKey } from "./props.js";
 
@@ -121,18 +121,8 @@ export function projectVueComputedExpression(
       return parts("asChild ? className : ", ref("triggerBaseClassName"));
     case "value ?? defaultValue":
       return parts({ name: "modelValue", unwrap: false }, " ?? defaultValue");
-    case "Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue]":
-      return parts(
-        "Array.isArray(",
-        ref("resolvedValue"),
-        ") ? ",
-        ref("resolvedValue"),
-        " : [",
-        ref("resolvedValue"),
-        "]",
-      );
-    case "(item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100)":
-      return parts("(item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100)");
+    case "getPaintValues(resolvedValue)":
+      return parts(ref("getPaintValues"), "(", ref("resolvedValue"), ")");
     case "values.length > 1 ? getPercentage(Math.min(...values)) : 0":
       return parts(
         ref("values"),
@@ -155,9 +145,9 @@ export function projectVueComputedExpression(
         ref("values"),
         "[0] ?? min)",
       );
-    case 'orientation === "horizontal" ? { left: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` } : { bottom: `${rangeStart}%`, height: `${rangeEnd - rangeStart}%` }':
+    case 'orientation === "horizontal" ? { insetInlineStart: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` } : { bottom: `${rangeStart}%`, height: `${rangeEnd - rangeStart}%` }':
       return parts(
-        'orientation === "horizontal" ? { left: `${',
+        'orientation === "horizontal" ? { insetInlineStart: `${',
         ref("rangeStart"),
         "}%`, width: `${",
         ref("rangeEnd"),
@@ -171,7 +161,7 @@ export function projectVueComputedExpression(
         ref("rangeStart"),
         "}%` }",
       );
-    case 'typeof style === "string" ? `--gap: ${spacing}; ${style}` : { "--gap": spacing, ...(style ?? {}) }':
+    case 'typeof style === "string" ? `--gap: ${spacing}; ${style}` : { "--gap": spacing, ...style }':
       return parts(
         "typeof ",
         { name: "style", unwrap: false },
@@ -181,9 +171,9 @@ export function projectVueComputedExpression(
         { name: "style", unwrap: false },
         '}` : { "--gap": ',
         { name: "spacing", unwrap: false },
-        ", ...(",
+        ", ...",
         { name: "style", unwrap: false },
-        " ?? {}) }",
+        " }",
       );
     case "Math.min(boundedMin, boundedMax)":
       return parts("Math.min(", ref("boundedMin"), ", ", ref("boundedMax"), ")");

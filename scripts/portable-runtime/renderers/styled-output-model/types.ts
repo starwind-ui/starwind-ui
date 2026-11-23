@@ -1,4 +1,8 @@
-import type { ClassVariantDefinition, SvgAsset } from "../../contracts/styled/types.js";
+import type {
+  ClassVariantDefinition,
+  FrameworkTarget,
+  SvgAsset,
+} from "../../contracts/styled/types.js";
 
 export type StyledOutputModel = {
   componentGroups: StyledOutputComponentGroup[];
@@ -23,6 +27,7 @@ export type StyledOutputComponentGroup = {
 
 export type StyledOutputPrimitiveFacadeExports = {
   component: string;
+  frameworkValues?: Partial<Record<FrameworkTarget, string[]>>;
   types: string[];
   values: string[];
 };
@@ -41,9 +46,23 @@ export type StyledOutputComponent = {
   primitiveAliases: StyledOutputPrimitiveAlias[];
   props?: StyledOutputProps;
   render: StyledOutputRenderNode[];
+  /** Named slots that the component reads without rendering a slot node. */
+  slots?: StyledOutputSlotDeclaration[];
   sourceFileName?: string;
   targetScopes?: StyledOutputTargetScope[];
+  typeParameters?: StyledOutputTypeParameter[];
   variables: StyledOutputVariable[];
+};
+
+export type StyledOutputSlotDeclaration = {
+  name: string;
+  targetScopes?: StyledOutputTargetScope[];
+};
+
+export type StyledOutputTypeParameter = {
+  constraint?: string;
+  default?: string;
+  name: string;
 };
 
 export type StyledOutputNativeModel = {
@@ -135,6 +154,7 @@ export type StyledOutputPropExtend =
     };
 
 export type StyledOutputPropField = {
+  comment?: string;
   name: string;
   optional: boolean;
   targetScopes?: StyledOutputTargetScope[];
@@ -217,6 +237,7 @@ export type StyledOutputComponentNode = {
 };
 
 export type StyledOutputElementNode = {
+  omitVoidChildrenIn?: StyledOutputTargetScope[];
   attrs: StyledOutputAttribute[];
   children: StyledOutputRenderNode[];
   comments: StyledOutputComment[];
@@ -233,8 +254,13 @@ export type StyledOutputFragmentNode = {
   type: "fragment";
 };
 
+/** A projected SVG asset. An attribute with target scopes prints only in those targets. */
+export type StyledOutputSvgAsset = Omit<SvgAsset, "attributes"> & {
+  attributes: (SvgAsset["attributes"][number] & { targetScopes?: StyledOutputTargetScope[] })[];
+};
+
 export type StyledOutputIconNode = {
-  asset?: SvgAsset;
+  asset?: StyledOutputSvgAsset;
   attrs: StyledOutputAttribute[];
   importName: string;
   type: "icon";

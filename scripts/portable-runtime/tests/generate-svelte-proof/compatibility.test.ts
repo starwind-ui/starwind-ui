@@ -4,15 +4,14 @@ import os from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
-
+import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
 import {
-  SVELTE_COMPATIBILITY_TOOLS,
   installCompatibilityTools,
   readCompatibilityProvenance,
   runSvelteCompatibility,
+  SVELTE_COMPATIBILITY_TOOLS,
   type SvelteCompatibilityResult,
 } from "../../check-svelte-compatibility.js";
-import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
 
 const temporaryRoots: string[] = [];
 afterEach(async () => {
@@ -118,7 +117,7 @@ describe("explicit Svelte compatibility gate", () => {
           "@floating-ui/dom@1.7.6",
           "embla-carousel@8.6.0",
           "tailwind-variants@3.2.2",
-          "tailwind-merge@3.6.0",
+          "tailwind-merge@3.7.0",
           path.join(root, version, ".pnpm-store"),
           "--config.enable-global-virtual-store=false",
           "--config.link-workspace-packages=false",
@@ -147,7 +146,7 @@ describe("explicit Svelte compatibility gate", () => {
     );
     const tools = await readCompatibilityProvenance(root, "5.29.0");
     expect(tools["tailwind-merge"]).toEqual({
-      version: "3.6.0",
+      version: "3.7.0",
       manifest: path.join(root, "node_modules/tailwind-merge/package.json"),
       entry: path.join(root, "node_modules/tailwind-merge/dist/index.js"),
     });
@@ -159,7 +158,7 @@ describe("explicit Svelte compatibility gate", () => {
   });
 
   it.each([
-    [{ name: "another-package", version: "3.6.0" }, /own package manifest/],
+    [{ name: "another-package", version: "3.7.0" }, /own package manifest/],
     [{ name: "tailwind-merge", version: "0.0.0" }, /exact selected version/],
   ])("rejects mismatched hidden package metadata %j", async (metadata, message) => {
     const root = await fakeCompatibilityTools();

@@ -18,7 +18,7 @@ function PaginationPrevious(props: PaginationPreviousProps) {
       ref={ref}
       data-slot="pagination-previous"
     >
-      {icon ?? <ChevronLeft />}
+      {icon ?? <ChevronLeft className="rtl:rotate-180" />}
 
       {children}
     </PaginationLink>

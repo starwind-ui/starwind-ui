@@ -302,7 +302,7 @@ export const svelteAdapterPublicContract = {
     demoIntegration: true,
     packageExports: true,
     publicDocsClaim: true,
-    status: "public-beta",
+    status: "shipping",
   },
   rendering: {
     content: "typed-snippet",

@@ -1,5 +1,5 @@
-import { createStyledPopoverConsumer } from "./styled-popover-consumer.js";
 import { writeStyledConsumerFiles } from "./styled-consumer-files.js";
+import { createStyledPopoverConsumer } from "./styled-popover-consumer.js";
 export async function createStyledColorPickerConsumer(repoRoot: string) {
   const consumer = await createStyledPopoverConsumer(repoRoot);
   try {

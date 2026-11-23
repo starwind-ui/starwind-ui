@@ -207,7 +207,7 @@ const permissiveClass: ClassValue = 0;
 
     expect(compactCode(source)).toContain(
       compactCode(
-        `v-bind="omitForwardedAttrs(attrs, ['class', 'style', 'title', 'data-slot']) as Omit<InstanceType<typeof GenericClassChild>['$props'], 'class' | 'style' | 'title' | 'data-slot'>"`,
+        `v-bind="omitForwardedAttrs(attrs, ['data-slot']) as Omit<InstanceType<typeof GenericClassChild>['$props'], 'data-slot'>"`,
       ),
     );
     expect(source).toMatch(
@@ -241,11 +241,11 @@ function handleClick(): void {}
     await expectVueTypecheck(root, [fixturePath]);
   });
 
-  it("mounts generated forwarding without overriding owned child attributes", async () => {
+  it("mounts generated forwarding so consumer attributes override the defaults before the spread", async () => {
     const { root } = await generate([GENERIC_CHILD_FORWARDING_FIXTURE]);
     await writeFile(
       path.join(root, "index.html"),
-      '<div id="app"></div><script type="module" src="/proof.ts"></script>\n',
+      '<link rel="icon" href="data:,"><div id="app"></div><script type="module" src="/proof.ts"></script>\n',
       "utf8",
     );
     await writeFile(path.join(root, "proof.ts"), BROWSER_PROOF_SOURCE, "utf8");
@@ -257,7 +257,7 @@ function handleClick(): void {}
       await server.listen();
       const url = server.resolvedUrls?.local[0];
       if (!url) throw new TypeError("Ticket 15 browser server did not expose a local URL.");
-      browser = await chromium.launch({ headless: true });
+      browser = await chromium.launch({ channel: "chrome", headless: true });
       const page = await browser.newPage();
       const browserErrors: string[] = [];
       page.on("pageerror", (error) => browserErrors.push(String(error)));
@@ -276,14 +276,15 @@ function handleClick(): void {}
       expect(browserErrors).toEqual([]);
       expect(JSON.parse(serialized ?? "null")).toEqual({
         ariaLabel: "forwarded label",
-        backgroundColor: "",
-        className: "owned-class",
+        // Vue merges class and style from fallthrough attrs, and the consumer style wins.
+        backgroundColor: "blue",
+        className: "owned-class caller-class",
         clicks: 1,
-        color: "red",
+        color: "blue",
         dataSlot: "generic-class-child",
         dataTone: "accent",
         id: "forwarded-id",
-        title: "owned title",
+        title: "caller title",
         warnings: [],
       });
     } finally {
@@ -366,7 +367,7 @@ type Browser = {
 
 type PlaywrightModule = {
   chromium: {
-    launch(options: { headless: boolean }): Promise<Browser>;
+    launch(options: { headless: boolean; channel?: string }): Promise<Browser>;
   };
 };
 

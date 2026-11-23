@@ -1,7 +1,5 @@
-import { createApp, h, nextTick, ref } from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { SliderValueChangeDetails } from "@starwind-ui/runtime/slider";
+import { FieldRoot } from "@starwind-ui/vue/field";
 import {
   SliderControl,
   SliderIndicator,
@@ -9,7 +7,8 @@ import {
   SliderThumb,
   SliderTrack,
 } from "@starwind-ui/vue/slider";
-import { FieldRoot } from "@starwind-ui/vue/field";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick, ref } from "vue";
 import { Slider as StyledSlider } from "../../../../apps/vue-demo/src/components/starwind-runtime/slider";
 
 const cleanups: Array<() => void> = [];
@@ -197,6 +196,110 @@ describe("Vue Slider public behavior", () => {
     expect([...inputs].map((input) => input.value)).toEqual(["20", "50", "80"]);
   });
 
+  it("keeps a later v-model write and sends no model update for it", async () => {
+    const model = ref<number | number[]>();
+    const updates: unknown[] = [];
+    const onValueChange = vi.fn();
+    const host = mountSlider(() => ({
+      modelValue: model.value,
+      onValueChange,
+      "onUpdate:modelValue": (next: number | number[]) => {
+        updates.push(next);
+        model.value = next;
+      },
+    }));
+    await settle();
+
+    model.value = 40;
+    await settle();
+    const thumb = host.querySelector<HTMLElement>("[data-sw-slider-thumb]")!;
+    expect(model.value).toBe(40);
+    expect(thumb.getAttribute("aria-valuenow")).toBe("40");
+    expect(host.querySelector("[data-sw-slider]")!.getAttribute("data-value")).toBe("40");
+    expect(updates).toEqual([]);
+    expect(onValueChange).not.toHaveBeenCalled();
+
+    thumb.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    await settle();
+    expect(model.value).toBe(41);
+    expect(updates).toEqual([41]);
+  });
+
+  it.each([
+    ["scalar", 40, 41],
+    ["array", [30, 70], [31, 70]],
+  ] as const)(
+    "applies a later one-way %s value as a silent command and keeps a later interaction",
+    async (_, later, interacted) => {
+      const input = ref<number | number[]>();
+      const name = ref("volume");
+      const onUpdate = vi.fn();
+      const onValueChange = vi.fn();
+      const count = Array.isArray(later) ? later.length : 1;
+      const host = mountSlider(
+        () => ({
+          defaultValue: Array.isArray(later) ? [0, 100] : 0,
+          // A fresh array on every render must count as the same input.
+          modelValue: Array.isArray(input.value) ? [...input.value] : input.value,
+          name: name.value,
+          onValueChange,
+          "onUpdate:modelValue": onUpdate,
+        }),
+        count,
+      );
+      await settle();
+
+      input.value = Array.isArray(later) ? [...later] : later;
+      await settle();
+      expect(shownValue(host)).toEqual(later);
+      expect(onUpdate).not.toHaveBeenCalled();
+      expect(onValueChange).not.toHaveBeenCalled();
+
+      host
+        .querySelector<HTMLElement>("[data-sw-slider-thumb]")!
+        .dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+      await settle();
+      expect(shownValue(host)).toEqual(interacted);
+      expect(onValueChange).toHaveBeenCalledOnce();
+
+      // A stale parent input must not revert the accepted interaction.
+      name.value = "volume-2";
+      await settle();
+      expect(shownValue(host)).toEqual(interacted);
+      // Readback may publish the accepted value again, never the stale input.
+      expect(
+        onUpdate.mock.calls.every(
+          ([value]) => JSON.stringify(value) === JSON.stringify(interacted),
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it("records the Runtime-normalized value of a later v-model write", async () => {
+    const model = ref<number>();
+    const updates: unknown[] = [];
+    const onValueChange = vi.fn();
+    const host = mountSlider(() => ({
+      max: 100,
+      modelValue: model.value,
+      onValueChange,
+      "onUpdate:modelValue": (next: number) => {
+        updates.push(next);
+        model.value = next;
+      },
+    }));
+    await settle();
+
+    model.value = 150;
+    await settle();
+    expect(shownValue(host)).toBe(100);
+    expect(onValueChange).not.toHaveBeenCalled();
+    // Readback publishes the normalized value like a Svelte binding, never the out-of-range input.
+    expect(model.value).toBe(100);
+    expect(updates.length).toBeGreaterThan(0);
+    expect(updates.every((value) => value === 100)).toBe(true);
+  });
+
   it("uses Runtime Field registration for inherited disabled and name state", async () => {
     const host = document.createElement("div");
     document.body.append(host);
@@ -266,6 +369,23 @@ describe("Vue Slider public behavior", () => {
     expect(abort).toHaveBeenCalled();
   });
 });
+
+async function settle(): Promise<void> {
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => window.setTimeout(resolve, 0));
+  await nextTick();
+}
+
+function shownValue(host: HTMLElement): number | number[] {
+  const root = host.querySelector<HTMLElement>("[data-sw-slider]")!;
+  const values = [...root.querySelectorAll<HTMLElement>("[data-sw-slider-thumb]")].map((thumb) =>
+    Number(thumb.getAttribute("aria-valuenow")),
+  );
+  const rendered = JSON.parse(root.getAttribute("data-value")!) as number | number[];
+  expect(Array.isArray(rendered) ? rendered : [rendered]).toEqual(values);
+  return rendered;
+}
 
 function mountSlider(
   props: Record<string, unknown> | (() => Record<string, unknown>),

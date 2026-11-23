@@ -1,12 +1,12 @@
-import { getPrimitivePackageExportNames } from "../primitive-inventory.js";
+import { getPrimitivePackageExportNamesForTarget } from "../primitive-inventory.js";
 import { astroFrameworkAdapterTarget } from "./astro/index.js";
 import { reactFrameworkAdapterTarget } from "./react/index.js";
 import { svelteFrameworkAdapterTarget } from "./svelte/index.js";
-import { vueFrameworkAdapterTarget } from "./vue/index.js";
 import type {
   FrameworkAdapterTargetPrimitiveSupport,
   FrameworkAdapterTargetRegistration,
 } from "./types.js";
+import { vueFrameworkAdapterTarget } from "./vue/index.js";
 
 export const primitiveFrameworkAdapterTargets = [
   astroFrameworkAdapterTarget,
@@ -109,7 +109,7 @@ export function resolveFrameworkAdapterPrimitiveSupport(
   support: FrameworkAdapterTargetPrimitiveSupport | undefined,
   requestedComponents?: readonly string[],
 ): readonly string[] {
-  const inventory = getPrimitivePackageExportNames();
+  const inventory = getPrimitivePackageExportNamesForTarget(target);
   const inventorySet = new Set(inventory);
   const declaration = support ?? { kind: "all" };
   const declaredComponents = declaration.kind === "all" ? inventory : declaration.components;

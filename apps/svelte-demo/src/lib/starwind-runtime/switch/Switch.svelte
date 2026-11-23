@@ -5,6 +5,7 @@
   import { SwitchRoot } from "@starwind-ui/svelte/switch";
   import { switchWrapper, switchButton, switchToggle, switchLabel } from "./variants.js";
   import { SwitchThumb } from "@starwind-ui/svelte/switch";
+  import "./styles.css";
 
   type NativeProps=Extract<ComponentProps<typeof SwitchRoot>,{nativeButton:true}>;
   export type SwitchProps=Omit<NativeProps,"nativeButton"|"children"|"id"> & VariantProps<typeof switchButton> & VariantProps<typeof switchToggle> & {id:string;label?:string;padding?:number};
@@ -12,23 +13,23 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "default",
-    "size": size = "md",
-    "defaultChecked": defaultChecked,
-    "disabled": disabled = false,
-    "form": form,
-    "id": id,
-    "label": label,
-    "name": name,
-    "padding": padding,
-    "readOnly": readOnly = false,
-    "required": required = false,
-    "uncheckedValue": uncheckedValue,
-    "value": value,
+    variant = "default",
+    size = "md",
+    defaultChecked,
+    disabled = false,
+    form,
+    id,
+    label,
+    name,
+    padding,
+    readOnly = false,
+    required = false,
+    uncheckedValue,
+    value,
     "class": className,
     checked = $bindable(),
-    "ref": ref,
-    "onCheckedChange": onCheckedChange,
+    ref,
+    onCheckedChange,
     "checked": commandChecked,
     ...rest
   }: SwitchProps = $props();

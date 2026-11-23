@@ -13,7 +13,6 @@ import type {
   AdapterRepeatedDisclosureFacts,
   AdapterRepeatedDisclosureIndexProjection,
 } from "../types.js";
-import { projectVueDetailedEvent, projectVueModel } from "./public-contract.js";
 
 export function printVueRepeatedDisclosureComponent(
   family: AdapterRepeatedDisclosureComponentProjection,

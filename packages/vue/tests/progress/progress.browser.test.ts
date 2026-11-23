@@ -1,22 +1,21 @@
 import {
-  createApp,
-  createSSRApp,
-  defineComponent,
-  h,
-  nextTick,
-  ref,
-  type ComponentPublicInstance,
-} from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import {
   ProgressIndicator,
   ProgressLabel,
   ProgressRoot,
   ProgressTrack,
   ProgressValue,
 } from "@starwind-ui/vue/progress";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  type ComponentPublicInstance,
+  createApp,
+  createSSRApp,
+  defineComponent,
+  h,
+  nextTick,
+  ref,
+} from "vue";
+import { renderToString } from "vue/server-renderer";
 
 type ExposedElement<T extends HTMLElement> = ComponentPublicInstance & { element: T | null };
 

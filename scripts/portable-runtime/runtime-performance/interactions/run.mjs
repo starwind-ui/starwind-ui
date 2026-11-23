@@ -4,14 +4,13 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
-import { prepareBuild, repoRoot, serve, sourceInventory, command } from "./build.mjs";
 import { installObserver } from "./browser-observer.mjs";
+import { command, prepareBuild, repoRoot, serve, sourceInventory } from "./build.mjs";
 import { collectObservations } from "./collector.mjs";
 import {
   boundary,
-  inputAction,
   domCounts,
-  validatePointerDelivery,
+  inputAction,
   insist,
   linearPath,
   pacePointer,
@@ -20,14 +19,15 @@ import {
   runMenuFlow,
   runSelectFlow,
   setFlowIdentity,
+  validatePointerDelivery,
   verifyDisabledMenuItem,
 } from "./driver.mjs";
 import { writeEvidenceManifest, writeSessionEvidence, writeSessionIndex } from "./evidence.mjs";
 import { runSelectPageFlow } from "./pages.mjs";
 import { createRunPlan } from "./plan.mjs";
+import { visualContract } from "./registry.mjs";
 import { writeCaptureReport } from "./report.mjs";
 import { runSubmenuFlow } from "./submenus.mjs";
-import { visualContract } from "./registry.mjs";
 
 const save = (directory, name, value) =>
   writeFileSync(path.join(directory, name), JSON.stringify(value, null, 2) + "\n");

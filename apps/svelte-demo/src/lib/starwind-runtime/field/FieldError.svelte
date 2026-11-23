@@ -11,11 +11,11 @@
 
 <script lang="ts">
   let {
-    "match": match,
-    "messageSource": messageSource,
+    match,
+    messageSource,
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldErrorProps = $props();
 </script>

@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   NavigationMenuContent,
   NavigationMenuItem,
@@ -14,6 +10,9 @@ import {
   NavigationMenuTrigger,
   NavigationMenuViewport,
 } from "@starwind-ui/vue/navigation-menu";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 describe("Vue Navigation Menu SSR", () => {
   it("renders its public Portal wrapper inline without browser work", async () => {

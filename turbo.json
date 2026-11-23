@@ -24,12 +24,6 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
-    "format:check": {
-      "outputs": []
-    },
-    "format:write": {
-      "outputs": []
-    },
     "clean": {
       "cache": false
     }

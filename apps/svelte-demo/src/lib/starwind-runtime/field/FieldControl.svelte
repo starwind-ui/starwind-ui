@@ -11,14 +11,14 @@
 
 <script lang="ts">
   let {
-    "size": size,
-    "defaultValue": defaultValue,
-    "disabled": disabled = false,
+    size,
+    defaultValue,
+    disabled = false,
     "class": className,
     value = $bindable(),
     "value": commandValue,
-    "onValueChange": onValueChange,
-    "ref": ref,
+    onValueChange,
+    ref,
     ...rest
   }: FieldControlProps = $props();
 </script>

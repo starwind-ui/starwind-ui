@@ -19,13 +19,13 @@
 <script lang="ts">
   let {
     "class": className,
-    "duration": duration = 5000,
-    "gap": gap = "0.5rem",
-    "limit": limit = 3,
-    "peek": peek = "1rem",
-    "position": position = "bottom-right",
-    "style": style,
-    "children": children,
+    duration = 5000,
+    gap = "0.5rem",
+    limit = 3,
+    peek = "1rem",
+    position = "bottom-right",
+    style,
+    children,
     ...rest
   }: ToasterProps = $props();
 </script>

@@ -33,12 +33,14 @@ export const solidFrameworkAdapter = defineFrameworkAdapter({
   fileExtension: solidFrameworkAdapterReadiness.fileExtension,
   target: solidFrameworkAdapterReadiness.target,
   printOutput(model) {
-    return model.files.filter((file) => !file.target || file.target === this.target).map((file) => {
-      if (file.kind === "component") return this.printComponentFile(file);
-      if (file.kind === "helper") return this.printHelperFile(file);
-      if (file.kind === "index") return this.printIndexFile(file);
-      return this.printTypeFacadeFile(file);
-    });
+    return model.files
+      .filter((file) => !file.target || file.target === this.target)
+      .map((file) => {
+        if (file.kind === "component") return this.printComponentFile(file);
+        if (file.kind === "helper") return this.printHelperFile(file);
+        if (file.kind === "index") return this.printIndexFile(file);
+        return this.printTypeFacadeFile(file);
+      });
   },
   printComponentFile(file) {
     const component = file.component;
@@ -61,7 +63,9 @@ export const solidFrameworkAdapter = defineFrameworkAdapter({
         ? "{}"
         : `{ ${propNames.map((prop) => `${prop}: undefined`).join(", ")} }`;
     const contextValue =
-      propNames.length === 0 ? "{}" : `{ ${propNames.map((prop) => `${prop}: local.${prop}`).join(", ")} }`;
+      propNames.length === 0
+        ? "{}"
+        : `{ ${propNames.map((prop) => `${prop}: local.${prop}`).join(", ")} }`;
     const lifecycle = renderSolidLifecycle(component.lifecycle);
     const eventEffects = renderSolidEventEffects(component.events);
     const attrs = renderSolidAttributes(render?.attrs ?? [], render?.part ?? "root");

@@ -9,10 +9,10 @@
 
 <script lang="ts">
   let {
-    "size": size = "md",
+    size = "md",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: CardProps = $props();
 </script>

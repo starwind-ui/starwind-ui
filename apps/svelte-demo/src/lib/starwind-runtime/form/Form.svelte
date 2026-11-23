@@ -10,15 +10,15 @@
 
 <script lang="ts">
   let {
-    "options": options,
-    "errors": errors,
-    "errorOptions": errorOptions,
-    "errorVisibility": errorVisibility,
-    "revalidationTiming": revalidationTiming,
-    "validationTiming": validationTiming,
+    options,
+    errors,
+    errorOptions,
+    errorVisibility,
+    revalidationTiming,
+    validationTiming,
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FormProps = $props();
 </script>

@@ -14,7 +14,7 @@ function PaginationEllipsis(props: PaginationEllipsisProps) {
 
   return (
     <span
-      aria-hidden
+      aria-hidden="true"
       className={paginationEllipsis({ size, class: className })}
       {...rest}
       ref={ref}

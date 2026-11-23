@@ -189,7 +189,9 @@ const CAROUSEL_OUTPUT_MODEL_PARTS = [
   "viewport",
 ] as const satisfies readonly AdapterEngineViewportPartName[];
 
-export function buildCarouselAdapterOutputModel(spec: CarouselSpecializedAdapterSpec): AdapterOutputModel {
+export function buildCarouselAdapterOutputModel(
+  spec: CarouselSpecializedAdapterSpec,
+): AdapterOutputModel {
   const facts = getCarouselEngineFacts(spec);
 
   return {
@@ -262,7 +264,9 @@ function createCarouselIndexFile(
 function getCarouselEngineFacts(spec: CarouselSpecializedAdapterSpec): AdapterEngineViewportFacts {
   const errors = validateCarouselSpecializedAdapterSpec(spec);
   if (errors.length > 0) {
-    throw new Error(`Carousel output model cannot print invalid Carousel spec:\n${errors.join("\n")}`);
+    throw new Error(
+      `Carousel output model cannot print invalid Carousel spec:\n${errors.join("\n")}`,
+    );
   }
 
   const namespace = spec.carousel.namespace;
@@ -308,7 +312,9 @@ function getCarouselEngineFacts(spec: CarouselSpecializedAdapterSpec): AdapterEn
       importMembers: namespace.namedExports
         .filter((exportName) => exportName !== namespace.namespace)
         .map((exportName) => {
-          const entry = namespace.objectEntries.find((candidate) => candidate.exportName === exportName);
+          const entry = namespace.objectEntries.find(
+            (candidate) => candidate.exportName === exportName,
+          );
           if (!entry) {
             throw new Error(`Carousel output model requires ${exportName} namespace entry.`);
           }
@@ -442,7 +448,6 @@ export function validateCarouselSpecializedAdapterSpec(
   errors.push(...validateControls(spec, carousel.controls));
   errors.push(...validateNamespace(spec, carousel.namespace));
   errors.push(...validateShippingFiles(spec));
-
 
   if (!arraysEqual(asArray(carousel.runtimeBoundary), CAROUSEL_RUNTIME_BOUNDARY)) {
     errors.push(
@@ -790,10 +795,7 @@ function validateShippingFiles(spec: CarouselSpecializedAdapterSpec): string[] {
       ];
 }
 
-function getCarouselFileExportName(
-  spec: CarouselSpecializedAdapterSpec,
-  partName: string,
-): string {
+function getCarouselFileExportName(spec: CarouselSpecializedAdapterSpec, partName: string): string {
   const file = spec.files.find(
     (candidate) => candidate.kind === "part" && candidate.part === partName,
   );

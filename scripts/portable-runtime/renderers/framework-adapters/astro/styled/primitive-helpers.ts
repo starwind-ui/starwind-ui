@@ -2,10 +2,10 @@ import type {
   StyledOutputComponent,
   StyledOutputPrimitiveNode,
   StyledOutputRenderNode,
-} from '../../../styled-output-model/index.js';
-import { collectStyledOutputPrimitiveReferences } from '../../../styled-output-model/index.js';
-import type { RuntimeImportRewriteContext } from '../../../styled-runtime-imports.js';
-import { toPascalCase } from './formatting.js';
+} from "../../../styled-output-model/index.js";
+import { collectStyledOutputPrimitiveReferences } from "../../../styled-output-model/index.js";
+import type { RuntimeImportRewriteContext } from "../../../styled-runtime-imports.js";
+import { toPascalCase } from "./formatting.js";
 
 export function collectPrimitiveComponents(nodes: StyledOutputRenderNode[]): string[] {
   return collectStyledOutputPrimitiveReferences(nodes);
@@ -38,8 +38,7 @@ export function getRuntimeImportRewriteContext(
 function getPrimitiveAlias(component: StyledOutputComponent, primitiveComponent: string): string {
   const alias =
     component.primitiveAliases.find((candidate) => candidate.component === primitiveComponent)
-      ?.alias ??
-    `${toPascalCase(primitiveComponent)}Primitive`;
+      ?.alias ?? `${toPascalCase(primitiveComponent)}Primitive`;
 
   return alias === component.exportName ? `${alias}Primitive` : alias;
 }

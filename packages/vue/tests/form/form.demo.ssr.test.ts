@@ -1,6 +1,6 @@
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
 
 import FormReview from "../../../../apps/vue-demo/src/components/FormReview.vue";
 

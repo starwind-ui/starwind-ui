@@ -11,10 +11,10 @@
 
 <script lang="ts">
   let {
-    "disabled": disabled = false,
+    disabled = false,
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldSetProps = $props();
 </script>

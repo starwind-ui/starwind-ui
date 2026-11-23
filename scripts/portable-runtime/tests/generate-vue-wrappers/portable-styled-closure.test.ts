@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -21,6 +21,7 @@ export const PREVIOUSLY_OWNED_PORTABLE_STYLED = [
   "avatar",
   "button",
   "carousel",
+  "chart",
   "checkbox",
   "checkbox-group",
   "collapsible",
@@ -141,11 +142,11 @@ describe("Vue portable Styled closure ownership", () => {
       .sort();
     const owned = [...PREVIOUSLY_OWNED_PORTABLE_STYLED, ...PORTABLE_STYLED_CLOSURE];
 
-    expect(allComponents).toHaveLength(55);
-    expect(new Set(allComponents).size).toBe(55);
-    expect(portableComponents).toHaveLength(54);
-    expect(owned).toHaveLength(54);
-    expect(new Set(owned).size).toBe(54);
+    expect(allComponents).toHaveLength(56);
+    expect(new Set(allComponents).size).toBe(56);
+    expect(portableComponents).toHaveLength(55);
+    expect(owned).toHaveLength(55);
+    expect(new Set(owned).size).toBe(55);
     expect([...owned].sort()).toEqual(portableComponents);
     expect(vueStyledComponents).toEqual([
       "accordion",
@@ -153,6 +154,7 @@ describe("Vue portable Styled closure ownership", () => {
       "avatar",
       "button",
       "carousel",
+      "chart",
       "checkbox",
       "checkbox-group",
       "collapsible",
@@ -226,7 +228,7 @@ describe("Vue portable Styled closure ownership", () => {
     const first = await readFileManifest(fixtureRoot);
     const second = await readFileManifest(fixtureRoot);
 
-    expect(Object.keys(first)).toEqual([...Object.keys(first)].sort());
+    expect(Object.keys(first)).toEqual(Object.keys(first).sort());
     expect(second).toEqual(first);
     expect(createPortableStyledTempRoot).toBeTypeOf("function");
   });

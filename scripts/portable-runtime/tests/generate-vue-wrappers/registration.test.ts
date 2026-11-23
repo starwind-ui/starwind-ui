@@ -30,7 +30,7 @@ describe("registered Vue Framework Adapter target", () => {
     );
   });
 
-  it("registers exactly the approved public-beta Primitive subset", () => {
+  it("registers exactly the approved stable Primitive subset", () => {
     expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(expectedPrimitiveTargets);
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("vue")).toEqual(vuePrimitiveComponents);
     expect(vueFrameworkAdapterTarget.primitive.support).toEqual({
@@ -42,7 +42,7 @@ describe("registered Vue Framework Adapter target", () => {
       demoIntegration: true,
       packageExports: true,
       publicDocsClaim: true,
-      status: "public-beta",
+      status: "shipping",
     });
     expect(vueFrameworkAdapterTarget.cliRegistry).toMatchObject({
       generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
@@ -61,11 +61,14 @@ describe("registered Vue Framework Adapter target", () => {
         outputDir: "vue",
         primitiveOutputDir: "vue-primitives",
       },
-      setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
+      setupPackageRequirements: [
+        { name: "tailwind-merge", range: "^3.7.0" },
+        { name: "vue", range: ">=3.5.21" },
+      ],
     });
   });
 
-  it("rejects a partial public-beta capability promotion", () => {
+  it("rejects a partial stable capability promotion", () => {
     expect(() =>
       defineFrameworkAdapterTarget({
         ...vueFrameworkAdapterTarget,
@@ -74,10 +77,10 @@ describe("registered Vue Framework Adapter target", () => {
           publicDocsClaim: false,
         },
       } as unknown as FrameworkAdapterTargetRegistration<"vue">),
-    ).toThrow(/status "public-beta" requires .* to be true together.*publicDocsClaim/);
+    ).toThrow(/status "shipping" requires .* to be true together.*publicDocsClaim/);
   });
 
-  it("keeps stable, beta and quarantined target support classifications distinct", () => {
+  it("keeps stable and quarantined target support classifications distinct", () => {
     const shipping = {
       cliRegistry: true,
       demoIntegration: true,
@@ -96,10 +99,7 @@ describe("registered Vue Framework Adapter target", () => {
     expect(getPrimitiveFrameworkAdapterTarget("astro").publicSupport).toEqual(shipping);
     expect(getPrimitiveFrameworkAdapterTarget("react").publicSupport).toEqual(shipping);
     if (hasPrivateSvelte)
-      expect(getWorkspacePrimitiveTarget("svelte").publicSupport).toEqual({
-        ...shipping,
-        status: "public-beta",
-      });
+      expect(getWorkspacePrimitiveTarget("svelte").publicSupport).toEqual(shipping);
     expect(solidFrameworkAdapterReadiness.publicSupport).toEqual(quarantined);
   });
 

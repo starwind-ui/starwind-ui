@@ -1,7 +1,7 @@
 import type { DistConsumer } from "./dist-consumer.js";
 import {
-  menuLifecycleCases,
   menuLifecycleActions,
+  menuLifecycleCases,
   menuModelActions,
   verifyMenuBrowser,
 } from "./menu-browser.js";

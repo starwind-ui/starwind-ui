@@ -1,0 +1,22 @@
+---
+import { ClientRouter } from "astro:transitions";
+
+import "@/styles/global.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Chart client router smoke start</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <main class="p-6">
+      <h1>Chart client router smoke start</h1>
+      <p>This route has no chart.</p>
+      <a href="/smoke/chart-client-router-destination/">Open chart examples</a>
+    </main>
+  </body>
+</html>

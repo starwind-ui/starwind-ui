@@ -9,11 +9,11 @@
 
 <script lang="ts">
   let {
-    "orientation": orientation = "horizontal",
+    orientation = "horizontal",
     "data-slot": dataSlot = "separator",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: SeparatorProps = $props();
 

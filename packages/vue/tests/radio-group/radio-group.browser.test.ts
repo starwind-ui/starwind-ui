@@ -1,12 +1,11 @@
-import { createApp, h, nextTick, reactive, ref } from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import {
   createRadioGroup,
   type RadioGroupValueChangeDetails,
 } from "@starwind-ui/runtime/radio-group";
-import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
 import { RadioRoot } from "@starwind-ui/vue/radio";
+import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick, reactive, ref } from "vue";
 import { RadioGroup as StyledRadioGroup } from "../../../../apps/vue-demo/src/components/starwind-runtime/radio-group";
 
 const cleanups: Array<() => void> = [];
@@ -142,11 +141,10 @@ describe("Vue Radio Group public behavior", () => {
             "onUpdate:modelValue": (value: string) => proposals.push(value),
           },
           {
-            default: () => [
-              ...state.entries.map((value, index) =>
+            default: () =>
+              state.entries.map((value, index) =>
                 h(RadioRoot, { key: `${value}-${index}`, value }),
               ),
-            ],
           },
         ),
     });

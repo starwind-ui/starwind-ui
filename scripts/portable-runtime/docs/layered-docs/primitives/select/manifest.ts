@@ -1,11 +1,12 @@
 export const primitiveAuthoredExamples = {
   "positioned-select": {
     title: "Positioned Select",
-    summary: "Render Select with a positioned popup across Astro, React, Vue, and HTML surfaces.",
+    summary: "Compose the positioning parts around the Select popup.",
     files: {
       astro: "./examples/positioned-select.astro",
       react: "./examples/positioned-select.tsx",
       vue: "./examples/positioned-select.vue",
+      svelte: "./examples/positioned-select.svelte",
       html: "./examples/positioned-select.html",
     },
   },

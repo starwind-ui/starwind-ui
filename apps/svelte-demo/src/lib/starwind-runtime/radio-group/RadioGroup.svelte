@@ -10,21 +10,21 @@
 
 <script lang="ts">
   let {
-    "defaultValue": defaultValue,
-    "disabled": disabled = false,
-    "form": form,
-    "legend": legend,
-    "name": name,
-    "orientation": orientation = "vertical",
-    "readOnly": readOnly = false,
-    "required": required = false,
-    "size": size = "md",
+    defaultValue,
+    disabled = false,
+    form,
+    legend,
+    name,
+    orientation = "vertical",
+    readOnly = false,
+    required = false,
+    size = "md",
     "class": className,
     value = $bindable(),
     "value": commandValue,
-    "ref": ref,
-    "onValueChange": onValueChange,
-    "children": children,
+    ref,
+    onValueChange,
+    children,
     ...rest
   }: RadioGroupProps = $props();
 </script>

@@ -453,8 +453,11 @@ export type PrimitiveDocsExampleMetadata = {
 };
 
 export type PrimitiveDocsAuthoredExampleFrameworkMetadata = {
-  readonly framework: Extract<PrimitiveDocsFrameworkTarget, "astro" | "react" | "vue" | "raw-html">;
-  readonly language: "astro" | "tsx" | "vue" | "html";
+  readonly framework: Extract<
+    PrimitiveDocsFrameworkTarget,
+    "astro" | "react" | "vue" | "svelte" | "raw-html"
+  >;
+  readonly language: "astro" | "tsx" | "vue" | "svelte" | "html";
   readonly source: string;
   readonly code: string;
 };
@@ -509,7 +512,14 @@ export type PrimitivePartDocsEnrichment = {
 };
 
 export type PrimitiveDocsEnrichment = {
+  /** User-facing intro sentence. It opens the Primitive page and is the page description. */
   readonly summary?: string;
+  /**
+   * Set to true when the docs site has a live demo for this Primitive at
+   * `src/components/demos/primitives/<PascalName>PrimitiveDemo.astro`. The generated page imports
+   * and renders it above the anatomy.
+   */
+  readonly liveDemo?: boolean;
   readonly behaviorNotes?: readonly string[];
   readonly frameworkNotes?: Readonly<
     Partial<Record<PrimitiveDocsFrameworkTarget, readonly string[]>>
@@ -583,8 +593,18 @@ export type PrimitiveRelatedStyledComponentMetadata = {
   readonly foundationType: BehaviorFoundationType;
 };
 
+export type PrimitiveDocsLiveDemoMetadata = {
+  /** Local component name the generated page imports. */
+  readonly componentName: string;
+  /** Import specifier the generated page uses, through the docs site `@/` alias. */
+  readonly importPath: string;
+  /** Demo file path, relative to the docs site root. */
+  readonly sourcePath: string;
+};
+
 export type PrimitiveDocsReferenceMetadata = {
   readonly summary: string;
+  readonly liveDemo?: PrimitiveDocsLiveDemoMetadata;
   readonly frameworkCoordination: string;
   readonly frameworkTargets: readonly PrimitiveDocsFrameworkTarget[];
   readonly behaviorNotes: readonly string[];

@@ -78,7 +78,7 @@ the target home.
 
 ## Current Primitive Surface
 
-The current Primitive adapter inventory is 36 component families.
+The current Primitive adapter inventory is 37 component families.
 
 Adapter Family Plan components:
 
@@ -105,6 +105,7 @@ Adapter Family Plan components:
 Specialized Adapter Spec generated primitives:
 
 - `carousel`
+- `chart`
 - `toast`
 - `field`
 - `slider`
@@ -152,18 +153,50 @@ These tracers do not imply package exports, CLI registry entries, demo dependenc
 target. The retained `toggle/vue` fixture is contract-conformance evidence for a registered Vue
 projection; it does not define the package surface.
 
-Vue is a registered Vue 3.5 public-beta target across its complete Primitive and portable Styled
+Vue is a registered stable Vue 3.5 target across its complete Primitive and portable Styled
 surfaces. The exact inventories are documented by the
 [Vue Framework Adapter README](../../scripts/portable-runtime/renderers/framework-adapters/vue/README.md)
 and owned by the
 [Vue adapter inventory](../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.ts).
 Those registrations are authoritative rather than the future-framework tracer list. The four Vue
-public-support capabilities are enabled together. Beta support does not add Vue to the stable
-Runtime, Astro, and React fixed package group.
+public-support capabilities are enabled together. Vue publishes in the Runtime fixed package group.
 
-Existing Solid tracers are frozen comparison artifacts. Svelte is a registered Svelte 5 public-beta
+Existing Solid tracers are frozen comparison artifacts. Svelte is a registered stable Svelte 5
 target across the complete Primitive and portable Styled surfaces. Its four public-support
-capabilities are enabled together, and it stays outside the stable fixed package group.
+capabilities are enabled together, and it publishes in the Runtime fixed package group.
+
+## Tested Framework Floors
+
+The release gate installs exact framework versions beside the packed archives. A peer floor that
+no stage installs is not a tested floor.
+
+| Framework   | Packed peer range | Exact versions under test                                                                              | Gate stage             |
+| ----------- | ----------------- | ------------------------------------------------------------------------------------------------------ | ---------------------- |
+| Vue         | `>=3.5.21`        | The floor that the packed peer range gives (3.5.21), and the version the package builds with (3.5.42)  | `Vue compatibility`    |
+| Svelte      | `>=5.29.0 <6`     | 5.29.0 and 5.57.0                                                                                      | `Svelte compatibility` |
+| SvelteKit 2 | none              | Kit 2.70.3 with adapter-node 5.5.7, Svelte 5.29.0, Vite 7.3.5 and plugin-svelte 6.2.1                  | `Svelte hosts`         |
+| SvelteKit 3 | none              | Kit 3.4.0 with adapter-node 6.0.5, Svelte 5.57.1, Vite 8.3.8, plugin-svelte 7.3.1 and TypeScript 6.0.3 | `Svelte hosts`         |
+
+`Vue compatibility` type checks the public consumer, imports every export-map entry, compiles every
+Styled SFC with the selected Vue compiler, and runs the Primitive SSR and hydration fixture in
+Chrome. The stage reads the floor from the packed peer range, so a range change moves the tested
+floor.
+
+The declaration check without `skipLibCheck` accepts one known diagnostic: TS2344 on
+`GlobalComponents`, at its pinned files and counts. Any other diagnostic, or a new occurrence on
+either version, fails the stage. A new Vue part adds occurrences of that diagnostic. After a review, refresh the
+pins with `pnpm vue:compatibility --packs=<dir> --write-accepted-diagnostics`.
+
+Vue 3.5.21 is the floor. Vue 3.5.0 and 3.5.1 do not accept the `DefineComponent` and
+`CreateComponentPublicInstanceWithMixins` arity in the packed declarations. Vue 3.5.0 to 3.5.20
+throw on unmount after they hydrate a portal part. The CLI asks for a Vue upgrade when a project
+declares a range below 3.5.21.
+
+SvelteKit 3 has these minimums: Svelte 5.57.1, Vite 8.0.12, plugin-svelte 7, TypeScript 6 and
+Node 22.17. It has no `svelte.config.js` and no `$lib`. Users import installed components through
+the `#lib` subpath import, with the `index.js` file named, for example
+`#lib/starwind/button/index.js`. SvelteKit projects keep the Starwind stylesheet packages in
+`devDependencies`, because adapter-node 6 keeps production dependencies external to the SSR build.
 
 ## Gate Tiers
 
@@ -204,7 +237,7 @@ Use this tier only when the target can be maintained as a first-party adapter.
 
 Requirements:
 
-- All 36 Primitive contracts are either generated for the target or have an accepted, documented
+- All 37 Primitive contracts are either generated for the target or have an accepted, documented
   non-shipping decision.
 - Every manual island escape hatch supported by the target has a component renderer or typed adapter
   family plan with explicit contract-owned facts and escape hatches.
@@ -247,7 +280,7 @@ React-like targets such as Vue and Solid also need helper coverage for:
 - form hidden-input synchronization
 - effect cleanup and duplicate initialization protection
 
-Vue consumes Specialized Adapter Specs through its Framework Adapter. The public-beta Vue package
+Vue consumes Specialized Adapter Specs through its Framework Adapter. The Vue package
 surface is the exact registered inventory documented by
 the [Vue Framework Adapter README](../../scripts/portable-runtime/renderers/framework-adapters/vue/README.md)
 and owned by the
@@ -258,7 +291,7 @@ fixtures remain source-level tracer evidence. Solid's equivalent fixtures are fr
 rather than an active expansion target.
 
 Svelte consumes the registered Generic Adapter Plans, Adapter Family Plans, and Specialized Adapter
-Specs through its Framework Adapter. Its public-beta package is ready for Vite with Svelte,
+Specs through its Framework Adapter. Its package is ready for Vite with Svelte,
 SvelteKit, and Astro with Svelte hosts.
 
 ## Required Validation Coverage
@@ -270,7 +303,7 @@ Before any target leaves Tier 0:
   wrappers.
 - Generic Adapter Plan validation must pass for every family the target Framework Adapter consumes.
 - Framework Adapter conformance tests must pass for the target home.
-- Coverage classification must be current for all 36 Primitive contracts.
+- Coverage classification must be current for all 37 Primitive contracts.
 - Every escape hatch used by a supported component must name affected frameworks, boundary, reason,
   contract-owned facts, demotion criteria, and tests.
 - Any target-specific omission must be represented as a documented framework note, unsupported
@@ -297,17 +330,16 @@ High-complexity islands remain human-gated:
 - None.
 
 `select`, `menu`, `context-menu`, `navigation-menu`, `combobox`, `color-picker`, `tooltip`, `preview-card`,
-`tabs`, `accordion`, `sidebar`, `slider`, `input-otp`, `dropzone`, `field`, `carousel`, and `toast`
+`tabs`, `accordion`, `sidebar`, `slider`, `input-otp`, `dropzone`, `field`, `carousel`, `chart`, and `toast`
 are no longer manual islands. They are Specialized Adapter Spec generated for Astro and React. Vue
-has registered public-beta projections for its complete Primitive and portable Styled surfaces. The
+has registered stable projections for its complete Primitive and portable Styled surfaces. The
 exact inventories are documented by the
 [Vue Framework Adapter README](../../scripts/portable-runtime/renderers/framework-adapters/vue/README.md)
 and owned by the
 [Vue adapter inventory](../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.ts).
 Legacy Vue tracer fixtures remain historical evidence and do not define package output. Solid's
 fixtures remain frozen, non-shipping comparison artifacts rather than an active expansion target.
-Vue public-beta support is explicit in the target registration and remains distinct from stable
-support.
+Vue stable support is explicit in the target registration.
 
 The specialized form controls still need future target helper coverage for form hidden inputs,
 callback/ref mapping, and controlled setter synchronization before any target preview can ship them.

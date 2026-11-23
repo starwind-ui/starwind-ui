@@ -201,19 +201,27 @@ function validateContract(
         ),
       );
     }
-    if (contract.component === "color-picker" && ["value", "format"].includes(stateModel.name)) {
+    const fixedOwnership =
+      contract.component === "color-picker"
+        ? ["value", "format"]
+        : contract.component === "slider" || contract.component === "input-otp"
+          ? ["value"]
+          : contract.component === "chart"
+            ? ["visible"]
+            : [];
+    if (fixedOwnership.includes(stateModel.name)) {
       const policy = stateModel.ownership;
       if (
         policy?.controlledWhen !== "initial-defined" ||
         policy.lifetime !== "mount" ||
         policy.laterUndefined !== "retain-controlled-value" ||
-        policy.laterDefined !== "ignore-when-uncontrolled"
+        policy.laterDefined !== "silent-command"
       ) {
         issues.push(
           issue(
             contract,
             `stateModels.${stateModel.name}.ownership`,
-            "Color Picker requires fixed initial-defined model ownership until unmount.",
+            `${contract.displayName} requires fixed initial-defined model ownership until unmount.`,
           ),
         );
       }
@@ -509,7 +517,7 @@ function validateContract(
 }
 
 const frameworkSourcePatterns = [
-  /\bimport\s+[\s\S]*?\sfrom\s+["'](?:astro|react|solid-js|svelte|vue)(?:[\/"'])/,
+  /\bimport\s+[\s\S]*?\sfrom\s+["'](?:astro|react|solid-js|svelte|vue)(?:[/"'])/,
   /<(?:script\s+setup|template)(?:\s|>)/,
   /\b(?:defineEmits|defineModel|defineProps|onMounted|useEffect|useTemplateRef)\s*\(/,
   /\b(?:if|switch)\s*\([^)]*\b(?:framework|target)\b[^)]*\b(?:astro|react|solid|svelte|vue)\b/i,

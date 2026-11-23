@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   SelectItem,
   SelectItemIndicator,
@@ -14,6 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@starwind-ui/vue/select";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Select as StyledSelect,
   SelectTrigger as StyledSelectTrigger,

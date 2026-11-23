@@ -1,14 +1,14 @@
 import semver from "semver";
 
 import { PATHS } from "./constants.js";
-import { fileExists, readJsonFile, writeJsonFile } from "./fs.js";
 import {
   type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   isConfigTarget,
-  type PublicCliFrameworkTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
 } from "./framework-target-policy.js";
+import { fileExists, readJsonFile, writeJsonFile } from "./fs.js";
 import { assertProjectRelativePath, assertSafePathSegment } from "./project-path.js";
 
 export const CONFIG_SCHEMA_V1_URL = "https://starwind.dev/config-schema.json";
@@ -1130,7 +1130,7 @@ export async function updateConfig<TFramework extends CliFrameworkTarget = Starw
     pro: mergeStarwindProConfig(currentConfig.pro, updates.pro),
     tailwind: {
       ...currentConfig.tailwind,
-      ...(updates.tailwind || {}),
+      ...updates.tailwind,
     },
     componentDir: updates.componentDir ? updates.componentDir : currentConfig.componentDir,
     componentDirs: nextComponentDirs,

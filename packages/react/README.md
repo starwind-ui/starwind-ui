@@ -49,6 +49,13 @@ Use `ThemeInitScript` in a server-rendered document head, or use `getThemeInitSc
 integration, to apply the stored theme before the first paint. The Starwind CLI configures this for
 supported Vite React, Next.js, TanStack Start, and React Router projects.
 
+## Installed documentation
+
+The package includes Markdown docs for its exact version. After you install it, open
+`node_modules/@starwind-ui/react/docs/README.md`. Coding agents can start from
+`node_modules/@starwind-ui/react/docs/llms.txt`. Each Primitive has a reference page with its parts,
+props, state, callbacks, and data attributes.
+
 ## Starwind UI ecosystem
 
 - [Website](https://starwind.dev/)

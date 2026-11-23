@@ -46,8 +46,8 @@ export const PUBLIC_FRAMEWORK_TARGET_POLICY = defineFrameworkTargetPolicy<Public
     labels: {
       astro: "Astro",
       react: "React",
-      vue: "Vue (beta)",
-      svelte: "Svelte 5 (beta)",
+      vue: "Vue",
+      svelte: "Svelte 5",
     },
     requiredAdapterPackages: {
       "legacy-astro": [],

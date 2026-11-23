@@ -15,14 +15,14 @@
 
 <script lang="ts">
   let {
-    "isActive": isActive = false,
-    "tooltip": tooltip,
-    "variant": variant,
-    "size": size = "md",
-    "href": href,
+    isActive = false,
+    tooltip,
+    variant,
+    size = "md",
+    href,
     "class": className,
-    "child": child,
-    "children": children,
+    child,
+    children,
     ...rest
   }: SidebarMenuButtonProps = $props();
 
@@ -36,7 +36,7 @@
 {#snippet nativeControl({ props, children: content }: SidebarMenuButtonChildPayload)}
   <svelte:element this={Tag} {...props} {...{ type: Tag === "button" ? "button" : undefined }}>{@render content?.()}</svelte:element>
 {/snippet}
-{#if Boolean(tooltip)}
+{#if tooltip}
   <Tooltip
     openDelay={0}
     closeDelay={0}
@@ -49,7 +49,7 @@
       {@render children?.()}
     </SidebarMenuButton>
     <TooltipContent
-      side={"right"}
+      data-sw-sidebar-tooltip-default
       align={"center"}
       class={"whitespace-nowrap"}
       data-sw-sidebar-tooltip-content

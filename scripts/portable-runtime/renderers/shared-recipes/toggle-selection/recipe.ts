@@ -3,7 +3,7 @@ import type {
   AdapterGroupedValueControlFacts,
   AdapterSingleBooleanControlFacts,
 } from "../../framework-adapters/types.js";
-import { initialCheckedValue, initialListValue } from "../initial-state.js";
+import { defaultMarker, initialCheckedValue, initialListValue } from "../initial-state.js";
 import type { FrameworkOperations } from "../structured/operations.js";
 export type Kind = "toggle" | "toggle-group";
 type GroupCommand = "refresh" | "options" | "parent" | "readback";
@@ -60,7 +60,8 @@ export function renderToggle(
       ["data-sw-part", '"root"'],
       [
         facts.attrs.defaultState,
-        `!isGroupOwned && ${read("pressed")}===undefined && initialDefault ? "true" : undefined`,
+        // A group owns pressed state, so its items have no default of their own.
+        `!isGroupOwned && ${defaultMarker("initialDefault")}`,
       ],
       [facts.attrs.native, `${read("nativeButton")} ? undefined : "false"`],
       [facts.attrs.syncGroup, read("syncGroup")],
@@ -148,7 +149,6 @@ export function renderToggleGroup(
   };
   const code = `function normalizeValue(value:string[],multiple:boolean){const next=Array.from(new Set(value.filter(item=>item.length>0)));return multiple?next:next.slice(0,1);}
 function isModelEqual(left:string[]|undefined,right:string[]|undefined){return left===right||left!==undefined&&right!==undefined&&left.length===right.length&&left.every((entry,index)=>entry===right[index]);}
-function copyModel(value:string[]){return [...value];}
 ${cleanup}
 function publishReadback(owned:ReturnType<typeof createToggleGroup>){if(connection.instance!==owned)return;const next=owned.getValue();if(!isModelEqual(connection.accepted,next)){connection.accepted=next;${render("next")}}${binding ? `if(${controlled})return;${pub("next")}if(connection.instance!==owned)return;const canonical=${read("value")};if(canonical!==undefined&&!isModelEqual(canonical,next)){owned.setValue(normalizeValue(canonical,${read("multiple")}),{emit:false});const retained=owned.getValue();connection.accepted=retained;${render("retained")}}` : ""}}
 function connect(root:HTMLDivElement){disconnect();const desired=normalizeValue(${model}??initialDefault,${read("multiple")});const owned=createToggleGroup(root,{defaultValue:desired,${inputs.map((n) => `${n}:${read(n)}`).join(",")},...(${fw.controlled("value")}?{value:desired}:{}),onValueChange:(next,detail)=>{${fw.untracked(fw.proposal("onValueChange", "next", "detail"))}}});connection.instance=owned;
@@ -156,5 +156,14 @@ connection.unsubscribe=owned.subscribe('valueChange',detail=>{if(connection.inst
 connection.observer=new MutationObserver(()=>{${fw.untracked("publishReadback(owned);")}});connection.observer.observe(root,{attributes:true,attributeFilter:['data-value']});publishReadback(owned);}
 function applyParent(){const owned=connection.instance,input=${model};if(!owned||input===undefined)return;const next=normalizeValue(input,${read("multiple")});if(isModelEqual(owned.getValue(),next))return;owned.setValue(next,{emit:false});publishReadback(owned);}
 function applyOptions(){const owned=connection.instance;if(!owned)return;${recipe.commandOrder.map((command) => commands[command]).join("\n")}}`;
-  return ops.frame("toggle-group", code, projection);
+  // Emit the copy helper only for targets whose framework hooks call it.
+  const copyHelper = code.includes("copyModel(")
+    ? "\nfunction copyModel(value:string[]){return [...value];}"
+    : "";
+  const isModelEqualEnd = code.indexOf("\n", code.indexOf("function isModelEqual("));
+  return ops.frame(
+    "toggle-group",
+    code.slice(0, isModelEqualEnd) + copyHelper + code.slice(isModelEqualEnd),
+    projection,
+  );
 }

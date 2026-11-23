@@ -18,6 +18,7 @@ import { specializeSvelteStyledAvatar } from "./avatar.js";
 import { specializeSvelteStyledBreadcrumb } from "./breadcrumb.js";
 import { specializeSvelteStyledButton } from "./button.js";
 import { specializeSvelteStyledCarousel } from "./carousel.js";
+import { specializeSvelteStyledChart } from "./chart.js";
 import { specializeSvelteStyledCheckbox } from "./checkbox.js";
 import { specializeSvelteStyledCheckboxGroup } from "./checkbox-group.js";
 import { specializeSvelteStyledCollapsible } from "./collapsible.js";
@@ -101,6 +102,7 @@ export function projectSvelteStyledGroup(
       "input-otp",
       "prose",
       "scroll-area",
+      "switch",
       "toast",
       "color-picker",
       "sidebar",
@@ -154,6 +156,7 @@ export function projectSvelteStyledComponent(
   const isColorPicker = group.component === "color-picker";
   const isToast = group.component === "toast";
   const isCarousel = group.component === "carousel";
+  const isChart = group.component === "chart";
   const isToggle = ["toggle", "toggle-group"].includes(group.component);
   const isRadioGroup = group.component === "radio-group";
   const isCheckboxGroup = group.component === "checkbox-group";
@@ -198,6 +201,7 @@ export function projectSvelteStyledComponent(
     !isColorPicker &&
     !isToast &&
     !isCarousel &&
+    !isChart &&
     !isToggle &&
     !isRadioGroup &&
     !isCheckboxGroup &&
@@ -234,6 +238,7 @@ export function projectSvelteStyledComponent(
     fail("missing component projection owner");
   const specialization: Pick<
     SvelteStyledComponentProjection,
+    | "generics"
     | "imports"
     | "publicTypes"
     | "destructure"
@@ -244,165 +249,171 @@ export function projectSvelteStyledComponent(
     | "semanticNativeSlot"
     | "typeExports"
     | "templatePrelude"
-  > = isCombobox
-    ? specializeSvelteStyledCombobox(group, component, options)
-    : isNavigationMenu
-      ? specializeSvelteStyledNavigationMenu(group, component, options)
-      : isContextMenu
-        ? specializeSvelteStyledContextMenu(group, component, options)
-        : isDropdown
-          ? specializeSvelteStyledDropdown(group, component, options)
-          : isHoverCard
-            ? specializeSvelteStyledHoverCard(group, component, options)
-            : isTooltip
-              ? specializeSvelteStyledTooltip(group, component, options)
-              : isPopover
-                ? specializeSvelteStyledPopover(group, component, options)
-                : isSheet
-                  ? specializeSvelteStyledSheet(group, component, options)
-                  : isAlertDialog
-                    ? specializeSvelteStyledAlertDialog(group, component, options)
-                    : isTabs
-                      ? specializeSvelteStyledTabs(group, component, options)
-                      : isSlider
-                        ? specializeSvelteStyledSlider(group, component, options)
-                        : isAccordion
-                          ? specializeSvelteStyledAccordion(group, component, options)
-                          : isDropzone
-                            ? specializeSvelteStyledDropzone(group, component, options)
-                            : isInputOtp
-                              ? specializeSvelteStyledInputOtp(group, component, options)
-                              : isField
-                                ? specializeSvelteStyledField(group, component, options)
-                                : isToggle
-                                  ? specializeSvelteStyledToggle(group, component, options)
-                                  : isRadioGroup
-                                    ? specializeSvelteStyledRadioGroup(group, component, options)
-                                    : isCheckboxGroup
-                                      ? specializeSvelteStyledCheckboxGroup(
-                                          group,
-                                          component,
-                                          options,
-                                        )
-                                      : isSwitch
-                                        ? specializeSvelteStyledSwitch(group, component, options)
-                                        : isInputGroup
-                                          ? specializeSvelteStyledInputGroup(group, component)
-                                          : isForm
-                                            ? specializeSvelteStyledForm(group, component, options)
-                                            : isInput
-                                              ? specializeSvelteStyledInput(
+  > = isChart
+    ? specializeSvelteStyledChart(group, component, options)
+    : isCombobox
+      ? specializeSvelteStyledCombobox(group, component, options)
+      : isNavigationMenu
+        ? specializeSvelteStyledNavigationMenu(group, component, options)
+        : isContextMenu
+          ? specializeSvelteStyledContextMenu(group, component, options)
+          : isDropdown
+            ? specializeSvelteStyledDropdown(group, component, options)
+            : isHoverCard
+              ? specializeSvelteStyledHoverCard(group, component, options)
+              : isTooltip
+                ? specializeSvelteStyledTooltip(group, component, options)
+                : isPopover
+                  ? specializeSvelteStyledPopover(group, component, options)
+                  : isSheet
+                    ? specializeSvelteStyledSheet(group, component, options)
+                    : isAlertDialog
+                      ? specializeSvelteStyledAlertDialog(group, component, options)
+                      : isTabs
+                        ? specializeSvelteStyledTabs(group, component, options)
+                        : isSlider
+                          ? specializeSvelteStyledSlider(group, component, options)
+                          : isAccordion
+                            ? specializeSvelteStyledAccordion(group, component, options)
+                            : isDropzone
+                              ? specializeSvelteStyledDropzone(group, component, options)
+                              : isInputOtp
+                                ? specializeSvelteStyledInputOtp(group, component, options)
+                                : isField
+                                  ? specializeSvelteStyledField(group, component, options)
+                                  : isToggle
+                                    ? specializeSvelteStyledToggle(group, component, options)
+                                    : isRadioGroup
+                                      ? specializeSvelteStyledRadioGroup(group, component, options)
+                                      : isCheckboxGroup
+                                        ? specializeSvelteStyledCheckboxGroup(
+                                            group,
+                                            component,
+                                            options,
+                                          )
+                                        : isSwitch
+                                          ? specializeSvelteStyledSwitch(group, component, options)
+                                          : isInputGroup
+                                            ? specializeSvelteStyledInputGroup(group, component)
+                                            : isForm
+                                              ? specializeSvelteStyledForm(
                                                   group,
                                                   component,
                                                   options,
                                                 )
-                                              : isCollapsible
-                                                ? specializeSvelteStyledCollapsible(
+                                              : isInput
+                                                ? specializeSvelteStyledInput(
                                                     group,
                                                     component,
                                                     options,
                                                   )
-                                                : isScrollArea
-                                                  ? specializeSvelteStyledScrollArea(
+                                                : isCollapsible
+                                                  ? specializeSvelteStyledCollapsible(
                                                       group,
                                                       component,
                                                       options,
                                                     )
-                                                  : isProgress
-                                                    ? specializeSvelteStyledProgress(
+                                                  : isScrollArea
+                                                    ? specializeSvelteStyledScrollArea(
                                                         group,
                                                         component,
                                                         options,
                                                       )
-                                                    : isAvatar
-                                                      ? specializeSvelteStyledAvatar(
+                                                    : isProgress
+                                                      ? specializeSvelteStyledProgress(
                                                           group,
                                                           component,
                                                           options,
                                                         )
-                                                      : isVideo
-                                                        ? specializeSvelteStyledVideo(
+                                                      : isAvatar
+                                                        ? specializeSvelteStyledAvatar(
                                                             group,
                                                             component,
+                                                            options,
                                                           )
-                                                        : isNativeForm
-                                                          ? specializeSvelteStyledNativeForm(
+                                                        : isVideo
+                                                          ? specializeSvelteStyledVideo(
                                                               group,
                                                               component,
                                                             )
-                                                          : isSpinner
-                                                            ? specializeSvelteStyledSpinner(
+                                                          : isNativeForm
+                                                            ? specializeSvelteStyledNativeForm(
                                                                 group,
                                                                 component,
                                                               )
-                                                            : isNavigation
-                                                              ? specializeSvelteStyledNavigation(
+                                                            : isSpinner
+                                                              ? specializeSvelteStyledSpinner(
                                                                   group,
                                                                   component,
                                                                 )
-                                                              : isBreadcrumb
-                                                                ? specializeSvelteStyledBreadcrumb(
+                                                              : isNavigation
+                                                                ? specializeSvelteStyledNavigation(
                                                                     group,
                                                                     component,
                                                                   )
-                                                                : isNative
-                                                                  ? specializeSvelteStyledNative(
+                                                                : isBreadcrumb
+                                                                  ? specializeSvelteStyledBreadcrumb(
                                                                       group,
                                                                       component,
                                                                     )
-                                                                  : isDialog
-                                                                    ? specializeSvelteStyledDialog(
+                                                                  : isNative
+                                                                    ? specializeSvelteStyledNative(
                                                                         group,
                                                                         component,
-                                                                        options,
                                                                       )
-                                                                    : isSelect
-                                                                      ? specializeSvelteStyledSelect(
+                                                                    : isDialog
+                                                                      ? specializeSvelteStyledDialog(
                                                                           group,
                                                                           component,
                                                                           options,
                                                                         )
-                                                                      : isTheme
-                                                                        ? specializeSvelteStyledThemeToggle(
+                                                                      : isSelect
+                                                                        ? specializeSvelteStyledSelect(
                                                                             group,
                                                                             component,
                                                                             options,
                                                                           )
-                                                                        : isCheckbox
-                                                                          ? specializeSvelteStyledCheckbox(
+                                                                        : isTheme
+                                                                          ? specializeSvelteStyledThemeToggle(
                                                                               group,
                                                                               component,
                                                                               options,
                                                                             )
-                                                                          : isCarousel
-                                                                            ? specializeSvelteStyledCarousel(
+                                                                          : isCheckbox
+                                                                            ? specializeSvelteStyledCheckbox(
                                                                                 group,
                                                                                 component,
                                                                                 options,
                                                                               )
-                                                                            : isToast
-                                                                              ? specializeSvelteStyledToast(
+                                                                            : isCarousel
+                                                                              ? specializeSvelteStyledCarousel(
                                                                                   group,
                                                                                   component,
                                                                                   options,
                                                                                 )
-                                                                              : isSidebar
-                                                                                ? specializeSvelteStyledSidebar(
+                                                                              : isToast
+                                                                                ? specializeSvelteStyledToast(
                                                                                     group,
                                                                                     component,
                                                                                     options,
                                                                                   )
-                                                                                : isColorPicker
-                                                                                  ? specializeSvelteStyledColorPicker(
+                                                                                : isSidebar
+                                                                                  ? specializeSvelteStyledSidebar(
                                                                                       group,
                                                                                       component,
                                                                                       options,
                                                                                     )
-                                                                                  : specializeSvelteStyledButton(
-                                                                                      group,
-                                                                                      component,
-                                                                                      options,
-                                                                                    );
+                                                                                  : isColorPicker
+                                                                                    ? specializeSvelteStyledColorPicker(
+                                                                                        group,
+                                                                                        component,
+                                                                                        options,
+                                                                                      )
+                                                                                    : specializeSvelteStyledButton(
+                                                                                        group,
+                                                                                        component,
+                                                                                        options,
+                                                                                      );
   if (component.client) fail("unsupported client behavior");
   if (component.imports.some((entry) => supportsSvelteScope(entry.targetScopes)))
     fail("unsupported custom import");
@@ -457,6 +468,7 @@ export function projectSvelteStyledComponent(
         if (
           node.name &&
           !(isScrollArea && component.exportName === "ScrollArea" && node.name === "scrollbar") &&
+          !(isChart && node.name === "content") &&
           !(isTheme && ["light-icon", "dark-icon"].includes(node.name)) &&
           !(isRadioGroup && node.name === "icon") &&
           !(isInputOtp && node.name === "icon") &&
@@ -491,9 +503,6 @@ export function projectSvelteStyledComponent(
                   ? "consumerChildren"
                   : (node.name ?? "children"),
           fallback: node.fallback.map(project),
-          ...(isNavigationMenu && component.exportName === "NavigationMenu" && !node.name
-            ? { args: ["acceptedValue"] }
-            : {}),
         };
       case "text":
         return isSidebar && node.value === "{tooltip}"
@@ -686,6 +695,12 @@ export function projectSvelteStyledComponent(
           ...(isCheckboxGroup && node.type === "primitive" && node.part === "Root"
             ? { bindings: [{ name: "value", expression: "value" }] }
             : {}),
+          ...(isChart &&
+          component.exportName === "ChartContainer" &&
+          node.type === "primitive" &&
+          node.part === "Root"
+            ? { bindings: [{ name: "visible", expression: "visible" }] }
+            : {}),
           ...(isCombobox && node.type === "primitive" && node.part === "Root"
             ? {
                 bindings: ["inputValue", "open", "value"].map((name) => ({
@@ -849,16 +864,6 @@ export function projectSvelteStyledComponent(
             },
           ];
         }
-        if (isNavigationMenu && node.type === "primitive" && node.part === "Root") {
-          projected.children = [
-            {
-              type: "snippet-definition",
-              name: "children",
-              parameters: ["acceptedValue"],
-              children: projected.children,
-            },
-          ];
-        }
         // Svelte 5.29 requires an array for a multiple binding. An omitted value
         // keeps the select unbound so the browser owns selected options and reset.
         if (isNativeForm && node.type === "element" && node.tag === "select") {
@@ -931,7 +936,9 @@ export function projectSvelteStyledComponent(
           selfClosing: false,
           ...(isSpinner ? { bindings: [{ name: "this", expression: "ref" }] } : {}),
           attrs: [
-            ...node.asset.attributes.map(literal),
+            ...node.asset.attributes
+              .filter((attr) => supportsSvelteScope(attr.targetScopes))
+              .map(literal),
             ...attrs.filter((attr) => !node.asset!.omittedAttributes?.includes(attr.name)),
           ],
           children: node.asset.children.map((child) => ({
@@ -1001,6 +1008,7 @@ export function projectSvelteStyledComponent(
     imports,
     exportName: component.exportName,
     fileName: `${component.exportName}.svelte`,
+    ...(component.typeParameters?.length ? { typeParameters: component.typeParameters } : {}),
     variables,
     render,
   };
@@ -1065,6 +1073,13 @@ function projectPrimitiveFacade(
 ): SvelteStyledGroupProjection["primitiveFacade"] {
   const facade = group.primitiveFacadeExports;
   if (!facade) return;
+  // The chart index exports its helpers itself, so a chart page needs one component import.
+  if (group.component === "chart" && facade.component === "chart")
+    return {
+      source: sveltePrimitiveImport(facade.component, options),
+      types: [...facade.types],
+      values: [...facade.values, ...(facade.frameworkValues?.svelte ?? [])],
+    };
   const inventory = getPrimitiveInventoryEntry(facade.component);
   const validNames = (names: string[], allowed: readonly string[] | undefined) =>
     allowed !== undefined &&

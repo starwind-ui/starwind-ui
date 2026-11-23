@@ -27,3 +27,17 @@ export function initialNullableModelValue(
 export function initialListValue(defaultValue: string): string {
   return `${defaultValue} ?? []`;
 }
+
+/**
+ * A `data-default-*` marker states the default prop as read once at mount, and only when it is
+ * true. A held value, interaction, readback, a later prop write, and hydration never change it.
+ * Printers capture the default at mount in their own syntax and pass that read here.
+ */
+export function defaultMarker(initialDefault: string): string {
+  return `${initialDefault} ? "true" : undefined`;
+}
+
+/** A value marker such as `data-default-value` follows the same rule with the value itself. */
+export function defaultValueMarker(initialDefault: string): string {
+  return `${initialDefault} ?? undefined`;
+}

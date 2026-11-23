@@ -21,6 +21,8 @@ export type StyledAdapterContract = {
 
 export type StyledPrimitiveFacadeExportsContract = {
   component: string;
+  /** Extra values that one framework's Styled index re-exports, such as page-script helpers. */
+  frameworkValues?: Partial<Record<FrameworkTarget, string[]>>;
   types: string[];
   values: string[];
 };
@@ -32,7 +34,17 @@ export type StyledAdapterContractAnnotations = {
 };
 
 export type StyledComponentDependenciesContract = {
+  /**
+   * Package floors that installs of this Styled component need. The CLI registry uses the
+   * declared range in place of the range the demo app pins for the same package.
+   */
+  packages?: StyledPackageRequirementContract[];
   styledComponents?: string[];
+};
+
+export type StyledPackageRequirementContract = {
+  name: string;
+  range: string;
 };
 
 export type StyledComponentStylesContract = {
@@ -70,6 +82,27 @@ export type StyledComponentContract = {
   variables?: LocalVariableContract[];
   imports?: ImportContract[];
   render: RenderNode[];
+  /**
+   * Named slots that the component reads without rendering a slot node, such as a Vue
+   * `$slots.name` check in an attribute value. Writers declare them with the rendered slots.
+   */
+  slots?: StyledSlotDeclarationContract[];
+  /**
+   * Type parameters of the generated component. Each target writer prints them on the component
+   * and on its exported props type, so consumers keep type inference for typed props.
+   */
+  typeParameters?: StyledTypeParameterContract[];
+};
+
+export type StyledSlotDeclarationContract = {
+  frameworks?: FrameworkTarget[];
+  name: string;
+};
+
+export type StyledTypeParameterContract = {
+  constraint?: string;
+  default?: string;
+  name: string;
 };
 
 export type StyledComponentForwardRefContract = {
@@ -110,6 +143,8 @@ export type ComponentPropsExtendContract = {
 };
 
 export type PropFieldContract = {
+  /** Line comment above the field, such as a lint disable with its reason. React prints it. */
+  comment?: string;
   frameworks?: FrameworkTarget[];
   name: string;
   optional?: boolean;
@@ -202,6 +237,8 @@ export type ComponentNode = {
 };
 
 export type ElementNode = {
+  /** Targets that omit generated children when a bound tag selects a void HTML element. */
+  omitVoidChildrenIn?: FrameworkTarget[];
   attrs?: AttributeContract[];
   children?: RenderNode[];
   leadingComments?: CommentContract[];

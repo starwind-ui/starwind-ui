@@ -1,8 +1,7 @@
 import * as p from "@clack/prompts";
-
+import type { StarwindFramework } from "@/utils/config.js";
 import { fileExists, readJsoncFile, writeJsonFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
-import type { StarwindFramework } from "@/utils/config.js";
 
 /**
  * Required tsconfig.json configuration for Starwind UI
@@ -258,7 +257,7 @@ export async function setupTsConfig(
 
 function getSourceAliasPaths(existingConfig: TsConfig): TsConfigPaths {
   return {
-    ...(existingConfig.compilerOptions?.paths ?? {}),
+    ...existingConfig.compilerOptions?.paths,
     "@/*": [
       "./src/*",
       ...(existingConfig.compilerOptions?.paths?.["@/*"] ?? []).filter(
@@ -270,7 +269,7 @@ function getSourceAliasPaths(existingConfig: TsConfig): TsConfigPaths {
 
 export function mergeVueTsConfig(existingConfig: TsConfig, includeJavaScript = false): TsConfig {
   const compilerOptions = {
-    ...(existingConfig.compilerOptions ?? {}),
+    ...existingConfig.compilerOptions,
     ...(includeJavaScript
       ? {
           allowJs: true,
@@ -318,7 +317,7 @@ export function mergeSvelteTsConfig(existingConfig: TsConfig): TsConfig {
   return {
     ...existingConfig,
     compilerOptions: {
-      ...(existingConfig.compilerOptions ?? {}),
+      ...existingConfig.compilerOptions,
       paths: getSourceAliasPaths(existingConfig),
     },
   };
@@ -357,7 +356,7 @@ export async function setupAstroReactTsConfig(): Promise<boolean> {
       ? ((await readJsoncFile(TSCONFIG_PATH)) as TsConfig)
       : createDefaultTsConfig("astro");
     const compilerOptions = {
-      ...(existingConfig.compilerOptions ?? {}),
+      ...existingConfig.compilerOptions,
       jsx: "react-jsx",
       jsxImportSource: "react",
     };

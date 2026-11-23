@@ -145,7 +145,6 @@ export type FrameworkAdapterTargetPrimitiveEditableContentMarker = {
 };
 
 export type FrameworkAdapterTargetCliRegistryMetadata = {
-  exactAdapterPackageVersion?: true;
   generatedImportCandidateExtensions: readonly string[];
   packageMetadataSources?: readonly string[];
   primitiveArtifact?: {
@@ -269,7 +268,9 @@ export function getAdapterChildElements(
   asChild: readonly PrimitiveAsChildContract[] | undefined,
 ): AdapterChildElements {
   return Object.fromEntries(
-    (asChild ?? []).flatMap(({ childElement, part }) => (childElement ? [[part, childElement]] : [])),
+    (asChild ?? []).flatMap(({ childElement, part }) =>
+      childElement ? [[part, childElement]] : [],
+    ),
   );
 }
 
@@ -2360,6 +2361,8 @@ export type AdapterRangeControlFacts = {
   };
   state: {
     getter: string;
+    /** Contract fact: a later defined input on a Runtime-owned model is a silent command. */
+    laterDefined?: "silent-command";
     name: string;
     syncEvent: string;
     type: string;
@@ -2490,6 +2493,8 @@ export type AdapterHiddenInputVisualSlotFacts = {
   };
   state: {
     getter: string;
+    /** Contract fact: a later defined input on a Runtime-owned model is a silent command. */
+    laterDefined?: "silent-command";
     name: string;
     type: string;
   };

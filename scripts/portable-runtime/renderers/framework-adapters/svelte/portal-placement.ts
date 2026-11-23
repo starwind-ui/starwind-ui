@@ -27,13 +27,21 @@ export function createPortalPlacement(
   let stopDocumentObservation: (() => void) | undefined;
   let placedTarget: HTMLElement | null = null;
 
+  const isOwnerHTMLElement = (value: unknown): value is HTMLElement => {
+    const Constructor = element.ownerDocument.defaultView?.HTMLElement ?? HTMLElement;
+    return (
+      (value instanceof Constructor || value instanceof HTMLElement) &&
+      value.ownerDocument === element.ownerDocument
+    );
+  };
+
   const move = (parent: Node, next: Node | null = null) => {
     if (!preserveFocus) {
       parent.insertBefore(element, next);
       return;
     }
     const focused = element.ownerDocument.activeElement;
-    const restoreFocus = focused instanceof HTMLElement && element.contains(focused);
+    const restoreFocus = isOwnerHTMLElement(focused) && element.contains(focused);
     parent.insertBefore(element, next);
     if (restoreFocus && focused.isConnected) focused.focus({ preventScroll: true });
   };
@@ -69,12 +77,12 @@ export function createPortalPlacement(
     if (element.parentNode === authoredParent) return () => {};
     const parent = element.parentNode;
     const next = element.nextSibling;
-    if (reportPreparation && parent instanceof HTMLElement) runtime.reportPortalPlacement(element, { ready: false, target: parent });
+    if (reportPreparation && isOwnerHTMLElement(parent)) runtime.reportPortalPlacement(element, { ready: false, target: parent });
     restore();
     return () => {
       if (!parent) return;
       move(parent, next?.parentNode === parent ? next : null);
-      if (reportPreparation && parent instanceof HTMLElement) runtime.reportPortalPlacement(element, { ready: true, target: parent });
+      if (reportPreparation && isOwnerHTMLElement(parent)) runtime.reportPortalPlacement(element, { ready: true, target: parent });
     };
   };
   const update = (active: boolean, container: string | HTMLElement | undefined) => {

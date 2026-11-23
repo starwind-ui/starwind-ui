@@ -1,9 +1,9 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { execa } from "execa";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildInstallDependencyArgs,
@@ -11,6 +11,8 @@ import {
   detectPackageManager,
   installDependencies,
   installDependenciesWithProgress,
+  isPnpmWorkspaceRoot,
+  resolveInstallDependencyCommands,
 } from "../../src/utils/package-manager.js";
 import { isExactPackageSpec, parsePackageSpec } from "../../src/utils/package-spec.js";
 
@@ -170,9 +172,24 @@ describe("package manager dependency arguments", () => {
   });
 
   it("passes the separated arguments to execa", async () => {
-    await installDependencies(["react@^18.0.0"], "pnpm", true, true);
+    // The root Vitest run starts in the monorepo root, which holds a pnpm-workspace.yaml file.
+    const cwd = mkdtempSync(join(tmpdir(), "starwind-install-dependencies-args-"));
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(cwd);
 
-    expect(mockExeca).toHaveBeenCalledWith("pnpm", ["add", "-D", "--force", "--", "react@^18.0.0"]);
+    try {
+      await installDependencies(["react@^18.0.0"], "pnpm", true, true);
+
+      expect(mockExeca).toHaveBeenCalledWith("pnpm", [
+        "add",
+        "-D",
+        "--force",
+        "--",
+        "react@^18.0.0",
+      ]);
+    } finally {
+      cwdSpy.mockRestore();
+      rmSync(cwd, { recursive: true, force: true });
+    }
   });
 
   it("shows installation progress for the selected package manager", async () => {
@@ -232,6 +249,92 @@ describe("package manager dependency arguments", () => {
       expect(mockExeca).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("pnpm workspace root installs", () => {
+  let root: string;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    root = mkdtempSync(join(tmpdir(), "starwind-pnpm-workspace-"));
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  function writeWorkspace(contents: string) {
+    writeFileSync(join(root, "pnpm-workspace.yaml"), contents);
+  }
+
+  it("adds -w at the root of a workspace with package globs", () => {
+    writeWorkspace('packages:\n  - "apps/*"\n  - "packages/*"\n');
+
+    expect(isPnpmWorkspaceRoot("pnpm", root)).toBe(true);
+    expect(resolveInstallDependencyCommands(["clsx"], "pnpm", false, false, root)).toEqual([
+      ["add", "-w", "--", "clsx"],
+    ]);
+    expect(resolveInstallDependencyCommands(["clsx"], "pnpm", true, true, root)).toEqual([
+      ["add", "-w", "-D", "--force", "--", "clsx"],
+    ]);
+  });
+
+  it("adds -w at the root of a settings-only workspace file, where pnpm accepts it", () => {
+    writeWorkspace("onlyBuiltDependencies:\n  - esbuild\n");
+
+    expect(resolveInstallDependencyCommands(["clsx"], "pnpm", false, false, root)).toEqual([
+      ["add", "-w", "--", "clsx"],
+    ]);
+  });
+
+  it("leaves -w out inside a workspace package", () => {
+    writeWorkspace('packages:\n  - "apps/*"\n');
+    const app = join(root, "apps", "web");
+    mkdirSync(app, { recursive: true });
+
+    expect(isPnpmWorkspaceRoot("pnpm", app)).toBe(false);
+    expect(resolveInstallDependencyCommands(["clsx"], "pnpm", false, false, app)).toEqual([
+      ["add", "--", "clsx"],
+    ]);
+  });
+
+  it("leaves -w out when the project has no workspace file", () => {
+    expect(isPnpmWorkspaceRoot("pnpm", root)).toBe(false);
+    expect(resolveInstallDependencyCommands(["clsx"], "pnpm", false, false, root)).toEqual([
+      ["add", "--", "clsx"],
+    ]);
+  });
+
+  it.each([
+    ["npm", [["install", "--", "clsx"]]],
+    ["yarn", [["add", "--", "clsx"]]],
+    ["bun", [["add", "--", "clsx"]]],
+  ] as const)("keeps %s commands unchanged next to a pnpm workspace file", (pm, expected) => {
+    writeWorkspace('packages:\n  - "apps/*"\n');
+
+    expect(isPnpmWorkspaceRoot(pm, root)).toBe(false);
+    expect(resolveInstallDependencyCommands(["clsx"], pm, false, false, root)).toEqual(expected);
+    expect(buildInstallDependencyArgs(["clsx"], pm, false, false, true)).toEqual(expected[0]);
+  });
+
+  it("adds -w once to a pnpm list that mixes exact versions and ranges", () => {
+    expect(
+      buildInstallDependencyCommands(["react@^18.0.0", "clsx@2.1.1"], "pnpm", false, false, true),
+    ).toEqual([["add", "-w", "--", "react@^18.0.0", "clsx@2.1.1"]]);
+  });
+
+  it("runs pnpm with -w from the workspace root", async () => {
+    writeWorkspace('packages:\n  - "apps/*"\n  - "packages/*"\n');
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(root);
+
+    try {
+      await installDependencies(["clsx"], "pnpm");
+
+      expect(mockExeca).toHaveBeenCalledWith("pnpm", ["add", "-w", "--", "clsx"]);
+    } finally {
+      cwdSpy.mockRestore();
+    }
+  });
 });
 
 describe("package manager detection", () => {

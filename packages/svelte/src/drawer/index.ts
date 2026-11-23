@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import DrawerBackdrop from "./DrawerBackdrop.svelte";
 import DrawerClose from "./DrawerClose.svelte";
 import DrawerDescription from "./DrawerDescription.svelte";
@@ -41,6 +39,6 @@ export {
 };
 
 export default Drawer;
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
 
 export type { DrawerCloseCompleteDetails, DrawerOpenChangeDetails } from "@starwind-ui/runtime";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";

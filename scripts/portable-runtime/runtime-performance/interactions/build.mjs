@@ -3,7 +3,6 @@ import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
-  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,

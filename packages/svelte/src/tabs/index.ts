@@ -3,12 +3,12 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
 import TabsIndicator from "./TabsIndicator.svelte";
 import TabsList from "./TabsList.svelte";
 import TabsPanel from "./TabsPanel.svelte";
 import TabsRoot from "./TabsRoot.svelte";
 import TabsTab from "./TabsTab.svelte";
+
 const Tabs = {
   Root: TabsRoot,
   List: TabsList,
@@ -16,6 +16,7 @@ const Tabs = {
   Panel: TabsPanel,
   Indicator: TabsIndicator,
 };
+
 export { Tabs, TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTab };
 export default Tabs;
 export type { TabsOrientation, TabsValue, TabsValueChangeDetails } from "@starwind-ui/runtime";

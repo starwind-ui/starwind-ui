@@ -1,9 +1,9 @@
-import { runtimeAdapterContracts } from "../../../contracts/primitive/representatives.js";
-import { writeGeneratedFile } from "../../../renderers/shared.js";
-import { type LayeredDocsMetadata } from "../types.js";
 import fs from "node:fs";
 import { mkdir, readdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
+import { runtimeAdapterContracts } from "../../../contracts/primitive/representatives.js";
+import { writeGeneratedFile } from "../../../renderers/shared.js";
+import type { LayeredDocsMetadata } from "../types.js";
 import { buildLayeredDocsMetadata } from "./build-metadata.js";
 import { GENERATED_MDX_MARKER_TEXT } from "./constants.js";
 import { findMissingPublishedPages } from "./docs-files.js";
@@ -23,11 +23,11 @@ import {
   renderRuntimeIndexPage,
 } from "./render-reference.js";
 import { renderCanonicalMetadataSource, renderDocsExportSource } from "./serialize-metadata.js";
-import {
-  validateLayeredDocsMetadata as validateLayeredDocsMetadataCore,
-  validateLayeredDocsMetadataArtifact as validateLayeredDocsMetadataArtifactCore,
-} from "./validate-metadata.js";
 import { formatError } from "./shared.js";
+import {
+  validateLayeredDocsMetadataArtifact as validateLayeredDocsMetadataArtifactCore,
+  validateLayeredDocsMetadata as validateLayeredDocsMetadataCore,
+} from "./validate-metadata.js";
 
 export const generateLayeredDocsMetadata = (
   options: GenerateLayeredDocsMetadataOptions = {},
@@ -187,6 +187,12 @@ const exportDocsMetadata = (
     }
   }
 
+  const missingLiveDemos = findMissingPrimitiveLiveDemos(metadata, docsRoot);
+  if (missingLiveDemos.length > 0) {
+    // A generated page that imports a missing demo breaks the docs build.
+    throw new Error(missingLiveDemos.join("\n"));
+  }
+
   const docsExportDirectory = path.join(docsRoot, "src", "docs", "data", "starwind", "generated");
   const docsExportPath = path.join(docsExportDirectory, "layered-docs-metadata.ts");
 
@@ -224,7 +230,7 @@ const getDocsExportCheckFailures = async (
       expected: await renderDocsTypesExportSource(),
     },
   ];
-  const failures: string[] = [];
+  const failures: string[] = [...findMissingPrimitiveLiveDemos(metadata, docsRoot)];
 
   for (const artifact of artifacts) {
     try {
@@ -242,6 +248,13 @@ const getDocsExportCheckFailures = async (
 
   return failures;
 };
+
+const findMissingPrimitiveLiveDemos = (metadata: LayeredDocsMetadata, docsRoot: string) =>
+  metadata.primitives.flatMap(({ id, docsReference: { liveDemo } }) =>
+    liveDemo && !fs.existsSync(path.join(docsRoot, liveDemo.sourcePath))
+      ? [`${id} primitive live demo is missing at ${path.join(docsRoot, liveDemo.sourcePath)}.`]
+      : [],
+  );
 
 const renderDocsTypesExportSource = async () => {
   const canonicalTypesPath = path.join(

@@ -13,6 +13,8 @@ import Bot from "@tabler/icons/outline/robot.svg";
 import Send from "@tabler/icons/outline/send.svg";
 import Settings2 from "@tabler/icons/outline/settings-2.svg";
 import SquareTerminal from "@tabler/icons/outline/terminal-2.svg";
+import DirectionInitScript from "@/components/nav/DirectionInitScript.astro";
+import DirectionToggle from "@/components/nav/DirectionToggle.astro";
 import NestedDialogDemo from "@/components/runtime-prototype/NestedDialogDemo.astro";
 import {
   Collapsible,
@@ -108,6 +110,7 @@ const projects = [
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <ThemeInitScript />
+    <DirectionInitScript />
   </head>
 
   <body class="min-h-lvh">
@@ -238,6 +241,7 @@ const projects = [
                 Basic
               </a>
             </nav>
+            <DirectionToggle />
             <ThemeToggle />
           </header>
 

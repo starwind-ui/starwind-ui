@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-
+import { zagVueExpectedResolvedVersions } from "../package-size-vue-plan.mjs";
 import {
   createRuntimePerformanceEnvironment,
   createRuntimePerformanceResult,
@@ -13,10 +13,9 @@ import {
   buildRuntimePerformanceCandidateCeiling,
   evaluateRuntimePerformanceStability,
 } from "./statistics.mjs";
-import { zagVueExpectedResolvedVersions } from "../package-size-vue-plan.mjs";
 import {
-  VUE_PERFORMANCE_REKA_AUDIT_SOURCE,
   rekaUiExpectedResolvedVersions,
+  VUE_PERFORMANCE_REKA_AUDIT_SOURCE,
   vuePerformanceProviderRows,
 } from "./vue-plan.mjs";
 

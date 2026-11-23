@@ -4,6 +4,7 @@ import {
   avatarRecipe,
   avatarRefresh,
   avatarRefreshInputs,
+  avatarRootEventFilter,
   avatarSubscription,
 } from "../../shared-recipes/media/avatar.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
@@ -118,7 +119,7 @@ let eventRoot: HTMLElement | undefined;
 defineExpose({ element: imageRef });
 
 function handleLoadingStatusChange(event: Event): void {
-  if (event.target !== eventRoot) return;
+  ${avatarRootEventFilter("eventRoot")}
   const detail = (event as CustomEvent<${facts.event.detailsType}>).detail;
   emit("${facts.event.name}", detail.${facts.event.valueProperty}, detail);
 }
@@ -133,8 +134,9 @@ onMounted(() => {
   if (!root) return;
 
   eventRoot = root;
-  ${avatarSubscription({
-    listen: `root.addEventListener("${facts.event.domEvent}", handleLoadingStatusChange);`,
+  ${avatarSubscription(facts, {
+    root: "root",
+    handler: "handleLoadingStatusChange",
     read: `root.getAttribute("${facts.attrs.rootStatus}") as ${facts.state.type} | null`,
     notify: `emit("${facts.event.name}", status, { previousStatus: "${avatarRecipe.initialStatus}", status });`,
   })}

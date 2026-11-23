@@ -1,13 +1,13 @@
-import {
-  type ComponentGroupMetadata,
-  type LayeredDocsMetadata,
-  type PrimitiveDocsEnrichment,
-  type PrimitiveDocsExampleCoveragePolicy,
-  type PrimitiveDocsExampleRegistry,
-  type StyledDocsAnnotation,
-} from "../types.js";
 import type { RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
 import type { StyledAdapterContract } from "../../../contracts/styled/types.js";
+import type {
+  ComponentGroupMetadata,
+  LayeredDocsMetadata,
+  PrimitiveDocsEnrichment,
+  PrimitiveDocsExampleCoveragePolicy,
+  PrimitiveDocsExampleRegistry,
+  StyledDocsAnnotation,
+} from "../types.js";
 
 export type LayeredDocsRuntimeContract = RuntimeAdapterContract;
 

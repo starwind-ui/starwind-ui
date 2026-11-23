@@ -1,0 +1,13 @@
+{
+  "impact": "behavior",
+  "primitives": {
+    "carousel": "minor",
+    "dialog": "minor",
+    "input-otp": "minor",
+    "radio-group": "minor",
+    "scroll-area": "minor",
+    "slider": "minor",
+    "tabs": "minor",
+    "toggle-group": "minor"
+  }
+}

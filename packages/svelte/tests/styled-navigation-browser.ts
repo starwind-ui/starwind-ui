@@ -1,13 +1,13 @@
-import { verifyStyledButtonAttachmentIsolation } from "./styled-button-attachments-browser.js";
-import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
+import type { DistConsumer } from "./dist-consumer.js";
+import { verifyStyledButtonAttachmentIsolation } from "./styled-button-attachments-browser.js";
+import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 import { navigationImports, navigationParts } from "./styled-navigation-consumer.js";
 
 export async function verifyStyledNavigationBrowser(consumer: DistConsumer) {

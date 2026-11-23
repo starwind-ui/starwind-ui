@@ -1,8 +1,9 @@
 "use client";
 
-import SwitchPrimitive from "@starwind-ui/react/switch";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";
+import "./styles.css";
+import SwitchPrimitive from "@starwind-ui/react/switch";
 import { switchButton, switchLabel, switchToggle, switchWrapper } from "./variants";
 
 export type SwitchProps = Omit<

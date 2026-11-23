@@ -1,8 +1,12 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const carouselStyledContract: StyledAdapterContract = {
   component: "carousel",
-  dependencies: { styledComponents: ["button"] },
+  dependencies: {
+    packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT],
+    styledComponents: ["button"],
+  },
   publicExports: [
     "Carousel",
     "CarouselContent",
@@ -31,38 +35,31 @@ export const carouselStyledContract: StyledAdapterContract = {
   },
   variants: {
     carousel: {
-      base: "group/carousel relative",
-    },
-    carouselContent: {
-      base: "overflow-hidden",
-    },
-    carouselContainer: {
+      // Every root resets these inherited values, so nested parts use their own axis.
       base: [
-        "flex group-data-[axis=y]/carousel:flex-col",
-        "group-data-[axis=x]/carousel:-ml-4",
-        "group-data-[axis=y]/carousel:-mt-4",
+        "group/carousel relative [--sw-carousel-outside:calc(var(--spacing)*-12)]",
+        "[--sw-carousel-flow:row] [--sw-carousel-inline-gap:calc(var(--spacing)*4)] [--sw-carousel-block-gap:0px]",
+        // Insets use CSS top/right/bottom/left order. Each vertical control anchors at left 50%.
+        "[--sw-carousel-previous:50%_auto_auto_var(--sw-carousel-outside)] [--sw-carousel-next:50%_var(--sw-carousel-outside)_auto_auto]",
+        "[--sw-carousel-shift:0_-50%] [--sw-carousel-turn:none] [--sw-carousel-icon-turn:none]",
+        "rtl:data-[axis=x]:[--sw-carousel-previous:50%_var(--sw-carousel-outside)_auto_auto] rtl:data-[axis=x]:[--sw-carousel-next:50%_auto_auto_var(--sw-carousel-outside)] rtl:data-[axis=x]:[--sw-carousel-icon-turn:180deg]",
+        "data-[axis=y]:[--sw-carousel-flow:column] data-[axis=y]:[--sw-carousel-inline-gap:0px] data-[axis=y]:[--sw-carousel-block-gap:calc(var(--spacing)*4)]",
+        "data-[axis=y]:[--sw-carousel-previous:var(--sw-carousel-outside)_auto_auto_50%] data-[axis=y]:[--sw-carousel-next:auto_auto_var(--sw-carousel-outside)_50%]",
+        "data-[axis=y]:[--sw-carousel-shift:-50%_0] data-[axis=y]:[--sw-carousel-turn:90deg]",
       ],
+    },
+    carouselContent: { base: "overflow-hidden" },
+    carouselContainer: {
+      base: "flex [flex-direction:var(--sw-carousel-flow)] -ms-(--sw-carousel-inline-gap) -mt-(--sw-carousel-block-gap)",
     },
     carouselItem: {
-      base: [
-        "min-w-0 shrink-0 grow-0 basis-full",
-        "group-data-[axis=x]/carousel:pl-4",
-        "group-data-[axis=y]/carousel:pt-4",
-      ],
+      base: "min-w-0 shrink-0 grow-0 basis-full ps-(--sw-carousel-inline-gap) pt-(--sw-carousel-block-gap)",
     },
     carouselNext: {
-      base: [
-        "absolute size-8 rounded-full",
-        "group-data-[axis=x]/carousel:top-1/2 group-data-[axis=x]/carousel:-right-12 group-data-[axis=x]/carousel:-translate-y-1/2",
-        "group-data-[axis=y]/carousel:-bottom-12 group-data-[axis=y]/carousel:left-1/2 group-data-[axis=y]/carousel:-translate-x-1/2 group-data-[axis=y]/carousel:rotate-90",
-      ],
+      base: "absolute inset-(--sw-carousel-next) size-8 [translate:var(--sw-carousel-shift)] rotate-(--sw-carousel-turn) rounded-full",
     },
     carouselPrevious: {
-      base: [
-        "absolute size-8 rounded-full",
-        "group-data-[axis=x]/carousel:top-1/2 group-data-[axis=x]/carousel:-left-12 group-data-[axis=x]/carousel:-translate-y-1/2",
-        "group-data-[axis=y]/carousel:-top-12 group-data-[axis=y]/carousel:left-1/2 group-data-[axis=y]/carousel:-translate-x-1/2 group-data-[axis=y]/carousel:rotate-90",
-      ],
+      base: "absolute inset-(--sw-carousel-previous) size-8 [translate:var(--sw-carousel-shift)] rotate-(--sw-carousel-turn) rounded-full",
     },
   },
   components: [
@@ -281,7 +278,16 @@ export const carouselStyledContract: StyledAdapterContract = {
                 {
                   type: "icon",
                   importName: "ChevronLeft",
-                  attrs: [{ name: "aria-hidden", value: { type: "literal", value: true } }],
+                  attrs: [
+                    {
+                      name: "class",
+                      value: {
+                        type: "literal",
+                        value: "rotate-(--sw-carousel-icon-turn)",
+                      },
+                    },
+                    { name: "aria-hidden", value: { type: "literal", value: true } },
+                  ],
                 },
                 {
                   type: "element",
@@ -354,7 +360,16 @@ export const carouselStyledContract: StyledAdapterContract = {
                 {
                   type: "icon",
                   importName: "ChevronRight",
-                  attrs: [{ name: "aria-hidden", value: { type: "literal", value: true } }],
+                  attrs: [
+                    {
+                      name: "class",
+                      value: {
+                        type: "literal",
+                        value: "rotate-(--sw-carousel-icon-turn)",
+                      },
+                    },
+                    { name: "aria-hidden", value: { type: "literal", value: true } },
+                  ],
                 },
                 {
                   type: "element",

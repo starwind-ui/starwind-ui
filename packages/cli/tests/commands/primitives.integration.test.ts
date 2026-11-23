@@ -7,18 +7,14 @@ import { fileURLToPath } from "node:url";
 
 import * as clackPrompts from "@clack/prompts";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-
-import { primitivesAdd, primitivesUpdate } from "../../src/commands/primitives.js";
-import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
-import {
-  getPrimitiveComponents,
-  type PrimitiveVendoringArtifactSet,
-} from "../../src/utils/primitive-component.js";
 import {
   buildPrimitiveVendoringArtifacts,
   createCliRegistryBuildPolicy,
 } from "../../../../scripts/portable-runtime/generate-cli-registry.js";
 import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
+import { primitivesAdd, primitivesUpdate } from "../../src/commands/primitives.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import type { PrimitiveVendoringArtifactSet } from "../../src/utils/primitive-component.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
@@ -392,7 +388,7 @@ describe.sequential("primitives add integration", () => {
   it("vendors and updates authoritative generated Vue primitive families with exact provenance", async () => {
     await writeFile(
       "package.json",
-      JSON.stringify({ dependencies: { vue: "^3.5.0" } }, null, 2),
+      JSON.stringify({ dependencies: { vue: "^3.5.21" } }, null, 2),
       "utf-8",
     );
     const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
@@ -431,8 +427,8 @@ describe.sequential("primitives add integration", () => {
       expect(artifact.version).toBe(primitiveVersions.primitives[artifact.component]);
       expect(artifact.packageRequirements).toEqual(
         expect.arrayContaining([
-          { name: "@starwind-ui/runtime", range: runtimePackage.version },
-          { name: "vue", range: ">=3.5" },
+          { name: "@starwind-ui/runtime", range: `^${runtimePackage.version}` },
+          { name: "vue", range: ">=3.5.21" },
         ]),
       );
       for (const file of artifact.files) {

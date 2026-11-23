@@ -1,8 +1,7 @@
+import * as PreviewCard from "@starwind-ui/vue/preview-card";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import * as PreviewCard from "@starwind-ui/vue/preview-card";
 
 describe("Vue Preview Card SSR", () => {
   it("renders deterministic inline portal and full presence anatomy", async () => {

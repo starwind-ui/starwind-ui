@@ -23,11 +23,11 @@ export const toggleGroupItem = tv({
     "group-data-[size=md]/toggle-group:h-11 group-data-[size=md]/toggle-group:min-w-11 group-data-[size=md]/toggle-group:px-2.5 group-data-[size=md]/toggle-group:text-base",
     "group-data-[size=lg]/toggle-group:h-12 group-data-[size=lg]/toggle-group:min-w-12 group-data-[size=lg]/toggle-group:px-3 group-data-[size=lg]/toggle-group:text-lg",
     "group-data-[spacing=0]/toggle-group:rounded-none group-data-[spacing=0]/toggle-group:px-2",
-    "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5",
-    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-l-lg group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-t-lg",
-    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-r-lg group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-b-lg",
-    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-l-0 group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-t-0",
-    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-l group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-t",
+    "group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pe-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:ps-1.5",
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-s-lg group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-t-lg",
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-e-lg group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-b-lg",
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-s-0 group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-t-0",
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-s group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:first:border-t",
   ],
   variants: {
     variant: {

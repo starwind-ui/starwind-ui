@@ -1,17 +1,18 @@
 # Vue Framework Adapter
 
-This Framework Adapter home generates the Vue 3.5 public beta. The `@starwind-ui/vue` package
-uses the `beta` npm channel and stays outside the stable Runtime, Astro, and React fixed package
-group. Read `packages/vue/package.json` for its current version. All four public-support flags are enabled.
+This Framework Adapter home generates the stable Vue 3.5 Primitive adapters. The `@starwind-ui/vue`
+package publishes on `latest` in the Runtime fixed package group with Runtime, Astro, React, and
+Svelte. It left the public beta in the 1.6.0 release. Read `packages/vue/package.json` for its
+current version. All four public-support flags are enabled.
 
 `inventory.ts` is the authoritative inventory. The current Primitive surface contains Accordion,
-Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Color Picker,
+Alert Dialog, Avatar, Button, Carousel, Chart, Checkbox, Checkbox Group, Collapsible, Color Picker,
 Combobox, Context Menu, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, Input OTP, Menu,
 Navigation Menu, Popover, Preview Card, Progress, Radio, Radio Group, Scroll Area, Select, Sidebar,
 Slider, Switch, Tabs, Toast, Toggle, Toggle Group, Tooltip, and the manual Theme facade.
 
-The complete Styled surface contains 54 portable roots exactly once: Accordion, Alert
-Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Combobox, Color Picker,
+The complete Styled surface contains 55 portable roots exactly once: Accordion, Alert
+Dialog, Avatar, Button, Carousel, Chart, Checkbox, Checkbox Group, Collapsible, Combobox, Color Picker,
 Context Menu, Dialog, Dropzone, Dropdown, Field, Sheet, Form, Hover Card, Input, Input OTP,
 Navigation Menu, Popover, Progress, Radio Group, Scroll Area, Select, Separator, Sidebar, Slider,
 Switch, Tabs, Theme Toggle, Toast, Toggle, Toggle Group, Tooltip, Alert, Aspect Ratio, Badge,
@@ -30,7 +31,7 @@ fixtures. They do not define target support or package output. The legacy Collap
 fixture remains isolated printer-unit evidence.
 
 The registered target generates the public Primitive package, Vue demo, and CLI registry output.
-The beta supports Vite with Vue, Astro with Vue, Nuxt 3 and 4, Laravel with Inertia Vue, and Quasar
+The target supports Vite with Vue, Astro with Vue, Nuxt 3 and 4, Laravel with Inertia Vue, and Quasar
 CLI with Vite in SPA or SSR mode.
 
 `public-contract.ts` is the typed, target-local source of truth for Vue 3.5 public naming,
@@ -48,7 +49,7 @@ than an active target.
 ## Historical Pre-Beta Evidence
 
 The Orders 11–14 records below describe the private verification phase. Package versions, support
-flags, and roadmap actions in these records apply to that phase. The current public beta status
+flags, and roadmap actions in these records apply to that phase. The current stable status
 is defined above and in `public-contract.ts`.
 
 ### Portable Styled Closure Verdict
@@ -57,7 +58,7 @@ Order 11 closed with a PROCEED depth verdict on 2026-08-06. The Styled Output Mo
 target `styled` capability form the small interface. Contracts own component composition and shared
 render facts. This target owns Vue props, attrs, slots, refs, SFC syntax, and deterministic output.
 
-The exact 54-contract inventory, Image exclusion, component-identity scans, deletion and byte
+The order 11 54-contract inventory, Image exclusion, component-identity scans, deletion and byte
 parity, typechecking, SSR, hydration, browser smoke, visual review, private quarantine, protected
 Astro and React output, bundle guard, and current size guard pass. No closure component adds
 Vue-local behavior, lifecycle, a component printer, or handwritten SFC input. Vue remains private
@@ -93,9 +94,9 @@ minification, static-import graph, and Node zlib level-9 gzip method. Vue stays 
 rows. The adapter-only headline also externalizes every Runtime entry, while the combined headline
 bundles the built Runtime alias. Dynamic chunks are reported separately from headline static rows.
 
-The private inventory includes 36 Runtime-backed cold imports and one Theme helper row. It also
+The private inventory includes 37 Runtime-backed cold imports and one Theme helper row. It also
 measures the complete package root, the 30-family matched Zag Vue support set, the npm-pack-equivalent
-Primitive payload, and the separate 54-root Styled copied-source tree. The comparator set pins the
+Primitive payload, and the separate 55-root Styled copied-source tree. The comparator set pins the
 Vue adapter, infrastructure, and 26 deduplicated machines to exact version `1.42.0`.
 
 The accepted baseline uses three serialized runs from one Linux x64 environment with Node 24.19.0,

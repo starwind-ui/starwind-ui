@@ -61,6 +61,7 @@ function readInputs() {
 function connectOtp(root: HTMLElement) {
   let previous = readInputs();
   const controlled = previous.value !== undefined;
+  let retained = previous.value;
   let instance: ReturnType<typeof createInputOtp>;
   let unsubscribe = () => {};
   let disposed = false;
@@ -73,6 +74,8 @@ function connectOtp(root: HTMLElement) {
     }
   }
   function synchronize(value: string | undefined): void {
+    // A later undefined keeps the last controlled value for the mounted lifetime.
+    if (controlled) value = retained = value ?? retained;
     if (value === undefined) return;
     if (instance.getValue() !== value) instance.setValue(value, { emit: false });
     publishCurrent();
@@ -165,7 +168,8 @@ function connectOtp(root: HTMLElement) {
           ...(next.required !== previous.required ? { required: next.required } : {}),
         });
       }
-      if (controlled) synchronize(next.value);
+      // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
+      if (next.value !== previous.value || controlled) synchronize(next.value);
       publishCurrent();
       bindReset();
       previous = next;

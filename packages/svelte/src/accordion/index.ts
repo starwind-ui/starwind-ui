@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import AccordionHeader from "./AccordionHeader.svelte";
 import AccordionItem from "./AccordionItem.svelte";
 import AccordionPanel from "./AccordionPanel.svelte";

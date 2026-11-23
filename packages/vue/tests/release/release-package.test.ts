@@ -190,6 +190,34 @@ const EXPECTED_CAROUSEL_EXPORTS = [
   "createCarousel",
   "default",
 ].sort();
+const EXPECTED_CHART_EXPORTS = [
+  "Chart",
+  "ChartLegend",
+  "ChartLegendIcon",
+  "ChartLegendItem",
+  "ChartLegendItems",
+  "ChartLegendLabel",
+  "ChartLegendSwatch",
+  "ChartPrimitive",
+  "ChartRoot",
+  "ChartStyle",
+  "ChartSurface",
+  "ChartTooltip",
+  "ChartTooltipContent",
+  "ChartTooltipIcon",
+  "ChartTooltipIndicator",
+  "ChartTooltipItem",
+  "ChartTooltipItems",
+  "ChartTooltipLabel",
+  "ChartTooltipName",
+  "ChartTooltipValue",
+  "default",
+  "defineChartModule",
+  "isChartIcon",
+  "tooltipView",
+  "useChartRoot",
+  "useChartTooltipBody",
+].sort();
 const EXPECTED_AVATAR_EXPORTS = [
   "Avatar",
   "AvatarFallback",
@@ -252,7 +280,6 @@ const EXPECTED_DIALOG_EXPORTS = [
   "Dialog",
   "DialogBackdrop",
   "DialogClose",
-  "DialogContext",
   "DialogDescription",
   "DialogPopup",
   "DialogRoot",
@@ -264,7 +291,6 @@ const EXPECTED_DRAWER_EXPORTS = [
   "Drawer",
   "DrawerBackdrop",
   "DrawerClose",
-  "DrawerContext",
   "DrawerDescription",
   "DrawerPopup",
   "DrawerPortal",
@@ -287,7 +313,6 @@ const EXPECTED_ALERT_DIALOG_EXPORTS = [
   "AlertDialog",
   "AlertDialogBackdrop",
   "AlertDialogClose",
-  "AlertDialogContext",
   "AlertDialogDescription",
   "AlertDialogPopup",
   "AlertDialogPortal",
@@ -407,8 +432,8 @@ const EXPECTED_TOGGLE_GROUP_EXPORTS = [
 const EXPECTED_ENTRY_JAVA_SCRIPT = vuePackageSubpaths
   .map(({ exportTarget }) => exportTarget.import.replace("./dist/", ""))
   .sort();
-// Native overlay controls add one shared helper chunk to the existing helper inventory.
-const EXPECTED_SHARED_JAVA_SCRIPT_CHUNKS = vuePackageSubpaths.length + 8;
+// Native overlay controls and the asChild target resolver each add one shared helper chunk.
+const EXPECTED_SHARED_JAVA_SCRIPT_CHUNKS = vuePackageSubpaths.length + 9;
 
 describe("release-like @starwind-ui/vue package", () => {
   it("imports the exact built root and component subpath values", async () => {
@@ -419,6 +444,7 @@ describe("release-like @starwind-ui/vue package", () => {
     const avatar = modules["./avatar"]!;
     const button = modules["./button"]!;
     const carousel = modules["./carousel"]!;
+    const chart = modules["./chart"]!;
     const checkbox = modules["./checkbox"]!;
     const checkboxGroup = modules["./checkbox-group"]!;
     const collapsible = modules["./collapsible"]!;
@@ -457,6 +483,7 @@ describe("release-like @starwind-ui/vue package", () => {
     expect(Object.keys(avatar).sort()).toEqual(EXPECTED_AVATAR_EXPORTS);
     expect(Object.keys(button).sort()).toEqual(EXPECTED_BUTTON_EXPORTS);
     expect(Object.keys(carousel).sort()).toEqual(EXPECTED_CAROUSEL_EXPORTS);
+    expect(Object.keys(chart).sort()).toEqual(EXPECTED_CHART_EXPORTS);
     expect(Object.keys(checkbox).sort()).toEqual(EXPECTED_CHECKBOX_EXPORTS);
     expect(Object.keys(checkboxGroup).sort()).toEqual(EXPECTED_CHECKBOX_GROUP_EXPORTS);
     expect(Object.keys(collapsible).sort()).toEqual(EXPECTED_COLLAPSIBLE_EXPORTS);
@@ -719,6 +746,7 @@ describe("release-like @starwind-ui/vue package", () => {
           "AvatarFallback",
           ...EXPECTED_ACCORDION_EXPORTS,
           ...EXPECTED_ALERT_DIALOG_EXPORTS,
+          ...EXPECTED_CHART_EXPORTS,
           "AvatarImage",
           "AvatarRoot",
           "Avatar",
@@ -772,7 +800,9 @@ describe("release-like @starwind-ui/vue package", () => {
     const packageJson = JSON.parse(
       await readFile(path.join(repoRoot, "packages/vue/package.json"), "utf8"),
     );
-    for (const contract of Object.values(packageJson.exports) as Array<{ types: string }>) {
+    const exportTargets = Object.values(packageJson.exports) as Array<string | { types: string }>;
+    expect(packageJson.exports["./package.json"]).toBe("./package.json");
+    for (const contract of exportTargets.filter((target) => typeof target !== "string")) {
       const declaration = path.join(repoRoot, "packages/vue", contract.types.replace(/^\.\//, ""));
       expect((await stat(declaration)).isFile(), declaration).toBe(true);
       expect(await readFile(declaration, "utf8"), declaration).not.toHaveLength(0);
@@ -1318,14 +1348,12 @@ describe("release-like @starwind-ui/vue package", () => {
   });
 
   it("keeps Runtime declared and Vue external across built ESM chunks", async () => {
-    const [packageJson, runtimePackageJson] = await Promise.all([
-      readFile(path.join(repoRoot, "packages/vue/package.json"), "utf8").then(JSON.parse),
-      readFile(path.join(repoRoot, "packages/runtime/package.json"), "utf8").then(JSON.parse),
-    ]);
-    expect(packageJson.dependencies).toEqual({
-      "@starwind-ui/runtime": runtimePackageJson.version,
-    });
-    expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5" });
+    const packageJson = JSON.parse(
+      await readFile(path.join(repoRoot, "packages/vue/package.json"), "utf8"),
+    );
+    // pnpm publishes workspace:* as the exact Runtime version of the same fixed-group release.
+    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "workspace:*" });
+    expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5.21" });
 
     const javaScript = await readJavaScriptTree(path.join(repoRoot, "packages/vue/dist"));
     expect(javaScript).toMatch(/from\s*["']vue["']/);

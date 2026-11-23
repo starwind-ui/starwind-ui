@@ -7,8 +7,8 @@ import type {
   StyledAdapterContract,
   StyledComponentContract,
 } from "../../contracts/styled/types.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { supportsVueScope } from "../../renderers/framework-adapters/vue/styled.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 const GROUPS = ["breadcrumb", "card", "item", "prose", "table", "video"] as const;
 

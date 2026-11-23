@@ -1,4 +1,14 @@
 export type {
+  AdapterColorPickerComponentProjection,
+  AdapterColorPickerEvent,
+  AdapterColorPickerFacts,
+  AdapterColorPickerIndexProjection,
+  AdapterColorPickerPart,
+  AdapterColorPickerPartName,
+  AdapterColorPickerSetter,
+  AdapterColorPickerState,
+} from "../primitive-output-model/index.js";
+export type {
   StyledOutputAttribute,
   StyledOutputClientBehavior,
   StyledOutputComponent,
@@ -73,24 +83,14 @@ export {
   SVELTE_FRAMEWORK_ADAPTER_PRIVATE_TARGET,
 } from "./future-readiness.js";
 export { reactFrameworkAdapter, reactFrameworkAdapterTarget } from "./react/index.js";
+export { solidFrameworkAdapter, solidFrameworkAdapterReadiness } from "./solid/index.js";
 export {
+  SVELTE_PRIMITIVE_COMPONENTS,
   svelteAdapterPublicContract,
   svelteFrameworkAdapter,
   svelteFrameworkAdapterReadiness,
   svelteFrameworkAdapterTarget,
-  SVELTE_PRIMITIVE_COMPONENTS,
 } from "./svelte/index.js";
-export type {
-  AdapterColorPickerComponentProjection,
-  AdapterColorPickerEvent,
-  AdapterColorPickerFacts,
-  AdapterColorPickerIndexProjection,
-  AdapterColorPickerPart,
-  AdapterColorPickerPartName,
-  AdapterColorPickerSetter,
-  AdapterColorPickerState,
-} from "../primitive-output-model/index.js";
-export { solidFrameworkAdapter, solidFrameworkAdapterReadiness } from "./solid/index.js";
 export { defineFrameworkAdapterTarget } from "./target-definition.js";
 export {
   type FrameworkAdapterRegisteredTarget,

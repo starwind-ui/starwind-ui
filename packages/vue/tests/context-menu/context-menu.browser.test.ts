@@ -86,7 +86,7 @@ describe("Vue Context Menu", () => {
   it("anchors accepted context requests at Runtime-owned pointer coordinates", async () => {
     const events: string[] = [];
     const state = reactive({ cancelOpen: true });
-    const { host, trigger } = mountContextMenu({
+    const { trigger } = mountContextMenu({
       onOpenChange: (_open, detail) => {
         events.push("open-detail");
         if (state.cancelOpen) detail.cancel();

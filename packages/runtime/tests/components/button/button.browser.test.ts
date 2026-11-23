@@ -94,7 +94,7 @@ describe("createButton", () => {
 
   it("preserves focus and non-activation pointer handlers while disabled", () => {
     const button = renderButton("<button data-sw-button>Save</button>");
-    const instance = createButton(button, { disabled: true });
+    createButton(button, { disabled: true });
     const onBlur = vi.fn();
     const onFocus = vi.fn();
     const onMouseEnter = vi.fn();

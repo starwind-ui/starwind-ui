@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+
 import { RuntimePrototypeProvider } from "./runtime-prototype/context";
 import {
   AccordionDemo,
@@ -65,6 +67,20 @@ import {
   RuntimeSidebarDemoPage,
 } from "./runtime-prototype/pages";
 
+// The chart page loads TanStack Charts, so it stays out of the bundle that every route loads.
+const RuntimeChartsDemoPage = lazy(() =>
+  import("./runtime-prototype/pages/RuntimeChartsDemoPage").then((module) => ({
+    default: module.RuntimeChartsDemoPage,
+  })),
+);
+
+// The chart gallery also loads TanStack Charts, so it has its own lazy chunk.
+const RuntimeChartGalleryPage = lazy(() =>
+  import("./runtime-prototype/pages/RuntimeChartGalleryPage").then((module) => ({
+    default: module.RuntimeChartGalleryPage,
+  })),
+);
+
 const navLinks = [
   { href: "/", label: "Runtime Prototype", paths: ["/", "/runtime-prototype"] },
   {
@@ -92,6 +108,11 @@ const navLinks = [
     label: "Runtime Overlays",
     paths: ["/runtime-overlays", "/pages/runtime-overlays"],
   },
+  {
+    href: "/runtime-charts",
+    label: "Runtime Charts",
+    paths: ["/runtime-charts", "/pages/runtime-charts"],
+  },
 ];
 
 const runtimeSidebarPaths = new Set(["/pages/runtime-sidebar-demo", "/runtime-sidebar-demo"]);
@@ -102,9 +123,12 @@ const runtimeNestedSidebarPaths = new Set([
 const runtimeFormsPaths = new Set(["/runtime-forms", "/pages/runtime-forms"]);
 const runtimeCollectionsPaths = new Set(["/runtime-collections", "/pages/runtime-collections"]);
 const runtimeOverlaysPaths = new Set(["/runtime-overlays", "/pages/runtime-overlays"]);
+const runtimeChartsPaths = new Set(["/runtime-charts", "/pages/runtime-charts"]);
+const runtimeChartGalleryPath = /^\/runtime-charts\/([a-z]+)$/;
 
 function App() {
   const pathname = window.location.pathname.replace(/\/$/, "") || "/";
+  const chartGalleryType = runtimeChartGalleryPath.exec(pathname)?.[1];
   const isRuntimeSidebarPage =
     runtimeSidebarPaths.has(pathname) || runtimeNestedSidebarPaths.has(pathname);
 
@@ -122,6 +146,14 @@ function App() {
         <RuntimeCollectionsDemoPage />
       ) : runtimeOverlaysPaths.has(pathname) ? (
         <RuntimeOverlaysDemoPage />
+      ) : runtimeChartsPaths.has(pathname) ? (
+        <Suspense fallback={null}>
+          <RuntimeChartsDemoPage />
+        </Suspense>
+      ) : chartGalleryType ? (
+        <Suspense fallback={null}>
+          <RuntimeChartGalleryPage type={chartGalleryType} />
+        </Suspense>
       ) : (
         <div className="min-h-[calc(100lvh-4.25rem)]">
           <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12">

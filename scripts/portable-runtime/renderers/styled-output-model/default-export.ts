@@ -118,6 +118,7 @@ function collectIndexBindings(
     ...(group.variantCollectionName ? [group.variantCollectionName] : []),
     ...(group.primitiveFacadeExports?.types ?? []),
     ...(group.primitiveFacadeExports?.values ?? []),
+    ...Object.values(group.primitiveFacadeExports?.frameworkValues ?? {}).flat(),
     ...group.publicExports,
     ...group.defaultExport.members.map((member) => member.localName),
   ]);

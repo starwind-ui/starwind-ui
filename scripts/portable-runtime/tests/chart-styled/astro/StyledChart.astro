@@ -1,0 +1,86 @@
+---
+// The generated Styled chart parts in apps/demo, one case per mode.
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "../../../../../apps/demo/src/components/starwind-runtime/chart";
+import { visitorConfig, visitorData, visitors } from "./fixture-modules";
+
+const { mode } = Astro.props;
+const tooltip = mode === "off" ? false : mode === "native" ? "native" : true;
+---
+
+<ChartContainer
+  id={`styled-${mode}`}
+  chart={visitors}
+  data={visitorData()}
+  config={visitorConfig}
+  tooltip={tooltip}
+  labels={mode === "rich"
+    ? { desktop: "<em data-prop-label>Desktop</em>", mobile: "prop" }
+    : undefined}
+>
+  {
+    (mode === "child" || mode === "slot") && (
+      <ChartTooltip>
+        <ChartTooltipContent slot="content" indicator="line" class="child" />
+      </ChartTooltip>
+    )
+  }
+  {mode === "slot" && <ChartTooltipContent slot="tooltip" indicator="dashed" class="slot" />}
+  {
+    mode === "plain-tooltip" && (
+      <span slot="tooltip" class="plain-tooltip">
+        plain
+      </span>
+    )
+  }
+  {
+    mode === "plain-child" && (
+      <ChartTooltip>
+        <span slot="content" class="plain-child">
+          child
+        </span>
+      </ChartTooltip>
+    )
+  }
+  {
+    mode === "mixed-tooltip" && (
+      <ChartTooltip>
+        <p slot="content" class="mixed-heading">
+          Heading
+        </p>
+        <ChartTooltipContent slot="content" class="mixed-content" />
+      </ChartTooltip>
+    )
+  }
+  {
+    mode === "nested-tooltip" && (
+      <div slot="tooltip" class="outer">
+        <ChartTooltip>
+          <span slot="content" class="inner">
+            inner
+          </span>
+        </ChartTooltip>
+      </div>
+    )
+  }
+  {
+    mode === "rich" && (
+      <strong slot="label-mobile" data-rich>
+        Mobile
+      </strong>
+    )
+  }
+  {
+    mode === "wrapped" ? (
+      <div data-wrapper>
+        <ChartLegend />
+      </div>
+    ) : (
+      mode !== "off" && <ChartLegend hideIcon class="styled-legend" />
+    )
+  }
+</ChartContainer>

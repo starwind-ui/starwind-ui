@@ -29,7 +29,6 @@
   stroke-width={"2"}
   stroke-linecap={"round"}
   stroke-linejoin={"round"}
-  aria-hidden={"true"}
   role={"status"}
   aria-label={"Loading"}
   class={spinner({ "class": cx(className) })}

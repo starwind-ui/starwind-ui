@@ -45,6 +45,7 @@ const mockLog = {
 vi.mocked(clackPrompts).log = mockLog as typeof clackPrompts.log;
 
 const mockFileExists = vi.mocked(fs.fileExists);
+const mockWriteCssFile = vi.mocked(fs.writeCssFile);
 const mockGetConfigState = vi.mocked(config.getConfigState);
 const mockHasLegacyStarwindUiV2ConfigShape = vi.mocked(config.hasLegacyStarwindUiV2ConfigShape);
 const mockLoadRegistry = vi.mocked(registry.loadRegistry);
@@ -210,6 +211,20 @@ describe("add command", () => {
     expect(summary.indexOf("Alpha")).toBeLessThan(summary.indexOf("zebra"));
   });
 
+  it("keeps a configured custom stylesheet during component add", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        tailwind: { css: "styles/custom.css", baseColor: "neutral", cssVariables: true },
+      }),
+    });
+
+    await add(["button"], { yes: true });
+
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledOnce();
+    expect(mockWriteCssFile).not.toHaveBeenCalled();
+  });
+
   it("warns about unknown names and installs known components in request order", async () => {
     await add(["card", "missing-component", "button"], { yes: true });
 
@@ -339,6 +354,63 @@ describe("add command", () => {
         skipPrompts: true,
       }),
     );
+  });
+
+  it("reports the chart tokens that the chart install added", async () => {
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: [{ ...registryFixture.components[0]!, name: "chart" }],
+    });
+    mockInstallRuntimeComponents.mockResolvedValue({
+      installed: [{ name: "chart", status: "installed", version: "1.0.0" }],
+      skipped: [],
+      failed: [],
+      chartTokens: {
+        status: "added",
+        cssPath: "src/styles/starwind.css",
+        added: [{ block: ":root", tokens: ["--chart-1", "--chart-2"] }],
+      },
+    });
+
+    await add(["chart"], { yes: true });
+
+    const report = mockLog.success.mock.calls.find(([message]) =>
+      String(message).includes("Added chart tokens to src/styles/starwind.css"),
+    )?.[0] as string;
+    expect(report).toContain(":root: --chart-1, --chart-2");
+    expect(mockNote).not.toHaveBeenCalledWith(expect.anything(), "Chart tokens");
+  });
+
+  it("prints the chart token block and finishes the install when the CSS file cannot be edited", async () => {
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: [{ ...registryFixture.components[0]!, name: "chart" }],
+    });
+    mockInstallRuntimeComponents.mockResolvedValue({
+      installed: [{ name: "chart", status: "installed", version: "1.0.0" }],
+      skipped: [],
+      failed: [],
+      chartTokens: {
+        status: "failed",
+        cssPath: "src/styles/starwind.css",
+        error: "The CSS file has an unclosed block.",
+        block: ":root {\n  --chart-1: var(--color-blue-300);\n}\n",
+      },
+    });
+
+    await add(["chart"], { yes: true });
+
+    expect(mockLog.warn).toHaveBeenCalledWith(
+      expect.stringContaining("The CSS file has an unclosed block."),
+    );
+    expect(mockNote).toHaveBeenCalledWith(
+      ":root {\n  --chart-1: var(--color-blue-300);\n}",
+      "Chart tokens",
+    );
+    expect(mockLog.success).toHaveBeenCalledWith(
+      expect.stringContaining("Successfully installed components:"),
+    );
+    expect(process.exitCode).toBe(originalExitCode);
   });
 
   it("passes explicit framework targets to Runtime styled installs", async () => {

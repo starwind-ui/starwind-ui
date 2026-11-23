@@ -3,10 +3,12 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import RadioRoot from "./RadioRoot.svelte";
 import RadioIndicator from "./RadioIndicator.svelte";
+import RadioRoot from "./RadioRoot.svelte";
+
 const Radio = { Root: RadioRoot, Indicator: RadioIndicator };
-export { Radio, RadioRoot, RadioIndicator };
+
+export { Radio, RadioIndicator, RadioRoot };
 export default Radio;
 
 export type { RadioCheckedChangeDetails } from "@starwind-ui/runtime";

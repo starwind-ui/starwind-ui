@@ -2,15 +2,15 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { createStyledSelectConsumer } from "../../../../packages/svelte/tests/styled-select-consumer.js";
-import { verifyStyledSelectBrowser } from "../../../../packages/svelte/tests/styled-select-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledSelectBrowser } from "../../../../packages/svelte/tests/styled-select-browser.js";
+import { createStyledSelectConsumer } from "../../../../packages/svelte/tests/styled-select-consumer.js";
+import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { selectStyledContract } from "../../contracts/styled/components/select.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
-import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
-import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
@@ -104,7 +104,7 @@ describe("generated Styled Select", () => {
   it("server-renders Select seeds, fallback values, complete exports, and inline portal markup", async () => {
     const consumer = await fixture();
     await consumer.write({
-      "SSR.svelte": `<script lang="ts">import Select from "./select/index.js";</script><Select.Root defaultValue="alpha" defaultOpen><Select.Trigger placeholder="Choose" /><Select.Value placeholder="Fallback" /><Select.Value>{#snippet children(label, value)}Custom {value}{/snippet}</Select.Value><Select.Content><Select.Item value="alpha">Alpha</Select.Item></Select.Content></Select.Root>`,
+      "SSR.svelte": `<script lang="ts">import Select from "./select/index.js";</script><Select.Root defaultValue="alpha" defaultOpen><Select.Trigger placeholder="Choose" /><Select.Value placeholder="Fallback" /><Select.Value>Custom alpha</Select.Value><Select.Content><Select.Item value="alpha">Alpha</Select.Item></Select.Content></Select.Root>`,
       "ssr.mjs": `import assert from "node:assert/strict"; import { render } from "svelte/server"; import App from "./SSR.svelte"; import Parts, * as exports from "./select/index.js"; assert.equal(globalThis.document, undefined); assert.equal(Parts.Root, exports.Select); console.log(JSON.stringify({ body: render(App).body, names: Object.keys(exports).sort(), facade: import.meta.resolve("@starwind-ui/svelte/select") }));`,
     });
     const result = JSON.parse(await consumer.run("ssr.mjs", { loader: true }));

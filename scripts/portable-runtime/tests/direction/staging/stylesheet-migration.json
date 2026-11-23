@@ -1,0 +1,4 @@
+{
+  "cohort": "stylesheet-migration",
+  "caseIds": ["stylesheet-migration-scoped", "stylesheet-migration-retained"]
+}

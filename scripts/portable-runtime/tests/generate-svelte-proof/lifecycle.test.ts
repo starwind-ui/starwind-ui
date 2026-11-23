@@ -1,4 +1,14 @@
-import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readdir,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
@@ -10,12 +20,18 @@ const temporaryRoots: string[] = [];
 const servers: ViteDevServer[] = [];
 const browsers: Browser[] = [];
 
+// Attempt every shutdown and every folder removal, then report the first failure. A failed close
+// must not leave the harness folder behind.
 afterEach(async () => {
-  await Promise.all(browsers.splice(0).map((browser) => browser.close()));
-  await Promise.all(servers.splice(0).map((server) => server.close()));
-  await Promise.all(
-    temporaryRoots.splice(0).map((root) => rm(root, { force: true, recursive: true })),
-  );
+  const results = [
+    ...(await Promise.allSettled(browsers.splice(0).map((browser) => browser.close()))),
+    ...(await Promise.allSettled(servers.splice(0).map((server) => server.close()))),
+    ...(await Promise.allSettled(
+      temporaryRoots.splice(0).map((root) => rm(root, { force: true, recursive: true })),
+    )),
+  ];
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure) throw failure.reason;
 });
 
 describe("generated Svelte Button lifecycle", () => {
@@ -111,14 +127,21 @@ async function runBrowserHarness(
 }
 
 async function createHarness(): Promise<string> {
-  const root = await mkdtemp(path.join(process.cwd(), ".svelte-proof-browser-"));
+  // The harness lives in the system temporary folder, so a run that times out leaves nothing in
+  // the repository. The linked node_modules folder lets Vite resolve Svelte from the workspace.
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "svelte-proof-browser-")));
+  temporaryRoots.push(root);
+  await symlink(
+    path.join(process.cwd(), "node_modules"),
+    path.join(root, "node_modules"),
+    "junction",
+  );
   await mkdir(path.join(root, "button"));
   await mkdir(path.join(root, "_internal"), { recursive: true });
   await copyFile(
     path.join(process.cwd(), "packages/svelte/src/_internal/ref-attachment.ts"),
     path.join(root, "_internal/ref-attachment.ts"),
   );
-  temporaryRoots.push(root);
   await copyFile(
     path.join(process.cwd(), "packages/svelte/src/button/ButtonRoot.svelte"),
     path.join(root, "button/ButtonRoot.svelte"),
@@ -496,8 +519,12 @@ async function createProofServer(
       },
     },
     root,
-    server: middlewareMode
-      ? { middlewareMode: true, watch: null, hmr: false }
-      : { host: "127.0.0.1", port: 0, strictPort: false, watch: null, hmr: false },
+    server: {
+      // The harness imports Runtime source and Svelte from the workspace outside its root.
+      fs: { allow: [root, process.cwd()] },
+      ...(middlewareMode
+        ? { middlewareMode: true, watch: null, hmr: false }
+        : { host: "127.0.0.1", port: 0, strictPort: false, watch: null, hmr: false }),
+    },
   });
 }

@@ -1,9 +1,9 @@
 import AspectRatio from "./AspectRatio.vue";
-import { aspectRatio, aspectRatioWrapper } from "./variants";
+import { aspectRatio } from "./variants";
 
 export type { AspectRatioProps } from "./AspectRatio.vue";
 
-const AspectRatioVariants = { aspectRatio, aspectRatioWrapper };
+const AspectRatioVariants = { aspectRatio };
 
 export { AspectRatio, AspectRatioVariants };
 

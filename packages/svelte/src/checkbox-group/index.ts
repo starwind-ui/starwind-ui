@@ -4,7 +4,9 @@
  */
 
 import CheckboxGroupRoot from "./CheckboxGroupRoot.svelte";
+
 const CheckboxGroup = { Root: CheckboxGroupRoot };
+
 export { CheckboxGroup, CheckboxGroupRoot };
 export default CheckboxGroup;
 

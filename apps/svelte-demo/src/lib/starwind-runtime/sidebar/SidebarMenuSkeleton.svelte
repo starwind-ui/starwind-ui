@@ -11,11 +11,11 @@
 
 <script lang="ts">
   let {
-    "showIcon": showIcon = false,
-    "width": width,
+    showIcon = false,
+    width,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: SidebarMenuSkeletonProps = $props();
 

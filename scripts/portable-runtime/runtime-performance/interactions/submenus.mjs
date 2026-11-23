@@ -7,8 +7,8 @@ import {
   insist,
   linearPath,
   pacePointer,
-  waitEndpoint,
   validatePointerDelivery,
+  waitEndpoint,
 } from "./driver.mjs";
 import { visualContract } from "./registry.mjs";
 

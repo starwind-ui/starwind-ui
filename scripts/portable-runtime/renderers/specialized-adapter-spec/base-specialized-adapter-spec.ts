@@ -1,9 +1,6 @@
 import type { RuntimeAdapterContract } from "../../contracts/primitive/types.js";
 import { buildGenericAdapterPlan } from "../generic-adapter-plan/generic-adapter-plan-builder.js";
-import type {
-  GenericAdapterPlan,
-  GenericAdapterPlanPart,
-} from "../generic-adapter-plan/types.js";
+import type { GenericAdapterPlan, GenericAdapterPlanPart } from "../generic-adapter-plan/types.js";
 import { validateGenericAdapterPlan } from "../generic-adapter-plan/validation.js";
 import type { SpecializedAdapterSpec } from "./types.js";
 

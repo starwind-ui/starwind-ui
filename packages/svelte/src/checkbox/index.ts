@@ -3,14 +3,12 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import CheckboxRoot from "./CheckboxRoot.svelte";
 import CheckboxIndicator from "./CheckboxIndicator.svelte";
+import CheckboxRoot from "./CheckboxRoot.svelte";
 
 const Checkbox = { Root: CheckboxRoot, Indicator: CheckboxIndicator };
-export { Checkbox, CheckboxRoot, CheckboxIndicator };
-export default Checkbox;
 
-export { CheckboxGroupContext } from "./CheckboxGroupContext.svelte.js";
-export type { CheckboxGroupContextValue } from "./CheckboxGroupContext.svelte.js";
+export { Checkbox, CheckboxIndicator, CheckboxRoot };
+export default Checkbox;
 
 export type { CheckboxCheckedChangeDetails } from "@starwind-ui/runtime";

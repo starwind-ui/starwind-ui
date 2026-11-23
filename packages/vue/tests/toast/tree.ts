@@ -1,4 +1,4 @@
-import { h, type VNode } from "vue";
+import type { ToastVariant } from "@starwind-ui/runtime";
 
 import {
   ToastAction,
@@ -11,7 +11,7 @@ import {
   ToastTitleText,
   ToastViewport,
 } from "@starwind-ui/vue/toast";
-import type { ToastVariant } from "@starwind-ui/runtime";
+import { h, type VNode } from "vue";
 
 const variants: ToastVariant[] = ["default", "error", "info", "loading", "success", "warning"];
 

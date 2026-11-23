@@ -76,9 +76,7 @@ const emit = defineEmits<{
   "update:modelValue": [value: import("@starwind-ui/vue/toggle-group").ToggleGroupValue];
 }>();
 const toggleGroupStyle = computed(() =>
-  typeof style === "string"
-    ? `--gap: ${spacing}; ${style}`
-    : { "--gap": spacing, ...(style ?? {}) },
+  typeof style === "string" ? `--gap: ${spacing}; ${style}` : { "--gap": spacing, ...style },
 );
 function handleValueChange(
   value: import("@starwind-ui/vue/toggle-group").ToggleGroupValue,

@@ -1,8 +1,7 @@
 import type { EmblaPluginType } from "embla-carousel";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createCarousel } from "../../../src/components/carousel/carousel";
+import { initStarwind } from "../../../src/init-starwind";
 
 describe("createCarousel", () => {
   beforeEach(() => {
@@ -314,6 +313,253 @@ describe("createCarousel", () => {
 
     carousel.destroy();
     cleanup.destroy();
+  });
+
+  it("infers RTL engine direction and aligns keys with physical slide flow", async () => {
+    const root = renderCarousel({ opts: { align: "start", duration: 1 } });
+    root.dir = "rtl";
+    const carousel = createCarousel(root);
+    await waitForCarousel();
+
+    expect(carousel.api.internalEngine().options.direction).toBe("rtl");
+    const slides = root.querySelectorAll<HTMLElement>("[data-sw-carousel-item]");
+    expect(slides[0]!.getBoundingClientRect().left).toBeGreaterThan(
+      slides[1]!.getBoundingClientRect().left,
+    );
+    carousel.scrollTo(1, true);
+    await waitForCarousel();
+    const firstX = slides[0]!.getBoundingClientRect().left;
+
+    root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    await waitForCarousel();
+    expect(carousel.selectedSnap()).toBe(0);
+    expect(slides[0]!.getBoundingClientRect().left).toBeLessThan(firstX);
+
+    carousel.scrollTo(1, true);
+    root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowLeft" }));
+    await waitForCarousel();
+    expect(carousel.selectedSnap()).toBe(2);
+  });
+
+  it("keeps the snap, plugins and one select notification after repeated inferred flips", async () => {
+    const root = renderCarousel({ opts: { align: "start", duration: 1 } });
+    const plugin = createTestPlugin();
+    const carousel = createCarousel(root, { plugins: [plugin] });
+    const reInit = vi.spyOn(carousel.api, "reInit");
+    const select = vi.fn();
+    carousel.api.on("select", select);
+    await waitForCarousel();
+    carousel.scrollTo(1, true);
+    await waitForCarousel();
+    select.mockClear();
+
+    for (const direction of ["rtl", "ltr", "rtl"] as const) {
+      root.dir = direction;
+      document.dispatchEvent(new Event("starwind:direction-change"));
+      await waitForCarousel();
+      expect(carousel.api.internalEngine().options.direction).toBe(direction);
+      expect(carousel.selectedSnap()).toBe(1);
+    }
+    expect(reInit).toHaveBeenCalledTimes(3);
+    expect(plugin.init).toHaveBeenCalledTimes(4);
+    expect(select).not.toHaveBeenCalled();
+
+    getNext().click();
+    await waitForCarousel();
+    expect(carousel.selectedSnap()).toBe(2);
+    expect(select).toHaveBeenCalledTimes(1);
+    carousel.destroy();
+    root.dir = "ltr";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await waitForCarousel();
+    expect(reInit).toHaveBeenCalledTimes(3);
+  });
+
+  it("rebinds inferred direction after reparenting", async () => {
+    const ltr = document.createElement("div");
+    const rtl = document.createElement("div");
+    ltr.dir = "ltr";
+    rtl.dir = "rtl";
+    document.body.append(ltr, rtl);
+    const root = renderCarousel({ opts: { align: "start", duration: 1 } });
+    ltr.append(root);
+    const carousel = createCarousel(root);
+    await waitForCarousel();
+    carousel.scrollTo(1, true);
+
+    rtl.append(root);
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("ltr");
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("rtl");
+    expect(carousel.selectedSnap()).toBe(1);
+    ltr.append(root);
+    // Embla owns the drag, so a pointerdown reads direction before the engine sees it.
+    root.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("ltr");
+    expect(carousel.selectedSnap()).toBe(1);
+  });
+
+  it("reads direction before control clicks and public scrolls after a dir change with no event", async () => {
+    const host = document.createElement("div");
+    host.dir = "ltr";
+    document.body.append(host);
+    const root = renderCarousel({ opts: { align: "start", duration: 1 } });
+    host.append(root);
+    const carousel = createCarousel(root);
+    await waitForCarousel();
+    const slides = root.querySelectorAll<HTMLElement>("[data-sw-carousel-item]");
+    // The root keeps a fixed width, so it moves to the inline start of the host when `dir` flips.
+    const viewport = () => getViewport().getBoundingClientRect();
+    expect(carousel.api.internalEngine().options.direction).toBe("ltr");
+
+    host.dir = "rtl";
+    carousel.scrollNext(true);
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("rtl");
+    expect(carousel.selectedSnap()).toBe(1);
+    expect(slides[1]!.getBoundingClientRect().right).toBeCloseTo(viewport().right, 0);
+
+    host.dir = "ltr";
+    getNext().click();
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("ltr");
+    expect(carousel.selectedSnap()).toBe(2);
+    await vi.waitFor(() =>
+      expect(slides[2]!.getBoundingClientRect().left).toBeCloseTo(viewport().left, 0),
+    );
+
+    host.dir = "rtl";
+    getPrevious().click();
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("rtl");
+    expect(carousel.selectedSnap()).toBe(1);
+    await vi.waitFor(() =>
+      expect(slides[1]!.getBoundingClientRect().right).toBeCloseTo(viewport().right, 0),
+    );
+    carousel.destroy();
+  });
+
+  it("scrolls once per LTR control click with no reInit and no dir change", async () => {
+    const host = document.createElement("div");
+    host.dir = "ltr";
+    document.body.append(host);
+    const root = renderCarousel({ opts: { align: "start", duration: 1 } });
+    host.append(root);
+    const carousel = createCarousel(root);
+    await waitForCarousel();
+    const reInitCall = vi.spyOn(carousel.api, "reInit");
+    const reInit = vi.fn();
+    const select = vi.fn();
+    carousel.api.on("reInit", reInit);
+    carousel.api.on("select", select);
+    const controls = () => ({
+      canNext: carousel.api.canScrollNext(),
+      canPrevious: carousel.api.canScrollPrev(),
+      next: getNext().disabled,
+      previous: getPrevious().disabled,
+      snap: carousel.selectedSnap(),
+    });
+    expect(controls()).toEqual({
+      canNext: true,
+      canPrevious: false,
+      next: false,
+      previous: true,
+      snap: 0,
+    });
+
+    const steps = [
+      { control: getNext, snap: 1, next: false, previous: false },
+      { control: getNext, snap: 2, next: true, previous: false },
+      { control: getPrevious, snap: 1, next: false, previous: false },
+      { control: getPrevious, snap: 0, next: false, previous: true },
+    ];
+    for (const step of steps) {
+      select.mockClear();
+      step.control().click();
+      expect(select).toHaveBeenCalledTimes(1);
+      await waitForCarousel();
+      expect(select).toHaveBeenCalledTimes(1);
+      expect(controls()).toEqual({
+        canNext: !step.next,
+        canPrevious: !step.previous,
+        next: step.next,
+        previous: step.previous,
+        snap: step.snap,
+      });
+    }
+
+    // At the first snap, Previous is disabled and a click does nothing.
+    select.mockClear();
+    getPrevious().click();
+    await waitForCarousel();
+    expect(select).not.toHaveBeenCalled();
+    expect(carousel.selectedSnap()).toBe(0);
+
+    carousel.scrollTo(2, true);
+    await waitForCarousel();
+    expect(getNext().disabled).toBe(true);
+    select.mockClear();
+    getNext().click();
+    await waitForCarousel();
+    expect(select).not.toHaveBeenCalled();
+    expect(carousel.selectedSnap()).toBe(2);
+
+    expect(reInitCall).not.toHaveBeenCalled();
+    expect(reInit).not.toHaveBeenCalled();
+    expect(carousel.api.internalEngine().options.direction).toBe("ltr");
+    carousel.destroy();
+  });
+
+  it("keeps explicit options ahead of serialized options and supports later reInit", async () => {
+    const root = renderCarousel({
+      opts: { align: "start", direction: "ltr", duration: 1 },
+    });
+    root.dir = "rtl";
+    const carousel = createCarousel(root, { opts: { direction: "rtl" } });
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("rtl");
+
+    root.dir = "ltr";
+    carousel.reInit({ direction: "ltr", duration: 1 });
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("ltr");
+    root.dir = "rtl";
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("ltr");
+  });
+
+  it("reads the effective engine direction after direct Embla reInit", async () => {
+    const root = renderCarousel({ opts: { align: "start", duration: 1 } });
+    root.dir = "ltr";
+    const carousel = createCarousel(root, { opts: { direction: "ltr" } });
+    await waitForCarousel();
+    carousel.scrollTo(1, true);
+
+    root.dir = "rtl";
+    carousel.api.reInit({ direction: "rtl" });
+    root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    await waitForCarousel();
+
+    expect(carousel.api.internalEngine().options.direction).toBe("rtl");
+    expect(carousel.selectedSnap()).toBe(0);
+  });
+
+  it("uses serialized direction when it matches the DOM and retains looped slides", async () => {
+    const root = renderCarousel({
+      opts: { align: "start", direction: "rtl", duration: 1, loop: true },
+    });
+    root.dir = "rtl";
+    const carousel = createCarousel(root);
+    await waitForCarousel();
+    expect(carousel.api.internalEngine().options.direction).toBe("rtl");
+    expect(carousel.canScrollPrev()).toBe(true);
+    carousel.scrollPrev(true);
+    await waitForCarousel();
+    expect(carousel.selectedSnap()).toBe(2);
+    expect(carousel.api.internalEngine().options.loop).toBe(true);
   });
 });
 

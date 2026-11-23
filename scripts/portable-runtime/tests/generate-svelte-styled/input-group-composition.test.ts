@@ -1,8 +1,8 @@
-import { expect, it } from "vitest";
-import { afterEach } from "vitest";
 import path from "node:path";
+import { afterEach, expect, it } from "vitest";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
 import { createStyledInputGroupConsumer } from "../../../../packages/svelte/tests/styled-input-group-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));
@@ -14,14 +14,16 @@ async function consumer() {
 }
 
 import { verifyInputGroupLifecycle } from "../../../../packages/svelte/tests/input-group-composition-browser.js";
+
 it("hydrates all Input Group owners with composed Input and native Textarea lifecycle", async () => {
   await verifyInputGroupLifecycle(await consumer());
 }, 60000);
 
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("generates all six Input Group parts and exact dependency closure deterministically", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-input-group-output-"));
   try {

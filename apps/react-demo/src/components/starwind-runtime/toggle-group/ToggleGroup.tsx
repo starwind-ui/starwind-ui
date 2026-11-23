@@ -44,9 +44,7 @@ function ToggleGroup(props: ToggleGroupProps) {
   } = props;
 
   const toggleGroupStyle =
-    typeof style === "string"
-      ? `--gap: ${spacing}; ${style}`
-      : { "--gap": spacing, ...(style ?? {}) };
+    typeof style === "string" ? `--gap: ${spacing}; ${style}` : { "--gap": spacing, ...style };
 
   return (
     <ToggleGroupPrimitive.Root

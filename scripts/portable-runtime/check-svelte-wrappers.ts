@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -36,7 +36,7 @@ async function readTree(root: string): Promise<Map<string, string>> {
 async function listFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = await Promise.all(
-    entries.map((entry) => {
+    entries.map(async (entry) => {
       const candidate = path.join(directory, entry.name);
       return entry.isDirectory() ? listFiles(candidate) : [candidate];
     }),

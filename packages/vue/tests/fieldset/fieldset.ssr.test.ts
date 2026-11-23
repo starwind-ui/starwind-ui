@@ -1,9 +1,8 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import { FieldsetLegend, FieldsetRoot } from "@starwind-ui/vue/fieldset";
 import { InputRoot } from "@starwind-ui/vue/input";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 describe("Vue Fieldset SSR", () => {
   it("renders deterministic semantic disabled markup without browser globals", async () => {

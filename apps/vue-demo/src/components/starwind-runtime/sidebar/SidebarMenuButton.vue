@@ -47,7 +47,7 @@ const buttonClassName = computed(() => sidebarMenuButton({ variant, size, class:
 </script>
 
 <template>
-  <template v-if="Boolean(tooltip)">
+  <template v-if="tooltip">
     <Tooltip :open-delay="0" :close-delay="0" class="w-full">
       <TooltipTrigger class="w-full">
         <SidebarPrimitive.SidebarMenuButton :as-child="true">
@@ -68,7 +68,7 @@ const buttonClassName = computed(() => sidebarMenuButton({ variant, size, class:
         </SidebarPrimitive.SidebarMenuButton>
       </TooltipTrigger>
       <TooltipContent
-        side="right"
+        data-sw-sidebar-tooltip-default
         align="center"
         class="whitespace-nowrap"
         data-sw-sidebar-tooltip-content

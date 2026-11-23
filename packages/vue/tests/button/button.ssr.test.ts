@@ -1,8 +1,7 @@
+import { ButtonRoot } from "@starwind-ui/vue/button";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { ButtonRoot } from "@starwind-ui/vue/button";
 
 describe("Vue Button SSR", () => {
   it("server-renders deterministic semantic markup without browser globals", async () => {

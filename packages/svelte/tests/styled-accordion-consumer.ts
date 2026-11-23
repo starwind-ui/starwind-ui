@@ -14,8 +14,8 @@ const item:AccordionItemProps={value:"one",disabled:false};
 const attached={ [createAttachmentKey()]:(node:HTMLButtonElement)=>{void node.disabled;return()=>{};} };
 void [AccordionVariants.accordion(),AccordionVariants.accordionContent()];
 </script>
-<Accordion.Root {...props} bind:value>{#snippet children(accepted)}
- <output>{JSON.stringify(accepted)}</output><Accordion.Item {...item}><Accordion.Trigger {...attached} ref={(node:HTMLButtonElement|null)=>{}} onclick={event=>{const button:HTMLButtonElement=event.currentTarget;void button;}}>One</Accordion.Trigger><Accordion.Content ref={(node:HTMLDivElement|null)=>{}}>Content</Accordion.Content></Accordion.Item>
-{/snippet}</Accordion.Root>
+<Accordion.Root {...props} bind:value>
+ <output>{JSON.stringify(value)}</output><Accordion.Item {...item}><Accordion.Trigger {...attached} ref={(node:HTMLButtonElement|null)=>{}} onclick={event=>{const button:HTMLButtonElement=event.currentTarget;void button;}}>One</Accordion.Trigger><Accordion.Content ref={(node:HTMLDivElement|null)=>{}}>Content</Accordion.Content></Accordion.Item>
+</Accordion.Root>
 <StyledRoot value="one"><AccordionItem value="one"><AccordionTrigger>{#snippet icon()}<span>+</span>{/snippet}One</AccordionTrigger><AccordionContent>Content</AccordionContent></AccordionItem></StyledRoot>
 <Primitive.Root value={null}><Primitive.Item value="one"><Primitive.Trigger>One</Primitive.Trigger><Primitive.Panel>Content</Primitive.Panel></Primitive.Item></Primitive.Root>`;

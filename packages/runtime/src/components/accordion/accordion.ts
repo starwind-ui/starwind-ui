@@ -1,4 +1,9 @@
 import {
+  type CancelableDetails,
+  createCancelableDetails,
+  runCancelableDetailsTransaction,
+} from "../../internal/cancelable-details";
+import {
   type DynamicCollectionObserver,
   observeDynamicCollection,
 } from "../../internal/collection";
@@ -9,11 +14,6 @@ import {
   readStringOrStringArrayAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import {
-  type CancelableDetails,
-  createCancelableDetails,
-  runCancelableDetailsTransaction,
-} from "../../internal/cancelable-details";
 import { shared } from "../../internal/shared";
 import { renderCollapsiblePanel } from "../collapsible/collapsible-panel";
 import {

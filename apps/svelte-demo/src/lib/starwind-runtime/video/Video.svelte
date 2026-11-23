@@ -8,17 +8,17 @@
 
 <script lang="ts">
   let {
-    "src": src,
-    "title": title = "Video",
-    "autoplay": autoplay = false,
-    "muted": muted = false,
-    "loop": loop = false,
-    "controls": controls = true,
-    "poster": poster,
-    "srcdoc": srcdoc,
+    src,
+    title = "Video",
+    autoplay = false,
+    muted = false,
+    loop = false,
+    controls = true,
+    poster,
+    srcdoc,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: VideoProps = $props();
 

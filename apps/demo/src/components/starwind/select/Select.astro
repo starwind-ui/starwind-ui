@@ -64,10 +64,10 @@ const { class: className, name, defaultValue, required, ...rest } = Astro.props;
       // animationDuration is set with inline styles through passed prop to SelectContent
       const animationDurationString = this.content.style.animationDuration;
       if (animationDurationString.endsWith("ms")) {
-        this.animationDuration = parseFloat(animationDurationString);
+        this.animationDuration = Number.parseFloat(animationDurationString);
       } else if (animationDurationString.endsWith("s")) {
         // using something like @playform/compress might optimize to use "s" instead of "ms"
-        this.animationDuration = parseFloat(animationDurationString) * 1000;
+        this.animationDuration = Number.parseFloat(animationDurationString) * 1000;
       }
 
       this.init(selectIdx);

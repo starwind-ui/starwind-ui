@@ -1,23 +1,23 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { compile } from "svelte/compiler";
-import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
-import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
-import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
-
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { compile } from "svelte/compiler";
+import { afterEach, describe, expect, it } from "vitest";
+import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledStaticBrowser } from "../../../../packages/svelte/tests/styled-static-browser.js";
 import {
   createStyledStaticConsumer,
-  staticStyledRoots,
   staticStyledParts,
+  staticStyledRoots,
 } from "../../../../packages/svelte/tests/styled-static-consumer.js";
-import { verifyStyledStaticBrowser } from "../../../../packages/svelte/tests/styled-static-browser.js";
-import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
+import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+
 const consumers: DistConsumer[] = [];
 const temporaryRoots: string[] = [];
 afterEach(async () => {

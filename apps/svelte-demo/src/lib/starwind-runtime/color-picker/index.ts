@@ -1,16 +1,15 @@
 import ColorPicker from "./ColorPicker.svelte";
-import ColorPickerDefaultEditor from "./ColorPickerDefaultEditor.svelte";
-import ColorPickerInput from "./ColorPickerInput.svelte";
-import ColorPickerTrigger from "./ColorPickerTrigger.svelte";
-import ColorPickerContent from "./ColorPickerContent.svelte";
 import ColorPickerArea from "./ColorPickerArea.svelte";
-import ColorPickerChannelSlider from "./ColorPickerChannelSlider.svelte";
 import ColorPickerChannelInput from "./ColorPickerChannelInput.svelte";
-import ColorPickerValueSwatch from "./ColorPickerValueSwatch.svelte";
-import ColorPickerSwatchGroup from "./ColorPickerSwatchGroup.svelte";
-import ColorPickerSwatch from "./ColorPickerSwatch.svelte";
-import ColorPickerEyeDropper from "./ColorPickerEyeDropper.svelte";
+import ColorPickerChannelSlider from "./ColorPickerChannelSlider.svelte";
 import ColorPickerClear from "./ColorPickerClear.svelte";
+import ColorPickerContent from "./ColorPickerContent.svelte";
+import ColorPickerEyeDropper from "./ColorPickerEyeDropper.svelte";
+import ColorPickerInput from "./ColorPickerInput.svelte";
+import ColorPickerSwatch from "./ColorPickerSwatch.svelte";
+import ColorPickerSwatchGroup from "./ColorPickerSwatchGroup.svelte";
+import ColorPickerTrigger from "./ColorPickerTrigger.svelte";
+import ColorPickerValueSwatch from "./ColorPickerValueSwatch.svelte";
 import {
   colorPicker,
   colorPickerAction,
@@ -40,19 +39,21 @@ import {
   colorPickerValueInputLayout,
   colorPickerValueSwatch,
 } from "./variants.js";
+
 export type { ColorPickerProps } from "./ColorPicker.svelte";
-export type { ColorPickerDefaultEditorProps } from "./ColorPickerDefaultEditor.svelte";
-export type { ColorPickerInputProps } from "./ColorPickerInput.svelte";
-export type { ColorPickerTriggerProps } from "./ColorPickerTrigger.svelte";
-export type { ColorPickerContentProps } from "./ColorPickerContent.svelte";
 export type { ColorPickerAreaProps } from "./ColorPickerArea.svelte";
-export type { ColorPickerChannelSliderProps } from "./ColorPickerChannelSlider.svelte";
 export type { ColorPickerChannelInputProps } from "./ColorPickerChannelInput.svelte";
-export type { ColorPickerValueSwatchProps } from "./ColorPickerValueSwatch.svelte";
-export type { ColorPickerSwatchGroupProps } from "./ColorPickerSwatchGroup.svelte";
-export type { ColorPickerSwatchProps } from "./ColorPickerSwatch.svelte";
-export type { ColorPickerEyeDropperProps } from "./ColorPickerEyeDropper.svelte";
+export type { ColorPickerChannelSliderProps } from "./ColorPickerChannelSlider.svelte";
 export type { ColorPickerClearProps } from "./ColorPickerClear.svelte";
+export type { ColorPickerContentProps } from "./ColorPickerContent.svelte";
+export type { ColorPickerDefaultEditorProps } from "./ColorPickerDefaultEditor.svelte";
+export type { ColorPickerEyeDropperProps } from "./ColorPickerEyeDropper.svelte";
+export type { ColorPickerInputProps } from "./ColorPickerInput.svelte";
+export type { ColorPickerSwatchProps } from "./ColorPickerSwatch.svelte";
+export type { ColorPickerSwatchGroupProps } from "./ColorPickerSwatchGroup.svelte";
+export type { ColorPickerTriggerProps } from "./ColorPickerTrigger.svelte";
+export type { ColorPickerValueSwatchProps } from "./ColorPickerValueSwatch.svelte";
+
 const ColorPickerVariants = {
   colorPicker,
   colorPickerAction,
@@ -96,6 +97,7 @@ const ColorPickerParts = {
   EyeDropper: ColorPickerEyeDropper,
   Clear: ColorPickerClear,
 };
+
 export {
   ColorPicker,
   ColorPickerArea,

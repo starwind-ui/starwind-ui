@@ -8,7 +8,7 @@ import { readJsonFile } from "./fs.js";
 export async function filterUninstalledDependencies(dependencies: string[]): Promise<string[]> {
   try {
     const pkg = await readJsonFile("package.json");
-    const installedDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+    const installedDeps = { ...pkg.dependencies, ...pkg.devDependencies };
 
     const dependenciesToInstall: string[] = [];
 

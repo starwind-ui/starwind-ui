@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  createColorPicker,
-  parseColor,
   type ColorPickerValueChangeDetails,
   type ColorPickerValueCommitDetails,
+  createColorPicker,
+  parseColor,
 } from "../../../src/components/color-picker";
+import { createDialog } from "../../../src/components/dialog/dialog";
 import { createPopover } from "../../../src/components/popover/popover";
 import { createSelect } from "../../../src/components/select/select";
 
@@ -269,6 +270,113 @@ describe("Color Picker controller", () => {
     expect(select.getOpen()).toBe(false);
     expect(popover.getOpen()).toBe(true);
     expect(document.activeElement).toBe(selectTrigger);
+  });
+
+  it.each([
+    ["value input", "[data-sw-color-picker-value-input]", "#ff", "#ff0000"],
+    ["channel input", '[data-sw-color-picker-channel-field][data-channel="red"]', "nope", "255"],
+  ])(
+    "keeps the Popover open when Escape restores a %s draft",
+    async (_name, selector, draft, restored) => {
+      const host = document.createElement("div");
+      host.innerHTML = `<div data-sw-popover><div data-sw-color-picker>
+        <button type="button" data-sw-popover-trigger>Open color picker</button>
+        <div data-sw-popover-portal><div data-sw-popover-popup>
+          <input data-sw-color-picker-value-input>
+          <input data-sw-color-picker-channel-field data-channel="red">
+          <input data-sw-color-picker-hidden-input>
+        </div></div>
+      </div></div>`;
+      document.body.append(host);
+      const trigger = host.querySelector<HTMLButtonElement>("[data-sw-popover-trigger]")!;
+      createColorPicker(host.querySelector<HTMLElement>("[data-sw-color-picker]")!, {
+        defaultValue: "#ff0000",
+      });
+      const popover = createPopover(host.querySelector<HTMLElement>("[data-sw-popover]")!);
+      trigger.click();
+      expect(popover.getOpen()).toBe(true);
+
+      const field = host.querySelector<HTMLInputElement>(selector)!;
+      field.focus();
+      field.value = draft;
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+      field.dispatchEvent(key("Escape", { cancelable: true }));
+      expect(field.value).toBe(restored);
+      expect(popover.getOpen()).toBe(true);
+      expect(document.activeElement).toBe(field);
+
+      field.dispatchEvent(key("Escape", { cancelable: true }));
+      expect(popover.getOpen()).toBe(false);
+      await vi.waitFor(() => expect(document.activeElement).toBe(trigger));
+    },
+  );
+
+  it("closes only the Popover on the second Escape when the Popover is inside a Dialog", () => {
+    const host = document.createElement("div");
+    host.innerHTML = `<div data-sw-dialog>
+      <button type="button" data-sw-dialog-trigger>Open dialog</button>
+      <dialog data-sw-dialog-content><h2 data-sw-dialog-title>Dialog</h2>
+        <div data-sw-popover><div data-sw-color-picker>
+          <button type="button" data-sw-popover-trigger>Open color picker</button>
+          <div data-sw-popover-portal><div data-sw-popover-popup>
+            <input data-sw-color-picker-value-input>
+            <input data-sw-color-picker-hidden-input>
+          </div></div>
+        </div></div>
+      </dialog>
+    </div>`;
+    document.body.append(host);
+    createColorPicker(host.querySelector<HTMLElement>("[data-sw-color-picker]")!, {
+      defaultValue: "#ff0000",
+    });
+    const dialog = createDialog(host.querySelector<HTMLElement>("[data-sw-dialog]")!);
+    const popover = createPopover(host.querySelector<HTMLElement>("[data-sw-popover]")!);
+    dialog.setOpen(true);
+    host.querySelector<HTMLButtonElement>("[data-sw-popover-trigger]")!.click();
+    expect(popover.getOpen()).toBe(true);
+
+    const field = host.querySelector<HTMLInputElement>("[data-sw-color-picker-value-input]")!;
+    field.focus();
+    field.value = "#ff";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    field.dispatchEvent(key("Escape", { cancelable: true }));
+    expect(field.value).toBe("#ff0000");
+    expect(popover.getOpen()).toBe(true);
+    expect(dialog.getOpen()).toBe(true);
+
+    field.dispatchEvent(key("Escape", { cancelable: true }));
+    expect(popover.getOpen()).toBe(false);
+    expect(dialog.getOpen()).toBe(true);
+  });
+
+  it("lets Escape close a Dialog around an inline Color Picker when no draft exists", () => {
+    const host = document.createElement("div");
+    host.innerHTML = `<div data-sw-dialog>
+      <button type="button" data-sw-dialog-trigger>Open dialog</button>
+      <dialog data-sw-dialog-content><h2 data-sw-dialog-title>Dialog</h2>
+        <div data-sw-color-picker>
+          <input data-sw-color-picker-value-input>
+          <input data-sw-color-picker-hidden-input>
+        </div>
+      </dialog>
+    </div>`;
+    document.body.append(host);
+    createColorPicker(host.querySelector<HTMLElement>("[data-sw-color-picker]")!, {
+      defaultValue: "#ff0000",
+    });
+    const dialog = createDialog(host.querySelector<HTMLElement>("[data-sw-dialog]")!);
+    dialog.setOpen(true);
+
+    const field = host.querySelector<HTMLInputElement>("[data-sw-color-picker-value-input]")!;
+    field.focus();
+    field.value = "#ff";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    field.dispatchEvent(key("Escape", { cancelable: true }));
+    expect(field.value).toBe("#ff0000");
+    expect(dialog.getOpen()).toBe(true);
+
+    field.dispatchEvent(key("Escape", { cancelable: true }));
+    expect(dialog.getOpen()).toBe(false);
   });
 
   it("synchronizes color state while exposing valid CSS and accessible range output", () => {
@@ -790,9 +898,10 @@ describe("Color Picker controller", () => {
       root.addEventListener("starwind:value-committed", (event) => {
         commits.push((event as CustomEvent<ColorPickerValueCommitDetails>).detail);
       });
-      const picker = createColorPicker(root, {
-        ...(controlled ? { value: "#ff0000" } : { defaultValue: "#ff0000" }),
-      });
+      const picker = createColorPicker(
+        root,
+        controlled ? { value: "#ff0000" } : { defaultValue: "#ff0000" },
+      );
 
       channel(root, "hue").dispatchEvent(key("ArrowRight"));
 
@@ -1434,6 +1543,128 @@ describe("Color Picker controller", () => {
     expect(picker.getValue()!.hsb.saturation).toBeCloseTo(59);
   });
 
+  it.each(["ltr", "rtl"] as const)(
+    "maps the area and channel using their opposite %s surface",
+    (dir) => {
+      const root = render({ channels: ["red"] });
+      const editor = document.createElement("section");
+      const area = getArea(root);
+      const slider = getSlider(root, "red");
+      editor.dir = dir;
+      root.append(editor);
+      editor.append(area, slider);
+      const other = dir === "ltr" ? "rtl" : "ltr";
+      const picker = createColorPicker(root, { dir: other, defaultValue: "#4080c0" });
+      for (const [host, control, max] of [
+        [area, input(root, "x"), 100],
+        [slider, channel(root, "red"), 255],
+      ] as const) {
+        rect(host);
+        control.dir = other;
+        host.dispatchEvent(pointer("pointerdown", { clientX: 25, clientY: 25, buttons: 1 }));
+        document.dispatchEvent(pointer("pointerup", { clientX: 25, clientY: 25, buttons: 0 }));
+        const value = Math.round((dir === "ltr" ? 0.25 : 0.75) * max);
+        expect(control).toHaveAttribute("aria-valuenow", String(value));
+        control.dispatchEvent(key("ArrowRight"));
+        expect(control).toHaveAttribute("aria-valuenow", String(value + (dir === "ltr" ? 1 : -1)));
+        control.dispatchEvent(key("Home"));
+        expect(control).toHaveAttribute("aria-valuenow", "0");
+        control.dispatchEvent(key("End"));
+        expect(control).toHaveAttribute("aria-valuenow", String(max));
+      }
+      picker.destroy();
+    },
+  );
+
+  it.each(["pointermove", "pointerup"] as const)(
+    "rolls back before a same-task local surface flip and %s",
+    (completion) => {
+      const root = render();
+      const area = getArea(root);
+      rect(area);
+      root.dir = "rtl";
+      area.dir = "ltr";
+      const committed = vi.fn();
+      const picker = createColorPicker(root, { defaultValue: "#fff", onValueCommitted: committed });
+      const start = picker.getValueAsString();
+      area.dispatchEvent(pointer("pointerdown", { clientX: 25, clientY: 75, buttons: 1 }));
+      expect(picker.getValueAsString()).not.toBe(start);
+      area.removeAttribute("dir");
+      document.dispatchEvent(
+        pointer(completion, {
+          clientX: 75,
+          clientY: 75,
+          buttons: completion === "pointermove" ? 1 : 0,
+        }),
+      );
+      expect(root.hasAttribute("data-dragging")).toBe(false);
+      expect(picker.getValueAsString()).toBe(start);
+      expect(committed).not.toHaveBeenCalled();
+      picker.destroy();
+    },
+  );
+
+  it("retains the controlled value accepted before a local direction change", () => {
+    const root = render({ channels: ["red"] });
+    const surface = getSlider(root, "red");
+    rect(surface);
+    root.dir = "rtl";
+    surface.dir = "ltr";
+    const committed = vi.fn();
+    let picker: ReturnType<typeof createColorPicker>;
+    picker = createColorPicker(root, {
+      value: "#4080c0",
+      onValueChange: (next) => picker.setValue(next, { emit: false }),
+      onValueCommitted: committed,
+    });
+    surface.dispatchEvent(pointer("pointerdown", { clientX: 75, clientY: 50, buttons: 1 }));
+    expect(picker.getValue()!.rgb.red).toBe(191);
+    surface.removeAttribute("dir");
+    document.dispatchEvent(pointer("pointerup", { clientX: 25, clientY: 50, buttons: 0 }));
+    expect(picker.getValue()!.rgb.red).toBe(191);
+    expect(root.hasAttribute("data-dragging")).toBe(false);
+    expect(committed).not.toHaveBeenCalled();
+    picker.destroy();
+  });
+
+  it("reads local auto text and reparenting on direction-change during a drag and releases the session", async () => {
+    const root = render({ channels: ["red"] });
+    const area = getArea(root);
+    const auto = document.createElement("section");
+    auto.dir = "auto";
+    const text = document.createTextNode("Sample");
+    root.prepend(auto);
+    auto.append(text, area);
+    rect(area);
+    const committed = vi.fn();
+    const picker = createColorPicker(root, { defaultValue: "#fff", onValueCommitted: committed });
+    const start = picker.getValueAsString();
+    area.dispatchEvent(pointer("pointerdown", { clientX: 25, clientY: 75, buttons: 1 }));
+    root.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.hasAttribute("data-dragging")).toBe(true);
+    text.data = "العربية";
+    await nextFrame();
+    expect(root.hasAttribute("data-dragging")).toBe(true);
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.hasAttribute("data-dragging")).toBe(false);
+    expect(picker.getValueAsString()).toBe(start);
+    const ltr = document.createElement("section");
+    ltr.dir = "ltr";
+    root.append(ltr);
+    area.dispatchEvent(pointer("pointerdown", { clientX: 25, clientY: 75, buttons: 1 }));
+    ltr.append(area);
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(picker.getValueAsString()).toBe(start);
+    expect(committed).not.toHaveBeenCalled();
+    area.dispatchEvent(pointer("pointerdown", { clientX: 25, clientY: 75, buttons: 1 }));
+    picker.destroy();
+    ltr.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    document.dispatchEvent(pointer("pointerup", { clientX: 25, clientY: 75, buttons: 0 }));
+    expect(committed).not.toHaveBeenCalled();
+  });
+
   it("supports vertical channel pointer math and localized announcements", () => {
     const root = render();
     const hue = getSlider(root, "hue");
@@ -1606,7 +1837,7 @@ describe("Color Picker controller", () => {
     expect(committed).not.toHaveBeenCalled();
   });
 
-  it("clears optional reflected state explicitly and recomputes inherited direction", () => {
+  it("clears an explicit direction and updates inherited reflection on direction-change", async () => {
     const parent = document.createElement("div");
     parent.dir = "rtl";
     document.body.append(parent);
@@ -1626,9 +1857,18 @@ describe("Color Picker controller", () => {
     expect(root.hasAttribute("data-name")).toBe(false);
     expect(root.hasAttribute("data-form")).toBe(false);
     expect(root.hasAttribute("data-locale")).toBe(false);
-    expect(root.hasAttribute("dir")).toBe(false);
+    expect(root.getAttribute("dir")).toBe("rtl");
     expect(hidden(root).name).toBe("");
     expect(hidden(root).getAttribute("form")).toBeNull();
+
+    parent.dir = "ltr";
+    await nextFrame();
+    expect(root.getAttribute("dir")).toBe("rtl");
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("ltr");
+    parent.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("rtl");
 
     const area = getArea(root);
     rect(area);
@@ -1637,7 +1877,331 @@ describe("Color Picker controller", () => {
       pointer("pointerup", { clientX: 20, clientY: 50, buttons: 0 }),
     );
     expect(picker.getValue()!.hsb.saturation).toBeCloseTo(80);
+    picker.destroy();
+    expect(root.hasAttribute("dir")).toBe(false);
   });
+
+  it("treats a same-value root write as a projection and a different value as authored", () => {
+    const parent = document.createElement("div");
+    parent.dir = "ltr";
+    document.body.append(parent);
+    const root = render({ channels: ["hue"] });
+    parent.append(root);
+    const changed = vi.fn();
+    const committed = vi.fn();
+    root.addEventListener("starwind:value-change", changed);
+    root.addEventListener("starwind:value-committed", committed);
+    const picker = createColorPicker(root, { defaultValue: "#ff0000", name: "accent" });
+    expect(root.getAttribute("dir")).toBe("ltr");
+
+    // With no observer, a same-value write reads as the Runtime projection.
+    root.setAttribute("dir", "ltr");
+    parent.dir = "rtl";
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(359);
+    expect(root.getAttribute("dir")).toBe("rtl");
+
+    root.setAttribute("dir", "ltr");
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("ltr");
+    expect(getComputedStyle(root).direction).toBe("ltr");
+    picker.setValue("#ff0000", { emit: false });
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(1);
+
+    root.removeAttribute("dir");
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("rtl");
+    expect(getComputedStyle(root).direction).toBe("rtl");
+    picker.setValue("#ff0000", { emit: false });
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(359);
+    parent.dir = "ltr";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("ltr");
+    expect(changed).toHaveBeenCalledTimes(3);
+    expect(committed).toHaveBeenCalledTimes(3);
+    picker.destroy();
+    expect(root.hasAttribute("dir")).toBe(false);
+  });
+
+  it("preserves authored auto direction and restores it after option precedence", async () => {
+    const parent = document.createElement("div");
+    parent.dir = "ltr";
+    document.body.append(parent);
+    const root = render({ channels: ["hue"] });
+    root.setAttribute("dir", "auto");
+    label(root).textContent = "مرحبا";
+    parent.append(root);
+    const picker = createColorPicker(root, { defaultValue: "#ff0000", dir: "ltr" });
+    expect(root.getAttribute("dir")).toBe("ltr");
+
+    picker.setOptions({ dir: null });
+    expect(root.getAttribute("dir")).toBe("auto");
+    expect(getComputedStyle(root).direction).toBe("rtl");
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(359);
+    picker.setValue("#ff0000", { emit: false });
+    label(root).textContent = "Color";
+    await nextFrame();
+    expect(root.getAttribute("dir")).toBe("auto");
+    expect(getComputedStyle(root).direction).toBe("ltr");
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(1);
+    picker.destroy();
+    expect(root.getAttribute("dir")).toBe("auto");
+  });
+
+  it.each(["", "sideways"])(
+    "keeps an authored invalid dir value %j while inheriting",
+    async (raw) => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      document.body.append(parent);
+      const root = render();
+      root.setAttribute("dir", raw);
+      parent.append(root);
+      const picker = createColorPicker(root);
+      expect(root.getAttribute("dir")).toBe(raw);
+      expect(getComputedStyle(root).direction).toBe("rtl");
+
+      parent.dir = "ltr";
+      await nextFrame();
+      expect(root.getAttribute("dir")).toBe(raw);
+      expect(getComputedStyle(root).direction).toBe("ltr");
+      picker.destroy();
+      expect(root.getAttribute("dir")).toBe(raw);
+    },
+  );
+
+  it("keeps explicit option precedence and restores a later authored root write", async () => {
+    const parent = document.createElement("div");
+    parent.dir = "rtl";
+    document.body.append(parent);
+    const root = render();
+    parent.append(root);
+    const picker = createColorPicker(root, { dir: "ltr" });
+    expect(root.getAttribute("dir")).toBe("ltr");
+
+    root.setAttribute("dir", "rtl");
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("ltr");
+    parent.dir = "ltr";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("ltr");
+    picker.destroy();
+    expect(root.getAttribute("dir")).toBe("rtl");
+  });
+
+  it("reads a new inherited scope at the next input and after reparenting", async () => {
+    const ltr = document.createElement("div");
+    ltr.dir = "ltr";
+    const rtl = document.createElement("div");
+    rtl.dir = "rtl";
+    document.body.append(ltr, rtl);
+    const root = render({ channels: ["hue"] });
+    ltr.append(root);
+    const picker = createColorPicker(root, { defaultValue: "#ff0000" });
+
+    ltr.dir = "rtl";
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(root.getAttribute("dir")).toBe("rtl");
+    expect(picker.getValue()!.hsb.hue).toBe(359);
+
+    rtl.dir = "ltr";
+    rtl.append(root);
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("ltr");
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(0);
+    picker.destroy();
+  });
+
+  it("uses root CSS direction before init and after an explicit refresh", async () => {
+    const style = document.createElement("style");
+    style.textContent = ".color-direction-rtl { direction: rtl; }";
+    document.body.append(style);
+    const parent = document.createElement("div");
+    parent.dir = "rtl";
+    document.body.append(parent);
+    const root = render({ channels: ["hue"] });
+    root.classList.add("color-direction-rtl");
+    parent.append(root);
+    const picker = createColorPicker(root, { defaultValue: "#ff0000" });
+    expect(root.getAttribute("dir")).toBe("rtl");
+
+    parent.dir = "ltr";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("rtl");
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(359);
+
+    root.classList.remove("color-direction-rtl");
+    picker.refresh();
+    expect(root.getAttribute("dir")).toBe("ltr");
+    picker.setValue("#ff0000", { emit: false });
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    expect(picker.getValue()!.hsb.hue).toBe(1);
+
+    root.classList.add("color-direction-rtl");
+    picker.refresh();
+    expect(root.getAttribute("dir")).toBe("rtl");
+    root.classList.remove("color-direction-rtl");
+    root.style.direction = "rtl";
+    picker.refresh();
+    expect(root.getAttribute("dir")).toBe("rtl");
+    root.style.direction = "";
+    picker.refresh();
+    expect(root.getAttribute("dir")).toBe("ltr");
+    root.style.direction = "inherit";
+    picker.refresh();
+    parent.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("rtl");
+    root.style.direction = "";
+    picker.refresh();
+    picker.destroy();
+    expect(root.hasAttribute("dir")).toBe(false);
+  });
+
+  it("rolls back an uncontrolled drag on direction flip without a commit", async () => {
+    const form = document.createElement("form");
+    form.dir = "ltr";
+    document.body.append(form);
+    const root = render({ channels: ["hue"] });
+    form.append(root);
+    const area = getArea(root);
+    rect(area);
+    const changed = vi.fn();
+    const committed = vi.fn();
+    root.addEventListener("starwind:value-change", changed);
+    root.addEventListener("starwind:value-committed", committed);
+    const picker = createColorPicker(root, {
+      defaultValue: "hsb(0, 0%, 100%)",
+      name: "accent",
+    });
+    const baseline = picker.getValueAsString();
+
+    area.dispatchEvent(pointer("pointerdown", { clientX: 80, clientY: 50, buttons: 1 }));
+    expect(picker.getValue()!.hsb.saturation).toBe(80);
+    form.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("rtl");
+    expect(root.hasAttribute("data-dragging")).toBe(false);
+    expect(picker.getValueAsString()).toBe(baseline);
+    expect(new FormData(form).get("accent")).toBe(baseline);
+    document.dispatchEvent(pointer("pointerup", { clientX: 80, clientY: 50, buttons: 0 }));
+    expect(changed).toHaveBeenCalledOnce();
+    expect(committed).not.toHaveBeenCalled();
+
+    form.dir = "ltr";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    area.dispatchEvent(pointer("pointerdown", { clientX: 60, clientY: 50, buttons: 1 }));
+    form.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(picker.getValueAsString()).toBe(baseline);
+    expect(changed).toHaveBeenCalledTimes(2);
+    expect(committed).not.toHaveBeenCalled();
+    picker.destroy();
+  });
+
+  it("keeps the controlled owner value when direction cancels its drag", async () => {
+    const parent = document.createElement("div");
+    parent.dir = "ltr";
+    document.body.append(parent);
+    const root = render();
+    parent.append(root);
+    const area = getArea(root);
+    rect(area);
+    const committed = vi.fn();
+    let picker!: ReturnType<typeof createColorPicker>;
+    const changed = vi.fn((value: Parameters<typeof picker.setValue>[0]) =>
+      picker.setValue(value, { emit: false }),
+    );
+    picker = createColorPicker(root, {
+      value: "hsb(0, 0%, 100%)",
+      onValueChange: changed,
+      onValueCommitted: committed,
+    });
+    area.dispatchEvent(pointer("pointerdown", { clientX: 60, clientY: 50, buttons: 1 }));
+    expect(picker.getValue()!.hsb.saturation).toBe(60);
+    parent.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.getAttribute("dir")).toBe("rtl");
+    expect(picker.getValue()!.hsb.saturation).toBe(60);
+    expect(changed).toHaveBeenCalledOnce();
+    expect(committed).not.toHaveBeenCalled();
+    picker.destroy();
+  });
+
+  it.each(["pointerup", "pointermove"] as const)(
+    "keeps the last committed value when a same-task flip precedes %s",
+    async (completion) => {
+      const form = document.createElement("form");
+      form.dir = "ltr";
+      document.body.append(form);
+      const root = render();
+      form.append(root);
+      const area = getArea(root);
+      rect(area);
+      const committed = vi.fn();
+      root.addEventListener("starwind:value-committed", committed);
+      const picker = createColorPicker(root, {
+        defaultValue: "hsb(0, 0%, 100%)",
+        name: "accent",
+      });
+      area.dispatchEvent(pointer("pointerdown", { clientX: 30, clientY: 50, buttons: 1 }));
+      document.dispatchEvent(pointer("pointerup", { clientX: 30, clientY: 50, buttons: 0 }));
+      const baseline = picker.getValueAsString();
+      expect(committed).toHaveBeenCalledOnce();
+
+      area.dispatchEvent(pointer("pointerdown", { clientX: 80, clientY: 50, buttons: 1 }));
+      expect(picker.getValueAsString()).not.toBe(baseline);
+      form.dir = "rtl";
+      document.dispatchEvent(pointer(completion, { clientX: 80, clientY: 50, buttons: 0 }));
+      expect(root.getAttribute("dir")).toBe("rtl");
+      expect(picker.getValueAsString()).toBe(baseline);
+      expect(new FormData(form).get("accent")).toBe(baseline);
+      expect(committed).toHaveBeenCalledOnce();
+      await nextFrame();
+      expect(committed).toHaveBeenCalledOnce();
+      picker.destroy();
+    },
+  );
+
+  it.each(["pointerup", "pointermove"] as const)(
+    "keeps the controlled owner's accepted value when a same-task flip precedes %s",
+    async (completion) => {
+      const parent = document.createElement("div");
+      parent.dir = "ltr";
+      document.body.append(parent);
+      const root = render();
+      parent.append(root);
+      const area = getArea(root);
+      rect(area);
+      const committed = vi.fn();
+      let picker!: ReturnType<typeof createColorPicker>;
+      picker = createColorPicker(root, {
+        value: "hsb(0, 0%, 100%)",
+        onValueChange: (value) => picker.setValue(value, { emit: false }),
+        onValueCommitted: committed,
+      });
+      area.dispatchEvent(pointer("pointerdown", { clientX: 30, clientY: 50, buttons: 1 }));
+      document.dispatchEvent(pointer("pointerup", { clientX: 30, clientY: 50, buttons: 0 }));
+      expect(committed).toHaveBeenCalledOnce();
+
+      area.dispatchEvent(pointer("pointerdown", { clientX: 60, clientY: 50, buttons: 1 }));
+      expect(picker.getValue()!.hsb.saturation).toBe(60);
+      parent.dir = "rtl";
+      document.dispatchEvent(pointer(completion, { clientX: 60, clientY: 50, buttons: 0 }));
+      expect(root.getAttribute("dir")).toBe("rtl");
+      expect(picker.getValue()!.hsb.saturation).toBe(60);
+      expect(committed).toHaveBeenCalledOnce();
+      await nextFrame();
+      expect(committed).toHaveBeenCalledOnce();
+      picker.destroy();
+    },
+  );
 });
 
 function render({
@@ -1716,4 +2280,7 @@ function pointer(type: string, init: PointerEventInit) {
 }
 function key(value: string, init: KeyboardEventInit = {}) {
   return new KeyboardEvent("keydown", { bubbles: true, key: value, ...init });
+}
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }

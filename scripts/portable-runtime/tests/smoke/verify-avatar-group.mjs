@@ -3,7 +3,7 @@ import { verifyAvatarGroupCases } from "./shared/avatar-group.mjs";
 
 const urls = process.argv.slice(2);
 if (!urls.length) throw new Error("Pass one or more demo URLs.");
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ channel: "chrome", headless: true });
 try {
   for (const url of urls) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });

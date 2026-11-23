@@ -544,18 +544,34 @@ async function assertControllednessInvariance(page) {
     .getByTestId("mode-uncontrolled-prop")
     .getByText(/passed$/)
     .waitFor();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector(
+          "#react-color-picker-mode-uncontrolled [data-slot='color-picker-value-input']",
+        )
+        ?.value.toLowerCase() === "#16a34a",
+  );
   assert.match(
     await uncontrolledInput.inputValue(),
-    /^#e11d48$/i,
-    "an initially uncontrolled root retains its accepted internal value when value is passed later",
+    /^#16a34a$/i,
+    "an initially uncontrolled root applies a value that the parent passes later",
   );
-  assert.match(await page.getByTestId("mode-uncontrolled-changes").textContent(), /1$/);
+  assert.match(
+    await page.getByTestId("mode-uncontrolled-changes").textContent(),
+    /1$/,
+    "a late parent value is a silent command and fires no change callback",
+  );
   assert.match(await page.getByTestId("mode-uncontrolled-commits").textContent(), /1$/);
 
   await uncontrolledFixture.getByRole("button", { name: "Uncontrolled choose indigo" }).click();
   await page.getByTestId("mode-uncontrolled-changes").getByText(/2$/).waitFor();
   await page.getByTestId("mode-uncontrolled-commits").getByText(/2$/).waitFor();
-  assert.match(await uncontrolledInput.inputValue(), /^#4f46e5$/i);
+  assert.match(
+    await uncontrolledInput.inputValue(),
+    /^#4f46e5$/i,
+    "the parent re-render with the same late value does not undo the user's change",
+  );
   assert.match(
     await page.getByTestId("mode-uncontrolled-last-event").textContent(),
     /#4f46e5:swatch-press$/i,

@@ -15,8 +15,6 @@ import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteButtonChild } from "./button-child.js";
 import { printSvelteOverlayPortal } from "./overlay-portal.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 function assertTimedFacts(facts: AdapterTimedFloatingOverlayFacts): void {
   const tooltip =
     facts.trigger.triggerKind === "button" && facts.root.disabled && facts.popup.omitTabIndexProps;
@@ -44,8 +42,7 @@ export function printSvelteTimedFloatingOverlayIndex(file: AdapterIndexFile): Ad
   const { facts } = family;
   assertTimedFacts(facts);
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-${facts.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
+    contents: `${facts.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
 const ${facts.exports.namespace} = {
 ${facts.index.namespaceMembers.map(({ key, name }) => `  ${key}: ${name},`).join("\n")}
 };
@@ -162,8 +159,7 @@ function printPart(
     omit?: string;
   },
 ): string {
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";

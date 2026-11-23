@@ -4,6 +4,7 @@ import { appendRuntimeTypeFacades, renderPrimitiveIndex } from "../../primitive-
 import { createTsHeader, writeGeneratedFile } from "../../shared.js";
 import type { FrameworkAdapterTargetPrimitivePackageGenerator } from "../types.js";
 import { renderVueAsChildHelper } from "./as-child.js";
+import { renderVueAsChildTargetHelper } from "./as-child-target.js";
 import { printVueFormDiscovery } from "./form-discovery.js";
 import { renderVueNativeControlHelper } from "./native-control.js";
 import { renderVuePortalHelper } from "./portal.js";
@@ -28,6 +29,11 @@ export const generateVuePrimitivePackage: FrameworkAdapterTargetPrimitivePackage
       path.join(outputRoot, "_internal"),
       "as-child.ts",
       renderVueAsChildHelper(generatedBy),
+    ),
+    writeGeneratedFile(
+      path.join(outputRoot, "_internal"),
+      "as-child-target.ts",
+      renderVueAsChildTargetHelper(generatedBy),
     ),
     writeGeneratedFile(
       path.join(outputRoot, "_internal"),

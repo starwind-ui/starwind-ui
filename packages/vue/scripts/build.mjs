@@ -1,5 +1,5 @@
-import { cp, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { cp, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import { build } from "tsup";

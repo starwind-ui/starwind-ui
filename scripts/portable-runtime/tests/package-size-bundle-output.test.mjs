@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { constants } from "node:zlib";
+import { describe, expect, it } from "vitest";
 
 import { summarizeInitialBundleOutput } from "../package-size-bundle-output.mjs";
 

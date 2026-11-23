@@ -30,7 +30,7 @@ export async function verifyFixedOwnerAttachments(consumer: DistConsumer) {
     response.end(
       request.url === "/browser.js"
         ? javascript
-        : `<link rel="icon" href="data:,\"><div id="app">${body}</div><script type="module" src="/browser.js"></script>`,
+        : `<link rel="icon" href="data:,"><div id="app">${body}</div><script type="module" src="/browser.js"></script>`,
     );
   });
   let browser;
@@ -55,14 +55,30 @@ export async function verifyFixedOwnerAttachments(consumer: DistConsumer) {
     assert.equal(result.error, undefined, result.error);
     assert.deepEqual(result, {
       owners: {
-        button: "BUTTON", checkbox: "BUTTON", indicator: "SPAN", select: "DIV",
-        combobox: "DIV", group: "DIV", navigation: "NAV", icon: "SPAN",
-        "dialog-trigger": "BUTTON", "preview-trigger": "A", "context-trigger": "DIV",
+        button: "BUTTON",
+        checkbox: "BUTTON",
+        indicator: "SPAN",
+        select: "DIV",
+        combobox: "DIV",
+        group: "DIV",
+        navigation: "NAV",
+        icon: "SPAN",
+        "dialog-trigger": "BUTTON",
+        "preview-trigger": "A",
+        "context-trigger": "DIV",
       },
       updated: {
-        button: "updated", checkbox: "updated", indicator: "updated", select: "updated",
-        combobox: "updated", group: "updated", navigation: "updated", icon: "updated",
-        "dialog-trigger": "updated", "preview-trigger": "updated", "context-trigger": "updated",
+        button: "updated",
+        checkbox: "updated",
+        indicator: "updated",
+        select: "updated",
+        combobox: "updated",
+        group: "updated",
+        navigation: "updated",
+        icon: "updated",
+        "dialog-trigger": "updated",
+        "preview-trigger": "updated",
+        "context-trigger": "updated",
       },
       checked: true,
       cleared: 0,

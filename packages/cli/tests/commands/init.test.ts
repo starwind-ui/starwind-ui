@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PATHS } from "../../src/utils/constants.js";
 
@@ -82,6 +82,10 @@ const vuePackage = JSON.parse(
 const registryVersionManifest = JSON.parse(
   readFileSync(new URL("../../registry/styled-component-versions.json", import.meta.url), "utf8"),
 ) as { registryVersion: string };
+const DIRECTION_VARIANT_LINES = {
+  rtl: '@custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)));',
+  ltr: '@custom-variant ltr (&:where(:not([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *))));',
+} as const;
 const CURRENT_ASTRO_SPEC = `@starwind-ui/astro@${runtimePackage.version}`;
 const CURRENT_REACT_SPEC = `@starwind-ui/react@${runtimePackage.version}`;
 const CURRENT_VUE_SPEC = `@starwind-ui/vue@${vuePackage.version}`;
@@ -90,7 +94,7 @@ const ASTRO_SETUP_REQUIREMENTS = [
   "@tabler/icons@^3",
   "@tailwindcss/forms@^0.5",
   "@tailwindcss/vite@^4",
-  "tailwind-merge@^3",
+  "tailwind-merge@^3.7.0",
   "tailwind-variants@^3",
   "tailwindcss@^4",
   "tw-animate-css@^1",
@@ -99,7 +103,7 @@ const REACT_SETUP_REQUIREMENTS = [
   "@tabler/icons-react@^3",
   "@tailwindcss/forms@^0.5",
   "@tailwindcss/vite@^4",
-  "tailwind-merge@^3",
+  "tailwind-merge@^3.7.0",
   "tailwind-variants@^3",
   "tailwindcss@^4",
   "tw-animate-css@^1",
@@ -287,6 +291,44 @@ describe("init command", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDefaultProject();
+  });
+
+  afterEach(() => {
+    for (const [file, content] of mockWriteCssFile.mock.calls) {
+      for (const [direction, declaration] of Object.entries(DIRECTION_VARIANT_LINES)) {
+        expect(content.split(declaration).length - 1, `${file} ${direction} variant`).toBe(1);
+        expect(
+          content.match(new RegExp(`@custom-variant ${direction}\\b`, "g")),
+          `${file} ${direction} variant count`,
+        ).toHaveLength(1);
+      }
+      expect(content, `${file} has no :dir() selector`).not.toContain(":dir(");
+    }
+  });
+
+  it("keeps a custom stylesheet byte-identical when init retains it", async () => {
+    const original = Buffer.from(
+      '@import "tailwindcss";\n@custom-variant rtl (&:where([dir="rtl"] &));\n.custom { color: rebeccapurple; }\n',
+    );
+    let current = Buffer.from(original);
+    mockFileExists.mockImplementation(
+      async (filePath) => filePath === "package.json" || filePath === PATHS.LOCAL_CSS_FILE,
+    );
+    mockGroup.mockResolvedValue({
+      framework: "astro",
+      componentDir: PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
+      cssFile: PATHS.LOCAL_CSS_FILE,
+      twBaseColor: "neutral",
+    });
+    mockConfirm.mockResolvedValue(false);
+    mockWriteCssFile.mockImplementation(async (_file, content) => {
+      current = Buffer.from(content);
+    });
+
+    await init(false, { framework: "astro", packageManager: "pnpm" });
+
+    expect(current.equals(original)).toBe(true);
+    expect(mockWriteCssFile).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -612,6 +654,28 @@ describe("init command", () => {
     expect(mockGetVuePackageRequirements).toHaveBeenCalledWith(["vue@>=3.5"]);
   });
 
+  it("installs tailwind-merge 3.7 through the bundled Vue setup", async () => {
+    const bundled = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
+    mockReadJsonFile.mockResolvedValue({ dependencies: { vue: "3.5.39" } });
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan: vuePlan,
+        registry: { ...vueRegistry, setup: { vue: bundled.setup.vue } },
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    // Generated Vue Styled components import tailwind-variants, which imports tailwind-merge.
+    expect(mockGetVuePackageRequirements).toHaveBeenCalledWith(
+      expect.arrayContaining(["tailwind-merge@^3.7.0", "vue@>=3.5.21"]),
+    );
+  });
+
   it.each([
     ["missing", {}],
     ["incompatible", { dependencies: { vue: "^3.4.0" } }],
@@ -695,7 +759,7 @@ describe("init command", () => {
     mockGroup.mockImplementation(async (prompts) => {
       const answers: Record<string, unknown> = {};
       for (const [key, prompt] of Object.entries(prompts)) {
-        answers[key] = await (prompt as () => unknown | Promise<unknown>)();
+        answers[key] = await (prompt as () => unknown)();
       }
       return answers;
     });
@@ -912,7 +976,9 @@ describe("init command", () => {
           },
         ),
       ).rejects.toThrow("process.exit called");
-      expect(clackPrompts.cancel).toHaveBeenCalledWith(expect.stringContaining("Vue 3.5 or later"));
+      expect(clackPrompts.cancel).toHaveBeenCalledWith(
+        expect.stringContaining("Vue 3.5.21 or later"),
+      );
       expect(mockInstallDependencies).not.toHaveBeenCalled();
       expect(mockSetupVueProject).not.toHaveBeenCalled();
       expect(mockUpdateConfig).not.toHaveBeenCalled();
@@ -920,6 +986,37 @@ describe("init command", () => {
       exitSpy.mockRestore();
     }
   });
+
+  // The adapter's peer range rejects Vue 3.5.13, so npm needs the upgrade in the same install.
+  it.each(["npm", "pnpm", "yarn", "bun"] as const)(
+    "installs the Vue upgrade with an absent adapter for an exact old Vue pin with %s",
+    async (packageManager) => {
+      mockReadJsonFile.mockResolvedValue({
+        dependencies: { vue: "3.5.13" },
+        devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
+      });
+      mockGetVuePackageRequirements.mockReturnValue(["vue@>=3.5.21", "@tailwindcss/vite@^4"]);
+
+      await init(
+        true,
+        { defaults: true, framework: "vue", packageManager },
+        {
+          hostPlan: {
+            ...vuePlan,
+            targets: [{ framework: "vue" as const, readiness: "configurable" as const }],
+            vueHostProject: { ...vuePlan.vueHostProject, vueUpgradeRequired: true },
+          },
+          registry: vueRegistry,
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        },
+      );
+
+      expect(mockInstallDependencies.mock.calls).toEqual([
+        [["vue@>=3.5.21", FIXTURE_VUE_SPEC], packageManager],
+        [["@tailwindcss/vite@^4"], packageManager, false, false],
+      ]);
+    },
+  );
 
   it("initializes Vue through the public host path", async () => {
     mockDetectHostPlan.mockResolvedValue(vuePlan);
@@ -1069,7 +1166,7 @@ describe("init command", () => {
     mockGetReactPackageRequirements.mockReturnValue([
       "@tabler/icons-react@^3",
       "@tailwindcss/forms@^0.5",
-      "tailwind-merge@^3",
+      "tailwind-merge@^3.7.0",
       "tailwind-variants@^3",
       "tailwindcss@^4",
       "tw-animate-css@^1",
@@ -1116,7 +1213,7 @@ describe("init command", () => {
     mockGetReactPackageRequirements.mockReturnValue([
       "@tabler/icons-react@^3",
       "@tailwindcss/forms@^0.5",
-      "tailwind-merge@^3",
+      "tailwind-merge@^3.7.0",
       "tailwind-variants@^3",
       "tailwindcss@^4",
       "tw-animate-css@^1",
@@ -1285,7 +1382,7 @@ describe("init command", () => {
       const answers: Record<string, unknown> = {};
 
       for (const [key, prompt] of Object.entries(prompts)) {
-        answers[key] = await (prompt as () => unknown | Promise<unknown>)();
+        answers[key] = await (prompt as () => unknown)();
       }
 
       return answers;
@@ -1326,7 +1423,7 @@ describe("init command", () => {
     mockGroup.mockImplementation(async (prompts) => {
       const answers: Record<string, unknown> = {};
       for (const [key, prompt] of Object.entries(prompts)) {
-        answers[key] = await (prompt as () => unknown | Promise<unknown>)();
+        answers[key] = await (prompt as () => unknown)();
       }
       return answers;
     });
@@ -1715,7 +1812,7 @@ describe("init command", () => {
   it("initializes Quasar SSR through the common private host seam", async () => {
     const { hostPlan, setup, setupTypeScript, validate } = createQuasarHostPlan();
     mockReadJsonFile.mockResolvedValue({
-      dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+      dependencies: { quasar: "^2.18.0", vue: "^3.5.21" },
       devDependencies: { "@quasar/app-vite": "^3.0.0" },
     });
 
@@ -1926,7 +2023,7 @@ describe("init command", () => {
       },
     };
     mockReadJsonFile.mockResolvedValue({
-      dependencies: { nuxt: "^4.2.0", vue: "^3.5.0" },
+      dependencies: { nuxt: "^4.2.0", vue: "^3.5.21" },
     });
 
     await init(
@@ -1987,12 +2084,12 @@ describe("init command", () => {
       },
     };
     mockReadJsonFile.mockResolvedValue({
-      dependencies: { nuxt: "^4.2.0", vue: "^3.5.0" },
+      dependencies: { nuxt: "^4.2.0", vue: "^3.5.21" },
     });
     mockGroup.mockImplementation(async (prompts) => {
       const answers: Record<string, unknown> = {};
       for (const [key, prompt] of Object.entries(prompts)) {
-        answers[key] = await (prompt as () => unknown | Promise<unknown>)();
+        answers[key] = await (prompt as () => unknown)();
       }
       return answers;
     });
@@ -2100,7 +2197,7 @@ describe("init command", () => {
       },
     };
     mockReadJsonFile.mockResolvedValue({
-      dependencies: { nuxt: "^4.2.0", vue: "^3.5.0" },
+      dependencies: { nuxt: "^4.2.0", vue: "^3.5.21" },
     });
     mockGroup.mockResolvedValue({
       framework: "vue",

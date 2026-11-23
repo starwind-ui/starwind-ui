@@ -10,11 +10,11 @@
 
 <script lang="ts">
   let {
-    "keepMounted": keepMounted,
-    "value": value,
+    keepMounted,
+    value,
     "class": className,
-    "ref": ref,
-    "children": children,
+    ref,
+    children,
     ...rest
   }: TabsContentProps = $props();
 </script>

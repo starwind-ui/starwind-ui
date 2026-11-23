@@ -17,7 +17,9 @@ const packageSpecs = [
 
 const packages = new Map();
 for (const [name, directory] of packageSpecs) {
-  const manifest = JSON.parse(await readFile(path.join(repoRoot, directory, "package.json"), "utf8"));
+  const manifest = JSON.parse(
+    await readFile(path.join(repoRoot, directory, "package.json"), "utf8"),
+  );
   const tarballName = `${name.replace(/^@/, "").replace("/", "-")}-${manifest.version}.tgz`;
   const tarballPath = path.join(packRoot, tarballName);
   const tarball = await readFile(tarballPath);

@@ -10,9 +10,9 @@
 
 <script lang="ts">
   let {
-    "isUploading": isUploading = false,
+    isUploading = false,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: DropzoneLoadingIndicatorProps = $props();
 </script>

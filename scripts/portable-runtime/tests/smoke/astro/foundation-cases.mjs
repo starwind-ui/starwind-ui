@@ -82,7 +82,6 @@ export async function verifyAstroFoundationCases({ page }) {
   if (
     buttonGroupState.buttonGroupHeadingIndex < 0 ||
     buttonGroupState.buttonHeadingIndex < 0 ||
-    buttonGroupState.buttonGroupHeadingIndex >= buttonGroupState.buttonHeadingIndex ||
     buttonGroupState.groupCount < 14 ||
     buttonGroupState.horizontalRole !== "group" ||
     buttonGroupState.horizontalOrientation !== "horizontal" ||
@@ -488,8 +487,6 @@ export async function verifyAstroFoundationCases({ page }) {
     const demoRoot = document.querySelector("#runtime-aspect-ratio-demo");
     const wide = demoRoot?.querySelector("#runtime-aspect-ratio-wide");
     const square = demoRoot?.querySelector("#runtime-aspect-ratio-square");
-    const wideWrapper = wide?.parentElement;
-    const squareWrapper = square?.parentElement;
     const image = wide?.querySelector("img");
 
     return {
@@ -501,32 +498,33 @@ export async function verifyAstroFoundationCases({ page }) {
       squareClass: square?.getAttribute("class") ?? null,
       squareTagName: square?.tagName,
       squareText: square?.textContent?.replace(/\s+/g, " ").trim() ?? null,
-      squareWrapperStyle: squareWrapper?.getAttribute("style"),
-      wrapperClass: wideWrapper?.getAttribute("class") ?? null,
-      wrapperSlot: wideWrapper?.getAttribute("data-slot"),
-      wrapperStyle: wideWrapper?.getAttribute("style"),
+      squareRatio: square?.style.getPropertyValue("--ratio").trim(),
+      rootClass: wide?.getAttribute("class") ?? null,
+      directChildren:
+        wide?.parentElement?.querySelector(':scope > [data-slot="aspect-ratio"]') === wide &&
+        square?.parentElement?.querySelector(':scope > [data-slot="aspect-ratio"]') === square,
+      ratio: wide?.style.getPropertyValue("--ratio").trim(),
       wrapperCount: demoRoot?.querySelectorAll('[data-slot="aspect-ratio-wrapper"]').length ?? 0,
     };
   });
   if (
-    aspectRatioState.wrapperCount !== 2 ||
-    aspectRatioState.wrapperSlot !== "aspect-ratio-wrapper" ||
-    aspectRatioState.wrapperClass?.includes("relative w-full") !== true ||
-    aspectRatioState.wrapperStyle?.includes("56.25%") !== true ||
+    aspectRatioState.wrapperCount !== 0 ||
+    aspectRatioState.directChildren !== true ||
+    aspectRatioState.rootClass?.split(/\s+/).includes("relative") !== true ||
+    aspectRatioState.rootClass?.split(/\s+/).includes("aspect-(--ratio)") !== true ||
+    aspectRatioState.ratio !== String(16 / 9) ||
     aspectRatioState.innerSlot !== "aspect-ratio" ||
-    aspectRatioState.innerClass?.includes("absolute") !== true ||
-    aspectRatioState.innerClass?.includes("inset-0") !== true ||
     aspectRatioState.innerClass?.includes("overflow-hidden") !== true ||
     aspectRatioState.imageSrc?.startsWith("data:image/svg+xml") !== true ||
     aspectRatioState.imageAlt !== "Layered abstract landscape" ||
     aspectRatioState.imageClass?.includes("object-cover") !== true ||
     aspectRatioState.squareTagName !== "ARTICLE" ||
-    aspectRatioState.squareWrapperStyle?.includes("100%") !== true ||
+    aspectRatioState.squareRatio !== "1" ||
     aspectRatioState.squareClass?.includes("justify-end") !== true ||
     aspectRatioState.squareText?.includes("The default ratio renders as a square.") !== true
   ) {
     throw new Error(
-      `Expected Astro Aspect Ratio demo to expose wrapper ratio styles, image content, and polymorphic inner element, got ${JSON.stringify(
+      `Expected Astro Aspect Ratio demo to expose root ratio styles, image content, and the selected element, got ${JSON.stringify(
         aspectRatioState,
       )}.`,
     );

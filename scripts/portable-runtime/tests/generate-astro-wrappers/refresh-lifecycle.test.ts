@@ -27,7 +27,7 @@ it("reconnects generated Astro Input and Dropzone scripts through scoped init an
     },
     server: { host: "127.0.0.1", port: 0, fs: { allow: [repo, directory] } },
   });
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
     for (const component of ["input", "dropzone"]) {
       await primitiveGeneratorRegistry

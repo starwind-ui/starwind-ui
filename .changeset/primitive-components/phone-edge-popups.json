@@ -1,0 +1,7 @@
+{
+  "impact": "behavior",
+  "primitives": {
+    "navigation-menu": "patch",
+    "tooltip": "patch"
+  }
+}

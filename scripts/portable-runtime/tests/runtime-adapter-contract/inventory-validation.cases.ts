@@ -51,6 +51,7 @@ export function defineRuntimeInventoryValidationTests(): void {
       "combobox",
       "color-picker",
       "toast",
+      "chart",
     ]);
 
     expect(representativeRuntimeAdapterContracts.map((contract) => contract.category)).toEqual([
@@ -90,6 +91,7 @@ export function defineRuntimeInventoryValidationTests(): void {
       "floating-value-control",
       "form-value-control",
       "notification-system",
+      "viewport-measurement",
     ]);
   });
 

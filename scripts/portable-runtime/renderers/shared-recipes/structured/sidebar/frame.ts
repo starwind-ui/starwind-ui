@@ -63,7 +63,12 @@ ${models.map((name) => `${plan.defaults[name]}:${seed(name)},\n...(${fw.controll
 ${plan.constructorInputs.map((name) => `${name}:${fw.readInput(name)},`).join("\n")}
 ${models.map((name) => `${f.events[name].callbackProp}:(next,detail)=>{${fw.untracked(fw.proposal(f.events[name].callbackProp, "next", "detail"))}},`).join("\n")}
 });connection.instance=owned;`,
-    "subscribe-notifications": `connection.unsubscribe=[${models.map((name) => `owned.subscribe('${f.events[name].name}',detail=>{${notify(name)}})`).join(",")}];`,
+    "subscribe-notifications": `connection.unsubscribe=[${models
+      .map((name) => {
+        const handler = notify(name);
+        return `owned.subscribe('${f.events[name].name}',${/\bdetail\b/.test(handler) ? "detail" : "()"}=>{${handler}})`;
+      })
+      .join(",")}];`,
     "restore-defined-or-retained": models
       .map(
         (name) =>

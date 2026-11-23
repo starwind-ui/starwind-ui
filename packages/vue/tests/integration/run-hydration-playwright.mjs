@@ -1,13 +1,9 @@
-import { createRequire } from "node:module";
-import { createServer } from "node:http";
+import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { createSSRApp, Fragment, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-
-import { AvatarFallback, AvatarImage, AvatarRoot } from "@starwind-ui/vue/avatar";
 import {
   AccordionHeader,
   AccordionItem,
@@ -26,6 +22,8 @@ import {
   AlertDialogTrigger,
   AlertDialogViewport,
 } from "@starwind-ui/vue/alert-dialog";
+
+import { AvatarFallback, AvatarImage, AvatarRoot } from "@starwind-ui/vue/avatar";
 import { ButtonRoot } from "@starwind-ui/vue/button";
 import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
 import { CheckboxGroupRoot } from "@starwind-ui/vue/checkbox-group";
@@ -49,7 +47,13 @@ import {
   DrawerTrigger,
   DrawerViewport,
 } from "@starwind-ui/vue/drawer";
-import { InputRoot } from "@starwind-ui/vue/input";
+import {
+  DropzoneFilesList,
+  DropzoneInput,
+  DropzoneLoadingIndicator,
+  DropzoneRoot,
+  DropzoneUploadIndicator,
+} from "@starwind-ui/vue/dropzone";
 import {
   FieldControl,
   FieldDescription,
@@ -58,19 +62,13 @@ import {
   FieldRoot,
   FieldValidity,
 } from "@starwind-ui/vue/field";
+import { InputRoot } from "@starwind-ui/vue/input";
 import {
   InputOtpGroup,
   InputOtpRoot,
   InputOtpSeparator,
   InputOtpSlot,
 } from "@starwind-ui/vue/input-otp";
-import {
-  ProgressIndicator,
-  ProgressLabel,
-  ProgressRoot,
-  ProgressTrack,
-  ProgressValue,
-} from "@starwind-ui/vue/progress";
 import {
   PopoverClose,
   PopoverDescription,
@@ -81,11 +79,15 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@starwind-ui/vue/popover";
-import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
+import {
+  ProgressIndicator,
+  ProgressLabel,
+  ProgressRoot,
+  ProgressTrack,
+  ProgressValue,
+} from "@starwind-ui/vue/progress";
 import { RadioRoot } from "@starwind-ui/vue/radio";
-import { SwitchRoot, SwitchThumb } from "@starwind-ui/vue/switch";
-import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
-import { ToggleRoot } from "@starwind-ui/vue/toggle";
+import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
 import {
   ScrollAreaContent,
   ScrollAreaCorner,
@@ -113,20 +115,34 @@ import {
   SliderThumb,
   SliderTrack,
 } from "@starwind-ui/vue/slider";
+import { SwitchRoot, SwitchThumb } from "@starwind-ui/vue/switch";
 import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTab } from "@starwind-ui/vue/tabs";
-import {
-  DropzoneFilesList,
-  DropzoneInput,
-  DropzoneLoadingIndicator,
-  DropzoneRoot,
-  DropzoneUploadIndicator,
-} from "@starwind-ui/vue/dropzone";
+import { ToggleRoot } from "@starwind-ui/vue/toggle";
+import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
+import { createSSRApp, Fragment, h, version as serverVue } from "vue";
+import { renderToString } from "vue/server-renderer";
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+// The Vue compatibility stage copies this runner and its fixture into a consumer that installs
+// one exact Vue version beside the packed packages. Then every file comes from that consumer.
+const consumerRoot = process.env.STARWIND_VUE_COMPATIBILITY_CONSUMER;
+const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
+const packageRoot = consumerRoot
+  ? path.join(consumerRoot, "node_modules/@starwind-ui/vue")
+  : path.resolve(scriptDirectory, "../..");
 const repoRoot = path.resolve(packageRoot, "../..");
-const vueDemoRequire = createRequire(path.join(repoRoot, "apps/vue-demo/package.json"));
-const { chromium } = vueDemoRequire("playwright");
-const runtimeRequire = createRequire(path.join(repoRoot, "packages/runtime/package.json"));
+const runtimeRoot = consumerRoot
+  ? path.join(consumerRoot, "node_modules/@starwind-ui/runtime")
+  : path.join(repoRoot, "packages/runtime");
+const vueRoot = consumerRoot
+  ? path.join(consumerRoot, "node_modules/vue")
+  : path.join(packageRoot, "node_modules/vue");
+const playwrightRequire = createRequire(
+  process.env.STARWIND_VUE_COMPATIBILITY_PLAYWRIGHT ??
+    path.join(repoRoot, "apps/vue-demo/package.json"),
+);
+const { chromium } = playwrightRequire("playwright");
+// pnpm links each package into its own store folder, where its dependencies resolve.
+const runtimeRequire = createRequire(path.join(realpathSync(runtimeRoot), "package.json"));
 const floatingDomRoot = path.dirname(runtimeRequire.resolve("@floating-ui/dom/package.json"));
 const floatingDomRequire = createRequire(path.join(floatingDomRoot, "package.json"));
 const floatingCoreRoot = path.dirname(floatingDomRequire.resolve("@floating-ui/core/package.json"));
@@ -137,13 +153,13 @@ const floatingUtilsRoot = path.dirname(
 
 const serverMarkup = await renderToString(createSSRApp({ render: renderFixture }));
 const roots = {
-  fixture: path.join(packageRoot, "tests/integration/hydration.playwright.fixture.js"),
+  fixture: path.join(scriptDirectory, "hydration.playwright.fixture.js"),
   floatingCore: path.join(floatingCoreRoot, "dist/floating-ui.core.browser.mjs"),
   floatingDom: path.join(floatingDomRoot, "dist/floating-ui.dom.browser.mjs"),
   floatingUtils: path.join(floatingUtilsRoot, "dist/floating-ui.utils.mjs"),
-  runtime: path.join(repoRoot, "packages/runtime/dist"),
+  runtime: path.join(runtimeRoot, "dist"),
   vue: path.join(packageRoot, "dist"),
-  vueRuntime: path.join(packageRoot, "node_modules/vue/dist/vue.esm-browser.js"),
+  vueRuntime: path.join(vueRoot, "dist/vue.esm-browser.js"),
 };
 
 const server = createServer(async (request, response) => {
@@ -153,6 +169,7 @@ const server = createServer(async (request, response) => {
       response.setHeader("content-type", "text/html; charset=utf-8");
       response.end(`<!doctype html>
 <html>
+  <head><link rel="icon" href="data:," /></head>
   <body>
     <div id="hydration-host">${serverMarkup}</div>
     <div id="hydration-overlays"></div>
@@ -196,7 +213,7 @@ const address = server.address();
 if (!address || typeof address === "string") throw new Error("Hydration server did not bind.");
 let browser;
 try {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage();
   const browserErrors = [];
   page.on("pageerror", (error) => browserErrors.push(error.stack ?? error.message));
@@ -227,7 +244,12 @@ try {
   const result = await page.evaluate(() => window.__STARWIND_HYDRATION_RESULT__);
   if (!result.ok) throw new Error(result.error);
   if (browserErrors.length > 0) throw new Error(browserErrors.join("\n"));
-  console.log(`Vue built hydration checks passed in Chromium ${await browser.version()}.`);
+  const browserVue = await page.evaluate(() =>
+    import("/vendor/vue.js").then(({ version }) => version),
+  );
+  console.log(
+    `Vue built hydration checks passed in Chromium ${await browser.version()} with Vue ${browserVue} (server ${serverVue}).`,
+  );
 } finally {
   await browser?.close();
   await new Promise((resolve, reject) =>

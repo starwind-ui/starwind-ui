@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
-
-import { createRuntimePerformanceResult } from "../runtime-performance/model.mjs";
 import { zagVueExpectedResolvedVersions } from "../package-size-vue-plan.mjs";
+import { createRuntimePerformanceResult } from "../runtime-performance/model.mjs";
 import {
-  VUE_PERFORMANCE_REKA_AUDIT_SOURCE,
   rekaUiExpectedResolvedVersions,
+  VUE_PERFORMANCE_REKA_AUDIT_SOURCE,
   vuePerformanceProviderRows,
 } from "../runtime-performance/vue-plan.mjs";
+import {
+  renderVuePerformanceEvidenceMarkdown,
+  renderVuePerformanceRunMarkdown,
+} from "../runtime-performance/vue-report.mjs";
 import {
   buildVuePerformanceEvidence,
   buildVuePerformanceRowRecord,
@@ -14,10 +17,6 @@ import {
   createVuePerformanceRun,
   VUE_PERFORMANCE_BASELINE_CONTROLS,
 } from "../runtime-performance/vue-run-evidence.mjs";
-import {
-  renderVuePerformanceEvidenceMarkdown,
-  renderVuePerformanceRunMarkdown,
-} from "../runtime-performance/vue-report.mjs";
 
 const audit = createVuePerformanceAudit({
   contents: "audit",

@@ -6,13 +6,13 @@ export const dropdown = tv({
 
 export const dropdownCheckboxItem = tv({
   base: [
-    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
+    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-2 pe-8 transition-colors outline-none select-none",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
     "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
   ],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
     disabled: {
       true: "pointer-events-none opacity-50",
@@ -26,7 +26,7 @@ export const dropdownCheckboxItem = tv({
 
 export const dropdownCheckboxItemIndicator = tv({
   base: [
-    "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+    "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
     "data-hidden:opacity-0 data-visible:opacity-100 data-[state=checked]:opacity-100",
     "[&>svg]:size-4 [&>svg]:shrink-0",
   ],
@@ -51,7 +51,7 @@ export const dropdownItem = tv({
   ],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
     disabled: {
       true: "pointer-events-none opacity-50",
@@ -67,7 +67,7 @@ export const dropdownLabel = tv({
   base: ["text-muted-foreground px-2 py-1.5 text-sm font-medium"],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
   },
   defaultVariants: {
@@ -81,13 +81,13 @@ export const dropdownRadioGroup = tv({
 
 export const dropdownRadioItem = tv({
   base: [
-    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
+    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-2 pe-8 transition-colors outline-none select-none",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
     "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
   ],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
     disabled: {
       true: "pointer-events-none opacity-50",
@@ -101,7 +101,7 @@ export const dropdownRadioItem = tv({
 
 export const dropdownRadioItemIndicator = tv({
   base: [
-    "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+    "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
     "data-hidden:opacity-0 data-visible:opacity-100 data-[state=checked]:opacity-100",
     "[&>svg]:size-4 [&>svg]:shrink-0",
   ],
@@ -113,7 +113,7 @@ export const dropdownSeparator = tv({
 
 export const dropdownShortcut = tv({
   base: [
-    "group-data-highlighted/dropdown-item:text-accent-foreground group-focus/dropdown-item:text-accent-foreground group-hover/dropdown-item:text-accent-foreground text-muted-foreground ml-auto text-sm tracking-widest transition-colors",
+    "group-data-highlighted/dropdown-item:text-accent-foreground group-focus/dropdown-item:text-accent-foreground group-hover/dropdown-item:text-accent-foreground text-muted-foreground ms-auto text-sm tracking-widest transition-colors",
   ],
 });
 

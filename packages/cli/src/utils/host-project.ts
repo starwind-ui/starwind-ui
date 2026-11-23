@@ -29,6 +29,8 @@ export type HostProjectPlanBase = {
   }) => Promise<HostProjectPreparation>;
   prepareStylesheet: (content: string) => string;
   requirements: (requirements: string[]) => string[];
+  /** Selects planned packages that the host installs as dev dependencies. */
+  isDevRequirement?: (packageSpec: string) => boolean;
   lockCssFile?: true;
   setup: (cssFile: string) => Promise<void>;
   setupLabel: string;

@@ -5,7 +5,7 @@ export const checkbox = tv({
     base: "starwind-checkbox relative flex items-center space-x-2",
     input: [
       "peer border-input bg-background dark:bg-input/30 shrink-0 transform-gpu rounded-sm border",
-      "transition-all focus-visible:ring-3",
+      "transition-[color,background-color,border-color,box-shadow,opacity] focus-visible:ring-3",
       "outline-0 focus:ring-0 focus:ring-offset-0",
       "not-disabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
       "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",

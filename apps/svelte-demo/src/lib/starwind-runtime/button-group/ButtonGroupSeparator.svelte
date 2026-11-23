@@ -9,9 +9,9 @@
 
 <script lang="ts">
   let {
-    "orientation": orientation = "vertical",
+    orientation = "vertical",
     "class": className,
-    "ref": ref,
+    ref,
     ...rest
   }: ButtonGroupSeparatorProps = $props();
 

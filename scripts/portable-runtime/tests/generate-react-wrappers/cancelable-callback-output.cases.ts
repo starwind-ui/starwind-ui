@@ -96,9 +96,9 @@ export function defineReactCancelableCallbackOutputTests(getTempRoot: GetTempRoo
       }
     }
 
-    expect(cancelableEvents).toHaveLength(31);
-    expect(new Set(cancelableEvents.map(({ contract }) => contract.component)).size).toBe(24);
-    expect(constructionCallbackEvents).toHaveLength(27);
+    expect(cancelableEvents).toHaveLength(32);
+    expect(new Set(cancelableEvents.map(({ contract }) => contract.component)).size).toBe(25);
+    expect(constructionCallbackEvents).toHaveLength(28);
     expect(domEventProjectionEvents).toHaveLength(4);
     expect(missingConstructionCallbacks).toEqual([]);
     expect(missingDomEventProjections).toEqual([]);

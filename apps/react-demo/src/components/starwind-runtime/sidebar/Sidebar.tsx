@@ -35,13 +35,14 @@ function Sidebar(props: SidebarProps) {
     return (
       <div
         className={[
-          "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+          "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col data-[sw-sidebar-side=left]:order-(--sw-sidebar-left-order) data-[sw-sidebar-side=right]:order-(--sw-sidebar-right-order)",
           className,
         ]
           .filter(Boolean)
           .join(" ")}
         {...rest}
         ref={ref}
+        data-sw-sidebar-side={side}
         data-slot="sidebar"
       >
         {children}
@@ -84,6 +85,7 @@ function Sidebar(props: SidebarProps) {
           side={side}
           className={sidebarMobileContent()}
           style={mobileStyle}
+          data-sw-sidebar-side={side}
           data-sidebar="sidebar"
           data-slot="sidebar-mobile-content"
         >

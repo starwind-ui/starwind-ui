@@ -5,14 +5,14 @@
   import { SelectValue } from "@starwind-ui/svelte/select";
   import { select, selectContent, selectGroup, selectItem, selectItemIndicator, selectItemText, selectLabel, selectList, selectScrollButton, selectSeparator, selectTrigger, selectValue } from "./variants.js";
 
-  export type SelectValueProps = Omit<ComponentProps<typeof SelectValue>, "children"> & { children?: ComponentProps<typeof SelectValue>["children"];  placeholder?: string; };
+  export type SelectValueProps = Omit<ComponentProps<typeof SelectValue>, "children"> & { children?: Snippet;  placeholder?: string; };
 </script>
 
 <script lang="ts">
   let {
     "class": className,
-    "placeholder": placeholder,
-    "children": children,
+    placeholder,
+    children,
     ...rest
   }: SelectValueProps = $props();
 </script>

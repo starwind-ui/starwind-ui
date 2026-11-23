@@ -1,20 +1,19 @@
 export {
   createPortalBinding,
-  pendingPortalBindingSnapshot,
-  readyPortalBindingSnapshot,
   type PortalBinding,
   type PortalBindingSnapshot,
   type PortalPlacementFacts,
   type PortalPlacementMode,
+  pendingPortalBindingSnapshot,
   type ReportPortalPlacementOptions,
   type ResolvePortalPlacementOptions,
   type RuntimePartScope,
+  readyPortalBindingSnapshot,
   reportPortalPlacement,
   resolvePortalPlacement,
 } from "../../internal/floating-portal";
 export {
   createMenu,
-  refreshMenuPortalSurface,
   type MenuCheckedChangeDetails,
   type MenuCheckedChangeReason,
   type MenuCloseCompleteDetails,
@@ -25,4 +24,5 @@ export {
   type MenuSetOpenOptions,
   type MenuValueChangeDetails,
   type MenuValueChangeReason,
+  refreshMenuPortalSurface,
 } from "./menu";

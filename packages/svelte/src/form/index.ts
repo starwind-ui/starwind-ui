@@ -3,17 +3,14 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import FormRoot from "./FormRoot.svelte";
 import FormErrorSummary from "./FormErrorSummary.svelte";
+import FormRoot from "./FormRoot.svelte";
+
 const Form = { Root: FormRoot, ErrorSummary: FormErrorSummary };
-export { Form, FormRoot, FormErrorSummary };
+
+export { Form, FormErrorSummary, FormRoot };
 export default Form;
 
-export {
-  createForm,
-  createFormSchemaValidator,
-  validateFormSchema,
-} from "@starwind-ui/runtime/form";
 export type {
   FormExternalErrorOptions,
   FormExternalErrors,
@@ -27,3 +24,8 @@ export type {
   FormValidationTiming,
   FormValues,
 } from "@starwind-ui/runtime";
+export {
+  createForm,
+  createFormSchemaValidator,
+  validateFormSchema,
+} from "@starwind-ui/runtime/form";

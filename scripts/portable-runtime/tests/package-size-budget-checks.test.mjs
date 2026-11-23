@@ -18,7 +18,14 @@ function acceptedResults() {
   for (const row of acceptedPackageSizeBaseline.measurements) {
     const { id, label, gzipBytes } = row;
     if (
-      ["runtime.catalog", "runtime.color-picker", "react.adapter", "react.catalog"].includes(id)
+      [
+        "runtime.catalog",
+        "runtime.chart",
+        "runtime.color-picker",
+        "runtime.init-starwind",
+        "react.adapter",
+        "react.catalog",
+      ].includes(id)
     ) {
       results.bundleResults.push({ label, gzipBytes });
     } else if (id.startsWith("react.matched.")) {
@@ -66,6 +73,15 @@ const evaluate = (results, options = {}) =>
   });
 
 describe("package size checks", () => {
+  it.each([
+    ["@starwind-ui/runtime", "runtime.root"],
+    ["@starwind-ui/runtime/init-starwind", "runtime.init-starwind"],
+  ])("fails when %s grows by one byte", (label, id) => {
+    const results = acceptedResults();
+    results.bundleResults.find((row) => row.label === label).gzipBytes += 1;
+    expect(evaluate(results).failures).toEqual([expect.stringContaining(`${id}:`)]);
+  });
+
   it("accepts the reviewed sizes, including every component import", () => {
     const result = evaluate(acceptedResults());
     expect(result.failures).toEqual([]);

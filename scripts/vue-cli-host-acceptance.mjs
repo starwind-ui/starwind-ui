@@ -29,6 +29,8 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const ASTRO_SCAFFOLD_VERSION = "5.2.3";
 const ASTRO_VERSION = "7.0.0";
+// Pin the CLI's integration floor for this minimum Astro host.
+const ASTRO_VUE_VERSION = "7.1.2";
 const VITE_SCAFFOLD_VERSION = "9.1.1";
 const VUE_VERSION = "3.5.39";
 const NUXT_3_VERSION = "3.21.0";
@@ -141,6 +143,7 @@ function createBaselineVueCliHostAcceptancePlan({ packages, root }) {
           "@tailwindcss/forms",
           "@tailwindcss/vite",
           "@vitejs/plugin-vue",
+          "tailwind-merge",
           "tailwindcss",
           "tw-animate-css",
           "vite",
@@ -195,6 +198,7 @@ function createBaselineVueCliHostAcceptancePlan({ packages, root }) {
           "@tailwindcss/forms",
           "@tailwindcss/vite",
           "astro",
+          "tailwind-merge",
           "tailwindcss",
           "tw-animate-css",
           "vue",
@@ -734,7 +738,7 @@ overrides:
 `;
 }
 
-async function prepareManifest(project, packages, registryUrl) {
+export async function prepareVueHostManifest(project, packages, registryUrl) {
   const manifestFile = path.join(project.directory, "package.json");
   const manifest = JSON.parse(await readFile(manifestFile, "utf8"));
   manifest.devDependencies = {
@@ -743,7 +747,12 @@ async function prepareManifest(project, packages, registryUrl) {
     typescript: "^5.9.3",
   };
   if (project.host === "astro") {
-    manifest.dependencies = { ...manifest.dependencies, astro: ASTRO_VERSION, vue: VUE_VERSION };
+    manifest.dependencies = {
+      ...manifest.dependencies,
+      "@astrojs/vue": ASTRO_VUE_VERSION,
+      astro: ASTRO_VERSION,
+      vue: VUE_VERSION,
+    };
     manifest.devDependencies["@astrojs/check"] = "^0.9.8";
   } else {
     manifest.dependencies = { ...manifest.dependencies, vue: VUE_VERSION };
@@ -790,7 +799,8 @@ async function loadProductionCapability(vueAdapterVersion) {
       "utf8",
     ).then(JSON.parse),
   ]);
-  assert.equal(registry.setup.vue.adapterPackage.range, vueAdapterVersion);
+  // Stable adapters install with a caret range on the packed version.
+  assert.equal(registry.setup.vue.adapterPackage.range, `^${vueAdapterVersion}`);
   return {
     add: addModule.add,
     artifacts,
@@ -1648,13 +1658,13 @@ async function runVueHostProject({ root, projectIds, packages, manifests }) {
     const capability = await loadProductionCapability(manifests.vue.version);
     const require = createRequire(path.join(REPO_ROOT, "package.json"));
     const { chromium } = require("playwright");
-    browser = await chromium.launch();
+    browser = await chromium.launch({ channel: "chrome" });
     for (const project of plan.projects) {
       const logs = path.join(rootLogs, project.id);
       if (project.scaffold) await runLoggedCommand("01-scaffold", project.scaffold, logs);
       else await createOfficialVueHostFixture(project);
       const preservedBytes = await capturePreservedVueHostBytes(project);
-      await prepareManifest(project, packages, registry.url);
+      await prepareVueHostManifest(project, packages, registry.url);
       await runLoggedCommand("02-install", packageCommand(project.directory, ["install"]), logs);
       if (project.ssrInstall) await runLoggedCommand("02-ssr-install", project.ssrInstall, logs);
       if (project.prepare) await runLoggedCommand("02-prepare", project.prepare, logs);
@@ -1903,7 +1913,7 @@ export default defineConfig(() => ({
   );
   await write(
     "index.html",
-    "<!doctype html><html><head></head><body><!-- quasar:entry-point --></body></html>\n",
+    '<!doctype html><html><head><link rel="icon" href="data:," /></head><body><!-- quasar:entry-point --></body></html>\n',
   );
   await write("src/App.vue", "<template><router-view /></template>\n");
   await write("src/css/app.scss", "");
@@ -2034,6 +2044,7 @@ export function createVueCliHostAcceptancePlan({ packages, root }) {
           "@tailwindcss/forms",
           "@tailwindcss/vite",
           "nuxt",
+          "tailwind-merge",
           "tailwindcss",
           "tw-animate-css",
           "vue",
@@ -2069,6 +2080,7 @@ export function createVueCliHostAcceptancePlan({ packages, root }) {
         "@tailwindcss/vite",
         "@vitejs/plugin-vue",
         "laravel-vite-plugin",
+        "tailwind-merge",
         "tailwindcss",
         "tw-animate-css",
         "vite",
@@ -2128,6 +2140,7 @@ export function createVueCliHostAcceptancePlan({ packages, root }) {
           "@tailwindcss/forms",
           "@tailwindcss/vite",
           "quasar",
+          "tailwind-merge",
           "tailwindcss",
           "tw-animate-css",
           "vite",

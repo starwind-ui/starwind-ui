@@ -14,7 +14,7 @@ Install the kit once, while you are online:
 npm install --global @starwind-ui/offline@beta
 ```
 
-The kit is in beta. Its version, such as 0.1.0, is separate from the `starwind` CLI version that it
+The kit is in beta. Its version is separate from the `starwind` CLI version that it
 contains. Run `npm ls --global starwind` to see that CLI version.
 
 ## Use

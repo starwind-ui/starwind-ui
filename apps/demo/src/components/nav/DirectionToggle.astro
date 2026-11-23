@@ -1,0 +1,58 @@
+---
+import TextDirectionLtr from "@tabler/icons/outline/text-direction-ltr.svg";
+import TextDirectionRtl from "@tabler/icons/outline/text-direction-rtl.svg";
+import { button } from "@/components/starwind-runtime/button/variants";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<button
+  type="button"
+  class={button({ variant: "outline", size: "sm", class: ["gap-1.5 px-2.5 sm:px-3", className] })}
+  data-demo-direction-toggle
+  aria-pressed="false"
+  title="Switch the whole page between left-to-right and right-to-left"
+>
+  <TextDirectionLtr class="size-4 rtl:hidden" aria-hidden="true" />
+  <TextDirectionRtl class="size-4 ltr:hidden" aria-hidden="true" />
+  <span class="hidden sm:inline sm:rtl:hidden">LTR</span>
+  <span class="hidden sm:rtl:inline">RTL</span>
+  <span class="sr-only">Right to left</span>
+</button>
+
+<script>
+  const key = "starwind-demo-dir";
+  const root = document.documentElement;
+  const isRtl = () => getComputedStyle(root).direction === "rtl";
+
+  const sync = () => {
+    for (const toggle of document.querySelectorAll("[data-demo-direction-toggle]")) {
+      toggle.setAttribute("aria-pressed", String(isRtl()));
+    }
+  };
+
+  document.addEventListener("click", (event) => {
+    const toggle = (event.target as Element | null)?.closest("[data-demo-direction-toggle]");
+    if (!toggle) return;
+    const next = isRtl() ? "ltr" : "rtl";
+    root.dir = next;
+    try {
+      localStorage.setItem(key, next);
+    } catch {
+      // Storage can be unavailable. The choice lasts until reload.
+    }
+    const url = new URL(location.href);
+    if (url.searchParams.has("dir")) {
+      url.searchParams.set("dir", next);
+      history.replaceState(history.state, "", url);
+    }
+    sync();
+    document.dispatchEvent(new Event("starwind:direction-change"));
+  });
+
+  sync();
+</script>

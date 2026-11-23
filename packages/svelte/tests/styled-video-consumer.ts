@@ -13,29 +13,6 @@ const attachment:Attachment<HTMLVideoElement|HTMLIFrameElement>=node=>{const own
 const symbols={[createAttachmentKey()]:attachment};void VideoVariants.video({class:"rounded-lg"});
 </script>
 <Video {...props} {...symbols}/><NamedVideo {...embedded}/><Video src="/clip.mp4">Inherited children remain unused.</Video>`;
-const invalid = {
-  MissingSource: "<Video/>",
-  Source: "<Video src={42}/>",
-  Autoplay: '<Video src="/clip.mp4" autoplay="yes"/>',
-  ReactAutoplay: '<Video src="/clip.mp4" autoPlay/>',
-  ReactSrcdoc: '<Video src="https://youtu.be/id" srcDoc="<p>Wrong casing</p>"/>',
-  Srcdoc: '<Video src="https://youtu.be/id" srcdoc={42}/>',
-  Poster: '<Video src="/clip.mp4" poster={false}/>',
-  Controls: '<Video src="/clip.mp4" controls="hidden"/>',
-  Muted: '<Video src="/clip.mp4" muted="yes"/>',
-  Loop: '<Video src="/clip.mp4" loop={1}/>',
-  Title: '<Video src="/clip.mp4" title={false}/>',
-  Ref: '<Video src="/clip.mp4" ref={(node:HTMLDivElement|null)=>{void node;}}/>',
-  NarrowRef: '<Video src="/clip.mp4" ref={(node:HTMLVideoElement|null)=>{void node;}}/>',
-  Event: '<Video src="/clip.mp4" onpointerdown={(event:KeyboardEvent)=>{void event;}}/>',
-  Preload: '<Video src="/clip.mp4" preload="instant"/>',
-  Loading: '<Video src="https://youtu.be/id" loading="now"/>',
-  Policy: '<Video src="https://youtu.be/id" referrerpolicy="anything"/>',
-  Disabled: '<Video src="/clip.mp4" disabled/>',
-  Variant: '<Video src="/clip.mp4" variant="large"/>',
-  Snippet: '<Video src="/clip.mp4">{#snippet icon()}<span>Play</span>{/snippet}</Video>',
-};
-
 /** Expected values preserve every source form in the existing contract. */
 export const videoSourceCases = [
   { name: "local", src: "/clip.mp4", tag: "VIDEO" },

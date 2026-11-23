@@ -3,8 +3,9 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import { getContext, setContext } from "svelte";
 import { createForm, type FormInstance } from "@starwind-ui/runtime/form";
+import { getContext, setContext } from "svelte";
+
 const FORM_CONTEXT = Symbol("starwind-form");
 const FIELD_CONTEXT = Symbol("starwind-field-refresh");
 export function provideFieldRefresh(refresh: () => void): void {

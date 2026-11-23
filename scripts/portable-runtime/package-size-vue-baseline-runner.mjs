@@ -11,9 +11,10 @@ import {
 } from "./package-size-run-evidence.mjs";
 import {
   STARWIND_VUE_MEASUREMENT_LABELS,
-  ZAG_VUE_COMPARATOR_VERSION,
+  starwindVueBaselineComponents,
   starwindVueRuntimeComponents,
   validateZagVueResolvedVersions,
+  ZAG_VUE_COMPARATOR_VERSION,
 } from "./package-size-vue-plan.mjs";
 
 export const VUE_BASELINE_SCHEMA = "starwind.package-size.vue-baseline";
@@ -36,14 +37,17 @@ const matchedRowIds = Object.freeze({
 const themeRowId = "vue.theme";
 const coldImportRowId = (component) => `vue.cold.${component}`;
 
-export const VUE_BASELINE_REQUIRED_ROW_IDS = Object.freeze(
-  [
-    ...Object.values(headlineRowIds),
-    ...starwindVueRuntimeComponents.map(coldImportRowId),
-    themeRowId,
-    ...Object.values(matchedRowIds),
-  ].sort((left, right) => left.localeCompare(right, "en")),
-);
+const baselineRowIds = (components) =>
+  Object.freeze(
+    [
+      ...Object.values(headlineRowIds),
+      ...components.map(coldImportRowId),
+      themeRowId,
+      ...Object.values(matchedRowIds),
+    ].sort((left, right) => left.localeCompare(right, "en")),
+  );
+export const VUE_BASELINE_REQUIRED_ROW_IDS = baselineRowIds(starwindVueBaselineComponents);
+export const VUE_CAPTURE_REQUIRED_ROW_IDS = baselineRowIds(starwindVueRuntimeComponents);
 
 export function getVueBaselineEvidencePaths({ evidenceDirectory }) {
   const resolvedDirectory = path.resolve(evidenceDirectory);
@@ -91,11 +95,19 @@ export function mapVueMeasurementToRunRecord(results, { diagnosticPath }) {
   });
 }
 
-export function buildVueBaselineEvidence(runs, { requireBaselinePlatform = true } = {}) {
+export function buildVueBaselineEvidence(
+  runs,
+  {
+    requireBaselinePlatform = true,
+    requiredRowIds = runs?.[0]?.rows?.some(({ id }) => id === "vue.cold.chart")
+      ? VUE_CAPTURE_REQUIRED_ROW_IDS
+      : VUE_BASELINE_REQUIRED_ROW_IDS,
+  } = {},
+) {
   for (const run of runs ?? []) validateExactVueComparatorProvenance(run);
   const stability = evaluatePackageSizeRunStability({
     requireBaselinePlatform,
-    requiredRowIds: VUE_BASELINE_REQUIRED_ROW_IDS,
+    requiredRowIds,
     runs,
   });
   if (!stability.stable) {
@@ -153,7 +165,15 @@ export function validateVueBaselineEvidence(evidence, { requireBaselinePlatform 
     throw new Error(`Unsupported Vue baseline evidence schema version: ${evidence.schemaVersion}`);
   }
 
-  const rebuilt = buildVueBaselineEvidence(evidence.runs, { requireBaselinePlatform });
+  const requiredRowIds = evidence.stability?.requiredRowIds;
+  const validRows = [VUE_BASELINE_REQUIRED_ROW_IDS, VUE_CAPTURE_REQUIRED_ROW_IDS];
+  if (!validRows.some((rows) => JSON.stringify(rows) === JSON.stringify(requiredRowIds))) {
+    throw new Error("Vue baseline evidence has an unsupported inventory");
+  }
+  const rebuilt = buildVueBaselineEvidence(evidence.runs, {
+    requireBaselinePlatform,
+    requiredRowIds,
+  });
   for (const key of ["stability", "sentinels", "candidates"]) {
     if (
       serializePackageSizeEvidence(evidence[key]) !== serializePackageSizeEvidence(rebuilt[key])
@@ -196,7 +216,7 @@ export async function runVueBaselineCapture({
     }
   }
 
-  const evidence = buildVueBaselineEvidence(runs);
+  const evidence = buildVueBaselineEvidence(runs, { requiredRowIds: VUE_CAPTURE_REQUIRED_ROW_IDS });
   const json = serializePackageSizeEvidence(evidence);
   const markdown = renderVueBaselineEvidenceMarkdown(evidence);
   const paths = getVueBaselineEvidencePaths({ evidenceDirectory });
@@ -218,7 +238,7 @@ export async function runVueBaselineCapture({
       },
     ],
     evidence: runs,
-    requiredRowIds: VUE_BASELINE_REQUIRED_ROW_IDS,
+    requiredRowIds: VUE_CAPTURE_REQUIRED_ROW_IDS,
     ...publicationOptions,
   });
 

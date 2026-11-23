@@ -1,49 +1,50 @@
 <script module lang="ts">
-  import type { SvelteHTMLElements } from "svelte/elements";
+  import type { HTMLAttributes, SvelteHTMLElements } from "svelte/elements";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
-  import { aspectRatio, aspectRatioWrapper } from "./variants.js";
+  import { aspectRatio } from "./variants.js";
 
-  export type AspectRatioProps = SvelteHTMLElements["div"] & VariantProps<typeof aspectRatio> & { as?: keyof HTMLElementTagNameMap; ref?: HTMLElement; "ratio"?: number; };
+  export type AspectRatioProps<T extends keyof HTMLElementTagNameMap = "div"> = SvelteHTMLElements[T] & VariantProps<typeof aspectRatio> & { as?: T; ref?: HTMLElement; "ratio"?: number; };
 </script>
 
-<script lang="ts">
+<script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'div'">
   let {
-    "ratio": ratio = 1,
-    "as": Tag = "div",
+    ratio = 1,
+    as,
     "class": className,
+    style,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
-  }: AspectRatioProps = $props();
+  }: AspectRatioProps<T> = $props();
 
-  let wrapperStyle = $derived(`padding-bottom: ${100 / ratio}%`);
+  let ratioStyle = $derived(`--ratio: ${ratio}; ${style ?? ""}`);
+
+  let Tag: keyof HTMLElementTagNameMap = $derived(as ?? "div");
+
+  const nativeProps = () => rest as HTMLAttributes<HTMLElement>;
 
   let nativeIsVoid = $derived(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].includes(Tag));
 </script>
 
-<div
-  class={aspectRatioWrapper({  })}
-  style={wrapperStyle}
-  data-slot={"aspect-ratio-wrapper"}
->
-  {#if nativeIsVoid}
-    <svelte:element
-      this={Tag}
-      class={aspectRatio({ "class": cx(className) })}
-      data-slot={"aspect-ratio"}
-      {...rest}
-      bind:this={ref}
-    />
-  {:else}
-    <svelte:element
-      this={Tag}
-      class={aspectRatio({ "class": cx(className) })}
-      data-slot={"aspect-ratio"}
-      {...rest}
-      bind:this={ref}
-    >
-      {@render children?.()}
-    </svelte:element>
-  {/if}
-</div>
+{#if nativeIsVoid}
+  <svelte:element
+    this={Tag}
+    {...nativeProps()}
+    class={aspectRatio({ "class": cx(className) })}
+    style={ratioStyle}
+    data-slot={"aspect-ratio"}
+    bind:this={ref}
+  />
+{:else}
+  <svelte:element
+    this={Tag}
+    {...nativeProps()}
+    class={aspectRatio({ "class": cx(className) })}
+    style={ratioStyle}
+    data-slot={"aspect-ratio"}
+    bind:this={ref}
+  >
+    {@render children?.()}
+  </svelte:element>
+{/if}

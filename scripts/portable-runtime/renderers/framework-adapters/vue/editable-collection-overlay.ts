@@ -6,10 +6,8 @@ import {
   comboboxResetSettlement,
 } from "../../shared-recipes/structured/combobox.js";
 import {
-  comboboxInheritedBoolean,
   comboboxSelection,
   comboboxSelectionAttributes,
-  comboboxValueFallback,
 } from "../../shared-recipes/structured/combobox-parts.js";
 import { projectVueAttributeAccess } from "./public-contract.js";
 
@@ -117,6 +115,20 @@ ${typeExports}
 `;
 }
 
+// Parts read the Runtime wiring through an internal key and accessor. The family index exports
+// the public key and hook, which carry state only, as React does.
+function internalKey(f: AdapterEditableCollectionOverlayFacts): string {
+  return `${f.displayName}InternalContext`;
+}
+
+function internalType(f: AdapterEditableCollectionOverlayFacts): string {
+  return `${f.displayName}InternalContextValue`;
+}
+
+function internalHook(f: AdapterEditableCollectionOverlayFacts): string {
+  return `use${f.displayName}InternalContext`;
+}
+
 function printRoot(f: AdapterEditableCollectionOverlayFacts): string {
   const inputModel = projectVueModel(f.states.inputValue.name);
   const openModel = projectVueModel(f.states.open.name);
@@ -126,22 +138,28 @@ import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type ${f.context.rootContextValueType} = Readonly<{
   disabled: ComputedRef<boolean>;
-  element: Readonly<Ref<HTMLElement | null>>;
   inputValue: ComputedRef<string>;
-  mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
-  registerPortal(owner: symbol, element: HTMLElement | null): void;
   required: ComputedRef<boolean>;
   value: ComputedRef<string | null>;
 }>;
+export type ${internalType(f)} = ${f.context.rootContextValueType} & Readonly<{
+  element: Readonly<Ref<HTMLElement | null>>;
+  mounted: Readonly<Ref<boolean>>;
+  registerPortal(owner: symbol, element: HTMLElement | null): void;
+}>;
 export type ${f.context.itemContextValueType} = Readonly<{ disabled: ComputedRef<boolean>; value: ComputedRef<string> }>;
-export const ${f.context.rootContext}: InjectionKey<${f.context.rootContextValueType}> = Symbol("Starwind${f.context.rootContext}");
+export const ${internalKey(f)}: InjectionKey<${internalType(f)}> = Symbol("Starwind${f.context.rootContext}");
+export const ${f.context.rootContext}: InjectionKey<${f.context.rootContextValueType}> = ${internalKey(f)};
 export const ${f.context.itemContext}: InjectionKey<${f.context.itemContextValueType}> = Symbol("Starwind${f.context.itemContext}");
-export function ${f.context.useRootContext}(part = "part"): ${f.context.rootContextValueType} {
-  const value = inject(${f.context.rootContext});
+export function ${internalHook(f)}(part = "part"): ${internalType(f)} {
+  const value = inject(${internalKey(f)});
   if (!value) throw new Error(\`${f.displayName}.\${part} requires an owning ${f.displayName}.Root.\`);
   return value;
+}
+export function ${f.context.useRootContext}(part = "part"): ${f.context.rootContextValueType} {
+  return ${internalHook(f)}(part);
 }
 export function ${f.context.useItemContext}(part = "part"): ${f.context.itemContextValueType} {
   const value = inject(${f.context.itemContext});
@@ -192,7 +210,7 @@ let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
 
-provide(${f.context.rootContext}, { disabled, element: rootRef, inputValue: renderedInputValue, mounted, open: renderedOpen, readOnly, registerPortal(owner, element) { if (element) { portalOwner = owner; portalReference = element; } else if (portalOwner === owner) { portalOwner = undefined; portalReference = null; } }, required, value: renderedValue });
+provide(${internalKey(f)}, { disabled, element: rootRef, inputValue: renderedInputValue, mounted, open: renderedOpen, readOnly, registerPortal(owner, element) { if (element) { portalOwner = owner; portalReference = element; } else if (portalOwner === owner) { portalOwner = undefined; portalReference = null; } }, required, value: renderedValue });
 defineExpose({ element: rootRef });
 
 function unbindReset(): void { if (resetTimer !== undefined) window.clearTimeout(resetTimer); resetTimer = undefined; resetForm?.removeEventListener("reset", handleReset); resetForm = null; }
@@ -231,7 +249,7 @@ function printInput(f: AdapterEditableCollectionOverlayFacts): string {
     "HTMLInputElement",
     `input`,
     `${f.attrs.input} data-sw-part="${p.name}" role="${f.inputSemantics.role}" aria-autocomplete="${f.inputSemantics.ariaAutocomplete}" :aria-expanded="combobox.open.value" autocomplete="${f.inputSemantics.autocomplete}"`,
-    `import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";\n\nconst combobox = ${f.context.useRootContext}("Input");`,
+    `import { ${internalHook(f)} } from "./${f.exports.root}.vue";\n\nconst combobox = ${internalHook(f)}("Input");`,
     ``,
     ``,
     true,
@@ -250,14 +268,14 @@ function printButton(f: AdapterEditableCollectionOverlayFacts, name: "clear" | "
   return `<script setup lang="ts">
 import { defineComponent, ref, useAttrs, type VNode } from "vue";
 import { createVueAsChild } from "../_internal/as-child";
-import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
+import { ${internalHook(f)} } from "./${f.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ ${f.props.asChild.name}?: ${f.props.asChild.type} }>(), { ${f.props.asChild.name}: false });
 const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
-const combobox = ${f.context.useRootContext}("${p.namespaceKey}");
+const combobox = ${internalHook(f)}("${p.namespaceKey}");
 const asChild = createVueAsChild("${f.exports[name]}", element);
 const { setElement } = asChild;
 defineExpose({ element });
@@ -284,13 +302,13 @@ function printPortal(f: AdapterEditableCollectionOverlayFacts): string {
 import { reportPortalPlacement, resolvePortalPlacement } from "${f.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
-import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
+import { ${internalHook(f)} } from "./${f.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 
 const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), { disabled: false });
 defineSlots<{ default?: () => unknown }>();
-const combobox = ${f.context.useRootContext}("Portal"); const portalRef = ref<HTMLDivElement | null>(null); const owner = Symbol("${f.displayName}Portal");
+const combobox = ${internalHook(f)}("Portal"); const portalRef = ref<HTMLDivElement | null>(null); const owner = Symbol("${f.displayName}Portal");
 const placement = useVuePortalPlacement({ active: () => combobox.mounted.value, container: () => props.container, disabled: () => props.disabled, element: portalRef, reference: () => combobox.element.value, runtime: { reportPortalPlacement, resolvePortalPlacement } });
 onMounted(() => { combobox.registerPortal(owner, portalRef.value); });
 onBeforeUnmount(() => { combobox.registerPortal(owner, null); });
@@ -307,10 +325,10 @@ function printFloatingPart(
   const popup =
     name === "popup" ? ` role="${f.popupRole}" tabindex="-1" :hidden="!combobox.open.value"` : "";
   return `<script setup lang="ts">
-import { ref } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
+import { ref } from "vue"; import { ${internalHook(f)} } from "./${f.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false }); const props=withDefaults(defineProps<{ align?: "start"|"center"|"end"; alignOffset?: number; avoidCollisions?: boolean; side?: "top"|"right"|"bottom"|"left"; sideOffset?: number }>(), { align: ${f.floating.alignDefault}, alignOffset: ${f.floating.alignOffsetDefault}, avoidCollisions: ${f.floating.avoidCollisionsDefault}, side: ${f.floating.sideDefault}, sideOffset: ${f.floating.sideOffsetDefault} }); defineSlots<{ default?: () => unknown }>();
-const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("${p.namespaceKey}"); defineExpose({ element });
+const element=ref<HTMLDivElement|null>(null); const combobox=${internalHook(f)}("${p.namespaceKey}"); defineExpose({ element });
 </script>
 <template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs[name]} data-sw-part="${p.name}"${popup} :data-state="combobox.open.value ? 'open' : 'closed'" :${f.attrs.side}="props.side" :${f.attrs.align}="props.align" :${f.attrs.sideOffset}="props.sideOffset" :${f.attrs.alignOffset}="props.alignOffset" :${f.attrs.avoidCollisions}="props.avoidCollisions ? 'true' : 'false'"><slot /></${p.defaultElement}></template>
 `;
@@ -319,10 +337,10 @@ const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRoot
 function printItem(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.item;
   return `<script setup lang="ts">
-import { computed, provide, ref } from "vue"; import { ${f.context.itemContext}, ${f.context.useRootContext} } from "./${f.exports.root}.vue";
+import { computed, provide, ref } from "vue"; import { ${f.context.itemContext}, ${internalHook(f)} } from "./${f.exports.root}.vue";
 
 defineOptions({ inheritAttrs:false }); const props=withDefaults(defineProps<{ disabled?: boolean; value: string }>(), { disabled:false }); defineSlots<{default?:()=>unknown}>();
-const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("Item"); const value=computed(()=>props.value); const disabled=computed(()=>props.disabled); const selected=computed(()=>${comboboxSelection("combobox.value.value", "value.value")}); provide(${f.context.itemContext},{disabled,value}); defineExpose({element});
+const element=ref<HTMLDivElement|null>(null); const combobox=${internalHook(f)}("Item"); const value=computed(()=>props.value); const disabled=computed(()=>props.disabled); const selected=computed(()=>${comboboxSelection("combobox.value.value", "value.value")}); provide(${f.context.itemContext},{disabled,value}); defineExpose({element});
 </script>
 <template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.item} data-sw-part="${p.name}" :${f.attrs.valueData}="props.value" role="${f.collection.item.role}" ${comboboxSelectionAttributes("vue", "item")} :aria-disabled="props.disabled ? 'true' : undefined" :${f.attrs.disabled}="props.disabled ? '' : undefined" tabindex="${f.collection.item.initialProjection.tabIndex}"><slot /></${p.defaultElement}></template>
 `;
@@ -331,10 +349,10 @@ const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRoot
 function printItemIndicator(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.itemIndicator;
   return `<script setup lang="ts">
-import { computed, ref } from "vue"; import { ${f.context.useRootContext}, ${f.context.useItemContext} } from "./${f.exports.root}.vue";
+import { computed, ref } from "vue"; import { ${internalHook(f)}, ${f.context.useItemContext} } from "./${f.exports.root}.vue";
 
 defineOptions({inheritAttrs:false}); defineSlots<{default?:()=>unknown}>();
-const element=ref<HTMLSpanElement|null>(null); const combobox=${f.context.useRootContext}("ItemIndicator"); const item=${f.context.useItemContext}("ItemIndicator"); const selected=computed(()=>${comboboxSelection("combobox.value.value", "item.value.value")}); defineExpose({element});
+const element=ref<HTMLSpanElement|null>(null); const combobox=${internalHook(f)}("ItemIndicator"); const item=${f.context.useItemContext}("ItemIndicator"); const selected=computed(()=>${comboboxSelection("combobox.value.value", "item.value.value")}); defineExpose({element});
 </script>
 <template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.itemIndicator} data-sw-part="${p.name}" aria-hidden="true" ${comboboxSelectionAttributes("vue", "indicator")}><slot /></${p.defaultElement}></template>
 `;
@@ -358,8 +376,8 @@ function printSeparator(f: AdapterEditableCollectionOverlayFacts): string {
 }
 function printValue(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.value;
-  return `<script setup lang="ts">import { ref } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";\n\ndefineOptions({inheritAttrs:false}); const props=defineProps<{placeholder?:string}>(); const slots=defineSlots<{default?:()=>unknown}>();
-const element=ref<HTMLSpanElement|null>(null); const initialPlaceholder=props.placeholder; ${f.context.useRootContext}("Value"); defineExpose({element});</script>
+  return `<script setup lang="ts">import { ref } from "vue"; import { ${internalHook(f)} } from "./${f.exports.root}.vue";\n\ndefineOptions({inheritAttrs:false}); const props=defineProps<{placeholder?:string}>(); const slots=defineSlots<{default?:()=>unknown}>();
+const element=ref<HTMLSpanElement|null>(null); const initialPlaceholder=props.placeholder; ${internalHook(f)}("Value"); defineExpose({element});</script>
 <template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" :${f.attrs.value}="slots.default ? undefined : ''" data-sw-part="${p.name}" :data-placeholder="props.placeholder"><slot>{{ initialPlaceholder }}</slot></${p.defaultElement}></template>
 `;
 }

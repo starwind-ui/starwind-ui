@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -184,12 +184,12 @@ function assertExpectedElementExposure(source: string, file: string): void {
   if (target === undefined) return;
   if (target === null) {
     expect(source, file).not.toContain("defineExpose({ element });");
-    expect(source, file).not.toMatch(/\b(?:ref|:ref)=\"(?:element|setElement)\"/);
+    expect(source, file).not.toMatch(/\b(?:ref|:ref)="(?:element|setElement)"/);
     return;
   }
 
   expect(source, file).toContain("defineExpose({ element });");
-  expect(source, file).toMatch(/\b(?:ref|:ref)=\"(?:element|setElement)\"/);
+  expect(source, file).toMatch(/\b(?:ref|:ref)="(?:element|setElement)"/);
 }
 
 function readOpeningTag(source: string, tag: string): string {

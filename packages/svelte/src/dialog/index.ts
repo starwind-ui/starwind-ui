@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import DialogBackdrop from "./DialogBackdrop.svelte";
 import DialogClose from "./DialogClose.svelte";
 import DialogDescription from "./DialogDescription.svelte";
@@ -35,6 +33,6 @@ export {
 };
 
 export default Dialog;
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
 
 export type { DialogCloseCompleteDetails, DialogOpenChangeDetails } from "@starwind-ui/runtime";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";

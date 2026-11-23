@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import * as SwitchPrimitive from "@starwind-ui/vue/switch";
 import type { ClassValue, VariantProps } from "tailwind-variants";
 import { type ButtonHTMLAttributes, computed, useAttrs } from "vue";
+import "./styles.css";
+import * as SwitchPrimitive from "@starwind-ui/vue/switch";
 import { switchButton, switchLabel, switchToggle, switchWrapper } from "./variants";
 
 defineOptions({ inheritAttrs: false });

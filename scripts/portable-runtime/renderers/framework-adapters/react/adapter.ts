@@ -1,5 +1,4 @@
 import { assertBooleanStatePolicy } from "../../primitive-output-model/boolean-state-policy.js";
-import { requireRefreshConnection } from "../../primitive-output-model/refresh-connection.js";
 import { assertSidebarConnection } from "../../primitive-output-model/sidebar-connection.js";
 import { renderFormGroup } from "../../shared-recipes/grouped/groups.js";
 import { renderRadioIndicator, renderRadioRoot } from "../../shared-recipes/grouped/radio.js";
@@ -8,7 +7,9 @@ import {
   avatarRecipe,
   avatarRefresh,
   avatarRefreshInputs,
+  avatarRootEventFilter,
   avatarSubscription,
+  avatarUnsubscribe,
 } from "../../shared-recipes/media/avatar.js";
 import { scrollAreaRecipe, scrollAreaThresholds } from "../../shared-recipes/media/scroll-area.js";
 import { renderTabs as renderRecipeTabs } from "../../shared-recipes/selection/tabs.js";
@@ -67,11 +68,9 @@ import type {
   AdapterComponentModel,
   AdapterContextProjection,
   AdapterControlledValuePresenceComponentProjection,
-  AdapterControlledValuePresenceFacts,
   AdapterControlledValuePresenceHelperProjection,
   AdapterControlledValuePresenceIndexProjection,
   AdapterDisclosurePresenceComponentProjection,
-  AdapterDisclosurePresenceFacts,
   AdapterDisclosurePresenceIndexProjection,
   AdapterElementRenderNode,
   AdapterEventBridge,
@@ -118,7 +117,6 @@ import type {
   AdapterSidebarHelperProjection,
   AdapterSidebarIndexProjection,
   AdapterSingleBooleanControlComponentProjection,
-  AdapterSingleBooleanControlFacts,
   AdapterSingleBooleanControlIndexProjection,
   AdapterTimedFloatingOverlayComponentProjection,
   AdapterTimedFloatingOverlayFacts,
@@ -143,13 +141,19 @@ import {
 } from "./as-child-trigger-fragments.js";
 import {
   assertBooleanFormControlBehavior,
-  renderReactBooleanControlledSetters,
   renderReactBooleanDisabledSetter,
   renderReactBooleanIndeterminateControlledSetters,
   renderReactBooleanMutationSync,
   renderVisuallyHiddenStyle,
   requireGroupFacts,
 } from "./boolean-form-control-fragments.js";
+import {
+  isReactChartSurfaceProjection,
+  printReactChartSurfaceComponent,
+  printReactChartSurfaceIndex,
+  type ReactChartSurfaceComponentProjection,
+  type ReactChartSurfaceIndexProjection,
+} from "./chart-surface.js";
 import {
   printReactColorPickerComponent,
   printReactColorPickerIndex,
@@ -293,6 +297,15 @@ export const reactFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printIndexFile(file) {
+    if (isReactChartSurfaceProjection(file.family)) {
+      return {
+        contents: printReactChartSurfaceIndex(
+          file.family as unknown as ReactChartSurfaceIndexProjection,
+        ),
+        path: file.path,
+      };
+    }
+
     if (isReactColorPickerIndexProjection(file.family)) {
       return {
         contents: printReactColorPickerIndex(
@@ -553,6 +566,12 @@ function printReactComponent(file: AdapterComponentFile): string {
   }
   const component = file.component;
 
+  if (isReactChartSurfaceProjection(component.family)) {
+    return printReactChartSurfaceComponent(
+      component.family as unknown as ReactChartSurfaceComponentProjection,
+    );
+  }
+
   if (isReactColorPickerComponentProjection(component.family)) {
     return printReactColorPickerComponent(
       component.family as unknown as ReactColorPickerComponentProjection,
@@ -772,65 +791,6 @@ function applyReactFamilyPrintNormalizations(file: AdapterComponentFile, content
   }
 
   return contents;
-}
-
-function normalizeReactRepeatedDisclosureRoot(
-  facts: AdapterRepeatedDisclosureFacts,
-  contents: string,
-): string {
-  const stateType = facts.state.type;
-  const defaultValueRef = `${facts.props.defaultValue.name}Ref`;
-  const valueRef = `${facts.props.value.name}Ref`;
-  const eventValueProperty = facts.events.valueChange.valueProperty;
-
-  let next = replaceRequired(
-    contents,
-    `  const [uncontrolledValue, setUncontrolledValueState] = React.useState<${stateType} | undefined>(
-    () => ${defaultValueRef}.current,
-  );
-  const uncontrolledValueRef = React.useRef(uncontrolledValue);
-
-  const setUncontrolledValue = React.useCallback((nextValue: ${stateType}) => {
-    uncontrolledValueRef.current = nextValue;
-    setUncontrolledValueState(nextValue);
-  }, []);
-`,
-    `  const uncontrolledValueRef = React.useRef<${stateType} | undefined>(
-    ${defaultValueRef}.current,
-  );
-`,
-    "repeated-disclosure root uncontrolled value render state normalization",
-  );
-
-  next = replaceRequired(
-    next,
-    `      ${facts.props.collapsible.name},
-      ...(${valueRef}.current !== undefined`,
-    `      ${facts.props.collapsible.name},
-      ${facts.events.valueChange.callbackProp}: (details) => {
-        ${facts.events.valueChange.callbackProp}Ref.current?.(details);
-      },
-      ...(${valueRef}.current !== undefined`,
-    "repeated-disclosure cancelable callback Runtime option",
-  );
-
-  next = replaceRequired(
-    next,
-    `      ${facts.events.valueChange.callbackProp}Ref.current?.(details);
-      if (${valueRef}.current === undefined) {
-        setUncontrolledValue(details.${eventValueProperty});
-      }
-`,
-    `      if (details.isCanceled) return;
-
-      if (${valueRef}.current === undefined) {
-        uncontrolledValueRef.current = details.${eventValueProperty};
-      }
-`,
-    "repeated-disclosure root uncontrolled value subscription ref write",
-  );
-
-  return next;
 }
 
 function normalizeReactBooleanFormControlRoot(
@@ -1077,85 +1037,6 @@ function insertCancelableCallbackBeforeControlledState(
 ${controlledStateSpread}`,
     description,
   );
-}
-
-type ReactCancelableSingleStateRoot = {
-  retainOpenTrigger?: boolean;
-  callbackProp: string;
-  controlledProp: string;
-  eventName: string;
-  valueProperty: string;
-};
-
-function normalizeReactCancelableSingleStateRoot(
-  contents: string,
-  event: ReactCancelableSingleStateRoot,
-): string {
-  const callbackInvocation = `${event.callbackProp}Ref.current?.(next${toPascalCase(event.valueProperty)}, details);`;
-  const callbackIndex = contents.indexOf(callbackInvocation);
-  if (callbackIndex < 0) {
-    throw new Error(
-      `Could not apply React family print normalization: ${event.callbackProp} Runtime callback.`,
-    );
-  }
-
-  const lineStart = contents.lastIndexOf("\n", callbackIndex) + 1;
-  const indent = contents.slice(lineStart, callbackIndex);
-  const nextValue = `next${toPascalCase(event.valueProperty)}`;
-  const earlyStatePublication = `${indent}${callbackInvocation}
-${indent}if (details.isCanceled) return;
-
-${indent}if (${event.controlledProp}Ref.current === undefined) {
-${indent}  setUncontrolled${toPascalCase(event.valueProperty)}(${nextValue});
-${indent}}`;
-  let next = replaceRequired(
-    contents,
-    earlyStatePublication,
-    `${indent}${callbackInvocation}`,
-    `${event.callbackProp} pre-DOM state publication removal`,
-  );
-
-  const instanceMarker = "instanceRef.current = instance;";
-  const instanceIndex = next.indexOf(instanceMarker, callbackIndex);
-  if (instanceIndex < 0) {
-    throw new Error(
-      `Could not apply React family print normalization: ${event.callbackProp} accepted subscription insertion.`,
-    );
-  }
-  const instanceLineStart = next.lastIndexOf("\n", instanceIndex) + 1;
-  const instanceIndent = next.slice(instanceLineStart, instanceIndex);
-  const unsubscribeName = `unsubscribe${toPascalCase(event.eventName)}`;
-  const acceptedSubscription = `${instanceIndent}${instanceMarker}
-${instanceIndent}const ${unsubscribeName} = instance.subscribe("${event.eventName}", (details) => {
-${
-  event.retainOpenTrigger
-    ? `${instanceIndent}  if (details.open && details.trigger instanceof HTMLElement) {
-${instanceIndent}    acceptedTriggerRef.current = details.trigger;
-${instanceIndent}  }
-`
-    : ""
-}${instanceIndent}  if (${event.controlledProp}Ref.current === undefined) {
-${instanceIndent}    setUncontrolled${toPascalCase(event.valueProperty)}(details.${event.valueProperty});
-${instanceIndent}  }
-${instanceIndent}});`;
-  next =
-    next.slice(0, instanceLineStart) +
-    acceptedSubscription +
-    next.slice(instanceIndex + instanceMarker.length);
-
-  const destroyMarker = `${instanceIndent}  instance.destroy();`;
-  next = replaceRequired(
-    next,
-    destroyMarker,
-    `${instanceIndent}  ${unsubscribeName}();
-${destroyMarker}`,
-    `${event.callbackProp} accepted subscription cleanup`,
-  );
-  return next;
-}
-
-function toPascalCase(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function replaceRequired(
@@ -1792,7 +1673,6 @@ function printReactPresenceFloatingOverlayComponent(
       facts,
       facts.parts.arrow,
       facts.exports.arrow,
-      facts.attrs.arrow,
     );
   }
   if (family.part === "title") return printReactPresenceFloatingOverlayTitle(facts);
@@ -1802,7 +1682,6 @@ function printReactPresenceFloatingOverlayComponent(
       facts,
       facts.parts.viewport,
       facts.exports.viewport,
-      facts.attrs.viewport,
     );
   }
 
@@ -2194,13 +2073,15 @@ function printReactMediaStatusImage(facts: AdapterMediaStatusFacts): string {
   const visibilityProperty = facts.presence.imageConcealment.property;
   const visibilityValue = facts.presence.imageConcealment.value;
 
-  return `import type {\n  ${facts.state.type},\n  ${eventDetailsType},\n} from "${facts.runtime.importSource}";\nimport * as React from "react";\nimport { MediaStatusContext } from "./${facts.exports.root}";\n\nexport type ${exportName}Props = React.ImgHTMLAttributes<HTMLImageElement> & {\n  ${facts.props.alt.name}: ${facts.props.alt.type};\n  ${callbackProp}?: (\n    ${eventValueProperty}: ${facts.state.type},\n    details: ${eventDetailsType},\n  ) => void;\n};\n\nconst ${exportName} = React.forwardRef<HTMLImageElement, ${exportName}Props>(\n  function ${exportName}({ ${callbackProp}, style, ...props }, forwardedRef) {\n    const requestRefresh = React.useContext(MediaStatusContext);\n    React.useEffect(() => { requestRefresh?.(); return () => requestRefresh?.(); }, [requestRefresh]);\n    const imageRef = React.useRef<HTMLImageElement>(null);\n    const onLoadingStatusChangeRef = React.useRef(${callbackProp});\n    const hasLoadingStatusChangeCallback = ${callbackProp} !== undefined;\n    onLoadingStatusChangeRef.current = ${callbackProp};\n\n    const composedRef = React.useCallback(\n      (node: HTMLImageElement | null) => {\n        imageRef.current = node;\n        setRef(forwardedRef, node);\n      },\n      [forwardedRef],\n    );\n\n    React.useEffect(() => {\n      if (!hasLoadingStatusChangeCallback) return;\n\n      const root = imageRef.current?.closest<HTMLElement>("[${facts.parts.root.discoveryAttribute}]");\n      if (!root) return;\n\n      const handleLoadingStatusChange = (event: Event) => {\n        if (event.target !== root) return;\n        const details = (event as CustomEvent<${eventDetailsType}>).detail;\n        onLoadingStatusChangeRef.current?.(details.${eventValueProperty}, details);\n      };\n\n      ${avatarSubscription(
+  return `import type {\n  ${facts.state.type},\n  ${eventDetailsType},\n} from "${facts.runtime.importSource}";\nimport * as React from "react";\nimport { MediaStatusContext } from "./${facts.exports.root}";\n\nexport type ${exportName}Props = React.ImgHTMLAttributes<HTMLImageElement> & {\n  ${facts.props.alt.name}: ${facts.props.alt.type};\n  ${callbackProp}?: (\n    ${eventValueProperty}: ${facts.state.type},\n    details: ${eventDetailsType},\n  ) => void;\n};\n\nconst ${exportName} = React.forwardRef<HTMLImageElement, ${exportName}Props>(\n  function ${exportName}({ ${callbackProp}, style, ...props }, forwardedRef) {\n    const requestRefresh = React.useContext(MediaStatusContext);\n    React.useEffect(() => { requestRefresh?.(); return () => requestRefresh?.(); }, [requestRefresh]);\n    const imageRef = React.useRef<HTMLImageElement>(null);\n    const onLoadingStatusChangeRef = React.useRef(${callbackProp});\n    const hasLoadingStatusChangeCallback = ${callbackProp} !== undefined;\n    onLoadingStatusChangeRef.current = ${callbackProp};\n\n    const composedRef = React.useCallback(\n      (node: HTMLImageElement | null) => {\n        imageRef.current = node;\n        setRef(forwardedRef, node);\n      },\n      [forwardedRef],\n    );\n\n    React.useEffect(() => {\n      if (!hasLoadingStatusChangeCallback) return;\n\n      const root = imageRef.current?.closest<HTMLElement>("[${facts.parts.root.discoveryAttribute}]");\n      if (!root) return;\n\n      const handleLoadingStatusChange = (event: Event) => {\n        ${avatarRootEventFilter("root")}\n        const details = (event as CustomEvent<${eventDetailsType}>).detail;\n        onLoadingStatusChangeRef.current?.(details.${eventValueProperty}, details);\n      };\n\n      ${avatarSubscription(
+    facts,
     {
-      listen: `root.addEventListener("${facts.event.domEvent}", handleLoadingStatusChange);`,
+      root: "root",
+      handler: "handleLoadingStatusChange",
       read: `root.getAttribute("${facts.attrs.rootStatus}") as ${facts.state.type} | null`,
       notify: `onLoadingStatusChangeRef.current?.(status, { previousStatus: "${avatarRecipe.initialStatus}", status });`,
     },
-  )}\n\n      return () => {\n        root.removeEventListener("${facts.event.domEvent}", handleLoadingStatusChange);\n      };\n    }, [hasLoadingStatusChangeCallback]);\n\n    return (\n      <${part.defaultElement}\n        ${part.discoveryAttribute}\n        ${facts.attrs.imageStatus}="${avatarRecipe.initialStatus}"\n        ref={composedRef}\n        style={{ ...style, ${visibilityProperty}: "${visibilityValue}" }}\n        {...props}\n        hidden={false}\n      />\n    );\n  },\n);\n\n${exportName}.displayName = "${facts.displayName}.${part.namespaceKey}";\n\nexport default ${exportName};\n\n${renderSetRefFunction()}`;
+  )}\n\n      return () => {\n        ${avatarUnsubscribe(facts, "root", "handleLoadingStatusChange")}\n      };\n    }, [hasLoadingStatusChangeCallback]);\n\n    return (\n      <${part.defaultElement}\n        ${part.discoveryAttribute}\n        ${facts.attrs.imageStatus}="${avatarRecipe.initialStatus}"\n        ref={composedRef}\n        style={{ ...style, ${visibilityProperty}: "${visibilityValue}" }}\n        {...props}\n        hidden={false}\n      />\n    );\n  },\n);\n\n${exportName}.displayName = "${facts.displayName}.${part.namespaceKey}";\n\nexport default ${exportName};\n\n${renderSetRefFunction()}`;
 }
 
 function printReactMediaStatusFallback(facts: AdapterMediaStatusFacts): string {
@@ -2519,42 +2400,6 @@ function renderSetRefFunction(): string {
   return `function setRef<T>(ref: React.Ref<T> | undefined, value: T | null): void {\n  if (!ref) return;\n\n  if (typeof ref === "function") {\n    ref(value);\n    return;\n  }\n\n  ref.current = value;\n}\n`;
 }
 
-function wrapReactForwardRefFunction(
-  contents: string,
-  forwardRefDeclaration: string,
-  exportName: string,
-): string {
-  const declarationIndex = contents.indexOf(forwardRefDeclaration);
-  const displayNameMarker = `\n\n${exportName}.displayName`;
-  const displayNameIndex = contents.indexOf(displayNameMarker);
-
-  if (declarationIndex === -1 || displayNameIndex === -1) {
-    throw new Error(`${exportName} forwardRef output cannot be wrapped.`);
-  }
-
-  const beforeDeclaration = contents.slice(0, declarationIndex);
-  const functionRest = contents.slice(
-    declarationIndex + forwardRefDeclaration.length,
-    displayNameIndex,
-  );
-
-  if (!functionRest.endsWith("});")) {
-    throw new Error(`${exportName} forwardRef output has an unexpected terminator.`);
-  }
-
-  const functionBody = functionRest.slice(0, -"});".length);
-  const indentedFunctionBody = functionBody
-    .split("\n")
-    .map((line) => (line.length > 0 ? `  ${line}` : line))
-    .join("\n");
-  const afterFunction = contents.slice(displayNameIndex);
-
-  return `${beforeDeclaration}${forwardRefDeclaration.replace(
-    ">(function",
-    ">(\n  function",
-  )}${indentedFunctionBody}  },\n);${afterFunction}`;
-}
-
 function renderReactJsxReturn(jsx: string): string {
   const inlineReturn = `return ${jsx};`;
 
@@ -2800,18 +2645,6 @@ function requireString(value: string | undefined, label: string): string {
   return value;
 }
 
-function requireTimedFloatingPart(
-  facts: AdapterTimedFloatingOverlayFacts,
-  partName: "backdrop" | "viewport",
-): NonNullable<AdapterTimedFloatingOverlayFacts["parts"]["backdrop" | "viewport"]> {
-  const part = facts.parts[partName];
-  if (!part) {
-    throw new Error(`${facts.displayName} timed-floating facts are missing ${partName} part.`);
-  }
-
-  return part;
-}
-
 function requireTimedFloatingString(value: string | undefined, label: string): string {
   if (!value) {
     throw new Error(label);
@@ -2887,14 +2720,6 @@ function getNativeOverlayExportName(facts: AdapterNativeOverlayFacts, partName: 
   return exportName;
 }
 
-function getRangeControlValuesEqualHelperName(facts: AdapterRangeControlFacts): string {
-  return `are${facts.displayName}ValuesEqual`;
-}
-
-function getRangeControlSerializeValueHelperName(facts: AdapterRangeControlFacts): string {
-  return `serialize${facts.displayName}Value`;
-}
-
 function renderFormControlCompositionMatchUnion(matchValues: readonly string[]): string {
   return ["boolean", ...matchValues.map((value) => `"${value}"`)]
     .map((value) => `  | ${value}`)
@@ -2964,10 +2789,6 @@ function escapeAttribute(value: string): string {
 
 function escapeText(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
-}
-
-function escapeStringLiteral(value: string): string {
-  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
 function indent(value: string, depth = 1): string {

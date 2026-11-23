@@ -96,7 +96,7 @@ export async function verifyReactToggleCases({ page }) {
     Number(initialToggleState.disabled.opacity) > 0.8 ||
     initialToggleState.large.className?.includes("h-12") !== true ||
     initialToggleState.controlled.hasPressed !== false ||
-    initialToggleState.controlled.defaultPressedAttribute !== null ||
+    initialToggleState.controlled.defaultPressedAttribute !== "true" ||
     initialToggleState.controlled.value !== "controlled-toggle" ||
     initialToggleState.nonNative.tagName !== "SPAN" ||
     initialToggleState.nonNative.role !== "button" ||

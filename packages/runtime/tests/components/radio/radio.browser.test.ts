@@ -108,7 +108,7 @@ describe("createRadio", () => {
     radio.setChecked(true);
 
     expect(listener).toHaveBeenCalledOnce();
-    expect((listener.mock.calls[0]?.[0] as CustomEvent).detail.isCanceled).toBe(true);
+    expect((listener.mock.calls[0]![0] as CustomEvent).detail.isCanceled).toBe(true);
     expect(radio.getChecked()).toBe(false);
     expect(root.getAttribute("aria-checked")).toBe("false");
     expect(getInput(root).checked).toBe(false);

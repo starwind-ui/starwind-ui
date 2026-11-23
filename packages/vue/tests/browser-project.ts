@@ -1,10 +1,9 @@
-import ts from "typescript";
-import { playwright } from "@vitest/browser-playwright";
-import { defineConfig } from "../../runtime/node_modules/vitest/dist/config.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
+import { playwright } from "@vitest/browser-playwright";
+import ts from "typescript";
 import { vueRuntimePrimitiveComponents } from "../../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.js";
+import { defineConfig } from "../../runtime/node_modules/vitest/dist/config.js";
 
 import { compileVueSfc } from "../tsup.config.js";
 
@@ -41,6 +40,11 @@ export const vueBrowserProjectOwnership = [
     component: "carousel",
     config: "packages/vue/tests/carousel/vitest.config.ts",
     tests: ["packages/vue/tests/carousel/carousel.browser.test.ts"],
+  },
+  {
+    component: "chart",
+    config: "packages/vue/tests/chart/vitest.config.ts",
+    tests: ["packages/vue/tests/chart/chart.browser.test.ts"],
   },
   {
     component: "checkbox",
@@ -369,7 +373,7 @@ export function createVueBrowserProjectConfig(component: string) {
               enabled: true,
               headless: true,
               instances: [{ browser: "chromium" }],
-              provider: playwright({ launchOptions: { channel: "chromium" } }),
+              provider: playwright({ launchOptions: { channel: "chrome" } }),
             },
             include: [`packages/vue/tests/${component}/**/*.browser.test.ts`],
             name: "browser",

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { contextMenuShortcut } from "./variants";
 
 defineOptions({ inheritAttrs: false });

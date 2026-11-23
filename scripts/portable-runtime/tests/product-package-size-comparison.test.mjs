@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
-
+import { buildProductOverlapAttribution } from "../product-package-size-attribution.mjs";
 import {
-  PRODUCT_COMPARATOR_IDS,
   buildMeasurementEntries,
   buildProductComparisonPlan,
   buildSnapshotPath,
+  PRODUCT_COMPARATOR_IDS,
   parseProductSizeCommand,
   validateComparatorSnapshot,
 } from "../product-package-size-comparison.mjs";
-import { buildProductOverlapAttribution } from "../product-package-size-attribution.mjs";
 import {
   formatProductAttributionReport,
   formatProductSizeReport,

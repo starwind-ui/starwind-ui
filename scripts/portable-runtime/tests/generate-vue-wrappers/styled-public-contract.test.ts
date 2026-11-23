@@ -1,8 +1,8 @@
+import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -55,7 +55,12 @@ const INVALID_CONTRACT_CASES = [
   ["Checkbox detailed event payload", "invalid-checkbox-event.vue", /CheckboxCheckedChangeDetails/],
   ["Select open event payload", "invalid-select-open-event.vue", /SelectOpenChangeDetails/],
   ["Select value event payload", "invalid-select-value-event.vue", /SelectValueChangeDetails/],
-  ["Select slot payload", "invalid-select-slot.vue", /missing/],
+  ["Styled Select Value slot props", "invalid-select-slot.vue", /'label'/],
+  ["Select Value slot props", "invalid-select-value-primitive-slot.vue", /'value'/],
+  ["Tabs root slot props", "invalid-tabs-root-slot.vue", /'orientation'/],
+  ["Tabs Tab slot props", "invalid-tabs-tab-slot.vue", /'active'/],
+  ["Tabs Panel slot props", "invalid-tabs-panel-slot.vue", /'active'/],
+  ["Accordion root slot props", "invalid-accordion-root-slot.vue", /'value'/],
   ["Checkbox semantic ref element", "invalid-checkbox-ref.vue", /HTMLInputElement/],
 ] as const;
 
@@ -143,9 +148,11 @@ describe("generated Vue Styled public contracts", () => {
     expect(sourceByPath["toggle/Toggle.vue"]).toContain('"update:pressed"');
     expect(sourceByPath["toggle/Toggle.vue"]).toContain("pressedChange:");
     expect(sourceByPath["toggle/Toggle.vue"]).toContain(':pressed="pressed"');
-    expect(sourceByPath["select/SelectValue.vue"]).toContain(
-      "default?: (props: { label: string | null; value: string | null }) => unknown;",
-    );
+    expect(sourceByPath["select/SelectValue.vue"]).toContain("default?: () => unknown;");
+    expect(sourceByPath["select/SelectValue.vue"]).not.toContain("slotProps");
+    expect(
+      sourceByPath["select/SelectValue.vue"].match(/<SelectPrimitive\.SelectValue\b/g),
+    ).toHaveLength(1);
     for (const relativePath of [
       "avatar/AvatarImage.vue",
       "button/Button.vue",

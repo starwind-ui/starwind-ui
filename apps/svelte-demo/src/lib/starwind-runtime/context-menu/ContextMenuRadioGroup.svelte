@@ -10,10 +10,10 @@
 <script lang="ts">
   let {
     "class": className,
-    "defaultValue": defaultValue,
+    defaultValue,
     value = $bindable(),
-    "onValueChange": onValueChange,
-    "children": children,
+    onValueChange,
+    children,
     "value": commandValue,
     ...rest
   }: ContextMenuRadioGroupProps = $props();

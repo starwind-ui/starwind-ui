@@ -151,6 +151,14 @@ changed area needs them:
 | Bundle size                                 | `pnpm runtime:bundle:test` and `pnpm runtime:size:check`             |
 | Windows CLI behavior                        | `pnpm test:windows-packed-cli` on Windows                            |
 
+Browser tests, smoke tests, and acceptance scripts use Playwright with `channel: "chrome"`. They
+launch the Google Chrome that is installed on your computer. Chrome updates itself, so tests get
+browser security fixes on the day Google ships them. The Chromium build that Playwright downloads
+can be some versions older. Install Google Chrome before you run these tests. You do not need
+`playwright install` for them. CI runs `pnpm exec playwright install --with-deps chrome` to get the
+current stable Chrome. The Runtime performance benchmark scripts still use the Chromium that
+Playwright downloads, because their saved evidence records that Chromium build.
+
 For Node 22.12 consumer validation, build and pack the public packages with Node 24 using
 `pnpm runtime:build && pnpm react:build && pnpm cli:build && pnpm release:pack:public-artifacts`.
 Switch to Node 22.12.0, then run `npm run release:consumer:node22`.

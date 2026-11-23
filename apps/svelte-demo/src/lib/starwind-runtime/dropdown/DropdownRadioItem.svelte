@@ -11,16 +11,16 @@
 <script lang="ts">
   let {
     "class": className,
-    "value": value,
-    "checked": checked,
-    "defaultChecked": defaultChecked = false,
-    "closeOnClick": closeOnClick = false,
-    "inset": inset = false,
-    "disabled": disabled = false,
+    value,
+    checked,
+    defaultChecked = false,
+    closeOnClick = false,
+    inset = false,
+    disabled = false,
     "indicatorClass": indicatorClassName,
-    "showIndicator": showIndicator = true,
-    "children": children,
-    "indicator": indicator,
+    showIndicator = true,
+    children,
+    indicator,
     ...rest
   }: DropdownRadioItemProps = $props();
 </script>

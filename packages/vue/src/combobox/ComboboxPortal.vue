@@ -3,7 +3,7 @@
 import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/combobox";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
-import { useComboboxContext } from "./ComboboxRoot.vue";
+import { useComboboxInternalContext } from "./ComboboxRoot.vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -12,7 +12,7 @@ const props = withDefaults(
   { disabled: false },
 );
 defineSlots<{ default?: () => unknown }>();
-const combobox = useComboboxContext("Portal");
+const combobox = useComboboxInternalContext("Portal");
 const portalRef = ref<HTMLDivElement | null>(null);
 const owner = Symbol("ComboboxPortal");
 const placement = useVuePortalPlacement({

@@ -10,9 +10,9 @@
 
 <script lang="ts">
   let {
-    "orientation": orientation = "horizontal",
+    orientation = "horizontal",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: SidebarSeparatorProps = $props();
 </script>

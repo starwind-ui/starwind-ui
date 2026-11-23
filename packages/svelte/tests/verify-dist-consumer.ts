@@ -1,9 +1,9 @@
-import { getPrimitiveInventoryEntry } from "../../../scripts/portable-runtime/renderers/primitive-inventory.js";
-import { consumerFamilies } from "./dist-consumer.js";
-import { verifyNamedRejections } from "./named-rejections.js";
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
 import path from "node:path";
+import { getPrimitiveInventoryEntry } from "../../../scripts/portable-runtime/renderers/primitive-inventory.js";
+import type { DistConsumer } from "./dist-consumer.js";
+import { consumerFamilies } from "./dist-consumer.js";
 
 import {
   negativeConsumers,
@@ -11,7 +11,7 @@ import {
   ssrConsumer,
   typescriptConsumer,
 } from "./dist-consumer-fixtures.js";
-import type { DistConsumer } from "./dist-consumer.js";
+import { verifyNamedRejections } from "./named-rejections.js";
 
 export async function verifyPositiveConsumer(consumer: DistConsumer) {
   await consumer.write({

@@ -26,8 +26,10 @@ import { Dropdown, DropdownCheckboxItem, DropdownContent, DropdownTrigger } from
 import { Field, FieldControl, FieldSeparator, FieldValidity } from "styled/field";
 import { InputGroup, InputGroupTextarea } from "styled/input-group";
 import { NativeSelect, NativeSelectOption } from "styled/native-select";
+import { PaginationEllipsis, PaginationNext, PaginationPrevious } from "styled/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "styled/select";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarRail } from "styled/sidebar";
+import { Spinner } from "styled/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "styled/tabs";
 import { Textarea } from "styled/textarea";
 import { Toggle } from "styled/toggle";
@@ -168,6 +170,13 @@ Object.assign(window, { __models: selectModels });
     <CarouselPrevious id="carousel-previous-label" aria-label="Zurueck" />
     <CarouselNext id="carousel-next-label" aria-label="Weiter" />
   </Carousel>
+
+  <PaginationPrevious id="pagination-previous" href="#" />
+  <PaginationNext id="pagination-next" href="#" />
+  <PaginationPrevious id="pagination-previous-label" href="#" aria-label="Vorherige Seite" />
+  <PaginationNext id="pagination-next-label" href="#" aria-label="Naechste Seite" />
+  <PaginationEllipsis id="pagination-ellipsis" />
+  <Spinner id="spinner" />
 
   <Combobox default-value="a">
     <ComboboxInput id="combobox-input" />
@@ -347,9 +356,9 @@ beforeAll(async () => {
   if (!url) throw new TypeError("Vue Styled parity server did not expose a local URL.");
 
   const { chromium } = (await import(pathToFileURL(demoRequire.resolve("playwright")).href)) as {
-    chromium: { launch(options: { headless: boolean }): Promise<Browser> };
+    chromium: { launch(options: { headless: boolean; channel?: string }): Promise<Browser> };
   };
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   page = await browser.newPage();
   page.setDefaultTimeout(3_000);
   page.on("pageerror", (error) => pageErrors.push(String(error)));
@@ -690,6 +699,23 @@ describe("Vue Styled parity with React", () => {
       expect(await page.getAttribute("#carousel-next-label", "aria-label")).toBe("Weiter");
       expect(await page.getAttribute("#carousel-previous-label", "aria-label")).toBe("Zurueck");
       expect(await page.getAttribute("#sidebar-rail-label", "aria-label")).toBe("Seitenleiste");
+      expect(await page.getAttribute("#pagination-next", "aria-label")).toBe("Go to next page");
+      expect(await page.getAttribute("#pagination-previous", "aria-label")).toBe(
+        "Go to previous page",
+      );
+      expect(await page.getAttribute("#pagination-next-label", "aria-label")).toBe(
+        "Naechste Seite",
+      );
+      expect(await page.getAttribute("#pagination-previous-label", "aria-label")).toBe(
+        "Vorherige Seite",
+      );
+    });
+
+    it("hides decorative parts and exposes the Spinner status", async () => {
+      expect(await page.getAttribute("#pagination-ellipsis", "aria-hidden")).toBe("true");
+      expect(await page.getAttribute("#spinner", "role")).toBe("status");
+      expect(await page.getAttribute("#spinner", "aria-label")).toBe("Loading");
+      expect(await page.getAttribute("#spinner", "aria-hidden")).toBeNull();
     });
   });
 

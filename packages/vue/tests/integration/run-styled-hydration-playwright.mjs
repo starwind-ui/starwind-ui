@@ -1,5 +1,5 @@
-import { createRequire } from "node:module";
 import { createServer } from "node:http";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -23,6 +23,7 @@ const vite = await createViteServer({
   appType: "custom",
   configFile: false,
   plugins: [vue()],
+  optimizeDeps: { entries: ["apps/vue-demo/tests/styled-hydration.fixture.ts"] },
   resolve: {
     alias: [
       { find: /^@starwind-ui\/vue\/(.+)$/, replacement: `${vueDist}/$1/index.js` },
@@ -42,6 +43,7 @@ const html = await vite.transformIndexHtml(
   "/",
   `<!doctype html>
 <html>
+  <head><link rel="icon" href="data:,"></head>
   <body>
     <div id="styled-hydration-host">${markup}</div>
     <style>
@@ -89,7 +91,7 @@ if (!address || typeof address === "string")
 
 let browser;
 try {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage();
   const browserErrors = [];
   page.on("pageerror", (error) => browserErrors.push(error.stack ?? error.message));

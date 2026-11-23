@@ -106,7 +106,7 @@ function buildSourceContributionAnalysis({
   topLimit,
 }) {
   const contributors = collectMetafileContributors(metafile).map((contributor) => {
-    const category = categorizeInput(contributor.input, { repoRoot, tmpRoot });
+    const category = categorizeInput(contributor.input, { tmpRoot });
     const input = formatInputPath(contributor.input, { repoRoot, tmpRoot });
 
     return {
@@ -191,7 +191,7 @@ function compareContributors(left, right) {
   return right.bytes - left.bytes || left.input.localeCompare(right.input);
 }
 
-function categorizeInput(input, { repoRoot, tmpRoot }) {
+function categorizeInput(input, { tmpRoot }) {
   const normalizedInput = normalizePath(input);
   const absoluteInput = resolvePortablePath(tmpRoot, input);
   const runtimeSegment = "/packages/runtime/";

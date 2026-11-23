@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { tailwindConfig } from "../../src/templates/starwind.css.js";
 import {
   getLaravelInertiaVueProjectPlan,
   prepareLaravelHostCss,
@@ -9,7 +10,6 @@ import {
   validateLaravelInertiaVueProjectSetup,
 } from "../../src/utils/laravel-inertia-vue-project.js";
 import * as projectPath from "../../src/utils/project-path.js";
-import { tailwindConfig } from "../../src/templates/starwind.css.js";
 
 vi.mock("fs-extra");
 vi.mock("../../src/utils/project-path.js");
@@ -63,7 +63,7 @@ const pkg = {
     "@inertiajs/vue3": "^3.0.0",
     "laravel-vite-plugin": "^3.0.0",
     tailwindcss: "^4.1.0",
-    vue: "^3.5.13",
+    vue: "^3.5.21",
   },
   devDependencies: {
     "@tailwindcss/vite": "^4.1.0",
@@ -126,6 +126,11 @@ describe("Laravel Inertia Vue project setup", () => {
     expect(fragment).not.toContain('@import "tailwindcss"');
     expect(fragment).not.toContain('@import "tw-animate-css"');
     expect(fragment).not.toContain("@custom-variant dark");
+    const installed = `${prepareLaravelHostCss(hostCss)!}\n${fragment}`;
+    for (const direction of ["rtl", "ltr"] as const) {
+      expect(fragment.match(new RegExp(`@custom-variant ${direction}\\b`, "g"))).toHaveLength(1);
+      expect(installed.match(new RegExp(`@custom-variant ${direction}\\b`, "g"))).toHaveLength(1);
+    }
     expect(fragment).toContain('@plugin "@tailwindcss/forms"');
     expect(fragment).toContain("--animate-accordion-down");
     expect(fragment).toContain("@keyframes accordion-down");

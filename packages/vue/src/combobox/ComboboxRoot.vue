@@ -4,28 +4,35 @@ import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type ComboboxContextValue = Readonly<{
   disabled: ComputedRef<boolean>;
-  element: Readonly<Ref<HTMLElement | null>>;
   inputValue: ComputedRef<string>;
-  mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
-  registerPortal(owner: symbol, element: HTMLElement | null): void;
   required: ComputedRef<boolean>;
   value: ComputedRef<string | null>;
 }>;
+export type ComboboxInternalContextValue = ComboboxContextValue &
+  Readonly<{
+    element: Readonly<Ref<HTMLElement | null>>;
+    mounted: Readonly<Ref<boolean>>;
+    registerPortal(owner: symbol, element: HTMLElement | null): void;
+  }>;
 export type ComboboxItemContextValue = Readonly<{
   disabled: ComputedRef<boolean>;
   value: ComputedRef<string>;
 }>;
-export const ComboboxContext: InjectionKey<ComboboxContextValue> =
+export const ComboboxInternalContext: InjectionKey<ComboboxInternalContextValue> =
   Symbol("StarwindComboboxContext");
+export const ComboboxContext: InjectionKey<ComboboxContextValue> = ComboboxInternalContext;
 export const ComboboxItemContext: InjectionKey<ComboboxItemContextValue> = Symbol(
   "StarwindComboboxItemContext",
 );
-export function useComboboxContext(part = "part"): ComboboxContextValue {
-  const value = inject(ComboboxContext);
+export function useComboboxInternalContext(part = "part"): ComboboxInternalContextValue {
+  const value = inject(ComboboxInternalContext);
   if (!value) throw new Error(`Combobox.${part} requires an owning Combobox.Root.`);
   return value;
+}
+export function useComboboxContext(part = "part"): ComboboxContextValue {
+  return useComboboxInternalContext(part);
 }
 export function useComboboxItemContext(part = "part"): ComboboxItemContextValue {
   const value = inject(ComboboxItemContext);
@@ -115,7 +122,7 @@ let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
 
-provide(ComboboxContext, {
+provide(ComboboxInternalContext, {
   disabled,
   element: rootRef,
   inputValue: renderedInputValue,
@@ -289,7 +296,20 @@ watch(
   (nextValue, previous) => {
     if ((nextValue === undefined) !== (previous === undefined)) {
       if (nextValue === undefined && instance) uncontrolledValue.value = instance.getValue();
-      void recreate();
+      // A late value shows its item label, unless the parent holds the input text.
+      const before = instance?.getValue();
+      void recreate().then(() => {
+        const owned = instance;
+        if (
+          nextValue === undefined ||
+          props.inputValue !== undefined ||
+          !owned ||
+          owned.getValue() === before
+        )
+          return;
+        owned.setValue(owned.getValue(), { emit: false });
+        uncontrolledInputValue.value = owned.getInputValue();
+      });
       return;
     }
     const owned = instance;

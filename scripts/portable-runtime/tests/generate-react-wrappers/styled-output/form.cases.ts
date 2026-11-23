@@ -140,7 +140,7 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(selectVariants).not.toContain("side: {");
   expect(selectVariants).not.toContain("align: {");
   expect(selectVariants).not.toContain("compoundVariants:");
-  expect(selectVariants).toContain("rounded-sm py-1.5 pr-8 pl-2 outline-none");
+  expect(selectVariants).toContain("rounded-sm py-1.5 pe-8 ps-2 outline-none");
   expect(selectVariants).toContain('md: "h-11 px-3 text-base"');
   expect(selectIndex).toContain("SelectTrigger");
   expect(selectIndex).toContain("SelectItemIndicator");
@@ -158,7 +158,7 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxInputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(comboboxInputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-slot="combobox-input-group"/);
   expect(inputGroup).toMatch(/data-slot="input-group"[\s\S]*\{\.\.\.rest\}/);
-  expect(comboboxVariants).toContain("[&>[data-align=inline-end]:has(>div>button)]:mr-[-0.3rem]");
+  expect(comboboxVariants).toContain("[&>[data-align=inline-end]:has(>div>button)]:me-[-0.3rem]");
   expect(comboboxInput).toContain(
     'import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";',
   );
@@ -227,10 +227,10 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxVariants).not.toContain("align: {");
   expect(comboboxVariants).not.toContain("compoundVariants:");
   expect(comboboxVariants).toContain("appearance-none rounded-none border-0 bg-transparent");
-  expect(comboboxVariants).toContain("py-1 pr-1 pl-3 shadow-none");
+  expect(comboboxVariants).toContain("py-1 pe-1 ps-3 shadow-none");
   expect(comboboxVariants).toContain("outline-none");
   expect(comboboxVariants).toContain("ring-0");
-  expect(comboboxVariants).toContain("rounded-sm py-1.5 pr-8 pl-2 outline-none");
+  expect(comboboxVariants).toContain("rounded-sm py-1.5 pe-8 ps-2 outline-none");
   expect(comboboxVariants).toContain("focus-within:ring-3");
   expect(comboboxVariants).toContain("data-error-visible:text-error data-error-visible:ring-0");
   expect(comboboxVariants).toContain(
@@ -397,7 +397,7 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(inputGroupVariants).toContain(
     "has-[[data-slot][data-error-visible]]:border-error has-[[data-slot][data-error-visible]]:ring-error/40 has-[[data-slot][data-error-visible]]:ring-3",
   );
-  expect(inputGroupVariants).toContain("order-last pr-2.5 has-[>button]:mr-[-0.3rem]");
+  expect(inputGroupVariants).toContain("order-last pe-2.5 has-[>button]:me-[-0.3rem]");
   expect(inputGroupVariants).toContain('"icon-sm": "size-8 p-0 has-[>svg]:p-0"');
   expect(inputGroupIndex).toContain("Root: InputGroup");
   expect(inputGroupIndex).toContain("Button: InputGroupButton");
@@ -579,6 +579,8 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(progressVariants).not.toContain("starwind-progress");
   expect(progressVariants).toContain("bg-muted h-2 w-full overflow-hidden rounded-full");
   expect(progressVariants).toContain("h-full w-full flex-1 transition-transform");
+  expect(progressVariants).toContain('base: "h-full w-full rtl:-scale-x-100"');
+  expect(progressVariants).toContain('indeterminate: "absolute inset-y-0 left-0 w-3/4"');
   expect(progressVariants).toContain("data-instant:transition-none");
   expect(progressVariants).toContain("motion-reduce:transition-none");
   expect(progressIndex).toContain("export default Progress;");
@@ -650,7 +652,9 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(switchVariants).toContain(
     "data-error-visible:border-error data-error-visible:focus-visible:ring-error/40",
   );
-  expect(switchVariants).toContain("group-aria-checked:translate-x-(--translation)");
+  expect(switchVariants).toContain(
+    "group-aria-checked:[--sw-switch-thumb-offset:var(--translation)]",
+  );
   expect(switchVariants).toContain("peer-disabled:cursor-not-allowed");
   expect(switchIndex).toContain("export default Switch;");
   expect(switchIndex).not.toContain("Root: Switch");

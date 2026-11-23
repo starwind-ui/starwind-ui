@@ -1,0 +1,179 @@
+---
+// Smaller Primitive cases: generated ids, tooltip order, a native definition and a bare legend.
+import Chart from "@starwind-ui/astro/chart";
+import {
+  iconConfig,
+  visitorConfig,
+  visitorData,
+  visitorDefinition,
+  visitors,
+} from "./fixture-modules";
+import PrimitiveChart from "./PrimitiveChart.astro";
+
+const { mode, kind } = Astro.props;
+// A heading that names a config key whose label is empty: the plain text or a rich slot shows it.
+const emptyLabelConfig = {
+  ...visitorConfig,
+  desktop: {
+    ...visitorConfig.desktop,
+    label: "",
+    ...(kind === "text" ? { text: "Revenue" } : {}),
+  },
+};
+---
+
+{
+  mode === "empty-label" && (
+    <Chart.Root
+      id={`empty-label-${kind}`}
+      chart={visitors}
+      data={visitorData()}
+      config={emptyLabelConfig}
+    >
+      {kind === "slot" && (
+        <b slot="label-desktop" data-rich-heading>
+          Rich
+        </b>
+      )}
+      <Chart.Surface />
+      <Chart.Tooltip>
+        <Chart.TooltipContent label="desktop" class="content">
+          <Chart.TooltipLabel class="label" />
+          <Chart.TooltipItems>
+            <Chart.TooltipItem>
+              <Chart.TooltipName />
+              <Chart.TooltipValue />
+            </Chart.TooltipItem>
+          </Chart.TooltipItems>
+        </Chart.TooltipContent>
+      </Chart.Tooltip>
+    </Chart.Root>
+  )
+}
+
+{
+  mode === "ids" && (
+    <>
+      <PrimitiveChart />
+      <PrimitiveChart />
+    </>
+  )
+}
+{
+  mode === "order" && (
+    <Chart.Root id="order" chart={visitors} data={visitorData()} config={visitorConfig}>
+      <Chart.Surface />
+      <Chart.Tooltip>
+        <Chart.TooltipContent class="first" />
+      </Chart.Tooltip>
+      <Chart.Tooltip>
+        <Chart.TooltipContent class="second" />
+      </Chart.Tooltip>
+    </Chart.Root>
+  )
+}
+{
+  mode === "definition" && (
+    <Chart.Root id="native" definition={visitorDefinition} config={visitorConfig}>
+      <Chart.Surface />
+      <Chart.Legend>
+        <Chart.LegendItems>
+          <Chart.LegendItem class="item">
+            <Chart.LegendLabel />
+          </Chart.LegendItem>
+        </Chart.LegendItems>
+      </Chart.Legend>
+      <Chart.LegendItem value="desktop">Desktop</Chart.LegendItem>
+    </Chart.Root>
+  )
+}
+{
+  mode === "definition-visible" && (
+    <Chart.Root id="native" definition={visitorDefinition} config={visitorConfig} visible={[]}>
+      <Chart.Surface />
+    </Chart.Root>
+  )
+}
+{
+  mode === "prop-empty-slot" && (
+    <Chart.Root
+      id="prop-empty-slot"
+      chart={visitors}
+      data={visitorData()}
+      config={visitorConfig}
+      labels={{ mobile: "<b data-prop-label>Mobile</b>" }}
+    >
+      {kind === "never" && (
+        <strong slot="label-mobile" data-slot-label>
+          Slot
+        </strong>
+      )}
+      <Chart.Surface />
+      <Chart.Legend>
+        <Chart.LegendItems>
+          <Chart.LegendItem>
+            <Chart.LegendLabel />
+          </Chart.LegendItem>
+        </Chart.LegendItems>
+      </Chart.Legend>
+    </Chart.Root>
+  )
+}
+{
+  mode === "bare-legend" && (
+    <Chart.Legend config={iconConfig} visible={["mobile"]}>
+      <Chart.LegendItems>
+        <Chart.LegendItem>
+          <Chart.LegendIcon class="legend-icon" />
+          <Chart.LegendSwatch class="swatch" />
+          <Chart.LegendLabel />
+        </Chart.LegendItem>
+      </Chart.LegendItems>
+    </Chart.Legend>
+  )
+}
+{
+  mode === "outside" && (
+    <Chart.Tooltip>
+      <span class="outside">outside</span>
+    </Chart.Tooltip>
+  )
+}
+{
+  mode === "config-legend" && (
+    <Chart.Root
+      id={`config-${kind}`}
+      chart={kind === "definition" ? undefined : visitors}
+      definition={kind === "definition" ? visitorDefinition : undefined}
+      data={visitorData()}
+      config={visitorConfig}
+      interactive={kind !== "static"}
+    >
+      <Chart.Surface />
+      <Chart.Legend class="root-legend">
+        <Chart.LegendItems>
+          <Chart.LegendItem class="item">
+            <Chart.LegendIcon class="legend-icon" />
+            <Chart.LegendLabel />
+          </Chart.LegendItem>
+        </Chart.LegendItems>
+      </Chart.Legend>
+      <Chart.Legend class="config-legend" config={visitorConfig}>
+        <Chart.LegendItems>
+          <Chart.LegendItem class="item">
+            <Chart.LegendIcon class="legend-icon" />
+            <Chart.LegendLabel />
+          </Chart.LegendItem>
+        </Chart.LegendItems>
+      </Chart.Legend>
+      <Fragment slot="label-mobile">
+        <strong data-rich>Mobile</strong>
+      </Fragment>
+      <Fragment slot="icon-desktop">
+        <svg data-rich-icon viewBox="0 0 4 4">
+          <rect width="4" height="4" />
+        </svg>
+      </Fragment>
+    </Chart.Root>
+  )
+}

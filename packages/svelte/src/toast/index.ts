@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import ToastAction from "./ToastAction.svelte";
 import ToastClose from "./ToastClose.svelte";
 import ToastContent from "./ToastContent.svelte";

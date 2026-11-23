@@ -10,6 +10,7 @@ export async function verifyDialogFloatingOverlays({ ids, label, page }) {
     try {
       await cleanupDialogFloatingOverlays({ ids, page });
     } catch (cleanupError) {
+      // oxlint-disable-next-line eslint/no-unsafe-finally -- surface the cleanup error only when the main step passed.
       if (!primaryError) throw cleanupError;
     }
   }

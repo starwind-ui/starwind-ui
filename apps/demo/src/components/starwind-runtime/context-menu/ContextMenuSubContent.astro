@@ -14,7 +14,7 @@ type Props = HTMLAttributes<"div"> & {
 
 const {
   class: className,
-  side = "right",
+  side,
   align = "start",
   sideOffset = 0,
   avoidCollisions = true,
@@ -33,10 +33,11 @@ const subContentClassName = className;
 >
   <ContextMenuPrimitive.Popup
     class={contextMenuContent({ class: subContentClassName })}
-    side={side}
+    side={side ?? "right"}
     align={align}
     sideOffset={sideOffset}
     avoidCollisions={avoidCollisions}
+    data-sw-menu-side-intent={side ?? ""}
     {...rest}
     data-slot="context-menu-sub-content"
   >

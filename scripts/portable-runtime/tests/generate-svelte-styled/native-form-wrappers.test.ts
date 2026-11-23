@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
 import { compile } from "svelte/compiler";
+import { describe, expect, it } from "vitest";
 import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+
 describe("Native form wrappers", () => {
   it.each(["native-select", "textarea"])(
     "projects and compiles contract-owned %s output",
@@ -29,10 +30,11 @@ describe("Native form wrappers", () => {
   );
 });
 
-import { afterEach } from "vitest";
 import path from "node:path";
+import { afterEach } from "vitest";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
 import { createStyledNativeFormConsumer } from "../../../../packages/svelte/tests/styled-native-form-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((c) => c.dispose()));
@@ -49,11 +51,12 @@ it("preserves native form bindings, SSR/hydration, reset, FormData and ref/attac
   await verifyStyledNativeFormBrowser(await consumer());
 });
 
-import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("serializes the form wrappers and icon deterministically without hidden runtime dependencies", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-native-form-output-"));
   try {

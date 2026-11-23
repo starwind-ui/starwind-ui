@@ -5,8 +5,17 @@
 reviewed sizes. The check prints the changed rows with their previous size, current size, added gzip
 bytes and percentage. Its saved diagnostic report contains all rows.
 
-The current baseline was accepted on September 28, 2026. It includes the shared recipe migration,
-recent component fixes and the Field registration split. Earlier captures remain historical evidence.
+The current baseline was accepted on November 15, 2026. It includes chart, the shared recipe
+migration, recent component fixes and the Field registration split. The rows that include the chart
+entry were accepted again on November 18, 2026, after the chart tooltip snapping, motion and radial
+bar placement changes and the gradient tooltip indicator fix, and on November 20, 2026, after the
+straight tooltip motion change, the tooltip follow fix and the whole-pixel pointer follow.
+On November 21, 2026, after `main` merged into the charts branch, the React and Vue Tooltip rows,
+the Runtime root and `init-starwind` were accepted again for the RTL and arrow work from `main`.
+On November 22, 2026, the Runtime root and `init-starwind` were accepted again after the stable
+fix lanes. They grew by 25 B and 16 B for the pointer-press, Tab dismissal, Menu radio and
+Navigation Menu fixes.
+Earlier captures remain historical evidence.
 The current Runtime, React and Vue package sizes are accepted.
 
 ## Check a change

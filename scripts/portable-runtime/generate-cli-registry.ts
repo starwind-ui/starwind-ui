@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -8,7 +9,7 @@ import semver from "semver";
 import type { RuntimeAdapterContract } from "./contracts/primitive/types.js";
 import { starwindStyledContracts } from "./contracts/styled/starwind.js";
 import type { FrameworkTarget, StyledAdapterContract } from "./contracts/styled/types.js";
-import { formatGeneratedOutput } from "./format-generated-output.js";
+import { getFormatGeneratedOutputCommands } from "./format-generated-output.js";
 import {
   type FrameworkAdapterRegisteredTarget,
   getFrameworkAdapterTargetsWithStyledCapability,
@@ -19,7 +20,10 @@ import {
   generateFrameworkPrimitiveWrappers,
   generateFrameworkStyledWrappers,
 } from "./renderers/framework-wrapper-generator.js";
-import { getPrimitiveVendoringContracts } from "./renderers/primitive-inventory.js";
+import {
+  getPrimitiveVendoringContracts,
+  isPrimitiveInventoryComponentAvailableForTarget,
+} from "./renderers/primitive-inventory.js";
 import { toPortablePath } from "./renderers/shared.js";
 import type { StyledOutputComponentGroup } from "./renderers/styled-output-model/index.js";
 import { analyzeStyledOutputGroup } from "./renderers/styled-output-model/index.js";
@@ -30,7 +34,6 @@ export const DEFAULT_PRIMITIVE_VERSION_MANIFEST = "packages/cli/registry/primiti
 export const DEFAULT_COMPONENT_INSTALL_ROOT = "src/components/starwind";
 export const DEFAULT_PRIMITIVE_INSTALL_ROOT = "src/components/starwind-primitives";
 export const DEFAULT_CLI_REGISTRY_OUTPUT = "packages/cli/src/registry/bundled-registry.json";
-const RUNTIME_PACKAGE_NAME = "@starwind-ui/runtime";
 
 type RegistryImplementationTarget = FrameworkAdapterRegisteredTarget;
 type PrimitiveVendoringFramework = FrameworkAdapterRegisteredTarget;
@@ -372,7 +375,11 @@ export function buildStyledArtifactPlanningFacts(
         componentDependencies: analysis.dependencies.styledComponents.filter(
           (dependency) => dependency !== group.component,
         ),
-        packageRequirementSources: collectStyledPackageRequirementSources(group, target),
+        packageRequirementSources: collectStyledPackageRequirementSources(
+          group,
+          target,
+          targetContracts.find((contract) => contract.component === group.component),
+        ),
         target: target.target,
       };
     }
@@ -429,7 +436,7 @@ export async function buildRuntimeRegistry(
         primitiveImportBase: target.primitiveImportBase,
         primitiveOutputRoot: path.join(tempRoot, target.primitiveOutputDir),
       });
-      if (target.target === "vue") await formatGeneratedOutput([outputRoot], repoRoot);
+      if (target.target === "vue") await formatVueRegistryOutput(outputRoot, repoRoot);
 
       targetOutputs.set(target.target, outputRoot);
     }
@@ -523,6 +530,7 @@ function buildRegistrySetup(
 
 const MAX_REGISTRY_PACKAGE_NAME_LENGTH = 214;
 const REGISTRY_PACKAGE_NAME_SEGMENT = /^[a-z0-9](?:[a-z0-9._~-]*[a-z0-9])?$/;
+// oxlint-disable-next-line eslint/no-control-regex -- npm names reject control characters.
 const REGISTRY_PACKAGE_NAME_WHITESPACE_OR_CONTROL = /[\s\u0000-\u001f\u007f]/;
 
 export function isValidRegistryPackageName(value: string): boolean {
@@ -621,8 +629,11 @@ export async function buildPrimitiveVendoringArtifacts(
         outputRoot,
       });
 
+      const targetContracts = contracts.filter((contract) =>
+        isPrimitiveInventoryComponentAvailableForTarget(contract.component, target.framework),
+      );
       const targetArtifacts = await Promise.all(
-        contracts.map(async (contract) => {
+        targetContracts.map(async (contract) => {
           const files = await readGeneratedPrimitiveFiles({
             component: contract.component,
             generatedImportCandidateExtensions: target.generatedImportCandidateExtensions,
@@ -642,7 +653,12 @@ export async function buildPrimitiveVendoringArtifacts(
             version: primitiveVersionManifest.primitives[contract.component],
             files,
             packageRequirements: collectPrimitivePackageRequirements({
-              extraPackageNames: target.extraPackageRequirements,
+              extraPackageNames: [
+                ...(target.extraPackageRequirements ?? []),
+                ...(contract.component === "chart" && target.publicRegistry
+                  ? ["@tanstack/charts"]
+                  : []),
+              ],
               files,
               packageRanges: targetPackageRanges.get(target.framework)!,
             }),
@@ -753,6 +769,7 @@ async function buildTargetsForContract(options: {
       files,
       componentDependencies: planningFacts?.componentDependencies ?? [],
       packageRequirements: collectPackageRequirements({
+        declaredPackageRequirements: options.contract.dependencies?.packages,
         packageRanges: options.targetPackageRanges.get(target.target)!,
         packageRequirementSources: planningFacts?.packageRequirementSources ?? [
           target.adapterPackage,
@@ -788,11 +805,6 @@ export async function loadPackageRanges(
   targetRegistrations: readonly CliRegistryTargetRegistration[],
 ): Promise<Map<string, string>> {
   const ranges = new Map<string, string>();
-  const exactAdapterPackages = new Set(
-    targetRegistrations
-      .filter((registration) => registration.cliRegistry.exactAdapterPackageVersion)
-      .map((registration) => getCliRegistryAdapterPackage(registration.target)),
-  );
   const packageMetadataSources = [
     ...new Set(
       targetRegistrations.flatMap(
@@ -802,7 +814,7 @@ export async function loadPackageRanges(
   ];
 
   for (const packageMetadataSource of packageMetadataSources) {
-    await addPackageVersionRange(ranges, repoRoot, packageMetadataSource, exactAdapterPackages);
+    await addPackageVersionRange(ranges, repoRoot, packageMetadataSource);
     await addPackageDependencyRanges(ranges, repoRoot, packageMetadataSource);
   }
 
@@ -810,8 +822,10 @@ export async function loadPackageRanges(
 }
 
 /**
- * An exact adapter keeps one Runtime version for that whole adapter release. A wider direct Runtime
- * requirement can resolve a newer copy beside it, so these targets use the adapter's own pin.
+ * Every target uses the same caret ranges. Runtime and the first-party adapters publish together in
+ * the fixed group, so the ranges accept matching versions. A consumer can still resolve two
+ * Runtime copies when its lockfile holds an older adapter. `docs/release/versioning.md` explains
+ * how to align the adapter and the Runtime in that project.
  */
 export async function loadTargetPackageRanges(
   repoRoot: string,
@@ -821,38 +835,10 @@ export async function loadTargetPackageRanges(
   const targetRanges = new Map<RegistryImplementationTarget, Map<string, string>>();
 
   for (const registration of targetRegistrations) {
-    const ranges = new Map(sharedRanges);
-    if (registration.cliRegistry.exactAdapterPackageVersion) {
-      ranges.set(RUNTIME_PACKAGE_NAME, await loadExactAdapterRuntimePin(repoRoot, registration));
-    }
-    targetRanges.set(registration.target, ranges);
+    targetRanges.set(registration.target, new Map(sharedRanges));
   }
 
   return targetRanges;
-}
-
-async function loadExactAdapterRuntimePin(
-  repoRoot: string,
-  registration: CliRegistryTargetRegistration,
-): Promise<string> {
-  const adapterPackage = getCliRegistryAdapterPackage(registration.target);
-
-  for (const packageJsonPath of registration.cliRegistry.packageMetadataSources ?? []) {
-    const packageJson = await readPackageJson(repoRoot, packageJsonPath);
-    if (packageJson.name !== adapterPackage) continue;
-
-    const runtimePin = packageJson.dependencies?.[RUNTIME_PACKAGE_NAME];
-    if (!runtimePin || semver.valid(runtimePin) !== runtimePin) {
-      throw new Error(
-        `CLI registry adapter package ${adapterPackage} requires an exact ${RUNTIME_PACKAGE_NAME} dependency; received "${runtimePin}" from ${packageJsonPath}.`,
-      );
-    }
-    return runtimePin;
-  }
-
-  throw new Error(
-    `CLI registry target "${registration.target}" has no ${adapterPackage} metadata.`,
-  );
 }
 
 export async function loadRegistryVersionManifest(
@@ -1095,20 +1081,10 @@ async function addPackageVersionRange(
   ranges: Map<string, string>,
   repoRoot: string,
   packageJsonPath: string,
-  exactPackageNames: ReadonlySet<string>,
 ): Promise<void> {
   const packageJson = await readPackageJson(repoRoot, packageJsonPath);
   const name = getPackageName(packageJson, packageJsonPath);
 
-  if (exactPackageNames.has(name)) {
-    if (semver.valid(packageJson.version) !== packageJson.version) {
-      throw new Error(
-        `CLI registry adapter package ${name} requires an exact package version; received "${packageJson.version}" from ${packageJsonPath}.`,
-      );
-    }
-    ranges.set(name, packageJson.version);
-    return;
-  }
   ranges.set(name, packageJson.version === "0.0.0" ? "*" : `^${packageJson.version}`);
 }
 
@@ -1153,6 +1129,7 @@ function getPackageName(packageJson: { name?: string }, packageJsonPath: string)
 }
 
 function collectPackageRequirements(options: {
+  declaredPackageRequirements?: readonly RegistryPackageRequirement[];
   packageRanges: Map<string, string>;
   packageRequirementSources: readonly string[];
   target: TargetDefinition;
@@ -1166,17 +1143,27 @@ function collectPackageRequirements(options: {
     }
   }
 
+  // Contract-declared package floors win over the range the demo app pins.
+  const declaredRanges = new Map(
+    (options.declaredPackageRequirements ?? []).map(({ name, range }) => [name, range]),
+  );
+
   return [...packageNames].sort().map((name) => ({
     name,
-    range: getPackageRange(name, options.packageRanges),
+    range: declaredRanges.get(name) ?? getPackageRange(name, options.packageRanges),
   }));
 }
 
 function collectStyledPackageRequirementSources(
   group: StyledOutputComponentGroup,
   target: TargetDefinition,
+  contract: StyledAdapterContract | undefined,
 ): string[] {
   const sources = new Set<string>([target.adapterPackage]);
+
+  for (const requirement of contract?.dependencies?.packages ?? []) {
+    sources.add(requirement.name);
+  }
 
   for (const source of target.collectPackageImportSources?.({
     group,
@@ -1376,7 +1363,7 @@ async function readGeneratedPrimitiveFiles(options: {
         options.formatContent
           ? await options.formatContent(generatedContent, sourcePath)
           : await formatWithPrettier(generatedContent, {
-              ...((await resolvePrettierConfig(sourcePath)) ?? {}),
+              ...(await resolvePrettierConfig(sourcePath)),
               filepath: sourcePath,
             }),
       );
@@ -1573,10 +1560,81 @@ function toCanonicalJson(value: unknown): string {
 
 async function formatJsonDocument(value: unknown, filepath: string): Promise<string> {
   return formatWithPrettier(JSON.stringify(value), {
-    ...((await resolvePrettierConfig(filepath)) ?? {}),
+    ...(await resolvePrettierConfig(filepath)),
     filepath,
     parser: "json",
   });
+}
+
+async function formatVueRegistryOutput(outputRoot: string, repoRoot: string): Promise<void> {
+  await prettierVueRegistryOutput(outputRoot, repoRoot);
+  await sortVueRegistryImports(outputRoot, repoRoot);
+  // Biome can rejoin a sorted import past the line width, so Prettier also runs last.
+  await prettierVueRegistryOutput(outputRoot, repoRoot);
+}
+
+async function prettierVueRegistryOutput(outputRoot: string, repoRoot: string): Promise<void> {
+  const relativeFiles = await readFilesRecursively(outputRoot);
+
+  await Promise.all(
+    relativeFiles.map(async (relativeFile) => {
+      const outputFile = path.join(outputRoot, relativeFile);
+      const canonicalFilepath = path.join(
+        repoRoot,
+        "apps/vue-demo/src/components/starwind-runtime",
+        relativeFile,
+      );
+      const source = await readFile(outputFile, "utf8");
+      const formatted = await formatWithPrettier(source, {
+        ...(await resolvePrettierConfig(canonicalFilepath)),
+        filepath: canonicalFilepath,
+      });
+
+      if (formatted !== source) await writeFile(outputFile, formatted, "utf8");
+    }),
+  );
+}
+
+async function sortVueRegistryImports(outputRoot: string, repoRoot: string): Promise<void> {
+  const biomeConfigDir = await mkdtemp(path.join(os.tmpdir(), "starwind-biome-generated-"));
+  try {
+    const biomeConfigPath = path.join(biomeConfigDir, "biome.json");
+    await writeFile(
+      biomeConfigPath,
+      JSON.stringify(
+        {
+          assist: { actions: { source: { organizeImports: "on" } } },
+          files: { includes: ["**"] },
+          formatter: { enabled: false },
+          linter: { enabled: false },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const biomeCommand = getFormatGeneratedOutputCommands({
+      biomeConfigPath,
+      cwd: repoRoot,
+      paths: [outputRoot],
+    })[1];
+
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn(biomeCommand.command, biomeCommand.args, biomeCommand.options);
+
+      child.on("error", reject);
+      child.on("exit", (code) => {
+        if (code === 0) {
+          resolve();
+          return;
+        }
+
+        reject(new Error(`Biome exited with code ${code}.`));
+      });
+    });
+  } finally {
+    await rm(biomeConfigDir, { force: true, recursive: true });
+  }
 }
 
 async function readFilesRecursively(dir: string, root: string = dir): Promise<string[]> {

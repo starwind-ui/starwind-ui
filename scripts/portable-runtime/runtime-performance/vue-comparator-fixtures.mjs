@@ -139,7 +139,7 @@ export function validateVueComparatorFixture(fixture, expectedRow) {
     const machineImport = row.packageImports.find(
       (name) => name.startsWith("@zag-js/") && !["@zag-js/core", "@zag-js/vue"].includes(name),
     );
-    if (!fixture.source.includes(`from \"${machineImport}\"`)) {
+    if (!fixture.source.includes(`from "${machineImport}"`)) {
       throw new Error(`Fixture ${row.id} lacks its exact Zag machine import`);
     }
   }

@@ -16,14 +16,14 @@
 
 <script lang="ts">
   let {
-    "size": size = "md",
-    "showEyeDropper": showEyeDropper = true,
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "formatControl": formatControl = "select",
-    "formats": formats = ["hex","rgb","hsl","hsb"],
-    "swatches": swatches = [],
-    "children": children
+    size = "md",
+    showEyeDropper = true,
+    portalContainer,
+    disablePortal = false,
+    formatControl = "select",
+    formats = ["hex","rgb","hsl","hsb"],
+    swatches = [],
+    children
   }: ColorPickerDefaultEditorProps = $props();
 
   let isSwatchDescriptor = $derived((swatch: (typeof swatches)[number]): swatch is Extract<(typeof swatches)[number], { value: unknown }> => typeof swatch === "object" && swatch !== null && "value" in swatch && "label" in swatch);

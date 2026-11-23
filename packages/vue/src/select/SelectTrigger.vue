@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { defineComponent, type HTMLAttributes, useAttrs, type VNode } from "vue";
 import { useVueNativeControl } from "../_internal/native-control";
-import { useSelectContext } from "./SelectRoot.vue";
+import { useSelectInternalContext } from "./SelectRoot.vue";
 
 defineOptions({ inheritAttrs: false });
 type NativeElementProps = /* @vue-ignore */ HTMLAttributes;
@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<{ asChild?: boolean } & NativeElementProp
 });
 const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
-const select = useSelectContext("Trigger");
+const select = useSelectInternalContext("Trigger");
 const {
   element,
   render: renderAsChild,

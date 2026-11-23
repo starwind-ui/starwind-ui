@@ -3,7 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
 import MenuCheckboxItem from "./MenuCheckboxItem.svelte";
 import MenuCheckboxItemIndicator from "./MenuCheckboxItemIndicator.svelte";
 import MenuGroup from "./MenuGroup.svelte";
@@ -22,6 +21,7 @@ import MenuShortcut from "./MenuShortcut.svelte";
 import MenuSubmenuRoot from "./MenuSubmenuRoot.svelte";
 import MenuSubmenuTrigger from "./MenuSubmenuTrigger.svelte";
 import MenuTrigger from "./MenuTrigger.svelte";
+
 const Menu = {
   Root: MenuRoot,
   Trigger: MenuTrigger,
@@ -42,6 +42,7 @@ const Menu = {
   SubmenuRoot: MenuSubmenuRoot,
   SubmenuTrigger: MenuSubmenuTrigger,
 };
+
 export {
   Menu,
   MenuCheckboxItem,
@@ -64,10 +65,10 @@ export {
   MenuTrigger,
 };
 export default Menu;
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
 export type {
   MenuCheckedChangeDetails,
   MenuCloseCompleteDetails,
   MenuOpenChangeDetails,
   MenuValueChangeDetails,
 } from "@starwind-ui/runtime";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";

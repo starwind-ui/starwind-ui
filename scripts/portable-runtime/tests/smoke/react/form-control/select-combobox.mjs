@@ -722,6 +722,29 @@ export async function verifyReactSelectComboboxCases({ page }) {
   await assertPublicPortalTopology(page.locator("#react-runtime-combobox-fruit-content"), {
     portalSlot: "combobox-portal",
   });
+  // The popup opens with a zoom and can move once while it takes its place. Read the item box only
+  // after it stays the same for two animation frames, so the press lands on the item.
+  await page.waitForFunction(
+    () =>
+      new Promise((resolve) => {
+        const item = document.querySelector("#react-runtime-combobox-fruit-apple");
+        const first = item?.getBoundingClientRect();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            const next = item?.getBoundingClientRect();
+            resolve(
+              Boolean(first && next) &&
+                first.x === next.x &&
+                first.y === next.y &&
+                first.width === next.width &&
+                first.height === next.height,
+            );
+          }),
+        );
+      }),
+    undefined,
+    { timeout: 5_000 },
+  );
   const reactComboboxAppleBox = await page
     .locator("#react-runtime-combobox-fruit-apple")
     .boundingBox();

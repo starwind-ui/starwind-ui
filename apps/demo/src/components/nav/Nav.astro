@@ -1,68 +1,125 @@
 ---
-import { ThemeToggle } from "@/components/starwind/theme-toggle";
+import { componentDemos } from "@/components/runtime-prototype/sections";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/starwind-runtime/navigation-menu";
+import { ThemeToggle } from "@/components/starwind-runtime/theme-toggle";
 
-import AnnouncementBar from "./AnnouncementBar.astro";
+import DirectionToggle from "./DirectionToggle.astro";
+
+const pageGroups = [
+  {
+    title: "Runtime test pages",
+    links: [
+      { href: "/", label: "All components" },
+      { href: "/runtime-forms", label: "Runtime Forms" },
+      { href: "/runtime-collections", label: "Runtime Collections" },
+      { href: "/runtime-overlays", label: "Runtime Overlays" },
+      { href: "/runtime-color-picker", label: "Runtime Color Picker" },
+      { href: "/runtime-charts", label: "Runtime Charts" },
+      { href: "/pages/markdown-example", label: "Prose Demo" },
+    ],
+  },
+  {
+    title: "Sidebar layouts",
+    links: [
+      { href: "/pages/runtime-sidebar-demo", label: "Runtime Sidebar" },
+      { href: "/pages/runtime-nested-sidebar", label: "Runtime Nested Sidebar" },
+      { href: "/pages/sidebar-demo", label: "Sidebar" },
+      { href: "/pages/sidebar-nested", label: "Nested Sidebar" },
+    ],
+  },
+];
+
+const reviewLinks = [
+  { href: "/base-ui-maintenance-review", label: "Group labels and Tabs" },
+  { href: "/beta-6-release-review", label: "Beta 6 release" },
+];
+
+// Small screens show the review links inside Pages, so the header fits at 320px.
+const allPageGroups = [...pageGroups, { title: "Reviews", links: reviewLinks, smallOnly: true }];
+
+const linkClass = "px-2 py-1.5 text-sm";
 ---
 
-<!-- <div class="sticky top-0 z-50"> -->
-<AnnouncementBar />
+<header
+  class="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 border-b backdrop-blur"
+>
+  <div class="container mx-auto flex h-14 items-center gap-2 px-4 sm:gap-4">
+    <a href="/" class="hidden shrink-0 font-semibold hover:opacity-80 sm:inline">Starwind UI</a>
 
-<nav class="bg-background sticky top-0 z-50 border-b py-3 shadow-md">
-  <div class="container mx-auto flex items-center justify-between px-4">
-    <div class="flex items-center gap-8">
-      <a href="/" class="text-2xl font-semibold hover:opacity-80">Starwind UI</a>
-      <nav class="flex items-center gap-4">
-        <a
-          href="/pages/sidebar-demo"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Sidebar
-        </a>
-        <a
-          href="/pages/runtime-sidebar-demo"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Runtime Sidebar
-        </a>
-        <a
-          href="/pages/sidebar-nested"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Nested Sidebar
-        </a>
-        <a
-          href="/pages/runtime-nested-sidebar"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Runtime Nested Sidebar
-        </a>
-        <a
-          href="/runtime-forms"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Runtime Forms
-        </a>
-        <a
-          href="/runtime-collections"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Runtime Collections
-        </a>
-        <a
-          href="/runtime-overlays"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Runtime Overlays
-        </a>
-        <a
-          href="/pages/markdown-example"
-          class="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          Prose Demo
-        </a>
-      </nav>
+    <NavigationMenu aria-label="Demo pages" size="sm">
+      <NavigationMenuList>
+        <NavigationMenuItem value="components">
+          <NavigationMenuTrigger>Components</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul
+              class="grid w-[min(40rem,calc(100vw-2rem))] grid-cols-2 gap-0.5 sm:grid-cols-3 md:grid-cols-4"
+            >
+              {
+                componentDemos.map(({ id, label }) => (
+                  <li>
+                    <NavigationMenuLink href={`/#${id}`} class={linkClass}>
+                      {label}
+                    </NavigationMenuLink>
+                  </li>
+                ))
+              }
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem value="pages">
+          <NavigationMenuTrigger>Pages</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <div class="grid w-[min(28rem,calc(100vw-2rem))] gap-4 sm:grid-cols-2">
+              {
+                allPageGroups.map((group) => (
+                  <div class={"smallOnly" in group ? "sm:hidden" : undefined}>
+                    <p class="text-muted-foreground px-2 pb-1 text-xs font-medium">{group.title}</p>
+                    <ul class="grid gap-0.5">
+                      {group.links.map((link) => (
+                        <li>
+                          <NavigationMenuLink href={link.href} class={linkClass}>
+                            {link.label}
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              }
+            </div>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem value="reviews" class="hidden sm:block">
+          <NavigationMenuTrigger>Reviews</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul class="grid w-56 gap-0.5">
+              {
+                reviewLinks.map((link) => (
+                  <li>
+                    <NavigationMenuLink href={link.href} class={linkClass}>
+                      {link.label}
+                    </NavigationMenuLink>
+                  </li>
+                ))
+              }
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+
+    <div class="ms-auto flex shrink-0 items-center gap-2">
+      <DirectionToggle />
+      <ThemeToggle size="sm" />
     </div>
-    <ThemeToggle />
   </div>
-</nav>
-<!-- </div> -->
+</header>

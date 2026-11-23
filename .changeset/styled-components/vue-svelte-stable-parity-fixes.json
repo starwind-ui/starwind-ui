@@ -1,0 +1,10 @@
+{
+  "components": {
+    "alert-dialog": "patch",
+    "aspect-ratio": "major",
+    "navigation-menu": "minor",
+    "select": "minor",
+    "tooltip": "patch"
+  },
+  "impact": "source"
+}

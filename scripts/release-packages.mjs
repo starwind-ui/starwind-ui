@@ -10,6 +10,10 @@ import { preparePublicationPlan } from "./release-publication-plan.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
   CHANGESET_PRIVATE_PACKAGE_POLICY,
+  GRADUATED_BETA_PACKAGES,
+  GRADUATION_PENDING_VERSIONS,
+  GRADUATION_START_GROUP_VERSION,
+  LEGACY_BETA_RUNTIME_FIXED_GROUP,
   ROUTINE_RELEASE_PACKAGE_SET,
   RUNTIME_FIXED_GROUP,
   RUNTIME_RELEASE_PACKAGE_SET,
@@ -230,6 +234,31 @@ export function formatPublishPlan(packageManifests) {
   );
 }
 
+/** Lists the old `beta` dist-tags that finalization points at a new stable version. */
+export function formatBetaRetirementPlan(packageManifests) {
+  return packageManifests
+    .filter(({ entry }) => GRADUATED_BETA_PACKAGES.includes(entry.name) && entry.tag === "latest")
+    .map(
+      ({ entry, manifest }) =>
+        `${entry.name} dist-tag beta -> ${manifest.version} after publication, when beta is older`,
+    );
+}
+
+/**
+ * Finds the Vue and Svelte manifests that still hold their last beta versions before Changesets
+ * versions the graduation release. Both must be pending, or neither.
+ */
+export function findGraduationPendingManifests(packageManifests) {
+  const pending = packageManifests.filter(
+    ({ entry, manifest }) =>
+      Object.hasOwn(GRADUATION_PENDING_VERSIONS, entry.name) &&
+      GRADUATION_PENDING_VERSIONS[entry.name] === manifest.version,
+  );
+  const expected = Object.keys(GRADUATION_PENDING_VERSIONS);
+  const partial = pending.length > 0 && pending.length !== expected.length;
+  return { partial, pending };
+}
+
 function parseVersion(version) {
   const match = EXACT_VERSION_PATTERN.exec(version ?? "");
   if (!match) return undefined;
@@ -246,6 +275,23 @@ export function validateReleasePackageManifests(packageManifests, preState) {
   const errors = [];
   const runtimeVersions = new Set();
   const parsedVersions = [];
+  const graduation = findGraduationPendingManifests(packageManifests);
+  const pendingNames = new Set(graduation.pending.map(({ entry }) => entry.name));
+  if (graduation.pending.length > 0) {
+    const groupVersions = packageManifests
+      .filter(({ entry }) => entry.name !== "starwind" && !pendingNames.has(entry.name))
+      .map(({ manifest }) => manifest.version);
+    if (groupVersions.some((version) => version !== GRADUATION_START_GROUP_VERSION)) {
+      errors.push(
+        `Vue and Svelte can keep their last beta versions only while the rest of the fixed group is at ${GRADUATION_START_GROUP_VERSION}.`,
+      );
+    }
+  }
+  if (graduation.partial) {
+    errors.push(
+      `${Object.keys(GRADUATION_PENDING_VERSIONS).join(" and ")} must leave their last beta versions in the same release.`,
+    );
+  }
 
   for (const { entry, manifest } of packageManifests) {
     if (manifest.name !== entry.name) {
@@ -257,7 +303,9 @@ export function validateReleasePackageManifests(packageManifests, preState) {
     if (/\bprototype\b/i.test(manifest.description ?? "")) {
       errors.push(`${entry.name} description must not describe the package as a prototype.`);
     }
-    if (entry.name !== "starwind") runtimeVersions.add(manifest.version);
+    if (entry.name !== "starwind" && !pendingNames.has(entry.name)) {
+      runtimeVersions.add(manifest.version);
+    }
   }
 
   if (runtimeVersions.size !== 1) {
@@ -266,7 +314,9 @@ export function validateReleasePackageManifests(packageManifests, preState) {
     );
   }
 
-  const tags = new Set(parsedVersions.map((item) => item.tag));
+  const tags = new Set(
+    parsedVersions.filter(({ entry }) => !pendingNames.has(entry.name)).map((item) => item.tag),
+  );
   if (tags.size > 1) {
     errors.push(
       `Release packages must share one release channel, found ${Array.from(tags).join(", ")}.`,
@@ -286,13 +336,38 @@ export function validateReleasePackageManifests(packageManifests, preState) {
 
   if (tag === "latest") {
     for (const parsed of parsedVersions) {
-      if (parsed.entry.name !== "starwind" && parsed.major < 1) {
+      if (
+        parsed.entry.name !== "starwind" &&
+        !pendingNames.has(parsed.entry.name) &&
+        parsed.major < 1
+      ) {
         errors.push(`${parsed.entry.name} stable releases must start at 1.0.0 or later.`);
       }
     }
   }
 
-  return { errors, ok: errors.length === 0, tag };
+  return {
+    errors,
+    ok: errors.length === 0,
+    pending: graduation.pending.map(({ entry }) => entry.name),
+    tag,
+  };
+}
+
+/**
+ * The publisher refuses a tree whose Vue and Svelte manifests still hold their last beta versions.
+ * Those versions exist on npm, so a plan would silently leave both adapters out. The check runs
+ * before the publisher saves a plan or prepares the offline kit.
+ */
+export function assertGraduationComplete(pending) {
+  if (!Array.isArray(pending)) {
+    throw new Error("Release metadata must list the graduation-pending packages, even when empty.");
+  }
+  if (pending.length > 0) {
+    throw new Error(
+      `Version the graduation release before publication. These packages still hold their last beta versions: ${pending.join(", ")}.`,
+    );
+  }
 }
 
 export function validateReleaseChangesetConfig(config) {
@@ -337,7 +412,7 @@ export function validateVueBetaReleaseMetadata({ config, fixedGroupManifests, pa
     );
   }
 
-  const expectedFixedNames = RUNTIME_RELEASE_PACKAGE_SET.slice(0, 3).map(({ name }) => name);
+  const expectedFixedNames = [...LEGACY_BETA_RUNTIME_FIXED_GROUP];
   const fixedNames = fixedGroupManifests.map(({ manifest }) => manifest.name);
   const fixedVersions = new Set(fixedGroupManifests.map(({ manifest }) => manifest.version));
   if (
@@ -352,7 +427,7 @@ export function validateVueBetaReleaseMetadata({ config, fixedGroupManifests, pa
 
   const configResult = validateReleaseChangesetConfig(config);
   errors.push(...configResult.errors);
-  if (JSON.stringify(config?.fixed) !== JSON.stringify([RUNTIME_FIXED_GROUP])) {
+  if (JSON.stringify(config?.fixed) !== JSON.stringify([LEGACY_BETA_RUNTIME_FIXED_GROUP])) {
     errors.push(
       `Changesets fixed groups must contain only Runtime, Astro, and React in their existing group.`,
     );
@@ -401,7 +476,9 @@ async function readPackageManifest(entry) {
 }
 
 export async function assertVueBetaReleaseMetadata() {
-  const fixedGroupEntries = RUNTIME_RELEASE_PACKAGE_SET.slice(0, 3);
+  const fixedGroupEntries = RUNTIME_RELEASE_PACKAGE_SET.filter(({ name }) =>
+    LEGACY_BETA_RUNTIME_FIXED_GROUP.includes(name),
+  );
   const [packageManifests, fixedGroupManifests, config] = await Promise.all([
     Promise.all(VUE_BETA_RELEASE_PLAN.map((entry) => readPackageManifest(entry))),
     Promise.all(fixedGroupEntries.map((entry) => readPackageManifest(entry))),
@@ -438,10 +515,7 @@ export async function assertReleaseMetadata() {
 }
 
 export function validateRoutineReleaseMetadata({ packageManifests, preState, config }) {
-  const baseManifests = packageManifests.filter(({ entry }) =>
-    RELEASE_PACKAGE_SET.some(({ name }) => name === entry.name),
-  );
-  const baseResult = validateReleasePackageManifests(baseManifests, preState);
+  const baseResult = validateReleasePackageManifests(packageManifests, preState);
   const errors = [...baseResult.errors, ...validateReleaseChangesetConfig(config).errors];
   if (
     JSON.stringify(packageManifests.map(({ entry }) => entry.name)) !==
@@ -450,33 +524,22 @@ export function validateRoutineReleaseMetadata({ packageManifests, preState, con
     errors.push("Routine releases must include the complete ordered public package inventory.");
   }
   if (JSON.stringify(config?.fixed) !== JSON.stringify([RUNTIME_FIXED_GROUP])) {
-    errors.push(
-      "Beta adapters must remain outside the Runtime, Astro, and React Changesets fixed group.",
-    );
+    errors.push(`Changesets must keep ${RUNTIME_FIXED_GROUP.join(", ")} in one fixed group.`);
   }
-  const runtime = baseManifests.find(({ entry }) => entry.name === "@starwind-ui/runtime");
-  for (const packageName of ["@starwind-ui/vue", "@starwind-ui/svelte"]) {
-    const adapter = packageManifests.find(({ entry }) => entry.name === packageName);
-    if (adapter?.manifest.name !== packageName || adapter?.manifest.private === true) {
-      errors.push(`${packageName} must be a public package for routine publication.`);
+  for (const { entry, manifest } of packageManifests) {
+    if (entry.name === "starwind" || entry.name === "@starwind-ui/runtime") continue;
+    if (manifest.private === true) {
+      errors.push(`${entry.name} must be a public package for routine publication.`);
     }
-    if (
-      !parseVersion(adapter?.manifest.version) ||
-      validSemver(adapter?.manifest.version) !== adapter?.manifest.version
-    ) {
-      errors.push(`${packageName} must use an exact SemVer version.`);
+    if (validSemver(manifest.version) !== manifest.version) {
+      errors.push(`${entry.name} must use an exact SemVer version.`);
     }
-    if (
-      adapter?.entry.tag !==
-      ROUTINE_RELEASE_PACKAGE_SET.find(({ name }) => name === packageName)?.tag
-    ) {
-      errors.push(`${packageName} must use its explicit release-policy tag.`);
-    }
-    if (adapter?.manifest.dependencies?.["@starwind-ui/runtime"] !== runtime?.manifest.version) {
-      errors.push(`${packageName} must depend on the exact current @starwind-ui/runtime version.`);
+    // pnpm publishes workspace:* as the exact Runtime version of the same fixed-group release.
+    if (manifest.dependencies?.["@starwind-ui/runtime"] !== "workspace:*") {
+      errors.push(`${entry.name} must depend on @starwind-ui/runtime through workspace:*.`);
     }
   }
-  return { errors, ok: errors.length === 0, tag: baseResult.tag };
+  return { errors, ok: errors.length === 0, pending: baseResult.pending, tag: baseResult.tag };
 }
 
 export async function assertRoutineReleaseMetadata() {
@@ -488,7 +551,7 @@ export async function assertRoutineReleaseMetadata() {
   const result = validateRoutineReleaseMetadata({ packageManifests, preState, config });
   if (!result.ok)
     throw new Error(`Routine release metadata is not ready:\n${result.errors.join("\n")}`);
-  return { packageManifests, tag: result.tag };
+  return { packageManifests, pending: result.pending, tag: result.tag };
 }
 
 export function parseArgs(argv) {
@@ -655,6 +718,31 @@ export async function prepareOfflineKit({ packageManifests, releaseArchives = []
   };
 }
 
+/**
+ * Starts a routine publication. It refuses a pending graduation before the plan is saved, so no
+ * plan, kit preparation or npm write happens on that tree.
+ */
+export async function prepareRoutinePublicationPlan({
+  dryRun,
+  head,
+  metadata,
+  registry,
+  repoRoot,
+  resumeFrom,
+}) {
+  assertGraduationComplete(metadata.pending);
+  return await preparePublicationPlan({
+    allowComplete: true,
+    dryRun,
+    head,
+    packageManifests: metadata.packageManifests,
+    registry,
+    resumeFrom,
+    tag: metadata.tag,
+    ...(repoRoot ? { repoRoot } : {}),
+  });
+}
+
 async function main() {
   const { dryRun, otp, resumeFrom, vueBeta } = parseArgs(process.argv.slice(2));
   const metadata = vueBeta
@@ -676,14 +764,12 @@ async function main() {
   if (!vueBeta) {
     const head = gitState?.head ?? (await readGitOutput(["rev-parse", "HEAD"]));
     const system = createCommandSystem();
-    const plan = await preparePublicationPlan({
-      head,
-      packageManifests: metadata.packageManifests,
-      tag: metadata.tag,
-      registry: system,
+    const plan = await prepareRoutinePublicationPlan({
       dryRun,
+      head,
+      metadata,
+      registry: system,
       resumeFrom,
-      allowComplete: true,
     });
     if (plan.complete || plan.packages.length === 0) {
       console.log(
@@ -722,6 +808,7 @@ async function main() {
     );
     console.log("[publish-plan] Routine release order:");
     for (const target of formatPublishPlan(selected)) console.log(`- ${target}`);
+    for (const target of formatBetaRetirementPlan(selected)) console.log(`- ${target}`);
     // A kit problem stops the release here, before npm has any of its packages.
     const kit = await prepareOfflineKit({
       packageManifests: metadata.packageManifests,

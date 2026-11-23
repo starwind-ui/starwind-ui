@@ -11,10 +11,12 @@ import {
   getAcceptanceWorkspacePolicy,
   getFixtureFiles,
   getPreviewEnvironment,
-  isVueHydrationMismatchWarning,
   isPreviewTreeAlive,
+  isVueHydrationMismatchWarning,
   parseArgs,
   stopPreviewTree,
+  validateGraduatedDistTags,
+  validateInstalledAdapterManifest,
 } from "../published-release-acceptance.mjs";
 
 describe("published release acceptance", () => {
@@ -259,8 +261,85 @@ allowBuilds:
     expect(workflow).toContain("pnpm test:published-release -- --version");
     expect(workflow).toContain('--vue-version "${{ inputs.vue_version }}"');
     expect(workflow).toContain('--svelte-version "${{ inputs.svelte_version }}"');
-    expect(workflow).toContain("playwright install --with-deps chromium");
+    expect(workflow).toContain("playwright install --with-deps chrome");
     expect(workflow).not.toContain("pull_request:");
     expect(workflow).not.toContain("push:");
+  });
+
+  it("requires a stable adapter on latest with no older beta tag", () => {
+    const name = "@starwind-ui/vue";
+    expect(() => validateGraduatedDistTags(name, "1.6.0", { latest: "1.6.0" })).not.toThrow();
+    expect(() =>
+      validateGraduatedDistTags(name, "1.6.0", { beta: "1.6.0", latest: "1.6.0" }),
+    ).not.toThrow();
+    expect(() =>
+      validateGraduatedDistTags(name, "1.6.0", { beta: "1.7.0-beta.0", latest: "1.6.0" }),
+    ).not.toThrow();
+    expect(() =>
+      validateGraduatedDistTags(name, "1.6.0", { beta: "0.4.0", latest: "1.6.0" }),
+    ).toThrow("older than 1.6.0");
+    expect(() =>
+      validateGraduatedDistTags(name, "1.6.0", { beta: "1.6.0-beta.1", latest: "1.6.0" }),
+    ).toThrow("older than 1.6.0");
+    expect(() => validateGraduatedDistTags(name, "1.6.0", { latest: "0.1.0" })).toThrow(
+      "latest must be 1.6.0 or newer",
+    );
+    // Acceptance for an older release passes after a newer release owns latest.
+    expect(() =>
+      validateGraduatedDistTags(name, "1.6.0", { beta: "1.6.1", latest: "1.6.1" }),
+    ).not.toThrow();
+    // A historical beta version keeps the old channel rules.
+    expect(() =>
+      validateGraduatedDistTags(name, "0.4.0", { beta: "0.4.0", latest: "0.1.0" }),
+    ).not.toThrow();
+  });
+
+  it("accepts a caret declaration and requires the matching Runtime pin", () => {
+    const base = {
+      adapterManifest: { version: "1.6.0", dependencies: { "@starwind-ui/runtime": "1.6.0" } },
+      declaredVersion: "^1.6.0",
+      expectedAdapterVersion: "1.6.0",
+      packageName: "@starwind-ui/vue",
+    };
+    expect(() => validateInstalledAdapterManifest(base)).not.toThrow();
+    expect(() =>
+      validateInstalledAdapterManifest({ ...base, declaredVersion: "1.6.0" }),
+    ).not.toThrow();
+    expect(() => validateInstalledAdapterManifest({ ...base, declaredVersion: "^1.7.0" })).toThrow(
+      "must satisfy the declared ^1.7.0",
+    );
+    expect(() =>
+      validateInstalledAdapterManifest({
+        ...base,
+        adapterManifest: { version: "1.6.0", dependencies: { "@starwind-ui/runtime": "1.5.0" } },
+      }),
+    ).toThrow("must pin the Runtime version of its own fixed-group release");
+    expect(() =>
+      validateInstalledAdapterManifest({
+        ...base,
+        adapterManifest: { version: "1.6.0", dependencies: { "@starwind-ui/runtime": "^1.6.0" } },
+      }),
+    ).toThrow("exact Runtime version");
+    expect(() =>
+      validateInstalledAdapterManifest({ ...base, expectedAdapterVersion: "1.6.1" }),
+    ).toThrow("must equal the requested published version");
+    // An older release stays valid when the project declares its exact version.
+    expect(() =>
+      validateInstalledAdapterManifest({
+        adapterManifest: { version: "1.6.0", dependencies: { "@starwind-ui/runtime": "1.6.0" } },
+        declaredVersion: "1.6.0",
+        expectedAdapterVersion: "1.6.0",
+        packageName: "@starwind-ui/svelte",
+      }),
+    ).not.toThrow();
+    // A historical beta adapter pinned an older Runtime, so the fixed-group rule skips it.
+    expect(() =>
+      validateInstalledAdapterManifest({
+        adapterManifest: { version: "0.4.0", dependencies: { "@starwind-ui/runtime": "1.5.0" } },
+        declaredVersion: "0.4.0",
+        expectedAdapterVersion: "0.4.0",
+        packageName: "@starwind-ui/vue",
+      }),
+    ).not.toThrow();
   });
 });

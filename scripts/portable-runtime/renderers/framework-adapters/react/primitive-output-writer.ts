@@ -282,7 +282,7 @@ function waitForElementAnimations(
 ): void {
   const animations = getElementAnimations(element);
   if (animations.length > 0) {
-    Promise.allSettled(animations.map((animation) => animation.finished)).then(onComplete);
+    void Promise.allSettled(animations.map((animation) => animation.finished)).then(onComplete);
     return;
   }
 
@@ -586,7 +586,7 @@ function normalizeReactInternalHelperImports(contents: string): string {
 function normalizeReactRuntimeImports(contents: string): string {
   if (!PORTAL_SCOPE_IMPORT_PATTERN.test(contents)) return contents;
   return contents.replace(
-    /import \{([^;]+)\} from "(@starwind-ui\/runtime\/[^\"]+)";/g,
+    /import \{([^;]+)\} from "(@starwind-ui\/runtime\/[^"]+)";/g,
     (_match, rawSpecifiers: string, source: string) => {
       const specifiers = rawSpecifiers
         .split(",")

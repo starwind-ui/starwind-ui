@@ -1,9 +1,8 @@
-import { createApp, createSSRApp, h, nextTick, ref } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import { FormErrorSummary, FormRoot } from "@starwind-ui/vue/form";
 import { InputRoot } from "@starwind-ui/vue/input";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, createSSRApp, h, nextTick, ref } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 const cleanups: Array<() => void> = [];
 

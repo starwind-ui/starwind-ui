@@ -45,7 +45,6 @@ export function printSvelteHiddenInputVisualSlotComponent(
 function printRoot(facts: AdapterHiddenInputVisualSlotFacts): string {
   const connection = otpConnection(facts, {
     authority: "binding",
-    parentAcceptance: "reconcile-model",
     read: "readInputs()",
     seed: "seed",
     current: "renderedValue",

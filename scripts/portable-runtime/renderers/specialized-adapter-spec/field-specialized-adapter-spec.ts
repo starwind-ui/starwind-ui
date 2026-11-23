@@ -303,7 +303,6 @@ export function validateFieldSpecializedAdapterSpec(spec: FieldSpecializedAdapte
   errors.push(...validateNamespace(spec, field.namespace));
   errors.push(...validateShippingFiles(spec));
 
-
   if (!arraysEqual(asArray(field.runtimeBoundary), FIELD_RUNTIME_BOUNDARY)) {
     errors.push(
       "Field specialized adapter spec runtimeBoundary must match Runtime-owned Field behavior.",
@@ -438,15 +437,20 @@ function getFieldComponentProps(
   }
 
   if (partName === "error") {
-    return [
-      facts.message.error.matchProp,
-      facts.message.error.messageSource.prop,
-    ].map((prop) => ({ kind: "unknown" as const, name: prop.name, type: prop.type }));
+    return [facts.message.error.matchProp, facts.message.error.messageSource.prop].map((prop) => ({
+      kind: "unknown" as const,
+      name: prop.name,
+      type: prop.type,
+    }));
   }
 
   if (partName === "validity") {
     return [
-      { kind: "unknown" as const, name: facts.message.validity.matchProp.name, type: facts.message.matchType },
+      {
+        kind: "unknown" as const,
+        name: facts.message.validity.matchProp.name,
+        type: facts.message.matchType,
+      },
     ];
   }
 

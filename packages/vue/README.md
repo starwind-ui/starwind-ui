@@ -1,15 +1,15 @@
 # `@starwind-ui/vue`
 
-This package contains the public beta of the generated Vue Primitive adapters for Starwind UI. It
-provides the lower-level accessible behavior and framework-native component layer through the
-shared framework-neutral Runtime.
+This package contains the generated Vue Primitive adapters for Starwind UI. It provides the
+lower-level accessible behavior and framework-native component layer through the shared
+framework-neutral Runtime.
 
-Starwind UI ships 54 source-owned styled components for Vue. Developers install these styled
+Starwind UI ships 55 source-owned styled components for Vue. Developers install these styled
 components as editable application source with the Starwind CLI. The Vue Primitive adapters use the
 same Runtime as the Astro, React, and Svelte adapters.
 
-The package supports Vue 3.5 or newer. Vue support is in public beta, and its API can change during
-the `0.x` release series.
+The package supports Vue 3.5.21 or newer. It is stable and follows SemVer. It shares one version with
+`@starwind-ui/runtime` and the other first-party adapters.
 
 ## Start with the CLI
 
@@ -26,11 +26,10 @@ with Vue, Nuxt 3, Nuxt 4, Laravel with Inertia Vue, and Quasar CLI with Vite.
 
 ## Install the Primitive adapters
 
-Install this package directly when you need to build with the lower-level Primitive parts. Beta
-releases use the `beta` npm tag:
+Install this package directly when you need to build with the lower-level Primitive parts:
 
 ```bash
-npm install @starwind-ui/vue@beta vue@^3.5
+npm install @starwind-ui/vue vue@^3.5.21
 ```
 
 ## Use an adapter
@@ -57,10 +56,17 @@ Use `getThemeInitScript` from `@starwind-ui/vue/theme` to apply the stored theme
 paint. The [dark mode guide](https://starwind.dev/docs/getting-started/dark-mode/) shows the setup
 for each supported host.
 
-## Beta feedback
+## Feedback
 
-Report Vue beta issues through the
+Report Vue issues through the
 [Starwind UI issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
+
+## Installed documentation
+
+The package includes Markdown docs for its exact version. After you install it, open
+`node_modules/@starwind-ui/vue/docs/README.md`. Coding agents can start from
+`node_modules/@starwind-ui/vue/docs/llms.txt`. Each Primitive has a reference page with its parts,
+props, models, events, and data attributes.
 
 ## Starwind UI ecosystem
 

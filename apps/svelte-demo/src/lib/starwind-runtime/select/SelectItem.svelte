@@ -13,13 +13,13 @@
 <script lang="ts">
   let {
     "class": className,
-    "disabled": disabled = false,
+    disabled = false,
     "indicatorClass": indicatorClassName,
-    "inset": inset = false,
-    "showIndicator": showIndicator = true,
-    "value": value,
-    "children": children,
-    "indicator": indicator,
+    inset = false,
+    showIndicator = true,
+    value,
+    children,
+    indicator,
     ...rest
   }: SelectItemProps = $props();
 </script>

@@ -1,17 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
-
-import { getThemeInitScript, initThemeController } from "@starwind-ui/vue/theme";
 import {
   getThemeInitScript as getRuntimeThemeInitScript,
   initThemeController as initRuntimeThemeController,
 } from "@starwind-ui/runtime/theme";
 
-import { createThemeInitTags } from "../../../../apps/vue-demo/vite.config.js";
+import { getThemeInitScript, initThemeController } from "@starwind-ui/vue/theme";
+import { describe, expect, it, vi } from "vitest";
 import {
   runVueThemeHostFailureFixture,
   runVueThemeHostFixture,
   type VueThemeHostFailureStage,
 } from "../../../../apps/vue-demo/tests/theme-init.fixture.js";
+import { createThemeInitTags } from "../../../../apps/vue-demo/vite.config.js";
 
 describe("@starwind-ui/vue/theme", () => {
   it("is an SSR-safe exact facade over the approved Runtime helpers", () => {

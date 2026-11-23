@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as PreviewCardPrimitive from "@starwind-ui/vue/preview-card";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { hoverCardContent, hoverCardPositioner } from "./variants";
 
 defineOptions({ inheritAttrs: false });

@@ -14,18 +14,33 @@ export {
   buildCarouselSpecializedAdapterSpec,
   validateCarouselSpecializedAdapterSpec,
 } from "./carousel-specialized-adapter-spec.js";
-export type { ComboboxSpecializedAdapterSpec } from "./combobox-specialized-adapter-spec.js";
+export type {
+  ChartSpecializedAdapterSpec,
+  ChartSurfaceComponentProjection,
+  ChartSurfaceFacts,
+  ChartSurfaceIndexProjection,
+  ChartSurfacePartFacts,
+  ChartSurfacePartName,
+  ChartSurfacePartRole,
+} from "./chart-specialized-adapter-spec.js";
 export {
-  buildComboboxAdapterOutputModel,
-  buildComboboxSpecializedAdapterSpec,
-  validateComboboxSpecializedAdapterSpec,
-} from "./combobox-specialized-adapter-spec.js";
+  buildChartAdapterOutputModel,
+  buildChartSpecializedAdapterSpec,
+  CHART_SURFACE_PART_NAMES,
+  validateChartSpecializedAdapterSpec,
+} from "./chart-specialized-adapter-spec.js";
 export type { ColorPickerSpecializedAdapterSpec } from "./color-picker-specialized-adapter-spec.js";
 export {
   buildColorPickerAdapterOutputModel,
   buildColorPickerSpecializedAdapterSpec,
   validateColorPickerSpecializedAdapterSpec,
 } from "./color-picker-specialized-adapter-spec.js";
+export type { ComboboxSpecializedAdapterSpec } from "./combobox-specialized-adapter-spec.js";
+export {
+  buildComboboxAdapterOutputModel,
+  buildComboboxSpecializedAdapterSpec,
+  validateComboboxSpecializedAdapterSpec,
+} from "./combobox-specialized-adapter-spec.js";
 export type { ContextMenuSpecializedAdapterSpec } from "./context-menu-specialized-adapter-spec.js";
 export {
   buildContextMenuAdapterOutputModel,

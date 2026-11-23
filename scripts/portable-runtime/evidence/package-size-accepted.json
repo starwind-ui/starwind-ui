@@ -2,530 +2,559 @@
   "schemaVersion": 1,
   "method": "package-dist-static-gzip-v1",
   "provenance": {
-    "capturedAt": "2026-09-28T18:16:01.970Z",
-    "sourceCommit": "e7542c129b87b16799f3ba3fb20d096dd3df5eac",
-    "workingTreeDirty": true,
-    "esbuildVersion": "0.28.1",
-    "lockfileSha256": "f1b8cef9550879ac8a9b68ae3970c21d6558ff47a8f203e9373d366dd86fb55c",
-    "acceptedAt": "2026-09-28",
-    "reason": "Maintainer accepted current sizes after release review and commit attribution, including the shared recipe migration, Field registry split, React Portal cleanup and Color Picker refresh fix."
+    "capturedAt": "2026-11-23T01:44:45.604Z",
+    "sourceCommit": "eea4bb33562eb63d47684d15a9fd6ec4e5e68a25",
+    "workingTreeDirty": false,
+    "esbuildVersion": "0.28.2",
+    "lockfileSha256": "67571337ef27e48d486fe98b8538fa89e54573ad6726afe9e5da23cfc6c1bc4a",
+    "reason": "Accepted main's RTL and arrow growth after merging main into the charts branch, captured twice from a clean tree with identical measurements. main's own size check passes. Four rows fail here only against the stricter baseline the chart branch captured in November: React Tooltip 19,414 B to 21,566 B, Vue Tooltip 20,216 B to 22,312 B, Runtime root 133,734 B to 138,287 B and init-starwind 132,386 B to 136,884 B. The Runtime catalog row measures the same root bundle as the Runtime root row, so it moves to 138,287 B with it. Only those five rows were updated. The chart rows changed by 2 B or less and stay as accepted. On 2026-11-22 the chart contract alignment moved chart visibility into the Runtime controller and added a shared tooltip layout helper. init-starwind moved from 136,884 B to 136,893 B (+9 B). The chart rows grew within their thresholds and stay as accepted. On 2026-11-22 the stable fix lanes changed Runtime pointer-press, Tab dismissal, Menu radio ARIA and Navigation Menu default handling. A clean rebuild measured Runtime root and the Runtime catalog at 138,312 B (+25 B) and init-starwind at 136,909 B (+16 B). Only those three rows were updated."
   },
   "measurements": [
     {
       "id": "react.accordion",
       "label": "Starwind accordion",
       "kind": "component",
-      "gzipBytes": 4488
+      "gzipBytes": 4267
     },
     {
       "id": "react.adapter",
       "label": "@starwind-ui/react (adapter only)",
       "kind": "aggregate",
-      "gzipBytes": 46475
+      "gzipBytes": 48902
     },
     {
       "id": "react.alert-dialog",
       "label": "Starwind alert-dialog",
       "kind": "component",
-      "gzipBytes": 13859
+      "gzipBytes": 13066
     },
     {
       "id": "react.avatar",
       "label": "Starwind avatar",
       "kind": "component",
-      "gzipBytes": 2691
+      "gzipBytes": 2456
     },
     {
       "id": "react.button",
       "label": "Starwind button",
       "kind": "component",
-      "gzipBytes": 1271
+      "gzipBytes": 1172
     },
     {
       "id": "react.carousel",
       "label": "Starwind carousel",
       "kind": "component",
-      "gzipBytes": 9688
+      "gzipBytes": 9511
     },
     {
       "id": "react.catalog",
       "label": "@starwind-ui/react + runtime",
       "kind": "aggregate",
-      "gzipBytes": 197865
+      "gzipBytes": 224837
+    },
+    {
+      "id": "react.chart",
+      "label": "Starwind chart",
+      "kind": "component",
+      "gzipBytes": 45846
     },
     {
       "id": "react.checkbox",
       "label": "Starwind checkbox",
       "kind": "component",
-      "gzipBytes": 6124
+      "gzipBytes": 5904
     },
     {
       "id": "react.checkbox-group",
       "label": "Starwind checkbox-group",
       "kind": "component",
-      "gzipBytes": 6940
+      "gzipBytes": 6580
     },
     {
       "id": "react.collapsible",
       "label": "Starwind collapsible",
       "kind": "component",
-      "gzipBytes": 4713
+      "gzipBytes": 4453
     },
     {
       "id": "react.color-picker",
       "label": "Starwind color-picker",
       "kind": "component",
-      "gzipBytes": 18006
+      "gzipBytes": 16743
     },
     {
       "id": "react.combobox",
       "label": "Starwind combobox",
       "kind": "component",
-      "gzipBytes": 29746
+      "gzipBytes": 29924
     },
     {
       "id": "react.context-menu",
       "label": "Starwind context-menu",
       "kind": "component",
-      "gzipBytes": 28658
+      "gzipBytes": 27378
     },
     {
       "id": "react.dialog",
       "label": "Starwind dialog",
       "kind": "component",
-      "gzipBytes": 11480
+      "gzipBytes": 10778
     },
     {
       "id": "react.drawer",
       "label": "Starwind drawer",
       "kind": "component",
-      "gzipBytes": 13845
+      "gzipBytes": 13031
     },
     {
       "id": "react.dropzone",
       "label": "Starwind dropzone",
       "kind": "component",
-      "gzipBytes": 4486
+      "gzipBytes": 4269
     },
     {
       "id": "react.field",
       "label": "Starwind field",
       "kind": "component",
-      "gzipBytes": 10273
+      "gzipBytes": 8944
     },
     {
       "id": "react.fieldset",
       "label": "Starwind fieldset",
       "kind": "component",
-      "gzipBytes": 2503
+      "gzipBytes": 2205
     },
     {
       "id": "react.form",
       "label": "Starwind form",
       "kind": "component",
-      "gzipBytes": 17577
+      "gzipBytes": 15174
     },
     {
       "id": "react.input",
       "label": "Starwind input",
       "kind": "component",
-      "gzipBytes": 2646
+      "gzipBytes": 2461
     },
     {
       "id": "react.input-otp",
       "label": "Starwind input-otp",
       "kind": "component",
-      "gzipBytes": 5725
+      "gzipBytes": 5257
     },
     {
       "id": "react.matched.all-three-overlap",
       "label": "All-three overlap - Starwind",
       "kind": "aggregate",
-      "gzipBytes": 133932
+      "gzipBytes": 122717
     },
     {
       "id": "react.matched.starwind-base-overlap",
       "label": "Starwind/Base UI overlap - Starwind",
       "kind": "aggregate",
-      "gzipBytes": 142479
+      "gzipBytes": 130245
     },
     {
       "id": "react.matched.starwind-zag-overlap",
       "label": "Starwind/Zag overlap - Starwind",
       "kind": "aggregate",
-      "gzipBytes": 146362
+      "gzipBytes": 134899
     },
     {
       "id": "react.menu",
       "label": "Starwind menu",
       "kind": "component",
-      "gzipBytes": 27952
+      "gzipBytes": 26824
     },
     {
       "id": "react.navigation-menu",
       "label": "Starwind navigation-menu",
       "kind": "component",
-      "gzipBytes": 24467
+      "gzipBytes": 23065
     },
     {
       "id": "react.popover",
       "label": "Starwind popover",
       "kind": "component",
-      "gzipBytes": 21459
+      "gzipBytes": 20499
     },
     {
       "id": "react.preview-card",
       "label": "Starwind preview-card",
       "kind": "component",
-      "gzipBytes": 19612
+      "gzipBytes": 18885
     },
     {
       "id": "react.progress",
       "label": "Starwind progress",
       "kind": "component",
-      "gzipBytes": 2804
+      "gzipBytes": 2637
     },
     {
       "id": "react.radio",
       "label": "Starwind radio",
       "kind": "component",
-      "gzipBytes": 5637
+      "gzipBytes": 5343
     },
     {
       "id": "react.radio-group",
       "label": "Starwind radio-group",
       "kind": "component",
-      "gzipBytes": 8757
+      "gzipBytes": 8172
     },
     {
       "id": "react.scroll-area",
       "label": "Starwind scroll-area",
       "kind": "component",
-      "gzipBytes": 4728
+      "gzipBytes": 4329
     },
     {
       "id": "react.select",
       "label": "Starwind select",
       "kind": "component",
-      "gzipBytes": 31305
+      "gzipBytes": 30059
     },
     {
       "id": "react.sidebar",
       "label": "Starwind sidebar",
       "kind": "component",
-      "gzipBytes": 5941
+      "gzipBytes": 5523
     },
     {
       "id": "react.slider",
       "label": "Starwind slider",
       "kind": "component",
-      "gzipBytes": 8066
+      "gzipBytes": 7281
     },
     {
       "id": "react.switch",
       "label": "Starwind switch",
       "kind": "component",
-      "gzipBytes": 4864
+      "gzipBytes": 4606
     },
     {
       "id": "react.tabs",
       "label": "Starwind tabs",
       "kind": "component",
-      "gzipBytes": 6644
+      "gzipBytes": 6301
     },
     {
       "id": "react.theme",
       "label": "Starwind theme",
       "kind": "component",
-      "gzipBytes": 3635
+      "gzipBytes": 3460
     },
     {
       "id": "react.toast",
       "label": "Starwind toast",
       "kind": "component",
-      "gzipBytes": 6029
+      "gzipBytes": 5510
     },
     {
       "id": "react.toggle",
       "label": "Starwind toggle",
       "kind": "component",
-      "gzipBytes": 3310
+      "gzipBytes": 3134
     },
     {
       "id": "react.toggle-group",
       "label": "Starwind toggle-group",
       "kind": "component",
-      "gzipBytes": 5354
+      "gzipBytes": 5056
     },
     {
       "id": "react.tooltip",
       "label": "Starwind tooltip",
       "kind": "component",
-      "gzipBytes": 20240
+      "gzipBytes": 21566
     },
     {
       "id": "runtime.catalog",
       "label": "@starwind-ui/runtime",
       "kind": "aggregate",
-      "gzipBytes": 148501
+      "gzipBytes": 138312
+    },
+    {
+      "id": "runtime.chart",
+      "label": "@starwind-ui/runtime/chart",
+      "kind": "component",
+      "gzipBytes": 42885
     },
     {
       "id": "runtime.color-picker",
       "label": "@starwind-ui/runtime/color-picker",
       "kind": "component",
-      "gzipBytes": 13605
+      "gzipBytes": 12551
+    },
+    {
+      "id": "runtime.init-starwind",
+      "label": "@starwind-ui/runtime/init-starwind",
+      "kind": "aggregate",
+      "gzipBytes": 136909
+    },
+    {
+      "id": "runtime.root",
+      "label": "@starwind-ui/runtime root",
+      "kind": "aggregate",
+      "gzipBytes": 138312
     },
     {
       "id": "vue.accordion",
       "label": "@starwind-ui/vue/accordion",
       "kind": "component",
-      "gzipBytes": 4882
+      "gzipBytes": 4694
     },
     {
       "id": "vue.adapter",
       "label": "@starwind-ui/vue (adapter only)",
       "kind": "aggregate",
-      "gzipBytes": 58629
+      "gzipBytes": 63839
     },
     {
       "id": "vue.alert-dialog",
       "label": "@starwind-ui/vue/alert-dialog",
       "kind": "component",
-      "gzipBytes": 14114
+      "gzipBytes": 13533
     },
     {
       "id": "vue.avatar",
       "label": "@starwind-ui/vue/avatar",
       "kind": "component",
-      "gzipBytes": 2882
+      "gzipBytes": 2685
     },
     {
       "id": "vue.button",
       "label": "@starwind-ui/vue/button",
       "kind": "component",
-      "gzipBytes": 1329
+      "gzipBytes": 1250
     },
     {
       "id": "vue.carousel",
       "label": "@starwind-ui/vue/carousel",
       "kind": "component",
-      "gzipBytes": 9922
+      "gzipBytes": 9825
     },
     {
       "id": "vue.catalog",
       "label": "@starwind-ui/vue + runtime",
       "kind": "aggregate",
-      "gzipBytes": 211881
+      "gzipBytes": 242058
+    },
+    {
+      "id": "vue.chart",
+      "label": "@starwind-ui/vue/chart",
+      "kind": "component",
+      "gzipBytes": 46470
     },
     {
       "id": "vue.checkbox",
       "label": "@starwind-ui/vue/checkbox",
       "kind": "component",
-      "gzipBytes": 6100
+      "gzipBytes": 5898
     },
     {
       "id": "vue.checkbox-group",
       "label": "@starwind-ui/vue/checkbox-group",
       "kind": "component",
-      "gzipBytes": 7021
+      "gzipBytes": 6655
     },
     {
       "id": "vue.collapsible",
       "label": "@starwind-ui/vue/collapsible",
       "kind": "component",
-      "gzipBytes": 5531
+      "gzipBytes": 5357
     },
     {
       "id": "vue.color-picker",
       "label": "@starwind-ui/vue/color-picker",
       "kind": "component",
-      "gzipBytes": 18919
+      "gzipBytes": 17904
     },
     {
       "id": "vue.combobox",
       "label": "@starwind-ui/vue/combobox",
       "kind": "component",
-      "gzipBytes": 29272
+      "gzipBytes": 29267
     },
     {
       "id": "vue.complete-catalog",
       "label": "@starwind-ui/vue complete catalog",
       "kind": "aggregate",
-      "gzipBytes": 214706
+      "gzipBytes": 245196
     },
     {
       "id": "vue.context-menu",
       "label": "@starwind-ui/vue/context-menu",
       "kind": "component",
-      "gzipBytes": 29406
+      "gzipBytes": 28428
     },
     {
       "id": "vue.dialog",
       "label": "@starwind-ui/vue/dialog",
       "kind": "component",
-      "gzipBytes": 12134
+      "gzipBytes": 11543
     },
     {
       "id": "vue.drawer",
       "label": "@starwind-ui/vue/drawer",
       "kind": "component",
-      "gzipBytes": 14075
+      "gzipBytes": 13500
     },
     {
       "id": "vue.dropzone",
       "label": "@starwind-ui/vue/dropzone",
       "kind": "component",
-      "gzipBytes": 4788
+      "gzipBytes": 4598
     },
     {
       "id": "vue.field",
       "label": "@starwind-ui/vue/field",
       "kind": "component",
-      "gzipBytes": 10816
+      "gzipBytes": 9596
     },
     {
       "id": "vue.fieldset",
       "label": "@starwind-ui/vue/fieldset",
       "kind": "component",
-      "gzipBytes": 2577
+      "gzipBytes": 2317
     },
     {
       "id": "vue.form",
       "label": "@starwind-ui/vue/form",
       "kind": "component",
-      "gzipBytes": 17765
+      "gzipBytes": 15365
     },
     {
       "id": "vue.input",
       "label": "@starwind-ui/vue/input",
       "kind": "component",
-      "gzipBytes": 2662
+      "gzipBytes": 2505
     },
     {
       "id": "vue.input-otp",
       "label": "@starwind-ui/vue/input-otp",
       "kind": "component",
-      "gzipBytes": 6121
+      "gzipBytes": 5664
     },
     {
       "id": "vue.matched.starwind-zag-vue-overlap",
       "label": "Starwind/Zag Vue overlap - Starwind Vue",
       "kind": "aggregate",
-      "gzipBytes": 186818
+      "gzipBytes": 175216
     },
     {
       "id": "vue.menu",
       "label": "@starwind-ui/vue/menu",
       "kind": "component",
-      "gzipBytes": 29294
+      "gzipBytes": 28498
     },
     {
       "id": "vue.navigation-menu",
       "label": "@starwind-ui/vue/navigation-menu",
       "kind": "component",
-      "gzipBytes": 25465
+      "gzipBytes": 24370
     },
     {
       "id": "vue.packed",
       "label": "@starwind-ui/vue",
       "kind": "payload",
-      "gzipBytes": 146699
+      "gzipBytes": 165637
     },
     {
       "id": "vue.popover",
       "label": "@starwind-ui/vue/popover",
       "kind": "component",
-      "gzipBytes": 22090
+      "gzipBytes": 21335
     },
     {
       "id": "vue.preview-card",
       "label": "@starwind-ui/vue/preview-card",
       "kind": "component",
-      "gzipBytes": 20182
+      "gzipBytes": 19712
     },
     {
       "id": "vue.progress",
       "label": "@starwind-ui/vue/progress",
       "kind": "component",
-      "gzipBytes": 3049
+      "gzipBytes": 2922
     },
     {
       "id": "vue.radio",
       "label": "@starwind-ui/vue/radio",
       "kind": "component",
-      "gzipBytes": 5936
+      "gzipBytes": 5650
     },
     {
       "id": "vue.radio-group",
       "label": "@starwind-ui/vue/radio-group",
       "kind": "component",
-      "gzipBytes": 8854
+      "gzipBytes": 8261
     },
     {
       "id": "vue.scroll-area",
       "label": "@starwind-ui/vue/scroll-area",
       "kind": "component",
-      "gzipBytes": 5139
+      "gzipBytes": 4770
     },
     {
       "id": "vue.select",
       "label": "@starwind-ui/vue/select",
       "kind": "component",
-      "gzipBytes": 31202
+      "gzipBytes": 29966
     },
     {
       "id": "vue.sidebar",
       "label": "@starwind-ui/vue/sidebar",
       "kind": "component",
-      "gzipBytes": 6951
+      "gzipBytes": 6638
     },
     {
       "id": "vue.slider",
       "label": "@starwind-ui/vue/slider",
       "kind": "component",
-      "gzipBytes": 8384
+      "gzipBytes": 7677
     },
     {
       "id": "vue.switch",
       "label": "@starwind-ui/vue/switch",
       "kind": "component",
-      "gzipBytes": 5077
+      "gzipBytes": 4788
     },
     {
       "id": "vue.tabs",
       "label": "@starwind-ui/vue/tabs",
       "kind": "component",
-      "gzipBytes": 7136
+      "gzipBytes": 6780
     },
     {
       "id": "vue.theme",
       "label": "@starwind-ui/vue/theme",
       "kind": "component",
-      "gzipBytes": 3556
+      "gzipBytes": 3385
     },
     {
       "id": "vue.toast",
       "label": "@starwind-ui/vue/toast",
       "kind": "component",
-      "gzipBytes": 6509
+      "gzipBytes": 6114
     },
     {
       "id": "vue.toggle",
       "label": "@starwind-ui/vue/toggle",
       "kind": "component",
-      "gzipBytes": 3475
+      "gzipBytes": 3298
     },
     {
       "id": "vue.toggle-group",
       "label": "@starwind-ui/vue/toggle-group",
       "kind": "component",
-      "gzipBytes": 5430
+      "gzipBytes": 5142
     },
     {
       "id": "vue.tooltip",
       "label": "@starwind-ui/vue/tooltip",
       "kind": "component",
-      "gzipBytes": 20804
+      "gzipBytes": 22312
     }
   ]
 }

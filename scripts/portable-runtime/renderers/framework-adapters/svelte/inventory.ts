@@ -151,6 +151,11 @@ export const svelteInventory = {
       testOwner: `${proofTests}/carousel-lifecycle.test.ts`,
     },
     {
+      component: "chart",
+      kind: "primitive",
+      testOwner: `${proofTests}/chart-lifecycle.test.ts`,
+    },
+    {
       component: "checkbox",
       kind: "primitive",
       testOwner: `${proofTests}/checkbox-lifecycle.test.ts`,
@@ -198,6 +203,13 @@ export const svelteInventory = {
       testOwner: "scripts/portable-runtime/tests/generate-svelte-styled/carousel.test.ts",
       demoOwner: "apps/svelte-demo/src/lib/starwind-runtime/carousel",
       hostOwner: "packages/svelte/tests/styled-carousel-consumer.ts",
+    },
+    {
+      component: "chart",
+      status: "implemented",
+      testOwner: "scripts/portable-runtime/tests/generate-svelte-styled/chart.test.ts",
+      demoOwner: "apps/svelte-demo/src/lib/starwind-runtime/chart",
+      hostOwner: "scripts/portable-runtime/tests/chart-styled/svelte.browser.tsx",
     },
     {
       component: "combobox",
@@ -725,6 +737,7 @@ export const SVELTE_REVIEW_OWNERS = {
   "color-picker": "apps/svelte-demo/src/lib/review/ColorPickerReview.svelte",
   toast: "apps/svelte-demo/src/lib/review/ToastReview.svelte",
   carousel: "apps/svelte-demo/src/lib/review/CarouselReview.svelte",
+  chart: "apps/svelte-demo/src/lib/review/ChartReview.svelte",
   combobox: "apps/svelte-demo/src/lib/review/ComboboxReview.svelte",
   "navigation-menu": "apps/svelte-demo/src/lib/review/NavigationMenuReview.svelte",
   dropdown: "apps/svelte-demo/src/lib/review/DropdownReview.svelte",

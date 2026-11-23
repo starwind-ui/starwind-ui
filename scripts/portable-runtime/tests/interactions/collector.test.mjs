@@ -4,6 +4,7 @@ import {
   matchEntry,
   validateDelivery,
 } from "../../runtime-performance/interactions/collector.mjs";
+
 const action = {
   uid: "first/open/0",
   actionId: "open",

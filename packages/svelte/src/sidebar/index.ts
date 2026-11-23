@@ -3,11 +3,12 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import SidebarProvider from "./SidebarProvider.svelte";
 import SidebarComponent from "./Sidebar.svelte";
-import SidebarTrigger from "./SidebarTrigger.svelte";
-import SidebarRail from "./SidebarRail.svelte";
 import SidebarMenuButton from "./SidebarMenuButton.svelte";
+import SidebarProvider from "./SidebarProvider.svelte";
+import SidebarRail from "./SidebarRail.svelte";
+import SidebarTrigger from "./SidebarTrigger.svelte";
+
 const Sidebar = {
   Provider: SidebarProvider,
   Sidebar: SidebarComponent,
@@ -15,21 +16,22 @@ const Sidebar = {
   Rail: SidebarRail,
   MenuButton: SidebarMenuButton,
 };
+
 export {
   Sidebar,
-  SidebarProvider,
   SidebarComponent,
-  SidebarTrigger,
-  SidebarRail,
   SidebarMenuButton,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
 };
 export default Sidebar;
-export { SidebarContext, useSidebarContext } from "./SidebarContext.js";
-export type { SidebarContextValue } from "./SidebarContext.js";
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
-export type { SidebarMenuButtonChildPayload } from "./SidebarMenuButton.svelte";
 export type {
   SidebarMobileOpenChangeDetails,
   SidebarOpenChangeDetails,
   SidebarPersistenceStorage,
 } from "@starwind-ui/runtime";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";
+export type { SidebarContextValue } from "./SidebarContext.js";
+export { SidebarContext, useSidebarContext } from "./SidebarContext.js";
+export type { SidebarMenuButtonChildPayload } from "./SidebarMenuButton.svelte";

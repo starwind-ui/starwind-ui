@@ -49,7 +49,6 @@ function printRoot(facts: AdapterHiddenInputVisualSlotFacts): string {
   const event = facts.event;
   const connection = otpConnection(facts, {
     authority: "parent",
-    parentAcceptance: "reconcile-model",
     read: "readInputs()",
     seed: "initialDefaultValue",
     current: "uncontrolledValue.value",

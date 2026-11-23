@@ -4,7 +4,9 @@
  */
 
 import ToggleGroupRoot from "./ToggleGroupRoot.svelte";
+
 const ToggleGroup = { Root: ToggleGroupRoot };
+
 export { ToggleGroup, ToggleGroupRoot };
 export default ToggleGroup;
 

@@ -14,8 +14,6 @@ import type {
 } from "../types.js";
 import { printSvelteRefAttachment } from "./attachments.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 type RepeatedDisclosureHelperFamily = {
   facts: AdapterRepeatedDisclosureFacts;
   kind: "repeated-disclosure";
@@ -87,8 +85,7 @@ export function printSvelteRepeatedDisclosureIndex(file: AdapterIndexFile): Adap
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -151,8 +148,7 @@ function printItem(
   const part = facts.parts.item;
   const context = `${facts.displayName}ItemContext`;
   return {
-    contents: `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+    contents: `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
@@ -214,8 +210,7 @@ function printContextPart(
   const isTrigger = partName === "trigger";
   if (isTrigger)
     return {
-      contents: `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+      contents: `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLButtonAttributes } from "svelte/elements";
@@ -268,8 +263,7 @@ function printPartShell({
 }): string {
   const elementImport =
     htmlType === "HTMLButtonAttributes" ? "HTMLButtonAttributes" : "HTMLAttributes";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${elementImport} } from "svelte/elements";

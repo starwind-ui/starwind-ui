@@ -2,7 +2,15 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
   "changelog": "./changelog.mjs",
   "commit": true,
-  "fixed": [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
+  "fixed": [
+    [
+      "@starwind-ui/runtime",
+      "@starwind-ui/astro",
+      "@starwind-ui/react",
+      "@starwind-ui/vue",
+      "@starwind-ui/svelte"
+    ]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",

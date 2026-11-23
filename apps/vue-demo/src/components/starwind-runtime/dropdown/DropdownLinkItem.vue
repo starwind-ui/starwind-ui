@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { type AnchorHTMLAttributes } from "vue";
+import type { AnchorHTMLAttributes } from "vue";
 import { dropdownItem } from "./variants";
 
 defineOptions({ inheritAttrs: false });

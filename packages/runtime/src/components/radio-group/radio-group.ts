@@ -2,6 +2,7 @@ import {
   type DynamicCollectionObserver,
   observeDynamicCollection,
 } from "../../internal/collection";
+import { readDirection, spatialDelta } from "../../internal/direction";
 import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
@@ -1099,17 +1100,8 @@ function getNavigationDelta(
   if (key === "ArrowDown") return 1;
   if (key !== "ArrowLeft" && key !== "ArrowRight") return null;
 
-  const rtl = orientation === "horizontal" && getTextDirection(root) === "rtl";
-  if (key === "ArrowLeft") return rtl ? 1 : -1;
-  return rtl ? -1 : 1;
-}
-
-function getTextDirection(element: HTMLElement): "ltr" | "rtl" {
-  const closestDir = element.closest<HTMLElement>("[dir]")?.getAttribute("dir")?.toLowerCase();
-  if (closestDir === "rtl" || closestDir === "ltr") return closestDir;
-
-  const documentDir = element.ownerDocument.documentElement.getAttribute("dir")?.toLowerCase();
-  return documentDir === "rtl" ? "rtl" : "ltr";
+  const physicalDelta = key === "ArrowLeft" ? -1 : 1;
+  return spatialDelta(physicalDelta, readDirection(root), orientation) as -1 | 1;
 }
 
 function setBooleanAriaAttribute(element: HTMLElement, name: string, value: boolean): void {

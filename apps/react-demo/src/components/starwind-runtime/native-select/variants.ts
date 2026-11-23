@@ -14,9 +14,9 @@ export const nativeSelect = tv({
   ],
   variants: {
     size: {
-      sm: "h-9 pr-8 pl-2 text-sm",
-      md: "h-11 pr-9 pl-3 text-base",
-      lg: "h-12 pr-10 pl-4 text-lg",
+      sm: "h-9 ps-2 pe-8 text-sm",
+      md: "h-11 ps-3 pe-9 text-base",
+      lg: "h-12 ps-4 pe-10 text-lg",
     },
   },
   defaultVariants: {
@@ -28,9 +28,9 @@ export const nativeSelectIcon = tv({
   base: ["text-foreground pointer-events-none absolute top-1/2 -translate-y-1/2 opacity-50"],
   variants: {
     size: {
-      sm: "right-2 size-3.5",
-      md: "right-3 size-4",
-      lg: "right-4 size-5",
+      sm: "end-2 size-3.5",
+      md: "end-3 size-4",
+      lg: "end-4 size-5",
     },
   },
   defaultVariants: {

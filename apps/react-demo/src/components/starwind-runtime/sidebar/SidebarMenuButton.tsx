@@ -31,7 +31,7 @@ function SidebarMenuButton(props: SidebarMenuButtonProps) {
   const Tag = (asChild ? "div" : href ? "a" : "button") as React.ElementType;
   const buttonClassName = sidebarMenuButton({ variant, size, class: className });
 
-  if (Boolean(tooltip)) {
+  if (tooltip) {
     return (
       <Tooltip openDelay={0} closeDelay={0} className="w-full">
         <TooltipTrigger className="w-full">
@@ -54,7 +54,7 @@ function SidebarMenuButton(props: SidebarMenuButtonProps) {
         </TooltipTrigger>
 
         <TooltipContent
-          side="right"
+          data-sw-sidebar-tooltip-default
           align="center"
           className="whitespace-nowrap"
           data-sw-sidebar-tooltip-content

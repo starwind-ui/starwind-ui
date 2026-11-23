@@ -4,6 +4,11 @@ import {
   runCancelableDetailsTransaction,
 } from "../../internal/cancelable-details";
 import {
+  type DirectionSubscription,
+  readDirection,
+  subscribeDirection,
+} from "../../internal/direction";
+import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
@@ -13,7 +18,6 @@ import {
   setBooleanAttribute,
   uniqueElements,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
   type FloatingPositioner,
@@ -221,6 +225,10 @@ const SELECT_ALIGNED_TRIGGER_EDGE_GUARD = 20;
 const SELECT_FLOATING_VIEWPORT_PADDING = 8;
 const SELECT_SCROLL_ARROW_STEP = 24;
 const SELECT_SCROLL_ARROW_INTERVAL = 32;
+const SELECT_ALIGNED_STYLE_PROPERTIES = ["position", "left", "top", "transform-origin"] as const;
+
+type InlineStyleValue = { value: string; priority: string };
+type AlignedPlacementStyle = { authored: InlineStyleValue; applied: InlineStyleValue };
 
 const instances = shared<WeakMap<HTMLElement, SelectController>>("select");
 // Module scope, since an adapter can recreate the controller while the same value element stays.
@@ -258,6 +266,7 @@ class SelectController implements SelectInstance {
   private readonly abortController = new AbortController();
   private readonly controlledOpen: boolean;
   private readonly controlledValue: boolean;
+  private directionSubscription: DirectionSubscription;
   private readonly elements: SelectElements;
   private readonly focusBoundary: FocusBoundaryHandle;
   private readonly onOpenChange?: (open: boolean, details: SelectOpenChangeDetails) => void;
@@ -276,6 +285,10 @@ class SelectController implements SelectInstance {
   private modal: boolean;
   private readonly valueSubscribers = new Set<(details: SelectValueChangeDetails) => void>();
   private alignedAutoUpdateCleanup: (() => void) | null = null;
+  private readonly alignedPlacementStyles = new Map<
+    HTMLElement,
+    Map<string, AlignedPlacementStyle>
+  >();
   private alignItemWithTriggerActive = false;
   private autoComplete?: string;
   private destroyed = false;
@@ -370,6 +383,7 @@ class SelectController implements SelectInstance {
     this.setupAccessibility();
     this.bindEvents();
     this.applyValueState(this.valueState);
+    this.directionSubscription = this.subscribeSurfaceDirection();
     this.applyOpenState(this.openState, { reason: "imperative-action" });
   }
 
@@ -409,7 +423,6 @@ class SelectController implements SelectInstance {
       return;
     }
 
-    const previousOpen = this.openState;
     this.openState = open;
     this.applyOpenState(open, { reason: "imperative-action" });
     if (!open && this.pendingRestoreFocus) {
@@ -426,8 +439,6 @@ class SelectController implements SelectInstance {
       this.requestValue({ forceApply: true, reason: "imperative-action", value: normalizedValue });
       return;
     }
-
-    const previousValue = this.valueState;
 
     this.valueState = normalizedValue;
     this.applyValueState(normalizedValue);
@@ -535,9 +546,12 @@ class SelectController implements SelectInstance {
     this.stopAlignedAutoUpdate();
     this.floatingPositioner?.destroy();
     this.floatingPositioner = null;
+    this.restoreAuthoredPlacementAttributes();
     this.portalSurfaceAbortController?.abort();
     this.portalSurfaceAbortController = new AbortController();
     Object.assign(this.elements, nextElements);
+    this.directionSubscription.destroy();
+    this.directionSubscription = this.subscribeSurfaceDirection();
     this.ownedList.setRoot(nextElements.popup);
     this.authoredPlacementAttributes = readPlacementAttributes(
       this.elements.positioner ?? this.elements.popup,
@@ -556,6 +570,7 @@ class SelectController implements SelectInstance {
   destroy(): void {
     if (this.destroyed) return;
 
+    this.directionSubscription.destroy();
     this.abortController.abort();
     this.portalSurfaceAbortController?.abort();
     this.focusBoundary.destroy();
@@ -575,6 +590,7 @@ class SelectController implements SelectInstance {
     this.ownedList.destroy();
     this.lastEligibleFocusOwner = null;
     this.lifecycle.destroy();
+    this.restoreAuthoredPlacementAttributes();
     this.elements.popup.hidden = true;
     instances.delete(this.root);
     this.destroyed = true;
@@ -1242,6 +1258,7 @@ class SelectController implements SelectInstance {
           this.stopAlignedAutoUpdate();
         },
       },
+      getPointerPassThroughWrapper: () => this.elements.positioner,
       popup: this.elements.popup,
       portal: {
         clearFloatingStyles: () => this.clearFloatingStyles(),
@@ -1322,17 +1339,20 @@ class SelectController implements SelectInstance {
 
   private clearFloatingStyles(): void {
     this.alignItemWithTriggerActive = false;
+    const preserved = this.restoreAlignedPlacementStyles();
 
     const elements = [this.elements.positioner, this.elements.popup].filter(
       (element): element is HTMLElement => element instanceof HTMLElement,
     );
 
     elements.forEach((element) => {
-      element.style.removeProperty("left");
+      if (!preserved.get(element)?.has("left")) element.style.removeProperty("left");
       element.style.removeProperty("max-height");
-      element.style.removeProperty("position");
-      element.style.removeProperty("top");
-      element.style.removeProperty("transform-origin");
+      if (!preserved.get(element)?.has("position")) element.style.removeProperty("position");
+      if (!preserved.get(element)?.has("top")) element.style.removeProperty("top");
+      if (!preserved.get(element)?.has("transform-origin")) {
+        element.style.removeProperty("transform-origin");
+      }
       element.style.removeProperty("--anchor-width");
     });
     this.elements.list?.style.removeProperty("max-height");
@@ -1341,6 +1361,7 @@ class SelectController implements SelectInstance {
   private positionPopup(): void {
     if (!this.openState || !this.lifecycle.isPlacementReady()) return;
 
+    this.lifecycle.syncDirection();
     const placementRevision = this.placementRevision;
 
     this.clearAvailableSpaceStyles();
@@ -1355,7 +1376,7 @@ class SelectController implements SelectInstance {
 
     this.stopAlignedAutoUpdate();
     if (this.shouldAlignItemWithTrigger()) {
-      this.getFloatingPositioner()?.startAutoUpdate();
+      this.getFloatingPositioner()?.startAutoUpdate({ onUpdate: this.lifecycle.syncDirection });
     }
     this.applyAvailableSpaceSize();
     const positioner = this.getFloatingPositioner();
@@ -1443,6 +1464,10 @@ class SelectController implements SelectInstance {
 
     this.alignedAutoUpdateCleanup();
     this.alignedAutoUpdateCleanup = null;
+  }
+
+  private subscribeSurfaceDirection(): DirectionSubscription {
+    return subscribeDirection(this.elements.popup, () => this.positionPopup());
   }
 
   private queueAlignedPositionRetry(): void {
@@ -1556,6 +1581,7 @@ class SelectController implements SelectInstance {
     const itemText = selectedItem?.querySelector<HTMLElement>(`[${SELECT_ITEM_TEXT_ATTRIBUTE}]`);
     const valueElement = this.elements.valueElements[0];
     if (!selectedItem || !itemText || !valueElement) {
+      this.restoreAuthoredPlacementAttributes();
       return false;
     }
 
@@ -1575,12 +1601,15 @@ class SelectController implements SelectInstance {
       viewportHeight - triggerRect.bottom < SELECT_ALIGNED_TRIGGER_EDGE_GUARD ||
       popupRect.height > viewportHeight - SELECT_ALIGNED_VIEWPORT_PADDING * 2
     ) {
+      this.restoreAuthoredPlacementAttributes();
       return false;
     }
 
-    const itemTextOffsetX = itemTextRect.left - floatingRect.left;
+    const inlineStartIsRight = readDirection(floating) === "rtl";
+    const itemTextOffsetX =
+      (inlineStartIsRight ? itemTextRect.right : itemTextRect.left) - floatingRect.left;
     const itemTextOffsetY = itemTextRect.top - floatingRect.top;
-    const left = valueRect.left - itemTextOffsetX;
+    const left = (inlineStartIsRight ? valueRect.right : valueRect.left) - itemTextOffsetX;
     const top = valueRect.top + (valueRect.height - itemTextRect.height) / 2 - itemTextOffsetY;
     const maxLeft =
       viewportWidth -
@@ -1594,10 +1623,7 @@ class SelectController implements SelectInstance {
     [this.elements.positioner, this.elements.popup].forEach((element) => {
       if (!element) return;
 
-      element.style.position = "fixed";
-      element.style.left = alignedLeft;
-      element.style.top = alignedTop;
-      element.style.transformOrigin = "center center";
+      this.applyAlignedPlacementStyles(element, alignedLeft, alignedTop);
       element.setAttribute(SELECT_SIDE_ATTRIBUTE, SELECT_ALIGNED_SIDE);
       element.setAttribute(SELECT_ALIGN_ATTRIBUTE, "center");
     });
@@ -1609,12 +1635,64 @@ class SelectController implements SelectInstance {
   }
 
   private restoreAuthoredPlacementAttributes(): void {
+    this.restoreAlignedPlacementStyles();
     [this.elements.positioner, this.elements.popup].forEach((element) => {
       if (!element) return;
 
       setOptionalAttribute(element, SELECT_SIDE_ATTRIBUTE, this.authoredPlacementAttributes.side);
       setOptionalAttribute(element, SELECT_ALIGN_ATTRIBUTE, this.authoredPlacementAttributes.align);
     });
+  }
+
+  private applyAlignedPlacementStyles(element: HTMLElement, left: string, top: string): void {
+    const styles =
+      this.alignedPlacementStyles.get(element) ?? new Map<string, AlignedPlacementStyle>();
+    this.alignedPlacementStyles.set(element, styles);
+    const values = { position: "fixed", left, top, "transform-origin": "center center" };
+
+    SELECT_ALIGNED_STYLE_PROPERTIES.forEach((property) => {
+      const value = values[property];
+      const current = {
+        value: element.style.getPropertyValue(property),
+        priority: element.style.getPropertyPriority(property),
+      };
+      const owned = styles.get(property);
+      if (!owned) {
+        styles.set(property, { authored: current, applied: { value, priority: "" } });
+      } else if (
+        current.value !== owned.applied.value ||
+        current.priority !== owned.applied.priority
+      ) {
+        owned.authored = current;
+      }
+      element.style.setProperty(property, value);
+      styles.get(property)!.applied = {
+        value: element.style.getPropertyValue(property),
+        priority: element.style.getPropertyPriority(property),
+      };
+    });
+  }
+
+  private restoreAlignedPlacementStyles(): Map<HTMLElement, Set<string>> {
+    const preserved = new Map<HTMLElement, Set<string>>();
+    for (const [element, styles] of this.alignedPlacementStyles) {
+      const properties = new Set<string>();
+      preserved.set(element, properties);
+      for (const [property, { authored, applied }] of styles) {
+        properties.add(property);
+        const currentValue = element.style.getPropertyValue(property);
+        const currentPriority = element.style.getPropertyPriority(property);
+        if (currentValue !== applied.value || currentPriority !== applied.priority) continue;
+
+        if (authored.value) {
+          element.style.setProperty(property, authored.value, authored.priority);
+        } else {
+          element.style.removeProperty(property);
+        }
+      }
+    }
+    this.alignedPlacementStyles.clear();
+    return preserved;
   }
 
   private getSelectedItem(): HTMLElement | null {

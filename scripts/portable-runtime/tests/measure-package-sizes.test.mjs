@@ -7,6 +7,7 @@ import { releaseGateStages } from "../../release-gate.mjs";
 
 import {
   addSourceContributionContexts,
+  assertNoChartInputs,
   buildContractGenerationProofMeasurementRows,
   committedComparatorBaselines,
   createMeasurementProvenance,
@@ -37,6 +38,15 @@ import {
 import { buildSourceContributionAnalyses } from "../source-contribution-report.mjs";
 
 describe("package-size command prerequisites", () => {
+  it("rejects TanStack chart inputs in guarded bundles", () => {
+    expect(() =>
+      assertNoChartInputs({ inputs: { "node_modules/@tanstack/charts/dist/index.js": {} } }),
+    ).toThrow(/Chart code/);
+    expect(() =>
+      assertNoChartInputs({ inputs: { "packages/runtime/dist/index.js": {} } }),
+    ).not.toThrow();
+  });
+
   it("accepts explicit comparison and candidate paths, and rejects ambiguous arguments", () => {
     expect(
       getPackageSizeComparisonOptions([
@@ -149,7 +159,7 @@ describe("Vue public-beta browser measurement plan", () => {
       STARWIND_VUE_MEASUREMENT_LABELS.combined,
       STARWIND_VUE_MEASUREMENT_LABELS.completeCatalog,
     ]);
-    expect(privateCheck.privateVueColdImportRows).toHaveLength(37);
+    expect(privateCheck.privateVueColdImportRows).toHaveLength(38);
     expect(privateCheck.privateVueMatchedRows.map(({ provider }) => provider)).toEqual([
       "starwind-vue",
     ]);
@@ -466,6 +476,8 @@ describe("package-size public and diagnostic reports", () => {
     expect(check.installComparators).toBe(false);
     expect(check.bundleRows.map(({ label }) => label)).toEqual([
       "@starwind-ui/runtime",
+      "@starwind-ui/runtime/init-starwind",
+      "@starwind-ui/runtime/chart",
       "@starwind-ui/runtime/color-picker",
       "@starwind-ui/react (adapter only)",
       "@starwind-ui/react + runtime",

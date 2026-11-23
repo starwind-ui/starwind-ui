@@ -1,3 +1,8 @@
+import {
+  type DirectionSubscription,
+  readDirection,
+  subscribeDirection,
+} from "../../internal/direction";
 import { assertHTMLElement, setBooleanAttribute } from "../../internal/dom";
 import { shared } from "../../internal/shared";
 
@@ -95,6 +100,8 @@ class ScrollAreaController implements ScrollAreaInstance {
   private readonly boundViewports = new WeakSet<HTMLElement>();
   private readonly mutationObserver: MutationObserver;
   private readonly resizeObserver: ResizeObserver;
+  private activeDrag?: { pointerId: number; thumb: HTMLElement };
+  private directionSubscription: DirectionSubscription;
   private dragAbortController?: AbortController;
   private destroyed = false;
   private elements: ScrollAreaElements;
@@ -113,6 +120,10 @@ class ScrollAreaController implements ScrollAreaInstance {
     this.overflowEdgeThreshold = readOverflowEdgeThreshold(options.overflowEdgeThreshold, root);
     this.mutationObserver = new MutationObserver(() => this.refresh());
     this.resizeObserver = new ResizeObserver(() => this.updateSoon());
+    this.directionSubscription = subscribeDirection(
+      this.elements.viewport,
+      this.handleDirectionChange,
+    );
 
     this.bindEvents();
     this.setupObservers();
@@ -127,6 +138,7 @@ class ScrollAreaController implements ScrollAreaInstance {
     this.abortController.abort();
     this.mutationObserver.disconnect();
     this.resizeObserver.disconnect();
+    this.directionSubscription.destroy();
     if (this.scrollTimeout !== undefined) {
       window.clearTimeout(this.scrollTimeout);
       this.scrollTimeout = undefined;
@@ -136,7 +148,15 @@ class ScrollAreaController implements ScrollAreaInstance {
   }
 
   refresh(): void {
+    const previousViewport = this.elements.viewport;
     this.elements = getScrollAreaElements(this.root);
+    if (this.elements.viewport !== previousViewport) {
+      this.directionSubscription.destroy();
+      this.directionSubscription = subscribeDirection(
+        this.elements.viewport,
+        this.handleDirectionChange,
+      );
+    }
     this.overflowEdgeThreshold = readOverflowEdgeThreshold(
       this.optionOverflowEdgeThreshold,
       this.root,
@@ -394,7 +414,12 @@ class ScrollAreaController implements ScrollAreaInstance {
       scrollbar.style.setProperty("--scroll-area-thumb-width", `${thumbSize}px`);
       thumb.style.width = `${thumbSize}px`;
       thumb.style.height = "100%";
-      thumb.style.transform = `translateX(${this.isRtl() ? -thumbOffset : thumbOffset}px)`;
+      const styles = getComputedStyle(scrollbar);
+      const trackStartsAtRight =
+        (styles.direction === "rtl") !== (styles.flexDirection === "row-reverse");
+      const desiredOffset = this.isRtl() ? maxThumbOffset - thumbOffset : thumbOffset;
+      const baseOffset = trackStartsAtRight ? maxThumbOffset : 0;
+      thumb.style.transform = `translateX(${desiredOffset - baseOffset}px)`;
       return;
     }
 
@@ -430,6 +455,11 @@ class ScrollAreaController implements ScrollAreaInstance {
       this.scrollTimeout = undefined;
     }, 120);
     this.updateSoon();
+  };
+
+  private readonly handleDirectionChange = (): void => {
+    this.stopDragging();
+    this.updateNow();
   };
 
   private readonly handlePointerEnterOrMove = (event: PointerEvent): void => {
@@ -484,6 +514,7 @@ class ScrollAreaController implements ScrollAreaInstance {
   private readonly handleScrollbarPointerDown = (event: PointerEvent): void => {
     const scrollbar = event.currentTarget;
     if (!(scrollbar instanceof HTMLElement)) return;
+    this.directionSubscription.get();
 
     const thumb = getThumb(scrollbar);
     if (
@@ -501,11 +532,26 @@ class ScrollAreaController implements ScrollAreaInstance {
     const rect = scrollbar.getBoundingClientRect();
     const scrollbarPadding = getPhysicalSpacing(scrollbar, "padding", orientation);
     const thumbMargin = getPhysicalSpacing(thumb, "margin", orientation);
+    const elementSize = isHorizontal ? scrollbar.offsetWidth : scrollbar.offsetHeight;
+    const rectSize = isHorizontal ? rect.width : rect.height;
+    const scale = rectSize > 0 && elementSize > 0 ? rectSize / elementSize : 1;
+    const physicalEndBorder = isHorizontal
+      ? scrollbar.offsetWidth - scrollbar.clientLeft - scrollbar.clientWidth
+      : scrollbar.offsetHeight - scrollbar.clientTop - scrollbar.clientHeight;
     const pointerPosition = isHorizontal
       ? this.isRtl()
-        ? rect.right - event.clientX - scrollbarPadding.end - thumbMargin.end
-        : event.clientX - rect.left - scrollbarPadding.start - thumbMargin.start
-      : event.clientY - rect.top - scrollbarPadding.start - thumbMargin.start;
+        ? (rect.right - event.clientX) / scale -
+          physicalEndBorder -
+          scrollbarPadding.end -
+          thumbMargin.end
+        : (event.clientX - rect.left) / scale -
+          scrollbar.clientLeft -
+          scrollbarPadding.start -
+          thumbMargin.start
+      : (event.clientY - rect.top) / scale -
+        scrollbar.clientTop -
+        scrollbarPadding.start -
+        thumbMargin.start;
     const { maxScrollOffset, maxThumbOffset, thumbSize } = this.getThumbMetrics(
       scrollbar,
       thumb,
@@ -529,14 +575,16 @@ class ScrollAreaController implements ScrollAreaInstance {
 
     if (event.ctrlKey || !this.hasOverflow(orientation)) return;
 
-    const delta = isHorizontal ? event.deltaX || event.deltaY : event.deltaY;
+    const delta = isHorizontal
+      ? event.deltaX || event.deltaY * (this.isRtl() ? -1 : 1)
+      : event.deltaY;
     if (delta === 0) return;
 
     const scrollProperty = isHorizontal ? "scrollLeft" : "scrollTop";
     const maxScrollOffset = this.getMaxScrollOffset(orientation);
     const minScroll = isHorizontal && this.isRtl() ? -maxScrollOffset : 0;
     const maxScroll = isHorizontal && this.isRtl() ? 0 : maxScrollOffset;
-    const scrollPosition = this.elements.viewport[scrollProperty];
+    const scrollPosition = clamp(this.elements.viewport[scrollProperty], minScroll, maxScroll);
     const nextScrollPosition = clamp(scrollPosition + delta, minScroll, maxScroll);
 
     if (nextScrollPosition === scrollPosition) return;
@@ -549,6 +597,7 @@ class ScrollAreaController implements ScrollAreaInstance {
   private readonly handleThumbPointerDown = (event: PointerEvent): void => {
     const thumb = event.currentTarget;
     if (!(thumb instanceof HTMLElement) || event.button !== 0 || isNonPrimaryPointer(event)) return;
+    this.directionSubscription.get();
 
     const scrollbar = thumb.closest<HTMLElement>(SCROLL_AREA_SCROLLBAR_SELECTOR);
     if (!scrollbar || scrollbar.closest(SCROLL_AREA_ROOT_SELECTOR) !== this.root) return;
@@ -560,39 +609,54 @@ class ScrollAreaController implements ScrollAreaInstance {
     const startPointerPosition = isHorizontal ? event.clientX : event.clientY;
     const startScrollPosition = this.getScrollPosition(orientation);
     const { maxScrollOffset, maxThumbOffset } = this.getThumbMetrics(scrollbar, thumb, orientation);
+    const rect = scrollbar.getBoundingClientRect();
+    const elementSize = isHorizontal ? scrollbar.offsetWidth : scrollbar.offsetHeight;
+    const rectSize = isHorizontal ? rect.width : rect.height;
+    const scale = rectSize > 0 && elementSize > 0 ? rectSize / elementSize : 1;
 
     if (maxThumbOffset === 0) return;
 
-    setPointerCapture(thumb, event.pointerId);
     this.stopDragging();
+    const drag = { pointerId: event.pointerId, thumb };
+    this.activeDrag = drag;
+    setPointerCapture(thumb, event.pointerId);
 
     this.dragAbortController = new AbortController();
     const signal = this.dragAbortController.signal;
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== drag.pointerId) return;
+      this.directionSubscription.get();
+      if (this.activeDrag !== drag) return;
       const pointerPosition = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
       const delta =
         isHorizontal && this.isRtl()
           ? startPointerPosition - pointerPosition
           : pointerPosition - startPointerPosition;
-      const nextScrollPosition = startScrollPosition + (delta / maxThumbOffset) * maxScrollOffset;
+      const nextScrollPosition =
+        startScrollPosition + (delta / scale / maxThumbOffset) * maxScrollOffset;
 
       this.setScrollPosition(orientation, nextScrollPosition);
     };
 
     const handlePointerEnd = (endEvent: PointerEvent) => {
-      releasePointerCapture(thumb, endEvent.pointerId);
+      if (endEvent.pointerId !== drag.pointerId || this.activeDrag !== drag) return;
       this.stopDragging();
     };
 
-    document.addEventListener("pointermove", handlePointerMove, { signal });
-    document.addEventListener("pointerup", handlePointerEnd, { signal });
-    document.addEventListener("pointercancel", handlePointerEnd, { signal });
+    const ownerDocument = thumb.ownerDocument;
+    ownerDocument.addEventListener("pointermove", handlePointerMove, { signal });
+    ownerDocument.addEventListener("pointerup", handlePointerEnd, { signal });
+    ownerDocument.addEventListener("pointercancel", handlePointerEnd, { signal });
   };
 
   private stopDragging(): void {
     this.dragAbortController?.abort();
     this.dragAbortController = undefined;
+    if (this.activeDrag) {
+      releasePointerCapture(this.activeDrag.thumb, this.activeDrag.pointerId);
+      this.activeDrag = undefined;
+    }
   }
 
   private hasOverflow(orientation: ScrollAreaOrientation): boolean {
@@ -604,7 +668,7 @@ class ScrollAreaController implements ScrollAreaInstance {
   }
 
   private isRtl(): boolean {
-    return getComputedStyle(this.elements.viewport).direction === "rtl";
+    return readDirection(this.elements.viewport) === "rtl";
   }
 
   private getScrollbar(orientation: ScrollAreaOrientation): HTMLElement | undefined {
@@ -787,10 +851,6 @@ function getSpacing(element: Element | null, property: SpacingProperty, axis: Sc
   if (!element) return 0;
 
   const styles = getComputedStyle(element);
-
-  if (axis === "x" && property === "margin") {
-    return parseCssPixelValue(styles.getPropertyValue("margin-inline-start")) * 2;
-  }
 
   const propertyAxis = axis === "x" ? "inline" : "block";
 

@@ -99,10 +99,10 @@ const element = ref<HTMLElement | null>(null);
 const asChild = createVueAsChild("${facts.exports.trigger}", element);
 const { setElement } = asChild;
 defineExpose({ element });
-function handleClick(event: MouseEvent): void {
+${anchor ? "// While disabled, this capture listener runs before every consumer click listener.\n" : ""}function handleClick(event: MouseEvent): void {
   if (!props.${facts.props.disabled.name}) return;
   event.preventDefault();
-  event.stopPropagation();
+  event.${anchor ? "stopImmediatePropagation" : "stopPropagation"}();
 }
 function protectedProps() {
   return {
@@ -110,7 +110,7 @@ function protectedProps() {
     "${facts.attrs.triggerDisabled}": props.${facts.props.disabled.name} ? "" : undefined,
     "${facts.attrs.triggerAriaDisabled}": props.${facts.props.disabled.name} ? "true" : undefined,
     "${facts.attrs.triggerState}": "${timedTriggerPolicy.state}",
-${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    ...(props.${facts.props.disabled.name} ? { href: undefined, tabindex: -1 } : {}),\n    onClick: handleClick,\n` : nativeDisabled ? `    ...(props.${facts.props.disabled.name} ? { "${nativeDisabled}": true } : {}),\n` : ""}    "data-sw-part": "${facts.parts.trigger.name}",
+${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    ...(props.${facts.props.disabled.name} ? { href: undefined, tabindex: -1, onClickCapture: handleClick } : {}),\n` : nativeDisabled ? `    ...(props.${facts.props.disabled.name} ? { "${nativeDisabled}": true } : {}),\n` : ""}    "data-sw-part": "${facts.parts.trigger.name}",
   };
 }
 const AsChildTrigger = defineComponent({
@@ -139,7 +139,7 @@ const AsChildTrigger = defineComponent({
     :${facts.attrs.triggerDisabled}="props.${facts.props.disabled.name} ? '' : undefined"
     :${facts.attrs.triggerAriaDisabled}="props.${facts.props.disabled.name} ? 'true' : undefined"
     ${facts.attrs.triggerState}="${timedTriggerPolicy.state}"
-${anchor ? `    :${closeDelay}="props.${facts.props.closeDelay.name}"\n    :${openDelay}="props.${facts.props.openDelay.name}"\n    :href="props.${facts.props.disabled.name} ? undefined : (attrs.href as string | undefined)"\n    :tabindex="props.${facts.props.disabled.name} ? -1 : (attrs.tabindex as number | undefined)"\n    @click="handleClick"\n` : `    type="button"\n    :disabled="props.${facts.props.disabled.name}"\n`}  >
+${anchor ? `    :${closeDelay}="props.${facts.props.closeDelay.name}"\n    :${openDelay}="props.${facts.props.openDelay.name}"\n    :href="props.${facts.props.disabled.name} ? undefined : (attrs.href as string | undefined)"\n    :tabindex="props.${facts.props.disabled.name} ? -1 : (attrs.tabindex as number | undefined)"\n    v-on="props.${facts.props.disabled.name} ? { clickCapture: handleClick } : {}"\n` : `    type="button"\n    :disabled="props.${facts.props.disabled.name}"\n`}  >
     <slot />
   </${facts.trigger.renderedElement}>
 </template>
@@ -206,13 +206,13 @@ function printSimplePart(
   >,
 ): string {
   const part = requirePart(facts, partName);
-  const discovery = requireFact(facts.attrs[partName], `${partName} discovery attribute`);
-  const extras =
-    partName === "arrow"
-      ? `${facts.attrs.arrowState}="closed"`
-      : partName === "backdrop"
-        ? `${requireFact(facts.attrs.backdropState, "backdrop state")}="closed" ${requireFact(facts.attrs.backdropHidden, "backdrop hidden")}`
-        : `${requireFact(facts.attrs.viewportState, "viewport state")}="closed"`;
+  requireFact(facts.attrs[partName], `${partName} discovery attribute`);
+  if (partName === "backdrop") {
+    requireFact(facts.attrs.backdropState, "backdrop state");
+    requireFact(facts.attrs.backdropHidden, "backdrop hidden");
+  } else if (partName !== "arrow") {
+    requireFact(facts.attrs.viewportState, "viewport state");
+  }
   return `<script setup lang="ts">
 import { type HTMLAttributes, ref } from "vue";
 defineOptions({ inheritAttrs: false });
@@ -238,11 +238,4 @@ function requirePart(
 function requireFact(value: string | undefined, context: string): string {
   if (!value) throw new TypeError(`Vue timed-floating-overlay requires ${context}.`);
   return value;
-}
-
-function printOptions(options: Record<string, boolean | number | string> | undefined): string {
-  if (!options || Object.keys(options).length === 0) return "";
-  return `, { ${Object.entries(options)
-    .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-    .join(", ")} }`;
 }

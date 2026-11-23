@@ -1,17 +1,17 @@
-import path from 'node:path';
+import path from "node:path";
 
-import type { FrameworkTarget } from '../../../../contracts/styled/types.js';
-import { getRelativeImportPath } from '../../../shared.js';
+import type { FrameworkTarget } from "../../../../contracts/styled/types.js";
+import { getRelativeImportPath } from "../../../shared.js";
 import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
   StyledOutputComponentReference,
-} from '../../../styled-output-model/index.js';
+} from "../../../styled-output-model/index.js";
 import {
   collectStyledOutputComposedComponentReferences,
   collectStyledOutputVariantReferences,
-} from '../../../styled-output-model/index.js';
-import { REACT_FRAMEWORK } from './constants.js';
+} from "../../../styled-output-model/index.js";
+import { REACT_FRAMEWORK } from "./constants.js";
 
 export function collectComponentVariants(
   component: StyledOutputComponent,
@@ -25,6 +25,7 @@ export function renderComposedComponentImports(
   component: StyledOutputComponent,
   outputRoot: string,
   dir: string,
+  componentBody = "",
 ): string[] {
   const siblingImports: string[] = [];
   const imports = new Map<string, Map<string, string | undefined>>();
@@ -38,9 +39,32 @@ export function renderComposedComponentImports(
     ]),
   );
 
-  for (const reference of collectStyledOutputComposedComponentReferences(component, {
+  const references = collectStyledOutputComposedComponentReferences(component, {
     target: REACT_FRAMEWORK,
-  })) {
+  });
+  // A raw JSX value, such as a default element passed as a prop, can name a sibling part.
+  const boundNames = new Set(
+    (component.imports ?? []).map((importContract) =>
+      importContract.kind === "named"
+        ? (importContract.localName ?? importContract.importName)
+        : importContract.importName,
+    ),
+  );
+  for (const sibling of group.components) {
+    if (
+      sibling.exportName !== component.exportName &&
+      !boundNames.has(sibling.exportName) &&
+      !references.some(
+        (reference) =>
+          reference.component === group.component && reference.exportName === sibling.exportName,
+      ) &&
+      new RegExp(`<${sibling.exportName}[\\s/>]`).test(componentBody)
+    ) {
+      references.push({ component: group.component, exportName: sibling.exportName });
+    }
+  }
+
+  for (const reference of references) {
     if (reference.component === group.component) {
       const fileName = siblingFiles.get(reference.exportName) ?? reference.exportName;
       siblingImports.push(`import ${getComponentReferenceName(reference)} from "./${fileName}";`);

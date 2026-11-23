@@ -1,10 +1,9 @@
-import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { getImplementedSvelteStyledRoots } from "../../renderers/framework-adapters/svelte/inventory.js";
 import { describe, expect, it } from "vitest";
-
 import { buttonStyledContract } from "../../contracts/styled/components/button.js";
-import { validateStyledAdapterContracts } from "../../contracts/styled/validation.js";
+import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
+import { validateStyledAdapterContracts } from "../../contracts/styled/validation.js";
+import { getImplementedSvelteStyledRoots } from "../../renderers/framework-adapters/svelte/inventory.js";
 import {
   selectSvelteStyledContracts,
   supportsSvelteScope,

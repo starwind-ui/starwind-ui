@@ -8,12 +8,12 @@
 
 <script lang="ts">
   let {
-    "isActive": isActive,
-    "size": size = "icon",
+    isActive,
+    size = "icon",
     "data-slot": dataSlot = "pagination-link",
     "class": className,
-    "ref": ref,
-    "children": children,
+    ref,
+    children,
     ...rest
   }: PaginationLinkProps = $props();
 

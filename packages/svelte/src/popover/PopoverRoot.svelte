@@ -27,7 +27,8 @@
 
   let { children, defaultOpen, open = $bindable(), open: commandOpen, closeOnEscape = true, closeOnOutsideInteract = true, modal = false, openOnHover = false, closeDelay = 200, onOpenChange, onCloseComplete, ref, ...rest }: Props = $props();
   const initialModel = untrack(() => open);
-  const initialDefaultOpen = untrack(() => defaultOpen) ?? initialModel ?? false;
+  // The default marker states only `defaultOpen`. A held `open` seeds the rendered state below.
+  const initialDefaultOpen = untrack(() => defaultOpen) ?? false;
   const openControlled = initialModel !== undefined;
   let renderedOpen = $state(initialModel ?? initialDefaultOpen);
   let surfaceReady = $state(false);
@@ -141,7 +142,7 @@ connectRuntime(root); } finally { for (const restore of restorers.reverse()) res
   data-close-on-escape={String(closeOnEscape)}
   data-close-on-outside-interact={String(closeOnOutsideInteract)}
   data-modal={String(modal)}
-  data-open-on-hover={String(openOnHover)}
+  data-open-on-hover={openOnHover ? "true" : undefined}
   data-close-delay={closeDelay}
   data-state={renderedOpen ? "open" : "closed"}
   {@attach attachRuntime}

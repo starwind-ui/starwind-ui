@@ -150,7 +150,7 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
       "data-error-visible:border-error data-error-visible:focus-visible:ring-error/40 data-error-visible:focus-visible:ring-3",
     );
     expect(nativeSelectVariants).toContain("text-foreground pointer-events-none absolute");
-    expect(nativeSelectVariants).toContain('md: "right-3 size-4"');
+    expect(nativeSelectVariants).toContain('md: "end-3 size-4"');
   });
 
   it("keeps Pagination sizing owned by its links", () => {
@@ -239,7 +239,9 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
     expect(paginationPrevious).toContain('size = "md"');
     expect(paginationPrevious).toContain("size={size}");
     expect(paginationPrevious).toContain('data-slot="pagination-previous"');
-    expect(paginationPrevious).toContain("<ChevronLeft />");
+    expect(paginationPrevious).toMatch(
+      /<slot name="icon">\s*<ChevronLeft class="rtl:rotate-180"\s*\/>\s*<\/slot>/,
+    );
     expect(paginationPrevious).not.toContain("group-hover:");
     expect(paginationPrevious).not.toContain("transition-transform");
     expect(paginationPrevious).toContain("class={className}");
@@ -248,7 +250,9 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
     expect(paginationNext).toContain('size = "md"');
     expect(paginationNext).toContain("size={size}");
     expect(paginationNext).toContain('data-slot="pagination-next"');
-    expect(paginationNext).toContain("<ChevronRight />");
+    expect(paginationNext).toMatch(
+      /<slot name="icon">\s*<ChevronRight class="rtl:rotate-180"\s*\/>\s*<\/slot>/,
+    );
     expect(paginationNext).not.toContain("group-hover:");
     expect(paginationNext).not.toContain("transition-transform");
     expect(paginationEllipsis).toContain("import Dots");
@@ -336,16 +340,16 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
     expect(aspectRatio).toContain("type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }>");
     expect(aspectRatio).toContain("ratio = 1");
     expect(aspectRatio).toContain('as: Tag = "div"');
-    expect(aspectRatio).toContain("`padding-bottom: ${100 / ratio}%`");
-    expect(aspectRatio).toContain("aspectRatioWrapper()");
-    expect(aspectRatio).toContain("style={wrapperStyle}");
-    expect(aspectRatio).toContain('data-slot="aspect-ratio-wrapper"');
+    expect(aspectRatio).toContain('typeof style === "string" ? `--ratio: ${ratio}; ${style}`');
+    expect(aspectRatio).not.toContain("aspectRatioWrapper");
+    expect(aspectRatio).toContain("style={ratioStyle}");
+    expect(aspectRatio).not.toContain('data-slot="aspect-ratio-wrapper"');
     expect(aspectRatio).toContain("aspectRatio({ class: className })");
     expect(aspectRatio).toContain('data-slot="aspect-ratio"');
     expect(aspectRatioIndex).toContain("export default AspectRatio;");
     expect(aspectRatioIndex).not.toContain("Root: AspectRatio");
-    expect(aspectRatioVariants).toContain("relative w-full");
-    expect(aspectRatioVariants).toContain("absolute inset-0");
+    expect(aspectRatioVariants).toContain("relative aspect-(--ratio)");
+    expect(aspectRatioVariants).not.toContain("aspectRatioWrapper");
   });
 
   it("keeps the Collapsible styled variant contract data-hook based", async () => {

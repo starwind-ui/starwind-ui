@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-
-import AvatarReview from "./AvatarReview.vue";
 import AccordionReview from "./AccordionReview.vue";
 import AlertDialogReview from "./AlertDialogReview.vue";
+import AvatarReview from "./AvatarReview.vue";
 import ButtonReview from "./ButtonReview.vue";
 import CheckboxReview from "./CheckboxReview.vue";
 import CollapsibleReview from "./CollapsibleReview.vue";
@@ -11,10 +10,10 @@ import ComplexServicesStyledReview from "./ComplexServicesStyledReview.vue";
 import DialogReview from "./DialogReview.vue";
 import DrawerReview from "./DrawerReview.vue";
 import DropzoneReview from "./DropzoneReview.vue";
-import FormReview from "./FormReview.vue";
 import FieldReview from "./FieldReview.vue";
-import InputReview from "./InputReview.vue";
+import FormReview from "./FormReview.vue";
 import InputOtpReview from "./InputOtpReview.vue";
+import InputReview from "./InputReview.vue";
 import MenusFloatingStyledReview from "./MenusFloatingStyledReview.vue";
 import PopoverReview from "./PopoverReview.vue";
 import PortableStyledClosureReview from "./PortableStyledClosureReview.vue";
@@ -25,10 +24,10 @@ import SelectReview from "./SelectReview.vue";
 import SliderReview from "./SliderReview.vue";
 import StyledReview from "./StyledReview.vue";
 import SwitchReview from "./SwitchReview.vue";
-import TabsReview from "./TabsReview.vue";
 import ThemeToggle from "./starwind-runtime/theme-toggle/ThemeToggle.vue";
-import ToggleReview from "./ToggleReview.vue";
+import TabsReview from "./TabsReview.vue";
 import ToggleGroupReview from "./ToggleGroupReview.vue";
+import ToggleReview from "./ToggleReview.vue";
 
 const secondaryToggle = ref<InstanceType<typeof ThemeToggle> | null>(null);
 const showSecondaryToggle = ref(true);
@@ -38,7 +37,7 @@ const themeClickCount = ref(0);
 <template>
   <main class="review-shell" data-testid="vue-adapter-review-route">
     <header class="review-hero">
-      <p class="eyebrow">Vue 3.5 public beta</p>
+      <p class="eyebrow">Vue 3.5</p>
       <h1>Starwind Vue internal adapter verification</h1>
       <p>
         Internal Primitive adapter and generated Styled checks used by the automated release gate.

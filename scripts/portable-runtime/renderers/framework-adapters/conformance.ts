@@ -1,10 +1,8 @@
-import type {
-  AdapterOutputModel,
-  AdapterPrintedFile,
-  FrameworkAdapter,
-} from "./types.js";
+import type { AdapterOutputModel, AdapterPrintedFile, FrameworkAdapter } from "./types.js";
 
-export function defineFrameworkAdapter<TAdapter extends FrameworkAdapter>(adapter: TAdapter): TAdapter {
+export function defineFrameworkAdapter<TAdapter extends FrameworkAdapter>(
+  adapter: TAdapter,
+): TAdapter {
   return adapter;
 }
 

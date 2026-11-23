@@ -2,10 +2,10 @@
 <script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { HTMLAttributes, HTMLButtonAttributes } from "svelte/elements";
-  import { useSidebarContext } from "./SidebarContext.js";
+  import { useSidebarState } from "./SidebarContext.js";
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; ref?: (element: HTMLDivElement|null)=>void; side?: "left" | "right"; variant?: "sidebar" | "floating" | "inset"; collapsible?: "offcanvas" | "icon"; };
   let { children, ref, side="left", variant="sidebar", collapsible="offcanvas", ...rest }:Props=$props();
-  const context=useSidebarContext();
+  const context=useSidebarState();
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>

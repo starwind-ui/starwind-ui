@@ -49,7 +49,6 @@ export function printReactPresenceFloatingOverlaySimplePart(
   facts: AdapterPresenceFloatingOverlayFacts,
   part: { defaultElement: string; name: string; namespaceKey: string },
   exportName: string,
-  discoveryAttribute: string,
 ): string {
   const jsx = `<${part.defaultElement} {...props} ${partAttributes("react", popoverPartPolicy(facts, part.name as PopoverPart))} ref={forwardedRef} />`;
   const jsxReturn =
@@ -246,8 +245,13 @@ const element = React.useRef<HTMLDivElement>(null);
 const composedRef = useComposedRefs(forwardedRef, element);
 useIsomorphicLayoutEffect(() => {
   const node = element.current;
-  if (!node) return;
-  owner?.registerPlacement(node, { ${inputs.map(([name, input]) => `${JSON.stringify(name)}: String(${input})`).join(", ")} });
-  return () => owner?.registerPlacement(node, null);
-}, [owner, ${inputs.map(([, input]) => input).join(", ")}]);`;
+  if (node) owner?.registerPlacement(node, { ${inputs.map(([name, input]) => `${JSON.stringify(name)}: String(${input})`).join(", ")} });
+}, [owner, ${inputs.map(([, input]) => input).join(", ")}]);
+// Unregister only on unmount so a placement change keeps the Runtime connection.
+useIsomorphicLayoutEffect(() => {
+  const node = element.current;
+  return () => {
+    if (node) owner?.registerPlacement(node, null);
+  };
+}, [owner]);`;
 }

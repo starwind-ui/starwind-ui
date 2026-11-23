@@ -474,7 +474,9 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   );
   expect(breadcrumbSeparator).toContain('role="presentation"');
   expect(breadcrumbSeparator).toContain('aria-hidden="true"');
-  expect(breadcrumbSeparator).toContain("<ChevronRight />");
+  expect(breadcrumbSeparator).toMatch(
+    /<slot>\s*<ChevronRight class="rtl:rotate-180"\s*\/>\s*<\/slot>/,
+  );
   expect(breadcrumbEllipsis).toContain('import Dots from "@tabler/icons/outline/dots.svg"');
   expect(breadcrumbEllipsis).toContain('<slot name="icon">');
   expect(breadcrumbEllipsis).toContain("<Dots />");

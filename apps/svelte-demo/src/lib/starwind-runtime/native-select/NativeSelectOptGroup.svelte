@@ -2,7 +2,6 @@
   import type { SvelteHTMLElements } from "svelte/elements";
   import type { VariantProps } from "tailwind-variants";
   import { cx } from "tailwind-variants";
-  import {  } from "./variants.js";
 
   export type NativeSelectOptGroupProps = SvelteHTMLElements["optgroup"] & { ref?: HTMLOptGroupElement;  };
 </script>
@@ -11,7 +10,7 @@
   let {
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: NativeSelectOptGroupProps = $props();
 </script>

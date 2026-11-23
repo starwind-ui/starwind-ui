@@ -16,6 +16,7 @@ export const sliderPolicy = {
   emitCommands: false,
 } as const;
 export interface SliderOperations {
+  /** Chooses framework publication and readback only. The contract fact owns the late-write rule. */
   authority: "parent" | "binding";
   read(name: string): string;
   /** Binding targets read their local bindable here for Runtime-owned readback. */
@@ -31,6 +32,8 @@ function valuesEqual(left:SliderValue|undefined,right:SliderValue|undefined):boo
 function serializeValue(value:SliderValue):string{return Array.isArray(value)?JSON.stringify(value):String(value);}`;
 }
 export function sliderConnection(f: AdapterRangeControlFacts, op: SliderOperations): string {
+  if (f.state.laterDefined !== "silent-command")
+    throw new Error("Slider value requires the silent-command late-write contract fact.");
   const read = op.read,
     binding = op.authority === "binding",
     keys = sliderPolicy.options;
@@ -43,7 +46,7 @@ function connectSlider(root:HTMLDivElement){
  const initialModel=copyValue(${read("value")});
  const controlled=initialModel!==undefined;
  let disposed=false,synchronizing=false;
- let rendered=copyValue(initialModel??initialDefaultValue);
+ let rendered=copyValue(initialModel??initialDefaultValue),commanded=copyValue(initialModel);
  const readOptions=()=>({${keys.map((k) => `${k}:${read(k)}`).join(",")}});
  let applied=readOptions();
  const instance=${f.runtime.factory}(root,{
@@ -54,7 +57,8 @@ function connectSlider(root:HTMLDivElement){
  function render(next:SliderValue):void{if(${binding ? "" : "controlled||"}valuesEqual(rendered,next))return;rendered=copyValue(next);${op.render("copyValue(next)")}}
  function publishReadback():void{if(disposed||controlled)return;const next=instance.getValue();render(next);${publish}}
  function synchronize(next:SliderValue):void{if(disposed)return;synchronizing=true;try{instance.refresh();if(!valuesEqual(instance.getValue(),next))instance.setValue(copyValue(next),{emit:${sliderPolicy.emitCommands}});}finally{synchronizing=false;}render(instance.getValue());}
- function syncModel():void{if(disposed${binding ? "" : "||!controlled"})return;const next=${read("value")};if(next===undefined)return;synchronize(next);${binding ? "publishReadback();" : ""}}
+ // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
+ function syncModel():void{if(disposed)return;const next=${read("value")},changed=controlled||!valuesEqual(next,commanded);commanded=copyValue(next);if(next===undefined)return;if(changed)synchronize(next);${binding ? "publishReadback();" : ""}}
  function syncOptions():void{if(disposed)return;const next=readOptions();if(${keys.map((k) => `Object.is(next.${k},applied.${k})`).join("&&")})return;
  synchronizing=true;try{
  if(next.disabled!==applied.disabled)instance.${f.setters.disabled}(next.disabled);

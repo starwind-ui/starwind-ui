@@ -1,11 +1,10 @@
 import path from "node:path";
-
+import { getRelativeImportPath } from "../../../shared.js";
 import {
   assertStyledPartsIdentifier,
   getStyledPartsIdentifier,
   type StyledOutputComponentGroup,
 } from "../../../styled-output-model/index.js";
-import { getRelativeImportPath } from "../../../shared.js";
 import { renderNamedExport, renderNamedImport } from "./formatting.js";
 import { renderIdentifierObject } from "./render-tree.js";
 
@@ -98,7 +97,9 @@ function renderPrimitiveFacadeExports(
         options.directory,
         path.join(options.primitiveOutputRoot, facade.component),
       );
-  const valueNames = [...facade.values].sort();
+  const valueNames = [
+    ...new Set([...facade.values, ...(facade.frameworkValues?.astro ?? [])]),
+  ].sort();
   const valueNameSet = new Set(valueNames);
   const typeNames = [...facade.types].filter((name) => !valueNameSet.has(name)).sort();
 

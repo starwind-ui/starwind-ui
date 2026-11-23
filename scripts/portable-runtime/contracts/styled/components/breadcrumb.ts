@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const breadcrumbStyledContract: StyledAdapterContract = {
   component: "breadcrumb",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Breadcrumb",
     "BreadcrumbEllipsis",
@@ -316,7 +318,13 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
           children: [
             {
               type: "slot",
-              fallback: [{ type: "icon", importName: "ChevronRight" }],
+              fallback: [
+                {
+                  type: "icon",
+                  importName: "ChevronRight",
+                  attrs: [{ name: "class", value: { type: "literal", value: "rtl:rotate-180" } }],
+                },
+              ],
             },
           ],
         },

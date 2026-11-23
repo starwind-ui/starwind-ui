@@ -1,21 +1,21 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
-import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
-
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { compile } from "svelte/compiler";
+import { afterEach, describe, expect, it } from "vitest";
+import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledNativeBrowser } from "../../../../packages/svelte/tests/styled-native-browser.js";
 import {
   createStyledNativeConsumer,
   nativeStyledRoots,
 } from "../../../../packages/svelte/tests/styled-native-consumer.js";
-import { verifyStyledNativeBrowser } from "../../../../packages/svelte/tests/styled-native-browser.js";
-import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+
 const consumers: DistConsumer[] = [];
 const roots: string[] = [];
 afterEach(async () => {

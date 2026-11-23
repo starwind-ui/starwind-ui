@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";
 import type { ClassValue } from "tailwind-variants";
-import { type ButtonHTMLAttributes } from "vue";
+import type { ButtonHTMLAttributes } from "vue";
 import { comboboxTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });

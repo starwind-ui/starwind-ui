@@ -1,11 +1,5 @@
 import { renderFormGroup } from "../../shared-recipes/grouped/groups.js";
 import { renderToggleGroup } from "../../shared-recipes/toggle-selection/recipe.js";
-import { projectVueAttributeAccess } from "./public-contract.js";
-import { groupOperations } from "./recipe-form-group.js";
-import { toggleOperations } from "./recipe-toggle.js";
-
-const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
-
 import type {
   AdapterComponentFile,
   AdapterGroupedValueControlFacts,
@@ -13,7 +7,8 @@ import type {
   AdapterIndexFile,
   AdapterPrintedFile,
 } from "../types.js";
-import { projectVueModel } from "./public-contract.js";
+import { groupOperations } from "./recipe-form-group.js";
+import { toggleOperations } from "./recipe-toggle.js";
 
 export function printVueGroupedValueControlComponent(
   file: AdapterComponentFile,
@@ -115,23 +110,4 @@ function printVueScalarGroupedValueRoot(
   facts: AdapterGroupedValueControlFacts,
 ): AdapterPrintedFile {
   return { path: `${file.path}.vue`, contents: renderFormGroup(groupOperations, facts) };
-}
-
-function requireContext(facts: AdapterGroupedValueControlFacts) {
-  if (!facts.context) throw new TypeError(`${facts.displayName} requires grouped context facts.`);
-  return facts.context;
-}
-
-function requireFact<T>(value: T | undefined, message: string): T {
-  if (value === undefined) throw new TypeError(message);
-  return value;
-}
-
-function formatOptions(
-  options: Readonly<Record<string, boolean | number | string>> | undefined,
-): string {
-  if (!options || Object.keys(options).length === 0) return "{}";
-  return `{ ${Object.entries(options)
-    .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-    .join(", ")} }`;
 }

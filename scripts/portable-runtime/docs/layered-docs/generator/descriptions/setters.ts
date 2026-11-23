@@ -1,5 +1,5 @@
-import { type RuntimeAdapterContract } from "../../../../contracts/primitive/types.js";
-import { type PrimitiveDocsEnrichment, type PrimitiveSetterMetadata } from "../../types.js";
+import type { RuntimeAdapterContract } from "../../../../contracts/primitive/types.js";
+import type { PrimitiveDocsEnrichment, PrimitiveSetterMetadata } from "../../types.js";
 import { formatNaturalList } from "../shared.js";
 import { formatPrimitiveOptionSubject, formatPrimitiveStateSubject } from "./subjects.js";
 

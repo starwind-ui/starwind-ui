@@ -10,10 +10,10 @@
 <script lang="ts">
   let {
     "class": className,
-    "inset": inset = false,
-    "disabled": disabled = false,
-    "children": children,
-    "icon": icon,
+    inset = false,
+    disabled = false,
+    children,
+    icon,
     ...rest
   }: ContextMenuSubTriggerProps = $props();
 
@@ -36,7 +36,7 @@
     stroke-linecap={"round"}
     stroke-linejoin={"round"}
     aria-hidden={"true"}
-    class={"ml-auto size-4"}
+    class={"ms-auto size-4 rtl:rotate-180"}
   >
     <path
       stroke={"none"}

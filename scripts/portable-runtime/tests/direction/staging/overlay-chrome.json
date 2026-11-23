@@ -1,0 +1,9 @@
+{
+  "cohort": "overlay-chrome",
+  "caseIds": [
+    "chrome-overlay-styled",
+    "chrome-phone-styled",
+    "chrome-sidebar-styled",
+    "chrome-toast-styled"
+  ]
+}

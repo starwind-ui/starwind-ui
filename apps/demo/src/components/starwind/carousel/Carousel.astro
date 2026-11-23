@@ -1,6 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { type EmblaOptionsType } from "embla-carousel";
+import type { EmblaOptionsType } from "embla-carousel";
 
 import { carousel } from "./variants";
 
@@ -33,19 +33,26 @@ const {
 </div>
 
 <script>
-  import { initCarousel } from "./index";
+  import { initCarousel, type CarouselManager } from "./index";
 
+  const instances = new Set<CarouselManager>();
   const setupCarousels = () => {
     const carousels = document.querySelectorAll(".starwind-carousel") as NodeListOf<HTMLElement>;
     carousels.forEach((carousel) => {
       if (carousel.dataset.autoInit === "false") {
         return;
       }
-      initCarousel(carousel);
+      const instance = initCarousel(carousel);
+      if (instance) instances.add(instance);
     });
   };
 
   document.addEventListener("DOMContentLoaded", setupCarousels);
+
+  document.addEventListener("astro:before-swap", () => {
+    for (const instance of instances) instance.destroy();
+    instances.clear();
+  });
 
   // Re-initialize after Astro page transitions
   document.addEventListener("astro:after-swap", setupCarousels);

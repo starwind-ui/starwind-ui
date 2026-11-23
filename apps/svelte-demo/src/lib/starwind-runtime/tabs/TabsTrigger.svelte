@@ -10,11 +10,11 @@
 
 <script lang="ts">
   let {
-    "disabled": disabled = false,
-    "value": value,
+    disabled = false,
+    value,
     "class": className,
-    "ref": ref,
-    "children": children,
+    ref,
+    children,
     ...rest
   }: TabsTriggerProps = $props();
 </script>

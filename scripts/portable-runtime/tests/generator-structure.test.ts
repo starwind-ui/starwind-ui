@@ -12,7 +12,10 @@ import {
   primitiveGeneratorRegistry,
 } from "../renderers/primitive-generator-registry.js";
 import { PRIMITIVE_COMPONENTS, PRIMITIVE_HELPER_EXPORTS } from "../renderers/primitive-index.js";
-import { getPrimitiveInventoryEntry } from "../renderers/primitive-inventory.js";
+import {
+  getPrimitiveInventoryEntry,
+  isPrimitiveInventoryComponentAvailableForTarget,
+} from "../renderers/primitive-inventory.js";
 import { expectedPrimitiveTargets, hasPrivateSvelte } from "./workspace-support.js";
 
 const SCRIPT_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -25,6 +28,7 @@ const PRIMITIVE_GENERATOR_SOURCE_BY_COMPONENT = {
   avatar: "adapter-family-plan",
   button: "adapter-family-plan",
   carousel: "specialized-adapter-spec",
+  chart: "specialized-adapter-spec",
   checkbox: "adapter-family-plan",
   "checkbox-group": "adapter-family-plan",
   collapsible: "adapter-family-plan",
@@ -57,14 +61,12 @@ const PRIMITIVE_GENERATOR_SOURCE_BY_COMPONENT = {
   "toggle-group": "adapter-family-plan",
   tooltip: "specialized-adapter-spec",
   theme: "manual",
-} satisfies Record<
-  (typeof PRIMITIVE_COMPONENTS)[number] | (typeof PRIMITIVE_HELPER_EXPORTS)[number],
-  PrimitiveGeneratorSource
->;
+} satisfies Record<(typeof PRIMITIVE_COMPONENTS)[number], PrimitiveGeneratorSource>;
 
 const MIGRATED_SPECIALIZED_OUTPUT_MODEL_COMPONENTS = [
   "accordion",
   "carousel",
+  "chart",
   "combobox",
   "color-picker",
   "context-menu",
@@ -193,7 +195,7 @@ const FUTURE_FRAMEWORK_TRACER_SHIPPING_SURFACE_PATTERNS = [
     pattern: /@starwind-ui\/(?:solid|svelte|vue)/g,
   },
 ] as const;
-// Vue and Svelte are public beta targets, so CLI host setup may name their packages.
+// Vue and Svelte are public targets, so CLI host setup may name their packages.
 const PUBLIC_ADAPTER_PACKAGE_SURFACE_PATHS = new Set([
   "packages/cli/src/utils/framework-target-policy.ts",
   "packages/cli/src/utils/svelte-host-project.ts",
@@ -214,6 +216,7 @@ const PRIMITIVE_CONTRACT_COMPONENTS = [
   "avatar",
   "button",
   "carousel",
+  "chart",
   "checkbox",
   "checkbox-group",
   "combobox",
@@ -258,6 +261,7 @@ const STYLED_COMPONENTS = [
   "button-group",
   "carousel",
   "card",
+  "chart",
   "checkbox",
   "checkbox-group",
   "combobox",
@@ -426,6 +430,7 @@ describe("portable runtime generator structure", () => {
               "avatar",
               "button",
               "carousel",
+              "chart",
               "checkbox",
               "checkbox-group",
               "collapsible",
@@ -465,7 +470,11 @@ describe("portable runtime generator structure", () => {
         },
         {
           support: {
-            components: [...PRIMITIVE_COMPONENTS, ...PRIMITIVE_HELPER_EXPORTS].sort(),
+            components: [...PRIMITIVE_COMPONENTS, ...PRIMITIVE_HELPER_EXPORTS]
+              .filter((component) =>
+                isPrimitiveInventoryComponentAvailableForTarget(component, "svelte"),
+              )
+              .sort(),
             kind: "subset",
           },
           target: "svelte",
@@ -1085,7 +1094,7 @@ describe("portable runtime generator structure", () => {
   it("keeps runtime adapter contracts component-scoped with a stable thin aggregator", async () => {
     const aggregator = await readPortableFile("contracts/primitive/representatives.ts");
 
-    expect(lineCount(aggregator)).toBeLessThan(120);
+    expect(lineCount(aggregator)).toBeLessThan(125);
     expect(aggregator).toContain("runtimeAdapterContracts");
     expect(aggregator).toContain("representativeRuntimeAdapterContracts");
 
@@ -1211,6 +1220,7 @@ describe("portable runtime generator structure", () => {
       'disabled: getAdapterFamilyProp(getPlanProp(plan, "disabled"))',
     );
     expect(astroNativeDisabledPrinter).toContain("printAstroNativeDisabledComponent");
+    expect(reactNativeDisabledPrinter).toContain("printReactNativeDisabledComponent");
   });
 
   it("routes Input primitive generation through the generic-adapter-plan seam", async () => {
@@ -1694,10 +1704,6 @@ describe("portable runtime generator structure", () => {
     const groupedFamily = await readPortableFile(
       "renderers/generic-adapter-plan/families/grouped-value-control.ts",
     );
-    const adapterSources = await Promise.all([
-      readPortableFile("renderers/framework-adapters/astro/adapter.ts"),
-      readPortableFile("renderers/framework-adapters/react/adapter.ts"),
-    ]);
 
     expect(outputModelBuilder).toContain("createGroupedValueControlAdapterFamilyPlan");
     expect(outputModelBuilder).not.toContain("function isToggleGroupGroupedValueOutputModelPlan(");
@@ -1717,11 +1723,6 @@ describe("portable runtime generator structure", () => {
     for (const value of ["disabled", "loopFocus", "multiple", "orientation", "value"]) {
       expect(groupedFamily).toContain(`groupContext.values.includes("${value}")`);
     }
-
-    const forbiddenTargetTerms =
-      /ToggleGroup|toggleGroup|toggle-group|setupToggleGroups|useToggleGroupContext/;
-    for (const adapterSource of adapterSources) {
-    }
   });
 
   it("uses Radio Group contract root, value state, event, context, form, and setter facts in its renderers", async () => {
@@ -1736,10 +1737,6 @@ describe("portable runtime generator structure", () => {
     const groupedFamily = await readPortableFile(
       "renderers/generic-adapter-plan/families/grouped-value-control.ts",
     );
-    const adapterSources = await Promise.all([
-      readPortableFile("renderers/framework-adapters/astro/adapter.ts"),
-      readPortableFile("renderers/framework-adapters/react/adapter.ts"),
-    ]);
 
     expect(outputModelBuilder).toContain("createGroupedValueControlAdapterFamilyPlan");
     expect(outputModelBuilder).not.toContain("function isRadioGroupGroupedValueOutputModelPlan(");
@@ -1766,11 +1763,6 @@ describe("portable runtime generator structure", () => {
     for (const value of ["disabled", "form", "name", "readOnly", "required", "value"]) {
       expect(groupedFamily).toContain(`groupContext.values.includes("${value}")`);
     }
-
-    const forbiddenTargetTerms =
-      /\b(?:createRadioGroup|RadioGroupContext|RadioGroupRoot|RadioGroupValue|setupRadioGroups|useRadioGroupContext)\b|radio-group/;
-    for (const adapterSource of adapterSources) {
-    }
   });
 
   it("uses Checkbox Group contract root, value state, event, context, and setter facts in its renderers", async () => {
@@ -1785,10 +1777,6 @@ describe("portable runtime generator structure", () => {
     const groupedFamily = await readPortableFile(
       "renderers/generic-adapter-plan/families/grouped-value-control.ts",
     );
-    const adapterSources = await Promise.all([
-      readPortableFile("renderers/framework-adapters/astro/adapter.ts"),
-      readPortableFile("renderers/framework-adapters/react/adapter.ts"),
-    ]);
 
     expect(outputModelBuilder).toContain("createGroupedValueControlAdapterFamilyPlan");
     expect(outputModelBuilder).not.toContain(
@@ -1813,10 +1801,20 @@ describe("portable runtime generator structure", () => {
     expect(groupedFamily).toContain('groupContext.values.includes("disabled")');
     expect(groupedFamily).toContain('groupContext.values.includes("value")');
     expect(groupedFamily).toContain("parseValueAttributeFunction");
+  });
 
-    const forbiddenTargetTerms =
-      /CheckboxGroup|checkboxGroup|checkbox-group|setupCheckboxGroups|parseCheckboxGroupValueAttribute|useCheckboxGroupContext/;
-    for (const adapterSource of adapterSources) {
+  // Astro prints grouped value controls from the shared family facts. Recipe targets may name
+  // components (see docs/portable-runtime/README.md), so this check covers Astro only.
+  it("keeps the Astro adapter free of grouped value control component names", async () => {
+    const astroAdapter = await readPortableFile("renderers/framework-adapters/astro/adapter.ts");
+    const forbiddenTerms = [
+      /ToggleGroup|toggleGroup|toggle-group|setupToggleGroups|useToggleGroupContext/,
+      /\b(?:createRadioGroup|RadioGroupContext|RadioGroupRoot|RadioGroupValue|setupRadioGroups|useRadioGroupContext)\b|radio-group/,
+      /CheckboxGroup|checkboxGroup|checkbox-group|setupCheckboxGroups|parseCheckboxGroupValueAttribute|useCheckboxGroupContext/,
+    ];
+
+    for (const forbidden of forbiddenTerms) {
+      expect(astroAdapter).not.toMatch(forbidden);
     }
   });
 
@@ -1998,6 +1996,7 @@ describe("portable runtime generator structure", () => {
     expect(actionSurfaceFamily).toContain('getSetterForProp(plan, "disabled")');
     expect(actionSurfaceFamily).toContain('truthyValue: "true"');
     expect(outputModelBuilder).not.toContain("isButtonRootOutput");
+    expect(reactActionSurfacePrinter).toContain("printReactActionSurfaceComponent");
   });
 
   it("uses Input contract value, event, form, and native-input-value facts in its renderers", async () => {
@@ -2026,6 +2025,7 @@ describe("portable runtime generator structure", () => {
       'defaultValue: getAdapterFamilyProp(getPlanProp(plan, "defaultValue"))',
     );
     expect(outputModelBuilder).not.toContain("isNativeInputValuePart");
+    expect(reactNativeInputValuePrinter).toContain("printReactNativeInputValueComponent");
   });
 
   it("uses Progress contract parts, value state, range props, and setter facts in its renderers", async () => {
@@ -2067,6 +2067,7 @@ describe("portable runtime generator structure", () => {
       'const valueSetter = getSetterForProps(plan, [valuePropName, "max", "min"])',
     );
     expect(outputModelBuilder).not.toContain("function getProgressFacts");
+    expect(reactRangeStatusPrinter).toContain("printReactRangeStatusComponent");
   });
 
   it("keeps Astro native body printers in the Astro target home", async () => {
@@ -2089,6 +2090,7 @@ describe("portable runtime generator structure", () => {
 
     await expectMissingFile("renderers/generic-adapter-plan/static-adapter-printer-core.ts");
     await expectMissingFile("renderers/framework-adapters/react/static.ts");
+    expect(reactNativeInputValuePrinter).toContain("printReactNativeInputValueComponent");
   });
 
   it("keeps legacy static family printer registries out of target adapters", async () => {

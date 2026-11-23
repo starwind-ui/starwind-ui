@@ -304,7 +304,8 @@ async function verifyAstroTabsMotion({ page }) {
     const incoming = panel("activity");
     const initial =
       !outgoing.hidden && incoming.hidden && !outgoing.hasAttribute("data-starting-style");
-    getComputedStyle(outgoing).opacity;
+    // Read computed style to flush styles before the click starts the transition.
+    void getComputedStyle(outgoing).opacity;
     trigger("activity").click();
     const overlap =
       !outgoing.hidden &&

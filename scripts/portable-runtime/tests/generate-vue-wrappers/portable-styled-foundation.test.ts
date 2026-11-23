@@ -81,7 +81,7 @@ describe("Vue portable foundational Styled generation", () => {
       /error[\s\S]+warning[\s\S]+alert[\s\S]+status/,
     );
     await expect(read("aspect-ratio", "AspectRatio.vue")).resolves.toMatch(
-      /paddingBottom[\s\S]+<component/,
+      /ratioStyle[\s\S]+<component/,
     );
     await expect(read("badge", "Badge.vue")).resolves.toMatch(
       /attrs\.href[\s\S]+<component[\s\S]+badge\(/,
@@ -89,10 +89,10 @@ describe("Vue portable foundational Styled generation", () => {
     await expect(read("kbd", "Kbd.vue")).resolves.toContain("<kbd");
     await expect(read("label", "Label.vue")).resolves.toMatch(/<label[\s\S]+<slot \/>/);
     await expect(read("separator", "Separator.vue")).resolves.toMatch(
-      /role=\"separator\"[\s\S]+aria-orientation/,
+      /role="separator"[\s\S]+aria-orientation/,
     );
     await expect(read("spinner", "Spinner.vue")).resolves.toMatch(
-      /<svg[\s\S]+aria-label=\"Loading\"/,
+      /<svg[\s\S]+aria-label="Loading"/,
     );
 
     const spinnerSource = await read("spinner", "Spinner.vue");

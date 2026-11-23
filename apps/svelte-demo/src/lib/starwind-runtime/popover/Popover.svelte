@@ -9,17 +9,17 @@
 
 <script lang="ts">
   let {
-    "defaultOpen": defaultOpen = false,
-    "closeOnEscape": closeOnEscape = true,
-    "closeOnOutsideInteract": closeOnOutsideInteract = true,
-    "modal": modal = false,
-    "openOnHover": openOnHover = false,
-    "closeDelay": closeDelay = 200,
+    defaultOpen = false,
+    closeOnEscape = true,
+    closeOnOutsideInteract = true,
+    modal = false,
+    openOnHover = false,
+    closeDelay = 200,
     "class": className,
     open = $bindable(),
-    "onOpenChange": onOpenChange,
-    "onCloseComplete": onCloseComplete,
-    "children": children,
+    onOpenChange,
+    onCloseComplete,
+    children,
     "open": commandOpen,
     ...rest
   }: PopoverProps = $props();

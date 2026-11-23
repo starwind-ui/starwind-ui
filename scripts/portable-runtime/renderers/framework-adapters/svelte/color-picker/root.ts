@@ -43,8 +43,9 @@ export function printColorPickerRoot(f: AdapterColorPickerFacts): string {
   const initialProjection = untrack(() => projectColorPickerInitialPart(context.initialState, { part: "root" }));
   let rootProps = $derived(mergeProjection(initialProjection, rest, { "${f.parts.root.discoveryAttribute}": "", "data-sw-part": "root", role: "group" }));
 
-  ${printColorPickerConnection(f, false, true)}
+  ${printColorPickerConnection(f)}
   const attachRuntime: Attachment<HTMLDivElement> = (root) => {
+    const projectedDirection = captureProjectedDirection(root, initialProjection.attributes.dir);
     let alive = true, refreshRevision = 0;
     let connection: ReturnType<typeof connectColorPicker> | undefined;
     const readOptions = (): ColorPickerOptions => ({ value: commandValue, format: commandFormat, ${colorPickerLiveOptions(f).join(", ")}, onValueChange, onValueCommitted, onFormatChange });
@@ -58,7 +59,7 @@ export function printColorPickerRoot(f: AdapterColorPickerFacts): string {
       untrack(() => {
         connection = connectColorPicker(root, {
           seed: ${seeds.constructor},
-          read: readOptions,
+          read: readOptions, projectedDirection,
           observe: (nextValue, nextFormat) => { acceptedValue = nextValue; acceptedFormat = nextFormat; },
           publishValue: (next) => { value = next; },
           publishFormat: (next) => { format = next; },
@@ -70,6 +71,7 @@ export function printColorPickerRoot(f: AdapterColorPickerFacts): string {
     $effect(() => { readOptions(); untrack(() => connection?.update()); });
     return () => {
       alive = false; refreshRevision += 1; requestRefresh = () => {};
+      projectedDirection?.disconnect();
       connection?.destroy(); connection = undefined;
     };
   };

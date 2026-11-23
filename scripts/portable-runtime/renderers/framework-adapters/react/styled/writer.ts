@@ -3,7 +3,10 @@ import type { StyledAdapterContract } from "../../../../contracts/styled/types.j
 import { assertStyledSidebarConnection } from "../../../primitive-output-model/sidebar-connection.js";
 import { writeGeneratedFile } from "../../../shared.js";
 import {
+  getStyledOutputTypeParameters,
   projectStyledOutputModel,
+  renderStyledTypeParameterArguments,
+  renderStyledTypeParameterDeclarations,
   type StyledOutputComponent,
   type StyledOutputComponentGroup,
   type StyledOutputRenderNode,
@@ -15,6 +18,7 @@ import { renderIndex } from "./index-output.js";
 import { isAlertDialogButtonControl, projectNativeOverlayControl } from "./native-overlay.js";
 import { getReactPrimitiveAliases } from "./primitive-helpers.js";
 import {
+  getReactElementTypedAsDefault,
   getRuntimeImportRewriteContext,
   renderComponentBody,
   renderProps,
@@ -150,7 +154,18 @@ function renderComponent(
     primitiveImportBase,
     runtimeImportContext,
     Boolean(component.forwardRef) || /\bReact\./.test(`${props}\n${componentBody}`),
+    componentBody,
   );
+
+  const typeParameters = getStyledOutputTypeParameters(component);
+  if (forwardRef && typeParameters) {
+    throw new TypeError(
+      `React Styled ${group.component}/${component.exportName}: type parameters cannot combine with forwardRef.`,
+    );
+  }
+  const asDefault = getReactElementTypedAsDefault(renderedComponent);
+  if (asDefault && forwardRef)
+    throw new TypeError(`React Styled ${component.exportName}: as typing needs a ref prop.`);
 
   if (forwardRef) {
     return `${tsHeader}${imports}
@@ -176,7 +191,19 @@ export default ${component.exportName};
 
 ${props}
 
-function ${component.exportName}(props: ${component.exportName}Props) {
+${
+  asDefault
+    ? `// Callers get props from the as element. The body reads them with a wide element type.
+function ${component.exportName}<T extends React.ElementType = ${asDefault}>(
+  props: ${component.exportName}Props<T>,
+): React.JSX.Element;
+function ${component.exportName}(props: ${component.exportName}Props<React.ElementType>) {`
+    : `function ${component.exportName}${
+        typeParameters ? `<${renderStyledTypeParameterDeclarations(typeParameters)}>` : ""
+      }(props: ${component.exportName}Props${
+        typeParameters ? `<${renderStyledTypeParameterArguments(typeParameters)}>` : ""
+      }) {`
+}
 ${componentBody}
 }
 

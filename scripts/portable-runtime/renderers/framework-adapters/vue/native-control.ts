@@ -4,7 +4,6 @@ export function renderVueNativeControlHelper(generatedBy: string): string {
   return `${createTsHeader(generatedBy)}import {
   cloneVNode,
   isRef,
-  isVNode,
   mergeProps,
   onBeforeUnmount,
   ref,
@@ -12,6 +11,7 @@ export function renderVueNativeControlHelper(generatedBy: string): string {
   type ComponentPublicInstance,
   type VNode,
 } from "vue";
+import { resolveVueAsChildTarget } from "./as-child-target";
 
 type ComponentRoot = ComponentPublicInstance & {
   element?: unknown;
@@ -40,12 +40,7 @@ export function useVueNativeControl(name: string, requestRefresh?: () => void) {
     disabled = false,
     protectedProps = {},
   }: VueNativeControlRenderOptions): VNode {
-    const child = children[0];
-    if (children.length !== 1 || !isVNode(child) || (
-      typeof child.type !== "string" && typeof child.type !== "object" && typeof child.type !== "function"
-    )) {
-      throw new TypeError(\`\${name} asChild requires exactly one native element or component VNode.\`);
-    }
+    const child = resolveVueAsChildTarget(name, children);
     const nativeButtonDefault =
       defaultNativeButtonType !== undefined &&
       child.type === "button" &&

@@ -1,18 +1,16 @@
-import { sidebarStyledContract } from "../../contracts/styled/components/sidebar.js";
-import { colorPickerStyledContract } from "../../contracts/styled/components/color-picker.js";
-import { toastStyledContract } from "../../contracts/styled/components/toast.js";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
-import { carouselStyledContract } from "../../contracts/styled/components/carousel.js";
 import { buttonStyledContract } from "../../contracts/styled/components/button.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { carouselStyledContract } from "../../contracts/styled/components/carousel.js";
+import { colorPickerStyledContract } from "../../contracts/styled/components/color-picker.js";
+import { sidebarStyledContract } from "../../contracts/styled/components/sidebar.js";
+import { toastStyledContract } from "../../contracts/styled/components/toast.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
 import { writeSvelteStyledOutput } from "../../renderers/framework-adapters/svelte/styled/writer.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 const roots: string[] = [];
 afterEach(async () => {

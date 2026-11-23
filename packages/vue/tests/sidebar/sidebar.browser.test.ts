@@ -9,10 +9,12 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
+  useSidebarContext,
 } from "@starwind-ui/vue/sidebar";
 import { afterEach, describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { createApp, h, nextTick, ref } from "vue";
+import { createApp, createSSRApp, h, nextTick, ref } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   Collapsible as StyledCollapsible,
   CollapsibleContent as StyledCollapsibleContent,
@@ -340,6 +342,49 @@ describe("Vue Sidebar public behavior", () => {
     expect(document.activeElement).toBe(trigger);
     expect(provider(first).dataset.state).toBe("expanded");
     expect(provider(second).dataset.state).toBe("collapsed");
+  });
+
+  it("hydrates parts outside a Provider as expanded, as React does", async () => {
+    const contexts: unknown[] = [];
+    const Probe = {
+      setup() {
+        contexts.push(useSidebarContext());
+        return () => null;
+      },
+    };
+    const tree = () => [
+      h(Probe),
+      h(SidebarComponent, { collapsible: "icon" }, () => "Sidebar"),
+      h(SidebarTrigger, null, () => "Toggle"),
+      h(SidebarRail),
+      h(SidebarMenuButton, null, () => "Menu"),
+    ];
+    const host = document.createElement("div");
+    document.body.append(host);
+    host.innerHTML = await renderToString(createSSRApp({ render: tree }));
+    const warnings: string[] = [];
+    const app = createSSRApp({ render: tree });
+    app.config.warnHandler = (message) => warnings.push(message);
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await settle();
+
+    const sidebar = host.querySelector<HTMLElement>("[data-sw-sidebar]")!;
+    const trigger = host.querySelector<HTMLButtonElement>("[data-sw-sidebar-trigger]")!;
+    const rail = host.querySelector<HTMLButtonElement>("[data-sw-sidebar-rail]")!;
+    const menuButton = host.querySelector<HTMLButtonElement>("[data-sw-sidebar-menu-button]")!;
+    expect(contexts).toEqual([null, null]);
+    expect(warnings).toEqual([]);
+    expect(sidebar.dataset.state).toBe("expanded");
+    expect(sidebar.dataset.collapsible).toBe("");
+    for (const control of [trigger, rail]) {
+      expect(control.dataset.state).toBe("expanded");
+      expect(control.getAttribute("aria-expanded")).toBe("false");
+    }
+    expect(menuButton.dataset.sidebarState).toBe("expanded");
+    trigger.click();
+    await settle();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("keeps nested providers isolated", async () => {

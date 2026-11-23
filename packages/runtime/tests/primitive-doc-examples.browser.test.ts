@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { runtimeAdapterContracts } from "../../../scripts/portable-runtime/contracts/primitive/representatives.js";
-import { primitiveDocsExamples } from "../../../scripts/portable-runtime/docs/layered-docs/examples.js";
+// The generated metadata is plain data. The examples module reads adapter files with Node APIs, so
+// it cannot load in the browser.
+import { layeredDocsMetadata } from "../../../scripts/portable-runtime/docs/layered-docs/generated/layered-docs-metadata.js";
+import { registerChartModule } from "../src/components/chart";
+import { visitorBars } from "./components/chart/fixtures";
 
 type RuntimeFactory = (root: HTMLElement) => { destroy?: () => void };
 type RuntimeInstance = {
@@ -21,6 +25,13 @@ declare global {
   }
 }
 
+const rawHtmlExample = (primitiveId: string) =>
+  layeredDocsMetadata.primitives
+    .find((primitive) => primitive.id === primitiveId)
+    ?.docsReference.examples.find(
+      (example) => example.id === "basic" && example.framework === "raw-html",
+    );
+
 const runtimeModules = import.meta.glob("../src/components/*/index.ts", {
   eager: true,
 }) as Record<string, Record<string, unknown>>;
@@ -32,7 +43,7 @@ describe("primitive docs raw HTML examples", () => {
 
   for (const contract of runtimeAdapterContracts) {
     it(`initializes the ${contract.component} raw HTML example with its documented factory`, () => {
-      const example = primitiveDocsExamples[contract.component]?.basic?.["raw-html"];
+      const example = rawHtmlExample(contract.component);
       const rootPart = contract.parts.find((part) => part.name === contract.runtime.rootPart);
 
       expect(example?.code).toBeTruthy();
@@ -48,6 +59,8 @@ describe("primitive docs raw HTML examples", () => {
 
       expect(root).toBeInstanceOf(HTMLElement);
       expect(factory).toBeTypeOf("function");
+
+      if (contract.component === "chart") standInForChartModuleScript(root as HTMLElement);
 
       const instance = factory?.(root as HTMLElement);
 
@@ -112,6 +125,17 @@ describe("primitive docs raw HTML examples", () => {
   });
 });
 
+/**
+ * The chart example's module script registers its chart module, which `stripScript` removes. Register
+ * a fixture module under the root's `data-chart-module` id, as the page would after that script loads.
+ */
+function standInForChartModuleScript(root: HTMLElement) {
+  const moduleId = root.dataset.chartModule;
+
+  expect(moduleId).toBeTruthy();
+  registerChartModule({ id: moduleId!, ariaLabel: "Visitors by month", create: visitorBars });
+}
+
 function stripScript(source: string) {
   return source.replace(/\n\n<script type="module">[\s\S]*<\/script>\s*$/, "");
 }
@@ -121,7 +145,7 @@ function mountRawHtmlExample(primitiveId: string): {
   root: HTMLElement;
 } {
   const contract = runtimeAdapterContracts.find((candidate) => candidate.component === primitiveId);
-  const example = primitiveDocsExamples[primitiveId]?.basic?.["raw-html"];
+  const example = rawHtmlExample(primitiveId);
   const rootPart = contract?.parts.find((part) => part.name === contract.runtime.rootPart);
   const runtimeModule = runtimeModules[`../src/components/${primitiveId}/index.ts`];
   const factory = runtimeModule?.[contract?.runtime.factory ?? ""] as RuntimeFactory | undefined;

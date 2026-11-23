@@ -699,6 +699,7 @@ function getInputOtpHiddenInputVisualSlotFacts(
     },
     state: {
       getter: valueControl.state.getter,
+      laterDefined: getRequiredState(spec, "value").ownership?.laterDefined,
       name: valueControl.state.name,
       type: valueControl.state.valueType,
     },

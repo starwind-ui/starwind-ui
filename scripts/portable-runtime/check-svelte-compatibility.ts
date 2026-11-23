@@ -21,7 +21,7 @@ export const SVELTE_COMPATIBILITY_TOOLS = {
   "@floating-ui/dom": "1.7.6",
   "embla-carousel": "8.6.0",
   "tailwind-variants": "3.2.2",
-  "tailwind-merge": "3.6.0",
+  "tailwind-merge": "3.7.0",
 } as const;
 
 type ExecuteInstall = (args: string[], root: string) => Promise<void>;

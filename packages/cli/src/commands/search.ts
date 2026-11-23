@@ -9,7 +9,6 @@ import {
   type CliFrameworkTarget,
   type FrameworkTargetPolicy,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
-  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { assertOnlineFeature, isOfflineMode } from "@/utils/offline.js";
@@ -52,9 +51,7 @@ type PrivateSearchOptions = Omit<SearchOptions, "framework"> & {
 export type PrivateSearchDependencies = {
   registry?: StarwindRegistryFor<CliFrameworkTarget>;
   artifacts: PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
-  targetPolicy:
-    | FrameworkTargetPolicy<CliFrameworkTarget>
-    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
 };
 
 /**

@@ -1,6 +1,4 @@
 import { createSSRApp, defineComponent, h, nextTick, ref } from "vue";
-
-import { AvatarFallback, AvatarImage, AvatarRoot } from "/vue/avatar/index.js";
 import {
   AccordionHeader,
   AccordionItem,
@@ -19,6 +17,7 @@ import {
   AlertDialogTrigger,
   AlertDialogViewport,
 } from "/vue/alert-dialog/index.js";
+import { AvatarFallback, AvatarImage, AvatarRoot } from "/vue/avatar/index.js";
 import { ButtonRoot } from "/vue/button/index.js";
 import { CheckboxIndicator, CheckboxRoot } from "/vue/checkbox/index.js";
 import { CheckboxGroupRoot } from "/vue/checkbox-group/index.js";
@@ -42,7 +41,13 @@ import {
   DrawerTrigger,
   DrawerViewport,
 } from "/vue/drawer/index.js";
-import { InputRoot } from "/vue/input/index.js";
+import {
+  DropzoneFilesList,
+  DropzoneInput,
+  DropzoneLoadingIndicator,
+  DropzoneRoot,
+  DropzoneUploadIndicator,
+} from "/vue/dropzone/index.js";
 import {
   FieldControl,
   FieldDescription,
@@ -51,19 +56,13 @@ import {
   FieldRoot,
   FieldValidity,
 } from "/vue/field/index.js";
+import { InputRoot } from "/vue/input/index.js";
 import {
   InputOtpGroup,
   InputOtpRoot,
   InputOtpSeparator,
   InputOtpSlot,
 } from "/vue/input-otp/index.js";
-import {
-  ProgressIndicator,
-  ProgressLabel,
-  ProgressRoot,
-  ProgressTrack,
-  ProgressValue,
-} from "/vue/progress/index.js";
 import {
   PopoverClose,
   PopoverDescription,
@@ -74,12 +73,15 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "/vue/popover/index.js";
-import { RadioGroupRoot } from "/vue/radio-group/index.js";
+import {
+  ProgressIndicator,
+  ProgressLabel,
+  ProgressRoot,
+  ProgressTrack,
+  ProgressValue,
+} from "/vue/progress/index.js";
 import { RadioRoot } from "/vue/radio/index.js";
-import { SwitchRoot } from "/vue/switch/index.js";
-import { SwitchThumb } from "/vue/switch/index.js";
-import { ToggleGroupRoot } from "/vue/toggle-group/index.js";
-import { ToggleRoot } from "/vue/toggle/index.js";
+import { RadioGroupRoot } from "/vue/radio-group/index.js";
 import {
   ScrollAreaContent,
   ScrollAreaCorner,
@@ -107,14 +109,10 @@ import {
   SliderThumb,
   SliderTrack,
 } from "/vue/slider/index.js";
+import { SwitchRoot, SwitchThumb } from "/vue/switch/index.js";
 import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTab } from "/vue/tabs/index.js";
-import {
-  DropzoneFilesList,
-  DropzoneInput,
-  DropzoneLoadingIndicator,
-  DropzoneRoot,
-  DropzoneUploadIndicator,
-} from "/vue/dropzone/index.js";
+import { ToggleRoot } from "/vue/toggle/index.js";
+import { ToggleGroupRoot } from "/vue/toggle-group/index.js";
 
 export async function runHydrationChecks() {
   const host = document.querySelector("#hydration-host");

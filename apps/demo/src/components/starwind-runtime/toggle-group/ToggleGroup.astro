@@ -29,9 +29,7 @@ const {
 } = Astro.props;
 
 const toggleGroupStyle =
-  typeof style === "string"
-    ? `--gap: ${spacing}; ${style}`
-    : { "--gap": spacing, ...(style ?? {}) };
+  typeof style === "string" ? `--gap: ${spacing}; ${style}` : { "--gap": spacing, ...style };
 ---
 
 <ToggleGroupPrimitive.Root

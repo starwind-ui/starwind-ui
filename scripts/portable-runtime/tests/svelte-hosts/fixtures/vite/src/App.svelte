@@ -78,9 +78,7 @@
     >
       <Select.Trigger data-test="select" {ref}
         >{#snippet child({ props, children })}<Button {...props}>{@render children?.()}</Button
-          >{/snippet}<Select.Value placeholder="Choose"
-          >{#snippet children(label, selected)}{label ?? selected}{/snippet}</Select.Value
-        ></Select.Trigger
+          >{/snippet}<Select.Value placeholder="Choose" /></Select.Trigger
       >
       <Select.Content
         ><Select.Item value="alpha">Alpha</Select.Item><Select.Item value="beta">Beta</Select.Item

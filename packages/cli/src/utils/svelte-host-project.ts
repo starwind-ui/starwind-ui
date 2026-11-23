@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "fs-extra";
+import semver from "semver";
 
 import { updateAstroTailwindConfig } from "./astro-config.js";
 import { toHostProjectPreparation } from "./astro-framework-integration.js";
@@ -13,6 +14,7 @@ import {
 import { MIN_ASTRO_VERSION, PATHS } from "./constants.js";
 import type { HostEvidence, ProjectPackage } from "./host-planner.js";
 import type { HostProjectPlanBase } from "./host-project.js";
+import { STARWIND_STYLESHEET_REQUIREMENTS } from "./install-defaults.js";
 import { type CssImportResult, LAYOUT_PATHS, setupLayoutCssImport } from "./layout.js";
 import { resolveProjectMutationPath } from "./project-path.js";
 import {
@@ -120,7 +122,7 @@ export function detectSvelteHostProject(
       svelteRanges.some((range) => !isCompatiblePublishedRange(range, ">=5.29.0 <6"))
     ) {
       throw new Error(
-        "Declare a Svelte range within >=5.29.0 <6 before running Svelte 5 beta initialization.",
+        "Declare a Svelte range within >=5.29.0 <6 before running Svelte 5 initialization.",
       );
     }
     let configPath: string;
@@ -164,7 +166,7 @@ export function detectSvelteHostProject(
     }
     const configContent = evidence.projectFiles?.[configPath];
     if (configContent === undefined)
-      throw new Error(`Read ${configPath} before planning Svelte 5 beta initialization.`);
+      throw new Error(`Read ${configPath} before planning Svelte 5 initialization.`);
     const astroInstalled = readInstalledAstro(evidence);
     projectConfig(configContent, kind, deps.astro, astroInstalled);
     const initialEntry = evidence.projectFiles?.[entryPath];
@@ -173,7 +175,7 @@ export function detectSvelteHostProject(
         initialEntry === undefined &&
         !(kind === "sveltekit" && !evidence.existingPaths.has(entryPath))
       )
-        throw new Error(`Read ${entryPath} before planning Svelte 5 beta initialization.`);
+        throw new Error(`Read ${entryPath} before planning Svelte 5 initialization.`);
       projectEntry(initialEntry, entryPath, PATHS.LOCAL_CSS_FILE, kind);
     }
     const astroConfigured =
@@ -181,7 +183,14 @@ export function detectSvelteHostProject(
       Boolean(deps["@astrojs/svelte"]) &&
       svelteRanges.length > 0 &&
       inspectAstroSvelteConfig(configContent).status === "ready";
-    const requirements = createVuePackageRequirementPlanner(pkg);
+    const planRequirements = createVuePackageRequirementPlanner(pkg);
+    // A SvelteKit project can already declare a stylesheet package in dependencies, where
+    // adapter-node 6 breaks the SSR build. A dev install with the declared range moves it.
+    const requirements =
+      kind === "sveltekit"
+        ? (packageRequirements: string[]) =>
+            planStylesheetDevMoves(planRequirements(packageRequirements), pkg)
+        : planRequirements;
     const prepare: SvelteHostProjectPlan["prepare"] =
       kind === "astro"
         ? async ({ packageManager, projectPackage, skipPrompts }) =>
@@ -225,6 +234,9 @@ export function detectSvelteHostProject(
       cssFile: PATHS.LOCAL_CSS_FILE,
       hostKind: kind,
       hostLabel: label,
+      // SvelteKit adapters such as adapter-node 6 keep production dependencies external to the
+      // SSR build. Tailwind then cannot resolve the style-only stylesheet imports in that build.
+      ...(kind === "sveltekit" ? { isDevRequirement: isStylesheetRequirement } : {}),
       isSecondaryTarget: kind === "astro",
       projectFramework: kind === "astro" ? ("astro" as const) : ("svelte" as const),
       prepare,
@@ -284,6 +296,28 @@ export function detectSvelteHostProject(
       diagnostic: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+const packageNameOf = (spec: string) =>
+  spec.lastIndexOf("@") > 0 ? spec.slice(0, spec.lastIndexOf("@")) : spec;
+const STYLESHEET_PACKAGES = new Set(STARWIND_STYLESHEET_REQUIREMENTS.map(packageNameOf));
+const isStylesheetRequirement = (spec: string) => STYLESHEET_PACKAGES.has(packageNameOf(spec));
+
+/** Add a dev install, at the declared range, for each stylesheet package in dependencies only. */
+export function planStylesheetDevMoves(planned: string[], pkg: ProjectPackage): string[] {
+  const next = [...planned];
+  for (const name of STYLESHEET_PACKAGES) {
+    const range = pkg.dependencies?.[name];
+    if (
+      range === undefined ||
+      pkg.devDependencies?.[name] !== undefined ||
+      !semver.validRange(range) ||
+      next.some((spec) => packageNameOf(spec) === name)
+    )
+      continue;
+    next.push(`${name}@${range}`);
+  }
+  return next;
 }
 
 /** Reject configured route directories that would leave the default root layout unused. */

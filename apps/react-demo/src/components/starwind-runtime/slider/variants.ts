@@ -36,7 +36,7 @@ export const sliderThumb = tv({
     "transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden",
     "data-error-visible:border-error data-error-visible:ring-error/50",
     "disabled:pointer-events-none disabled:opacity-50",
-    "data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:-translate-x-1/2 data-[orientation=horizontal]:-translate-y-1/2",
+    "data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:-translate-x-1/2 data-[orientation=horizontal]:-translate-y-1/2 data-[orientation=horizontal]:rtl:translate-x-1/2",
     "data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:-translate-x-1/2 data-[orientation=vertical]:translate-y-1/2",
   ],
   variants: {

@@ -1,18 +1,3 @@
-import {
-  Comment,
-  Fragment,
-  Text,
-  createApp,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  ref,
-  type ComponentPublicInstance,
-  type VNode,
-} from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type {
   ComboboxInputValueChangeDetails,
   ComboboxValueChangeDetails,
@@ -40,6 +25,20 @@ import {
   ComboboxTrigger,
   ComboboxValue,
 } from "@starwind-ui/vue/combobox";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  Comment,
+  type ComponentPublicInstance,
+  createApp,
+  defineComponent,
+  Fragment,
+  h,
+  nextTick,
+  reactive,
+  ref,
+  Text,
+  type VNode,
+} from "vue";
 import StyledButton from "../../../../apps/vue-demo/src/components/starwind-runtime/button/Button.vue";
 
 const cleanups: Array<() => void> = [];
@@ -805,6 +804,92 @@ type RenderOptions = {
   triggerProps?: Record<string, unknown>;
   valueChild?: VNode | string;
 };
+
+describe("Vue Combobox late value", () => {
+  for (const vModel of [true, false]) {
+    it(`shows the label of a late value with ${vModel ? "v-model" : "a one-way prop"}`, async () => {
+      const overlays = document.createElement("div");
+      overlays.id = "overlays";
+      document.body.append(overlays);
+      const state = reactive({ value: undefined as string | null | undefined });
+      const events: string[] = [];
+      const host = document.createElement("div");
+      document.body.append(host);
+      const app = createApp({
+        render: () =>
+          renderCombobox({
+            modelValue: state.value,
+            "onUpdate:modelValue": (next: string | null) => {
+              events.push("value-update");
+              if (vModel) state.value = next;
+            },
+            "onUpdate:inputValue": () => events.push("input-update"),
+            onValueChange: () => events.push("value-detail"),
+          }),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await frame();
+      const input = host.querySelector<HTMLInputElement>("[data-sw-combobox-input]")!;
+      expect(input.value).toBe("");
+
+      state.value = "banana";
+      await frame();
+      await frame();
+      expect(host.querySelector("[data-sw-combobox]")?.getAttribute("data-value")).toBe("banana");
+      expect(input.value).toBe("Banana");
+      expect(events).toEqual([]);
+      if (!vModel) return;
+
+      host.querySelector<HTMLElement>("[data-sw-combobox-trigger]")!.click();
+      await frame();
+      item("apple").click();
+      await frame();
+      expect(state.value).toBe("apple");
+      expect(input.value).toBe("Apple");
+    });
+  }
+
+  it("shows the label of a late value over a default input text", async () => {
+    const overlays = document.createElement("div");
+    overlays.id = "overlays";
+    document.body.append(overlays);
+    const state = reactive({ value: undefined as string | null | undefined });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () => renderCombobox({ defaultInputValue: "Ap", modelValue: state.value }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await frame();
+    const input = host.querySelector<HTMLInputElement>("[data-sw-combobox-input]")!;
+    state.value = "banana";
+    await frame();
+    await frame();
+    expect(input.value).toBe("Banana");
+  });
+
+  it("keeps the default input text when a late value is null", async () => {
+    const overlays = document.createElement("div");
+    overlays.id = "overlays";
+    document.body.append(overlays);
+    const state = reactive({ value: undefined as string | null | undefined });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () => renderCombobox({ defaultInputValue: "Ap", modelValue: state.value }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await frame();
+    const input = host.querySelector<HTMLInputElement>("[data-sw-combobox-input]")!;
+    state.value = null;
+    await frame();
+    await frame();
+    expect(input.value).toBe("Ap");
+  });
+});
 
 function renderCombobox(rootProps: Record<string, unknown>, options: RenderOptions = {}) {
   const items = options.items ?? [

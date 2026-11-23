@@ -8,13 +8,13 @@ export function printSidebarMenuButton(f: AdapterSidebarFacts): string {
   export type SidebarMenuButtonChildPayload = { props: HTMLAttributes<HTMLElement>; children?: ModuleSnippet };
 </script>
 <script lang="ts">
-  import { useSidebarContext } from "./SidebarContext.js";
+  import { useSidebarState } from "./SidebarContext.js";
   import type { ButtonChildProps } from "../button/ButtonRoot.svelte";
   import { untrack, type Snippet } from "svelte";
   import { createAttachmentKey } from "svelte/attachments";
   type Props = ButtonChildProps & { children?: Snippet; child?: Snippet<[SidebarMenuButtonChildPayload]>; ref?: (element: HTMLElement|null)=>void };
   let props:Props=$props();
-  const context=useSidebarContext();
+  const context=useSidebarState();
   let children=$derived(props.children),child=$derived(props.child);
   let native=$derived.by(()=>{const {children:_children,child:_child,ref:_ref,...rest}=props;return {...rest,${sidebarAttrs(f, "menuButton", "svelte", "object")},type:"button" as const};});
   const attachRef = (element: HTMLElement) => {

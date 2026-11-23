@@ -25,8 +25,15 @@ describe("partial Primitive Framework Adapter target generation", () => {
   it("preserves full support for existing Astro and React targets", () => {
     const inventory = getPrimitivePackageExportNames();
 
+    // Chart generates for every target, as carousel does.
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("astro")).toEqual(inventory);
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("react")).toEqual(inventory);
+    expect(getPrimitiveFrameworkAdapterTargetsForComponent("chart")).toEqual([
+      "astro",
+      "react",
+      "vue",
+      ...(hasPrivateSvelte ? ["svelte"] : []),
+    ]);
     expect(getPrimitiveFrameworkAdapterTargetsForComponent("theme")).toEqual([
       "astro",
       "react",

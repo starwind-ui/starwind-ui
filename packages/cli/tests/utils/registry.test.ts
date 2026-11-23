@@ -5,11 +5,7 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
-import {
-  type FrameworkTargetPolicy,
-  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
-  PUBLIC_FRAMEWORK_TARGET_POLICY,
-} from "../../src/utils/framework-target-policy.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import {
   clearRegistryCache,
   getAllComponents,

@@ -51,6 +51,7 @@ const GENERIC_ADAPTER_PLAN_COVERAGE_MANIFEST = {
     "field",
     "carousel",
     "toast",
+    "chart",
   ],
   futureFrameworkTracer: [],
   customIsland: [],

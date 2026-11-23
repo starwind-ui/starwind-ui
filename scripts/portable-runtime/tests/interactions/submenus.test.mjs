@@ -7,8 +7,8 @@ import {
 } from "../../runtime-performance/interactions/driver.mjs";
 import {
   validateSubmenuDwell,
-  validateSubmenuInventory,
   validateSubmenuGeometry,
+  validateSubmenuInventory,
 } from "../../runtime-performance/interactions/submenus.mjs";
 
 describe("submenu journey", () => {

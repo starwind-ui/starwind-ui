@@ -1,11 +1,5 @@
 export { loadPrimitiveAuthoredUsage } from "./authored-input.js";
 export { buildLayeredDocsMetadata } from "./build-metadata.js";
-export {
-  checkLayeredDocsMetadata,
-  generateLayeredDocsMetadata,
-  validateLayeredDocsMetadata,
-  validateLayeredDocsMetadataArtifact,
-} from "./orchestrate.js";
 export type {
   BuildLayeredDocsMetadataOptions,
   CheckLayeredDocsMetadataOptions,
@@ -17,6 +11,12 @@ export type {
   LayeredDocsValidationReport,
   ValidateLayeredDocsMetadataOptions,
 } from "./options.js";
+export {
+  checkLayeredDocsMetadata,
+  generateLayeredDocsMetadata,
+  validateLayeredDocsMetadata,
+  validateLayeredDocsMetadataArtifact,
+} from "./orchestrate.js";
 export {
   formatPrimitiveStateControlSupport,
   renderPrimitiveIndexPage,

@@ -10,21 +10,21 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "default",
-    "size": size = "md",
-    "spacing": spacing = 2,
-    "defaultValue": defaultValue,
-    "disabled": disabled = false,
-    "loopFocus": loopFocus,
-    "multiple": multiple = false,
-    "orientation": orientation = "horizontal",
-    "style": style,
+    variant = "default",
+    size = "md",
+    spacing = 2,
+    defaultValue,
+    disabled = false,
+    loopFocus,
+    multiple = false,
+    orientation = "horizontal",
+    style,
     "class": className,
     value = $bindable(),
     "value": commandValue,
-    "ref": ref,
-    "onValueChange": onValueChange,
-    "children": children,
+    ref,
+    onValueChange,
+    children,
     ...rest
   }: ToggleGroupProps = $props();
 

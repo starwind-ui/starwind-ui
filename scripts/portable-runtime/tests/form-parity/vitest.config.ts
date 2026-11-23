@@ -1,11 +1,11 @@
-import path from "node:path";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 import ts from "typescript";
 import { defineConfig } from "vitest/config";
 import { playwright } from "../../../../packages/react/node_modules/@vitest/browser-playwright/dist/index.js";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { compileVueSfc } from "../../../../packages/vue/tsup.config.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
@@ -82,7 +82,7 @@ export default defineConfig({
       enabled: true,
       headless: true,
       instances: [{ browser: "chromium" }],
-      provider: playwright({ launchOptions: { channel: "chromium" } }),
+      provider: playwright({ launchOptions: { channel: "chrome" } }),
     },
   },
 });

@@ -3,10 +3,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
-
-import { formatGeneratedOutput as runFormatGeneratedOutput } from "./format-generated-output.js";
 import { starwindStyledContracts } from "./contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "./contracts/styled/types.js";
+import { formatGeneratedOutput as runFormatGeneratedOutput } from "./format-generated-output.js";
 import {
   generateFrameworkPrimitiveWrappers,
   generateFrameworkStyledWrappers,

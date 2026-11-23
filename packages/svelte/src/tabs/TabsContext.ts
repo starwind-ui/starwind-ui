@@ -3,9 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
+import type { TabsOrientation, TabsValue } from "@starwind-ui/runtime/tabs";
 import { getContext, setContext } from "svelte";
-import type { TabsValue, TabsOrientation } from "@starwind-ui/runtime/tabs";
 export type TabsContextValue = Readonly<{
   value: TabsValue;
   orientation: TabsOrientation;

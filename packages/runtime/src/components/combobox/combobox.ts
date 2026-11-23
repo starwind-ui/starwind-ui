@@ -11,7 +11,6 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
   type FloatingPositioner,
@@ -27,14 +26,14 @@ import { createFocusBoundary, type FocusBoundaryHandle } from "../../internal/fo
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { hideNativeInput } from "../../internal/native-input";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
-import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
-import { showElement } from "../../internal/presence";
-import { lockDocumentScroll } from "../../internal/scroll-lock";
 import {
   createActiveDescendantNavigationAdapter,
   createOwnedListNavigation,
   type OwnedListNavigation,
 } from "../../internal/owned-list-navigation";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
+import { showElement } from "../../internal/presence";
+import { lockDocumentScroll } from "../../internal/scroll-lock";
 import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
 
@@ -453,7 +452,6 @@ class ComboboxController implements ComboboxInstance {
       return;
     }
 
-    const previousOpen = this.openState;
     this.openState = open;
     this.applyOpenState(open, { reason: "imperative-action" });
   }
@@ -490,8 +488,6 @@ class ComboboxController implements ComboboxInstance {
       if (accepted && options.filter !== false) this.setFilterValue(inputValue);
       return;
     }
-
-    const previousInputValue = this.inputValueState;
 
     this.formResetRevision += 1;
     this.inputValueState = inputValue;
@@ -937,7 +933,7 @@ class ComboboxController implements ComboboxInstance {
           case "Escape":
             event.preventDefault();
             this.requestOpen(false, { event, reason: "escape-key" });
-            this.focusInputWithoutOpening();
+            this.focusInputWithoutOpening({ preventScroll: true });
             break;
           case "Enter":
           case " ":
@@ -1187,6 +1183,7 @@ class ComboboxController implements ComboboxInstance {
           this.positionPopup();
         },
       },
+      getPointerPassThroughWrapper: () => this.elements.positioner,
       popup: this.elements.popup,
       portal: {
         clearFloatingStyles: () => this.clearFloatingStyles(),
@@ -1343,7 +1340,7 @@ class ComboboxController implements ComboboxInstance {
     if (!closeApplied || this.openState) {
       this.updateFilteredItems({ clearHighlight: false });
     }
-    this.focusInputWithoutOpening();
+    this.focusInputWithoutOpening({ preventScroll: true });
   }
 
   private selectActiveItem(event?: Event): void {
@@ -1353,11 +1350,11 @@ class ComboboxController implements ComboboxInstance {
     this.selectItem(item, event);
   }
 
-  private focusInputWithoutOpening(): void {
+  private focusInputWithoutOpening(options?: FocusOptions): void {
     if (document.activeElement === this.elements.input) return;
 
     this.suppressNextFocusOpen = true;
-    this.elements.input.focus();
+    this.elements.input.focus(options);
 
     if (document.activeElement !== this.elements.input) {
       this.suppressNextFocusOpen = false;

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createStyledCarouselConsumer } from "../../../../packages/svelte/tests/styled-carousel-consumer.js";
-import { verifyStyledCarousel } from "../../../../packages/svelte/tests/styled-carousel-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledCarousel } from "../../../../packages/svelte/tests/styled-carousel-browser.js";
+import { createStyledCarouselConsumer } from "../../../../packages/svelte/tests/styled-carousel-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

@@ -8,11 +8,7 @@ import {
   createAdapterExportInventory,
   createRuntimeTypeExportFacts,
 } from "../export-toolkit.js";
-import type {
-  AdapterIndexFile,
-  AdapterNamespaceExport,
-  AdapterTypeFacadeFile,
-} from "../types.js";
+import type { AdapterIndexFile, AdapterNamespaceExport, AdapterTypeFacadeFile } from "../types.js";
 
 function printIndexFileExports(file: AdapterIndexFile): string {
   const inventory = createAdapterExportInventory({
@@ -55,8 +51,11 @@ function printRuntimeTypeReExport({
 }
 
 function printNamespaceExport(exportsModel: AdapterNamespaceExport): string {
-  return createAdapterExportInventory({ namespaceExport: exportsModel }).namespace.members
-    .map((member) => `export { ${member.mode === "type" ? "type " : ""}${member.name} } from "${member.from}";`)
+  return createAdapterExportInventory({ namespaceExport: exportsModel })
+    .namespace.members.map(
+      (member) =>
+        `export { ${member.mode === "type" ? "type " : ""}${member.name} } from "${member.from}";`,
+    )
     .join("\n");
 }
 
@@ -67,9 +66,7 @@ export const exportPrinter = {
   printTypeFacadeFileExports,
 } satisfies FrameworkAdapterExportPrinter;
 
-function printTypeFacadeExports(
-  typeFacades: readonly AdapterTypeFacadeFacts[],
-): string[] {
+function printTypeFacadeExports(typeFacades: readonly AdapterTypeFacadeFacts[]): string[] {
   return typeFacades.flatMap((typeFacade) =>
     typeFacade.exports.map((exportName) => `export type { ${exportName} };`),
   );

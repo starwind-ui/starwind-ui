@@ -8,6 +8,7 @@ import { shared } from "../../internal/shared";
 import { createInput } from "../input";
 import {
   connectFieldControl,
+  type FieldNativeControl,
   getFieldControlAccessibleSurfaces,
   getFieldControlFocusTarget,
   getFieldControlKind,
@@ -17,7 +18,6 @@ import {
   readFieldControlCustomValidity,
   readFieldControlValue,
   registerFieldControlBridge,
-  type FieldNativeControl,
 } from "./field-control-bridge";
 
 export type FieldState = {

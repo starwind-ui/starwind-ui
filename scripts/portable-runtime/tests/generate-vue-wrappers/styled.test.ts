@@ -99,6 +99,15 @@ const EXPECTED_REQUESTED_ROOT_FILES = {
     "index.ts",
     "variants.ts",
   ],
+  chart: [
+    "ChartContainer.vue",
+    "ChartLegend.vue",
+    "ChartLegendContent.vue",
+    "ChartTooltip.vue",
+    "ChartTooltipContent.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   checkbox: ["Checkbox.vue", "index.ts", "styles.css", "variants.ts"],
   "checkbox-group": ["CheckboxGroup.vue", "index.ts", "variants.ts"],
   collapsible: [
@@ -382,7 +391,7 @@ const EXPECTED_REQUESTED_ROOT_FILES = {
   slider: ["Slider.vue", "index.ts", "variants.ts"],
   skeleton: ["Skeleton.vue", "index.ts", "variants.ts"],
   spinner: ["Spinner.vue", "index.ts", "variants.ts"],
-  switch: ["Switch.vue", "index.ts", "variants.ts"],
+  switch: ["Switch.vue", "index.ts", "styles.css", "variants.ts"],
   table: [
     "Table.vue",
     "TableBody.vue",
@@ -1000,8 +1009,8 @@ import { ScrollArea, ScrollAreaThumb, ScrollBar } from "./styled/scroll-area/ind
 
 const defaultRoot = ref(null);
 const customRoot = ref(null);
-let mutationRootObserves = 0;
-let mutationDisconnected = 0;
+let mutationSequence = 0;
+const mutationObservers = [];
 let resizeCreated = 0;
 let resizeDisconnected = 0;
 const NativeMutationObserver = window.MutationObserver;
@@ -1009,15 +1018,42 @@ const NativeResizeObserver = window.ResizeObserver;
 window.MutationObserver = class extends NativeMutationObserver {
   constructor(callback) {
     super(callback);
+    // Playwright injects its script into the page while it waits for the result. That script
+    // keeps a document observer of its own, so the proof does not record it.
+    if (String(new Error().stack).includes("InjectedScript")) {
+      this.record = null;
+      return;
+    }
+    this.record = {
+      activeTargets: [],
+      events: [],
+      id: mutationObservers.length,
+      observations: [],
+    };
+    mutationObservers.push(this.record);
   }
   observe(target, options) {
-    if (target instanceof Element && target.matches("[data-sw-scroll-area]")) {
-      mutationRootObserves += 1;
+    if (!this.record) return super.observe(target, options);
+    const targetName = target === document || target === document.documentElement
+      ? "document"
+      : target instanceof Element && target.matches("[data-sw-scroll-area]")
+        ? "scroll-area:" + (target.dataset.testid ?? "unlabeled")
+        : "element:" + (target instanceof Element ? target.tagName.toLowerCase() : "unknown");
+    const recordedOptions = {
+      ...options,
+      ...(options.attributeFilter ? { attributeFilter: [...options.attributeFilter] } : {}),
+    };
+    this.record.observations.push({ options: recordedOptions, target: targetName });
+    if (!this.record.activeTargets.includes(targetName)) {
+      this.record.activeTargets.push(targetName);
     }
+    this.record.events.push({ sequence: ++mutationSequence, target: targetName, type: "observe" });
     return super.observe(target, options);
   }
   disconnect() {
-    mutationDisconnected += 1;
+    if (!this.record) return super.disconnect();
+    this.record.activeTargets = [];
+    this.record.events.push({ sequence: ++mutationSequence, type: "disconnect" });
     return super.disconnect();
   }
 };
@@ -1120,8 +1156,7 @@ try {
   window.ResizeObserver = NativeResizeObserver;
   document.documentElement.dataset.starwindScrollAreaHydrationResult = JSON.stringify({
     ...proof,
-    mutationDisconnected,
-    mutationRootObserves,
+    mutationObservers,
     refsCleared: defaultRoot.value === null && customRoot.value === null,
     resizeCreated,
     resizeDisconnected,
@@ -1482,13 +1517,11 @@ describe("generated Vue Styled wrappers", () => {
     expect(firstTree["select/SelectTrigger.vue"]).toContain(':ref="setElement"');
     expect(firstTree["select/SelectTrigger.vue"]).toContain("pendingPrimitiveRef");
     expect(firstTree["select/SelectTrigger.vue"]).toContain("watch(");
-    expect(firstTree["select/SelectValue.vue"]).toContain('v-if="$slots.default"');
-    expect(firstTree["select/SelectValue.vue"]).toContain('<template #default="slotProps">');
-    expect(firstTree["select/SelectValue.vue"]).toContain('<slot v-bind="slotProps" />');
-    expect(firstTree["select/SelectValue.vue"]).toContain("v-else");
-    expect(firstTree["select/SelectValue.vue"]).toContain(
-      "default?: (props: { label: string | null; value: string | null }) => unknown;",
-    );
+    expect(firstTree["select/SelectValue.vue"]).not.toContain("$slots.default");
+    expect(firstTree["select/SelectValue.vue"]).not.toContain("slotProps");
+    expect(firstTree["select/SelectValue.vue"]).not.toContain("v-else");
+    expect(firstTree["select/SelectValue.vue"]).toContain("<slot />");
+    expect(firstTree["select/SelectValue.vue"]).toContain("default?: () => unknown;");
     const themeToggle = firstTree["theme-toggle/ThemeToggle.vue"];
     expect(themeToggle).toContain('from "@starwind-ui/vue/theme"');
     expect(themeToggle).toContain("onMounted(() => {");
@@ -1694,19 +1727,17 @@ describe("generated Vue Styled wrappers", () => {
     );
     expect(valueHtml).toContain("Choose a value");
 
-    const scopedValueHtml = await renderToString(
+    const customValueHtml = await renderToString(
       createSSRApp({
         render: () =>
           h(Select, null, {
             default: () =>
-              h(SelectValue, null, {
-                default: ({ label, value }: { label: string | null; value: string | null }) =>
-                  `${label ?? "none"}:${value ?? "none"}`,
-              }),
+              h(SelectValue, { placeholder: "Choose a value" }, { default: () => "Custom value" }),
           }),
       }),
     );
-    expect(scopedValueHtml).toContain("none:none");
+    expect(customValueHtml).toContain("Custom value");
+    expect(customValueHtml).not.toContain(">Choose a value<");
 
     const ThemeToggle = await loadGeneratedComponent(
       server,
@@ -1889,7 +1920,7 @@ describe("generated Vue Styled wrappers", () => {
     );
     await writeFile(
       path.join(root, "index.html"),
-      `<!doctype html><html><body><div id="app">${html}</div><script type="module" src="/main.js"></script></body></html>`,
+      `<!doctype html><html><head><link rel="icon" href="data:,"></head><body><div id="app">${html}</div><script type="module" src="/main.js"></script></body></html>`,
       "utf8",
     );
     await writeFile(path.join(root, "main.js"), BROWSER_PROOF_SOURCE, "utf8");
@@ -1908,7 +1939,7 @@ describe("generated Vue Styled wrappers", () => {
       throw new TypeError("The workspace Playwright module does not expose Chromium.");
     }
 
-    const browser = await playwright.chromium.launch({ headless: true });
+    const browser = await playwright.chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       const browserErrors: string[] = [];
@@ -2015,7 +2046,7 @@ describe("generated Vue Styled wrappers", () => {
     );
     await writeFile(
       path.join(root, "index.html"),
-      `<!doctype html><html><body><div id="app">${html}</div><div id="combobox-overlays"></div><script type="module" src="/combobox-portal-hydration.js"></script></body></html>`,
+      `<!doctype html><html><head><link rel="icon" href="data:,"></head><body><div id="app">${html}</div><div id="combobox-overlays"></div><script type="module" src="/combobox-portal-hydration.js"></script></body></html>`,
       "utf8",
     );
     await writeFile(
@@ -2037,7 +2068,7 @@ describe("generated Vue Styled wrappers", () => {
       throw new TypeError("The workspace Playwright module does not expose Chromium.");
     }
 
-    const browser = await playwright.chromium.launch({ headless: true });
+    const browser = await playwright.chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       const browserErrors: string[] = [];
@@ -2102,7 +2133,7 @@ describe("generated Vue Styled wrappers", () => {
     );
     await writeFile(
       path.join(root, "index.html"),
-      `<!doctype html><html><body><div id="app">${html}</div><script type="module" src="/avatar-hydration.js"></script></body></html>`,
+      `<!doctype html><html><head><link rel="icon" href="data:,"></head><body><div id="app">${html}</div><script type="module" src="/avatar-hydration.js"></script></body></html>`,
       "utf8",
     );
     await writeFile(path.join(root, "avatar-hydration.js"), AVATAR_HYDRATION_PROOF_SOURCE, "utf8");
@@ -2120,7 +2151,7 @@ describe("generated Vue Styled wrappers", () => {
       throw new TypeError("The workspace Playwright module does not expose Chromium.");
     }
 
-    const browser = await playwright.chromium.launch({ headless: true });
+    const browser = await playwright.chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       const browserErrors: string[] = [];
@@ -2171,7 +2202,7 @@ describe("generated Vue Styled wrappers", () => {
     );
     await writeFile(
       path.join(root, "index.html"),
-      `<!doctype html><html><body><div id="app">${html}</div><script type="module" src="/progress-hydration.js"></script></body></html>`,
+      `<!doctype html><html><head><link rel="icon" href="data:,"></head><body><div id="app">${html}</div><script type="module" src="/progress-hydration.js"></script></body></html>`,
       "utf8",
     );
     await writeFile(
@@ -2194,7 +2225,7 @@ describe("generated Vue Styled wrappers", () => {
       throw new TypeError("The workspace Playwright module does not expose Chromium.");
     }
 
-    const browser = await playwright.chromium.launch({ headless: true });
+    const browser = await playwright.chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       const browserErrors: string[] = [];
@@ -2286,7 +2317,7 @@ describe("generated Vue Styled wrappers", () => {
     const html = await renderToString(createSSRApp({ render: fixture }));
     await writeFile(
       path.join(root, "index.html"),
-      `<!doctype html><html><head><style>
+      `<!doctype html><html><head><link rel="icon" href="data:,"><style>
         .hydrated-scroll-area { height: 100px; width: 160px; }
         .hydrated-scroll-area [data-sw-scroll-area-viewport] { height: 100%; width: 100%; }
         .hydrated-scroll-content { height: 320px; width: 360px; }
@@ -2313,7 +2344,7 @@ describe("generated Vue Styled wrappers", () => {
       throw new TypeError("The workspace Playwright module does not expose Chromium.");
     }
 
-    const browser = await playwright.chromium.launch({ headless: true });
+    const browser = await playwright.chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       const browserErrors: string[] = [];
@@ -2335,8 +2366,7 @@ describe("generated Vue Styled wrappers", () => {
         anatomy: { corners: 2, roots: 2, scrollbars: 2, thumbs: 2, viewports: 2 },
         geometryStable: true,
         horizontalOrientation: "horizontal",
-        mutationDisconnected: expect.any(Number),
-        mutationRootObserves: expect.any(Number),
+        mutationObservers: expect.any(Array),
         refsCleared: true,
         refsSame: true,
         resizeCreated: 2,
@@ -2345,10 +2375,58 @@ describe("generated Vue Styled wrappers", () => {
         scrolled: true,
         warnings: [],
       });
-      // Vue 3.5.41 and newer refresh each root once more after hydration. Each root still
-      // creates one observer, and every attach needs a matching detach.
-      expect(result.mutationRootObserves).toBeGreaterThanOrEqual(2);
-      expect(result.mutationDisconnected).toBe(result.mutationRootObserves);
+      type MutationObserverSnapshot = {
+        activeTargets: string[];
+        events: Array<{ sequence: number; target?: string; type: "disconnect" | "observe" }>;
+        id: number;
+        observations: Array<{ options: Record<string, unknown>; target: string }>;
+      };
+      const mutationObservers = result.mutationObservers as MutationObserverSnapshot[];
+      const scrollAreaMutationOptions = {
+        characterData: true,
+        childList: true,
+        subtree: true,
+      };
+      const rootObservers = ["hydrated-default", "hydrated-custom"].map((name) => {
+        const target = `scroll-area:${name}`;
+        const matching = mutationObservers.filter((observer) =>
+          observer.observations.some((observation) => observation.target === target),
+        );
+        expect(matching).toHaveLength(1);
+        const [observer] = matching;
+        expect(observer.observations.length).toBeGreaterThanOrEqual(1);
+        expect(
+          observer.observations.every(
+            (observation) =>
+              observation.target === target &&
+              JSON.stringify(observation.options) === JSON.stringify(scrollAreaMutationOptions),
+          ),
+        ).toBe(true);
+        expect(observer.activeTargets).toEqual([]);
+        const lastObserve = Math.max(
+          ...observer.events
+            .filter((event) => event.type === "observe")
+            .map((event) => event.sequence),
+        );
+        const finalEvent = observer.events.at(-1);
+        expect(finalEvent?.type).toBe("disconnect");
+        expect(finalEvent?.sequence).toBeGreaterThan(lastObserve);
+        return observer;
+      });
+      expect(rootObservers[0].id).not.toBe(rootObservers[1].id);
+
+      // Runtime reads direction without a document observer.
+      expect(
+        mutationObservers.filter((observer) =>
+          observer.observations.some(
+            (observation) =>
+              observation.target === "document" &&
+              (observation.options.attributes === true ||
+                Array.isArray(observation.options.attributeFilter)),
+          ),
+        ),
+      ).toEqual([]);
+      expect(mutationObservers.every((observer) => observer.activeTargets.length === 0)).toBe(true);
       expect(result.resizeDisconnected).toBeGreaterThanOrEqual(result.resizeCreated);
     } finally {
       await browser.close();
@@ -2381,7 +2459,7 @@ describe("generated Vue Styled wrappers", () => {
     );
     await writeFile(
       path.join(root, "index.html"),
-      `<!doctype html><html><body><div id="app">${html}</div><script type="module" src="/theme-hydration.js"></script></body></html>`,
+      `<!doctype html><html><head><link rel="icon" href="data:,"></head><body><div id="app">${html}</div><script type="module" src="/theme-hydration.js"></script></body></html>`,
       "utf8",
     );
     await writeFile(
@@ -2403,7 +2481,7 @@ describe("generated Vue Styled wrappers", () => {
       throw new TypeError("The workspace Playwright module does not expose Chromium.");
     }
 
-    const browser = await playwright.chromium.launch({ headless: true });
+    const browser = await playwright.chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       const browserErrors: string[] = [];
@@ -2476,7 +2554,7 @@ describe("generated Vue Styled wrappers", () => {
     );
     await writeFile(
       path.join(root, "index.html"),
-      `<!doctype html><html><body><div id="app">${html}</div><script type="module" src="/checkbox-hydration.js"></script></body></html>`,
+      `<!doctype html><html><head><link rel="icon" href="data:,"></head><body><div id="app">${html}</div><script type="module" src="/checkbox-hydration.js"></script></body></html>`,
       "utf8",
     );
     await writeFile(
@@ -2499,7 +2577,7 @@ describe("generated Vue Styled wrappers", () => {
       throw new TypeError("The workspace Playwright module does not expose Chromium.");
     }
 
-    const browser = await playwright.chromium.launch({ headless: true });
+    const browser = await playwright.chromium.launch({ channel: "chrome", headless: true });
     try {
       const page = await browser.newPage();
       const browserErrors: string[] = [];
@@ -2831,7 +2909,7 @@ type Browser = {
 
 type PlaywrightModule = {
   chromium: {
-    launch(options: { headless: boolean }): Promise<Browser>;
+    launch(options: { headless: boolean; channel?: string }): Promise<Browser>;
   };
 };
 

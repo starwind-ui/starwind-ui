@@ -555,7 +555,7 @@ async function hydrateRegistry<TFramework extends CliFrameworkTarget>(
   return {
     ...registry,
     components: await Promise.all(
-      registry.components.map((component) =>
+      registry.components.map(async (component) =>
         component.artifact
           ? hydrateComponentArtifact(component, registry, source, options)
           : component,

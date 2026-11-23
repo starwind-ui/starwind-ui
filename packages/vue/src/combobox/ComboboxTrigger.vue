@@ -2,14 +2,14 @@
 <script setup lang="ts">
 import { defineComponent, ref, useAttrs, type VNode } from "vue";
 import { createVueAsChild } from "../_internal/as-child";
-import { useComboboxContext } from "./ComboboxRoot.vue";
+import { useComboboxInternalContext } from "./ComboboxRoot.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ asChild?: boolean }>(), { asChild: false });
 const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
-const combobox = useComboboxContext("Trigger");
+const combobox = useComboboxInternalContext("Trigger");
 const asChild = createVueAsChild("ComboboxTrigger", element);
 const { setElement } = asChild;
 defineExpose({ element });

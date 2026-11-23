@@ -23,9 +23,9 @@ errorOptions?: FormExternalErrorOptions;
     "data-error-visibility": dataErrorVisibility,
     "data-revalidation-timing": dataRevalidationTiming,
     "data-validation-timing": dataValidationTiming,
-    errorVisibility = "submit",
-    revalidationTiming = "change",
-    validationTiming = "submit",
+    errorVisibility,
+    revalidationTiming,
+    validationTiming,
     ...rest }: Props = $props();
   const configured = { options: false, errors: false };
   const owner = provideFormOwner();

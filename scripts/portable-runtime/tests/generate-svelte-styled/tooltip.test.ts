@@ -1,4 +1,4 @@
-import { it, expect } from "vitest";
+import { expect, it } from "vitest";
 import { createStyledTooltipConsumer } from "../../../../packages/svelte/tests/styled-tooltip-consumer.js";
 import { verifyTooltipBrowser } from "../../../../packages/svelte/tests/tooltip-browser.js";
 
@@ -60,6 +60,31 @@ return { link: true };`,
       [],
     );
     expect(result).toMatchObject({ link: true, hydrationExact: true, teardown: true });
+  } finally {
+    await consumer.dispose();
+  }
+}, 60_000);
+
+it("gives a text child trigger the React and Vue class list", async () => {
+  const consumer = await createStyledTooltipConsumer(process.cwd());
+  try {
+    await consumer.write({
+      "TextTrigger.svelte": `<script lang="ts">import Tooltip from "./tooltip/index.js";</script>
+<Tooltip.Root><Tooltip.Trigger data-case="text">Help</Tooltip.Trigger><Tooltip.Trigger data-case="custom" class="custom">Help</Tooltip.Trigger><Tooltip.Trigger data-case="child">{#snippet child({ props, children })}<a href="#docs" {...props as any}>{@render children?.()}</a>{/snippet}Docs</Tooltip.Trigger><Tooltip.Content>Tip</Tooltip.Content></Tooltip.Root>`,
+      "text-trigger.mjs":
+        'import { render } from "svelte/server"; import App from "./TextTrigger.svelte"; console.log(JSON.stringify(render(App).body));',
+    });
+    const body: string = JSON.parse(await consumer.run("text-trigger.mjs", { loader: true }));
+    const trigger = (name: string) => {
+      const tag = body.match(new RegExp(`<(\\w+)[^>]*data-case="${name}"[^>]*>`));
+      expect(tag, name).not.toBeNull();
+      const classes = tag![0].match(/\sclass="([^"]*)"/)?.[1] ?? "";
+      return { element: tag![1], classes: classes.split(/\s+/).filter(Boolean) };
+    };
+    // React and Vue give the fallback button only the consumer class.
+    expect(trigger("text")).toEqual({ element: "button", classes: [] });
+    expect(trigger("custom")).toEqual({ element: "button", classes: ["custom"] });
+    expect(trigger("child")).toEqual({ element: "a", classes: [] });
   } finally {
     await consumer.dispose();
   }

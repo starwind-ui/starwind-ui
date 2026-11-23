@@ -10,13 +10,13 @@
 
 <script lang="ts">
   let {
-    "type": type = "single",
-    "defaultValue": defaultValue,
-    "collapsible": collapsible = true,
+    type = "single",
+    defaultValue,
+    collapsible = true,
     "class": className,
-    "children": children,
+    children,
     value = $bindable(),
-    "onValueChange": onValueChange,
+    onValueChange,
     "value": commandValue,
     ...rest
   }: AccordionProps = $props();

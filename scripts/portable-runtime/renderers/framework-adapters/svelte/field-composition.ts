@@ -70,11 +70,11 @@ import { untrack, type Snippet } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { HTMLAttributes } from "svelte/elements";
 type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-children?: Snippet; ref?: (element: HTMLDivElement | null) => void; "data-slot"?: string;
+children?: Snippet; ref?: (element: HTMLDivElement | null) => void;
 ${states.map(({ prop }) => `${prop.name}?: ${prop.type};`).join("\n")}
 ${timings.map(({ prop, attribute }) => `${prop.name}?: FormValidationTiming; "${attribute}"?: FormValidationTiming;`).join("\n")}
 };
-let { children, ref, "data-slot": dataSlot = "field", ${states.map(({ prop }) => prop.name + (prop.name === "disabled" ? ` = ${prop.defaultValue}` : "")).join(", ")},
+let { children, ref, ${states.map(({ prop }) => prop.name + (prop.name === "disabled" ? ` = ${prop.defaultValue}` : "")).join(", ")},
 ${timings.map(({ prop, attribute }) => `${prop.name}, "${attribute}": data${prop.name}`).join(", ")}, ...rest }: Props = $props();
 const owner = getFormOwner();
 let instance = $state<ReturnType<typeof ${facts.runtime.factory}>>();
@@ -101,7 +101,7 @@ $effect(() => {
   return () => untrack(() => callback?.(null));
 });
 </script>
-<div {...rest} ${facts.attrs.root}="" data-slot={dataSlot}
+<div {...rest} ${facts.attrs.root}=""
 ${states.map(({ prop, attribute }) => `${attribute}={${prop.name}${prop.name === "name" ? "" : ' ? "" : undefined'}}`).join("\n")}
 ${timings.map(({ prop, attribute }) => `${attribute}={${formTimingValue(`data${prop.name}`, prop.name)}}`).join("\n")}
 {@attach attachField}>{@render children?.()}</div>
@@ -146,10 +146,10 @@ import type { ${part === "label" ? "HTMLLabelAttributes" : "HTMLAttributes"} } f
 import { getFieldRefresh } from "../form/FormFieldContext.js";
 const refresh = getFieldRefresh();
 const attachPart: Attachment<${element}> = () => { ${fieldPartConnection("refresh")} };
-type Props = Omit<${part === "label" ? "HTMLLabelAttributes" : `HTMLAttributes<${element}>`}, "children"> & { children?: Snippet; ref?: (element: ${element} | null) => void; "data-slot"?: string; ${message ? `match?: ${matchType};` : ""} ${part === "error" ? `${facts.message.error.messageSource.prop.name}?: ${facts.message.error.messageSource.prop.type};` : ""} };
-let { children, ref, "data-slot": dataSlot = "field-${part}", ${message ? `match = ${message.matchDefault}, hidden = ${message.hiddenDefault},` : ""} ${part === "error" ? "messageSource," : ""} ...rest }: Props = $props();
+type Props = Omit<${part === "label" ? "HTMLLabelAttributes" : `HTMLAttributes<${element}>`}, "children"> & { children?: Snippet; ref?: (element: ${element} | null) => void; ${message ? `match?: ${matchType};` : ""} ${part === "error" ? `${facts.message.error.messageSource.prop.name}?: ${facts.message.error.messageSource.prop.type};` : ""} };
+let { children, ref, ${message ? `match = ${message.matchDefault}, hidden = ${message.hiddenDefault},` : ""} ${part === "error" ? "messageSource," : ""} ...rest }: Props = $props();
 ${printSvelteRefAttachment(element)}
 </script>
-<${facts.parts[part].defaultElement} {...rest} ${facts.attrs[part]}="" data-slot={dataSlot} ${message ? `${message.matchAttribute}={${fieldMatch("match")}} {hidden}` : ""} ${part === "error" ? `${facts.message.error.messageSource.attribute}={messageSource}` : ""} {@attach attachPart} {@attach attachRef}>{@render children?.()}</${facts.parts[part].defaultElement}>
+<${facts.parts[part].defaultElement} {...rest} ${facts.attrs[part]}="" ${message ? `${message.matchAttribute}={${fieldMatch("match")}} {hidden}` : ""} ${part === "error" ? `${facts.message.error.messageSource.attribute}={messageSource}` : ""} {@attach attachPart} {@attach attachRef}>{@render children?.()}</${facts.parts[part].defaultElement}>
 `;
 }

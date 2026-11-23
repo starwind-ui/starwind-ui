@@ -1,7 +1,7 @@
 import {
   getPrimitiveFrameworkAdapterTarget,
-  resolvePrimitiveFrameworkAdapterTargetComponents,
   type PrimitiveFrameworkAdapterTarget,
+  resolvePrimitiveFrameworkAdapterTargetComponents,
 } from "./framework-adapters/target-registry.js";
 import { getPrimitiveGeneratorEntries } from "./primitive-generator-registry.js";
 

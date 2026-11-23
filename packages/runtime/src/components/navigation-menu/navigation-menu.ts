@@ -1,4 +1,5 @@
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
+import { readDirection } from "../../internal/direction";
 import {
   assertHTMLElement,
   ensureId,
@@ -7,7 +8,6 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
   type FloatingAlign,
@@ -21,13 +21,13 @@ import {
   createFloatingPortalSession,
   type FloatingPortalSession,
 } from "../../internal/floating-portal";
-import { canReturnFocus } from "../../internal/focus";
+import { canReturnFocus, hasFocusWithin } from "../../internal/focus";
 import {
   type OverlayDismissalHandle,
   registerOverlayDismissal,
 } from "../../internal/overlay-dismissal";
-import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
+import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { shared } from "../../internal/shared";
 
 export type NavigationMenuValue = string | null;
@@ -234,6 +234,7 @@ class NavigationMenuController implements NavigationMenuInstance {
   >();
   private activeIndex: number | null = null;
   private activeTrigger: HTMLElement | null = null;
+  private closeAbortController: AbortController | null = null;
   private closeTimer: number | null = null;
   private hoverPressTimer: number | null = null;
   private hoverPressValue: NavigationMenuValue = null;
@@ -282,6 +283,9 @@ class NavigationMenuController implements NavigationMenuInstance {
           this.applyValueState(null, request);
         }
       },
+    });
+    this.portalSession.onDirectionChange(() => {
+      void this.positionPopup();
     });
     const floatingOptionsElement = this.getFloatingOptionsElement();
     this.requestedFloatingAlign = readFloatingAlignAttribute(
@@ -367,6 +371,8 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.controlledValueIntent = null;
     this.valueState = null;
     this.renderState(null);
+    // A pending close must not run its cleanup after the portal session restores the surface.
+    this.abortPendingClose();
     this.portalSession.destroy();
     this.clearFloatingStyles();
     this.clearSurfaceSizeStyles();
@@ -760,9 +766,11 @@ class NavigationMenuController implements NavigationMenuInstance {
     }
 
     const orientation = this.getOrientation();
+    const direction = readDirection(this.root);
     const openKey =
       (orientation === "horizontal" && event.key === "ArrowDown") ||
-      (orientation === "vertical" && event.key === "ArrowRight");
+      (orientation === "vertical" &&
+        event.key === (direction === "rtl" ? "ArrowLeft" : "ArrowRight"));
 
     if (openKey) {
       event.preventDefault();
@@ -787,7 +795,7 @@ class NavigationMenuController implements NavigationMenuInstance {
       return;
     }
 
-    const focusMove = getTriggerFocusMove(orientation, event.key);
+    const focusMove = getTriggerFocusMove(orientation, event.key, direction);
     if (!focusMove) return;
 
     event.preventDefault();
@@ -1120,12 +1128,30 @@ class NavigationMenuController implements NavigationMenuInstance {
       this.elements.viewport.hidden = true;
       this.activeIndex = null;
     } else {
+      // The closing popup becomes inert, and the browser would drop its focus to the body.
+      // Closing also hides the open content. On Escape, focus goes back to the trigger first.
+      // The restore in `onHidden` stays as a fallback.
+      if (
+        request?.reason === "escape-key" &&
+        hasFocusWithin(this.root.ownerDocument, [this.elements.popup])
+      ) {
+        this.restoreTriggerFocus();
+      }
       this.cancelPlacementReady();
       this.unregisterDismissal();
       this.renderState(null);
       this.activeIndex = null;
+      this.abortPendingClose();
+      const closeAbortController = new AbortController();
+      this.closeAbortController = closeAbortController;
       hideElementAfterAnimations(this.elements.popup, {
+        passThroughPointerWhileEnding: true,
+        pointerPassThroughWrapper: this.elements.positioner,
+        signal: closeAbortController.signal,
         onHidden: () => {
+          if (this.closeAbortController === closeAbortController) {
+            this.closeAbortController = null;
+          }
           this.floatingPositioner?.stopAutoUpdate();
           this.unportalPopup();
           if (request?.reason === "escape-key") {
@@ -1617,6 +1643,7 @@ class NavigationMenuController implements NavigationMenuInstance {
   private async positionPopup(): Promise<unknown> {
     if (this.valueState === null || !this.portalSession.isReady()) return undefined;
 
+    this.portalSession.syncDirection();
     const placementRevision = this.placementRevision;
     const state = await this.getFloatingPositioner()?.update();
     if (
@@ -1642,6 +1669,7 @@ class NavigationMenuController implements NavigationMenuInstance {
       },
       onUpdate: () => {
         if (this.valueState !== null && this.portalSession.isReady()) {
+          this.portalSession.syncDirection();
           this.setInstantPositionState();
         }
       },
@@ -1660,6 +1688,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.floatingReference = reference;
     this.floatingPositioner = createFloatingPositioner({
       adaptiveOrigin: true,
+      arrow: this.elements.arrow,
       reference,
       floating: this.getPortalElement(),
       placementStateElements: [
@@ -1676,7 +1705,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     align: FloatingAlign;
     alignOffset?: number;
     avoidCollisions?: boolean;
-    preserveAnchor?: boolean;
+    preserveAnchor?: boolean | "side";
     side: FloatingSide;
     sideOffset?: number;
     viewportPadding?: number;
@@ -1691,7 +1720,7 @@ class NavigationMenuController implements NavigationMenuInstance {
         NAV_MENU_AVOID_COLLISIONS_ATTRIBUTE,
         true,
       ),
-      preserveAnchor: true,
+      preserveAnchor: "side",
       side: this.requestedFloatingSide,
       sideOffset: readNumberAttribute(floatingOptionsElement, NAV_MENU_SIDE_OFFSET_ATTRIBUTE, 4),
       viewportPadding: readNumberAttribute(
@@ -1830,7 +1859,7 @@ class NavigationMenuController implements NavigationMenuInstance {
 
       const positionUpdateDeferred = this.updateViewportSize(item, options);
       if (!positionUpdateDeferred) {
-        this.positionPopup();
+        void this.positionPopup();
       }
     });
   }
@@ -1877,10 +1906,15 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.openTimer = null;
   }
 
+  private abortPendingClose(): void {
+    this.closeAbortController?.abort();
+    this.closeAbortController = null;
+  }
+
   private restoreTriggerFocus(): void {
     if (!this.restoreFocusTrigger?.isConnected) return;
     if (!canReturnFocus(this.root.ownerDocument, [this.elements.popup])) return;
-    this.restoreFocusTrigger.focus();
+    this.restoreFocusTrigger.focus({ preventScroll: true });
   }
 
   private notifyValueChange(details: NavigationMenuValueChangeDetails): void {
@@ -1925,7 +1959,9 @@ function getInitialValue(
   }
   if (controlled) return null;
 
-  return options.defaultValue ?? root.getAttribute(NAV_MENU_DEFAULT_VALUE_ATTRIBUTE) ?? null;
+  // An explicit null keeps the menu closed. Adapters reconnect with their accepted value.
+  if (options.defaultValue !== undefined) return options.defaultValue;
+  return root.getAttribute(NAV_MENU_DEFAULT_VALUE_ATTRIBUTE);
 }
 
 function getNavigationMenuItem(
@@ -2064,13 +2100,14 @@ function isActivationKey(key: string): boolean {
 function getTriggerFocusMove(
   orientation: NavigationMenuOrientation,
   key: string,
+  direction: "ltr" | "rtl",
 ): "first" | "last" | "next" | "previous" | null {
   if (key === "Home") return "first";
   if (key === "End") return "last";
 
   if (orientation === "horizontal") {
-    if (key === "ArrowRight") return "next";
-    if (key === "ArrowLeft") return "previous";
+    if (key === "ArrowRight") return direction === "rtl" ? "previous" : "next";
+    if (key === "ArrowLeft") return direction === "rtl" ? "next" : "previous";
     return null;
   }
 

@@ -314,6 +314,7 @@ import {
   testComponentTrigger,
   testInitialPortalFocus,
 } from "../dialog/component-trigger.js";
+
 testComponentTrigger(
   { Root: DrawerRoot, Trigger: DrawerTrigger, Popup: DrawerPopup, Title: DrawerTitle },
   cleanups,

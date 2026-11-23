@@ -62,7 +62,7 @@ a {
   text-decoration: none;
 }
 
-.beta-label {
+.version-label {
   display: inline-flex;
   min-height: 1.5rem;
   align-items: center;

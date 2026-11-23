@@ -122,11 +122,83 @@ describe("release gate checkpoints", () => {
       "--filter=@starwind-ui/svelte",
       "test:run",
     ]);
+    expect(publicStages.find(([name]) => name === "svelte styled tests")).toEqual([
+      "svelte styled tests",
+      ["svelte:styled:test"],
+      "generators",
+    ]);
+    expect(index("svelte generator tests")).toBeLessThan(index("svelte styled tests"));
     expect(publicStages.find(([name]) => name === "Svelte hosts")[1]).toEqual([
       "test:svelte-cli-host-acceptance",
       `--packs=${RELEASE_PACKS}`,
     ]);
     expect(releaseGateStages({ privateEvidence: true })).toEqual(publicStages);
+  });
+
+  it("runs the direction suite on every engine and the installed hosts from the gate packs", () => {
+    const publicStages = releaseGateStages();
+    const stage = (name) => publicStages.find(([candidate]) => candidate === name);
+    expect(stage("direction browsers")).toEqual([
+      "direction browsers",
+      ["direction:test", "--engines", "all", "--max-workers", "10"],
+      "direction",
+    ]);
+    expect(stage("direction installed hosts")).toEqual([
+      "direction installed hosts",
+      ["direction:installed", "--packs", RELEASE_PACKS],
+      "direction",
+    ]);
+    expect(stage("Svelte compatibility")[1].join(" ")).not.toMatch(/build/);
+  });
+
+  it("runs the Chart suites in local lanes with capped workers", () => {
+    const publicStages = releaseGateStages();
+    const stage = (name) => publicStages.find(([candidate]) => candidate === name);
+    const index = (name) => publicStages.findIndex(([candidate]) => candidate === name);
+    expect(stage("chart parity")).toEqual([
+      "chart parity",
+      ["test:chart-parity", "--maxWorkers", "4"],
+      "tests",
+    ]);
+    expect(stage("chart styled")).toEqual([
+      "chart styled",
+      ["test:chart-styled", "--maxWorkers", "4"],
+      "tests",
+    ]);
+    // The gallery starts the demo dev servers and reuses the gate build.
+    expect(stage("chart gallery")).toEqual([
+      "chart gallery",
+      ["test:chart-gallery", "--skip-build"],
+      "demos",
+    ]);
+    const demoLane = publicStages.filter(([, , lane]) => lane === "demos");
+    expect(demoLane.at(-1)[0]).toBe("chart gallery");
+    for (const name of ["chart parity", "chart styled", "chart gallery"])
+      expect(index("pack")).toBeLessThan(index(name));
+  });
+
+  it("copies the Runtime dist for Svelte compatibility only after the Runtime tests rebuild it", () => {
+    const publicStages = releaseGateStages();
+    const index = (name) => publicStages.findIndex(([candidate]) => candidate === name);
+    expect(publicStages[index("Svelte compatibility")][2]).toBe("tests");
+    expect(publicStages[index("runtime tests")][2]).toBe("tests");
+    expect(index("runtime tests")).toBeLessThan(index("Svelte compatibility"));
+  });
+
+  it("checks the packed Vue archives on the exact Vue peer floor after packing", () => {
+    const publicStages = releaseGateStages();
+    const index = (name) => publicStages.findIndex(([candidate]) => candidate === name);
+    expect(publicStages[index("Vue compatibility")]).toEqual([
+      "Vue compatibility",
+      [
+        "exec",
+        "tsx",
+        "scripts/portable-runtime/check-vue-compatibility.ts",
+        `--packs=${RELEASE_PACKS}`,
+      ],
+      "tests",
+    ]);
+    expect(index("pack")).toBeLessThan(index("Vue compatibility"));
   });
 
   it("reuses a completed prefix after a later stage fails", async () => {
@@ -204,9 +276,10 @@ describe("release gate checkpoints", () => {
     expect(publicStages.slice(firstLane).every(([, , lane]) => lane)).toBe(true);
     const laneOf = (name) => publicStages.find(([stage]) => stage === name)[2];
     // These stages start Vite servers on the default HMR port, so they must not overlap.
-    for (const name of ["astro demo", "react demo"]) expect(laneOf(name)).toBe(laneOf("vue tests"));
+    for (const name of ["astro demo", "react demo", "chart gallery"])
+      expect(laneOf(name)).toBe(laneOf("vue tests"));
     expect(new Set(publicStages.map(([, , lane]) => lane).filter(Boolean))).toEqual(
-      new Set(["tests", "generators", "demos", "hosts", "candidate"]),
+      new Set(["tests", "generators", "demos", "hosts", "candidate", "direction"]),
     );
   });
 
@@ -237,7 +310,7 @@ describe("release gate checkpoints", () => {
     // The fixture has no packs, so the final artifact check fails after every stage passes.
     await expect(runReleaseGate({ root, run })).rejects.not.toThrow(/failed stage/);
 
-    expect(peak).toBe(5);
+    expect(peak).toBe(6);
     expect(logFiles).toHaveLength(laneNames.size);
     expect(logFiles.every((file) => file?.startsWith(path.join(root, "node_modules")))).toBe(true);
     const record = await loadRecord(root);

@@ -17,20 +17,20 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "default",
-    "defaultValue": defaultValue,
-    "disabled": disabled = false,
-    "form": form,
-    "largeStep": largeStep = 10,
-    "max": max = 100,
-    "min": min = 0,
-    "name": name,
-    "orientation": orientation = "horizontal",
-    "step": step = 1,
+    variant = "default",
+    defaultValue,
+    disabled = false,
+    form,
+    largeStep = 10,
+    max = 100,
+    min = 0,
+    name,
+    orientation = "horizontal",
+    step = 1,
     "class": className,
-    "onValueChange": onValueChange,
-    "onValueCommitted": onValueCommitted,
-    "ref": ref,
+    onValueChange,
+    onValueCommitted,
+    ref,
     value = $bindable(),
     "value": commandValue,
     ...rest
@@ -44,15 +44,26 @@
 
   let resolvedValue = $derived(acceptedInput() ?? retainedValue);
 
-  let values = $derived(Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue]);
+  let getPaintValues = $derived((input: number | number[]) => {
+                const items = Array.isArray(input) ? input : [input];
+                if (!items.length) return [min];
+                const precision = (String(step).split(".")[1] ?? "").length;
+                return items.map((item) => {
+                  if (!Number.isFinite(item)) return min;
+                  const snapped = step > 0 ? Number((Math.round((item - min) / step) * step + min).toFixed(precision)) : item;
+                  return Math.min(Math.max(snapped, min), max);
+                }).sort((left, right) => left - right);
+              });
 
-  let getPercentage = $derived((item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100));
+  let values = $derived(getPaintValues(resolvedValue));
+
+  let getPercentage = $derived((item: number) => (max <= min ? 0 : ((item - min) / (max - min)) * 100));
 
   let rangeStart = $derived(values.length > 1 ? getPercentage(Math.min(...values)) : 0);
 
   let rangeEnd = $derived(values.length > 1 ? getPercentage(Math.max(...values)) : getPercentage(values[0] ?? min));
 
-  let rangeStyle = $derived(orientation === "horizontal" ? `left: ${rangeStart}%; width: ${rangeEnd - rangeStart}%` : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`);
+  let rangeStyle = $derived(orientation === "horizontal" ? `inset-inline-start: ${rangeStart}%; width: ${rangeEnd - rangeStart}%` : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`);
 
   $effect(() => {
     const next = copy(acceptedInput());
@@ -99,7 +110,7 @@
       <SliderThumb
         class={sliderThumb({ "variant": variant })}
         index={index}
-        style={orientation === "horizontal" ? `left: ${getPercentage(values[index] ?? min)}%` : `bottom: ${getPercentage(values[index] ?? min)}%`}
+        style={orientation === "horizontal" ? `inset-inline-start: ${getPercentage(values[index] ?? min)}%` : `bottom: ${getPercentage(values[index] ?? min)}%`}
         data-orientation={orientation}
         data-slot={"slider-thumb"}
       />

@@ -59,6 +59,13 @@ import { ThemeInitScript } from "@starwind-ui/astro/theme";
 </head>
 ```
 
+## Installed documentation
+
+The package includes Markdown docs for its exact version. After you install it, open
+`node_modules/@starwind-ui/astro/docs/README.md`. Coding agents can start from
+`node_modules/@starwind-ui/astro/docs/llms.txt`. Each Primitive has a reference page with its parts,
+props, state, events, and data attributes.
+
 ## Starwind UI ecosystem
 
 - [Website](https://starwind.dev/)

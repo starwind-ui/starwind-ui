@@ -7,7 +7,6 @@ import {
   type FrameworkTargetPolicy,
   isConfigTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
-  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -48,9 +47,7 @@ export type PrivateVueUpdateOptions = Omit<UpdateOptions, "framework"> & {
 
 export type PrivateVueUpdateDependencies = {
   registry: StarwindRegistryFor<CliFrameworkTarget>;
-  targetPolicy:
-    | FrameworkTargetPolicy<CliFrameworkTarget>
-    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
 };
 
 type UpdateResult = {

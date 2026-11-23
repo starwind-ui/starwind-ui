@@ -142,6 +142,8 @@ const primitive: Component[] = [
     first: {
       "am-root": { "data-state": "closed" },
       "am-trigger": { "data-state": "closed", "aria-haspopup": "menu", "aria-expanded": "false" },
+      // A Popup with no side keeps the bottom default in every target's first markup.
+      "am-popup": { "data-side": "bottom", "data-sw-menu-side-intent": null },
     },
     interact: async (ui) => {
       await open("am")(ui);

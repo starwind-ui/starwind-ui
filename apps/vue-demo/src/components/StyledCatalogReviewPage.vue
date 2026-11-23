@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AccordionReview from "./AccordionReview.vue";
 import AvatarReview from "./AvatarReview.vue";
+import ChartStyledReview from "./ChartStyledReview.vue";
 import ComplexServicesStyledReview from "./ComplexServicesStyledReview.vue";
 import MenusFloatingStyledReview from "./MenusFloatingStyledReview.vue";
 import PortableStyledClosureReview from "./PortableStyledClosureReview.vue";
@@ -21,6 +22,7 @@ const styledComponents = [
   "button-group",
   "card",
   "carousel",
+  "chart",
   "checkbox",
   "checkbox-group",
   "collapsible",
@@ -70,7 +72,7 @@ const styledComponents = [
 <template>
   <main class="review-shell" data-testid="vue-styled-review-route">
     <header class="review-hero">
-      <p class="eyebrow">Vue 3.5 public beta</p>
+      <p class="eyebrow">Vue 3.5</p>
       <h1>Starwind Vue Styled review</h1>
       <p>
         Review every generated Styled component in light and dark modes. Use the theme control in
@@ -83,6 +85,8 @@ const styledComponents = [
         <a href="#styled-complex-services-review">Complex services</a>
         <a href="/review/sidebar">Full-page Sidebar</a>
         <a href="#portable-styled-closure-review">Portable catalog</a>
+        <a href="#chart-review">Chart</a>
+        <a href="/review/charts/area">Chart gallery</a>
         <a href="#accordion-review">Accordion</a>
         <a href="#avatar-review">Avatar</a>
         <a href="#progress-review">Progress</a>
@@ -93,7 +97,7 @@ const styledComponents = [
     <section class="review-card" data-testid="styled-catalog-inventory">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">54 generated component groups</p>
+          <p class="eyebrow">55 generated component groups</p>
           <h2>Catalog coverage</h2>
         </div>
       </div>
@@ -130,6 +134,7 @@ const styledComponents = [
     <MenusFloatingStyledReview docs-navigation />
     <ComplexServicesStyledReview separate-sidebar-review />
     <PortableStyledClosureReview />
+    <ChartStyledReview />
     <AccordionReview styled-only />
     <AvatarReview styled-only />
     <ProgressReview styled-only />

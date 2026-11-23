@@ -9,10 +9,10 @@
 
 <script lang="ts">
   let {
-    "asChild": asChild = false,
+    asChild = false,
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: BreadcrumbLinkProps = $props();
 </script>
