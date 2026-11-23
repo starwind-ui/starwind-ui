@@ -252,6 +252,9 @@ export async function verifyAstroCoreControlCases({ page }) {
       const thumbs = Array.from(root?.querySelectorAll("[data-sw-slider-thumb]") ?? []);
       const inputs = Array.from(root?.querySelectorAll("[data-sw-slider-input]") ?? []);
       const firstThumb = thumbs[0];
+      const trackRect = track instanceof HTMLElement ? track.getBoundingClientRect() : null;
+      const indicatorRect =
+        indicator instanceof HTMLElement ? indicator.getBoundingClientRect() : null;
 
       return {
         className: root?.getAttribute("class"),
@@ -259,9 +262,18 @@ export async function verifyAstroCoreControlCases({ page }) {
         dataSlot: root?.getAttribute("data-slot"),
         indicatorBottom: indicator instanceof HTMLElement ? indicator.style.bottom : null,
         indicatorHeight: indicator instanceof HTMLElement ? indicator.style.height : null,
-        indicatorLeft: indicator instanceof HTMLElement ? indicator.style.left : null,
+        indicatorInsetInlineStart:
+          indicator instanceof HTMLElement ? indicator.style.insetInlineStart : null,
         indicatorOrientation: indicator?.getAttribute("data-orientation"),
         indicatorWidth: indicator instanceof HTMLElement ? indicator.style.width : null,
+        renderedStartPercent:
+          trackRect && indicatorRect && trackRect.width > 0
+            ? ((indicatorRect.left - trackRect.left) / trackRect.width) * 100
+            : null,
+        renderedEndPercent:
+          trackRect && indicatorRect && trackRect.width > 0
+            ? ((indicatorRect.right - trackRect.left) / trackRect.width) * 100
+            : null,
         inputNames: inputs.map((input) => (input instanceof HTMLInputElement ? input.name : null)),
         inputValues: inputs.map((input) =>
           input instanceof HTMLInputElement ? input.value : null,
@@ -322,15 +334,23 @@ export async function verifyAstroCoreControlCases({ page }) {
     sliderState.initial.volume.thumbOrientation !== "horizontal" ||
     sliderState.initial.volume.thumbCount !== 1 ||
     sliderState.initial.volume.value !== "25" ||
-    sliderState.initial.volume.indicatorLeft !== "0%" ||
+    sliderState.initial.volume.indicatorInsetInlineStart !== "0%" ||
     sliderState.initial.volume.indicatorWidth !== "25%" ||
+    sliderState.initial.volume.renderedStartPercent === null ||
+    Math.abs(sliderState.initial.volume.renderedStartPercent) > 1 ||
+    sliderState.initial.volume.renderedEndPercent === null ||
+    Math.abs(sliderState.initial.volume.renderedEndPercent - 25) > 1 ||
     sliderState.initial.volume.inputNames[0] !== "volume" ||
     sliderState.initial.volume.inputValues[0] !== "25" ||
     sliderState.initial.volumeFormValue !== "25" ||
     sliderState.initial.price.thumbCount !== 2 ||
     sliderState.initial.price.value !== "[20,80]" ||
-    sliderState.initial.price.indicatorLeft !== "20%" ||
+    sliderState.initial.price.indicatorInsetInlineStart !== "20%" ||
     sliderState.initial.price.indicatorWidth !== "60%" ||
+    sliderState.initial.price.renderedStartPercent === null ||
+    Math.abs(sliderState.initial.price.renderedStartPercent - 20) > 1 ||
+    sliderState.initial.price.renderedEndPercent === null ||
+    Math.abs(sliderState.initial.price.renderedEndPercent - 80) > 1 ||
     sliderState.initial.price.inputNames[0] !== "price[0]" ||
     sliderState.initial.price.inputNames[1] !== "price[1]" ||
     sliderState.initial.priceStartFormValue !== "20" ||
@@ -346,7 +366,12 @@ export async function verifyAstroCoreControlCases({ page }) {
     sliderState.afterKeyboard.value !== "26" ||
     sliderState.afterKeyboard.thumbAriaValue !== "26" ||
     sliderState.afterKeyboard.inputValues[0] !== "26" ||
+    sliderState.afterKeyboard.indicatorInsetInlineStart !== "0%" ||
     sliderState.afterKeyboard.indicatorWidth !== "26%" ||
+    sliderState.afterKeyboard.renderedStartPercent === null ||
+    Math.abs(sliderState.afterKeyboard.renderedStartPercent) > 1 ||
+    sliderState.afterKeyboard.renderedEndPercent === null ||
+    Math.abs(sliderState.afterKeyboard.renderedEndPercent - 26) > 1 ||
     sliderState.updatedVolumeFormValue !== "26"
   ) {
     throw new Error(
@@ -362,6 +387,8 @@ export async function verifyAstroCoreControlCases({ page }) {
       const input = document.querySelector(`#${id}-input`);
       const label = document.querySelector(`label[data-slot="switch-label"][for="${id}"]`);
       const thumb = root?.querySelector("[data-sw-switch-thumb]");
+      const rootRect = root instanceof HTMLElement ? root.getBoundingClientRect() : null;
+      const thumbRect = thumb instanceof HTMLElement ? thumb.getBoundingClientRect() : null;
       const uncheckedInput =
         input instanceof HTMLInputElement &&
         input.nextElementSibling instanceof HTMLInputElement &&
@@ -387,6 +414,7 @@ export async function verifyAstroCoreControlCases({ page }) {
         labelText: label?.textContent?.trim(),
         opacity: style?.opacity,
         thumbClassName: thumb?.getAttribute("class"),
+        thumbOffsetX: rootRect && thumbRect ? thumbRect.left - rootRect.left : null,
         thumbSlot: thumb?.getAttribute("data-slot"),
         translationVariable:
           thumb instanceof HTMLElement ? thumb.style.getPropertyValue("--translation") : "",
@@ -396,6 +424,14 @@ export async function verifyAstroCoreControlCases({ page }) {
 
     const disabledRoot = document.querySelector("#runtime-switch-disabled");
     const readOnlyRoot = document.querySelector("#runtime-switch-readonly");
+    await Promise.all(
+      ["runtime-switch-default", "runtime-switch-checked"].flatMap((id) => {
+        const thumb = document.querySelector(`#${id} [data-sw-switch-thumb]`);
+        return thumb instanceof HTMLElement
+          ? thumb.getAnimations().map((animation) => animation.finished)
+          : [];
+      }),
+    );
 
     const initial = {
       checked: readSwitch("runtime-switch-checked"),
@@ -418,6 +454,12 @@ export async function verifyAstroCoreControlCases({ page }) {
     disabledRoot?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     readOnlyRoot?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const defaultThumb = document.querySelector("#runtime-switch-default [data-sw-switch-thumb]");
+    await Promise.all(
+      defaultThumb instanceof HTMLElement
+        ? defaultThumb.getAnimations().map((animation) => animation.finished)
+        : [],
+    );
 
     return {
       afterToggle: {
@@ -443,9 +485,14 @@ export async function verifyAstroCoreControlCases({ page }) {
     switchState.initial.default.className?.includes("border-input") !== true ||
     switchState.initial.default.className?.includes("group") !== true ||
     switchState.initial.default.heightVariable.includes("var(--spacing) * 5") !== true ||
-    switchState.initial.default.thumbClassName?.includes("transition-transform") !== true ||
+    switchState.initial.default.thumbClassName?.includes(
+      "transition-[--sw-switch-thumb-offset]",
+    ) !== true ||
     switchState.initial.default.thumbSlot !== "switch-toggle" ||
     switchState.initial.default.translationVariable.includes("var(--spacing) * 5") !== true ||
+    switchState.initial.default.thumbOffsetX === null ||
+    switchState.initial.checked.thumbOffsetX === null ||
+    switchState.initial.checked.thumbOffsetX <= switchState.initial.default.thumbOffsetX + 1 ||
     switchState.initial.checked.hasChecked !== true ||
     switchState.initial.checked.inputChecked !== true ||
     switchState.initial.checked.uncheckedValue !== null ||
@@ -459,6 +506,9 @@ export async function verifyAstroCoreControlCases({ page }) {
     switchState.afterToggle.default.hasChecked !== true ||
     switchState.afterToggle.default.inputChecked !== true ||
     switchState.afterToggle.default.uncheckedValue !== null ||
+    switchState.afterToggle.default.thumbOffsetX === null ||
+    switchState.initial.default.thumbOffsetX === null ||
+    switchState.afterToggle.default.thumbOffsetX <= switchState.initial.default.thumbOffsetX + 1 ||
     switchState.afterToggle.disabled.hasChecked !== false ||
     switchState.afterToggle.disabled.inputChecked !== false ||
     switchState.afterToggle.readOnly.hasChecked !== true ||

@@ -50,7 +50,7 @@ describe("generated Vue Input Primitive", () => {
 
     expect(compactCode(first.root)).toContain(compactCode("data-sw-input"));
 
-    await expect(normalizeVueSource(first.root)).toBe(
+    expect(normalizeVueSource(first.root)).toBe(
       normalizeVueSource(
         await readFile(path.join(process.cwd(), "packages/vue/src/input/InputRoot.vue"), "utf8"),
       ),

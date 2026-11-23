@@ -9,16 +9,16 @@
 
 <script lang="ts">
   let {
-    "defaultOpen": defaultOpen = false,
-    "closeDelay": closeDelay = 300,
-    "closeOnEscape": closeOnEscape = true,
-    "closeOnOutsideInteract": closeOnOutsideInteract = true,
-    "disableHoverableContent": disableHoverableContent = false,
-    "openDelay": openDelay = 600,
+    defaultOpen = false,
+    closeDelay = 300,
+    closeOnEscape = true,
+    closeOnOutsideInteract = true,
+    disableHoverableContent = false,
+    openDelay = 600,
     "class": className,
     open = $bindable(),
-    "onOpenChange": onOpenChange,
-    "children": children,
+    onOpenChange,
+    children,
     "open": commandOpen,
     ...rest
   }: HoverCardProps = $props();

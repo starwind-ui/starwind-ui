@@ -1,17 +1,17 @@
 import { execFile } from "node:child_process";
+import { cp, readFile, symlink } from "node:fs/promises";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import type { AddressInfo } from "node:net";
 import { promisify } from "node:util";
-import { cp, readFile, symlink } from "node:fs/promises";
 
 import { colorPickerRuntimeAdapterContract } from "../../contracts/primitive/color-picker.js";
+import { astroFrameworkAdapterTarget } from "../../renderers/framework-adapters/index.js";
 import { assertColorPickerFamilyProjected } from "../../renderers/primitive-output-model/index.js";
 import {
   buildColorPickerAdapterOutputModel,
   buildColorPickerSpecializedAdapterSpec,
 } from "../../renderers/specialized-adapter-spec/index.js";
-import { astroFrameworkAdapterTarget } from "../../renderers/framework-adapters/index.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -20,7 +20,6 @@ import {
   it,
   mkdir,
   path,
-  readGeneratedFile,
   readGeneratedTree,
   writeFile,
 } from "./shared.js";
@@ -248,10 +247,10 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
 
     const reactDemoRequire = createRequire(path.resolve("apps/react-demo/package.json"));
     const { chromium } = reactDemoRequire("playwright") as {
-      chromium: { launch(options: { headless: boolean }): Promise<any> };
+      chromium: { launch(options: { headless: boolean; channel?: string }): Promise<any> };
     };
     await withStaticServer(path.join(appRoot, "dist"), async (url) => {
-      const browser = await chromium.launch({ headless: true });
+      const browser = await chromium.launch({ channel: "chrome", headless: true });
       const page = await browser.newPage();
       const pageErrors: Error[] = [];
       page.on("pageerror", (error: Error) => pageErrors.push(error));

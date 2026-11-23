@@ -11,7 +11,7 @@
   let {
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: BreadcrumbSeparatorProps = $props();
 </script>
@@ -34,6 +34,7 @@
     stroke-linecap={"round"}
     stroke-linejoin={"round"}
     aria-hidden={"true"}
+    class={"rtl:rotate-180"}
   >
     <path
       stroke={"none"}

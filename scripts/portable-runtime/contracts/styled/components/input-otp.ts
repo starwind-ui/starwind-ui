@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const inputOtpStyledContract: StyledAdapterContract = {
   component: "input-otp",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   constants: {
     REGEXP_ONLY_DIGITS: "/^[0-9]+$/",
     REGEXP_ONLY_DIGITS_AND_CHARS: "/^[A-Za-z0-9]+$/",
@@ -55,9 +57,9 @@ export const inputOtpStyledContract: StyledAdapterContract = {
     },
     inputOtpSlot: {
       base: [
-        "border-input dark:bg-input/30 text-foreground border bg-transparent text-center shadow-xs",
-        "relative flex items-center justify-center border-y border-r text-sm transition-all outline-none",
-        "first:rounded-l-md first:border-l last:rounded-r-md disabled:cursor-not-allowed disabled:opacity-50",
+        "border-input dark:bg-input/30 text-foreground bg-transparent text-center shadow-xs",
+        "relative flex items-center justify-center border-y border-e text-sm transition-[color,background-color,border-color,box-shadow] outline-none",
+        "first:rounded-s-md first:border-s last:rounded-e-md disabled:cursor-not-allowed disabled:opacity-50",
         "data-[active=true]:border-outline data-[active=true]:ring-outline/50 data-[active=true]:z-10 data-[active=true]:ring-3",
         "data-[active=true]:data-error-visible:ring-error/40",
         "data-error-visible:border-error data-[active=true]:data-error-visible:border-error",

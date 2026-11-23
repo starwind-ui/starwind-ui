@@ -10,10 +10,10 @@
 
 <script lang="ts">
   let {
-    "disabled": disabled = false,
+    disabled = false,
     "class": className,
-    "children": children,
-    "value": value,
+    children,
+    value,
     ...rest
   }: AccordionItemProps = $props();
 </script>

@@ -25,7 +25,7 @@ defineExpose({ element });
 <template>
   <span
     ref="element"
-    aria-hidden
+    aria-hidden="true"
     :class="paginationEllipsis({ size, class: className })"
     v-bind="$attrs"
     data-slot="pagination-ellipsis"

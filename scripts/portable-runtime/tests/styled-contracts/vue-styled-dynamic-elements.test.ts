@@ -105,7 +105,7 @@ describe("generic dynamic Styled element facts", () => {
 
   it("marks the Aspect Ratio root with the same bound-tag fact", () => {
     const root = aspectRatioStyledContract.components[0]?.render[0];
-    const aspectRatio = root && "children" in root ? root.children?.[0] : undefined;
+    const aspectRatio = root;
 
     expect(aspectRatio).toMatchObject({
       tag: "Tag",

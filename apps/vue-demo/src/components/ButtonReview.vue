@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ButtonRoot } from "@starwind-ui/vue/button";
-import { computed, ref, type ComponentPublicInstance } from "vue";
+import { type ComponentPublicInstance, computed, ref } from "vue";
 
 import { Button as StyledButton } from "./starwind-runtime/button";
 

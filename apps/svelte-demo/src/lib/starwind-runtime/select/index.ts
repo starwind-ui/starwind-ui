@@ -1,15 +1,15 @@
 import Select from "./Select.svelte";
+import SelectContent from "./SelectContent.svelte";
+import SelectGroup from "./SelectGroup.svelte";
+import SelectItem from "./SelectItem.svelte";
+import SelectItemIndicator from "./SelectItemIndicator.svelte";
+import SelectItemText from "./SelectItemText.svelte";
+import SelectLabel from "./SelectLabel.svelte";
+import SelectScrollDownButton from "./SelectScrollDownButton.svelte";
+import SelectScrollUpButton from "./SelectScrollUpButton.svelte";
+import SelectSeparator from "./SelectSeparator.svelte";
 import SelectTrigger from "./SelectTrigger.svelte";
 import SelectValue from "./SelectValue.svelte";
-import SelectContent from "./SelectContent.svelte";
-import SelectItem from "./SelectItem.svelte";
-import SelectItemText from "./SelectItemText.svelte";
-import SelectItemIndicator from "./SelectItemIndicator.svelte";
-import SelectGroup from "./SelectGroup.svelte";
-import SelectLabel from "./SelectLabel.svelte";
-import SelectSeparator from "./SelectSeparator.svelte";
-import SelectScrollUpButton from "./SelectScrollUpButton.svelte";
-import SelectScrollDownButton from "./SelectScrollDownButton.svelte";
 import {
   select,
   selectContent,
@@ -24,18 +24,20 @@ import {
   selectTrigger,
   selectValue,
 } from "./variants.js";
+
 export type { SelectProps } from "./Select.svelte";
+export type { SelectContentProps } from "./SelectContent.svelte";
+export type { SelectGroupProps } from "./SelectGroup.svelte";
+export type { SelectItemProps } from "./SelectItem.svelte";
+export type { SelectItemIndicatorProps } from "./SelectItemIndicator.svelte";
+export type { SelectItemTextProps } from "./SelectItemText.svelte";
+export type { SelectLabelProps } from "./SelectLabel.svelte";
+export type { SelectScrollDownButtonProps } from "./SelectScrollDownButton.svelte";
+export type { SelectScrollUpButtonProps } from "./SelectScrollUpButton.svelte";
+export type { SelectSeparatorProps } from "./SelectSeparator.svelte";
 export type { SelectTriggerProps } from "./SelectTrigger.svelte";
 export type { SelectValueProps } from "./SelectValue.svelte";
-export type { SelectContentProps } from "./SelectContent.svelte";
-export type { SelectItemProps } from "./SelectItem.svelte";
-export type { SelectItemTextProps } from "./SelectItemText.svelte";
-export type { SelectItemIndicatorProps } from "./SelectItemIndicator.svelte";
-export type { SelectGroupProps } from "./SelectGroup.svelte";
-export type { SelectLabelProps } from "./SelectLabel.svelte";
-export type { SelectSeparatorProps } from "./SelectSeparator.svelte";
-export type { SelectScrollUpButtonProps } from "./SelectScrollUpButton.svelte";
-export type { SelectScrollDownButtonProps } from "./SelectScrollDownButton.svelte";
+
 const SelectVariants = {
   select,
   selectContent,
@@ -64,6 +66,7 @@ const SelectParts = {
   ScrollUpButton: SelectScrollUpButton,
   ScrollDownButton: SelectScrollDownButton,
 };
+
 export {
   Select,
   SelectContent,

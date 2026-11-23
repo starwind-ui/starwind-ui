@@ -27,12 +27,14 @@ export const popoverContent = tv({
     {
       side: ["top", "bottom"],
       align: "start",
-      class: "slide-in-from-left-1 slide-out-to-left-1",
+      class:
+        "slide-in-from-left-1 slide-out-to-left-1 rtl:slide-in-from-right-1 rtl:slide-out-to-right-1",
     },
     {
       side: ["top", "bottom"],
       align: "end",
-      class: "slide-in-from-right-1 slide-out-to-right-1",
+      class:
+        "slide-in-from-right-1 slide-out-to-right-1 rtl:slide-in-from-left-1 rtl:slide-out-to-left-1",
     },
   ],
   defaultVariants: {

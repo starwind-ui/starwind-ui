@@ -5,20 +5,20 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  Combobox as StyledCombobox,
   ComboboxContent,
   ComboboxInput,
   ComboboxInputGroup,
   ComboboxItem,
   ComboboxTrigger,
+  Combobox as StyledCombobox,
 } from "../../../apps/react-demo/src/components/starwind-runtime/combobox";
 import StyledField from "../../../apps/react-demo/src/components/starwind-runtime/field/Field";
 import {
-  Select as StyledSelect,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Select as StyledSelect,
 } from "../../../apps/react-demo/src/components/starwind-runtime/select";
 import { Field } from "../src/field";
 

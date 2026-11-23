@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   ProgressIndicator,
   ProgressLabel,
@@ -9,6 +5,9 @@ import {
   ProgressTrack,
   ProgressValue,
 } from "@starwind-ui/vue/progress";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 describe("Vue Progress SSR", () => {
   it("server-renders all semantic parts deterministically without browser globals", async () => {

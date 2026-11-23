@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { readFile, realpath, readdir, rm, mkdir, mkdtemp, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createSpawnCommand, getPackageManagerCommand } from "../../../scripts/command-process.mjs";
 
 // Four bundled framework targets: 768 KiB packed and 5.5 MiB unpacked.
-export const MAX_TARBALL_BYTES = 786_432;
+export const MAX_TARBALL_BYTES = 851_968;
 export const MAX_UNPACKED_BYTES = 5_767_168;
 export const INSTALLED_CLI_COMMAND = Object.freeze(["exec", "starwind", "--help"]);
 

@@ -43,6 +43,7 @@
     if (!controlled && (readInputs()).value !== accepted) { value = accepted; } }
     function proposeCurrent(): void { value = instance.getValue(); }
     function synchronize(value: string | undefined): void {
+      // A later undefined keeps the last controlled value for the mounted lifetime.
       if (controlled) value = retained = value ?? retained;
       if (value === undefined) return;
       if (instance.getValue() !== value) instance.setValue(value, {"emit":false});
@@ -121,6 +122,7 @@ required: options.required,
 ...(next.required !== previous.required ? { required: next.required } : {}),
             });
           }
+        // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
         if (next.value !== previous.value) synchronize(next.value);
         publishCurrent();
         bindReset();

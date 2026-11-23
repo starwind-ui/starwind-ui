@@ -1,13 +1,12 @@
 import path from "node:path";
-
+import { starwindStyledContracts } from "../../../contracts/styled/starwind.js";
 import { checkAcceptedVuePerformanceEvidence } from "../../../measure-vue-runtime-performance.mjs";
 import { checkVueBaselineEvidence } from "../../../package-size-vue-baseline-runner.mjs";
-import { validateVuePackageSizeBaselineEvidence } from "../../../vue-package-size-baseline.mjs";
-import { starwindStyledContracts } from "../../../contracts/styled/starwind.js";
 import {
   getManualHelperPrimitiveInventoryEntries,
   getRuntimeAdapterPrimitiveInventoryEntries,
 } from "../../../renderers/primitive-inventory.js";
+import { validateVuePackageSizeBaselineEvidence } from "../../../vue-package-size-baseline.mjs";
 import { vueAdapterInventory, vuePackageSubpaths, vueStyledComponents } from "./inventory.js";
 import { supportsVueScope } from "./styled/scope.js";
 
@@ -280,10 +279,10 @@ export function validateVueBetaReadiness(
     blockers,
     "Runtime-backed Primitive families",
     sources.centralRuntimePrimitives,
-    36,
+    37,
   );
   requireExactCount(blockers, "manual Theme facades", sources.centralManualFacades, 1);
-  requireExactCount(blockers, "portable Styled roots", sources.portableStyledRoots, 54);
+  requireExactCount(blockers, "portable Styled roots", sources.portableStyledRoots, 55);
   requireExactCount(blockers, "Astro-only Styled exclusions", sources.explicitStyledExclusions, 1);
   requireExactSet(
     blockers,

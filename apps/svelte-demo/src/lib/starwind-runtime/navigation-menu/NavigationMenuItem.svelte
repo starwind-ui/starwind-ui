@@ -9,9 +9,9 @@
 
 <script lang="ts">
   let {
-    "value": value,
+    value,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: NavigationMenuItemProps = $props();
 </script>

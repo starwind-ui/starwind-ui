@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { compile } from "svelte/compiler";
+import { describe, expect, it } from "vitest";
 import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 describe("composed navigation", () => {
   it.each(["button-group", "pagination"])("projects and compiles every %s part", (root) => {
@@ -28,10 +28,11 @@ describe("composed navigation", () => {
   });
 });
 
-import { afterEach } from "vitest";
 import path from "node:path";
+import { afterEach } from "vitest";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
 import { createStyledNavigationConsumer } from "../../../../packages/svelte/tests/styled-navigation-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((c) => c.dispose()));
@@ -48,12 +49,13 @@ it("hydrates component dependencies and isolates Button/Pagination attachment re
   await verifyStyledNavigationBrowser(await consumer());
 });
 
-import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
-import type { StyledAdapterContract } from "../../contracts/styled/types.js";
-import { selectSvelteStyledContracts } from "../../renderers/framework-adapters/svelte/styled/scope.js";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import type { StyledAdapterContract } from "../../contracts/styled/types.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+import { selectSvelteStyledContracts } from "../../renderers/framework-adapters/svelte/styled/scope.js";
+
 it("closes dependencies and imports same-group parts directly", () => {
   expect(
     selectSvelteStyledContracts(starwindStyledContracts, ["button-group", "pagination"]).map(

@@ -162,11 +162,7 @@ export function getRangeStatusFacts(plan: GenericAdapterPlan): AdapterRangeStatu
     `${plan.displayName} value state is missing initialAttribute.`,
   );
   const valueSetter = getSetterForProps(plan, [valuePropName, "max", "min"]);
-  const formatOptionsSetter = getSetterForProps(plan, [
-    "format",
-    "getAriaValueText",
-    "locale",
-  ]);
+  const formatOptionsSetter = getSetterForProps(plan, ["format", "getAriaValueText", "locale"]);
 
   return {
     attrs: {
@@ -210,9 +206,7 @@ export function getRangeStatusFacts(plan: GenericAdapterPlan): AdapterRangeStatu
     },
     props: {
       format: getOptionalAdapterFamilyProp(getOptionalPlanProp(plan, "format")),
-      getAriaValueText: getOptionalAdapterFamilyProp(
-        getOptionalPlanProp(plan, "getAriaValueText"),
-      ),
+      getAriaValueText: getOptionalAdapterFamilyProp(getOptionalPlanProp(plan, "getAriaValueText")),
       locale: getOptionalAdapterFamilyProp(getOptionalPlanProp(plan, "locale")),
       max: getAdapterFamilyProp(getPlanProp(plan, "max")),
       min: getAdapterFamilyProp(getPlanProp(plan, "min")),

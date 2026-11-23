@@ -13,8 +13,6 @@ import type {
 } from "../types.js";
 import { printSvelteRefAttachment } from "./attachments.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 export function printSvelteEngineViewportIndex(file: AdapterIndexFile): AdapterPrintedFile {
   const family = file.family;
   if (family?.kind !== "engine-viewport") {
@@ -29,8 +27,7 @@ export function printSvelteEngineViewportIndex(file: AdapterIndexFile): AdapterP
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -69,8 +66,7 @@ export function printSvelteEngineViewportComponent(file: AdapterComponentFile): 
 
 function printRoot(facts: AdapterEngineViewportFacts): string {
   const props = facts.options;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { ${facts.runtime.factory}, type ${facts.runtime.instanceType}, type ${facts.runtime.optionsType} } from "${facts.runtime.importSource}";
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
@@ -157,8 +153,7 @@ function printPart(
   const elementType = isButton ? "HTMLButtonElement" : "HTMLDivElement";
   const htmlType = isButton ? "HTMLButtonAttributes" : "HTMLAttributes<HTMLDivElement>";
   const htmlImport = isButton ? "HTMLButtonAttributes" : "HTMLAttributes";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${htmlImport} } from "svelte/elements";

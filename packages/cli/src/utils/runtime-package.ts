@@ -6,10 +6,10 @@ import primitiveVendoringArtifacts from "../registry/primitive-vendoring-artifac
 import { DEFAULT_STYLED_REGISTRY_REFERENCE } from "./config.js";
 import { readJsonFile } from "./fs.js";
 import {
-  buildInstallDependencyCommands,
   detectPackageManager,
   installDependenciesWithProgress,
   type PackageManager,
+  resolveInstallDependencyCommands,
 } from "./package-manager.js";
 import type { RegistryPackageRequirement, RegistrySetupTarget } from "./registry.js";
 import type { UpdatePreviewPlan } from "./update-preview.js";
@@ -103,7 +103,7 @@ export async function offerRuntimePackageUpdates(
   const sections = getInstallSections(updates);
   const packageManager = options.packageManager ?? detectPackageManager().name;
   const manualCommand = sections
-    .flatMap(({ dev, packages }) => buildInstallDependencyCommands(packages, packageManager, dev))
+    .flatMap(({ dev, packages }) => resolveInstallDependencyCommands(packages, packageManager, dev))
     .map((args) => [packageManager, ...args.filter((arg) => arg !== "--")].join(" "))
     .join(" && ");
 
@@ -174,7 +174,8 @@ function getStarwindPackageRequirements(
     .filter((primitive) => projectFrameworks.has(primitive.framework))
     .flatMap((primitive) => primitive.packageRequirements)
     .filter((requirement) => requirement.name === RUNTIME_PACKAGE_NAME);
-  // Vue and Svelte adapters pin one exact Runtime, so a project that mixes targets must match it.
+  // Every bundled target now uses one caret Runtime range. An exact requirement still wins, so a
+  // project that mixes targets matches it.
   const runtimeRequirement =
     runtimeRequirements.find((requirement) => semver.valid(requirement.range)) ??
     runtimeRequirements[0];

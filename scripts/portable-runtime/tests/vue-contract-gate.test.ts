@@ -116,9 +116,18 @@ type TextSurface = {
 };
 
 const boundaryAwareVuePattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/i;
-const approvedVueCliManifestPath = "packages/cli/package.json";
-const approvedVueCliDescription =
-  "Install and manage Starwind UI components in Astro, React, Vue (beta), and Svelte (beta) applications";
+// Only these package descriptions may name Vue outside the Vue packages.
+const approvedVueAwareDescriptions: Record<string, string> = {
+  "packages/cli/package.json":
+    "Install and manage Starwind UI components in Astro, React, Vue, and Svelte applications",
+};
+const approvedFixedGroup = [
+  "@starwind-ui/runtime",
+  "@starwind-ui/astro",
+  "@starwind-ui/react",
+  "@starwind-ui/vue",
+  "@starwind-ui/svelte",
+];
 const approvedVueScriptNames = [
   "build:public",
   "l",
@@ -147,6 +156,7 @@ const approvedVueScriptNames = [
   "typecheck:public",
   "ul",
   "vue:build",
+  "vue:compatibility",
   "vue:link",
   "vue:test",
   "vue:test:browser:ci",
@@ -248,8 +258,11 @@ function findChangesetConfigVueViolations(
   if (JSON.stringify(config.ignore) !== JSON.stringify(approvedChangesetIgnore)) {
     violations.push("ignore");
   }
-  const { ignore: _approvedIgnore, ...configWithoutIgnore } = config;
-  if (containsBoundaryAwareVue(JSON.stringify(configWithoutIgnore))) {
+  if (JSON.stringify(config.fixed) !== JSON.stringify([approvedFixedGroup])) {
+    violations.push("fixed");
+  }
+  const { fixed: _approvedFixed, ignore: _approvedIgnore, ...configWithoutGroups } = config;
+  if (containsBoundaryAwareVue(JSON.stringify(configWithoutGroups))) {
     violations.push("config");
   }
   return violations;
@@ -275,7 +288,7 @@ function findForbiddenVueDependencies(manifest: PackageManifest): string[] {
 
 function isApprovedVueAwarePackageManifest(path: string, manifest: PackageManifest): boolean {
   if (!containsBoundaryAwareVue(JSON.stringify(manifest))) return true;
-  if (path !== approvedVueCliManifestPath || manifest.description !== approvedVueCliDescription) {
+  if (manifest.description !== approvedVueAwareDescriptions[path]) {
     return false;
   }
 
@@ -283,7 +296,7 @@ function isApprovedVueAwarePackageManifest(path: string, manifest: PackageManife
   return !containsBoundaryAwareVue(JSON.stringify(manifestWithoutDescription));
 }
 
-describe("Vue public-beta contract gate", () => {
+describe("Vue public contract gate", () => {
   it("keeps the human review Styled-only and the full adapter review internal", () => {
     const demoRoot = join(process.cwd(), "apps/vue-demo/src");
     const app = readFileSync(join(demoRoot, "App.vue"), "utf8");
@@ -307,7 +320,7 @@ describe("Vue public-beta contract gate", () => {
     expect(app).toContain("route === '/review'");
     expect(app).toContain("route === '/internal/adapter-review'");
     expect(catalog).toEqual(generated);
-    expect(catalog).toHaveLength(54);
+    expect(catalog).toHaveLength(55);
     expect(styledReview).toContain("<AccordionReview styled-only />");
     expect(styledReview).toContain("<AvatarReview styled-only />");
     expect(styledReview).toContain("<ProgressReview styled-only />");
@@ -601,9 +614,9 @@ describe("Vue public-beta contract gate", () => {
     }
   });
 
-  it("keeps Vue public-beta support enabled across public surfaces", () => {
+  it("keeps Vue stable support enabled across public surfaces", () => {
     expect(vueFrameworkAdapterReadiness.publicSupport).toBe(vueAdapterPublicContract.publicSupport);
-    expect(vueAdapterPublicContract.publicSupport.status).toBe("public-beta");
+    expect(vueAdapterPublicContract.publicSupport.status).toBe("shipping");
     expect(
       Object.entries(vueAdapterPublicContract.publicSupport)
         .filter(([key]) => key !== "status")
@@ -672,14 +685,14 @@ describe("Vue public-beta contract gate", () => {
     ) as PackageManifest;
     const vueVersion = vueManifest.version ?? "";
     expect(vueManifest).toMatchObject({
-      dependencies: { "@starwind-ui/runtime": runtimeVersion },
+      dependencies: { "@starwind-ui/runtime": "workspace:*" },
       name: "@starwind-ui/vue",
-      peerDependencies: { vue: ">=3.5" },
+      peerDependencies: { vue: ">=3.5.21" },
     });
     expect(semver.valid(vueVersion)).toBe(vueVersion);
     expect(vueManifest.private).not.toBe(true);
     expect(Object.keys(vueManifest.exports ?? {}).sort()).toEqual(
-      Object.keys(vuePackageExports).sort(),
+      [...Object.keys(vuePackageExports), "./package.json"].sort(),
     );
     const vueDemoManifest = JSON.parse(
       readFileSync(join(process.cwd(), "apps/vue-demo/package.json"), "utf8"),
@@ -723,7 +736,7 @@ describe("Vue public-beta contract gate", () => {
       readFileSync(join(process.cwd(), ".changeset/config.json"), "utf8"),
     ) as Record<string, unknown> & { fixed: string[][]; ignore: string[] };
     expect(changesetConfig.ignore).toEqual(approvedChangesetIgnore);
-    expect(changesetConfig.fixed.flat().filter(containsBoundaryAwareVue)).toEqual([]);
+    expect(changesetConfig.fixed).toEqual([approvedFixedGroup]);
     expect(findChangesetConfigVueViolations(changesetConfig)).toEqual([]);
     const prereleaseStatePath = join(process.cwd(), ".changeset/pre.json");
     if (existsSync(prereleaseStatePath)) {
@@ -735,8 +748,8 @@ describe("Vue public-beta contract gate", () => {
       expect(prereleaseState.initialVersions["@starwind-ui/vue"]).toBe("0.0.0");
       expect(prereleaseState.changesets.filter(containsBoundaryAwareVue)).toEqual([]);
     }
-    // Public beta fixes may describe Vue in Changesets. Package eligibility and fixed-group
-    // membership are enforced by the configuration checks above, not by release-note wording.
+    // Changesets may describe Vue. Package eligibility and fixed-group membership are enforced by
+    // the configuration checks above, not by release-note wording.
 
     const publicCliSurfaces = readTextSurfaces(publicCliTextSurfacePaths);
     expect(findBoundaryAwareVueSurfaces(publicCliSurfaces)).toEqual([
@@ -751,8 +764,8 @@ describe("Vue public-beta contract gate", () => {
       labels: {
         astro: "Astro",
         react: "React",
-        svelte: "Svelte 5 (beta)",
-        vue: "Vue (beta)",
+        svelte: "Svelte 5",
+        vue: "Vue",
       },
       primitiveArtifactIntegrity: undefined,
       registryTargets: ["legacy-astro", "astro", "react", "vue", "svelte"],
@@ -777,13 +790,14 @@ describe("Vue public-beta contract gate", () => {
 
     const readme = readFileSync(join(process.cwd(), "README.md"), "utf8");
     const vueReadme = readFileSync(join(process.cwd(), "packages/vue/README.md"), "utf8");
-    expect(readme).toMatch(/Vue 3\.5 beta/);
-    expect(vueReadme).toMatch(/public beta[\s\S]*Vue 3\.5/);
+    expect(readme).toMatch(/Vue 3\.5/);
+    expect(readme).not.toMatch(/@starwind-ui\/(?:vue|svelte)@beta/);
+    expect(vueReadme).toMatch(/Vue 3\.5/);
+    expect(vueReadme).not.toMatch(/public beta|@beta/);
     // The positioning document stays in the private workspace.
     if (hasPrivateWorkspace) {
       const positioning = readFileSync(join(process.cwd(), "docs/product/positioning.md"), "utf8");
-      expect(positioning).toMatch(/Vue 3\.5 public beta/);
-      expect(positioning).toMatch(/Svelte 5 public beta/);
+      expect(positioning).not.toMatch(/Vue 3\.5 public beta|Svelte 5 public beta/);
     }
   });
 
@@ -880,17 +894,23 @@ describe("Vue public-beta contract gate", () => {
     ).toEqual(["missing:vue:typecheck"]);
     expect(
       findChangesetConfigVueViolations({
-        fixed: [],
+        fixed: [approvedFixedGroup],
         ignore: [...approvedChangesetIgnore, "future-vue-demo"],
       }),
     ).toEqual(["ignore"]);
     expect(
       findChangesetConfigVueViolations({
-        fixed: [],
+        fixed: [approvedFixedGroup],
         ignore: approvedChangesetIgnore,
         registry: { framework: "vue" },
       }),
     ).toEqual(["config"]);
+    expect(
+      findChangesetConfigVueViolations({
+        fixed: [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
+        ignore: approvedChangesetIgnore,
+      }),
+    ).toEqual(["fixed"]);
     expect(
       findBoundaryAwareVueSurfaces([
         { path: "registry/framework.json", source: '{ "framework": "vue" }' },
@@ -917,20 +937,18 @@ describe("Vue public-beta contract gate", () => {
       "optionalDependencies:@vue/server-renderer",
       "peerDependencies:@vue/runtime-dom",
     ]);
+    const cliPath = "packages/cli/package.json";
+    const cliDescription = approvedVueAwareDescriptions[cliPath];
+    expect(isApprovedVueAwarePackageManifest(cliPath, { description: cliDescription })).toBe(true);
     expect(
-      isApprovedVueAwarePackageManifest(approvedVueCliManifestPath, {
-        description: approvedVueCliDescription,
-      }),
-    ).toBe(true);
-    expect(
-      isApprovedVueAwarePackageManifest(approvedVueCliManifestPath, {
-        description: approvedVueCliDescription,
+      isApprovedVueAwarePackageManifest(cliPath, {
+        description: cliDescription,
         scripts: { prepare: "vue-tsc" },
       }),
     ).toBe(false);
     expect(
       isApprovedVueAwarePackageManifest("packages/runtime/package.json", {
-        description: approvedVueCliDescription,
+        description: cliDescription,
       }),
     ).toBe(false);
   });

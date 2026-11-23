@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const checkboxStyledContract: StyledAdapterContract = {
   component: "checkbox",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: ["Checkbox"],
   defaultExport: { Root: "Checkbox" },
   defaultExportMode: "component",
@@ -13,7 +15,7 @@ export const checkboxStyledContract: StyledAdapterContract = {
     checkbox: {
       base: [
         "peer border-input bg-background dark:bg-input/30 relative flex shrink-0 items-center justify-center rounded-sm border",
-        "transition-all focus-visible:ring-3",
+        "transition-[color,background-color,border-color,box-shadow,opacity] focus-visible:ring-3",
         "after:absolute after:-inset-x-3 after:-inset-y-2",
         "outline-0 focus:ring-0 focus:ring-offset-0",
         "not-data-disabled:cursor-pointer data-disabled:cursor-not-allowed data-disabled:opacity-50",

@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   ContextMenuCheckboxItem,
   ContextMenuCheckboxItemIndicator,
@@ -17,6 +13,9 @@ import {
   ContextMenuSubmenuTrigger,
   ContextMenuTrigger,
 } from "@starwind-ui/vue/context-menu";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 describe("Vue Context Menu SSR", () => {
   it("server-renders the local anchored root through Menu-backed parts", async () => {

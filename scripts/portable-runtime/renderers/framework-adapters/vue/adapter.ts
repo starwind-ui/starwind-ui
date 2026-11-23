@@ -14,6 +14,15 @@ import {
   printVueBooleanFormControlIndex,
 } from "./boolean-form-control.js";
 import {
+  isVueChartContextProjection,
+  isVueChartSurfaceProjection,
+  printVueChartContext,
+  printVueChartSurfaceComponent,
+  printVueChartSurfaceIndex,
+  type VueChartSurfaceComponentProjection,
+  type VueChartSurfaceIndexProjection,
+} from "./chart-surface.js";
+import {
   printVueColorPickerComponent,
   printVueColorPickerIndex,
   type VueColorPickerComponentProjection,
@@ -155,6 +164,14 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
       });
   },
   printComponentFile(file) {
+    if (isVueChartSurfaceProjection(file.component.family)) {
+      return {
+        contents: printVueChartSurfaceComponent(
+          file.component.family as unknown as VueChartSurfaceComponentProjection,
+        ),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
     if ((file.component.family as { kind?: string } | undefined)?.kind === "vue-color-picker") {
       return {
         contents: printVueColorPickerComponent(
@@ -291,6 +308,10 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printHelperFile(file) {
+    const chartContext: unknown = file.family;
+    if (isVueChartContextProjection(chartContext)) {
+      return { contents: printVueChartContext(chartContext.facts), path: file.path };
+    }
     if (file.path.endsWith("ColorPickerContext.ts")) {
       return { contents: file.body.code, path: file.path };
     }
@@ -312,6 +333,14 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printIndexFile(file) {
+    if (isVueChartSurfaceProjection(file.family)) {
+      return {
+        contents: printVueChartSurfaceIndex(
+          file.family as unknown as VueChartSurfaceIndexProjection,
+        ),
+        path: file.path,
+      };
+    }
     if ((file.family as { kind?: string } | undefined)?.kind === "vue-color-picker") {
       return {
         contents: printVueColorPickerIndex(file.family as unknown as VueColorPickerIndexProjection),

@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   access,
   cp,
@@ -16,11 +16,13 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  ASTRO_TOOLS,
   assertConsumerPath,
   assertPublicSveltePackSet,
   HOST_TOOLS,
+  HOSTS,
   type HostSteps,
+  hostTools,
+  isSvelteKitHost,
   type Packed,
   prepareSvelteCommandCapability,
   REPRESENTATIVE_SVELTE_STYLED_ROOTS,
@@ -32,7 +34,9 @@ import {
   runSvelteCommandDelivery,
   runSvelteHost,
   runSvelteHosts,
-  SVELTEKIT_TOOLS,
+  SVELTEKIT_3_INIT_PACKAGES,
+  SVELTEKIT_3_RUNTIME_PACKAGES,
+  SVELTEKIT_3_TOOLS,
   selectHost,
   startHostProcess,
   svelteBaselineScope,
@@ -51,7 +55,7 @@ afterEach(async () => {
   await Promise.all(owned.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 describe("packed host lifecycle", () => {
-  it("passes one public Runtime, Svelte, and CLI pack set to all three hosts", async () => {
+  it("passes one public Runtime, Svelte, and CLI pack set to all four hosts", async () => {
     let root = "";
     const packed: Packed[] = [
       {
@@ -72,7 +76,7 @@ describe("packed host lifecycle", () => {
     ];
     const selected: string[] = [];
     await runSvelteHosts({
-      hosts: ["vite", "sveltekit", "astro"],
+      hosts: ["vite", "sveltekit", "sveltekit-3", "astro"],
       pack: async (directory) => {
         root = directory;
         return packed;
@@ -85,7 +89,7 @@ describe("packed host lifecycle", () => {
         return { host: options.host, status: "passed" };
       },
     });
-    expect(selected).toEqual(["vite", "sveltekit", "astro"]);
+    expect(selected).toEqual(["vite", "sveltekit", "sveltekit-3", "astro"]);
     await expect(access(root)).rejects.toThrow();
   });
 
@@ -248,24 +252,31 @@ describe("source command delivery", () => {
     const svelte = JSON.parse(
       await readFile(path.join(repoRoot, "packages/svelte/package.json"), "utf8"),
     );
-    for (const host of ["vite", "sveltekit", "astro"] as const) {
+    for (const host of HOSTS) {
       const root = await temporary();
       await cp(
         path.join(repoRoot, `scripts/portable-runtime/tests/svelte-hosts/fixtures/${host}`),
         root,
         { recursive: true },
       );
-      const tools =
-        host === "vite" ? HOST_TOOLS : host === "sveltekit" ? SVELTEKIT_TOOLS : ASTRO_TOOLS;
+      // The source path installs nothing, so the Kit 3 fixture declares what init installs.
+      const tools = {
+        ...hostTools(host),
+        ...(host === "sveltekit-3"
+          ? Object.fromEntries(SVELTEKIT_3_INIT_PACKAGES.map((name) => [name, HOST_TOOLS[name]]))
+          : {}),
+      };
       await writeFile(
         path.join(root, "package.json"),
+        // SvelteKit hosts declare their tools in devDependencies, as the packed host does.
         JSON.stringify({
           type: "module",
           dependencies: {
-            ...tools,
+            ...(isSvelteKitHost(host) ? {} : tools),
             "@starwind-ui/runtime": runtime.version,
             "@starwind-ui/svelte": svelte.version,
           },
+          ...(isSvelteKitHost(host) ? { devDependencies: tools } : {}),
         }),
       );
       const result = (await runSvelteCommandDelivery(repoRoot, root, host, capabilityPath)) as {
@@ -584,6 +595,61 @@ describe("consumer provenance", () => {
     await expect(readHostProvenance(root, [], { svelte: "5.29.0" })).rejects.toThrow(
       "outside consumer",
     );
+  });
+  it.each([
+    [
+      "in dependencies",
+      { dependencies: { "tw-animate-css": "^1.4.0" } },
+      "init must not declare tw-animate-css in dependencies",
+    ],
+    ["undeclared", {}, "init must declare tw-animate-css in devDependencies"],
+    [
+      "outside its declared range",
+      { devDependencies: { "tw-animate-css": "^1.5.0" } },
+      "tw-animate-css 1.4.0 is outside its declared ^1.5.0",
+    ],
+  ])("rejects an init-installed stylesheet package %s", async (_name, manifest, message) => {
+    const root = await temporary();
+    const directory = path.join(root, "node_modules/tw-animate-css");
+    await mkdir(directory, { recursive: true });
+    await writeFile(path.join(root, "package.json"), JSON.stringify(manifest));
+    await writeFile(
+      path.join(directory, "package.json"),
+      JSON.stringify({ name: "tw-animate-css", version: "1.4.0" }),
+    );
+    await expect(readHostProvenance(root, [], {}, ["tw-animate-css"])).rejects.toThrow(message);
+  });
+  it("rejects a declared Runtime when the SvelteKit 3 host needs it through the adapter", async () => {
+    const root = await temporary();
+    for (const [name, version] of [
+      ["@starwind-ui/svelte", "1.0.0"],
+      ["@starwind-ui/runtime", "1.0.0"],
+    ]) {
+      await mkdir(path.join(root, "node_modules", name), { recursive: true });
+      await writeFile(
+        path.join(root, "node_modules", name, "package.json"),
+        JSON.stringify({ name, version }),
+      );
+    }
+    await writeFile(
+      path.join(root, "package.json"),
+      JSON.stringify({ dependencies: { "@starwind-ui/runtime": "1.0.0" } }),
+    );
+    const runtime = {
+      name: "@starwind-ui/runtime",
+      version: "1.0.0",
+      tarball: "runtime.tgz",
+      sha256: "r",
+      files: {},
+    };
+    await expect(
+      readHostProvenance(root, [runtime], {}, [], ["@starwind-ui/runtime"]),
+    ).rejects.toThrow("@starwind-ui/runtime must arrive through another package");
+  });
+  it("leaves the SvelteKit 3 stylesheet packages for init to install", () => {
+    for (const name of SVELTEKIT_3_INIT_PACKAGES)
+      expect(SVELTEKIT_3_TOOLS).not.toHaveProperty(name);
+    for (const name of SVELTEKIT_3_RUNTIME_PACKAGES) expect(SVELTEKIT_3_TOOLS).toHaveProperty(name);
   });
   it("rejects an unexpected installed tool version", async () => {
     const root = await temporary();

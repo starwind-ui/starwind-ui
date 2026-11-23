@@ -1,9 +1,9 @@
 import ScrollArea from "./ScrollArea.svelte";
-import ScrollAreaViewport from "./ScrollAreaViewport.svelte";
 import ScrollAreaContent from "./ScrollAreaContent.svelte";
-import ScrollBar from "./ScrollBar.svelte";
-import ScrollAreaThumb from "./ScrollAreaThumb.svelte";
 import ScrollAreaCorner from "./ScrollAreaCorner.svelte";
+import ScrollAreaThumb from "./ScrollAreaThumb.svelte";
+import ScrollAreaViewport from "./ScrollAreaViewport.svelte";
+import ScrollBar from "./ScrollBar.svelte";
 import {
   scrollArea,
   scrollAreaContent,
@@ -12,12 +12,14 @@ import {
   scrollAreaThumb,
   scrollAreaViewport,
 } from "./variants.js";
+
 export type { ScrollAreaProps } from "./ScrollArea.svelte";
-export type { ScrollAreaViewportProps } from "./ScrollAreaViewport.svelte";
 export type { ScrollAreaContentProps } from "./ScrollAreaContent.svelte";
-export type { ScrollBarProps } from "./ScrollBar.svelte";
-export type { ScrollAreaThumbProps } from "./ScrollAreaThumb.svelte";
 export type { ScrollAreaCornerProps } from "./ScrollAreaCorner.svelte";
+export type { ScrollAreaThumbProps } from "./ScrollAreaThumb.svelte";
+export type { ScrollAreaViewportProps } from "./ScrollAreaViewport.svelte";
+export type { ScrollBarProps } from "./ScrollBar.svelte";
+
 const ScrollAreaVariants = {
   scrollArea,
   scrollAreaContent,
@@ -34,6 +36,7 @@ const ScrollAreaParts = {
   Thumb: ScrollAreaThumb,
   Corner: ScrollAreaCorner,
 };
+
 export {
   ScrollArea,
   ScrollAreaContent,

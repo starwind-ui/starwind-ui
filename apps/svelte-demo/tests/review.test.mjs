@@ -1,22 +1,23 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, readdir } from "node:fs/promises";
+import { mkdir, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { after, before, test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { preview } from "vite";
+import { verifyChartExamples } from "../../demo/tests/chart-cases.mjs";
+import {
+  verifyCarouselDocsExample,
+  verifyColorPickerDocsExample,
+  verifyComboboxDocsExample,
+  verifyContextMenuDocsExample,
+  verifyDropdownDocsExample,
+  verifyNavigationMenuDocsExample,
+  verifySidebarDocsExample,
+  verifyToastDocsExample,
+} from "./docs-examples.mjs";
 import * as styles from "./stock-styles.mjs";
 import { verifyThemeLayoutLifecycle } from "./theme-lifecycle.mjs";
-import {
-  verifySidebarDocsExample,
-  verifyColorPickerDocsExample,
-  verifyToastDocsExample,
-  verifyCarouselDocsExample,
-  verifyDropdownDocsExample,
-  verifyContextMenuDocsExample,
-  verifyNavigationMenuDocsExample,
-  verifyComboboxDocsExample,
-} from "./docs-examples.mjs";
 
 const appRoot = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
@@ -62,7 +63,7 @@ after(async () => {
     );
 });
 function check(name, run, options = {}) {
-  test(name, { skip: !filter.test(name), timeout: 30_000 }, async () => {
+  void test(name, { skip: !filter.test(name), timeout: 30_000 }, async () => {
     const context = await browser.newContext({
       viewport: { width, height: 1000 },
       colorScheme: theme,
@@ -162,6 +163,12 @@ check(
   { javaScriptEnabled: false },
 );
 
+if (!selected.length || selected.includes("chart"))
+  check("Chart examples render, toggle series and follow the theme", async (page) => {
+    await page.goto(`${baseURL}/review/`);
+    await verifyChartExamples({ page, label: "Svelte" });
+  });
+
 if (!selected.length || selected.includes("theme-toggle") || args.includes("--layout")) {
   check("Catalog theme control updates the page and survives reload", async (page) => {
     await page.goto(`${baseURL}/review/`);
@@ -180,8 +187,10 @@ if (!selected.length || selected.includes("theme-toggle") || args.includes("--la
   });
 }
 if (!selected.length || selected.includes("theme-toggle") || args.includes("--layout"))
-  test("Catalog layout releases theme owners on replacement and unmount", { timeout: 30_000 }, () =>
-    verifyThemeLayoutLifecycle(browser, appRoot),
+  void test(
+    "Catalog layout releases theme owners on replacement and unmount",
+    { timeout: 30_000 },
+    () => verifyThemeLayoutLifecycle(browser, appRoot),
   );
 
 const interactions = {

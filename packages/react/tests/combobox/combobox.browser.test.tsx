@@ -1,10 +1,8 @@
+import { createCombobox } from "@starwind-ui/runtime/combobox";
 import * as React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
-import { Combobox } from "../../src/combobox";
-import { createCombobox } from "@starwind-ui/runtime/combobox";
 import {
   Combobox as StyledCombobox,
   ComboboxClear as StyledComboboxClear,
@@ -12,6 +10,7 @@ import {
   ComboboxInput as StyledComboboxInput,
   ComboboxItem as StyledComboboxItem,
 } from "../../../../apps/react-demo/src/components/starwind-runtime/combobox";
+import { Combobox } from "../../src/combobox";
 
 let reactRoot: Root | undefined;
 let container: HTMLDivElement | undefined;

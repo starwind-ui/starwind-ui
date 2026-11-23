@@ -1,8 +1,4 @@
-import type {
-  AdapterCodeBlock,
-  AdapterNamespaceExport,
-  AdapterTypeFacade,
-} from "./types.js";
+import type { AdapterCodeBlock, AdapterNamespaceExport, AdapterTypeFacade } from "./types.js";
 
 export type AdapterExportMode = "type" | "value";
 export type AdapterReExportRole = "helper" | "runtime-type" | "value";

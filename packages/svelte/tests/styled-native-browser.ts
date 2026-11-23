@@ -1,13 +1,13 @@
-import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import { isSvelte557OrNewer, type DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
+import { type DistConsumer, isSvelte557OrNewer } from "./dist-consumer.js";
 import { nativeStyledImports } from "./styled-native-consumer.js";
+import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 
 /** Use the isolated consumer compiler for both server output and the hydrated client. */
 export async function verifyStyledNativeBrowser(consumer: DistConsumer) {

@@ -13,8 +13,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "children": children,
-    "child": child,
+    children,
+    child,
     ...rest
   }: CollapsibleTriggerProps = $props();
 </script>

@@ -297,6 +297,64 @@ describe("Vue Preview Card browser contract", () => {
     expect(link.tabIndex).toBe(0);
   });
 
+  it.each([
+    ["native trigger", "trigger", false],
+    ["asChild trigger", "trigger", true],
+    ["asChild child", "child", true],
+  ] as const)(
+    "runs the disabled guard before the consumer click on the %s",
+    async (_name, listenerOn, asChild) => {
+      const state = reactive({ disabled: true });
+      const clicks: string[] = [];
+      const onClick = () => clicks.push(state.disabled ? "disabled" : "enabled");
+      const host = mountRender(() =>
+        h(
+          PreviewCardRoot,
+          { openDelay: 0 },
+          {
+            default: () => [
+              h(
+                PreviewCardTrigger,
+                {
+                  asChild,
+                  disabled: state.disabled,
+                  href: "#profile",
+                  ...(listenerOn === "trigger" ? { onClick } : {}),
+                },
+                {
+                  default: () =>
+                    asChild
+                      ? h(
+                          "a",
+                          { href: "#profile", ...(listenerOn === "child" ? { onClick } : {}) },
+                          "Profile",
+                        )
+                      : "Profile",
+                },
+              ),
+              h(PreviewCardPopup, {}, { default: () => "Profile details" }),
+            ],
+          },
+        ),
+      );
+      // Vue skips an event stamped in the same millisecond that its listener attached.
+      await wait(5);
+      const link = host.querySelector<HTMLAnchorElement>("[data-sw-preview-card-trigger]")!;
+
+      const disabledClick = new MouseEvent("click", { bubbles: true, cancelable: true });
+      link.dispatchEvent(disabledClick);
+      expect(disabledClick.defaultPrevented).toBe(true);
+      expect(clicks).toEqual([]);
+
+      state.disabled = false;
+      await wait(5);
+      const enabledClick = new MouseEvent("click", { bubbles: true, cancelable: true });
+      enabledClick.preventDefault();
+      link.dispatchEvent(enabledClick);
+      expect(clicks).toEqual(["enabled"]);
+    },
+  );
+
   it("projects disabled anchor behavior and isolates multiple instances", async () => {
     const disabled = mount(tree({}, {}, { disabled: true, href: "#profile" }));
     const link = disabled.querySelector<HTMLAnchorElement>("[data-sw-preview-card-trigger]")!;

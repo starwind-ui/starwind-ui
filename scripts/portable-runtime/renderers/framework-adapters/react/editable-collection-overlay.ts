@@ -9,7 +9,6 @@ import {
   comboboxInheritedBoolean,
   comboboxSelection,
   comboboxSelectionAttributes,
-  comboboxValueFallback,
 } from "../../shared-recipes/structured/combobox-parts.js";
 import type {
   AdapterEditableCollectionOverlayComponentProjection,
@@ -503,32 +502,6 @@ function printRuntimeTypeExport(facts: AdapterEditableCollectionOverlayFacts): s
   if (!facts.index.typeExportSource || !facts.index.typeExports?.length) return "";
 
   return `\nexport type {\n${facts.index.typeExports.map((typeName) => `  ${typeName},`).join("\n")}\n} from "${facts.index.typeExportSource}";\n`;
-}
-
-function formatOptions(
-  options: Readonly<Record<string, boolean | number | string>> | undefined,
-): string {
-  if (!options || Object.keys(options).length === 0) return "{ emit: false }";
-
-  return `{ ${Object.entries(options)
-    .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-    .join(", ")} }`;
-}
-
-function renderObjectShorthand(properties: string[]): string {
-  if (properties.length === 0) {
-    throw new Error("Editable collection overlay facts require form setter props.");
-  }
-
-  return `{ ${properties.join(", ")} }`;
-}
-
-function renderDependencyList(dependencies: string[]): string {
-  if (dependencies.length === 0) {
-    throw new Error("Editable collection overlay facts require form setter dependencies.");
-  }
-
-  return `[${dependencies.join(", ")}]`;
 }
 
 function getReactElementTypeForPart(tagName: string): string {

@@ -1,8 +1,4 @@
-import type {
-  AdapterIndexFile,
-  AdapterNamespaceExport,
-  AdapterTypeFacadeFile,
-} from "./types.js";
+import type { AdapterIndexFile, AdapterNamespaceExport, AdapterTypeFacadeFile } from "./types.js";
 
 export type FrameworkAdapterRuntimeTypeReExportArgs = {
   names: readonly string[];

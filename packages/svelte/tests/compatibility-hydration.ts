@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
+import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { once } from "node:events";
 
 import { chromium } from "playwright";
 

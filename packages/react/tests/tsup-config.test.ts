@@ -12,6 +12,7 @@ const componentDirectories = [
   "avatar",
   "button",
   "carousel",
+  "chart",
   "checkbox",
   "checkbox-group",
   "collapsible",

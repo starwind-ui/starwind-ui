@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { page } from "vitest/browser";
 import { createDialog } from "../../../src/components/dialog/dialog";
 import {
   createNavigationMenu,
   type NavigationMenuValueChangeDetails,
 } from "../../../src/components/navigation-menu/navigation-menu";
 import { initStarwind } from "../../../src/init-starwind";
-import { reportPortalPlacement } from "../../../src/internal/floating-portal";
 import { createDialogTopLayerHost } from "../../../src/internal/dialog-top-layer-host";
+import { reportPortalPlacement } from "../../../src/internal/floating-portal";
 
 describe("createNavigationMenu", () => {
   beforeEach(() => {
@@ -257,6 +258,52 @@ describe("createNavigationMenu", () => {
 
     menu.destroy();
     dialog.destroy();
+  });
+
+  it("cancels a pending close before it restores a Dialog portal on destroy", async () => {
+    const root = renderNavigationMenu();
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog>
+        <button data-sw-dialog-trigger>Open dialog</button>
+        <dialog data-sw-dialog-content data-slot="dialog-content"></dialog>
+      </div>
+    `;
+    const dialogRoot = wrapper.firstElementChild as HTMLElement;
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("dialog")!;
+    const positioner = getPositioner();
+    const popup = getPopup();
+    // Without an authored portal, the positioner is the portal element that the Dialog promotes.
+    root.querySelector("[data-sw-nav-menu-portal]")!.replaceWith(positioner);
+    popup.style.transition = "opacity 300ms linear";
+    positioner.style.setProperty("pointer-events", "visible");
+    dialogContent.append(root);
+    document.body.append(dialogRoot);
+    const dialog = createDialog(dialogRoot);
+    const menu = createNavigationMenu(root);
+
+    try {
+      dialog.open();
+      menu.setValue("products", { emit: false });
+      await waitForFloatingPosition();
+      expect(positioner.style.getPropertyValue("pointer-events")).toBe("auto");
+
+      menu.setValue(null, { emit: false });
+      expect(popup.hasAttribute("data-ending-style")).toBe(true);
+      expect(positioner.inert).toBe(true);
+
+      menu.destroy();
+      expect(positioner.inert).toBe(false);
+      expect(popup.inert).toBe(false);
+      expect(positioner.style.getPropertyValue("pointer-events")).toBe("visible");
+
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      expect(positioner.inert).toBe(false);
+      expect(positioner.style.getPropertyValue("pointer-events")).toBe("visible");
+    } finally {
+      menu.destroy();
+      dialog.destroy();
+    }
   });
 
   it("keeps trigger dialog ownership when the explicit portal owner is outside", () => {
@@ -595,6 +642,17 @@ describe("createNavigationMenu", () => {
     expect(getTrigger("company").getAttribute("aria-expanded")).toBe("true");
     expect(getContent("company").hidden).toBe(false);
     expect(getViewport()).toContainElement(getContent("company"));
+  });
+
+  it("keeps an explicit null default closed over the default value attribute", () => {
+    // An adapter reconnects with its accepted value. A closed menu must not reopen from the
+    // server-rendered default.
+    const root = renderNavigationMenu();
+    root.setAttribute("data-default-value", "company");
+    const menu = createNavigationMenu(root, { defaultValue: null });
+
+    expect(menu.getValue()).toBe(null);
+    expect(getTrigger("company").getAttribute("aria-expanded")).toBe("false");
   });
 
   it("supports explicit empty string item values", () => {
@@ -1032,6 +1090,52 @@ describe("createNavigationMenu", () => {
     expect(disabled.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("moves horizontal trigger focus toward the physical arrow in RTL", () => {
+    const root = renderNavigationMenuWithKeyboard();
+    root.dir = "rtl";
+    const list = root.querySelector<HTMLElement>("[data-sw-nav-menu-list]")!;
+    list.style.display = "flex";
+    createNavigationMenu(root);
+    const first = getTrigger("first");
+    const last = getTrigger("last");
+    const firstX = first.getBoundingClientRect().x;
+    const lastX = last.getBoundingClientRect().x;
+    expect(lastX).toBeLessThan(firstX);
+
+    first.focus();
+    pressNavigationKey(first, "ArrowLeft");
+    expect(document.activeElement).toBe(last);
+    expect(last.getBoundingClientRect().x).toBeLessThan(firstX);
+    pressNavigationKey(last, "ArrowRight");
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("uses inherited RTL on the next arrow after a mounted trigger list changes direction", () => {
+    const root = renderNavigationMenuWithKeyboard();
+    const scope = document.createElement("div");
+    scope.dir = "ltr";
+    document.body.append(scope);
+    scope.append(root);
+    const list = root.querySelector<HTMLElement>("[data-sw-nav-menu-list]")!;
+    list.style.display = "flex";
+    createNavigationMenu(root);
+    const first = getTrigger("first");
+    const last = getTrigger("last");
+    expect(root.hasAttribute("dir")).toBe(false);
+
+    first.focus();
+    pressNavigationKey(first, "ArrowRight");
+    expect(document.activeElement).toBe(last);
+
+    first.focus();
+    scope.dir = "rtl";
+    const startX = first.getBoundingClientRect().x;
+    pressNavigationKey(first, "ArrowLeft");
+    const destinationX = last.getBoundingClientRect().x;
+    expect(destinationX).toBeLessThan(startX);
+    expect(document.activeElement).toBe(last);
+  });
+
   it("opens horizontal menus from ArrowDown, focuses content, and restores focus from Escape", () => {
     const root = renderNavigationMenuWithKeyboard();
     const menu = createNavigationMenu(root);
@@ -1349,6 +1453,25 @@ describe("createNavigationMenu", () => {
 
     expect(menu.getValue()).toBe("last");
     expect(document.activeElement).toBe(link);
+  });
+
+  it("opens vertical RTL content toward inline-end and keeps focus policies", () => {
+    const root = renderNavigationMenuWithKeyboard({ orientation: "vertical" });
+    root.dir = "rtl";
+    const menu = createNavigationMenu(root);
+    const trigger = getTrigger("first");
+    const link = getLink("first-link");
+
+    trigger.focus();
+    pressNavigationKey(trigger, "ArrowLeft");
+    expect(menu.getValue()).toBe("first");
+    expect(document.activeElement).toBe(link);
+    pressNavigationKey(link, "Tab", true);
+    expect(document.activeElement).toBe(trigger);
+    link.focus();
+    pressNavigationKey(link, "Escape");
+    expect(menu.getValue()).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 
   it("adds inserted items to accessibility and keyboard ownership", async () => {
@@ -2094,6 +2217,62 @@ describe("createNavigationMenu", () => {
     expect(getPositioner().style.top).toBe("");
   });
 
+  it.each([
+    ["ltr", "start"],
+    ["ltr", "end"],
+    ["rtl", "start"],
+    ["rtl", "end"],
+  ] as const)(
+    "keeps %s content inside the phone viewport padding at the inline %s edge",
+    async (dir, edge) => {
+      await withPhoneViewport(dir, async () => {
+        const root = renderNavigationMenuWithSizedContent();
+        const trigger = getTrigger("company");
+        const physical = (edge === "start") === (dir === "ltr") ? "left" : "right";
+        trigger.style.cssText = `position:fixed;${physical}:0;top:100px;width:80px;height:40px`;
+        getPositioner().setAttribute("data-side", "bottom");
+        getPositioner().setAttribute("data-align", "start");
+        getPositioner().setAttribute("data-avoid-collisions", "true");
+
+        const menu = createNavigationMenu(root);
+        trigger.click();
+        await waitForBoundaryTransitionTarget();
+
+        const rect = getPositioner().getBoundingClientRect();
+        const anchor = trigger.getBoundingClientRect();
+        expect(rect.width).toBe(320);
+        expect(rect.left).toBeGreaterThanOrEqual(8);
+        expect(rect.right).toBeLessThanOrEqual(window.innerWidth - 8);
+        expect(rect.left).toBeLessThan(anchor.right);
+        expect(rect.right).toBeGreaterThan(anchor.left);
+        expect(rect.top).toBeGreaterThanOrEqual(anchor.bottom);
+        expect(getPositioner().getAttribute("data-side")).toBe("bottom");
+        menu.destroy();
+      });
+    },
+  );
+
+  it("keeps content on its trigger when the trigger scrolls past the viewport edge", async () => {
+    await withPhoneViewport("ltr", async () => {
+      const root = renderNavigationMenuWithSizedContent();
+      const trigger = getTrigger("company");
+      trigger.style.cssText = "position:fixed;left:-400px;top:100px;width:80px;height:40px";
+      getPositioner().setAttribute("data-side", "bottom");
+      getPositioner().setAttribute("data-align", "start");
+      getPositioner().setAttribute("data-avoid-collisions", "true");
+
+      const menu = createNavigationMenu(root);
+      trigger.click();
+      await waitForBoundaryTransitionTarget();
+
+      // The shift stops at the trigger edge instead of at the 8px viewport padding.
+      expect(getPositioner().getBoundingClientRect().left).toBe(
+        trigger.getBoundingClientRect().right,
+      );
+      menu.destroy();
+    });
+  });
+
   it("keeps open content attached to the active trigger while scroll changes its rect", async () => {
     const root = renderNavigationMenuWithSizedContent();
     const trigger = getTrigger("products");
@@ -2114,7 +2293,8 @@ describe("createNavigationMenu", () => {
     await waitForBoundaryTransitionTarget();
 
     expect(getPositioner().style.width).toBe("240px");
-    expect(getPositioner().style.left).toBe(`${triggerLeft + 20 - 240}px`);
+    // The end edge of the trigger is 4px from the viewport, so the popup slides back to the 8px padding.
+    expect(getPositioner().style.left).toBe(`${window.innerWidth - 8 - 240}px`);
     expect(getPositioner().getAttribute("data-side")).toBe("bottom");
     expect(getPositioner().getAttribute("data-align")).toBe("end");
 
@@ -3535,6 +3715,12 @@ function renderNavigationMenuWithFallbackValues(): HTMLElement {
   return root;
 }
 
+function pressNavigationKey(target: HTMLElement, key: string, shiftKey = false): void {
+  target.dispatchEvent(
+    new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key, shiftKey }),
+  );
+}
+
 function getTrigger(name: string): HTMLButtonElement {
   return document.querySelector<HTMLButtonElement>(`[data-testid="trigger-${name}"]`)!;
 }
@@ -3612,6 +3798,18 @@ async function waitForMicrotasks(): Promise<void> {
 
 function nextAnimationFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function withPhoneViewport(dir: "ltr" | "rtl", run: () => Promise<void>): Promise<void> {
+  const original = { height: window.innerHeight, width: window.innerWidth };
+  await page.viewport(390, 844);
+  document.documentElement.dir = dir;
+  try {
+    await run();
+  } finally {
+    document.documentElement.removeAttribute("dir");
+    await page.viewport(original.width, original.height);
+  }
 }
 
 async function waitForFloatingPosition(): Promise<void> {

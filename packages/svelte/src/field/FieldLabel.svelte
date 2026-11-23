@@ -6,9 +6,9 @@ import type { HTMLLabelAttributes } from "svelte/elements";
 import { getFieldRefresh } from "../form/FormFieldContext.js";
 const refresh = getFieldRefresh();
 const attachPart: Attachment<HTMLLabelElement> = () => { refresh?.(); return () => refresh?.(); };
-type Props = Omit<HTMLLabelAttributes, "children"> & { children?: Snippet; ref?: (element: HTMLLabelElement | null) => void; "data-slot"?: string;   };
-let { children, ref, "data-slot": dataSlot = "field-label",   ...rest }: Props = $props();
+type Props = Omit<HTMLLabelAttributes, "children"> & { children?: Snippet; ref?: (element: HTMLLabelElement | null) => void;   };
+let { children, ref,   ...rest }: Props = $props();
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLLabelElement>(() => ref);
 </script>
-<label {...rest} data-sw-field-label="" data-slot={dataSlot}   {@attach attachPart} {@attach attachRef}>{@render children?.()}</label>
+<label {...rest} data-sw-field-label=""   {@attach attachPart} {@attach attachRef}>{@render children?.()}</label>

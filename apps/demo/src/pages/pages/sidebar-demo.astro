@@ -14,6 +14,8 @@ import Search from "@tabler/icons/outline/search.svg";
 import Settings from "@tabler/icons/outline/settings.svg";
 import Sparkles from "@tabler/icons/outline/sparkles.svg";
 import User from "@tabler/icons/outline/user.svg";
+import DirectionInitScript from "@/components/nav/DirectionInitScript.astro";
+import DirectionToggle from "@/components/nav/DirectionToggle.astro";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
 import {
   Dropdown,
@@ -61,6 +63,7 @@ const menuItems = [
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <ThemeInitScript />
+    <DirectionInitScript />
   </head>
 
   <body class="min-h-lvh">
@@ -225,6 +228,7 @@ const menuItems = [
           <div class="flex-1">
             <h1 class="text-lg font-semibold">Sidebar Demo</h1>
           </div>
+          <DirectionToggle />
           <ThemeToggle />
         </header>
 

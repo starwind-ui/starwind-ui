@@ -125,12 +125,15 @@ const containerProps = Object.fromEntries(
       data-part="sat-rect"
       class={`sat-rect relative w-full touch-none bg-red-500 select-none ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[20px] rounded-md border border-outline`}
     >
-      <div class="absolute inset-0 rounded-[7px] bg-linear-to-r from-white to-transparent"></div>
+      <div
+        class="absolute inset-0 rounded-[7px] bg-linear-to-r from-white to-transparent rtl:bg-linear-to-l"
+      >
+      </div>
       <div class="absolute inset-0 rounded-[7px] bg-linear-to-t from-black to-transparent"></div>
       <div
         draggable="false"
         data-part="cursor"
-        class="cursor absolute top-0 left-full z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-500"
+        class="cursor absolute start-full top-0 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-500 rtl:translate-x-1/2"
       >
       </div>
     </div>
@@ -151,7 +154,7 @@ const containerProps = Object.fromEntries(
         >
           <div
             data-part="hue-handle"
-            class="hue-handle border-foreground absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500"
+            class="hue-handle border-foreground absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500 rtl:translate-x-1/2"
           >
           </div>
         </div>
@@ -162,11 +165,11 @@ const containerProps = Object.fromEntries(
           <div class="checkerboard absolute inset-0 rounded-md bg-white"></div>
           <div
             data-part="opacity-slider"
-            class="absolute inset-0 rounded-md bg-linear-to-r from-transparent to-red-500"
+            class="absolute inset-0 rounded-md bg-linear-to-r from-transparent to-red-500 rtl:bg-linear-to-l"
           >
             <div
               data-part="opacity-handle"
-              class="border-foreground pointer-events-none absolute top-1/2 left-full z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500 shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+              class="border-foreground pointer-events-none absolute start-full top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500 shadow-[0_1px_3px_rgba(0,0,0,0.3)] rtl:translate-x-1/2"
             >
             </div>
           </div>
@@ -194,10 +197,10 @@ const containerProps = Object.fromEntries(
         </SelectContent>
       </Select>
       <div class="flex">
-        <Input class="input-text rounded-r-none" size="sm" />
+        <Input class="input-text rounded-e-none" size="sm" />
         <Input class="input-text rounded-none" size="sm" />
         <Input class="input-text rounded-none" size="sm" />
-        <Input class="input-text rounded-l-none" size="sm" />
+        <Input class="input-text rounded-s-none" size="sm" />
       </div>
     </div>
     <Button data-part="none-btn" size="sm" variant="outline" class="mt-5 dark:border-none">
@@ -208,9 +211,20 @@ const containerProps = Object.fromEntries(
 </div>
 
 <style>
+  [data-part="hue-slider"]:where(
+    [dir="rtl"],
+    [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)
+  ),
+  [data-part="opacity-slider"]:where(
+    [dir="rtl"],
+    [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)
+  ) {
+    --sw-color-axis: to left;
+  }
+
   .hue-range {
     background: linear-gradient(
-      to right,
+      var(--sw-color-axis, to right),
       #ff0000 0%,
       #ffff00 17%,
       #00ff00 33%,
@@ -236,6 +250,11 @@ const containerProps = Object.fromEntries(
   }
 </style>
 <script>
+  import {
+    keepPortalDirection,
+    readDirection,
+    watchDirection,
+  } from "@/lib/utils/starwind/direction";
   import {
     type FloatingAlign,
     type FloatingSide,
@@ -298,9 +317,15 @@ const containerProps = Object.fromEntries(
     ) {
       return () => {};
     }
-    let isDraggingHue = false;
-    let isDraggingSquare = false;
-    let isDraggingOpacity = false;
+    let gesture: {
+      editor: HTMLElement;
+      pointerId: number;
+      direction: "ltr" | "rtl";
+      hue: number;
+      rgb: string;
+      opacity: number;
+      stopWatching: () => void;
+    } | null = null;
     let currentHue = 0;
     let currentOpacity = 100;
     let currentRgb = "255,0,0";
@@ -308,6 +333,7 @@ const containerProps = Object.fromEntries(
     let isOpen = false;
     let isClosing = false;
     let contentPlaceholder: Comment | null = null;
+    let stopPortalScope: ReturnType<typeof keepPortalDirection> | undefined;
     let portalTarget: HTMLElement | null = null;
     let cleanupAutoUpdate: (() => void) | null = null;
     let closeTimeoutRef: number | null = null;
@@ -322,9 +348,9 @@ const containerProps = Object.fromEntries(
     const animationDurationString = customPicker.style.animationDuration;
 
     if (animationDurationString.endsWith("ms")) {
-      animationDuration = parseFloat(animationDurationString);
+      animationDuration = Number.parseFloat(animationDurationString);
     } else if (animationDurationString.endsWith("s")) {
-      animationDuration = parseFloat(animationDurationString) * 1000;
+      animationDuration = Number.parseFloat(animationDurationString) * 1000;
     }
 
     if (contentSide === "top" || contentSide === "bottom") {
@@ -360,6 +386,7 @@ const containerProps = Object.fromEntries(
     }
 
     function getVerticalPlacement(options: {
+      direction: "ltr" | "rtl";
       preferredSide: ColorPickerFloatingSide;
       align: FloatingAlign;
       sideOffset: number;
@@ -389,7 +416,7 @@ const containerProps = Object.fromEntries(
           ? triggerRect.bottom + sideOffset
           : triggerRect.top - contentHeight - sideOffset;
       const getLeft = () => {
-        if (align === "end") {
+        if (align === (options.direction === "rtl" ? "start" : "end")) {
           return triggerRect.right - contentWidth;
         }
 
@@ -451,7 +478,10 @@ const containerProps = Object.fromEntries(
       const contentWidth = customPicker.offsetWidth;
       const contentHeight = customPicker.offsetHeight;
       const viewportPadding = 8;
+      stopPortalScope?.sync();
+      const direction = readDirection(customPicker);
       const helperPlacement = resolvePlacement({
+        direction,
         side,
         align,
         sideOffset,
@@ -467,6 +497,7 @@ const containerProps = Object.fromEntries(
         helperPlacement.side === "top" || helperPlacement.side === "bottom"
           ? helperPlacement
           : getVerticalPlacement({
+              direction,
               preferredSide: side,
               align,
               sideOffset,
@@ -495,6 +526,7 @@ const containerProps = Object.fromEntries(
       customPicker.style.transformOrigin = getTransformOrigin(
         resolvedPlacement.side,
         resolvedPlacement.align,
+        direction,
       );
       customPicker.setAttribute("data-side", resolvedPlacement.side);
       customPicker.setAttribute("data-align", resolvedPlacement.align);
@@ -507,6 +539,7 @@ const containerProps = Object.fromEntries(
 
       contentPlaceholder = document.createComment("color-picker-placeholder");
       customPicker.parentNode?.insertBefore(contentPlaceholder, customPicker);
+      stopPortalScope = keepPortalDirection(container, customPicker, positionPicker);
       target.appendChild(customPicker);
       portalTarget = target;
       customPicker.style.position = target === document.body ? "fixed" : "absolute";
@@ -528,6 +561,9 @@ const containerProps = Object.fromEntries(
     }
 
     function unportalPicker() {
+      stopPortalScope?.destroy();
+      stopPortalScope = undefined;
+      endGesture(false);
       if (!customPicker) return;
       cleanupAutoUpdate?.();
       cleanupAutoUpdate = null;
@@ -705,69 +741,77 @@ const containerProps = Object.fromEntries(
       }
     }
 
-    // Manage Hue and Opacity Sliders (During Dragging)
-    hueSlider.addEventListener(
-      "pointerdown",
-      (e: PointerEvent) => {
-        e.preventDefault();
-        isDraggingHue = true;
-        hueSlider.setPointerCapture(e.pointerId);
-        updateHue(e);
-      },
-      { signal: abortController.signal },
-    );
-    opacitySlider.addEventListener(
-      "pointerdown",
-      (e: PointerEvent) => {
-        e.preventDefault();
-        isDraggingOpacity = true;
-        opacitySlider.setPointerCapture(e.pointerId);
-        updateOpacity(e);
-      },
-      { signal: abortController.signal },
-    );
-    window.addEventListener(
-      "pointermove",
-      (e: PointerEvent) => {
-        if (isDraggingHue) {
-          updateHue(e);
-        }
-        if (isDraggingOpacity) {
-          updateOpacity(e);
-        }
-        if (isDraggingSquare) {
-          moveCursor(e);
-        }
-      },
-      { signal: abortController.signal },
-    );
+    function endGesture(rollback: boolean) {
+      if (!gesture) return;
+      const session = gesture;
+      gesture = null;
+      session.stopWatching();
+      if (session.editor.hasPointerCapture(session.pointerId))
+        session.editor.releasePointerCapture(session.pointerId);
+      if (rollback) {
+        const [r, g, b] = session.rgb.split(",").map(Number);
+        updateOpacityValue(session.opacity / 100, { dispatch: false });
+        updateUIFromRGB(r, g, b, { dispatch: false });
+        // Achromatic colors cannot recover the previous hue from RGB.
+        currentHue = session.hue;
+        if (hueHandle && hueSlider)
+          hueHandle.style.insetInlineStart = `${(currentHue / 360) * hueSlider.offsetWidth}px`;
+        if (satRect) satRect.style.backgroundColor = `hsl(${currentHue}, 100%, 50%)`;
+        if (hueHandle) hueHandle.style.backgroundColor = `hsl(${currentHue}, 100%, 50%)`;
+      }
+    }
+
+    function moveGesture(event: PointerEvent) {
+      if (!gesture || event.pointerId !== gesture.pointerId) return;
+      stopPortalScope?.sync();
+      if (readDirection(gesture.editor) !== gesture.direction) {
+        endGesture(true);
+        return;
+      }
+      if (gesture.editor === satRect) moveCursor(event);
+      else if (gesture.editor === hueSlider) updateHue(event);
+      else updateOpacity(event);
+    }
+
+    for (const editor of [satRect, hueSlider, opacitySlider]) {
+      editor.addEventListener(
+        "pointerdown",
+        (event: PointerEvent) => {
+          if (gesture) return;
+          event.preventDefault();
+          gesture = {
+            editor,
+            pointerId: event.pointerId,
+            direction: readDirection(editor),
+            rgb: currentRgb,
+            opacity: currentOpacity,
+            hue: currentHue,
+            stopWatching: watchDirection(editor, () => endGesture(true)),
+          };
+          editor.setPointerCapture(event.pointerId);
+          moveGesture(event);
+        },
+        { signal: abortController.signal },
+      );
+    }
+    window.addEventListener("pointermove", moveGesture, { signal: abortController.signal });
     window.addEventListener(
       "pointerup",
-      () => {
-        isDraggingHue = false;
-        isDraggingOpacity = false;
-        isDraggingSquare = false;
+      (event) => {
+        if (gesture && event.pointerId === gesture.pointerId) {
+          stopPortalScope?.sync();
+          endGesture(readDirection(gesture.editor) !== gesture.direction);
+        }
       },
       { signal: abortController.signal },
     );
     window.addEventListener(
       "pointercancel",
-      () => {
-        isDraggingHue = false;
-        isDraggingOpacity = false;
-        isDraggingSquare = false;
-      },
-      { signal: abortController.signal },
-    );
-
-    // Manage Main Color Square (During Dragging)
-    satRect.addEventListener(
-      "pointerdown",
-      (e: PointerEvent) => {
-        e.preventDefault();
-        isDraggingSquare = true;
-        satRect.setPointerCapture(e.pointerId);
-        moveCursor(e);
+      (event) => {
+        if (gesture && event.pointerId === gesture.pointerId) {
+          stopPortalScope?.sync();
+          endGesture(readDirection(gesture.editor) !== gesture.direction);
+        }
       },
       { signal: abortController.signal },
     );
@@ -775,14 +819,14 @@ const containerProps = Object.fromEntries(
     function moveCursor(e: PointerEvent) {
       if (!satRect || !cursor) return;
       const rect = satRect.getBoundingClientRect();
-      let x = e.clientX - rect.left;
+      let x = readDirection(satRect) === "rtl" ? rect.right - e.clientX : e.clientX - rect.left;
       let y = e.clientY - rect.top;
 
       // Keep cursor inside bounds
       x = Math.max(0, Math.min(x, rect.width));
       y = Math.max(0, Math.min(y, rect.height));
 
-      cursor.style.left = `${x}px`;
+      cursor.style.insetInlineStart = `${x}px`;
       cursor.style.top = `${y}px`;
 
       const h = currentHue;
@@ -803,7 +847,7 @@ const containerProps = Object.fromEntries(
       const rect = hueSlider.getBoundingClientRect();
 
       // Calculate position relative to the slider
-      let x = e.clientX - rect.left;
+      let x = readDirection(hueSlider) === "rtl" ? rect.right - e.clientX : e.clientX - rect.left;
 
       // Constrain the value between 0 and the slider width
       x = Math.max(0, Math.min(x, rect.width));
@@ -812,7 +856,7 @@ const containerProps = Object.fromEntries(
       const percent = (x / rect.width) * 100;
 
       // Update UI (Move handle and change color)
-      hueHandle.style.left = `${x}px`;
+      hueHandle.style.insetInlineStart = `${x}px`;
 
       // Hue is 0-360 degrees
       const hue = (percent / 100) * 360;
@@ -830,7 +874,7 @@ const containerProps = Object.fromEntries(
       cursor.style.backgroundColor = finalColor;
       currentRgb = `${r},${g},${b}`;
       const rgb = `${r},${g},${b}`;
-      opacitySlider.style.background = `linear-gradient(to right, rgba(${rgb}, 0) 0%, rgba(${rgb}, 1) 100%)`;
+      opacitySlider.style.background = `linear-gradient(var(--sw-color-axis, to right), rgba(${rgb}, 0) 0%, rgba(${rgb}, 1) 100%)`;
       opacityHandle.style.backgroundColor = `rgba(${rgb}, ${alpha})`;
       colorInput.value = rgbToHex(r, g, b);
       container.setAttribute("value", finalColor);
@@ -852,8 +896,8 @@ const containerProps = Object.fromEntries(
 
       // 2. Get the cursor's current position to calculate Saturation and Value
       const rect = satRect.getBoundingClientRect();
-      const cursorLeft = parseFloat(cursor.style.left) || 0;
-      const cursorTop = parseFloat(cursor.style.top) || 0;
+      const cursorLeft = Number.parseFloat(cursor.style.insetInlineStart) || 0;
+      const cursorTop = Number.parseFloat(cursor.style.top) || 0;
       const s = (cursorLeft / rect.width) * 100;
       const v = 100 - (cursorTop / rect.height) * 100;
 
@@ -867,13 +911,14 @@ const containerProps = Object.fromEntries(
     function updateOpacity(e: PointerEvent) {
       if (!opacitySlider || !opacityHandle || !colorInput) return;
       const rect = opacitySlider.getBoundingClientRect();
-      let x = e.clientX - rect.left;
+      let x =
+        readDirection(opacitySlider) === "rtl" ? rect.right - e.clientX : e.clientX - rect.left;
 
       // Constrain position
       x = Math.max(0, Math.min(x, rect.width));
 
       // Update handle position UI
-      opacityHandle.style.left = `${x}px`;
+      opacityHandle.style.insetInlineStart = `${x}px`;
 
       // Calculate the percentage (0 to 1)
       const opacityPercentage = normalizeOpacity(x / rect.width);
@@ -904,7 +949,7 @@ const containerProps = Object.fromEntries(
       const rect = opacitySlider.getBoundingClientRect();
       let x = rect.width * normalizedValue;
       x = Math.max(0, Math.min(x, rect.width));
-      opacityHandle.style.left = `${x}px`;
+      opacityHandle.style.insetInlineStart = `${x}px`;
       colorInput.style.opacity = normalizedValue.toString();
       container.setAttribute(
         "value",
@@ -967,13 +1012,13 @@ const containerProps = Object.fromEntries(
       const x = (s / 100) * rect.width;
       const y = (1 - v / 100) * rect.height;
 
-      cursor.style.left = `${x}px`;
+      cursor.style.insetInlineStart = `${x}px`;
       cursor.style.top = `${y}px`;
 
       // 5. Update Hue Slider Position
       const huePercent = h / 360;
       const trackWidth = hueSlider.offsetWidth;
-      hueHandle.style.left = `${huePercent * trackWidth}px`;
+      hueHandle.style.insetInlineStart = `${huePercent * trackWidth}px`;
 
       // 6. Finally, update the color input value
       setSelectedColor(r, g, b, options);
@@ -1140,9 +1185,9 @@ const containerProps = Object.fromEntries(
           .join("");
       }
 
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
+      const r = Number.parseInt(hex.substring(0, 2), 16);
+      const g = Number.parseInt(hex.substring(2, 4), 16);
+      const b = Number.parseInt(hex.substring(4, 6), 16);
 
       return areRgbValuesValid(r, g, b) ? [r, g, b] : undefined;
     }
@@ -1157,11 +1202,11 @@ const containerProps = Object.fromEntries(
       const cleanHex = hexAlpha.replace("#", "");
       const alphaPart = cleanHex.length > 2 ? cleanHex.slice(-2) : cleanHex;
 
-      const intValue = parseInt(alphaPart, 16);
+      const intValue = Number.parseInt(alphaPart, 16);
 
-      if (isNaN(intValue)) return 1; // Default to fully opaque if invalid
+      if (Number.isNaN(intValue)) return 1; // Default to fully opaque if invalid
 
-      return parseFloat((intValue / 255).toFixed(2));
+      return Number.parseFloat((intValue / 255).toFixed(2));
     }
 
     function isValidRGB(color: string): boolean {
@@ -1172,7 +1217,7 @@ const containerProps = Object.fromEntries(
 
       const [r, g, b, a] = match.slice(1).map(Number);
 
-      const rgbValid = [r, g, b].every((val) => !isNaN(val) && val >= 0 && val <= 255);
+      const rgbValid = [r, g, b].every((val) => !Number.isNaN(val) && val >= 0 && val <= 255);
 
       const hasAlpha = match[4] !== undefined;
       const alphaValid = !hasAlpha || (a >= 0 && a <= 1);

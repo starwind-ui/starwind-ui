@@ -9,15 +9,19 @@ export const buttonGroup = tv({
   variants: {
     orientation: {
       horizontal: [
-        "[&>*:not(:first-child)]:rounded-l-none",
-        "[&>*:not(:first-child)]:border-l-0",
-        "[&>*:not(:last-child):not(:has(+_script:last-child))]:rounded-r-none",
-        "[&>*:not(:first-child)_>_[data-as-child]_>_*]:rounded-l-none",
-        "[&>*:not(:first-child)_>_[data-as-child]_>_*]:border-l-0",
-        "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-as-child]_>_*]:rounded-r-none",
-        "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:rounded-l-none",
-        "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:border-l-0",
-        "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-slot=select-trigger]]:rounded-r-none",
+        // Keep state transitions while joined edges move on the next direction change.
+        "[&>.transition-all]:transition",
+        "[&>*>[data-as-child]>.transition-all]:transition",
+        "[&>*>[data-slot=select-trigger].transition-all]:transition",
+        "[&>*:not(:first-child)]:rounded-s-none",
+        "[&>*:not(:first-child)]:border-s-0",
+        "[&>*:not(:last-child):not(:has(+_script:last-child))]:rounded-e-none",
+        "[&>*:not(:first-child)_>_[data-as-child]_>_*]:rounded-s-none",
+        "[&>*:not(:first-child)_>_[data-as-child]_>_*]:border-s-0",
+        "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-as-child]_>_*]:rounded-e-none",
+        "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:rounded-s-none",
+        "[&>*:not(:first-child)_>_[data-slot=select-trigger]]:border-s-0",
+        "[&>*:not(:last-child):not(:has(+_script:last-child))_>_[data-slot=select-trigger]]:rounded-e-none",
       ],
       vertical: [
         "flex-col",

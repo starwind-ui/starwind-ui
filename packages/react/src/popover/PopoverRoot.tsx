@@ -96,7 +96,19 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
     if (attributes) authoredPlacement.set(element, attributes);
     else authoredPlacement.delete(element);
   }
-  const partContext = React.useMemo(() => ({ registerPlacement }), []);
+  const partContext = React.useMemo(
+    () => ({
+      registerPlacement(element: HTMLElement, attributes: Record<string, string> | null) {
+        registerPlacement(element, attributes);
+        // Release the Runtime before a removed Popup leaves the DOM; connect a Popup that mounts later.
+        if (!attributes) {
+          if (!hasRequiredSurface()) disconnectRuntime();
+        } else if (!connection.instance && portalScope.isReady() && rootRef.current)
+          connectSurface(rootRef.current);
+      },
+    }),
+    [],
+  );
   const composedRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
@@ -171,7 +183,15 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
   }, [closeOnEscape, closeOnOutsideInteract, modal, openOnHover]);
   useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
   useIsomorphicLayoutEffect(() => {
-    if (portalScope.isReady() && rootRef.current) refreshPopoverPortalSurface(rootRef.current);
+    const root = rootRef.current;
+    if (!portalScope.isReady() || !root) return;
+    // A Popup that mounts after the root connects the Runtime here.
+    if (!connection.instance || !hasRequiredSurface()) connectSurface(root);
+    // Only a Portal surface needs a refresh; the Runtime may have moved a bare Popup out of the root.
+    else if (
+      [...authoredPlacement.keys()].some((element) => element.closest("[data-sw-popover-portal]"))
+    )
+      refreshPopoverPortalSurface(root);
   }, [portalRuntimeActivation]);
   useIsomorphicLayoutEffect(applyParentCommand, [open]);
   const renderedOpen = open ?? renderedState;

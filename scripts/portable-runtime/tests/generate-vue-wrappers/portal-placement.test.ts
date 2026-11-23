@@ -71,9 +71,26 @@ describe("generated Vue framework-owned Portal placement", () => {
     );
     expect(compactCode(source)).toContain(
       compactCode(
-        "if (authoredRoot instanceof HTMLElement && authoredRoot.isConnected) return authoredRoot",
+        "if (isOwnerHTMLElement(authoredRoot, wrapper.ownerDocument) && authoredRoot.isConnected) return authoredRoot",
       ),
     );
+    expect(compactCode(source)).toContain(
+      compactCode(
+        "function isOwnerHTMLElement(value: unknown, ownerDocument: Document): value is HTMLElement",
+      ),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode("if ((value as Element).ownerDocument !== ownerDocument) return false"),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode("const Constructor = ownerDocument.defaultView?.HTMLElement ?? HTMLElement"),
+    );
+    expect(compactCode(source)).toContain(
+      compactCode(
+        'const getter = Object.getOwnPropertyDescriptor(Constructor.prototype, "dir")?.get',
+      ),
+    );
+    expect(compactCode(source)).toContain(compactCode("getter.call(value)"));
     expect(source.indexOf("inlineReference?.isConnected")).toBeLessThan(
       source.indexOf("options.reference?.()"),
     );

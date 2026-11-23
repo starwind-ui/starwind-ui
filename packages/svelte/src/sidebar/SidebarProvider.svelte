@@ -70,7 +70,7 @@ function connectMedia(query:string):()=>void{const media=typeof window.matchMedi
 const sync=()=>{acceptedIsMobile=media?.matches ?? false;};sync();
 if(media?.addEventListener)media.addEventListener('change',sync);else media?.addListener(sync);
 return()=>{if(media?.removeEventListener)media.removeEventListener('change',sync);else media?.removeListener(sync);};}
-const context:SidebarContextValue={get open(){return acceptedOpen;},get mobileOpen(){return acceptedMobileOpen;},get state(){return acceptedOpen?'expanded' as const:'collapsed' as const;},get expanded(){return acceptedIsMobile?acceptedMobileOpen:acceptedOpen;},get isMobile(){return acceptedIsMobile;},setMobileOpen(next){acceptMobile(next);}};setContext(SidebarContext,context);
+const context:SidebarContextValue={get open(){return acceptedOpen;},get mobileOpen(){return acceptedMobileOpen;},get state(){return acceptedOpen?'expanded' as const:'collapsed' as const;},get expanded(){return acceptedIsMobile?acceptedMobileOpen:acceptedOpen;}};setContext(SidebarContext,context);
 const attachRuntime:Attachment<HTMLDivElement>=(root)=>{
 $effect(()=>connectMedia(mobileQuery));
 $effect(()=>{void keyboardShortcut;void mobileQuery;void persistOpen;void persistenceKey;void persistenceStorage;void persistenceMaxAge;untrack(()=>connectRuntime(root));return()=>untrack(disconnectRuntime);});

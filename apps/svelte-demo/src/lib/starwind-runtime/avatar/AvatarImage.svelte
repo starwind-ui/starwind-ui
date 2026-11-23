@@ -12,8 +12,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "alt": alt,
-    "onLoadingStatusChange": onLoadingStatusChange,
+    alt,
+    onLoadingStatusChange,
     ...rest
   }: AvatarImageProps = $props();
 </script>

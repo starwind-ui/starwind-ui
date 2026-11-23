@@ -7,8 +7,6 @@ import type {
 import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteMenuRoot } from "./composite-menu-overlay.js";
 
-const NOTICE = "Svelte 5 public beta adapter output.";
-
 export function printSvelteAnchoredMenuOverlayComponent(
   file: AdapterComponentFile,
 ): AdapterPrintedFile {
@@ -34,8 +32,7 @@ export function printSvelteAnchoredMenuOverlayIndex(file: AdapterIndexFile): Ada
   ];
   return {
     path: file.path,
-    contents: `// ${NOTICE}
-${facts.index.menuAliasMembers.map(({ contextName, menuName }) => `import ${contextName} from "../menu/${menuName}.svelte";`).join("\n")}
+    contents: `${facts.index.menuAliasMembers.map(({ contextName, menuName }) => `import ${contextName} from "../menu/${menuName}.svelte";`).join("\n")}
 ${facts.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
 const ${facts.exports.namespace} = {
 ${facts.index.namespaceMembers.map(({ key, name }) => `  ${key}: ${name},`).join("\n")}
@@ -49,8 +46,7 @@ export type { ${facts.index.typeExports.join(", ")} } from "${facts.runtime.type
 
 function printTrigger(f: AdapterAnchoredMenuOverlayFacts): string {
   const { trigger } = f;
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";

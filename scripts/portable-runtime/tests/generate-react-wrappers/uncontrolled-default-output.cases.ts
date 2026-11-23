@@ -132,9 +132,7 @@ export function defineReactUncontrolledDefaultOutputTests(getTempRoot: GetTempRo
       compactCode('reset.form?.removeEventListener("reset", reset.listener)'),
     );
     expect(compactCode(selectRoot)).toContain(compactCode("window.clearTimeout(reset.timer)"));
-    expect(compactCode(selectRoot)).toContain(
-      compactCode("settleSelectedLabel(acceptedValue)"),
-    );
+    expect(compactCode(selectRoot)).toContain(compactCode("settleSelectedLabel(acceptedValue)"));
     expect(compactCode(selectRoot)).not.toContain(compactCode("MutationObserver"));
 
     expect(compactCode(tree["sidebar/SidebarProvider.tsx"])).toContain(

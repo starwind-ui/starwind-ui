@@ -1,10 +1,10 @@
 import { defineFrameworkAdapterTarget } from "../target-definition.js";
 import {
-  frameworkAdapterTargetRenderedPortal,
   type FrameworkAdapterTargetRegistration,
+  frameworkAdapterTargetRenderedPortal,
 } from "../types.js";
-import { svelteRenderedPortalCapability } from "./portal-inspection.js";
 import { svelteFrameworkAdapter, svelteFrameworkAdapterReadiness } from "./adapter.js";
+import { projectSvelteChartSurfaceOutput } from "./chart-surface.js";
 import {
   collectSvelteStyledPackageImportSources,
   formatSveltePrimitiveVendoringContent,
@@ -16,6 +16,7 @@ import { projectSvelteColorPickerOutput } from "./color-picker.js";
 import { projectSvelteControlledValuePresenceOutput } from "./controlled-value-presence.js";
 import { SVELTE_PACKAGE_COMPONENTS } from "./inventory.js";
 import { svelteManualPrimitiveGenerators } from "./manual-primitives.js";
+import { svelteRenderedPortalCapability } from "./portal-inspection.js";
 import { writeSvelteAdapterOutput } from "./primitive-output-writer.js";
 import { generateSveltePrimitivePackage } from "./primitive-package.js";
 import { svelteAdapterPublicContract } from "./public-contract.js";
@@ -27,7 +28,6 @@ import { projectSvelteStyledOutput, writeSvelteStyledOutput } from "./styled/wri
 const svelteFrameworkAdapterTargetDefinition = {
   adapter: svelteFrameworkAdapter,
   cliRegistry: {
-    exactAdapterPackageVersion: true,
     packageMetadataSources: [
       "packages/svelte/package.json",
       "packages/runtime/package.json",
@@ -50,6 +50,7 @@ const svelteFrameworkAdapterTargetDefinition = {
     },
     setupPackageRequirements: [
       { name: "svelte", range: `>=${svelteAdapterPublicContract.framework.minimumVersion} <6` },
+      { name: "tailwind-merge", range: "^3.7.0" },
     ],
   },
   displayName: "Svelte",
@@ -64,10 +65,12 @@ const svelteFrameworkAdapterTargetDefinition = {
     manualPrimitives: svelteManualPrimitiveGenerators,
     outputModel: {
       projectSpecialized: (model) =>
-        projectSvelteSidebarOutput(
-          projectSvelteColorPickerOutput(
-            projectSvelteControlledValuePresenceOutput(
-              projectSvelteRepeatedDisclosureOutput(model),
+        projectSvelteChartSurfaceOutput(
+          projectSvelteSidebarOutput(
+            projectSvelteColorPickerOutput(
+              projectSvelteControlledValuePresenceOutput(
+                projectSvelteRepeatedDisclosureOutput(model),
+              ),
             ),
           ),
         ),

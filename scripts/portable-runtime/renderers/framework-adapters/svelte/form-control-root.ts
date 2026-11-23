@@ -5,22 +5,18 @@ import {
 import { operations } from "../../shared-recipes/structured/operations.js";
 import type { FormProjection } from "../form-control-frame.js";
 import type { FormTargetOperations } from "../form-control-operations.js";
-export const formOperations = (plan: FormControlPlan): FormTargetOperations => ({
+export const formOperations = (): FormTargetOperations => ({
   ...operations.svelte,
   restoreRuntimeInputName: false,
   renderMixed: () => "renderedIndeterminate = connection.input?.indeterminate ?? false;",
 });
 export function printFormProjection(projection: FormProjection): string {
   const {
-    target,
     plan,
     fw,
     grouped,
     fields,
-    defaults,
     destructure,
-    inputNames,
-    access,
     attributes,
     inputAttrs,
     inputData,

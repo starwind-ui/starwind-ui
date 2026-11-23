@@ -7,6 +7,8 @@ import { fileExists } from "./fs.js";
 import { highlighter } from "./highlighter.js";
 import { resolveProjectMutationPath } from "./project-path.js";
 import {
+  type AstArrayExpression,
+  type AstObjectExpression,
   asAstArrayExpression,
   asAstObjectExpression,
   getAstDefaultExportCallObject,
@@ -20,10 +22,8 @@ import {
   hasAstDirectCall,
   hasAstTopLevelFunction,
   isAstSourceAliasValue,
-  parseSourceModule,
-  type AstArrayExpression,
-  type AstObjectExpression,
   type ParsedSourceModule,
+  parseSourceModule,
 } from "./source-shape.js";
 
 const VITE_CONFIG_PATHS = [

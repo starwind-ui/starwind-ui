@@ -116,7 +116,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       port: 4337,
       astroPackagePath: demoRequire.resolve("astro/package.json"),
     });
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ channel: "chrome", headless: true });
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));

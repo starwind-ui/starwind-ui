@@ -1,0 +1,150 @@
+{
+  "ticket-07": {
+    "slug": "direction-service",
+    "baselineCaseIds": []
+  },
+  "ticket-08": {
+    "slug": "stylesheet-migration",
+    "baselineCaseIds": []
+  },
+  "ticket-09": {
+    "slug": "portal-sessions",
+    "baselineCaseIds": [
+      "dropdown",
+      "hover-card",
+      "navigation-menu",
+      "popover",
+      "surface-raw-select",
+      "surface-raw-tooltip",
+      "surface-select",
+      "surface-tooltip"
+    ]
+  },
+  "ticket-10": {
+    "slug": "stable-portal-adapters",
+    "baselineCaseIds": []
+  },
+  "ticket-11": {
+    "slug": "beta-portal-adapters",
+    "baselineCaseIds": []
+  },
+  "ticket-12": {
+    "slug": "collection-keys",
+    "baselineCaseIds": ["surface-raw-tabs", "surface-raw-toggle-group", "surface-tabs"]
+  },
+  "ticket-13": {
+    "slug": "navigation-otp",
+    "baselineCaseIds": ["input-otp", "navigation-menu"]
+  },
+  "ticket-14": {
+    "slug": "menu-branches",
+    "baselineCaseIds": ["dropdown"]
+  },
+  "ticket-15": {
+    "slug": "slider-mapping",
+    "baselineCaseIds": ["surface-raw-slider", "surface-slider"]
+  },
+  "ticket-16": {
+    "slug": "color-direction",
+    "baselineCaseIds": ["fixtures-controls-raw-color-picker"]
+  },
+  "ticket-17": {
+    "slug": "scroll-geometry",
+    "baselineCaseIds": []
+  },
+  "ticket-18": {
+    "slug": "carousel-engine",
+    "baselineCaseIds": ["fixtures-controls-carousel"]
+  },
+  "ticket-19": {
+    "slug": "select-alignment",
+    "baselineCaseIds": ["surface-select"]
+  },
+  "ticket-20": {
+    "slug": "slider-paint",
+    "baselineCaseIds": []
+  },
+  "ticket-21": {
+    "slug": "color-paint",
+    "baselineCaseIds": ["fixtures-controls-color-picker"]
+  },
+  "ticket-22": {
+    "slug": "switch-progress-paint",
+    "baselineCaseIds": ["progress", "surface-switch"]
+  },
+  "ticket-23": {
+    "slug": "reading-layout",
+    "baselineCaseIds": ["fixtures-controls-button-group", "form", "native-select"]
+  },
+  "ticket-24": {
+    "slug": "overlay-chrome",
+    "baselineCaseIds": ["fixtures-controls-context-menu"]
+  },
+  "ticket-25": {
+    "slug": "motion-controls",
+    "baselineCaseIds": []
+  },
+  "ticket-26": {
+    "slug": "legacy-layout",
+    "baselineCaseIds": [
+      "legacy-accordion",
+      "legacy-alert",
+      "legacy-aspect-ratio",
+      "legacy-avatar",
+      "legacy-badge",
+      "legacy-breadcrumb",
+      "legacy-button",
+      "legacy-button-group",
+      "legacy-card",
+      "legacy-checkbox",
+      "legacy-collapsible",
+      "legacy-dropzone",
+      "legacy-image",
+      "legacy-input",
+      "legacy-input-group",
+      "legacy-item",
+      "legacy-kbd",
+      "legacy-label",
+      "legacy-native-select",
+      "legacy-pagination",
+      "legacy-prose",
+      "legacy-separator",
+      "legacy-skeleton",
+      "legacy-spinner",
+      "legacy-table",
+      "legacy-textarea",
+      "legacy-theme-toggle",
+      "legacy-toggle",
+      "legacy-video"
+    ]
+  },
+  "ticket-27": {
+    "slug": "legacy-controls",
+    "baselineCaseIds": [
+      "legacy-alert-dialog",
+      "legacy-carousel",
+      "legacy-color-picker",
+      "legacy-context-menu",
+      "legacy-dialog",
+      "legacy-dropdown",
+      "legacy-hover-card",
+      "legacy-input-otp",
+      "legacy-popover",
+      "legacy-progress",
+      "legacy-radio-group",
+      "legacy-scroll-area",
+      "legacy-select",
+      "legacy-sheet",
+      "legacy-sidebar",
+      "legacy-slider",
+      "legacy-switch",
+      "legacy-tabs",
+      "legacy-toast",
+      "legacy-tooltip"
+    ]
+  },
+  "ticket-29": {
+    "slug": "physical-token-audit",
+    "baselineCaseIds": []
+  }
+}

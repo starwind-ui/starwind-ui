@@ -24,9 +24,9 @@ export const tooltipCaret = tv({
   base: [
     "text-foreground absolute z-50 size-4",
     "[&>svg]:absolute [&>svg]:inset-0 [&>svg]:block [&>svg]:size-4 [&>svg]:fill-current",
-    "group-data-[side=top]:bottom-0 group-data-[side=top]:left-1/2 group-data-[side=top]:-translate-x-1/2 group-data-[side=top]:translate-y-[calc(50%+1px)] group-data-[side=top]:rotate-180",
-    "group-data-[side=bottom]:top-0 group-data-[side=bottom]:left-1/2 group-data-[side=bottom]:-translate-x-1/2 group-data-[side=bottom]:-translate-y-[calc(50%+1px)]",
-    "group-data-[side=left]:top-1/2 group-data-[side=left]:right-0 group-data-[side=left]:translate-x-[calc(50%+1px)] group-data-[side=left]:-translate-y-1/2 group-data-[side=left]:rotate-90",
-    "group-data-[side=right]:top-1/2 group-data-[side=right]:left-0 group-data-[side=right]:-translate-x-[calc(50%+1px)] group-data-[side=right]:-translate-y-1/2 group-data-[side=right]:-rotate-90",
+    "group-data-[side=top]:bottom-0 group-data-[side=top]:left-[var(--sw-floating-arrow-x,calc(50%-0.5rem))] group-data-[side=top]:translate-y-[calc(50%+1px)] group-data-[side=top]:rotate-180",
+    "group-data-[side=bottom]:top-0 group-data-[side=bottom]:left-[var(--sw-floating-arrow-x,calc(50%-0.5rem))] group-data-[side=bottom]:-translate-y-[calc(50%+1px)]",
+    "group-data-[side=left]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))] group-data-[side=left]:right-0 group-data-[side=left]:translate-x-[calc(50%+1px)] group-data-[side=left]:rotate-90",
+    "group-data-[side=right]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))] group-data-[side=right]:left-0 group-data-[side=right]:-translate-x-[calc(50%+1px)] group-data-[side=right]:-rotate-90",
   ],
 });

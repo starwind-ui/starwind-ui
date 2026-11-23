@@ -208,3 +208,33 @@ describe("routine publication planning", () => {
     ).resolves.toMatchObject({ vueLatest: null });
   });
 });
+
+describe("stable fixed-group publication planning", () => {
+  it("records no latest baseline when Vue and Svelte publish on latest", async () => {
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-publication-plan-"));
+    roots.push(repoRoot);
+    const stableManifests = names.map((name) => ({
+      entry: { name },
+      manifest: { name, version: name === "starwind" ? "3.7.0" : "1.6.0" },
+    }));
+    const reads = [];
+    const plan = await preparePublicationPlan({
+      head,
+      packageManifests: stableManifests,
+      tag: "latest",
+      repoRoot,
+      dryRun: true,
+      registry: {
+        capture: async (_command, args) => {
+          reads.push(args.join(" "));
+          return { code: 1, stdout: "", stderr: "npm ERR! code E404" };
+        },
+      },
+    });
+    expect(plan.packages.map(({ name, tag }) => `${name}:${tag}`)).toEqual(
+      names.map((name) => `${name}:latest`),
+    );
+    expect(plan).toMatchObject({ svelteLatest: null, vueLatest: null });
+    expect(reads.some((read) => read.includes("dist-tags"))).toBe(false);
+  });
+});

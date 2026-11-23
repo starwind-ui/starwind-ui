@@ -1,0 +1,25 @@
+{
+  "cohort": "legacy-controls",
+  "caseIds": [
+    "legacy-controls-alert-dialog",
+    "legacy-controls-carousel",
+    "legacy-controls-color-picker",
+    "legacy-controls-context-menu",
+    "legacy-controls-dialog",
+    "legacy-controls-dropdown",
+    "legacy-controls-hover-card",
+    "legacy-controls-input-otp",
+    "legacy-controls-popover",
+    "legacy-controls-progress",
+    "legacy-controls-radio-group",
+    "legacy-controls-scroll-area",
+    "legacy-controls-select",
+    "legacy-controls-sheet",
+    "legacy-controls-sidebar",
+    "legacy-controls-slider",
+    "legacy-controls-switch",
+    "legacy-controls-tabs",
+    "legacy-controls-toast",
+    "legacy-controls-tooltip"
+  ]
+}

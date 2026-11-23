@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const inputGroupStyledContract: StyledAdapterContract = {
   component: "input-group",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "InputGroup",
     "InputGroupAddon",
@@ -31,8 +33,8 @@ export const inputGroupStyledContract: StyledAdapterContract = {
         "has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col",
         "has-[>[data-align=block-end]]:[&>[data-slot=input-group-control]]:pt-3",
         "has-[>[data-align=block-start]]:[&>[data-slot=input-group-control]]:pb-3",
-        "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pr-1.5",
-        "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:pl-1.5",
+        "has-[>[data-align=inline-end]]:[&>[data-slot=input-group-control]]:pe-1.5",
+        "has-[>[data-align=inline-start]]:[&>[data-slot=input-group-control]]:ps-1.5",
       ],
     },
     inputGroupAddon: {
@@ -42,8 +44,8 @@ export const inputGroupStyledContract: StyledAdapterContract = {
       ],
       variants: {
         align: {
-          "inline-start": "order-first pl-2.5 has-[>button]:ml-[-0.3rem]",
-          "inline-end": "order-last pr-2.5 has-[>button]:mr-[-0.3rem]",
+          "inline-start": "order-first ps-2.5 has-[>button]:ms-[-0.3rem]",
+          "inline-end": "order-last pe-2.5 has-[>button]:me-[-0.3rem]",
           "block-start":
             "order-first w-full justify-start px-3 pt-2 group-has-[>input]/input-group:pt-2.5 [.border-b]:pb-2.5",
           "block-end":

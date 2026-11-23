@@ -9,9 +9,9 @@
 
 <script lang="ts">
   let {
-    "disabled": disabled = false,
+    disabled = false,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: ContextMenuTriggerProps = $props();
 </script>

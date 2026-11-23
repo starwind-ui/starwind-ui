@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 import type { CollapsibleOpenChangeDetails } from "@starwind-ui/vue/collapsible";
 import {
   CollapsiblePanel,
   CollapsibleRoot,
   CollapsibleTrigger,
 } from "@starwind-ui/vue/collapsible";
+import { ref } from "vue";
 
 const controlledOpen = ref(false);
 const cancelNext = ref(true);
@@ -76,11 +75,7 @@ function handleControlledChange(open: boolean, detail: CollapsibleOpenChangeDeta
     <div class="scenario">
       <h3>Strict Trigger asChild</h3>
       <CollapsibleRoot>
-        <CollapsibleTrigger
-          as-child
-          class="wrapper-trigger"
-          @click="wrapperClicks += 1"
-        >
+        <CollapsibleTrigger as-child class="wrapper-trigger" @click="wrapperClicks += 1">
           <button
             class="review-action child-trigger"
             data-testid="collapsible-as-child"

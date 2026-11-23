@@ -26,6 +26,7 @@
   type ColorPickerConnectionTransport = {
   seed: Pick<ColorPickerOptions, "value" | "defaultValue" | "format">;
   read(): ColorPickerOptions;
+  projectedDirection?: ReturnType<typeof captureProjectedDirection>;
   restoreAuthoredOwnership?(): void;
   captureAuthoredOwnership?(): void;
   own?(instance: ReturnType<typeof createColorPicker> | undefined): void;
@@ -34,6 +35,28 @@
   publishFormat?(format: ColorPickerFormat): void;
   afterUpdate(run: () => void): void;
 };
+
+// Start at native-node attachment, before consumer refs and mounted callbacks.
+function captureProjectedDirection(root: HTMLElement, projected: unknown) {
+  const owned = root.getAttribute("data-sw-color-picker-initial-owned")?.split(",").includes("a:dir");
+  if (!owned || (projected !== "ltr" && projected !== "rtl") || root.getAttribute("dir") !== projected)
+    return undefined;
+  let active = true;
+  let authored = false;
+  const Observer = root.ownerDocument.defaultView?.MutationObserver ?? MutationObserver;
+  const observer = new Observer(() => { authored = true; });
+  observer.observe(root, { attributes: true, attributeFilter: ["dir"] });
+  return {
+    disconnect() { active = false; observer.disconnect(); },
+    handoff() {
+      if (!active) return;
+      active = false;
+      const touched = authored || observer.takeRecords().length > 0;
+      observer.disconnect();
+      if (!touched && root.getAttribute("dir") === projected) root.removeAttribute("dir");
+    },
+  };
+}
 
 function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionTransport) {
   const valueControlled = transport.seed.value !== undefined;
@@ -50,6 +73,7 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
   const initialOptions = { ...applied, ...transport.seed };
   // Runtime captures value ownership from property presence at construction.
   if (!valueControlled) delete initialOptions.value;
+  transport.projectedDirection?.handoff();
   const owner = createColorPicker(root, {
     ...initialOptions,
     onValueChange(next, details) {
@@ -78,7 +102,7 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
       const parsed = next.value === null ? (next.allowEmpty ? null : undefined) : typeof next.value === "string" ? parseColor(next.value) ?? undefined : next.value;
       if (parsed !== undefined) controlledValue = parsed;
       if (controlledValue !== undefined && !sameValue(owner.getValue(), controlledValue)) owner.setValue(controlledValue, { emit: false });
-    } else if (!Object.is(next.value, commandedValue)) {
+    } else if (!sameValue(next.value, commandedValue)) {
       // Apply a changed input once, so a stale one-way value never reverts an accepted interaction.
       commandedValue = next.value;
       const parsed = next.value === null ? (next.allowEmpty ? null : undefined) : typeof next.value === "string" ? parseColor(next.value) ?? undefined : next.value;
@@ -143,6 +167,7 @@ observedValue = owner.getValue(); observedFormat = owner.getFormat();
 }
 
   const attachRuntime: Attachment<HTMLDivElement> = (root) => {
+    const projectedDirection = captureProjectedDirection(root, initialProjection.attributes.dir);
     let alive = true, refreshRevision = 0;
     let connection: ReturnType<typeof connectColorPicker> | undefined;
     const readOptions = (): ColorPickerOptions => ({ value: commandValue, format: commandFormat, alpha, allowEmpty, disabled, readOnly, name, form, required, locale, dir, getAriaValueText, getAreaRoleDescription, getColorDescription, onValueChange, onValueCommitted, onFormatChange });
@@ -156,7 +181,7 @@ observedValue = owner.getValue(); observedFormat = owner.getFormat();
       untrack(() => {
         connection = connectColorPicker(root, {
           seed: { ...(initialValue !== undefined ? { value: initialValue } : {}), defaultValue: resetValue, format: initialFormat },
-          read: readOptions,
+          read: readOptions, projectedDirection,
           observe: (nextValue, nextFormat) => { acceptedValue = nextValue; acceptedFormat = nextFormat; },
           publishValue: (next) => { value = next; },
           publishFormat: (next) => { format = next; },
@@ -168,6 +193,7 @@ observedValue = owner.getValue(); observedFormat = owner.getFormat();
     $effect(() => { readOptions(); untrack(() => connection?.update()); });
     return () => {
       alive = false; refreshRevision += 1; requestRefresh = () => {};
+      projectedDirection?.disconnect();
       connection?.destroy(); connection = undefined;
     };
   };

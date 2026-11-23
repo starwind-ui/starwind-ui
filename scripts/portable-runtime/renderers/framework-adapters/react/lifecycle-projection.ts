@@ -166,9 +166,11 @@ function printEffect({
   const dependencySource = printDependencyArray(dependencies);
   const bodySource = indentBody(body, `${indentation}  `);
 
-  return [`${indentation}${hook}(() => {`, bodySource, `${indentation}}, ${dependencySource});`].join(
-    "\n",
-  );
+  return [
+    `${indentation}${hook}(() => {`,
+    bodySource,
+    `${indentation}}, ${dependencySource});`,
+  ].join("\n");
 }
 
 function printRefSyncEffect({

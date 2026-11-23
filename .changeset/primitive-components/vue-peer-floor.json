@@ -1,0 +1,15 @@
+{
+  "impact": "source",
+  "primitives": {
+    "button": "patch",
+    "carousel": "patch",
+    "checkbox-group": "patch",
+    "dropzone": "patch",
+    "fieldset": "patch",
+    "progress": "patch",
+    "radio": "patch",
+    "radio-group": "patch",
+    "scroll-area": "patch",
+    "switch": "patch"
+  }
+}

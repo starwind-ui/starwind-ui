@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ColorPickerPrimitive from "@starwind-ui/vue/color-picker";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { colorPickerSwatchGroup } from "./variants";
 
 defineOptions({ inheritAttrs: false });

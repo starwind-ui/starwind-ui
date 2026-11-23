@@ -186,7 +186,7 @@ export function requireColorPickerModelOwnership(
       policy?.controlledWhen !== "initial-defined" ||
       policy.lifetime !== "mount" ||
       policy.laterUndefined !== "retain-controlled-value" ||
-      policy.laterDefined !== "ignore-when-uncontrolled"
+      policy.laterDefined !== "silent-command"
     ) {
       throw new Error(
         `Color Picker ${name} requires fixed initial-defined model ownership until unmount.`,

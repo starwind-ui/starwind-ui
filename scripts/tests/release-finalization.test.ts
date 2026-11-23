@@ -1,10 +1,14 @@
+import { EventEmitter } from "node:events";
+
 import { describe, expect, it } from "vitest";
 
 import {
   assertReleaseIdentityAvailable,
+  createCommandSystem,
   createGitHubReleaseArgs,
   deriveReleaseIdentity,
   runReleaseFinalization,
+  selectBetaRetirements,
   verifyPublishedPackages,
 } from "../release-finalization.mjs";
 import { VUE_BETA_RELEASE_PLAN } from "../release-packages.mjs";
@@ -674,5 +678,214 @@ describe("routine release finalization", () => {
         },
       }),
     ).rejects.toThrow(/points to other-sha, expected abc123/);
+  });
+});
+
+describe("graduated beta dist-tag retirement", () => {
+  const stableManifests = [
+    { entry: { name: "@starwind-ui/runtime" }, manifest: { version: "1.6.0" } },
+    { entry: { name: "@starwind-ui/vue" }, manifest: { version: "1.6.0" } },
+    { entry: { name: "@starwind-ui/svelte" }, manifest: { version: "1.6.0" } },
+    { entry: { name: "starwind" }, manifest: { version: "3.7.0" } },
+  ];
+  const stablePlan = {
+    packages: [
+      { name: "@starwind-ui/runtime", tag: "latest", version: "1.6.0" },
+      { name: "@starwind-ui/vue", tag: "latest", version: "1.6.0" },
+      { name: "@starwind-ui/svelte", tag: "latest", version: "1.6.0" },
+      { name: "starwind", tag: "latest", version: "3.7.0" },
+    ],
+    svelteLatest: null,
+    vueLatest: null,
+  };
+
+  function createRegistry(initialBeta: Record<string, string | undefined>) {
+    const beta = { ...initialBeta };
+    const versions: Record<string, string> = {
+      "@starwind-ui/runtime": "1.6.0",
+      "@starwind-ui/vue": "1.6.0",
+      "@starwind-ui/svelte": "1.6.0",
+      starwind: "3.7.0",
+    };
+    const writes: string[] = [];
+    const interactive: string[] = [];
+    const order: string[] = [];
+    const system = {
+      capture: async (command: string, args: string[]) => {
+        if (command === "npm") {
+          const name = args[1].startsWith("@")
+            ? `@${args[1].slice(1).split("@")[0]}`
+            : args[1].split("@")[0];
+          if (args[2] === "version") {
+            return { code: 0, stderr: "", stdout: JSON.stringify(versions[name]) };
+          }
+          const tags: Record<string, string> = { latest: versions[name] };
+          if (beta[name]) tags.beta = beta[name]!;
+          return { code: 0, stderr: "", stdout: JSON.stringify(tags) };
+        }
+        if (command === "git" && args[0] === "ls-remote") {
+          return { code: 0, stderr: "", stdout: "" };
+        }
+        return { code: 1, stderr: "release not found", stdout: "" };
+      },
+      run: async (command: string, args: string[]) => {
+        writes.push([command, ...args].join(" "));
+        order.push(command);
+      },
+      runInteractive: async (command: string, args: string[]) => {
+        interactive.push([command, ...args].join(" "));
+        order.push("dist-tag");
+        const [name, version] = [
+          args[2].slice(0, args[2].lastIndexOf("@")),
+          args[2].split("@").at(-1),
+        ];
+        beta[name] = version;
+      },
+    };
+    return { beta, interactive, order, system, writes };
+  }
+
+  function finalizeStable(system: ReturnType<typeof createRegistry>["system"]) {
+    return runReleaseFinalization({
+      gitStateLoader: async () => ({ head: "abc123" }),
+      metadataLoader: async () => ({ packageManifests: stableManifests, tag: "latest" }),
+      publicationPlanLoader: async () => stablePlan,
+      registryVerificationOptions: { attempts: 2, retryDelayMs: 0, wait: async () => undefined },
+      system,
+    });
+  }
+
+  it("points the old beta tags at the stable version before Git and GitHub change", async () => {
+    const registry = createRegistry({
+      "@starwind-ui/vue": "0.4.0",
+      "@starwind-ui/svelte": "0.3.0",
+    });
+    const release = await finalizeStable(registry.system);
+
+    expect(release).toMatchObject({ prerelease: false, tagName: "v3.7.0" });
+    expect(release?.preservedDistTags).toBeUndefined();
+    expect(registry.interactive).toEqual([
+      "npm dist-tag add @starwind-ui/vue@1.6.0 beta",
+      "npm dist-tag add @starwind-ui/svelte@1.6.0 beta",
+    ]);
+    expect(registry.beta).toEqual({ "@starwind-ui/vue": "1.6.0", "@starwind-ui/svelte": "1.6.0" });
+    expect(registry.order.slice(0, 2)).toEqual(["dist-tag", "dist-tag"]);
+    expect(registry.writes.at(-1)).toContain("gh release create v3.7.0");
+  });
+
+  it("repeats safely when the beta tags already point at the stable version", async () => {
+    const registry = createRegistry({
+      "@starwind-ui/vue": "1.6.0",
+      "@starwind-ui/svelte": "1.6.0",
+    });
+    await finalizeStable(registry.system);
+    expect(registry.interactive).toEqual([]);
+  });
+
+  it("keeps a missing beta tag missing and leaves a newer prerelease beta in place", async () => {
+    const registry = createRegistry({ "@starwind-ui/svelte": "1.7.0-beta.0" });
+    await finalizeStable(registry.system);
+    expect(registry.interactive).toEqual([]);
+    expect(registry.beta).toEqual({ "@starwind-ui/svelte": "1.7.0-beta.0" });
+  });
+
+  it("stops before Git and GitHub change when the moved beta tag does not appear", async () => {
+    const registry = createRegistry({
+      "@starwind-ui/vue": "0.4.0",
+      "@starwind-ui/svelte": "1.6.0",
+    });
+    registry.system.runInteractive = async (command: string, args: string[]) => {
+      registry.interactive.push([command, ...args].join(" "));
+    };
+    await expect(finalizeStable(registry.system)).rejects.toThrow(
+      /@starwind-ui\/vue dist-tag beta must point to 1\.6\.0, found 0\.4\.0.*pnpm release:finalize/s,
+    );
+    expect(registry.writes).toEqual([]);
+  });
+
+  it("tells the maintainer to run the command again when the beta move fails", async () => {
+    const registry = createRegistry({
+      "@starwind-ui/vue": "0.4.0",
+      "@starwind-ui/svelte": "1.6.0",
+    });
+    registry.system.runInteractive = async () => {
+      throw new Error("npm dist-tag add failed with exit code 1 (EOTP).");
+    };
+    await expect(finalizeStable(registry.system)).rejects.toThrow(
+      /dist-tag beta could not move to 1\.6\.0.*EOTP.*Run the same publication command again, or pnpm release:finalize/s,
+    );
+    expect(registry.writes).toEqual([]);
+  });
+
+  it("selects only stable Vue and Svelte entries for retirement", () => {
+    expect(
+      selectBetaRetirements({
+        packages: [
+          { name: "@starwind-ui/runtime", tag: "latest", version: "1.6.0" },
+          { name: "@starwind-ui/vue", tag: "latest", version: "1.6.0" },
+          { name: "@starwind-ui/svelte", tag: "beta", version: "1.7.0-beta.0" },
+        ],
+      }).map(({ name }) => name),
+    ).toEqual(["@starwind-ui/vue"]);
+  });
+
+  it("keeps the captured latest for a prerelease adapter after graduation", async () => {
+    const release = await runReleaseFinalization({
+      gitStateLoader: async () => ({ head: "abc123" }),
+      metadataLoader: async () => ({
+        packageManifests: [
+          { entry: { name: "@starwind-ui/vue" }, manifest: { version: "1.7.0-rc.0" } },
+        ],
+        tag: "rc",
+      }),
+      publicationPlanLoader: async () => ({
+        packages: [{ name: "@starwind-ui/vue", tag: "rc", version: "1.7.0-rc.0" }],
+        svelteLatest: null,
+        vueLatest: "1.6.0",
+      }),
+      registryVerificationOptions: { attempts: 1 },
+      system: {
+        capture: async (command: string, args: string[]) => {
+          if (command === "npm") {
+            return {
+              code: 0,
+              stderr: "",
+              stdout: JSON.stringify(
+                args[2] === "version" ? "1.7.0-rc.0" : { latest: "1.6.0", rc: "1.7.0-rc.0" },
+              ),
+            };
+          }
+          if (command === "git" && args[0] === "ls-remote") {
+            return { code: 0, stderr: "", stdout: "" };
+          }
+          return { code: 1, stderr: "release not found", stdout: "" };
+        },
+        run: async () => undefined,
+      },
+    });
+    expect(release).toMatchObject({
+      prerelease: true,
+      preservedDistTags: { "@starwind-ui/vue": { latest: "1.6.0" } },
+    });
+  });
+});
+
+describe("interactive npm writes", () => {
+  it("keeps the terminal attached so npm can ask for a one-time password", async () => {
+    const calls: Array<{ args: string[]; options: { stdio?: unknown } }> = [];
+    const system = createCommandSystem({
+      spawnProcess: ((command: string, args: string[], options: { stdio?: unknown }) => {
+        calls.push({ args: [command, ...args], options });
+        const child = new EventEmitter();
+        queueMicrotask(() => child.emit("close", 0));
+        return child;
+      }) as never,
+    });
+
+    await system.runInteractive("npm", ["dist-tag", "add", "@starwind-ui/vue@1.6.0", "beta"]);
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.args.join(" ")).toContain("dist-tag add @starwind-ui/vue@1.6.0 beta");
+    expect(calls[0]!.options.stdio).toBe("inherit");
   });
 });

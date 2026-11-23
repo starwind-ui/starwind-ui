@@ -1,5 +1,5 @@
-import { createStyledSheetConsumer } from "./styled-sheet-consumer.js";
 import { writeStyledConsumerFiles } from "./styled-consumer-files.js";
+import { createStyledSheetConsumer } from "./styled-sheet-consumer.js";
 export async function createStyledSidebarConsumer(repoRoot: string) {
   const consumer = await createStyledSheetConsumer(repoRoot);
   try {

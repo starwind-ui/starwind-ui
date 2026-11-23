@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as CollapsiblePrimitive from "@starwind-ui/vue/collapsible";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { collapsibleContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });

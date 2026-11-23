@@ -12,6 +12,10 @@ import {
   toggleRuntimeAdapterContract,
 } from "./contracts/primitive/representatives.js";
 import {
+  printFrameworkAdapterConformanceFixture,
+  vueFrameworkAdapter,
+} from "./renderers/framework-adapters/index.js";
+import {
   buildGenericAdapterPlan,
   printFutureFrameworkTracerPlan,
 } from "./renderers/generic-adapter-plan/index.js";
@@ -21,10 +25,6 @@ import {
   buildNavigationMenuSpecializedAdapterSpec,
   printFutureSpecializedAdapterSpecFixture,
 } from "./renderers/specialized-adapter-spec/index.js";
-import {
-  printFrameworkAdapterConformanceFixture,
-  vueFrameworkAdapter,
-} from "./renderers/framework-adapters/index.js";
 
 export const VUE_CONTRACT_FIXTURE_PATHS = [
   "__future-fixtures/vue/conformance/ConformanceRoot.vue",

@@ -12,7 +12,7 @@
   let {
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: SidebarGroupLabelProps = $props();
 </script>

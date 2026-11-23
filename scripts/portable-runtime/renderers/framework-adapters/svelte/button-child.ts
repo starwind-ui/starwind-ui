@@ -31,8 +31,7 @@ export function printSvelteButtonChild({
   const noun = anyElement ? "element" : "button";
   const elementType = anyElement ? "HTMLElement" : "HTMLButtonElement";
   const payload = anyElement ? "TriggerChildPayload" : "ButtonChildPayload";
-  return `<!-- Svelte 5 public beta adapter output. -->
-<script module lang="ts">
+  return `<script module lang="ts">
   export type { ButtonChildProps, ButtonChildPayload${anyElement ? ", TriggerChildProps, TriggerChildPayload" : ""} } from "../button/ButtonRoot.svelte";
 </script>
 <script lang="ts">
@@ -69,9 +68,13 @@ ${register || !omitEmptyRegistration ? `  const owner = Symbol("${name} owner");
       const revision = ++validationRevision;
       void tick().then(() => {
         if (!mounted || revision !== validationRevision) return;
-        const message = ${childElement ? "" : `[...owners].some((element) => !(element instanceof HTMLButtonElement))
+        const message = ${
+          childElement
+            ? ""
+            : `[...owners].some((element) => !(element instanceof HTMLButtonElement))
           ? "${name} child props must attach to an HTMLButtonElement."
-          : `}owners.size > 1
+          : `
+        }owners.size > 1
             ? "${name} child props must attach to exactly one ${noun}; multiple owners were attached."
             : owners.size === 0
               ? "${name} child props did not attach to ${anyElement ? "an element" : "a button"} after mount. Spread the whole props object onto one ${noun}."
@@ -105,16 +108,24 @@ ${register || !omitEmptyRegistration ? `  const owner = Symbol("${name} owner");
       untrack(() => callback?.(root));
       return () => untrack(() => callback?.(null));
     });
-${register ? `    $effect(() => untrack(() => {
+${
+  register
+    ? `    $effect(() => untrack(() => {
       ${register}
     }));
-` : ""}
+`
+    : ""
+}
   });
   const attachOwner: Attachment<Element> = (root) => {
     diagnoseOwner?.(root, true);
     attachmentRevision += 1;
-    if (root instanceof ${elementType}) currentElement = root;${childElement === "button" ? `
-    else console.error("${name} child must be a button. It does nothing on another element.");` : ""}
+    if (root instanceof ${elementType}) currentElement = root;${
+      childElement === "button"
+        ? `
+    else console.error("${name} child must be a button. It does nothing on another element.");`
+        : ""
+    }
     return () => {
       diagnoseOwner?.(root, false);
       if (!root.isConnected) {

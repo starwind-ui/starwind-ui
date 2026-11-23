@@ -1,11 +1,10 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import * as projectPath from "../../src/utils/project-path.js";
 import {
   starwindStylesheetPackageRequirements,
   tailwindConfig,
 } from "../../src/templates/starwind.css.js";
+import * as projectPath from "../../src/utils/project-path.js";
 import {
   createVuePackageRequirementPlanner,
   getVuePackageRequirements,
@@ -26,7 +25,7 @@ const mockResolvePath = vi.mocked(projectPath.resolveProjectMutationPath);
 describe("Vite Vue project setup", () => {
   const plan = getVueProjectPlan(
     {
-      dependencies: { vue: "^3.5.0" },
+      dependencies: { vue: "^3.5.21" },
       devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
     },
     new Set(["vite.config.ts", "src/main.ts", "src/App.vue"]),
@@ -61,18 +60,23 @@ export default defineConfig({ plugins: [vue()] });
   });
 
   it.each([
-    ["^3.5.0", true],
-    [">=3.5", true],
-    ["3.5.0", true],
+    ["^3.5.21", true],
+    [">=3.5.21", true],
+    ["3.5.21", true],
+    ["3.5.42", true],
+    ["^3.5.0", false],
+    [">=3.5", false],
+    ["~3.5.13", false],
+    ["3.5.20", false],
     ["^3.4.0", false],
     ["3.4.38", false],
     ["^2.7.16", false],
     ["workspace:*", false],
-  ])("classifies Vue range %s against the 3.5 floor", (range, expected) => {
+  ])("classifies Vue range %s against the 3.5.21 floor", (range, expected) => {
     expect(meetsVueVersionFloor(range)).toBe(expected);
   });
 
-  it.each(["^3.4.0", "^2.7.16"])(
+  it.each(["~3.5.13", "^3.4.0", "^2.7.16"])(
     "marks an official Vite project using Vue %s for corrective installation",
     (range) => {
       expect(
@@ -91,7 +95,7 @@ export default defineConfig({ plugins: [vue()] });
     expect(() =>
       getVueProjectPlan(
         {
-          dependencies: { vue: "^3.5.0" },
+          dependencies: { vue: "^3.5.21" },
           devDependencies: { "@vitejs/plugin-vue": "^6.0.0" },
         },
         new Set(["vite.config.ts", "src/main.ts"]),
@@ -155,7 +159,7 @@ export default defineConfig({ plugins: [vue()] });
     expect(
       getVuePackageRequirements(["vue@>=3.5"], {
         dependencies: { vue: "3.5.39" },
-        peerDependencies: { vue: "^3.5.0" },
+        peerDependencies: { vue: "^3.5.21" },
       }),
     ).not.toContain("vue@>=3.5");
     expect(

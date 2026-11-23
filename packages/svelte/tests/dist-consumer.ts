@@ -3,8 +3,8 @@ import {
   cp,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rm,
   symlink,
@@ -291,9 +291,11 @@ async function copyConsumerTools(
     "typescript",
     "@floating-ui/dom",
     "embla-carousel",
+    // The root index exports chart, so its Runtime chart subpath loads TanStack Charts.
+    "@tanstack/charts",
   ]) {
     const from =
-      name.startsWith("@floating-ui") || name === "embla-carousel"
+      name.startsWith("@floating-ui") || name === "embla-carousel" || name === "@tanstack/charts"
         ? createRequire(path.resolve(packageRoot, "../runtime/package.json"))
         : sourceRequire;
     const installed = await copyPackage(name, from);

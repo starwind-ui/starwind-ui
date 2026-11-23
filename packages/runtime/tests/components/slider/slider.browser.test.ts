@@ -65,7 +65,7 @@ describe("createSlider", () => {
     expect(slider.getValue()).toEqual([20, 80]);
     expect(firstInput.name).toBe("price[0]");
     expect(secondInput.name).toBe("price[1]");
-    expect(getIndicator(root).style.left).toBe("20%");
+    expect(getIndicator(root).style.insetInlineStart).toBe("20%");
     expect(getIndicator(root).style.width).toBe("60%");
 
     firstThumb.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "End" }));
@@ -73,7 +73,7 @@ describe("createSlider", () => {
     expect(slider.getValue()).toEqual([80, 80]);
     expect(firstInput.value).toBe("80");
     expect(secondInput.value).toBe("80");
-    expect(getIndicator(root).style.left).toBe("80%");
+    expect(getIndicator(root).style.insetInlineStart).toBe("80%");
     expect(getIndicator(root).style.width).toBe("0%");
   });
 
@@ -108,7 +108,7 @@ describe("createSlider", () => {
     expect(slider.getValue()).toEqual([70, 80]);
     expect(getInput(root, 0).value).toBe("70");
     expect(getInput(root, 1).value).toBe("80");
-    expect(getIndicator(root).style.left).toBe("70%");
+    expect(getIndicator(root).style.insetInlineStart).toBe("70%");
     expect(getIndicator(root).style.width).toBe("10%");
 
     slider.setValue([20, 80], { emit: false });
@@ -117,7 +117,7 @@ describe("createSlider", () => {
     expect(slider.getValue()).toEqual([20, 30]);
     expect(getInput(root, 0).value).toBe("20");
     expect(getInput(root, 1).value).toBe("30");
-    expect(getIndicator(root).style.left).toBe("20%");
+    expect(getIndicator(root).style.insetInlineStart).toBe("20%");
     expect(getIndicator(root).style.width).toBe("10%");
   });
 
@@ -232,7 +232,7 @@ describe("createSlider", () => {
     expect(getThumb(rangeRoot, 1).getAttribute("aria-valuenow")).toBe("85");
     expect(getInput(rangeRoot, 0).value).toBe("20");
     expect(getInput(rangeRoot, 1).value).toBe("85");
-    expect(getIndicator(rangeRoot).style.left).toBe("20%");
+    expect(getIndicator(rangeRoot).style.insetInlineStart).toBe("20%");
     expect(getIndicator(rangeRoot).style.width).toBe("65%");
     expect(new FormData(form).get("volume")).toBe("25");
     expect(new FormData(form).getAll("price[0]")).toEqual(["20"]);
@@ -270,7 +270,7 @@ describe("createSlider", () => {
     expect(getInput(root, 1).value).toBe("70");
     expect(getThumb(root, 0).getAttribute("aria-valuenow")).toBe("30");
     expect(getThumb(root, 1).getAttribute("aria-valuenow")).toBe("70");
-    expect(getIndicator(root).style.left).toBe("30%");
+    expect(getIndicator(root).style.insetInlineStart).toBe("30%");
     expect(getIndicator(root).style.width).toBe("40%");
     expect(new FormData(form).get("price[0]")).toBe("30");
     expect(new FormData(form).get("price[1]")).toBe("70");
@@ -328,7 +328,7 @@ describe("createSlider", () => {
     expect(getThumb(root, 1).getAttribute("aria-valuenow")).toBe("80");
     expect(getInput(root, 0).value).toBe("20");
     expect(getInput(root, 1).value).toBe("80");
-    expect(getIndicator(root).style.left).toBe("20%");
+    expect(getIndicator(root).style.insetInlineStart).toBe("20%");
     expect(getIndicator(root).style.width).toBe("60%");
     expect(new FormData(firstForm).get("price[0]")).toBeNull();
     expect(new FormData(secondForm).get("price[0]")).toBe("20");
@@ -734,6 +734,231 @@ describe("createSlider", () => {
 
     expect(root.hasAttribute("data-dragging")).toBe(false);
     expect(committedListener).not.toHaveBeenCalled();
+  });
+
+  it("maps horizontal endpoints and ten percent clicks from inline start", () => {
+    for (const direction of ["ltr", "rtl"] as const) {
+      const root = renderSlider({ defaultValue: 50 });
+      root.dir = direction;
+      setControlRect(root);
+      const slider = createSlider(root);
+      const control = getControl(root);
+      const values = direction === "rtl" ? [100, 90, 0] : [0, 10, 100];
+
+      for (const [index, x] of [0, 10, 100].entries()) {
+        control.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            button: 0,
+            buttons: 1,
+            clientX: x,
+            pointerId: index + 1,
+          }),
+        );
+        root.ownerDocument.dispatchEvent(
+          new PointerEvent("pointerup", { bubbles: true, pointerId: index + 1 }),
+        );
+        expect(slider.getValue()).toBe(values[index]);
+        expect(getThumb(root, 0).style.insetInlineStart).toBe(`${values[index]}%`);
+      }
+      slider.destroy();
+    }
+  });
+
+  it("keeps range order and thumb identity during RTL touch and drag", () => {
+    const root = renderSlider({ defaultValue: [20, 80], name: "price" });
+    root.dir = "rtl";
+    setControlRect(root);
+    const slider = createSlider(root, { minStepsBetweenValues: 2, step: 5 });
+    const changes = vi.fn();
+    const commits = vi.fn();
+    slider.subscribe("valueChange", changes);
+    slider.subscribe("valueCommitted", commits);
+    const control = getControl(root);
+
+    control.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        buttons: 1,
+        clientX: 75,
+        pointerId: 4,
+        pointerType: "touch",
+      }),
+    );
+    root.ownerDocument.dispatchEvent(
+      new PointerEvent("pointermove", {
+        bubbles: true,
+        buttons: 1,
+        clientX: 30,
+        pointerId: 4,
+        pointerType: "touch",
+      }),
+    );
+    root.ownerDocument.dispatchEvent(
+      new PointerEvent("pointerup", { bubbles: true, pointerId: 4, pointerType: "touch" }),
+    );
+
+    expect(slider.getValue()).toEqual([70, 80]);
+    expect(changes).toHaveBeenCalledTimes(2);
+    expect(commits).toHaveBeenCalledTimes(1);
+    expect(getInput(root, 0).value).toBe("70");
+    expect(getInput(root, 1).value).toBe("80");
+    expect(getIndicator(root).style.insetInlineStart).toBe("70%");
+    expect(getIndicator(root).style.width).toBe("10%");
+  });
+
+  it("uses horizontal RTL key signs while retaining vertical and absolute keys", () => {
+    const root = renderSlider({ defaultValue: 50 });
+    root.dir = "rtl";
+    const slider = createSlider(root);
+    const thumb = getThumb(root, 0);
+    for (const [key, value] of [
+      ["ArrowRight", 49],
+      ["ArrowLeft", 50],
+      ["PageUp", 60],
+      ["PageDown", 50],
+      ["Shift+ArrowRight", 40],
+      ["Home", 0],
+      ["End", 100],
+    ] as const) {
+      thumb.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          key: key.replace("Shift+", ""),
+          shiftKey: key.startsWith("Shift+"),
+        }),
+      );
+      expect(slider.getValue()).toBe(value);
+    }
+    slider.setOptions({ orientation: "vertical" });
+    thumb.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowUp" }));
+    expect(slider.getValue()).toBe(100);
+    thumb.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Home" }));
+    expect(slider.getValue()).toBe(0);
+    thumb.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowUp" }));
+    expect(slider.getValue()).toBe(1);
+  });
+
+  it("cancels an active drag on a direction-change event and keeps its last accepted value", async () => {
+    const root = renderSlider({ defaultValue: 25 });
+    setControlRect(root);
+    const slider = createSlider(root);
+    const commits = vi.fn();
+    slider.subscribe("valueCommitted", commits);
+    getControl(root).dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        buttons: 1,
+        clientX: 40,
+        pointerId: 7,
+      }),
+    );
+    expect(slider.getValue()).toBe(40);
+    root.dir = "rtl";
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(root.hasAttribute("data-dragging")).toBe(true);
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(root.hasAttribute("data-dragging")).toBe(false);
+    expect(slider.getValue()).toBe(40);
+    root.ownerDocument.dispatchEvent(
+      new PointerEvent("pointerup", { bubbles: true, pointerId: 7 }),
+    );
+    expect(commits).not.toHaveBeenCalled();
+    expect(getThumb(root, 0).style.insetInlineStart).toBe("40%");
+  });
+
+  for (const completion of ["pointerup", "lost-buttons"] as const) {
+    it(`cancels a direction-flipped drag before immediate ${completion}`, () => {
+      const root = renderSlider({ defaultValue: 25 });
+      setControlRect(root);
+      const slider = createSlider(root);
+      const commits = vi.fn();
+      slider.subscribe("valueCommitted", commits);
+      getControl(root).dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          buttons: 1,
+          clientX: 40,
+          pointerId: 7,
+        }),
+      );
+      expect(slider.getValue()).toBe(40);
+
+      root.dir = "rtl";
+      root.ownerDocument.dispatchEvent(
+        new PointerEvent(completion === "pointerup" ? "pointerup" : "pointermove", {
+          bubbles: true,
+          buttons: 0,
+          clientX: 60,
+          pointerId: 7,
+        }),
+      );
+
+      expect(root.hasAttribute("data-dragging")).toBe(false);
+      expect(slider.getValue()).toBe(40);
+      expect(getInput(root, 0).value).toBe("40");
+      expect(commits).not.toHaveBeenCalled();
+      slider.destroy();
+    });
+  }
+
+  it("blocks pointer and keyboard changes while disabled in RTL", () => {
+    const root = renderSlider({ defaultValue: 35 });
+    root.dir = "rtl";
+    setControlRect(root);
+    const slider = createSlider(root, { disabled: true });
+    const changes = vi.fn();
+    const commits = vi.fn();
+    slider.subscribe("valueChange", changes);
+    slider.subscribe("valueCommitted", commits);
+
+    getControl(root).dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        buttons: 1,
+        clientX: 10,
+        pointerId: 3,
+      }),
+    );
+    getThumb(root, 0).dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }),
+    );
+
+    expect(slider.getValue()).toBe(35);
+    expect(getInput(root, 0).value).toBe("35");
+    expect(changes).not.toHaveBeenCalled();
+    expect(commits).not.toHaveBeenCalled();
+  });
+
+  it("uses the owner document for an adopted slider drag", () => {
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+    const ownerDocument = iframe.contentDocument!;
+    const root = renderSlider({ defaultValue: 25 });
+    ownerDocument.body.append(root);
+    root.dir = "rtl";
+    setControlRect(root);
+    const slider = createSlider(root);
+
+    getControl(root).dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        buttons: 1,
+        clientX: 10,
+        pointerId: 9,
+      }),
+    );
+    ownerDocument.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 9 }));
+
+    expect(slider.getValue()).toBe(90);
+    expect(root.hasAttribute("data-dragging")).toBe(false);
+    slider.destroy();
+    iframe.remove();
   });
 
   it("keeps the previous value when value change details are canceled", () => {

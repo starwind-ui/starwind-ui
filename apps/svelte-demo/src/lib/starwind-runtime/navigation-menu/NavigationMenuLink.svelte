@@ -9,10 +9,10 @@
 
 <script lang="ts">
   let {
-    "active": active = false,
-    "closeOnClick": closeOnClick = true,
+    active = false,
+    closeOnClick = true,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: NavigationMenuLinkProps = $props();
 </script>

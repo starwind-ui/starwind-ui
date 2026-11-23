@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, type ComponentPublicInstance, ref, useTemplateRef } from "vue";
+import { ToggleRoot } from "@starwind-ui/vue/toggle";
 
 import type { ToggleGroupValueChangeDetails } from "@starwind-ui/vue/toggle-group";
 import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
-import { ToggleRoot } from "@starwind-ui/vue/toggle";
+import { type ComponentPublicInstance, computed, ref, useTemplateRef } from "vue";
 
 const singleValue = ref(["left"]);
 const multipleValue = ref(["bold"]);

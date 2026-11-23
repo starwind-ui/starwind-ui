@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
+import { createCombobox } from "../../src/components/combobox/combobox";
 import { createDialog } from "../../src/components/dialog/dialog";
 import { createMenu } from "../../src/components/menu/menu";
 import { createNavigationMenu } from "../../src/components/navigation-menu/navigation-menu";
@@ -93,6 +94,26 @@ describe("focus return after a close", () => {
       expect(document.activeElement).toBe(trigger);
     });
 
+    it("returns focus without scrolling the page when focus fell to the document", async () => {
+      const { trigger } = setup();
+      document.body.insertAdjacentHTML("beforeend", `<div style="height:4000px"></div>`);
+      await userEvent.click(trigger);
+      await wait(50);
+      const focus = vi.spyOn(trigger, "focus");
+
+      await userEvent.keyboard("{Escape}");
+      (document.activeElement as HTMLElement).blur();
+      window.scrollTo(0, 2000);
+      const scrollY = window.scrollY;
+      await afterClose();
+
+      expect(document.activeElement).toBe(trigger);
+      // Focus goes to the trigger when the close starts and again when it ends.
+      expect(focus.mock.calls).toEqual([[{ preventScroll: true }], [{ preventScroll: true }]]);
+      expect(window.scrollY).toBe(scrollY);
+      window.scrollTo(0, 0);
+    });
+
     it("leaves focus on a control the user moved to during the close", async () => {
       const { trigger } = setup();
       const outside = outsideInput();
@@ -153,6 +174,25 @@ describe("focus return after a close", () => {
       expect(document.activeElement).toBe(trigger);
     });
 
+    it("returns focus without scrolling the page when focus fell to the document", async () => {
+      const { trigger } = setup();
+      document.body.insertAdjacentHTML("beforeend", `<div style="height:4000px"></div>`);
+      await userEvent.click(trigger);
+      await wait(50);
+      const focus = vi.spyOn(trigger, "focus");
+
+      (document.activeElement as HTMLElement).blur();
+      window.scrollTo(0, 2000);
+      const scrollY = window.scrollY;
+      await userEvent.keyboard("{Escape}");
+      await afterClose();
+
+      expect(document.activeElement).toBe(trigger);
+      expect(focus.mock.calls).toEqual([[{ preventScroll: true }]]);
+      expect(window.scrollY).toBe(scrollY);
+      window.scrollTo(0, 0);
+    });
+
     it("leaves focus on a control the user moved to during the close", async () => {
       const { trigger } = setup();
       const outside = outsideInput();
@@ -211,6 +251,45 @@ describe("focus return after a close", () => {
   });
 
   describe("Select and Menu", () => {
+    it("Combobox returns focus to the input without scrolling after an item press", async () => {
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<div data-sw-combobox>
+           <div data-sw-combobox-input-group>
+             <input data-sw-combobox-input aria-label="Fruit" />
+             <button data-sw-combobox-trigger type="button">Open</button>
+           </div>
+           <input data-sw-combobox-hidden-input type="hidden" />
+           <div data-sw-combobox-positioner data-side="bottom" data-align="start">
+             <div data-sw-combobox-popup hidden>
+               <div data-sw-combobox-list>
+                 <div data-sw-combobox-item data-value="a"><span data-sw-combobox-item-text>A</span></div>
+               </div>
+             </div>
+           </div>
+         </div>
+         <div style="height:4000px"></div>`,
+      );
+      const input = getElement<HTMLInputElement>("[data-sw-combobox-input]");
+      createCombobox(getElement("[data-sw-combobox]"));
+      await userEvent.click(getElement("[data-sw-combobox-trigger]"));
+      await wait(50);
+      expect(getElement("[data-sw-combobox-popup]").hidden).toBe(false);
+      const focus = vi.spyOn(input, "focus");
+
+      // Some browsers do not focus a pressed item, so focus falls to the document.
+      (document.activeElement as HTMLElement).blur();
+      window.scrollTo(0, 2000);
+      const scrollY = window.scrollY;
+      getElement("[data-sw-combobox-item]").click();
+      await wait(50);
+
+      expect(document.activeElement).toBe(input);
+      expect(focus.mock.calls).toEqual([[{ preventScroll: true }]]);
+      expect(window.scrollY).toBe(scrollY);
+      window.scrollTo(0, 0);
+    });
+
     it("Select returns focus to the trigger when focus is still in the popup", async () => {
       document.body.insertAdjacentHTML(
         "beforeend",

@@ -168,7 +168,7 @@ describe("starwind CLI parser", () => {
     ["init", ["init", "--framework", "vue"], mockInit],
     ["component add", ["add", "button", "--framework", "vue"], mockAdd],
     ["primitive add", ["primitives", "add", "button", "--framework", "vue"], mockPrimitivesAdd],
-  ] as const)("passes the Vue beta target through public %s", async (_command, args, action) => {
+  ] as const)("passes the Vue target through public %s", async (_command, args, action) => {
     const program = createTestProgram();
 
     await program.parseAsync([...args], { from: "user" });
@@ -492,10 +492,10 @@ describe("starwind CLI parser", () => {
     );
   });
 
-  it("labels Vue and Svelte as beta and exposes them in every public framework option", () => {
+  it("lists Vue and Svelte as stable and exposes them in every public framework option", () => {
     const program = createProgram();
-    expect(program.description()).toContain("Vue (beta)");
-    expect(program.description()).toContain("Svelte 5 (beta)");
+    expect(program.description()).toContain("Astro, React, Vue, and Svelte 5 applications");
+    expect(program.description()).not.toContain("beta");
     const primitivesCommand = getCommand(program, "primitives");
     const frameworkOptions: Array<[Command, string[]]> = [
       [getCommand(program, "init"), ["astro", "react", "vue", "svelte"]],
@@ -513,7 +513,7 @@ describe("starwind CLI parser", () => {
       expect(option?.argChoices).toEqual(expectedChoices);
       expect(option?.argChoices).toContain("vue");
       expect(option?.argChoices).toContain("svelte");
-      expect(option?.description).toContain("Vue and Svelte 5 are beta");
+      expect(option?.description).not.toContain("beta");
     }
   });
 

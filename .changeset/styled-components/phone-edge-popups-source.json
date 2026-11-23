@@ -1,0 +1,7 @@
+{
+  "impact": "source",
+  "components": {
+    "navigation-menu": "patch",
+    "tooltip": "patch"
+  }
+}

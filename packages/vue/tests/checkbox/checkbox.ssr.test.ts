@@ -1,8 +1,7 @@
+import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
 
 describe("Vue Checkbox SSR", () => {
   it("server-renders deterministic initial form and presence markup without browser globals", async () => {

@@ -1,8 +1,10 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import { proseStyles } from "../styles/prose.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const proseStyledContract: StyledAdapterContract = {
   component: "prose",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: ["Prose"],
   defaultExport: { Root: "Prose" },
   defaultExportMode: "component",

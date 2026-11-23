@@ -1,4 +1,4 @@
-import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
@@ -20,11 +20,6 @@ afterEach(async () => {
 
 describe("generated Svelte Slider lifecycle", () => {
   it("preserves Slider state, forms, geometry delegation, identity, SSR, and cleanup", async () => {
-    const generatedRoot = await readFile(
-      path.join(process.cwd(), "packages/svelte/src/slider/SliderRoot.svelte"),
-      "utf8",
-    );
-
     expect(globalThis).not.toHaveProperty("window");
     expect(globalThis).not.toHaveProperty("document");
     const root = await createHarness();
@@ -111,7 +106,6 @@ describe("generated Svelte Slider lifecycle", () => {
         before: ["21", "80"],
         rootValue: [20, 80],
         runtime: [20, 80],
-        snippetValue: [20, 80],
       },
       scalar: { submitted: "31", value: 31 },
       scalarReset: {
@@ -120,7 +114,6 @@ describe("generated Svelte Slider lifecycle", () => {
         eventsBefore: ["change:31", "commit:31"],
         rootValue: 30,
         runtime: 30,
-        snippetValue: 30,
         submitted: "30",
       },
       uncontrolled: 26,
@@ -232,30 +225,22 @@ const APP_SOURCE = String.raw`<script lang="ts">
 </script>
 
 <SliderRoot defaultValue={[20,80]} bind:value={controlled} {disabled} {form} {largeStep} {max} {min} {minStepsBetweenValues} {name} {orientation} {step} onValueChange={onValueChange} onValueCommitted={onValueCommitted} data-case="controlled" data-consumer="forwarded" ref={(element) => refs.root = element !== null}>
-  {#snippet children(currentValue)}
-    <SliderLabel>Price</SliderLabel>
-    <SliderControl data-control="controlled" style="display:block;height:20px;position:relative;width:200px">
-      <SliderTrack><SliderIndicator /></SliderTrack>
-      {#each (Array.isArray(currentValue) ? currentValue : [currentValue]) as _, index (index)}
-        <SliderThumb {index} data-thumb="controlled" ref={(element) => { if (index === 0) refs.thumb = element !== null; }} inputRef={(element) => { if (index === 0) refs.input = element !== null; }} />
-      {/each}
-    </SliderControl>
-  {/snippet}
+  <SliderLabel>Price</SliderLabel>
+  <SliderControl data-control="controlled" style="display:block;height:20px;position:relative;width:200px">
+    <SliderTrack><SliderIndicator /></SliderTrack>
+    {#each (Array.isArray(controlled) ? controlled : [controlled]) as _, index (index)}
+      <SliderThumb {index} data-thumb="controlled" ref={(element) => { if (index === 0) refs.thumb = element !== null; }} inputRef={(element) => { if (index === 0) refs.input = element !== null; }} />
+    {/each}
+  </SliderControl>
 </SliderRoot>
 
 <SliderRoot defaultValue={25} data-case="uncontrolled"><SliderControl><SliderTrack /><SliderThumb index={0} /></SliderControl></SliderRoot>
 <SliderRoot defaultValue={40} data-case="outer"><SliderControl><SliderTrack /><SliderThumb index={0} /></SliderControl><SliderRoot defaultValue={10} data-case="inner"><SliderControl><SliderTrack /><SliderThumb index={0} /></SliderControl></SliderRoot></SliderRoot>
 <SliderRoot defaultValue={[20, 80]} name="reset" form="reset-form" data-case="reset">
-  {#snippet children(currentValue)}
-    <output data-reset-snippet>{JSON.stringify(currentValue)}</output>
-    <SliderControl><SliderTrack /><SliderThumb index={0} /><SliderThumb index={1} /></SliderControl>
-  {/snippet}
+  <SliderControl><SliderTrack /><SliderThumb index={0} /><SliderThumb index={1} /></SliderControl>
 </SliderRoot>
 <SliderRoot bind:value={scalarValue} defaultValue={30} name="scalar" form="scalar-form" data-case="scalar" onValueChange={onScalarValueChange} onValueCommitted={onScalarValueCommitted}>
-  {#snippet children(currentValue)}
-    <output data-scalar-snippet>{JSON.stringify(currentValue)}</output>
-    <SliderControl><SliderTrack /><SliderThumb index={0} /></SliderControl>
-  {/snippet}
+  <SliderControl><SliderTrack /><SliderThumb index={0} /></SliderControl>
 </SliderRoot>
 <div data-sw-field data-case="field"><SliderRoot defaultValue={35}><SliderControl><SliderTrack /><SliderThumb index={0} /></SliderControl></SliderRoot></div>
 `;
@@ -292,7 +277,7 @@ void (async () => { try {
   const scalarForm = query("#scalar-form");
   scalarForm.reset(); await new Promise(resolve=>setTimeout(resolve,10)); await tick();
   const scalarSnapshot = instance.snapshot();
-  const scalarReset = { binding: scalarSnapshot.scalarValue, eventsAfter: scalarSnapshot.scalarEvents, eventsBefore: scalarEventsBeforeReset, rootValue: Number(scalarRoot.getAttribute("data-value")), runtime: Number(scalarRoot.querySelector("[data-sw-slider-input]").value), snippetValue: Number(query("[data-scalar-snippet]").textContent), submitted: new FormData(scalarForm).get("scalar") };
+  const scalarReset = { binding: scalarSnapshot.scalarValue, eventsAfter: scalarSnapshot.scalarEvents, eventsBefore: scalarEventsBeforeReset, rootValue: Number(scalarRoot.getAttribute("data-value")), runtime: Number(scalarRoot.querySelector("[data-sw-slider-input]").value), submitted: new FormData(scalarForm).get("scalar") };
   const innerRoot = query('[data-case="inner"]');
   key(innerRoot.querySelector("[data-sw-slider-thumb]"), "ArrowRight"); await tick();
   const nested = { inner: Number(innerRoot.querySelector("[data-sw-slider-input]").value), outer: Number(query('[data-case="outer"] > [data-sw-slider-control] [data-sw-slider-input]').value) };
@@ -339,7 +324,7 @@ void (async () => { try {
   const resetForm = query("#reset-form");
   const resetBefore = values(resetForm, "reset", 2);
   resetForm.reset(); await new Promise(resolve=>setTimeout(resolve,10)); await tick();
-  const reset = { after: values(resetForm, "reset", 2), before: resetBefore, rootValue: JSON.parse(resetRoot.getAttribute("data-value")), runtime: sliderValue(resetRoot), snippetValue: JSON.parse(query("[data-reset-snippet]").textContent) };
+  const reset = { after: values(resetForm, "reset", 2), before: resetBefore, rootValue: JSON.parse(resetRoot.getAttribute("data-value")), runtime: sliderValue(resetRoot) };
   const lifecycle = globalThis.__sliderLifecycle;
   const refs = { ...globalThis.__sliderRefs };
   fieldInstance.destroy();
@@ -394,7 +379,6 @@ try {
    const inputs = Array.from(element?.querySelectorAll("[data-sw-slider-input]") ?? []);
    return { ...cases[id].snapshot(), exists: Boolean(element),
      runtime: element ? runtime(id).getValue() : null,
-     rendered: element ? JSON.parse(element.querySelector("[data-rendered]").textContent) : null,
      valueAttribute: element ? JSON.parse(element.getAttribute("data-value")) : null,
      inputs: inputs.map(input => Number(input.value)),
      names: inputs.map(input => input.name),
@@ -475,9 +459,8 @@ export function setForm(next) {associatedForm=next;}
 export function hide() {shown=false;}
 export function snapshot() {return {model:model === undefined ? "undefined" : copy(model),writes:writes.map(copy),callbacks:[...callbacks],commits:[...commits],initialArray:initialArray ? [...initialArray] : null,aliased:lastProposal !== undefined && lastProposal === lastPublication};}
 </script>
-{#snippet parts(accepted)}
- <output data-rendered>{JSON.stringify(accepted)}</output>
- <SliderControl><SliderTrack />{#each (Array.isArray(accepted) ? accepted : [accepted]) as _,index (index)}<SliderThumb {index} />{/each}</SliderControl>
+{#snippet parts()}
+ <SliderControl><SliderTrack />{#each (Array.isArray(model ?? seed) && (model ?? seed).length ? (model ?? seed) : [0]) as _,index (index)}<SliderThumb {index} />{/each}</SliderControl>
 {/snippet}
 <form id={id + "-other"}></form>
 <form id={id + "-form"} data-model-form={id}>
@@ -526,7 +509,6 @@ describe("Slider accepted models", () => {
     })) {
       expect(result.initial[id]).toMatchObject({
         runtime: value,
-        rendered: value,
         valueAttribute: value,
         inputs: Array.isArray(value) ? value : [value],
         callbacks: [],
@@ -612,6 +594,18 @@ describe("Slider accepted models", () => {
       submitted: [40],
       writes: [21],
     });
+  }, 120_000);
+  it("applies a later one-way value once and keeps a later interaction", async () => {
+    const result = await runSliderModels(
+      [{ id: "late", mode: "plain", defaultValue: 0 }],
+      `cases.late.setModel(40);await settle();const command=state("late");
+      key("late");await settle();const interacted=state("late");
+      cases.late.setForm("late-other");await settle();
+      return {command,interacted,stale:state("late")};`,
+    );
+    expect(result.command).toMatchObject({ runtime: 40, callbacks: [], commits: [] });
+    expect(result.interacted).toMatchObject({ runtime: 41 });
+    expect(result.stale).toMatchObject({ runtime: 41 });
   }, 120_000);
   it("normalizes option and array commands while refreshing new inputs after Svelte flush", async () => {
     const result = await runSliderModels(

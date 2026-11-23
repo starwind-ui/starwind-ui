@@ -1,6 +1,6 @@
 # Svelte Framework Adapter
 
-This folder contains the Svelte 5.29+ public-beta target. It uses runes-era
+This folder contains the Svelte 5.29+ stable target. It uses runes-era
 components, typed `$props`, callback event properties, snippets, Svelte context, and attachments.
 Attachments own DOM connection and cleanup. Public setters update an existing Runtime controller.
 Constructor-only changes can recreate it while preserving accepted state.
@@ -8,34 +8,34 @@ Constructor-only changes can recreate it while preserving accepted state.
 Select, Alert Dialog, Drawer, Popover, Preview Card, Tooltip, Menu, Context Menu, Navigation Menu, and Combobox have portal-placement coverage. Its Svelte 5.29+ attachment moves
 one stable public Portal wrapper after hydration. Runtime resolves the accepted target and receives
 pending and ready placement reports before it starts floating work. The attachment restores the
-same wrapper during target changes and cleanup. This behavior ships through the public-beta target.
+same wrapper during target changes and cleanup. This behavior ships through the stable target.
 See the current [Svelte attachment reference](https://svelte.dev/docs/svelte/%40attach) for the
 5.29+ mount, rerun, and cleanup lifecycle used by this proof.
 
-Generated output lives in the public-beta `@starwind-ui/svelte` workspace package under
+Generated output lives in the stable `@starwind-ui/svelte` workspace package under
 `packages/svelte/src`. Production CLI registry entries, the public demo, install docs, and public
-support claims move together. Changesets and publication wiring remain with the release ticket. The target supports exactly
-36 Primitive families: Accordion, Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Color Picker, Combobox, Context Menu, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, Input OTP, Menu, Navigation Menu, Popover, Preview Card, Progress, Radio, Radio Group,
+support claims move together. The package publishes in the Runtime fixed group. The target supports exactly
+37 Primitive families: Accordion, Alert Dialog, Avatar, Button, Carousel, Chart, Checkbox, Checkbox Group, Collapsible, Color Picker, Combobox, Context Menu, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, Input OTP, Menu, Navigation Menu, Popover, Preview Card, Progress, Radio, Radio Group,
 Scroll Area, Select, Sidebar, Slider, Switch, Tabs, Toast, Toggle, Toggle Group, and Tooltip. Theme is a separate manual
 facade that exports `ThemeInitScriptOptions`, `getThemeInitScript`, and `initThemeController` from
 the Runtime theme subpath. The package root also exports these names.
 
-The public beta supports Styled generation, the Svelte demo, and packed
+The stable target supports Styled generation, the Svelte demo, and packed
 host verification. [inventory.ts](./inventory.ts) owns the implemented Primitive and manual facade
-identities and their test owners. The Svelte Styled writer generates exactly 54 Styled roots
+identities and their test owners. The Svelte Styled writer generates exactly 55 Styled roots
 through a typed projection of the shared Styled Output Model. Each implemented root in the inventory has test, demo, host, and review
 owners. All production public-support flags are enabled.
 
 Repository callers can generate target-scoped CLI data with `createCliRegistryBuildPolicy` and the
-single Svelte registration. The builders return 54 usable Styled implementations and 36 Primitive
+single Svelte registration. The builders return 55 usable Styled implementations and 37 Primitive
 artifacts, including their local helpers. Image has no Svelte implementation; Theme stays in the
 package. Versions and source versions come from the shared component manifests. The adapter
-requirement uses the source package's exact `0.0.0` version until normal release versioning.
+requirement uses a caret range on the source package version, as Astro and React do.
 
 `createPrivateSvelteFrameworkTargetPolicy` remains available for repository tests that inject a
 canonical Primitive artifact fingerprint. Production CLI inputs, schemas, bundled registry data,
 and generated docs metadata use the public target policy. Vendoring marks copied files as editable.
-Canonical package files keep their generated public-beta headers.
+Canonical package files keep their generated headers.
 
 Avatar connects Root, Image, and Fallback to the Runtime media-status facade. The adapter registers
 part nodes and recreates the controller when a node or fallback delay changes. Image forwards the
@@ -94,7 +94,7 @@ the target-local renderer fragment/helper pattern and public-support guardrails.
   writing, exports, and lifecycle projection inside this folder.
 - Reuse the same high-level target adapter object shape and helper responsibilities as Astro,
   React, and Vue.
-- Keep the single Svelte registration in the central target registry at public-beta status.
+- Keep the single Svelte registration in the central target registry at shipping status.
 - Keep Runtime behavior in `packages/runtime`; this folder only projects Svelte syntax onto Runtime
   controllers.
 
@@ -203,7 +203,7 @@ Each consumer checked 23 invalid `.svelte` fixtures and all eight SSR export nam
 Checkbox, Select, and Slider also passed browser hydration and interaction checks. The runner
 records compiler, checker, bundler, and module paths and rejects resolution outside each consumer.
 
-The source package remains at `0.0.0` until the release workflow applies its first beta version.
+The package version follows the Runtime fixed group.
 
 ## Styled output
 
@@ -534,7 +534,7 @@ The beta review scene shows stock horizontal and vertical layouts with source-vi
 Toaster imports the contract stylesheet and forwards position, duration, limit, gap, and peek to
 the Primitive Viewport. Its six default templates cover every service variant. Custom children
 replace those defaults. The Styled index re-exports toast and its API, options, and promise types
-from the public-beta Primitive subpath.
+from the Primitive subpath.
 
 Runtime clones template markup and fills its title, description, and action from service options.
 Svelte handlers and state in a template remain on the source nodes. Use `action.onClick` for
@@ -543,7 +543,7 @@ review example keeps one Toaster mounted while switching between default and cus
 
 ### Color Picker Primitive
 
-The public-beta Color Picker subpath exports all 23 parts and the contract's Runtime facade names.
+The Color Picker subpath exports all 23 parts and the contract's Runtime facade names.
 Value and format select ownership independently from their initial inputs. Defined inputs keep
 parent control until unmount; later undefined retains the last controlled state. Initially undefined
 bindings observe accepted Runtime state. ADR 0018 records the model and function-binding policy. The public initial projectors supply deterministic
@@ -559,7 +559,7 @@ algorithms. The single Color Picker lifecycle consumer owns these adapter regres
 
 ## Sidebar accepted state and native controls
 
-Sidebar exposes Provider, Sidebar, Trigger, Rail, and MenuButton through its public-beta subpath and
+Sidebar exposes Provider, Sidebar, Trigger, Rail, and MenuButton through its subpath and
 namespace. Provider has independent optional `open` and `mobileOpen` models. Defined inputs command
 Runtime silently; accepted interactions update local state and bindings. Later undefined retains
 state. Its callbacks notify accepted changes and have no cancellation method.
@@ -575,14 +575,14 @@ It has no href prop. Its child snippet receives a SidebarMenuButtonChildPayload 
 props, as the React and Vue asChild path allows. Spread the complete props onto one link, button, or
 forwarding component. The ref receives the rendered element, and attachments keep independent cleanup.
 
-The mobile Sheet connection uses defined Sheet model inputs from the nearest Provider context.
-Accepted Sheet binding output calls the context's silent setMobileOpen method. A Sheet attachment
-contains Runtime dialog commands and stops its proposal event before that event reaches a Provider.
-Runtime resolves the mobile Sheet by nearest Provider ownership. The retained bridge coordinates
-Svelte binding commands and accepted Sheet output. Preserve the
-`data-sidebar="mobile"` discovery hook when Styled Sheet supplies its public slot. Canceled Sheet
-requests retain both models; close completion only notifies. The Sidebar lifecycle fixture proves
-this connection through the existing Styled Sheet, including a newer open during pending close.
+`useSidebarContext()` returns read-only `open`, `mobileOpen`, `state`, and `expanded` values, as in
+React. Outside a Provider it returns `null`, and Sidebar, Trigger, Rail, and MenuButton render with
+state `expanded`. Trigger and Rail render `aria-expanded="false"` there, as in React and Astro. The Provider keeps its media state private.
+
+Runtime resolves the mobile Sheet by nearest Provider ownership. Preserve the
+`data-sidebar="mobile"` discovery hook when Styled Sheet supplies its public slot. A custom Sheet
+bridge reads `mobileOpen` from the context and writes accepted Sheet output through the Provider's
+`bind:mobileOpen`. Canceled Sheet requests retain both models; close completion only notifies.
 
 ## Styled Color Picker composition
 
@@ -642,7 +642,7 @@ semantic child forwarding, refs, and document resource cleanup.
 ## Order 08 review and checkpoint boundary
 
 All six family tickets have independent review and focused passing evidence. The current inventory
-is 36 Primitive families plus Theme and 54 Styled roots. The general route contains 53 groups;
+is 37 Primitive families plus Theme and 55 Styled roots. The general route contains 53 groups;
 Sidebar has one review owner at `/review/sidebar/`. Both routes use the CLI stock stylesheet.
 
 The target inventory and focused tests link each criterion to its implementation owner. The final

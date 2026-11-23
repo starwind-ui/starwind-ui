@@ -118,7 +118,7 @@ const modelPolicy = {
     initialDefined: "parent-controlled",
     initialUndefined: "runtime-owned",
     laterUndefined: "retain-last-controlled-value",
-    laterDefined: "ignored-by-initially-uncontrolled-model",
+    laterDefined: "silent-command",
   },
   acceptedUncontrolledValue: "latest-accepted-value",
   controlledWhen: "model-prop-is-not-undefined",
@@ -244,7 +244,7 @@ export const vueAdapterPublicContract = {
   },
   events: eventPolicy,
   framework: {
-    minimumVersion: "3.5",
+    minimumVersion: "3.5.21",
     packageIntent: "@starwind-ui/vue",
     vuePeerExternalized: true,
   },
@@ -255,7 +255,7 @@ export const vueAdapterPublicContract = {
     demoIntegration: true,
     packageExports: true,
     publicDocsClaim: true,
-    status: "public-beta",
+    status: "shipping",
   },
   refs: {
     element: "semantic-dom-element",

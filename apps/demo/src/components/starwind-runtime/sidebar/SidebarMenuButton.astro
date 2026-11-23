@@ -31,7 +31,7 @@ const buttonClassName = sidebarMenuButton({ variant, size, class: className });
 ---
 
 {
-  Boolean(tooltip) ? (
+  tooltip ? (
     <Tooltip openDelay={0} closeDelay={0} class="w-full">
       <TooltipTrigger class="w-full">
         <SidebarPrimitive.MenuButton asChild={true}>
@@ -53,7 +53,7 @@ const buttonClassName = sidebarMenuButton({ variant, size, class: className });
       </TooltipTrigger>
 
       <TooltipContent
-        side="right"
+        data-sw-sidebar-tooltip-default
         align="center"
         class="whitespace-nowrap"
         data-sw-sidebar-tooltip-content

@@ -4,31 +4,41 @@ import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type SelectContextValue = Readonly<{
   disabled: ComputedRef<boolean>;
-  element: Readonly<Ref<HTMLElement | null>>;
-  mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
-  requestRefresh(): void;
-  registerPortal(owner: symbol, element: HTMLElement | null): void;
   required: ComputedRef<boolean>;
   selectedLabel: ComputedRef<string | null>;
   value: ComputedRef<string | null>;
 }>;
+
+export type SelectInternalContextValue = SelectContextValue &
+  Readonly<{
+    element: Readonly<Ref<HTMLElement | null>>;
+    mounted: Readonly<Ref<boolean>>;
+    requestRefresh(): void;
+    registerPortal(owner: symbol, element: HTMLElement | null): void;
+  }>;
 
 export type SelectItemContextValue = Readonly<{
   disabled: ComputedRef<boolean>;
   value: ComputedRef<string>;
 }>;
 
-export const SelectContext: InjectionKey<SelectContextValue> = Symbol("StarwindSelectContext");
+export const SelectInternalContext: InjectionKey<SelectInternalContextValue> =
+  Symbol("StarwindSelectContext");
+export const SelectContext: InjectionKey<SelectContextValue> = SelectInternalContext;
 export const SelectItemContext: InjectionKey<SelectItemContextValue> = Symbol(
   "StarwindSelectItemContext",
 );
 
-export function useSelectContext(part = "part"): SelectContextValue {
-  const value = inject(SelectContext);
+export function useSelectInternalContext(part = "part"): SelectInternalContextValue {
+  const value = inject(SelectInternalContext);
   if (!value) throw new Error(`Select.${part} requires an owning Select.Root.`);
   return value;
+}
+
+export function useSelectContext(part = "part"): SelectContextValue {
+  return useSelectInternalContext(part);
 }
 
 export function useSelectItemContext(part = "part"): SelectItemContextValue {
@@ -120,7 +130,7 @@ let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
 let refreshPending = false;
 
-provide(SelectContext, {
+provide(SelectInternalContext, {
   disabled,
   element: rootRef,
   mounted,

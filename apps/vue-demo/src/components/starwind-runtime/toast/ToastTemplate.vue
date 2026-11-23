@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import {
   toastAction,
   toastClose,

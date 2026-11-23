@@ -1,13 +1,14 @@
+import { colorPickerRuntimeAdapterContract } from "./color-picker.js";
 import { accordionRuntimeAdapterContract } from "./components/accordion.js";
 import { alertDialogRuntimeAdapterContract } from "./components/alert-dialog.js";
 import { avatarRuntimeAdapterContract } from "./components/avatar.js";
 import { buttonRuntimeAdapterContract } from "./components/button.js";
 import { carouselRuntimeAdapterContract } from "./components/carousel.js";
+import { chartRuntimeAdapterContract } from "./components/chart.js";
 import { checkboxRuntimeAdapterContract } from "./components/checkbox.js";
 import { checkboxGroupRuntimeAdapterContract } from "./components/checkbox-group.js";
 import { collapsibleRuntimeAdapterContract } from "./components/collapsible.js";
 import { comboboxRuntimeAdapterContract } from "./components/combobox.js";
-import { colorPickerRuntimeAdapterContract } from "./color-picker.js";
 import { contextMenuRuntimeAdapterContract } from "./components/context-menu.js";
 import { dialogRuntimeAdapterContract } from "./components/dialog.js";
 import { drawerRuntimeAdapterContract } from "./components/drawer.js";
@@ -42,11 +43,12 @@ export {
   avatarRuntimeAdapterContract,
   buttonRuntimeAdapterContract,
   carouselRuntimeAdapterContract,
+  chartRuntimeAdapterContract,
   checkboxGroupRuntimeAdapterContract,
   checkboxRuntimeAdapterContract,
   collapsibleRuntimeAdapterContract,
-  comboboxRuntimeAdapterContract,
   colorPickerRuntimeAdapterContract,
+  comboboxRuntimeAdapterContract,
   contextMenuRuntimeAdapterContract,
   dialogRuntimeAdapterContract,
   drawerRuntimeAdapterContract,
@@ -112,6 +114,7 @@ export const runtimeAdapterContracts = [
   comboboxRuntimeAdapterContract,
   colorPickerRuntimeAdapterContract,
   toastRuntimeAdapterContract,
+  chartRuntimeAdapterContract,
 ] as const satisfies readonly RuntimeAdapterContract[];
 
 export const representativeRuntimeAdapterContracts = runtimeAdapterContracts;

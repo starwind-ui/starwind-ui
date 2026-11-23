@@ -1,7 +1,7 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-11-05T12:10:31.521Z",
+  "capturedAt": "2026-11-21T20:19:50.989Z",
   "catalog": {
     "brotliBytes": 148663,
     "gzipBytes": 183051,
@@ -385,188 +385,250 @@
   "measurementEntries": {
     "catalog": [
       {
-        "exports": ["*"],
+        "exports": [
+          "*"
+        ],
         "specifier": "@base-ui/react"
       }
     ],
     "components": {
       "accordion": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/accordion"
         }
       ],
       "alert-dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/alert-dialog"
         }
       ],
       "avatar": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/avatar"
         }
       ],
       "button": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/button"
         }
       ],
       "checkbox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/checkbox"
         }
       ],
       "checkbox-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/checkbox-group"
         }
       ],
       "collapsible": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/collapsible"
         }
       ],
       "combobox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/combobox"
         }
       ],
       "context-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/context-menu"
         }
       ],
       "dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/dialog"
         }
       ],
       "drawer": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/drawer"
         }
       ],
       "field": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/field"
         }
       ],
       "input": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/input"
         }
       ],
       "input-otp": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/otp-field"
         }
       ],
       "menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/menu"
         }
       ],
       "navigation-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/navigation-menu"
         }
       ],
       "popover": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/popover"
         }
       ],
       "preview-card": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/preview-card"
         }
       ],
       "progress": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/progress"
         }
       ],
       "radio": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/radio"
         }
       ],
       "radio-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/radio-group"
         }
       ],
       "scroll-area": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/scroll-area"
         }
       ],
       "select": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/select"
         }
       ],
       "slider": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/slider"
         }
       ],
       "switch": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/switch"
         }
       ],
       "tabs": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/tabs"
         }
       ],
       "toast": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/toast"
         }
       ],
       "toggle": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/toggle"
         }
       ],
       "toggle-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/toggle-group"
         }
       ],
       "tooltip": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@base-ui/react/tooltip"
         }
       ]

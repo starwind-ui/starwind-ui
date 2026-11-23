@@ -1,6 +1,6 @@
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
 
 import ThemeToggle from "../../../../apps/vue-demo/src/components/starwind-runtime/theme-toggle/ThemeToggle.vue";
 

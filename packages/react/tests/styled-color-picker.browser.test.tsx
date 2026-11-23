@@ -272,7 +272,23 @@ describe("React styled Color Picker root", () => {
     expect(area.className).toContain("border-outline");
     expect(area.className).not.toContain("overflow-hidden");
     expect(areaThumb.className).toContain("z-10");
-    expect(areaThumb.className).toContain("clamp(1px");
+    const { default: css } = await import("../../../apps/react-demo/src/styles.css?inline");
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(css);
+    document.adoptedStyleSheets.push(sheet);
+    try {
+      for (const dir of ["ltr", "rtl"]) {
+        area.dir = dir;
+        const track = area.getBoundingClientRect();
+        const thumb = areaThumb.getBoundingClientRect();
+        expect(track.width).toBeGreaterThan(100);
+        expect(thumb.width).toBeGreaterThan(0);
+        const edge = dir === "rtl" ? track.left : track.right;
+        expect(Math.abs(thumb.left + thumb.width / 2 - edge)).toBeLessThan(2);
+      }
+    } finally {
+      document.adoptedStyleSheets = document.adoptedStyleSheets.filter((entry) => entry !== sheet);
+    }
     expect(slider.className).toContain("h-(--sw-color-picker-slider-size)");
     expect(sliderThumb.className).toContain("z-10");
   });

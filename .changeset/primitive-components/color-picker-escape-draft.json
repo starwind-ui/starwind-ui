@@ -1,0 +1,6 @@
+{
+  "impact": "behavior",
+  "primitives": {
+    "color-picker": "patch"
+  }
+}

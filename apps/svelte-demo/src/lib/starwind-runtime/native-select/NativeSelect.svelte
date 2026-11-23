@@ -10,12 +10,12 @@
 
 <script lang="ts">
   let {
-    "size": size,
+    size,
     "class": className,
     value = $bindable(),
     ref = $bindable(),
-    "icon": icon,
-    "children": children,
+    icon,
+    children,
     ...rest
   }: NativeSelectProps = $props();
 

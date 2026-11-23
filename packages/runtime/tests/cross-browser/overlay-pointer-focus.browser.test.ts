@@ -10,6 +10,19 @@ function reasons(onOpenChange: ReturnType<typeof vi.fn>): unknown[] {
   return onOpenChange.mock.calls.map(([open, details]) => [open, details.reason]);
 }
 
+/**
+ * A Tabs panel has tabindex 0, and a Popover popup has tabindex -1. WebKit does not focus a pressed
+ * button, so a press on the trigger moves focus to that container.
+ */
+function wrapInFocusableContainer(selector: string, tabIndex: number): void {
+  const root = document.querySelector<HTMLElement>(selector)!;
+  const container = document.createElement("div");
+  container.tabIndex = tabIndex;
+  container.style.padding = "8px";
+  root.before(container);
+  container.append(root);
+}
+
 describe("Select pointer presses and focus", () => {
   beforeEach(() => {
     document.body.innerHTML = `
@@ -35,6 +48,23 @@ describe("Select pointer presses and focus", () => {
   }
 
   it("closes when the trigger is pressed a second time", async () => {
+    const onOpenChange = vi.fn();
+    const select = create(onOpenChange);
+
+    await userEvent.click(page.getByTestId("trigger"));
+    await settle();
+    await userEvent.click(page.getByTestId("trigger"));
+    await settle();
+
+    expect(reasons(onOpenChange)).toEqual([
+      [true, "trigger-press"],
+      [false, "trigger-press"],
+    ]);
+    expect(select.getOpen()).toBe(false);
+  });
+
+  it("closes from its trigger inside a focusable container", async () => {
+    wrapInFocusableContainer("[data-sw-select]", 0);
     const onOpenChange = vi.fn();
     const select = create(onOpenChange);
 
@@ -108,6 +138,22 @@ describe("Menu pointer presses and focus", () => {
       [true, "trigger-press"],
       [false, "trigger-press"],
     ]);
+    expect(menu.getOpen()).toBe(false);
+  });
+
+  it("closes from its trigger inside a focusable container after a keyboard open", async () => {
+    wrapInFocusableContainer("[data-sw-menu]", -1);
+    const onOpenChange = vi.fn();
+    const menu = create(onOpenChange);
+
+    page.getByTestId("trigger").element().focus();
+    await userEvent.keyboard("{Enter}");
+    await settle();
+    expect(menu.getOpen()).toBe(true);
+    await userEvent.click(page.getByTestId("trigger"));
+    await settle();
+
+    expect(onOpenChange.mock.calls.at(-1)?.[0]).toBe(false);
     expect(menu.getOpen()).toBe(false);
   });
 

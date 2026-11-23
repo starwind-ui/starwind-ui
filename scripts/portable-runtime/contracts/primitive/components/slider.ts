@@ -131,6 +131,12 @@ export const sliderRuntimeAdapterContract = {
       runtimeSetter: "setValue",
       valueType: "SliderValue",
       controlledStateSync: "unsupported",
+      ownership: {
+        controlledWhen: "initial-defined",
+        lifetime: "mount",
+        laterUndefined: "retain-controlled-value",
+        laterDefined: "silent-command",
+      },
     },
   ],
   events: [

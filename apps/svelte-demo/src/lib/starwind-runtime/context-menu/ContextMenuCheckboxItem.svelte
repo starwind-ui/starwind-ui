@@ -11,16 +11,16 @@
 <script lang="ts">
   let {
     "class": className,
-    "defaultChecked": defaultChecked = false,
-    "closeOnClick": closeOnClick = false,
-    "inset": inset = false,
-    "disabled": disabled = false,
+    defaultChecked = false,
+    closeOnClick = false,
+    inset = false,
+    disabled = false,
     "indicatorClass": indicatorClassName,
-    "showIndicator": showIndicator = true,
+    showIndicator = true,
     checked = $bindable(),
-    "onCheckedChange": onCheckedChange,
-    "children": children,
-    "indicator": indicator,
+    onCheckedChange,
+    children,
+    indicator,
     "checked": commandChecked,
     ...rest
   }: ContextMenuCheckboxItemProps = $props();

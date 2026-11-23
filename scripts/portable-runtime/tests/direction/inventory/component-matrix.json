@@ -1,0 +1,575 @@
+[
+  {
+    "id": "accordion",
+    "exports": ["Accordion", "AccordionContent", "AccordionItem", "AccordionTrigger"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "alert",
+    "exports": ["Alert", "AlertDescription", "AlertTitle"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "alert-dialog",
+    "exports": [
+      "AlertDialog",
+      "AlertDialogAction",
+      "AlertDialogCancel",
+      "AlertDialogContent",
+      "AlertDialogDescription",
+      "AlertDialogFooter",
+      "AlertDialogHeader",
+      "AlertDialogTitle",
+      "AlertDialogTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "aspect-ratio",
+    "exports": ["AspectRatio"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "avatar",
+    "exports": ["Avatar", "AvatarFallback", "AvatarGroup", "AvatarGroupCount", "AvatarImage"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "badge",
+    "exports": ["Badge"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "breadcrumb",
+    "exports": [
+      "Breadcrumb",
+      "BreadcrumbEllipsis",
+      "BreadcrumbItem",
+      "BreadcrumbLink",
+      "BreadcrumbList",
+      "BreadcrumbPage",
+      "BreadcrumbSeparator"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "button",
+    "exports": ["Button"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "button-group",
+    "exports": ["ButtonGroup", "ButtonGroupSeparator", "ButtonGroupText"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "card",
+    "exports": [
+      "Card",
+      "CardAction",
+      "CardContent",
+      "CardDescription",
+      "CardFooter",
+      "CardHeader",
+      "CardTitle"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "carousel",
+    "exports": ["Carousel", "CarouselContent", "CarouselItem", "CarouselNext", "CarouselPrevious"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "chart",
+    "exports": [
+      "ChartContainer",
+      "ChartTooltip",
+      "ChartTooltipContent",
+      "ChartLegend",
+      "ChartLegendContent"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": false
+  },
+  {
+    "id": "checkbox",
+    "exports": ["Checkbox"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "checkbox-group",
+    "exports": ["CheckboxGroup"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": false
+  },
+  {
+    "id": "collapsible",
+    "exports": ["Collapsible", "CollapsibleContent", "CollapsibleTrigger"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "color-picker",
+    "exports": [
+      "ColorPicker",
+      "ColorPickerInput",
+      "ColorPickerTrigger",
+      "ColorPickerContent",
+      "ColorPickerArea",
+      "ColorPickerChannelSlider",
+      "ColorPickerChannelInput",
+      "ColorPickerValueSwatch",
+      "ColorPickerSwatchGroup",
+      "ColorPickerSwatch",
+      "ColorPickerEyeDropper",
+      "ColorPickerClear"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "combobox",
+    "exports": [
+      "Combobox",
+      "ComboboxClear",
+      "ComboboxContent",
+      "ComboboxEmpty",
+      "ComboboxGroup",
+      "ComboboxGroupLabel",
+      "ComboboxInput",
+      "ComboboxInputGroup",
+      "ComboboxItem",
+      "ComboboxItemIndicator",
+      "ComboboxItemText",
+      "ComboboxLabel",
+      "ComboboxSeparator",
+      "ComboboxTrigger",
+      "ComboboxValue"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": false
+  },
+  {
+    "id": "context-menu",
+    "exports": [
+      "ContextMenu",
+      "ContextMenuCheckboxItem",
+      "ContextMenuCheckboxItemIndicator",
+      "ContextMenuContent",
+      "ContextMenuGroup",
+      "ContextMenuItem",
+      "ContextMenuLabel",
+      "ContextMenuRadioGroup",
+      "ContextMenuRadioItem",
+      "ContextMenuRadioItemIndicator",
+      "ContextMenuSeparator",
+      "ContextMenuShortcut",
+      "ContextMenuSub",
+      "ContextMenuSubContent",
+      "ContextMenuSubTrigger",
+      "ContextMenuTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "dialog",
+    "exports": [
+      "Dialog",
+      "DialogClose",
+      "DialogContent",
+      "DialogDescription",
+      "DialogFooter",
+      "DialogHeader",
+      "DialogTitle",
+      "DialogTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "dropdown",
+    "exports": [
+      "Dropdown",
+      "DropdownCheckboxItem",
+      "DropdownCheckboxItemIndicator",
+      "DropdownContent",
+      "DropdownGroup",
+      "DropdownItem",
+      "DropdownLabel",
+      "DropdownLinkItem",
+      "DropdownRadioGroup",
+      "DropdownRadioItem",
+      "DropdownRadioItemIndicator",
+      "DropdownSeparator",
+      "DropdownShortcut",
+      "DropdownSub",
+      "DropdownSubContent",
+      "DropdownSubTrigger",
+      "DropdownTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "dropzone",
+    "exports": [
+      "Dropzone",
+      "DropzoneFilesList",
+      "DropzoneLoadingIndicator",
+      "DropzoneUploadIndicator"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "field",
+    "exports": [
+      "Field",
+      "FieldContent",
+      "FieldControl",
+      "FieldDescription",
+      "FieldError",
+      "FieldGroup",
+      "FieldItem",
+      "FieldLabel",
+      "FieldLegend",
+      "FieldSeparator",
+      "FieldSet",
+      "FieldTitle",
+      "FieldValidity"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": false
+  },
+  {
+    "id": "form",
+    "exports": ["Form", "FormErrorSummary"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": false
+  },
+  {
+    "id": "hover-card",
+    "exports": ["HoverCard", "HoverCardContent", "HoverCardTrigger"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "image",
+    "exports": ["Image"],
+    "targets": ["astro"],
+    "legacy": true
+  },
+  {
+    "id": "input",
+    "exports": ["Input"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "input-group",
+    "exports": [
+      "InputGroup",
+      "InputGroupAddon",
+      "InputGroupButton",
+      "InputGroupInput",
+      "InputGroupText",
+      "InputGroupTextarea"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "input-otp",
+    "exports": ["InputOtp", "InputOtpGroup", "InputOtpSeparator", "InputOtpSlot"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "item",
+    "exports": [
+      "Item",
+      "ItemActions",
+      "ItemContent",
+      "ItemDescription",
+      "ItemFooter",
+      "ItemGroup",
+      "ItemHeader",
+      "ItemMedia",
+      "ItemSeparator",
+      "ItemTitle"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "kbd",
+    "exports": ["Kbd", "KbdGroup"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "label",
+    "exports": ["Label"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "native-select",
+    "exports": ["NativeSelect", "NativeSelectOptGroup", "NativeSelectOption"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "navigation-menu",
+    "exports": [
+      "NavigationMenu",
+      "NavigationMenuContent",
+      "NavigationMenuIndicator",
+      "NavigationMenuItem",
+      "NavigationMenuLink",
+      "NavigationMenuList",
+      "NavigationMenuPositioner",
+      "NavigationMenuTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": false
+  },
+  {
+    "id": "pagination",
+    "exports": [
+      "Pagination",
+      "PaginationContent",
+      "PaginationEllipsis",
+      "PaginationItem",
+      "PaginationLink",
+      "PaginationNext",
+      "PaginationPrevious"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "popover",
+    "exports": [
+      "Popover",
+      "PopoverContent",
+      "PopoverDescription",
+      "PopoverHeader",
+      "PopoverTitle",
+      "PopoverTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "progress",
+    "exports": ["Progress"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "prose",
+    "exports": ["Prose"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "radio-group",
+    "exports": ["RadioGroup", "RadioGroupItem"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "scroll-area",
+    "exports": [
+      "ScrollArea",
+      "ScrollAreaContent",
+      "ScrollAreaCorner",
+      "ScrollAreaThumb",
+      "ScrollAreaViewport",
+      "ScrollBar"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "select",
+    "exports": [
+      "Select",
+      "SelectContent",
+      "SelectGroup",
+      "SelectItem",
+      "SelectItemIndicator",
+      "SelectItemText",
+      "SelectLabel",
+      "SelectScrollDownButton",
+      "SelectScrollUpButton",
+      "SelectSeparator",
+      "SelectTrigger",
+      "SelectValue"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "separator",
+    "exports": ["Separator"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "sheet",
+    "exports": [
+      "Sheet",
+      "SheetClose",
+      "SheetContent",
+      "SheetDescription",
+      "SheetFooter",
+      "SheetHeader",
+      "SheetTitle",
+      "SheetTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "sidebar",
+    "exports": [
+      "Sidebar",
+      "SidebarContent",
+      "SidebarFooter",
+      "SidebarGroup",
+      "SidebarGroupAction",
+      "SidebarGroupContent",
+      "SidebarGroupLabel",
+      "SidebarHeader",
+      "SidebarInput",
+      "SidebarInset",
+      "SidebarMenu",
+      "SidebarMenuAction",
+      "SidebarMenuBadge",
+      "SidebarMenuButton",
+      "SidebarMenuItem",
+      "SidebarMenuSkeleton",
+      "SidebarMenuSub",
+      "SidebarMenuSubButton",
+      "SidebarMenuSubItem",
+      "SidebarProvider",
+      "SidebarRail",
+      "SidebarSeparator",
+      "SidebarTrigger"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "skeleton",
+    "exports": ["Skeleton"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "slider",
+    "exports": ["Slider"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "spinner",
+    "exports": ["Spinner"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "switch",
+    "exports": ["Switch"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "table",
+    "exports": [
+      "Table",
+      "TableBody",
+      "TableCaption",
+      "TableCell",
+      "TableFoot",
+      "TableHead",
+      "TableHeader",
+      "TableRow"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "tabs",
+    "exports": ["Tabs", "TabsContent", "TabsList", "TabsTrigger"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "textarea",
+    "exports": ["Textarea"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "theme-toggle",
+    "exports": ["ThemeToggle"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "toast",
+    "exports": [
+      "Toaster",
+      "ToastAction",
+      "ToastClose",
+      "ToastContent",
+      "ToastDescription",
+      "ToastItem",
+      "ToastTemplate",
+      "ToastTitle"
+    ],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "toggle",
+    "exports": ["Toggle"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "toggle-group",
+    "exports": ["ToggleGroup", "ToggleGroupItem"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": false
+  },
+  {
+    "id": "tooltip",
+    "exports": ["Tooltip", "TooltipContent", "TooltipTrigger"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  },
+  {
+    "id": "video",
+    "exports": ["Video"],
+    "targets": ["astro", "react", "vue", "svelte"],
+    "legacy": true
+  }
+]

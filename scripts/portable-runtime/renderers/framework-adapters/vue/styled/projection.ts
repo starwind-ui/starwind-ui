@@ -1,6 +1,8 @@
 import { assertStyledSidebarConnection } from "../../../primitive-output-model/sidebar-connection.js";
 import {
   collectStyledOutputNamedSlots,
+  getStyledOutputTypeParameters,
+  renderStyledTypeParameterArguments,
   type StyledOutputComponent,
   type StyledOutputComponentGroup,
   type StyledOutputRenderNode,
@@ -36,6 +38,7 @@ export function projectVueStyledComponent(
   assertStyledSidebarConnection(group);
   const component = structuredClone(sourceComponent);
   const specialization = specializeVueStyledComponent(group.component, component);
+  component.render = applyNativeVoidChildrenPolicy(component.render);
   applyGenericNativeElementRef(component, specialization);
   const nativeModel = applyVueNativeModel(component, specialization);
   const familyContract = getVueStyledPublicContract(group.component, component.exportName);
@@ -88,7 +91,7 @@ export function projectVueStyledComponent(
     computedExpressionUsesReference(variable.expression, "attrs"),
   );
   const templateRequiresSetupAttrs = component.render.some((node) =>
-    renderNodeRequiresSetupAttrs(node, component.destructure?.rest),
+    renderNodeRequiresSetupAttrs(node),
   );
   const usesAttrs = manuallyForwardsAttrs || computedUsesAttrs;
   const setupReasons: VueAttributeSetupReason[] = [
@@ -142,15 +145,44 @@ export function projectVueStyledComponent(
             ...(usesStyledOutputDefaultSlot(component.render)
               ? [{ name: "default", signature: "() => unknown" }]
               : []),
-            ...collectStyledOutputNamedSlots(component.render).map((name) => ({
+            ...[
+              ...new Set([
+                ...collectStyledOutputNamedSlots(component.render),
+                ...(component.slots ?? []).filter(isForVue).map((slot) => slot.name),
+              ]),
+            ].map((name) => ({
               name,
               signature: "() => unknown",
             })),
           ]
         : specialization.specialization.slots,
     specialization: specialization.specialization,
+    ...(getStyledOutputTypeParameters(component)
+      ? { typeParameters: getStyledOutputTypeParameters(component) }
+      : {}),
     usesAttrs,
   };
+}
+
+/** A generated empty slot is still a VNode, so void native tags must omit it. */
+function applyNativeVoidChildrenPolicy(nodes: StyledOutputRenderNode[]): StyledOutputRenderNode[] {
+  return nodes.map((node) => {
+    if ("children" in node) node.children = applyNativeVoidChildrenPolicy(node.children);
+    if (node.type === "condition") {
+      node.then = applyNativeVoidChildrenPolicy(node.then);
+      node.else = applyNativeVoidChildrenPolicy(node.else);
+    }
+    if (node.type === "slot") node.fallback = applyNativeVoidChildrenPolicy(node.fallback);
+    if (node.type !== "element" || !node.omitVoidChildrenIn?.includes("vue")) return node;
+    if (!node.tagBinding) throw new TypeError("Void-child omission requires a bound native tag.");
+    delete node.omitVoidChildrenIn;
+    return {
+      type: "condition",
+      condition: `["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].includes(${node.tag})`,
+      then: [{ ...structuredClone(node), children: [], selfClosing: true }],
+      else: [node],
+    };
+  });
 }
 
 function applyGenericComponentAttrForwarding(component: StyledOutputComponent): boolean {
@@ -168,10 +200,13 @@ function applyGenericComponentAttrForwarding(component: StyledOutputComponent): 
         attribute.value.name === restBinding,
     );
     if (!spread) return;
+    // An attribute before the spread is a default, so the consumer value must win. Only the
+    // attributes after the spread own their names.
     const ownedNames = [
       ...new Set(
         node.attrs
-          .filter((attribute) => attribute !== spread && isForVue(attribute))
+          .slice(node.attrs.indexOf(spread) + 1)
+          .filter(isForVue)
           .map((attribute) => toVueFallthroughName(attribute.name)),
       ),
     ];
@@ -312,10 +347,7 @@ function renderNodeUsesVueAttrs(
   }
 }
 
-function renderNodeRequiresSetupAttrs(
-  node: StyledOutputRenderNode,
-  restBinding: string | undefined,
-): boolean {
+function renderNodeRequiresSetupAttrs(node: StyledOutputRenderNode): boolean {
   if (
     "attrs" in node &&
     node.attrs.filter(isForVue).some((attribute) => {
@@ -337,13 +369,11 @@ function renderNodeRequiresSetupAttrs(
     case "fragment":
     case "primitive":
     case "repeat":
-      return node.children.some((child) => renderNodeRequiresSetupAttrs(child, restBinding));
+      return node.children.some((child) => renderNodeRequiresSetupAttrs(child));
     case "condition":
-      return [...node.then, ...node.else].some((child) =>
-        renderNodeRequiresSetupAttrs(child, restBinding),
-      );
+      return [...node.then, ...node.else].some((child) => renderNodeRequiresSetupAttrs(child));
     case "slot":
-      return node.fallback.some((child) => renderNodeRequiresSetupAttrs(child, restBinding));
+      return node.fallback.some((child) => renderNodeRequiresSetupAttrs(child));
     case "icon":
     case "text":
       return false;
@@ -443,6 +473,24 @@ function countVueAttrDestinations(
   }
 }
 
+/**
+ * A declared public extension replaces the public props type in the declared template props, so
+ * the renderer cannot also omit replaced public fields from it. A contract must use one or the
+ * other.
+ */
+export function checkVueDeclaredPublicExtension(
+  exportName: string,
+  extension: string,
+  replacedPublicSourceFields: readonly string[],
+): string {
+  if (replacedPublicSourceFields.length > 0) {
+    throw new Error(
+      `${exportName} sets declaredPublicExtension and also replaces public fields (${replacedPublicSourceFields.join(", ")}). Remove declaredPublicExtension or the field replacements; the renderer does not support both.`,
+    );
+  }
+  return extension;
+}
+
 function projectProps(
   component: StyledOutputComponent,
   publicContract: ReturnType<typeof getVueStyledPublicContract>,
@@ -482,7 +530,7 @@ function projectProps(
   const inheritedPublicFields = sourceDestructure.flatMap((prop) => {
     if (publicFields.some((field) => field.name === prop.name)) return [];
     const type = getInheritedPropType(component, prop.name);
-    return type === "unknown" || type.includes(`${component.exportName}Props[`)
+    return type === "unknown" || type.includes(`${renderVuePublicPropsReference(component)}[`)
       ? []
       : [{ name: prop.name, optional: true, type }];
   });
@@ -519,6 +567,15 @@ function projectProps(
       extendsPublic: publicContract.declaredExtendsPublic ?? true,
       fields: [...declaredFields.values()],
       name: `${component.exportName}DeclaredProps`,
+      ...(publicContract.declaredPublicExtension
+        ? {
+            publicExtension: checkVueDeclaredPublicExtension(
+              component.exportName,
+              publicContract.declaredPublicExtension,
+              replacedPublicSourceFields,
+            ),
+          }
+        : {}),
       replacedPublicSourceFields,
     },
     destructure: declaredDestructure,
@@ -564,9 +621,16 @@ function getInheritedPropType(component: StyledOutputComponent, name: string): s
       (propExtend) => isForVue(propExtend) && propExtend.kind === "variant-props",
     )
   ) {
-    return `${component.exportName}Props[${JSON.stringify(name)}]`;
+    return `${renderVuePublicPropsReference(component)}[${JSON.stringify(name)}]`;
   }
   return "unknown";
+}
+
+function renderVuePublicPropsReference(component: StyledOutputComponent): string {
+  const typeParameters = getStyledOutputTypeParameters(component);
+  return `${component.exportName}Props${
+    typeParameters ? `<${renderStyledTypeParameterArguments(typeParameters)}>` : ""
+  }`;
 }
 
 function isForVue(value: { targetScopes?: readonly string[] }): boolean {

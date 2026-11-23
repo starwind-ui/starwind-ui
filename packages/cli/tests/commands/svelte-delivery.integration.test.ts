@@ -12,21 +12,25 @@ import {
   createCliRegistryBuildPolicy,
 } from "../../../../scripts/portable-runtime/generate-cli-registry.js";
 import { svelteFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/svelte/index.js";
+import {
+  getPrimitiveVendoringContracts,
+  isPrimitiveInventoryComponentAvailableForTarget,
+} from "../../../../scripts/portable-runtime/renderers/primitive-inventory.js";
 import { add } from "../../src/commands/add.js";
 import { docs } from "../../src/commands/docs.js";
 import { primitivesAdd, primitivesList, primitivesUpdate } from "../../src/commands/primitives.js";
 import { remove } from "../../src/commands/remove.js";
 import { search } from "../../src/commands/search.js";
 import { update } from "../../src/commands/update.js";
-import { type StarwindConfigFor } from "../../src/utils/config.js";
+import type { StarwindConfigFor } from "../../src/utils/config.js";
 import { PATHS } from "../../src/utils/constants.js";
 import {
   type CliFrameworkTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
 } from "../../src/utils/framework-target-policy.js";
 import { installDependenciesWithProgress } from "../../src/utils/package-manager.js";
-import { type PrimitiveVendoringArtifactSet } from "../../src/utils/primitive-component.js";
-import { type StarwindRegistryFor } from "../../src/utils/registry.js";
+import type { PrimitiveVendoringArtifactSet } from "../../src/utils/primitive-component.js";
+import type { StarwindRegistryFor } from "../../src/utils/registry.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
@@ -177,7 +181,7 @@ describe.sequential("public Svelte component command delivery", () => {
     expect(
       vi.mocked(installDependenciesWithProgress).mock.calls.flatMap(([packages]) => packages),
     ).toContain(
-      `@starwind-ui/svelte@${JSON.parse(await readFile(path.join(repoRoot, "packages/svelte/package.json"), "utf8")).version}`,
+      `@starwind-ui/svelte@^${JSON.parse(await readFile(path.join(repoRoot, "packages/svelte/package.json"), "utf8")).version}`,
     );
     const first = await snapshot();
     await add(["select"], options, dependencies);
@@ -323,7 +327,11 @@ describe.sequential("public Svelte component command delivery", () => {
       }),
     );
     await primitivesList({ framework: "svelte", json: true }, dependencies);
-    expect(lastJson().primitives.total).toBe(36);
+    expect(lastJson().primitives.total).toBe(
+      getPrimitiveVendoringContracts().filter(({ component }) =>
+        isPrimitiveInventoryComponentAvailableForTarget(component, "svelte"),
+      ).length,
+    );
     expect(
       lastJson().primitives.results.every(
         (entry: { framework: string }) => entry.framework === "svelte",

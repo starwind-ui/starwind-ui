@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createMenuConsumer } from "../../../../packages/svelte/tests/menu-consumer.js";
-import { verifyMenuLifecycle } from "../../../../packages/svelte/tests/menu-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyMenuLifecycle } from "../../../../packages/svelte/tests/menu-browser.js";
+import { createMenuConsumer } from "../../../../packages/svelte/tests/menu-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

@@ -57,7 +57,7 @@ import {
   buildGenericAdapterOutputModel,
   buildGenericAdapterPlan,
 } from "../renderers/generic-adapter-plan/index.js";
-import { getPrimitivePackageExportNames } from "../renderers/primitive-inventory.js";
+import { getPrimitivePackageExportNamesForTarget } from "../renderers/primitive-inventory.js";
 import {
   buildAccordionAdapterOutputModel,
   buildAccordionSpecializedAdapterSpec,
@@ -782,7 +782,7 @@ describe("Framework Adapter seam", () => {
               { name: "@tabler/icons", range: "^3" },
               { name: "@tailwindcss/forms", range: "^0.5" },
               { name: "@tailwindcss/vite", range: "^4" },
-              { name: "tailwind-merge", range: "^3" },
+              { name: "tailwind-merge", range: "^3.7.0" },
               { name: "tailwind-variants", range: "^3" },
               { name: "tailwindcss", range: "^4" },
               { name: "tw-animate-css", range: "^1" },
@@ -839,7 +839,7 @@ describe("Framework Adapter seam", () => {
               { name: "@tabler/icons-react", range: "^3" },
               { name: "@tailwindcss/forms", range: "^0.5" },
               { name: "@tailwindcss/vite", range: "^4" },
-              { name: "tailwind-merge", range: "^3" },
+              { name: "tailwind-merge", range: "^3.7.0" },
               { name: "tailwind-variants", range: "^3" },
               { name: "tailwindcss", range: "^4" },
               { name: "tw-animate-css", range: "^1" },
@@ -872,7 +872,6 @@ describe("Framework Adapter seam", () => {
         {
           adapterTarget: "vue",
           cliRegistry: {
-            exactAdapterPackageVersion: true,
             generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
             packageMetadataSources: [
               "packages/vue/package.json",
@@ -892,7 +891,10 @@ describe("Framework Adapter seam", () => {
               outputDir: "vue",
               primitiveOutputDir: "vue-primitives",
             },
-            setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
+            setupPackageRequirements: [
+              { name: "tailwind-merge", range: "^3.7.0" },
+              { name: "vue", range: ">=3.5.21" },
+            ],
           },
           fileExtension: ".vue",
           home: "scripts/portable-runtime/renderers/framework-adapters/vue",
@@ -910,7 +912,7 @@ describe("Framework Adapter seam", () => {
             demoIntegration: true,
             packageExports: true,
             publicDocsClaim: true,
-            status: "public-beta",
+            status: "shipping",
           },
           styled: {
             project: "function",
@@ -921,7 +923,6 @@ describe("Framework Adapter seam", () => {
         {
           adapterTarget: "svelte",
           cliRegistry: {
-            exactAdapterPackageVersion: true,
             generatedImportCandidateExtensions: [".svelte", ".ts", ".js"],
             packageMetadataSources: [
               "packages/svelte/package.json",
@@ -942,7 +943,10 @@ describe("Framework Adapter seam", () => {
               outputDir: "svelte",
               primitiveOutputDir: "svelte-primitives",
             },
-            setupPackageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
+            setupPackageRequirements: [
+              { name: "svelte", range: ">=5.29.0 <6" },
+              { name: "tailwind-merge", range: "^3.7.0" },
+            ],
           },
           fileExtension: ".svelte",
           home: "scripts/portable-runtime/renderers/framework-adapters/svelte",
@@ -955,7 +959,7 @@ describe("Framework Adapter seam", () => {
               write: "function",
             },
             support: {
-              components: expect.arrayContaining(getPrimitivePackageExportNames()),
+              components: expect.arrayContaining(getPrimitivePackageExportNamesForTarget("svelte")),
               kind: "subset",
             },
           },
@@ -964,7 +968,7 @@ describe("Framework Adapter seam", () => {
             demoIntegration: true,
             packageExports: true,
             publicDocsClaim: true,
-            status: "public-beta",
+            status: "shipping",
           },
           styled: {
             project: "function",
@@ -1018,6 +1022,7 @@ describe("Framework Adapter seam", () => {
             "avatar",
             "button",
             "carousel",
+            "chart",
             "checkbox",
             "checkbox-group",
             "collapsible",
@@ -1059,7 +1064,7 @@ describe("Framework Adapter seam", () => {
         demoIntegration: true,
         packageExports: true,
         publicDocsClaim: true,
-        status: "public-beta",
+        status: "shipping",
       },
     });
     if (hasPrivateSvelte) {
@@ -1068,7 +1073,7 @@ describe("Framework Adapter seam", () => {
         packageName: "@starwind-ui/svelte",
         primitive: {
           support: {
-            components: expect.arrayContaining(getPrimitivePackageExportNames()),
+            components: expect.arrayContaining(getPrimitivePackageExportNamesForTarget("svelte")),
             kind: "subset",
           },
         },
@@ -1077,7 +1082,7 @@ describe("Framework Adapter seam", () => {
           demoIntegration: true,
           packageExports: true,
           publicDocsClaim: true,
-          status: "public-beta",
+          status: "shipping",
         },
       });
       expect(svelteTarget).toHaveProperty("styled");
@@ -1647,7 +1652,7 @@ describe("Framework Adapter seam", () => {
         demoIntegration: true,
         packageExports: true,
         publicDocsClaim: true,
-        status: "public-beta",
+        status: "shipping",
       },
       readiness: vueFrameworkAdapterReadiness,
       requiredSnippets: [

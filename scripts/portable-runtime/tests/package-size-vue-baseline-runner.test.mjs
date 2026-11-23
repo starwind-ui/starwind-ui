@@ -5,13 +5,14 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  VUE_BASELINE_REQUIRED_ROW_IDS,
   buildVueBaselineEvidence,
   checkVueBaselineEvidence,
   getVueBaselineEvidencePaths,
   mapVueMeasurementToRunRecord,
   renderVueBaselineEvidenceMarkdown,
   runVueBaselineCapture,
+  VUE_BASELINE_REQUIRED_ROW_IDS,
+  VUE_CAPTURE_REQUIRED_ROW_IDS,
   validateSerializedVueBaselineEvidence,
 } from "../package-size-vue-baseline-runner.mjs";
 import {
@@ -34,6 +35,17 @@ const linuxEnvironment = {
 };
 
 describe("Vue package-size baseline runner", () => {
+  it("validates historical evidence while the current plan includes chart", () => {
+    expect(starwindVueRuntimeComponents).toContain("chart");
+    expect(VUE_BASELINE_REQUIRED_ROW_IDS).not.toContain("vue.cold.chart");
+    expect(VUE_CAPTURE_REQUIRED_ROW_IDS).toContain("vue.cold.chart");
+    expect(() =>
+      checkVueBaselineEvidence({
+        evidenceDirectory: path.resolve(import.meta.dirname, "../evidence"),
+      }),
+    ).not.toThrow();
+  });
+
   it("performs exactly three serialized measurements in unique run roots", async () => {
     const root = temporaryDirectory("vue-baseline-success-");
     const events = [];
@@ -62,6 +74,8 @@ describe("Vue package-size baseline runner", () => {
     ]);
     expect(new Set(events.map(([, , runDirectory]) => runDirectory)).size).toBe(3);
     expect(result.evidence.runs).toHaveLength(3);
+    expect(result.evidence.runs[0].rows.map(({ id }) => id)).toContain("vue.cold.chart");
+    expect(result.evidence.stability.requiredRowIds).toContain("vue.cold.chart");
     expect(result.evidence.stability.stable).toBe(true);
     expect(result.evidence.sentinels.map(({ component }) => component)).toEqual([
       "tooltip",
@@ -181,14 +195,16 @@ describe("Vue package-size baseline runner", () => {
         diagnosticPath: `/tmp/run-${offset}`,
       }),
     );
-    const evidence = buildVueBaselineEvidence(runs);
+    const evidence = buildVueBaselineEvidence(runs, {
+      requiredRowIds: VUE_CAPTURE_REQUIRED_ROW_IDS,
+    });
     const serialized = `${JSON.stringify(sortJson(evidence), null, 2)}\n`;
 
     expect(validateSerializedVueBaselineEvidence(serialized)).toEqual(evidence);
     expect(renderVueBaselineEvidenceMarkdown(evidence)).toBe(
       renderVueBaselineEvidenceMarkdown(JSON.parse(serialized)),
     );
-    expect(evidence.stability.requiredRowIds).toEqual(VUE_BASELINE_REQUIRED_ROW_IDS);
+    expect(evidence.stability.requiredRowIds).toEqual(VUE_CAPTURE_REQUIRED_ROW_IDS);
     expect(evidence.candidates).toHaveLength(8);
   });
 
@@ -241,7 +257,10 @@ describe("Vue package-size baseline runner", () => {
       };
       return mapVueMeasurementToRunRecord(fixture, { diagnosticPath: `/tmp/run-${offset}` });
     });
-    const evidence = buildVueBaselineEvidence(runs, { requireBaselinePlatform: false });
+    const evidence = buildVueBaselineEvidence(runs, {
+      requireBaselinePlatform: false,
+      requiredRowIds: VUE_CAPTURE_REQUIRED_ROW_IDS,
+    });
     const paths = getVueBaselineEvidencePaths({ evidenceDirectory });
     writeFileSync(paths.json, `${JSON.stringify(sortJson(evidence), null, 2)}\n`);
     writeFileSync(paths.markdown, "accepted markdown\n");

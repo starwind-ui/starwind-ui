@@ -3,13 +3,13 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import { getContext, setContext, untrack } from "svelte";
 import type {
-  ColorPickerInitialState,
+  ColorPickerInitialChannel,
   ColorPickerInitialPartProjection,
   ColorPickerInitialPartRequest,
-  ColorPickerInitialChannel,
+  ColorPickerInitialState,
 } from "@starwind-ui/runtime/color-picker";
+import { getContext, setContext, untrack } from "svelte";
 export type RootContext = {
   readonly initialState: ColorPickerInitialState;
   register(element: HTMLElement): () => void;
@@ -86,7 +86,7 @@ export function mergeProjection(
     .join(";");
   // Keep attachment symbols on the native spread. Svelte gives each symbol its own effect.
   Object.assign(result, authored, protectedProps);
-  if (css) result.style = css + ";" + (authored.style ?? "");
+  if (css) result.style = css + ";" + String(authored.style ?? "");
   const owns = (name: string) =>
     !(name in authored) &&
     !((name === "readOnly" ? "readonly" : name) in authored) &&

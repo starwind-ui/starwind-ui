@@ -60,6 +60,20 @@ function acceptsTeleportTarget(wrapper: HTMLElement, target: HTMLElement): boole
   );
 }
 
+function isOwnerHTMLElement(value: unknown, ownerDocument: Document): value is HTMLElement {
+  if (!value || typeof value !== "object") return false;
+  try {
+    if ((value as Element).ownerDocument !== ownerDocument) return false;
+    const Constructor = ownerDocument.defaultView?.HTMLElement ?? HTMLElement;
+    const getter = Object.getOwnPropertyDescriptor(Constructor.prototype, "dir")?.get;
+    if (!getter) return false;
+    getter.call(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const portalDocumentObservers = new WeakMap<
   Document,
   { observer: MutationObserver; subscribers: Set<() => void> }
@@ -124,7 +138,8 @@ export function useVuePortalPlacement(
     }
     if (inlineReference?.isConnected) return inlineReference;
     const authoredRoot = options.reference?.();
-    if (authoredRoot instanceof HTMLElement && authoredRoot.isConnected) return authoredRoot;
+    if (isOwnerHTMLElement(authoredRoot, wrapper.ownerDocument) && authoredRoot.isConnected)
+      return authoredRoot;
     const currentParent = wrapper.parentElement;
     return currentParent?.isConnected ? currentParent : wrapper.ownerDocument.body;
   }
@@ -215,7 +230,7 @@ export function useVuePortalPlacement(
 
     const placedTarget =
       options.active() && !options.disabled()
-        ? target.value instanceof HTMLElement
+        ? isOwnerHTMLElement(target.value, wrapper.ownerDocument)
           ? target.value
           : null
         : wrapper.parentElement;

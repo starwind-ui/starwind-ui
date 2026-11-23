@@ -1,11 +1,11 @@
-import { sveltePrimitiveImport } from "./imports.js";
 import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
   StyledOutputRenderNode,
 } from "../../../styled-output-model/index.js";
-import type { SvelteStyledComponentProjection, SvelteStyledRenderOptions } from "./types.js";
+import { sveltePrimitiveImport } from "./imports.js";
 import { supportsSvelteScope } from "./scope.js";
+import type { SvelteStyledComponentProjection, SvelteStyledRenderOptions } from "./types.js";
 
 /** Native branch and ref types belong to Svelte; shared render expressions retain their contract values. */
 export function specializeSvelteStyledButton(

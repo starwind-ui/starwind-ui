@@ -1,3 +1,5 @@
+import { releaseFrameworkPortalDirection } from "./portal-direction";
+
 export type PortalBindingPendingSnapshot = Readonly<{
   status: "pending";
 }>;
@@ -148,6 +150,7 @@ export function reportPortalPlacement(
     wrapper.setAttribute("data-placement", placement.ready ? "ready" : "pending");
   } else {
     frameworkPlacements.delete(wrapper);
+    releaseFrameworkPortalDirection(wrapper);
   }
 
   frameworkPlacementListeners.get(wrapper)?.forEach((listener) => listener());

@@ -12,11 +12,10 @@ import type {
   AdapterSharedViewportNavigationFacts,
   AdapterSharedViewportNavigationPartName,
 } from "../types.js";
-import { printSvelteForwardedAttachments, printSvelteRefAttachment } from "./attachments.js";
+import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteButtonChild } from "./button-child.js";
 import { printSvelteOverlayPortal } from "./overlay-portal.js";
 
-const NOTICE = "Svelte 5 public beta adapter output.";
 type Facts = AdapterSharedViewportNavigationFacts;
 
 export function printSvelteSharedViewportNavigationIndex(
@@ -27,8 +26,7 @@ export function printSvelteSharedViewportNavigationIndex(
   const f = file.family.facts;
   return {
     path: file.path,
-    contents: `// ${NOTICE}
-${f.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
+    contents: `${f.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
 const ${f.exports.namespace} = {
 ${f.index.namespaceMembers.map(({ key, name }) => `  ${key}: ${name},`).join("\n")}
 };
@@ -73,8 +71,7 @@ function printRoot(f: Facts): string {
     readAccepted: "accepted",
     fallback: f.props.defaultValue.defaultValue ?? "null",
   });
-  return `<!-- ${NOTICE} -->
-<script module lang="ts">
+  return `<script module lang="ts">
   import { getContext } from "svelte";
   export type NavigationMenuPart = { element: HTMLElement; part: string; attributes?: Record<string, string | undefined> };
   export type NavigationMenuContext = {
@@ -98,7 +95,7 @@ function printRoot(f: Facts): string {
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
   type Props = Omit<HTMLAttributes<HTMLElement>, "children"> & {
-    children?: Snippet<[string | null]>; value?: string | null; defaultValue?: string | null;
+    children?: Snippet; value?: string | null; defaultValue?: string | null;
     openDelay?: number; closeDelay?: number; closeOnEscape?: boolean; closeOnOutsideInteract?: boolean;
     orientation?: "horizontal" | "vertical";
     ${event.callbackProp}?: (value: string | null, details: ${event.detailsType}) => void;
@@ -194,7 +191,7 @@ function printRoot(f: Facts): string {
   };
 ${printSvelteRefAttachment("HTMLElement")}
 </script>
-<nav {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.openDelay}={openDelay} ${f.attrs.closeDelay}={closeDelay} ${f.attrs.closeOnEscape}={closeOnEscape} ${f.attrs.closeOnOutsideInteract}={closeOnOutsideInteract} ${f.attrs.orientation}={orientation} data-state={accepted !== null ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>{@render children?.(${initial.rendered})}</nav>
+<nav {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={commandValue === undefined ? (initialDefault ?? undefined) : undefined} ${f.attrs.openDelay}={openDelay} ${f.attrs.closeDelay}={closeDelay} ${f.attrs.closeOnEscape}={closeOnEscape} ${f.attrs.closeOnOutsideInteract}={closeOnOutsideInteract} ${f.attrs.orientation}={orientation} data-state={accepted !== null ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</nav>
 `;
 }
 
@@ -282,8 +279,7 @@ function printPart(
                   : part === "icon"
                     ? `aria-hidden="true" data-state={item?.open ? "open" : "closed"}`
                     : `aria-hidden="true" data-state="closed"`;
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { ${part === "item" ? "setContext, " : ""}untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${part === "link" ? "HTMLAnchorAttributes" : "HTMLAttributes"} } from "svelte/elements";

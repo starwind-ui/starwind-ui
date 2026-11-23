@@ -1,5 +1,9 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import * as ts from "typescript";
 import { runtimeAdapterContracts } from "../../contracts/primitive/representatives.js";
 import type { RuntimeAdapterContract } from "../../contracts/primitive/types.js";
+import { repoRoot } from "./generator/paths.js";
 import type {
   PrimitiveDocsAuthoredExampleMetadata,
   PrimitiveDocsExampleCoveragePolicy,
@@ -15,6 +19,7 @@ const requiredExampleTargets = [
   "astro",
   "react",
   "vue",
+  "svelte",
 ] as const satisfies readonly PrimitiveDocsFrameworkTarget[];
 
 export const primitiveDocsExampleCoveragePolicy = {
@@ -22,6 +27,11 @@ export const primitiveDocsExampleCoveragePolicy = {
 } as const satisfies PrimitiveDocsExampleCoveragePolicy;
 
 type PrimitivePart = RuntimeAdapterContract["parts"][number];
+
+type AdapterExampleFramework = "astro" | "react" | "svelte" | "vue";
+
+// Declared before the example registry builds at module load.
+const adapterNamespacePartsCache = new Map<string, ReadonlySet<string>>();
 
 type ExampleNode = {
   readonly part: string;
@@ -108,6 +118,37 @@ import { Select } from "@starwind-ui/vue/select";
   <ColorPicker.HiddenInput />
 </ColorPicker.Root>
 </template>`,
+      },
+      {
+        framework: "svelte",
+        language: "svelte",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-composite-format-control-svelte`,
+        code: `<script lang="ts">
+  import { ColorPicker } from "@starwind-ui/svelte/color-picker";
+  import { Select } from "@starwind-ui/svelte/select";
+</script>
+
+<ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+  <ColorPicker.ValueInput />
+  <ColorPicker.FormatControl>
+    <Select.Root defaultValue="hex">
+      <Select.Trigger aria-label="Color format">
+        <Select.Value>HEX</Select.Value>
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup>
+          <Select.List>
+            <Select.Item value="hex"><Select.ItemText>HEX</Select.ItemText></Select.Item>
+            <Select.Item value="rgb"><Select.ItemText>RGB</Select.ItemText></Select.Item>
+            <Select.Item value="hsl"><Select.ItemText>HSL</Select.ItemText></Select.Item>
+            <Select.Item value="hsb"><Select.ItemText>HSB</Select.ItemText></Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+  </ColorPicker.FormatControl>
+  <ColorPicker.HiddenInput />
+</ColorPicker.Root>`,
       },
       {
         framework: "react",
@@ -232,6 +273,25 @@ import { ColorPicker } from "@starwind-ui/vue/color-picker";
   <ColorPicker.HiddenInput />
 </ColorPicker.Root>
 </template>`,
+      },
+      {
+        framework: "svelte",
+        language: "svelte",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-native-format-select-svelte`,
+        code: `<script lang="ts">
+  import { ColorPicker } from "@starwind-ui/svelte/color-picker";
+</script>
+
+<ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+  <ColorPicker.ValueInput />
+  <ColorPicker.FormatSelect aria-label="Color format">
+    <option value="hex">HEX</option>
+    <option value="rgb">RGB</option>
+    <option value="hsl">HSL</option>
+    <option value="hsb">HSB</option>
+  </ColorPicker.FormatSelect>
+  <ColorPicker.HiddenInput />
+</ColorPicker.Root>`,
       },
       {
         framework: "react",
@@ -393,6 +453,11 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
                   props: { value: stringProp("astro") },
                   children: [{ part: "itemText", text: "Astro" }, { part: "itemIndicator" }],
                 },
+                {
+                  part: "item",
+                  props: { value: stringProp("react") },
+                  children: [{ part: "itemText", text: "React" }, { part: "itemIndicator" }],
+                },
               ],
             },
           ],
@@ -444,13 +509,13 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
     },
   ],
   dialog: [
-    { part: "trigger", text: "Open dialog" },
+    { part: "trigger", text: "Open settings" },
     { part: "backdrop" },
     {
       part: "popup",
       children: [
-        { part: "title", text: "Dialog title" },
-        { part: "description", text: "Dialog description" },
+        { part: "title", text: "Settings" },
+        { part: "description", text: "Review your settings." },
         { part: "close", text: "Close" },
       ],
     },
@@ -549,13 +614,12 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
     { part: "corner" },
   ],
   select: [
-    { part: "label", text: "Choose a framework" },
+    { part: "input", props: { type: stringProp("hidden") } },
+    { part: "label", text: "Framework" },
     {
       part: "trigger",
-      children: [
-        { part: "value", text: "Astro" },
-        { part: "icon", text: "v" },
-      ],
+      props: { type: stringProp("button") },
+      children: [{ part: "value", text: "Astro" }],
     },
     {
       part: "positioner",
@@ -569,7 +633,12 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
                 {
                   part: "item",
                   props: { value: stringProp("astro") },
-                  children: [{ part: "itemText", text: "Astro" }, { part: "itemIndicator" }],
+                  children: [{ part: "itemText", text: "Astro" }],
+                },
+                {
+                  part: "item",
+                  props: { value: stringProp("react") },
+                  children: [{ part: "itemText", text: "React" }],
                 },
               ],
             },
@@ -630,6 +699,171 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
   ],
 } as const satisfies Readonly<Record<string, readonly ExampleNode[]>>;
 
+/**
+ * Chart needs a chart module, data and a typed config, which the generic attribute renderer cannot
+ * express. These basic examples are authored so the React example typechecks against the adapter.
+ */
+const chartExampleModuleSource = (
+  typed: boolean,
+  exported = false,
+) => `${exported ? "export " : ""}const data${typed ? ": VisitorRow[]" : ""} = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+];
+
+${exported ? "export " : ""}const config = {
+  desktop: { label: "Desktop", color: "var(--chart-1)" },
+  mobile: { label: "Mobile", color: "var(--chart-2)" },
+}${typed ? " satisfies ChartConfig" : ""};
+
+${exported ? "export " : ""}const visitors = defineChartModule${typed ? "<VisitorRow>" : ""}({
+  id: "visitors",
+  ariaLabel: "Visitors by month",
+  create: (ctx) =>
+    defineChart(
+      {
+        marks: [
+          barY(
+            ctx.data.flatMap((row) =>
+              ctx.visible.map((series) => ({
+                id: \`\${row.month}-\${series}\`,
+                month: row.month,
+                series,
+                value: row[series${typed ? ' as "desktop" | "mobile"' : ""}],
+              })),
+            ),
+            { x: "month", y: "value", color: "series", key: "id", layout: group({ padding: 0.15 }) },
+          ),
+        ],
+        scales: {
+          x: { scale: () => scaleBand${typed ? "<string>" : ""}().domain(ctx.data.map((row) => row.month)) },
+          y: { scale: scaleLinear, nice: true },
+        },
+        color: ctx.color,
+        theme: ctx.theme,
+      },
+      { tooltip: ctx.tooltip({ labelKey: "month" }) },
+    ),
+});`;
+
+const chartExampleRowType = `type VisitorRow = { month: string; desktop: number; mobile: number };`;
+
+const indentLines = (source: string, indent: string) =>
+  source
+    .split("\n")
+    .map((line) => (line ? `${indent}${line}` : line))
+    .join("\n");
+
+const primitiveBasicExampleCode: Readonly<
+  Record<string, Readonly<Record<(typeof requiredExampleTargets)[number], string>>>
+> = {
+  chart: {
+    "raw-html": `<div data-sw-chart data-slot="chart" data-chart="visitors" data-chart-module="visitors">
+  <div data-sw-chart-surface data-slot="chart-surface"></div>
+</div>
+
+<script type="module">
+  import { barY, defineChart, group } from "@tanstack/charts";
+  import { scaleBand } from "@tanstack/charts/scales/band";
+  import { scaleLinear } from "@tanstack/charts/scales/linear";
+  import { createChart } from "@starwind-ui/runtime/chart";
+  import { defineChartModule } from "@starwind-ui/runtime/chart";
+
+${indentLines(chartExampleModuleSource(false), "  ")}
+
+  const root = document.querySelector("[data-sw-chart]");
+  if (root) {
+    // The root names the registered module, so pass only the input.
+    createChart(root, { input: { data, config } });
+  }
+</script>`,
+    astro: `// src/charts/visitors.ts
+import { barY, defineChart, group } from "@tanstack/charts";
+import { scaleBand } from "@tanstack/charts/scales/band";
+import { scaleLinear } from "@tanstack/charts/scales/linear";
+import { type ChartConfig, defineChartModule } from "@starwind-ui/runtime/chart";
+
+${chartExampleRowType}
+
+${chartExampleModuleSource(true, true)}
+
+// src/pages/example.astro
+---
+import { Chart } from "@starwind-ui/astro/chart";
+import { visitors, data, config } from "../charts/visitors";
+---
+
+<Chart.Root id="visitors" chart={visitors} data={data} config={config}>
+  <Chart.Style />
+  <Chart.Surface />
+</Chart.Root>
+
+<script>
+  import "../charts/visitors";
+</script>`,
+    react: `import { barY, defineChart, group } from "@tanstack/charts";
+import { scaleBand } from "@tanstack/charts/scales/band";
+import { scaleLinear } from "@tanstack/charts/scales/linear";
+import { Chart } from "@starwind-ui/react/chart";
+import type { ChartConfig } from "@starwind-ui/react/chart";
+import { defineChartModule } from "@starwind-ui/runtime/chart";
+
+${chartExampleRowType}
+
+${chartExampleModuleSource(true)}
+
+export function Example() {
+  return (
+    <Chart.Root id="visitors" chart={visitors} data={data} config={config}>
+      <Chart.Style />
+      <Chart.Surface />
+    </Chart.Root>
+  );
+}`,
+    vue: `<script setup lang="ts">
+import { barY, defineChart, group } from "@tanstack/charts";
+import { scaleBand } from "@tanstack/charts/scales/band";
+import { scaleLinear } from "@tanstack/charts/scales/linear";
+import Chart from "@starwind-ui/vue/chart";
+import { type ChartConfig, defineChartModule } from "@starwind-ui/runtime/chart";
+
+${chartExampleRowType}
+
+${chartExampleModuleSource(true)}
+</script>
+
+<template>
+  <Chart.Root id="visitors" :chart="visitors" :data="data" :config="config">
+    <Chart.Style />
+    <Chart.Surface />
+  </Chart.Root>
+</template>`,
+    svelte: `<script lang="ts">
+  import { barY, defineChart, group } from "@tanstack/charts";
+  import { scaleBand } from "@tanstack/charts/scales/band";
+  import { scaleLinear } from "@tanstack/charts/scales/linear";
+  import { Chart } from "@starwind-ui/svelte/chart";
+  import { type ChartConfig, defineChartModule } from "@starwind-ui/runtime/chart";
+
+${indentLines(chartExampleRowType, "  ")}
+
+${indentLines(chartExampleModuleSource(true), "  ")}
+</script>
+
+<Chart.Root id="visitors" chart={visitors} {data} {config}>
+  <Chart.Style />
+  <Chart.Surface />
+</Chart.Root>`,
+  },
+};
+
+const basicExampleCaptions: Readonly<Record<string, string>> = {
+  dialog:
+    "Select **Open settings**, then press Escape or select **Close**. Focus returns to the trigger.",
+  select: "Open the Framework list and choose React. The list closes and the trigger shows React.",
+};
+
 export const primitiveDocsExamples = buildPrimitiveDocsExampleRegistry(
   runtimeAdapterContracts,
 ) satisfies PrimitiveDocsExampleRegistry;
@@ -646,6 +880,7 @@ function buildPrimitiveDocsExampleRegistry(
           astro: buildExampleEntry(contract, "astro"),
           react: buildExampleEntry(contract, "react"),
           vue: buildExampleEntry(contract, "vue"),
+          svelte: buildExampleEntry(contract, "svelte"),
         },
       },
     ]),
@@ -675,6 +910,12 @@ function buildExampleEntry(
       language: "vue",
       code: renderVueExample(contract),
     },
+    svelte: {
+      title: "Svelte",
+      summary: `Use the Svelte components to build ${contract.displayName}.`,
+      language: "svelte",
+      code: renderSvelteExample(contract),
+    },
     react: {
       title: "React",
       summary: `Use the React primitive adapter when ${contract.displayName} state participates in React rendering.`,
@@ -683,8 +924,12 @@ function buildExampleEntry(
     },
   } satisfies Record<(typeof requiredExampleTargets)[number], PrimitiveDocsExampleRegistryEntry>;
 
+  const authoredCode = primitiveBasicExampleCode[contract.component]?.[framework];
+
   return {
     ...entryByFramework[framework],
+    summary: basicExampleCaptions[contract.component] ?? entryByFramework[framework].summary,
+    ...(authoredCode ? { code: authoredCode } : {}),
     source: `${EXAMPLES_SOURCE_PATH}#${contract.component}-basic-${framework}`,
   };
 }
@@ -741,6 +986,19 @@ import ${namespace} from "@starwind-ui/vue/${contract.component}";
 <template>
 ${markup}
 </template>`;
+}
+
+function renderSvelteExample(contract: RuntimeAdapterContract) {
+  const namespace = toPascalCase(contract.component);
+  const rootPart = getRootPart(contract);
+  const children = getExampleLayout(contract);
+  const markup = renderAdapterNode(contract, { part: rootPart.name, children }, 0, "svelte");
+
+  return `<script lang="ts">
+  import { ${namespace} } from "@starwind-ui/svelte/${contract.component}";
+</script>
+
+${markup}`;
 }
 
 function renderReactExample(contract: RuntimeAdapterContract) {
@@ -803,13 +1061,16 @@ function renderAdapterNode(
   contract: RuntimeAdapterContract,
   node: ExampleNode,
   depth: number,
-  framework: "astro" | "react" | "vue",
+  framework: AdapterExampleFramework,
 ): string {
   const part = getPart(contract, node.part);
-  const publicParts = getPublicAdapterParts(contract);
 
-  if (!publicParts.some((candidate) => candidate.name === part.name)) {
-    return "";
+  if (!getAdapterNamespaceParts(contract, framework).has(toPascalCase(part.name))) {
+    // The adapter renders this part itself, so its children stay in place.
+    return (node.children ?? [])
+      .map((child) => renderAdapterNode(contract, child, depth, framework))
+      .filter(Boolean)
+      .join("\n");
   }
 
   const indent = " ".repeat(depth);
@@ -881,7 +1142,7 @@ function renderAdapterAttributes(
   contract: RuntimeAdapterContract,
   part: PrimitivePart,
   nodeProps: Readonly<Record<string, ExamplePropValue>> | undefined,
-  framework: "astro" | "react" | "vue",
+  framework: AdapterExampleFramework,
 ) {
   return getExamplePropsForPart(contract, part, nodeProps)
     .map((prop) =>
@@ -911,6 +1172,11 @@ function getExamplePropsForPart(
 
   if (part.name === "image") {
     props.set("src", stringProp("/avatar.png"));
+  }
+
+  if (part.name === "root" && contract.component === "select") {
+    props.set("defaultValue", stringProp("astro"));
+    props.set("name", stringProp("framework"));
   }
 
   if (part.name === "root" && contract.component === "tabs") {
@@ -987,14 +1253,17 @@ function getHtmlAttributeForProp(part: PrimitivePart, propName: string) {
     return "src";
   }
 
-  if (["alt", "href", "placeholder", "value"].includes(propName)) {
+  if (["alt", "href", "placeholder", "type", "value"].includes(propName)) {
     return propName;
   }
 
   return `data-${toKebabCase(propName)}`;
 }
 
-function formatAdapterPropValue(value: ExamplePropValue, framework: "astro" | "react") {
+function formatAdapterPropValue(
+  value: ExamplePropValue,
+  framework: Exclude<AdapterExampleFramework, "vue">,
+) {
   if (value.kind === "string") {
     return `"${escapeAttribute(value.value)}"`;
   }
@@ -1003,7 +1272,7 @@ function formatAdapterPropValue(value: ExamplePropValue, framework: "astro" | "r
     return `{${value.value}}`;
   }
 
-  return framework === "astro" ? `{${value.value ? "true" : "false"}}` : `{${String(value.value)}}`;
+  return framework === "react" ? `{${String(value.value)}}` : `{${value.value ? "true" : "false"}}`;
 }
 
 function toHtmlAttributeValue(value: ExamplePropValue) {
@@ -1040,10 +1309,78 @@ function hasPart(contract: RuntimeAdapterContract, partName: string) {
   return contract.parts.some((part) => part.name === partName);
 }
 
-function getPublicAdapterParts(contract: RuntimeAdapterContract) {
-  return contract.parts.filter(
-    (part) => part.name === contract.runtime.rootPart || part.forwardsRef,
+/**
+ * Parts that the shipped adapter exports on its namespace object, such as `Select.List`. A part
+ * renders in an adapter example only when that framework exports it. A missing adapter index, or
+ * an index whose namespace object the parser cannot read, fails generation.
+ */
+function getAdapterNamespaceParts(
+  contract: RuntimeAdapterContract,
+  framework: AdapterExampleFramework,
+): ReadonlySet<string> {
+  const cacheKey = `${framework}:${contract.component}`;
+  const cached = adapterNamespacePartsCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const parts = readAdapterNamespaceParts(
+    contract,
+    framework,
+    path.join(repoRoot, "packages", framework, "src", contract.component, "index.ts"),
   );
+
+  adapterNamespacePartsCache.set(cacheKey, parts);
+  return parts;
+}
+
+/** Reads the namespace parts from one adapter index file and fails when it cannot. */
+export function readAdapterNamespaceParts(
+  contract: { readonly component: string; readonly runtime: { readonly rootPart: string } },
+  framework: string,
+  indexPath: string,
+): ReadonlySet<string> {
+  if (!existsSync(indexPath)) {
+    throw new Error(
+      `${contract.component} ${framework} adapter index is missing at ${indexPath}. Regenerate the adapters before the docs metadata.`,
+    );
+  }
+
+  const namespace = toPascalCase(contract.component);
+  const parts = readNamespaceObjectKeys(readFileSync(indexPath, "utf8"), namespace);
+  const rootKey = toPascalCase(contract.runtime.rootPart);
+
+  if (!parts.has(rootKey)) {
+    throw new Error(
+      `${contract.component} ${framework} adapter index does not declare ${namespace}.${rootKey} in a \`const ${namespace} = { ... }\` object, so the docs generator cannot read its exported parts.`,
+    );
+  }
+
+  return parts;
+}
+
+function readNamespaceObjectKeys(source: string, namespace: string): ReadonlySet<string> {
+  const file = ts.createSourceFile("index.ts", source, ts.ScriptTarget.ES2022, true);
+  const keys = new Set<string>();
+
+  for (const statement of file.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (
+        ts.isIdentifier(declaration.name) &&
+        declaration.name.text === namespace &&
+        declaration.initializer &&
+        ts.isObjectLiteralExpression(declaration.initializer)
+      ) {
+        for (const property of declaration.initializer.properties) {
+          if (property.name && ts.isIdentifier(property.name)) keys.add(property.name.text);
+        }
+      }
+    }
+  }
+
+  return keys;
 }
 
 function getPartExampleText(contract: RuntimeAdapterContract, part: PrimitivePart) {

@@ -7,7 +7,7 @@ import {
   type TabsValueChangeDetails,
 } from "@starwind-ui/runtime/tabs";
 import { computed, onBeforeUnmount, onMounted, onUpdated, provide, ref, toRef, watch } from "vue";
-import { TabsContext } from "./TabsContext";
+import { TabsInternalContext } from "./TabsContext";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
@@ -23,7 +23,7 @@ const emit = defineEmits<{
   valueChange: [value: TabsValue, detail: TabsValueChangeDetails];
   "update:modelValue": [value: TabsValue];
 }>();
-defineSlots<{ default?: (props: { value: TabsValue; orientation: TabsOrientation }) => unknown }>();
+defineSlots<{ default?: () => unknown }>();
 const rootRef = ref<HTMLDivElement | null>(null);
 defineExpose({ element: rootRef });
 const initialDefault = props.defaultValue;
@@ -34,7 +34,11 @@ const renderedValue = ref<TabsValue>(
 const selected = computed(() =>
   normalizeModel(props.modelValue !== undefined ? props.modelValue : renderedValue.value),
 );
-provide(TabsContext, { value: selected, orientation: toRef(props, "orientation"), refresh });
+provide(TabsInternalContext, {
+  value: selected,
+  orientation: toRef(props, "orientation"),
+  refresh,
+});
 const connection: { instance?: ReturnType<typeof createTabs>; unsubscribe?: () => void } = {};
 function normalizeModel(next: TabsValue | undefined): TabsValue {
   return next ?? null;
@@ -109,6 +113,6 @@ watch(() => props.modelValue, applyParent, { flush: "post" });
     :data-value="serialize(selected)"
     :data-orientation="props.orientation"
   >
-    <slot :value="selected" :orientation="props.orientation" />
+    <slot />
   </div>
 </template>

@@ -1,6 +1,7 @@
-import { it, expect } from "vitest";
-import { createStyledColorPickerConsumer } from "../../../../packages/svelte/tests/styled-color-picker-consumer.js";
+import { expect, it } from "vitest";
 import { verifyStyledColorPicker } from "../../../../packages/svelte/tests/styled-color-picker-browser.js";
+import { createStyledColorPickerConsumer } from "../../../../packages/svelte/tests/styled-color-picker-consumer.js";
+
 it("composes Color Picker models, format controls, native form state and local Popover ownership", async () => {
   const consumer = await createStyledColorPickerConsumer(process.cwd());
   try {

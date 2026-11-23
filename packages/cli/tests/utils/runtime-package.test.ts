@@ -1,6 +1,8 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import * as clackPrompts from "@clack/prompts";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as fs from "../../src/utils/fs.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import {
@@ -77,8 +79,18 @@ function mockProject(
 }
 
 describe("Runtime package updates", () => {
+  // The root Vitest run starts in the monorepo root, which holds a pnpm-workspace.yaml file.
+  let projectDir: string;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    rmSync(projectDir, { recursive: true, force: true });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+    projectDir = mkdtempSync(join(tmpdir(), "starwind-runtime-package-"));
+    vi.spyOn(process, "cwd").mockReturnValue(projectDir);
     mockInstall.mockReset();
     mockIsCancel.mockReturnValue(false);
     mockConfirm.mockResolvedValue(true);
@@ -171,7 +183,9 @@ describe("Runtime package updates", () => {
       ]);
     });
 
-    it("uses the exact Runtime version for a Vue project", async () => {
+    it("uses the shared caret Runtime range for a Vue project", async () => {
+      expect(vueRuntimeRange).toBe(runtimeRange);
+      expect(vueRuntimeRange.startsWith("^")).toBe(true);
       mockProject({ dependencies: { [RUNTIME]: "0.0.1" } }, { [RUNTIME]: "0.0.1" });
 
       await expect(planRuntimePackageUpdates(vueConfig)).resolves.toEqual([
@@ -179,7 +193,7 @@ describe("Runtime package updates", () => {
       ]);
     });
 
-    it("uses the exact Runtime version when a project mixes Vue with another target", async () => {
+    it("uses the same Runtime range when a project mixes Vue with another target", async () => {
       mockProject({ dependencies: { [RUNTIME]: "0.0.1" } }, { [RUNTIME]: "0.0.1" });
 
       const [update] = await planRuntimePackageUpdates({
@@ -190,29 +204,16 @@ describe("Runtime package updates", () => {
       expect(update?.requiredRange).toBe(vueRuntimeRange);
     });
 
-    it("replaces a Vue project's range that could drift past the exact version", async () => {
+    it("keeps a Vue project already on the required caret range", async () => {
       mockProject(
-        { dependencies: { [RUNTIME]: `^${vueRuntimeRange}` } },
-        { [RUNTIME]: vueRuntimeRange },
+        { dependencies: { [RUNTIME]: vueRuntimeRange } },
+        { [RUNTIME]: vueRuntimeRange.slice(1) },
       );
-
-      await expect(planRuntimePackageUpdates(vueConfig)).resolves.toEqual([
-        {
-          name: RUNTIME,
-          currentRange: `^${vueRuntimeRange}`,
-          requiredRange: vueRuntimeRange,
-          dev: false,
-        },
-      ]);
-    });
-
-    it("keeps a Vue project already on the exact version", async () => {
-      mockProject({ dependencies: { [RUNTIME]: vueRuntimeRange } }, { [RUNTIME]: vueRuntimeRange });
 
       await expect(planRuntimePackageUpdates(vueConfig)).resolves.toEqual([]);
     });
 
-    it("does not downgrade a Vue project above the exact version", async () => {
+    it("does not downgrade a Vue project above the required version", async () => {
       mockProject({ dependencies: { [RUNTIME]: "^999.0.0" } }, { [RUNTIME]: "999.0.0" });
 
       await expect(planRuntimePackageUpdates(vueConfig)).resolves.toEqual([]);
@@ -315,6 +316,18 @@ describe("Runtime package updates", () => {
       expect(mockInstall).not.toHaveBeenCalled();
       expect(mockLog.info).toHaveBeenCalledWith(
         expect.stringContaining(`run: pnpm add ${RUNTIME}@${runtimeRange}`),
+      );
+    });
+
+    it("shows the workspace root flag in the manual command at a pnpm workspace root", async () => {
+      writeFileSync(join(projectDir, "pnpm-workspace.yaml"), 'packages:\n  - "apps/*"\n');
+      mockProject({ dependencies: { [RUNTIME]: "0.0.1" } });
+      mockConfirm.mockResolvedValue(false);
+
+      await offerRuntimePackageUpdates({ config: reactConfig });
+
+      expect(mockLog.info).toHaveBeenCalledWith(
+        expect.stringContaining(`run: pnpm add -w ${RUNTIME}@${runtimeRange}`),
       );
     });
 

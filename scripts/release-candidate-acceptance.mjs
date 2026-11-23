@@ -27,6 +27,11 @@ function fileSpecifier(file) {
   return `file:${file.replaceAll("\\", "/")}`;
 }
 
+export function candidateDistTag(version) {
+  const prerelease = /^\d+\.\d+\.\d+-([0-9A-Za-z-]+)/.exec(version);
+  return prerelease ? prerelease[1] : "latest";
+}
+
 export async function startCandidateRegistry(packageEntries) {
   const packagesByName = new Map();
   const versionsByName = new Map(
@@ -90,7 +95,8 @@ export async function startCandidateRegistry(packageEntries) {
 
     const tarballUrl = `${registryUrl}/${entry.name}/-/${entry.packageFileName}`;
     const body = JSON.stringify({
-      "dist-tags": { beta: entry.version },
+      // Ordinary installs resolve latest. A prerelease candidate uses its own channel instead.
+      "dist-tags": { [candidateDistTag(entry.version)]: entry.version },
       name: entry.name,
       versions: {
         [entry.version]: {
@@ -609,6 +615,14 @@ function ConditionalPortalCheck() {
         }),
         path: "src/routes/index.tsx",
       },
+      {
+        // A transparent 1px ICO serves the browser's automatic favicon request.
+        content: Buffer.from(
+          "AAABAAEAAQEAAAEAIAAwAAAAFgAAACgAAAABAAAAAgAAAAEAIAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+          "base64",
+        ),
+        path: "public/favicon.ico",
+      },
     ];
   }
   if (project.host === "react-router") {
@@ -889,7 +903,7 @@ export async function runReleaseCandidateAcceptance({
 
     const reactDemoRequire = createRequire(path.join(REPO_ROOT, "apps/react-demo/package.json"));
     const { chromium } = reactDemoRequire("playwright");
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ channel: "chrome", headless: true });
     for (const project of plan.projects.filter((candidate) => candidate.browser)) {
       await verifyBrowserProject({ artifacts, browser, project });
     }

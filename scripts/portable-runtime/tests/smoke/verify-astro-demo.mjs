@@ -1,4 +1,8 @@
 import { verifyAstroPrimitiveConsumerAttributes } from "./astro/primitive-consumer-attributes.mjs";
+import {
+  verifyAstroChartClientRouter,
+  verifyChartExamples,
+} from "../../../../apps/demo/tests/chart-cases.mjs";
 import { verifyAstroTimedOverlayReinit } from "./astro/timed-overlay-reinit.mjs";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
@@ -78,7 +82,7 @@ try {
   const baseUrl = `http://${HOST}:${PORT}`;
   const url = `${baseUrl}${COMPONENT_DEMO_PATH}`;
   const carouselClientRouterStartUrl = `${baseUrl}${CAROUSEL_CLIENT_ROUTER_START_PATH}`;
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
 
   page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.addInitScript(() => {
@@ -213,6 +217,11 @@ try {
     baseUrl,
     serverMode: SERVER_MODE,
   });
+  await page.goto(`${baseUrl}/runtime-charts/`, {
+    waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",
+  });
+  await verifyChartExamples({ page, label: "Astro" });
+  await verifyAstroChartClientRouter({ page, baseUrl });
 
   if (messages.length > 0) {
     throw new Error(messages.join("\n"));
@@ -313,7 +322,7 @@ function isExternalVideoUrl(url) {
 
 async function verifyAstroAppNav({ page }) {
   await page.waitForFunction(() => {
-    const nav = document.querySelector("body > nav");
+    const nav = document.querySelector("body > header");
     const themeInitScript = document.querySelector("script[data-starwind-theme-init]");
     const links = Array.from(nav?.querySelectorAll("a") ?? []).map((link) => ({
       href: link.getAttribute("href"),
@@ -506,7 +515,7 @@ async function verifyAstroColorPickerCases({ page }) {
 
 async function verifyAstroSidebarInsetNav({ page, expectedLinks }) {
   await page.waitForFunction((links) => {
-    const appNav = document.querySelector("body > nav");
+    const appNav = document.querySelector("body > header");
     const insetNav = document.querySelector('nav[aria-label="Runtime sidebar page navigation"]');
     const themeInitScript = document.querySelector("script[data-starwind-theme-init]");
     const insetThemeToggle = document.querySelector(

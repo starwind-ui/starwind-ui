@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 import { FieldsetLegend, FieldsetRoot } from "@starwind-ui/vue/fieldset";
 import { FormErrorSummary, FormRoot } from "@starwind-ui/vue/form";
 import { InputRoot } from "@starwind-ui/vue/input";
+import { ref } from "vue";
 
 const disabled = ref(false);
 const showCompany = ref(false);

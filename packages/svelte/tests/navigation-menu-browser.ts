@@ -27,7 +27,7 @@ function navigationMenuCaseSource(styled: boolean): string {
   const rootProps =
     "data-root={id} ref={rootRef} defaultValue={seed} {openDelay} {closeDelay} {closeOnEscape} {closeOnOutsideInteract} {orientation} onValueChange={propose}";
   const renderRoot = (name: string, binding: string, custom: boolean) =>
-    `<${name} ${rootProps} ${binding} ${styled && !custom ? "portalContainer={container} {disablePortal} {side} {align} sideOffset={offset} avoidCollisions={false}" : ""}>{#snippet children(accepted)}<output data-accepted={id}>{JSON.stringify(accepted)}</output>${`{#if id === "implicit"}${implicitList}{:else}${list}{/if}`}${custom || !styled ? `{#if showSurface}${surface}{/if}` : ""}{/snippet}</${name}>`;
+    `<${name} ${rootProps} ${binding} ${styled && !custom ? "portalContainer={container} {disablePortal} {side} {align} sideOffset={offset} avoidCollisions={false}" : ""}>${`{#if id === "implicit"}${implicitList}{:else}${list}{/if}`}${custom || !styled ? `{#if showSurface}${surface}{/if}` : ""}</${name}>`;
   const rootModes = (name: string, custom: boolean) =>
     `{#if mode === "function"}${renderRoot(name, "bind:value={getValue,putValue}", custom)}{:else if mode === "bound"}${renderRoot(name, "bind:value={model}", custom)}{:else}${renderRoot(name, '{...(mode === "plain" ? {value:model} : {})}', custom)}{/if}`;
   return `<script lang="ts">
@@ -136,6 +136,7 @@ export const navigationMenuLifecycleCases: NavigationMenuCase[] = [
   ].map((id) => ({ id, value: null })),
   { id: "surface", value: null, customSurface: true },
   { id: "missing", value: "a", missing: true, customSurface: true },
+  { id: "reconnect", mode: "omitted", customSurface: true },
   { id: "refresh", value: null, separatePopup: true, customSurface: true },
 ];
 
@@ -165,7 +166,7 @@ const root=id=>query("data-root",id);
 const popup=id=>query("data-popup",id)??document.getElementById((trigger(id)??trigger(id,"b"))?.getAttribute("aria-controls"));
 const viewport=id=>query("data-viewport",id)??popup(id)?.querySelector("[data-sw-nav-menu-viewport]");
 const portal=id=>popup(id)?.closest("[data-sw-nav-menu-portal]");
-const accepted=id=>JSON.parse(query("data-accepted",id)?.textContent??"null");
+const accepted=id=>{const node=root(id);if(node?.getAttribute("data-state")!=="open")return null;const item=[...node.querySelectorAll("[data-sw-nav-menu-item][data-state=open]")].find(entry=>entry.closest("[data-sw-nav-menu]")===node);return item?.getAttribute("data-value")??createNavigationMenu(node).getValue();};
 const state=id=>cases[id].snapshot();
 const click=element=>element.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true}));
 const key=(element,name,options={})=>element.dispatchEvent(new KeyboardEvent("keydown",{key:name,bubbles:true,cancelable:true,...options}));
@@ -268,7 +269,8 @@ const surface="surface";await open(surface);const survivor=panel(surface);
 for(const part of ${JSON.stringify(styled ? ["surface"] : ["viewport", "popup", "positioner", "portal"])}){
  const previous=popup(surface);cases[surface].replace(part);await finish();assert(accepted(surface)==="a"&&panel(surface)===survivor&&survivor.parentElement===viewport(surface)&&!popup(surface).hidden,part+" surface replacement restores the accepted panel");if(part!=="viewport")assert(!previous.isConnected&&popup(surface)!==previous,part+" releases the old Popup");
 }
-cases.missing.show("surface",true);await finish();assert(accepted("missing")==="a"&&panel("missing").parentElement===viewport("missing"),"connection waits for missing required surfaces then restores the initial command");const missingPanel=panel("missing");cases.missing.show("surface",false);await finish();assert(accepted("missing")==="a"&&!popup("missing"),"removing required surfaces retains accepted state while disconnected");cases.missing.show("surface",true);await finish();assert(panel("missing")===missingPanel&&missingPanel.parentElement===viewport("missing"),"returning required surfaces reconnects the surviving Content");
+cases.missing.show("surface",true);await finish();assert(accepted("missing")==="a"&&panel("missing").parentElement===viewport("missing"),"connection waits for missing required surfaces then restores the initial command");const missingPanel=panel("missing");cases.missing.show("surface",false);await finish();assert(!popup("missing"),"removing required surfaces disconnects the Popup");cases.missing.show("surface",true);await finish();assert(accepted("missing")==="a"&&panel("missing")===missingPanel&&missingPanel.parentElement===viewport("missing"),"returning required surfaces restores the retained accepted value and the surviving Content");
+click(trigger("reconnect","b"));await finish();assert(accepted("reconnect")==="b"&&!popup("reconnect").hidden,"an uncontrolled click accepts a non-default Item");const reconnectPanel=panel("reconnect","b");cases.reconnect.show("surface",false);await finish();assert(!popup("reconnect"),"removing required surfaces disconnects the uncontrolled Root");cases.reconnect.show("surface",true);await finish();assert(accepted("reconnect")==="b"&&!popup("reconnect").hidden&&panel("reconnect","b")===reconnectPanel&&reconnectPanel.parentElement===viewport("reconnect"),"reconnection reopens the retained uncontrolled Item");
 await open("refresh");const refreshViewport=viewport("refresh"),refreshContent=panel("refresh"),refreshPopup=popup("refresh");cases.refresh.replace("popup");await finish();assert(!refreshPopup.isConnected&&viewport("refresh")===refreshViewport&&panel("refresh")===refreshContent&&refreshContent.parentElement===refreshViewport&&accepted("refresh")==="a","a separate Popup replacement refreshes the surviving public surface");
 result.partReplacement=true;
 `;
@@ -443,7 +445,7 @@ export async function verifyNavigationMenuFixture(
     "build-browser.mjs": createBrowserBuildScript(true),
     "ssr.mjs":
       'import { render } from "svelte/server"; import App from "./App.svelte"; console.log(JSON.stringify({body:render(App).body}));',
-    "hydrate-main.js": `import { hydrate, unmount, tick, flushSync } from "svelte"; import App from "./App.svelte";
+    "hydrate-main.js": `import { hydrate, unmount, tick, flushSync } from "svelte"; import { createNavigationMenu } from "@starwind-ui/runtime/navigation-menu"; import App from "./App.svelte";
 const assert=(condition,message)=>{if(!condition)throw new Error(message)};
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const settle=async()=>{flushSync();await tick();await wait(30);flushSync();};

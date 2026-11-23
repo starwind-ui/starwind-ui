@@ -18,6 +18,10 @@ export const runtimePackageJsonPath = path.join(repoRoot, "packages", "runtime",
 
 export const runtimeIndexPath = path.join(repoRoot, "packages", "runtime", "src", "index.ts");
 
+/** Source entry behind a `@starwind-ui/runtime/<name>` component subpath, as the Runtime build maps it. */
+export const toRuntimeComponentSubpathSourcePath = (subpathName: string) =>
+  path.join(repoRoot, "packages", "runtime", "src", "components", subpathName, "index.ts");
+
 export const primitiveVersionsPath = path.join(
   repoRoot,
   "packages",

@@ -3,10 +3,7 @@ import {
   getPrimitiveFrameworkAdapterTargetsWithOutputModelCapability,
 } from "../framework-adapters/target-registry.js";
 import type { AdapterOutputModel } from "../framework-adapters/types.js";
-import {
-  type AdapterOutputFamilyPlan,
-  getAdapterFamilyPlanIds,
-} from "./adapter-family-plans.js";
+import { type AdapterOutputFamilyPlan, getAdapterFamilyPlanIds } from "./adapter-family-plans.js";
 import { actionSurfaceAdapterFamilyPlan } from "./families/action-surface.js";
 import { booleanFormControlAdapterFamilyPlan } from "./families/boolean-form-control.js";
 import { disclosurePresenceAdapterFamilyPlan } from "./families/disclosure-presence.js";

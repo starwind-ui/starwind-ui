@@ -8,11 +8,11 @@
 
 <script lang="ts">
   let {
-    "size": size = "md",
+    size = "md",
     "class": className,
-    "ref": ref,
-    "children": children,
-    "icon": icon,
+    ref,
+    children,
+    icon,
     ...rest
   }: PaginationPreviousProps = $props();
 
@@ -36,6 +36,7 @@
     stroke-linecap={"round"}
     stroke-linejoin={"round"}
     aria-hidden={"true"}
+    class={"rtl:rotate-180"}
   >
     <path
       stroke={"none"}

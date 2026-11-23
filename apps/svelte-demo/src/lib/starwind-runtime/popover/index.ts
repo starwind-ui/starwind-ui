@@ -1,9 +1,9 @@
 import Popover from "./Popover.svelte";
-import PopoverTrigger from "./PopoverTrigger.svelte";
 import PopoverContent from "./PopoverContent.svelte";
+import PopoverDescription from "./PopoverDescription.svelte";
 import PopoverHeader from "./PopoverHeader.svelte";
 import PopoverTitle from "./PopoverTitle.svelte";
-import PopoverDescription from "./PopoverDescription.svelte";
+import PopoverTrigger from "./PopoverTrigger.svelte";
 import {
   popover,
   popoverContent,
@@ -12,12 +12,14 @@ import {
   popoverTitle,
   popoverTrigger,
 } from "./variants.js";
+
 export type { PopoverProps } from "./Popover.svelte";
-export type { PopoverTriggerProps } from "./PopoverTrigger.svelte";
 export type { PopoverContentProps } from "./PopoverContent.svelte";
+export type { PopoverDescriptionProps } from "./PopoverDescription.svelte";
 export type { PopoverHeaderProps } from "./PopoverHeader.svelte";
 export type { PopoverTitleProps } from "./PopoverTitle.svelte";
-export type { PopoverDescriptionProps } from "./PopoverDescription.svelte";
+export type { PopoverTriggerProps } from "./PopoverTrigger.svelte";
+
 const PopoverVariants = {
   popover,
   popoverContent,
@@ -34,6 +36,7 @@ const PopoverParts = {
   Title: PopoverTitle,
   Description: PopoverDescription,
 };
+
 export {
   Popover,
   PopoverContent,

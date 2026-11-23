@@ -16,28 +16,18 @@ type SelectValueDeclaredProps = {
 } & /* @vue-ignore */ SelectValueProps;
 const { class: className, placeholder } = defineProps<SelectValueDeclaredProps>();
 defineSlots<{
-  default?: (props: { label: string | null; value: string | null }) => unknown;
+  default?: () => unknown;
 }>();
 const attrs = useAttrs();
 </script>
 
 <template>
   <SelectPrimitive.SelectValue
-    v-if="$slots.default"
     :class="selectValue({ class: className })"
     :placeholder="placeholder"
     v-bind="attrs"
     data-slot="select-value"
   >
-    <template #default="slotProps">
-      <slot v-bind="slotProps" />
-    </template>
+    <slot />
   </SelectPrimitive.SelectValue>
-  <SelectPrimitive.SelectValue
-    v-else
-    :class="selectValue({ class: className })"
-    :placeholder="placeholder"
-    v-bind="attrs"
-    data-slot="select-value"
-  />
 </template>

@@ -9,17 +9,17 @@
 
 <script lang="ts">
   let {
-    "defaultOpen": defaultOpen = false,
-    "closeDelay": closeDelay = 200,
-    "closeOnEscape": closeOnEscape = true,
-    "closeOnOutsideInteract": closeOnOutsideInteract = true,
-    "disabled": disabled = false,
-    "disableHoverableContent": disableHoverableContent = false,
-    "openDelay": openDelay = 200,
+    defaultOpen = false,
+    closeDelay = 200,
+    closeOnEscape = true,
+    closeOnOutsideInteract = true,
+    disabled = false,
+    disableHoverableContent = false,
+    openDelay = 200,
     "class": className,
     open = $bindable(),
-    "onOpenChange": onOpenChange,
-    "children": children,
+    onOpenChange,
+    children,
     "open": commandOpen,
     ...rest
   }: TooltipProps = $props();

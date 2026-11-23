@@ -3,8 +3,8 @@ import type { AdapterHiddenInputVisualSlotFacts } from "../../../framework-adapt
 import { initialModelValue } from "../../initial-state.js";
 
 export interface OtpOperations {
+  /** Chooses reset seeding, publication, and controlled readback only. The contract fact owns the late-write rule. */
   authority: "parent" | "binding";
-  parentAcceptance: "runtime" | "reconcile-model";
   read: string;
   seed: string;
   current: string;
@@ -12,6 +12,7 @@ export interface OtpOperations {
   writeCurrent(value: string): string;
   publish(value: string): string;
   untrack(body: string): string;
+  /** Schedules controlled reconciliation after a Runtime commit, so a refused change reverts to the parent value. */
   afterCommit(body: string): string;
 }
 /** Binding targets use their initial model as the reset seed when no explicit default is authored. */
@@ -53,6 +54,8 @@ export function otpConnection(
 ): string {
   if (!facts.event.cancelable || facts.event.callbackTiming !== "before-state-commit")
     throw new Error("InputOtp requires a cancelable before-commit callback.");
+  if (facts.state.laterDefined !== "silent-command")
+    throw new Error("InputOtp value requires the silent-command late-write contract fact.");
   const formSetter = inputOtpRuntimeAdapterContract.setters.find(
     (setter) => setter.method === facts.setters.formOptions,
   );
@@ -72,14 +75,17 @@ export function otpConnection(
     if (!controlled) { ${ops.writeCurrent("accepted")} }`;
   return `function connectOtp(root: HTMLElement) {
     let previous = ${ops.read};
-    const controlled = previous.value !== undefined;${bind ? "\n    let retained = previous.value;" : ""}
+    const controlled = previous.value !== undefined;
+    let retained = previous.value;
     let instance: ReturnType<typeof ${facts.runtime.factory}>;
     let unsubscribe = () => {};
     let disposed = false;
     let associated: HTMLFormElement | null = null;
     let resetTimer: number | undefined;
     function publishCurrent(): void { ${emitAccepted} }${bind ? `\n    function proposeCurrent(): void { ${ops.publish(`instance.${facts.state.getter}()`)} }` : ""}
-    function synchronize(value: string | undefined): void {${bind ? "\n      if (controlled) value = retained = value ?? retained;" : ""}
+    function synchronize(value: string | undefined): void {
+      // A later undefined keeps the last controlled value for the mounted lifetime.
+      if (controlled) value = retained = value ?? retained;
       if (value === undefined) return;
       if (instance.${facts.state.getter}() !== value) instance.${facts.setter.method}(value, ${silent});
       publishCurrent();
@@ -129,7 +135,7 @@ export function otpConnection(
         if (disposed || owner !== instance) return;
         publishCurrent();
         ${bind ? "if (controlled) proposeCurrent();" : ops.publish(`instance.${facts.state.getter}()`)}
-        ${ops.parentAcceptance === "reconcile-model" ? `if (controlled) ${ops.afterCommit(`if (!disposed && owner === instance) synchronize((${ops.read}).value);`)}` : ""}
+        if (controlled) ${ops.afterCommit(`if (!disposed && owner === instance) synchronize((${ops.read}).value);`)}
       `)} });
       bindReset();
     }
@@ -150,7 +156,8 @@ export function otpConnection(
               ${formOptions.map((key) => `...(next.${key} !== previous.${key} ? { ${key}: next.${key} } : {}),`).join("\n")}
             });
           }
-        if (${bind ? "next.value !== previous.value" : "controlled"}) synchronize(next.value);
+        // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
+        if (next.value !== previous.value${bind ? "" : " || controlled"}) synchronize(next.value);
         publishCurrent();
         bindReset();
         previous = next;

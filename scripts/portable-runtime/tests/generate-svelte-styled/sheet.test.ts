@@ -1,6 +1,6 @@
-import { it, expect } from "vitest";
-import { createStyledSheetConsumer } from "../../../../packages/svelte/tests/styled-sheet-consumer.js";
+import { expect, it } from "vitest";
 import { verifyDrawerBrowser } from "../../../../packages/svelte/tests/drawer-browser.js";
+import { createStyledSheetConsumer } from "../../../../packages/svelte/tests/styled-sheet-consumer.js";
 
 it("forwards Sheet binding, side variants, and the attached stock close owner", async () => {
   const consumer = await createStyledSheetConsumer(process.cwd());

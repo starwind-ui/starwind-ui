@@ -19,7 +19,7 @@ function BreadcrumbSeparator(props: BreadcrumbSeparatorProps) {
       ref={ref}
       data-slot="breadcrumb-separator"
     >
-      {children ?? <ChevronRight />}
+      {children ?? <ChevronRight className="rtl:rotate-180" />}
     </li>
   );
 }

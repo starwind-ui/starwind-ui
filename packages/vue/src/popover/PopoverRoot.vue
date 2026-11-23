@@ -71,7 +71,17 @@ function registerPlacement(element: HTMLElement, attributes: Record<string, stri
   else authoredPlacement.delete(element);
 }
 let runtimeGeneration = 0;
-provide(PopoverContext, { element: rootRef, mounted, registerPlacement });
+provide(PopoverContext, {
+  element: rootRef,
+  mounted,
+  registerPlacement(element, attributes) {
+    registerPlacement(element, attributes);
+    // A removed Popup releases the Runtime after its effect settles; a Popup that mounts later connects it.
+    if (!attributes) {
+      if (element.matches("[data-sw-popover-popup]")) queueMicrotask(() => releaseSurface(element));
+    } else if (!connection.instance && mounted.value) void reconnectAfterDom();
+  },
+});
 defineExpose({ element: rootRef });
 
 function disconnectRuntime(): void {
@@ -132,6 +142,21 @@ function connectSurface(root: HTMLDivElement): void {
     for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
   }
   connectRuntime(root);
+}
+function releaseSurface(popup: HTMLElement): void {
+  // An effect re-run registers the same Popup again before this runs.
+  if (authoredPlacement.has(popup)) return;
+  const removed: Element[] = [];
+  for (let node: Element | null = popup; node && !popup.isConnected; node = node.parentElement)
+    removed.push(node);
+  disconnectRuntime();
+  // Runtime destroy puts the removed surface (Positioner or Popup) back at its placeholder.
+  removed
+    .filter((node) => node.isConnected)
+    .pop()
+    ?.remove();
+  // A replacement Popup registered while the old one was still connected.
+  if (hasRequiredSurface() && mounted.value) void reconnectAfterDom();
 }
 async function reconnectAfterDom(): Promise<void> {
   const generation = ++runtimeGeneration;

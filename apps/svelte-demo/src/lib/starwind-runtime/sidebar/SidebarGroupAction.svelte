@@ -10,10 +10,10 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "ghost",
-    "size": size = "icon-sm",
+    variant = "ghost",
+    size = "icon-sm",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: SidebarGroupActionProps = $props();
 </script>

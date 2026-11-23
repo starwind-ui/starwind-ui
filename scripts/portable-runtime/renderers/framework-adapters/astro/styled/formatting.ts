@@ -1,5 +1,5 @@
-import type { FrameworkTarget } from '../../../../contracts/styled/types.js';
-import { ASTRO_INDENT } from './constants.js';
+import type { FrameworkTarget } from "../../../../contracts/styled/types.js";
+import { ASTRO_INDENT } from "./constants.js";
 
 export function renderNamedImport(names: string[], source: string): string {
   const inlineImport = `import { ${names.join(", ")} } from ${JSON.stringify(source)};`;

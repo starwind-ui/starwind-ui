@@ -1,8 +1,7 @@
-import { createApp, h, nextTick, reactive, ref } from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import { createRadio, type RadioCheckedChangeDetails } from "@starwind-ui/runtime/radio";
 import { RadioRoot } from "@starwind-ui/vue/radio";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick, reactive, ref } from "vue";
 
 const cleanups: Array<() => void> = [];
 

@@ -1,7 +1,7 @@
+import { defaultMarker, defaultValueMarker } from "../../shared-recipes/initial-state.js";
 import {
   selectFragments,
   selectOptionObservers,
-  selectParentCommand,
   selectResetSettlement,
 } from "../../shared-recipes/structured/select.js";
 import {
@@ -16,10 +16,8 @@ import type {
   AdapterOptionCollectionOverlayPartName,
   AdapterPrintedFile,
 } from "../types.js";
-import { printSvelteForwardedAttachments, printSvelteRefAttachment } from "./attachments.js";
+import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteButtonChild } from "./button-child.js";
-
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
 
 export function printSvelteOptionCollectionOverlayComponent(
   file: AdapterComponentFile,
@@ -82,25 +80,36 @@ export { ${facts.context.rootContext}, ${facts.context.itemContext}, ${facts.con
   };
 }
 
+function internalTypeName(facts: AdapterOptionCollectionOverlayFacts): string {
+  return `${facts.displayName}InternalContextValue`;
+}
+
+function internalHookName(facts: AdapterOptionCollectionOverlayFacts): string {
+  return `use${facts.displayName}InternalContext`;
+}
+
 function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
-  const openModel = requireModel(facts, "open");
-  const valueModel = requireModel(facts, "value");
+  requireModel(facts, "open");
+  requireModel(facts, "value");
+  const internalType = internalTypeName(facts);
+  const internalHook = internalHookName(facts);
   const itemAttribute = facts.attrs[facts.collection.selectedLabel.itemPart];
-  const itemTextAttribute = facts.attrs[facts.collection.selectedLabel.itemTextPart];
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script module lang="ts">
+  return `<script module lang="ts">
   import { getContext } from "svelte";
 
   export type ${facts.context.rootContextValueType} = Readonly<{
     disabled: boolean;
-    mounted: boolean;
     open: boolean;
     readOnly: boolean;
-    registerTrigger(owner: symbol, element: HTMLButtonElement | null): void;
-    registerPortal(owner: symbol, element: HTMLElement | null, prepare?: () => () => void): void;
     required: boolean;
     selectedLabel: string | null;
     value: string | null;
+  }>;
+  // Parts also read the Runtime wiring. The family index does not export this type or accessor.
+  export type ${internalType} = ${facts.context.rootContextValueType} & Readonly<{
+    mounted: boolean;
+    registerTrigger(owner: symbol, element: HTMLButtonElement | null): void;
+    registerPortal(owner: symbol, element: HTMLElement | null, prepare?: () => () => void): void;
   }>;
   export type ${facts.context.itemContextValueType} = Readonly<{
     disabled: boolean;
@@ -108,10 +117,13 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   }>;
   export const ${facts.context.rootContext}: symbol = Symbol("Starwind ${facts.context.rootContext}");
   export const ${facts.context.itemContext}: symbol = Symbol("Starwind ${facts.context.itemContext}");
-  export function ${facts.context.useRootContext}(part = "part"): ${facts.context.rootContextValueType} {
-    const value = getContext<${facts.context.rootContextValueType} | undefined>(${facts.context.rootContext});
+  export function ${internalHook}(part = "part"): ${internalType} {
+    const value = getContext<${internalType} | undefined>(${facts.context.rootContext});
     if (!value) throw new Error("${facts.displayName}." + part + " requires an owning ${facts.displayName}.Root.");
     return value;
+  }
+  export function ${facts.context.useRootContext}(part = "part"): ${facts.context.rootContextValueType} {
+    return ${internalHook}(part);
   }
   export function ${facts.context.useItemContext}(part = "part"): ${facts.context.itemContextValueType} {
     const value = getContext<${facts.context.itemContextValueType} | undefined>(${facts.context.itemContext});
@@ -176,7 +188,9 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   const initialValueModel = untrack(() => value);
   const openControlled = initialOpenModel !== undefined;
   const valueControlled = initialValueModel !== undefined;
-  const initialDefaultOpen = untrack(() => ${facts.props.defaultOpen.name}) ?? initialOpenModel ?? false;
+  // Default markers state only the default props. The Runtime seeds below also fall back to a held model.
+  const initialOpenDefault = untrack(() => ${facts.props.defaultOpen.name});
+  const initialDefaultOpen = initialOpenDefault ?? initialOpenModel ?? false;
   const initialValueDefault = untrack(() => ${facts.props.defaultValue.name});
   const initialDefaultValue = initialValueDefault !== undefined ? initialValueDefault : initialValueModel ?? null;
   const initialValue = initialValueModel !== undefined ? initialValueModel : initialDefaultValue;
@@ -192,7 +206,7 @@ function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   let runtimeInstance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
   let selectedLabel = $derived(selectedLabelState.value === renderedValue ? selectedLabelState.label : null);
 
-  setContext<${facts.context.rootContextValueType}>(${facts.context.rootContext}, {
+  setContext<${internalTypeName(facts)}>(${facts.context.rootContext}, {
     get disabled() { return ${facts.props.disabled.name}; },
     get mounted() { return mounted; },
     get open() { return renderedOpen; },
@@ -302,8 +316,8 @@ ${selectOptionObservers("svelte")}
   ${facts.attrs.root}=""
   data-sw-part="${facts.parts.root.name}"
   ${facts.attrs.autoComplete}={${facts.props.autoComplete.name}}
-  ${facts.attrs.defaultOpen}={initialDefaultOpen ? "true" : undefined}
-  ${facts.attrs.defaultValue}={initialDefaultValue ?? undefined}
+  ${facts.attrs.defaultOpen}={${defaultMarker("initialOpenDefault")}}
+  ${facts.attrs.defaultValue}={${defaultValueMarker("initialValueDefault")}}
   ${facts.attrs.disabled}={${facts.props.disabled.name} ? "" : undefined}
   ${facts.attrs.form}={${facts.props.form.name}}
   ${facts.attrs.highlightItemOnHover}={${facts.props.highlightItemOnHover.name} ? "true" : "false"}
@@ -338,49 +352,49 @@ ${selectOptionObservers("svelte")}
 `;
 }
 
+// The Runtime writes aria-disabled="false" at init. Svelte prints "false" only after mount, so server
+// HTML matches Astro, React and Vue, and a later spread update keeps the Runtime value.
 function printTrigger(facts: AdapterOptionCollectionOverlayFacts): string {
   return printSvelteButtonChild({
     childElement: facts.childElements?.trigger,
     name: facts.exports.trigger,
-    imports: `import { ${facts.context.useRootContext} } from "./${facts.exports.root}.svelte";`,
-    init: `const select = ${facts.context.useRootContext}("Trigger");`,
+    imports: `import { ${internalHookName(facts)} } from "./${facts.exports.root}.svelte";`,
+    init: `const select = ${internalHookName(facts)}("Trigger");`,
     register: `select.registerTrigger(owner, root); return () => select.registerTrigger(owner, null);`,
-    attributes: `"${facts.attrs.trigger}": "", "data-sw-part": "${facts.parts.trigger.name}", type: "button", role: "${facts.parts.trigger.role ?? "combobox"}", "aria-haspopup": "listbox", "aria-expanded": select.open, "aria-readonly": select.readOnly, "aria-required": select.required, "aria-disabled": select.disabled ? "true" : "false", "data-state": select.open ? "open" : "closed", disabled: select.disabled,`,
+    attributes: `"${facts.attrs.trigger}": "", "data-sw-part": "${facts.parts.trigger.name}", type: "button", role: "${facts.parts.trigger.role ?? "combobox"}", "aria-haspopup": "listbox", "aria-expanded": select.open, "aria-readonly": select.readOnly, "aria-required": select.required, "aria-disabled": select.disabled ? "true" : select.mounted ? "false" : undefined, "data-state": select.open ? "open" : "closed", disabled: select.disabled,`,
   });
 }
 
 function printValue(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.value;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
-  import { ${facts.context.useRootContext} } from "./${facts.exports.root}.svelte";
-  type Props = Omit<HTMLAttributes<HTMLSpanElement>, "children"> & { children?: Snippet<[label: string | null, value: string | null]>; placeholder?: string; ref?: (element: HTMLSpanElement | null) => void };
+  import { ${internalHookName(facts)} } from "./${facts.exports.root}.svelte";
+  type Props = Omit<HTMLAttributes<HTMLSpanElement>, "children"> & { children?: Snippet; placeholder?: string; ref?: (element: HTMLSpanElement | null) => void };
   let { children, placeholder, ref, ...rest }: Props = $props();
-  const select = ${facts.context.useRootContext}("Value");
+  const select = ${internalHookName(facts)}("Value");
 ${printSvelteRefAttachment("HTMLSpanElement")}
 </script>
 <span {...rest} ${facts.attrs.value}="" data-sw-part="${part.name}" data-placeholder={placeholder} {@attach attachRef}>
-  {#if children}{@render children(select.selectedLabel, select.value)}{:else}{${selectValueFallback("select.selectedLabel", "placeholder")}}{/if}
+  {#if children}{@render children()}{:else}{${selectValueFallback("select.selectedLabel", "placeholder")}}{/if}
 </span>
 `;
 }
 
 function printPortal(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.portal;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { createPortalPlacement } from "../_internal/portal-placement.js";
   import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
-  import { ${facts.context.useRootContext} } from "./${facts.exports.root}.svelte";
+  import { ${internalHookName(facts)} } from "./${facts.exports.root}.svelte";
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; container?: string | HTMLElement; disabled?: boolean; ref?: (element: HTMLDivElement | null) => void };
   let { children, container, disabled = false, ref, ...rest }: Props = $props();
-  const select = ${facts.context.useRootContext}("Portal");
+  const select = ${internalHookName(facts)}("Portal");
   const owner = Symbol("${facts.displayName}PortalOwner");
 ${printSvelteRefAttachment("HTMLDivElement")}
   const attachPortal: Attachment<HTMLDivElement> = (element) => {
@@ -407,15 +421,14 @@ function printFloatingPart(
 ): string {
   const part = facts.parts[partName];
   const isPopup = partName === "popup";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
-  import { ${facts.context.useRootContext} } from "./${facts.exports.root}.svelte";
+  import { ${internalHookName(facts)} } from "./${facts.exports.root}.svelte";
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; ${facts.props.align.name}?: ${facts.props.align.type}; ${facts.props.alignOffset.name}?: ${facts.props.alignOffset.type}; ${isPopup ? "" : `${facts.props.alignItemWithTrigger.name}?: ${facts.props.alignItemWithTrigger.type};`} ${facts.props.avoidCollisions.name}?: ${facts.props.avoidCollisions.type}; ref?: (element: HTMLDivElement | null) => void; ${facts.props.side.name}?: ${facts.props.side.type}; ${facts.props.sideOffset.name}?: ${facts.props.sideOffset.type} };
   let { children, ${facts.props.align.name} = ${facts.floating.alignDefault}, ${facts.props.alignOffset.name} = ${facts.floating.alignOffsetDefault}, ${isPopup ? "" : `${facts.props.alignItemWithTrigger.name} = ${facts.floating.alignItemWithTriggerDefault},`} ${facts.props.avoidCollisions.name} = ${facts.floating.avoidCollisionsDefault}, ref, ${facts.props.side.name} = ${facts.floating.sideDefault}, ${facts.props.sideOffset.name} = ${facts.floating.sideOffsetDefault}, ...rest }: Props = $props();
-  const select = ${facts.context.useRootContext}("${part.namespaceKey}");
+  const select = ${internalHookName(facts)}("${part.namespaceKey}");
   const initialOpen = untrack(() => select.open);
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
@@ -426,15 +439,14 @@ ${printSvelteRefAttachment("HTMLDivElement")}
 function printItem(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.item;
   const identity = facts.collection.itemIdentity;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { setContext, untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
-  import { ${facts.context.itemContext}, ${facts.context.useRootContext}, type ${facts.context.itemContextValueType} } from "./${facts.exports.root}.svelte";
+  import { ${facts.context.itemContext}, ${internalHookName(facts)}, type ${facts.context.itemContextValueType} } from "./${facts.exports.root}.svelte";
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; disabled?: boolean; ref?: (element: HTMLDivElement | null) => void; ${identity.prop}: string };
   let { children, disabled = false, ref, ${identity.prop}, ...rest }: Props = $props();
-  const select = ${facts.context.useRootContext}("Item");
+  const select = ${internalHookName(facts)}("Item");
   let selected = $derived(${selectSelection("select.value", identity.prop)});
   setContext<${facts.context.itemContextValueType}>(${facts.context.itemContext}, { get disabled() { return disabled; }, get value() { return ${identity.prop}; } });
 ${printSvelteRefAttachment("HTMLDivElement")}
@@ -445,15 +457,14 @@ ${printSvelteRefAttachment("HTMLDivElement")}
 
 function printItemIndicator(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.itemIndicator;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
-  import { ${facts.context.useItemContext}, ${facts.context.useRootContext} } from "./${facts.exports.root}.svelte";
+  import { ${facts.context.useItemContext}, ${internalHookName(facts)} } from "./${facts.exports.root}.svelte";
   type Props = Omit<HTMLAttributes<HTMLSpanElement>, "children"> & { children?: Snippet; ref?: (element: HTMLSpanElement | null) => void };
   let { children, ref, ...rest }: Props = $props();
-  const select = ${facts.context.useRootContext}("ItemIndicator");
+  const select = ${internalHookName(facts)}("ItemIndicator");
   const item = ${facts.context.useItemContext}("ItemIndicator");
   let selected = $derived(${selectSelection("select.value", "item.value")});
 ${printSvelteRefAttachment("HTMLSpanElement")}
@@ -475,8 +486,7 @@ function printSimplePart(
   const elementType = element === "span" ? "HTMLSpanElement" : "HTMLDivElement";
   const attributesType =
     element === "span" ? "HTMLAttributes<HTMLSpanElement>" : "HTMLAttributes<HTMLDivElement>";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";

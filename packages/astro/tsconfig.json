@@ -4,7 +4,7 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "baseUrl": ".",
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "@starwind-ui/runtime": ["../runtime/src/index.ts"],
       "@starwind-ui/runtime/init-starwind": ["../runtime/src/init-starwind.ts"],

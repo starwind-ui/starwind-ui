@@ -1,0 +1,10 @@
+---
+import ChartPrimitive from "@starwind-ui/astro/chart";
+import ChartTooltipContent from "./ChartTooltipContent.astro";
+---
+
+<ChartPrimitive.Tooltip>
+  <slot name="content">
+    <ChartTooltipContent />
+  </slot>
+</ChartPrimitive.Tooltip>

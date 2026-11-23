@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
 import {
   FieldControl,
@@ -11,6 +9,7 @@ import {
   FieldValidity,
 } from "@starwind-ui/vue/field";
 import { FormRoot } from "@starwind-ui/vue/form";
+import { ref } from "vue";
 
 const email = ref("");
 const submitCount = ref(0);

@@ -32,9 +32,9 @@ function omitForwardedAttrs(
     :size="size"
     :class="className"
     v-bind="
-      omitForwardedAttrs(attrs, ['aria-label', 'size', 'class', 'data-slot']) as Omit<
+      omitForwardedAttrs(attrs, ['data-slot']) as Omit<
         InstanceType<typeof PaginationLink>['$props'],
-        'aria-label' | 'size' | 'class' | 'data-slot'
+        'data-slot'
       >
     "
     data-slot="pagination-next"
@@ -50,6 +50,7 @@ function omitForwardedAttrs(
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
+        class="rtl:rotate-180"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M9 6l6 6l-6 6" />

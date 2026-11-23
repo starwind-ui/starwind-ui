@@ -21,7 +21,7 @@ independent CLI package and component release rules.
 ## Delivered and source versions
 
 Versions belong to each component across frameworks. A newly added Vue implementation inherits
-the existing component version; Vue's npm package separately uses `0.1.0` on `beta`. Adding only
+the existing component version. Adapter npm packages use the Runtime fixed-group version. Adding only
 a framework implementation requires a CLI minor and leaves component versions unchanged. Once
 delivered, Vue source changes follow the shared component bump rules. See
 `docs/release/versioning.md` for framework additions and package release boundaries.

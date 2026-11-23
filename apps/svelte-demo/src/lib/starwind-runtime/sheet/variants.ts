@@ -44,7 +44,7 @@ export const sheetContent = tv({
 
 export const sheetCloseButton = tv({
   base: [
-    "absolute top-4 right-4 rounded-xs [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+    "absolute end-4 top-4 rounded-xs [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
     "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
   ],
 });

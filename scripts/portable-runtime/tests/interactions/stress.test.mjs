@@ -1,23 +1,23 @@
-import { describe, expect, it } from "vitest";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { inventory } from "../../runtime-performance/interactions/build.mjs";
+import { describe, expect, it } from "vitest";
+import { renderStandardReport } from "../../measure-performance.mjs";
 import { main } from "../../measure-react-stress.mjs";
+import { inventory } from "../../runtime-performance/interactions/build.mjs";
 import {
   acceptStressRun,
   checkStressRun,
   loadAcceptedStress,
   writeStressManifest,
 } from "../../runtime-performance/stress/evidence.mjs";
-import { parseStressArgs, stressPlan } from "../../runtime-performance/stress/plan.mjs";
-import { initialStateErrors, sessionErrors } from "../../runtime-performance/stress/state.mjs";
-import { renderStandardReport } from "../../measure-performance.mjs";
 import { radioEndpointReady } from "../../runtime-performance/stress/fixtures/radio-endpoint.mjs";
+import { parseStressArgs, stressPlan } from "../../runtime-performance/stress/plan.mjs";
 import {
   abortAfterWarmup,
   navigationTargetHitTest,
 } from "../../runtime-performance/stress/run.mjs";
+import { initialStateErrors, sessionErrors } from "../../runtime-performance/stress/state.mjs";
 
 const json = (file, value) => writeFileSync(file, JSON.stringify(value, null, 2) + "\n");
 const tabsInitial = {
@@ -248,7 +248,7 @@ describe("retained React stress", () => {
       expect(source).toContain(`boot("${provider}", App)`);
       expect(source).toMatch(/NavigationMenu\.List data-stress-nav-list/);
       expect(source).not.toContain("@zag-js/");
-      for (const relative of source.matchAll(/from "(\.\/[^\"]+)"|import "(\.\/[^\"]+)"/g))
+      for (const relative of source.matchAll(/from "(\.\/[^"]+)"|import "(\.\/[^"]+)"/g))
         expect(existsSync(path.join(fixtures, relative[1] ?? relative[2]))).toBe(true);
       for (const other of ["starwind", "base-ui", "ark-ui"].filter((name) => name !== provider))
         expect(source).not.toContain(`./${other}.jsx`);

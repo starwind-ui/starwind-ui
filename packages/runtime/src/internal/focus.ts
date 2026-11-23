@@ -29,6 +29,25 @@ export function focusFirstElement(container: HTMLElement, options?: FocusOptions
   }
 }
 
+function getDeepActiveElement(ownerDocument: Document): Element | null {
+  let active = ownerDocument.activeElement;
+  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+  return active;
+}
+
+/** Tells if focus is on an element inside one of the surfaces. */
+export function hasFocusWithin(
+  ownerDocument: Document,
+  surfaces: Iterable<HTMLElement | null>,
+): boolean {
+  const active = getDeepActiveElement(ownerDocument);
+  if (!active) return false;
+  for (const surface of surfaces) {
+    if (surface?.contains(active)) return true;
+  }
+  return false;
+}
+
 /**
  * A close can finish long after it starts. Focus goes back to the trigger only when it is still in
  * the closing surfaces, or nothing holds it. Otherwise the user has moved on, and that focus stays.
@@ -37,8 +56,7 @@ export function canReturnFocus(
   ownerDocument: Document,
   closingSurfaces: Iterable<HTMLElement | null>,
 ): boolean {
-  let active = ownerDocument.activeElement;
-  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+  const active = getDeepActiveElement(ownerDocument);
   if (!active || active === ownerDocument.body || active === ownerDocument.documentElement) {
     return true;
   }

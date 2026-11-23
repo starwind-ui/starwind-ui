@@ -1,0 +1,58 @@
+---
+// Primitive composition with every tooltip and legend part. Props pick the case under test.
+import Chart from "@starwind-ui/astro/chart";
+import { iconConfig, visitorConfig, visitorData, visitors } from "./fixture-modules";
+
+const {
+  id,
+  interactive,
+  visible,
+  hideIcon = false,
+  icons = false,
+  richLabel = true,
+  nameLabelClass,
+} = Astro.props;
+const config = icons ? iconConfig : visitorConfig;
+---
+
+<Chart.Root
+  id={id}
+  chart={visitors}
+  data={visitorData()}
+  config={config}
+  interactive={interactive}
+  visible={visible}
+  class="root"
+>
+  <Chart.Style />
+  <Chart.Surface />
+  <Chart.Tooltip>
+    <Chart.TooltipContent indicator="line" class="content">
+      <Chart.TooltipLabel class="label" />
+      <Chart.TooltipItems>
+        <Chart.TooltipItem class="row">
+          <Chart.TooltipIcon class="icon" />
+          <Chart.TooltipIndicator class="indicator" />
+          <Chart.TooltipName class="name" labelClass={nameLabelClass} />
+          <Chart.TooltipValue class="value" />
+        </Chart.TooltipItem>
+      </Chart.TooltipItems>
+    </Chart.TooltipContent>
+  </Chart.Tooltip>
+  <Chart.Legend hideIcon={hideIcon} class="legend">
+    <Chart.LegendItems>
+      <Chart.LegendItem class="item">
+        <Chart.LegendIcon class="legend-icon" />
+        <Chart.LegendSwatch class="swatch" />
+        <Chart.LegendLabel class="legend-label" />
+      </Chart.LegendItem>
+    </Chart.LegendItems>
+  </Chart.Legend>
+  {
+    richLabel && (
+      <Fragment slot="label-mobile">
+        <strong>Mobile</strong>
+      </Fragment>
+    )
+  }
+</Chart.Root>

@@ -3,7 +3,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "allowJs": true,
-    "baseUrl": ".",
     "checkJs": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
@@ -13,8 +12,8 @@
       "@starwind-ui/runtime": ["../runtime/src/index.ts"],
       "@starwind-ui/runtime/theme": ["../runtime/src/theme/theme.ts"],
       "@starwind-ui/runtime/*": ["../runtime/src/components/*/index.ts"],
-      "@starwind-ui/svelte": ["src/index.ts"],
-      "@starwind-ui/svelte/*": ["src/*/index.ts"]
+      "@starwind-ui/svelte": ["./src/index.ts"],
+      "@starwind-ui/svelte/*": ["./src/*/index.ts"]
     },
     "types": ["node", "svelte"]
   },

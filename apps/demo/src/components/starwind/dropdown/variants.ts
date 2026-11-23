@@ -2,13 +2,13 @@ import { tv } from "tailwind-variants";
 
 export const dropdownCheckboxItem = tv({
   base: [
-    "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
+    "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-2 pe-8 transition-colors outline-none select-none",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
     "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
   ],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
     disabled: {
       true: "pointer-events-none opacity-50",
@@ -45,12 +45,14 @@ export const dropdownContent = tv({
     {
       side: ["top", "bottom"],
       align: "start",
-      class: "slide-in-from-left-1 slide-out-to-left-1",
+      class:
+        "slide-in-from-left-1 slide-out-to-left-1 rtl:slide-in-from-right-1 rtl:slide-out-to-right-1",
     },
     {
       side: ["top", "bottom"],
       align: "end",
-      class: "slide-in-from-right-1 slide-out-to-right-1",
+      class:
+        "slide-in-from-right-1 slide-out-to-right-1 rtl:slide-in-from-left-1 rtl:slide-out-to-left-1",
     },
   ],
   defaultVariants: {
@@ -67,7 +69,7 @@ export const dropdownItem = tv({
   ],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
     disabled: {
       true: "pointer-events-none opacity-50",
@@ -83,7 +85,7 @@ export const dropdownLabel = tv({
   base: ["text-muted-foreground px-2 py-1.5 text-sm font-medium"],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
   },
   defaultVariants: {
@@ -97,7 +99,7 @@ export const dropdownSeparator = tv({
 
 export const dropdownShortcut = tv({
   base: [
-    "group-focus/dropdown-item:text-accent-foreground text-muted-foreground ml-auto text-sm tracking-widest transition-colors",
+    "group-focus/dropdown-item:text-accent-foreground text-muted-foreground ms-auto text-sm tracking-widest transition-colors",
   ],
 });
 

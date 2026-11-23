@@ -27,12 +27,12 @@ import {
   createCliRegistryBuildPolicy,
 } from "../../../../scripts/portable-runtime/generate-cli-registry.js";
 import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
+import { search } from "../../src/commands/search.js";
 import * as config from "../../src/utils/config.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as primitiveComponent from "../../src/utils/primitive-component.js";
 import * as proManifest from "../../src/utils/pro-manifest.js";
 import * as registry from "../../src/utils/registry.js";
-import { search } from "../../src/commands/search.js";
 
 vi.mock("../../src/utils/config.js");
 vi.mock("../../src/utils/primitive-component.js");
@@ -617,7 +617,7 @@ describe("search command", () => {
       expect(target.packageRequirements).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: "@starwind-ui/vue" }),
-          expect.objectContaining({ name: "vue", range: ">=3.5" }),
+          expect.objectContaining({ name: "vue", range: ">=3.5.21" }),
         ]),
       );
       expect(mockLoadRegistry).toHaveBeenLastCalledWith(

@@ -10,9 +10,18 @@ function createContextMenuStyledContract(): StyledAdapterContract {
 
   contract.components.forEach((component) => {
     component.primitiveAliases = { "context-menu": "ContextMenuPrimitive" };
-    retargetPrimitiveNodes(component.render);
+    retargetPrimitiveNodes(component.render, component.exportName === "ContextMenuContent");
   });
 
+  const content = contract.variants!.contextMenuContent!;
+  content.base = [
+    ...(Array.isArray(content.base) ? content.base : [content.base ?? ""]),
+    "data-sw-context-menu-entry:[--sw-context-menu-entry-distance:min(calc(var(--spacing)*2),var(--sw-context-menu-entry-room,100vmax))]",
+    "data-sw-context-menu-entry:data-[side=top]:[--tw-enter-translate-y:var(--sw-context-menu-entry-distance)]",
+    "data-sw-context-menu-entry:data-[side=bottom]:[--tw-enter-translate-y:calc(-1*var(--sw-context-menu-entry-distance))]",
+    "data-sw-context-menu-entry:data-[side=left]:[--tw-enter-translate-x:var(--sw-context-menu-entry-distance)]",
+    "data-sw-context-menu-entry:data-[side=right]:[--tw-enter-translate-x:calc(-1*var(--sw-context-menu-entry-distance))]",
+  ];
   normalizeRootSlot(contract);
   setRootPropDefault(contract, "modal", "true");
   removeRootProp(contract, "openOnHover");
@@ -73,23 +82,25 @@ function normalizeRootSlot(contract: StyledAdapterContract): void {
   }
 }
 
-function retargetPrimitiveNodes(nodes: RenderNode[]): void {
+function retargetPrimitiveNodes(nodes: RenderNode[], rootPopup: boolean): void {
   for (const node of nodes) {
     if (node.type === "primitive" && node.component === "menu") {
       node.component = "context-menu";
+      if (rootPopup && node.part === "Popup")
+        (node.attrs ??= []).push({ name: "data-sw-context-menu-entry" });
     }
 
     if ("children" in node) {
-      retargetPrimitiveNodes(node.children ?? []);
+      retargetPrimitiveNodes(node.children ?? [], rootPopup);
     }
 
     if (node.type === "conditional") {
-      retargetPrimitiveNodes(node.then);
-      retargetPrimitiveNodes(node.else);
+      retargetPrimitiveNodes(node.then, rootPopup);
+      retargetPrimitiveNodes(node.else, rootPopup);
     }
 
     if (node.type === "slot") {
-      retargetPrimitiveNodes(node.fallback ?? []);
+      retargetPrimitiveNodes(node.fallback ?? [], rootPopup);
     }
   }
 }

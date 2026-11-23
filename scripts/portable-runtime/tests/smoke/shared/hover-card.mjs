@@ -318,7 +318,7 @@ export async function verifyHoverCardCases({ page, ids, label, positionerParentT
   }
 }
 
-async function waitForFloatingPosition(page, options = undefined) {
+async function waitForFloatingPosition(page, options) {
   if (options?.expectedSide) {
     await page.waitForFunction(({ contentId, expectedSide, triggerId }) => {
       const content = document.getElementById(contentId);

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  createContextMenu,
   type ContextMenuOpenChangeReason,
+  createContextMenu,
 } from "../../../src/components/context-menu/context-menu";
 
 describe("createContextMenu", () => {
@@ -235,6 +235,21 @@ describe("createContextMenu", () => {
     openFromPointer(root, 260, 220);
     expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["260px", "220px", "0px", "0px"]);
     recreated.destroy();
+  });
+
+  it("anchors keyboard invocation at RTL inline-start and pointer invocation at client x", async () => {
+    const root = renderContextMenu({ modal: false });
+    root.dir = "rtl";
+    const trigger = getTrigger(root);
+    mockRect(trigger, { height: 30, width: 180, x: 80, y: 160 });
+    const menu = createContextMenu(root);
+    trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ContextMenu" }));
+    await waitForFloatingPosition();
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["260px", "190px", "0px", "0px"]);
+    menu.close();
+    openFromPointer(root, 145, 210);
+    expect(readAnchorRectangle(getContextMenuAnchor())).toEqual(["145px", "210px", "0px", "0px"]);
+    menu.destroy();
   });
 
   it("retains a long-press rectangle during recreation and replaces its size on pointer activation", async () => {

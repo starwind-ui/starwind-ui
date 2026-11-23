@@ -1,5 +1,6 @@
 ---
 import { ThemeInitScript } from "@starwind-ui/astro/theme";
+import DirectionInitScript from "@/components/nav/DirectionInitScript.astro";
 import Nav from "@/components/nav/Nav.astro";
 import { Toaster } from "@/components/starwind/toast";
 
@@ -29,11 +30,12 @@ import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-nor
     <link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin="anonymous" />
 
     <ThemeInitScript />
+    <DirectionInitScript />
   </head>
 
   <body class="min-h-lvh">
     <Nav />
-    <main>
+    <main class="overflow-x-clip">
       <slot />
     </main>
     <Toaster position="bottom-right" />

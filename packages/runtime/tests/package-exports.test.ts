@@ -3,10 +3,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
-
-import tsupConfig from "../tsup.config";
 import * as colorPickerSubpath from "../src/components/color-picker";
 import * as runtimeRoot from "../src/index";
+import tsupConfig from "../tsup.config";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -45,7 +44,7 @@ describe("runtime package exports", () => {
     expect(packageJson.sideEffects).toBe(false);
 
     expect(Object.keys(packageJson.exports).sort()).toEqual(
-      [".", ...expectedSubpaths.map((subpath) => `./${subpath}`)].sort(),
+      [".", "./package.json", ...expectedSubpaths.map((subpath) => `./${subpath}`)].sort(),
     );
     expect(packageJson.exports["."]).toEqual({
       import: "./dist/index.js",

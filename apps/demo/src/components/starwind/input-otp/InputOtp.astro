@@ -88,12 +88,12 @@ const inputMode = isNumericOnly ? "numeric" : "text";
       if (!container.id) {
         container.id = this.containerId;
       }
-      this.maxLength = parseInt(container.dataset.maxLength || "6", 10);
+      this.maxLength = Number.parseInt(container.dataset.maxLength || "6", 10);
       const patternStr = container.dataset.pattern || "\\d";
       this.pattern = new RegExp(`^${patternStr}$`);
       this.slots = Array.from(container.querySelectorAll<HTMLElement>("[data-otp-slot]"));
       this.hiddenInput = container.querySelector<HTMLInputElement>("input[data-otp-hidden-input]");
-      this.values = new Array(this.slots.length).fill("");
+      this.values = Array.from({ length: this.slots.length }, () => "");
       this.init();
     }
 
@@ -170,13 +170,16 @@ const inputMode = isNumericOnly ? "numeric" : "text";
         }
         this.updateSlots();
         this.updateValue();
-      } else if (e.key === "ArrowLeft") {
+      } else if (
+        e.key ===
+        (getComputedStyle(this.container).direction === "rtl" ? "ArrowRight" : "ArrowLeft")
+      ) {
         e.preventDefault();
         if (this.currentIndex > 0) {
           this.currentIndex--;
           this.updateSlots();
         }
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         e.preventDefault();
         if (this.currentIndex < this.slots.length - 1) {
           this.currentIndex++;

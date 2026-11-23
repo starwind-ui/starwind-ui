@@ -1,0 +1,15 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import ChartLegendContent from "./ChartLegendContent.astro";
+
+type Props = ComponentProps<typeof ChartLegendContent>;
+
+const { ...rest } = Astro.props;
+---
+
+<>
+  <slot name="content">
+    <ChartLegendContent {...rest} />
+  </slot>
+</>

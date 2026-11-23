@@ -29,6 +29,9 @@ export default defineConfig([
       ".github/",
       ".changeset/",
       ".local/",
+      ".claude/",
+      // Re-apply after the scripts/portable-runtime negation above.
+      "**/node_modules/**",
 
       // agent items
       ".agent/**",

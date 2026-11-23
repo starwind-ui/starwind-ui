@@ -3,7 +3,7 @@
 import{tick,untrack,type Snippet}from 'svelte';import type{Attachment}from 'svelte/attachments';import type{HTMLAttributes}from 'svelte/elements';
 import{createSlider,type SliderValue,type SliderOrientation,type SliderValueChangeDetails,type SliderValueCommitDetails}from '@starwind-ui/runtime/slider';
 import{createRefAttachment}from '../_internal/ref-attachment.js';
-type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'>&{defaultValue?:SliderValue;disabled?:boolean;form?:string;largeStep?:number;max?:number;min?:number;minStepsBetweenValues?:number;name?:string;orientation?:SliderOrientation;step?:number;value?:SliderValue;children?:Snippet<[SliderValue]>;ref?:(node:HTMLDivElement|null)=>void;onValueChange?:(value:SliderValue,detail:SliderValueChangeDetails)=>void;onValueCommitted?:(value:SliderValue,detail:SliderValueCommitDetails)=>void;};
+type Props=Omit<HTMLAttributes<HTMLDivElement>,'children'>&{defaultValue?:SliderValue;disabled?:boolean;form?:string;largeStep?:number;max?:number;min?:number;minStepsBetweenValues?:number;name?:string;orientation?:SliderOrientation;step?:number;value?:SliderValue;children?:Snippet;ref?:(node:HTMLDivElement|null)=>void;onValueChange?:(value:SliderValue,detail:SliderValueChangeDetails)=>void;onValueCommitted?:(value:SliderValue,detail:SliderValueCommitDetails)=>void;};
 let{defaultValue,disabled=false,form,largeStep=10,max=100,min=0,minStepsBetweenValues=0,name,orientation="horizontal",step=1,value=$bindable(),value:commandValue,children,ref,onValueChange,onValueCommitted,...rest}:Props=$props();
 const initialDefaultValue=untrack(()=>copyValue(defaultValue??value??0));let localValue=$state<SliderValue>(untrack(()=>copyValue(value??initialDefaultValue)));let renderedValue=$derived(localValue);
 function copyValue<T extends SliderValue | undefined>(value:T):T{return (Array.isArray(value)?[...value]:value) as T;}
@@ -13,7 +13,7 @@ function connectSlider(root:HTMLDivElement){
  const initialModel=copyValue(commandValue);
  const controlled=initialModel!==undefined;
  let disposed=false,synchronizing=false;
- let rendered=copyValue(initialModel??initialDefaultValue);
+ let rendered=copyValue(initialModel??initialDefaultValue),commanded=copyValue(initialModel);
  const readOptions=()=>({disabled:disabled,form:form,largeStep:largeStep,max:max,min:min,minStepsBetweenValues:minStepsBetweenValues,name:name,orientation:orientation,step:step});
  let applied=readOptions();
  const instance=createSlider(root,{
@@ -24,7 +24,8 @@ function connectSlider(root:HTMLDivElement){
  function render(next:SliderValue):void{if(valuesEqual(rendered,next))return;rendered=copyValue(next);localValue=copyValue(next);}
  function publishReadback():void{if(disposed||controlled)return;const next=instance.getValue();render(next);if(!valuesEqual(value,copyValue(next)))value=copyValue(next); const canonical=value;if(canonical!==undefined&&!valuesEqual(canonical,next))synchronize(canonical);}
  function synchronize(next:SliderValue):void{if(disposed)return;synchronizing=true;try{instance.refresh();if(!valuesEqual(instance.getValue(),next))instance.setValue(copyValue(next),{emit:false});}finally{synchronizing=false;}render(instance.getValue());}
- function syncModel():void{if(disposed)return;const next=commandValue;if(next===undefined)return;synchronize(next);publishReadback();}
+ // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
+ function syncModel():void{if(disposed)return;const next=commandValue,changed=controlled||!valuesEqual(next,commanded);commanded=copyValue(next);if(next===undefined)return;if(changed)synchronize(next);publishReadback();}
  function syncOptions():void{if(disposed)return;const next=readOptions();if(Object.is(next.disabled,applied.disabled)&&Object.is(next.form,applied.form)&&Object.is(next.largeStep,applied.largeStep)&&Object.is(next.max,applied.max)&&Object.is(next.min,applied.min)&&Object.is(next.minStepsBetweenValues,applied.minStepsBetweenValues)&&Object.is(next.name,applied.name)&&Object.is(next.orientation,applied.orientation)&&Object.is(next.step,applied.step))return;
  synchronizing=true;try{
  if(next.disabled!==applied.disabled)instance.setDisabled(next.disabled);
@@ -57,4 +58,4 @@ data-min={min}
 data-min-steps-between-values={minStepsBetweenValues}
 data-name={name}
 data-orientation={orientation}
-data-step={step} {@attach attachRuntime} {@attach attachRef}>{@render children?.(copyValue(renderedValue))}</div>
+data-step={step} {@attach attachRuntime} {@attach attachRef}>{@render children?.()}</div>

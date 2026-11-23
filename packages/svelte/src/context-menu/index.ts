@@ -3,7 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
 import ContextMenuCheckboxItem from "../menu/MenuCheckboxItem.svelte";
 import ContextMenuCheckboxItemIndicator from "../menu/MenuCheckboxItemIndicator.svelte";
 import ContextMenuGroup from "../menu/MenuGroup.svelte";
@@ -22,6 +21,7 @@ import ContextMenuSubmenuRoot from "../menu/MenuSubmenuRoot.svelte";
 import ContextMenuSubmenuTrigger from "../menu/MenuSubmenuTrigger.svelte";
 import ContextMenuRoot from "./ContextMenuRoot.svelte";
 import ContextMenuTrigger from "./ContextMenuTrigger.svelte";
+
 const ContextMenu = {
   Root: ContextMenuRoot,
   Trigger: ContextMenuTrigger,
@@ -42,10 +42,9 @@ const ContextMenu = {
   SubmenuRoot: ContextMenuSubmenuRoot,
   SubmenuTrigger: ContextMenuSubmenuTrigger,
 };
+
 export {
   ContextMenu,
-  ContextMenuRoot,
-  ContextMenuTrigger,
   ContextMenuCheckboxItem,
   ContextMenuCheckboxItemIndicator,
   ContextMenuGroup,
@@ -58,10 +57,12 @@ export {
   ContextMenuRadioGroup,
   ContextMenuRadioItem,
   ContextMenuRadioItemIndicator,
+  ContextMenuRoot,
   ContextMenuSeparator,
   ContextMenuShortcut,
   ContextMenuSubmenuRoot,
   ContextMenuSubmenuTrigger,
+  ContextMenuTrigger,
 };
 export default ContextMenu;
 export type {

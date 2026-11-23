@@ -11,11 +11,11 @@
 
 <script lang="ts">
   let {
-    "type": type = "button",
-    "variant": variant = "ghost",
-    "size": size,
+    type = "button",
+    variant = "ghost",
+    size,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: InputGroupButtonProps = $props();
 

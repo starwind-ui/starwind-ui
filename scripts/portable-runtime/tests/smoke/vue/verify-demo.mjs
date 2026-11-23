@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { verifyChartExamples } from "../../../../../apps/demo/tests/chart-cases.mjs";
 
 const scriptRoot = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptRoot, "../../../../..");
@@ -74,7 +75,7 @@ for (const theme of ["light", "dark"]) {
 
 try {
   const baseUrl = server.resolvedUrls?.local[0] ?? `http://${host}:5190/`;
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   page = await browser.newPage({ viewport: { height: 1000, width: 1440 } });
   page.on("console", (message) => {
     if (message.type() === "error") messages.push(`console error: ${message.text()}`);
@@ -99,7 +100,7 @@ try {
     waitUntil: "networkidle",
   });
   await page.getByRole("heading", { name: "Starwind Vue internal adapter verification" }).waitFor();
-  await verifyVueBetaLabel(page, "review light");
+  await verifyVueVersionLabel(page, "review light");
   await assertNoErrors(messages);
 
   await verifyAccordion(page);
@@ -165,10 +166,13 @@ try {
   await page.getByTestId("vue-review-index").waitFor();
   await verifyPersistentHeader(page, "index");
   await verifyIndexDarkTheme(page, themeProof);
-  await verifyVueBetaLabel(page, "index dark");
+  await verifyVueVersionLabel(page, "index dark");
   await page.getByTestId("header-theme-toggle").click();
   await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
-  await verifyVueBetaLabel(page, "index light");
+  await verifyVueVersionLabel(page, "index light");
+  await assertNoErrors(messages);
+  await page.goto(new URL("/review", baseUrl).toString(), { waitUntil: "networkidle" });
+  await verifyChartExamples({ page, label: "Vue" });
   await assertNoErrors(messages);
 
   console.log(
@@ -199,6 +203,7 @@ async function verifyStyledHumanReview(page, baseUrl, evidence, messages) {
     "button-group",
     "card",
     "carousel",
+    "chart",
     "checkbox",
     "checkbox-group",
     "collapsible",
@@ -467,6 +472,18 @@ async function verifyPortableStyledClosure(page, evidence) {
     await page.getByTestId("portable-aspect-ratio").evaluate((element) => element.tagName),
     "FIGURE",
     "portable Aspect Ratio dynamic root",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-aspect-ratio").evaluate((element) =>
+      JSON.stringify({
+        slot: element.getAttribute("data-slot"),
+        ratio: element.style.getPropertyValue("--ratio").trim(),
+        wrappers: element.parentElement.querySelectorAll('[data-slot="aspect-ratio-wrapper"]')
+          .length,
+      }),
+    ),
+    JSON.stringify({ slot: "aspect-ratio", ratio: String(16 / 9), wrappers: 0 }),
+    "portable Aspect Ratio style owner",
   );
   await assertEqual(
     await page.getByTestId("portable-breadcrumb").evaluate((element) => element.tagName),
@@ -1300,6 +1317,7 @@ async function verifyProgress(page) {
     "transform: translateX(-65%);",
     "Progress initial transform",
   );
+  await assertProgressVisiblePercent(controlled, 35, "Progress initial determinate fill");
   await assertText(page.getByTestId("progress-ref-state"), "ref: DIV", "Styled Progress ref");
 
   await page.getByTestId("progress-increment").click();
@@ -1317,7 +1335,9 @@ async function verifyProgress(page) {
   const controlledTransitionDuration = await controlledIndicator.evaluate(
     (element) => getComputedStyle(element).transitionDuration,
   );
-  if (!controlledTransitionDuration.split(",").some((duration) => parseFloat(duration) > 0)) {
+  if (
+    !controlledTransitionDuration.split(",").some((duration) => Number.parseFloat(duration) > 0)
+  ) {
     throw new Error(
       `Progress determinate transition: expected a non-zero duration, received ${controlledTransitionDuration}`,
     );
@@ -1388,11 +1408,12 @@ async function verifyProgress(page) {
     "transform: translateX(-50%);",
     "Progress range transform",
   );
+  await assertProgressVisiblePercent(range, 50, "Progress range fill");
   for (const [name, expected] of Object.entries({
-    reversed: ["0", "100", "25", "progressing", "transform: translateX(-75%);"],
-    "equal-complete": ["10", "10", "10", "complete", "transform: translateX(0%);"],
-    "equal-progressing": ["10", "10", "10", "complete", "transform: translateX(0%);"],
-    "invalid-bounds": ["0", "100", "25", "progressing", "transform: translateX(-75%);"],
+    reversed: ["0", "100", "25", "progressing", "transform: translateX(-75%);", 25],
+    "equal-complete": ["10", "10", "10", "complete", "transform: translateX(0%);", 100],
+    "equal-progressing": ["10", "10", "10", "complete", "transform: translateX(0%);", 100],
+    "invalid-bounds": ["0", "100", "25", "progressing", "transform: translateX(-75%);", 25],
   })) {
     const progress = page.getByTestId(`progress-${name}`);
     const received = [
@@ -1402,7 +1423,12 @@ async function verifyProgress(page) {
       await progress.getAttribute("data-status"),
       await progress.locator('[data-slot="progress-indicator"]').getAttribute("style"),
     ];
-    await assertEqual(JSON.stringify(received), JSON.stringify(expected), `Progress ${name}`);
+    await assertEqual(
+      JSON.stringify(received),
+      JSON.stringify(expected.slice(0, 5)),
+      `Progress ${name}`,
+    );
+    await assertProgressVisiblePercent(progress, expected[5], `Progress ${name} fill`);
   }
   for (const name of ["nan", "positive-infinity", "negative-infinity"]) {
     const progress = page.getByTestId(`progress-${name}`);
@@ -1415,7 +1441,7 @@ async function verifyProgress(page) {
     await assertEqual(
       await progress.locator('[data-slot="progress-indicator"]').getAttribute("style"),
       null,
-      `Progress ${name} transform`,
+      `Progress ${name} inline style`,
     );
   }
   await assertEqual(
@@ -1545,9 +1571,6 @@ async function verifyScrollArea(page) {
 
   const horizontal = page.getByTestId("scroll-area-horizontal");
   const horizontalViewport = horizontal.locator('[data-slot="scroll-area-viewport"]');
-  const horizontalScrollbar = horizontal.locator(
-    '[data-slot="scroll-area-scrollbar"][data-orientation="horizontal"]',
-  );
   await assertEqual(
     await horizontal.locator('[data-slot="scroll-area-scrollbar"]').count(),
     1,
@@ -1986,7 +2009,7 @@ async function verifyTheme(page) {
   if (darkHeaderBackground === initialHeaderBackground) {
     throw new Error(`Theme visual token did not change: ${darkHeaderBackground}`);
   }
-  await verifyVueBetaLabel(page, "review dark");
+  await verifyVueVersionLabel(page, "review dark");
   await assertThemeIcons(headerToggle, false, true, "header dark icons");
   await assertThemeIcons(reviewToggle, false, true, "review custom dark icons");
 
@@ -2093,11 +2116,11 @@ async function verifyPersistentHeader(page, route) {
   );
 }
 
-async function verifyVueBetaLabel(page, state) {
-  const label = page.getByTestId("vue-beta-label");
-  await assertEqual(await label.count(), 1, `${state} Vue beta label count`);
-  await assertEqual(await label.isVisible(), true, `${state} Vue beta label visibility`);
-  await assertText(label, "Vue 3.5 beta", `${state} Vue beta label text`);
+async function verifyVueVersionLabel(page, state) {
+  const label = page.getByTestId("vue-version-label");
+  await assertEqual(await label.count(), 1, `${state} Vue version label count`);
+  await assertEqual(await label.isVisible(), true, `${state} Vue version label visibility`);
+  await assertText(label, "Vue 3.5", `${state} Vue version label text`);
 }
 
 async function verifyButton(page) {

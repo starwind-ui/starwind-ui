@@ -19,6 +19,6 @@ const { size = "md", class: className, ...rest } = Astro.props;
   <slot />
 
   <slot name="icon">
-    <ChevronRight />
+    <ChevronRight class="rtl:rotate-180" />
   </slot>
 </PaginationLink>

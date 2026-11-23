@@ -12,16 +12,16 @@
 
 <script lang="ts">
   let {
-    "align": align = "start",
-    "alignOffset": alignOffset = 0,
-    "avoidCollisions": avoidCollisions = true,
+    align = "start",
+    alignOffset = 0,
+    avoidCollisions = true,
     "class": className,
-    "side": side = "bottom",
-    "sideOffset": sideOffset = 4,
-    "size": size = "md",
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "children": children,
+    side = "bottom",
+    sideOffset = 4,
+    size = "md",
+    portalContainer,
+    disablePortal = false,
+    children,
     ...rest
   }: ComboboxContentProps = $props();
 </script>

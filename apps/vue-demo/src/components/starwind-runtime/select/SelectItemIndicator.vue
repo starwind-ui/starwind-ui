@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as SelectPrimitive from "@starwind-ui/vue/select";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { selectItemIndicator } from "./variants";
 
 defineOptions({ inheritAttrs: false });

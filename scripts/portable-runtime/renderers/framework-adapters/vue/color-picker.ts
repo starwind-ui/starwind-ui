@@ -196,7 +196,6 @@ function printRoot(facts: AdapterColorPickerFacts): string {
   const root = facts.parts.root;
   const createInitial = facts.initialStateProjection.createFunction;
   const projectInitial = facts.initialStateProjection.projectFunction;
-  const ownership = facts.initialStateProjection.ownershipAttribute;
   return `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
@@ -277,6 +276,13 @@ const rootProps = computed(() => mergeColorPickerProjection(initialRootProjectio
 defineExpose({ element });
 
 let connection: ReturnType<typeof connectColorPicker> | undefined;
+let directionCapture: ReturnType<typeof captureProjectedDirection>;
+const vProjectedDirection = {
+  beforeMount(root: HTMLElement) {
+    directionCapture = captureProjectedDirection(root, initialRootProjection.attributes.dir);
+  },
+  beforeUnmount() { directionCapture?.disconnect(); },
+};
 function readOptions(): ColorPickerOptions {
   return { value: props.modelValue, format: props.format, ${colorPickerLiveOptions(facts)
     .map((name) => `${name}: props.${name}`)
@@ -295,7 +301,7 @@ onMounted(() => {
   if (!rootElement) return;
   const structure = colorPickerStructure(rootElement);
   connection = connectColorPicker(rootElement, {
-    seed, read: readOptions,
+    seed, read: readOptions, projectedDirection: directionCapture,
     restoreAuthoredOwnership: structure.restoreOwnership,
     captureAuthoredOwnership: structure.captureOwnership,
     observe: (value, format) => {
@@ -319,7 +325,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<template><div ref="element" v-bind="rootProps"><slot /></div></template>
+<template><div ref="element" v-projected-direction v-bind="rootProps"><slot /></div></template>
 `;
 }
 

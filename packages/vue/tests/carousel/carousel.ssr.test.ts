@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   CarouselContainer,
   CarouselItem,
@@ -10,6 +6,9 @@ import {
   CarouselRoot,
   CarouselViewport,
 } from "@starwind-ui/vue/carousel";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 describe("Vue Carousel SSR", () => {
   it("renders deterministic engine anatomy without browser globals", async () => {

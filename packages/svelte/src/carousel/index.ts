@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import CarouselContainer from "./CarouselContainer.svelte";
 import CarouselItem from "./CarouselItem.svelte";
 import CarouselNext from "./CarouselNext.svelte";

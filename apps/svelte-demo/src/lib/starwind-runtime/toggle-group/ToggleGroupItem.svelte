@@ -12,17 +12,17 @@
 
 <script lang="ts">
   let {
-    "variant": variant,
-    "defaultPressed": defaultPressed,
-    "disabled": disabled = false,
-    "nativeButton": nativeButton,
-    "value": value,
+    variant,
+    defaultPressed,
+    disabled = false,
+    nativeButton,
+    value,
     "class": className,
     pressed = $bindable(),
     "pressed": commandValue,
-    "ref": ref,
-    "onPressedChange": onPressedChange,
-    "children": children,
+    ref,
+    onPressedChange,
+    children,
     "pressed": commandPressed,
     ...rest
   }: ToggleGroupItemProps = $props();

@@ -1,13 +1,13 @@
-import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
+import type { DistConsumer } from "./dist-consumer.js";
 import { dynamicStyledImports, dynamicStyledParts } from "./styled-dynamic-consumer.js";
+import { nativeAttachmentOwnership } from "./styled-native-lifecycle.js";
 
 export async function verifyStyledDynamicBrowser(consumer: DistConsumer) {
   await consumer.write({
@@ -22,21 +22,21 @@ assert.equal(globalThis.document, undefined);
 assert.equal(AspectRatio, aspectExports.AspectRatio); assert.equal(Badge, badgeExports.Badge);
 assert.deepEqual(Object.keys(aspectExports).sort(), ["AspectRatio", "AspectRatioVariants", "default"]);
 assert.deepEqual(Object.keys(badgeExports).sort(), ["Badge", "BadgeVariants", "default"]);
-assert.deepEqual(Object.keys(itemExports).sort(), ${JSON.stringify([...["Item", "ItemActions", "ItemContent", "ItemDescription", "ItemFooter", "ItemGroup", "ItemHeader", "ItemMedia", "ItemSeparator", "ItemTitle", "ItemVariants", "default"]].sort())});
+assert.deepEqual(Object.keys(itemExports).sort(), ${JSON.stringify(["Item", "ItemActions", "ItemContent", "ItemDescription", "ItemFooter", "ItemGroup", "ItemHeader", "ItemMedia", "ItemSeparator", "ItemTitle", "ItemVariants", "default"].sort())});
 ${dynamicStyledParts
   .filter((part) => part.root === "item")
   .map((part) => `assert.equal(Item.${part.member}, itemExports.${part.name});`)
   .join("\n")}
 assert.deepEqual(Object.keys(Item).sort(), ${JSON.stringify(["Root", "Actions", "Content", "Description", "Footer", "Group", "Header", "Media", "Separator", "Title"].sort())});
-assert.deepEqual(Object.keys(aspectExports.AspectRatioVariants).sort(), ["aspectRatio", "aspectRatioWrapper"]);
+assert.deepEqual(Object.keys(aspectExports.AspectRatioVariants).sort(), ["aspectRatio"]);
 assert.deepEqual(Object.keys(badgeExports.BadgeVariants), ["badge"]);
 assert.deepEqual(Object.keys(itemExports.ItemVariants).sort(), ${JSON.stringify(["item", "itemActions", "itemContent", "itemDescription", "itemFooter", "itemGroup", "itemHeader", "itemMedia", "itemSeparator", "itemTitle"].sort())});
 const body = render(App).body; assert.equal(body, render(App).body); console.log(JSON.stringify({ body, voidBody: render(VoidApp).body }));`,
     "build-dynamic.mjs": BROWSER_BUILD,
   });
   const { body, voidBody } = JSON.parse(await consumer.run("dynamic-ssr.mjs", { loader: true }));
-  assert.match(body, /padding-bottom: 100%/);
-  assert.match(body, /data-slot="aspect-ratio-wrapper"/);
+  assert.match(body, /--ratio: 1;/);
+  assert.doesNotMatch(body, /data-slot="aspect-ratio-wrapper"/);
   assert.match(body, /role="list"/);
   assert.match(body, /role="separator"/);
   for (const { slot } of dynamicStyledParts) assert.ok(body.includes(`data-slot="${slot}"`), slot);
@@ -103,6 +103,7 @@ ${nativeAttachmentOwnership}
 ${dynamicStyledImports}
 import { createAttachmentKey, type Attachment } from "svelte/attachments";
 let generation = $state(0), second = $state(false);
+let ratioOverride = $state(false);
 let ratio = $state<number | undefined>(undefined), as = $state<keyof HTMLElementTagNameMap>("div"), itemAs = $state<keyof HTMLElementTagNameMap>("div"), href = $state<string | undefined>(undefined);
 let tone = $state<BadgeProps["tone"]>(undefined), appearance = $state<BadgeProps["appearance"]>(undefined), variant = $state<BadgeProps["variant"]>("primary");
 let size = $state<"sm" | "md">("sm"), media = $state<"icon" | "image">("icon"), orientation = $state<"horizontal" | "vertical">("horizontal");
@@ -117,9 +118,10 @@ function attributes(name: string) {
     attachments.push(label + ":" + node.tagName + ":setup");
     return () => { release(); attachments.push(label + ":" + node.tagName + ":cleanup"); };
   });
-  return { [key]: attachCallbacks.get(label), "data-dynamic-part": name, title: name, class: "native-" + name, style: "--native-probe: ready; color: red;", onpointerdown: (event: PointerEvent) => { if (event.target === event.currentTarget) calls[name] = (calls[name] ?? 0) + 1; } };
+  return { [key]: attachCallbacks.get(label), "data-dynamic-part": name, title: name, class: "native-" + name, style: "--native-probe: ready; color: red;" + (name === "AspectRatio" && ratioOverride ? " --ratio: 2;" : ""), onpointerdown: (event: PointerEvent) => { if (event.target === event.currentTarget) calls[name] = (calls[name] ?? 0) + 1; } };
 }
 export function changeProps() { ratio = 16 / 9; tone = "success"; media = "image"; size = "md"; orientation = "vertical"; }
+export function overrideRatio(value: boolean) { ratioOverride = value; }
 export function appearanceOnly() { tone = undefined; appearance = "outline"; }
 export function legacyStyle() { appearance = undefined; variant = "warning"; }
 export function replaceBranches() { as = "section"; itemAs = "a"; href = "#details"; }
@@ -163,12 +165,17 @@ for (const { name, tag, slot } of parts) {
 }
 assert(Object.values(app.snapshot().calls).every((value) => value === 1) && Object.keys(app.snapshot().calls).length === 12, "native handlers must fire once on each owner");
 const container = part("AspectRatio").parentElement;
-assert(container.dataset.slot === "aspect-ratio-wrapper" && container.children.length === 1 && !container.hasAttribute("title") && !container.hasAttribute("data-dynamic-part"), "AspectRatio wrapper took native props");
-assert(container.style.paddingBottom === "100%" && !part("AspectRatio").style.paddingBottom && !container.style.color, "ratio default and style ownership");
+assert(container.id === "app" && !container.querySelector('[data-slot="aspect-ratio-wrapper"]'), "AspectRatio native owner must be a direct child");
+assert(part("AspectRatio").style.getPropertyValue("--ratio").trim() === "1" && part("AspectRatio").style.color === "red", "ratio default and style ownership");
 assert(part("Badge").classList.contains("bg-primary") && !part("Badge").classList.contains("cursor-pointer"), "legacy Badge variant");
 assert(part("ItemGroup").getAttribute("role") === "list" && part("ItemSeparator").getAttribute("role") === "separator" && part("ItemSeparator").getAttribute("aria-orientation") === "horizontal", "Item Separator composition");
 app.changeProps(); await settle();
-assert(container.style.paddingBottom === "56.25%", "ratio numeric change");
+assert(part("AspectRatio").style.getPropertyValue("--ratio").trim() === String(16 / 9), "ratio numeric change");
+assert(part("AspectRatio") === before[0] && part("AspectRatio").style.color === "red", "ratio update changed its owner or caller style");
+app.overrideRatio(true); await settle();
+assert(part("AspectRatio").style.getPropertyValue("--ratio").trim() === "2", "caller style must override the ratio default");
+app.overrideRatio(false); await settle();
+assert(part("AspectRatio").style.getPropertyValue("--ratio").trim() === String(16 / 9), "caller style removal must restore the ratio prop");
 assert(part("Badge").classList.contains("bg-success/10") && !part("Badge").classList.contains("bg-primary"), "tone must select composed soft default");
 assert(part("Item").classList.contains("gap-4") && part("ItemMedia").dataset.variant === "image" && part("ItemSeparator").getAttribute("aria-orientation") === "vertical", "Item reactive variants and separator props");
 app.appearanceOnly(); await settle();
@@ -181,7 +188,7 @@ for (const { name } of parts) {
   if (branchOwners.some((entry) => entry.name === name)) assert(branched[index] !== before[index], "branch retained owner " + name);
   else assert(branched[index] === before[index], "branch replaced sibling owner " + name);
 }
-assert(part("AspectRatio").tagName === "SECTION" && part("AspectRatio").parentElement === container, "AspectRatio inner branch");
+assert(part("AspectRatio").tagName === "SECTION" && part("AspectRatio").parentElement === container, "AspectRatio owner branch");
 assert(part("Badge").tagName === "A" && part("Badge").getAttribute("href") === "#details" && part("Badge").classList.contains("cursor-pointer"), "Badge link branch");
 assert(part("Item").tagName === "A" && part("Item").getAttribute("href") === "#details", "Item native as link");
 for (const name of changed) dispatch(part(name));
@@ -189,7 +196,7 @@ for (const { name } of branchOwners) dispatch(before[parts.findIndex((entry) => 
 assert(changed.every((name) => app.snapshot().calls[name] === 2), "branch handlers or retired owner handler");
 app.restoreBranches(); await settle(); const restored = elements();
 assert(changed.every((name) => part(name).tagName === "DIV"), "branch restoration");
-assert(container.style.paddingBottom === "100%", "ratio undefined restores default");
+assert(part("AspectRatio").style.getPropertyValue("--ratio").trim() === "1", "ratio undefined restores default");
 assert(!part("Badge").classList.contains("cursor-pointer"), "empty href uses div branch");
 for (const name of changed) dispatch(part(name));
 for (const { name } of branchOwners) dispatch(branched[parts.findIndex((entry) => entry.name === name)]);

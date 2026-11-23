@@ -11,10 +11,10 @@
 
 <script lang="ts">
   let {
-    "match": match,
+    match,
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldValidityProps = $props();
 </script>

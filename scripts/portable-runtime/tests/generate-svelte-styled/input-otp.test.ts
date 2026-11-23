@@ -2,11 +2,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+import { verifyInputOtp } from "../../../../packages/svelte/tests/input-otp-browser.js";
+import { createStyledInputOtpConsumer } from "../../../../packages/svelte/tests/styled-input-otp-consumer.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { inputOtpStyledContract } from "../../contracts/styled/components/input-otp.js";
-import { createStyledInputOtpConsumer } from "../../../../packages/svelte/tests/styled-input-otp-consumer.js";
-import { verifyInputOtp } from "../../../../packages/svelte/tests/input-otp-browser.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 
 it("hydrates Styled Input OTP through its accepted string model and native form owner", async () => {
   const consumer = await createStyledInputOtpConsumer(process.cwd());

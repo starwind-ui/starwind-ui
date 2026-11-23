@@ -1,7 +1,7 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-11-05T12:10:44.790Z",
+  "capturedAt": "2026-11-21T20:29:20.148Z",
   "catalog": {
     "brotliBytes": 258034,
     "gzipBytes": 333618,
@@ -385,188 +385,250 @@
   "measurementEntries": {
     "catalog": [
       {
-        "exports": ["*"],
+        "exports": [
+          "*"
+        ],
         "specifier": "@ark-ui/vue"
       }
     ],
     "components": {
       "accordion": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/accordion"
         }
       ],
       "alert-dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/dialog"
         }
       ],
       "avatar": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/avatar"
         }
       ],
       "carousel": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/carousel"
         }
       ],
       "checkbox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/checkbox"
         }
       ],
       "checkbox-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/checkbox"
         }
       ],
       "collapsible": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/collapsible"
         }
       ],
       "combobox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/combobox"
         }
       ],
       "context-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/menu"
         }
       ],
       "dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/dialog"
         }
       ],
       "drawer": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/drawer"
         }
       ],
       "dropzone": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/file-upload"
         }
       ],
       "field": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/field"
         }
       ],
       "input-otp": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/pin-input"
         }
       ],
       "menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/menu"
         }
       ],
       "navigation-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/navigation-menu"
         }
       ],
       "popover": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/popover"
         }
       ],
       "preview-card": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/hover-card"
         }
       ],
       "progress": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/progress"
         }
       ],
       "radio": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/radio-group"
         }
       ],
       "radio-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/radio-group"
         }
       ],
       "scroll-area": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/scroll-area"
         }
       ],
       "select": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/select"
         }
       ],
       "slider": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/slider"
         }
       ],
       "switch": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/switch"
         }
       ],
       "tabs": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/tabs"
         }
       ],
       "toast": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/toast"
         }
       ],
       "toggle": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/toggle"
         }
       ],
       "toggle-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/toggle-group"
         }
       ],
       "tooltip": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/tooltip"
         }
       ]

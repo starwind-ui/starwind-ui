@@ -2,15 +2,15 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { createStyledCheckboxConsumer } from "../../../../packages/svelte/tests/styled-checkbox-consumer.js";
-import { verifyStyledCheckboxBrowser } from "../../../../packages/svelte/tests/styled-checkbox-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledCheckboxBrowser } from "../../../../packages/svelte/tests/styled-checkbox-browser.js";
+import { createStyledCheckboxConsumer } from "../../../../packages/svelte/tests/styled-checkbox-consumer.js";
+import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { checkboxStyledContract } from "../../contracts/styled/components/checkbox.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
-import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
-import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 const consumers: DistConsumer[] = [];
 afterEach(async () => {

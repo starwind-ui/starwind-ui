@@ -16,6 +16,7 @@ const props = withDefaults(
 );
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null);
+const initialDefaultChecked = props.defaultChecked;
 const group = useMenuRadioGroupContext("RadioItem");
 const checked = computed(() =>
   group.value.value === undefined
@@ -34,7 +35,7 @@ defineExpose({ element });
     role="menuitemradio"
     tabindex="0"
     :data-value="props.value"
-    :data-default-checked="props.defaultChecked ? 'true' : undefined"
+    :data-default-checked="initialDefaultChecked ? 'true' : undefined"
     :data-close-on-click="props.closeOnClick ? 'true' : undefined"
     :aria-checked="checked"
     :data-checked="checked ? '' : undefined"

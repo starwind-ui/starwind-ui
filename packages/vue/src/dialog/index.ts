@@ -33,4 +33,3 @@ export { Dialog };
 export default Dialog;
 
 export type { DialogCloseCompleteDetails, DialogOpenChangeDetails } from "@starwind-ui/runtime";
-export { DialogContext } from "./DialogRoot.vue";

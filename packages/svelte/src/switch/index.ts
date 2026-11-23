@@ -5,7 +5,9 @@
 
 import SwitchRoot from "./SwitchRoot.svelte";
 import SwitchThumb from "./SwitchThumb.svelte";
+
 const Switch = { Root: SwitchRoot, Thumb: SwitchThumb };
+
 export { Switch, SwitchRoot, SwitchThumb };
 export default Switch;
 

@@ -332,7 +332,7 @@ describe("offline kit preparation", () => {
   });
 
   it("uses the beta channel by default", async () => {
-    expect(resolveKitRelease("3.6.0")).toEqual({ kitVersion: "0.1.0", tag: "beta" });
+    expect(resolveKitRelease("3.6.0")).toEqual({ kitVersion: "0.1.1", tag: "beta" });
     expect(resolveKitRelease("3.6.0", null)).toEqual({ kitVersion: "3.6.0", tag: "latest" });
     expect(resolveKitRelease("3.7.0-beta.1", null)).toEqual({
       kitVersion: "3.7.0-beta.1",

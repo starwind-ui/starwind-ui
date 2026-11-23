@@ -9,10 +9,10 @@
 
 <script lang="ts">
   let {
-    "orientation": orientation = "horizontal",
+    orientation = "horizontal",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: ButtonGroupProps = $props();
 </script>

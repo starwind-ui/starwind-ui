@@ -282,6 +282,16 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(contextMenu).toContain("modal?: boolean;");
   expect(contextMenu).toContain("modal = true");
   expect(contextMenu).toContain("modal={modal}");
+  // Styled submenus ask Runtime for the inline-end side through an empty side intent.
+  for (const subContent of [dropdownSubContent, contextMenuSubContent]) {
+    expect(subContent).toContain('data-sw-menu-side-intent={side ?? ""}');
+    // Older Runtime copies ignore the intent, so the first markup keeps the base right side.
+    expect(subContent).toContain('side={side ?? "right"}');
+    expect(subContent).not.toMatch(/\bside = "/);
+  }
+  for (const rootContent of [dropdownContent, contextMenuContent]) {
+    expect(rootContent).not.toContain("data-sw-menu-side-intent");
+  }
   for (const portalOwner of [contextMenuContent, contextMenuSubContent]) {
     expect(portalOwner).toContain("portalContainer?: string;");
     expect(portalOwner).toContain("disablePortal?: boolean;");
@@ -437,10 +447,10 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   );
   expect(navigationMenuVariants).toContain("focus-visible:ring-3 focus-visible:outline-1");
   expect(navigationMenuVariants).toContain(
-    "relative top-px ml-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
+    "relative top-px ms-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
   );
   expect(navigationMenuVariants).toContain(
-    "group-data-[size=md]/nav-menu:ml-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
+    "group-data-[size=md]/nav-menu:ms-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
   );
   expect(navigationMenuVariants).toContain("group-data-[state=open]/nav-menu-trigger:rotate-180");
   expect(navigationMenuVariants).toContain(
@@ -562,8 +572,12 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(tooltipVariants).toContain("[&>svg]:absolute [&>svg]:inset-0");
   expect(tooltipVariants).toContain("group-data-[side=top]:bottom-0");
   expect(tooltipVariants).toContain("group-data-[side=bottom]:top-0");
-  expect(tooltipVariants).toContain("group-data-[side=left]:top-1/2");
-  expect(tooltipVariants).toContain("group-data-[side=right]:top-1/2");
+  expect(tooltipVariants).toContain(
+    "group-data-[side=left]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))]",
+  );
+  expect(tooltipVariants).toContain(
+    "group-data-[side=right]:top-[var(--sw-floating-arrow-y,calc(50%-0.5rem))]",
+  );
   expect(tooltipVariants).not.toContain("group fixed");
   expect(tooltipIndex).toContain("Root: Tooltip");
   expect(alertDialog).toContain('AlertDialogPrimitive from "../primitives/astro/alert-dialog"');

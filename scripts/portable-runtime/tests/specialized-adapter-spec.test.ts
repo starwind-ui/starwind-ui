@@ -13734,7 +13734,7 @@ function normalizePrintedComparison(contents: string): string {
   if (!contents.trimStart().startsWith("---")) return normalizeTypeScriptSource(contents);
   return contents
     .replace(/\s+/g, " ")
-    .replace(/\s*([(){}\[\],;])\s*/g, "$1")
+    .replace(/\s*([(){}[\],;])\s*/g, "$1")
     .replace(/,([)\]}])/g, "$1");
 }
 
@@ -13864,5 +13864,5 @@ async function formatGeneratedOutput(contents: string, filepath: string): Promis
     prettierConfigCache.set(cacheKey, config);
   }
 
-  return normalizeGeneratedPackageBody(await format(contents, { ...(config ?? {}), filepath }));
+  return normalizeGeneratedPackageBody(await format(contents, { ...config, filepath }));
 }

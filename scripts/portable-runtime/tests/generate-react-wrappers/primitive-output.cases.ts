@@ -221,6 +221,13 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const progressLabel = await readGeneratedFile(outputRoot, "progress/ProgressLabel.tsx");
     const progressIndex = await readGeneratedFile(outputRoot, "progress/index.ts");
     const menuRoot = await readGeneratedFile(outputRoot, "menu/MenuRoot.tsx");
+    // Primitive Menu floating parts keep the bottom side default and emit no side intent hook.
+    for (const file of ["menu/MenuPopup.tsx", "menu/MenuPositioner.tsx"]) {
+      const floatingPart = compactCode(await readGeneratedFile(outputRoot, file));
+      expect(floatingPart).toContain(compactCode('side = "bottom"'));
+      expect(floatingPart).toContain(compactCode("data-side={side}"));
+      expect(floatingPart).not.toContain("data-sw-menu-side-intent");
+    }
     const menuTrigger = await readGeneratedFile(outputRoot, "menu/MenuTrigger.tsx");
     const menuItem = await readGeneratedFile(outputRoot, "menu/MenuItem.tsx");
     const menuLinkItem = await readGeneratedFile(outputRoot, "menu/MenuLinkItem.tsx");
@@ -410,6 +417,7 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       "avatar",
       "button",
       "carousel",
+      "chart",
       "checkbox",
       "checkbox-group",
       "collapsible",

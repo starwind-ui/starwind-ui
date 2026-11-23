@@ -71,7 +71,7 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
         data-slot="slider-range"
         data-orientation={orientation}
         style={orientation === "horizontal"
-          ? `left: ${rangeStart}%; width: ${rangeEnd - rangeStart}%`
+          ? `inset-inline-start: ${rangeStart}%; width: ${rangeEnd - rangeStart}%`
           : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`}
       >
       </div>
@@ -85,7 +85,7 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
           data-orientation={orientation}
           style={
             orientation === "horizontal"
-              ? `left: ${getPercentage(val)}%`
+              ? `inset-inline-start: ${getPercentage(val)}%`
               : `bottom: ${getPercentage(val)}%`
           }
           tabindex={disabled ? -1 : 0}
@@ -116,6 +116,7 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
 </div>
 
 <script>
+  import { watchDirection, readDirection } from "@/lib/utils/starwind/direction";
   class StarwindSlider {
     private root: HTMLElement;
     private track: HTMLElement;
@@ -130,7 +131,10 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
     private disabled: boolean;
     private values: number[];
     private activeThumbIndex: number = -1;
-    private dragging: boolean = false;
+    private stopWatchingDrag?: () => void;
+    private pointerId: number | null = null;
+    private dragDirection: "ltr" | "rtl" = "ltr";
+    private dragListeners?: AbortController;
 
     constructor(root: HTMLElement) {
       this.root = root;
@@ -162,9 +166,6 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
       });
 
       this.track.addEventListener("pointerdown", (e) => this.handleTrackClick(e));
-
-      document.addEventListener("pointermove", (e) => this.handlePointerMove(e));
-      document.addEventListener("pointerup", () => this.handlePointerUp());
     }
 
     private getPercentage(val: number): number {
@@ -176,7 +177,10 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
       let percentage: number;
 
       if (this.orientation === "horizontal") {
-        percentage = (clientX - rect.left) / rect.width;
+        percentage =
+          (getComputedStyle(this.root).direction === "rtl"
+            ? rect.right - clientX
+            : clientX - rect.left) / rect.width;
       } else {
         percentage = 1 - (clientY - rect.top) / rect.height;
       }
@@ -217,7 +221,7 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
         : this.getPercentage(this.values[0]);
 
       if (this.orientation === "horizontal") {
-        this.range.style.left = `${rangeStart}%`;
+        this.range.style.insetInlineStart = `${rangeStart}%`;
         this.range.style.width = `${rangeEnd - rangeStart}%`;
       } else {
         this.range.style.bottom = `${rangeStart}%`;
@@ -227,7 +231,7 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
       this.thumbs.forEach((thumb, index) => {
         const percentage = this.getPercentage(this.values[index]);
         if (this.orientation === "horizontal") {
-          thumb.style.left = `${percentage}%`;
+          thumb.style.insetInlineStart = `${percentage}%`;
         } else {
           thumb.style.bottom = `${percentage}%`;
         }
@@ -246,28 +250,65 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
     }
 
     private handleThumbPointerDown(e: PointerEvent, index: number): void {
-      if (this.disabled) return;
+      if (this.disabled || this.pointerId !== null) return;
       e.preventDefault();
       this.activeThumbIndex = index;
-      this.dragging = true;
+      this.pointerId = e.pointerId;
+      this.dragDirection = readDirection(this.root);
+      this.dragListeners = new AbortController();
+      const options = { signal: this.dragListeners.signal };
+      const doc = this.root.ownerDocument;
+      doc.addEventListener("pointermove", (event) => this.handlePointerMove(event), options);
+      doc.addEventListener(
+        "pointerup",
+        (event) => {
+          if (event.pointerId === this.pointerId)
+            this.finishDrag(
+              this.orientation !== "horizontal" || readDirection(this.root) === this.dragDirection,
+            );
+        },
+        options,
+      );
+      doc.addEventListener(
+        "pointercancel",
+        (event) => {
+          if (event.pointerId === this.pointerId) this.finishDrag(false);
+        },
+        options,
+      );
+      doc.addEventListener("astro:before-swap", () => this.finishDrag(false), options);
+      if (this.orientation === "horizontal")
+        this.stopWatchingDrag = watchDirection(this.root, () => this.finishDrag(false));
       this.root.setAttribute("data-dragging", "");
       this.thumbs[index].setAttribute("data-dragging", "");
       this.thumbs[index].focus();
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      this.thumbs[index].setPointerCapture(e.pointerId);
     }
 
     private handlePointerMove(e: PointerEvent): void {
-      if (!this.dragging || this.activeThumbIndex === -1) return;
+      if (e.pointerId !== this.pointerId || this.activeThumbIndex === -1) return;
+      if (this.orientation === "horizontal" && readDirection(this.root) !== this.dragDirection) {
+        this.finishDrag(false);
+        return;
+      }
       const newValue = this.getValueFromPosition(e.clientX, e.clientY);
       this.updateValue(this.activeThumbIndex, newValue);
     }
 
-    private handlePointerUp(): void {
-      if (!this.dragging) return;
-      this.dragging = false;
+    private finishDrag(commit: boolean): void {
+      if (this.pointerId === null) return;
+      this.dragListeners?.abort();
+      this.dragListeners = undefined;
+      const thumb = this.thumbs[this.activeThumbIndex];
+      if (thumb.hasPointerCapture(this.pointerId)) thumb.releasePointerCapture(this.pointerId);
+      this.pointerId = null;
+      this.stopWatchingDrag?.();
+      this.stopWatchingDrag = undefined;
       this.root.removeAttribute("data-dragging");
       this.thumbs.forEach((thumb) => thumb.removeAttribute("data-dragging"));
 
+      this.activeThumbIndex = -1;
+      if (!commit) return;
       const value = this.values.length === 1 ? this.values[0] : [...this.values];
       this.root.dispatchEvent(
         new CustomEvent("slider-commit", {
@@ -275,8 +316,6 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
           bubbles: true,
         }),
       );
-
-      this.activeThumbIndex = -1;
     }
 
     private handleTrackClick(e: PointerEvent): void {
@@ -297,20 +336,29 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
       if (this.disabled) return;
 
       let newValue = this.values[index];
-      const isHorizontal = this.orientation === "horizontal";
+      const horizontalStep =
+        this.orientation === "vertical"
+          ? e.shiftKey
+            ? 1
+            : -1
+          : readDirection(this.root) === "rtl"
+            ? -1
+            : 1;
 
       switch (e.key) {
         case "ArrowRight":
         case "ArrowUp":
           e.preventDefault();
-          newValue += isHorizontal === (e.key === "ArrowRight") ? this.step : -this.step;
-          if (e.shiftKey) newValue = this.values[index] + this.largeStep;
+          newValue +=
+            (e.shiftKey ? this.largeStep : this.step) *
+            (e.key === "ArrowRight" ? horizontalStep : 1);
           break;
         case "ArrowLeft":
         case "ArrowDown":
           e.preventDefault();
-          newValue -= isHorizontal === (e.key === "ArrowLeft") ? this.step : -this.step;
-          if (e.shiftKey) newValue = this.values[index] - this.largeStep;
+          newValue -=
+            (e.shiftKey ? this.largeStep : this.step) *
+            (e.key === "ArrowLeft" ? horizontalStep : 1);
           break;
         case "PageUp":
           e.preventDefault();

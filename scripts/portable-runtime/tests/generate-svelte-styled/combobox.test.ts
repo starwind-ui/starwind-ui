@@ -1,8 +1,8 @@
-import { verifyStyledComboboxLifecycle } from "../../../../packages/svelte/tests/styled-combobox-browser.js";
 import { afterEach, describe, expect, it } from "vitest";
-
-import { createStyledComboboxConsumer } from "../../../../packages/svelte/tests/styled-combobox-consumer.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledComboboxLifecycle } from "../../../../packages/svelte/tests/styled-combobox-browser.js";
+import { createStyledComboboxConsumer } from "../../../../packages/svelte/tests/styled-combobox-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

@@ -1,6 +1,12 @@
 import type { EmblaCarouselType, EmblaOptionsType, EmblaPluginType } from "embla-carousel";
 import EmblaCarousel from "embla-carousel";
 
+import {
+  type Direction,
+  type DirectionSubscription,
+  readDirection,
+  subscribeDirection,
+} from "../../internal/direction";
 import { assertHTMLElement } from "../../internal/dom";
 import { shared } from "../../internal/shared";
 
@@ -53,8 +59,12 @@ class CarouselController implements CarouselInstance {
   readonly viewport: HTMLElement;
 
   private readonly abortController = new AbortController();
+  private readonly direction: DirectionSubscription;
   private readonly nextButton: HTMLButtonElement | null;
   private readonly previousButton: HTMLButtonElement | null;
+  private explicitDirection: Direction | undefined;
+  private readonly serializedDirection: Direction | undefined;
+  private engineDirection: Direction;
   private destroyed = false;
 
   constructor(root: HTMLElement, options: CarouselOptions) {
@@ -64,12 +74,22 @@ class CarouselController implements CarouselInstance {
     this.previousButton = getOwnedElement(root, `[${CAROUSEL_PREVIOUS_ATTRIBUTE}]`);
     this.nextButton = getOwnedElement(root, `[${CAROUSEL_NEXT_ATTRIBUTE}]`);
 
-    const emblaOptions = resolveEmblaOptions(root, options);
+    const serializedOptions = readOptionsAttribute(root);
+    this.explicitDirection = readDirectionOption(options.opts?.direction);
+    this.serializedDirection = readDirectionOption(serializedOptions.direction);
+    this.engineDirection = this.resolveEngineDirection();
+    const emblaOptions = resolveEmblaOptions(
+      root,
+      options,
+      serializedOptions,
+      this.engineDirection,
+    );
     this.root.setAttribute(CAROUSEL_AXIS_ATTRIBUTE, emblaOptions.axis === "y" ? "y" : "x");
     this.api = EmblaCarousel(this.viewport, emblaOptions, options.plugins);
 
     this.setupAccessibility();
     this.bindEvents();
+    this.direction = subscribeDirection(root, this.handleDirectionChange);
     this.updateControls();
     options.setApi?.(this.api);
   }
@@ -86,6 +106,7 @@ class CarouselController implements CarouselInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.direction.destroy();
     this.api.off("select", this.updateControls);
     this.api.off("init", this.updateControls);
     this.api.off("reInit", this.updateControls);
@@ -95,21 +116,29 @@ class CarouselController implements CarouselInstance {
   }
 
   reInit(options?: EmblaOptionsType, plugins?: EmblaPluginType[]): void {
-    this.api.reInit(options, plugins);
+    if (options && Object.hasOwn(options, "direction")) {
+      this.explicitDirection = readDirectionOption(options.direction);
+    }
+    this.engineDirection = this.resolveEngineDirection();
+    this.api.reInit({ ...options, direction: this.engineDirection }, plugins);
     const axis = options?.axis ?? this.api.internalEngine().options.axis;
     this.root.setAttribute(CAROUSEL_AXIS_ATTRIBUTE, axis === "y" ? "y" : "x");
     this.updateControls();
   }
 
+  // Each scroll path reads direction first, so Embla re-inits after a `dir` change with no event.
   scrollNext(jump?: boolean): void {
+    this.direction.get();
     this.api.scrollNext(jump);
   }
 
   scrollPrev(jump?: boolean): void {
+    this.direction.get();
     this.api.scrollPrev(jump);
   }
 
   scrollTo(index: number, jump?: boolean): void {
+    this.direction.get();
     this.api.scrollTo(index, jump);
   }
 
@@ -132,7 +161,7 @@ class CarouselController implements CarouselInstance {
       "click",
       (event) => {
         event.preventDefault();
-        this.api.scrollPrev();
+        this.scrollPrev();
       },
       { signal },
     );
@@ -141,39 +170,58 @@ class CarouselController implements CarouselInstance {
       "click",
       (event) => {
         event.preventDefault();
-        this.api.scrollNext();
+        this.scrollNext();
       },
       { signal },
     );
 
     this.root.addEventListener("keydown", this.handleKeyDown, { signal });
+    // Embla owns the drag. Read direction before it handles the pointer.
+    this.root.addEventListener("pointerdown", () => this.direction.get(), {
+      capture: true,
+      signal,
+    });
     this.api.on("select", this.updateControls);
     this.api.on("init", this.updateControls);
     this.api.on("reInit", this.updateControls);
   }
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
+    this.direction.get();
     const axis = this.root.getAttribute(CAROUSEL_AXIS_ATTRIBUTE) === "y" ? "y" : "x";
 
     if (axis === "y") {
       if (event.key === "ArrowUp") {
         event.preventDefault();
-        this.api.scrollPrev();
+        this.scrollPrev();
       } else if (event.key === "ArrowDown") {
         event.preventDefault();
-        this.api.scrollNext();
+        this.scrollNext();
       }
       return;
     }
 
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      this.api.scrollPrev();
+      if (this.api.internalEngine().options.direction === "rtl") this.api.scrollNext();
+      else this.api.scrollPrev();
     } else if (event.key === "ArrowRight") {
       event.preventDefault();
-      this.api.scrollNext();
+      if (this.api.internalEngine().options.direction === "rtl") this.api.scrollPrev();
+      else this.api.scrollNext();
     }
   };
+
+  private readonly handleDirectionChange = (direction: Direction): void => {
+    if (this.explicitDirection || this.serializedDirection) return;
+    if (direction === this.engineDirection) return;
+    this.engineDirection = direction;
+    this.api.reInit({ direction });
+  };
+
+  private resolveEngineDirection(): Direction {
+    return this.explicitDirection ?? this.serializedDirection ?? readDirection(this.root);
+  }
 
   private readonly updateControls = (): void => {
     updateControl(this.previousButton, this.api.canScrollPrev());
@@ -181,16 +229,26 @@ class CarouselController implements CarouselInstance {
   };
 }
 
-function resolveEmblaOptions(root: HTMLElement, options: CarouselOptions): EmblaOptionsType {
+function resolveEmblaOptions(
+  root: HTMLElement,
+  options: CarouselOptions,
+  serializedOptions: EmblaOptionsType,
+  direction: Direction,
+): EmblaOptionsType {
   const axis = options.orientation
     ? orientationToAxis(options.orientation)
     : readAxisAttribute(root.getAttribute(CAROUSEL_AXIS_ATTRIBUTE));
 
   return {
     axis,
-    ...readOptionsAttribute(root),
+    ...serializedOptions,
     ...options.opts,
+    direction,
   };
+}
+
+function readDirectionOption(value: unknown): Direction | undefined {
+  return value === "ltr" || value === "rtl" ? value : undefined;
 }
 
 function readAxisAttribute(value: string | null): "x" | "y" {

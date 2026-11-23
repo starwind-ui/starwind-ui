@@ -16,7 +16,6 @@ import {
   type FrameworkTargetPolicy,
   isConfigTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
-  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -34,9 +33,7 @@ export type PrivateVueRemoveOptions = Omit<RemoveOptions, "framework"> & {
 };
 
 export type PrivateVueRemoveDependencies = {
-  targetPolicy:
-    | FrameworkTargetPolicy<CliFrameworkTarget>
-    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
 };
 
 type LifecycleRemoveTarget = RemoveTarget<CliFrameworkTarget>;

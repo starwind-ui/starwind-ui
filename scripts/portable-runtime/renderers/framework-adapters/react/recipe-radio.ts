@@ -30,7 +30,7 @@ function frame(code: string, p: RadioProjection): string {
   const inputStyle = p.inputStyle
     .map(
       ([name, value]) =>
-        `${name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())}:${/^-?\d+(px)?$/.test(value) ? parseInt(value) : JSON.stringify(value)}`,
+        `${name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())}:${/^-?\d+(px)?$/.test(value) ? Number.parseInt(value) : JSON.stringify(value)}`,
     )
     .join(",");
   const input = p.input

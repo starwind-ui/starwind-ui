@@ -29,7 +29,7 @@ try {
     const computed = getComputedStyle(part("button"));
     styles.push({ display: computed.display, radius: computed.borderRadius });
     assert(
-      computed.display === "inline-flex" && parseFloat(computed.borderRadius) > 0,
+      computed.display === "inline-flex" && Number.parseFloat(computed.borderRadius) > 0,
       "Command-installed Button CSS is absent",
     );
     const before = ["button", "checkbox", "theme", "trigger", "dialog", "select"].map(part);

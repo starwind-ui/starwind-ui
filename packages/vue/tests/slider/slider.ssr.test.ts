@@ -1,8 +1,7 @@
+import { SliderControl, SliderRoot, SliderThumb, SliderTrack } from "@starwind-ui/vue/slider";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { SliderControl, SliderRoot, SliderThumb, SliderTrack } from "@starwind-ui/vue/slider";
 import { Slider as StyledSlider } from "../../../../apps/vue-demo/src/components/starwind-runtime/slider";
 
 describe("Vue Slider SSR", () => {

@@ -2,14 +2,14 @@
 import { ref } from "vue";
 import {
   Dropdown,
-  DropdownTrigger,
   DropdownContent,
   DropdownItem,
   DropdownLabel,
   DropdownSeparator,
   DropdownSub,
-  DropdownSubTrigger,
   DropdownSubContent,
+  DropdownSubTrigger,
+  DropdownTrigger,
 } from "./starwind-runtime/dropdown";
 
 defineProps<{ context: string; id: string }>();

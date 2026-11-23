@@ -10,8 +10,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "inset": inset = false,
-    "children": children,
+    inset = false,
+    children,
     ...rest
   }: DropdownLabelProps = $props();
 </script>

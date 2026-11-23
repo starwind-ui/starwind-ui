@@ -1,24 +1,23 @@
-import { publicFrameworks, buildPrimitivePackages } from "./public-frameworks.js";
 import { readFileSync } from "node:fs";
 import semver from "semver";
 import { runtimeAdapterContracts } from "../../../contracts/primitive/representatives.js";
-import { type RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
+import type { RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
 import { starwindStyledContracts } from "../../../contracts/styled/components/index.js";
-import { type StyledAdapterContract } from "../../../contracts/styled/types.js";
+import type { StyledAdapterContract } from "../../../contracts/styled/types.js";
 import { componentGroups, primitiveDocsEnrichment, styledDocsAnnotations } from "../annotations.js";
 import { primitiveDocsExampleCoveragePolicy, primitiveDocsExamples } from "../examples.js";
-import {
-  type ComponentGroupMetadata,
-  type LayeredDocsMetadata,
-  type PrimitiveDocsEnrichment,
-  type PrimitiveDocsExampleCoveragePolicy,
-  type PrimitiveDocsExampleRegistry,
-  type PrimitiveDocsFrameworkTarget,
-  type PrimitiveDocsMetadata,
-  type RuntimeFactoryMetadata,
-  type StyledComponentDocsMetadata,
-  type StyledDocsAnnotation,
-  type StyledFrameworkTarget,
+import type {
+  ComponentGroupMetadata,
+  LayeredDocsMetadata,
+  PrimitiveDocsEnrichment,
+  PrimitiveDocsExampleCoveragePolicy,
+  PrimitiveDocsExampleRegistry,
+  PrimitiveDocsFrameworkTarget,
+  PrimitiveDocsMetadata,
+  RuntimeFactoryMetadata,
+  StyledComponentDocsMetadata,
+  StyledDocsAnnotation,
+  StyledFrameworkTarget,
 } from "../types.js";
 import {
   copyPrimitiveDocsAuthoredExample,
@@ -32,6 +31,7 @@ import {
   buildPlaceholderStyledComponentMetadata,
   buildRuntimeDocsMetadata,
   buildStylingDocsMetadata,
+  classifyRuntimeFactoryExport,
   collectPrimitiveIds,
   collectSlots,
   collectStyledAliases,
@@ -44,32 +44,35 @@ import {
   toRuntimePackageExportPath,
 } from "./build-runtime-styling.js";
 import {
+  buildStyledApiMetadata,
+  validateAuditedAsChildVisualOwnership,
+  validateStyledApiExportAnnotationKeys,
+} from "./build-styled-api.js";
+import {
   FOUNDATION_LABELS,
   FRAMEWORK_TARGETS,
   PRIMITIVE_DOCS_FRAMEWORK_TARGETS,
   RUNTIME_DOCS_PATH,
 } from "./constants.js";
+import { frameworkCoordinationSummary } from "./descriptions/framework-behavior.js";
 import {
   buildPrimitiveCanonicalNames,
   buildPrimitiveExportGroups,
   buildPrimitivePartApiReference,
   copyPrimitiveStateModel,
-  getPublicPrimitiveAdapterParts,
   getPrimitiveNamespace,
+  getPublicPrimitiveAdapterParts,
   renderPrimitiveAnatomyCode,
+  resolvePrimitivePropType,
   toPrimitiveEventMetadata,
 } from "./descriptions/primitive-reference.js";
-import { frameworkCoordinationSummary } from "./descriptions/framework-behavior.js";
 import { toPrimitiveSetterMetadata } from "./descriptions/setters.js";
+import { getPrimitiveLiveDemo } from "./live-demo.js";
 import type { BuildLayeredDocsMetadataOptions } from "./options.js";
 import { PRIMITIVE_AUTHORED_USAGE_ROOT, primitiveVersionsPath, repoRoot } from "./paths.js";
+import { buildPrimitivePackages, publicFrameworks } from "./public-frameworks.js";
 import { dedupe, toKebabCase, toPrimitiveDisplayName, toTitle } from "./shared.js";
 import { isBehaviorFoundationType, validateFoundation } from "./validate-metadata.js";
-import {
-  buildStyledApiMetadata,
-  validateAuditedAsChildVisualOwnership,
-  validateStyledApiExportAnnotationKeys,
-} from "./build-styled-api.js";
 
 export const buildLayeredDocsMetadata = (
   options: BuildLayeredDocsMetadataOptions = {},
@@ -109,7 +112,7 @@ export const buildLayeredDocsMetadata = (
     groups,
     annotations,
     runtimeExports,
-    runtimeIndexSource,
+    { runtimeIndexSource, initStarwindSource },
     validationIssues,
   );
   validatePrimitiveDocsEnrichment(primitiveById, primitiveEnrichment, validationIssues);
@@ -242,7 +245,7 @@ const buildStyledComponentMetadata = (
     ...(contract.variantCollectionName
       ? { variantCollectionName: contract.variantCollectionName }
       : {}),
-    variantNames: [...Object.keys(contract.variants ?? {})].sort(),
+    variantNames: Object.keys(contract.variants ?? {}).sort(),
     slots: collectSlots(contract),
     aliases: collectStyledAliases(
       contract,
@@ -309,7 +312,7 @@ const buildPrimitiveMetadata = (
     kind: prop.kind,
     ...(prop.required !== undefined ? { required: prop.required } : {}),
     ...(prop.targets ? { targets: [...prop.targets] } : {}),
-    type: prop.type,
+    type: resolvePrimitivePropType(prop.type),
   })),
   stateModels: (contract.stateModels ?? []).map((stateModel) =>
     copyPrimitiveStateModel(withPrimitiveDocsDisplayName(contract), stateModel, enrichment),
@@ -517,9 +520,9 @@ const buildPrimitiveDocsReference = (
   );
 
   return {
-    summary:
-      enrichment.summary ??
-      `${docsContract.displayName} is a Starwind Runtime primitive in the ${contract.category} contract family.`,
+    // An empty summary fails validation, so every Primitive page needs an authored summary.
+    summary: enrichment.summary ?? "",
+    ...(enrichment.liveDemo ? { liveDemo: getPrimitiveLiveDemo(contract.component) } : {}),
     frameworkCoordination: frameworkCoordinationSummary,
     frameworkTargets: [...PRIMITIVE_DOCS_FRAMEWORK_TARGETS],
     behaviorNotes: [...(enrichment.behaviorNotes ?? [])],
@@ -630,7 +633,7 @@ const validateAnnotations = (
   groups: readonly ComponentGroupMetadata[],
   annotations: Readonly<Record<string, StyledDocsAnnotation>>,
   runtimeExports: ReadonlySet<string>,
-  runtimeIndexSource: string,
+  runtimeSources: { readonly runtimeIndexSource: string; readonly initStarwindSource: string },
   validationIssues: string[],
 ) => {
   const groupIds = new Set(groups.map((group) => group.id));
@@ -682,7 +685,7 @@ const validateAnnotations = (
       );
     }
 
-    if (!runtimeIndexSource.includes(primitive.runtime.factory)) {
+    if (classifyRuntimeFactoryExport(primitive.runtime, runtimeSources) === "missing") {
       validationIssues.push(
         `${primitive.component} runtime factory ${primitive.runtime.factory} is not re-exported by packages/runtime/src/index.ts.`,
       );

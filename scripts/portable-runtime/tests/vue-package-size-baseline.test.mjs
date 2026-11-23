@@ -1,12 +1,14 @@
 import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
-
 import {
-  vuePackageSizeBaseline,
+  buildVueBaselineEvidence,
+  VUE_BASELINE_REQUIRED_ROW_IDS,
+} from "../package-size-vue-baseline-runner.mjs";
+import {
   validateVuePackageSizeBaselineEvidence,
+  vuePackageSizeBaseline,
 } from "../vue-package-size-baseline.mjs";
-import { buildVueBaselineEvidence } from "../package-size-vue-baseline-runner.mjs";
 
 const evidencePath = new URL("../evidence/vue-package-size-baseline.json", import.meta.url);
 
@@ -95,7 +97,9 @@ describe("adopted Vue package-size baseline", () => {
         arguments: [...run.command.arguments, "--unexpected-capture-path"],
       },
     }));
-    const internallyValidEvidence = buildVueBaselineEvidence(changedRuns);
+    const internallyValidEvidence = buildVueBaselineEvidence(changedRuns, {
+      requiredRowIds: VUE_BASELINE_REQUIRED_ROW_IDS,
+    });
 
     expect(internallyValidEvidence.stability.stable).toBe(true);
     expect(() => validateVuePackageSizeBaselineEvidence(internallyValidEvidence)).toThrow(

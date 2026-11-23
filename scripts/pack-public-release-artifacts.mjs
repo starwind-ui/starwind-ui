@@ -6,6 +6,10 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  formatPackedDocsReport,
+  verifyPackedPackageDocs,
+} from "./portable-runtime/package-docs/verify-packed-docs.mjs";
 import { releaseSourceFingerprint } from "./release-inputs.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -137,6 +141,16 @@ export async function packPublicReleaseArtifacts({ outputDirectory, vueBeta = fa
     assert.equal(typeof packageManifest.version, "string");
     assert.equal(packageManifest.name, entry.name);
     await runCommand({ args: ["pack", "--out", entry.file], cwd: entry.directory });
+    // Runtime and Primitive adapter archives must carry docs for their own version, inside the
+    // docs budget. Package size checks measure a doc-free copy, so the docs stay in place.
+    if (entry.key !== "cli") {
+      const docsReport = verifyPackedPackageDocs({
+        archive: entry.file,
+        name: packageManifest.name,
+        version: packageManifest.version,
+      });
+      console.log(formatPackedDocsReport(packageManifest.name, docsReport));
+    }
     artifactPackages[entry.key] = {
       file: entry.fileName,
       name: packageManifest.name,

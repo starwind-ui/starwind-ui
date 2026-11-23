@@ -49,12 +49,7 @@ export const createStyledDynamicConsumer = (repoRoot: string) =>
   createStyledNativeConsumer(repoRoot, [...dynamicStyledRoots, "separator"]);
 const declarations = dynamicStyledParts
   .map(
-    ({
-      name,
-      element,
-      root,
-      member,
-    }) => `let ${name}Ref = $state<${element}>();
+    ({ name, element, root, member }) => `let ${name}Ref = $state<${element}>();
 const ${name}Attrs: ${name}Props = { title: "${name}", ref: ${name}Ref, onpointerdown(event) { const owner: HTMLElement = event.currentTarget; void owner; } };
 const ${name}FromDefault: typeof ${name} = ${root === "item" ? `ItemParts.${member}` : `${name}Default`}; void ${name}FromDefault;`,
   )
@@ -62,8 +57,10 @@ const ${name}FromDefault: typeof ${name} = ${root === "item" ? `ItemParts.${memb
 export const dynamicStyledPositive = `<script lang="ts">
 ${dynamicStyledImports}
 ${declarations}
-void [AspectRatioVariants.aspectRatio(), AspectRatioVariants.aspectRatioWrapper(), BadgeVariants.badge({ tone: "primary-accent", appearance: "frosted", eyebrow: true, size: "lg" }), ItemVariants.item({ variant: "outline", size: "sm" }), ItemVariants.itemMedia({ variant: "icon" })];
+let aspectRatioTag = $state<"a" | "div">("a");
+let aspectRatioElement = $state<keyof HTMLElementTagNameMap>("section");
+void [AspectRatioVariants.aspectRatio(), BadgeVariants.badge({ tone: "primary-accent", appearance: "frosted", eyebrow: true, size: "lg" }), ItemVariants.item({ variant: "outline", size: "sm" }), ItemVariants.itemMedia({ variant: "icon" })];
 </script>
-<AspectRatio {...AspectRatioAttrs} ratio={16 / 9} as="section" style="color: red">Photo</AspectRatio><AspectRatioDefault as="article" /><AspectRatio as="img" />
+<AspectRatio {...AspectRatioAttrs} ratio={16 / 9} style="color: red">Photo</AspectRatio><AspectRatio as="section" title="Section">Section</AspectRatio><AspectRatioDefault as="article" /><AspectRatio as="img" /><AspectRatio as="img" src="/photo.png" alt="" /><AspectRatio as="a" href="#details">Details</AspectRatio><AspectRatio as={aspectRatioTag}>Tag</AspectRatio><AspectRatio as={aspectRatioElement}>Element</AspectRatio>
 <Badge {...BadgeAttrs} href="#details" target="_self" download="file" tone="success" appearance="soft" eyebrow size="sm">Published</Badge><BadgeDefault variant="outline">Draft</BadgeDefault>
 <ItemGroup {...ItemGroupAttrs}><Item {...ItemAttrs} as="a" href="#details" variant="outline" size="sm"><ItemHeader {...ItemHeaderAttrs}>Header</ItemHeader><ItemMedia {...ItemMediaAttrs} variant="image">Media</ItemMedia><ItemContent {...ItemContentAttrs}><ItemTitle {...ItemTitleAttrs}>Title</ItemTitle><ItemDescription {...ItemDescriptionAttrs}>Description</ItemDescription></ItemContent><ItemActions {...ItemActionsAttrs}>Actions</ItemActions><ItemFooter {...ItemFooterAttrs}>Footer</ItemFooter></Item><ItemSeparator {...ItemSeparatorAttrs} orientation="vertical" /><ItemParts.Root as="article"><ItemParts.Title>Namespace</ItemParts.Title></ItemParts.Root></ItemGroup>`;

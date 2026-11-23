@@ -379,8 +379,8 @@ function assertTooltipArrowState(state, tolerance) {
   const arrowCenterY = state.arrowRect.top + state.arrowRect.height / 2;
   const iconCenterX = state.arrowIconRect.left + state.arrowIconRect.width / 2;
   const iconCenterY = state.arrowIconRect.top + state.arrowIconRect.height / 2;
-  const contentCenterX = state.contentRect.left + state.contentRect.width / 2;
-  const contentCenterY = state.contentRect.top + state.contentRect.height / 2;
+  const triggerCenterX = state.triggerRect.left + state.triggerRect.width / 2;
+  const triggerCenterY = state.triggerRect.top + state.triggerRect.height / 2;
 
   if (
     Math.abs(arrowCenterX - iconCenterX) > 1 ||
@@ -393,10 +393,11 @@ function assertTooltipArrowState(state, tolerance) {
     );
   }
 
+  // Floating UI places the arrow at the trigger center for every alignment.
   const centered =
     state.dataSide === "top" || state.dataSide === "bottom"
-      ? Math.abs(arrowCenterX - contentCenterX) <= tolerance
-      : Math.abs(arrowCenterY - contentCenterY) <= tolerance;
+      ? Math.abs(arrowCenterX - triggerCenterX) <= tolerance
+      : Math.abs(arrowCenterY - triggerCenterY) <= tolerance;
 
   const edgeAligned =
     state.dataSide === "top"
@@ -409,7 +410,7 @@ function assertTooltipArrowState(state, tolerance) {
 
   if (!centered || !edgeAligned) {
     throw new Error(
-      `Expected tooltip arrow to be centered on the popup edge, got ${JSON.stringify(state)}.`,
+      `Expected tooltip arrow on the popup edge to point at the trigger center, got ${JSON.stringify(state)}.`,
     );
   }
 }

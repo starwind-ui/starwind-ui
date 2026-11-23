@@ -10,13 +10,13 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
 import semver from "semver";
+import { createSpawnCommand } from "../../../scripts/command-process.mjs";
 import {
   buildOfflineKit,
   DEFAULT_OUTPUT_DIRECTORY,
   PUBLICATION_MARKER,
   readPublicationMarker,
 } from "./build.mjs";
-import { KIT_BETA, releaseTag, resolveKitRelease } from "./kit-channel.mjs";
 import {
   createNpmPackumentFetcher,
   downloadArchive,
@@ -26,7 +26,7 @@ import {
   splitSpec,
   withLocalPackages,
 } from "./builder.mjs";
-import { createSpawnCommand } from "../../../scripts/command-process.mjs";
+import { KIT_BETA, releaseTag, resolveKitRelease } from "./kit-channel.mjs";
 import { platformPackageName, SUPPORTED_PLATFORMS } from "./platforms.mjs";
 
 const execFileAsync = promisify(execFile);

@@ -1,3 +1,4 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
@@ -5,7 +6,6 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { shared } from "../../internal/shared";
 import {
   COLLAPSIBLE_PANEL_HIDDEN_UNTIL_FOUND_ATTRIBUTE,

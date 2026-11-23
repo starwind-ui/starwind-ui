@@ -14,15 +14,15 @@
 
 <script lang="ts">
   let {
-    "id": id,
-    "disabled": disabled = false,
-    "isUploading": isUploading = false,
+    id,
+    disabled = false,
+    isUploading = false,
     "aria-invalid": ariaInvalid,
     "class": className,
-    "ref": ref,
-    "onFilesChange": onFilesChange,
-    "onFilesReject": onFilesReject,
-    "children": children,
+    ref,
+    onFilesChange,
+    onFilesReject,
+    children,
     ...rest
   }: DropzoneProps = $props();
 </script>

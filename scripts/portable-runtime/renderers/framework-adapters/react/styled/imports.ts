@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { alertDialogStyledControlHelper } from "../../../../contracts/styled/components/alert-dialog.js";
 import { getRelativeImportPath } from "../../../shared.js";
 import type {
   StyledOutputComponent,
@@ -23,12 +24,15 @@ export function renderComponentImports(
   primitiveImportBase: string | undefined,
   runtimeImportContext: RuntimeImportRewriteContext,
   usesReactNamespace: boolean,
+  componentBody = "",
 ): string {
   const imports: string[] = [];
   if (usesReactNamespace) {
     imports.push(
       component.client?.effects ||
-        (component.forwardRef && isForFramework(component.forwardRef, REACT_FRAMEWORK))
+        (component.forwardRef && isForFramework(component.forwardRef, REACT_FRAMEWORK)) ||
+        // A lowercase member such as `React.useMemo` is a runtime value.
+        /\bReact\.[a-z]/.test(componentBody)
         ? 'import * as React from "react";'
         : 'import type * as React from "react";',
     );
@@ -56,7 +60,11 @@ export function renderComponentImports(
     imports.push(`import { ${iconImports.join(", ")} } from "@tabler/icons-react";`);
   }
 
-  for (const importLine of renderNamedExternalImports(component, runtimeImportContext)) {
+  for (const importLine of renderNamedExternalImports(
+    component,
+    runtimeImportContext,
+    componentBody,
+  )) {
     imports.push(importLine);
   }
 
@@ -64,7 +72,7 @@ export function renderComponentImports(
     const importPath = primitiveImportBase
       ? `${primitiveImportBase}/alert-dialog`
       : getRelativeImportPath(dir, path.join(primitiveOutputRoot, "alert-dialog"));
-    imports.push(`import { __useAlertDialogControl } from "${importPath}";`);
+    imports.push(`import { ${alertDialogStyledControlHelper} } from "${importPath}";`);
   }
 
   for (const primitiveComponent of collectPrimitiveComponents(component.render)) {
@@ -76,7 +84,13 @@ export function renderComponentImports(
     imports.push(`import ${alias} from "${importPath}";`);
   }
 
-  for (const importLine of renderComposedComponentImports(group, component, outputRoot, dir)) {
+  for (const importLine of renderComposedComponentImports(
+    group,
+    component,
+    outputRoot,
+    dir,
+    componentBody,
+  )) {
     imports.push(importLine);
   }
 
@@ -101,6 +115,7 @@ function collectIconImports(
 function renderNamedExternalImports(
   component: StyledOutputComponent,
   runtimeImportContext: RuntimeImportRewriteContext,
+  componentBody: string,
 ): string[] {
   const imports = new Map<string, Map<string, string | undefined>>();
 
@@ -115,13 +130,23 @@ function renderNamedExternalImports(
   }
 
   return [...imports.entries()].map(([source, specifiers]) => {
-    const renderedSpecifiers = [...specifiers.entries()]
-      .map(([importName, localName]) =>
+    const entries = [...specifiers.entries()].map(([importName, localName]) => ({
+      specifier:
         localName && localName !== importName ? `${importName} as ${localName}` : importName,
+      // A name the component body never reads is used only in its types.
+      typeOnly: !new RegExp(`\\b${localName ?? importName}\\b`).test(componentBody),
+    }));
+    const allTypeOnly = entries.every((entry) => entry.typeOnly);
+    const renderedSpecifiers = entries
+      .map(({ specifier, typeOnly }) =>
+        typeOnly && !allTypeOnly ? `type ${specifier}` : specifier,
       )
-      .sort();
+      .sort((left, right) => {
+        const [a, b] = [left.replace(/^type /, ""), right.replace(/^type /, "")];
+        return a < b ? -1 : a > b ? 1 : 0;
+      });
 
-    return `import { ${renderedSpecifiers.join(", ")} } from "${source}";`;
+    return `import ${allTypeOnly ? "type " : ""}{ ${renderedSpecifiers.join(", ")} } from "${source}";`;
   });
 }
 

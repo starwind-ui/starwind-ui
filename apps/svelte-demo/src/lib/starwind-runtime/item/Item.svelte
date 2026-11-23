@@ -9,12 +9,12 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "default",
-    "size": size = "md",
+    variant = "default",
+    size = "md",
     "as": Tag = "div",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: ItemProps = $props();
 

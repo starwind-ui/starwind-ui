@@ -1,0 +1,97 @@
+---
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/starwind-runtime/chart";
+
+import {
+  areaChart,
+  barChart,
+  donutChart,
+  monthConfig,
+  radarChart,
+  visitorConfig,
+  visitorData,
+} from "./chart-recipes";
+
+const card =
+  "bg-card text-card-foreground flex min-w-0 flex-col gap-4 rounded-xl border p-6 shadow-sm";
+---
+
+<div class="grid gap-6 md:grid-cols-2" data-testid="chart-examples">
+  <section class={card} data-chart-example="bar" aria-labelledby="chart-bar-heading">
+    <div class="space-y-1">
+      <h2 id="chart-bar-heading" class="text-lg font-semibold">Bar chart</h2>
+      <p class="text-muted-foreground text-sm">
+        Desktop and mobile visitors from January to June, with the default dot tooltip.
+      </p>
+    </div>
+    <ChartContainer
+      id="chart-visitors-bar"
+      chart={barChart}
+      config={visitorConfig}
+      data={visitorData}
+    >
+      <ChartLegend />
+    </ChartContainer>
+  </section>
+
+  <section class={card} data-chart-example="area" aria-labelledby="chart-area-heading">
+    <div class="space-y-1">
+      <h2 id="chart-area-heading" class="text-lg font-semibold">Area chart</h2>
+      <p class="text-muted-foreground text-sm">
+        Stacked visitors with a line indicator from a ChartTooltip.
+      </p>
+    </div>
+    <ChartContainer
+      id="chart-visitors-area"
+      chart={areaChart}
+      config={visitorConfig}
+      data={visitorData}
+    >
+      <ChartTooltip>
+        <ChartTooltipContent slot="content" indicator="line" />
+      </ChartTooltip>
+      <ChartLegend />
+    </ChartContainer>
+  </section>
+
+  <section class={card} data-chart-example="donut" aria-labelledby="chart-donut-heading">
+    <div class="space-y-1">
+      <h2 id="chart-donut-heading" class="text-lg font-semibold">Donut chart</h2>
+      <p class="text-muted-foreground text-sm">
+        Desktop visitors by month. This chart has no id, so the component makes one.
+      </p>
+    </div>
+    <ChartContainer chart={donutChart} config={monthConfig} data={visitorData}>
+      <ChartTooltip>
+        <ChartTooltipContent slot="content" hideLabel />
+      </ChartTooltip>
+      <ChartLegend />
+    </ChartContainer>
+  </section>
+
+  <section class={card} data-chart-example="radar" aria-labelledby="chart-radar-heading">
+    <div class="space-y-1">
+      <h2 id="chart-radar-heading" class="text-lg font-semibold">Radar chart</h2>
+      <p class="text-muted-foreground text-sm">
+        Desktop and mobile visitors on one polar grid. Use the legend to hide a series.
+      </p>
+    </div>
+    <ChartContainer
+      id="chart-visitors-radar"
+      chart={radarChart}
+      config={visitorConfig}
+      data={visitorData}
+    >
+      <ChartLegend />
+    </ChartContainer>
+  </section>
+</div>
+
+<script>
+  // The chart modules register when this module loads, and the charts then become interactive.
+  import "./chart-recipes";
+</script>

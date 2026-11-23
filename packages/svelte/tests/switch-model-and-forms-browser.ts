@@ -4,8 +4,8 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
+import type { DistConsumer } from "./dist-consumer.js";
 
 export async function verifySwitchLifecycle(consumer: DistConsumer, styled = false) {
   await consumer.write({

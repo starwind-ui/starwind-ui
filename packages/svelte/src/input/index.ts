@@ -4,7 +4,9 @@
  */
 
 import InputRoot from "./InputRoot.svelte";
+
 const Input = { Root: InputRoot };
+
 export { Input, InputRoot };
 export default Input;
 

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-
 import {
   DialogClose,
   DialogDescription,
@@ -20,6 +18,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@starwind-ui/vue/popover";
+import { computed, ref } from "vue";
 
 const align = ref<"start" | "center" | "end">("center");
 const mounted = ref(true);

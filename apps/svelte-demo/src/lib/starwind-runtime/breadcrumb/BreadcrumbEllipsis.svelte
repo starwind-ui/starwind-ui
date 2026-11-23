@@ -12,8 +12,8 @@
   let {
     "class": className,
     ref = $bindable(),
-    "icon": icon,
-    "children": children,
+    icon,
+    children,
     ...rest
   }: BreadcrumbEllipsisProps = $props();
 </script>

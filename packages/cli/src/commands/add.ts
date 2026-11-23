@@ -1,4 +1,5 @@
 import * as p from "@clack/prompts";
+import type { ChartTokenSyncResult } from "@/utils/chart-tokens.js";
 import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import {
   getConfigState,
@@ -13,7 +14,6 @@ import {
   type FrameworkTargetPolicy,
   isConfigTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
-  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -62,9 +62,7 @@ export type PrivateVueAddOptions = Omit<AddOptions, "framework"> & {
 
 export type PrivateVueAddDependencies = {
   registry: StarwindRegistryFor<CliFrameworkTarget>;
-  targetPolicy:
-    | FrameworkTargetPolicy<CliFrameworkTarget>
-    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
 };
 
 type AddResult = {
@@ -297,10 +295,6 @@ export async function add(
 
       // Handle registry components (e.g., @starwind-pro/login1)
       if (registryComponents.length > 0) {
-        if (runtimeConfig?.framework === "svelte") {
-          throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
-        }
-
         let proInstallConfig = selectedStarwindUiMajor === 2 ? configState.config : runtimeConfig;
 
         if (selectedStarwindUiMajor === 2) {
@@ -452,6 +446,7 @@ export async function add(
     // ================================================================
     //                      Install components
     // ================================================================
+    let chartTokens: ChartTokenSyncResult | undefined;
     if (componentsToInstall.length > 0) {
       if (!runtimeConfig) {
         p.log.error(
@@ -496,6 +491,7 @@ export async function add(
           );
 
       if (runtimeResults.setupOutcome) return;
+      chartTokens = runtimeResults.chartTokens;
 
       for (const result of [
         ...runtimeResults.installed,
@@ -541,6 +537,8 @@ ${sortComponentPresentation(results.installed)
   .join("\n")}`,
       );
     }
+
+    if (chartTokens) reportChartTokens(chartTokens);
 
     // Show registry component results in the final summary
     if (registryResults) {
@@ -589,6 +587,26 @@ ${sortComponentPresentation(registryResults.installed)
     p.cancel("Operation cancelled");
     process.exit(1);
   }
+}
+
+function reportChartTokens(result: ChartTokenSyncResult): void {
+  if (result.status === "added") {
+    p.log.success(
+      `${highlighter.success(`Added chart tokens to ${result.cssPath}:`)}
+${result.added.map((addition) => `  ${addition.block}: ${addition.tokens.join(", ")}`).join("\n")}`,
+    );
+    return;
+  }
+
+  if (result.status === "unchanged") {
+    p.log.info(`Chart tokens are already in ${result.cssPath}.`);
+    return;
+  }
+
+  p.log.warn(
+    `${highlighter.warn(`Could not add chart tokens to ${result.cssPath}:`)} ${result.error}\nAdd the missing tokens below to your CSS file by hand.`,
+  );
+  p.note(result.block.trimEnd(), "Chart tokens");
 }
 
 function assertV2ProAddRequest(

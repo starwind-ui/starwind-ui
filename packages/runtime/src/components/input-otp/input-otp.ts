@@ -1,3 +1,5 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
+import { readDirection } from "../../internal/direction";
 import {
   assertHTMLElement,
   ensureId,
@@ -5,7 +7,6 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { shared } from "../../internal/shared";
 import { registerFieldControlBridge } from "../field/field-control-registry";
@@ -105,6 +106,12 @@ const DEFAULT_PATTERN = "\\d";
 const NUMERIC_PATTERNS = new Set(["\\d", "[0-9]", "\\d+", "[0-9]+"]);
 
 const instances = shared<WeakMap<HTMLElement, InputOtpController>>("input-otp");
+
+function centerX(slot: HTMLElement | undefined): number | null {
+  if (!slot) return null;
+  const bounds = slot.getBoundingClientRect();
+  return bounds.width > 0 ? bounds.left + bounds.width / 2 : null;
+}
 
 registerFieldControlBridge({
   kind: "input-otp",
@@ -369,14 +376,14 @@ class InputOtpController implements InputOtpInstance {
 
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      this.currentIndex = Math.max(0, this.currentIndex - 1);
+      this.currentIndex = this.getSpatialSlotIndex(-1);
       this.render();
       return;
     }
 
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      this.currentIndex = Math.min(this.getSlotLimit() - 1, this.currentIndex + 1);
+      this.currentIndex = this.getSpatialSlotIndex(1);
       this.render();
       return;
     }
@@ -429,6 +436,30 @@ class InputOtpController implements InputOtpInstance {
       this.render();
     }
   };
+
+  private getSpatialSlotIndex(physicalDelta: -1 | 1): number {
+    const slots = this.elements.slots.slice(0, this.getSlotLimit());
+    const currentCenter = centerX(slots[this.currentIndex]);
+    if (currentCenter !== null) {
+      let nextIndex = this.currentIndex;
+      let nearestDistance = Infinity;
+      let hasDistinctCenter = false;
+      slots.forEach((slot, index) => {
+        const center = centerX(slot);
+        if (center === null) return;
+        if (center !== currentCenter) hasDistinctCenter = true;
+        const distance = (center - currentCenter) * physicalDelta;
+        if (distance > 0 && distance < nearestDistance) {
+          nearestDistance = distance;
+          nextIndex = index;
+        }
+      });
+      if (hasDistinctCenter) return nextIndex;
+    }
+
+    const indexDelta = readDirection(this.root) === "rtl" ? -physicalDelta : physicalDelta;
+    return Math.max(0, Math.min(this.getSlotLimit() - 1, this.currentIndex + indexDelta));
+  }
 
   private readonly handlePaste = (event: ClipboardEvent): void => {
     if (this.disabled || this.readOnly) return;
@@ -704,7 +735,7 @@ class InputOtpController implements InputOtpInstance {
 
   private normalizeValueToChars(value: string): string[] {
     const normalizedValue = this.normalizeValue(value);
-    const chars = new Array<string>(this.getSlotLimit()).fill("");
+    const chars = Array.from({ length: this.getSlotLimit() }, () => "");
     for (let index = 0; index < chars.length; index += 1) {
       chars[index] = normalizedValue[index] ?? "";
     }

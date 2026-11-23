@@ -3,10 +3,10 @@ import type {
   StyledOutputPropExtend,
   StyledOutputPropField,
   StyledOutputRenderNode,
+  StyledOutputTypeParameter,
 } from "../../../styled-output-model/index.js";
-
-import type { VueComputedExpression } from "./expressions.js";
 import type { VueAttributeAccessProjection } from "../public-contract.js";
+import type { VueComputedExpression } from "./expressions.js";
 
 export type RenderVueComponentOptions = {
   directory: string;
@@ -20,7 +20,7 @@ export type VueImportName = { kind: "type" | "value"; name: string };
 export type VueModuleImport =
   | { kind: "default"; localName: string; source: string }
   | { kind: "framework"; names: VueImportName[] }
-  | { importName: string; kind: "named"; localName?: string; source: string }
+  | { importName: string; kind: "named"; localName?: string; source: string; typeOnly?: boolean }
   | { kind: "named-group"; names: string[]; source: string; typeOnly?: boolean }
   | { kind: "namespace"; localName: string; source: string }
   | { kind: "side-effect"; source: string };
@@ -42,6 +42,8 @@ export type VuePropsProjection = {
     extendsPublic: boolean;
     fields: Array<{ name: string; optional: boolean; type: string }>;
     name: string;
+    /** Replaces the public props type in the declared template props. */
+    publicExtension?: string;
     replacedPublicSourceFields: string[];
   };
   destructure: StyledOutputDestructureProp[];
@@ -173,5 +175,6 @@ export type VueStyledComponentProjection = {
   setup: string[];
   slots: VueSlotProjection[];
   specialization: VueStyledSpecialization;
+  typeParameters?: readonly StyledOutputTypeParameter[];
   usesAttrs: boolean;
 };

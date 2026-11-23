@@ -92,11 +92,7 @@
                 class={["w-full", props.class]}
                 >{@render children?.()}<span aria-hidden="true">⌄</span></Button
               >{/snippet}
-            <Select.Value placeholder="Choose"
-              >{#snippet children(label, selected)}{label ??
-                  selected ??
-                  "Choose"}{/snippet}</Select.Value
-            >
+            <Select.Value placeholder="Choose" />
           </Select.Trigger>
           <Select.Content aria-label="Action choices">{@render choices()}</Select.Content>
         </Select.Root>

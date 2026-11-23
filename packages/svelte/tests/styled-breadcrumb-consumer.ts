@@ -61,11 +61,7 @@ function attachRef(node: HTMLAnchorElement) {
 <a {...props} href={to} data-router-link {@attach attachRef}>{@render children?.()}</a>`;
 const declarations = breadcrumbParts
   .map(
-    ({
-      name,
-      element,
-      member,
-    }) => `let ${name}Ref = $state<${element}>();
+    ({ name, element, member }) => `let ${name}Ref = $state<${element}>();
 const ${name}Attrs: ${name}Props = { title: "${name}", ref: ${name}Ref, onpointerdown(event) { const owner: ${element} = event.currentTarget; void owner; } };
 const ${name}FromNamespace: typeof ${name} = BreadcrumbParts.${member}; void ${name}FromNamespace;`,
   )

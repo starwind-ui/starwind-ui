@@ -32,12 +32,11 @@ vi.mock("../../src/commands/init.js");
 import type { Task } from "@clack/prompts";
 // Now import the modules
 import * as clackPrompts from "@clack/prompts";
-
+import * as initModule from "../../src/commands/init.js";
+import { setup } from "../../src/commands/setup.js";
 import * as config from "../../src/utils/config.js";
 import * as env from "../../src/utils/env.js";
 import * as fs from "../../src/utils/fs.js";
-import * as initModule from "../../src/commands/init.js";
-import { setup } from "../../src/commands/setup.js";
 
 // Get references to the mocked functions
 const mockCancel = vi.mocked(clackPrompts.cancel);
@@ -181,7 +180,7 @@ describe("setup command", () => {
     expect(mockSetupStarwindProEnv).toHaveBeenCalled();
   });
 
-  it("rejects Pro setup for an existing Svelte config before mutation", async () => {
+  it("sets up Pro for an existing Svelte config", async () => {
     mockGetConfig.mockResolvedValue({
       $schema: "https://starwind.dev/config-schema.v2.json",
       version: 2,
@@ -192,17 +191,14 @@ describe("setup command", () => {
       components: [],
     });
 
-    await expect(setup({ pro: true })).rejects.toThrow("process.exit called");
+    await setup({ pro: true });
 
-    expect(mockLog.error).toHaveBeenCalledWith(
-      "Svelte 5 beta does not support Starwind Pro setup.",
-    );
-    expect(mockCheckStarwindProEnv).not.toHaveBeenCalled();
-    expect(mockSetupStarwindProConfig).not.toHaveBeenCalled();
-    expect(mockSetupStarwindProEnv).not.toHaveBeenCalled();
+    expect(mockLog.error).not.toHaveBeenCalled();
+    expect(mockSetupStarwindProConfig).toHaveBeenCalled();
+    expect(mockSetupStarwindProEnv).toHaveBeenCalled();
   });
 
-  it("passes Pro intent to init before a missing-config setup can mutate a Svelte host", async () => {
+  it("passes Pro intent to init and then sets up Pro for a new Svelte config", async () => {
     mockFileExists.mockResolvedValue(false);
     mockGetConfig.mockResolvedValue({
       $schema: "https://starwind.dev/config-schema.v2.json",
@@ -214,16 +210,15 @@ describe("setup command", () => {
       components: [],
     });
 
-    await expect(setup({ yes: true })).rejects.toThrow("process.exit called");
+    await setup({ yes: true });
 
     expect(mockInit).toHaveBeenCalledWith(true, {
       defaults: true,
       packageManager: undefined,
       pro: true,
     });
-    expect(mockCheckStarwindProEnv).not.toHaveBeenCalled();
-    expect(mockSetupStarwindProConfig).not.toHaveBeenCalled();
-    expect(mockSetupStarwindProEnv).not.toHaveBeenCalled();
+    expect(mockLog.error).not.toHaveBeenCalled();
+    expect(mockSetupStarwindProConfig).toHaveBeenCalled();
   });
 
   it("should handle errors during setup", async () => {

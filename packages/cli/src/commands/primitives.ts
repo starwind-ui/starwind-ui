@@ -10,7 +10,6 @@ import {
   type FrameworkTargetPolicy,
   isConfigTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
-  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -45,9 +44,7 @@ import { migrate } from "./migrate.js";
 
 export type PrivatePrimitiveCommandDependencies = {
   artifacts: PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
-  targetPolicy:
-    | FrameworkTargetPolicy<CliFrameworkTarget>
-    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
 };
 
 interface PrimitiveAddOptions {

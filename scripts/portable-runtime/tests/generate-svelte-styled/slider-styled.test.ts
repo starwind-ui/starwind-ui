@@ -2,11 +2,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { sliderStyledContract } from "../../contracts/styled/components/slider.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 it("regenerates stock Slider with a thumb repeat keyed by index", async () => {
   const outputRoot = await mkdtemp(path.join(os.tmpdir(), "svelte-styled-slider-"));
@@ -53,8 +53,9 @@ it.each(["collection", "item", "index", "part", "extra-child"])(
   },
 );
 
-import { createStyledSliderConsumer } from "../../../../packages/svelte/tests/styled-slider-consumer.js";
 import { verifyStyledSlider } from "../../../../packages/svelte/tests/styled-slider-browser.js";
+import { createStyledSliderConsumer } from "../../../../packages/svelte/tests/styled-slider-consumer.js";
+
 it("hydrates Styled Slider models, thumb identity, input and form behavior", async () => {
   const consumer = await createStyledSliderConsumer(process.cwd());
   try {

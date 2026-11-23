@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const progressStyledContract: StyledAdapterContract = {
   component: "progress",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: ["Progress"],
   defaultExport: { Root: "Progress" },
   defaultExportMode: "component",
@@ -16,7 +18,7 @@ export const progressStyledContract: StyledAdapterContract = {
       },
     },
     progressTrack: {
-      base: "h-full w-full",
+      base: "h-full w-full rtl:-scale-x-100",
     },
     progressIndicator: {
       base: [
@@ -25,7 +27,7 @@ export const progressStyledContract: StyledAdapterContract = {
       ],
       variants: {
         variant: {
-          indeterminate: "absolute inset-y-0 start-0 w-3/4",
+          indeterminate: "absolute inset-y-0 left-0 w-3/4",
         },
         color: {
           primary: "bg-primary",

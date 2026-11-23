@@ -36,14 +36,14 @@ describe("CLI framework target policy", () => {
     );
   });
 
-  it("includes both public beta targets in framework types", () => {
+  it("includes Vue and Svelte targets in framework types", () => {
     expectTypeOf<StarwindFramework>().toEqualTypeOf<"astro" | "react" | "svelte" | "vue">();
     expectTypeOf<RegistryImplementationTarget>().toEqualTypeOf<
       "legacy-astro" | "astro" | "react" | "svelte" | "vue"
     >();
   });
 
-  it("publishes Vue and Svelte through the production policy with beta labels", () => {
+  it("publishes Vue and Svelte through the production policy with stable labels", () => {
     expect(PUBLIC_FRAMEWORK_TARGET_POLICY).toEqual({
       cacheKey: "public",
       configTargets: ["astro", "react", "vue", "svelte"],
@@ -52,8 +52,8 @@ describe("CLI framework target policy", () => {
       labels: {
         astro: "Astro",
         react: "React",
-        vue: "Vue (beta)",
-        svelte: "Svelte 5 (beta)",
+        vue: "Vue",
+        svelte: "Svelte 5",
       },
       primitiveArtifactIntegrity: undefined,
       requiredAdapterPackages: {

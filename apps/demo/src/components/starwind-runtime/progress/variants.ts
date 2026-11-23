@@ -10,7 +10,7 @@ export const progress = tv({
 });
 
 export const progressTrack = tv({
-  base: "h-full w-full",
+  base: "h-full w-full rtl:-scale-x-100",
 });
 
 export const progressIndicator = tv({
@@ -20,7 +20,7 @@ export const progressIndicator = tv({
   ],
   variants: {
     variant: {
-      indeterminate: "absolute inset-y-0 start-0 w-3/4",
+      indeterminate: "absolute inset-y-0 left-0 w-3/4",
     },
     color: {
       primary: "bg-primary",

@@ -1,6 +1,6 @@
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
 
 import Progress from "../../../../apps/vue-demo/src/components/starwind-runtime/progress/Progress.vue";
 
@@ -49,7 +49,7 @@ describe("generated Vue Styled Progress SSR", () => {
 
     expect(html).toContain('aria-label="Waiting for server"');
     expect(html).toContain("relative");
-    expect(html).toContain("absolute inset-y-0 start-0 w-3/4");
+    expect(html).toContain("absolute inset-y-0 left-0 w-3/4");
     expect(html).toContain("bg-warning");
     expect(html).not.toContain("aria-valuenow");
     expect(html).not.toContain("translateX(");
@@ -116,7 +116,7 @@ describe("generated Vue Styled Progress SSR", () => {
     const html = await renderProgress({ value });
 
     expect(html).toContain("relative");
-    expect(html).toContain("absolute inset-y-0 start-0 w-3/4");
+    expect(html).toContain("absolute inset-y-0 left-0 w-3/4");
     expect(html).not.toContain("data-value=");
     expect(html).not.toContain("translateX(");
   });

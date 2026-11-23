@@ -72,9 +72,15 @@
     var(
       --sw-color-picker-area-background-overlay,
       linear-gradient(to top, #000, transparent),
-      linear-gradient(to right, #fff, transparent)
+      linear-gradient(var(--sw-color-picker-area-gradient-direction, to right), #fff, transparent)
     ),
     var(--sw-color-picker-area-background, hsl(var(--sw-color-picker-hue) 100% 50%));
+}
+[data-slot="color-picker-area-background"]:where(
+  [dir="rtl"],
+  [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)
+) {
+  --sw-color-picker-area-gradient-direction: to left;
 }
 [data-slot="color-picker-channel-slider"] {
   --sw-color-picker-channel-gradient-direction: to right;
@@ -83,6 +89,12 @@
     transparent,
     var(--sw-color-picker-color, #000)
   );
+}
+[data-slot="color-picker-channel-slider"][data-orientation="horizontal"]:where(
+    [dir="rtl"],
+    [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)
+  ) {
+  --sw-color-picker-channel-gradient-direction: to left;
 }
 [data-slot="color-picker-channel-slider"][data-orientation="vertical"] {
   --sw-color-picker-channel-gradient-direction: to top;

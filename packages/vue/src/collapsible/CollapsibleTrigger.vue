@@ -24,7 +24,9 @@ const AsChildTrigger = defineComponent({
     return () => {
       const children = slots.default?.() ?? [];
       const disabled =
-        disclosure?.disabled || Boolean(attrs.disabled) || Boolean(children[0]?.props?.disabled);
+        disclosure?.disabled ||
+        Boolean(attrs.disabled === "" || attrs.disabled) ||
+        Boolean(children[0]?.props?.disabled === "" || children[0]?.props?.disabled);
       const protectedProps = {
         disabled: disabled ? true : undefined,
         "data-disabled": disabled ? "" : undefined,
@@ -53,8 +55,10 @@ const AsChildTrigger = defineComponent({
     data-sw-collapsible-trigger
     data-sw-part="trigger"
     type="button"
-    :disabled="disclosure?.disabled || Boolean(attrs.disabled)"
-    :data-disabled="disclosure?.disabled || Boolean(attrs.disabled) ? '' : undefined"
+    :disabled="disclosure?.disabled || Boolean(attrs.disabled === '' || attrs.disabled)"
+    :data-disabled="
+      disclosure?.disabled || Boolean(attrs.disabled === '' || attrs.disabled) ? '' : undefined
+    "
     aria-expanded="false"
     data-state="closed"
   >

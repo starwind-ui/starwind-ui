@@ -4,7 +4,6 @@ import { ref } from "vue";
 import { Alert, AlertDescription, AlertTitle } from "./starwind-runtime/alert";
 import { AspectRatio } from "./starwind-runtime/aspect-ratio";
 import { Badge } from "./starwind-runtime/badge";
-import { Button } from "./starwind-runtime/button";
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -14,6 +13,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "./starwind-runtime/breadcrumb";
+import { Button } from "./starwind-runtime/button";
 import {
   ButtonGroup,
   ButtonGroupSeparator,
@@ -28,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./starwind-runtime/card";
+import { Input } from "./starwind-runtime/input";
 import {
   InputGroup,
   InputGroupAddon,
@@ -36,7 +37,6 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "./starwind-runtime/input-group";
-import { Input } from "./starwind-runtime/input";
 import {
   Item,
   ItemActions,

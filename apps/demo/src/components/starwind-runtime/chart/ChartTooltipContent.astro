@@ -1,0 +1,44 @@
+---
+import ChartPrimitive from "@starwind-ui/astro/chart";
+import {
+  chartTooltipContent,
+  chartTooltipCustom,
+  chartTooltipIcon,
+  chartTooltipIndicator,
+  chartTooltipItem,
+  chartTooltipLabel,
+  chartTooltipName,
+  chartTooltipValue,
+} from "./variants";
+
+type Props<T = unknown> = Omit<
+  import("@starwind-ui/astro/chart").ChartTooltipContentProps<T>,
+  "children"
+> & {
+  labelClass?: string;
+};
+
+const { class: className, slot: _slot, labelClass: labelClassName, ...rest } = Astro.props;
+
+const labelClass = chartTooltipLabel({ class: labelClassName });
+---
+
+<ChartPrimitive.TooltipContent
+  {...rest}
+  class={chartTooltipContent({ class: className })}
+  data-slot="chart-tooltip-content"
+>
+  <ChartPrimitive.TooltipLabel class={labelClass} />
+
+  <ChartPrimitive.TooltipItems>
+    <ChartPrimitive.TooltipItem class={chartTooltipItem()} customClass={chartTooltipCustom()}>
+      <ChartPrimitive.TooltipIcon class={chartTooltipIcon()} />
+
+      <ChartPrimitive.TooltipIndicator class={chartTooltipIndicator()} />
+
+      <ChartPrimitive.TooltipName class={chartTooltipName()} labelClass={labelClass} />
+
+      <ChartPrimitive.TooltipValue class={chartTooltipValue()} />
+    </ChartPrimitive.TooltipItem>
+  </ChartPrimitive.TooltipItems>
+</ChartPrimitive.TooltipContent>

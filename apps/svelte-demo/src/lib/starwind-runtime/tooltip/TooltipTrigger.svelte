@@ -9,14 +9,14 @@
 
 <script lang="ts">
   let {
-    "disabled": disabled = false,
+    disabled = false,
     "class": className,
-    "child": child,
-    "children": children,
+    child,
+    children,
     ...rest
   }: TooltipTriggerProps = $props();
 
-  let triggerClassName = $derived(cx(child ? undefined : "inline-flex", className));
+  let triggerClassName = $derived(cx(className));
 </script>
 
 <TooltipTrigger

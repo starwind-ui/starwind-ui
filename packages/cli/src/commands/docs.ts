@@ -1,10 +1,6 @@
 import * as p from "@clack/prompts";
 
-import {
-  type CliFrameworkTarget,
-  type FrameworkTargetPolicy,
-  type PublicCliFrameworkTarget,
-} from "@/utils/framework-target-policy.js";
+import type { CliFrameworkTarget, FrameworkTargetPolicy } from "@/utils/framework-target-policy.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { loadRegistry, parseRegistrySource, type StarwindRegistryFor } from "@/utils/registry.js";
 
@@ -15,9 +11,7 @@ interface DocsOptions {
 
 export type PrivateVueDocsDependencies = {
   registry: StarwindRegistryFor<CliFrameworkTarget>;
-  targetPolicy:
-    | FrameworkTargetPolicy<CliFrameworkTarget>
-    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
 };
 
 const DOCS_BASE_URL = "https://starwind.dev/docs/components";

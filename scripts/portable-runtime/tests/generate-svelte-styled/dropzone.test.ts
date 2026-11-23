@@ -2,11 +2,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+import { verifyDropzone } from "../../../../packages/svelte/tests/dropzone-browser.js";
+import { createStyledDropzoneConsumer } from "../../../../packages/svelte/tests/styled-dropzone-consumer.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { dropzoneStyledContract } from "../../contracts/styled/components/dropzone.js";
-import { createStyledDropzoneConsumer } from "../../../../packages/svelte/tests/styled-dropzone-consumer.js";
-import { verifyDropzone } from "../../../../packages/svelte/tests/dropzone-browser.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 
 it("hydrates Styled Dropzone through its native file owner and committed notifications", async () => {
   const consumer = await createStyledDropzoneConsumer(process.cwd());

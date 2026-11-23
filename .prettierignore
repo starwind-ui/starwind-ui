@@ -1,6 +1,9 @@
 # Ignore artifacts:
 dist
+packages/*/docs
 .astro
+**/.svelte-kit
+apps/svelte-demo/build
 coverage
 **/coverage
 
@@ -38,8 +41,25 @@ ai-context
 
 # local projects
 .local
+.claude
 scripts/portable-runtime/docs/layered-docs/generated/**
 scripts/portable-runtime/evidence/**
 
 # turbo files
 **/.turbo
+
+# Svelte Styled CSS keeps the contract text byte for byte (see svelte/styled/writer.ts)
+apps/svelte-demo/src/lib/starwind-runtime/**/*.css
+
+# Script-generated reports and saved evidence
+scripts/portable-runtime/framework-surface-manifest.json
+scripts/portable-runtime/product-package-size-snapshots
+scripts/portable-runtime/tests/direction/inventory/physical-tokens.json
+scripts/portable-runtime/tests/direction/staging
+docs/portable-runtime/diagnostics
+docs/portable-runtime/performance-evidence
+docs/portable-runtime/primitive-adapter-audit.md
+docs/portable-runtime/runtime-performance-comparison.md
+
+# Upstream shadcn/ui reference copies
+docs/shadcn-ui

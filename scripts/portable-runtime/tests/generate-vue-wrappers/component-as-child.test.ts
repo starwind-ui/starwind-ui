@@ -25,7 +25,7 @@ describe("generated Vue component-rooted asChild support", () => {
     expect(helper).toContain("export function createVueAsChild");
     expect(helper).toContain("cloneVNode");
     expect(helper).toContain("mergeProps");
-    expect(helper).toContain("Fragment");
+    expect(helper).toContain('import { resolveVueAsChildTarget } from "./as-child-target";');
     expect(helper).toContain("exposedElement = isRef(component.element)");
     expect(helper).toContain("publicRoot = component.$el");
     expect(helper).toContain("element.value = null");
@@ -47,11 +47,21 @@ describe("generated Vue component-rooted asChild support", () => {
     expect(nativeControl).toContain("export function useVueNativeControl");
     expect(nativeControl).toContain("cloneVNode");
     expect(nativeControl).toContain("mergeProps");
+    // Native controls share only the small child resolver, never the larger as-child module.
     expect(nativeControl).not.toContain('from "./as-child"');
-    expect(nativeControl).toContain('typeof child.type !== "string"');
-    expect(nativeControl).toContain('typeof child.type !== "object"');
+    expect(nativeControl).toContain('import { resolveVueAsChildTarget } from "./as-child-target";');
+    expect(nativeControl).toContain("const child = resolveVueAsChildTarget(name, children);");
     expect(nativeControl).not.toContain("allowComponentRoot");
-    expect(nativeControl).not.toContain("Fragment");
+
+    const asChildTarget = await readFile(
+      path.join(outputRoot, "_internal/as-child-target.ts"),
+      "utf8",
+    );
+    expect(asChildTarget).toContain(
+      'import { Comment, Fragment, isVNode, type VNode } from "vue";',
+    );
+    expect(asChildTarget).toContain("boundary.type === Fragment");
+    expect(asChildTarget).toContain('typeof child.type === "symbol"');
     expect(nativeControl).not.toContain("patchFlag");
     expect(nativeControl).toContain('child.type === "button"');
     expect(nativeControl).toContain("consumerProps.type === undefined");

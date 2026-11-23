@@ -45,10 +45,7 @@ export function specializeSvelteStyledAccordion(
     const callback = owner.attrs.find((attr) => attr.name === "onValueChange");
     if (!callback) throw new TypeError("Styled Accordion requires its value callback contract.");
     callback.targetScopes = ["svelte"];
-    props.push(
-      { name: "value", defaultValue: "$bindable()" },
-      { name: "onValueChange" },
-    );
+    props.push({ name: "value", defaultValue: "$bindable()" }, { name: "onValueChange" });
     owner.children = [];
     owner.attrs.push({ name: "children", value: { type: "variable", name: "children" } });
   } else if (part === "Item") props.push({ name: "value" });

@@ -9,16 +9,16 @@
 
 <script lang="ts">
   let {
-    "defaultOpen": defaultOpen,
-    "disabled": disabled = false,
-    "modal": modal = false,
-    "openOnHover": openOnHover = false,
-    "closeDelay": closeDelay = 200,
+    defaultOpen,
+    disabled = false,
+    modal = false,
+    openOnHover = false,
+    closeDelay = 200,
     "class": className,
     open = $bindable(),
-    "onOpenChange": onOpenChange,
-    "onCloseComplete": onCloseComplete,
-    "children": children,
+    onOpenChange,
+    onCloseComplete,
+    children,
     "open": commandOpen,
     ...rest
   }: DropdownProps = $props();

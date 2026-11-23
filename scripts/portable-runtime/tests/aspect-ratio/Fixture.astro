@@ -1,0 +1,20 @@
+---
+import AspectRatio from "../../../../apps/demo/src/components/starwind-runtime/aspect-ratio/AspectRatio.astro";
+import { cases, childHtml, propsFor } from "./cases.mjs";
+---
+
+{
+  cases.map((entry) =>
+    entry.hostClass ? (
+      <div class={entry.hostClass} style="width: 320px">
+        <AspectRatio {...propsFor(entry, "astro")}>
+          <Fragment set:html={childHtml(entry.child)} />
+        </AspectRatio>
+      </div>
+    ) : (
+      <AspectRatio {...propsFor(entry, "astro")}>
+        <Fragment set:html={childHtml(entry.child)} />
+      </AspectRatio>
+    ),
+  )
+}

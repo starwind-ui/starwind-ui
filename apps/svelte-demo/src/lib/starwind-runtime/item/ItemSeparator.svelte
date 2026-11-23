@@ -9,7 +9,7 @@
 
 <script lang="ts">
   let {
-    "orientation": orientation = "horizontal",
+    orientation = "horizontal",
     "class": className,
     ...rest
   }: ItemSeparatorProps = $props();

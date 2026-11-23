@@ -26,7 +26,7 @@ export function mergeProjection(projection: ColorPickerInitialPartProjection, au
   const css = Object.entries(projection.styles).filter(([, value]) => value !== undefined).map(([name, value]) => name + ":" + value).join(";");
   // Keep attachment symbols on the native spread. Svelte gives each symbol its own effect.
   Object.assign(result, authored, protectedProps);
-  if (css) result.style = css + ";" + (authored.style ?? "");
+  if (css) result.style = css + ";" + String(authored.style ?? "");
   const owns = (name: string) => !(name in authored) && !((name === "readOnly" ? "readonly" : name) in authored) && !(name in protectedProps);
   const tokens = [...projection.ownership.attributes.filter(owns).map((name) => "a:" + name), ...projection.ownership.properties.filter(owns).map((name) => "p:" + name)];
   if (tokens.length) result["data-sw-color-picker-initial-owned"] = tokens.join(",");

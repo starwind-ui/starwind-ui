@@ -1,0 +1,100 @@
+---
+import ChartGalleryCard from "./ChartGalleryCard.astro";
+import { type ChartGalleryType, chartGallery, chartGalleryTypes } from "./chart-catalog";
+
+interface Props {
+  type: ChartGalleryType;
+}
+
+const { type } = Astro.props;
+const entries = chartGallery[type];
+const label = chartGalleryTypes.find((item) => item.type === type)?.label ?? type;
+// shadcn fills a 12-slot grid and shows the empty slots as dashed boxes on wide screens.
+const slots = Array.from({ length: Math.max(12, entries.length) }, (_, index) => entries[index]);
+---
+
+<div class="space-y-6" data-chart-gallery={type}>
+  <nav class="flex flex-wrap items-center" aria-label="Chart types">
+    {
+      chartGalleryTypes.map((item) => (
+        <a
+          href={`/runtime-charts/${item.type}/`}
+          class="text-muted-foreground hover:text-primary data-[active=true]:text-primary flex h-7 shrink-0 items-center justify-center px-4 text-center text-base font-medium transition-colors"
+          data-active={item.type === type ? "true" : "false"}
+          aria-current={item.type === type ? "page" : undefined}
+          data-chart-gallery-nav={item.type}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <h2 class="sr-only">{label}</h2>
+  {
+    entries.length === 0 && (
+      <p class="text-muted-foreground text-sm" data-chart-gallery-empty>
+        This view has no charts yet.
+      </p>
+    )
+  }
+  <div
+    class="grid flex-1 scroll-mt-20 items-stretch gap-10 md:grid-cols-2 md:gap-6 lg:grid-cols-3 xl:gap-10"
+    data-chart-gallery-grid
+  >
+    {
+      slots.map((entry) =>
+        entry ? (
+          <ChartGalleryCard entry={entry} />
+        ) : (
+          <div class="hidden aspect-square w-full rounded-lg border border-dashed xl:block" />
+        ),
+      )
+    }
+  </div>
+</div>
+
+<script>
+  // Importing the catalog registers its chart modules, so the server-rendered charts start.
+  import { getChartController } from "@/components/starwind-runtime/chart";
+
+  import { chartGallery, chartGalleryRows } from "./chart-catalog";
+
+  const entries = Object.values(chartGallery).flat();
+
+  function cardOf(control: Element) {
+    const card = control.closest<HTMLElement>("[data-chart-gallery-card]");
+    const entry = entries.find((item) => item.id === card?.dataset.chartGalleryCard);
+    const root = card?.querySelector<HTMLElement>('[data-slot="chart"]');
+    const controller = root ? getChartController(root) : undefined;
+    return card && entry && controller ? { card, entry, controller } : undefined;
+  }
+
+  // One delegated listener survives client-router swaps, and it finds the controller only when
+  // the reader uses a control, after the chart has started.
+  document.addEventListener("change", (event) => {
+    const select = (event.target as Element | null)?.closest<HTMLSelectElement>(
+      "select[data-chart-gallery-range], select[data-chart-gallery-active]",
+    );
+    const target = select && cardOf(select);
+    if (!target) return;
+    target.controller.update({ data: chartGalleryRows(target.entry, select.value) });
+  });
+
+  document.addEventListener("click", (event) => {
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>(
+      "button[data-chart-gallery-series]",
+    );
+    const target = button && cardOf(button);
+    if (!target) return;
+    const key = button.dataset.chartGallerySeries!;
+    target.controller.update({ visible: [key] });
+    for (const item of target.card.querySelectorAll<HTMLButtonElement>(
+      "button[data-chart-gallery-series]",
+    )) {
+      const active = item === button;
+      item.dataset.active = String(active);
+      item.setAttribute("aria-pressed", String(active));
+    }
+  });
+</script>

@@ -1,3 +1,4 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract, StyledComponentContract } from "../types.js";
 
 const chevronLeftImport = {
@@ -76,6 +77,7 @@ function paginationPart(
 
 export const paginationStyledContract: StyledAdapterContract = {
   component: "pagination",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Pagination",
     "PaginationContent",
@@ -250,6 +252,7 @@ export const paginationStyledContract: StyledAdapterContract = {
                 {
                   type: "icon",
                   importName: "ChevronLeft",
+                  attrs: [{ name: "class", value: { type: "literal", value: "rtl:rotate-180" } }],
                 },
               ],
             },
@@ -296,6 +299,7 @@ export const paginationStyledContract: StyledAdapterContract = {
                 {
                   type: "icon",
                   importName: "ChevronRight",
+                  attrs: [{ name: "class", value: { type: "literal", value: "rtl:rotate-180" } }],
                 },
               ],
             },
@@ -334,7 +338,7 @@ export const paginationStyledContract: StyledAdapterContract = {
           type: "element",
           tag: "span",
           attrs: [
-            { name: "aria-hidden" },
+            { name: "aria-hidden", value: { type: "literal", value: "true" } },
             {
               name: "class",
               value: {

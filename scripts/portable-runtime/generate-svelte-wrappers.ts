@@ -1,15 +1,14 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
-
-import { getPrimitiveFrameworkAdapterTarget } from "./renderers/framework-adapters/target-registry.js";
+import { formatGeneratedOutput } from "./format-generated-output.js";
 import { SVELTE_PACKAGE_COMPONENTS } from "./renderers/framework-adapters/svelte/inventory.js";
+import { getPrimitiveFrameworkAdapterTarget } from "./renderers/framework-adapters/target-registry.js";
 import { getPrimitiveGeneratorEntries } from "./renderers/primitive-generator-registry.js";
 
 export const SVELTE_PRIMITIVE_OUTPUT_DIR = "packages/svelte/src";
 export const GENERATED_BY = "scripts/portable-runtime/generate-svelte-wrappers.ts";
+const CHECKOUT_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
 export type GenerateSveltePrimitiveWrappersOptions = {
   generatedBy?: string;
@@ -43,7 +42,8 @@ export async function generateSveltePrimitiveWrappers(
     generatedBy: options.generatedBy ?? GENERATED_BY,
     outputRoot,
   });
-  await formatSvelteTypeScriptOutput(outputRoot, repoRoot);
+  // Format from this checkout: an output repoRoot can be a bare folder with no formatter install.
+  await formatGeneratedOutput([outputRoot], CHECKOUT_ROOT);
 }
 
 if (isDirectExecution()) await generateSveltePrimitiveWrappers();
@@ -52,33 +52,4 @@ function isDirectExecution(): boolean {
   return (
     Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
   );
-}
-
-async function formatSvelteTypeScriptOutput(outputRoot: string, repoRoot: string): Promise<void> {
-  const files = await listTypeScriptFiles(outputRoot);
-  const prettierConfig =
-    (await resolvePrettierConfig(path.join(repoRoot, "prettier.config.mjs"))) ?? {};
-
-  await Promise.all(
-    files.map(async (file) => {
-      const source = await readFile(file, "utf8");
-      const formatted = await formatWithPrettier(source, {
-        ...prettierConfig,
-        filepath: file,
-      });
-      if (formatted !== source) await writeFile(file, formatted, "utf8");
-    }),
-  );
-}
-
-async function listTypeScriptFiles(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files = await Promise.all(
-    entries.map(async (entry) => {
-      const candidate = path.join(directory, entry.name);
-      if (entry.isDirectory()) return listTypeScriptFiles(candidate);
-      return entry.isFile() && entry.name.endsWith(".ts") ? [candidate] : [];
-    }),
-  );
-  return files.flat().sort();
 }

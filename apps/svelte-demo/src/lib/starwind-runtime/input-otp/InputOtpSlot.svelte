@@ -12,9 +12,9 @@
 
 <script lang="ts">
   let {
-    "index": index,
+    index,
     "class": className,
-    "ref": ref,
+    ref,
     ...rest
   }: InputOtpSlotProps = $props();
 </script>

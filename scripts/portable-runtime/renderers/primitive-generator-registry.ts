@@ -19,10 +19,12 @@ import {
   buildAccordionSpecializedAdapterSpec,
   buildCarouselAdapterOutputModel,
   buildCarouselSpecializedAdapterSpec,
-  buildComboboxAdapterOutputModel,
-  buildComboboxSpecializedAdapterSpec,
+  buildChartAdapterOutputModel,
+  buildChartSpecializedAdapterSpec,
   buildColorPickerAdapterOutputModel,
   buildColorPickerSpecializedAdapterSpec,
+  buildComboboxAdapterOutputModel,
+  buildComboboxSpecializedAdapterSpec,
   buildContextMenuAdapterOutputModel,
   buildContextMenuSpecializedAdapterSpec,
   buildDropzoneAdapterOutputModel,
@@ -55,161 +57,171 @@ type SpecializedPrimitiveGeneratorFactory = {
   createEntry(entry: PrimitiveRuntimeAdapterInventoryEntry): PrimitiveGeneratorRegistryEntry;
 };
 
-const specializedPrimitiveGeneratorFactories: Record<string, SpecializedPrimitiveGeneratorFactory> = {
-  accordion: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildAccordionAdapterOutputModel,
-        buildSpec: buildAccordionSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  carousel: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildCarouselAdapterOutputModel,
-        buildSpec: buildCarouselSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  combobox: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildComboboxAdapterOutputModel,
-        buildSpec: buildComboboxSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  "color-picker": {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildColorPickerAdapterOutputModel,
-        buildSpec: buildColorPickerSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  "context-menu": {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildContextMenuAdapterOutputModel,
-        buildSpec: buildContextMenuSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  dropzone: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildDropzoneAdapterOutputModel,
-        buildSpec: buildDropzoneSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  field: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildFieldAdapterOutputModel,
-        buildSpec: buildFieldSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  "input-otp": {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildInputOtpAdapterOutputModel,
-        buildSpec: buildInputOtpSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  menu: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildMenuAdapterOutputModel,
-        buildSpec: buildMenuSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  "navigation-menu": {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildNavigationMenuAdapterOutputModel,
-        buildSpec: buildNavigationMenuSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  "preview-card": {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildPreviewCardAdapterOutputModel,
-        buildSpec: buildPreviewCardSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  select: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildSelectAdapterOutputModel,
-        buildSpec: buildSelectSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  sidebar: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildSidebarAdapterOutputModel,
-        buildSpec: buildSidebarSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  slider: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildSliderAdapterOutputModel,
-        buildSpec: buildSliderSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  tabs: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildTabsAdapterOutputModel,
-        buildSpec: buildTabsSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  toast: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildToastAdapterOutputModel,
-        buildSpec: buildToastSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-  tooltip: {
-    createEntry: (entry) =>
-      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
-        buildOutputModel: buildTooltipAdapterOutputModel,
-        buildSpec: buildTooltipSpecializedAdapterSpec,
-        component: entry.component,
-        contract: entry.contract,
-      }),
-  },
-};
+const specializedPrimitiveGeneratorFactories: Record<string, SpecializedPrimitiveGeneratorFactory> =
+  {
+    accordion: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildAccordionAdapterOutputModel,
+          buildSpec: buildAccordionSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    carousel: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildCarouselAdapterOutputModel,
+          buildSpec: buildCarouselSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    chart: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildChartAdapterOutputModel,
+          buildSpec: buildChartSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    combobox: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildComboboxAdapterOutputModel,
+          buildSpec: buildComboboxSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    "color-picker": {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildColorPickerAdapterOutputModel,
+          buildSpec: buildColorPickerSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    "context-menu": {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildContextMenuAdapterOutputModel,
+          buildSpec: buildContextMenuSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    dropzone: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildDropzoneAdapterOutputModel,
+          buildSpec: buildDropzoneSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    field: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildFieldAdapterOutputModel,
+          buildSpec: buildFieldSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    "input-otp": {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildInputOtpAdapterOutputModel,
+          buildSpec: buildInputOtpSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    menu: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildMenuAdapterOutputModel,
+          buildSpec: buildMenuSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    "navigation-menu": {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildNavigationMenuAdapterOutputModel,
+          buildSpec: buildNavigationMenuSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    "preview-card": {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildPreviewCardAdapterOutputModel,
+          buildSpec: buildPreviewCardSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    select: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildSelectAdapterOutputModel,
+          buildSpec: buildSelectSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    sidebar: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildSidebarAdapterOutputModel,
+          buildSpec: buildSidebarSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    slider: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildSliderAdapterOutputModel,
+          buildSpec: buildSliderSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    tabs: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildTabsAdapterOutputModel,
+          buildSpec: buildTabsSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    toast: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildToastAdapterOutputModel,
+          buildSpec: buildToastSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+    tooltip: {
+      createEntry: (entry) =>
+        createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+          buildOutputModel: buildTooltipAdapterOutputModel,
+          buildSpec: buildTooltipSpecializedAdapterSpec,
+          component: entry.component,
+          contract: entry.contract,
+        }),
+    },
+  };
 
 export const primitiveGeneratorRegistry: readonly PrimitiveGeneratorRegistryEntry[] = [
   ...getRuntimeAdapterPrimitiveInventoryEntries().map(createRuntimeAdapterPrimitiveGeneratorEntry),

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type AnchorHTMLAttributes } from "vue";
+import type { AnchorHTMLAttributes } from "vue";
 import { sidebarMenuSubButton } from "./variants";
 
 defineOptions({ inheritAttrs: false });

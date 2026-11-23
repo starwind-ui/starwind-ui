@@ -75,7 +75,8 @@ export function specializeSvelteStyledTooltip(
     props.push({ name: "child" });
     const classes = component.variables.find((variable) => variable.name === "triggerClassName");
     if (!classes) fail("missing Trigger class composition");
-    classes!.value = { type: "raw", code: 'cx(child ? undefined : "inline-flex", className)' };
+    // Svelte has no asChild. Its own button stands for the React and Vue text child fallback.
+    classes!.value = { type: "raw", code: "cx(className)" };
   }
   if (part === "Popup") props.push({ name: "positionerClass" }, { name: "icon" });
   props.push({ name: "children" });

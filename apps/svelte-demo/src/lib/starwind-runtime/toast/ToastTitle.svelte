@@ -12,9 +12,9 @@
 <script lang="ts">
   let {
     "class": className,
-    "variant": variant = "default",
-    "children": children,
-    "icon": icon,
+    variant = "default",
+    children,
+    icon,
     ...rest
   }: ToastTitleProps = $props();
 </script>

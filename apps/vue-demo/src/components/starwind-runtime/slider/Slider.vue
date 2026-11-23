@@ -85,11 +85,22 @@ const emit = defineEmits<{
   "update:modelValue": [value: import("@starwind-ui/vue/slider").SliderValue | undefined];
 }>();
 const resolvedValue = computed(() => modelValue ?? defaultValue);
-const values = computed(() =>
-  Array.isArray(resolvedValue.value) ? resolvedValue.value : [resolvedValue.value],
-);
+const getPaintValues = computed(() => (input: number | number[]) => {
+  const items = Array.isArray(input) ? input : [input];
+  if (!items.length) return [min];
+  const precision = (String(step).split(".")[1] ?? "").length;
+  return items
+    .map((item) => {
+      if (!Number.isFinite(item)) return min;
+      const snapped =
+        step > 0 ? Number((Math.round((item - min) / step) * step + min).toFixed(precision)) : item;
+      return Math.min(Math.max(snapped, min), max);
+    })
+    .sort((left, right) => left - right);
+});
+const values = computed(() => getPaintValues.value(resolvedValue.value));
 const getPercentage = computed(
-  () => (item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100),
+  () => (item: number) => (max <= min ? 0 : ((item - min) / (max - min)) * 100),
 );
 const rangeStart = computed(() =>
   values.value.length > 1 ? getPercentage.value(Math.min(...values.value)) : 0,
@@ -101,7 +112,7 @@ const rangeEnd = computed(() =>
 );
 const rangeStyle = computed(() =>
   orientation === "horizontal"
-    ? { left: `${rangeStart.value}%`, width: `${rangeEnd.value - rangeStart.value}%` }
+    ? { insetInlineStart: `${rangeStart.value}%`, width: `${rangeEnd.value - rangeStart.value}%` }
     : { bottom: `${rangeStart.value}%`, height: `${rangeEnd.value - rangeStart.value}%` },
 );
 function handleValueChange(
@@ -183,7 +194,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
           :index="index"
           :style="
             orientation === 'horizontal'
-              ? { left: `${getPercentage(values[index] ?? min)}%` }
+              ? { insetInlineStart: `${getPercentage(values[index] ?? min)}%` }
               : { bottom: `${getPercentage(values[index] ?? min)}%` }
           "
           :data-orientation="orientation"

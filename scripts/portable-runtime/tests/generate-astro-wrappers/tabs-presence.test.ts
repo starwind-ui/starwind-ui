@@ -72,7 +72,7 @@ document.querySelector('#external')!.addEventListener('click', () => createTabs(
     await once(server, "listening");
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("Missing browser server port");
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ channel: "chrome", headless: true });
     const page = await browser.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));

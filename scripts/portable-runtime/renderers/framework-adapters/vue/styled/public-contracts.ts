@@ -25,6 +25,11 @@ type VueStyledPublicContract = {
   }>;
   attributeBindings?: Readonly<Record<string, string>>;
   declaredExtendsPublic?: boolean;
+  /**
+   * The type that the declared template props extend in place of the public props type. Use it
+   * when the public type stays strict for script use and a template needs a different shape.
+   */
+  declaredPublicExtension?: string;
   declaredFieldTypes?: Readonly<Record<string, string>>;
   declaredPropNames?: Readonly<Record<string, string>>;
   emits?: ReadonlyArray<VueEmitProjection>;
@@ -91,6 +96,14 @@ const tabsValueModel = projectVueModel("value");
 const toggleGroupValueModel = projectVueModel("value");
 
 const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
+  // The public ChartContainerProps is the strict Root props union. In a template, a union whose
+  // definition branch forbids the visibility listeners stops vue-tsc from typing inline
+  // \`@visible-change\` and \`@update:visible\` handlers. ChartContainer forwards listeners as
+  // attributes and declares no emits, so its template props give the definition branch the same
+  // listener types. The Root rejects a listener on a definition at setup.
+  "chart:ChartContainer": {
+    declaredPublicExtension: `import("@starwind-ui/vue/chart").ChartRootSourceProps<T, D, X, Y> | (Omit<import("@starwind-ui/vue/chart").ChartRootDefinitionProps<T, D, X, Y>, "onVisibleChange" | "onUpdate:visible"> & Pick<import("@starwind-ui/vue/chart").ChartRootSourceProps<T, D, X, Y>, "onVisibleChange" | "onUpdate:visible">)`,
+  },
   "accordion:Accordion": {
     emits: [
       {

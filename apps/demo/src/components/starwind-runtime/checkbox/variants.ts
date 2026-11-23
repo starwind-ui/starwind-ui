@@ -7,7 +7,7 @@ export const checkboxWrapper = tv({
 export const checkbox = tv({
   base: [
     "peer border-input bg-background dark:bg-input/30 relative flex shrink-0 items-center justify-center rounded-sm border",
-    "transition-all focus-visible:ring-3",
+    "transition-[color,background-color,border-color,box-shadow,opacity] focus-visible:ring-3",
     "after:absolute after:-inset-x-3 after:-inset-y-2",
     "outline-0 focus:ring-0 focus:ring-offset-0",
     "not-data-disabled:cursor-pointer data-disabled:cursor-not-allowed data-disabled:opacity-50",

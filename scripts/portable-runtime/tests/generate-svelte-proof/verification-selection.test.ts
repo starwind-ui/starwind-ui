@@ -242,8 +242,8 @@ describe("Svelte verification selection", () => {
     const result = await selectSvelteVerification([], { all: true });
     const commands = svelteCommands(result);
     expectPortalCommands(result);
-    expect(result.primitives).toHaveLength(37);
-    expect(result.styled).toHaveLength(54);
+    expect(result.primitives).toHaveLength(38);
+    expect(result.styled).toHaveLength(55);
     const argumentsText = commands.map((command) => command.args.join(" ")).join("\n");
     expect(argumentsText).not.toMatch(/svelte:(?:compatibility|hosts|economics)|--visual/);
     expect(commands.filter((command) => command.label === "Build Runtime once")).toHaveLength(1);

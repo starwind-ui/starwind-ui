@@ -4,19 +4,22 @@ import path from "node:path";
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import semver from "semver";
-
+import { ensureAstroReactIntegration } from "./astro-react-integration.js";
+import { type ChartTokenSyncResult, syncChartTokens } from "./chart-tokens.js";
 import type {
   ComponentConfigFor,
   StarwindConfigFor,
   StarwindFramework,
   StyledRegistryConfig,
 } from "./config.js";
-import { DEFAULT_STYLED_REGISTRY_REFERENCE } from "./config.js";
-import { getStyledComponentDir, getStyledComponentDirConfigUpdate } from "./config.js";
-import { updateConfig } from "./config.js";
+import {
+  DEFAULT_STYLED_REGISTRY_REFERENCE,
+  getStyledComponentDir,
+  getStyledComponentDirConfigUpdate,
+  updateConfig,
+} from "./config.js";
 import { PATHS } from "./constants.js";
 import { filterUninstalledDependencies } from "./dependency-resolver.js";
-import { ensureAstroReactIntegration } from "./astro-react-integration.js";
 import {
   type CliFrameworkTarget,
   type FrameworkTargetPolicy,
@@ -33,12 +36,12 @@ import {
 } from "./react-project.js";
 import {
   type ComponentFor,
+  getStyledRegistrySource,
   loadRegistry,
   type RegistryPackageRequirement,
   type RegistrySource,
   type RegistryTarget,
   type StarwindRegistryFor,
-  getStyledRegistrySource,
 } from "./registry.js";
 
 type RuntimeInstallStatus = {
@@ -49,6 +52,8 @@ type RuntimeInstallStatus = {
 };
 
 export type RuntimeInstallSummary = {
+  /** Present when this install added the `chart` component. */
+  chartTokens?: ChartTokenSyncResult;
   failed: RuntimeInstallStatus[];
   installed: RuntimeInstallStatus[];
   skipped: RuntimeInstallStatus[];
@@ -427,6 +432,10 @@ export async function installRuntimeComponents<TFramework extends CliFrameworkTa
 
   if (summary.installed.length > 0) {
     await syncReactProjectComponentStyles(options.config, reactHostKind);
+  }
+
+  if (summary.installed.some((component) => component.name === "chart")) {
+    summary.chartTokens = await syncChartTokens(options.config.tailwind.css);
   }
 
   if (summary.installed.length > 0 && options.writeConfig !== false) {

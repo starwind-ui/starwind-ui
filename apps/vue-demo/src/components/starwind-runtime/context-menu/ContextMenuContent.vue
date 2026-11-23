@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { contextMenuContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -61,6 +61,7 @@ defineSlots<{
       :avoid-collisions="avoidCollisions"
       v-bind="$attrs"
       data-slot="context-menu-content"
+      data-sw-context-menu-entry
     >
       <slot />
     </ContextMenuPrimitive.ContextMenuPopup>

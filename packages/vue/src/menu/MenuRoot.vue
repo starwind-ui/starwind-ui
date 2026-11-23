@@ -155,7 +155,7 @@ onBeforeUnmount(() => {
     :data-default-open="initialDefaultOpen ? 'true' : undefined"
     :data-disabled="props.disabled ? '' : undefined"
     :data-modal="props.modal ? 'true' : 'false'"
-    :data-open-on-hover="props.openOnHover ? '' : undefined"
+    :data-open-on-hover="props.openOnHover ? 'true' : undefined"
     :data-close-delay="props.closeDelay"
     :data-state="renderedOpen ? 'open' : 'closed'"
   >

@@ -52,9 +52,12 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
     <div
       class:list={[
         "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+        side === "right" ? "order-(--sw-sidebar-right-order)" : "order-(--sw-sidebar-left-order)",
         className,
       ]}
       {...rest}
+      data-sidebar-owner-side={side}
+      data-collapsible-mode="none"
       data-slot="sidebar"
     >
       <slot />
@@ -69,6 +72,7 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
         data-collapsible-mode={collapsible}
         data-variant={variant}
         data-side={side}
+        data-sidebar-owner-side={side}
         data-slot="sidebar"
       >
         {/* Gap placeholder for layout */}
@@ -86,6 +90,7 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
       <Sheet class="md:hidden" data-slot="sidebar-mobile">
         <SheetContent
           side={side}
+          data-sidebar-owner-side={side}
           class={sidebarMobileContent()}
           style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE }}
         >

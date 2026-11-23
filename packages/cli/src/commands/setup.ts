@@ -58,11 +58,6 @@ export async function setup(options?: SetupOptions) {
       }
     }
 
-    const config = await getConfig().catch(() => undefined);
-    if (config?.framework === "svelte") {
-      throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
-    }
-
     // 2. Define available setup tasks
     const tasks: SetupTask[] = [
       {

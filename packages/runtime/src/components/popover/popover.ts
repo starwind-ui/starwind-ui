@@ -1,4 +1,3 @@
-import { presentDomOwnedPopup } from "../../internal/dom-owned-popup";
 import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
@@ -8,6 +7,7 @@ import {
   resolveAsChildControl,
   uniqueElements,
 } from "../../internal/dom";
+import { presentDomOwnedPopup } from "../../internal/dom-owned-popup";
 import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
@@ -22,7 +22,7 @@ import {
   type FloatingDisclosureLifecycle,
   type FloatingDisclosurePositionOptions,
 } from "../../internal/floating-disclosure";
-import { canReturnFocus, focusFirstElement } from "../../internal/focus";
+import { canReturnFocus, focusFirstElement, hasFocusWithin } from "../../internal/focus";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
@@ -214,6 +214,11 @@ class PopoverController implements PopoverInstance {
       lockDocumentScroll,
       onBeforeClose: () => {
         this.closeNestedPopovers();
+        // The closing popup becomes inert, and the browser would drop its focus to the body.
+        // Focus goes back to the trigger first, so Tab during the exit starts from the trigger.
+        if (hasFocusWithin(this.root.ownerDocument, [this.elements.popup])) {
+          this.getFocusReturnTarget()?.focus({ preventScroll: true });
+        }
       },
       onBeforeOpen: ({ captureFocusFallback, request }) => {
         if (captureFocusFallback) {
@@ -250,6 +255,7 @@ class PopoverController implements PopoverInstance {
       onOutsidePointerDown: (event) => {
         this.requestOpen(false, { event, reason: "outside-press" });
       },
+      getPointerPassThroughWrapper: () => this.elements.positioner,
       popup: this.elements.popup,
       renderState: (open, closeSignal) => this.renderState(open, closeSignal),
       root: this.root,
@@ -482,6 +488,8 @@ class PopoverController implements PopoverInstance {
       "keydown",
       (event) => {
         if (event.key !== "Escape" || !this.closeOnEscape || !this.openState) return;
+        // A nested layer, such as a Select or Combobox, already handled this Escape.
+        if (event.defaultPrevented) return;
         event.preventDefault();
         this.requestOpen(false, { event, reason: "escape-key" });
       },
@@ -694,14 +702,16 @@ class PopoverController implements PopoverInstance {
     return this.getConnectedActiveTrigger();
   }
 
-  private restoreFocus(): void {
-    const focusTarget = this.activeTrigger?.isConnected
-      ? this.activeTrigger
-      : this.previousActiveElement?.isConnected
-        ? this.previousActiveElement
-        : null;
+  private getFocusReturnTarget(): HTMLElement | null {
+    if (this.activeTrigger?.isConnected) return this.activeTrigger;
+    if (this.previousActiveElement?.isConnected) return this.previousActiveElement;
+    return null;
+  }
 
-    if (canReturnFocus(this.root.ownerDocument, [this.elements.popup])) focusTarget?.focus();
+  private restoreFocus(): void {
+    if (canReturnFocus(this.root.ownerDocument, [this.elements.popup])) {
+      this.getFocusReturnTarget()?.focus({ preventScroll: true });
+    }
     this.previousActiveElement = null;
   }
 

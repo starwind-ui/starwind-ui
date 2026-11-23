@@ -74,6 +74,116 @@ describe("presence", () => {
     expect(element.hidden).toBe(false);
   });
 
+  it("makes a closing element inert and removes only that inert when it hides", async () => {
+    vi.useFakeTimers();
+    const element = renderElementWithAnimationDuration("200ms");
+    element.style.setProperty("pointer-events", "auto");
+
+    hideElementAfterAnimations(element, { passThroughPointerWhileEnding: true });
+
+    expect(element.hasAttribute("inert")).toBe(true);
+    expect(element.style.getPropertyValue("pointer-events")).toBe("auto");
+
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(element.hidden).toBe(true);
+    expect(element.hasAttribute("inert")).toBe(false);
+    expect(element.style.getPropertyValue("pointer-events")).toBe("auto");
+  });
+
+  it("removes its inert when a closing element opens again or its close aborts", () => {
+    const reopened = renderElementWithAnimationDuration("200ms");
+    hideElementAfterAnimations(reopened, { passThroughPointerWhileEnding: true });
+    expect(reopened.hasAttribute("inert")).toBe(true);
+    showElement(reopened);
+    expect(reopened.hasAttribute("inert")).toBe(false);
+
+    const aborted = renderElementWithAnimationDuration("200ms");
+    const controller = new AbortController();
+    hideElementAfterAnimations(aborted, {
+      passThroughPointerWhileEnding: true,
+      signal: controller.signal,
+    });
+    expect(aborted.hasAttribute("inert")).toBe(true);
+    controller.abort();
+    expect(aborted.hasAttribute("inert")).toBe(false);
+  });
+
+  it("makes a placement wrapper inert and removes that inert with the element", async () => {
+    vi.useFakeTimers();
+    const element = renderElementWithAnimationDuration("200ms");
+    const wrapper = document.createElement("div");
+    wrapper.style.setProperty("pointer-events", "auto", "important");
+    element.before(wrapper);
+    wrapper.append(element);
+
+    hideElementAfterAnimations(element, {
+      passThroughPointerWhileEnding: true,
+      pointerPassThroughWrapper: wrapper,
+    });
+    expect(wrapper.hasAttribute("inert")).toBe(true);
+    showElement(element);
+    expect(wrapper.hasAttribute("inert")).toBe(false);
+    expect(wrapper.style.getPropertyValue("pointer-events")).toBe("auto");
+    expect(wrapper.style.getPropertyPriority("pointer-events")).toBe("important");
+
+    hideElementAfterAnimations(element, {
+      passThroughPointerWhileEnding: true,
+      pointerPassThroughWrapper: wrapper,
+    });
+    await vi.advanceTimersByTimeAsync(200);
+    expect(element.hidden).toBe(true);
+    expect(wrapper.hasAttribute("inert")).toBe(false);
+  });
+
+  it("keeps an inert value that the app set before the close", async () => {
+    vi.useFakeTimers();
+    const element = renderElementWithAnimationDuration("200ms");
+    element.inert = true;
+
+    hideElementAfterAnimations(element, { passThroughPointerWhileEnding: true });
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(element.hidden).toBe(true);
+    expect(element.inert).toBe(true);
+  });
+
+  it("keeps an inert value that the app sets during the exit", async () => {
+    vi.useFakeTimers();
+    const removed = renderElementWithAnimationDuration("200ms");
+    const set = renderElementWithAnimationDuration("200ms");
+    const reopened = renderElementWithAnimationDuration("200ms");
+    const kept = renderElementWithAnimationDuration("200ms");
+
+    for (const element of [removed, set, reopened, kept]) {
+      hideElementAfterAnimations(element, { passThroughPointerWhileEnding: true });
+    }
+    removed.inert = false;
+    set.removeAttribute("inert");
+    set.inert = true;
+    kept.inert = true;
+    reopened.setAttribute("inert", "app");
+    showElement(reopened);
+    expect(reopened.getAttribute("inert")).toBe("app");
+
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(removed.hidden).toBe(true);
+    expect(removed.inert).toBe(false);
+    expect(set.hidden).toBe(true);
+    expect(set.inert).toBe(true);
+    expect(kept.hidden).toBe(true);
+    expect(kept.inert).toBe(true);
+  });
+
+  it("keeps pointer input on a closing element by default", () => {
+    const element = renderElementWithAnimationDuration("200ms");
+
+    hideElementAfterAnimations(element);
+
+    expect(element.hasAttribute("inert")).toBe(false);
+  });
+
   it("discovers animations immediately by default", () => {
     const element = document.createElement("div");
     const getAnimations = vi.fn(() => []);

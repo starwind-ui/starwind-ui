@@ -18,6 +18,25 @@ describe("createToastManager", () => {
     document.body.innerHTML = "";
   });
 
+  it("uses authored item and template directions before viewport inheritance", () => {
+    const viewport = renderToaster();
+    viewport.dir = "rtl";
+    const template = viewport.querySelector<HTMLTemplateElement>("template")!;
+    const manager = createToastManager(viewport);
+    const item = () => viewport.querySelector<HTMLElement>("[data-sw-toast-root]")!;
+    manager.add({ title: "Saved" });
+    expect(item().hasAttribute("dir")).toBe(false);
+    expect(getComputedStyle(item()).direction).toBe("rtl");
+    viewport.dir = "ltr";
+    expect(getComputedStyle(item()).direction).toBe("ltr");
+    template.dir = "auto";
+    manager.add({ title: "Saved" });
+    expect(item().dir).toBe("auto");
+    template.content.firstElementChild!.setAttribute("dir", "rtl");
+    manager.add({ title: "Saved" });
+    expect(item().dir).toBe("rtl");
+  });
+
   it("renders, updates, and dismisses toasts from templates", async () => {
     const viewport = renderToaster();
     const manager = createToastManager(viewport);

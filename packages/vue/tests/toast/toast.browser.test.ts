@@ -63,13 +63,13 @@ describe("Vue Toast public behavior", () => {
       const computed = getComputedStyle(viewport);
       expect(computed.getPropertyValue("--gap")).toBe(gap);
       expect(computed.getPropertyValue("--peek")).toBe(peek);
-      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
       const first = host.querySelector<HTMLElement>("#spacing-first")!;
       const second = host.querySelector<HTMLElement>("#spacing-second")!;
       expect(second.getBoundingClientRect().top - first.getBoundingClientRect().bottom).toBeCloseTo(
         gapRem * rem,
       );
-      expect(parseFloat(getComputedStyle(second).paddingTop)).toBeCloseTo(peekRem * rem);
+      expect(Number.parseFloat(getComputedStyle(second).paddingTop)).toBeCloseTo(peekRem * rem);
     },
   );
 

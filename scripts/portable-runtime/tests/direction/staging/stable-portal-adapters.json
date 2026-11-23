@@ -1,0 +1,8 @@
+{
+  "cohort": "stable-portal-adapters",
+  "caseIds": [
+    "stable-portal-adapters-popover",
+    "stable-portal-adapters-sheet",
+    "stable-portal-adapters-dropdown"
+  ]
+}

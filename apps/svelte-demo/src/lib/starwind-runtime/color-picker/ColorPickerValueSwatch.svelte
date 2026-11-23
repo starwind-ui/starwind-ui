@@ -13,7 +13,7 @@
 <script lang="ts">
   let {
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: ColorPickerValueSwatchProps = $props();
 </script>

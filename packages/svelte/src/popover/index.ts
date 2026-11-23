@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import PopoverArrow from "./PopoverArrow.svelte";
 import PopoverBackdrop from "./PopoverBackdrop.svelte";
 import PopoverClose from "./PopoverClose.svelte";
@@ -47,11 +45,11 @@ export {
 };
 
 export default Popover;
-export type {
-  ButtonChildProps,
-  ButtonChildPayload,
-  TriggerChildProps,
-  TriggerChildPayload,
-} from "../button/ButtonRoot.svelte";
 
 export type { PopoverCloseCompleteDetails, PopoverOpenChangeDetails } from "@starwind-ui/runtime";
+export type {
+  ButtonChildPayload,
+  ButtonChildProps,
+  TriggerChildPayload,
+  TriggerChildProps,
+} from "../button/ButtonRoot.svelte";

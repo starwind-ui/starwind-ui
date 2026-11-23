@@ -9,13 +9,13 @@ export type SidebarContextValue = Readonly<{
   mobileOpen: boolean;
   state: "collapsed" | "expanded";
   expanded: boolean;
-  isMobile: boolean;
-  /** Accept a Sheet binding output through the Provider's silent public setter. */
-  setMobileOpen(open: boolean): void;
 }>;
 export const SidebarContext: symbol = Symbol("StarwindSidebarContext");
-export function useSidebarContext(): SidebarContextValue {
-  const context = getContext<SidebarContextValue | undefined>(SidebarContext);
-  if (!context) throw new Error("Sidebar parts must be used within SidebarProvider.");
-  return context;
+export function useSidebarContext(): SidebarContextValue | null {
+  return getContext<SidebarContextValue | undefined>(SidebarContext) ?? null;
+}
+const expanded = { state: "expanded", expanded: false } as const;
+/** Sidebar parts outside a Provider render state expanded with aria-expanded false, as React does. Not exported from the package. */
+export function useSidebarState(): Pick<SidebarContextValue, "state" | "expanded"> {
+  return useSidebarContext() ?? expanded;
 }

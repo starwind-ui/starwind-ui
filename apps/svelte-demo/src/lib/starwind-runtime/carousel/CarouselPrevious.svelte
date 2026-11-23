@@ -10,10 +10,10 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "outline",
-    "size": size = "icon",
+    variant = "outline",
+    size = "icon",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: CarouselPreviousProps = $props();
 
@@ -35,6 +35,7 @@
     stroke-linecap={"round"}
     stroke-linejoin={"round"}
     aria-hidden={"true"}
+    class={"rotate-(--sw-carousel-icon-turn)"}
   >
     <path
       stroke={"none"}

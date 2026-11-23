@@ -1,9 +1,9 @@
-import {
-  type BehaviorFoundationType,
-  type PrimitiveDocsFrameworkTarget,
-  type StyledFrameworkTarget,
-  type StylingRecipeMetadata,
-  type StylingSectionMetadata,
+import type {
+  BehaviorFoundationType,
+  PrimitiveDocsFrameworkTarget,
+  StyledFrameworkTarget,
+  StylingRecipeMetadata,
+  StylingSectionMetadata,
 } from "../types.js";
 
 export const FRAMEWORK_TARGETS = [
@@ -24,6 +24,7 @@ export const PRIMITIVE_ANATOMY_FRAMEWORK_ORDER = [
   "astro",
   "react",
   "vue",
+  "svelte",
   "raw-html",
 ] as const satisfies readonly PrimitiveDocsFrameworkTarget[];
 

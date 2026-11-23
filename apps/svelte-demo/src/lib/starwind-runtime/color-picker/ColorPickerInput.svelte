@@ -21,14 +21,14 @@
 
 <script lang="ts">
   let {
-    "formatControl": formatControl = "select",
-    "formats": formats = ["hex","rgb","hsl","hsb"],
-    "formatContentSize": formatContentSize = "md",
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
+    formatControl = "select",
+    formats = ["hex","rgb","hsl","hsb"],
+    formatContentSize = "md",
+    portalContainer,
+    disablePortal = false,
     "class": className,
-    "ref": ref,
-    "children": children,
+    ref,
+    children,
     ...rest
   }: ColorPickerInputProps = $props();
 

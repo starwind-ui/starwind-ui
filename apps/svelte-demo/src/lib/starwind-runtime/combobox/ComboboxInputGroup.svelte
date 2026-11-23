@@ -12,9 +12,9 @@
 <script lang="ts">
   let {
     "class": className,
-    "size": size = "md",
+    size = "md",
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: ComboboxInputGroupProps = $props();
 </script>

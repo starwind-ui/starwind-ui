@@ -5,11 +5,23 @@ import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 import { runtimeAdapterContracts } from "../contracts/primitive/representatives.js";
-import { primitiveDocsExamples } from "../docs/layered-docs/examples.js";
+import {
+  colorPickerPrimitiveDocsAuthoredExamples,
+  primitiveDocsExamples,
+  readAdapterNamespaceParts,
+} from "../docs/layered-docs/examples.js";
+import { isPrimitiveInventoryComponentAvailableForTarget } from "../renderers/primitive-inventory.js";
 
 const repoRoot = process.cwd();
 const adapterFrameworks = ["astro", "react"] as const;
 const demoRequire = createRequire(path.join(repoRoot, "apps/demo/package.json"));
+const svelteRequire = createRequire(path.join(repoRoot, "packages/svelte/package.json"));
+const selectSvelteAuthoredExamplePath =
+  "scripts/portable-runtime/docs/layered-docs/primitives/select/examples/positioned-select.svelte";
+
+type SvelteCompiler = {
+  compile(source: string, options: { filename: string; generate: "client" }): unknown;
+};
 
 type AstroCompiler = {
   transform(
@@ -66,6 +78,8 @@ describe("primitive docs examples", () => {
   it("keeps Astro and React examples aligned with real adapter namespace exports", async () => {
     for (const contract of runtimeAdapterContracts) {
       for (const framework of adapterFrameworks) {
+        if (!isPrimitiveInventoryComponentAvailableForTarget(contract.component, framework))
+          continue;
         const namespace = toPascalCase(contract.component);
         const example = primitiveDocsExamples[contract.component]?.basic?.[framework];
         const adapterIndexSource = await readFile(
@@ -91,6 +105,104 @@ describe("primitive docs examples", () => {
         }
       }
     }
+  });
+
+  it("keeps the Select and Combobox list and items in every anatomy example", () => {
+    for (const component of ["select", "combobox"] as const) {
+      const namespace = toPascalCase(component);
+      const frameworks = primitiveDocsExamples[component]?.basic ?? {};
+
+      for (const framework of ["astro", "react", "vue", "svelte"] as const) {
+        const code = frameworks[framework]?.code ?? "";
+        const label = `${component} ${framework}`;
+
+        expect(code, label).toMatch(
+          new RegExp(
+            `<${namespace}\\.Popup>\\s*(?:<${namespace}\\.Empty>[^<]*</${namespace}\\.Empty>\\s*)?<${namespace}\\.List>`,
+          ),
+        );
+        for (const value of ["astro", "react"]) {
+          expect(code, label).toMatch(
+            new RegExp(
+              `<${namespace}\\.List>[\\s\\S]*<${namespace}\\.Item value="${value}">[\\s\\S]*</${namespace}\\.List>`,
+            ),
+          );
+        }
+        expect(code, label).toContain(`<${namespace}.ItemText>React</${namespace}.ItemText>`);
+        expect(code, label).not.toContain(`<${namespace}.Popup />`);
+      }
+
+      const html = frameworks["raw-html"]?.code ?? "";
+      expect(html).toContain(`<div data-sw-${component}-list>`);
+      expect(html).toContain('role="option" data-value="react"');
+    }
+  });
+
+  it("keeps Svelte examples aligned with the shipped Svelte adapter namespaces", async () => {
+    const { compile } = svelteRequire("svelte/compiler") as SvelteCompiler;
+    const examples = [
+      ...runtimeAdapterContracts.map((contract) => ({
+        label: `${contract.component} basic`,
+        code: primitiveDocsExamples[contract.component]?.basic?.svelte?.code ?? "",
+      })),
+      ...colorPickerPrimitiveDocsAuthoredExamples.flatMap((example) =>
+        example.frameworks
+          .filter((framework) => framework.framework === "svelte")
+          .map((framework) => ({ label: `color-picker ${example.id}`, code: framework.code })),
+      ),
+      {
+        label: "select positioned-select",
+        code: await readFile(path.join(repoRoot, selectSvelteAuthoredExamplePath), "utf8"),
+      },
+    ];
+    const failures: string[] = [];
+
+    expect(examples.filter((example) => !example.code)).toEqual([]);
+
+    for (const example of examples) {
+      try {
+        compile(example.code, { filename: `${example.label}.svelte`, generate: "client" });
+      } catch (error) {
+        failures.push(
+          `${example.label}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+
+      const imports = [
+        ...example.code.matchAll(
+          /import \{ ([A-Za-z]+) \} from "@starwind-ui\/svelte\/([a-z-]+)";/g,
+        ),
+      ];
+      expect(imports, example.label).not.toEqual([]);
+
+      for (const [, namespace, component] of imports) {
+        const adapterIndexSource = await readFile(
+          path.join(repoRoot, "packages/svelte/src", component!, "index.ts"),
+          "utf8",
+        );
+        const members = [
+          ...new Set(
+            [...example.code.matchAll(new RegExp(`<${namespace}\\.([A-Za-z]\\w*)`, "g"))].map(
+              (match) => match[1]!,
+            ),
+          ),
+        ];
+
+        expect(adapterIndexSource, example.label).toMatch(
+          new RegExp(`export \\{[^}]*\\b${namespace}\\b`),
+        );
+        expect(members, example.label).not.toEqual([]);
+        const parts = getNamespaceObjectKeys(adapterIndexSource, namespace!);
+        expect(parts, `${example.label}: ${namespace} namespace object`).not.toEqual([]);
+        for (const member of members) {
+          if (!parts.includes(member)) {
+            failures.push(`${example.label}: ${namespace}.${member} is not a Svelte adapter part`);
+          }
+        }
+      }
+    }
+
+    expect(failures).toEqual([]);
   });
 
   it("compiles generated Astro examples with the Astro compiler", async () => {
@@ -196,9 +308,76 @@ function formatDiagnostics(diagnostics: readonly ts.Diagnostic[]) {
     .join("\n");
 }
 
+/** Reads the part keys of `const <namespace> = { ... }` in a generated adapter index. */
+function getNamespaceObjectKeys(source: string, namespace: string) {
+  const file = ts.createSourceFile("index.ts", source, ts.ScriptTarget.ES2022, true);
+  const keys: string[] = [];
+
+  for (const statement of file.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (
+        ts.isIdentifier(declaration.name) &&
+        declaration.name.text === namespace &&
+        declaration.initializer &&
+        ts.isObjectLiteralExpression(declaration.initializer)
+      ) {
+        for (const property of declaration.initializer.properties) {
+          if (property.name && ts.isIdentifier(property.name)) keys.push(property.name.text);
+        }
+      }
+    }
+  }
+
+  return keys;
+}
+
 function toPascalCase(value: string) {
   return value
     .split("-")
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join("");
 }
+
+describe("adapter namespace parts", () => {
+  const contract = { component: "fake-select", runtime: { rootPart: "root" } } as const;
+
+  it("fails when the adapter index is missing", () => {
+    expect(() =>
+      readAdapterNamespaceParts(contract, "svelte", path.join(repoRoot, "missing", "index.ts")),
+    ).toThrow(/adapter index is missing/);
+  });
+
+  it("fails when the index declares its namespace in a shape the parser cannot read", async () => {
+    const directory = await mkdtemp(path.join(repoRoot, ".tmp-adapter-index-"));
+    const indexPath = path.join(directory, "index.ts");
+
+    try {
+      await writeFile(
+        indexPath,
+        "const FakeSelect = Object.assign({}, { Root, List });\nexport { FakeSelect };\n",
+      );
+      expect(() => readAdapterNamespaceParts(contract, "vue", indexPath)).toThrow(
+        /does not declare FakeSelect\.Root/,
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("reads the parts of an object literal namespace", async () => {
+    const directory = await mkdtemp(path.join(repoRoot, ".tmp-adapter-index-"));
+    const indexPath = path.join(directory, "index.ts");
+
+    try {
+      await writeFile(indexPath, "const FakeSelect = { Root, List, Item };\n");
+      expect([...readAdapterNamespaceParts(contract, "react", indexPath)]).toEqual([
+        "Root",
+        "List",
+        "Item",
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+});

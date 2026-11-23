@@ -36,6 +36,10 @@ const families = [
     factory: createAlertDialog,
   },
 ] as const;
+const alertDialogCloseControls = [
+  ["Action", AlertDialog.Action, "alert-dialog-action"],
+  ["Cancel", AlertDialog.Cancel, "alert-dialog-cancel"],
+] as const;
 
 describe("Styled native overlay control wiring", () => {
   it("forwards consumer refs from Alert Dialog Action and Cancel", async () => {
@@ -56,6 +60,55 @@ describe("Styled native overlay control wiring", () => {
     expect(actionRef.current).toBe(action);
     expect(cancelRef.current).toBe(cancel);
   });
+
+  it.each(alertDialogCloseControls)(
+    "keeps the Alert Dialog %s asChild wrapper DOM, props, listeners, and ref",
+    async (_name, Control, slot) => {
+      const calls: string[] = [];
+      const controlRef = React.createRef<HTMLButtonElement>();
+      const childRef = React.createRef<HTMLButtonElement>();
+      await render(
+        <AlertDialog.Root>
+          <AlertDialog.Trigger>Open</AlertDialog.Trigger>
+          <AlertDialog.Content>
+            <AlertDialog.Title>Confirm</AlertDialog.Title>
+            <Control
+              asChild
+              ref={controlRef}
+              className="consumer-wrapper"
+              data-consumer="wrapper"
+              size="sm"
+              onClick={() => calls.push("wrapper")}
+            >
+              <button ref={childRef} data-child onClick={() => calls.push("child")}>
+                Confirm
+              </button>
+            </Control>
+          </AlertDialog.Content>
+        </AlertDialog.Root>,
+      );
+      const root = host.querySelector<HTMLElement>("[data-sw-alert-dialog]")!;
+      const instance = createAlertDialog(root);
+      const child = document.querySelector<HTMLButtonElement>("[data-child]")!;
+      const wrapper = child.parentElement!;
+      expect(wrapper.tagName).toBe("DIV");
+      expect(wrapper.style.display).toBe("contents");
+      expect(wrapper.children).toHaveLength(1);
+      expect(child).toHaveAttribute("data-slot", slot);
+      expect(child).toHaveAttribute("data-sw-alert-dialog-close");
+      expect(child).toHaveAttribute("data-consumer", "wrapper");
+      expect(child).toHaveClass("consumer-wrapper");
+      expect(controlRef.current).toBe(wrapper);
+      expect(childRef.current).toBe(child);
+      await act(() =>
+        root.querySelector<HTMLButtonElement>("[data-sw-alert-dialog-trigger]")!.click(),
+      );
+      expect(instance.getOpen()).toBe(true);
+      await act(() => child.click());
+      expect(calls).toEqual(["child", "wrapper"]);
+      expect(instance.getOpen()).toBe(false);
+    },
+  );
 
   it.each(families)(
     "refreshes $name child controls with stable ownership",

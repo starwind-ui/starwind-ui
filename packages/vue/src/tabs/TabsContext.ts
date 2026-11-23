@@ -7,17 +7,24 @@ import type { TabsOrientation, TabsValue } from "@starwind-ui/runtime/tabs";
 import { type InjectionKey, inject, type Ref } from "vue";
 
 export type TabsContextValue = Readonly<{
-  refresh(): void;
   orientation: Readonly<Ref<TabsOrientation>>;
   value: Readonly<Ref<TabsValue>>;
 }>;
 
-export const TabsContext: InjectionKey<TabsContextValue> = Symbol("StarwindTabs");
+/** Parts also read the Runtime refresh hook. The family index does not export this type. */
+export type TabsInternalContextValue = TabsContextValue & Readonly<{ refresh(): void }>;
 
-export function useTabsContext(componentName: string): TabsContextValue {
-  const context = inject(TabsContext);
+export const TabsInternalContext: InjectionKey<TabsInternalContextValue> = Symbol("StarwindTabs");
+export const TabsContext: InjectionKey<TabsContextValue> = TabsInternalContext;
+
+export function useTabsInternalContext(componentName: string): TabsInternalContextValue {
+  const context = inject(TabsInternalContext);
   if (!context) {
     throw new Error(`${componentName} must be used within TabsRoot.`);
   }
   return context;
+}
+
+export function useTabsContext(componentName: string): TabsContextValue {
+  return useTabsInternalContext(componentName);
 }

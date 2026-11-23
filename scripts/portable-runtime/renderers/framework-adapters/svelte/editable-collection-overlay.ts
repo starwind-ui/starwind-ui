@@ -1,3 +1,4 @@
+import { defaultValueMarker } from "../../shared-recipes/initial-state.js";
 import {
   comboboxFragments,
   comboboxModelObservers,
@@ -9,7 +10,6 @@ import {
   comboboxInheritedBoolean,
   comboboxSelection,
   comboboxSelectionAttributes,
-  comboboxValueFallback,
 } from "../../shared-recipes/structured/combobox-parts.js";
 import type {
   AdapterComponentFile,
@@ -18,11 +18,10 @@ import type {
   AdapterIndexFile,
   AdapterPrintedFile,
 } from "../types.js";
-import { printSvelteForwardedAttachments, printSvelteRefAttachment } from "./attachments.js";
+import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteButtonChild } from "./button-child.js";
 import { printSvelteOverlayPortal } from "./overlay-portal.js";
 
-const NOTICE = "Svelte 5 public beta adapter output.";
 type Facts = AdapterEditableCollectionOverlayFacts;
 
 export function printSvelteEditableCollectionOverlayIndex(
@@ -33,8 +32,7 @@ export function printSvelteEditableCollectionOverlayIndex(
   const f = file.family.facts;
   return {
     path: file.path,
-    contents: `// ${NOTICE}
-${f.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
+    contents: `${f.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
 const ${f.exports.namespace} = {
 ${f.index.namespaceMembers.map(({ key, name }) => `  ${key}: ${name},`).join("\n")}
 };
@@ -70,6 +68,8 @@ export function printSvelteEditableCollectionOverlayComponent(
   return { path: `${file.path}.svelte`, contents };
 }
 
+// The Runtime writes aria-disabled="false" at init. Svelte prints "false" only after mount, so server
+// HTML matches Astro, React and Vue, and a later spread update keeps the Runtime value.
 function printButton(f: Facts, part: "trigger" | "clear"): string {
   return printSvelteButtonChild({
     childElement: f.childElements?.[part],
@@ -77,7 +77,7 @@ function printButton(f: Facts, part: "trigger" | "clear"): string {
     imports: `import { getComboboxContext } from "./${f.exports.root}.svelte";`,
     init: `const combobox = getComboboxContext();`,
     register: `combobox?.registerPart(owner, { element: root, part: "${part}" }); return () => combobox?.registerPart(owner, null);`,
-    attributes: `"${f.attrs[part]}": "", type: "button", disabled: !!(allProps.disabled || combobox?.disabled), "${f.attrs.disabled}": allProps.disabled || combobox?.disabled ? "" : undefined, "data-sw-part": "${f.parts[part].name}", ${part === "trigger" ? '"aria-haspopup": "listbox", "aria-expanded": !!combobox?.open,' : ""}`,
+    attributes: `"${f.attrs[part]}": "", type: "button", disabled: !!(allProps.disabled || combobox?.disabled), "${f.attrs.disabled}": allProps.disabled || combobox?.disabled ? "" : undefined, "aria-disabled": combobox?.disabled ? "true" : combobox?.mounted ? "false" : undefined, "data-sw-part": "${f.parts[part].name}", ${part === "trigger" ? '"aria-haspopup": "listbox", "aria-expanded": !!combobox?.open, "data-state": combobox?.open ? "open" : "closed",' : ""}`,
     independentAttachments: true,
   });
 }
@@ -136,8 +136,7 @@ function printPart(
                     : floating
                       ? `${part === "popup" ? `role="${f.popupRole}" tabindex="-1" hidden={!initialOpen}` : ""} data-state={initialOpen ? "open" : "closed"} ${floatingNames.map((name) => `${f.attrs[name]}={${name}}`).join(" ")}`
                       : "";
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { ${part === "item" ? "setContext, " : ""}untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${part === "input" ? "HTMLInputAttributes" : "HTMLAttributes"} } from "svelte/elements";
@@ -176,8 +175,7 @@ ${printSvelteRefAttachment(elementType)}
 }
 
 function printRoot(f: Facts): string {
-  return `<!-- ${NOTICE} -->
-<script module lang="ts">
+  return `<script module lang="ts">
   import { getContext } from "svelte";
   export type ComboboxPart = { element: HTMLElement; part: string; attributes?: Record<string, string | undefined> };
   export type ComboboxContext = {
@@ -223,6 +221,8 @@ ${Object.values(f.events)
   let accepted = $state<{ value: string | null; inputValue: string | undefined; open: boolean }>({ value: initialModels.value === undefined ? initialDefaults.value : initialModels.value, inputValue: initialModels.inputValue ?? initialDefaults.inputValue, open: untrack(() => disabled) ? false : initialModels.open ?? initialDefaults.open });
   // First render only. Runtime owns data-state after that.
   const initialOpen = untrack(() => accepted.open);
+  // Default markers state only the default props. initialDefaults also seeds held models.
+  const defaultMarkers = untrack(() => ({ value: defaultValue, inputValue: defaultInputValue }));
   const initialDefaultOpen = untrack(() => defaultOpen);
   let mounted = $state(false);
   let revision = $state(0);
@@ -299,7 +299,7 @@ ${Object.values(f.events)
   };
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
-<div {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={initialDefaults.value ?? undefined} ${f.attrs.autoComplete}={autoComplete} ${f.attrs.defaultInputValue}={initialDefaults.inputValue} ${f.attrs.defaultOpen}={initialDefaultOpen ? "true" : undefined} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.filterMode}={filterMode} ${f.attrs.highlightItemOnHover}={highlightItemOnHover ? "true" : "false"} ${f.attrs.locale}={locale} ${f.attrs.modal}={modal ? "true" : "false"} ${f.attrs.readOnly}={readOnly ? "" : undefined} ${f.attrs.name}={name} ${f.attrs.form}={form} ${f.attrs.required}={required ? "" : undefined} data-state={initialOpen ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
+<div {...rest} ${f.attrs.root}="" data-sw-part="${f.parts.root.name}" ${f.attrs.defaultValue}={${defaultValueMarker("defaultMarkers.value")}} ${f.attrs.autoComplete}={autoComplete} ${f.attrs.defaultInputValue}={defaultMarkers.inputValue} ${f.attrs.defaultOpen}={initialDefaultOpen ? "true" : undefined} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.filterMode}={filterMode} ${f.attrs.highlightItemOnHover}={highlightItemOnHover ? "true" : "false"} ${f.attrs.locale}={locale} ${f.attrs.modal}={modal ? "true" : "false"} ${f.attrs.readOnly}={readOnly ? "" : undefined} ${f.attrs.name}={name} ${f.attrs.form}={form} ${f.attrs.required}={required ? "" : undefined} data-state={initialOpen ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
   <input type={required ? undefined : "hidden"} style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0" ${f.attrs.hiddenInput}="" aria-hidden="${f.hiddenInput.constantAttributes.ariaHidden}" tabindex={${f.hiddenInput.constantAttributes.tabIndex}} value={initialDefaults.value ?? ""} {name} {form} {required} {disabled} />
 </div>

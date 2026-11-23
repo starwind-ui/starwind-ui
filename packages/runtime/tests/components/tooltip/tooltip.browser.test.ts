@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { page } from "vitest/browser";
 import { createTooltip } from "../../../src/components/tooltip/tooltip";
 import { initStarwind } from "../../../src/init-starwind";
 
@@ -460,6 +461,57 @@ describe("createTooltip", () => {
     expect(getPopup(controlledRoot).hidden).toBe(true);
   });
 
+  it.each([
+    ["ltr", "start"],
+    ["ltr", "end"],
+    ["rtl", "start"],
+    ["rtl", "end"],
+  ] as const)(
+    "keeps a %s tooltip inside the phone viewport padding at the inline %s edge",
+    async (dir, edge) => {
+      await withPhoneViewport(dir, async () => {
+        const root = renderTooltip();
+        const trigger = getTrigger(root);
+        const popup = getPopup(root);
+        const physical = (edge === "start") === (dir === "ltr") ? "left" : "right";
+        trigger.style.cssText = `position:fixed;${physical}:0;top:200px;width:80px;height:32px`;
+        popup.style.width = "240px";
+        popup.style.height = "40px";
+
+        const tooltip = createTooltip(root, { defaultOpen: true });
+        await waitForFloatingPosition();
+
+        const rect = popup.getBoundingClientRect();
+        const anchor = trigger.getBoundingClientRect();
+        expect(rect.left).toBeGreaterThanOrEqual(8);
+        expect(rect.right).toBeLessThanOrEqual(window.innerWidth - 8);
+        expect(rect.left).toBeLessThan(anchor.right);
+        expect(rect.right).toBeGreaterThan(anchor.left);
+        expect(rect.bottom).toBeLessThanOrEqual(anchor.top);
+        expect(popup.getAttribute("data-side")).toBe("top");
+        tooltip.destroy();
+      });
+    },
+  );
+
+  it("keeps a tooltip on its trigger when the trigger scrolls past the viewport edge", async () => {
+    await withPhoneViewport("ltr", async () => {
+      const root = renderTooltip();
+      const trigger = getTrigger(root);
+      const popup = getPopup(root);
+      trigger.style.cssText = "position:fixed;left:-100px;top:200px;width:80px;height:32px";
+      popup.style.width = "240px";
+      popup.style.height = "40px";
+
+      const tooltip = createTooltip(root, { defaultOpen: true });
+      await waitForFloatingPosition();
+
+      // The shift stops at the trigger edge instead of at the 8px viewport padding.
+      expect(popup.getBoundingClientRect().left).toBe(trigger.getBoundingClientRect().right);
+      tooltip.destroy();
+    });
+  });
+
   it("keeps a default-open tooltip attached to the trigger while scroll changes its rect", async () => {
     const root = renderTooltip();
     const trigger = getTrigger();
@@ -481,7 +533,8 @@ describe("createTooltip", () => {
     await waitForFloatingPosition();
 
     expect(tooltip.getOpen()).toBe(true);
-    expect(popup.style.left).toBe(`${triggerLeft + 20 - 160}px`);
+    // The end edge of the trigger is 4px from the viewport, so the popup slides back to the 8px padding.
+    expect(popup.style.left).toBe(`${window.innerWidth - 8 - 160}px`);
     expect(popup.getAttribute("data-side")).toBe("bottom");
     expect(popup.getAttribute("data-align")).toBe("end");
 
@@ -816,6 +869,46 @@ describe("createTooltip", () => {
 
     expect(tooltip.getOpen()).toBe(true);
     expect(getPopup().hidden).toBe(false);
+  });
+
+  it.each([
+    ["left", "right"],
+    ["right", "left"],
+  ])("opens the marked default away from its nearest %s Sidebar", async (side, expected) => {
+    const root = renderTooltipWithPositioner();
+    const outer = document.createElement("div"),
+      provider = document.createElement("div"),
+      panel = document.createElement("div");
+    outer.setAttribute("data-sw-sidebar", "");
+    outer.dataset.side = expected;
+    provider.setAttribute("data-sw-sidebar-provider", "");
+    panel.setAttribute("data-sw-sidebar", "");
+    panel.dataset.side = side;
+    root.before(outer);
+    outer.append(provider);
+    provider.append(panel);
+    panel.append(root);
+    getPopup(root).setAttribute("data-sw-sidebar-tooltip-default", "");
+    getPositioner().setAttribute("data-avoid-collisions", "false");
+    const instance = createTooltip(root);
+    dispatchPointer(getTrigger(root), "pointerenter");
+    await waitForFloatingPosition();
+    expect(getPopup().getAttribute("data-side")).toBe(expected);
+    expect(getPositioner().parentElement).toBe(document.body);
+    const popup = getPopup();
+    panel.dataset.side = expected;
+    await waitForFloatingPosition();
+    expect(popup.getAttribute("data-side")).toBe(side);
+    const replacement = panel.cloneNode(false) as HTMLElement;
+    replacement.dataset.side = side;
+    provider.append(replacement);
+    replacement.append(root);
+    await waitForFloatingPosition();
+    expect(popup.getAttribute("data-side")).toBe(expected);
+    replacement.dataset.side = expected;
+    await waitForFloatingPosition();
+    expect(popup.getAttribute("data-side")).toBe(side);
+    instance.destroy();
   });
 
   it("reads placement attributes from a primitive positioner", async () => {
@@ -1154,6 +1247,18 @@ function mockRect(
 async function waitForMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+async function withPhoneViewport(dir: "ltr" | "rtl", run: () => Promise<void>): Promise<void> {
+  const original = { height: window.innerHeight, width: window.innerWidth };
+  await page.viewport(390, 844);
+  document.documentElement.dir = dir;
+  try {
+    await run();
+  } finally {
+    document.documentElement.removeAttribute("dir");
+    await page.viewport(original.width, original.height);
+  }
 }
 
 async function waitForFloatingPosition(): Promise<void> {

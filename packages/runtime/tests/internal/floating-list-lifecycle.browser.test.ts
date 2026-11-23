@@ -49,6 +49,34 @@ describe("floating list lifecycle", () => {
     ]);
   });
 
+  it("copies the owner direction to the portal from a restarted auto-update", () => {
+    const harness = createHarness();
+    harness.root.dir = "ltr";
+
+    harness.open = true;
+    harness.lifecycle.applyOpenState(true, { reason: "trigger-press", trigger: harness.trigger });
+    expect(harness.popup.parentElement).toBe(harness.portalTarget);
+    expect(harness.popup.getAttribute("dir")).toBe("ltr");
+
+    harness.lifecycle.stopAutoUpdate();
+    harness.lifecycle.startAutoUpdate();
+    const startAutoUpdate = vi.mocked(harness.positioner.startAutoUpdate);
+    expect(startAutoUpdate).toHaveBeenCalledTimes(2);
+    const onUpdate = startAutoUpdate.mock.calls[1]?.[0]?.onUpdate;
+    expect(onUpdate).toBeTypeOf("function");
+
+    harness.root.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    expect(harness.popup.getAttribute("dir")).toBe("rtl");
+
+    harness.root.dir = "ltr";
+    expect(harness.popup.getAttribute("dir")).toBe("rtl");
+    onUpdate?.();
+    expect(harness.popup.getAttribute("dir")).toBe("ltr");
+
+    harness.lifecycle.destroy();
+  });
+
   it("keeps portal and dismissal lifecycle active when floating setup is opted out", () => {
     const createFloatingPositioner = vi.fn(() => createPositioner());
     const harness = createHarness({

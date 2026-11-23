@@ -2,9 +2,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { tabsStyledContract } from "../../contracts/styled/components/tabs.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("regenerates all stock Tabs exports and variants", async () => {
   const outputRoot = await mkdtemp(path.join(os.tmpdir(), "svelte-styled-tabs-"));
   try {
@@ -24,6 +25,7 @@ it("regenerates all stock Tabs exports and variants", async () => {
 
 import { createStyledTabsConsumer } from "../../../../packages/svelte/tests/styled-tabs-consumer.js";
 import { verifyTabs } from "../../../../packages/svelte/tests/tabs-browser.js";
+
 it("hydrates Styled Tabs accepted models, storage and part owners", async () => {
   const consumer = await createStyledTabsConsumer(process.cwd());
   try {

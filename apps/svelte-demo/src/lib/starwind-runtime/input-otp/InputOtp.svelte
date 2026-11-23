@@ -11,22 +11,22 @@
 
 <script lang="ts">
   let {
-    "defaultValue": defaultValue,
-    "disabled": disabled = false,
-    "form": form,
-    "id": id,
-    "maxLength": maxLength = 6,
-    "name": name,
-    "pattern": pattern,
-    "readOnly": readOnly = false,
-    "required": required = false,
-    "size": size = "md",
+    defaultValue,
+    disabled = false,
+    form,
+    id,
+    maxLength = 6,
+    name,
+    pattern,
+    readOnly = false,
+    required = false,
+    size = "md",
     "class": className,
-    "ref": ref,
+    ref,
     value = $bindable(),
     "value": commandValue,
-    "onValueChange": onValueChange,
-    "children": children,
+    onValueChange,
+    children,
     ...rest
   }: InputOtpProps = $props();
 </script>

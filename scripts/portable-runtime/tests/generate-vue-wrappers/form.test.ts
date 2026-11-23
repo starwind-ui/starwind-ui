@@ -84,7 +84,7 @@ describe("generated Vue Form Primitive", () => {
     expect(first.errorSummary).toContain(':aria-live="props.ariaLive"');
     expect(first.errorSummary).toContain('v-bind="$attrs"');
     expect(first.index).toContain("createFormSchemaValidator");
-    await expect(normalizeVueSource(first.root)).toBe(
+    expect(normalizeVueSource(first.root)).toBe(
       normalizeVueSource(
         await readFile(path.join(process.cwd(), "packages/vue/src/form/FormRoot.vue"), "utf8"),
       ),
@@ -104,7 +104,7 @@ describe("generated Vue Form Primitive", () => {
     const styled = await readFile(path.join(outputRoot, "form/Form.vue"), "utf8");
 
     expect(() => assertVueSfcCompiles(styled, "Form.vue")).not.toThrow();
-    expect(styled).toContain("type FormHTMLAttributes");
+    expect(styled).toContain('import type { FormHTMLAttributes } from "vue";');
     expect(styled).toContain("FormProps = Omit<\n  FormHTMLAttributes,");
     expect(styled).toContain('data-slot="form"');
     expect(styled).toContain("validationTiming?:");

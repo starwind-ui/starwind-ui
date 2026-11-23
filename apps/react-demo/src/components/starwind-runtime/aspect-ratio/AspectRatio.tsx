@@ -1,30 +1,36 @@
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";
-import { aspectRatio, aspectRatioWrapper } from "./variants";
+import { aspectRatio } from "./variants";
 
-export type AspectRatioProps = React.ComponentPropsWithoutRef<"div"> &
+export type AspectRatioProps<T extends React.ElementType = "div"> = Omit<
+  React.ComponentPropsWithoutRef<T>,
+  "as" | "ratio" | "ref"
+> &
   VariantProps<typeof aspectRatio> & {
-    as?: React.ElementType;
+    as?: T;
     ratio?: number;
     ref?: React.Ref<HTMLElement>;
   };
 
-function AspectRatio(props: AspectRatioProps) {
-  const { ratio = 1, as: Tag = "div", ref, className, children, ...rest } = props;
+// Callers get props from the as element. The body reads them with a wide element type.
+function AspectRatio<T extends React.ElementType = "div">(
+  props: AspectRatioProps<T>,
+): React.JSX.Element;
+function AspectRatio(props: AspectRatioProps<React.ElementType>) {
+  const { ratio = 1, as: Tag = "div", ref, className, style, children, ...rest } = props;
 
-  const wrapperStyle = { paddingBottom: `${100 / ratio}%` } as React.CSSProperties;
+  const ratioStyle = { "--ratio": ratio, ...style } as React.CSSProperties;
 
   return (
-    <div className={aspectRatioWrapper()} style={wrapperStyle} data-slot="aspect-ratio-wrapper">
-      <Tag
-        className={aspectRatio({ class: className })}
-        data-slot="aspect-ratio"
-        {...rest}
-        ref={ref}
-      >
-        {children}
-      </Tag>
-    </div>
+    <Tag
+      {...rest}
+      className={aspectRatio({ class: className })}
+      style={ratioStyle}
+      data-slot="aspect-ratio"
+      ref={ref}
+    >
+      {children}
+    </Tag>
   );
 }
 

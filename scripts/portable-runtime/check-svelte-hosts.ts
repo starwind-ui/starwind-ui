@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { type ChildProcess, execFile, fork } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { chromium } from "playwright";
+import semver from "semver";
 import { parse as parseYaml } from "yaml";
 import {
   getImplementedSvelteStyledRoots,
@@ -19,7 +21,7 @@ export const HOST_TOOLS = {
   vite: "7.3.5",
   "@sveltejs/vite-plugin-svelte": "6.2.1",
   "tailwind-variants": "3.2.2",
-  "tailwind-merge": "3.6.0",
+  "tailwind-merge": "3.7.0",
   "@floating-ui/dom": "1.7.6",
   "embla-carousel": "8.6.0",
   tailwindcss: "4.3.0",
@@ -31,6 +33,37 @@ export const SVELTEKIT_TOOLS = {
   ...HOST_TOOLS,
   "@sveltejs/kit": "2.70.3",
   "@sveltejs/adapter-node": "5.5.7",
+};
+/**
+ * The Starwind stylesheet packages. The SvelteKit 3 host does not declare them, so the installed
+ * CLI's init must install them, and it must put them in devDependencies.
+ */
+export const SVELTEKIT_3_INIT_PACKAGES = [
+  "tailwindcss",
+  "@tailwindcss/vite",
+  "tw-animate-css",
+  "@tailwindcss/forms",
+] as const;
+/** Component dependencies that a SvelteKit project declares in dependencies. */
+export const SVELTEKIT_3_RUNTIME_PACKAGES = [
+  "tailwind-variants",
+  "tailwind-merge",
+  "@floating-ui/dom",
+  "embla-carousel",
+] as const;
+/** SvelteKit 3 raises its tool floors: Svelte 5.57.1, Vite 8, plugin-svelte 7 and TypeScript 6. */
+export const SVELTEKIT_3_TOOLS = {
+  ...Object.fromEntries(
+    Object.entries(HOST_TOOLS).filter(
+      ([name]) => !(SVELTEKIT_3_INIT_PACKAGES as readonly string[]).includes(name),
+    ),
+  ),
+  "@sveltejs/kit": "3.4.0",
+  "@sveltejs/adapter-node": "6.0.5",
+  svelte: "5.57.1",
+  vite: "8.3.8",
+  "@sveltejs/vite-plugin-svelte": "7.3.1",
+  typescript: "6.0.3",
 };
 export const ASTRO_TOOLS = {
   ...HOST_TOOLS,
@@ -74,13 +107,25 @@ export function svelteBaselineScope() {
     fullCatalogBehavior: false,
   };
 }
-export type Host = "vite" | "sveltekit" | "astro";
+export const HOSTS = ["vite", "sveltekit", "sveltekit-3", "astro"] as const;
+export type Host = (typeof HOSTS)[number];
 export function selectHost(value: string | undefined): Host {
-  if (value !== "vite" && value !== "sveltekit" && value !== "astro")
+  if (!HOSTS.includes(value as Host))
     throw new Error(
-      `Host ${value ?? "(missing)"} is not implemented. Use --host=vite, --host=sveltekit, or --host=astro.`,
+      `Host ${value ?? "(missing)"} is not implemented. Use --host=${HOSTS.join(", --host=")}.`,
     );
-  return value;
+  return value as Host;
+}
+/** SvelteKit 2 and 3 share the request-server fixture shape and the navigation browser proof. */
+export const isSvelteKitHost = (host: Host) => host === "sveltekit" || host === "sveltekit-3";
+export function hostTools(host: Host): Record<string, string> {
+  return host === "sveltekit"
+    ? SVELTEKIT_TOOLS
+    : host === "sveltekit-3"
+      ? SVELTEKIT_3_TOOLS
+      : host === "astro"
+        ? ASTRO_TOOLS
+        : HOST_TOOLS;
 }
 export function assertConsumerPath(root: string, file: string) {
   assert.ok(file.startsWith(root + path.sep), `Resolved outside consumer: ${file}`);
@@ -245,16 +290,40 @@ export async function readHostProvenance(
   root: string,
   packed: Packed[],
   tools: Record<string, string> = HOST_TOOLS,
+  initPackages: readonly string[] = [],
+  /** Packed packages that the consumer gets only through another package, bound by overrides. */
+  transitivePacked: readonly string[] = [],
 ) {
   root = await realpath(root);
   const manifest = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
   const installed: Record<string, unknown> = {};
+  // init chose these versions, so the check reads the declared range instead of an exact pin.
+  for (const name of initPackages) {
+    assert.equal(
+      manifest.dependencies?.[name],
+      undefined,
+      `init must not declare ${name} in dependencies`,
+    );
+    const range = manifest.devDependencies?.[name];
+    assert.equal(typeof range, "string", `init must declare ${name} in devDependencies`);
+    const directory = await realpath(path.join(root, "node_modules", name));
+    assertConsumerPath(root, directory);
+    const metadata = JSON.parse(await readFile(path.join(directory, "package.json"), "utf8"));
+    assert.equal(metadata.name, name);
+    assert.ok(
+      semver.satisfies(metadata.version, range),
+      `${name} ${metadata.version} is outside its declared ${range}`,
+    );
+    installed[name] = { version: metadata.version, range, directory, installedBy: "init" };
+  }
   const packedRoots: Record<string, string> = {};
   for (const [name, version] of Object.entries({
     ...tools,
     ...Object.fromEntries(packed.map((p) => [p.name, p.version])),
   })) {
-    const directory = await realpath(path.join(root, "node_modules", name));
+    const directory = transitivePacked.includes(name)
+      ? await locateThrough(root, "@starwind-ui/svelte", name)
+      : await realpath(path.join(root, "node_modules", name));
     assertConsumerPath(root, directory);
     const metadata = JSON.parse(await readFile(path.join(directory, "package.json"), "utf8"));
     assert.equal(metadata.name, name);
@@ -262,7 +331,17 @@ export async function readHostProvenance(
     const archive = packed.find((p) => p.name === name);
     if (archive) {
       packedRoots[name] = directory;
-      if (manifest.dependencies[name] !== `file:${archive.tarball}`) {
+      if (transitivePacked.includes(name)) {
+        assert.equal(
+          manifest.dependencies?.[name] ?? manifest.devDependencies?.[name],
+          undefined,
+          `${name} must arrive through another package`,
+        );
+        verifyPackedWorkspaceOverrides(
+          await readFile(path.join(root, "pnpm-workspace.yaml"), "utf8"),
+          packed,
+        );
+      } else if (manifest.dependencies[name] !== `file:${archive.tarball}`) {
         assert.equal(
           manifest.dependencies[name],
           archive.version,
@@ -279,7 +358,12 @@ export async function readHostProvenance(
         archive.files,
         `${name} differs from packed files`,
       );
-    } else assert.equal(manifest.dependencies[name], version, `${name} exact tool dependency`);
+    } else
+      assert.equal(
+        manifest.dependencies?.[name] ?? manifest.devDependencies?.[name],
+        version,
+        `${name} exact tool dependency`,
+      );
     installed[name] = { version, directory, exports: metadata.exports };
   }
   await writeFile(path.join(root, "verified-packed-roots.json"), JSON.stringify(packedRoots));
@@ -296,6 +380,20 @@ export async function readHostProvenance(
     dependencyTree,
     lockfile: await readFile(path.join(root, "pnpm-lock.yaml"), "utf8"),
   };
+}
+/** Find a package as Node resolves it from the package that depends on it. */
+async function locateThrough(root: string, parent: string, name: string): Promise<string> {
+  const parentDirectory = await realpath(path.join(root, "node_modules", parent));
+  for (const lookup of createRequire(path.join(parentDirectory, "package.json")).resolve.paths(
+    name,
+  ) ?? []) {
+    try {
+      return await realpath(path.join(lookup, name));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+  }
+  assert.fail(`${name} is not installed for ${parent}`);
 }
 /** A same-version registry installation is a different payload from the verified archive. */
 export async function verifyPackedBuildModules(
@@ -409,7 +507,7 @@ export async function verifyHostBrowser(server: Server) {
     assert.equal(result.styles.length, 3);
     for (const style of result.styles) {
       assert.equal(style.display, "inline-flex");
-      assert.ok(parseFloat(style.radius) > 0);
+      assert.ok(Number.parseFloat(style.radius) > 0);
     }
     for (const cycle of result.cycles) {
       const { refs, ...behavior } = cycle;
@@ -451,10 +549,15 @@ interface NavigationWindow extends Window {
   }[];
   __documentToken?: string;
 }
-export const verifySvelteKitBrowser = (server: Server) =>
-  verifyNavigationHostBrowser(server, "sveltekit");
+export const verifySvelteKitBrowser = (
+  server: Server,
+  host: "sveltekit" | "sveltekit-3" = "sveltekit",
+) => verifyNavigationHostBrowser(server, host);
 export const verifyAstroBrowser = (server: Server) => verifyNavigationHostBrowser(server, "astro");
-async function verifyNavigationHostBrowser(server: Server, host: "sveltekit" | "astro") {
+async function verifyNavigationHostBrowser(
+  server: Server,
+  host: "sveltekit" | "sveltekit-3" | "astro",
+) {
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
     const ssrContext = await browser.newContext({ javaScriptEnabled: false });
@@ -475,7 +578,12 @@ async function verifyNavigationHostBrowser(server: Server, host: "sveltekit" | "
       await ssrPage.locator('[data-test="checkbox"]').getAttribute("aria-checked"),
       "true",
     );
-    assert.ok((await ssrPage.locator('[data-test="select"]').textContent())?.includes("alpha"));
+    // Select.Value reads its label from mounted items, so SSR carries the default as the form value.
+    assert.equal(
+      await ssrPage.locator("[data-sw-select-input]").first().getAttribute("value"),
+      "alpha",
+      `${host} SSR Select default value`,
+    );
     assert.equal(await ssrPage.locator("html").getAttribute("data-host-ready"), null);
     if (host === "astro") {
       assert.equal(
@@ -521,7 +629,7 @@ async function verifyNavigationHostBrowser(server: Server, host: "sveltekit" | "
         return { display: style.display, radius: style.borderRadius };
       });
       assert.equal(computedStyle.display, "inline-flex", `${host} command-installed Button CSS`);
-      assert.ok(parseFloat(computedStyle.radius) > 0, `${host} canonical theme radius`);
+      assert.ok(Number.parseFloat(computedStyle.radius) > 0, `${host} canonical theme radius`);
       const initial = await page.evaluate(() =>
         (window as unknown as NavigationWindow).__hostOwners.at(-1)!.app.snapshot(),
       );
@@ -830,9 +938,18 @@ export async function runInstalledSvelteCommandDelivery(
   return evidence;
 }
 
-function defaultSteps(repoRoot: string, host: Host, capabilityPath?: string): HostSteps {
-  const tools =
-    host === "sveltekit" ? SVELTEKIT_TOOLS : host === "astro" ? ASTRO_TOOLS : HOST_TOOLS;
+/** The packed host steps. Tests and experiments can wrap single steps. */
+export function defaultSteps(repoRoot: string, host: Host, capabilityPath?: string): HostSteps {
+  const tools = hostTools(host);
+  const kit = isSvelteKitHost(host);
+  // Kit 2 keeps its earlier layout with every tool in devDependencies.
+  const runtimePackages: readonly string[] =
+    host === "sveltekit-3" ? SVELTEKIT_3_RUNTIME_PACKAGES : [];
+  const initPackages: readonly string[] = host === "sveltekit-3" ? SVELTEKIT_3_INIT_PACKAGES : [];
+  // init declares only the Svelte adapter, so a SvelteKit 3 project gets the Runtime through it.
+  // adapter-node 6 then bundles the Runtime into the SSR build, as in a real project.
+  const transitivePacked: readonly string[] =
+    host === "sveltekit-3" ? ["@starwind-ui/runtime"] : [];
   return {
     async pack(root) {
       await command(repoRoot, ["runtime:build"]);
@@ -855,8 +972,7 @@ function defaultSteps(repoRoot: string, host: Host, capabilityPath?: string): Ho
         root,
         { recursive: true },
       );
-      const appDestination =
-        host === "vite" ? "src/App.svelte" : host === "sveltekit" ? "src/App.svelte" : "App.svelte";
+      const appDestination = host === "astro" ? "App.svelte" : "src/App.svelte";
       await mkdir(path.dirname(path.join(root, appDestination)), { recursive: true });
       const app = await readFile(
         path.join(
@@ -865,12 +981,15 @@ function defaultSteps(repoRoot: string, host: Host, capabilityPath?: string): Ho
         ),
         "utf8",
       );
+      // SvelteKit 3 has no $lib. Users import through the package.json #lib subpath import.
       const componentRoot =
-        host === "sveltekit"
-          ? "./lib/starwind/"
-          : host === "astro"
-            ? "./src/components/starwind-svelte/"
-            : "./components/starwind/";
+        host === "sveltekit-3"
+          ? "#lib/starwind/"
+          : host === "sveltekit"
+            ? "./lib/starwind/"
+            : host === "astro"
+              ? "./src/components/starwind-svelte/"
+              : "./components/starwind/";
       await writeFile(
         path.join(root, appDestination),
         app.replaceAll("./components/starwind/", componentRoot),
@@ -882,48 +1001,87 @@ function defaultSteps(repoRoot: string, host: Host, capabilityPath?: string): Ho
             name: `starwind-packed-${host}-consumer`,
             private: true,
             type: "module",
-            dependencies: {
-              ...tools,
-              ...Object.fromEntries(packed.map((p) => [p.name, `file:${p.tarball}`])),
-            },
+            ...(host === "sveltekit-3"
+              ? { imports: { "#lib": "./src/lib/index.js", "#lib/*": "./src/lib/*" } }
+              : {}),
+            // SvelteKit starters declare their tools as dev dependencies. adapter-node 6 keeps
+            // production dependencies external to the SSR build, so the field changes the build.
+            ...(kit
+              ? {
+                  dependencies: {
+                    ...Object.fromEntries(
+                      Object.entries(tools).filter(([name]) => runtimePackages.includes(name)),
+                    ),
+                    ...Object.fromEntries(
+                      packed
+                        .filter((p) => !transitivePacked.includes(p.name))
+                        .map((p) => [p.name, `file:${p.tarball}`]),
+                    ),
+                  },
+                  devDependencies: Object.fromEntries(
+                    Object.entries(tools).filter(([name]) => !runtimePackages.includes(name)),
+                  ),
+                }
+              : {
+                  dependencies: {
+                    ...tools,
+                    ...Object.fromEntries(packed.map((p) => [p.name, `file:${p.tarball}`])),
+                  },
+                }),
           },
           null,
           2,
         ),
       );
+      // The settings also apply to the installs that the CLI runs during init.
       await writeFile(
         path.join(root, "pnpm-workspace.yaml"),
-        "overrides:\n" +
+        `storeDir: ${JSON.stringify(path.join(root, ".pnpm-store"))}\n` +
+          "enableGlobalVirtualStore: false\nlinkWorkspacePackages: false\npreferWorkspacePackages: false\n" +
+          "overrides:\n" +
           packed
             .map((p) => `  ${JSON.stringify(p.name)}: ${JSON.stringify(`file:${p.tarball}`)}\n`)
             .join(""),
       );
-      await command(root, [
-        "--allow-build=esbuild",
-        "add",
-        "--save-exact",
-        "--workspace-root",
-        "--store-dir",
-        path.join(root, ".pnpm-store"),
-        "--config.enable-global-virtual-store=false",
-        "--config.link-workspace-packages=false",
-        "--config.prefer-workspace-packages=false",
-        "--reporter=append-only",
-        ...Object.entries(tools).map(([name, version]) => `${name}@${version}`),
-      ]);
+      const add = async (selected: [string, string][], dev: boolean) =>
+        selected.length &&
+        command(root, [
+          "--allow-build=esbuild",
+          "add",
+          "--save-exact",
+          ...(dev ? ["--save-dev"] : []),
+          "--workspace-root",
+          "--store-dir",
+          path.join(root, ".pnpm-store"),
+          "--config.enable-global-virtual-store=false",
+          "--config.link-workspace-packages=false",
+          "--config.prefer-workspace-packages=false",
+          "--reporter=append-only",
+          ...selected.map(([name, version]) => `${name}@${version}`),
+        ]);
+      const entries = Object.entries(tools);
+      await add(
+        entries.filter(([name]) => !kit || runtimePackages.includes(name)),
+        false,
+      );
+      if (kit)
+        await add(
+          entries.filter(([name]) => !runtimePackages.includes(name)),
+          true,
+        );
     },
     commands: (root, packed) =>
       capabilityPath
         ? runSvelteCommandDelivery(repoRoot, root, host, capabilityPath)
         : runInstalledSvelteCommandDelivery(root, host, packed),
-    provenance: (root, packed) => readHostProvenance(root, packed, tools),
+    provenance: (root, packed) =>
+      readHostProvenance(root, packed, tools, initPackages, transitivePacked),
     start: startHostProcess,
-    browser:
-      host === "sveltekit"
-        ? verifySvelteKitBrowser
-        : host === "astro"
-          ? verifyAstroBrowser
-          : verifyHostBrowser,
+    browser: kit
+      ? (server) => verifySvelteKitBrowser(server, host as "sveltekit" | "sveltekit-3")
+      : host === "astro"
+        ? verifyAstroBrowser
+        : verifyHostBrowser,
     async buildProvenance(root) {
       const modules: string[] = JSON.parse(
         await readFile(path.join(root, "build-provenance.json"), "utf8"),
@@ -960,12 +1118,11 @@ function defaultSteps(repoRoot: string, host: Host, capabilityPath?: string): Ho
           graphs[target] = graph;
         }
       }
-      const componentRoot =
-        host === "sveltekit"
-          ? "src/lib/starwind"
-          : host === "astro"
-            ? "src/components/starwind-svelte"
-            : "src/components/starwind";
+      const componentRoot = kit
+        ? "src/lib/starwind"
+        : host === "astro"
+          ? "src/components/starwind-svelte"
+          : "src/components/starwind";
       for (const group of REPRESENTATIVE_SVELTE_STYLED_ROOTS)
         assert.ok(
           modules.some((file) => file.startsWith(path.join(root, componentRoot, group) + path.sep)),

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { sidebarGroupLabel } from "./variants";
 
 export type SidebarGroupLabelProps = Omit<HTMLAttributes, "asChild" | "class"> & {

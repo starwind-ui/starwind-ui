@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { toastTitle } from "./variants";
 
 defineOptions({ inheritAttrs: false });

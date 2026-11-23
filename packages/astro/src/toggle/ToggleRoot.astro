@@ -29,7 +29,7 @@ const {
 
 const Tag = nativeButton ? "button" : "span";
 const initialPressed = pressed ?? defaultPressed;
-const defaultPressedAttribute = pressed === undefined && defaultPressed ? "true" : undefined;
+const defaultPressedAttribute = defaultPressed ? "true" : undefined;
 ---
 
 <Tag

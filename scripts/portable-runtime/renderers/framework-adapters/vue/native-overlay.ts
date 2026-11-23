@@ -16,9 +16,10 @@ export function printVueNativeOverlayIndex(file: AdapterIndexFile): AdapterPrint
   const printed = printVueFamilyIndex(file, "native-overlay");
   if (file.family?.kind !== "native-overlay") return printed;
   const { facts } = file.family;
-  printed.contents += `\nexport { ${facts.displayName}Context } from "./${facts.exports.root}.vue";\n`;
+  // The Root's injection key stays internal to the family parts. Only the AlertDialog control
+  // hook is shared, because Styled AlertDialog actions call it.
   if (facts.displayName === "AlertDialog") {
-    printed.contents += `export { __useAlertDialogControl } from "./${facts.exports.close}.vue";\n`;
+    printed.contents += `\nexport { __useAlertDialogControl } from "./${facts.exports.close}.vue";\n`;
   }
   return printed;
 }
@@ -336,12 +337,4 @@ defineExpose({ element });
   </${part.defaultElement}>
 </template>
 `;
-}
-
-function printOptions(options: Record<string, boolean | number | string> | undefined): string {
-  if (!options || Object.keys(options).length === 0) return "";
-  const fields = Object.entries(options)
-    .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-    .join(", ");
-  return `, { ${fields} }`;
 }

@@ -5,22 +5,18 @@ import {
 import { operations } from "../../shared-recipes/structured/operations.js";
 import type { FormProjection } from "../form-control-frame.js";
 import type { FormTargetOperations } from "../form-control-operations.js";
-export const formOperations = (plan: FormControlPlan): FormTargetOperations => ({
+export const formOperations = (): FormTargetOperations => ({
   ...operations.vue,
   restoreRuntimeInputName: false,
   renderMixed: () => "renderedIndeterminate.value = connection.input?.indeterminate ?? false;",
 });
 export function printFormProjection(projection: FormProjection): string {
   const {
-    target,
     plan,
     fw,
     grouped,
     fields,
     defaults,
-    destructure,
-    inputNames,
-    access,
     attributes,
     inputAttrs,
     inputData,
@@ -83,8 +79,6 @@ ${observe(plan)}
 }
 function observe(plan: FormControlPlan): string {
   const grouped = plan.group !== "none";
-  const deps = (names: readonly string[]) =>
-    names.map((name) => (name === "disabled" ? "effectiveDisabledValue" : name)).join(", ");
   return `function reconnectRuntime(): void { if (rootRef.value && inputElement.value) connectRuntime(rootRef.value, inputElement.value); }
 onMounted(reconnectRuntime);
 ${operations.vue.observeModel(plan.model.name, "reconnectRuntime")}

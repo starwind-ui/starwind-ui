@@ -19,6 +19,7 @@ interface OverflowAmount {
 }
 
 export interface ResolvePlacementOptions {
+  direction?: "ltr" | "rtl";
   side: FloatingSide;
   align: FloatingAlign;
   sideOffset: number;
@@ -106,6 +107,7 @@ function getPlacementPosition(
   contentWidth: number,
   contentHeight: number,
   sideOffset: number,
+  direction: "ltr" | "rtl",
 ): Position {
   let top = 0;
   let left = 0;
@@ -116,9 +118,10 @@ function getPlacementPosition(
         ? triggerRect.bottom + sideOffset
         : triggerRect.top - contentHeight - sideOffset;
 
-    if (placement.align === "start") {
+    const align = direction === "rtl" ? getOppositeAlign(placement.align) : placement.align;
+    if (align === "start") {
       left = triggerRect.left;
-    } else if (placement.align === "end") {
+    } else if (align === "end") {
       left = triggerRect.right - contentWidth;
     } else {
       left = triggerRect.left + (triggerRect.width - contentWidth) / 2;
@@ -215,6 +218,7 @@ export function resolvePlacement(options: ResolvePlacementOptions): ResolvePlace
     viewportWidth,
     viewportHeight,
     viewportPadding,
+    direction = "ltr",
     avoidCollisions = true,
   } = options;
 
@@ -227,6 +231,7 @@ export function resolvePlacement(options: ResolvePlacementOptions): ResolvePlace
       contentWidth,
       contentHeight,
       sideOffset,
+      direction,
     );
 
     return {
@@ -241,7 +246,14 @@ export function resolvePlacement(options: ResolvePlacementOptions): ResolvePlace
 
   let bestPlacement = candidates[0] ?? preferredPlacement;
   let bestPosition = clampPositionToViewport(
-    getPlacementPosition(bestPlacement, triggerRect, contentWidth, contentHeight, sideOffset),
+    getPlacementPosition(
+      bestPlacement,
+      triggerRect,
+      contentWidth,
+      contentHeight,
+      sideOffset,
+      direction,
+    ),
     contentWidth,
     contentHeight,
     viewportWidth,
@@ -257,6 +269,7 @@ export function resolvePlacement(options: ResolvePlacementOptions): ResolvePlace
       contentWidth,
       contentHeight,
       sideOffset,
+      direction,
     );
     const clampedPosition = clampPositionToViewport(
       preferredPosition,
@@ -303,9 +316,14 @@ export function resolvePlacement(options: ResolvePlacementOptions): ResolvePlace
 /**
  * Returns a transform-origin value that matches the resolved placement.
  */
-export function getTransformOrigin(side: FloatingSide, align: FloatingAlign): string {
+export function getTransformOrigin(
+  side: FloatingSide,
+  align: FloatingAlign,
+  direction: "ltr" | "rtl" = "ltr",
+): string {
   if (side === "top" || side === "bottom") {
     const vertical = side === "bottom" ? "top" : "bottom";
+    if (direction === "rtl") align = getOppositeAlign(align);
     const horizontal = align === "start" ? "left" : align === "end" ? "right" : "center";
 
     return `${horizontal} ${vertical}`;

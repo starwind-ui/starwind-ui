@@ -121,11 +121,11 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
       });
       connection.instance = owned;
       connection.unsubscribe = [
-        owned.subscribe("openChange", (detail) => {
+        owned.subscribe("openChange", () => {
           if (connection.instance !== owned) return;
           readContext(owned);
         }),
-        owned.subscribe("mobileOpenChange", (detail) => {
+        owned.subscribe("mobileOpenChange", () => {
           if (connection.instance !== owned) return;
           readContext(owned);
         }),

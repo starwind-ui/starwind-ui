@@ -11,11 +11,11 @@
 
 <script lang="ts">
   let {
-    "size": size = "icon-sm",
-    "variant": variant = "ghost",
+    size = "icon-sm",
+    variant = "ghost",
     "class": className,
-    "icon": icon,
-    "children": children,
+    icon,
+    children,
     ...rest
   }: SidebarTriggerProps = $props();
 </script>

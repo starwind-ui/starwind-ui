@@ -15,6 +15,7 @@
   let { value = $bindable(), value: commandValue, defaultValue, disabled = false, type, onValueChange, ref, ...rest }: Props = $props();
   const seed = untrack(() => defaultValue ?? value);
   const initialMarkup = untrack(() => type === "file" ? undefined : value ?? defaultValue);
+  const markupValue = initialMarkup === undefined ? {} : { value: initialMarkup };
   function connectInput(element: HTMLInputElement) {
     const initialModel = commandValue;
     const controlled = initialModel !== undefined;
@@ -105,4 +106,4 @@
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLInputElement>(() => ref);
 </script>
-<input {...rest} {type} value={initialMarkup} defaultValue={String(seed ?? "")} {disabled} data-sw-input="" data-disabled={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />
+<input {...rest} {type} {...markupValue} defaultValue={initialMarkup === undefined ? undefined : String(seed ?? "")} {disabled} data-sw-input="" data-disabled={disabled ? "" : undefined} {@attach attachInput} {@attach attachRef} />

@@ -18,7 +18,6 @@ export const svelteSelectionRootProjection: SelectionRootProjection = {
       code,
       controller,
       accepted,
-      renderedName,
       callbackType,
       fields,
       destructure,
@@ -36,7 +35,7 @@ import type { HTMLAttributes } from "svelte/elements";
 import type { Attachment } from "svelte/attachments";
 import { createRefAttachment } from "../_internal/ref-attachment.js";
 type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-  children?: Snippet<[${plan.model.type}]>;
+  children?: Snippet;
   ${fields}
   ${callback}?: ${callbackType};
   ref?: (element: HTMLDivElement | null) => void;
@@ -56,7 +55,7 @@ const attachRef = createRefAttachment<HTMLDivElement>(() => ref);
 ${helpers}
 </script>
 <${frame.element} {...rest} ${attributes} {@attach attachRuntime} {@attach attachRef}>
-  {@render children?.(copyModel(${renderedName}))}
+  {@render children?.()}
 </${frame.element}>
 `;
   },

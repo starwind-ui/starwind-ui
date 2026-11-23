@@ -10,11 +10,11 @@
 
 <script lang="ts">
   let {
-    "showOnHover": showOnHover = false,
-    "variant": variant = "ghost",
-    "size": size = "icon-sm",
+    showOnHover = false,
+    variant = "ghost",
+    size = "icon-sm",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: SidebarMenuActionProps = $props();
 </script>

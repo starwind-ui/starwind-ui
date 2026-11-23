@@ -517,8 +517,7 @@ describe("createSidebarController", () => {
       }),
     );
     expect(
-      "trigger" in
-        (listener.mock.calls.at(-1)?.[0] as CustomEvent<SidebarOpenChangeDetails>).detail,
+      "trigger" in (listener.mock.calls.at(-1)![0] as CustomEvent<SidebarOpenChangeDetails>).detail,
     ).toBe(false);
   });
 

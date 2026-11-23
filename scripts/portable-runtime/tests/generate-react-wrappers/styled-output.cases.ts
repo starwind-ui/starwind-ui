@@ -311,7 +311,16 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     expect(compactCode(carouselVariants)).toContain(compactCode("defaultVariants: {"));
     expect(compactCode(carouselVariants)).toContain(compactCode('variant: "outline"'));
     expect(compactCode(carouselVariants)).toContain(compactCode('size: "icon"'));
-    expect(compactCode(carouselVariants)).toContain(compactCode('"absolute size-8 rounded-full"'));
+    expect(compactCode(carouselVariants)).toContain(
+      compactCode(
+        'export const carouselNext = tv({\n  base: "absolute inset-(--sw-carousel-next) size-8 [translate:var(--sw-carousel-shift)] rotate-(--sw-carousel-turn) rounded-full"',
+      ),
+    );
+    expect(compactCode(carouselVariants)).toContain(
+      compactCode(
+        'export const carouselPrevious = tv({\n  base: "absolute inset-(--sw-carousel-previous) size-8 [translate:var(--sw-carousel-shift)] rotate-(--sw-carousel-turn) rounded-full"',
+      ),
+    );
     expect(compactCode(carouselNext)).toContain(
       compactCode("const controlClassName = carouselNext({ class: className });"),
     );

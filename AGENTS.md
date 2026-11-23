@@ -2,18 +2,19 @@
 
 ## Project Shape
 
-Starwind UI is a pnpm/Turbo monorepo for Astro, React, Vue 3.5 beta, and Svelte 5 beta components,
+Starwind UI is a pnpm/Turbo monorepo for Astro, React, Vue 3.5, and Svelte 5 components,
 framework-neutral Runtime controllers, generated Primitive adapters, and the `starwind` CLI.
 
 - `packages/runtime`: behavior-only DOM controllers and component subpath exports.
 - `packages/astro` and `packages/react`: generated first-party Primitive adapters.
-- `packages/vue`: generated Vue 3.5 public-beta Primitive adapters. The beta remains outside the
-  stable Runtime, Astro, and React fixed package group.
-- `packages/svelte`: generated Svelte 5 public-beta Primitive adapters for Svelte `>=5.29.0 <6`.
+- `packages/vue`: generated Vue 3.5 Primitive adapters, published in the Runtime fixed package
+  group.
+- `packages/svelte`: generated Svelte 5 Primitive adapters for Svelte `>=5.29.0 <6`, published in
+  the same fixed package group.
 - `packages/cli`: CLI commands, registries, migrations, and project integration.
 - `apps/demo` and `apps/react-demo`: complete Astro and React integration demos.
-- `apps/vue-demo`: public Vue beta integration and review demo.
-- `apps/svelte-demo`: public Svelte beta integration and review demo.
+- `apps/vue-demo`: public Vue integration and review demo.
+- `apps/svelte-demo`: public Svelte integration and review demo.
 - `scripts/portable-runtime`: adapter contracts, generators, smoke tests, and measurement tooling.
 
 Use pnpm for package work. Package metadata requires Node `>=22.12.0`; CI uses Node 24.
@@ -52,8 +53,8 @@ pnpm runtime:size:check
 - Add deferred primitive version intent under `.changeset/primitive-components/` for changed
   existing vendored primitives. Use normal SemVer: `patch` for compatible fixes, `minor` for
   backward-compatible capabilities, and `major` for breaking changes.
-- Add a Changeset for package-facing changes. Follow the beta release policy for
-  `@starwind-ui/vue` and `@starwind-ui/svelte`. Demo workspaces remain private.
+- Add a Changeset for package-facing changes. `@starwind-ui/vue` and `@starwind-ui/svelte` follow
+  the fixed-group release policy. Demo workspaces remain private.
 - Before writing or editing a Changeset or changelog, apply the Release Note Writing rules in
   `docs/release/versioning.md` and use the `write-changeset` skill when available. This requirement
   applies during implementation and release preparation without an explicit skill request.

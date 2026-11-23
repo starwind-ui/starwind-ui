@@ -28,7 +28,7 @@ export async function verifyStyledBindableRefs(consumer: DistConsumer) {
     response.end(
       request.url === "/browser.js"
         ? javascript
-        : `<link rel="icon" href="data:,\"><div id="app">${body}</div><script type="module" src="/browser.js"></script>`,
+        : `<link rel="icon" href="data:,"><div id="app">${body}</div><script type="module" src="/browser.js"></script>`,
     );
   });
   let browser;

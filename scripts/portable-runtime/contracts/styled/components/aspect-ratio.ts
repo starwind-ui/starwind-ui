@@ -1,4 +1,3 @@
-import { aspectRatioPercentage } from "../../../renderers/shared-recipes/passive/aspect-ratio.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const aspectRatioStyledContract: StyledAdapterContract = {
@@ -8,11 +7,8 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
   defaultExportMode: "component",
   variantCollectionName: "AspectRatioVariants",
   variants: {
-    aspectRatioWrapper: {
-      base: "relative w-full",
-    },
     aspectRatio: {
-      base: "absolute inset-0",
+      base: "relative aspect-(--ratio)",
     },
   },
   components: [
@@ -43,6 +39,12 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
             frameworks: ["vue"],
           },
           {
+            name: "style",
+            optional: true,
+            type: 'import("vue").StyleValue',
+            frameworks: ["vue"],
+          },
+          {
             name: "ratio",
             optional: true,
             type: "number",
@@ -61,65 +63,59 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
           { name: "as", alias: "Tag", defaultValue: '"div"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
+          { name: "style" },
         ],
         rest: "rest",
       },
       variables: [
         {
           frameworks: ["astro"],
-          name: "wrapperStyle",
-          value: { type: "raw", code: "`padding-bottom: " + aspectRatioPercentage() + "`" },
+          name: "ratioStyle",
+          value: {
+            type: "raw",
+            code: 'typeof style === "string" ? `--ratio: ${ratio}; ${style}` : { "--ratio": ratio, ...style }',
+          },
         },
         {
           frameworks: ["react"],
-          name: "wrapperStyle",
+          name: "ratioStyle",
           value: {
             type: "raw",
-            code: "{ paddingBottom: `" + aspectRatioPercentage() + "` } as React.CSSProperties",
+            code: '{ "--ratio": ratio, ...style } as React.CSSProperties',
           },
         },
         {
           frameworks: ["vue"],
-          name: "wrapperStyle",
-          value: { type: "raw", code: "{ paddingBottom: `" + aspectRatioPercentage() + "` }" },
+          name: "ratioStyle",
+          value: { type: "raw", code: '[{ "--ratio": ratio }, style]' },
+        },
+        {
+          frameworks: ["svelte"],
+          name: "ratioStyle",
+          value: { type: "raw", code: '`--ratio: ${ratio}; ${style ?? ""}`' },
         },
       ],
       render: [
         {
           type: "element",
-          tag: "div",
+          tag: "Tag",
+          tagBinding: true,
+          omitVoidChildrenIn: ["vue"],
           attrs: [
+            { name: "spread", value: { type: "variable", name: "rest" } },
             {
               name: "class",
               value: {
                 type: "classVariant",
-                variant: "aspectRatioWrapper",
+                variant: "aspectRatio",
+                args: { class: "className" },
               },
             },
-            { name: "style", value: { type: "variable", name: "wrapperStyle" } },
-            { name: "data-slot", value: { type: "literal", value: "aspect-ratio-wrapper" } },
+            { name: "style", value: { type: "variable", name: "ratioStyle" } },
+            { name: "data-slot", value: { type: "literal", value: "aspect-ratio" } },
+            { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
           ],
-          children: [
-            {
-              type: "element",
-              tag: "Tag",
-              tagBinding: true,
-              attrs: [
-                {
-                  name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "aspectRatio",
-                    args: { class: "className" },
-                  },
-                },
-                { name: "data-slot", value: { type: "literal", value: "aspect-ratio" } },
-                { name: "spread", value: { type: "variable", name: "rest" } },
-                { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
-              ],
-              children: [{ type: "slot" }],
-            },
-          ],
+          children: [{ type: "slot" }],
         },
       ],
     },

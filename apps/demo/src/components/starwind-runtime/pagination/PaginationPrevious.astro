@@ -17,7 +17,7 @@ const { size = "md", class: className, ...rest } = Astro.props;
   data-slot="pagination-previous"
 >
   <slot name="icon">
-    <ChevronLeft />
+    <ChevronLeft class="rtl:rotate-180" />
   </slot>
 
   <slot />

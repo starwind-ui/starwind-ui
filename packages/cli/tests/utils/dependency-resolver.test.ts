@@ -39,6 +39,25 @@ describe("dependency resolver", () => {
       expect(result).toEqual(["@tabler/icons-react@^3.0.0"]);
     });
 
+    it.each(["^3", "^3.4.0", "3.6.0", "~3.6.1"])(
+      "raises a declared tailwind-merge %s to the required ^3.7.0",
+      async (declared) => {
+        mockReadJsonFile.mockResolvedValue({ dependencies: { "tailwind-merge": declared } });
+
+        const result = await filterUninstalledDependencies(["tailwind-merge@^3.7.0"]);
+
+        expect(result).toEqual(["tailwind-merge@^3.7.0"]);
+      },
+    );
+
+    it("keeps a declared tailwind-merge that already satisfies ^3.7.0", async () => {
+      mockReadJsonFile.mockResolvedValue({ dependencies: { "tailwind-merge": "^3.8.0" } });
+
+      const result = await filterUninstalledDependencies(["tailwind-merge@^3.7.0"]);
+
+      expect(result).toEqual([]);
+    });
+
     it("requires install when the installed version does not satisfy the range", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
@@ -104,7 +123,7 @@ describe("dependency resolver", () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
           "@starwind-ui/vue": "workspace:*",
-          vue: "^3.5.13",
+          vue: "^3.5.21",
           "tailwind-variants": "^1.0.0",
         },
       });
@@ -117,6 +136,22 @@ describe("dependency resolver", () => {
       ]);
 
       expect(result).toEqual(["lucide-vue-next@^0.468.0"]);
+    });
+
+    it("moves an exact beta adapter to the stable fixed-group range", async () => {
+      mockReadJsonFile.mockResolvedValue({
+        dependencies: {
+          "@starwind-ui/svelte": "0.3.0",
+          "@starwind-ui/vue": "0.4.0",
+        },
+      });
+
+      const result = await filterUninstalledDependencies([
+        "@starwind-ui/vue@^1.6.0",
+        "@starwind-ui/svelte@^1.6.0",
+      ]);
+
+      expect(result).toEqual(["@starwind-ui/vue@^1.6.0", "@starwind-ui/svelte@^1.6.0"]);
     });
 
     it("treats missing package.json as requiring all requested dependencies", async () => {

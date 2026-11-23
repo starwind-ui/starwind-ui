@@ -29,15 +29,15 @@ export const navigationMenuTrigger = tv({
 
 export const navigationMenuIndicator = tv({
   base: [
-    "relative top-px ml-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
-    "group-data-[size=md]/nav-menu:ml-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
+    "relative top-px ms-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
+    "group-data-[size=md]/nav-menu:ms-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
     "group-data-[state=open]/nav-menu-trigger:rotate-180",
   ],
 });
 
 export const navigationMenuContent = tv({
   base: [
-    "h-full w-auto p-1 transition-opacity duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] outline-none data-ending-style:opacity-0 data-starting-style:opacity-0",
+    "h-full w-max max-w-[calc(100vw-2rem)] p-1 transition-opacity duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] outline-none data-ending-style:opacity-0 data-starting-style:opacity-0",
     "data-instant:transition-none data-[state=closed]:pointer-events-none data-[state=closed]:absolute data-[state=closed]:inset-0",
     "**:data-[slot=navigation-menu-link]:focus:ring-0 **:data-[slot=navigation-menu-link]:focus:outline-none",
   ],

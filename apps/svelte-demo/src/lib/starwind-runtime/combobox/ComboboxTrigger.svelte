@@ -12,10 +12,10 @@
   let {
     "class": className,
     "iconClass": iconClassName,
-    "showIcon": showIcon = true,
-    "child": child,
-    "children": children,
-    "icon": icon,
+    showIcon = true,
+    child,
+    children,
+    icon,
     ...rest
   }: ComboboxTriggerProps = $props();
 </script>

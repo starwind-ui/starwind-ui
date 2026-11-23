@@ -1,4 +1,8 @@
-import { initialCheckedValue, initialModelValue } from "../../shared-recipes/initial-state.js";
+import {
+  defaultMarker,
+  initialCheckedValue,
+  initialModelValue,
+} from "../../shared-recipes/initial-state.js";
 import {
   menuConnection,
   menuFragments,
@@ -80,7 +84,11 @@ function printComponent(
     AdapterCompositeMenuOverlayPartName,
     (facts: AdapterCompositeMenuOverlayFacts) => string
   > = {
-    root: (value) => printRoot(value, getVueAcceptedModelEvent(file, "open")),
+    root: (value) => {
+      // Validate that the root publishes its accepted open model through a controller subscription.
+      getVueAcceptedModelEvent(file, "open");
+      return printRoot(value);
+    },
     trigger: printTrigger,
     portal: printPortal,
     positioner: (value) => printFloating(value, "positioner"),
@@ -136,7 +144,7 @@ export const use${facts.displayName}SubmenuContext = (part = "part") => required
 `;
 }
 
-function printRoot(facts: AdapterCompositeMenuOverlayFacts, acceptedEvent: string): string {
+function printRoot(facts: AdapterCompositeMenuOverlayFacts): string {
   const { attrs, events, props, runtime, state } = facts;
   const initial = menuInitialProjection("vue", {
     readModel: `props.${props.open.name}`,
@@ -236,7 +244,7 @@ onBeforeUnmount(() => { generation += 1; mounted.value = false; destroyOwnedInst
     :${attrs.defaultOpen}="initialDefaultOpen ? 'true' : undefined"
     :${attrs.disabled}="props.${props.disabled.name} ? '' : undefined"
     :${attrs.modal}="props.${props.modal.name} ? 'true' : 'false'"
-    :${attrs.openOnHover}="props.${props.openOnHover.name} ? '' : undefined"
+    :${attrs.openOnHover}="props.${props.openOnHover.name} ? 'true' : undefined"
     :${attrs.closeDelay}="props.${props.closeDelay.name}"
     :data-state="renderedOpen ? 'open' : 'closed'"
   ><slot /></${facts.parts.root.defaultElement}>
@@ -351,7 +359,7 @@ import { ${facts.displayName}CheckboxItemContext } from "./${facts.displayName}C
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ ${recipe.checkedState.controlledProp.name}?: boolean; ${recipe.checkedState.defaultProp.name}?: boolean; ${recipe.closeOnClick.prop.name}?: boolean; ${recipe.disabled.prop.name}?: boolean }>(), { ${recipe.checkedState.controlledProp.name}: undefined, ${recipe.checkedState.defaultProp.name}: false, ${recipe.closeOnClick.prop.name}: ${recipe.closeOnClick.defaultValue}, ${recipe.disabled.prop.name}: false });
 const emit = defineEmits<{ "update:checked": [checked: boolean]; ${recipe.event.name}: [checked: boolean, detail: ${recipe.event.detailsType}] }>();
-defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const element = ref<HTMLDivElement | null>(null); const uncontrolledChecked = ref(props.${recipe.checkedState.defaultProp.name}); const checked = computed(() => ${initialCheckedValue(`props.${recipe.checkedState.controlledProp.name}`, "uncontrolledChecked.value")}); provide(${facts.displayName}CheckboxItemContext, { checked }); defineExpose({ element });
+defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const element = ref<HTMLDivElement | null>(null); const initialDefaultChecked = props.${recipe.checkedState.defaultProp.name}; const uncontrolledChecked = ref(props.${recipe.checkedState.defaultProp.name}); const checked = computed(() => ${initialCheckedValue(`props.${recipe.checkedState.controlledProp.name}`, "uncontrolledChecked.value")}); provide(${facts.displayName}CheckboxItemContext, { checked }); defineExpose({ element });
 function sync(value: boolean) {
   const item = element.value;
   if (!item) return;
@@ -363,7 +371,7 @@ onMounted(() => element.value?.addEventListener("${recipe.event.domEvent}", hand
 onBeforeUnmount(() => { disposed = true; element.value?.removeEventListener("${recipe.event.domEvent}", handle); });
 watch(() => props.${recipe.checkedState.controlledProp.name}, (next) => { if (next !== undefined) sync(next); }, { flush: "post" });
 </script>
-<template><${facts.parts.checkboxItem.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.checkboxItem} data-sw-part="${facts.parts.checkboxItem.name}" role="${recipe.role}" tabindex="0" :${recipe.checkedState.initialAttribute}="props.${recipe.checkedState.defaultProp.name} ? 'true' : undefined" :${recipe.closeOnClick.attribute}="props.${recipe.closeOnClick.prop.name} ? 'true' : undefined" :${recipe.stateAttributes.ariaChecked}="checked" :${recipe.stateAttributes.checked}="checked ? '' : undefined" :${recipe.stateAttributes.unchecked}="checked ? undefined : ''" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.checkboxItem.defaultElement}></template>
+<template><${facts.parts.checkboxItem.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.checkboxItem} data-sw-part="${facts.parts.checkboxItem.name}" role="${recipe.role}" tabindex="0" :${recipe.checkedState.initialAttribute}="${defaultMarker("initialDefaultChecked").replaceAll('"', "'")}" :${recipe.closeOnClick.attribute}="props.${recipe.closeOnClick.prop.name} ? 'true' : undefined" :${recipe.stateAttributes.ariaChecked}="checked" :${recipe.stateAttributes.checked}="checked ? '' : undefined" :${recipe.stateAttributes.unchecked}="checked ? undefined : ''" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.checkboxItem.defaultElement}></template>
 `;
 }
 
@@ -406,9 +414,9 @@ function printRadioItem(facts: AdapterCompositeMenuOverlayFacts): string {
 import { computed, provide, ref } from "vue";
 import { ${facts.displayName}RadioItemContext, use${facts.displayName}RadioGroupContext } from "./${facts.displayName}Context";
 defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${recipe.valueProp.name}: string; ${recipe.checkedState.controlledProp.name}?: boolean; ${recipe.checkedState.defaultProp.name}?: boolean; ${recipe.closeOnClick.prop.name}?: boolean; ${recipe.disabled.prop.name}?: boolean }>(), { ${recipe.checkedState.controlledProp.name}: undefined, ${recipe.checkedState.defaultProp.name}: false, ${recipe.closeOnClick.prop.name}: ${recipe.closeOnClick.defaultValue}, ${recipe.disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>();
-const element = ref<HTMLDivElement | null>(null); const group = use${facts.displayName}RadioGroupContext("RadioItem"); const checked = computed(() => ${menuRadioChecked("group.value.value", `props.${recipe.valueProp.name}`, initialCheckedValue(`props.${recipe.checkedState.controlledProp.name}`, `props.${recipe.checkedState.defaultProp.name}`))}); provide(${facts.displayName}RadioItemContext, { checked }); defineExpose({ element });
+const element = ref<HTMLDivElement | null>(null); const initialDefaultChecked = props.${recipe.checkedState.defaultProp.name}; const group = use${facts.displayName}RadioGroupContext("RadioItem"); const checked = computed(() => ${menuRadioChecked("group.value.value", `props.${recipe.valueProp.name}`, initialCheckedValue(`props.${recipe.checkedState.controlledProp.name}`, `props.${recipe.checkedState.defaultProp.name}`))}); provide(${facts.displayName}RadioItemContext, { checked }); defineExpose({ element });
 </script>
-<template><${facts.parts.radioItem.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.radioItem} data-sw-part="${facts.parts.radioItem.name}" role="${recipe.role}" tabindex="0" :${recipe.valueProp.attribute}="props.${recipe.valueProp.name}" :${recipe.checkedState.initialAttribute}="props.${recipe.checkedState.defaultProp.name} ? 'true' : undefined" :${recipe.closeOnClick.attribute}="props.${recipe.closeOnClick.prop.name} ? 'true' : undefined" :${recipe.stateAttributes.ariaChecked}="checked" :${recipe.stateAttributes.checked}="checked ? '' : undefined" :${recipe.stateAttributes.unchecked}="checked ? undefined : ''" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.radioItem.defaultElement}></template>
+<template><${facts.parts.radioItem.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.radioItem} data-sw-part="${facts.parts.radioItem.name}" role="${recipe.role}" tabindex="0" :${recipe.valueProp.attribute}="props.${recipe.valueProp.name}" :${recipe.checkedState.initialAttribute}="${defaultMarker("initialDefaultChecked").replaceAll('"', "'")}" :${recipe.closeOnClick.attribute}="props.${recipe.closeOnClick.prop.name} ? 'true' : undefined" :${recipe.stateAttributes.ariaChecked}="checked" :${recipe.stateAttributes.checked}="checked ? '' : undefined" :${recipe.stateAttributes.unchecked}="checked ? undefined : ''" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.radioItem.defaultElement}></template>
 `;
 }
 

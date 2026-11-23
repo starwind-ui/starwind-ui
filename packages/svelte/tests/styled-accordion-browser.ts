@@ -4,8 +4,8 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { chromium } from "playwright";
-import type { DistConsumer } from "./dist-consumer.js";
 import { BROWSER_BUILD } from "./compatibility-hydration.js";
+import type { DistConsumer } from "./dist-consumer.js";
 
 export async function verifyStyledAccordion(consumer: DistConsumer) {
   await consumer.write({
@@ -89,8 +89,7 @@ export function replace(part:string){if(part==="items")key++;if(part==="root")ro
 export function collection(next:string[]){items=[...next];}export function show(next:boolean){visible=next;}
 export function refs(){return [...references];}export function snapshot(){return {model:copy(model),proposals:[...proposals],attachments:[...attachments],native};}
 </script>
-{#snippet content(accepted:AccordionValue)}
-<output data-accepted>{JSON.stringify(accepted)}</output>
+{#snippet content()}
 {#key key}{#each items as item (item)}
 <Accordion.Item value={item} disabled={item==="b"&&disabled} ref={item==="b"?itemRef:undefined} {...(item==="b"?itemAttached:{})}>
 <Accordion.Trigger data-trigger={item} disabled={item==="b"&&triggerDisabled} ref={item==="b"?triggerRef:undefined} {...(item==="b"?triggerAttached:{})} onclick={()=>native++} aria-expanded={false}>{item}</Accordion.Trigger>
@@ -130,12 +129,12 @@ const settle=async()=>{await tick();await Promise.resolve();await new Promise(re
 const root=id=>document.querySelector('[data-case="'+id+'"]');
 const trigger=(id,item='b')=>root(id).querySelector('[data-trigger="'+item+'"]');
 const click=(id,item='b')=>trigger(id,item).click();
-const state=id=>({value:copy(createAccordion(root(id)).getValue()),rendered:JSON.parse(root(id).querySelector('[data-accepted]')?.textContent??'null'),open:[...root(id).querySelectorAll('[data-trigger][aria-expanded="true"]')].filter(node=>node.closest('[data-sw-accordion]')===root(id)).map(node=>node.dataset.trigger)});
+const state=id=>({value:copy(createAccordion(root(id)).getValue()),open:[...root(id).querySelectorAll('[data-trigger][aria-expanded="true"]')].filter(node=>node.closest('[data-sw-accordion]')===root(id)).map(node=>node.dataset.trigger)});
 try{
 const initial=[...target.querySelectorAll('[data-sw-accordion], [data-sw-accordion-item], [data-sw-accordion-trigger], [data-sw-accordion-content]')];
 const app=hydrate(App,{target});await settle();const cases=app.getCases();ok(initial.every(node=>node.isConnected),'hydration retains all owners');
 equal(cases.undefined.snapshot().model,'a','undefined initializes from default');equal(cases.bound.snapshot().proposals,[],'initialization silent');
-for(const id of ['bound','omitted']){click(id);await settle();equal(state(id),{value:'b',rendered:'b',open:['b']},id+' accepted click');equal(cases[id].snapshot().native,1,id+' native callback once');}click('plain');await settle();equal(state('plain'),{value:'a',rendered:'a',open:['a']},'plain parent keeps a refused click');equal(cases.plain.snapshot().native,1,'plain native callback once');
+for(const id of ['bound','omitted']){click(id);await settle();equal(state(id),{value:'b',open:['b']},id+' accepted click');equal(cases[id].snapshot().native,1,id+' native callback once');}click('plain');await settle();equal(state('plain'),{value:'a',open:['a']},'plain parent keeps a refused click');equal(cases.plain.snapshot().native,1,'plain native callback once');
 equal(cases.bound.snapshot().model,'b','bound publication');equal(cases.plain.snapshot().model,'a','plain parent remains');cases.plain.setModel('c');await settle();equal(state('plain').value,'c','plain later command');cases.plain.setModel(undefined);await settle();equal(state('plain').value,'c','undefined retains accepted');
 cases.bound.setModel(null);await settle();equal(state('bound').open,[],'null closes');cases.bound.setModel(['a','b']);await settle();equal(state('bound').value,'a','single normalizes array');equal(cases.bound.snapshot().model,['a','b'],'parent value stays');
 click('multiple');await settle();equal(state('multiple').value,['a','b'],'multiple opens second');equal(cases.multiple.snapshot().model,['a','b'],'multiple binding copied');cases.multiple.setModel(['a','b','c']);await settle();equal(state('multiple').value,['a','b','c'],'replacement array command');cases.multiple.setModel([]);await settle();equal(state('multiple').open,[],'empty array closes all');cases.multiple.setModel('b');await settle();equal(state('multiple').value,['b'],'multiple normalizes scalar');equal(cases.multiple.snapshot().model,'b','parent value stays');

@@ -7,12 +7,12 @@ import {
   createDistConsumer,
   type DistConsumer,
 } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { themeToggleStyledContract } from "../../contracts/styled/components/theme-toggle.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
-import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
-import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
 const consumers: DistConsumer[] = [];
 afterEach(async () => {

@@ -23,11 +23,15 @@ export type ${facts.context.typeName} = Readonly<{
 
 const ${facts.context.name}: InjectionKey<${facts.context.typeName}> = Symbol("Starwind${facts.context.name}");
 
-function ${facts.context.hook}(): ${facts.context.typeName} {
-  const context = inject(${facts.context.name}, undefined);
-  if (!context) throw new Error("${facts.displayName} parts must be used within ${facts.exports.provider}.");
-  return context;
-}
+const ${facts.context.hook} = (): ${facts.context.typeName} | null => inject(${facts.context.name}, null);
+
+type SidebarState = {
+  readonly state: { readonly value: "collapsed" | "expanded" };
+  readonly expanded: { readonly value: boolean };
+};
+const expanded: SidebarState = { state: { value: "expanded" }, expanded: { value: false } };
+/** Sidebar parts outside a Provider render state expanded with aria-expanded false, as React does. Not exported from the package. */
+export const useSidebarState = (): SidebarState => inject<SidebarState>(${facts.context.name}, expanded);
 
 export { ${facts.context.name}, ${facts.context.hook} };
 `;
@@ -80,12 +84,12 @@ function printSidebar(facts: AdapterSidebarFacts): string {
   const props = facts.props;
   return `<script setup lang="ts">
 import { ref } from "vue";
-import { ${facts.context.hook} } from "./${facts.context.name}.js";
+import { useSidebarState } from "./${facts.context.name}.js";
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ ${props.side.name}?: ${props.side.type}; ${props.variant.name}?: ${props.variant.type}; ${props.collapsible.name}?: ${props.collapsible.type} }>(), { ${props.side.name}: ${props.side.defaultValue}, ${props.variant.name}: ${props.variant.defaultValue}, ${props.collapsible.name}: ${props.collapsible.defaultValue} });
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null);
-const context = ${facts.context.hook}();
+const context = useSidebarState();
 defineExpose({ element });
 </script>
 <template><${facts.parts.sidebar.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${sidebarAttrs(facts, "sidebar", "vue")}><slot /></${facts.parts.sidebar.defaultElement}></template>
@@ -109,13 +113,13 @@ function printAsChildControl(
   return `<script setup lang="ts">
 import { computed, defineComponent, ref, useAttrs, useSlots } from "vue";
 import { createVueAsChild } from "../_internal/as-child.js";
-import { ${facts.context.hook} } from "./${facts.context.name}.js";
+import { useSidebarState } from "./${facts.context.name}.js";
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ ${facts.props.asChild.name}?: ${facts.props.asChild.type} }>(), { ${facts.props.asChild.name}: ${facts.props.asChild.defaultValue} });
 const attrs = useAttrs();
 const slots = useSlots();
 const element = ref<HTMLElement | null>(null);
-const context = ${facts.context.hook}();
+const context = useSidebarState();
 const asChild = createVueAsChild("${facts.displayName}.${part.namespaceKey}", element);
 const protectedProps = computed(() => (${protectedProps}));
 const AsChildRoot = defineComponent({
@@ -136,11 +140,11 @@ defineExpose({ element });
 function printRail(facts: AdapterSidebarFacts): string {
   return `<script setup lang="ts">
 import { ref } from "vue";
-import { ${facts.context.hook} } from "./${facts.context.name}.js";
+import { useSidebarState } from "./${facts.context.name}.js";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLButtonElement | null>(null);
-const context = ${facts.context.hook}();
+const context = useSidebarState();
 defineExpose({ element });
 </script>
 <template><${facts.parts.rail.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${sidebarAttrs(facts, "rail", "vue")}><slot /></${facts.parts.rail.defaultElement}></template>

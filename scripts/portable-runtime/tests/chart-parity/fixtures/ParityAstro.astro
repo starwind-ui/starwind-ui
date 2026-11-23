@@ -1,0 +1,295 @@
+---
+// Astro form of every chart parity case. Astro has no client re-render, so the test drives the
+// model, cancel and native definition cases through the Runtime events and controller.
+import Chart from "@starwind-ui/astro/chart";
+
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "../../../../../apps/demo/src/components/starwind-runtime/chart";
+import {
+  PARITY_ID,
+  baseConfig,
+  moduleFor,
+  parityData,
+  parityDefinition,
+  parityFormatter,
+} from "./modules";
+
+const { mode } = Astro.props;
+const base = baseConfig(mode);
+const config = { ...base, desktop: { ...base.desktop, label: "Desktop" } };
+// React, Vue and Svelte replace the mobile config icon with a framework icon in the default mode.
+// Astro passes that icon as an `icon-mobile` slot, so its config drops the portable icon.
+const defaultConfig = { ...config, mobile: { label: "Mobile", color: base.mobile.color } };
+// Astro formatters come from the chart module's domPresentation (SPEC-AC-12).
+const chart = mode === "formatter" ? parityFormatter : moduleFor(mode);
+const tooltip =
+  mode === "off" || mode === "off-child"
+    ? false
+    : mode === "native" || mode === "native-format"
+      ? "native"
+      : true;
+const legend = !["off", "mixed-body", "order", "off-child", "options", "keys"].includes(mode);
+// Astro registers a slot for a conditional slotted element even when the condition is false, so
+// each case that fills a ChartContainer slot has its own branch.
+const slotted = ["default", "plain-body", "nested-tooltip", "live-body", "precedence"];
+const styled = ![
+  "definition",
+  "primitive",
+  "cancel",
+  "ids",
+  "custom",
+  "parts",
+  "parts-nested",
+  "legends",
+  "icon-source",
+  "conditional-slot",
+  ...slotted,
+].includes(mode);
+---
+
+{
+  mode === "definition" && (
+    <ChartContainer id={PARITY_ID} definition={parityDefinition} config={config}>
+      <strong slot="label-desktop" data-rich-label="">
+        Desktop <small>web</small>
+      </strong>
+      <ChartLegend />
+    </ChartContainer>
+  )
+}
+{
+  (mode === "primitive" || mode === "cancel") && (
+    <Chart.Root id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <Chart.Style />
+      <Chart.Surface />
+      <Chart.Legend>
+        <Chart.LegendItem value="desktop">Desktop</Chart.LegendItem>
+        <Chart.LegendItem value="mobile">Mobile</Chart.LegendItem>
+      </Chart.Legend>
+      <strong slot="label-desktop" data-rich-label="">
+        Desktop <small>web</small>
+      </strong>
+    </Chart.Root>
+  )
+}
+{
+  mode === "ids" && (
+    <>
+      <ChartContainer chart={chart} data={parityData} config={config}>
+        <strong slot="label-desktop" data-rich-label="">
+          Desktop <small>web</small>
+        </strong>
+        <ChartLegend />
+      </ChartContainer>
+      <ChartContainer chart={chart} data={parityData} config={config}>
+        <strong slot="label-desktop" data-rich-label="">
+          Desktop <small>web</small>
+        </strong>
+        <ChartLegend />
+      </ChartContainer>
+    </>
+  )
+}
+{
+  (mode === "custom" || mode === "parts" || mode === "parts-nested") && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <strong slot="label-desktop" data-rich-label="">
+        Desktop <small>web</small>
+      </strong>
+      {mode === "custom" && (
+        <>
+          <ChartTooltip>
+            <ChartTooltipContent slot="content" indicator="dashed" />
+          </ChartTooltip>
+          <ChartLegend>
+            <ChartLegendContent slot="content" data-replacement="" />
+          </ChartLegend>
+        </>
+      )}
+      {mode === "parts" && (
+        <>
+          <ChartTooltip>
+            <ChartTooltipContent slot="content" indicator="dashed" />
+          </ChartTooltip>
+          <ChartLegend hideIcon />
+        </>
+      )}
+      {mode === "parts-nested" && (
+        <>
+          <div data-wrapper="">
+            <ChartTooltip>
+              <ChartTooltipContent slot="content" indicator="dashed" />
+            </ChartTooltip>
+          </div>
+          <div data-wrapper="">
+            <ChartLegend hideIcon />
+          </div>
+        </>
+      )}
+    </ChartContainer>
+  )
+}
+{
+  styled && (
+    <ChartContainer
+      id={PARITY_ID}
+      chart={chart}
+      data={parityData}
+      config={config}
+      tooltip={tooltip}
+      visible={mode === "one-way" ? ["desktop", "mobile"] : undefined}
+    >
+      <strong slot="label-desktop" data-rich-label="">
+        Desktop <small>web</small>
+      </strong>
+      {mode === "formatter" && (
+        <ChartTooltip>
+          <ChartTooltipContent slot="content" indicator="dashed" />
+        </ChartTooltip>
+      )}
+      {mode === "mixed-body" && (
+        <ChartTooltip>
+          <p slot="content" class="mixed-heading">
+            Heading
+          </p>
+          <ChartTooltipContent slot="content" class="mixed-content" />
+        </ChartTooltip>
+      )}
+      {mode === "off-child" && (
+        <ChartTooltip>
+          <span slot="content" class="child-body">
+            child
+          </span>
+        </ChartTooltip>
+      )}
+      {mode === "options" && (
+        <ChartTooltip>
+          <ChartTooltipContent slot="content" label="desktop" color="rgb(255, 0, 0)" />
+        </ChartTooltip>
+      )}
+      {mode === "keys" && (
+        <ChartTooltip>
+          <ChartTooltipContent slot="content" labelKey="id" nameKey="series" valueKey="value" />
+        </ChartTooltip>
+      )}
+      {mode === "order" && (
+        <>
+          <span data-tick="">0</span>
+          <ChartTooltip>
+            <ChartTooltipContent slot="content" class="first" />
+          </ChartTooltip>
+          <ChartTooltip>
+            <ChartTooltipContent slot="content" class="second" />
+          </ChartTooltip>
+        </>
+      )}
+      {legend && <ChartLegend />}
+    </ChartContainer>
+  )
+}
+{
+  mode === "default" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={defaultConfig}>
+      <strong slot="label-desktop" data-rich-label="">
+        Desktop <small>web</small>
+      </strong>
+      <svg slot="icon-mobile" data-component-icon="" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 2h10v20H7z" />
+      </svg>
+      <ChartLegend />
+    </ChartContainer>
+  )
+}
+{
+  mode === "plain-body" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <span slot="tooltip" class="plain-body">
+        plain
+      </span>
+    </ChartContainer>
+  )
+}
+{
+  mode === "nested-tooltip" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <div slot="tooltip" class="outer">
+        <ChartTooltip>
+          <span slot="content" class="inner">
+            inner
+          </span>
+        </ChartTooltip>
+      </div>
+    </ChartContainer>
+  )
+}
+{
+  mode === "precedence" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <span slot="tooltip" class="container-body">
+        container
+      </span>
+      <ChartTooltip>
+        <span slot="content" class="child-body">
+          child
+        </span>
+      </ChartTooltip>
+    </ChartContainer>
+  )
+}
+{
+  mode === "live-body" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <span slot="tooltip" class="live-body">
+        count 0
+      </span>
+    </ChartContainer>
+  )
+}
+{
+  mode === "legends" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <strong slot="label-desktop" data-rich-label="">
+        Desktop <small>web</small>
+      </strong>
+      <section data-wrapper="">
+        <ChartLegend />
+      </section>
+      <ChartLegend hideIcon />
+    </ChartContainer>
+  )
+}
+{
+  mode === "icon-source" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      <svg slot="icon-mobile" data-component-icon="" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 2h10v20H7z" />
+      </svg>
+      <ChartLegend />
+    </ChartContainer>
+  )
+}
+{
+  mode === "conditional-slot" && (
+    <ChartContainer id={PARITY_ID} chart={chart} data={parityData} config={config}>
+      {mode !== "conditional-slot" && (
+        <svg slot="icon-mobile" data-component-icon="" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 2h10v20H7z" />
+        </svg>
+      )}
+      <ChartLegend />
+    </ChartContainer>
+  )
+}
+{
+  mode === "model" && (
+    <>
+      <output data-accepted="">desktop,mobile</output>
+      <output data-changes="">0</output>
+    </>
+  )
+}

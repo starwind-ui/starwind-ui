@@ -1,14 +1,13 @@
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import * as config from "../../src/utils/config.js";
-import * as fs from "../../src/utils/fs.js";
-import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
-import * as primitiveComponent from "../../src/utils/primitive-component.js";
-import * as runtimePackage from "../../src/utils/runtime-package.js";
-import { primitivesAdd, primitivesList, primitivesUpdate } from "../../src/commands/primitives.js";
 import * as initModule from "../../src/commands/init.js";
 import * as migrateModule from "../../src/commands/migrate.js";
+import { primitivesAdd, primitivesList, primitivesUpdate } from "../../src/commands/primitives.js";
+import * as config from "../../src/utils/config.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import * as fs from "../../src/utils/fs.js";
+import * as primitiveComponent from "../../src/utils/primitive-component.js";
+import * as runtimePackage from "../../src/utils/runtime-package.js";
 
 vi.mock("@clack/prompts");
 vi.mock("../../src/utils/config.js");

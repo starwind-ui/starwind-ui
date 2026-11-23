@@ -22,7 +22,6 @@ import {
   type FrameworkTargetPolicy,
   isConfigTarget,
   PUBLIC_FRAMEWORK_TARGET_POLICY,
-  type PublicCliFrameworkTarget,
 } from "@/utils/framework-target-policy.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -36,7 +35,9 @@ import {
   validatePrivateHostTarget,
 } from "@/utils/host-planner.js";
 import type { HostProjectPreparation } from "@/utils/host-project.js";
+import { VUE_VERSION_FLOOR } from "@/utils/install-defaults.js";
 import { type CssImportResult, setupLayoutCssImport } from "@/utils/layout.js";
+import { isOfflineMode, offlineHostFrameworkMessage } from "@/utils/offline.js";
 import {
   detectPackageManager,
   installDependencies,
@@ -49,7 +50,6 @@ import {
   validateReactProjectSetup,
 } from "@/utils/react-project.js";
 import { loadRegistry, type StarwindRegistryFor } from "@/utils/registry.js";
-import { isOfflineMode, offlineHostFrameworkMessage } from "@/utils/offline.js";
 import { getRuntimeSetupPlan } from "@/utils/runtime-setup.js";
 import { sleep } from "@/utils/sleep.js";
 import { setupSnippets } from "@/utils/snippets.js";
@@ -73,9 +73,7 @@ export type PrivateVueInitOptions = Omit<InitOptions, "framework"> & {
 export type PrivateVueInitDependencies = {
   hostPlan?: HostPlan<CliFrameworkTarget>;
   registry: StarwindRegistryFor<CliFrameworkTarget>;
-  targetPolicy:
-    | FrameworkTargetPolicy<CliFrameworkTarget>
-    | FrameworkTargetPolicy<PublicCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
 };
 
 function resolveFrameworkOption<TFramework extends CliFrameworkTarget>(
@@ -285,11 +283,6 @@ export async function init(
       PUBLIC_FRAMEWORK_TARGET_POLICY) as FrameworkTargetPolicy<CliFrameworkTarget>;
     const selectedFramework = resolveFrameworkOption(options, targetPolicy);
     const configState = dependencies ? await getConfigState(targetPolicy) : await getConfigState();
-    if (
-      options?.pro &&
-      (selectedFramework === "svelte" || configState.config.framework === "svelte")
-    )
-      throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
 
     if (configState.status === "legacy") {
       const shouldMigrate = options?.defaults
@@ -355,8 +348,6 @@ export async function init(
         `The ${targetPolicy.labels[defaultFramework]} target requires a supported host before initialization can continue.`,
       );
     }
-    if (defaultFramework === "svelte" && options?.pro)
-      throw new Error("Svelte 5 beta does not support Starwind Pro setup.");
     const isAstroSecondaryTarget = isAstroReactTarget || hostProject?.isSecondaryTarget === true;
     const projectFramework: CliFrameworkTarget =
       hostProject?.projectFramework ?? (isAstroReactTarget ? "astro" : defaultFramework);
@@ -805,13 +796,20 @@ export async function init(
     //                Prepare astro installation
     // ================================================================
     // Determine package manager: use provided option or auto-detect
+    // A required Vue upgrade goes in the adapter's install, because the adapter's peer range
+    // rejects the old Vue. npm runs the Vue range before the exact adapter version.
+    let vueUpgradePackages: string[] = [];
+    let vueUpgradeInstalled = false;
     installTasks.push({
       title: "Installing Starwind Runtime packages",
       task: async () => {
         const missingPackages = await filterUninstalledDependencies([
           runtimeSetupPlan.adapterPackage,
         ]);
-        if (missingPackages.length > 0) await installDependencies(missingPackages, pm);
+        if (missingPackages.length > 0) {
+          await installDependencies([...vueUpgradePackages, ...missingPackages], pm);
+          vueUpgradeInstalled = vueUpgradePackages.length > 0;
+        }
         return "Starwind Runtime packages are ready";
       },
     });
@@ -898,15 +896,41 @@ export async function init(
       }
 
       if (shouldInstall) {
+        if (vueUpgradeRequired)
+          vueUpgradePackages = otherPackages.filter((spec) => spec.startsWith("vue@"));
+        const isPlannedDev = hostProject?.isDevRequirement ?? (() => false);
+        // pnpm and npm move a dependencies entry on a dev install. Yarn 1 and Bun keep it in
+        // dependencies, and Yarn 4 rejects the command. For them, install in place and warn.
+        const keepsProductionEntry = (spec: string) =>
+          (pm === "yarn" || pm === "bun") &&
+          pkg?.dependencies?.[spec.slice(0, spec.lastIndexOf("@"))] !== undefined;
+        const unmoved = otherPackages.filter(
+          (spec) => isPlannedDev(spec) && keepsProductionEntry(spec),
+        );
+        if (unmoved.length > 0)
+          p.log.warn(
+            highlighter.warn(
+              `Move ${unmoved.map((spec) => spec.slice(0, spec.lastIndexOf("@"))).join(", ")} from dependencies to devDependencies. ${pm} does not move them, and the SvelteKit SSR build needs them there.`,
+            ),
+          );
         installTasks.push({
           title: `Installing packages`,
           task: async () => {
-            await installDependencies(otherPackages, pm, false, false);
+            const isDev = (spec: string) => isPlannedDev(spec) && !keepsProductionEntry(spec);
+            const remaining = vueUpgradeInstalled
+              ? otherPackages.filter((spec) => !vueUpgradePackages.includes(spec))
+              : otherPackages;
+            const packages = remaining.filter((spec) => !isDev(spec));
+            const devPackages = remaining.filter(isDev);
+            if (packages.length > 0) await installDependencies(packages, pm, false, false);
+            if (devPackages.length > 0) await installDependencies(devPackages, pm, true, false);
             return `${highlighter.info("Packages installed successfully")}`;
           },
         });
       } else if (vueUpgradeRequired) {
-        p.cancel("Vue 3.5 or later is required before Starwind can configure this project.");
+        p.cancel(
+          `Vue ${VUE_VERSION_FLOOR} or later is required before Starwind can configure this project.`,
+        );
         return process.exit(1);
       } else {
         p.log.warn(

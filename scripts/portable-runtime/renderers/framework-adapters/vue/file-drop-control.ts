@@ -51,7 +51,6 @@ function printRoot(facts: AdapterFileDropControlFacts): string {
   });
   const props = facts.props;
   const part = facts.parts.root;
-  const exportName = facts.exports.root;
 
   return `<script setup lang="ts">
 import {
@@ -168,7 +167,6 @@ function printStatusPart(
   partName: Exclude<AdapterFileDropControlPartName, "input" | "root">,
 ): string {
   const part = facts.parts[partName];
-  const exportName = facts.exports[partName];
   const hasUploading = partName !== "filesList";
   const discoveryAttribute =
     partName === "filesList"

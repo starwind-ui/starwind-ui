@@ -1,7 +1,9 @@
 ---
-import SwitchPrimitive from "@starwind-ui/astro/switch";
 import type { HTMLAttributes } from "astro/types";
 import type { VariantProps } from "tailwind-variants";
+
+import "./styles.css";
+import SwitchPrimitive from "@starwind-ui/astro/switch";
 import { switchButton, switchLabel, switchToggle, switchWrapper } from "./variants";
 
 type Props = Omit<

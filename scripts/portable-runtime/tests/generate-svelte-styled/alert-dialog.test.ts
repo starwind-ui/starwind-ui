@@ -18,7 +18,7 @@ async function fixture() {
 }
 
 describe("generated Styled Alert Dialog lifecycle", () => {
-  it("notifies the existing Alert Dialog owner from both Styled Button attachments", () => {
+  it("notifies the existing Alert Dialog owner through the shared control helper name", () => {
     const files = renderSvelteStyledFiles(
       projectSvelteStyledGroup(projectStyledOutputComponentGroup(alertDialogStyledContract), {
         primitiveImportBase: "@starwind-ui/svelte",
@@ -28,10 +28,14 @@ describe("generated Styled Alert Dialog lifecycle", () => {
       const source = files.find((file) =>
         file.relativePath.endsWith(`/AlertDialog${name}.svelte`),
       )!.content;
-      expect(source).toContain("getAlertDialogControlRefresh()");
-      expect(source).toContain("[createAttachmentKey()]");
-      expect(source).toContain("return () => requestRefresh?.()");
+      // React and Vue Styled Action and Cancel import the same helper name.
+      expect(source).toContain(
+        'import { __useAlertDialogControl } from "@starwind-ui/svelte/alert-dialog";',
+      );
+      expect(source).toContain("const controlAttachment = __useAlertDialogControl();");
       expect(source).toContain("{...controlAttachment}");
+      expect(source).not.toContain("getAlertDialogControlRefresh");
+      expect(source).not.toContain("createAttachmentKey");
       expect(source).not.toContain("MutationObserver");
     }
   });

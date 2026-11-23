@@ -3,11 +3,13 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import AvatarRoot from "./AvatarRoot.svelte";
-import AvatarImage from "./AvatarImage.svelte";
 import AvatarFallback from "./AvatarFallback.svelte";
+import AvatarImage from "./AvatarImage.svelte";
+import AvatarRoot from "./AvatarRoot.svelte";
+
 const Avatar = { Fallback: AvatarFallback, Image: AvatarImage, Root: AvatarRoot };
-export { Avatar, AvatarRoot, AvatarImage, AvatarFallback };
+
+export { Avatar, AvatarFallback, AvatarImage, AvatarRoot };
 export default Avatar;
 export type {
   AvatarImageLoadingStatus,

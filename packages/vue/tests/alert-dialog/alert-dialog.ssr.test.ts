@@ -1,7 +1,3 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import {
   AlertDialogBackdrop,
   AlertDialogClose,
@@ -13,6 +9,9 @@ import {
   AlertDialogTrigger,
   AlertDialogViewport,
 } from "@starwind-ui/vue/alert-dialog";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 import {
   AlertDialog as StyledAlertDialog,
   AlertDialogAction as StyledAlertDialogAction,

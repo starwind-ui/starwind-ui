@@ -13,17 +13,17 @@
 <script lang="ts">
   let {
     "class": className,
-    "size": size = "md",
-    "showEyeDropper": showEyeDropper = true,
-    "formatControl": formatControl = "select",
-    "formats": formats = ["hex","rgb","hsl","hsb"],
-    "swatches": swatches = [],
-    "side": side = "bottom",
-    "align": align = "start",
-    "exitMotion": exitMotion = "fade",
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "children": children,
+    size = "md",
+    showEyeDropper = true,
+    formatControl = "select",
+    formats = ["hex","rgb","hsl","hsb"],
+    swatches = [],
+    side = "bottom",
+    align = "start",
+    exitMotion = "fade",
+    portalContainer,
+    disablePortal = false,
+    children,
     ...rest
   }: ColorPickerContentProps = $props();
 </script>

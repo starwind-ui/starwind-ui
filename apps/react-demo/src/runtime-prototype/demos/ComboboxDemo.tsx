@@ -3,7 +3,6 @@ import ComboboxPrimitive from "@starwind-ui/react/combobox";
 import { useRuntimePrototypeContext } from "../context";
 import {
   button,
-  comboboxInput,
   Combobox,
   ComboboxContent,
   ComboboxEmpty,
@@ -18,6 +17,7 @@ import {
   comboboxCities,
   comboboxDesserts,
   comboboxFruits,
+  comboboxInput,
   InputGroupAddon,
 } from "../kit";
 

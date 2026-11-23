@@ -1,9 +1,10 @@
 import { tv } from "tailwind-variants";
-import { input as channelInputRecipe } from "../input/variants.js";
-import { input as valueInputRecipe } from "../input/variants.js";
-import { nativeSelectWrapper as nativeSelectWrapperRecipe } from "../native-select/variants.js";
-import { nativeSelect as nativeSelectRecipe } from "../native-select/variants.js";
-import { nativeSelectIcon as nativeSelectIconRecipe } from "../native-select/variants.js";
+import { input as channelInputRecipe, input as valueInputRecipe } from "../input/variants.js";
+import {
+  nativeSelectIcon as nativeSelectIconRecipe,
+  nativeSelect as nativeSelectRecipe,
+  nativeSelectWrapper as nativeSelectWrapperRecipe,
+} from "../native-select/variants.js";
 
 export const colorPickerChannelInput: typeof channelInputRecipe = channelInputRecipe;
 
@@ -70,7 +71,7 @@ export const colorPickerArea = tv({
 });
 
 export const colorPickerAreaThumb = tv({
-  base: "group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-outline/60 pointer-events-none absolute top-[clamp(1px,var(--sw-color-picker-area-y),calc(100%_-_1px))] left-[clamp(1px,var(--sw-color-picker-area-x),calc(100%_-_1px))] z-10 size-(--sw-color-picker-area-thumb-size) -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-(--sw-color-picker-area-thumb-color) shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-3 focus-visible:ring-3 data-disabled:opacity-50 data-dragging:scale-110",
+  base: "group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-outline/60 pointer-events-none absolute start-(--sw-color-picker-area-x) top-(--sw-color-picker-area-y) z-10 size-(--sw-color-picker-area-thumb-size) -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-(--sw-color-picker-area-thumb-color) shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-3 focus-visible:ring-3 data-disabled:opacity-50 data-dragging:scale-110 rtl:translate-x-1/2",
 });
 
 export const colorPickerSliders = tv({
@@ -94,7 +95,7 @@ export const colorPickerChannelSlider = tv({
 });
 
 export const colorPickerChannelSliderThumb = tv({
-  base: "group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-outline/60 pointer-events-none absolute top-1/2 left-(--sw-color-picker-channel-position) z-10 size-(--sw-color-picker-slider-thumb-size) -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-white shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-3 group-data-[orientation=vertical]/color-picker-channel-slider:top-[calc(100%-var(--sw-color-picker-channel-position))] group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2 data-disabled:opacity-50 data-dragging:scale-110",
+  base: "group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-outline/60 pointer-events-none absolute top-1/2 z-10 size-(--sw-color-picker-slider-thumb-size) -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-white shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-3 group-data-[orientation=horizontal]/color-picker-channel-slider:start-(--sw-color-picker-channel-position) group-data-[orientation=vertical]/color-picker-channel-slider:top-[calc(100%-var(--sw-color-picker-channel-position))] group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2 data-disabled:opacity-50 data-dragging:scale-110 group-data-[orientation=horizontal]/color-picker-channel-slider:rtl:translate-x-1/2",
 });
 
 export const colorPickerChannelInputLayout = tv({

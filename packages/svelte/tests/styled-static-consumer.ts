@@ -122,12 +122,7 @@ export const createStyledStaticConsumer = (repoRoot: string) =>
 
 const propsDeclarations = staticStyledParts
   .map(
-    ({
-      name,
-      element,
-      root,
-      member,
-    }) => `let ${name}Ref = $state<${element}>();
+    ({ name, element, root, member }) => `let ${name}Ref = $state<${element}>();
 const ${name}Attrs: ${name}Props = { title: "${name}", ref: ${name}Ref, onpointerdown(event) { const owner: ${name === "TableCaption" ? "HTMLElement" : element} = event.currentTarget; void owner; } };
 const ${name}FromNamespace: typeof ${name} = ${root[0]!.toUpperCase() + root.slice(1)}Parts.${member}; void ${name}FromNamespace;`,
   )

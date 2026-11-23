@@ -263,8 +263,9 @@ export function buildToastSpecializedAdapterSpec(
   };
 }
 
-
-export function buildToastAdapterOutputModel(spec: ToastSpecializedAdapterSpec): AdapterOutputModel {
+export function buildToastAdapterOutputModel(
+  spec: ToastSpecializedAdapterSpec,
+): AdapterOutputModel {
   const errors = validateToastSpecializedAdapterSpec(spec);
   if (errors.length > 0) {
     throw new Error(`Invalid Toast specialized adapter spec:\n${errors.join("\n")}`);
@@ -546,7 +547,6 @@ export function validateToastSpecializedAdapterSpec(spec: ToastSpecializedAdapte
   errors.push(...validatePublicApi(spec, toast.publicApi));
   errors.push(...validateNamespace(spec, toast.namespace));
   errors.push(...validateShippingFiles(spec));
-
 
   if (!arraysEqual(asArray(toast.runtimeBoundary), TOAST_RUNTIME_BOUNDARY)) {
     errors.push(
@@ -1002,10 +1002,7 @@ function getRequiredValue<T>(value: T | undefined, context: string): T {
   return value;
 }
 
-function getToastFileExportName(
-  spec: ToastSpecializedAdapterSpec,
-  partName: AdapterNotificationSystemPartName | string,
-): string {
+function getToastFileExportName(spec: ToastSpecializedAdapterSpec, partName: string): string {
   const entry = spec.toast.namespace.objectEntries.find((candidate) => candidate.part === partName);
   if (!entry) {
     throw new Error(`Toast specialized adapter spec requires ${partName} namespace export.`);
@@ -1014,26 +1011,18 @@ function getToastFileExportName(
   return entry.exportName;
 }
 
-function getToastNamespaceEntryByExportName(
-  spec: ToastSpecializedAdapterSpec,
-  exportName: string,
-) {
+function getToastNamespaceEntryByExportName(spec: ToastSpecializedAdapterSpec, exportName: string) {
   const entry = spec.toast.namespace.objectEntries.find(
     (candidate) => candidate.exportName === exportName,
   );
   if (!entry) {
-    throw new Error(
-      `Toast specialized adapter spec requires ${exportName} namespace export.`,
-    );
+    throw new Error(`Toast specialized adapter spec requires ${exportName} namespace export.`);
   }
 
   return entry;
 }
 
-function getToastSpecFileBasename(
-  spec: ToastSpecializedAdapterSpec,
-  partName: AdapterNotificationSystemPartName | string,
-): string {
+function getToastSpecFileBasename(spec: ToastSpecializedAdapterSpec, partName: string): string {
   const file = spec.files.find(
     (candidate) => candidate.kind === "part" && candidate.part === partName,
   );

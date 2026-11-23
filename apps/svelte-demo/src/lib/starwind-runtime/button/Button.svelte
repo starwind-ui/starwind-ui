@@ -19,17 +19,17 @@
 
 <script lang="ts">
   let {
-    "variant": variant,
-    "size": size,
+    variant,
+    size,
     "as": buttonAs,
-    "href": href,
-    "disabled": disabled = false,
-    "focusableWhenDisabled": focusableWhenDisabled,
+    href,
+    disabled = false,
+    focusableWhenDisabled,
     "data-slot": dataSlot = "button",
     "class": className,
-    "ref": ref,
-    "tabindex": tabindex,
-    "children": children,
+    ref,
+    tabindex,
+    children,
     ...rest
   }: ButtonProps = $props();
 

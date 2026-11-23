@@ -1,6 +1,5 @@
-import * as React from "react";
-
 import type { ColorPickerColor } from "@starwind-ui/react/color-picker";
+import * as React from "react";
 import ColorPicker from "../src/components/starwind-runtime/color-picker/ColorPicker";
 import ColorPickerContent from "../src/components/starwind-runtime/color-picker/ColorPickerContent";
 import ColorPickerSwatch from "../src/components/starwind-runtime/color-picker/ColorPickerSwatch";

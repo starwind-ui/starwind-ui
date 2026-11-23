@@ -21,10 +21,10 @@ export type {
   ColorPickerDirection,
   ColorPickerFormat,
   ColorPickerFormatChangeDetails,
-  ColorPickerHsbChannelUpdates,
   ColorPickerHsbChannels,
-  ColorPickerHslChannelUpdates,
+  ColorPickerHsbChannelUpdates,
   ColorPickerHslChannels,
+  ColorPickerHslChannelUpdates,
   ColorPickerInitialAxis,
   ColorPickerInitialChannel,
   ColorPickerInitialDirection,
@@ -37,8 +37,8 @@ export type {
   ColorPickerInitialValue,
   ColorPickerInstance,
   ColorPickerOptions,
-  ColorPickerRgbChannelUpdates,
   ColorPickerRgbChannels,
+  ColorPickerRgbChannelUpdates,
   ColorPickerSetOptions,
   ColorPickerSetValueOptions,
   ColorPickerStringFormat,
@@ -108,6 +108,7 @@ export * from "./alert-dialog/index.js";
 export * from "./avatar/index.js";
 export * from "./button/index.js";
 export * from "./carousel/index.js";
+export * from "./chart/index.js";
 export * from "./checkbox/index.js";
 export * from "./checkbox-group/index.js";
 export * from "./collapsible/index.js";
@@ -131,22 +132,22 @@ export * from "./radio/index.js";
 export * from "./radio-group/index.js";
 export * from "./scroll-area/index.js";
 export * from "./select/index.js";
+export type { SidebarContextValue, SidebarMenuButtonChildPayload } from "./sidebar/index.js";
 export {
   Sidebar,
   SidebarComponent,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarRail,
-  SidebarMenuButton,
   SidebarContext,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
   useSidebarContext,
 } from "./sidebar/index.js";
-export type { SidebarContextValue, SidebarMenuButtonChildPayload } from "./sidebar/index.js";
 export * from "./slider/index.js";
 export * from "./switch/index.js";
 export * from "./tabs/index.js";
+export * from "./theme/index.js";
 export * from "./toast/index.js";
 export * from "./toggle/index.js";
 export * from "./toggle-group/index.js";
 export * from "./tooltip/index.js";
-export * from "./theme/index.js";

@@ -5,14 +5,17 @@ import type {
   AdapterOutputModel,
   AdapterSidebarFacts,
 } from "../types.js";
-import { printVueControlledValuePresenceContext } from "./controlled-value-presence.js";
-import { printVueRepeatedDisclosureContext } from "./repeated-disclosure.js";
-import { printVueEngineViewportTypes } from "./engine-viewport.js";
+import { projectVueChartSurfaceOutputModel } from "./chart-surface.js";
 import { printVueColorPickerContext } from "./color-picker.js";
+import { printVueControlledValuePresenceContext } from "./controlled-value-presence.js";
+import { printVueEngineViewportTypes } from "./engine-viewport.js";
+import { printVueRepeatedDisclosureContext } from "./repeated-disclosure.js";
 
 export function projectVueSpecializedAdapterOutputModel(
   model: AdapterOutputModel,
 ): AdapterOutputModel {
+  const chartModel = projectVueChartSurfaceOutputModel(model);
+  if (chartModel !== model) return chartModel;
   const colorPickerFiles = model.files.some(
     (file) =>
       (file.kind === "component" && file.component.family?.kind === "color-picker") ||

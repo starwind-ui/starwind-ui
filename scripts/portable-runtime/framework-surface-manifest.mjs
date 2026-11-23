@@ -1,13 +1,9 @@
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { starwindStyledContracts } from "./contracts/styled/starwind.js";
-import {
-  getPrimitiveInventoryEntries,
-  getRuntimeAdapterPrimitiveInventoryEntries,
-} from "./renderers/primitive-inventory.js";
 import {
   getPrimitiveFrameworkAdapterTarget,
   resolvePrimitiveFrameworkAdapterTargetComponents,
@@ -17,6 +13,11 @@ import {
   generateFrameworkPrimitiveWrappers,
   generateFrameworkStyledWrappers,
 } from "./renderers/framework-wrapper-generator.js";
+import {
+  getPrimitiveInventoryEntries,
+  getRuntimeAdapterPrimitiveInventoryEntries,
+  isPrimitiveInventoryComponentAvailableForTarget,
+} from "./renderers/primitive-inventory.js";
 
 const TARGETS = ["astro", "react", "vue", "svelte"];
 const PORTAL_FAMILIES = [
@@ -67,32 +68,32 @@ const EXPECTED_RENDERED_STYLED_PORTAL_SLOTS = {
 const RENDERED_EXTENSIONS = { astro: ".astro", react: ".tsx", vue: ".vue", svelte: ".svelte" };
 const EXPECTED_COUNTS = {
   astro: {
-    familySubpaths: 37,
-    namespaceParts: 242,
-    renderedPrimitivePaths: 227,
-    styledNormalizedPaths: 396,
-    styledRoots: 55,
+    familySubpaths: 38,
+    namespaceParts: 260,
+    renderedPrimitivePaths: 246,
+    styledNormalizedPaths: 404,
+    styledRoots: 56,
   },
   react: {
-    familySubpaths: 37,
-    namespaceParts: 242,
-    renderedPrimitivePaths: 226,
-    styledNormalizedPaths: 393,
-    styledRoots: 54,
+    familySubpaths: 38,
+    namespaceParts: 260,
+    renderedPrimitivePaths: 244,
+    styledNormalizedPaths: 401,
+    styledRoots: 55,
   },
   vue: {
-    familySubpaths: 37,
-    namespaceParts: 242,
-    renderedPrimitivePaths: 226,
-    styledNormalizedPaths: 393,
-    styledRoots: 54,
+    familySubpaths: 38,
+    namespaceParts: 260,
+    renderedPrimitivePaths: 244,
+    styledNormalizedPaths: 401,
+    styledRoots: 55,
   },
   svelte: {
-    familySubpaths: 37,
-    namespaceParts: 242,
-    renderedPrimitivePaths: 226,
-    styledNormalizedPaths: 393,
-    styledRoots: 54,
+    familySubpaths: 38,
+    namespaceParts: 260,
+    renderedPrimitivePaths: 244,
+    styledNormalizedPaths: 401,
+    styledRoots: 55,
   },
 };
 
@@ -111,6 +112,14 @@ export const approvedFrameworkSurfaceExceptions = Object.freeze([
     path: "image",
     reason: "Image is an Astro-only Styled root with three normalized files.",
   }),
+  Object.freeze({
+    id: "astro-chart-lifecycle",
+    target: "astro",
+    surface: "primitive.renderedPaths",
+    path: "chart/ChartLifecycle",
+    reason:
+      "Astro emits ChartLifecycle as a rendered .astro helper, so only interactive charts load a script.",
+  }),
 ]);
 
 const plannedCorrections = Object.freeze([]);
@@ -122,7 +131,7 @@ async function finishGeneration(tasks) {
   if (failure) throw failure.reason;
 }
 
-export async function buildFrameworkSurfaceManifest({ repoRoot = process.cwd() } = {}) {
+export async function buildFrameworkSurfaceManifest() {
   const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-framework-surface-"));
 
   try {
@@ -462,58 +471,45 @@ export function assertFrameworkSurfaceManifest(manifest) {
     }
   }
 
-  assertDeepEqual(
-    manifest.targets.astro.primitive.renderedPaths.filter(
-      (path) => path !== "theme/ThemeInitScript",
-    ),
-    manifest.targets.react.primitive.renderedPaths,
-    "Astro and React rendered Primitive paths",
+  const astroRenderedExceptions = new Set(
+    approvedFrameworkSurfaceExceptions
+      .filter((entry) => entry.target === "astro" && entry.surface === "primitive.renderedPaths")
+      .map((entry) => entry.path),
   );
-  assertDeepEqual(
-    manifest.targets.react.primitive.renderedPaths,
-    manifest.targets.vue.primitive.renderedPaths,
-    "React and Vue rendered Primitive paths",
-  );
-  assertDeepEqual(
-    manifest.targets.react.primitive.renderedPaths,
-    manifest.targets.svelte.primitive.renderedPaths,
-    "React and Svelte rendered Primitive paths",
-  );
-  assertDeepEqual(
-    manifest.targets.astro.familySubpaths,
-    manifest.targets.react.familySubpaths,
-    "Astro and React family subpaths",
-  );
-  assertDeepEqual(
-    manifest.targets.react.familySubpaths,
-    manifest.targets.vue.familySubpaths,
-    "React and Vue family subpaths",
-  );
-  assertDeepEqual(
-    manifest.targets.react.familySubpaths,
-    manifest.targets.svelte.familySubpaths,
-    "React and Svelte family subpaths",
-  );
-  assertDeepEqual(
-    manifest.targets.react.styled.roots,
-    manifest.targets.vue.styled.roots,
-    "React and Vue Styled roots",
-  );
-  assertDeepEqual(
-    manifest.targets.react.styled.roots,
-    manifest.targets.svelte.styled.roots,
-    "React and Svelte Styled roots",
-  );
-  assertDeepEqual(
-    manifest.targets.react.styled.normalizedPaths,
-    manifest.targets.vue.styled.normalizedPaths,
-    "React and Vue normalized Styled paths",
-  );
-  assertDeepEqual(
-    manifest.targets.react.styled.normalizedPaths,
-    manifest.targets.svelte.styled.normalizedPaths,
-    "React and Svelte normalized Styled paths",
-  );
+  const pairs = [
+    ["astro", "react", "Astro and React"],
+    ["react", "vue", "React and Vue"],
+    ["react", "svelte", "React and Svelte"],
+  ];
+  for (const [left, right, label] of pairs) {
+    // A family that one side does not generate yet, by its target gate, is left out of the pair.
+    const gated = gatedFamilies(left, right);
+    const renderedPaths = (target) =>
+      manifest.targets[target].primitive.renderedPaths.filter(
+        (path) => target !== "astro" || !astroRenderedExceptions.has(path),
+      );
+    assertDeepEqual(
+      withoutFamilies(renderedPaths(left), gated.primitive),
+      withoutFamilies(renderedPaths(right), gated.primitive),
+      `${label} rendered Primitive paths`,
+    );
+    assertDeepEqual(
+      withoutFamilies(manifest.targets[left].familySubpaths, gated.primitive),
+      withoutFamilies(manifest.targets[right].familySubpaths, gated.primitive),
+      `${label} family subpaths`,
+    );
+    if (left === "astro") continue;
+    assertDeepEqual(
+      withoutFamilies(manifest.targets[left].styled.roots, gated.styled),
+      withoutFamilies(manifest.targets[right].styled.roots, gated.styled),
+      `${label} Styled roots`,
+    );
+    assertDeepEqual(
+      withoutFamilies(manifest.targets[left].styled.normalizedPaths, gated.styled),
+      withoutFamilies(manifest.targets[right].styled.normalizedPaths, gated.styled),
+      `${label} normalized Styled paths`,
+    );
+  }
   assertDeepEqual(
     manifest.targets.astro.styled.roots.filter((root) => root !== "image"),
     manifest.targets.react.styled.roots,
@@ -531,7 +527,9 @@ export function assertFrameworkSurfaceManifest(manifest) {
     const react = manifest.targets.react.primitive.namespaces[component];
     const vue = manifest.targets.vue.primitive.namespaces[component];
     assertDeepEqual(astro, react, `Astro and React ${component} namespace order`);
+    if (!isPrimitiveInventoryComponentAvailableForTarget(component, "vue")) continue;
     assertDeepEqual(vue, react, `React and Vue ${component} namespace order`);
+    if (!isPrimitiveInventoryComponentAvailableForTarget(component, "svelte")) continue;
     // Svelte namespace property order differs; named part availability must match.
     assertDeepEqual(
       [...manifest.targets.svelte.primitive.namespaces[component]].sort(),
@@ -548,21 +546,14 @@ export function assertFrameworkSurfaceManifest(manifest) {
     );
   }
 
-  assertDeepEqual(
-    manifest.targets.astro.primitive.parts,
-    manifest.targets.react.primitive.parts,
-    "Astro and React part contracts",
-  );
-  assertDeepEqual(
-    manifest.targets.react.primitive.parts,
-    manifest.targets.vue.primitive.parts,
-    "React and Vue part contracts",
-  );
-  assertDeepEqual(
-    manifest.targets.react.primitive.parts,
-    manifest.targets.svelte.primitive.parts,
-    "React and Svelte part contracts",
-  );
+  for (const [left, right, label] of pairs) {
+    const gated = gatedFamilies(left, right).primitive;
+    assertDeepEqual(
+      withoutFamilyKeys(manifest.targets[left].primitive.parts, gated),
+      withoutFamilyKeys(manifest.targets[right].primitive.parts, gated),
+      `${label} part contracts`,
+    );
+  }
   const portablePortalAnatomy = (target) =>
     manifest.targets[target].primitive.portalAnatomy.map(
       ({
@@ -601,6 +592,45 @@ export function assertFrameworkSurfaceManifest(manifest) {
   );
 }
 
+/**
+ * Families that either target of a pair does not generate yet: the Primitive Inventory target gate
+ * for Primitive output and the Styled contract frameworks for Styled output.
+ */
+function gatedFamilies(...targets) {
+  const primitive = new Set(
+    getRuntimeAdapterPrimitiveInventoryEntries()
+      .map((entry) => entry.component)
+      .filter((component) =>
+        targets.some(
+          (target) => !isPrimitiveInventoryComponentAvailableForTarget(component, target),
+        ),
+      ),
+  );
+  const styled = new Set(
+    starwindStyledContracts
+      .filter(
+        (contract) =>
+          contract.component !== "image" &&
+          contract.frameworks &&
+          targets.some((target) => !contract.frameworks.includes(target)),
+      )
+      .map((contract) => contract.component),
+  );
+  return { primitive, styled };
+}
+
+function familyOf(value) {
+  return value.replace(/^\.\//, "").split("/")[0];
+}
+
+function withoutFamilies(values, families) {
+  return values.filter((value) => !families.has(familyOf(value)));
+}
+
+function withoutFamilyKeys(record, families) {
+  return Object.fromEntries(Object.entries(record).filter(([family]) => !families.has(family)));
+}
+
 export function compareFrameworkSurfaceManifests(expected, actual) {
   const differences = [];
   collectDifferences(expected, actual, "$", differences);
@@ -630,7 +660,8 @@ function collectDifferences(expected, actual, location, differences) {
 }
 
 function parseNamespace(source) {
-  const match = source.match(/const\s+([A-Za-z0-9_$]+)\s*=\s*\{([\s\S]*?)\};/);
+  // A namespace may carry a type annotation, as the Svelte chart index does for its generic parts.
+  const match = source.match(/const\s+([A-Za-z0-9_$]+)(?:\s*:\s*\{[^}]*\})?\s*=\s*\{([\s\S]*?)\};/);
   if (!match) return undefined;
   const entries = [...match[2].matchAll(/(?:^|,)\s*([A-Za-z0-9_$]+)\s*:\s*([A-Za-z0-9_$]+)/g)];
   return {
@@ -727,6 +758,9 @@ function parsePublicExports(source) {
 function isRenderedPrimitivePath(target, file, runtimeEntries) {
   if (!file.endsWith(RENDERED_EXTENSIONS[target])) return false;
   if (target === "astro" && file === "theme/ThemeInitScript.astro") return true;
+  // Svelte context belongs to a component, so chart rows, legend keys and the tooltip body use
+  // an internal provider helper that is not a namespace part.
+  if (target === "svelte" && file === "chart/ChartContextProvider.svelte") return false;
   const component = file.split("/")[0];
   if (!runtimeEntries.some((entry) => entry.component === component)) return false;
   return (
@@ -825,7 +859,7 @@ async function runCli() {
     repoRoot,
     "scripts/portable-runtime/framework-surface-manifest.json",
   );
-  const generated = await buildFrameworkSurfaceManifest({ repoRoot });
+  const generated = await buildFrameworkSurfaceManifest();
   const serialized = serializeFrameworkSurfaceManifest(generated);
   if (process.argv.includes("--check")) {
     const committed = await readFile(manifestPath, "utf8");

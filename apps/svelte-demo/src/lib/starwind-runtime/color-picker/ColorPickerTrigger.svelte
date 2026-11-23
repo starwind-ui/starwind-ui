@@ -14,8 +14,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "showValueText": showValueText = true,
-    "children": children,
+    showValueText = true,
+    children,
     ...rest
   }: ColorPickerTriggerProps = $props();
 </script>

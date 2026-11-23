@@ -9,10 +9,10 @@ import semver from "semver";
 import type { RegistryVersionManifest, RuntimeRegistry } from "./generate-cli-registry.js";
 import {
   aggregateReleaseDecisions,
-  formatVersionRollback,
   applyVersionIntents,
   assertSafeIntentFile,
   type ChangesetReleaseFacts,
+  formatVersionRollback,
   getNewPackageReleaseBump,
   hasFrameworkAdditionRelease,
   hasNewPackageRelease,
@@ -25,8 +25,8 @@ import {
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
-  validateVersionRollback,
   type VersionRollback,
+  validateVersionRollback,
 } from "./release-intent-utils.js";
 
 export type StyledVersionBump = "major" | "minor" | "patch";

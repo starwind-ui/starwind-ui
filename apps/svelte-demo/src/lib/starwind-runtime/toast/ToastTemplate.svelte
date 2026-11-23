@@ -16,8 +16,8 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "default",
-    "children": children,
+    variant = "default",
+    children,
     ...rest
   }: ToastTemplateProps = $props();
 </script>

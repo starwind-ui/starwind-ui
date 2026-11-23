@@ -115,7 +115,7 @@ describe("Vue Accordion public behavior", () => {
     expect(triggers[1]!.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("preserves controlled null in the scoped slot and Runtime state", async () => {
+  it("preserves controlled null in Runtime state", async () => {
     const modelValue = ref<AccordionValue>(null);
     const host = appendHost();
     const app = createApp({
@@ -126,27 +126,18 @@ describe("Vue Accordion public behavior", () => {
             defaultValue: "alpha",
             modelValue: modelValue.value,
           },
-          {
-            default: ({ value }: { value: AccordionValue }) => [
-              h("output", { "data-testid": "accordion-slot-value" }, String(value)),
-              disclosure("alpha"),
-              disclosure("beta"),
-            ],
-          },
+          () => [disclosure("alpha"), disclosure("beta")],
         ),
     });
     app.mount(host);
     cleanups.push(() => app.unmount());
     await settle();
 
-    const slotValue = () =>
-      host.querySelector<HTMLOutputElement>("[data-testid=accordion-slot-value]")!;
     const triggers = () => [
       ...host.querySelectorAll<HTMLButtonElement>("[data-sw-accordion-trigger]"),
     ];
     const panels = () => [...host.querySelectorAll<HTMLElement>("[data-sw-accordion-content]")];
 
-    expect(slotValue().textContent).toBe("null");
     expect(triggers().map((trigger) => trigger.getAttribute("aria-expanded"))).toEqual([
       "false",
       "false",
@@ -155,13 +146,11 @@ describe("Vue Accordion public behavior", () => {
 
     modelValue.value = "beta";
     await settle();
-    expect(slotValue().textContent).toBe("beta");
     expect(triggers()[1]!.getAttribute("aria-expanded")).toBe("true");
     expect(panels()[1]!.hidden).toBe(false);
 
     modelValue.value = null;
     await settle();
-    expect(slotValue().textContent).toBe("null");
     expect(triggers().every((trigger) => trigger.getAttribute("aria-expanded") === "false")).toBe(
       true,
     );

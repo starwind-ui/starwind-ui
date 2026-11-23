@@ -1,6 +1,6 @@
-import { it, expect } from "vitest";
-import { createStyledPopoverConsumer } from "../../../../packages/svelte/tests/styled-popover-consumer.js";
+import { expect, it } from "vitest";
 import { verifyPopoverBrowser } from "../../../../packages/svelte/tests/popover-browser.js";
+import { createStyledPopoverConsumer } from "../../../../packages/svelte/tests/styled-popover-consumer.js";
 
 it("forwards Styled Popover bindings, semantic children, and portal composition", async () => {
   const consumer = await createStyledPopoverConsumer(process.cwd());

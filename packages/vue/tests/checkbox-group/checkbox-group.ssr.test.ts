@@ -1,9 +1,8 @@
+import { CheckboxRoot } from "@starwind-ui/vue/checkbox";
+import { CheckboxGroupRoot } from "@starwind-ui/vue/checkbox-group";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { CheckboxGroupRoot } from "@starwind-ui/vue/checkbox-group";
-import { CheckboxRoot } from "@starwind-ui/vue/checkbox";
 
 describe("Vue Checkbox Group SSR", () => {
   it("renders deterministic group and child state without browser globals", async () => {

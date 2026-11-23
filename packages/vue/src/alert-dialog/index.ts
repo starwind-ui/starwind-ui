@@ -43,4 +43,3 @@ export type {
   AlertDialogOpenChangeDetails,
 } from "@starwind-ui/runtime";
 export { __useAlertDialogControl } from "./AlertDialogClose.vue";
-export { AlertDialogContext } from "./AlertDialogRoot.vue";

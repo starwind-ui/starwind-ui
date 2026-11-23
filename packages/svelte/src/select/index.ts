@@ -21,7 +21,7 @@ import SelectSeparator from "./SelectSeparator.svelte";
 import SelectTrigger from "./SelectTrigger.svelte";
 import SelectValue from "./SelectValue.svelte";
 
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";
 export type { SelectContextValue, SelectItemContextValue } from "./SelectRoot.svelte";
 export {
   SelectContext,

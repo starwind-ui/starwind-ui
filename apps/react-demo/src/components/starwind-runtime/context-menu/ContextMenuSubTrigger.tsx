@@ -25,7 +25,7 @@ function ContextMenuSubTrigger(props: ContextMenuSubTriggerProps) {
     >
       {children}
 
-      {icon ?? <ChevronRight className="ml-auto size-4" />}
+      {icon ?? <ChevronRight className="ms-auto size-4 rtl:rotate-180" />}
     </ContextMenuPrimitive.SubmenuTrigger>
   );
 }

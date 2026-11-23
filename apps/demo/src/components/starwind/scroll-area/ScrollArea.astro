@@ -36,6 +36,7 @@ const { root, viewport, content, corner } = scrollArea();
 </style>
 
 <script>
+  import { watchDirection, readDirection } from "@/lib/utils/starwind/direction";
   type ScrollOrientation = "vertical" | "horizontal";
   type ScrollAxis = "x" | "y";
   type SpacingProperty = "margin" | "padding";
@@ -79,10 +80,6 @@ const { root, viewport, content, corner } = scrollArea();
 
     const styles = getComputedStyle(element);
 
-    if (axis === "x" && property === "margin") {
-      return parseCssPixelValue(styles.getPropertyValue("margin-inline-start")) * 2;
-    }
-
     const propertyAxis = axis === "x" ? "inline" : "block";
 
     return (
@@ -116,6 +113,7 @@ const { root, viewport, content, corner } = scrollArea();
 
       this.setupScrollbars();
       this.setupObservers();
+      if (this.getScrollbar("horizontal")) watchDirection(this.viewport, () => this.update());
       this.viewport.addEventListener("scroll", () => this.update());
       requestAnimationFrame(() => this.update());
     }
@@ -327,6 +325,7 @@ const { root, viewport, content, corner } = scrollArea();
         maxScrollOffset === 0 ? 0 : (scrollPosition / maxScrollOffset) * maxThumbOffset;
 
       if (isHorizontal) {
+        scrollbar.style.direction = readDirection(this.viewport);
         thumb.style.width = `${thumbSize}px`;
         thumb.style.height = "100%";
         thumb.style.transform = `translateX(${this.isRtl() ? -thumbOffset : thumbOffset}px)`;
@@ -405,6 +404,7 @@ const { root, viewport, content, corner } = scrollArea();
 
       const orientation = this.getOrientation(scrollbar);
       const isHorizontal = orientation === "horizontal";
+      const dragDirection = this.isRtl();
       const startPointerPosition = isHorizontal ? event.clientX : event.clientY;
       const startScrollPosition = this.getScrollPosition(orientation);
       const { maxScrollOffset, maxThumbOffset } = this.getThumbMetrics(
@@ -420,6 +420,11 @@ const { root, viewport, content, corner } = scrollArea();
       }
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
+        if (moveEvent.pointerId !== event.pointerId) return;
+        if (isHorizontal && this.isRtl() !== dragDirection) {
+          handlePointerUp(moveEvent);
+          return;
+        }
         const pointerPosition = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
         const delta =
           isHorizontal && this.isRtl()
@@ -431,6 +436,7 @@ const { root, viewport, content, corner } = scrollArea();
       };
 
       const handlePointerUp = (upEvent: PointerEvent) => {
+        if (upEvent.pointerId !== event.pointerId) return;
         if (thumb.hasPointerCapture(upEvent.pointerId)) {
           thumb.releasePointerCapture(upEvent.pointerId);
         }

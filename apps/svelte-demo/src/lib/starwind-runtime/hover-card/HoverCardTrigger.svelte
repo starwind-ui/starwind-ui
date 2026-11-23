@@ -10,12 +10,12 @@
 
 <script lang="ts">
   let {
-    "closeDelay": closeDelay,
-    "disabled": disabled = false,
-    "openDelay": openDelay,
+    closeDelay,
+    disabled = false,
+    openDelay,
     "class": className,
-    "child": child,
-    "children": children,
+    child,
+    children,
     ...rest
   }: HoverCardTriggerProps = $props();
 

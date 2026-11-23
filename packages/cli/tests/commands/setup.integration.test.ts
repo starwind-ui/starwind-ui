@@ -4,9 +4,8 @@ import { join } from "node:path";
 import type { Task } from "@clack/prompts";
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import { CONFIG_SCHEMA_V2_URL } from "../../src/utils/config.js";
 import { setup } from "../../src/commands/setup.js";
+import { CONFIG_SCHEMA_V2_URL } from "../../src/utils/config.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),

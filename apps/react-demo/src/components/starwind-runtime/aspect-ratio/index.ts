@@ -1,9 +1,8 @@
 import AspectRatio from "./AspectRatio";
-import { aspectRatio, aspectRatioWrapper } from "./variants";
+import { aspectRatio } from "./variants";
 
 const AspectRatioVariants = {
   aspectRatio,
-  aspectRatioWrapper,
 };
 
 export { AspectRatio, AspectRatioVariants };

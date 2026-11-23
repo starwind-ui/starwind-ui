@@ -1,17 +1,17 @@
-import { sidebarPositive } from "./sidebar-consumer.js";
-import { colorPickerPositive } from "./color-picker-consumer.js";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { rm } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
+import { starwindStyledContracts } from "../../../scripts/portable-runtime/contracts/styled/starwind.js";
+import { getImplementedSvelteStyledRoots } from "../../../scripts/portable-runtime/renderers/framework-adapters/svelte/inventory.js";
+import { selectSvelteStyledContracts } from "../../../scripts/portable-runtime/renderers/framework-adapters/svelte/styled/scope.js";
+import { colorPickerPositive } from "./color-picker-consumer.js";
+import { styledNegativeConsumers, styledPositiveConsumers } from "./consumer-type-fixtures.js";
 import { createDistConsumer, type DistConsumer } from "./dist-consumer.js";
 import { negativeConsumers } from "./dist-consumer-fixtures.js";
-import { styledNegativeConsumers, styledPositiveConsumers } from "./consumer-type-fixtures.js";
-import { verifyNamedRejections, STYLED_REJECTION } from "./named-rejections.js";
+import { STYLED_REJECTION, verifyNamedRejections } from "./named-rejections.js";
+import { sidebarPositive } from "./sidebar-consumer.js";
 import { writeStyledConsumerFiles } from "./styled-consumer-files.js";
-import { getImplementedSvelteStyledRoots } from "../../../scripts/portable-runtime/renderers/framework-adapters/svelte/inventory.js";
-import { starwindStyledContracts } from "../../../scripts/portable-runtime/contracts/styled/starwind.js";
-import { selectSvelteStyledContracts } from "../../../scripts/portable-runtime/renderers/framework-adapters/svelte/styled/scope.js";
 
 export async function createSvelteConsumer(repoRoot: string): Promise<DistConsumer> {
   const require = createRequire(path.join(repoRoot, "package.json"));

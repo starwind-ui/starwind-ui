@@ -23,7 +23,9 @@ const { class: className, size = "md", ...rest } = Astro.props;
   data-slot="pagination-previous"
 >
   <slot name="icon">
-    <ChevronLeft class="size-4 transition-transform group-hover:-translate-x-1" />
+    <ChevronLeft
+      class="size-4 transition-transform group-hover:-translate-x-1 rtl:rotate-180 rtl:group-hover:translate-x-1"
+    />
   </slot>
   <slot />
 </PaginationLink>

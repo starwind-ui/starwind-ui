@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 import {
   AlertDialogBackdrop,
   AlertDialogClose,
@@ -12,6 +10,7 @@ import {
   AlertDialogTrigger,
   AlertDialogViewport,
 } from "@starwind-ui/vue/alert-dialog";
+import { ref } from "vue";
 
 const open = ref(false);
 const cancelNextOpen = ref(true);

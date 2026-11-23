@@ -85,6 +85,8 @@ export default defineConfig({
           include: [
             "scripts/portable-runtime/tests/conformance/conformance.browser.ts",
             "scripts/portable-runtime/tests/conformance/emission/emission.check.ts",
+            "scripts/portable-runtime/tests/conformance/emission/server-attributes.check.ts",
+            "scripts/portable-runtime/tests/conformance/emission/default-markers.check.ts",
           ],
           globalSetup: [path.join(home, "global-setup.ts")],
           // Each browser scenario has its own context, so scenarios can run at the same time. A

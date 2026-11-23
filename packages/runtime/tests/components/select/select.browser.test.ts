@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createPopover } from "../../../src/components/popover/popover";
-import { createSelect } from "../../../src/components/select/select";
+import { createSelect, refreshSelectPortalSurface } from "../../../src/components/select/select";
 import { reportPortalPlacement } from "../../../src/internal/floating-portal";
 
 describe("createSelect", () => {
@@ -2316,6 +2316,91 @@ describe("createSelect", () => {
     expect(getPositioner().style.top).toBe("76px");
   });
 
+  it("aligns unequal selected text edges to the effective surface direction", async () => {
+    const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
+    root.dir = "rtl";
+    const popup = getPopup();
+    popup.dir = "ltr";
+    const selectedItem = getItem("dark");
+    selectedItem.insertAdjacentHTML(
+      "afterbegin",
+      '<span data-item-icon aria-hidden="true">★</span>',
+    );
+    getTrigger().insertAdjacentHTML(
+      "beforeend",
+      '<span data-trigger-icon aria-hidden="true">◆</span>',
+    );
+    const onValueChange = vi.fn();
+    const select = createSelect(root, { onValueChange });
+    mockRect(getTrigger(), { height: 44, width: 180, x: 130, y: 100 });
+    mockRect(getValue(), { height: 20, width: 80, x: 160, y: 112 });
+    mockRect(getPositioner(), { height: 160, width: 260, x: 40, y: 200 });
+    mockRect(popup, { height: 160, width: 260, x: 40, y: 200 });
+    mockRect(selectedItem, { height: 36, width: 244, x: 48, y: 248 });
+    mockRect(selectedItem.querySelector<HTMLElement>("[data-sw-select-item-text]")!, {
+      height: 20,
+      width: 150,
+      x: 80,
+      y: 256,
+    });
+
+    openWithMouse();
+    await waitForFloatingPosition();
+    const active = document.activeElement;
+    expect(readPx(getPositioner().style.left) + 40).toBeCloseTo(160, 0);
+    expect(getPositioner().style.left).toBe("120px");
+
+    popup.dir = "rtl";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await waitForFloatingPosition();
+    expect(getPositioner().style.left).toBe("50px");
+    expect(readPx(getPositioner().style.left) + 190).toBeCloseTo(240, 0);
+    expect(document.activeElement).toBe(active);
+    expect(select.getValue()).toBe("dark");
+    expect(onValueChange).not.toHaveBeenCalled();
+
+    root.dir = "ltr";
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await waitForFloatingPosition();
+    expect(getPositioner().style.left).toBe("50px");
+    popup.removeAttribute("dir");
+    document.dispatchEvent(new Event("starwind:direction-change"));
+    await waitForFloatingPosition();
+    expect(getPositioner().style.left).toBe("120px");
+    expect(onValueChange).not.toHaveBeenCalled();
+    select.destroy();
+  });
+
+  it("clamps RTL selected-text placement to the physical viewport", async () => {
+    const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
+    root.dir = "rtl";
+    const onValueChange = vi.fn();
+    const select = createSelect(root, { onValueChange });
+    const viewportWidth = window.innerWidth;
+    mockRect(getTrigger(), { height: 44, width: 200, x: viewportWidth - 220, y: 100 });
+    mockRect(getValue(), { height: 20, width: 80, x: viewportWidth - 140, y: 112 });
+    mockRect(getPositioner(), { height: 160, width: 260, x: 40, y: 200 });
+    mockRect(getPopup(), { height: 160, width: 260, x: 40, y: 200 });
+    mockRect(getItem("dark"), { height: 36, width: 244, x: 48, y: 248 });
+    mockRect(getItem("dark").querySelector<HTMLElement>("[data-sw-select-item-text]")!, {
+      height: 20,
+      width: 150,
+      x: 80,
+      y: 256,
+    });
+
+    openWithMouse();
+    await waitForFloatingPosition();
+    const left = readPx(getPositioner().style.left);
+    expect(left).toBe(viewportWidth - 260 - 8);
+    expect(left).toBeGreaterThanOrEqual(8);
+    expect(left + 260).toBeLessThanOrEqual(viewportWidth - 8);
+    expect(getPopup().getAttribute("data-side")).toBe("none");
+    expect(select.getValue()).toBe("dark");
+    expect(onValueChange).not.toHaveBeenCalled();
+    select.destroy();
+  });
+
   it("retries selected-item alignment after lazy popup items mount", async () => {
     const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
     const popup = getPopup();
@@ -2466,9 +2551,11 @@ describe("createSelect", () => {
     expect(Number.parseFloat(getPopup().style.maxHeight)).toBeGreaterThan(100);
   });
 
-  it("falls back to normal floating placement for touch opens", async () => {
+  it.each(["ltr", "rtl"] as const)("uses floating placement for touch opens in %s", async (dir) => {
     const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
-    createSelect(root);
+    root.dir = dir;
+    const onValueChange = vi.fn();
+    const select = createSelect(root, { onValueChange });
 
     mockAlignmentRects();
     getTrigger().dispatchEvent(
@@ -2485,6 +2572,9 @@ describe("createSelect", () => {
     expect(getPopup().getAttribute("data-align-trigger")).toBe("true");
     expect(getPositioner().getAttribute("data-side")).not.toBe("none");
     expect(getPopup().getAttribute("data-side")).not.toBe("none");
+    expect(select.getValue()).toBe("dark");
+    expect(onValueChange).not.toHaveBeenCalled();
+    select.destroy();
   });
 
   it("closes when an open touch Select trigger is tapped again", async () => {
@@ -2542,6 +2632,161 @@ describe("createSelect", () => {
     expect(getPositioner().getAttribute("data-align")).toBe("start");
     expect(getPopup().getAttribute("data-side")).toBe("bottom");
     expect(getPopup().getAttribute("data-align")).toBe("start");
+  });
+
+  it("restores authored inline placement and priority after aligned close", async () => {
+    const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
+    const positioner = getPositioner();
+    const popup = getPopup();
+    const authored = new Map<HTMLElement, Record<string, [string, string]>>([
+      [
+        positioner,
+        {
+          position: ["absolute", "important"],
+          left: ["13px", "important"],
+          top: ["17px", ""],
+          "transform-origin": ["10% 20%", "important"],
+        },
+      ],
+      [
+        popup,
+        {
+          position: ["relative", ""],
+          left: ["23px", ""],
+          top: ["29px", "important"],
+          "transform-origin": ["30% 40%", ""],
+        },
+      ],
+    ]);
+    for (const [element, properties] of authored) {
+      for (const [property, [value, priority]] of Object.entries(properties)) {
+        element.style.setProperty(property, value, priority);
+      }
+    }
+    const select = createSelect(root);
+    mockAlignmentRects();
+
+    openWithMouse();
+    await waitForFloatingPosition();
+    expect(positioner.style.left).toBe("116px");
+    expect(popup.style.left).toBe("116px");
+
+    positioner.style.setProperty("top", "37px", "important");
+    select.updatePosition();
+    expect(positioner.style.top).toBe("56px");
+    popup.style.setProperty("left", "31px", "important");
+    authored.get(positioner)!.top = ["37px", "important"];
+    authored.get(popup)!.left = ["31px", "important"];
+    select.close();
+    await waitForMicrotasks();
+
+    for (const [element, properties] of authored) {
+      for (const [property, [value, priority]] of Object.entries(properties)) {
+        expect(element.style.getPropertyValue(property)).toBe(value);
+        expect(element.style.getPropertyPriority(property)).toBe(priority);
+      }
+    }
+    openWithMouse();
+    await waitForFloatingPosition();
+    expect(positioner.style.left).toBe("116px");
+    select.close();
+    await waitForMicrotasks();
+    for (const [element, properties] of authored) {
+      for (const [property, [value, priority]] of Object.entries(properties)) {
+        expect(element.style.getPropertyValue(property)).toBe(value);
+        expect(element.style.getPropertyPriority(property)).toBe(priority);
+      }
+    }
+    openWithMouse();
+    await waitForFloatingPosition();
+    select.destroy();
+    for (const [element, properties] of authored) {
+      for (const [property, [value, priority]] of Object.entries(properties)) {
+        expect(element.style.getPropertyValue(property)).toBe(value);
+        expect(element.style.getPropertyPriority(property)).toBe(priority);
+      }
+    }
+  });
+
+  it.each(["touch", "missing-text", "trigger-guard"] as const)(
+    "restores authored positioner styles before %s fallback",
+    async (fallback) => {
+      const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
+      const positioner = getPositioner();
+      const popup = getPopup();
+      positioner.style.setProperty("position", "absolute", "important");
+      positioner.style.setProperty("left", "13px", "important");
+      positioner.style.setProperty("top", "17px", "important");
+      positioner.style.setProperty("transform-origin", "10% 20%", "important");
+      popup.style.setProperty("left", "23px", "important");
+      popup.style.setProperty("top", "29px", "important");
+      const onValueChange = vi.fn();
+      const select = createSelect(root, { onValueChange });
+      mockAlignmentRects();
+      openWithMouse();
+      await waitForFloatingPosition();
+      expect(positioner.style.left).toBe("116px");
+
+      if (fallback === "touch") {
+        getTrigger().dispatchEvent(
+          new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }),
+        );
+      } else if (fallback === "missing-text") {
+        getItem("dark").querySelector("[data-sw-select-item-text]")!.remove();
+      } else {
+        mockRect(getTrigger(), { height: 44, width: 240, x: 100, y: 0 });
+      }
+      select.updatePosition();
+
+      for (const [property, value] of [
+        ["position", "absolute"],
+        ["left", "13px"],
+        ["top", "17px"],
+        ["transform-origin", "10% 20%"],
+      ]) {
+        expect(positioner.style.getPropertyValue(property)).toBe(value);
+        expect(positioner.style.getPropertyPriority(property)).toBe("important");
+      }
+      expect(popup.style.left).toBe("23px");
+      expect(popup.style.getPropertyPriority("left")).toBe("important");
+      expect(popup.style.top).toBe("29px");
+      expect(popup.style.getPropertyPriority("top")).toBe("important");
+      await waitForFloatingPosition();
+      expect(getPopup().getAttribute("data-side")).not.toBe("none");
+      expect(getPopup().style.left).not.toBe("116px");
+      expect(select.getValue()).toBe("dark");
+      expect(onValueChange).not.toHaveBeenCalled();
+      select.destroy();
+    },
+  );
+
+  it("restores an aligned popup before replacing its portal surface", async () => {
+    const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
+    const oldPopup = getPopup();
+    oldPopup.style.setProperty("left", "23px", "important");
+    oldPopup.style.setProperty("top", "29px", "important");
+    const select = createSelect(root);
+    mockAlignmentRects();
+    openWithMouse();
+    await waitForFloatingPosition();
+    expect(oldPopup.style.left).toBe("116px");
+
+    const nextPositioner = document.createElement("div");
+    nextPositioner.setAttribute("data-sw-select-positioner", "");
+    nextPositioner.setAttribute("data-align-item-with-trigger", "true");
+    const nextPopup = document.createElement("div");
+    nextPopup.setAttribute("data-sw-select-popup", "");
+    nextPopup.hidden = true;
+    nextPopup.innerHTML = oldPopup.innerHTML;
+    nextPositioner.append(nextPopup);
+    root.append(nextPositioner);
+    refreshSelectPortalSurface(root);
+
+    expect(oldPopup.style.getPropertyValue("left")).toBe("23px");
+    expect(oldPopup.style.getPropertyPriority("left")).toBe("important");
+    expect(oldPopup.style.getPropertyValue("top")).toBe("29px");
+    expect(oldPopup.style.getPropertyPriority("top")).toBe("important");
+    select.destroy();
   });
 
   it("clears normal floating before reopening with selected-item alignment", async () => {
@@ -2677,37 +2922,45 @@ describe("createSelect", () => {
     expect(getInput().value).toBe("dark");
   });
 
-  it("updates scroll arrow visibility and scrolls the list from arrow interaction", async () => {
-    const root = renderSelect({ defaultValue: "system", scrollArrows: true });
-    const select = createSelect(root);
-    const scrollMetrics = mockScrollMetrics(getList(), {
-      clientHeight: 80,
-      scrollHeight: 240,
-      scrollTop: 0,
-    });
+  it.each(["ltr", "rtl"] as const)(
+    "updates scroll arrows and vertical list scrolling in %s",
+    async (dir) => {
+      const root = renderSelect({ defaultValue: "system", scrollArrows: true });
+      root.dir = dir;
+      const onValueChange = vi.fn();
+      const select = createSelect(root, { onValueChange });
+      const scrollMetrics = mockScrollMetrics(getList(), {
+        clientHeight: 80,
+        scrollHeight: 240,
+        scrollTop: 0,
+      });
 
-    select.setOpen(true, { emit: false });
-    await waitForFloatingPosition();
+      select.setOpen(true, { emit: false });
+      await waitForFloatingPosition();
 
-    expect(getScrollUpArrow().hidden).toBe(true);
-    expect(getScrollDownArrow().hidden).toBe(false);
-    expect(getScrollDownArrow().hasAttribute("data-visible")).toBe(true);
+      expect(getScrollUpArrow().hidden).toBe(true);
+      expect(getScrollDownArrow().hidden).toBe(false);
+      expect(getScrollDownArrow().hasAttribute("data-visible")).toBe(true);
 
-    getScrollDownArrow().dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      getScrollDownArrow().dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
 
-    expect(getList().scrollTop).toBeGreaterThan(0);
-    expect(getScrollUpArrow().hidden).toBe(false);
+      expect(getList().scrollTop).toBeGreaterThan(0);
+      expect(getScrollUpArrow().hidden).toBe(false);
 
-    scrollMetrics.setScrollTop(160);
-    getList().dispatchEvent(new Event("scroll"));
+      scrollMetrics.setScrollTop(160);
+      getList().dispatchEvent(new Event("scroll"));
 
-    expect(getScrollDownArrow().hidden).toBe(true);
-    expect(getScrollDownArrow().hasAttribute("data-hidden")).toBe(true);
+      expect(getScrollDownArrow().hidden).toBe(true);
+      expect(getScrollDownArrow().hasAttribute("data-hidden")).toBe(true);
 
-    getScrollUpArrow().dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      getScrollUpArrow().dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
 
-    expect(getList().scrollTop).toBeLessThan(160);
-  });
+      expect(getList().scrollTop).toBeLessThan(160);
+      expect(select.getValue()).toBe("system");
+      expect(onValueChange).not.toHaveBeenCalled();
+      select.destroy();
+    },
+  );
 
   it("stops scroll arrow repeat on pointer leave and destroy", async () => {
     const root = renderSelect({ defaultValue: "system", scrollArrows: true });

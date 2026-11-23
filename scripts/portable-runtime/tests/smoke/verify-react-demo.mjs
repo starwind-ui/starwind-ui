@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { verifyReactCarouselCases } from "./react/carousel-cases.mjs";
 import { verifyReactColorPickerCases } from "../../../../apps/react-demo/tests/color-picker-cases.mjs";
+import { verifyChartExamples } from "../../../../apps/demo/tests/chart-cases.mjs";
 import { verifyReactFormControlCases } from "./react/form-control-cases.mjs";
 import { verifyReactFoundationCases } from "./react/foundation-cases.mjs";
 import { verifyNavigationMenuSizingCases } from "./shared/navigation-menu-sizing.mjs";
@@ -32,7 +33,7 @@ try {
   await server.listen();
   const url = server.resolvedUrls?.local[0] ?? `http://${HOST}:${PORT}/`;
   await verifyReactThemeInitScript(url);
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
 
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.addInitScript(() => {
@@ -126,6 +127,9 @@ try {
   await verifyReactFormControlCases({ page, messages });
   await verifyReactMediaOverlayCases({ page, messages });
   await verifyReactSheetMenuCases({ page });
+  await page.goto(new URL("/runtime-charts", url).toString(), { waitUntil: "networkidle" });
+  await verifyReactAppNav({ page, activeLabel: "Runtime Charts" });
+  await verifyChartExamples({ page, label: "React" });
 
   if (messages.length > 0) {
     throw new Error(messages.join("\n"));

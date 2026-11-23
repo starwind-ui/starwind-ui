@@ -10,9 +10,9 @@
 <script lang="ts">
   let {
     "class": className,
-    "inset": inset = false,
-    "disabled": disabled = false,
-    "children": children,
+    inset = false,
+    disabled = false,
+    children,
     ...rest
   }: ContextMenuItemProps = $props();
 </script>

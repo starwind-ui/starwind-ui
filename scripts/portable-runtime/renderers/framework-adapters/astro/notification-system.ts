@@ -51,7 +51,7 @@ function printTemplate(facts: AdapterNotificationSystemFacts): string {
   const part = facts.parts.template;
   const variant = facts.template.variant;
 
-  return `---\ntype Variant = ${variant.type};\n\ntype Props = {\n  ${variant.name}?: Variant;\n};\n\nconst { ${variant.name} = ${variant.defaultValue} } = Astro.props;\n---\n\n<${part.defaultElement} ${facts.attrs.template}={${variant.name}}>\n  <slot />\n</${part.defaultElement}>\n`;
+  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Variant = ${variant.type};\n\ntype Props = {\n  dir?: HTMLAttributes<"div">["dir"];\n  ${variant.name}?: Variant;\n};\n\nconst { dir, ${variant.name} = ${variant.defaultValue} } = Astro.props;\n---\n\n<${part.defaultElement} ${facts.attrs.template}={${variant.name}} dir={dir}>\n  <slot />\n</${part.defaultElement}>\n`;
 }
 
 function printRoot(facts: AdapterNotificationSystemFacts): string {

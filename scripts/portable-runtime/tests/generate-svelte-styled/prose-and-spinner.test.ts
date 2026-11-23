@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
 import { compile } from "svelte/compiler";
+import { describe, expect, it } from "vitest";
 import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+
 describe("Prose and Spinner", () => {
   it.each(["prose", "spinner"])("projects and compiles contract-owned %s output", (root) => {
     const contract = starwindStyledContracts.find((c) => c.component === root)!;
@@ -24,10 +25,11 @@ describe("Prose and Spinner", () => {
   });
 });
 
-import { afterEach } from "vitest";
 import path from "node:path";
+import { afterEach } from "vitest";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
 import { createStyledProseSpinnerConsumer } from "../../../../packages/svelte/tests/styled-prose-spinner-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((c) => c.dispose()));
@@ -38,9 +40,10 @@ async function consumer() {
   return result;
 }
 
-import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("rejects malformed Prose CSS before replacing prior output", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-prose-invalid-"));
   try {
@@ -64,8 +67,9 @@ it("includes Prose CSS in consumer builds and hydrates native HTML/SVG ownership
 });
 
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
-import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { proseStyles } from "../../contracts/styled/styles/prose.js";
+import type { StyledAdapterContract } from "../../contracts/styled/types.js";
+
 it("serializes owned Prose CSS and Spinner SVG deterministically", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-prose-spinner-output-"));
   try {

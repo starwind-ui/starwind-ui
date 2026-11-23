@@ -25,20 +25,20 @@
 
 <script lang="ts">
   let {
-    "ariaLabel": ariaLabel = "Toggle theme",
-    "variant": variant = "outline",
-    "size": size = "md",
-    "defaultPressed": defaultPressed,
-    "disabled": disabled = false,
-    "pressed": pressed,
-    "syncGroup": syncGroup = "starwind-theme",
-    "value": value,
+    ariaLabel = "Toggle theme",
+    variant = "outline",
+    size = "md",
+    defaultPressed,
+    disabled = false,
+    pressed,
+    syncGroup = "starwind-theme",
+    value,
     "data-slot": dataSlot = "theme-toggle",
     "class": className,
-    "children": children,
-    "lightIcon": lightIcon,
-    "darkIcon": darkIcon,
-    "ref": ref,
+    children,
+    lightIcon,
+    darkIcon,
+    ref,
     ...rest
   }: ThemeToggleProps = $props();
 

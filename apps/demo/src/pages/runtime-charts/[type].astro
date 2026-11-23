@@ -1,0 +1,34 @@
+---
+import ChartGallery from "@/components/demos/chart/ChartGallery.astro";
+import { type ChartGalleryType, chartGalleryTypes } from "@/components/demos/chart/chart-catalog";
+import Layout from "@/layouts/Layout.astro";
+
+export function getStaticPaths() {
+  return chartGalleryTypes.map((item) => ({ params: { type: item.type } }));
+}
+
+const type = Astro.params.type as ChartGalleryType;
+const label = chartGalleryTypes.find((item) => item.type === type)?.label ?? "Charts";
+---
+
+<Layout
+  title={`${label} · Runtime Chart Gallery`}
+  description="Astro chart gallery that follows the shadcn chart gallery for review"
+>
+  <main class="mx-auto w-full max-w-7xl px-6 py-12">
+    <header class="mb-8 space-y-3">
+      <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Runtime chart gallery
+      </p>
+      <h1 class="text-4xl font-semibold tracking-tight">Charts</h1>
+      <p class="text-muted-foreground max-w-3xl">
+        Compare each chart with the same chart on the shadcn charts page. Check light and dark mode,
+        and move the pointer over each chart to see its tooltip.
+      </p>
+      <a class="text-sm font-medium underline underline-offset-4" href="/runtime-charts/">
+        Back to the chart examples
+      </a>
+    </header>
+    <ChartGallery type={type} />
+  </main>
+</Layout>

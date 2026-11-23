@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as PopoverPrimitive from "@starwind-ui/vue/popover";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { popoverContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });

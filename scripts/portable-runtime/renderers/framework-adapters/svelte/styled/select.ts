@@ -3,8 +3,8 @@ import type {
   StyledOutputComponentGroup,
   StyledOutputRenderNode,
 } from "../../../styled-output-model/index.js";
-import { printSvelteNativePopupPresentation } from "./native-popup.js";
 import { sveltePrimitiveImport } from "./imports.js";
+import { printSvelteNativePopupPresentation } from "./native-popup.js";
 import { supportsSvelteScope } from "./scope.js";
 import type { SvelteStyledComponentProjection, SvelteStyledRenderOptions } from "./types.js";
 
@@ -129,7 +129,7 @@ export function specializeSvelteStyledSelect(
       },
       { source: "./variants.js", names: group.variants.map((variant) => variant.name) },
     ],
-    publicTypes: `export type ${component.exportName}Props = Omit<ComponentProps<typeof ${nativeName}>, "children">${contentProps}${variants.map((entry) => (entry.kind === "variant-props" ? ` & VariantProps<typeof ${entry.variant}>` : "")).join("")} & { children?: ${part === "Value" ? `ComponentProps<typeof ${nativeName}>["children"]` : "Snippet"}; ${snippets.map((name) => `${name}?: Snippet;`).join(" ")} ${extras.join(" ")} };`,
+    publicTypes: `export type ${component.exportName}Props = Omit<ComponentProps<typeof ${nativeName}>, "children">${contentProps}${variants.map((entry) => (entry.kind === "variant-props" ? ` & VariantProps<typeof ${entry.variant}>` : "")).join("")} & { children?: Snippet; ${snippets.map((name) => `${name}?: Snippet;`).join(" ")} ${extras.join(" ")} };`,
     destructure: props,
     rest: component.destructure?.rest,
     setup:

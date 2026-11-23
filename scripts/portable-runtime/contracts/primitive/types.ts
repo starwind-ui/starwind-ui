@@ -99,7 +99,21 @@ export type PrimitiveAttributeContract = {
 };
 
 export type PrimitivePropContract = {
+  /**
+   * The prop is a class for an element that the part renders. Each target names it with its
+   * `class` rule: React adds `Name`, so `labelClass` becomes `labelClassName`.
+   */
+  classHook?: true;
   defaultValue?: string;
+  /** One sentence that adapters print as the prop's doc comment. */
+  description?: string;
+  /**
+   * Another family owns this prop on the element this part renders. The part passes the prop to
+   * that family's part. On Astro, only a callback can be forwarded, through the owner's DOM
+   * event; an Astro value must be printed by this part. The emission check proves the owner
+   * handles the prop. Docs list it on this part.
+   */
+  forwardedTo?: { component: string; part: string };
   unsupportedTargets?: FrameworkTarget[];
   name: string;
   kind: "attribute" | "callback" | "children" | "control" | "option" | "rendering";
@@ -112,7 +126,7 @@ export type PrimitiveFixedModelOwnership = {
   controlledWhen: "initial-defined";
   lifetime: "mount";
   laterUndefined: "retain-controlled-value";
-  laterDefined: "ignore-when-uncontrolled";
+  laterDefined: "silent-command";
 };
 
 export type PrimitiveStateModelContract = {
@@ -120,6 +134,20 @@ export type PrimitiveStateModelContract = {
   name: string;
   controlledProp?: string;
   defaultProp?: string;
+  /**
+   * The attribute the Runtime reads for initial state. For the open, pressed, Menu item checked,
+   * and Select and Combobox value models, a `data-default-*` attribute states only the
+   * `defaultProp` value read once at mount. A held value, interaction, readback, a later prop
+   * write, and hydration never change it. See `defaultMarker` in the shared recipes.
+   *
+   * The Runtime reads such a marker only as a fallback: at setup when the matching option is
+   * absent, and for items and toggles only after the attributes that come first for each control.
+   * A Menu checkbox item reads `aria-checked` first. A Menu radio item reads `aria-checked`, then
+   * `data-checked`. Toggle reads its ARIA and state attributes first. Select also reads
+   * `data-default-value` at form reset and uses its captured reset baseline when the marker is
+   * absent. Checkbox, Switch, and Radio roots print their form reset
+   * baseline instead, which falls back to the held value.
+   */
   initialAttribute?: string;
   /** Retain the first mount reset baseline when an adapter recreates its controller. */
   resetBaseline?: "mount";
@@ -127,6 +155,11 @@ export type PrimitiveStateModelContract = {
   runtimeGetter?: string;
   runtimeSyncEvent?: string;
   runtimeSetter?: string;
+  /**
+   * Docs text for the setter step when `call <runtimeSetter> for later updates` is not enough,
+   * for example when a plain call emits a change event.
+   */
+  runtimeSetterUsage?: string;
   controlledStateSync?: "unsupported" | "custom-event" | "imperative";
 };
 

@@ -16,15 +16,12 @@ export const formOperations = (plan: FormControlPlan): FormTargetOperations => (
 });
 export function printFormProjection(projection: FormProjection): string {
   const {
-    target,
     plan,
     fw,
     grouped,
     fields,
-    defaults,
     destructure,
     inputNames,
-    access,
     attributes,
     inputAttrs,
     inputData,
@@ -33,7 +30,6 @@ export function printFormProjection(projection: FormProjection): string {
     imports,
     groupFunction,
     connection,
-    hiddenStyle,
   } = projection;
   const groupExpressions = formGroupExpressions(plan, {
     value: "value",

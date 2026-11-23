@@ -10,6 +10,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { copyFrozenDependencyWorkspace } from "../../runtime-performance/interactions/build.mjs";
 import {
   sessionContentMatches,
   validateCaptureReport,
@@ -17,7 +18,6 @@ import {
   writeSessionEvidence,
 } from "../../runtime-performance/interactions/evidence.mjs";
 import { createRunPlan } from "../../runtime-performance/interactions/plan.mjs";
-import { copyFrozenDependencyWorkspace } from "../../runtime-performance/interactions/build.mjs";
 import {
   buildCaptureReport,
   renderCaptureReport,

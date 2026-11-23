@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { chartStyledContract } from "../../contracts/styled/components/chart.js";
 import { progressStyledContract } from "../../contracts/styled/components/progress.js";
 import { selectStyledContract } from "../../contracts/styled/components/select.js";
 import {
@@ -8,7 +9,10 @@ import {
   renderVueComputedExpression,
   renderVueExpression,
 } from "../../renderers/framework-adapters/vue/styled/expressions.js";
-import { projectVueStyledComponent } from "../../renderers/framework-adapters/vue/styled/projection.js";
+import {
+  checkVueDeclaredPublicExtension,
+  projectVueStyledComponent,
+} from "../../renderers/framework-adapters/vue/styled/projection.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 import { compactCode } from "../source-comparison.js";
 
@@ -43,6 +47,24 @@ describe("Vue Styled renderer structure", () => {
     expect(projection.render[0]).toMatchObject({ type: "primitive", component: "progress" });
   });
 
+  it("uses a declared public extension only when no public field is replaced", () => {
+    const group = projectStyledOutputComponentGroup(chartStyledContract);
+    const container = projectVueStyledComponent(
+      group,
+      group.components.find(({ exportName }) => exportName === "ChartContainer")!,
+      OPTIONS,
+    );
+    expect(container.props.declared.publicExtension).toContain("ChartRootSourceProps");
+    expect(container.props.declared.replacedPublicSourceFields).toEqual([]);
+    // The renderer would drop the Omit of a replaced field, so the projection rejects the pair.
+    expect(() =>
+      checkVueDeclaredPublicExtension("Example", "ExampleProps", ["labelClassName"]),
+    ).toThrow(
+      /Example sets declaredPublicExtension and also replaces public fields \(labelClassName\)/,
+    );
+    expect(checkVueDeclaredPublicExtension("Example", "ExampleProps", [])).toBe("ExampleProps");
+  });
+
   it("projects Select specializations as typed data and routes both through common serialization", async () => {
     const group = projectStyledOutputComponentGroup(selectStyledContract);
     const trigger = projectVueStyledComponent(
@@ -62,7 +84,7 @@ describe("Vue Styled renderer structure", () => {
     });
     expect(trigger.slots.map(({ name }) => name)).toEqual(["default", "icon"]);
     expect(value.specialization).toMatchObject({ kind: "select-value" });
-    expect(value.slots[0]?.signature).toContain("label: string | null");
+    expect(value.slots[0]?.signature).toBe("() => unknown");
 
     const renderer = await readFile(path.join(STYLED_RENDERER_ROOT, "render.ts"), "utf8");
     expect(renderer).toContain("serializeVueSfc(projectSelectTriggerSfc(projection))");

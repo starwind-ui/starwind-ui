@@ -12,7 +12,7 @@ export const alertDialogBackdrop = tv({
 export const alertDialogContent = tv({
   base: [
     "bg-background space-y-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
-    "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
+    "fixed top-[50%] right-auto left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
     "data-starting-style:!animate-none data-starting-style:opacity-0",
     "data-[state=open]:animate-in fade-in zoom-in-95 duration-200 will-change-transform",
     "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
@@ -28,7 +28,7 @@ export const alertDialogFooter = tv({
 });
 
 export const alertDialogHeader = tv({
-  base: "flex flex-col gap-2 text-center sm:text-left",
+  base: "flex flex-col gap-2 text-center sm:text-start",
 });
 
 export const alertDialogTitle = tv({

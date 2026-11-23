@@ -7,3 +7,10 @@
   min-width: 24px;
   min-height: 24px;
 }
+
+/* Late-write sliders need a width, so a pointer drag can move a thumb. */
+.late-slider {
+  display: block;
+  position: relative;
+  width: 200px;
+}

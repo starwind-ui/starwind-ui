@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 import type { AccordionValue, AccordionValueChangeDetails } from "@starwind-ui/vue/accordion";
 import {
   AccordionHeader,
@@ -9,6 +7,7 @@ import {
   AccordionRoot,
   AccordionTrigger,
 } from "@starwind-ui/vue/accordion";
+import { ref } from "vue";
 import {
   Accordion as StyledAccordion,
   AccordionContent as StyledAccordionContent,

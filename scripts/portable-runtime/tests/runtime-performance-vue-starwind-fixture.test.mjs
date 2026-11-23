@@ -4,7 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
-
+import { vuePerformanceProviderRows } from "../runtime-performance/vue-plan.mjs";
 import {
   buildAllStarwindVueFixtures,
   buildStarwindVueFixture,
@@ -12,7 +12,6 @@ import {
   starwindVueFixtureImports,
   starwindVueFixtureScenarioKeys,
 } from "../runtime-performance/vue-starwind-fixture.mjs";
-import { vuePerformanceProviderRows } from "../runtime-performance/vue-plan.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 const vueDemoRequire = createRequire(path.join(repoRoot, "apps/vue-demo/package.json"));

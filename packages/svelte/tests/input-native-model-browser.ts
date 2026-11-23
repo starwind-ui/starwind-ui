@@ -31,6 +31,8 @@ assert.equal(globalThis.document,undefined);assert.equal(Input,named.${component
   });
   const { body } = JSON.parse(await consumer.run("input-ssr.mjs", { loader: true }));
   assert.match(body, /value="a,b"/);
+  assert.match(body, /<input[^>]*id="rerender-seeded"[^>]*value="server seed"/);
+  assert.doesNotMatch(body, /<input[^>]*id="(omitted|rerender-plain)"[^>]*\svalue=/);
   assert.doesNotMatch(body, /\[object Object\]/);
   const build = JSON.parse(await consumer.run("build-input.mjs"));
   const javascript = await readFile(path.join(consumer.root, "browser.js"));
@@ -89,6 +91,7 @@ let inputType = $state<"text" | "file">("text");
 let disabled = $state(false), readonly = $state(false), form = $state("external");
 let key = $state(0), refVersion = $state(0), attachmentVersion = $state(0), attachmentPresent = $state(true);
 let defaultValue = $state<InputValue>("seed");
+let rerenderClass = $state("first"), rerenderDisabled = $state(false), rerenderBound = $state<InputValue | undefined>(), late = $state<InputValue | undefined>();
 const calls = { value: 0, input: 0, change: 0, setter: 0, refs: 0, clear: 0, attach: 0, detach: 0 };
 let cancel = false, command: InputValue | undefined, transform = "uppercase";
 const log: string[] = [];
@@ -109,7 +112,9 @@ export function addAttachment() { attachmentPresent = true; }
 export function setType(next: "text" | "file") { inputType = next; }
 export function setTransform(next: string) { transform = next; }
 export function setFile(next: InputValue) { file = next; }
-export function snapshot() { return { bound, plain, functional, file, numeric, array, calls: {...calls}, log: [...log] }; }
+export function rerender(next: { class?: string; disabled?: boolean }) { if (next.class !== undefined) rerenderClass = next.class; if (next.disabled !== undefined) rerenderDisabled = next.disabled; }
+export function setLate(next: InputValue | undefined) { late = next; }
+export function snapshot() { return { rerenderBound, bound, plain, functional, file, numeric, array, calls: {...calls}, log: [...log] }; }
 </script>
 <form id="external"></form><form id="other"></form>
 {#key key}<Primitive.Root id="bound" type={inputType} {form} name="bound" bind:value={bound} {defaultValue} {disabled} {readonly} ref={callback} {...attachments} onValueChange={(next, detail) => { calls.value++; if (cancel) detail.cancel(); if (command !== undefined) bound = command; }} oninput={() => calls.input++} onchange={() => calls.change++} />{/key}
@@ -120,6 +125,8 @@ export function snapshot() { return { bound, plain, functional, file, numeric, a
 <Input id="file" type="file" bind:value={file} />
 <Input id="number" type="number" value={12} />
 <Primitive.Root id="numeric-bound" form="external" bind:value={numeric} /><Primitive.Root id="array-bound" form="external" bind:value={array} />
+<form id="rerender-form"><Primitive.Root id="rerender-plain" name="plain" class={rerenderClass} disabled={rerenderDisabled} /><Primitive.Root id="rerender-seeded" name="seeded" defaultValue="server seed" class={rerenderClass} disabled={rerenderDisabled} /><Primitive.Root id="rerender-bound" name="bound" bind:value={rerenderBound} class={rerenderClass} disabled={rerenderDisabled} /></form>
+<Primitive.Root id="rerender-late" value={late} class={rerenderClass} />
 <form id="validation" data-sw-form data-validation-timing="change"><div data-sw-field data-name="field"><Primitive.Root id="validated-input" data-sw-field-control name="field" onValueChange={(next, detail) => { if (next === "canceled") detail.cancel(); }} /></div></form>
 `;
 const CLIENT = `import { hydrate, flushSync, tick, unmount } from "svelte";
@@ -147,6 +154,16 @@ try {
  type("numeric-bound", "9"); type("array-bound", "z"); await settle(); assert(app.snapshot().numeric === "9" && app.snapshot().array === "z", "bound normalized native output");
  let validations = 0; const formController = createForm(input("validation"), { fieldValidators: { field: () => { validations++; return null; } } });
  type("validated-input", "accepted"); await pause(); await settle(); assert(validations > 0, "Form change validation"); const validated = validations; type("validated-input", "canceled"); await pause(); await settle(); assert(validations === validated && input("validated-input").value === "canceled", "canceled detail suppresses Form validation"); formController.destroy();
+ const rerendered = () => [input("rerender-plain").value, input("rerender-seeded").value, input("rerender-bound").value].join("|");
+ assert(input("rerender-seeded").getAttribute("value") === "server seed" && input("rerender-seeded").defaultValue === "server seed", "hydration keeps the server value attribute");
+ type("rerender-plain", "typed"); type("rerender-seeded", "typed seed"); type("rerender-bound", "typed bound"); await settle();
+ app.rerender({ class: "second" }); await settle(); assert(rerendered() === "typed|typed seed|typed bound", "class change keeps typed text " + rerendered());
+ app.rerender({ disabled: true }); await settle(); assert(rerendered() === "typed|typed seed|typed bound", "disabled change keeps typed text " + rerendered());
+ app.rerender({ disabled: false, class: "third" }); await settle(); assert(rerendered() === "typed|typed seed|typed bound" && app.snapshot().rerenderBound === "typed bound", "bound typed text after prop changes " + rerendered());
+ input("rerender-form").reset(); await pause(); await settle(); assert(rerendered() === "|server seed|" && app.snapshot().rerenderBound === "", "form reset restores the seeds " + rerendered());
+ app.rerender({ class: "fourth" }); await settle(); assert(rerendered() === "|server seed|", "class change after reset " + rerendered());
+ app.setLate("late"); await settle(); assert(input("rerender-late").value === "late", "late one-way value applies"); app.setLate(undefined); await settle();
+ type("rerender-late", "typed late"); await settle(); app.rerender({ class: "fifth" }); await settle(); assert(input("rerender-late").value === "typed late", "class change keeps text typed after a late value " + input("rerender-late").value);
  app.mutateArray(); await settle(); assert(input("plain").value === "a,b,c", "array mutation");
  type("plain", "edited-array"); await settle(); assert(input("plain").value === "a,b,c", "plain parent keeps a refused edit"); app.mutateArray(); await settle(); assert(input("plain").value === "a,b,c,c", "array command after refused edit");
  type("styled-plain", "edited-array"); await settle(); assert(input("styled-plain").value === "s,t", "Styled plain parent keeps a refused edit"); app.mutateStyledArray(); await settle(); assert(input("styled-plain").value === "s,t,u", "Styled array command after refused edit");

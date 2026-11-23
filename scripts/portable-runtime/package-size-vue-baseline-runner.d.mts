@@ -1,6 +1,4 @@
-export declare function checkVueBaselineEvidence(options: {
-  evidenceDirectory: string;
-}): {
+export declare function checkVueBaselineEvidence(options: { evidenceDirectory: string }): {
   evidence: unknown;
   paths: {
     json: string;

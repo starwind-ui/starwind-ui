@@ -11,17 +11,17 @@
 
 <script lang="ts">
   let {
-    "side": side = "bottom",
-    "align": align = "start",
-    "sideOffset": sideOffset = 8,
-    "alignOffset": alignOffset = 0,
-    "avoidCollisions": avoidCollisions = true,
-    "collisionPadding": collisionPadding = 8,
-    "size": size = "md",
+    side = "bottom",
+    align = "start",
+    sideOffset = 8,
+    alignOffset = 0,
+    avoidCollisions = true,
+    collisionPadding = 8,
+    size = "md",
     "class": className,
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "children": children,
+    portalContainer,
+    disablePortal = false,
+    children,
     ...rest
   }: NavigationMenuPositionerProps = $props();
 </script>

@@ -10,7 +10,7 @@
 
 <script lang="ts">
   let {
-    "size": size,
+    size,
     "data-slot": dataSlot = "textarea",
     "class": className,
     value = $bindable(),

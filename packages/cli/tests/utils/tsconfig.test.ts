@@ -15,9 +15,9 @@ import {
   mergeSvelteTsConfig,
   mergeTsConfig,
   mergeVueTsConfig,
+  setupAstroReactTsConfig,
   setupTsConfig,
   setupVueTsConfig,
-  setupAstroReactTsConfig,
   validateTsConfig,
 } from "../../src/utils/tsconfig.js";
 

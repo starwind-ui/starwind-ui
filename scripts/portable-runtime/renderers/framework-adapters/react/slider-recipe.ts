@@ -28,7 +28,7 @@ const SliderRoot=React.forwardRef<HTMLDivElement,SliderRootProps>(function Slide
 const inputs=React.useRef({${props.map((p) => p.name).join(",")},onValueChange,onValueCommitted});useIsomorphicLayoutEffect(()=>{inputs.current={${props.map((p) => p.name).join(",")},onValueChange,onValueCommitted};});
 const initialDefaultValue=React.useRef(${initialDefault}).current;
 const [localValue,setLocalValue]=React.useState<SliderValue>(()=>${initialModel});
-const renderedValue=value??localValue;
+const owned=React.useRef(value===undefined).current,renderedValue=owned?localValue:value??localValue;
 const rootRef=React.useRef<HTMLDivElement|null>(null),connection=React.useRef<ReturnType<typeof connectSlider>|undefined>(undefined);
 const composedRef=React.useCallback((node:HTMLDivElement|null)=>{rootRef.current=node;return setRef(forwardedRef,node);},[forwardedRef]);
 ${connection}

@@ -1,11 +1,12 @@
-import {
-  type BehaviorFoundationType,
-  type DocsPageStatus,
-  type LayeredDocsMetadata,
-  type PrimitiveDocsMetadata,
-  type PrimitivePartApiReferenceMetadata,
-  type RuntimeFactoryReferenceMetadata,
-  type StyledComponentDocsMetadata,
+import { CHART_TYPE_PLACEHOLDERS } from "../../../renderers/specialized-adapter-spec/chart-specialized-adapter-spec.js";
+import type {
+  BehaviorFoundationType,
+  DocsPageStatus,
+  LayeredDocsMetadata,
+  PrimitiveDocsMetadata,
+  PrimitivePartApiReferenceMetadata,
+  RuntimeFactoryReferenceMetadata,
+  StyledComponentDocsMetadata,
 } from "../types.js";
 import { FOUNDATION_LABELS, RUNTIME_DOCS_PATH, STYLING_DOCS_PATH } from "./constants.js";
 import {
@@ -200,6 +201,8 @@ const validatePrimitiveDocsMetadata = (
 ) => {
   const sourceContract = runtimeContracts.find((contract) => contract.component === primitive.id);
 
+  validatePrimitivePageIntro(primitive, requiredFailures);
+
   if (!primitive.runtime.factory) {
     requiredFailures.push(`${primitive.id} primitive runtime factory is missing.`);
   }
@@ -233,6 +236,27 @@ const validatePrimitiveDocsMetadata = (
       requiredFailures.push(
         `${primitive.id} primitive prop ${prop.name || "(unknown)"} is missing public API facts.`,
       );
+    }
+  }
+
+  // A contract type placeholder must resolve to docs words in every emitted type field.
+  const typedProps = [
+    ...primitive.props.map((prop) => ({ label: `prop ${prop.name}`, prop })),
+    ...primitive.docsReference.apiReference.parts.flatMap((part) =>
+      part.props.map((prop) => ({ label: `part ${part.part} prop ${prop.name}`, prop })),
+    ),
+  ];
+  for (const { label, prop } of typedProps) {
+    const fields: [string, string | undefined][] = [
+      ["type", prop.type],
+      ["displayType", "displayType" in prop ? (prop.displayType as string | undefined) : undefined],
+    ];
+    for (const [field, value] of fields) {
+      if (value !== undefined && CHART_TYPE_PLACEHOLDERS.test(value)) {
+        requiredFailures.push(
+          `${primitive.id} primitive ${label} ${field} shows a type placeholder: ${value}.`,
+        );
+      }
     }
   }
 
@@ -409,6 +433,31 @@ const validatePrimitiveDocsReferenceMetadata = (
   if (!reference.apiReference.runtimeFactory.docsPath.startsWith(RUNTIME_DOCS_PATH)) {
     requiredFailures.push(
       `${primitive.id} primitive docs reference runtime factory links outside the Runtime docs.`,
+    );
+  }
+};
+
+const INTERNAL_PRIMITIVE_SUMMARY_WORDING = /contract family/i;
+
+const validatePrimitivePageIntro = (
+  primitive: PrimitiveDocsMetadata,
+  requiredFailures: string[],
+) => {
+  const summary = primitive.docsReference.summary.trim();
+
+  if (!summary) {
+    requiredFailures.push(
+      `${primitive.id} primitive page needs a user-facing summary. Add primitiveDocsEnrichment.${primitive.id}.summary in scripts/portable-runtime/docs/layered-docs/annotations.ts.`,
+    );
+  } else if (INTERNAL_PRIMITIVE_SUMMARY_WORDING.test(summary)) {
+    requiredFailures.push(
+      `${primitive.id} primitive summary uses internal "contract family" wording. Describe what the Primitive does for users.`,
+    );
+  }
+
+  if (!primitive.docsReference.liveDemo) {
+    requiredFailures.push(
+      `${primitive.id} primitive page needs a live demo. Add the docs demo and set primitiveDocsEnrichment.${primitive.id}.liveDemo to true.`,
     );
   }
 };

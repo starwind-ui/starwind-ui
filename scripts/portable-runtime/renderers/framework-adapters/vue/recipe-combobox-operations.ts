@@ -7,7 +7,18 @@ export const vueComboboxOperations: ComboboxOperations = {
   ) => `watch(() => props.${c.name === "value" ? "modelValue" : c.name}, (nextValue, previous) => {
     if ((nextValue === undefined) !== (previous === undefined)) {
       if (nextValue === undefined && instance) uncontrolled${c.name[0]!.toUpperCase() + c.name.slice(1)}.value = instance.${c.getter}();
-      void recreate(); return;
+      ${
+        c.name === "value"
+          ? `// A late value shows its item label, unless the parent holds the input text.
+      const before = instance?.getValue();
+      void recreate().then(() => {
+        const owned = instance;
+        if (nextValue === undefined || props.inputValue !== undefined || !owned || owned.getValue() === before) return;
+        owned.setValue(owned.getValue(), { emit: false });
+        uncontrolledInputValue.value = owned.getInputValue();
+      });`
+          : "void recreate();"
+      } return;
     }
     const owned = instance; if (nextValue === undefined || !owned) return;
     ${body}

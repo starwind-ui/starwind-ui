@@ -99,6 +99,15 @@ describe("generated Vue Select Primitive", () => {
     expect(index).toContain("SelectOpenChangeDetails");
   });
 
+  it("passes no slot props from Select.Value", async () => {
+    const value = new Map(await generateSelect()).get("SelectValue.vue")!;
+    expect(value).not.toMatch(/<slot\s+:/);
+    expect(compactCode(value)).toContain(compactCode("defineSlots<{ default?: () => unknown }>()"));
+    expect(compactCode(value)).toContain(
+      compactCode("select.selectedLabel.value ?? props.placeholder"),
+    );
+  });
+
   async function generateSelect(): Promise<Array<[string, string]>> {
     const outputRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-select-"));
     temporaryRoots.push(outputRoot);

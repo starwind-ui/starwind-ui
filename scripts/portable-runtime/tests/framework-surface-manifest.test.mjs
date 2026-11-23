@@ -124,8 +124,8 @@ describe("framework surface manifest", () => {
 
   it("matches fresh deterministic Primitive and Styled output", async () => {
     const committed = JSON.parse(await readFile(manifestPath, "utf8"));
-    const first = await buildFrameworkSurfaceManifest({ repoRoot });
-    const second = await buildFrameworkSurfaceManifest({ repoRoot });
+    const first = await buildFrameworkSurfaceManifest();
+    const second = await buildFrameworkSurfaceManifest();
 
     expect(serializeFrameworkSurfaceManifest(first)).toBe(
       serializeFrameworkSurfaceManifest(second),
@@ -152,22 +152,31 @@ describe("framework surface manifest", () => {
         path: "image",
         reason: "Image is an Astro-only Styled root with three normalized files.",
       },
+      {
+        id: "astro-chart-lifecycle",
+        target: "astro",
+        surface: "primitive.renderedPaths",
+        path: "chart/ChartLifecycle",
+        reason:
+          "Astro emits ChartLifecycle as a rendered .astro helper, so only interactive charts load a script.",
+      },
     ]);
 
+    // Chart is generated for every target.
     expect(manifest.targets.astro.counts).toEqual({
-      familySubpaths: 37,
-      namespaceParts: 242,
-      renderedPrimitivePaths: 227,
-      styledNormalizedPaths: 396,
-      styledRoots: 55,
+      familySubpaths: 38,
+      namespaceParts: 260,
+      renderedPrimitivePaths: 246,
+      styledNormalizedPaths: 404,
+      styledRoots: 56,
     });
     for (const target of ["react", "vue", "svelte"]) {
       expect(manifest.targets[target].counts).toEqual({
-        familySubpaths: 37,
-        namespaceParts: 242,
-        renderedPrimitivePaths: 226,
-        styledNormalizedPaths: 393,
-        styledRoots: 54,
+        familySubpaths: 38,
+        namespaceParts: 260,
+        renderedPrimitivePaths: 244,
+        styledNormalizedPaths: 401,
+        styledRoots: 55,
       });
     }
   });
@@ -322,6 +331,22 @@ describe("framework surface manifest", () => {
         ]),
       );
     }
+  });
+
+  it("keeps internal coordination keys out of Vue and Svelte family exports", async () => {
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const exportNames = (target, family) =>
+      (manifest.targets[target].primitive.exports[family] ?? []).map((entry) => entry.name);
+
+    for (const [family, key] of [
+      ["dialog", "DialogContext"],
+      ["alert-dialog", "AlertDialogContext"],
+      ["drawer", "DrawerContext"],
+    ]) {
+      expect(exportNames("vue", family)).not.toContain(key);
+    }
+    expect(exportNames("svelte", "checkbox")).not.toContain("CheckboxGroupContext");
+    expect(exportNames("svelte", "checkbox")).not.toContain("CheckboxGroupContextValue");
   });
 
   it("classifies a known public export fixture independently", () => {

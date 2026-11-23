@@ -1,25 +1,26 @@
 import { execFileSync } from "node:child_process";
-import { createRequire } from "node:module";
 import {
   existsSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
   readdirSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { summarizeInitialBundleOutput } from "./package-size-bundle-output.mjs";
+import { buildProductOverlapAttribution } from "./product-package-size-attribution.mjs";
 import {
-  PRODUCT_COMPARISON_FIXTURE_REVISION,
   buildMeasurementEntries,
   buildProductComparisonPlan,
   buildSnapshotPath,
   getProviderDefinition,
+  PRODUCT_COMPARISON_FIXTURE_REVISION,
   parseProductSizeCommand,
   validateComparatorSnapshot,
   validateMeasurementEnvironment,
@@ -28,7 +29,6 @@ import {
   formatProductAttributionReport,
   formatProductSizeReport,
 } from "./product-package-size-report.mjs";
-import { buildProductOverlapAttribution } from "./product-package-size-attribution.mjs";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const requireFromRunner = createRequire(import.meta.url);

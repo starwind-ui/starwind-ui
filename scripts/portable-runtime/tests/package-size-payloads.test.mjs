@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -14,8 +14,14 @@ import {
   starwindVueStyledExclusions,
 } from "../package-size-vue-plan.mjs";
 
+const listTree = (root, relative = "") =>
+  readdirSync(path.join(root, relative), { withFileTypes: true }).flatMap((entry) => {
+    const child = path.posix.join(relative, entry.name);
+    return entry.isDirectory() ? listTree(root, child) : [child];
+  });
+
 describe("published package payloads", () => {
-  it("measures the exact packed file list with run-local npm state and separate declarations", async () => {
+  it("measures the exact doc-free packed file list with run-local npm state and separate declarations", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "package-size-payload-test-"));
     const packageDirectory = path.join(root, "package");
     const npmCache = path.join(root, "npm-cache");
@@ -32,7 +38,10 @@ describe("published package payloads", () => {
     writeFileSync(path.join(packageDirectory, "dist", "extra.d.ts"), "x");
     writeFileSync(path.join(packageDirectory, "dist", "index.d.ts.map"), "{}\n");
     writeFileSync(path.join(packageDirectory, "dist", "index.js.map"), "{}\n");
+    mkdirSync(path.join(packageDirectory, "docs"));
+    writeFileSync(path.join(packageDirectory, "docs", "README.md"), "# fixture");
     const calls = [];
+    const stagedEntries = [];
 
     try {
       const payload = await measurePublishedPackagePayload({
@@ -42,33 +51,56 @@ describe("published package payloads", () => {
         packDestination,
         runNpm(args, options) {
           calls.push({ args, options });
-          return JSON.stringify([
-            {
-              files: [
-                { path: "dist/extra.d.ts", size: 1 },
-                { path: "dist/index.d.ts", size: 31 },
-                { path: "dist/index.d.ts.map", size: 3 },
-                { path: "dist/index.js", size: 24 },
-                { path: "dist/index.js.map", size: 3 },
-                { path: "package.json", size: 19 },
-              ],
-              size: 101,
-              unpackedSize: 81,
-              version: "0.0.0",
-            },
-          ]);
+          const files = [
+            { path: "dist/extra.d.ts", size: 1 },
+            { path: "dist/index.d.ts", size: 31 },
+            { path: "dist/index.d.ts.map", size: 3 },
+            { path: "dist/index.js", size: 24 },
+            { path: "dist/index.js.map", size: 3 },
+            { path: "package.json", size: 19 },
+          ];
+          if (args.includes("--dry-run")) {
+            return JSON.stringify([
+              {
+                files: [...files, { path: "docs/README.md", size: 9 }],
+                size: 120,
+                unpackedSize: 90,
+                version: "0.0.0",
+              },
+            ]);
+          }
+          stagedEntries.push(...listTree(options.cwd));
+          return JSON.stringify([{ files, size: 101, unpackedSize: 81, version: "0.0.0" }]);
         },
       });
 
       expect(calls).toEqual([
         {
-          args: ["pack", "--json", "--ignore-scripts", "--pack-destination", packDestination],
+          args: ["pack", "--dry-run", "--json", "--ignore-scripts"],
           options: expect.objectContaining({
             cwd: packageDirectory,
             env: expect.objectContaining({ npm_config_cache: npmCache }),
             encoding: "utf8",
           }),
         },
+        {
+          args: ["pack", "--json", "--ignore-scripts", "--pack-destination", packDestination],
+          options: expect.objectContaining({
+            env: expect.objectContaining({ npm_config_cache: npmCache }),
+            encoding: "utf8",
+          }),
+        },
+      ]);
+      // The second pack runs in a doc-free staging copy that is removed afterward.
+      expect(calls[1].options.cwd).not.toBe(packageDirectory);
+      expect(existsSync(calls[1].options.cwd)).toBe(false);
+      expect(stagedEntries.sort()).toEqual([
+        "dist/extra.d.ts",
+        "dist/index.d.ts",
+        "dist/index.d.ts.map",
+        "dist/index.js",
+        "dist/index.js.map",
+        "package.json",
       ]);
       expect(payload.files).toEqual([
         { path: "dist/extra.d.ts", size: 1 },
@@ -139,13 +171,11 @@ describe("Vue Styled copied-source payloads", () => {
       import.meta.dirname,
       "../../../apps/vue-demo/src/components/starwind-runtime",
     );
-    const payload = measureStyledCopiedSourcePayload({
-      rootDirectory,
-      roots: starwindVueStyledComponents,
-    });
+    const roots = [...starwindVueStyledComponents].sort();
+    const payload = measureStyledCopiedSourcePayload({ rootDirectory, roots });
 
-    expect(payload.rootCount).toBe(54);
-    expect(payload.roots).toEqual([...starwindVueStyledComponents]);
+    expect(payload.rootCount).toBe(55);
+    expect(payload.roots).toEqual(roots);
     expect(starwindVueStyledExclusions).toEqual([
       { component: "image", reason: "Astro-only Styled contract" },
     ]);

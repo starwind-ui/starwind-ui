@@ -1,0 +1,7 @@
+{
+  "impact": "behavior",
+  "components": {
+    "context-menu": "patch",
+    "dropdown": "patch"
+  }
+}

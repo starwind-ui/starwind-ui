@@ -299,6 +299,9 @@ export async function verifyReactCoreControlCases({ page, messages }) {
       const thumbs = Array.from(root?.querySelectorAll("[data-sw-slider-thumb]") ?? []);
       const inputs = Array.from(root?.querySelectorAll("[data-sw-slider-input]") ?? []);
       const firstThumb = thumbs[0];
+      const trackRect = track instanceof HTMLElement ? track.getBoundingClientRect() : null;
+      const indicatorRect =
+        indicator instanceof HTMLElement ? indicator.getBoundingClientRect() : null;
 
       return {
         className: root?.getAttribute("class"),
@@ -307,9 +310,18 @@ export async function verifyReactCoreControlCases({ page, messages }) {
         dataSlot: root?.getAttribute("data-slot"),
         indicatorBottom: indicator instanceof HTMLElement ? indicator.style.bottom : null,
         indicatorHeight: indicator instanceof HTMLElement ? indicator.style.height : null,
-        indicatorLeft: indicator instanceof HTMLElement ? indicator.style.left : null,
+        indicatorInsetInlineStart:
+          indicator instanceof HTMLElement ? indicator.style.insetInlineStart : null,
         indicatorOrientation: indicator?.getAttribute("data-orientation"),
         indicatorWidth: indicator instanceof HTMLElement ? indicator.style.width : null,
+        renderedStartPercent:
+          trackRect && indicatorRect && trackRect.width > 0
+            ? ((indicatorRect.left - trackRect.left) / trackRect.width) * 100
+            : null,
+        renderedEndPercent:
+          trackRect && indicatorRect && trackRect.width > 0
+            ? ((indicatorRect.right - trackRect.left) / trackRect.width) * 100
+            : null,
         inputNames: inputs.map((input) => (input instanceof HTMLInputElement ? input.name : null)),
         inputValues: inputs.map((input) =>
           input instanceof HTMLInputElement ? input.value : null,
@@ -348,15 +360,23 @@ export async function verifyReactCoreControlCases({ page, messages }) {
     initialSliderState.volume.thumbOrientation !== "horizontal" ||
     initialSliderState.volume.thumbCount !== 1 ||
     initialSliderState.volume.value !== "25" ||
-    initialSliderState.volume.indicatorLeft !== "0%" ||
+    initialSliderState.volume.indicatorInsetInlineStart !== "0%" ||
     initialSliderState.volume.indicatorWidth !== "25%" ||
+    initialSliderState.volume.renderedStartPercent === null ||
+    Math.abs(initialSliderState.volume.renderedStartPercent) > 1 ||
+    initialSliderState.volume.renderedEndPercent === null ||
+    Math.abs(initialSliderState.volume.renderedEndPercent - 25) > 1 ||
     initialSliderState.volume.inputNames[0] !== "react-runtime-slider-volume" ||
     initialSliderState.volume.dataName !== "react-runtime-slider-volume" ||
     initialSliderState.volume.inputValues[0] !== "25" ||
     initialSliderState.range.thumbCount !== 2 ||
     initialSliderState.range.value !== "[20,80]" ||
-    initialSliderState.range.indicatorLeft !== "20%" ||
+    initialSliderState.range.indicatorInsetInlineStart !== "20%" ||
     initialSliderState.range.indicatorWidth !== "60%" ||
+    initialSliderState.range.renderedStartPercent === null ||
+    Math.abs(initialSliderState.range.renderedStartPercent - 20) > 1 ||
+    initialSliderState.range.renderedEndPercent === null ||
+    Math.abs(initialSliderState.range.renderedEndPercent - 80) > 1 ||
     initialSliderState.range.inputNames[0] !== "react-runtime-slider-range[0]" ||
     initialSliderState.range.inputNames[1] !== "react-runtime-slider-range[1]" ||
     initialSliderState.range.dataName !== "react-runtime-slider-range" ||
@@ -387,10 +407,24 @@ export async function verifyReactCoreControlCases({ page, messages }) {
       const indicator = root.querySelector("[data-sw-slider-indicator]");
       const thumb = root.querySelector("[data-sw-slider-thumb]");
       const input = root.querySelector("[data-sw-slider-input]");
+      const track = root.querySelector("[data-sw-slider-track]");
+      const trackRect = track instanceof HTMLElement ? track.getBoundingClientRect() : null;
+      const indicatorRect =
+        indicator instanceof HTMLElement ? indicator.getBoundingClientRect() : null;
 
       return {
+        indicatorInsetInlineStart:
+          indicator instanceof HTMLElement ? indicator.style.insetInlineStart : null,
         indicatorWidth: indicator instanceof HTMLElement ? indicator.style.width : null,
         inputValue: input instanceof HTMLInputElement ? input.value : null,
+        renderedStartPercent:
+          trackRect && indicatorRect && trackRect.width > 0
+            ? ((indicatorRect.left - trackRect.left) / trackRect.width) * 100
+            : null,
+        renderedEndPercent:
+          trackRect && indicatorRect && trackRect.width > 0
+            ? ((indicatorRect.right - trackRect.left) / trackRect.width) * 100
+            : null,
         thumbAriaValue: thumb?.getAttribute("aria-valuenow"),
         value: root.getAttribute("data-value"),
       };
@@ -399,6 +433,11 @@ export async function verifyReactCoreControlCases({ page, messages }) {
     updatedControlledSliderState.value !== "26" ||
     updatedControlledSliderState.thumbAriaValue !== "26" ||
     updatedControlledSliderState.inputValue !== "26" ||
+    updatedControlledSliderState.indicatorInsetInlineStart !== "0%" ||
+    updatedControlledSliderState.renderedStartPercent === null ||
+    Math.abs(updatedControlledSliderState.renderedStartPercent) > 1 ||
+    updatedControlledSliderState.renderedEndPercent === null ||
+    Math.abs(updatedControlledSliderState.renderedEndPercent - 26) > 1 ||
     updatedControlledSliderState.indicatorWidth !== "26%"
   ) {
     throw new Error(
@@ -408,12 +447,14 @@ export async function verifyReactCoreControlCases({ page, messages }) {
     );
   }
 
-  const initialSwitchState = await page.evaluate(() => {
+  const initialSwitchState = await page.evaluate(async () => {
     const readSwitch = (id) => {
       const root = document.querySelector(`#${id}[data-sw-switch]`);
       const input = document.querySelector(`#${id}-input`);
       const label = document.querySelector(`label[data-slot="switch-label"][for="${id}"]`);
       const thumb = root?.querySelector("[data-sw-switch-thumb]");
+      const rootRect = root instanceof HTMLElement ? root.getBoundingClientRect() : null;
+      const thumbRect = thumb instanceof HTMLElement ? thumb.getBoundingClientRect() : null;
       const uncheckedInput =
         input instanceof HTMLInputElement &&
         input.nextElementSibling instanceof HTMLInputElement &&
@@ -439,12 +480,22 @@ export async function verifyReactCoreControlCases({ page, messages }) {
         labelText: label?.textContent?.trim(),
         opacity: style?.opacity,
         thumbClassName: thumb?.getAttribute("class"),
+        thumbOffsetX: rootRect && thumbRect ? thumbRect.left - rootRect.left : null,
         thumbSlot: thumb?.getAttribute("data-slot"),
         translationVariable:
           thumb instanceof HTMLElement ? thumb.style.getPropertyValue("--translation") : "",
         uncheckedValue: uncheckedInput instanceof HTMLInputElement ? uncheckedInput.value : null,
       };
     };
+
+    await Promise.all(
+      ["react-runtime-switch-default", "react-runtime-switch-checked"].flatMap((id) => {
+        const thumb = document.querySelector(`#${id} [data-sw-switch-thumb]`);
+        return thumb instanceof HTMLElement
+          ? thumb.getAnimations().map((animation) => animation.finished)
+          : [];
+      }),
+    );
 
     return {
       checked: readSwitch("react-runtime-switch-checked"),
@@ -505,10 +556,13 @@ export async function verifyReactCoreControlCases({ page, messages }) {
     page.locator('label[data-slot="switch-label"][for="react-runtime-switch-reset"]'),
     "Reset switch 1",
   );
-  const updatedSwitchState = await page.evaluate(() => {
+  const updatedSwitchState = await page.evaluate(async () => {
     const readSwitch = (id) => {
       const root = document.querySelector(`#${id}[data-sw-switch]`);
       const input = document.querySelector(`#${id}-input`);
+      const thumb = root?.querySelector("[data-sw-switch-thumb]");
+      const rootRect = root instanceof HTMLElement ? root.getBoundingClientRect() : null;
+      const thumbRect = thumb instanceof HTMLElement ? thumb.getBoundingClientRect() : null;
       const uncheckedInput =
         input instanceof HTMLInputElement &&
         input.nextElementSibling instanceof HTMLInputElement &&
@@ -524,9 +578,19 @@ export async function verifyReactCoreControlCases({ page, messages }) {
           input instanceof HTMLInputElement && input.form
             ? new FormData(input.form).get(input.name)
             : null,
+        thumbOffsetX: rootRect && thumbRect ? thumbRect.left - rootRect.left : null,
         uncheckedValue: uncheckedInput instanceof HTMLInputElement ? uncheckedInput.value : null,
       };
     };
+
+    await Promise.all(
+      ["react-runtime-switch-default", "react-runtime-switch-controlled"].flatMap((id) => {
+        const thumb = document.querySelector(`#${id} [data-sw-switch-thumb]`);
+        return thumb instanceof HTMLElement
+          ? thumb.getAnimations().map((animation) => animation.finished)
+          : [];
+      }),
+    );
 
     return {
       controlled: readSwitch("react-runtime-switch-controlled"),
@@ -551,9 +615,13 @@ export async function verifyReactCoreControlCases({ page, messages }) {
     initialSwitchState.default.className?.includes("border-input") !== true ||
     initialSwitchState.default.className?.includes("group") !== true ||
     initialSwitchState.default.heightVariable.includes("var(--spacing) * 5") !== true ||
-    initialSwitchState.default.thumbClassName?.includes("transition-transform") !== true ||
+    initialSwitchState.default.thumbClassName?.includes("transition-[--sw-switch-thumb-offset]") !==
+      true ||
     initialSwitchState.default.thumbSlot !== "switch-toggle" ||
     initialSwitchState.default.translationVariable.includes("var(--spacing) * 5") !== true ||
+    initialSwitchState.default.thumbOffsetX === null ||
+    initialSwitchState.checked.thumbOffsetX === null ||
+    initialSwitchState.checked.thumbOffsetX <= initialSwitchState.default.thumbOffsetX + 1 ||
     initialSwitchState.checked.hasChecked !== true ||
     initialSwitchState.checked.inputChecked !== true ||
     initialSwitchState.checked.uncheckedValue !== null ||
@@ -569,6 +637,9 @@ export async function verifyReactCoreControlCases({ page, messages }) {
     updatedSwitchState.default.hasChecked !== true ||
     updatedSwitchState.default.inputChecked !== true ||
     updatedSwitchState.default.uncheckedValue !== null ||
+    updatedSwitchState.default.thumbOffsetX === null ||
+    initialSwitchState.default.thumbOffsetX === null ||
+    updatedSwitchState.default.thumbOffsetX <= initialSwitchState.default.thumbOffsetX + 1 ||
     updatedSwitchState.controlled.hasChecked !== true ||
     updatedSwitchState.controlled.inputChecked !== true ||
     updatedSwitchState.disabled.hasChecked !== false ||

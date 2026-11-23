@@ -2,6 +2,7 @@ import type {
   StyledOutputAttribute,
   StyledOutputComponentGroup,
   StyledOutputDestructureProp,
+  StyledOutputTypeParameter,
   StyledOutputValueExpression,
   StyledOutputVariantAlias,
 } from "../../../styled-output-model/index.js";
@@ -37,11 +38,13 @@ export type SvelteStyledRenderNode =
       parameters: string[];
       children: SvelteStyledRenderNode[];
     }
-  | { type: "snippet"; name: string; args?: string[]; fallback: SvelteStyledRenderNode[] }
+  | { type: "snippet"; name: string; fallback: SvelteStyledRenderNode[] }
   | { type: "text" | "expression"; value: string };
 
 export type SvelteStyledImport = { source: string; names: string[]; typeOnly?: boolean };
 export type SvelteStyledComponentProjection = {
+  // Instance script type parameters, and the arguments the props annotation passes.
+  generics?: { declaration: string; arguments: string };
   semanticNativeTag?: string;
   semanticNativeSlot?: string;
   typeExports?: string[];
@@ -56,6 +59,8 @@ export type SvelteStyledComponentProjection = {
   // SSR evaluates derived expressions eagerly, so their state must be initialized first.
   initialization?: string[];
   setup: string[];
+  /** Printed on the instance script `generics` attribute and on the public props type. */
+  typeParameters?: StyledOutputTypeParameter[];
   variables: {
     name: string;
     state?: { acceptedFrom: string };

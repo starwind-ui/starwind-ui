@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const navigationMenuStyledContract: StyledAdapterContract = {
   component: "navigation-menu",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "NavigationMenu",
     "NavigationMenuContent",
@@ -47,14 +49,14 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
     },
     navigationMenuIndicator: {
       base: [
-        "relative top-px ml-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
-        "group-data-[size=md]/nav-menu:ml-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
+        "relative top-px ms-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
+        "group-data-[size=md]/nav-menu:ms-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
         "group-data-[state=open]/nav-menu-trigger:rotate-180",
       ],
     },
     navigationMenuContent: {
       base: [
-        "data-starting-style:opacity-0 data-ending-style:opacity-0 h-full w-auto p-1 transition-opacity duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] outline-none",
+        "data-starting-style:opacity-0 data-ending-style:opacity-0 h-full w-max p-1 transition-opacity duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] outline-none max-w-[calc(100vw-2rem)]",
         "data-[state=closed]:pointer-events-none data-[state=closed]:absolute data-[state=closed]:inset-0 data-instant:transition-none",
         "**:data-[slot=navigation-menu-link]:focus:ring-0 **:data-[slot=navigation-menu-link]:focus:outline-none",
       ],

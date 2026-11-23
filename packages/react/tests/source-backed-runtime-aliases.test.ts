@@ -26,6 +26,7 @@ describe("React source-backed Runtime aliases", () => {
     ) as { exports: Record<string, unknown> };
 
     for (const exportPath of Object.keys(runtimePackage.exports)) {
+      if (exportPath === "./package.json") continue;
       const importId =
         exportPath === "." ? "@starwind-ui/runtime" : `@starwind-ui/runtime${exportPath.slice(1)}`;
       const sourcePath = resolveAlias(importId);

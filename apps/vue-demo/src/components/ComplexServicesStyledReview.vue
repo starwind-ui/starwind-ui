@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { toast } from "@starwind-ui/vue/toast";
 import type { ColorPickerFormat, ColorPickerValue } from "@starwind-ui/vue/color-picker";
-
+import { toast } from "@starwind-ui/vue/toast";
+import { computed, ref } from "vue";
+import { Card, CardContent } from "./starwind-runtime/card";
 import {
   Carousel,
   CarouselContent,
@@ -11,7 +11,6 @@ import {
   CarouselPrevious,
   type CarouselProps,
 } from "./starwind-runtime/carousel";
-import { Card, CardContent } from "./starwind-runtime/card";
 import { ColorPicker } from "./starwind-runtime/color-picker";
 import {
   Sidebar,

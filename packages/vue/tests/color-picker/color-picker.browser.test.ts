@@ -161,10 +161,11 @@ describe("Vue Color Picker public behavior", () => {
       const swatch = host.querySelectorAll<HTMLButtonElement>("[data-sw-color-picker-swatch]")[0]!;
       value.value = parseColor("#00ff00");
       await settle();
-      expect(root.dataset.value).toContain(controlled ? "00ff00" : "0000ff");
+      expect(root.dataset.value).toContain("00ff00");
+      expect(updates).toEqual([]);
       value.value = undefined;
       await settle();
-      expect(root.dataset.value).toContain(controlled ? "00ff00" : "0000ff");
+      expect(root.dataset.value).toContain("00ff00");
       swatch.click();
       await settle();
       expect(root.dataset.value).toContain(controlled ? "00ff00" : "ff0000");
@@ -191,10 +192,11 @@ describe("Vue Color Picker public behavior", () => {
       const select = host.querySelector<HTMLSelectElement>("[data-sw-color-picker-format-select]")!;
       format.value = "rgb";
       await settle();
-      expect(select.value).toBe(controlled ? "rgb" : "hex");
+      expect(select.value).toBe("rgb");
+      expect(updates).toEqual([]);
       format.value = undefined;
       await settle();
-      expect(select.value).toBe(controlled ? "rgb" : "hex");
+      expect(select.value).toBe("rgb");
       select.value = "hsl";
       select.dispatchEvent(new Event("change", { bubbles: true }));
       await settle();
@@ -205,6 +207,55 @@ describe("Vue Color Picker public behavior", () => {
       select.dispatchEvent(new Event("change", { bubbles: true }));
       await settle();
       expect(select.value).toBe("hsb");
+    });
+  }
+
+  for (const model of ["value", "format"] as const) {
+    it(`applies a later defined ${model} on a Runtime-owned model as a silent command`, async () => {
+      const input = ref<string | undefined>(undefined);
+      const name = ref("accent");
+      const events: string[] = [];
+      const host = mountPicker(() => ({
+        defaultValue: "#0000ff",
+        name: name.value,
+        modelValue: model === "value" ? input.value : undefined,
+        format: model === "format" ? input.value : undefined,
+        onValueChange: () => events.push("valueChange"),
+        onFormatChange: () => events.push("formatChange"),
+        "onUpdate:modelValue": () => events.push("update:modelValue"),
+        "onUpdate:format": () => events.push("update:format"),
+      }));
+      await settle();
+      const root = host.querySelector<HTMLElement>("[data-sw-color-picker]")!;
+      const select = host.querySelector<HTMLSelectElement>("[data-sw-color-picker-format-select]")!;
+      const shown = () =>
+        model === "value" ? parseColor(root.dataset.value!)?.toString("hex") : select.value;
+      const later = model === "value" ? "#00ff00" : "hsl";
+
+      input.value = later;
+      await settle();
+      expect(shown()).toBe(later);
+      expect(events).toEqual([]);
+
+      if (model === "value") {
+        host.querySelectorAll<HTMLButtonElement>("[data-sw-color-picker-swatch]")[0]!.click();
+      } else {
+        select.value = "rgb";
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      await settle();
+      const interacted = model === "value" ? "#ff0000" : "rgb";
+      expect(shown()).toBe(interacted);
+      expect(events).toEqual(
+        model === "value"
+          ? ["valueChange", "update:modelValue"]
+          : ["formatChange", "update:format"],
+      );
+
+      // A stale parent input must not revert the accepted interaction.
+      name.value = "accent-2";
+      await settle();
+      expect(shown()).toBe(interacted);
     });
   }
 

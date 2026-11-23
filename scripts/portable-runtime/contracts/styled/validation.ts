@@ -1,3 +1,5 @@
+import semver from "semver";
+import { resolveStyledSvgAsset } from "./svg-assets.js";
 import type {
   AttributeContract,
   ComponentNode,
@@ -12,7 +14,6 @@ import {
   getLocalVariantAliasSourceComponent,
   resolveStyledVariantDefinition,
 } from "./variant-resolution.js";
-import { resolveStyledSvgAsset } from "./svg-assets.js";
 
 export type StyledAdapterContractIssue = {
   component: string;
@@ -327,6 +328,28 @@ function validateDependencies(
   contractsByComponent: ReadonlyMap<string, StyledAdapterContract>,
   issues: StyledAdapterContractIssue[],
 ): void {
+  const seenPackages = new Set<string>();
+  for (const requirement of contract.dependencies?.packages ?? []) {
+    const path = `dependencies.packages.${requirement.name}`;
+    if (!requirement.name.trim() || !requirement.range.trim()) {
+      issues.push(issue(contract, path, "Styled package requirement needs a name and a range."));
+    } else if (!semver.validRange(requirement.range)) {
+      issues.push(
+        issue(
+          contract,
+          path,
+          `Styled package requirement range "${requirement.range}" is invalid.`,
+        ),
+      );
+    }
+    if (seenPackages.has(requirement.name)) {
+      issues.push(
+        issue(contract, path, `Duplicate styled package requirement "${requirement.name}".`),
+      );
+    }
+    seenPackages.add(requirement.name);
+  }
+
   const seen = new Set<string>();
 
   for (const componentName of contract.dependencies?.styledComponents ?? []) {
@@ -432,6 +455,7 @@ function validateComponent(
     issues,
   );
   validateProps(contract, component, contractsByComponent, variants, componentPath, issues);
+  validateTypeParameters(contract, component, componentPath, issues);
 
   for (const field of component.props?.fields ?? []) {
     validateFrameworkTargets(
@@ -646,6 +670,21 @@ function validateRenderNode(
       );
       break;
     case "element":
+      validateFrameworkTargets(
+        contract,
+        node.omitVoidChildrenIn,
+        `${path}.omitVoidChildrenIn`,
+        issues,
+      );
+      if (node.omitVoidChildrenIn?.length && !node.tagBinding) {
+        issues.push(
+          issue(
+            contract,
+            `${path}.omitVoidChildrenIn`,
+            "Void-child omission requires a bound native tag.",
+          ),
+        );
+      }
       if (!node.tag.trim()) {
         issues.push(issue(contract, `${path}.tag`, "Element nodes must declare a tag."));
       }
@@ -758,6 +797,78 @@ function validateRenderNodes(
   }
 }
 
+const TYPE_PARAMETER_NAME = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+function validateTypeParameters(
+  contract: StyledAdapterContract,
+  component: StyledComponentContract,
+  componentPath: string,
+  issues: StyledAdapterContractIssue[],
+): void {
+  const typeParameters = component.typeParameters;
+  if (!typeParameters) return;
+
+  const path = `${componentPath}.typeParameters`;
+  if (typeParameters.length === 0) {
+    issues.push(issue(contract, path, "Type parameters must include at least one parameter."));
+    return;
+  }
+
+  if (
+    component.forwardRef &&
+    (!component.forwardRef.frameworks || component.forwardRef.frameworks.includes("react"))
+  ) {
+    issues.push(
+      issue(contract, path, "Type parameters cannot combine with a React forwardRef component."),
+    );
+  }
+
+  const names = new Set<string>();
+  let hasDefault = false;
+  for (const parameter of typeParameters) {
+    const parameterPath = `${path}.${parameter.name}`;
+    if (!TYPE_PARAMETER_NAME.test(parameter.name)) {
+      issues.push(
+        issue(contract, parameterPath, `Type parameter name "${parameter.name}" is invalid.`),
+      );
+    }
+    if (names.has(parameter.name)) {
+      issues.push(issue(contract, parameterPath, `Duplicate type parameter "${parameter.name}".`));
+    }
+    names.add(parameter.name);
+
+    for (const key of ["constraint", "default"] as const) {
+      const value = parameter[key];
+      if (value === undefined) continue;
+      if (!value.trim()) {
+        issues.push(
+          issue(contract, `${parameterPath}.${key}`, `Type parameter ${key} must be non-empty.`),
+        );
+      } else if (value.includes('"')) {
+        issues.push(
+          issue(
+            contract,
+            `${parameterPath}.${key}`,
+            `Type parameter ${key} cannot contain double quotes, because Vue and Svelte print it in an attribute.`,
+          ),
+        );
+      }
+    }
+
+    if (parameter.default !== undefined) {
+      hasDefault = true;
+    } else if (hasDefault) {
+      issues.push(
+        issue(
+          contract,
+          parameterPath,
+          `Required type parameter "${parameter.name}" cannot follow a parameter with a default.`,
+        ),
+      );
+    }
+  }
+}
+
 function validateComponentReference(
   contract: StyledAdapterContract,
   reference: ComponentReference,
@@ -823,9 +934,41 @@ function validateAttributes(
       continue;
     }
 
+    if (attr.name.startsWith("aria-") && !attr.value) {
+      issues.push(
+        issue(
+          contract,
+          `${attrPath}.value`,
+          `Attribute "${attr.name}" requires a value, because frameworks render a bare ARIA attribute differently.`,
+        ),
+      );
+      continue;
+    }
+
     if (attr.value) {
       validateValueExpression(contract, attr.value, variants, `${attrPath}.value`, issues);
     }
+  }
+
+  // Check the pair within each target, because an attribute can be scoped to one framework.
+  const conflictTargets = FRAMEWORK_TARGETS.filter((target) => {
+    const scoped = attrs.filter((attr) => !attr.frameworks || attr.frameworks.includes(target));
+    const hidden = scoped.some(
+      (attr) =>
+        attr.name === "aria-hidden" &&
+        attr.value?.type === "literal" &&
+        String(attr.value.value) === "true",
+    );
+    return hidden && scoped.some((attr) => ["aria-label", "aria-labelledby"].includes(attr.name));
+  });
+  if (conflictTargets.length) {
+    issues.push(
+      issue(
+        contract,
+        path,
+        'An element with aria-hidden="true" must not have an accessible name, because assistive technology does not announce it.',
+      ),
+    );
   }
 }
 

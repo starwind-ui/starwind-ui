@@ -3,13 +3,13 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
 import TooltipArrow from "./TooltipArrow.svelte";
 import TooltipPopup from "./TooltipPopup.svelte";
 import TooltipPortal from "./TooltipPortal.svelte";
 import TooltipPositioner from "./TooltipPositioner.svelte";
 import TooltipRoot from "./TooltipRoot.svelte";
 import TooltipTrigger from "./TooltipTrigger.svelte";
+
 const Tooltip = {
   Root: TooltipRoot,
   Trigger: TooltipTrigger,
@@ -18,6 +18,7 @@ const Tooltip = {
   Popup: TooltipPopup,
   Arrow: TooltipArrow,
 };
+
 export {
   Tooltip,
   TooltipArrow,
@@ -28,10 +29,10 @@ export {
   TooltipTrigger,
 };
 export default Tooltip;
-export type {
-  ButtonChildProps,
-  ButtonChildPayload,
-  TriggerChildProps,
-  TriggerChildPayload,
-} from "../button/ButtonRoot.svelte";
 export type { TooltipOpenChangeDetails } from "@starwind-ui/runtime";
+export type {
+  ButtonChildPayload,
+  ButtonChildProps,
+  TriggerChildPayload,
+  TriggerChildProps,
+} from "../button/ButtonRoot.svelte";

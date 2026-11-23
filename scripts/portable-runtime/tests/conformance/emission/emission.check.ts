@@ -7,7 +7,15 @@ import type {
   PrimitivePropContract,
   RuntimeAdapterContract,
 } from "../../../contracts/primitive/types";
-import { partParents, skippedParts, togetherRootProps } from "./compositions";
+import { normalizeReactClassHookName } from "../../../renderers/framework-adapters/future-readiness";
+import {
+  basePartProps,
+  baseRootProps,
+  partParents,
+  skippedParts,
+  slotIdentifiedFamilies,
+  togetherRootProps,
+} from "./compositions";
 import { emissionExceptions } from "./exceptions";
 import {
   EMISSION_TARGETS,
@@ -53,13 +61,27 @@ function probeValue(prop: PrimitivePropContract): unknown {
   if (literals.length > 0) {
     return literals.find((literal) => `"${literal}"` !== prop.defaultValue) ?? literals[0];
   }
-  if (/Orientation$/.test(type)) return "vertical";
-  if (/\[\]$/.test(type) || /^(readonly )?string\[\]/.test(type)) return ["probe"];
-  if (/Value$/.test(type) && /slider/i.test(prop.type)) return 7;
+  if (type.endsWith("Orientation")) return "vertical";
+  if (type.endsWith("[]") || /^(readonly )?string\[\]/.test(type)) return ["probe"];
+  if (type.endsWith("Value") && /slider/i.test(prop.type)) return 7;
+  // A chart config must name CSS identifier keys with valid colors.
+  if (type === "ChartConfig") {
+    return {
+      desktop: { label: "Probe desktop", color: "red" },
+      mobile: { label: "Probe mobile", color: "blue" },
+    };
+  }
   return "probe";
 }
 
-function targetPropName(target: EmissionTarget, name: string, facts: PartFacts): string {
+function targetPropName(
+  target: EmissionTarget,
+  prop: PrimitivePropContract,
+  facts: PartFacts,
+): string {
+  const name = prop.name;
+  // React spells contract class hooks with `Name`, as the generator does.
+  if (target === "react" && prop.classHook) return normalizeReactClassHookName(name);
   if (target === "vue" && name === "value" && !facts.declared.has("value")) return "modelValue";
   if (target === "vue" && name.startsWith("on") && facts.declared.has(name)) return name;
   return name;
@@ -67,6 +89,41 @@ function targetPropName(target: EmissionTarget, name: string, facts: PartFacts):
 
 function propTargets(contract: RuntimeAdapterContract, prop: PrimitivePropContract): string[] {
   return prop.targets ?? [contract.runtime.rootPart];
+}
+
+/**
+ * A forwarded prop is proven by its owner family. The owner lists the same prop on its part for
+ * this target, and the forwarding part prints the owner part's discovery attribute. On Astro, only a
+ * callback can be forwarded, and it also needs the owner's DOM event: an Astro value lives only in
+ * the markup, so the forwarding part must print it and the direct proof must find it.
+ */
+function forwardIsProven(
+  target: EmissionTarget,
+  contract: RuntimeAdapterContract,
+  partName: string,
+  prop: PrimitivePropContract,
+): boolean {
+  if (!prop.forwardedTo) return false;
+  const { component, part } = prop.forwardedTo;
+  const owner = runtimeAdapterContracts.find((candidate) => candidate.component === component);
+  const ownerPart = owner?.parts.find((candidate) => candidate.name === part);
+  const ownerProp = owner?.props.find((candidate) => candidate.name === prop.name);
+  if (!owner || !ownerPart || !ownerProp || ownerProp.kind !== prop.kind) return false;
+  if (ownerProp.unsupportedTargets?.includes(target)) return false;
+  if (!propTargets(owner, ownerProp).includes(part)) return false;
+  const forwardingPart = contract.parts.find((candidate) => candidate.name === partName);
+  const printsOwner = forwardingPart?.initialAttributes?.some(
+    (attribute) =>
+      attribute.source === "constant" && attribute.name === ownerPart.discoveryAttribute,
+  );
+  if (!printsOwner) return false;
+  if (target === "astro") {
+    if (prop.kind !== "callback") return false;
+    return (
+      owner.events?.some((event) => event.callbackProp === prop.name && event.domEvent) ?? false
+    );
+  }
+  return true;
 }
 
 async function loadParts(
@@ -98,6 +155,9 @@ function requiredProps(
       props[prop.name] = probeValue(prop);
     }
   }
+  if (part.contract.name === contract.runtime.rootPart)
+    Object.assign(props, baseRootProps[contract.component]?.());
+  Object.assign(props, basePartProps[contract.component]?.[part.contract.name]);
   if (part.facts.declared.has("src")) props.src = "probe.png";
   const isGroup = /group$/i.test(part.contract.name);
   if (
@@ -172,15 +232,11 @@ function attributeIsAcceptedProp(
 
 type MountSpec = { file: string; props: Record<string, unknown>; children: MountSpec[] };
 
-function toMountSpec(
-  target: EmissionTarget,
-  node: RenderNode,
-  files: Map<unknown, string>,
-): MountSpec {
+function toMountSpec(node: RenderNode, files: Map<unknown, string>): MountSpec {
   return {
     file: files.get(node.component)!,
     props: node.props,
-    children: node.children.map((child) => toMountSpec(target, child, files)),
+    children: node.children.map((child) => toMountSpec(child, files)),
   };
 }
 
@@ -204,8 +260,15 @@ function mountPage(target: EmissionTarget): Promise<Page> {
   return page;
 }
 
-function elementsFor(html: string, part: PrimitivePartContract): ParsedElement[] {
-  return parseElements(html).filter((element) => element.attributes.has(part.discoveryAttribute));
+function elementsFor(html: string, part: PrimitivePartContract, family: string): ParsedElement[] {
+  const slot = slotIdentifiedFamilies.includes(family)
+    ? part.initialAttributes?.find((attribute) => attribute.name === "data-slot")?.value
+    : undefined;
+  return parseElements(html).filter(
+    (element) =>
+      element.attributes.has(part.discoveryAttribute) ||
+      (slot !== undefined && element.attributes.get("data-slot") === slot),
+  );
 }
 
 type Gap = string;
@@ -238,7 +301,7 @@ async function checkFamily(
         if (prop.name === "asChild") continue;
         // A controlled value replaces its default, so a part never receives both.
         if ((contract.stateModels ?? []).some((model) => model.defaultProp === prop.name)) continue;
-        props[targetPropName(target, prop.name, item.facts)] = probeValue(prop);
+        props[targetPropName(target, prop, item.facts)] = probeValue(prop);
       }
       const isRoot = item.contract.name === contract.runtime.rootPart;
       const printsDisabled = item.contract.initialAttributes?.some(({ name }) =>
@@ -269,12 +332,10 @@ async function checkFamily(
     allProbes("all"),
     allProbes("uncontrolled"),
     allProbes("disabled-parts"),
-    ...(togetherRootProps[contract.component] ?? []).map(
-      (rootProps) => (item: LoadedPart) => ({
-        ...openBaseProps(item),
-        ...(item.contract.name === contract.runtime.rootPart ? rootProps : {}),
-      }),
-    ),
+    ...(togetherRootProps[contract.component] ?? []).map((rootProps) => (item: LoadedPart) => ({
+      ...openBaseProps(item),
+      ...(item.contract.name === contract.runtime.rootPart ? rootProps : {}),
+    })),
   ];
   for (const propsFor of combined) {
     try {
@@ -291,7 +352,7 @@ async function checkFamily(
     for (const partName of propTargets(contract, prop)) {
       const part = parts.get(partName);
       if (!part) continue;
-      const name = targetPropName(target, prop.name, part.facts);
+      const name = targetPropName(target, prop, part.facts);
       if (prop.kind === "callback") {
         const domEvent = contract.events?.find((event) => event.callbackProp === prop.name);
         const handled =
@@ -299,7 +360,11 @@ async function checkFamily(
             ? domEvent?.domEvent !== undefined
             : (target === "vue" && vueEmitIsPublished(part.facts, name)) ||
               (part.facts.declared.has(name) && propIsRead(part.facts, name));
-        if (!handled && !isExcepted(target, contract.component, partName, prop.name)) {
+        if (
+          !handled &&
+          !forwardIsProven(target, contract, partName, prop) &&
+          !isExcepted(target, contract.component, partName, prop.name)
+        ) {
           gaps.push(`${partName}: callback ${prop.name} is not handled`);
         }
         continue;
@@ -345,6 +410,7 @@ async function checkFamily(
       if (
         !changed &&
         !declaredAndRead &&
+        !forwardIsProven(target, contract, partName, prop) &&
         !isExcepted(target, contract.component, partName, prop.name)
       ) {
         gaps.push(`${partName}: prop ${prop.name} changes no output and is never read`);
@@ -355,7 +421,7 @@ async function checkFamily(
   // State attributes need the prop values that switch them on, so every render above counts.
   const missing = () =>
     contract.parts.flatMap((part) => {
-      const seen = renders.flatMap((html) => elementsFor(html, part));
+      const seen = renders.flatMap((html) => elementsFor(html, part, contract.component));
       return (part.initialAttributes ?? []).flatMap((attribute) => {
         if (attribute.source === "runtime") return [];
         const name = attribute.name === "className" ? "class" : attribute.name.toLowerCase();
@@ -408,7 +474,7 @@ async function checkFamily(
           const html = await renderTree(target, tree);
           renders.push(await page.evaluate((item) => window.__mountAstroHtml!(item), html));
         } else {
-          const spec = toMountSpec(target, tree, files);
+          const spec = toMountSpec(tree, files);
           renders.push(await page.evaluate((item) => window.__renderEmission!(item), spec));
         }
       } catch {
@@ -424,7 +490,7 @@ async function checkFamily(
       for (const partName of propTargets(contract, prop)) {
         const part = parts.get(partName);
         if (!part) continue;
-        const name = targetPropName(target, prop.name, part.facts);
+        const name = targetPropName(target, prop, part.facts);
         const probe = probeValue(prop);
         for (const base of [baseProps, openBaseProps]) {
           await mounted((item) => ({ ...base(item), ...(item === part ? { [name]: probe } : {}) }));
@@ -442,7 +508,7 @@ async function checkFamily(
 }
 
 beforeAll(async () => {
-  browser = await chromium.launch();
+  browser = await chromium.launch({ channel: "chrome" });
 });
 
 afterAll(async () => {
@@ -450,8 +516,8 @@ afterAll(async () => {
 });
 
 describe("contract emission", () => {
-  it("covers all 36 Primitive families", () => {
-    expect(runtimeAdapterContracts).toHaveLength(36);
+  it("covers all 37 Primitive families", () => {
+    expect(runtimeAdapterContracts).toHaveLength(37);
   });
 
   for (const target of EMISSION_TARGETS) {

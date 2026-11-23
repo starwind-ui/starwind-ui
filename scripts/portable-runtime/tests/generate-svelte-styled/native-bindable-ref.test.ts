@@ -1,7 +1,7 @@
 import { afterEach, expect, it } from "vitest";
-import { createStyledNativeConsumer } from "../../../../packages/svelte/tests/styled-native-consumer.js";
-import { verifyStyledBindableRefs } from "../../../../packages/svelte/tests/styled-bindable-ref-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledBindableRefs } from "../../../../packages/svelte/tests/styled-bindable-ref-browser.js";
+import { createStyledNativeConsumer } from "../../../../packages/svelte/tests/styled-native-consumer.js";
 
 const consumers: DistConsumer[] = [];
 afterEach(async () => {

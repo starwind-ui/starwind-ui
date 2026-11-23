@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe } from "vitest";
 import { defineReactCancelableCallbackOutputTests } from "./generate-react-wrappers/cancelable-callback-output.cases.js";
 import { defineReactCarouselOutputTests } from "./generate-react-wrappers/carousel-output.cases.js";
+import { defineReactChartOutputTests } from "./generate-react-wrappers/chart-output.cases.js";
 import { defineReactColorPickerOutputTests } from "./generate-react-wrappers/color-picker-output.cases.js";
 import { defineReactCompositionOutputTests } from "./generate-react-wrappers/composition-output.cases.js";
 import { defineReactDropzoneOutputTests } from "./generate-react-wrappers/dropzone-output.cases.js";
@@ -35,6 +36,7 @@ describe("generateReactWrappers", () => {
   defineReactCancelableCallbackOutputTests(getTempRoot);
   defineReactColorPickerOutputTests(getTempRoot);
   defineReactCarouselOutputTests(getTempRoot);
+  defineReactChartOutputTests(getTempRoot);
   defineReactPreviewCardOutputTests(getTempRoot);
   defineReactDropzoneOutputTests(getTempRoot);
   defineReactStyledOutputTests(getTempRoot);

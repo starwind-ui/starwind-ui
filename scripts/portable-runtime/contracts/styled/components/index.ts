@@ -10,6 +10,7 @@ import { buttonStyledContract } from "./button.js";
 import { buttonGroupStyledContract } from "./button-group.js";
 import { cardStyledContract } from "./card.js";
 import { carouselStyledContract } from "./carousel.js";
+import { chartStyledContract } from "./chart.js";
 import { checkboxStyledContract } from "./checkbox.js";
 import { checkboxGroupStyledContract } from "./checkbox-group.js";
 import { collapsibleStyledContract } from "./collapsible.js";
@@ -97,6 +98,7 @@ export const starwindStyledContracts: StyledAdapterContract[] = [
   videoStyledContract,
   buttonGroupStyledContract,
   carouselStyledContract,
+  chartStyledContract,
   buttonStyledContract,
   collapsibleStyledContract,
   accordionStyledContract,

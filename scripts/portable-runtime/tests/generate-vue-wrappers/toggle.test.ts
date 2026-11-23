@@ -72,12 +72,12 @@ describe("generated Vue Toggle Primitive", () => {
     expect(first.index).toContain('export { default as ToggleRoot } from "./ToggleRoot.vue";');
     expect(first.index).toContain("TogglePressedChangeDetails");
 
-    await expect(normalizeVueSource(first.root)).toBe(
+    expect(normalizeVueSource(first.root)).toBe(
       normalizeVueSource(
         await readFile(path.join(process.cwd(), "packages/vue/src/toggle/ToggleRoot.vue"), "utf8"),
       ),
     );
-    await expect(normalizeVueSource(first.index)).toBe(
+    expect(normalizeVueSource(first.index)).toBe(
       normalizeVueSource(
         await readFile(path.join(process.cwd(), "packages/vue/src/toggle/index.ts"), "utf8"),
       ),

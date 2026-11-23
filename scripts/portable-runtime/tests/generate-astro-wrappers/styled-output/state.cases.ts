@@ -124,13 +124,16 @@ export async function assertAstroStyledStateOutput(outputRoot: string): Promise<
   expect(toggleGroupVariants).toContain("group-data-[spacing=0]/toggle-group:rounded-none");
   expect(toggleGroupVariants).toContain("data-vertical:flex-col");
   expect(toggleGroupVariants).toContain(
-    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-l-lg",
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-s-lg",
+  );
+  expect(toggleGroupVariants).toContain(
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:last:rounded-e-lg",
   );
   expect(toggleGroupVariants).toContain(
     "group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-t-lg",
   );
   expect(toggleGroupVariants).toContain(
-    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-l-0",
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-s-0",
   );
   expect(toggleGroupIndex).toContain("ToggleGroupItem");
   expect(toggleGroupIndex).toContain("Root: ToggleGroup");

@@ -7,7 +7,7 @@ import { untrack, type Snippet } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { HTMLAttributes } from "svelte/elements";
 type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
-children?: Snippet; ref?: (element: HTMLDivElement | null) => void; "data-slot"?: string;
+children?: Snippet; ref?: (element: HTMLDivElement | null) => void;
 dirty?: boolean;
 disabled?: boolean;
 invalid?: boolean;
@@ -17,7 +17,7 @@ errorVisibility?: FormValidationTiming; "data-error-visibility"?: FormValidation
 revalidationTiming?: FormValidationTiming; "data-revalidation-timing"?: FormValidationTiming;
 validationTiming?: FormValidationTiming; "data-validation-timing"?: FormValidationTiming;
 };
-let { children, ref, "data-slot": dataSlot = "field", dirty, disabled = false, invalid, name, touched,
+let { children, ref, dirty, disabled = false, invalid, name, touched,
 errorVisibility, "data-error-visibility": dataerrorVisibility, revalidationTiming, "data-revalidation-timing": datarevalidationTiming, validationTiming, "data-validation-timing": datavalidationTiming, ...rest }: Props = $props();
 const owner = getFormOwner();
 let instance = $state<ReturnType<typeof createField>>();
@@ -58,7 +58,7 @@ $effect(() => {
   return () => untrack(() => callback?.(null));
 });
 </script>
-<div {...rest} data-sw-field="" data-slot={dataSlot}
+<div {...rest} data-sw-field=""
 data-dirty={dirty ? "" : undefined}
 data-disabled={disabled ? "" : undefined}
 data-invalid={invalid ? "" : undefined}

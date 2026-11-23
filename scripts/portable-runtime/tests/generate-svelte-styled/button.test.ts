@@ -1,10 +1,9 @@
 import { rm } from "node:fs/promises";
 
 import { afterEach, describe, expect, it } from "vitest";
-
-import { createStyledButtonConsumer } from "../../../../packages/svelte/tests/styled-button-consumer.js";
-import { verifyStyledButtonBrowser } from "../../../../packages/svelte/tests/styled-button-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledButtonBrowser } from "../../../../packages/svelte/tests/styled-button-browser.js";
+import { createStyledButtonConsumer } from "../../../../packages/svelte/tests/styled-button-consumer.js";
 
 const roots: string[] = [];
 const consumers: DistConsumer[] = [];

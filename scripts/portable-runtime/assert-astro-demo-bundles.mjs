@@ -186,7 +186,7 @@ export function inspectPortalBundleBoundaries(root = distRoot) {
     const assetPath = path.join(assetsRoot, asset);
     const imports = collectStaticJsImports(fs.readFileSync(assetPath, "utf8"), assetPath);
     const dialogImport = imports.find((imported) =>
-      /^dialog\./.test(path.posix.basename(imported)),
+      path.posix.basename(imported).startsWith("dialog."),
     );
     if (dialogImport) {
       failures.push(`${asset} statically imports Dialog host code through ${dialogImport}.`);

@@ -7,9 +7,9 @@ import type {
   StyledOutputRepeatNode,
   StyledOutputSlotNode,
   StyledOutputValueExpression,
-} from '../../../styled-output-model/index.js';
-import { getComponentReferenceName } from './component-discovery.js';
-import { REACT_FRAMEWORK } from './constants.js';
+} from "../../../styled-output-model/index.js";
+import { getComponentReferenceName } from "./component-discovery.js";
+import { REACT_FRAMEWORK } from "./constants.js";
 import {
   escapeTemplateText,
   formatObjectKey,
@@ -18,8 +18,8 @@ import {
   isIdentifier,
   mapReactAttributeName,
   toReactSlotPropName,
-} from './formatting.js';
-import { getPrimitiveAliasForNode } from './primitive-helpers.js';
+} from "./formatting.js";
+import { getPrimitiveAliasForNode, mapPrimitiveClassHooks } from "./primitive-helpers.js";
 
 export function renderReturn(
   nodes: StyledOutputRenderNode[],
@@ -116,7 +116,7 @@ ${indent(level)}</>`;
     case "primitive":
       return renderTag(
         `${getPrimitiveAliasForNode(node, primitiveAliases)}.${node.part}`,
-        node.attrs ?? [],
+        mapPrimitiveClassHooks(node),
         node.children ?? [],
         Boolean(node.selfClosing),
         level,
@@ -181,10 +181,7 @@ function renderElementNode(
   return [comments, tag].filter(Boolean).join("\n");
 }
 
-function renderLeadingComments(
-  comments: StyledOutputComment[],
-  level: number,
-): string {
+function renderLeadingComments(comments: StyledOutputComment[], level: number): string {
   return comments
     .filter((comment) => isForFramework(comment, REACT_FRAMEWORK))
     .map((comment) => `${indent(level)}{/* ${comment.value} */}`)

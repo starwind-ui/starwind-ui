@@ -1,12 +1,8 @@
-import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { createServer } from "node:http";
 import { createRequire } from "node:module";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-
 import {
   SelectItem,
   SelectItemIndicator,
@@ -19,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@starwind-ui/vue/select";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const repoRoot = path.resolve(packageRoot, "../..");
@@ -142,7 +140,7 @@ const address = server.address();
 if (!address || typeof address === "string") throw new Error("Select test server did not bind.");
 let browser;
 try {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage();
   const browserErrors = [];
   page.on("pageerror", (webError) => {

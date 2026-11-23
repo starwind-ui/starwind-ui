@@ -1,8 +1,10 @@
 import { formReactiveProps } from "../../primitive/components/form.js";
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const formStyledContract: StyledAdapterContract = {
   component: "form",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: ["Form", "FormErrorSummary"],
   defaultExport: {
     ErrorSummary: "FormErrorSummary",
@@ -18,7 +20,7 @@ export const formStyledContract: StyledAdapterContract = {
       base: [
         "border-error/40 bg-error/7 text-error rounded-md border p-4 text-sm",
         "[&_[data-sw-form-error-summary-list]]:mt-2 [&_[data-sw-form-error-summary-list]]:grid [&_[data-sw-form-error-summary-list]]:gap-1",
-        "[&_[data-sw-form-error-summary-item]]:text-left [&_[data-sw-form-error-summary-item]]:underline [&_[data-sw-form-error-summary-item]]:underline-offset-4",
+        "[&_[data-sw-form-error-summary-item]]:text-start [&_[data-sw-form-error-summary-item]]:underline [&_[data-sw-form-error-summary-item]]:underline-offset-4",
       ],
     },
   },

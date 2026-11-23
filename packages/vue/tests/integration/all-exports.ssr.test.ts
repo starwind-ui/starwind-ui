@@ -1,13 +1,10 @@
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
 import * as VuePackage from "@starwind-ui/vue";
 import * as AccordionPackage from "@starwind-ui/vue/accordion";
 import * as AlertDialogPackage from "@starwind-ui/vue/alert-dialog";
 import * as AvatarPackage from "@starwind-ui/vue/avatar";
 import * as ButtonPackage from "@starwind-ui/vue/button";
 import * as CarouselPackage from "@starwind-ui/vue/carousel";
+import * as ChartPackage from "@starwind-ui/vue/chart";
 import * as CheckboxPackage from "@starwind-ui/vue/checkbox";
 import * as CheckboxGroupPackage from "@starwind-ui/vue/checkbox-group";
 import * as CollapsiblePackage from "@starwind-ui/vue/collapsible";
@@ -27,8 +24,8 @@ import * as NavigationMenuPackage from "@starwind-ui/vue/navigation-menu";
 import * as PopoverPackage from "@starwind-ui/vue/popover";
 import * as PreviewCardPackage from "@starwind-ui/vue/preview-card";
 import * as ProgressPackage from "@starwind-ui/vue/progress";
-import * as RadioGroupPackage from "@starwind-ui/vue/radio-group";
 import * as RadioPackage from "@starwind-ui/vue/radio";
+import * as RadioGroupPackage from "@starwind-ui/vue/radio-group";
 import * as ScrollAreaPackage from "@starwind-ui/vue/scroll-area";
 import * as SelectPackage from "@starwind-ui/vue/select";
 import * as SidebarPackage from "@starwind-ui/vue/sidebar";
@@ -40,14 +37,17 @@ import * as ToastPackage from "@starwind-ui/vue/toast";
 import * as TogglePackage from "@starwind-ui/vue/toggle";
 import * as ToggleGroupPackage from "@starwind-ui/vue/toggle-group";
 import * as TooltipPackage from "@starwind-ui/vue/tooltip";
-import { colorPickerChildren } from "../color-picker/tree.js";
+import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
+import * as StyledAccordionPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/accordion";
 import {
   Accordion as StyledAccordion,
   AccordionContent as StyledAccordionContent,
   AccordionItem as StyledAccordionItem,
   AccordionTrigger as StyledAccordionTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/accordion";
-import * as StyledAccordionPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/accordion";
+import * as StyledAlertDialogPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/alert-dialog";
 import {
   AlertDialog as StyledAlertDialog,
   AlertDialogAction as StyledAlertDialogAction,
@@ -57,25 +57,25 @@ import {
   AlertDialogTitle as StyledAlertDialogTitle,
   AlertDialogTrigger as StyledAlertDialogTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/alert-dialog";
-import * as StyledAlertDialogPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/alert-dialog";
+import * as StyledAvatarPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/avatar";
 import {
   Avatar as StyledAvatar,
   AvatarFallback as StyledAvatarFallback,
   AvatarImage as StyledAvatarImage,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/avatar";
-import * as StyledAvatarPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/avatar";
 import { Button as StyledButton } from "../../../../apps/vue-demo/src/components/starwind-runtime/button";
 import { Checkbox as StyledCheckbox } from "../../../../apps/vue-demo/src/components/starwind-runtime/checkbox";
-import { CheckboxGroup as StyledCheckboxGroup } from "../../../../apps/vue-demo/src/components/starwind-runtime/checkbox-group";
 import * as StyledCheckboxGroupPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/checkbox-group";
+import { CheckboxGroup as StyledCheckboxGroup } from "../../../../apps/vue-demo/src/components/starwind-runtime/checkbox-group";
+import * as StyledCollapsiblePackage from "../../../../apps/vue-demo/src/components/starwind-runtime/collapsible";
 import {
   Collapsible as StyledCollapsible,
   CollapsibleContent as StyledCollapsibleContent,
   CollapsibleTrigger as StyledCollapsibleTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/collapsible";
-import * as StyledCollapsiblePackage from "../../../../apps/vue-demo/src/components/starwind-runtime/collapsible";
 import * as StyledComboboxPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/combobox";
 import * as StyledContextMenuPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/context-menu";
+import * as StyledDialogPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/dialog";
 import {
   Dialog as StyledDialog,
   DialogContent as StyledDialogContent,
@@ -83,10 +83,10 @@ import {
   DialogTitle as StyledDialogTitle,
   DialogTrigger as StyledDialogTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/dialog";
-import * as StyledDialogPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/dialog";
-import { Dropzone as StyledDropzone } from "../../../../apps/vue-demo/src/components/starwind-runtime/dropzone";
-import * as StyledDropzonePackage from "../../../../apps/vue-demo/src/components/starwind-runtime/dropzone";
 import * as StyledDropdownPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/dropdown";
+import * as StyledDropzonePackage from "../../../../apps/vue-demo/src/components/starwind-runtime/dropzone";
+import { Dropzone as StyledDropzone } from "../../../../apps/vue-demo/src/components/starwind-runtime/dropzone";
+import * as StyledFieldPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/field";
 import {
   Field as StyledField,
   FieldContent as StyledFieldContent,
@@ -102,7 +102,21 @@ import {
   FieldTitle as StyledFieldTitle,
   FieldValidity as StyledFieldValidity,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/field";
-import * as StyledFieldPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/field";
+import {
+  Form as StyledForm,
+  FormErrorSummary as StyledFormErrorSummary,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/form";
+import * as StyledHoverCardPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/hover-card";
+import { Input as StyledInput } from "../../../../apps/vue-demo/src/components/starwind-runtime/input";
+import * as StyledInputOtpPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/input-otp";
+import {
+  InputOtp as StyledInputOtp,
+  InputOtpGroup as StyledInputOtpGroup,
+  InputOtpSeparator as StyledInputOtpSeparator,
+  InputOtpSlot as StyledInputOtpSlot,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/input-otp";
+import * as StyledNavigationMenuPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/navigation-menu";
+import * as StyledPopoverPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/popover";
 import {
   Popover as StyledPopover,
   PopoverContent as StyledPopoverContent,
@@ -111,29 +125,14 @@ import {
   PopoverTitle as StyledPopoverTitle,
   PopoverTrigger as StyledPopoverTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/popover";
-import * as StyledPopoverPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/popover";
-import * as StyledSheetPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/sheet";
-import {
-  Form as StyledForm,
-  FormErrorSummary as StyledFormErrorSummary,
-} from "../../../../apps/vue-demo/src/components/starwind-runtime/form";
-import { Input as StyledInput } from "../../../../apps/vue-demo/src/components/starwind-runtime/input";
-import {
-  InputOtp as StyledInputOtp,
-  InputOtpGroup as StyledInputOtpGroup,
-  InputOtpSlot as StyledInputOtpSlot,
-} from "../../../../apps/vue-demo/src/components/starwind-runtime/input-otp";
-import { InputOtpSeparator as StyledInputOtpSeparator } from "../../../../apps/vue-demo/src/components/starwind-runtime/input-otp";
-import * as StyledInputOtpPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/input-otp";
-import * as StyledHoverCardPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/hover-card";
-import * as StyledNavigationMenuPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/navigation-menu";
-import { Progress as StyledProgress } from "../../../../apps/vue-demo/src/components/starwind-runtime/progress";
 import * as StyledProgressPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/progress";
+import { Progress as StyledProgress } from "../../../../apps/vue-demo/src/components/starwind-runtime/progress";
+import * as StyledRadioGroupPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/radio-group";
 import {
   RadioGroup as StyledRadioGroup,
   RadioGroupItem as StyledRadioGroupItem,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/radio-group";
-import * as StyledRadioGroupPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/radio-group";
+import * as StyledScrollAreaPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/scroll-area";
 import {
   ScrollArea as StyledScrollArea,
   ScrollAreaContent as StyledScrollAreaContent,
@@ -142,9 +141,6 @@ import {
   ScrollAreaViewport as StyledScrollAreaViewport,
   ScrollBar as StyledScrollBar,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/scroll-area";
-import * as StyledScrollAreaPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/scroll-area";
-import { Slider as StyledSlider } from "../../../../apps/vue-demo/src/components/starwind-runtime/slider";
-import * as StyledSliderPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/slider";
 import {
   Select as StyledSelect,
   SelectContent as StyledSelectContent,
@@ -159,23 +155,27 @@ import {
   SelectTrigger as StyledSelectTrigger,
   SelectValue as StyledSelectValue,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/select";
+import * as StyledSheetPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/sheet";
+import * as StyledSliderPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/slider";
+import { Slider as StyledSlider } from "../../../../apps/vue-demo/src/components/starwind-runtime/slider";
 import { Switch as StyledSwitch } from "../../../../apps/vue-demo/src/components/starwind-runtime/switch";
+import * as StyledTabsPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/tabs";
 import {
   Tabs as StyledTabs,
   TabsContent as StyledTabsContent,
   TabsList as StyledTabsList,
   TabsTrigger as StyledTabsTrigger,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/tabs";
-import * as StyledTabsPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/tabs";
-import { ThemeToggle as StyledThemeToggle } from "../../../../apps/vue-demo/src/components/starwind-runtime/theme-toggle";
 import * as StyledThemeTogglePackage from "../../../../apps/vue-demo/src/components/starwind-runtime/theme-toggle";
+import { ThemeToggle as StyledThemeToggle } from "../../../../apps/vue-demo/src/components/starwind-runtime/theme-toggle";
 import { Toggle as StyledToggle } from "../../../../apps/vue-demo/src/components/starwind-runtime/toggle";
+import * as StyledToggleGroupPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/toggle-group";
 import {
   ToggleGroup as StyledToggleGroup,
   ToggleGroupItem as StyledToggleGroupItem,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/toggle-group";
-import * as StyledToggleGroupPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/toggle-group";
 import * as StyledTooltipPackage from "../../../../apps/vue-demo/src/components/starwind-runtime/tooltip";
+import { colorPickerChildren } from "../color-picker/tree.js";
 
 const EXPECTED_COMBOBOX_EXPORTS = [
   "Combobox",
@@ -313,7 +313,6 @@ const EXPECTED_ALERT_DIALOG_EXPORTS = [
   "AlertDialog",
   "AlertDialogBackdrop",
   "AlertDialogClose",
-  "AlertDialogContext",
   "AlertDialogDescription",
   "AlertDialogPopup",
   "AlertDialogPortal",
@@ -342,6 +341,34 @@ const EXPECTED_CAROUSEL_EXPORTS = [
   "CarouselViewport",
   "createCarousel",
   "default",
+].sort();
+const EXPECTED_CHART_EXPORTS = [
+  "Chart",
+  "ChartLegend",
+  "ChartLegendIcon",
+  "ChartLegendItem",
+  "ChartLegendItems",
+  "ChartLegendLabel",
+  "ChartLegendSwatch",
+  "ChartPrimitive",
+  "ChartRoot",
+  "ChartStyle",
+  "ChartSurface",
+  "ChartTooltip",
+  "ChartTooltipContent",
+  "ChartTooltipIcon",
+  "ChartTooltipIndicator",
+  "ChartTooltipItem",
+  "ChartTooltipItems",
+  "ChartTooltipLabel",
+  "ChartTooltipName",
+  "ChartTooltipValue",
+  "default",
+  "defineChartModule",
+  "isChartIcon",
+  "tooltipView",
+  "useChartRoot",
+  "useChartTooltipBody",
 ].sort();
 const EXPECTED_CHECKBOX_EXPORTS = [
   "Checkbox",
@@ -397,7 +424,6 @@ const EXPECTED_DIALOG_EXPORTS = [
   "Dialog",
   "DialogBackdrop",
   "DialogClose",
-  "DialogContext",
   "DialogDescription",
   "DialogPopup",
   "DialogRoot",
@@ -409,7 +435,6 @@ const EXPECTED_DRAWER_EXPORTS = [
   "Drawer",
   "DrawerBackdrop",
   "DrawerClose",
-  "DrawerContext",
   "DrawerDescription",
   "DrawerPopup",
   "DrawerPortal",
@@ -626,6 +651,7 @@ describe("Vue source package and Styled SSR inventory", () => {
     expect(Object.keys(AvatarPackage).sort()).toEqual(EXPECTED_AVATAR_EXPORTS);
     expect(Object.keys(ButtonPackage).sort()).toEqual(EXPECTED_BUTTON_EXPORTS);
     expect(Object.keys(CarouselPackage).sort()).toEqual(EXPECTED_CAROUSEL_EXPORTS);
+    expect(Object.keys(ChartPackage).sort()).toEqual(EXPECTED_CHART_EXPORTS);
     expect(Object.keys(CheckboxPackage).sort()).toEqual(EXPECTED_CHECKBOX_EXPORTS);
     expect(Object.keys(CheckboxGroupPackage).sort()).toEqual(EXPECTED_CHECKBOX_GROUP_EXPORTS);
     expect(Object.keys(CollapsiblePackage).sort()).toEqual(EXPECTED_COLLAPSIBLE_EXPORTS);
@@ -666,6 +692,7 @@ describe("Vue source package and Styled SSR inventory", () => {
           ...EXPECTED_ALERT_DIALOG_EXPORTS,
           ...EXPECTED_BUTTON_EXPORTS,
           ...EXPECTED_CAROUSEL_EXPORTS,
+          ...EXPECTED_CHART_EXPORTS,
           ...EXPECTED_CHECKBOX_EXPORTS,
           ...EXPECTED_CHECKBOX_GROUP_EXPORTS,
           ...EXPECTED_COLLAPSIBLE_EXPORTS,

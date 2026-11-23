@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const dialogStyledContract: StyledAdapterContract = {
   component: "dialog",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Dialog",
     "DialogClose",
@@ -34,7 +36,7 @@ export const dialogStyledContract: StyledAdapterContract = {
     },
     dialogContent: {
       base: [
-        "fixed top-16 left-[50%] z-50 translate-x-[-50%] sm:top-[50%] sm:translate-y-[-50%]",
+        "fixed top-16 right-auto left-[50%] z-50 translate-x-[-50%] sm:top-[50%] sm:translate-y-[-50%]",
         "bg-background w-full max-w-md rounded-lg border p-8 shadow-lg",
         "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards transition-[translate,scale,opacity] duration-200",
@@ -48,13 +50,13 @@ export const dialogStyledContract: StyledAdapterContract = {
     dialogCloseButton: {
       base: [
         "text-muted-foreground",
-        "absolute top-5.5 right-5.5 rounded-sm [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+        "absolute top-5.5 end-5.5 rounded-sm [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
         "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
       ],
     },
     dialogDescription: { base: "text-muted-foreground" },
     dialogFooter: { base: "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end" },
-    dialogHeader: { base: "flex flex-col space-y-2 text-center sm:text-left" },
+    dialogHeader: { base: "flex flex-col space-y-2 text-center sm:text-start" },
     dialogTitle: { base: "font-heading text-xl leading-none font-semibold tracking-tight" },
   },
   styles: {

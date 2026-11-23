@@ -71,7 +71,7 @@ describe("generated Vue Collapsible", () => {
     expect(first.index).toContain("const Collapsible =");
     expect(first.index).toContain("CollapsibleOpenChangeDetails");
 
-    await expect(normalizeVueSource(first.root)).toBe(
+    expect(normalizeVueSource(first.root)).toBe(
       normalizeVueSource(
         await readFile(
           path.join(process.cwd(), "packages/vue/src/collapsible/CollapsibleRoot.vue"),

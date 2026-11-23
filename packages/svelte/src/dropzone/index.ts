@@ -8,6 +8,7 @@ import DropzoneInput from "./DropzoneInput.svelte";
 import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.svelte";
 import DropzoneRoot from "./DropzoneRoot.svelte";
 import DropzoneUploadIndicator from "./DropzoneUploadIndicator.svelte";
+
 const Dropzone = {
   Root: DropzoneRoot,
   Input: DropzoneInput,
@@ -15,6 +16,7 @@ const Dropzone = {
   LoadingIndicator: DropzoneLoadingIndicator,
   FilesList: DropzoneFilesList,
 };
+
 export {
   Dropzone,
   DropzoneFilesList,

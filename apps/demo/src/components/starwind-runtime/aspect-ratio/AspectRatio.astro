@@ -2,20 +2,24 @@
 import type { HTMLTag, Polymorphic } from "astro/types";
 import type { VariantProps } from "tailwind-variants";
 
-import { aspectRatio, aspectRatioWrapper } from "./variants";
+import { aspectRatio } from "./variants";
 
 type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> &
   VariantProps<typeof aspectRatio> & {
     ratio?: number;
   };
 
-const { ratio = 1, as: Tag = "div", class: className, ...rest } = Astro.props;
+const { ratio = 1, as: Tag = "div", class: className, style, ...rest } = Astro.props;
 
-const wrapperStyle = `padding-bottom: ${100 / ratio}%`;
+const ratioStyle =
+  typeof style === "string" ? `--ratio: ${ratio}; ${style}` : { "--ratio": ratio, ...style };
 ---
 
-<div class={aspectRatioWrapper()} style={wrapperStyle} data-slot="aspect-ratio-wrapper">
-  <Tag class={aspectRatio({ class: className })} data-slot="aspect-ratio" {...rest}>
-    <slot />
-  </Tag>
-</div>
+<Tag
+  {...rest}
+  class={aspectRatio({ class: className })}
+  style={ratioStyle}
+  data-slot="aspect-ratio"
+>
+  <slot />
+</Tag>

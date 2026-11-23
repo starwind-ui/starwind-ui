@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as NavigationMenuPrimitive from "@starwind-ui/vue/navigation-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes } from "vue";
+import type { HTMLAttributes } from "vue";
 import { navigationMenuList } from "./variants";
 
 defineOptions({ inheritAttrs: false });

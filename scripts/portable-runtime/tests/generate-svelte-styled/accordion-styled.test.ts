@@ -2,9 +2,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
-import { generateSvelteStyled } from "../../generate-svelte-styled.js";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
 import { accordionStyledContract } from "../../contracts/styled/components/accordion.js";
+import { generateSvelteStyled } from "../../generate-svelte-styled.js";
+
 it("regenerates all stock Accordion exports, content wrapper and default icon", async () => {
   const outputRoot = await mkdtemp(path.join(os.tmpdir(), "svelte-styled-accordion-"));
   try {
@@ -24,8 +25,9 @@ it("regenerates all stock Accordion exports, content wrapper and default icon", 
   }
 });
 
-import { createStyledAccordionConsumer } from "../../../../packages/svelte/tests/styled-accordion-consumer.js";
 import { verifyStyledAccordion } from "../../../../packages/svelte/tests/styled-accordion-browser.js";
+import { createStyledAccordionConsumer } from "../../../../packages/svelte/tests/styled-accordion-consumer.js";
+
 it("hydrates Styled Accordion accepted models, collections and semantic owners", async () => {
   const consumer = await createStyledAccordionConsumer(process.cwd());
   try {

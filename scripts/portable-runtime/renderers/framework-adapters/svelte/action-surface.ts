@@ -1,8 +1,6 @@
 import { renderSimpleRoot } from "../../shared-recipes/simple/frame.js";
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 export function printSvelteActionSurfaceComponent(file: AdapterComponentFile): AdapterPrintedFile {
   if (file.component.family?.kind !== "action-surface")
     throw new TypeError("Expected action surface facts.");

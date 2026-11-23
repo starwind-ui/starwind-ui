@@ -77,8 +77,7 @@ export function specializeVueStyledComponent(
                     slots: [
                       {
                         name: "default",
-                        signature:
-                          "(props: { label: string | null; value: string | null }) => unknown",
+                        signature: "() => unknown",
                       },
                     ],
                   }

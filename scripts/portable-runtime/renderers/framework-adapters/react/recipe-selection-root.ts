@@ -15,7 +15,6 @@ export const reactSelectionRootProjection: SelectionRootProjection = {
       frame,
       plan,
       fw,
-      name,
       publicName,
       code,
       controller,

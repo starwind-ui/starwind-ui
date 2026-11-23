@@ -37,8 +37,9 @@ ${controller}
 ${lifecycle}
 ${media}
 const context:${f.context.typeName}={${Object.entries(context)
+    .filter(([name]) => name !== "isMobile")
     .map(([name, value]) => `get ${name}(){return ${value};}`)
-    .join(",")},setMobileOpen(next){acceptMobile(next);}};setContext(${f.context.name},context);
+    .join(",")}};setContext(${f.context.name},context);
 const attachRuntime:Attachment<HTMLDivElement>=(root)=>{
 $effect(()=>connectMedia(${plan.media.input}));
 $effect(()=>{${plan.constructorInputs.map((name) => `void ${name};`).join("")}untrack(()=>connectRuntime(root));return()=>untrack(disconnectRuntime);});

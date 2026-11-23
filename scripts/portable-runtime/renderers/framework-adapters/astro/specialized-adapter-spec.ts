@@ -1,9 +1,14 @@
 import type { AdapterColorPickerFacts } from "../../primitive-output-model/index.js";
 import type { AdapterOutputModel } from "../types.js";
+import { projectAstroChartSurfaceOutputModel } from "./chart-surface.js";
 
 export function projectSpecializedAdapterOutputModel(
   model: AdapterOutputModel,
 ): AdapterOutputModel {
+  return projectColorPickerOutputModel(projectAstroChartSurfaceOutputModel(model));
+}
+
+function projectColorPickerOutputModel(model: AdapterOutputModel): AdapterOutputModel {
   const colorPickerIndex = model.files.find(
     (file) => file.kind === "index" && file.family?.kind === "color-picker",
   );

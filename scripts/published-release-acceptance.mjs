@@ -8,6 +8,7 @@ import { createServer } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import semver from "semver";
 
 import { getPackageManagerCommand } from "./command-process.mjs";
 
@@ -464,6 +465,82 @@ export async function writeFixtures(project) {
   }
 }
 
+/**
+ * Checks the npm channels of a graduated adapter. A stable version must be `latest`, and the old
+ * `beta` tag must not point at an older version, so copied `@beta` installs get stable too.
+ */
+export function validateGraduatedDistTags(packageName, expectedVersion, tags) {
+  const stable = /^(0|[1-9]\d*)\.\d+\.\d+$/.exec(expectedVersion);
+  if (!stable || stable[1] === "0") return;
+  // A later release can own latest. Acceptance for an older release then still passes.
+  assert.ok(
+    semver.valid(tags?.latest ?? "") && !semver.lt(tags.latest, expectedVersion),
+    `${packageName} latest must be ${expectedVersion} or newer, found ${tags?.latest ?? "nothing"}`,
+  );
+  if (tags.beta === undefined) return;
+  assert.ok(
+    semver.valid(tags.beta) && !semver.lt(tags.beta, expectedVersion),
+    `${packageName} beta must not point at ${tags.beta}, which is older than ${expectedVersion}`,
+  );
+}
+
+async function validateAdapterDistTags(project) {
+  if (!project.expectedAdapterVersion) return;
+  const packageName = `@starwind-ui/${project.framework}`;
+  const result = await runCommand(
+    {
+      args: ["view", packageName, "dist-tags", "--json"],
+      command: getPackageManagerCommand("npm"),
+      cwd: project.directory,
+    },
+    { capture: true },
+  );
+  validateGraduatedDistTags(packageName, project.expectedAdapterVersion, JSON.parse(result.stdout));
+}
+
+/**
+ * Checks one installed adapter against the project declaration. The CLI can save an exact version
+ * or a caret range, so the installed version must satisfy the declaration. A stable fixed-group
+ * adapter must pin the Runtime version that equals its own version.
+ */
+export function validateInstalledAdapterManifest({
+  adapterManifest,
+  declaredVersion,
+  expectedAdapterVersion,
+  packageName,
+}) {
+  assert.match(
+    adapterManifest.version ?? "",
+    EXACT_VERSION_PATTERN,
+    `${packageName} must use an exact published version`,
+  );
+  assert.ok(
+    semver.validRange(declaredVersion) &&
+      semver.satisfies(adapterManifest.version, declaredVersion, { includePrerelease: true }),
+    `${packageName} ${adapterManifest.version} must satisfy the declared ${declaredVersion}`,
+  );
+  const runtimeVersion = adapterManifest.dependencies?.["@starwind-ui/runtime"] ?? "";
+  assert.match(
+    runtimeVersion,
+    EXACT_VERSION_PATTERN,
+    `${packageName} must depend on an exact Runtime version`,
+  );
+  if (semver.major(adapterManifest.version) >= 1) {
+    assert.equal(
+      runtimeVersion,
+      adapterManifest.version,
+      `${packageName} must pin the Runtime version of its own fixed-group release`,
+    );
+  }
+  if (expectedAdapterVersion) {
+    assert.equal(
+      adapterManifest.version,
+      expectedAdapterVersion,
+      `${packageName} must equal the requested published version`,
+    );
+  }
+}
+
 async function validateInstalledAdapter(project) {
   const projectManifest = JSON.parse(
     await readFile(path.join(project.directory, "package.json"), "utf8"),
@@ -490,28 +567,12 @@ async function validateInstalledAdapter(project) {
       "utf8",
     ),
   );
-  assert.equal(
-    adapterManifest.version,
+  validateInstalledAdapterManifest({
+    adapterManifest,
     declaredVersion,
-    `${packageName} must install its exact version`,
-  );
-  assert.match(
-    adapterManifest.version,
-    EXACT_VERSION_PATTERN,
-    `${packageName} must use an exact published version`,
-  );
-  assert.match(
-    adapterManifest.dependencies?.["@starwind-ui/runtime"] ?? "",
-    EXACT_VERSION_PATTERN,
-    `${packageName} must depend on an exact Runtime version`,
-  );
-  if (project.expectedAdapterVersion) {
-    assert.equal(
-      adapterManifest.version,
-      project.expectedAdapterVersion,
-      `${packageName} must equal the requested published beta version`,
-    );
-  }
+    expectedAdapterVersion: project.expectedAdapterVersion,
+    packageName,
+  });
 
   return {
     adapter: `${packageName}@${adapterManifest.version}`,
@@ -832,12 +893,13 @@ export async function runPublishedReleaseAcceptance(options) {
         framework: project.framework,
         ...(await validateInstalledAdapter(project)),
       });
+      await validateAdapterDistTags(project);
       await runCommand(project.build);
     }
 
     const reactDemoRequire = createRequire(path.join(REPO_ROOT, "apps/react-demo/package.json"));
     const { chromium } = reactDemoRequire("playwright");
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ channel: "chrome", headless: true });
 
     for (const project of plan.projects) {
       await verifyBrowserProject({ artifacts, browser, project });
@@ -875,6 +937,7 @@ export async function runPublishedReleaseAcceptance(options) {
       }
     }
     if (cleanupError) {
+      // oxlint-disable-next-line eslint/no-unsafe-finally -- surface the cleanup error only when the main step passed.
       if (!acceptanceError) throw cleanupError;
       console.error(
         `[acceptance] cleanup also failed: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,

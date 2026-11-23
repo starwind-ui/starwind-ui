@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { RadioIndicator, RadioRoot } from "@starwind-ui/vue/radio";
 
 import type { RadioGroupValueChangeDetails } from "@starwind-ui/vue/radio-group";
 import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
-import { RadioIndicator, RadioRoot } from "@starwind-ui/vue/radio";
+import { ref } from "vue";
 
 const value = ref("alpha");
 const cancelNext = ref(false);

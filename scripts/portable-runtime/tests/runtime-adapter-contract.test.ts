@@ -10,7 +10,11 @@ import { astroFrameworkAdapter } from "../renderers/framework-adapters/astro/ada
 import { reactFrameworkAdapter } from "../renderers/framework-adapters/react/adapter.js";
 import { projectSpecializedAdapterOutputModel } from "../renderers/framework-adapters/react/specialized-adapter-spec.js";
 import { svelteFrameworkAdapter } from "../renderers/framework-adapters/svelte/adapter.js";
-import type { AdapterOutputModel } from "../renderers/framework-adapters/types.js";
+import type {
+  AdapterHiddenInputVisualSlotFacts,
+  AdapterOutputModel,
+  AdapterRangeControlFacts,
+} from "../renderers/framework-adapters/types.js";
 import { vueFrameworkAdapter } from "../renderers/framework-adapters/vue/adapter.js";
 import { projectVueSpecializedAdapterOutputModel } from "../renderers/framework-adapters/vue/specialized-adapter-spec.js";
 import {
@@ -19,6 +23,8 @@ import {
   validateGenericAdapterPlan,
 } from "../renderers/generic-adapter-plan/index.js";
 import { assertStyledSidebarConnection } from "../renderers/primitive-output-model/sidebar-connection.js";
+import { otpConnection } from "../renderers/shared-recipes/structured/file-controls/input-otp-recipe.js";
+import { sliderConnection } from "../renderers/shared-recipes/structured/range/connection.js";
 import {
   buildColorPickerAdapterOutputModel,
   buildColorPickerSpecializedAdapterSpec,
@@ -652,6 +658,20 @@ describe("Color Picker fixed model ownership", () => {
           /fixed initial-defined model ownership/,
         );
       }
+      const ownership = contract.stateModels!.find((entry) => entry.name === state)!.ownership!;
+      expect(ownership.laterDefined).toBe("silent-command");
+      const ignored = structuredClone(contract);
+      Object.assign(ignored.stateModels!.find((entry) => entry.name === state)!.ownership!, {
+        laterDefined: "ignore-when-uncontrolled",
+      });
+      expect(
+        validateRuntimeAdapterContracts([ignored]).some((issue) =>
+          issue.message.includes("fixed initial-defined"),
+        ),
+      ).toBe(true);
+      expect(() => buildColorPickerSpecializedAdapterSpec(ignored)).toThrow(
+        /fixed initial-defined model ownership/,
+      );
       delete contract.stateModels!.find((entry) => entry.name === state)!.ownership;
       expect(
         validateRuntimeAdapterContracts([contract]).some((issue) =>
@@ -663,6 +683,74 @@ describe("Color Picker fixed model ownership", () => {
       );
     });
   }
+});
+
+describe("Slider fixed model ownership", () => {
+  it("requires the silent-command late-write fact on the value model", () => {
+    const contract = structuredClone(
+      runtimeAdapterContracts.find((entry) => entry.component === "slider")!,
+    ) as RuntimeAdapterContract;
+    const value = contract.stateModels!.find((entry) => entry.name === "value")!;
+    expect(value.ownership?.laterDefined).toBe("silent-command");
+    expect(validateRuntimeAdapterContracts([contract])).toEqual([]);
+    delete value.ownership;
+    expect(
+      validateRuntimeAdapterContracts([contract]).some((issue) =>
+        issue.message.includes("fixed initial-defined"),
+      ),
+    ).toBe(true);
+  });
+
+  it("refuses to print a Slider connection without the fact", () => {
+    const facts = { state: {} } as unknown as AdapterRangeControlFacts;
+    expect(() =>
+      sliderConnection(facts, {
+        authority: "parent",
+        read: (name) => name,
+        render: () => "",
+        publish: () => "",
+        notify: () => "",
+        untrack: (body) => body,
+      }),
+    ).toThrow(/silent-command late-write contract fact/);
+  });
+});
+
+describe("Input OTP fixed model ownership", () => {
+  it("requires the silent-command late-write fact on the value model", () => {
+    const contract = structuredClone(
+      runtimeAdapterContracts.find((entry) => entry.component === "input-otp")!,
+    ) as RuntimeAdapterContract;
+    const value = contract.stateModels!.find((entry) => entry.name === "value")!;
+    expect(value.ownership?.laterDefined).toBe("silent-command");
+    expect(validateRuntimeAdapterContracts([contract])).toEqual([]);
+    delete value.ownership;
+    expect(
+      validateRuntimeAdapterContracts([contract]).some((issue) =>
+        issue.message.includes("fixed initial-defined"),
+      ),
+    ).toBe(true);
+  });
+
+  it("refuses to print an Input OTP connection without the fact", () => {
+    const facts = {
+      event: { cancelable: true, callbackTiming: "before-state-commit" },
+      state: {},
+    } as unknown as AdapterHiddenInputVisualSlotFacts;
+    expect(() =>
+      otpConnection(facts, {
+        authority: "parent",
+        read: "inputs",
+        seed: "seed",
+        current: "current",
+        notify: () => "",
+        writeCurrent: () => "",
+        publish: () => "",
+        untrack: (body) => body,
+        afterCommit: (body) => body,
+      }),
+    ).toThrow(/silent-command late-write contract fact/);
+  });
 });
 
 describe("Vue disclosure and menu acceptance contracts", () => {

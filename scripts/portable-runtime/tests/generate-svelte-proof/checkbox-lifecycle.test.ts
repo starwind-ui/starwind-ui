@@ -445,7 +445,8 @@ try {
 
 const MODEL_CASE_SOURCE = String.raw`<script lang="ts">
 import { flushSync, setContext, untrack } from "svelte";
-import { CheckboxRoot, CheckboxIndicator, CheckboxGroupContext } from "./checkbox/index.js";
+import { CheckboxRoot, CheckboxIndicator } from "./checkbox/index.js";
+import { CheckboxGroupContext } from "./checkbox/CheckboxGroupContext.svelte.js";
 let { id, mode, initial, defaultChecked, group, indeterminate: initialIndeterminate = false, setter = "identity", proposal = "accept" } = $props();
 let model = $state<boolean | undefined>(untrack(() => initial));
 let seed = $state<boolean | undefined>(untrack(() => defaultChecked));
@@ -581,12 +582,11 @@ async function createProofServer(root: string, middlewareMode: boolean): Promise
 
 const GROUP_HARNESS_SOURCE = String.raw`<script lang="ts">
   import { setContext } from "svelte";
+  import { CheckboxIndicator, CheckboxRoot } from "./checkbox/index";
   import {
     CheckboxGroupContext,
-    CheckboxIndicator,
-    CheckboxRoot,
     type CheckboxGroupContextValue,
-  } from "./checkbox/index";
+  } from "./checkbox/CheckboxGroupContext.svelte.js";
 
   let disabled = $state(true);
   let value = $state<readonly string[]>(["group-value"]);

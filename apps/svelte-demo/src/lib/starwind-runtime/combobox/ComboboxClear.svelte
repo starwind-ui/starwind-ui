@@ -12,10 +12,10 @@
 <script lang="ts">
   let {
     "class": className,
-    "disabled": disabled = false,
-    "showIcon": showIcon = true,
-    "child": child,
-    "children": children,
+    disabled = false,
+    showIcon = true,
+    child,
+    children,
     ...rest
   }: ComboboxClearProps = $props();
 </script>

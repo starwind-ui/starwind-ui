@@ -121,9 +121,7 @@ watch(() => [props.disabled], applyDisabled, { flush: "post" });
     v-bind="$attrs"
     data-sw-toggle=""
     data-sw-part="root"
-    :data-default-pressed="
-      !isGroupOwned && props.pressed === undefined && initialDefault ? 'true' : undefined
-    "
+    :data-default-pressed="!isGroupOwned && initialDefault ? 'true' : undefined"
     :data-native="props.nativeButton ? undefined : 'false'"
     :data-sync-group="props.syncGroup"
     :data-value="props.value"

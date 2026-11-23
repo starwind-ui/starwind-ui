@@ -67,9 +67,9 @@ function printRoot(facts: AdapterFormFieldCoordinatorFacts): string {
     "${facts.attrs.errorVisibility}": dataErrorVisibility,
     "${facts.attrs.revalidationTiming}": dataRevalidationTiming,
     "${facts.attrs.validationTiming}": dataValidationTiming,
-    ${errorVisibility.name} = ${JSON.stringify(errorVisibility.defaultValue)},
-    ${revalidationTiming.name} = ${JSON.stringify(revalidationTiming.defaultValue)},
-    ${validationTiming.name} = ${JSON.stringify(validationTiming.defaultValue)},
+    ${errorVisibility.name},
+    ${revalidationTiming.name},
+    ${validationTiming.name},
     ...rest }: Props = $props();
   const configured = { options: false, errors: false };
   const owner = provideFormOwner();

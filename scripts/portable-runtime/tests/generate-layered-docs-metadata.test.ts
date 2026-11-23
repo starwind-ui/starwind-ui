@@ -11,6 +11,11 @@ import { starwindStyledContracts } from "../contracts/styled/components/index.js
 import type { StyledAdapterContract } from "../contracts/styled/types.js";
 import { styledDocsAnnotations } from "../docs/layered-docs/annotations.js";
 import { colorPickerPrimitiveDocsAuthoredExamples } from "../docs/layered-docs/examples.js";
+import {
+  classifyRuntimeFactoryExport,
+  loadRuntimeIndexSource,
+  loadRuntimeInitStarwindSource,
+} from "../docs/layered-docs/generator/build-runtime-styling.js";
 import { buildStyledApiMetadata } from "../docs/layered-docs/generator/build-styled-api.js";
 import type { LayeredDocsMetadata, PrimitiveDocsEnrichment } from "../docs/layered-docs/types.js";
 import * as layeredDocsGenerator from "../generate-layered-docs-metadata.js";
@@ -24,6 +29,7 @@ import {
   validateLayeredDocsMetadata,
   validateLayeredDocsMetadataArtifact,
 } from "../generate-layered-docs-metadata.js";
+import { isPrimitiveInventoryComponentAvailableForTarget } from "../renderers/primitive-inventory.js";
 
 const execFileAsync = promisify(execFile);
 const testRequire = createRequire(import.meta.url);
@@ -72,6 +78,17 @@ const toTestPascalCase = (value: string) =>
     .split("-")
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join("");
+
+/** Creates a docs root with a stub for each Primitive live demo that the generated pages import. */
+const createDocsRoot = async (docsRoot: string) => {
+  await mkdir(docsRoot, { recursive: true });
+  for (const primitive of buildLayeredDocsMetadata().primitives) {
+    const liveDemo = primitive.docsReference.liveDemo;
+    if (!liveDemo) continue;
+    await mkdir(path.dirname(path.join(docsRoot, liveDemo.sourcePath)), { recursive: true });
+    await writeFile(path.join(docsRoot, liveDemo.sourcePath), "<div></div>\n");
+  }
+};
 
 const writePrimitiveUsageFixture = async (
   primitiveId: string,
@@ -305,7 +322,28 @@ const auditedAsChildVisualOwnership = [
 ] as const;
 
 describe("generateLayeredDocsMetadata", () => {
-  it("reports public beta availability separately from API and example coverage", () => {
+  it("lists chart as available in Vue and Svelte, with their Primitive packages", () => {
+    const metadata = buildLayeredDocsMetadata();
+    const styled = metadata.styledComponents.find((component) => component.id === "chart");
+    const primitive = metadata.primitives.find((candidate) => candidate.id === "chart");
+
+    expect(styled?.frameworkAvailability.vue.status).toBe("available");
+    expect(styled?.frameworkAvailability.svelte.status).toBe("available");
+    expect(primitive?.packages).toContainEqual({
+      framework: "vue",
+      packageName: "@starwind-ui/vue",
+      importSource: "@starwind-ui/vue/chart",
+      installSpecifier: "@starwind-ui/vue",
+    });
+    expect(primitive?.packages).toContainEqual({
+      framework: "svelte",
+      packageName: "@starwind-ui/svelte",
+      importSource: "@starwind-ui/svelte/chart",
+      installSpecifier: "@starwind-ui/svelte",
+    });
+  });
+
+  it("reports framework maturity separately from API and example coverage", () => {
     const metadata = buildLayeredDocsMetadata();
     expect(metadata.frameworks).toEqual([
       {
@@ -325,40 +363,46 @@ describe("generateLayeredDocsMetadata", () => {
       {
         target: "vue",
         label: "Vue",
-        maturity: "beta",
+        maturity: "stable",
         packageName: "@starwind-ui/vue",
-        installSpecifier: "@starwind-ui/vue@beta",
+        installSpecifier: "@starwind-ui/vue",
       },
       {
         target: "svelte",
         label: "Svelte",
-        maturity: "beta",
+        maturity: "stable",
         packageName: "@starwind-ui/svelte",
-        installSpecifier: "@starwind-ui/svelte@beta",
+        installSpecifier: "@starwind-ui/svelte",
       },
     ]);
     for (const component of metadata.styledComponents) {
-      expect(component.frameworkAvailability.vue.status).toBe(
-        component.id === "image" ? "unsupported" : "available",
-      );
-      expect(component.frameworkAvailability.svelte.status).toBe(
-        component.id === "image" ? "unsupported" : "available",
+      const contractFrameworks = starwindStyledContracts.find(
+        (contract) => contract.component === component.id,
+      )?.frameworks;
+      const expectedStatus = (framework: "vue" | "svelte") =>
+        !contractFrameworks || contractFrameworks.includes(framework) ? "available" : "unsupported";
+
+      expect(component.frameworkAvailability.vue.status, component.id).toBe(expectedStatus("vue"));
+      expect(component.frameworkAvailability.svelte.status, component.id).toBe(
+        expectedStatus("svelte"),
       );
       expect(Object.keys(component.styledApi)).toEqual(["astro", "react"]);
     }
     for (const primitive of metadata.primitives) {
-      expect(primitive.packages).toContainEqual({
-        framework: "vue",
-        packageName: "@starwind-ui/vue",
-        importSource: `@starwind-ui/vue/${primitive.id}`,
-        installSpecifier: "@starwind-ui/vue@beta",
-      });
-      expect(primitive.packages).toContainEqual({
-        framework: "svelte",
-        packageName: "@starwind-ui/svelte",
-        importSource: `@starwind-ui/svelte/${primitive.id}`,
-        installSpecifier: "@starwind-ui/svelte@beta",
-      });
+      for (const framework of ["vue", "svelte"] as const) {
+        const frameworkPackage = {
+          framework,
+          packageName: `@starwind-ui/${framework}`,
+          importSource: `@starwind-ui/${framework}/${primitive.id}`,
+          installSpecifier: `@starwind-ui/${framework}`,
+        };
+
+        if (isPrimitiveInventoryComponentAvailableForTarget(primitive.id, framework)) {
+          expect(primitive.packages).toContainEqual(frameworkPackage);
+        } else {
+          expect(primitive.packages).not.toContainEqual(frameworkPackage);
+        }
+      }
     }
   });
   it("keeps the compatibility entrypoint public runtime exports stable", () => {
@@ -1806,6 +1850,7 @@ describe("generateLayeredDocsMetadata", () => {
       expect(example.frameworks.map((framework) => framework.framework)).toEqual([
         "astro",
         "vue",
+        "svelte",
         "react",
         "raw-html",
       ]);
@@ -2033,7 +2078,7 @@ describe("generateLayeredDocsMetadata", () => {
     });
   });
 
-  it("generates source-backed raw HTML, Astro, React, and Vue examples for every primitive", () => {
+  it("generates source-backed raw HTML, Astro, React, Vue, and Svelte examples for every primitive", () => {
     const metadata = buildLayeredDocsMetadata();
     const report = validateLayeredDocsMetadata(metadata);
     const button = metadata.primitives.find((primitive) => primitive.id === "button");
@@ -2068,7 +2113,7 @@ describe("generateLayeredDocsMetadata", () => {
       );
 
       expect(primitive?.docsReference.exampleCoverage).toEqual({
-        requiredTargets: ["raw-html", "astro", "react", "vue"],
+        requiredTargets: ["raw-html", "astro", "react", "vue", "svelte"],
         missingTargets: [],
         allowedMissingTargets: [],
       });
@@ -2089,6 +2134,20 @@ describe("generateLayeredDocsMetadata", () => {
       expect(vueExample?.code).toContain(`<${rootNamespaceName}`);
       expect(vueExample?.code).toContain('<script setup lang="ts">');
       expect(vueExample?.code).not.toMatch(/=\{(?:true|false|\d+)\}/);
+
+      const svelteExample = examplesByFramework.get("svelte");
+      expect(svelteExample).toMatchObject({
+        id: "basic",
+        language: "svelte",
+        title: "Svelte",
+        source: `scripts/portable-runtime/docs/layered-docs/examples.ts#${contract.component}-basic-svelte`,
+      });
+      expect(svelteExample?.code).toContain(
+        `import { ${namespace} } from "@starwind-ui/svelte/${contract.component}";`,
+      );
+      expect(svelteExample?.code).toContain(`<${rootNamespaceName}`);
+      expect(svelteExample?.code).toContain('<script lang="ts">');
+      expect(svelteExample?.code).not.toMatch(/\s:[a-zA-Z]+="/);
 
       expect(rawHtmlExample).toMatchObject({
         id: "basic",
@@ -2253,6 +2312,51 @@ describe("generateLayeredDocsMetadata", () => {
         expect.stringContaining("Primitive docs example gaps: framework examples missing for"),
       ]),
     );
+  });
+
+  it("resolves contract type placeholders in Primitive prop types and rejects any that remain", () => {
+    const metadata = buildLayeredDocsMetadata();
+    const chart = metadata.primitives.find((primitive) => primitive.id === "chart")!;
+    const props = chart.docsReference.apiReference.parts.flatMap((part) => part.props);
+    const labelClass = props.find((prop) => prop.name === "labelClass")!;
+
+    expect(labelClass.type).toBe("string");
+    expect(chart.props.find((prop) => prop.name === "labelClass")!.type).toBe("string");
+    expect(labelClass.description).toContain("React names it `labelClassName`.");
+    expect(props.find((prop) => prop.name === "formatter")!.displayType).toMatch(
+      /=> string \| framework content$/,
+    );
+    expect(validateLayeredDocsMetadata(metadata).requiredFailures).toEqual([]);
+
+    const brokenMetadata = {
+      ...metadata,
+      primitives: metadata.primitives.map((primitive) =>
+        primitive === chart
+          ? {
+              ...primitive,
+              docsReference: {
+                ...primitive.docsReference,
+                apiReference: {
+                  ...primitive.docsReference.apiReference,
+                  parts: primitive.docsReference.apiReference.parts.map((part) => ({
+                    ...part,
+                    props: part.props.map((prop) =>
+                      prop.name === "labelClass"
+                        ? { ...prop, type: "ChartClass", displayType: "ChartClass" }
+                        : prop,
+                    ),
+                  })),
+                },
+              },
+            }
+          : primitive,
+      ),
+    } satisfies LayeredDocsMetadata;
+
+    expect(validateLayeredDocsMetadata(brokenMetadata).requiredFailures).toEqual([
+      "chart primitive part tooltipName prop labelClass type shows a type placeholder: ChartClass.",
+      "chart primitive part tooltipName prop labelClass displayType shows a type placeholder: ChartClass.",
+    ]);
   });
 
   it("validates primitive reference generated facts separately from optional enrichment gaps", () => {
@@ -2753,6 +2857,90 @@ describe("generateLayeredDocsMetadata", () => {
     );
   });
 
+  it("treats chart as the only subpath-only Runtime family", () => {
+    const sources = {
+      runtimeIndexSource: loadRuntimeIndexSource([]),
+      initStarwindSource: loadRuntimeInitStarwindSource([]),
+    };
+    const subpathOnly = runtimeAdapterContracts
+      .filter((contract) => classifyRuntimeFactoryExport(contract.runtime, sources) !== "root")
+      .map((contract) => [
+        contract.component,
+        classifyRuntimeFactoryExport(contract.runtime, sources),
+      ]);
+
+    expect(subpathOnly).toEqual([["chart", "subpath-only"]]);
+  });
+
+  it("rejects a subpath-only Runtime factory that initStarwind imports or its subpath omits", () => {
+    const chartRuntime = { factory: "createChart", importSource: "@starwind-ui/runtime/chart" };
+    const chartSubpath = (name: string) =>
+      name === "chart" ? 'export { createChart } from "./controller";' : undefined;
+
+    expect(
+      classifyRuntimeFactoryExport(chartRuntime, {
+        runtimeIndexSource: "export {};",
+        initStarwindSource: "",
+        loadSubpathSource: chartSubpath,
+      }),
+    ).toBe("subpath-only");
+    expect(
+      classifyRuntimeFactoryExport(chartRuntime, {
+        runtimeIndexSource: "export {};",
+        initStarwindSource: 'import { createChart } from "./components/chart";',
+        loadSubpathSource: chartSubpath,
+      }),
+    ).toBe("missing");
+    expect(
+      classifyRuntimeFactoryExport(chartRuntime, {
+        runtimeIndexSource: "export {};",
+        initStarwindSource: "",
+        loadSubpathSource: () => "export {};",
+      }),
+    ).toBe("missing");
+    for (const initStarwindSource of [
+      'import { startCharts } from "./components/chart";',
+      'import { initCharts } from "./components/chart/lifecycle";',
+      'export { registerChartModules } from "@starwind-ui/runtime/chart";',
+      'import "./components/chart";',
+      'const charts = await import("./components/chart/index");',
+    ]) {
+      expect(
+        classifyRuntimeFactoryExport(chartRuntime, {
+          runtimeIndexSource: "export {};",
+          initStarwindSource,
+          loadSubpathSource: chartSubpath,
+        }),
+        initStarwindSource,
+      ).toBe("missing");
+    }
+    expect(
+      classifyRuntimeFactoryExport(chartRuntime, {
+        runtimeIndexSource: "export {};",
+        initStarwindSource: 'import { createCarousel } from "./components/carousel";',
+        loadSubpathSource: chartSubpath,
+      }),
+    ).toBe("subpath-only");
+    expect(
+      classifyRuntimeFactoryExport(
+        { factory: "createChart", importSource: "@starwind-ui/runtime" },
+        { runtimeIndexSource: "export {};", initStarwindSource: "" },
+      ),
+    ).toBe("missing");
+  });
+
+  it("fails validation when initStarwind imports another export of a subpath-only family", () => {
+    const initStarwindSource = loadRuntimeInitStarwindSource([]);
+
+    expect(() =>
+      buildLayeredDocsMetadata({
+        initStarwindSource: `import { startCharts } from "./components/chart";\n${initStarwindSource}`,
+      }),
+    ).toThrow(
+      "chart runtime factory createChart is not re-exported by packages/runtime/src/index.ts.",
+    );
+  });
+
   it("builds runtime reference metadata from the public runtime surface", () => {
     const metadata = buildLayeredDocsMetadata();
 
@@ -2872,7 +3060,19 @@ describe("generateLayeredDocsMetadata", () => {
       tailwindIntegration: {
         imports: ["tailwindcss", "tw-animate-css"],
         plugins: ["@tailwindcss/forms"],
-        customVariants: [{ name: "dark", selector: "(&:where(.dark, .dark *))" }],
+        customVariants: [
+          { name: "dark", selector: "(&:where(.dark, .dark *))" },
+          {
+            name: "rtl",
+            selector:
+              '(&:where([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)))',
+          },
+          {
+            name: "ltr",
+            selector:
+              '(&:where(:not([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *))))',
+          },
+        ],
       },
     });
     expect(metadata.styling.theme.tokens).toEqual(
@@ -3113,8 +3313,7 @@ describe("generateLayeredDocsMetadata", () => {
     const docsRoot = path.join(tempRoot, "starwind-docs");
 
     try {
-      const metadata = buildLayeredDocsMetadata();
-      await mkdir(docsRoot, { recursive: true });
+      await createDocsRoot(docsRoot);
       await generateLayeredDocsMetadata({ docsRoot, outputRoot: tempRoot });
 
       const result = await checkLayeredDocsMetadata({ docsRoot, outputRoot: tempRoot });
@@ -3162,7 +3361,7 @@ describe("generateLayeredDocsMetadata", () => {
       ];
 
       try {
-        await mkdir(docsRoot, { recursive: true });
+        await createDocsRoot(docsRoot);
         await generateLayeredDocsMetadata({ docsRoot, outputRoot: tempRoot });
 
         const looseResult = await execFileAsync(process.execPath, baseArguments, {
@@ -3244,7 +3443,7 @@ describe("generateLayeredDocsMetadata", () => {
     );
 
     try {
-      await mkdir(docsRoot, { recursive: true });
+      await createDocsRoot(docsRoot);
       await generateLayeredDocsMetadata({
         docsRoot,
         outputRoot: tempRoot,
@@ -3291,6 +3490,7 @@ describe("generateLayeredDocsMetadata", () => {
 
     try {
       const metadata = buildLayeredDocsMetadata();
+      await createDocsRoot(docsRoot);
       await mkdir(componentPagesRoot, { recursive: true });
       await mkdir(primitivePagesRoot, { recursive: true });
       await mkdir(runtimePagesRoot, { recursive: true });
@@ -3416,7 +3616,7 @@ describe("generateLayeredDocsMetadata", () => {
         "## Installation",
         "npm install @starwind-ui/astro",
         "npm install @starwind-ui/react",
-        "npm install @starwind-ui/svelte@beta",
+        'npm install @starwind-ui/svelte "svelte@',
         "[Getting Started Primitives guide](/docs/getting-started/primitives/)",
         "## Import Pattern",
         'import { Accordion } from "@starwind-ui/astro/accordion";',
@@ -3539,15 +3739,22 @@ describe("generateLayeredDocsMetadata", () => {
         "## Changelog",
         '<PrimitiveChangelog docId="primitives/menu" />',
       ]);
-      expectSubstringsInOrder(selectPrimitiveSource, [
-        "## Anatomy",
-        "## Positioning",
-        "Select positions its popup from the trigger.",
-        "## Examples",
-        "### Positioned Select",
-        "Render Select with a positioned popup across Astro, React, Vue, and HTML surfaces.",
-        "## API Reference",
-      ]);
+      expectSubstringsInOrder(
+        selectPrimitiveSource.slice(selectPrimitiveSource.indexOf("\n---\n") + 5),
+        [
+          "Use Select to pick one option from a popup list.",
+          "## Anatomy",
+          "Open the Framework list and choose React.",
+          '<Select.Item value="react">',
+          "## Usage Guidelines",
+          "## Positioning",
+          "Select positions its popup from the trigger.",
+          "## Examples",
+          "### Positioned Select",
+          "Compose the positioning parts around the Select popup.",
+          "## API Reference",
+        ],
+      );
       const selectAuthoredExampleSlice = selectPrimitiveSource.slice(
         selectPrimitiveSource.indexOf("### Positioned Select"),
         selectPrimitiveSource.indexOf("## API Reference"),
@@ -3556,11 +3763,16 @@ describe("generateLayeredDocsMetadata", () => {
         '<DocsTabs syncKey="framework" defaultValue="astro">',
         '<DocsTabsTrigger value="astro">Astro</DocsTabsTrigger>',
         '<DocsTabsTrigger value="react">React</DocsTabsTrigger>',
+        '<DocsTabsTrigger value="vue">Vue</DocsTabsTrigger>',
+        '<DocsTabsTrigger value="svelte">Svelte</DocsTabsTrigger>',
         '<DocsTabsTrigger value="raw-html">HTML</DocsTabsTrigger>',
         "```astro",
         'import { Select } from "@starwind-ui/astro/select";',
         "```tsx",
         'import { Select } from "@starwind-ui/react/select";',
+        "```vue",
+        "```svelte",
+        'import { Select } from "@starwind-ui/svelte/select";',
         "```html",
         'import { createSelect } from "@starwind-ui/runtime/select";',
       ]);
@@ -3597,11 +3809,11 @@ describe("generateLayeredDocsMetadata", () => {
         }),
       );
       expectSubstringsInOrder(colorPickerPrimitiveSource, [
-        "## Usage Guidelines",
         "## Anatomy",
         'import { ColorPicker } from "@starwind-ui/astro/color-picker";',
         'import { ColorPicker } from "@starwind-ui/react/color-picker";',
         'import { createColorPicker } from "@starwind-ui/runtime/color-picker";',
+        "## Usage Guidelines",
         "## Format Controls",
         "### Composite Format Control",
         'import { Select } from "@starwind-ui/astro/select";',
@@ -3650,9 +3862,6 @@ describe("generateLayeredDocsMetadata", () => {
       expect(colorPickerPrimitiveSource).not.toContain('::example{id="native-format-select"}');
       expect(colorPickerPrimitiveSource).not.toContain("data-swatch-value");
       expectSubstringsInOrder(checkboxPrimitiveSource, [
-        "## Usage Guidelines",
-        "- **Use Checkbox for one independent boolean value.**",
-        "- **Use the hidden input parts for form submission.**",
         "## Anatomy",
         '<DocsTabs syncKey="framework" defaultValue="astro">',
         '<DocsTabsTrigger value="astro">Astro</DocsTabsTrigger>',
@@ -3674,7 +3883,13 @@ describe("generateLayeredDocsMetadata", () => {
       expect(checkboxPrimitiveSource).toContain("```html");
       expect(checkboxPrimitiveSource).toContain("```astro");
       expect(checkboxPrimitiveSource).toContain("```tsx");
-      expect(checkboxPrimitiveSource).toContain("## Anatomy");
+      expectSubstringsInOrder(checkboxPrimitiveSource, [
+        "## Anatomy",
+        "## Usage Guidelines",
+        "- **Use Checkbox for one independent boolean value.**",
+        "- **Set the form field name on the root.**",
+        "## API Reference",
+      ]);
       expect(checkboxPrimitiveSource).toContain("<Checkbox.Root");
       expect(checkboxPrimitiveSource).toContain("## API Reference");
       expect(checkboxPrimitiveSource).toContain("### Root");
@@ -3791,7 +4006,7 @@ describe("generateLayeredDocsMetadata", () => {
     const docsRoot = path.join(tempRoot, "starwind-docs");
 
     try {
-      await mkdir(docsRoot, { recursive: true });
+      await createDocsRoot(docsRoot);
 
       await expect(
         generateLayeredDocsMetadata({

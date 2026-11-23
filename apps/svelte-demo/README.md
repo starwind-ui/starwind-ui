@@ -1,6 +1,6 @@
-# Svelte 5 beta demo
+# Svelte 5 demo
 
-This workspace runs the Svelte 5 public-beta Styled review at `/review/`.
+This workspace runs the Svelte 5 Styled review at `/review/`.
 The demo workspace stays private at `0.0.0`.
 
 From this app directory, run `pnpm dev`. Startup builds the Runtime and Svelte workspace packages

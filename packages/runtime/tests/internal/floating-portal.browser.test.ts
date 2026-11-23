@@ -30,6 +30,27 @@ describe("floating portal placement", () => {
     }
   });
 
+  it("uses the picker for its outer Popover and the local reference for inner overlays", () => {
+    document.body.innerHTML = `<div id="popover" dir="ltr"><div data-sw-color-picker dir="rtl"><div id="editor"></div><div id="menu" dir="ltr"><div id="nested"></div></div></div></div>`;
+    const picker = document.querySelector<HTMLElement>("[data-sw-color-picker]")!;
+    for (const [ownerId, wrapperId, direction] of [
+      ["popover", "editor", "rtl"],
+      ["menu", "nested", "ltr"],
+    ] as const) {
+      const root = document.getElementById(ownerId)!;
+      const wrapper = document.getElementById(wrapperId)!;
+      const session = createFloatingPortalSession({
+        root,
+        getPortalElement: () => wrapper,
+        getPortalTarget: () => picker,
+      });
+      expect(session.mount()).toBe(true);
+      expect(wrapper).toHaveAttribute("dir", direction);
+      session.destroy();
+      expect(wrapper.hasAttribute("dir")).toBe(false);
+    }
+  });
+
   it("moves and restores one Runtime-owned public wrapper", () => {
     const root = document.createElement("div");
     const before = document.createElement("span");
@@ -128,12 +149,12 @@ describe("floating portal placement", () => {
     });
     expect(session.mount()).toBe(true);
 
-    reportPortalPlacement(firstWrapper, null);
     currentWrapper = secondWrapper;
     currentTarget = secondTarget;
     secondTarget.append(secondWrapper);
     reportPortalPlacement(secondWrapper, { ready: true, target: secondTarget });
-    expect(session.mount()).toBe(true);
+    firstWrapper.remove();
+    reportPortalPlacement(firstWrapper, null);
     expect(session.isReady()).toBe(true);
     expect(secondWrapper.parentElement).toBe(secondTarget);
 
@@ -194,5 +215,69 @@ describe("floating portal placement", () => {
     expect(getPortalTarget).toHaveBeenCalledTimes(1);
     expect(session.isReady()).toBe(false);
     reportPortalPlacement(wrapper, null);
+  });
+
+  it("releases a disconnected framework wrapper without reacquiring its direction", () => {
+    const root = document.createElement("div");
+    const wrapper = document.createElement("div");
+    const target = document.createElement("section");
+    const nextTarget = document.createElement("section");
+    let currentTarget = target;
+    root.setAttribute("dir", "rtl");
+    target.setAttribute("dir", "ltr");
+    wrapper.setAttribute("data-sw-portal-placement", "framework");
+    root.append(wrapper);
+    document.body.append(root, target, nextTarget);
+    target.append(wrapper);
+    reportPortalPlacement(wrapper, { ready: true, target });
+    const session = createFloatingPortalSession({
+      getPortalElement: () => wrapper,
+      getPortalTarget: () => currentTarget,
+      root,
+    });
+
+    expect(session.mount()).toBe(true);
+    expect(wrapper.getAttribute("dir")).toBe("rtl");
+    wrapper.remove();
+    reportPortalPlacement(wrapper, null);
+    expect(wrapper.getAttribute("dir")).toBeNull();
+    expect(session.isReady()).toBe(false);
+
+    root.setAttribute("dir", "ltr");
+    expect(wrapper.getAttribute("dir")).toBeNull();
+    currentTarget = nextTarget;
+    nextTarget.append(wrapper);
+    reportPortalPlacement(wrapper, { ready: true, target: nextTarget });
+    expect(session.isReady()).toBe(true);
+    expect(wrapper.parentElement).toBe(nextTarget);
+    expect(wrapper.getAttribute("dir")).toBe("ltr");
+    session.destroy();
+    reportPortalPlacement(wrapper, null);
+    expect(wrapper.getAttribute("dir")).toBeNull();
+  });
+
+  it("keeps an authored framework wrapper direction during detached cleanup", () => {
+    const root = document.createElement("div");
+    const wrapper = document.createElement("div");
+    const target = document.createElement("section");
+    root.setAttribute("dir", "rtl");
+    wrapper.setAttribute("dir", "ltr");
+    wrapper.setAttribute("data-sw-portal-placement", "framework");
+    root.append(wrapper);
+    document.body.append(root, target);
+    target.append(wrapper);
+    reportPortalPlacement(wrapper, { ready: true, target });
+    const session = createFloatingPortalSession({
+      getPortalElement: () => wrapper,
+      getPortalTarget: () => target,
+      root,
+    });
+
+    expect(session.mount()).toBe(true);
+    wrapper.remove();
+    reportPortalPlacement(wrapper, null);
+    expect(wrapper.getAttribute("dir")).toBe("ltr");
+    session.destroy();
+    expect(wrapper.getAttribute("dir")).toBe("ltr");
   });
 });

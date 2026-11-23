@@ -3,7 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
 import ComboboxClear from "./ComboboxClear.svelte";
 import ComboboxEmpty from "./ComboboxEmpty.svelte";
 import ComboboxGroup from "./ComboboxGroup.svelte";
@@ -23,6 +22,7 @@ import ComboboxRoot from "./ComboboxRoot.svelte";
 import ComboboxSeparator from "./ComboboxSeparator.svelte";
 import ComboboxTrigger from "./ComboboxTrigger.svelte";
 import ComboboxValue from "./ComboboxValue.svelte";
+
 const Combobox = {
   Root: ComboboxRoot,
   Label: ComboboxLabel,
@@ -44,6 +44,7 @@ const Combobox = {
   ItemIndicator: ComboboxItemIndicator,
   Separator: ComboboxSeparator,
 };
+
 export {
   Combobox,
   ComboboxClear,
@@ -67,9 +68,9 @@ export {
   ComboboxValue,
 };
 export default Combobox;
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
 export type {
   ComboboxInputValueChangeDetails,
   ComboboxOpenChangeDetails,
   ComboboxValueChangeDetails,
 } from "@starwind-ui/runtime/combobox";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";

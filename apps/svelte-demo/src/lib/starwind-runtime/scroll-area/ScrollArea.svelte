@@ -16,12 +16,12 @@
 
 <script lang="ts">
   let {
-    "overflowEdgeThreshold": overflowEdgeThreshold,
-    "autoViewport": autoViewport = true,
-    "viewportClass": viewportClass,
+    overflowEdgeThreshold,
+    autoViewport = true,
+    viewportClass,
     "class": className,
-    "children": children,
-    "scrollbar": scrollbar,
+    children,
+    scrollbar,
     ...rest
   }: ScrollAreaProps = $props();
 </script>

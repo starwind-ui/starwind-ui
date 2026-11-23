@@ -1,9 +1,8 @@
 import { Buffer } from "node:buffer";
-
-import { createSSRApp, h } from "vue";
-import { renderToString } from "vue/server-renderer";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { createSSRApp, h } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 import { compileVueSfc } from "../tsup.config.js";
 

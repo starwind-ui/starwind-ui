@@ -3,6 +3,9 @@ import semver from "semver";
 
 import { resolveProjectMutationPath } from "./project-path.js";
 import {
+  type AstArrayExpression,
+  type AstNode,
+  type AstObjectExpression,
   asAstArrayExpression,
   asAstArrowFunctionExpression,
   asAstObjectExpression,
@@ -15,11 +18,8 @@ import {
   getAstStringValue,
   hasAstSoleNamedImport,
   hasOnlyAstBareObjectKeys,
-  parseSourceModule,
-  type AstArrayExpression,
-  type AstNode,
-  type AstObjectExpression,
   type ParsedSourceModule,
+  parseSourceModule,
   type SourceRange,
 } from "./source-shape.js";
 import { meetsVueVersionFloor } from "./vue-project.js";

@@ -1,7 +1,9 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { StyledAdapterContract } from "../types.js";
 
 export const dropdownStyledContract: StyledAdapterContract = {
   component: "dropdown",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Dropdown",
     "DropdownCheckboxItem",
@@ -45,19 +47,19 @@ export const dropdownStyledContract: StyledAdapterContract = {
     dropdown: { base: "relative" },
     dropdownCheckboxItem: {
       base: [
-        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
+        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pe-8 ps-2 transition-colors outline-none select-none",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
       ],
       variants: {
-        inset: { true: "pl-8" },
+        inset: { true: "ps-8" },
         disabled: { true: "pointer-events-none opacity-50" },
       },
       defaultVariants: { inset: false, disabled: false },
     },
     dropdownCheckboxItemIndicator: {
       base: [
-        "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+        "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
         "data-[state=checked]:opacity-100 data-visible:opacity-100 data-hidden:opacity-0",
         "[&>svg]:size-4 [&>svg]:shrink-0",
       ],
@@ -79,14 +81,14 @@ export const dropdownStyledContract: StyledAdapterContract = {
         "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
       ],
       variants: {
-        inset: { true: "pl-8" },
+        inset: { true: "ps-8" },
         disabled: { true: "pointer-events-none opacity-50" },
       },
       defaultVariants: { inset: false, disabled: false },
     },
     dropdownLabel: {
       base: ["text-muted-foreground px-2 py-1.5 text-sm font-medium"],
-      variants: { inset: { true: "pl-8" } },
+      variants: { inset: { true: "ps-8" } },
       defaultVariants: { inset: false },
     },
     dropdownRadioGroup: {
@@ -94,19 +96,19 @@ export const dropdownStyledContract: StyledAdapterContract = {
     },
     dropdownRadioItem: {
       base: [
-        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
+        "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pe-8 ps-2 transition-colors outline-none select-none",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
       ],
       variants: {
-        inset: { true: "pl-8" },
+        inset: { true: "ps-8" },
         disabled: { true: "pointer-events-none opacity-50" },
       },
       defaultVariants: { inset: false, disabled: false },
     },
     dropdownRadioItemIndicator: {
       base: [
-        "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+        "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
         "data-[state=checked]:opacity-100 data-visible:opacity-100 data-hidden:opacity-0",
         "[&>svg]:size-4 [&>svg]:shrink-0",
       ],
@@ -114,7 +116,7 @@ export const dropdownStyledContract: StyledAdapterContract = {
     dropdownSeparator: { base: "bg-border -mx-1 my-1 h-px" },
     dropdownShortcut: {
       base: [
-        "group-data-highlighted/dropdown-item:text-accent-foreground group-focus/dropdown-item:text-accent-foreground group-hover/dropdown-item:text-accent-foreground text-muted-foreground ml-auto text-sm tracking-widest transition-colors",
+        "group-data-highlighted/dropdown-item:text-accent-foreground group-focus/dropdown-item:text-accent-foreground group-hover/dropdown-item:text-accent-foreground text-muted-foreground ms-auto text-sm tracking-widest transition-colors",
       ],
     },
     dropdownTrigger: {
@@ -924,7 +926,12 @@ export const dropdownStyledContract: StyledAdapterContract = {
                 {
                   type: "icon",
                   importName: "ChevronRight",
-                  attrs: [{ name: "class", value: { type: "literal", value: "ml-auto size-4" } }],
+                  attrs: [
+                    {
+                      name: "class",
+                      value: { type: "literal", value: "ms-auto size-4 rtl:rotate-180" },
+                    },
+                  ],
                 },
               ],
             },
@@ -949,7 +956,7 @@ export const dropdownStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "class", alias: "className" },
-          { name: "side", defaultValue: '"right"' },
+          { name: "side" },
           { name: "align", defaultValue: '"start"' },
           { name: "sideOffset", defaultValue: "0" },
           { name: "avoidCollisions", defaultValue: "true" },
@@ -991,10 +998,16 @@ export const dropdownStyledContract: StyledAdapterContract = {
                     args: { class: "subContentClassName" },
                   },
                 },
-                { name: "side", value: { type: "variable", name: "side" } },
+                // Older Runtime copies ignore the side intent, so keep the base right side.
+                { name: "side", value: { type: "raw", code: 'side ?? "right"' } },
                 { name: "align", value: { type: "variable", name: "align" } },
                 { name: "sideOffset", value: { type: "variable", name: "sideOffset" } },
                 { name: "avoidCollisions", value: { type: "variable", name: "avoidCollisions" } },
+                // An empty side intent asks Runtime for the inline-end side.
+                {
+                  name: "data-sw-menu-side-intent",
+                  value: { type: "raw", code: 'side ?? ""' },
+                },
                 { name: "spread", value: { type: "variable", name: "rest" } },
                 {
                   name: "data-slot",

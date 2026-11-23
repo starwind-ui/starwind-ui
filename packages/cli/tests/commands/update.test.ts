@@ -31,6 +31,7 @@ const mockLog = {
 vi.mocked(clackPrompts).log = mockLog as typeof clackPrompts.log;
 
 const mockFileExists = vi.mocked(fs.fileExists);
+const mockWriteCssFile = vi.mocked(fs.writeCssFile);
 const mockGetConfigState = vi.mocked(config.getConfigState);
 const mockUpdateRuntimeComponents = vi.mocked(runtimeComponent.updateRuntimeComponents);
 const mockPlanRuntimeComponentUpdates = vi.mocked(runtimeComponent.planRuntimeComponentUpdates);
@@ -144,6 +145,32 @@ describe("update command", () => {
         },
       ],
     });
+  });
+
+  it("keeps a configured custom stylesheet during component update", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        tailwind: { css: "styles/custom.css", baseColor: "neutral", cssVariables: true },
+      }),
+    });
+    mockUpdateRuntimeComponents.mockResolvedValue({
+      updated: [
+        {
+          delivery: "source",
+          name: "button",
+          status: "updated",
+          oldVersion: "1.0.0",
+          newVersion: "2.0.0",
+        },
+      ],
+      skipped: [],
+      failed: [],
+    });
+
+    await update(["button"], { yes: true });
+
+    expect(mockWriteCssFile).not.toHaveBeenCalled();
   });
 
   afterEach(() => {

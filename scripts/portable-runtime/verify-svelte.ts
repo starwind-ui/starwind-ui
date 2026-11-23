@@ -53,6 +53,7 @@ const printers: Record<string, readonly string[]> = {
   "repeated-disclosure": ["accordion"],
   "range-control": ["slider"],
   "engine-viewport": ["carousel"],
+  "chart-surface": ["chart"],
   "notification-system": ["toast"],
   "media-status": ["avatar"],
   "range-status": ["progress"],
@@ -87,6 +88,7 @@ const styledForPrimitive: Record<string, string> = {
   fieldset: "form",
   theme: "theme-toggle",
   carousel: "carousel",
+  chart: "chart",
   toast: "toast",
 };
 
@@ -108,7 +110,7 @@ async function testFiles(repo: string): Promise<string[]> {
   const names = await Promise.all(
     [proof, styled].map(async (directory) =>
       (await readdir(path.join(repo, directory)))
-        .filter((name) => /\.test\.ts$/.test(name))
+        .filter((name) => name.endsWith(".test.ts"))
         .map((name) => directory + name),
     ),
   );

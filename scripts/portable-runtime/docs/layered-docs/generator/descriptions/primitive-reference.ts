@@ -1,18 +1,20 @@
-import { type RuntimeAdapterContract } from "../../../../contracts/primitive/types.js";
+import type { RuntimeAdapterContract } from "../../../../contracts/primitive/types.js";
+import { normalizeReactClassHookName } from "../../../../renderers/framework-adapters/future-readiness.js";
+import { chartPropType } from "../../../../renderers/specialized-adapter-spec/chart-specialized-adapter-spec.js";
+import type {
+  PrimitiveDocsEnrichment,
+  PrimitiveEventMetadata,
+  PrimitivePartApiReferenceMetadata,
+  PrimitivePartDocsEnrichment,
+  PrimitivePropReferenceMetadata,
+  PrimitiveStateModelMetadata,
+} from "../../types.js";
+import { dedupeByName, toDisplayTitle, toPascalCase } from "../shared.js";
 import {
   buildPrimitiveStateFrameworkBehavior,
   cancelableEventSequence,
   findPrimitivePropStateModel,
 } from "./framework-behavior.js";
-import {
-  type PrimitiveDocsEnrichment,
-  type PrimitiveEventMetadata,
-  type PrimitivePartApiReferenceMetadata,
-  type PrimitivePartDocsEnrichment,
-  type PrimitivePropReferenceMetadata,
-  type PrimitiveStateModelMetadata,
-} from "../../types.js";
-import { dedupeByName, toDisplayTitle, toPascalCase } from "../shared.js";
 import { toPrimitiveSetterMetadata } from "./setters.js";
 import {
   formatPrimitiveOptionSubject,
@@ -462,20 +464,41 @@ const toPrimitivePropReference = (
   enrichment: PrimitiveDocsEnrichment,
   partEnrichment: PrimitivePartDocsEnrichment | undefined,
 ): PrimitivePropReferenceMetadata => {
-  const description = partEnrichment?.props?.[prop.name] ?? enrichment.props?.[prop.name];
+  const description =
+    partEnrichment?.props?.[prop.name] ?? enrichment.props?.[prop.name] ?? prop.description;
   const displayType = getPrimitivePropDisplayType(contract, prop);
-  const stateModel = findPrimitivePropStateModel(contract, prop.name);
+  // A prop that React does not support cannot carry the React state behavior, even when it reuses
+  // a state prop name, such as the Astro-only Chart Legend \`visible\`. Item props such as an
+  // Accordion item \`value\` keep their state behavior.
+  const stateModel = prop.unsupportedTargets?.includes("react")
+    ? undefined
+    : findPrimitivePropStateModel(contract, prop.name);
+  const reactName = prop.classHook ? normalizeReactClassHookName(prop.name) : prop.name;
+  const resolvedDescription =
+    description ?? getPrimitivePropFallbackDescription(contract, part, prop);
+
+  // Authored part wording marks a prop that overrides the root value, such as a PreviewCard
+  // Trigger delay. The root value is its default, so the contract default does not apply there.
+  const overridesRoot =
+    part.name !== contract.runtime.rootPart &&
+    prop.targets?.includes(contract.runtime.rootPart) === true &&
+    partEnrichment?.props?.[prop.name] !== undefined;
 
   return {
-    ...(prop.defaultValue !== undefined ? { defaultValue: prop.defaultValue } : {}),
+    ...(prop.defaultValue !== undefined && !overridesRoot
+      ? { defaultValue: prop.defaultValue }
+      : {}),
     ...(prop.unsupportedTargets ? { unsupportedTargets: [...prop.unsupportedTargets] } : {}),
     name: prop.name,
     kind: prop.kind,
     ...(prop.required !== undefined ? { required: prop.required } : {}),
     ...(prop.targets ? { targets: [...prop.targets] } : {}),
-    type: prop.type,
+    type: resolvePrimitivePropType(prop.type),
     ...(displayType ? { displayType } : {}),
-    description: description ?? getPrimitivePropFallbackDescription(contract, part, prop),
+    description:
+      reactName === prop.name
+        ? resolvedDescription
+        : `${resolvedDescription} React names it \`${reactName}\`.`,
     descriptionSource: "authored",
     ...(stateModel
       ? { frameworkBehavior: buildPrimitiveStateFrameworkBehavior(contract, stateModel) }
@@ -487,7 +510,29 @@ const primitivePropDisplayTypes: Readonly<Record<string, string>> = {
   FormValidationTiming: '"blur" | "change" | "manual" | "submit"',
 };
 
+/**
+ * The docs words for contract type placeholders. The reference covers every framework, so framework
+ * view and body types read as neutral words.
+ */
+const PRIMITIVE_DOCS_TYPE_WORDS = {
+  ChartClass: "string",
+  ChartContent: "framework content",
+  ChartView: "string | framework content",
+};
+
 const getPrimitivePropDisplayType = (
+  contract: RuntimeAdapterContract,
+  prop: RuntimeAdapterContract["props"][number],
+) => {
+  const displayType = getPrimitivePropRawDisplayType(contract, prop);
+  return displayType === undefined ? undefined : resolvePrimitivePropType(displayType);
+};
+
+/** A contract prop type with its placeholder words in docs words. */
+export const resolvePrimitivePropType = (type: string): string =>
+  chartPropType({ type }, PRIMITIVE_DOCS_TYPE_WORDS);
+
+const getPrimitivePropRawDisplayType = (
   contract: RuntimeAdapterContract,
   prop: RuntimeAdapterContract["props"][number],
 ) => {

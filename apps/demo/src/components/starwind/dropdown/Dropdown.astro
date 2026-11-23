@@ -42,6 +42,7 @@ const {
 </div>
 
 <script>
+  import { keepPortalDirection, readDirection } from "@/lib/utils/starwind/direction";
   import {
     type FloatingAlign,
     type FloatingSide,
@@ -50,6 +51,8 @@ const {
   } from "@/lib/utils/starwind/positioning";
 
   class DropdownHandler {
+    private implicitSubmenuSide = false;
+    private releaseDirection?: ReturnType<typeof keepPortalDirection>;
     private dropdown: HTMLElement;
     private trigger: HTMLElement | null;
     private content: HTMLElement | null;
@@ -90,7 +93,7 @@ const {
       this.isSubmenu = dropdown.classList.contains("starwind-dropdown-sub");
       this.isContextMenu = dropdown.getAttribute("data-menu-mode") === "context-menu";
       this.openOnHover = dropdown.getAttribute("data-open-on-hover") === "true" || this.isSubmenu;
-      this.closeDelay = parseInt(dropdown.getAttribute("data-close-delay") || "200");
+      this.closeDelay = Number.parseInt(dropdown.getAttribute("data-close-delay") || "200");
 
       // Find the trigger and content that belong to this dropdown, avoiding nested ones
       this.trigger = this.findOwnElement(
@@ -121,9 +124,9 @@ const {
       // Get animation duration from inline styles if available
       const animationDurationString = this.content.style.animationDuration;
       if (animationDurationString.endsWith("ms")) {
-        this.animationDuration = parseFloat(animationDurationString);
+        this.animationDuration = Number.parseFloat(animationDurationString);
       } else if (animationDurationString.endsWith("s")) {
-        this.animationDuration = parseFloat(animationDurationString) * 1000;
+        this.animationDuration = Number.parseFloat(animationDurationString) * 1000;
       }
 
       if (this.isSubmenu) {
@@ -133,6 +136,7 @@ const {
       }
 
       const contentSide = this.content.getAttribute("data-side");
+      this.implicitSubmenuSide = this.isSubmenu && !contentSide;
       if (
         contentSide === "top" ||
         contentSide === "bottom" ||
@@ -147,7 +151,7 @@ const {
         this.align = contentAlign;
       }
 
-      const contentSideOffset = parseFloat(
+      const contentSideOffset = Number.parseFloat(
         this.content.getAttribute("data-side-offset") || `${this.sideOffset}`,
       );
       if (Number.isFinite(contentSideOffset)) {
@@ -260,7 +264,10 @@ const {
             } else {
               this.focusItem(this.items.length - 1); // Focus last item when opening with arrow up
             }
-          } else if (e.key === "ArrowRight" && this.isSubmenu) {
+          } else if (
+            e.key === (readDirection(this.dropdown) === "rtl" ? "ArrowLeft" : "ArrowRight") &&
+            this.isSubmenu
+          ) {
             e.preventDefault();
             e.stopPropagation();
             if (!this.isOpen) {
@@ -537,7 +544,10 @@ const {
     private openAtTrigger() {
       if (!this.trigger) return;
       const rect = this.trigger.getBoundingClientRect();
-      this.openAtPoint(rect.left, rect.bottom);
+      this.openAtPoint(
+        readDirection(this.dropdown) === "rtl" ? rect.right : rect.left,
+        rect.bottom,
+      );
     }
 
     private handleMenuKeydown(e: KeyboardEvent) {
@@ -561,14 +571,14 @@ const {
           e.stopPropagation();
           this.focusItem(currentIdx === -1 ? this.items.length - 1 : currentIdx - 1);
           break;
-        case "ArrowRight":
+        case readDirection(this.dropdown) === "rtl" ? "ArrowLeft" : "ArrowRight":
           if (currentItem?.getAttribute("aria-haspopup") === "true") {
             e.preventDefault();
             e.stopPropagation();
             currentItem.click();
           }
           break;
-        case "ArrowLeft":
+        case readDirection(this.dropdown) === "rtl" ? "ArrowRight" : "ArrowLeft":
           if (this.isSubmenu) {
             e.preventDefault();
             e.stopPropagation();
@@ -822,6 +832,9 @@ const {
       this.content.parentNode?.insertBefore(this.contentPlaceholder, this.content);
 
       // Move content to body
+      this.releaseDirection = keepPortalDirection(this.dropdown, this.content, () =>
+        this.positionContent(),
+      );
       portalTarget.appendChild(this.content);
       this.portalTarget = portalTarget;
 
@@ -887,6 +900,8 @@ const {
     }
 
     private unportalContent() {
+      this.releaseDirection?.destroy();
+      this.releaseDirection = undefined;
       if (!this.content) return;
 
       // Decrement parent's open child count
@@ -962,8 +977,15 @@ const {
       const viewportHeight = window.innerHeight;
       const viewportPadding = 8;
 
+      this.releaseDirection?.sync();
+      const direction = readDirection(this.content);
       const resolvedPlacement = resolvePlacement({
-        side: this.side,
+        direction,
+        side: this.implicitSubmenuSide
+          ? readDirection(this.dropdown) === "rtl"
+            ? "left"
+            : "right"
+          : this.side,
         align: this.align,
         sideOffset: this.sideOffset,
         triggerRect,
@@ -991,6 +1013,7 @@ const {
       this.content.style.transformOrigin = getTransformOrigin(
         resolvedPlacement.side,
         resolvedPlacement.align,
+        direction,
       );
       this.content.setAttribute("data-side", resolvedPlacement.side);
       this.content.setAttribute("data-align", resolvedPlacement.align);

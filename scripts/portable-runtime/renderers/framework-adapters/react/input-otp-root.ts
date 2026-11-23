@@ -22,7 +22,6 @@ export function printReactInputOtpRoot(facts: AdapterHiddenInputVisualSlotFacts)
   const root = facts.exports.root;
   const connection = otpConnection(facts, {
     authority: "parent",
-    parentAcceptance: "runtime",
     read: "inputs.current",
     seed: "seed.current",
     current: "currentRef.current",
@@ -64,7 +63,8 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
     return () => { if (connectionRef.current === owned) connectionRef.current = undefined; owned.destroy(); };
   }, []);
   useIsomorphicLayoutEffect(() => { connectionRef.current?.update(); });
-  const renderedValue = value ?? current;
+  const owned = React.useRef(value === undefined).current;
+  const renderedValue = owned ? current : value ?? current;
   return <div ref={composedRef} ${facts.attrs.root}
     ${facts.attrs.defaultValue}={seed.current} ${facts.attrs.disabled}={disabled ? "" : undefined}
     ${facts.attrs.form}={form} ${facts.attrs.id}={id} ${facts.attrs.maxLength}={maxLength} ${facts.attrs.name}={name}

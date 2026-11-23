@@ -15,6 +15,8 @@ import type { HostProjectPreparation } from "./host-project.js";
 import { installDependencies, type PackageManager } from "./package-manager.js";
 import { resolveProjectMutationPath } from "./project-path.js";
 import {
+  type AstArrayExpression,
+  type AstObjectExpression,
   asAstArrayExpression,
   getAstDefaultExportCallObject,
   getAstDefaultImportBinding,
@@ -23,10 +25,8 @@ import {
   getAstObjectProperty,
   getAvailableIdentifier,
   hasAstDirectCall,
-  parseSourceModule,
-  type AstArrayExpression,
-  type AstObjectExpression,
   type ParsedSourceModule,
+  parseSourceModule,
 } from "./source-shape.js";
 
 export type AstroIntegrationProjectPackage = {

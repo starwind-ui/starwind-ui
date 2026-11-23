@@ -43,7 +43,33 @@ export function releaseGateStages() {
     ["vue tests", ["--filter=@starwind-ui/vue", "test:all:built"], "demos"],
     ["vue generator tests", ["runtime:generate:vue:test"], "generators"],
     ["svelte tests", ["--filter=@starwind-ui/svelte", "test:run"], "tests"],
+    // Installs the exact Svelte 5.29 and current compiler tools beside the built Svelte package.
+    // It copies packages/runtime/dist, so it runs after "runtime tests" rebuilds that folder.
+    [
+      "Svelte compatibility",
+      ["exec", "tsx", "scripts/portable-runtime/check-svelte-compatibility.ts"],
+      "tests",
+    ],
+    // Installs the exact Vue peer floor and the Vue version the package builds with beside the
+    // packed Runtime and Vue archives. It reads only the packs, so it needs no build.
+    [
+      "Vue compatibility",
+      [
+        "exec",
+        "tsx",
+        "scripts/portable-runtime/check-vue-compatibility.ts",
+        `--packs=${RELEASE_PACKS}`,
+      ],
+      "tests",
+    ],
+    // The Chart browser suites import the four frameworks from source and write only to the
+    // system temporary folder. Their fixture servers turn off HMR and the WebSocket server, so they
+    // do not open the Vue tests' port and do not need the demo lane. Four browser workers keep
+    // them from starving the other lanes.
+    ["chart parity", ["test:chart-parity", "--maxWorkers", "4"], "tests"],
+    ["chart styled", ["test:chart-styled", "--maxWorkers", "4"], "tests"],
     ["svelte generator tests", ["runtime:generate:svelte:test"], "generators"],
+    ["svelte styled tests", ["svelte:styled:test"], "generators"],
     ["astro demo", ["demo:smoke"], "demos"],
     ["react demo", ["react-demo:smoke"], "demos"],
     ["vue demo", ["--filter=vue-demo", "smoke:built"], "demos"],
@@ -51,6 +77,10 @@ export function releaseGateStages() {
     // Builds its Astro fixtures from apps/demo, so it shares the demo lane with that app's build.
     ["target conformance", ["test:conformance"], "demos"],
     ["bundle sizes", ["runtime:size:check:prepared"], "demos"],
+    // Starts each demo app's dev server, so it shares the demo lane. The build stage already
+    // built the Runtime and Svelte packages, and it runs last, after the demo smoke stages. It
+    // opens one browser page at a time, so it needs no worker cap.
+    ["chart gallery", ["test:chart-gallery", "--skip-build"], "demos"],
     [
       "Vue hosts",
       ["test:vue-cli-host-acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"],
@@ -62,6 +92,18 @@ export function releaseGateStages() {
       ["release:candidate:acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"],
       "candidate",
     ],
+    // The direction suite builds its fixtures in its run folder with its own Astro root and Vite
+    // caches, so it does not write to apps/demo/.astro or the apps/demo caches that the demo lane
+    // uses. The gate runs every planned engine. Five other lanes run at the same time, so it caps
+    // the browser workers at 10.
+    [
+      "direction browsers",
+      ["direction:test", "--engines", "all", "--max-workers", "10"],
+      "direction",
+    ],
+    // The hosts stay in the system temporary folder, because a host inside the checkout reads
+    // the checkout's configuration files.
+    ["direction installed hosts", ["direction:installed", "--packs", RELEASE_PACKS], "direction"],
   ];
 }
 

@@ -10,8 +10,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "child": child,
-    "children": children,
+    child,
+    children,
     ...rest
   }: DropdownTriggerProps = $props();
 

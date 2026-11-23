@@ -1,0 +1,71 @@
+---
+import { Avatar } from "@starwind-ui/astro/avatar";
+import { Menu } from "@starwind-ui/astro/menu";
+import { Popover } from "@starwind-ui/astro/popover";
+import { Toggle } from "@starwind-ui/astro/toggle";
+import Page from "../Page.astro";
+---
+
+<Page>
+  <main>
+    <Toggle.Root defaultPressed data-testid="td-root">Default</Toggle.Root>
+
+    <Menu.Root data-testid="md-root">
+      <Menu.Trigger data-testid="md-trigger">Menu</Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Popup data-testid="md-popup">
+          <Menu.CheckboxItem defaultChecked data-testid="md-check">Default</Menu.CheckboxItem>
+          <Menu.RadioGroup data-testid="mr-group">
+            <Menu.RadioItem value="a" checked={false} defaultChecked data-testid="mr-a">
+              Held off
+            </Menu.RadioItem>
+            <Menu.RadioItem value="b" checked data-testid="mr-b">Held on</Menu.RadioItem>
+          </Menu.RadioGroup>
+          <Menu.RadioGroup>
+            <Menu.RadioItem value="a" defaultChecked data-testid="md-radio-a">A</Menu.RadioItem>
+            <Menu.RadioItem value="b" data-testid="md-radio-b">B</Menu.RadioItem>
+          </Menu.RadioGroup>
+        </Menu.Popup>
+      </Menu.Positioner>
+    </Menu.Root>
+
+    <div data-avatar-wrapper></div>
+    <template data-avatar-template>
+      <Avatar.Root data-testid="av-root">
+        <Avatar.Image src="/conformance-avatar.png" alt="Avatar" />
+      </Avatar.Root>
+    </template>
+
+    <Popover.Root defaultOpen data-testid="pd-root">
+      <Popover.Trigger>Default</Popover.Trigger>
+      <Popover.Positioner>
+        <Popover.Popup>Default body</Popover.Popup>
+      </Popover.Positioner>
+    </Popover.Root>
+  </main>
+  <script>
+    import { initStarwind } from "@starwind-ui/runtime/init-starwind";
+    import { parent, record } from "../../shared/harness";
+
+    // Astro has no callback prop. A listener on the Avatar root stands for the callback, because
+    // the React and Vue adapters bridge their callback from that root event.
+    const wrapper = document.querySelector<HTMLElement>("[data-avatar-wrapper]")!;
+    const template = document.querySelector<HTMLTemplateElement>("[data-avatar-template]")!;
+    const status = (event: Event) => (event as CustomEvent<{ status: string }>).detail.status;
+    wrapper.addEventListener("starwind:loading-status-change", (event) =>
+      record("av", "ancestor", status(event)),
+    );
+    parent("av", {
+      write: (next) => {
+        if (!next || wrapper.childElementCount > 0) return;
+        wrapper.append(template.content.cloneNode(true));
+        const root = wrapper.querySelector<HTMLElement>("[data-sw-avatar]")!;
+        root.addEventListener("starwind:loading-status-change", (event) => {
+          if (event.target === root) record("av", "callback", status(event));
+        });
+        initStarwind(wrapper);
+      },
+      read: () => wrapper.childElementCount > 0,
+    });
+  </script>
+</Page>

@@ -1,0 +1,10 @@
+{
+  "impact": "behavior",
+  "components": {
+    "hover-card": "minor",
+    "popover": "minor",
+    "radio-group": "minor",
+    "tabs": "minor",
+    "tooltip": "minor"
+  }
+}

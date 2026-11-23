@@ -2,7 +2,7 @@ import {
   frameworkAdapterTargets,
   getPrimitiveFrameworkAdapterTargetsForComponent,
 } from "../../../renderers/framework-adapters/target-registry.js";
-import type { PublicFrameworkMetadata, PrimitivePackageMetadata } from "../types.js";
+import type { PrimitivePackageMetadata, PublicFrameworkMetadata } from "../types.js";
 
 export const publicFrameworks: readonly PublicFrameworkMetadata[] = frameworkAdapterTargets
   .filter(({ publicSupport }) => publicSupport.publicDocsClaim)

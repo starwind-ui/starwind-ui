@@ -1,19 +1,18 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
-import { afterEach, describe, expect, it } from "vitest";
 import { format, resolveConfig } from "prettier";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { buttonRuntimeAdapterContract } from "../../contracts/primitive/components/button.js";
-import { vueFrameworkAdapter } from "../../renderers/framework-adapters/vue/adapter.js";
+import { formatGeneratedOutput } from "../../format-generated-output.js";
+import { generateVuePrimitiveWrappers } from "../../generate-vue-wrappers.js";
 import type { AdapterComponentFile } from "../../renderers/framework-adapters/types.js";
+import { vueFrameworkAdapter } from "../../renderers/framework-adapters/vue/adapter.js";
 import {
   buildGenericAdapterOutputModel,
   buildGenericAdapterPlan,
 } from "../../renderers/generic-adapter-plan/index.js";
-import { generateVuePrimitiveWrappers } from "../../generate-vue-wrappers.js";
-import { formatGeneratedOutput } from "../../format-generated-output.js";
 
 const FAMILY_MODULES = [
   "action-surface",
@@ -84,28 +83,24 @@ describe("Vue Primitive family renderer architecture", () => {
     );
   });
 
-  it(
-    "regenerates the complete package deterministically against checked-in bytes",
-    async () => {
-      const firstRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-family-first-"));
-      const secondRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-family-second-"));
-      temporaryRoots.push(firstRoot, secondRoot);
+  it("regenerates the complete package deterministically against checked-in bytes", async () => {
+    const firstRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-family-first-"));
+    const secondRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-family-second-"));
+    temporaryRoots.push(firstRoot, secondRoot);
 
-      await generateVuePrimitiveWrappers({ outputDir: ".", repoRoot: firstRoot });
-      await generateVuePrimitiveWrappers({ outputDir: ".", repoRoot: secondRoot });
-      await formatGeneratedOutput([firstRoot, secondRoot], process.cwd());
-      await Promise.all([formatTypeScriptTree(firstRoot), formatTypeScriptTree(secondRoot)]);
+    await generateVuePrimitiveWrappers({ outputDir: ".", repoRoot: firstRoot });
+    await generateVuePrimitiveWrappers({ outputDir: ".", repoRoot: secondRoot });
+    await formatGeneratedOutput([firstRoot, secondRoot], process.cwd());
+    await Promise.all([formatTypeScriptTree(firstRoot), formatTypeScriptTree(secondRoot)]);
 
-      const first = await readTree(firstRoot);
-      const second = await readTree(secondRoot);
-      const checkedIn = await readTree(path.join(process.cwd(), "packages/vue/src"));
+    const first = await readTree(firstRoot);
+    const second = await readTree(secondRoot);
+    const checkedIn = await readTree(path.join(process.cwd(), "packages/vue/src"));
 
-      expect(first).toEqual(second);
-      expect(first).toEqual(checkedIn);
-      expect(Object.keys(first)).toEqual(Object.keys(checkedIn));
-    },
-    120_000,
-  );
+    expect(first).toEqual(second);
+    expect(first).toEqual(checkedIn);
+    expect(Object.keys(first)).toEqual(Object.keys(checkedIn));
+  }, 120_000);
 });
 
 async function readTree(root: string): Promise<Record<string, string>> {

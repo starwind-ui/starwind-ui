@@ -6,11 +6,11 @@ import type {
   AdapterOptionCollectionOverlayPartName,
   AdapterOutputModel,
 } from "../framework-adapters/index.js";
+import { getAdapterChildElements } from "../framework-adapters/types.js";
 import { withAcceptedModelPublications } from "../primitive-output-model/accepted-model-publication.js";
 import { createPrimitiveAttributeMap } from "../primitives/contract-helpers.js";
 import { buildBaseSpecializedAdapterSpec } from "./base-specialized-adapter-spec.js";
 import type { SpecializedAdapterSpec } from "./types.js";
-import { getAdapterChildElements } from "../framework-adapters/types.js";
 
 export type SelectSpecializedAdapterSpec = SpecializedAdapterSpec & {
   select: {

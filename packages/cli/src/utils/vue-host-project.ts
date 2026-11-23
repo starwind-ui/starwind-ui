@@ -6,6 +6,7 @@ import {
   prepareAstroVueIntegration,
 } from "./astro-vue-integration.js";
 import type { HostProjectPlanBase, HostProjectPreparation } from "./host-project.js";
+import { VUE_VERSION_FLOOR } from "./install-defaults.js";
 import {
   getLaravelInertiaVueProjectPlan,
   hasLaravelInertiaVueProjectEvidence,
@@ -185,7 +186,7 @@ const viteVueHostAdapter: VueHostAdapter = Object.freeze({
         setup: async (cssFile) => setupVueProject(vitePlan, cssFile),
         setupLabel: "Setup Vite Vue project",
         setupResult: "Vue project setup completed",
-        setupTypeScript: async () => setupVueTsConfig(/\.js$/.test(vitePlan.cssEntry)),
+        setupTypeScript: async () => setupVueTsConfig(vitePlan.cssEntry.endsWith(".js")),
         utilsDir: vitePlan.utilsDir,
         validate: async () => validateVueProjectSetup(vitePlan),
         vueUpgradeRequired: vitePlan.vueUpgradeRequired,
@@ -417,7 +418,7 @@ function getHostPackageRequirements(
         requirement.startsWith("vue@") && meetsVueVersionFloor(requirement.slice("vue@".length)),
     )
   ) {
-    throw new Error("The private Vue registry must require Vue 3.5 or later.");
+    throw new Error(`The private Vue registry must require Vue ${VUE_VERSION_FLOOR} or later.`);
   }
   return next;
 }

@@ -616,6 +616,9 @@ class ToastManagerController implements ToastManager {
     const element = clone.firstElementChild as HTMLElement | null;
     if (!element) return null;
 
+    const templateDirection = template.getAttribute("dir");
+    if (!element.hasAttribute("dir") && templateDirection !== null)
+      element.setAttribute("dir", templateDirection);
     element.setAttribute(TOAST_ROOT_ATTRIBUTE, "");
     element.setAttribute(TOAST_ID_ATTRIBUTE, toast.id);
     element.setAttribute("data-state", "open");

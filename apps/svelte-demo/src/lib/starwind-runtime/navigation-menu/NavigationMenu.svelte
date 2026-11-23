@@ -10,25 +10,25 @@
 
 <script lang="ts">
   let {
-    "defaultValue": defaultValue = null,
-    "openDelay": openDelay = 50,
-    "closeDelay": closeDelay = 50,
-    "closeOnEscape": closeOnEscape = true,
-    "closeOnOutsideInteract": closeOnOutsideInteract = true,
-    "orientation": orientation = "horizontal",
-    "side": side = "bottom",
-    "align": align = "start",
-    "sideOffset": sideOffset = 8,
-    "alignOffset": alignOffset = 0,
-    "avoidCollisions": avoidCollisions = true,
-    "collisionPadding": collisionPadding = 8,
-    "size": size = "md",
-    "contentSize": contentSize = size,
+    defaultValue = null,
+    openDelay = 50,
+    closeDelay = 50,
+    closeOnEscape = true,
+    closeOnOutsideInteract = true,
+    orientation = "horizontal",
+    side = "bottom",
+    align = "start",
+    sideOffset = 8,
+    alignOffset = 0,
+    avoidCollisions = true,
+    collisionPadding = 8,
+    size = "md",
+    contentSize = size,
     "class": className,
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
+    portalContainer,
+    disablePortal = false,
     value = $bindable(),
-    "onValueChange": onValueChange,
+    onValueChange,
     "children": consumerChildren,
     "value": commandValue,
     ...rest
@@ -49,20 +49,18 @@
   onValueChange={onValueChange}
   bind:value={() => commandValue, (next) => { value = next; }}
 >
-  {#snippet children(acceptedValue)}
-    {@render consumerChildren?.(acceptedValue)}
-    <NavigationMenuPositioner
-      side={side}
-      align={align}
-      sideOffset={sideOffset}
-      alignOffset={alignOffset}
-      avoidCollisions={avoidCollisions}
-      collisionPadding={collisionPadding}
-      size={contentSize}
-      portalContainer={portalContainer}
-      disablePortal={disablePortal}
-    >
+  {@render consumerChildren?.()}
+  <NavigationMenuPositioner
+    side={side}
+    align={align}
+    sideOffset={sideOffset}
+    alignOffset={alignOffset}
+    avoidCollisions={avoidCollisions}
+    collisionPadding={collisionPadding}
+    size={contentSize}
+    portalContainer={portalContainer}
+    disablePortal={disablePortal}
+  >
 
-    </NavigationMenuPositioner>
-  {/snippet}
+  </NavigationMenuPositioner>
 </NavigationMenuRoot>

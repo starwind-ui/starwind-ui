@@ -51,7 +51,6 @@ async function readGeneratedFiles(directory: string, root: string = directory): 
 const vueFrameworkAdapterTargetDefinition = {
   adapter: vueFrameworkAdapter,
   cliRegistry: {
-    exactAdapterPackageVersion: true,
     generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
     packageMetadataSources: [
       "packages/vue/package.json",
@@ -71,7 +70,10 @@ const vueFrameworkAdapterTargetDefinition = {
       outputDir: "vue",
       primitiveOutputDir: "vue-primitives",
     },
-    setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
+    setupPackageRequirements: [
+      { name: "tailwind-merge", range: "^3.7.0" },
+      { name: "vue", range: `>=${vueAdapterPublicContract.framework.minimumVersion}` },
+    ],
   },
   displayName: "Vue",
   home: "scripts/portable-runtime/renderers/framework-adapters/vue",

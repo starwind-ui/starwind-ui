@@ -78,12 +78,8 @@ export const generateSveltePrimitivePackage: FrameworkAdapterTargetPrimitivePack
           const source = await readFile(path.join(outputRoot, file), "utf8");
           return {
             usesCapture: source.includes('from "../_internal/overlay-capture.js"'),
-            usesDiscovery: source.includes(
-              'from "../_internal/forwarded-attachment-discovery.js"',
-            ),
-            usesExecution: source.includes(
-              'from "../_internal/attachment-execution.svelte.js"',
-            ),
+            usesDiscovery: source.includes('from "../_internal/forwarded-attachment-discovery.js"'),
+            usesExecution: source.includes('from "../_internal/attachment-execution.svelte.js"'),
             usesRefAttachment: source.includes('from "../_internal/ref-attachment.js"'),
           };
         }),

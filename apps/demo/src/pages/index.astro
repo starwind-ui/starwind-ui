@@ -1,60 +1,5 @@
 ---
-import {
-  AlertDemo,
-  AlertDialogDemo,
-  AspectRatioDemo,
-  AvatarDemo,
-  BadgeDemo,
-  BreadcrumbDemo,
-  ButtonDemo,
-  ButtonGroupDemo,
-  CardDemo,
-  CarouselDemo,
-  CheckboxDemo,
-  CheckboxGroupDemo,
-  CollapsibleDemo,
-  ColorPickerDemo,
-  ComboboxDemo,
-  ContextMenuDemo,
-  DialogDemo,
-  DropdownDemo,
-  DropzoneDemo,
-  FieldDemo,
-  HoverCardDemo,
-  ImageDemo,
-  InputDemo,
-  InputGroupDemo,
-  InputOTPDemo,
-  ItemDemo,
-  KbdDemo,
-  LabelDemo,
-  NativeSelectDemo,
-  NavigationMenuDemo,
-  NestedDisclosureDemo,
-  PaginationDemo,
-  PopoverDemo,
-  ProgressDemo,
-  ProseDemo,
-  RadioGroupDemo,
-  ScrollAreaDemo,
-  SelectDemo,
-  SeparatorDemo,
-  SheetDemo,
-  SingleAccordionDemo,
-  SkeletonDemo,
-  SliderDemo,
-  SpinnerDemo,
-  SwitchDemo,
-  TableDemo,
-  TabsDemo,
-  TextareaDemo,
-  ThemeToggleDemo,
-  ToastDemo,
-  ToggleDemo,
-  ToggleGroupDemo,
-  TooltipDemo,
-  VideoDemo,
-} from "@/components/runtime-prototype";
+import { componentDemos } from "@/components/runtime-prototype/sections";
 import Layout from "@/layouts/Layout.astro";
 ---
 
@@ -62,121 +7,35 @@ import Layout from "@/layouts/Layout.astro";
   title="Starwind UI Astro Components"
   description="Starwind UI components for Astro backed by the portable Runtime"
 >
-  <main class="container mx-auto max-w-4xl px-4 py-12">
+  <div class="container mx-auto max-w-4xl px-4 py-12">
     <div class="mb-10 space-y-3">
       <h1 class="font-heading text-4xl font-semibold tracking-tight">Starwind UI components</h1>
       <p class="text-muted-foreground max-w-2xl">
         Generated styled Astro components backed by Starwind Runtime. Use this page to review and
-        test the current component set.
+        test the current component set. The LTR/RTL button in the header switches the reading
+        direction for the whole page.
       </p>
     </div>
 
-    <NestedDisclosureDemo />
+    <nav aria-label="Components on this page" class="mb-12 flex flex-wrap gap-2">
+      {
+        componentDemos.map(({ id, label }) => (
+          <a
+            href={`#${id}`}
+            class="bg-muted text-muted-foreground hover:text-foreground rounded-md px-2.5 py-1 text-sm transition-colors"
+          >
+            {label}
+          </a>
+        ))
+      }
+    </nav>
 
-    <ColorPickerDemo />
-
-    <SheetDemo />
-
-    <DropdownDemo />
-
-    <NavigationMenuDemo />
-
-    <ContextMenuDemo />
-
-    <PopoverDemo />
-
-    <DialogDemo />
-
-    <ButtonGroupDemo />
-
-    <ItemDemo />
-
-    <NativeSelectDemo />
-
-    <PaginationDemo />
-
-    <TableDemo />
-
-    <AspectRatioDemo />
-
-    <ImageDemo />
-
-    <VideoDemo />
-
-    <CarouselDemo />
-
-    <ButtonDemo />
-
-    <BadgeDemo />
-
-    <LabelDemo />
-
-    <InputDemo />
-
-    <DropzoneDemo />
-
-    <InputGroupDemo />
-
-    <SpinnerDemo />
-
-    <FieldDemo />
-
-    <InputOTPDemo />
-
-    <SliderDemo />
-
-    <SwitchDemo />
-
-    <ToggleDemo />
-
-    <ThemeToggleDemo />
-
-    <ToggleGroupDemo />
-
-    <TabsDemo />
-
-    <TextareaDemo />
-
-    <SkeletonDemo />
-
-    <CardDemo />
-
-    <BreadcrumbDemo />
-
-    <SeparatorDemo />
-
-    <ScrollAreaDemo />
-
-    <SelectDemo />
-
-    <ComboboxDemo />
-
-    <ToastDemo />
-
-    <AlertDemo />
-
-    <CheckboxDemo />
-
-    <CheckboxGroupDemo />
-
-    <RadioGroupDemo />
-
-    <AvatarDemo />
-
-    <KbdDemo />
-
-    <TooltipDemo />
-
-    <HoverCardDemo />
-
-    <ProgressDemo />
-
-    <ProseDemo />
-
-    <CollapsibleDemo />
-
-    <SingleAccordionDemo />
-
-    <AlertDialogDemo />
-  </main>
+    {
+      componentDemos.map(({ id, component: Demo }) => (
+        <div id={id} class="scroll-mt-20">
+          <Demo />
+        </div>
+      ))
+    }
+  </div>
 </Layout>

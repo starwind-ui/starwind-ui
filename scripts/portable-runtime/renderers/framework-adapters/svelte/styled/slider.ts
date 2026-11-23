@@ -47,7 +47,7 @@ export function specializeSvelteStyledSlider(
   resolved.value = { type: "raw", code: "acceptedInput() ?? retainedValue" };
   range.value = {
     type: "raw",
-    code: 'orientation === "horizontal" ? `left: ${rangeStart}%; width: ${rangeEnd - rangeStart}%` : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`',
+    code: 'orientation === "horizontal" ? `inset-inline-start: ${rangeStart}%; width: ${rangeEnd - rangeStart}%` : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`',
   };
   function visit(node: StyledOutputRenderNode): void {
     if (node.type === "primitive" && node.component === "slider" && node.part === "Thumb") {
@@ -55,7 +55,7 @@ export function specializeSvelteStyledSlider(
       if (!style) throw new TypeError("Styled Slider requires its contracted thumb position.");
       style.value = {
         type: "raw",
-        code: 'orientation === "horizontal" ? `left: ${getPercentage(values[index] ?? min)}%` : `bottom: ${getPercentage(values[index] ?? min)}%`',
+        code: 'orientation === "horizontal" ? `inset-inline-start: ${getPercentage(values[index] ?? min)}%` : `bottom: ${getPercentage(values[index] ?? min)}%`',
       };
     }
     if ("children" in node) node.children.forEach(visit);

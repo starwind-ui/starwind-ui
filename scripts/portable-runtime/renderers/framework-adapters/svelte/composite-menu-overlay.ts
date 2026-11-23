@@ -1,4 +1,8 @@
-import { initialCheckedValue, initialModelValue } from "../../shared-recipes/initial-state.js";
+import {
+  defaultMarker,
+  initialCheckedValue,
+  initialModelValue,
+} from "../../shared-recipes/initial-state.js";
 import {
   menuConnection,
   menuFragments,
@@ -25,7 +29,6 @@ import { printSvelteButtonChild } from "./button-child.js";
 import { printSvelteOverlayPortal } from "./overlay-portal.js";
 import { svelteCommandName } from "./recipe-framework-operations.js";
 
-const NOTICE = "Svelte 5 public beta adapter output.";
 type Facts = AdapterCompositeMenuOverlayFacts;
 
 export function printSvelteCompositeMenuOverlayIndex(file: AdapterIndexFile): AdapterPrintedFile {
@@ -34,8 +37,7 @@ export function printSvelteCompositeMenuOverlayIndex(file: AdapterIndexFile): Ad
   const { facts } = file.family;
   return {
     path: file.path,
-    contents: `// ${NOTICE}
-${facts.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
+    contents: `${facts.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
 const ${facts.exports.namespace} = {
 ${facts.index.namespaceMembers.map(({ key, name }) => `  ${key}: ${name},`).join("\n")}
 };
@@ -89,11 +91,10 @@ export function printSvelteMenuRoot(f: Facts | AdapterAnchoredMenuOverlayFacts):
   const closeEvent = f.events.closeComplete;
   const contextMenu = "menuRoot" in f.attrs ? (f as AdapterAnchoredMenuOverlayFacts) : undefined;
   const hover = "openOnHover" in f.props ? (f as Facts) : undefined;
-  return `<!-- ${NOTICE} -->
-${
-  contextMenu
-    ? ""
-    : `<script module lang="ts">
+  return `${
+    contextMenu
+      ? ""
+      : `<script module lang="ts">
   import { getContext } from "svelte";
   export type MenuPart = { element: HTMLElement; scope: symbol; part: string; attributes?: Record<string, string> };
   export type MenuItemModel = { prepare(): void; accept(): void };
@@ -118,7 +119,7 @@ ${
   export function getMenuRadioContext(): { readonly value: string | undefined } | undefined { return getContext(menuRadioKey); }
   export function getMenuCheckedContext(): { readonly checked: boolean } | undefined { return getContext(menuCheckedKey); }
 </script>`
-}
+  }
 <script lang="ts">
   import { ${f.runtime.factory}, ${contextMenu ? "" : "createPortalBinding, readyPortalBindingSnapshot, "}type ${openEvent.detailsType}, type ${closeEvent.detailsType} } from "${f.runtime.importSource}";
 ${
@@ -182,7 +183,7 @@ ${
   };
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
-<div {...rest} ${f.attrs.root}="" ${contextMenu ? `${contextMenu.attrs.menuRoot}="" ` : ""}data-sw-part="${f.parts.root.name}" ${f.attrs.defaultOpen}={initialDefault ? "true" : undefined} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.modal}={String(modal)} ${hover ? `${hover.attrs.openOnHover}={openOnHover ? "" : undefined} ` : ""}${f.attrs.closeDelay}={closeDelay} data-state={${initial.rendered} ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
+<div {...rest} ${f.attrs.root}="" ${contextMenu ? `${contextMenu.attrs.menuRoot}="" ` : ""}data-sw-part="${f.parts.root.name}" ${f.attrs.defaultOpen}={initialDefault ? "true" : undefined} ${f.attrs.disabled}={disabled ? "" : undefined} ${f.attrs.modal}={String(modal)} ${hover ? `${hover.attrs.openOnHover}={openOnHover ? "true" : undefined} ` : ""}${f.attrs.closeDelay}={closeDelay} data-state={${initial.rendered} ? "open" : "closed"} {@attach attachRuntime} {@attach attachRef}>
   {@render children?.()}
 </div>
 `;
@@ -201,8 +202,7 @@ function printTrigger(f: Facts): string {
 }
 
 function printSubmenuRoot(f: Facts): string {
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { createPortalBinding, readyPortalBindingSnapshot } from "${f.runtime.importSource}";
   import { setContext, untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
@@ -250,8 +250,7 @@ function printItemModel(f: Facts, part: "checkboxItem" | "radioGroup"): string {
   const read = checkbox
     ? 'element.getAttribute("aria-checked") === "true"'
     : `element.getAttribute("${f.attrs.radioGroupValue}") ?? undefined`;
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import type { ${event.detailsType} } from "${f.runtime.importSource}";
   import { setContext, untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
@@ -265,7 +264,8 @@ function printItemModel(f: Facts, part: "checkboxItem" | "radioGroup"): string {
   let { children, ${model} = $bindable(), ${model}: ${command}, ${checkbox ? "defaultChecked, disabled = false, closeOnClick = false" : "defaultValue"}, ${event.callbackProp}, ref, ...rest }: Props = $props();
   const initial = untrack(() => ${command});
   const ${model}Controlled = initial !== undefined;
-  let accepted = $state(${initialModelValue("initial", `untrack(() => ${checkbox ? "defaultChecked" : "defaultValue"})`)}${fallback});
+  const initialDefault = untrack(() => ${checkbox ? "defaultChecked" : "defaultValue"});
+  let accepted = $state(${initialModelValue("initial", "initialDefault")}${fallback});
   const tree = getMenuTreeContext();
   const owner = Symbol("${f.exports[part]} model");
   setContext(${checkbox ? "menuCheckedKey" : "menuRadioKey"}, { get ${model}() { return accepted; } });
@@ -294,13 +294,12 @@ function printItemModel(f: Facts, part: "checkboxItem" | "radioGroup"): string {
   };
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
-<div {...rest} ${f.parts[part].discoveryAttribute}="" data-sw-part="${f.parts[part].name}" role="${recipe.role}" ${checkbox ? `tabindex="0" aria-checked={accepted} data-checked={accepted ? "" : undefined} data-unchecked={accepted ? undefined : ""} data-default-checked={accepted ? "true" : undefined} data-close-on-click={String(closeOnClick)} aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined}` : `${f.attrs.radioGroupValue}={accepted}`} {@attach attachModel} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} ${f.parts[part].discoveryAttribute}="" data-sw-part="${f.parts[part].name}" role="${recipe.role}" ${checkbox ? `tabindex="0" aria-checked={accepted} data-checked={accepted ? "" : undefined} data-unchecked={accepted ? undefined : ""} ${f.checkboxItem.checkedState.initialAttribute}={${defaultMarker("initialDefault")}} ${f.checkboxItem.closeOnClick.attribute}={closeOnClick ? "true" : undefined} aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined}` : `${f.attrs.radioGroupValue}={accepted}`} {@attach attachModel} {@attach attachRef}>{@render children?.()}</div>
 `;
 }
 
 function printRadioItem(f: Facts): string {
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { setContext, untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
@@ -313,13 +312,12 @@ function printRadioItem(f: Facts): string {
   setContext(menuCheckedKey, { get checked() { return accepted; } });
 ${printSvelteRefAttachment("HTMLDivElement")}
 </script>
-<div {...rest} ${f.attrs.radioItem}="" data-sw-part="${f.parts.radioItem.name}" role="${f.radioItem.role}" tabindex="0" ${f.attrs.radioItemValue}={value} ${f.attrs.radioItemDefaultChecked}={initialDefault ? "true" : undefined} ${f.attrs.radioItemCloseOnClick}={String(closeOnClick)} aria-checked={accepted} data-checked={accepted ? "" : undefined} data-unchecked={accepted ? undefined : ""} aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} ${f.attrs.radioItem}="" data-sw-part="${f.parts.radioItem.name}" role="${f.radioItem.role}" tabindex="0" ${f.attrs.radioItemValue}={value} ${f.attrs.radioItemDefaultChecked}={${defaultMarker("initialDefault")}} ${f.attrs.radioItemCloseOnClick}={closeOnClick ? "true" : undefined} aria-checked={accepted} data-checked={accepted ? "" : undefined} data-unchecked={accepted ? undefined : ""} aria-disabled={disabled ? "true" : undefined} data-disabled={disabled ? "" : undefined} {@attach attachRef}>{@render children?.()}</div>
 `;
 }
 
 function printIndicator(f: Facts, part: "checkboxItemIndicator" | "radioItemIndicator"): string {
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
@@ -390,8 +388,7 @@ function printPart(
       ? ['role="menuitem"', 'aria-haspopup="menu"', 'aria-expanded="false"', 'data-state="closed"']
       : []),
   ];
-  return `<!-- ${NOTICE} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${part.defaultElement === "a" ? "HTMLAnchorAttributes" : "HTMLAttributes"} } from "svelte/elements";

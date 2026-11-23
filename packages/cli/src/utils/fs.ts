@@ -1,5 +1,5 @@
 import fs from "fs-extra";
-import { parse, printParseErrorCode, type ParseError } from "jsonc-parser";
+import { type ParseError, parse, printParseErrorCode } from "jsonc-parser";
 
 import { resolveProjectMutationPath } from "./project-path.js";
 

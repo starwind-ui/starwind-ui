@@ -1,7 +1,4 @@
 import { nativeInputConnection } from "../../shared-recipes/structured/document-controls/input-recipe.js";
-import { projectVueAttributeAccess } from "./public-contract.js";
-
-const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
@@ -23,7 +20,6 @@ export function printVueNativeInputValueComponent(file: AdapterComponentFile): A
   const defaultValue = facts.props.defaultValue.name;
   const disabled = facts.props.disabled.name;
   const event = facts.events.valueChange;
-  const value = facts.props.value.name;
 
   const parentModel = "readParentModel()";
   const connection = nativeInputConnection(facts, {

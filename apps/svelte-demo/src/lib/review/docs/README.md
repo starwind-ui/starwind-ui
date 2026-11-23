@@ -6,7 +6,7 @@ before its additional examples, with the Svelte source and a link to the compone
 These files adapt the first `CodePreview` from each public Starwind component docs page and its
 referenced demo files. The reference was checked at docs commit `613deb2` on September 9, 2026.
 Keep the example content, component parts, default values, and variants aligned when the docs
-change. These are hand-authored demo consumers of the Svelte 5 public beta.
+change. These are hand-authored demo consumers of the Svelte 5 adapters.
 
 The Svelte adaptations use typed native attributes and `child` snippets for composed triggers.
 Hover Card uses an anchor with the Button variants because its Svelte trigger owns an anchor.

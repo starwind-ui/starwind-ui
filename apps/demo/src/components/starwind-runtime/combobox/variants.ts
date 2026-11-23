@@ -48,7 +48,7 @@ export const comboboxGroupLabel = tv({
 
 export const comboboxInput = tv({
   base: [
-    "placeholder:text-muted-foreground text-foreground flex h-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent py-1 pr-1 pl-3 shadow-none ring-0 outline-none",
+    "placeholder:text-muted-foreground text-foreground flex h-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent py-1 ps-3 pe-1 shadow-none ring-0 outline-none",
     "focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50",
     "data-error-visible:text-error data-error-visible:ring-0",
   ],
@@ -58,7 +58,7 @@ export const comboboxInputGroup = tv({
   base: [
     "focus-within:border-outline focus-within:ring-outline/50 w-auto transition-[color,box-shadow] focus-within:ring-3 focus-within:transition-none",
     "has-[[data-slot=combobox-input][data-error-visible]]:border-error has-[[data-slot=combobox-input][data-error-visible]]:ring-error/40",
-    "[&>[data-align=inline-end]:has(>div>button)]:mr-[-0.3rem]",
+    "[&>[data-align=inline-end]:has(>div>button)]:me-[-0.3rem]",
   ],
   variants: {
     size: {
@@ -74,13 +74,13 @@ export const comboboxInputGroup = tv({
 
 export const comboboxItem = tv({
   base: [
-    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 outline-none select-none",
+    "data-highlighted:bg-accent data-highlighted:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 ps-2 pe-8 outline-none select-none",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
     "group/combobox-item [&>svg]:size-4 [&>svg]:shrink-0",
   ],
   variants: {
     inset: {
-      true: "pl-8",
+      true: "ps-8",
     },
     disabled: {
       true: "pointer-events-none opacity-50",
@@ -94,7 +94,7 @@ export const comboboxItem = tv({
 
 export const comboboxItemIndicator = tv({
   base: [
-    "pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
+    "pointer-events-none absolute end-2 flex size-4 items-center justify-center opacity-0 transition-opacity",
     "data-hidden:opacity-0 data-visible:opacity-100 data-[state=checked]:opacity-100",
     "[&>svg]:size-4 [&>svg]:shrink-0",
   ],

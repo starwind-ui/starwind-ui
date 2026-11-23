@@ -1,6 +1,7 @@
 import { it } from "vitest";
-import { createStyledCollapsibleConsumer } from "../../../../packages/svelte/tests/styled-collapsible-consumer.js";
 import { verifyCollapsibleLifecycle } from "../../../../packages/svelte/tests/collapsible-lifecycle-browser.js";
+import { createStyledCollapsibleConsumer } from "../../../../packages/svelte/tests/styled-collapsible-consumer.js";
+
 it("owns accepted Collapsible transactions, child and presence lifecycle", async () => {
   const consumer = await createStyledCollapsibleConsumer(process.cwd());
   try {

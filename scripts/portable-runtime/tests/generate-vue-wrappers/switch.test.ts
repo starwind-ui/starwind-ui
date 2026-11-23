@@ -71,12 +71,12 @@ describe("generated Vue Switch Primitive", () => {
     expect(first.index).toContain('export { default as SwitchRoot } from "./SwitchRoot.vue";');
     expect(first.index).toContain('export { default as SwitchThumb } from "./SwitchThumb.vue";');
 
-    await expect(normalizeVueSource(first.root)).toBe(
+    expect(normalizeVueSource(first.root)).toBe(
       normalizeVueSource(
         await readFile(path.join(process.cwd(), "packages/vue/src/switch/SwitchRoot.vue"), "utf8"),
       ),
     );
-    await expect(normalizeVueSource(first.thumb)).toBe(
+    expect(normalizeVueSource(first.thumb)).toBe(
       normalizeVueSource(
         await readFile(path.join(process.cwd(), "packages/vue/src/switch/SwitchThumb.vue"), "utf8"),
       ),

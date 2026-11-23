@@ -1,15 +1,12 @@
 import { renderTabs as renderRecipeTabs } from "../../shared-recipes/selection/tabs.js";
 import type {
   AdapterComponentFile,
-  AdapterControlledValuePresenceFacts,
   AdapterHelperFile,
   AdapterIndexFile,
   AdapterOutputModel,
   AdapterPrintedFile,
 } from "../types.js";
-import { printSvelteRefAttachment } from "./attachments.js";
 
-const HEADER = "Svelte 5 public beta adapter output.";
 export function projectSvelteControlledValuePresenceOutput(
   model: AdapterOutputModel,
 ): AdapterOutputModel {
@@ -43,7 +40,7 @@ export function printSvelteControlledValuePresenceIndex(
   const { facts } = family;
   return {
     path: file.path,
-    contents: `// ${HEADER}\n${facts.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
+    contents: `${facts.index.importMembers.map(({ from, name }) => `import ${name} from "${from}.svelte";`).join("\n")}
 const ${facts.exports.namespace} = { ${facts.index.namespaceMembers.map(({ key, name }) => `${key}: ${name}`).join(", ")} };
 export { ${[facts.exports.namespace, ...facts.index.importMembers.map(({ name }) => name)].join(", ")} };
 export default ${facts.exports.namespace};
@@ -60,8 +57,7 @@ export function printSvelteControlledValuePresenceHelper(
   const { facts } = family;
   return {
     path: file.path,
-    contents: `// ${HEADER}
-import {getContext,setContext} from "svelte";
+    contents: `import {getContext,setContext} from "svelte";
 import type {${facts.state.type},${facts.props.orientation.type}} from "${facts.runtime.importSource}";
 export type ${facts.context.typeName} = Readonly<{
  value: ${facts.state.type};

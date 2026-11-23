@@ -14,10 +14,14 @@ export type SidebarContextValue = Readonly<{
 
 const SidebarContext: InjectionKey<SidebarContextValue> = Symbol("StarwindSidebarContext");
 
-function useSidebarContext(): SidebarContextValue {
-  const context = inject(SidebarContext, undefined);
-  if (!context) throw new Error("Sidebar parts must be used within SidebarProvider.");
-  return context;
-}
+const useSidebarContext = (): SidebarContextValue | null => inject(SidebarContext, null);
+
+type SidebarState = {
+  readonly state: { readonly value: "collapsed" | "expanded" };
+  readonly expanded: { readonly value: boolean };
+};
+const expanded: SidebarState = { state: { value: "expanded" }, expanded: { value: false } };
+/** Sidebar parts outside a Provider render state expanded with aria-expanded false, as React does. Not exported from the package. */
+export const useSidebarState = (): SidebarState => inject<SidebarState>(SidebarContext, expanded);
 
 export { SidebarContext, useSidebarContext };

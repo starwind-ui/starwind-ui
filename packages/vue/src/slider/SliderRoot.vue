@@ -53,7 +53,10 @@ const attrs = useAttrs(),
 defineExpose({ element });
 const initialDefaultValue = copyValue(props.defaultValue ?? 0),
   localValue = ref<SliderValue>(copyValue(modelValue.value ?? initialDefaultValue));
-const renderedValue = computed(() => modelValue.value ?? localValue.value);
+const owned = modelValue.value === undefined,
+  renderedValue = computed(() =>
+    owned ? localValue.value : (modelValue.value ?? localValue.value),
+  );
 let connection: ReturnType<typeof connectSlider> | undefined;
 function copyValue<T extends SliderValue | undefined>(value: T): T {
   return (Array.isArray(value) ? [...value] : value) as T;
@@ -71,7 +74,8 @@ function connectSlider(root: HTMLDivElement) {
   const controlled = initialModel !== undefined;
   let disposed = false,
     synchronizing = false;
-  let rendered = copyValue(initialModel ?? initialDefaultValue);
+  let rendered = copyValue(initialModel ?? initialDefaultValue),
+    commanded = copyValue(initialModel);
   const readOptions = () => ({
     disabled: props.disabled,
     form: props.form,
@@ -115,11 +119,14 @@ function connectSlider(root: HTMLDivElement) {
     }
     render(instance.getValue());
   }
+  // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
   function syncModel(): void {
-    if (disposed || !controlled) return;
-    const next = modelValue.value;
+    if (disposed) return;
+    const next = modelValue.value,
+      changed = controlled || !valuesEqual(next, commanded);
+    commanded = copyValue(next);
     if (next === undefined) return;
-    synchronize(next);
+    if (changed) synchronize(next);
   }
   function syncOptions(): void {
     if (disposed) return;

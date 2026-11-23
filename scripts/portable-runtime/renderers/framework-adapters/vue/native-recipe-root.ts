@@ -16,16 +16,13 @@ export const vueNativeRootProjection: NativeRootProjection = {
           `${prop.name}${prop.defaultValue && prop.name !== "defaultOpen" ? ` = ${prop.defaultValue}` : ""}`,
       )
       .join(", "),
-  runtimeImports: (component, portal) => "",
+  runtimeImports: () => "",
   printRoot({
     component,
     plan,
     portal,
-    popup,
     props,
     fields,
-    destructure,
-    callbacks,
     imports,
     initial,
     accepted,

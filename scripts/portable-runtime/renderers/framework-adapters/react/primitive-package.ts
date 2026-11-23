@@ -12,7 +12,7 @@ import {
 } from "./primitive-output-writer.js";
 
 export const generateReactPrimitivePackage: FrameworkAdapterTargetPrimitivePackageGenerator =
-  async ({ generatePrimitiveEntries, generatedBy, outputRoot }) => {
+  async ({ components, generatePrimitiveEntries, generatedBy, outputRoot }) => {
     const moduleHeader = createTsHeader(generatedBy);
 
     await rm(outputRoot, { force: true, recursive: true });
@@ -52,8 +52,8 @@ export const generateReactPrimitivePackage: FrameworkAdapterTargetPrimitivePacka
         "form-discovery.ts",
         moduleHeader + printReactFormDiscovery(),
       ),
-      writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader)),
+      writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader, components)),
     ]);
 
-    await appendRuntimeTypeFacades(outputRoot);
+    await appendRuntimeTypeFacades(outputRoot, components);
   };

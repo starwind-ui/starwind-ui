@@ -2,7 +2,10 @@ import path from "node:path";
 
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
-
+import {
+  sortComponentNames,
+  sortComponentPresentationByName,
+} from "@/utils/component-presentation.js";
 import {
   CONFIG_SCHEMA_V2_URL,
   type ComponentConfig,
@@ -10,10 +13,6 @@ import {
   type StarwindConfig,
   updateConfig,
 } from "@/utils/config.js";
-import {
-  sortComponentNames,
-  sortComponentPresentationByName,
-} from "@/utils/component-presentation.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { detectPackageManager, type PackageManager } from "@/utils/package-manager.js";
 import { resolveProjectMutationPath } from "@/utils/project-path.js";

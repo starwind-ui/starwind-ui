@@ -50,20 +50,21 @@ import {
   vueRuntimePrimitiveComponents,
   vueStyledComponents,
 } from "../renderers/framework-adapters/vue/inventory.js";
+import { isPrimitiveInventoryComponentAvailableForTarget } from "../renderers/primitive-inventory.js";
 import { normalizeTypeScriptSource } from "./source-comparison.js";
 
 const runtimePackage = JSON.parse(
   await readFile(new URL("../../../packages/runtime/package.json", import.meta.url), "utf8"),
-) as { version: string };
+) as { version: string; dependencies: Record<string, string> };
 const vuePackage = JSON.parse(
   await readFile(new URL("../../../packages/vue/package.json", import.meta.url), "utf8"),
 ) as { dependencies: Record<string, string>; version: string };
 const sveltePackage = JSON.parse(
   await readFile(new URL("../../../packages/svelte/package.json", import.meta.url), "utf8"),
 ) as { dependencies: Record<string, string>; version: string };
-const CURRENT_BETA_PACKAGE_RANGE = `^${runtimePackage.version}`;
-const CURRENT_VUE_PACKAGE_VERSION = vuePackage.version;
-const CURRENT_SVELTE_PACKAGE_VERSION = sveltePackage.version;
+const CURRENT_RUNTIME_PACKAGE_RANGE = `^${runtimePackage.version}`;
+const CURRENT_VUE_PACKAGE_RANGE = `^${vuePackage.version}`;
+const CURRENT_SVELTE_PACKAGE_RANGE = `^${sveltePackage.version}`;
 const STABLE_TARGET_POLICY = createCliRegistryBuildPolicy([
   astroFrameworkAdapterTarget,
   reactFrameworkAdapterTarget,
@@ -83,6 +84,35 @@ describe("generateCliRegistry", () => {
     await rm(tempRoot, { force: true, recursive: true });
   });
 
+  it("requires TanStack Charts only for chart Primitives in every framework", async () => {
+    const artifacts = await buildPrimitiveVendoringArtifacts({
+      targetPolicy: createCliRegistryBuildPolicy([
+        astroFrameworkAdapterTarget,
+        reactFrameworkAdapterTarget,
+        vueFrameworkAdapterTarget,
+        svelteFrameworkAdapterTarget,
+      ]),
+    });
+    const chart = artifacts.primitives.filter(({ component }) => component === "chart");
+    expect(chart.map(({ framework }) => framework).sort()).toEqual([
+      "astro",
+      "react",
+      "svelte",
+      "vue",
+    ]);
+    for (const artifact of chart) {
+      expect(artifact.packageRequirements).toContainEqual({
+        name: "@tanstack/charts",
+        range: runtimePackage.dependencies["@tanstack/charts"],
+      });
+    }
+    for (const artifact of artifacts.primitives.filter(({ component }) => component !== "chart")) {
+      expect(artifact.packageRequirements.map(({ name }) => name)).not.toContain(
+        "@tanstack/charts",
+      );
+    }
+  }, 30_000);
+
   it("generates the complete deterministic public Svelte delivery data", async () => {
     const targetPolicy = createCliRegistryBuildPolicy([svelteFrameworkAdapterTarget]);
     const firstRegistry = await buildRuntimeRegistry({ targetPolicy });
@@ -95,7 +125,7 @@ describe("generateCliRegistry", () => {
       await loadTargetPackageRanges(process.cwd(), [svelteFrameworkAdapterTarget])
     ).get("svelte")!;
     const styled = firstRegistry.components.filter((component) => component.targets?.svelte);
-    expect(styled).toHaveLength(54);
+    expect(styled).toHaveLength(55);
     expect(styled.map(({ name }) => name).sort()).toEqual([...SVELTE_STYLED_ROOTS].sort());
     expect(
       firstRegistry.components.find(({ name }) => name === "image")?.targets?.svelte,
@@ -104,9 +134,12 @@ describe("generateCliRegistry", () => {
       svelte: {
         adapterPackage: {
           name: "@starwind-ui/svelte",
-          range: CURRENT_SVELTE_PACKAGE_VERSION,
+          range: CURRENT_SVELTE_PACKAGE_RANGE,
         },
-        packageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
+        packageRequirements: [
+          { name: "svelte", range: ">=5.29.0 <6" },
+          { name: "tailwind-merge", range: "^3.7.0" },
+        ],
       },
     });
     for (const component of styled) {
@@ -115,7 +148,10 @@ describe("generateCliRegistry", () => {
       const target = component.targets!.svelte!;
       expect(target.files.length).toBeGreaterThan(0);
       for (const requirement of target.packageRequirements) {
-        expect(requirement.range).toBe(ranges.get(requirement.name));
+        // A contract-declared tailwind-merge floor wins over the range the demo app pins.
+        expect(requirement.range).toBe(
+          requirement.name === "tailwind-merge" ? "^3.7.0" : ranges.get(requirement.name),
+        );
         expect(requirement.name).not.toMatch(/astro|react|vue/);
       }
       assertSafeInstallPaths(target.files, DEFAULT_COMPONENT_INSTALL_ROOT);
@@ -136,7 +172,7 @@ describe("generateCliRegistry", () => {
       );
     }
 
-    expect(firstPrimitives.primitives).toHaveLength(36);
+    expect(firstPrimitives.primitives).toHaveLength(37);
     expect(firstPrimitives.primitives.map(({ component }) => component).sort()).toEqual(
       [...SVELTE_PRIMITIVE_COMPONENTS].sort(),
     );
@@ -148,8 +184,11 @@ describe("generateCliRegistry", () => {
       expect(artifact.packageRequirements).toEqual([
         {
           name: "@starwind-ui/runtime",
-          range: sveltePackage.dependencies["@starwind-ui/runtime"],
+          range: CURRENT_RUNTIME_PACKAGE_RANGE,
         },
+        ...(artifact.component === "chart"
+          ? [{ name: "@tanstack/charts", range: runtimePackage.dependencies["@tanstack/charts"] }]
+          : []),
         { name: "svelte", range: ">=5.29.0 <6" },
       ]);
       assertSafeInstallPaths(artifact.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
@@ -161,15 +200,20 @@ describe("generateCliRegistry", () => {
       });
       assertNoMonorepoOnlyImports(artifact.files);
       expect(artifact.packageRequirements.map(({ name }) => name)).toEqual(
-        packageNamesFromImportSources(
-          artifact.files.flatMap(({ content }) => collectTestImportSources(content)),
-        ),
+        [
+          ...new Set([
+            ...packageNamesFromImportSources(
+              artifact.files.flatMap(({ content }) => collectTestImportSources(content)),
+            ),
+            ...(artifact.component === "chart" ? ["@tanstack/charts"] : []),
+          ]),
+        ].sort(),
       );
       for (const requirement of artifact.packageRequirements)
         expect(requirement.range).toBe(ranges.get(requirement.name));
       for (const file of artifact.files) {
         expect(file.content).toContain("Vendored by the Starwind CLI");
-        expect(file.content).not.toMatch(/Do not edit by hand|Svelte 5 public beta adapter output/);
+        expect(file.content).not.toMatch(/Do not edit by hand|public beta/);
         expect(file.sourceHash).toBe(
           `sha256:${createHash("sha256").update(file.content).digest("hex")}`,
         );
@@ -181,7 +225,8 @@ describe("generateCliRegistry", () => {
     ).toContain("context.svelte.ts");
     expect(select.files.some(({ sourcePath }) => sourcePath.includes("/button/"))).toBe(true);
     const canonical = await readFile("packages/svelte/src/select/SelectRoot.svelte", "utf8");
-    expect(canonical).toContain("Svelte 5 public beta adapter output.");
+    expect(canonical).toContain("Do not edit by hand");
+    expect(canonical).not.toContain("public beta");
   }, 60_000);
 
   it("rejects malformed setup package names", () => {
@@ -203,21 +248,21 @@ describe("generateCliRegistry", () => {
       demoIntegration: true,
       packageExports: true,
       publicDocsClaim: true,
-      status: "public-beta",
+      status: "shipping",
     });
     expect(() =>
       createCliRegistryBuildPolicy([vueFrameworkAdapterTarget, vueFrameworkAdapterTarget]),
     ).toThrow(/Duplicate CLI registry target "vue"/);
   });
 
-  it("derives Vue's exact adapter range from its current package manifest", async () => {
+  it("derives Vue's caret adapter range from its current package manifest", async () => {
     const repoRoot = path.join(tempRoot, "later-vue-version");
     for (const source of vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? []) {
       const packageJson = JSON.parse(await readFile(source, "utf8")) as {
         name: string;
         version: string;
       };
-      if (packageJson.name === "@starwind-ui/vue") packageJson.version = "0.2.0";
+      if (packageJson.name === "@starwind-ui/vue") packageJson.version = "4.5.6";
       if (packageJson.name === "@starwind-ui/runtime") packageJson.version = "4.5.6";
       const destination = path.join(repoRoot, source);
       await mkdir(path.dirname(destination), { recursive: true });
@@ -226,13 +271,13 @@ describe("generateCliRegistry", () => {
 
     const packageRanges = await loadPackageRanges(repoRoot, [vueFrameworkAdapterTarget]);
 
-    expect(packageRanges.get("@starwind-ui/vue")).toBe("0.2.0");
+    expect(packageRanges.get("@starwind-ui/vue")).toBe("^4.5.6");
     expect(packageRanges.get("@starwind-ui/runtime")).toBe("^4.5.6");
-    expect(packageRanges.get("vue")).toBe(">=3.5");
+    expect(packageRanges.get("vue")).toBe(">=3.5.21");
   });
 
-  it("uses each exact adapter's Runtime pin for direct Runtime requirements", async () => {
-    const repoRoot = path.join(tempRoot, "adapter-runtime-pin");
+  it("gives every target the same Runtime range for direct Runtime requirements", async () => {
+    const repoRoot = path.join(tempRoot, "adapter-runtime-range");
     const registrations = [
       astroFrameworkAdapterTarget,
       reactFrameworkAdapterTarget,
@@ -244,17 +289,10 @@ describe("generateCliRegistry", () => {
     );
     for (const source of sources) {
       const packageJson = JSON.parse(await readFile(source, "utf8")) as {
-        dependencies?: Record<string, string>;
         name: string;
         version: string;
       };
       if (packageJson.name === "@starwind-ui/runtime") packageJson.version = "4.5.6";
-      if (packageJson.name === "@starwind-ui/vue") {
-        packageJson.dependencies = { "@starwind-ui/runtime": "4.5.5" };
-      }
-      if (packageJson.name === "@starwind-ui/svelte") {
-        packageJson.dependencies = { "@starwind-ui/runtime": "4.5.4" };
-      }
       const destination = path.join(repoRoot, source);
       await mkdir(path.dirname(destination), { recursive: true });
       await writeFile(destination, `${JSON.stringify(packageJson, null, 2)}\n`);
@@ -266,36 +304,11 @@ describe("generateCliRegistry", () => {
 
     expect(runtimeRange("astro")).toBe("^4.5.6");
     expect(runtimeRange("react")).toBe("^4.5.6");
-    expect(runtimeRange("vue")).toBe("4.5.5");
-    expect(runtimeRange("svelte")).toBe("4.5.4");
+    expect(runtimeRange("vue")).toBe("^4.5.6");
+    expect(runtimeRange("svelte")).toBe("^4.5.6");
   });
 
-  it.each(["^1.4.0", "workspace:*", undefined])(
-    "rejects a non-exact Runtime dependency on an exact adapter: %s",
-    async (runtimeDependency) => {
-      const repoRoot = path.join(tempRoot, "invalid-runtime-pin");
-      for (const source of vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? []) {
-        const packageJson = JSON.parse(await readFile(source, "utf8")) as {
-          dependencies?: Record<string, string>;
-          name: string;
-        };
-        if (packageJson.name === "@starwind-ui/vue") {
-          packageJson.dependencies = runtimeDependency
-            ? { "@starwind-ui/runtime": runtimeDependency }
-            : {};
-        }
-        const destination = path.join(repoRoot, source);
-        await mkdir(path.dirname(destination), { recursive: true });
-        await writeFile(destination, `${JSON.stringify(packageJson, null, 2)}\n`);
-      }
-
-      await expect(loadTargetPackageRanges(repoRoot, [vueFrameworkAdapterTarget])).rejects.toThrow(
-        /@starwind-ui\/vue requires an exact @starwind-ui\/runtime dependency/,
-      );
-    },
-  );
-
-  it("generates exact Runtime requirements for Vue and Svelte targets only", async () => {
+  it("generates one caret Runtime requirement for every target", async () => {
     const [registry, primitiveArtifacts] = await Promise.all([
       readFile("packages/cli/src/registry/bundled-registry.json", "utf8").then(JSON.parse),
       readFile("packages/cli/src/registry/primitive-vendoring-artifacts.json", "utf8").then(
@@ -325,10 +338,10 @@ describe("generateCliRegistry", () => {
     }
 
     expect(Object.fromEntries(runtimeRanges)).toEqual({
-      astro: new Set([CURRENT_BETA_PACKAGE_RANGE]),
-      react: new Set([CURRENT_BETA_PACKAGE_RANGE]),
-      svelte: new Set([sveltePackage.dependencies["@starwind-ui/runtime"]]),
-      vue: new Set([vuePackage.dependencies["@starwind-ui/runtime"]]),
+      astro: new Set([CURRENT_RUNTIME_PACKAGE_RANGE]),
+      react: new Set([CURRENT_RUNTIME_PACKAGE_RANGE]),
+      svelte: new Set([CURRENT_RUNTIME_PACKAGE_RANGE]),
+      vue: new Set([CURRENT_RUNTIME_PACKAGE_RANGE]),
     });
   });
 
@@ -393,8 +406,11 @@ describe("generateCliRegistry", () => {
     );
     expect(firstRegistry.setup).toEqual({
       vue: {
-        adapterPackage: { name: "@starwind-ui/vue", range: CURRENT_VUE_PACKAGE_VERSION },
-        packageRequirements: [{ name: "vue", range: ">=3.5" }],
+        adapterPackage: { name: "@starwind-ui/vue", range: CURRENT_VUE_PACKAGE_RANGE },
+        packageRequirements: [
+          { name: "tailwind-merge", range: "^3.7.0" },
+          { name: "vue", range: ">=3.5.21" },
+        ],
       },
     });
 
@@ -402,7 +418,7 @@ describe("generateCliRegistry", () => {
       .filter((component) => component.targets?.vue)
       .map((component) => component.name)
       .sort();
-    expect(vueStyledComponents).toHaveLength(54);
+    expect(vueStyledComponents).toHaveLength(55);
     expect(vueComponents).toEqual([...vueStyledComponents].sort());
     expect(vueComponents).not.toContain("image");
     expect(
@@ -427,7 +443,7 @@ describe("generateCliRegistry", () => {
       expect(
         target.packageRequirements.find(({ name }) => name === "@starwind-ui/vue")?.range,
         componentName,
-      ).toBe(CURRENT_VUE_PACKAGE_VERSION);
+      ).toBe(CURRENT_VUE_PACKAGE_RANGE);
       expect(packageNames, componentName).toContain("vue");
       expect(packageNames, componentName).not.toEqual(
         expect.arrayContaining([
@@ -516,7 +532,7 @@ describe("generateCliRegistry", () => {
       colorPicker.files.find(({ path: filePath }) => filePath.endsWith("/styles.css"))?.content,
     ).toContain('[data-slot="color-picker"]');
 
-    expect(vueRuntimePrimitiveComponents).toHaveLength(36);
+    expect(vueRuntimePrimitiveComponents).toHaveLength(37);
     expect(firstPrimitiveSet.primitives.map(({ component }) => component).sort()).toEqual(
       [...vueRuntimePrimitiveComponents].sort(),
     );
@@ -536,9 +552,15 @@ describe("generateCliRegistry", () => {
       );
       expect(primitive.files.length, primitive.component).toBeGreaterThan(0);
       expect(packageNames, primitive.component).toContain("@starwind-ui/runtime");
-      expect(packageNames.every((name) => ["@starwind-ui/runtime", "vue"].includes(name))).toBe(
-        true,
-      );
+      expect(
+        packageNames.every((name) =>
+          [
+            "@starwind-ui/runtime",
+            "vue",
+            ...(primitive.component === "chart" ? ["@tanstack/charts"] : []),
+          ].includes(name),
+        ),
+      ).toBe(true);
       packageNames.forEach((name) => primitivePackageNames.add(name));
       assertSafeInstallPaths(primitive.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
       assertInstallGraphSourceClosure({
@@ -563,7 +585,11 @@ describe("generateCliRegistry", () => {
       }
     }
 
-    expect([...primitivePackageNames].sort()).toEqual(["@starwind-ui/runtime", "vue"]);
+    expect([...primitivePackageNames].sort()).toEqual([
+      "@starwind-ui/runtime",
+      "@tanstack/charts",
+      "vue",
+    ]);
     const toggleGroup = firstPrimitiveSet.primitives.find(
       ({ component }) => component === "toggle-group",
     );
@@ -595,7 +621,7 @@ describe("generateCliRegistry", () => {
         "utf8",
       );
       const formattedGeneratedSource = await formatWithPrettier(generatedSource, {
-        ...((await resolvePrettierConfig(sourcePath)) ?? {}),
+        ...(await resolvePrettierConfig(sourcePath)),
         filepath: sourcePath,
       });
 
@@ -628,24 +654,24 @@ describe("generateCliRegistry", () => {
     expect(registry.version).toBe("2.0.0");
     expect(registry.setup).toEqual({
       astro: {
-        adapterPackage: { name: "@starwind-ui/astro", range: CURRENT_BETA_PACKAGE_RANGE },
+        adapterPackage: { name: "@starwind-ui/astro", range: CURRENT_RUNTIME_PACKAGE_RANGE },
         packageRequirements: [
           { name: "@tabler/icons", range: "^3" },
           { name: "@tailwindcss/forms", range: "^0.5" },
           { name: "@tailwindcss/vite", range: "^4" },
-          { name: "tailwind-merge", range: "^3" },
+          { name: "tailwind-merge", range: "^3.7.0" },
           { name: "tailwind-variants", range: "^3" },
           { name: "tailwindcss", range: "^4" },
           { name: "tw-animate-css", range: "^1" },
         ],
       },
       react: {
-        adapterPackage: { name: "@starwind-ui/react", range: CURRENT_BETA_PACKAGE_RANGE },
+        adapterPackage: { name: "@starwind-ui/react", range: CURRENT_RUNTIME_PACKAGE_RANGE },
         packageRequirements: [
           { name: "@tabler/icons-react", range: "^3" },
           { name: "@tailwindcss/forms", range: "^0.5" },
           { name: "@tailwindcss/vite", range: "^4" },
-          { name: "tailwind-merge", range: "^3" },
+          { name: "tailwind-merge", range: "^3.7.0" },
           { name: "tailwind-variants", range: "^3" },
           { name: "tailwindcss", range: "^4" },
           { name: "tw-animate-css", range: "^1" },
@@ -654,13 +680,19 @@ describe("generateCliRegistry", () => {
       svelte: {
         adapterPackage: {
           name: "@starwind-ui/svelte",
-          range: CURRENT_SVELTE_PACKAGE_VERSION,
+          range: CURRENT_SVELTE_PACKAGE_RANGE,
         },
-        packageRequirements: [{ name: "svelte", range: ">=5.29.0 <6" }],
+        packageRequirements: [
+          { name: "svelte", range: ">=5.29.0 <6" },
+          { name: "tailwind-merge", range: "^3.7.0" },
+        ],
       },
       vue: {
-        adapterPackage: { name: "@starwind-ui/vue", range: CURRENT_VUE_PACKAGE_VERSION },
-        packageRequirements: [{ name: "vue", range: ">=3.5" }],
+        adapterPackage: { name: "@starwind-ui/vue", range: CURRENT_VUE_PACKAGE_RANGE },
+        packageRequirements: [
+          { name: "tailwind-merge", range: "^3.7.0" },
+          { name: "vue", range: ">=3.5.21" },
+        ],
       },
     });
     expect(registry.setup.astro?.packageRequirements.map(({ name }) => name)).not.toContain(
@@ -679,13 +711,17 @@ describe("generateCliRegistry", () => {
       dependencies: [],
     });
     expect(button.targets.astro.packageRequirements).toEqual(
-      expect.arrayContaining([{ name: "@starwind-ui/astro", range: CURRENT_BETA_PACKAGE_RANGE }]),
+      expect.arrayContaining([
+        { name: "@starwind-ui/astro", range: CURRENT_RUNTIME_PACKAGE_RANGE },
+      ]),
     );
     expect(button.targets.astro.packageRequirements).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ name: "@starwind-ui/runtime" })]),
     );
     expect(button.targets.react.packageRequirements).toEqual(
-      expect.arrayContaining([{ name: "@starwind-ui/react", range: CURRENT_BETA_PACKAGE_RANGE }]),
+      expect.arrayContaining([
+        { name: "@starwind-ui/react", range: CURRENT_RUNTIME_PACKAGE_RANGE },
+      ]),
     );
     expect(button.targets.react.packageRequirements).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ name: "@starwind-ui/runtime" })]),
@@ -1031,6 +1067,18 @@ describe("generateCliRegistry", () => {
         );
       }
     }
+
+    // Dialog declares the logical-class tailwind-merge floor. Button does not.
+    const mergeRequirement = (componentName: string) =>
+      Object.values(registry.components.find(({ name }) => name === componentName)!.targets!).map(
+        (target) => target.packageRequirements.find(({ name }) => name === "tailwind-merge"),
+      );
+    for (const requirement of mergeRequirement("dialog")) {
+      expect(requirement).toEqual({ name: "tailwind-merge", range: "^3.7.0" });
+    }
+    for (const requirement of mergeRequirement("button")) {
+      expect(requirement).toBeUndefined();
+    }
   });
 
   it("does not use generated styled file imports as a package requirement fallback", async () => {
@@ -1126,7 +1174,9 @@ describe("generateCliRegistry", () => {
       getRegistryComponentWithTargets(registry, "button", "astro").targets.astro
         .packageRequirements,
     ).toEqual(
-      expect.arrayContaining([{ name: "@starwind-ui/astro", range: CURRENT_BETA_PACKAGE_RANGE }]),
+      expect.arrayContaining([
+        { name: "@starwind-ui/astro", range: CURRENT_RUNTIME_PACKAGE_RANGE },
+      ]),
     );
   });
 
@@ -1467,6 +1517,78 @@ describe("generateCliRegistry", () => {
     });
   });
 
+  it("keeps both script blocks of the generic Vue ChartContainer in the chart registry target", async () => {
+    const runtimeBundledRegistry = JSON.parse(
+      await readFile(
+        path.join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"),
+        "utf8",
+      ),
+    ) as RuntimeRegistry;
+    const chart = runtimeBundledRegistry.components.find((component) => component.name === "chart");
+    const vue = chart?.targets?.vue;
+    expect(vue, "chart has a Vue registry target").toBeDefined();
+
+    const container = vue!.files.find((file) => file.path.endsWith("/chart/ChartContainer.vue"))!;
+    const generated = await readFile(
+      "apps/vue-demo/src/components/starwind-runtime/chart/ChartContainer.vue",
+      "utf8",
+    );
+    // The CLI writes Vue files unchanged, so the registry keeps the plain script block with the
+    // type imports and the generic setup block.
+    expect(container.content).toBe(generated);
+    const blocks = [...container.content.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+    expect(blocks.map(([, attributes]) => attributes.includes("setup"))).toEqual([false, true]);
+    expect(blocks[0]![2]).toContain('import type { ChartValue } from "@tanstack/charts";');
+    expect(blocks[0]![2]).toContain('import * as ChartPrimitive from "@starwind-ui/vue/chart";');
+    expect(blocks[1]![1]).toContain("generic=");
+
+    // Package requirements come from imports in every script block. The logical class floor adds
+    // tailwind-merge.
+    expect(vue!.packageRequirements.map(({ name }) => name)).toEqual([
+      "@starwind-ui/vue",
+      "@tanstack/charts",
+      "tailwind-merge",
+      "tailwind-variants",
+      "vue",
+    ]);
+    expect(vue!.packageRequirements).toContainEqual({ name: "@tanstack/charts", range: "^1.5.0" });
+    expect(vue!.files.map((file) => path.basename(file.path)).sort()).toEqual([
+      "ChartContainer.vue",
+      "ChartLegend.vue",
+      "ChartLegendContent.vue",
+      "ChartTooltip.vue",
+      "ChartTooltipContent.vue",
+      "index.ts",
+      "variants.ts",
+    ]);
+  });
+
+  it("lists TanStack Charts as a package requirement of the Svelte chart registry target", async () => {
+    const runtimeBundledRegistry = JSON.parse(
+      await readFile(
+        path.join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"),
+        "utf8",
+      ),
+    ) as RuntimeRegistry;
+    const chart = runtimeBundledRegistry.components.find((component) => component.name === "chart");
+    const svelte = chart?.targets?.svelte;
+    expect(svelte, "chart has a Svelte registry target").toBeDefined();
+    // The container imports the ChartValue type, so the requirement comes from its imports.
+    expect(svelte!.packageRequirements).toContainEqual({
+      name: "@tanstack/charts",
+      range: "^1.5.0",
+    });
+    expect(svelte!.files.map((file) => path.basename(file.path)).sort()).toEqual([
+      "ChartContainer.svelte",
+      "ChartLegend.svelte",
+      "ChartLegendContent.svelte",
+      "ChartTooltip.svelte",
+      "ChartTooltipContent.svelte",
+      "index.ts",
+      "variants.ts",
+    ]);
+  });
+
   it("keeps the committed bundled registry synced with styled contract inventory", async () => {
     const versionManifest = await loadRegistryVersionManifest();
     const runtimeBundledRegistry = JSON.parse(
@@ -1588,10 +1710,10 @@ describe("generateCliRegistry", () => {
       );
       expect(variantFile?.content).not.toContain("group-data-[size=lg]/nav-menu");
       expect(variantFile?.content).toContain(
-        "ml-1 size-3 shrink-0 origin-center transition duration-300",
+        "ms-1 size-3 shrink-0 origin-center transition duration-300",
       );
       expect(variantFile?.content).toContain(
-        "group-data-[size=md]/nav-menu:ml-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
+        "group-data-[size=md]/nav-menu:ms-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
       );
       expect(variantFile?.content).toContain(
         "data-[state=closed]:pointer-events-none data-[state=closed]:absolute data-[state=closed]:inset-0",
@@ -1936,13 +2058,50 @@ describe("generateCliRegistry", () => {
     );
 
     for (const contract of runtimeAdapterContracts) {
-      expect(artifactsByComponent.get(`astro:${contract.component}`)?.files.length).toBeGreaterThan(
-        0,
-      );
-      expect(artifactsByComponent.get(`react:${contract.component}`)?.files.length).toBeGreaterThan(
-        0,
-      );
+      for (const framework of ["astro", "react"]) {
+        const artifact = artifactsByComponent.get(`${framework}:${contract.component}`);
+
+        if (isPrimitiveInventoryComponentAvailableForTarget(contract.component, framework)) {
+          expect(artifact?.files.length, `${framework}:${contract.component}`).toBeGreaterThan(0);
+        } else {
+          expect(artifact, `${framework}:${contract.component}`).toBeUndefined();
+        }
+      }
     }
+
+    // Chart opened its Astro target gate: Astro vendors every chart file, support files included.
+    const astroChartFiles = artifactsByComponent
+      .get("astro:chart")
+      ?.files.map((file) => path.basename(file.path))
+      .sort();
+    expect(astroChartFiles).toContain("ChartLifecycle.astro");
+    expect(astroChartFiles).toContain("ChartMarkup.ts");
+    expect(astroChartFiles).toContain("ChartRoot.astro");
+    expect(astroChartFiles).toContain("index.ts");
+    expect(astroChartFiles).toHaveLength(21);
+
+    // Chart opened its Vue target gate: Vue vendors every part and the shared context module.
+    const vueChartFiles = artifactsByComponent
+      .get("vue:chart")
+      ?.files.map((file) => path.basename(file.path))
+      .sort();
+    expect(vueChartFiles).toContain("ChartContext.ts");
+    expect(vueChartFiles).toContain("ChartRoot.vue");
+    expect(vueChartFiles).toContain("ChartSurface.vue");
+    expect(vueChartFiles).toContain("index.ts");
+    expect(vueChartFiles).toHaveLength(20);
+
+    // Chart opened its Svelte target gate: Svelte vendors every part, the context module, the
+    // internal provider and the shared ref attachment helper.
+    const svelteChartFiles = artifactsByComponent
+      .get("svelte:chart")
+      ?.files.map((file) => path.basename(file.path))
+      .sort();
+    expect(svelteChartFiles).toContain("ChartContext.ts");
+    expect(svelteChartFiles).toContain("ChartContextProvider.svelte");
+    expect(svelteChartFiles).toContain("ChartRoot.svelte");
+    expect(svelteChartFiles).toContain("ChartSurface.svelte");
+    expect(svelteChartFiles).toContain("index.ts");
 
     for (const artifact of artifactSet.primitives) {
       const registration = getPrimitiveFrameworkAdapterTarget(artifact.framework);
@@ -2232,8 +2391,8 @@ describe("generateCliRegistry", () => {
       const adapterPackage = framework === "astro" ? "@starwind-ui/astro" : "@starwind-ui/react";
       const expectedPackageNames =
         framework === "astro"
-          ? [adapterPackage, "@tabler/icons", "astro", "tailwind-variants"]
-          : [adapterPackage, "@tabler/icons-react", "react", "tailwind-variants"];
+          ? [adapterPackage, "@tabler/icons", "astro", "tailwind-merge", "tailwind-variants"]
+          : [adapterPackage, "@tabler/icons-react", "react", "tailwind-merge", "tailwind-variants"];
 
       const expectedStyledPaths = [
         ...styledComponentCandidates.map(
@@ -2251,7 +2410,7 @@ describe("generateCliRegistry", () => {
         expectedPackageNames,
       );
       expect(target.packageRequirements).toEqual(
-        expect.arrayContaining([{ name: adapterPackage, range: CURRENT_BETA_PACKAGE_RANGE }]),
+        expect.arrayContaining([{ name: adapterPackage, range: CURRENT_RUNTIME_PACKAGE_RANGE }]),
       );
       expect(JSON.stringify(target.packageRequirements)).not.toContain("workspace:");
       expect(target.files).toHaveLength(styledComponentCandidates.length + 3);
@@ -2290,7 +2449,7 @@ describe("generateCliRegistry", () => {
       );
       expect(artifact?.packageRequirements).toEqual(
         expect.arrayContaining([
-          { name: "@starwind-ui/runtime", range: CURRENT_BETA_PACKAGE_RANGE },
+          { name: "@starwind-ui/runtime", range: CURRENT_RUNTIME_PACKAGE_RANGE },
         ]),
       );
       expect(JSON.stringify(artifact?.packageRequirements)).not.toContain("workspace:");

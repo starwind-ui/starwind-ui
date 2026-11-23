@@ -15,7 +15,6 @@ import {
   Comment,
   type ComponentPublicInstance,
   createApp,
-  defineComponent,
   Fragment,
   h,
   nextTick,
@@ -544,7 +543,8 @@ describe("Vue Alert Dialog public behavior", () => {
         () => [h("button"), h("button")],
         () => [h(Text, null, "text")],
         () => [h(Comment)],
-        () => [h(Fragment, null, [h("button")])],
+        () => [h(Fragment, null, [h("button"), h("a")])],
+        () => [h(Fragment, null, [h(Fragment, null, [h("button")])])],
       ];
       for (const slot of slots) {
         const host = document.createElement("div");
@@ -671,6 +671,7 @@ import {
   testComponentTrigger,
   testInitialPortalFocus,
 } from "../dialog/component-trigger.js";
+
 testComponentTrigger(
   {
     Root: AlertDialogRoot,

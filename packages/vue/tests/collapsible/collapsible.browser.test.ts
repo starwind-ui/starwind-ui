@@ -365,6 +365,36 @@ describe("Vue Collapsible public behavior", () => {
     expect(link.getAttribute("aria-expanded")).toBe("true");
   });
 
+  it("does not toggle a trigger with a bare disabled attribute", async () => {
+    // The template compiler passes a bare `<CollapsibleTrigger disabled>` attribute as "".
+    for (const asChild of [false, true]) {
+      const host = appendHost();
+      const app = createApp({
+        render: () =>
+          h(CollapsibleRoot, null, {
+            default: () => [
+              h(
+                CollapsibleTrigger,
+                { asChild, disabled: "" },
+                { default: () => (asChild ? h("button", "Details") : "Details") },
+              ),
+              h(CollapsiblePanel),
+            ],
+          }),
+      });
+      app.mount(host);
+      cleanups.push(() => app.unmount());
+      await nextTick();
+
+      const trigger = host.querySelector<HTMLButtonElement>("button")!;
+      expect(trigger.disabled, `asChild: ${asChild}`).toBe(true);
+      expect(trigger.hasAttribute("data-disabled"), `asChild: ${asChild}`).toBe(true);
+      trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await nextTick();
+      expect(trigger.getAttribute("aria-expanded"), `asChild: ${asChild}`).toBe("false");
+    }
+  });
+
   it("isolates multiple instances and destroys exact owners across remounts", async () => {
     const abort = vi.spyOn(AbortController.prototype, "abort");
     const show = ref(true);

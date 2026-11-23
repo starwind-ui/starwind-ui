@@ -1,16 +1,16 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
-import type { StyledAdapterContract } from "../../contracts/styled/types.js";
-import { afterEach, describe, expect, it } from "vitest";
+import path from "node:path";
 import { compile } from "svelte/compiler";
+import { afterEach, describe, expect, it } from "vitest";
+import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { createStyledBreadcrumbConsumer } from "../../../../packages/svelte/tests/styled-breadcrumb-consumer.js";
 import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { projectSvelteStyledGroup } from "../../renderers/framework-adapters/svelte/styled/projection.js";
 import { renderSvelteStyledFiles } from "../../renderers/framework-adapters/svelte/styled/render.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
 
-import { createStyledBreadcrumbConsumer } from "../../../../packages/svelte/tests/styled-breadcrumb-consumer.js";
-import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
-import path from "node:path";
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((entry) => entry.dispose()));

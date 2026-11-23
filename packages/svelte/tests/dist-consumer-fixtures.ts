@@ -128,6 +128,46 @@ export const negativeConsumers: Record<
     source: `<script lang="ts">import Dialog from "@starwind-ui/svelte/dialog";</script><Dialog.Root>{#snippet children(open:boolean)}{open}{/snippet}</Dialog.Root>`,
     diagnostic: /not assignable to type/,
   },
+  "NavigationMenuRootSnippetArgument.svelte": {
+    source: `<script lang="ts">import NavigationMenu from "@starwind-ui/svelte/navigation-menu";</script><NavigationMenu.Root>{#snippet children(value:string|null)}{value}{/snippet}</NavigationMenu.Root>`,
+    diagnostic: /not assignable to type/,
+  },
+  "SliderRootSnippetArgument.svelte": {
+    source: `<script lang="ts">import Slider,{type SliderValue} from "@starwind-ui/svelte/slider";</script><Slider.Root>{#snippet children(value:SliderValue)}{value}{/snippet}</Slider.Root>`,
+    diagnostic: /not assignable to type/,
+  },
+  "TabsRootSnippetArgument.svelte": {
+    source: `<script lang="ts">import Tabs,{type TabsValue} from "@starwind-ui/svelte/tabs";</script><Tabs.Root>{#snippet children(value:TabsValue)}{value}{/snippet}</Tabs.Root>`,
+    diagnostic: /not assignable to type/,
+  },
+  "TabsTabSnippetArgument.svelte": {
+    source: `<script lang="ts">import Tabs from "@starwind-ui/svelte/tabs";</script><Tabs.Root><Tabs.List><Tabs.Tab value="a">{#snippet children(active:boolean)}{active}{/snippet}</Tabs.Tab></Tabs.List></Tabs.Root>`,
+    diagnostic: /not assignable to type/,
+  },
+  "TabsPanelSnippetArgument.svelte": {
+    source: `<script lang="ts">import Tabs from "@starwind-ui/svelte/tabs";</script><Tabs.Root><Tabs.Panel value="a">{#snippet children(active:boolean)}{active}{/snippet}</Tabs.Panel></Tabs.Root>`,
+    diagnostic: /not assignable to type/,
+  },
+  "AccordionRootSnippetArgument.svelte": {
+    source: `<script lang="ts">import Accordion,{type AccordionValue} from "@starwind-ui/svelte/accordion";</script><Accordion.Root>{#snippet children(value:AccordionValue)}{value}{/snippet}</Accordion.Root>`,
+    diagnostic: /not assignable to type/,
+  },
+  "SelectValueSnippetArgument.svelte": {
+    source: `<script lang="ts">import Select from "@starwind-ui/svelte/select";</script><Select.Root><Select.Value>{#snippet children(label:string|null,value:string|null)}{label}{value}{/snippet}</Select.Value></Select.Root>`,
+    diagnostic: /not assignable to type/,
+  },
+  "SidebarContextNullable.svelte": {
+    source: `<script lang="ts">import {useSidebarContext} from "@starwind-ui/svelte/sidebar";const context=useSidebarContext();const state:string=context.state;void state;</script>`,
+    diagnostic: /possibly 'null'/,
+  },
+  "SidebarContextIsMobile.svelte": {
+    source: `<script lang="ts">import {useSidebarContext} from "@starwind-ui/svelte/sidebar";const context=useSidebarContext();void context?.isMobile;</script>`,
+    diagnostic: /does not exist on type/,
+  },
+  "SidebarContextSetMobileOpen.svelte": {
+    source: `<script lang="ts">import {useSidebarContext} from "@starwind-ui/svelte/sidebar";const context=useSidebarContext();context?.setMobileOpen(true);</script>`,
+    diagnostic: /does not exist on type/,
+  },
 };
 function invalid(name: string, imports: string, markup: string, diagnostic: RegExp) {
   negativeConsumers[`${name}.svelte`] = {
@@ -155,7 +195,7 @@ for (const [part, prop, value] of [
 }
 for (const [prop, value] of [
   ["value", "42"],
-  ["format", '\"lab\"'],
+  ["format", '"lab"'],
 ] as const)
   invalid(
     `InvalidColorPicker${prop}`,

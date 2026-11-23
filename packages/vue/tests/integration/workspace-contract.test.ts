@@ -12,7 +12,7 @@ import { vuePrimitiveComponents } from "../../../../scripts/portable-runtime/ren
 
 const repoRoot = fileURLToPath(new URL("../../../../", import.meta.url));
 
-describe("Vue public-beta vertical-slice workspace contract", () => {
+describe("Vue vertical-slice workspace contract", () => {
   it("exposes only the approved focused root commands", async () => {
     const rootPackage = await readRepoJson<{ scripts: Record<string, string> }>("package.json");
 
@@ -31,14 +31,13 @@ describe("Vue public-beta vertical-slice workspace contract", () => {
     );
   });
 
-  it("keeps the materialized beta independent and the review app private", async () => {
+  it("keeps Vue in the fixed group and the review app private", async () => {
     const vuePackage = await readRepoJson<{
       dependencies: Record<string, string>;
       name: string;
       private?: boolean;
       version: string;
     }>("packages/vue/package.json");
-    const runtimePackage = await readRepoJson<{ version: string }>("packages/runtime/package.json");
     const demoPackage = await readRepoJson<{ name: string; private: boolean }>(
       "apps/vue-demo/package.json",
     );
@@ -47,13 +46,21 @@ describe("Vue public-beta vertical-slice workspace contract", () => {
     );
 
     expect(vuePackage).toMatchObject({
-      dependencies: { "@starwind-ui/runtime": runtimePackage.version },
+      dependencies: { "@starwind-ui/runtime": "workspace:*" },
       name: "@starwind-ui/vue",
     });
     expect(semver.valid(vuePackage.version)).toBe(vuePackage.version);
     expect(vuePackage.private).toBeUndefined();
     expect(demoPackage).toMatchObject({ name: "vue-demo", private: true });
-    expect(changesets.fixed.flat()).not.toContain("@starwind-ui/vue");
+    expect(changesets.fixed).toEqual([
+      [
+        "@starwind-ui/runtime",
+        "@starwind-ui/astro",
+        "@starwind-ui/react",
+        "@starwind-ui/vue",
+        "@starwind-ui/svelte",
+      ],
+    ]);
     expect(changesets.ignore).toEqual(expect.arrayContaining(["demo", "react-demo", "vue-demo"]));
     expect(changesets.ignore).not.toContain("@starwind-ui/vue");
     expect(approvedTestHomePrefixes).toContain("packages/vue/tests/");
@@ -68,7 +75,7 @@ describe("Vue public-beta vertical-slice workspace contract", () => {
       demoIntegration: true,
       packageExports: true,
       publicDocsClaim: true,
-      status: "public-beta",
+      status: "shipping",
     });
     expect(vueTarget.primitive.support).toEqual({
       components: vuePrimitiveComponents,

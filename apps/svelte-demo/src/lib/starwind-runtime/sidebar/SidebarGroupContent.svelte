@@ -13,7 +13,7 @@
     "data-slot": dataSlot = "sidebar-group-content",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: SidebarGroupContentProps = $props();
 </script>

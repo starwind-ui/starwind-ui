@@ -88,7 +88,8 @@ const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function Sl
   const [localValue, setLocalValue] = React.useState<SliderValue>(() =>
     copyValue(value ?? initialDefaultValue),
   );
-  const renderedValue = value ?? localValue;
+  const owned = React.useRef(value === undefined).current,
+    renderedValue = owned ? localValue : (value ?? localValue);
   const rootRef = React.useRef<HTMLDivElement | null>(null),
     connection = React.useRef<ReturnType<typeof connectSlider> | undefined>(undefined);
   const composedRef = React.useCallback(
@@ -114,7 +115,8 @@ const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function Sl
     const controlled = initialModel !== undefined;
     let disposed = false,
       synchronizing = false;
-    let rendered = copyValue(initialModel ?? initialDefaultValue);
+    let rendered = copyValue(initialModel ?? initialDefaultValue),
+      commanded = copyValue(initialModel);
     const readOptions = () => ({
       disabled: inputs.current.disabled,
       form: inputs.current.form,
@@ -157,11 +159,14 @@ const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function Sl
       }
       render(instance.getValue());
     }
+    // A later defined input on a Runtime-owned model is a silent command. Apply an input that differs from the last one once, so a stale one never reverts an accepted interaction.
     function syncModel(): void {
-      if (disposed || !controlled) return;
-      const next = inputs.current.value;
+      if (disposed) return;
+      const next = inputs.current.value,
+        changed = controlled || !valuesEqual(next, commanded);
+      commanded = copyValue(next);
       if (next === undefined) return;
-      synchronize(next);
+      if (changed) synchronize(next);
     }
     function syncOptions(): void {
       if (disposed) return;

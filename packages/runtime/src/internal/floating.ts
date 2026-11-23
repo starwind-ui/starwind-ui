@@ -1,8 +1,11 @@
 import {
+  arrow,
   autoUpdate,
   computePosition,
+  detectOverflow,
   flip,
   limitShift,
+  type Middleware,
   offset,
   type Placement,
   type ReferenceElement,
@@ -10,6 +13,7 @@ import {
   shift,
   size,
 } from "@floating-ui/dom";
+import { type Direction, readDirection } from "./direction";
 
 export {
   type ResolveFloatingPortalTargetOptions,
@@ -44,9 +48,12 @@ export type FloatingPlacementState = {
 
 export type FloatingPositionerOptions = {
   adaptiveOrigin?: boolean;
+  arrow?: HTMLElement | null;
   floating: HTMLElement;
   getApplyRevision?: () => unknown;
   getOptions: () => FloatingOptions;
+  /** An owner can supply a side independently of the resolved data-side on the popup. */
+  getSideIntent?: () => FloatingSide;
   placementStateElements?: HTMLElement[];
   reference: ReferenceElement;
 };
@@ -62,6 +69,8 @@ export type FloatingAutoUpdateOptions = {
   onUpdated?: (state: FloatingPlacementState) => void;
   onUpdate?: () => void;
 };
+// Keeps an arrow off the rounded corners of the popup.
+const FLOATING_ARROW_PADDING = 6;
 const FLOATING_AVAILABLE_HEIGHT_PROPERTY = "--sw-floating-available-height";
 const FLOATING_AVAILABLE_WIDTH_PROPERTY = "--sw-floating-available-width";
 
@@ -70,6 +79,8 @@ export function createFloatingPositioner(options: FloatingPositionerOptions): Fl
   let cleanupAutoUpdate: (() => void) | null = null;
   let destroyed = false;
   let requestedPlacement: Pick<FloatingOptions, "align" | "side"> | null = null;
+  let requestedDirection: Direction | null = null;
+  let resolvedPlacement: Pick<FloatingOptions, "align" | "side"> | null = null;
 
   const executeUpdate = async () => {
     const stableApplyRevision = ++applyRevision;
@@ -83,21 +94,27 @@ export function createFloatingPositioner(options: FloatingPositionerOptions): Fl
       canApply,
       getOptions: () => {
         const nextOptions = options.getOptions();
-        if (!requestedPlacement) {
+        const direction = readDirection(options.floating);
+        const defaultsChanged =
+          resolvedPlacement !== null &&
+          (nextOptions.align !== resolvedPlacement.align ||
+            nextOptions.side !== resolvedPlacement.side);
+        if (!requestedPlacement || (requestedDirection !== direction && defaultsChanged)) {
           requestedPlacement = {
             align: nextOptions.align,
             side: nextOptions.side,
           };
-          return nextOptions;
         }
+        requestedDirection = direction;
 
         return {
           ...nextOptions,
           align: requestedPlacement.align,
-          side: requestedPlacement.side,
+          side: options.getSideIntent?.() ?? requestedPlacement.side,
         };
       },
     });
+    if (canApply()) resolvedPlacement = { align: state.align, side: state.side };
     return { applied: canApply(), state };
   };
   const update = async () => (await executeUpdate()).state;
@@ -141,9 +158,18 @@ export function createFloatingPositioner(options: FloatingPositionerOptions): Fl
   };
 }
 
-export function getTransformOrigin(side: FloatingSide, align: FloatingAlign): string {
+export function getTransformOrigin(
+  side: FloatingSide,
+  align: FloatingAlign,
+  direction: Direction = "ltr",
+): string {
   if (side === "bottom" || side === "top") {
-    const horizontal = align === "start" ? "left" : align === "end" ? "right" : "center";
+    const horizontal =
+      align === "center"
+        ? "center"
+        : (align === "start") === (direction === "ltr")
+          ? "left"
+          : "right";
     const vertical = side === "bottom" ? "top" : "bottom";
 
     return `${horizontal} ${vertical}`;
@@ -176,6 +202,7 @@ export function readFloatingSideAttribute(
 
 async function updateFloatingPosition({
   adaptiveOrigin = false,
+  arrow: arrowPart,
   canApply = () => true,
   floating,
   getOptions,
@@ -222,21 +249,44 @@ async function updateFloatingPosition({
     collisionStrategy === "best-fit"
       ? [flipMiddleware, sizeMiddleware]
       : [sizeMiddleware, flipMiddleware];
+  // An empty or hidden arrow has no size and takes no part in placement.
+  const arrowElement = arrowPart?.offsetWidth && arrowPart.offsetHeight ? arrowPart : null;
+  const arrowSize = arrowElement
+    ? Math.max(arrowElement.offsetWidth, arrowElement.offsetHeight)
+    : 0;
+  const arrowOffset = arrowSize && arrowSize / 2 + viewportPadding;
   const shiftMiddleware =
     avoidCollisions && preserveAnchor !== true
       ? shift({
           crossAxis: !preserveAnchor,
-          limiter: preserveAnchor === "side" ? limitShift() : undefined,
+          // Keep enough overlap with the anchor for the arrow to point at it, as Base UI does.
+          limiter: preserveAnchor === "side" ? limitShift({ offset: arrowOffset }) : undefined,
           padding: viewportPadding,
         })
       : null;
   // Correct centered alignment before deciding whether the requested side must flip.
   const shiftBeforeFlip = preserveAnchor === "side" && align === "center";
+  const menuEntry = [floating, ...placementStateElements].find((part) =>
+    part.hasAttribute("data-sw-context-menu-entry"),
+  );
+  const entryRoom: Middleware | null = menuEntry
+    ? {
+        name: "contextMenuEntryRoom",
+        async fn(state) {
+          const overflow = await detectOverflow(state);
+          const { side } = fromFloatingPlacement(state.placement);
+          const opposite = { top: "bottom", bottom: "top", left: "right", right: "left" } as const;
+          return { data: { pixels: Math.max(0, -overflow[opposite[side]]) } };
+        },
+      }
+    : null;
   const middleware = [
     offset({ alignmentAxis: alignOffset, mainAxis: sideOffset }),
     ...(shiftBeforeFlip
       ? [shiftMiddleware, ...collisionMiddleware]
       : [...collisionMiddleware, shiftMiddleware]),
+    arrowElement ? arrow({ element: arrowElement, padding: FLOATING_ARROW_PADDING }) : null,
+    entryRoom,
   ].filter(Boolean);
 
   if (canApply()) floating.style.position = strategy;
@@ -247,7 +297,11 @@ async function updateFloatingPosition({
     strategy,
   });
   const placement = fromFloatingPlacement(result.placement);
-  const transformOrigin = getTransformOrigin(placement.side, placement.align);
+  const transformOrigin = getTransformOrigin(
+    placement.side,
+    placement.align,
+    readDirection(floating),
+  );
 
   if (!canApply()) {
     return {
@@ -266,7 +320,18 @@ async function updateFloatingPosition({
     x: result.x,
     y: result.y,
   });
+  if (menuEntry && result.middlewareData.contextMenuEntryRoom) {
+    menuEntry.style.setProperty(
+      "--sw-context-menu-entry-room",
+      `${result.middlewareData.contextMenuEntryRoom.pixels}px`,
+    );
+  }
   floating.style.transformOrigin = transformOrigin;
+  for (const axis of ["x", "y"] as const) {
+    const arrowPosition = result.middlewareData.arrow?.[axis];
+    if (arrowPosition === undefined) floating.style.removeProperty(`--sw-floating-arrow-${axis}`);
+    else floating.style.setProperty(`--sw-floating-arrow-${axis}`, `${arrowPosition}px`);
+  }
   [floating, ...placementStateElements].forEach((element) => {
     element.style.setProperty("--transform-origin", transformOrigin);
   });

@@ -3,14 +3,18 @@ import path from "node:path";
 import type { StyledAdapterContract } from "../../../../contracts/styled/types.js";
 import { writeGeneratedFile } from "../../../shared.js";
 import {
+  getStyledOutputTypeParameters,
   projectStyledOutputModel,
   type StyledOutputComponent,
   type StyledOutputComponentGroup,
 } from "../../../styled-output-model/index.js";
+import { moveAstroElementSpreadsFirst } from "../spread-attribute-order.js";
+import { projectAstroColorPickerComponent } from "./color-picker-projection.js";
 import { ASTRO_FRAMEWORK } from "./constants.js";
 import { isForFramework } from "./formatting.js";
 import { renderComponentImports } from "./imports.js";
 import { renderIndex } from "./index-output.js";
+import { applyAstroNativeModel } from "./native-model.js";
 import { getAstroPrimitiveAliases, getRuntimeImportRewriteContext } from "./primitive-helpers.js";
 import {
   renderClientScript,
@@ -18,11 +22,8 @@ import {
   renderProps,
   renderVariables,
 } from "./props-client.js";
-import { applyAstroNativeModel } from "./native-model.js";
 import { renderNodes } from "./render-tree.js";
 import { renderVariants } from "./variants.js";
-import { projectAstroColorPickerComponent } from "./color-picker-projection.js";
-import { moveAstroElementSpreadsFirst } from "../spread-attribute-order.js";
 
 export type GenerateStarwindAstroWrappersOptions = {
   contracts: StyledAdapterContract[];
@@ -130,7 +131,11 @@ function renderComponent(
     primitiveImportBase,
     runtimeImportContext,
   );
-  const props = renderProps(component.props, runtimeImportContext);
+  const props = renderProps(
+    component.props,
+    runtimeImportContext,
+    getStyledOutputTypeParameters(component),
+  );
   const destructure = renderDestructure(component.destructure);
   const variables = renderVariables(component.variables ?? [], ASTRO_FRAMEWORK);
   const script = [imports, props, destructure, variables].filter(Boolean).join("\n\n");

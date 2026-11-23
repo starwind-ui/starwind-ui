@@ -10,10 +10,10 @@
 
 <script lang="ts">
   let {
-    "size": size = "md",
+    size = "md",
     "class": className,
     value = $bindable(),
-    "children": children,
+    children,
     "value": commandValue,
     ...rest
   }: SidebarInputProps = $props();

@@ -13,8 +13,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "variant": variant = "default",
-    "children": children,
+    variant = "default",
+    children,
     ...rest
   }: ToastItemProps = $props();
 </script>

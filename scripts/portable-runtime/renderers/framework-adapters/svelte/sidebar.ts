@@ -61,8 +61,8 @@ export function printSvelteSidebarComponent(file: AdapterComponentFile): Adapter
         : f.part === "trigger"
           ? printSvelteButtonChild({
               name: "Sidebar.Trigger",
-              imports: 'import { useSidebarContext } from "./SidebarContext.js";',
-              init: "const context = useSidebarContext();",
+              imports: 'import { useSidebarState } from "./SidebarContext.js";',
+              init: "const context = useSidebarState();",
               attributes: `${sidebarAttrs(f.facts, "trigger", "svelte", "object")}, type:"button",`,
               register: "",
               omitEmptyRegistration: true,
@@ -97,10 +97,10 @@ function printSidebarPart(f: AdapterSidebarFacts, part: "sidebar" | "rail"): str
   return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { HTMLAttributes, HTMLButtonAttributes } from "svelte/elements";
-  import { useSidebarContext } from "./SidebarContext.js";
+  import { useSidebarState } from "./SidebarContext.js";
   type Props = Omit<${sidebar ? "HTMLAttributes<HTMLDivElement>" : "HTMLButtonAttributes"}, "children"> & { children?: Snippet; ref?: (element: ${element}|null)=>void; ${sidebar ? `side?: ${f.props.side.type}; variant?: ${f.props.variant.type}; collapsible?: ${f.props.collapsible.type};` : ""} };
   let { children, ref, ${sidebar ? `side=${f.props.side.defaultValue}, variant=${f.props.variant.defaultValue}, collapsible=${f.props.collapsible.defaultValue},` : ""} ...rest }:Props=$props();
-  const context=useSidebarContext();
+  const context=useSidebarState();
 ${printSvelteRefAttachment(element)}
 </script>
 <${tag} {...rest} ${sidebarAttrs(f, part, "svelte")} {@attach attachRef}>{@render children?.()}</${tag}>`;

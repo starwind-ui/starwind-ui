@@ -1,5 +1,3 @@
-import { h } from "vue";
-
 import {
   ColorPickerArea,
   ColorPickerAreaBackground,
@@ -24,6 +22,7 @@ import {
   ColorPickerValueSwatch,
   ColorPickerValueText,
 } from "@starwind-ui/vue/color-picker";
+import { h } from "vue";
 
 export function colorPickerChildren() {
   return [

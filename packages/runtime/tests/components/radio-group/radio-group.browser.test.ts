@@ -99,7 +99,7 @@ describe("createRadioGroup", () => {
     hdd?.click();
 
     expect(listener).toHaveBeenCalledOnce();
-    expect((listener.mock.calls[0]?.[0] as CustomEvent).detail.isCanceled).toBe(true);
+    expect((listener.mock.calls[0]![0] as CustomEvent).detail.isCanceled).toBe(true);
     expect(group.getValue()).toBe("ssd");
     expect(hdd?.getAttribute("aria-checked")).toBe("false");
     expect(getInput(hdd!).checked).toBe(false);
@@ -1208,6 +1208,50 @@ describe("createRadioGroup", () => {
     expect(group.getValue()).toBe("ssd");
     expect(document.activeElement).toBe(ssd);
     expect(nvme?.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("reads computed direction for a CSS-directed horizontal group", () => {
+    const root = renderRadioGroup({
+      defaultValue: "hdd",
+      name: "storage",
+      orientation: "horizontal",
+    });
+    root.style.direction = "rtl";
+    const group = createRadioGroup(root);
+    const [ssd, hdd] = getRadios(root);
+    hdd?.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowRight" }),
+    );
+    expect(group.getValue()).toBe("ssd");
+    expect(document.activeElement).toBe(ssd);
+  });
+
+  it("keeps a canceled RTL keyboard proposal and focus stable through direction flips", () => {
+    const root = renderRadioGroup({
+      defaultValue: "hdd",
+      dir: "rtl",
+      name: "storage",
+      orientation: "horizontal",
+    });
+    let callbacks = 0;
+    const group = createRadioGroup(root, {
+      onValueChange: (_value, details) => {
+        callbacks++;
+        details.cancel();
+      },
+    });
+    const [, hdd] = getRadios(root);
+    hdd?.focus();
+    hdd?.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "ArrowRight" }),
+    );
+    expect(group.getValue()).toBe("hdd");
+    expect(document.activeElement).toBe(hdd);
+    expect(callbacks).toBe(1);
+    root.dir = "ltr";
+    root.dir = "rtl";
+    expect(group.getValue()).toBe("hdd");
+    expect(callbacks).toBe(1);
   });
 
   it("keeps group click and keyboard selection working with native-button radio inputs", () => {

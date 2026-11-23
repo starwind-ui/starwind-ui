@@ -1,14 +1,10 @@
 import { renderTabs as renderRecipeTabs } from "../../shared-recipes/selection/tabs.js";
-import { projectVueAttributeAccess } from "./public-contract.js";
-
-const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type {
   AdapterControlledValuePresenceComponentProjection,
   AdapterControlledValuePresenceFacts,
   AdapterControlledValuePresenceIndexProjection,
 } from "../types.js";
-import { projectVueDetailedEvent, projectVueModel } from "./public-contract.js";
 
 export function printVueControlledValuePresenceComponent(
   family: AdapterControlledValuePresenceComponentProjection,
@@ -55,6 +51,9 @@ export function printVueControlledValuePresenceContext(
 ): string {
   const orientation = facts.props.orientation;
   const value = facts.props.value;
+  const internalKey = `${facts.displayName}InternalContext`;
+  const internalType = `${facts.displayName}InternalContextValue`;
+  const internalHook = `use${facts.displayName}InternalContext`;
   return `import {
   inject,
   type InjectionKey,
@@ -63,29 +62,28 @@ export function printVueControlledValuePresenceContext(
 import type { ${orientation.type}, ${facts.state.type} } from "${facts.runtime.importSource}";
 
 export type ${facts.context.typeName} = Readonly<{
-  refresh(): void;
   ${orientation.name}: Readonly<Ref<${orientation.type}>>;
   ${value.name}: Readonly<Ref<${facts.state.type}>>;
 }>;
 
-export const ${facts.context.componentName}: InjectionKey<${facts.context.typeName}> = Symbol(
+/** Parts also read the Runtime refresh hook. The family index does not export this type. */
+export type ${internalType} = ${facts.context.typeName} & Readonly<{ refresh(): void }>;
+
+export const ${internalKey}: InjectionKey<${internalType}> = Symbol(
   "Starwind${facts.displayName}",
 );
+export const ${facts.context.componentName}: InjectionKey<${facts.context.typeName}> = ${internalKey};
 
-export function ${facts.context.hookName}(componentName: string): ${facts.context.typeName} {
-  const context = inject(${facts.context.componentName});
+export function ${internalHook}(componentName: string): ${internalType} {
+  const context = inject(${internalKey});
   if (!context) {
     throw new Error(\`\${componentName} must be used within ${facts.exports.root}.\`);
   }
   return context;
 }
-`;
-}
 
-function formatOptions(options: Record<string, boolean | number | string> | undefined): string {
-  if (!options) return "{}";
-  const entries = Object.entries(options).map(
-    ([name, value]) => `${name}: ${JSON.stringify(value)}`,
-  );
-  return `{ ${entries.join(", ")} }`;
+export function ${facts.context.hookName}(componentName: string): ${facts.context.typeName} {
+  return ${internalHook}(componentName);
+}
+`;
 }

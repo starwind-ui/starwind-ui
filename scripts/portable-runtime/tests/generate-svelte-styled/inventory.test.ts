@@ -1,11 +1,11 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { load } from "../../../../apps/svelte-demo/src/routes/review/+page.server.js";
 import {
   svelteInventory,
   validateSvelteInventory,
 } from "../../renderers/framework-adapters/svelte/inventory.js";
-import { load } from "../../../../apps/svelte-demo/src/routes/review/+page.server.js";
 
 const implemented = svelteInventory.styled
   .filter((entry) => entry.status === "implemented")
@@ -30,9 +30,9 @@ describe("Svelte Styled review inventory", () => {
       reviewSections: sections,
       requireStyledClosure: true,
     });
-    expect(implemented).toHaveLength(54);
-    expect(new Set(sections).size).toBe(54);
-    expect(load().catalog).toHaveLength(53);
+    expect(implemented).toHaveLength(55);
+    expect(new Set(sections).size).toBe(55);
+    expect(load().catalog).toHaveLength(54);
     expect(load().pages).toHaveLength(1);
     expect([...sections].sort()).toEqual([...implemented].sort());
     expect(load().catalog.map((entry) => entry.component)).toEqual(

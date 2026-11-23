@@ -136,7 +136,13 @@ export const previewCardRuntimeAdapterContract = {
       targets: ["root"],
       type: "boolean",
     },
-    { defaultValue: "300", name: "closeDelay", kind: "option", type: "number" },
+    {
+      defaultValue: "300",
+      name: "closeDelay",
+      kind: "option",
+      targets: ["root", "trigger"],
+      type: "number",
+    },
     { defaultValue: "true", name: "closeOnEscape", kind: "option", type: "boolean" },
     {
       defaultValue: "true",
@@ -151,7 +157,13 @@ export const previewCardRuntimeAdapterContract = {
       targets: ["root"],
       type: "boolean",
     },
-    { defaultValue: "600", name: "openDelay", kind: "option", type: "number" },
+    {
+      defaultValue: "600",
+      name: "openDelay",
+      kind: "option",
+      targets: ["root", "trigger"],
+      type: "number",
+    },
     { name: "onOpenChange", kind: "callback", type: "PreviewCardOpenChangeDetails" },
     { name: "asChild", kind: "rendering", targets: ["trigger"], type: "boolean" },
     {

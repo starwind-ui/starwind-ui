@@ -17,7 +17,7 @@ export const simpleRecipeOperations: CommandOperations = {
     });
   };`;
   },
-  frame({ kind, recipe, name, imports, fields, destructure, attrs, code }) {
+  frame({ kind, recipe, imports, fields, destructure, attrs, code }) {
     const publicFields =
       kind === "button"
         ? fields.replace(/"type"\?: [^;]+/, '"type"?: HTMLButtonAttributes["type"]')

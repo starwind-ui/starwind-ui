@@ -2,14 +2,14 @@
 <script setup lang="ts">
 import { computed, defineComponent, ref, useAttrs, useSlots } from "vue";
 import { createVueAsChild } from "../_internal/as-child.js";
-import { useSidebarContext } from "./SidebarContext.js";
+import { useSidebarState } from "./SidebarContext.js";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ asChild?: boolean }>(), { asChild: false });
 const attrs = useAttrs();
 const slots = useSlots();
 const element = ref<HTMLElement | null>(null);
-const context = useSidebarContext();
+const context = useSidebarState();
 const asChild = createVueAsChild("Sidebar.MenuButton", element);
 const protectedProps = computed(() => ({
   "data-sw-sidebar-menu-button": "",

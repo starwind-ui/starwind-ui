@@ -43,16 +43,9 @@ function omitForwardedAttrs(
     :size="size"
     :class="className"
     v-bind="
-      omitForwardedAttrs(attrs, [
-        'aria-current',
-        'variant',
-        'size',
-        'class',
-        'as',
-        'data-slot',
-      ]) as Omit<
+      omitForwardedAttrs(attrs, ['as', 'data-slot']) as Omit<
         InstanceType<typeof Button>['$props'],
-        'aria-current' | 'variant' | 'size' | 'class' | 'as' | 'data-slot'
+        'as' | 'data-slot'
       >
     "
     as="a"

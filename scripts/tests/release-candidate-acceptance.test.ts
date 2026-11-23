@@ -220,12 +220,13 @@ describe("release candidate acceptance", () => {
       svelte: {
         file: svelteTarball,
         name: "@starwind-ui/svelte",
-        version: "0.1.0",
+        version: "1.6.0",
       },
       vue: {
         file: vueTarball,
+        manifest: { dependencies: { "@starwind-ui/runtime": "workspace:*" } },
         name: "@starwind-ui/vue",
-        version: "0.2.0",
+        version: "1.6.0",
       },
     });
 
@@ -246,10 +247,14 @@ describe("release candidate acceptance", () => {
       expect(await tarballResponse.text()).toBe("packed runtime");
 
       const vueMetadata = await (await fetch(`${registry.url}/@starwind-ui%2Fvue`)).json();
-      expect(vueMetadata["dist-tags"].beta).toBe("0.2.0");
-      expect(vueMetadata.versions["0.2.0"].version).toBe("0.2.0");
+      // Stable adapters sit on latest, so an ordinary install without a tag resolves them.
+      expect(vueMetadata["dist-tags"]).toEqual({ latest: "1.6.0" });
+      expect(vueMetadata.versions["1.6.0"].version).toBe("1.6.0");
+      expect(vueMetadata.versions["1.6.0"].dependencies["@starwind-ui/runtime"]).toBe(
+        "0.1.0-beta.7",
+      );
       const svelteMetadata = await (await fetch(`${registry.url}/@starwind-ui%2Fsvelte`)).json();
-      expect(svelteMetadata["dist-tags"].beta).toBe("0.1.0");
+      expect(svelteMetadata["dist-tags"]).toEqual({ latest: "1.6.0" });
     } finally {
       await registry.close();
       await rm(directory, { force: true, recursive: true });
@@ -389,7 +394,7 @@ describe("release candidate acceptance", () => {
 
     expect(fixturePaths["next-app"]).toEqual(["src/app/page.tsx"]);
     expect(fixturePaths["next-pages"]).toEqual(["pages/index.tsx"]);
-    expect(fixturePaths["tanstack-start"]).toEqual(["src/routes/index.tsx"]);
+    expect(fixturePaths["tanstack-start"]).toEqual(["src/routes/index.tsx", "public/favicon.ico"]);
     expect(fixturePaths["react-router"]).toEqual(["app/routes/home.tsx"]);
     expect(fixturePaths["react-19-js"]).toEqual(["src/App.jsx"]);
     expect(fixturePaths["vue-35"]).toEqual(["src/App.vue"]);

@@ -76,9 +76,7 @@ export function assertPrintedPathsMatchOutputModel({
 }): void {
   const modelPaths = outputModel.files
     .filter((file) => !file.target || file.target === target)
-    .map((file) =>
-      file.kind === "component" ? `${file.path}.${extension}` : file.path,
-    );
+    .map((file) => (file.kind === "component" ? `${file.path}.${extension}` : file.path));
   const ignoredPaths = new Set(ignoreOutputModelFilePaths);
   const unknownIgnoredPaths = ignoreOutputModelFilePaths.filter(
     (filePath) => !modelPaths.includes(filePath),

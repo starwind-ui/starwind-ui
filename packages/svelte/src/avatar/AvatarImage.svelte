@@ -28,13 +28,18 @@
   $effect(() => {
     const controller = context?.instance;
     if (!controller) return;
+    const root = controller.root;
     const notify = (details: AvatarLoadingStatusChangeDetails) => untrack(() => onLoadingStatusChange?.(details.status, details));
-    const unsubscribe = controller.subscribe("loadingStatusChange", notify);
+    const handleLoadingStatusChange = (event: Event) => {
+      if (event.target !== root) return;
+      notify((event as CustomEvent<AvatarLoadingStatusChangeDetails>).detail);
+    };
+    root.addEventListener("starwind:loading-status-change", handleLoadingStatusChange);
 untrack(() => { const status = controller.getImageLoadingStatus();
 if (status && status !== "idle") {
   notify({ previousStatus: "idle", status });
 } });
-    return unsubscribe;
+    return () => root.removeEventListener("starwind:loading-status-change", handleLoadingStatusChange);
   });
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLImageElement>(() => ref);

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  type ColorPickerInitialPartProjection,
+  type ColorPickerInitialStateOptions,
   createColorPicker,
   createColorPickerInitialState,
   projectColorPickerInitialPart,
-  type ColorPickerInitialPartProjection,
-  type ColorPickerInitialStateOptions,
 } from "../../../src/components/color-picker";
 import { COLOR_PICKER_INITIAL_OWNERSHIP_ATTRIBUTE } from "../../../src/components/color-picker/initial-state";
 

@@ -6,6 +6,7 @@ import * as AlertDialogPackage from "@starwind-ui/svelte/alert-dialog";
 import * as AvatarPackage from "@starwind-ui/svelte/avatar";
 import * as ButtonPackage from "@starwind-ui/svelte/button";
 import * as CarouselPackage from "@starwind-ui/svelte/carousel";
+import * as ChartPackage from "@starwind-ui/svelte/chart";
 import * as CheckboxPackage from "@starwind-ui/svelte/checkbox";
 import * as CheckboxGroupPackage from "@starwind-ui/svelte/checkbox-group";
 import * as CollapsiblePackage from "@starwind-ui/svelte/collapsible";
@@ -82,6 +83,7 @@ const componentPackages = {
   accordion: AccordionPackage,
   button: ButtonPackage,
   carousel: CarouselPackage,
+  chart: ChartPackage,
   checkbox: CheckboxPackage,
   dialog: DialogPackage,
   drawer: DrawerPackage,
@@ -115,6 +117,8 @@ describe("private Svelte package build", () => {
     expect(SveltePackage.AccordionRoot).toBe(AccordionPackage.AccordionRoot);
     expect(SveltePackage.ButtonRoot).toBe(ButtonPackage.ButtonRoot);
     expect(SveltePackage.CarouselRoot).toBe(CarouselPackage.CarouselRoot);
+    expect(SveltePackage.ChartRoot).toBe(ChartPackage.ChartRoot);
+    expect(ChartPackage.ChartPrimitive).toBe(ChartPackage.default);
     expect(SveltePackage.CheckboxRoot).toBe(CheckboxPackage.CheckboxRoot);
     expect(SveltePackage.DialogRoot).toBe(DialogPackage.DialogRoot);
     expect(SveltePackage.SelectRoot).toBe(SelectPackage.SelectRoot);
@@ -161,7 +165,7 @@ console.log(import.meta.resolve("@starwind-ui/svelte/theme"));`,
 
   it("emits processed declarations and external Svelte imports for every private subpath", async () => {
     const manifest = JSON.parse(await readFile("package.json", "utf8")) as {
-      exports: Record<string, { default: string; svelte: string; types: string }>;
+      exports: Record<string, string | { default: string; svelte: string; types: string }>;
       peerDependencies: Record<string, string>;
       sideEffects: boolean;
     };
@@ -170,6 +174,7 @@ console.log(import.meta.resolve("@starwind-ui/svelte/theme"));`,
       ".",
       "./button",
       "./carousel",
+      "./chart",
       "./checkbox",
       "./select",
       "./accordion",
@@ -205,13 +210,15 @@ console.log(import.meta.resolve("@starwind-ui/svelte/theme"));`,
       "./navigation-menu",
       "./color-picker",
       "./combobox",
+      "./package.json",
     ]);
+    expect(manifest.exports["./package.json"]).toBe("./package.json");
     expect(manifest.peerDependencies.svelte).toBe(">=5.29.0 <6");
     expect(manifest.sideEffects).toBe(false);
 
     await Promise.all(
       Object.entries(manifest.exports).flatMap(([subpath, target]) =>
-        Object.values(target).map(async (file) => {
+        (typeof target === "string" ? [target] : Object.values(target)).map(async (file) => {
           const source = await readFile(file.slice(2), "utf8");
           expect(source.length, `${subpath}:${file}`).toBeGreaterThan(0);
         }),
@@ -242,6 +249,7 @@ console.log(import.meta.resolve("@starwind-ui/svelte/theme"));`,
       "avatar",
       "accordion",
       "carousel",
+      "chart",
       "dialog",
       "slider",
       "toast",

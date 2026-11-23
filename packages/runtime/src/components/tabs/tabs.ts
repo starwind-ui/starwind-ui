@@ -1,5 +1,10 @@
 import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
+  type DirectionSubscription,
+  spatialDelta,
+  subscribeDirection,
+} from "../../internal/direction";
+import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
@@ -127,6 +132,7 @@ class TabsController implements TabsInstance {
   readonly root: HTMLElement;
 
   private readonly abortController = new AbortController();
+  private readonly directionSubscription: DirectionSubscription;
   private readonly controlled: boolean;
   private readonly onValueChange?: (value: TabsValue, details: TabsValueChangeDetails) => void;
   private readonly subscribers = new Set<(details: TabsValueChangeDetails) => void>();
@@ -163,12 +169,16 @@ class TabsController implements TabsInstance {
 
     this.bindEvents();
     this.refresh();
+    this.directionSubscription = subscribeDirection(root, () => {
+      this.elements.indicators.forEach((indicator) => this.renderIndicator(indicator));
+    });
   }
 
   destroy(): void {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.directionSubscription.destroy();
     this.panelPresence.forEach((presence) => presence.destroy());
     this.panelPresence.clear();
     this.subscribers.clear();
@@ -540,7 +550,7 @@ class TabsController implements TabsInstance {
     if (key === "Home") return enabledTabs[0];
     if (key === "End") return enabledTabs.at(-1);
 
-    const direction = getKeyboardDirection(this.orientation, key);
+    const direction = getKeyboardDirection(this.orientation, key, this.directionSubscription.get());
     if (direction === 0) return undefined;
 
     const currentPosition = enabledTabs.findIndex((tab) => tab.element === currentTab.element);
@@ -616,7 +626,7 @@ class TabsController implements TabsInstance {
     const previousRect = previousTab.element.getBoundingClientRect();
     const nextRect = nextTab.element.getBoundingClientRect();
 
-    if (getRectWidth(previousRect) > 0 || getRectWidth(nextRect) > 0) {
+    if (getRectWidth(previousRect) > 0 && getRectWidth(nextRect) > 0) {
       if (this.orientation === "horizontal") {
         if (nextRect.left < previousRect.left) return "left";
         if (nextRect.left > previousRect.left) return "right";
@@ -627,7 +637,10 @@ class TabsController implements TabsInstance {
     }
 
     if (this.orientation === "horizontal") {
-      return nextTab.index > previousTab.index ? "right" : "left";
+      const logicalDelta = nextTab.index > previousTab.index ? 1 : -1;
+      return spatialDelta(logicalDelta, this.directionSubscription.get(), "horizontal") > 0
+        ? "right"
+        : "left";
     }
 
     return nextTab.index > previousTab.index ? "down" : "up";
@@ -858,15 +871,19 @@ function isDisabledTab(tab: HTMLButtonElement): boolean {
   );
 }
 
-function getKeyboardDirection(orientation: TabsOrientation, key: string): -1 | 0 | 1 {
+function getKeyboardDirection(
+  orientation: TabsOrientation,
+  key: string,
+  direction: "ltr" | "rtl",
+): -1 | 0 | 1 {
   if (orientation === "vertical") {
     if (key === "ArrowDown") return 1;
     if (key === "ArrowUp") return -1;
     return 0;
   }
 
-  if (key === "ArrowRight") return 1;
-  if (key === "ArrowLeft") return -1;
+  if (key === "ArrowRight") return spatialDelta(1, direction, "horizontal") as -1 | 1;
+  if (key === "ArrowLeft") return spatialDelta(-1, direction, "horizontal") as -1 | 1;
   return 0;
 }
 

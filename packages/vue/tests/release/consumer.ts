@@ -1,5 +1,3 @@
-import type { Component } from "vue";
-
 import {
   AccordionRoot,
   AlertDialogRoot,
@@ -29,33 +27,10 @@ import {
   SwitchRoot,
   TabsRoot,
   ToastRoot,
-  ToggleRoot,
   ToggleGroupRoot,
+  ToggleRoot,
 } from "@starwind-ui/vue";
-import {
-  Dropzone,
-  DropzoneFilesList,
-  DropzoneInput,
-  DropzoneLoadingIndicator,
-  DropzoneRoot as DropzoneSubpath,
-  DropzoneUploadIndicator,
-  type DropzoneFilesChangeDetails,
-} from "@starwind-ui/vue/dropzone";
-import DropzoneDefault from "@starwind-ui/vue/dropzone";
-import {
-  Field,
-  FieldControl,
-  FieldDescription,
-  FieldError,
-  FieldItem,
-  FieldLabel,
-  FieldRoot as FieldSubpath,
-  FieldValidity,
-  type InputValue as FieldInputValue,
-  type InputValueChangeDetails as FieldInputValueChangeDetails,
-} from "@starwind-ui/vue/field";
-import FieldDefault from "@starwind-ui/vue/field";
-import {
+import AccordionDefault, {
   Accordion,
   AccordionHeader,
   AccordionItem,
@@ -65,196 +40,179 @@ import {
   type AccordionValue,
   type AccordionValueChangeDetails,
 } from "@starwind-ui/vue/accordion";
-import AccordionDefault from "@starwind-ui/vue/accordion";
-import {
-  Tabs,
-  TabsContext,
-  TabsIndicator,
-  TabsList,
-  TabsPanel,
-  TabsRoot as TabsSubpath,
-  TabsTab,
-  type TabsOrientation,
-  type TabsValue,
-  type TabsValueChangeDetails,
-  useTabsContext,
-} from "@starwind-ui/vue/tabs";
-import TabsDefault from "@starwind-ui/vue/tabs";
-import {
-  Toast,
-  ToastAction,
-  ToastClose,
-  ToastContent,
-  ToastDescription,
-  ToastRoot as ToastSubpath,
-  ToastTemplate,
-  ToastTitle,
-  ToastTitleText,
-  ToastViewport,
-  toast,
-  type ToastOptions,
-  type ToastPromiseOptions,
-} from "@starwind-ui/vue/toast";
-import ToastDefault from "@starwind-ui/vue/toast";
-import {
+import AlertDialogDefault, {
   AlertDialog,
   AlertDialogBackdrop,
   AlertDialogClose,
+  type AlertDialogCloseCompleteDetails,
   AlertDialogDescription,
+  type AlertDialogOpenChangeDetails,
   AlertDialogPopup,
   AlertDialogPortal,
   AlertDialogRoot as AlertDialogSubpath,
   AlertDialogTitle,
   AlertDialogTrigger,
   AlertDialogViewport,
-  type AlertDialogCloseCompleteDetails,
-  type AlertDialogOpenChangeDetails,
 } from "@starwind-ui/vue/alert-dialog";
-import AlertDialogDefault from "@starwind-ui/vue/alert-dialog";
-import {
+import AvatarDefault, {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  AvatarRoot as AvatarSubpath,
   type AvatarImageLoadingStatus,
   type AvatarLoadingStatusChangeDetails,
+  AvatarRoot as AvatarSubpath,
 } from "@starwind-ui/vue/avatar";
-import AvatarDefault from "@starwind-ui/vue/avatar";
-import { Button, ButtonRoot as ButtonSubpath } from "@starwind-ui/vue/button";
-import ButtonDefault from "@starwind-ui/vue/button";
-import {
+import ButtonDefault, { Button, ButtonRoot as ButtonSubpath } from "@starwind-ui/vue/button";
+import CarouselDefault, {
   Carousel,
   CarouselContainer,
+  type CarouselInstance,
   CarouselItem,
   CarouselNext,
+  type CarouselOptions,
   CarouselPrevious,
   CarouselRoot as CarouselSubpath,
   CarouselViewport,
-  type CarouselInstance,
-  type CarouselOptions,
   createCarousel,
 } from "@starwind-ui/vue/carousel";
-import CarouselDefault from "@starwind-ui/vue/carousel";
-import {
+import CheckboxDefault, {
   Checkbox,
   CheckboxIndicator,
   CheckboxRoot as CheckboxSubpath,
 } from "@starwind-ui/vue/checkbox";
-import CheckboxDefault from "@starwind-ui/vue/checkbox";
-import {
+import CheckboxGroupDefault, {
   CheckboxGroup,
-  CheckboxGroupRoot as CheckboxGroupSubpath,
   type CheckboxGroupContextValue,
+  CheckboxGroupRoot as CheckboxGroupSubpath,
   type CheckboxGroupValue,
   useCheckboxGroupContext,
 } from "@starwind-ui/vue/checkbox-group";
-import CheckboxGroupDefault from "@starwind-ui/vue/checkbox-group";
-import {
+import CollapsibleDefault, {
   Collapsible,
+  type CollapsibleOpenChangeDetails,
   CollapsiblePanel,
   CollapsibleRoot as CollapsibleSubpath,
   CollapsibleTrigger,
-  type CollapsibleOpenChangeDetails,
 } from "@starwind-ui/vue/collapsible";
-import CollapsibleDefault from "@starwind-ui/vue/collapsible";
-import {
+import ColorPickerDefault, {
   ColorPicker,
   ColorPickerArea,
   ColorPickerAreaInput,
   ColorPickerChannelSlider,
   ColorPickerChannelSliderInput,
+  type ColorPickerColor,
+  type ColorPickerFormat,
   ColorPickerHiddenInput,
   ColorPickerRoot as ColorPickerSubpath,
   ColorPickerSwatch,
-  type ColorPickerColor,
-  type ColorPickerFormat,
   type ColorPickerValueChangeDetails,
   createColorPickerInitialState,
   parseColor,
   projectColorPickerInitialPart,
 } from "@starwind-ui/vue/color-picker";
-import ColorPickerDefault from "@starwind-ui/vue/color-picker";
-import {
+import ComboboxDefault, {
   Combobox,
   ComboboxInput,
   ComboboxItem,
   ComboboxRoot as ComboboxSubpath,
 } from "@starwind-ui/vue/combobox";
-import ComboboxDefault from "@starwind-ui/vue/combobox";
-import {
+import ContextMenuDefault, {
   ContextMenu,
   ContextMenuItem,
   ContextMenuRoot as ContextMenuSubpath,
   ContextMenuTrigger,
 } from "@starwind-ui/vue/context-menu";
-import ContextMenuDefault from "@starwind-ui/vue/context-menu";
-import {
+import DialogDefault, {
   Dialog,
   DialogBackdrop,
   DialogClose,
+  type DialogCloseCompleteDetails,
   DialogDescription,
+  type DialogOpenChangeDetails,
   DialogPopup,
   DialogRoot as DialogSubpath,
   DialogTitle,
   DialogTrigger,
-  type DialogCloseCompleteDetails,
-  type DialogOpenChangeDetails,
 } from "@starwind-ui/vue/dialog";
-import DialogDefault from "@starwind-ui/vue/dialog";
-import {
+import DrawerDefault, {
   Drawer,
   DrawerBackdrop,
   DrawerClose,
+  type DrawerCloseCompleteDetails,
   DrawerDescription,
+  type DrawerOpenChangeDetails,
   DrawerPopup,
   DrawerPortal,
   DrawerRoot as DrawerSubpath,
   DrawerTitle,
   DrawerTrigger,
   DrawerViewport,
-  type DrawerCloseCompleteDetails,
-  type DrawerOpenChangeDetails,
 } from "@starwind-ui/vue/drawer";
-import DrawerDefault from "@starwind-ui/vue/drawer";
-import {
+import DropzoneDefault, {
+  Dropzone,
+  type DropzoneFilesChangeDetails,
+  DropzoneFilesList,
+  DropzoneInput,
+  DropzoneLoadingIndicator,
+  DropzoneRoot as DropzoneSubpath,
+  DropzoneUploadIndicator,
+} from "@starwind-ui/vue/dropzone";
+import FieldDefault, {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  type InputValue as FieldInputValue,
+  type InputValueChangeDetails as FieldInputValueChangeDetails,
+  FieldItem,
+  FieldLabel,
+  FieldRoot as FieldSubpath,
+  FieldValidity,
+} from "@starwind-ui/vue/field";
+import FieldsetDefault, {
   Fieldset,
   FieldsetLegend,
   FieldsetRoot as FieldsetSubpath,
 } from "@starwind-ui/vue/fieldset";
-import FieldsetDefault from "@starwind-ui/vue/fieldset";
-import {
+import FormDefault, {
   Form,
   FormErrorSummary,
   FormRoot as FormSubpath,
   type FormValidationTiming,
 } from "@starwind-ui/vue/form";
-import FormDefault from "@starwind-ui/vue/form";
-import { Input, InputRoot as InputSubpath, type InputValue } from "@starwind-ui/vue/input";
-import InputDefault from "@starwind-ui/vue/input";
-import {
+import InputDefault, {
+  Input,
+  InputRoot as InputSubpath,
+  type InputValue,
+} from "@starwind-ui/vue/input";
+import InputOtpDefault, {
   InputOtp,
   InputOtpGroup,
-  InputOtpRoot as InputOtpSubpath,
   InputOtpSeparator,
   InputOtpSlot,
+  InputOtpRoot as InputOtpSubpath,
   type InputOtpValueChangeDetails,
 } from "@starwind-ui/vue/input-otp";
-import InputOtpDefault from "@starwind-ui/vue/input-otp";
-import { Menu, MenuItem, MenuRoot as MenuSubpath, MenuTrigger } from "@starwind-ui/vue/menu";
-import MenuDefault from "@starwind-ui/vue/menu";
-import {
+import MenuDefault, {
+  Menu,
+  MenuItem,
+  MenuRoot as MenuSubpath,
+  MenuTrigger,
+} from "@starwind-ui/vue/menu";
+import NavigationMenuDefault, {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuRoot as NavigationMenuSubpath,
   NavigationMenuTrigger,
 } from "@starwind-ui/vue/navigation-menu";
-import NavigationMenuDefault from "@starwind-ui/vue/navigation-menu";
-import {
+import PopoverDefault, {
   Popover,
   PopoverArrow,
   PopoverBackdrop,
   PopoverClose,
+  type PopoverCloseCompleteDetails,
   PopoverDescription,
+  type PopoverOpenChangeDetails,
   PopoverPopup,
   PopoverPortal,
   PopoverPositioner,
@@ -262,17 +220,13 @@ import {
   PopoverTitle,
   PopoverTrigger,
   PopoverViewport,
-  type PopoverCloseCompleteDetails,
-  type PopoverOpenChangeDetails,
 } from "@starwind-ui/vue/popover";
-import PopoverDefault from "@starwind-ui/vue/popover";
-import {
+import PreviewCardDefault, {
   PreviewCard,
   PreviewCardRoot as PreviewCardSubpath,
   PreviewCardTrigger,
 } from "@starwind-ui/vue/preview-card";
-import PreviewCardDefault from "@starwind-ui/vue/preview-card";
-import {
+import ProgressDefault, {
   Progress,
   ProgressIndicator,
   ProgressLabel,
@@ -280,34 +234,31 @@ import {
   ProgressTrack,
   ProgressValue as ProgressValuePart,
 } from "@starwind-ui/vue/progress";
-import ProgressDefault from "@starwind-ui/vue/progress";
-import {
+import RadioDefault, {
   Radio,
+  type RadioCheckedChangeDetails,
   RadioIndicator,
   RadioRoot as RadioSubpath,
-  type RadioCheckedChangeDetails,
 } from "@starwind-ui/vue/radio";
-import RadioDefault from "@starwind-ui/vue/radio";
-import {
+import RadioGroupDefault, {
   RadioGroup,
-  RadioGroupRoot as RadioGroupSubpath,
   type RadioGroupContextValue,
+  RadioGroupRoot as RadioGroupSubpath,
   type RadioGroupValue,
   useRadioGroupContext,
 } from "@starwind-ui/vue/radio-group";
-import RadioGroupDefault from "@starwind-ui/vue/radio-group";
-import {
+import ScrollAreaDefault, {
   ScrollArea,
   ScrollAreaContent,
   ScrollAreaCorner,
-  ScrollAreaRoot as ScrollAreaSubpath,
   ScrollAreaScrollbar,
+  ScrollAreaRoot as ScrollAreaSubpath,
   ScrollAreaThumb,
   ScrollAreaViewport,
 } from "@starwind-ui/vue/scroll-area";
-import ScrollAreaDefault from "@starwind-ui/vue/scroll-area";
-import {
+import SelectDefault, {
   Select,
+  type SelectContextValue,
   SelectGroup,
   SelectGroupLabel,
   SelectIcon,
@@ -319,30 +270,27 @@ import {
   SelectPopup,
   SelectPortal,
   SelectPositioner,
-  SelectRoot as SelectSubpath,
   SelectScrollDownArrow,
   SelectScrollUpArrow,
   SelectSeparator,
+  SelectRoot as SelectSubpath,
   SelectTrigger,
   SelectValue,
-  type SelectContextValue,
 } from "@starwind-ui/vue/select";
-import SelectDefault from "@starwind-ui/vue/select";
-import {
+import SidebarDefault, {
   Sidebar,
   SidebarComponent,
-  SidebarMenuButton,
-  SidebarProvider as SidebarProviderSubpath,
-  SidebarRail,
-  SidebarTrigger,
   type SidebarContextValue,
+  SidebarMenuButton,
   type SidebarMobileOpenChangeDetails,
   type SidebarOpenChangeDetails,
   type SidebarPersistenceStorage,
+  SidebarProvider as SidebarProviderSubpath,
+  SidebarRail,
+  SidebarTrigger,
   useSidebarContext,
 } from "@starwind-ui/vue/sidebar";
-import SidebarDefault from "@starwind-ui/vue/sidebar";
-import {
+import SliderDefault, {
   Slider,
   SliderControl,
   SliderIndicator,
@@ -354,35 +302,63 @@ import {
   type SliderValueChangeDetails,
   type SliderValueCommitDetails,
 } from "@starwind-ui/vue/slider";
-import SliderDefault from "@starwind-ui/vue/slider";
-import {
+import SwitchDefault, {
   Switch,
+  type SwitchCheckedChangeDetails,
   SwitchRoot as SwitchSubpath,
   SwitchThumb,
-  type SwitchCheckedChangeDetails,
 } from "@starwind-ui/vue/switch";
-import SwitchDefault from "@starwind-ui/vue/switch";
-import {
-  Toggle,
-  ToggleRoot as ToggleSubpath,
-  type TogglePressedChangeDetails,
-} from "@starwind-ui/vue/toggle";
-import ToggleDefault from "@starwind-ui/vue/toggle";
-import {
-  ToggleGroup,
-  ToggleGroupRoot as ToggleGroupSubpath,
-  type ToggleGroupContextValue,
-  type ToggleGroupValue,
-  useToggleGroupContext,
-} from "@starwind-ui/vue/toggle-group";
-import ToggleGroupDefault from "@starwind-ui/vue/toggle-group";
-import { Tooltip, TooltipRoot as TooltipSubpath, TooltipTrigger } from "@starwind-ui/vue/tooltip";
-import TooltipDefault from "@starwind-ui/vue/tooltip";
+import TabsDefault, {
+  Tabs,
+  TabsContext,
+  TabsIndicator,
+  TabsList,
+  type TabsOrientation,
+  TabsPanel,
+  TabsRoot as TabsSubpath,
+  TabsTab,
+  type TabsValue,
+  type TabsValueChangeDetails,
+  useTabsContext,
+} from "@starwind-ui/vue/tabs";
 import {
   getThemeInitScript,
   initThemeController,
   type ThemeInitScriptOptions,
 } from "@starwind-ui/vue/theme";
+import ToastDefault, {
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastContent,
+  ToastDescription,
+  type ToastOptions,
+  type ToastPromiseOptions,
+  ToastRoot as ToastSubpath,
+  ToastTemplate,
+  ToastTitle,
+  ToastTitleText,
+  ToastViewport,
+  toast,
+} from "@starwind-ui/vue/toast";
+import ToggleDefault, {
+  Toggle,
+  type TogglePressedChangeDetails,
+  ToggleRoot as ToggleSubpath,
+} from "@starwind-ui/vue/toggle";
+import ToggleGroupDefault, {
+  ToggleGroup,
+  type ToggleGroupContextValue,
+  ToggleGroupRoot as ToggleGroupSubpath,
+  type ToggleGroupValue,
+  useToggleGroupContext,
+} from "@starwind-ui/vue/toggle-group";
+import TooltipDefault, {
+  Tooltip,
+  TooltipRoot as TooltipSubpath,
+  TooltipTrigger,
+} from "@starwind-ui/vue/tooltip";
+import type { Component } from "vue";
 
 const components: Component[] = [
   AccordionRoot,
@@ -910,3 +886,27 @@ void useCheckboxGroupContext;
 void useToggleGroupContext;
 void getThemeInitScript(themeOptions);
 void initThemeController;
+
+// Public context types carry state only. Runtime wiring stays internal to the parts.
+declare const publicSelectContext: SelectContextValue;
+declare const publicComboboxContext: import("@starwind-ui/vue/combobox").ComboboxContextValue;
+declare const publicTabsContext: ReturnType<typeof useTabsContext>;
+void publicSelectContext.selectedLabel;
+void publicComboboxContext.inputValue;
+void publicTabsContext.orientation;
+// @ts-expect-error Select keeps registerPortal internal.
+void publicSelectContext.registerPortal;
+// @ts-expect-error Select keeps requestRefresh internal.
+void publicSelectContext.requestRefresh;
+// @ts-expect-error Select keeps mounted internal.
+void publicSelectContext.mounted;
+// @ts-expect-error Select keeps its root element internal.
+void publicSelectContext.element;
+// @ts-expect-error Combobox keeps registerPortal internal.
+void publicComboboxContext.registerPortal;
+// @ts-expect-error Combobox keeps mounted internal.
+void publicComboboxContext.mounted;
+// @ts-expect-error Combobox keeps its root element internal.
+void publicComboboxContext.element;
+// @ts-expect-error Tabs keeps refresh internal.
+void publicTabsContext.refresh;

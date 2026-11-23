@@ -1,3 +1,4 @@
+import { alertDialogStyledControlHelper } from "../../../../contracts/styled/components/alert-dialog.js";
 import type { StyledOutputComponent } from "../../../styled-output-model/index.js";
 
 export function projectNativeOverlayControl(
@@ -22,7 +23,7 @@ export function renderAlertDialogButtonControlSetup(component: StyledOutputCompo
   if (!isAlertDialogButtonControl(component)) return "";
 
   // The Primitive hook reads the ref from props. Reading it here fails react-hooks/refs.
-  return `const { controlKey, setControlElement } = __useAlertDialogControl({
+  return `const { controlKey, setControlElement } = ${alertDialogStyledControlHelper}({
   asChild,
   children,
   props,

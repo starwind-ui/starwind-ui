@@ -3,22 +3,22 @@
 Status: current
 Date: 2026-08-02
 
-This guide is for Primitive Framework Adapter targets such as the current Vue and Svelte betas, and
+This guide is for Primitive Framework Adapter targets such as the stable Vue and Svelte targets, and
 future Solid or other frameworks. It records the authoring pattern proven by the React and Astro renderer refactors:
 target adapters should print from Runtime Adapter Contracts, Generic Adapter Plans, Adapter Family
 Plans, Specialized Adapter Specs, and Adapter Output Models without copying large unstructured
 string templates.
 
-Astro and React are stable shipping targets. Vue 3.5 and Svelte 5 are public-beta targets. Solid
-remains a tracer-only target.
+Astro, React, Vue 3.5, and Svelte 5 are stable shipping targets. Solid remains a tracer-only
+target.
 
 Vue target work follows the repository's accepted idiomatic Vue adapter semantics. The typed Vue
 public contract lives in the Vue target home and owns model/event naming, composition, lifecycle,
-SSR/hydration, and delayed Teleport projection for the public beta.
+SSR/hydration, and delayed Teleport projection.
 
 Svelte target work follows the accepted Svelte 5.29+ component-and-attachment model. Typed
 `$props`, snippets, context, attachments, reactive Runtime setters, and teardown remain owned by the
-Svelte target home. The public-beta package covers 36 Primitive families plus Theme. Its target-local
+Svelte target home. The package covers 37 Primitive families plus Theme. Its target-local
 `inventory.ts` and README list the Primitive and Styled surfaces.
 
 ## Target Home Ownership
@@ -159,10 +159,10 @@ unchanged after formatting unless the issue explicitly accepts a formatting-only
 
 Future-framework tracer output is not public support.
 
-- Svelte public-beta capability flags must move together. The target stays outside the stable
-  Runtime, Astro, and React fixed package group until a separate stable-support decision.
-- Vue public-beta capability flags must move together. The target stays outside the stable Runtime,
-  Astro, and React fixed package group until a separate stable-support decision.
+- Svelte capability flags must move together. The package publishes in the Runtime fixed package
+  group.
+- Vue capability flags must move together. The package publishes in the Runtime fixed package
+  group.
 - Solid tracer output must not add a package, CLI registry artifacts, demo dependencies, install
   instructions, or public docs claims.
 - Any public API difference from Astro or React must be documented as framework semantics, not a

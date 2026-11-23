@@ -24,6 +24,7 @@ const MenuRadioItem = React.forwardRef<HTMLDivElement, MenuRadioItemProps>(funct
   forwardedRef,
 ) {
   const radioGroup = useMenuRadioGroupContext();
+  const defaultCheckedRef = React.useRef(defaultChecked);
   const initialChecked = checked ?? defaultChecked;
   const renderedChecked =
     radioGroup?.value === undefined ? initialChecked : radioGroup?.value === value;
@@ -37,7 +38,7 @@ const MenuRadioItem = React.forwardRef<HTMLDivElement, MenuRadioItemProps>(funct
       <div
         data-sw-menu-radio-item
         data-value={value}
-        data-default-checked={initialChecked ? "true" : undefined}
+        data-default-checked={defaultCheckedRef.current ? "true" : undefined}
         data-close-on-click={closeOnClick ? "true" : undefined}
         role="menuitemradio"
         aria-checked={renderedChecked}

@@ -1,0 +1,12 @@
+{
+  "cohort": "beta-portal-adapters",
+  "caseIds": [
+    "beta-portal-adapters-popover",
+    "beta-portal-adapters-popover-iframe",
+    "beta-portal-adapters-popover-opposite-iframe",
+    "beta-portal-adapters-menu-iframe",
+    "beta-portal-adapters-combobox-iframe",
+    "beta-portal-adapters-sheet",
+    "beta-portal-adapters-dropdown"
+  ]
+}

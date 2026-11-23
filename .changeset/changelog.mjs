@@ -1,7 +1,5 @@
 function formatSummary(summary) {
-  const [firstLine, ...remainingLines] = summary
-    .split("\n")
-    .map((line) => line.trimEnd());
+  const [firstLine, ...remainingLines] = summary.split("\n").map((line) => line.trimEnd());
 
   const continuation = remainingLines.map((line) => `  ${line}`).join("\n");
   return continuation ? `- ${firstLine}\n${continuation}` : `- ${firstLine}`;
@@ -16,9 +14,7 @@ export async function getDependencyReleaseLine(_changesets, dependenciesUpdated)
 
   return [
     "- Updated dependencies",
-    ...dependenciesUpdated.map(
-      (dependency) => `  - ${dependency.name}@${dependency.newVersion}`,
-    ),
+    ...dependenciesUpdated.map((dependency) => `  - ${dependency.name}@${dependency.newVersion}`),
   ].join("\n");
 }
 

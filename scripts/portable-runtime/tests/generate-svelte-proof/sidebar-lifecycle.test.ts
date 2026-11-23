@@ -1,7 +1,8 @@
-import { it, expect } from "vitest";
-import { createSidebarConsumer } from "../../../../packages/svelte/tests/sidebar-consumer.js";
+import { expect, it } from "vitest";
 import { verifySidebarLifecycle } from "../../../../packages/svelte/tests/sidebar-browser.js";
-it("preserves Sidebar accepted models, persistence, semantic controls, and the owned Sheet bridge", async () => {
+import { createSidebarConsumer } from "../../../../packages/svelte/tests/sidebar-consumer.js";
+
+it("preserves Sidebar accepted models, persistence, semantic controls, parts outside a Provider, and the owned Sheet bridge", async () => {
   const consumer = await createSidebarConsumer(process.cwd());
   try {
     expect(await verifySidebarLifecycle(consumer)).toMatchObject({
@@ -9,6 +10,7 @@ it("preserves Sidebar accepted models, persistence, semantic controls, and the o
       persistence: true,
       media: true,
       children: true,
+      orphan: true,
       sheet: true,
       nested: true,
       teardown: true,

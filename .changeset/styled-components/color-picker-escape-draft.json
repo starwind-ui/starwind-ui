@@ -1,0 +1,6 @@
+{
+  "impact": "behavior",
+  "components": {
+    "color-picker": "patch"
+  }
+}

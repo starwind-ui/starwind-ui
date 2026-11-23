@@ -1,5 +1,5 @@
-import path from "node:path";
 import { createRequire } from "node:module";
+import path from "node:path";
 import { createDistConsumer, type DistConsumer } from "./dist-consumer.js";
 
 export function createMenuConsumer(repoRoot: string): Promise<DistConsumer> {

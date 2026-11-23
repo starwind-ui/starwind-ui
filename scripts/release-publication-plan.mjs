@@ -177,10 +177,13 @@ export async function preparePublicationPlan({
   for (const entry of snapshot) {
     if (!(await exactVersionExists(entry, registry))) packages.push(entry);
   }
-  const vueLatest = packages.some(({ name }) => name === VUE_PACKAGE)
+  // A stable entry moves latest itself. Only an entry on another channel keeps its latest baseline.
+  const keepsLatest = (packageName) =>
+    packages.some(({ name, tag: entryTag }) => name === packageName && entryTag !== "latest");
+  const vueLatest = keepsLatest(VUE_PACKAGE)
     ? await readBetaLatest(registry, VUE_PACKAGE, "Vue")
     : null;
-  const svelteLatest = packages.some(({ name }) => name === SVELTE_PACKAGE)
+  const svelteLatest = keepsLatest(SVELTE_PACKAGE)
     ? await readBetaLatest(registry, SVELTE_PACKAGE, "Svelte")
     : null;
   const plan = { head, snapshot, packages, vueLatest, svelteLatest };

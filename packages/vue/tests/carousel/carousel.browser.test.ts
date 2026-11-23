@@ -1,7 +1,3 @@
-import { createApp, createSSRApp, h, nextTick, ref } from "vue";
-import { renderToString } from "vue/server-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { CarouselInstance, CarouselOptions } from "@starwind-ui/runtime/carousel";
 import {
   CarouselContainer,
@@ -11,6 +7,9 @@ import {
   CarouselRoot,
   CarouselViewport,
 } from "@starwind-ui/vue/carousel";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, createSSRApp, h, nextTick, ref } from "vue";
+import { renderToString } from "vue/server-renderer";
 
 const cleanups: Array<() => void> = [];
 
@@ -101,7 +100,7 @@ describe("Vue Carousel public behavior", () => {
       opts: { align: "start", duration: 1 },
       setApi: firstApi,
     }));
-    const second = mountCarousel(() => ({
+    mountCarousel(() => ({
       opts: { align: "start", duration: 1 },
       setApi: secondApi,
     }));

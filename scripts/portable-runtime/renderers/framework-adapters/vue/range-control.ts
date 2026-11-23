@@ -44,7 +44,6 @@ function printSimplePart(
   partName: Exclude<AdapterRangeControlComponentProjection["part"], "root" | "thumb">,
 ): string {
   const part = facts.parts[partName];
-  const exportName = facts.exports[partName];
   const elementType = part.defaultElement === "span" ? "HTMLSpanElement" : "HTMLDivElement";
 
   return `<script setup lang="ts">

@@ -1,5 +1,5 @@
-import { createStyledDropdownConsumer } from "./styled-dropdown-consumer.js";
 import { writeStyledConsumerFiles } from "./styled-consumer-files.js";
+import { createStyledDropdownConsumer } from "./styled-dropdown-consumer.js";
 
 export async function createStyledContextMenuConsumer(repoRoot: string) {
   const consumer = await createStyledDropdownConsumer(repoRoot);

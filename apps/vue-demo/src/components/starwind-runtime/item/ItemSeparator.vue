@@ -29,9 +29,9 @@ function omitForwardedAttrs(
     :orientation="orientation"
     :class="itemSeparator({ class: className })"
     v-bind="
-      omitForwardedAttrs(attrs, ['orientation', 'class', 'data-slot']) as Omit<
+      omitForwardedAttrs(attrs, ['data-slot']) as Omit<
         InstanceType<typeof Separator>['$props'],
-        'orientation' | 'class' | 'data-slot'
+        'data-slot'
       >
     "
     data-slot="item-separator"

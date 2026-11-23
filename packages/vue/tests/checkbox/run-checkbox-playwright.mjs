@@ -1,13 +1,11 @@
-import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { createServer } from "node:http";
 import { createRequire } from "node:module";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-
+import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-
-import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const repoRoot = path.resolve(packageRoot, "../..");
@@ -90,7 +88,7 @@ if (!address || typeof address === "string") {
 }
 let browser;
 try {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage();
   await page.goto(`http://127.0.0.1:${address.port}/`);
   await page.waitForFunction(() => window.__STARWIND_CHECKBOX_RESULT__ !== undefined);

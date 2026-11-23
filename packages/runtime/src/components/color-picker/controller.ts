@@ -1,4 +1,10 @@
 import {
+  type DirectionSubscription,
+  readDirection,
+  spatialRatio,
+  subscribeDirection,
+} from "../../internal/direction";
+import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
@@ -9,12 +15,14 @@ import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { shared } from "../../internal/shared";
 import {
   COLOR_PICKER_FORMATS,
-  parseColor,
   type ColorPickerColor,
   type ColorPickerFormat,
+  parseColor,
 } from "./color-picker";
 import {
   COLOR_PICKER_INITIAL_OWNERSHIP_ATTRIBUTE,
+  type ColorPickerInitialPartProjection,
+  type ColorPickerInitialState,
   createColorPickerInitialState,
   normalizeColorPickerCapabilityValue,
   normalizeColorPickerValue,
@@ -23,8 +31,6 @@ import {
   serializeColorPickerValue,
   snapColorPickerChannelValue,
   stepColorPickerHue,
-  type ColorPickerInitialPartProjection,
-  type ColorPickerInitialState,
 } from "./initial-state";
 
 export type ColorPickerValue = string | ColorPickerColor | null;
@@ -173,6 +179,7 @@ type InteractionSession = {
   revisionSource?: object;
 };
 type PointerSession = InteractionSession & {
+  direction?: DirectionSubscription;
   pointerId: number;
   reason: ColorPickerValueChangeReason;
   trigger: HTMLElement;
@@ -228,7 +235,13 @@ class ColorPickerController implements ColorPickerInstance {
   private allowEmpty: boolean;
   private locale?: string;
   private dir: ColorPickerDirection;
-  private reflectedDir?: ColorPickerDirection;
+  private optionDir?: ColorPickerDirection;
+  private authoredDir: string | null;
+  private rootCssDirection?: ColorPickerDirection;
+  // The root `dir` value after the last Runtime projection. Undefined before the first one.
+  private projectedDir?: string;
+  private directionSourceParent: Element | null;
+  private readonly directionSubscription: DirectionSubscription;
   private options: ColorPickerOptions;
   private ambientRevision = 0;
   private formatRevision = 0;
@@ -277,8 +290,17 @@ class ColorPickerController implements ColorPickerInstance {
     this.form = options.form ?? root.getAttribute("data-form") ?? undefined;
     this.required = options.required ?? readBooleanAttribute(root, "data-required");
     this.locale = options.locale ?? root.getAttribute("data-locale") ?? undefined;
-    this.dir = options.dir ?? readDirectionAttribute(root) ?? inheritedDirection(root);
-    this.reflectedDir = this.dir;
+    this.optionDir = options.dir;
+    this.authoredDir = root.getAttribute("dir");
+    this.directionSourceParent = root.parentElement;
+    this.dir = this.readSourceDirection();
+    this.directionSubscription = subscribeDirection(root, (dir) => this.updateDirection(dir), {
+      projection: true,
+      read: () => {
+        this.takeAuthoredDirection();
+        return this.readSourceDirection();
+      },
+    });
     this.format = validFormat(options.format ?? root.getAttribute("data-format")) ?? "hex";
     const initialValue = Object.hasOwn(options, "value")
       ? options.value
@@ -300,6 +322,7 @@ class ColorPickerController implements ColorPickerInstance {
   }
   destroy() {
     if (this.destroyed) return;
+    this.consumeRootDirectionMutations();
     this.cancelInteractions();
     this.invalidateEyeDropper();
     this.clearResetTimer();
@@ -307,12 +330,19 @@ class ColorPickerController implements ColorPickerInstance {
     this.cleanupAreaRoleDescriptions();
     this.detachFormReset();
     this.clearDrafts();
+    this.directionSubscription.destroy();
+    restoreAttribute(this.root, "dir", this.authoredDir);
     Object.values(this.subscribers).forEach((set) => set.clear());
     instances.delete(this.root);
     this.destroyed = true;
   }
   refresh(options: { preserveState?: boolean } = {}) {
     if (this.destroyed) return;
+    this.consumeRootDirectionMutations();
+    if (this.authoredDir === null) {
+      this.directionSourceParent = this.root.parentElement;
+      this.rootCssDirection = undefined;
+    }
     if (options.preserveState) {
       this.reconcilePreservedStructureState();
     } else {
@@ -325,6 +355,10 @@ class ColorPickerController implements ColorPickerInstance {
     this.abort = new AbortController();
     this.captureInitialProjectionOwnership();
     this.bind();
+    this.directionSubscription.refresh();
+    // A CSS pin write-back can leave the subscription's last value behind this.dir.
+    this.updateDirection(this.readSourceDirection());
+    this.projectDirectionAttribute(true);
     this.render();
   }
   getValue() {
@@ -432,14 +466,16 @@ class ColorPickerController implements ColorPickerInstance {
       this.form = options.form ?? undefined;
     if (options.required !== undefined) this.required = options.required;
     if (Object.hasOwn(options, "dir") && options.dir !== undefined) {
-      if (options.dir === null) {
-        this.reflectedDir = undefined;
-        this.root.removeAttribute("dir");
-        this.dir = inheritedDirection(this.root);
-      } else {
-        this.reflectedDir = options.dir;
-        this.dir = options.dir;
+      this.consumeRootDirectionMutations();
+      this.optionDir = options.dir ?? undefined;
+      if (this.optionDir === undefined) delete this.options.dir;
+      else this.options.dir = this.optionDir;
+      if (this.optionDir === undefined && this.authoredDir === null) {
+        this.rootCssDirection = undefined;
       }
+      this.projectDirectionAttribute(true);
+      this.directionSubscription.refresh();
+      this.updateDirection(this.readSourceDirection());
     }
     if (Object.hasOwn(options, "getAriaValueText"))
       this.options.getAriaValueText = options.getAriaValueText;
@@ -556,6 +592,15 @@ class ColorPickerController implements ColorPickerInstance {
       input.addEventListener("blur", (event) => this.commitDraft(event, input), { signal });
       input.addEventListener("keydown", (event) => this.draftKeydown(event, input), { signal });
     });
+    // The overlay dismiss layer reads Escape in document capture, before the input sees it.
+    this.root.ownerDocument.defaultView?.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.key === "Escape" && this.drafts.has(event.target as HTMLInputElement))
+          event.preventDefault();
+      },
+      { capture: true, signal },
+    );
     this.queryOwnedAll<HTMLSelectElement>("[data-sw-color-picker-format-select]").forEach(
       (select) =>
         select.addEventListener(
@@ -622,7 +667,9 @@ class ColorPickerController implements ColorPickerInstance {
   }
   private draftKeydown(event: KeyboardEvent, input: HTMLInputElement) {
     if (event.key === "Escape") {
+      if (!this.drafts.has(input)) return;
       event.preventDefault();
+      event.stopPropagation();
       this.restoreDraft(input);
     } else if (event.key === "Enter") {
       event.preventDefault();
@@ -710,6 +757,8 @@ class ColorPickerController implements ColorPickerInstance {
     target: HTMLElement,
     reason: ColorPickerValueChangeReason,
   ) {
+    this.consumeRootDirectionMutations();
+    this.directionSubscription.get();
     if (!this.owns(event.target instanceof Element ? event.target : null)) return;
     if (this.disabled || event.button !== 0) return;
     const configuration = this.pointerConfiguration(target, reason);
@@ -724,6 +773,10 @@ class ColorPickerController implements ColorPickerInstance {
     const editingValue = this.value ?? this.editingValue;
     const pointerAbort = new AbortController();
     this.pointer = {
+      direction:
+        reason === "area-drag" || target.dataset.orientation !== "vertical"
+          ? subscribeDirection(target, () => this.endPointer(false))
+          : undefined,
       pointerId: event.pointerId,
       start: this.value,
       editingStart: editingValue,
@@ -779,12 +832,17 @@ class ColorPickerController implements ColorPickerInstance {
     target: HTMLElement,
     reason: ColorPickerValueChangeReason,
   ) {
-    if (!this.pointer) return;
+    this.consumeRootDirectionMutations();
+    this.directionSubscription.get();
+    const session = this.pointer;
+    if (!session) return;
+    const direction = session.direction?.get() ?? this.dir;
+    if (this.pointer !== session) return;
     const editingValue = this.value ?? this.editingValue;
     const rect = target.getBoundingClientRect();
     let x = clamp((event.clientX - rect.left) / Math.max(rect.width, 1), 0, 1);
     const y = clamp((event.clientY - rect.top) / Math.max(rect.height, 1), 0, 1);
-    if (this.dir === "rtl") x = 1 - x;
+    x = spatialRatio(x, direction, "horizontal");
     let next: ColorPickerColor;
     if (reason === "area-drag") {
       const [xChannel, yChannel] = areaChannels(target);
@@ -834,7 +892,6 @@ class ColorPickerController implements ColorPickerInstance {
         ),
       );
     }
-    const session = this.pointer;
     session.pending = next;
     const generation = session.generation;
     const outcome = this.propose(next, { reason, trigger: target, event, commit: false });
@@ -844,7 +901,14 @@ class ColorPickerController implements ColorPickerInstance {
   private endPointer(completed: boolean, event?: Event) {
     const session = this.pointer;
     if (!session) return;
+    if (completed) {
+      this.consumeRootDirectionMutations();
+      this.directionSubscription.get();
+      session.direction?.get();
+      if (this.pointer !== session) return;
+    }
     this.pointer = undefined;
+    session.direction?.destroy();
     session.abort.abort();
     setBooleanAttribute(this.root, "data-dragging", false);
     setBooleanAttribute(session.trigger, "data-dragging", false);
@@ -913,6 +977,8 @@ class ColorPickerController implements ColorPickerInstance {
     session.revisionSource = outcome.revisionSource;
   }
   private keydown(event: KeyboardEvent, input: HTMLInputElement) {
+    this.consumeRootDirectionMutations();
+    this.directionSubscription.get();
     if (this.disabled || this.readOnly) return;
     const editingValue = this.value ?? this.editingValue;
     const channel = this.inputChannel(input);
@@ -921,10 +987,12 @@ class ColorPickerController implements ColorPickerInstance {
     const { min, max, step } = projection;
     let current = projection.displayed,
       next: number;
-    const horizontal =
-      input.getAttribute("data-axis") !== "y" &&
-      this.closestOwned(input, "[data-orientation=vertical]") === null;
-    const rtlSign = horizontal && this.dir === "rtl" ? -1 : 1;
+    const surface = this.closestOwned<HTMLElement>(
+      input,
+      "[data-sw-color-picker-area], [data-sw-color-picker-channel-slider]",
+    );
+    const horizontal = input.dataset.axis !== "y" && surface?.dataset.orientation !== "vertical";
+    const rtlSign = horizontal && readDirection(surface ?? this.root) === "rtl" ? -1 : 1;
     let stepDelta: number | undefined;
     if (event.key === "Home") next = min;
     else if (event.key === "End") next = max;
@@ -1134,6 +1202,76 @@ class ColorPickerController implements ColorPickerInstance {
   private stringify(value: ColorPickerColor | null) {
     return serializeColorPickerValue(value, this.format, this.alpha);
   }
+  private readSourceDirection(): ColorPickerDirection {
+    if (this.optionDir) return this.optionDir;
+    if (this.authoredDir !== null) return readDirection(this.root);
+    if (this.directionSourceParent !== this.root.parentElement) {
+      this.directionSourceParent = this.root.parentElement;
+      this.rootCssDirection = undefined;
+    }
+    if (this.rootCssDirection) {
+      this.rootCssDirection = readDirection(this.root);
+      return this.rootCssDirection;
+    }
+    const reflected = this.root.getAttribute("dir");
+    if (reflected === "ltr" || reflected === "rtl") {
+      const computed = readDirection(this.root);
+      if (computed !== reflected) return (this.rootCssDirection = computed);
+    }
+    // A Runtime-reflected dir pins the root, so inheritance comes from its parent.
+    return readDirection(this.root.parentElement ?? this.root.ownerDocument.documentElement);
+  }
+  /**
+   * With no observer, a root `dir` other than the last projection is an authored write. A
+   * same-value authored write reads as a projection. Returns true when the authored value changed.
+   */
+  private takeAuthoredDirection(): boolean {
+    const attribute = this.root.getAttribute("dir");
+    if (this.projectedDir === undefined || attribute === this.projectedDir) return false;
+    this.authoredDir = attribute;
+    if (attribute === null) {
+      this.directionSourceParent = this.root.parentElement;
+      this.rootCssDirection = undefined;
+    }
+    this.projectDirectionAttribute(true);
+    return true;
+  }
+  private consumeRootDirectionMutations() {
+    if (this.destroyed || !this.takeAuthoredDirection()) return;
+    this.directionSubscription.refresh();
+    this.updateDirection(this.readSourceDirection());
+  }
+  private updateDirection(dir: ColorPickerDirection) {
+    if (dir === this.dir) return;
+    const previous = this.dir;
+    this.dir = dir;
+    this.projectDirectionAttribute();
+    // A CSS pin found after the write keeps the previous direction.
+    if (this.dir === previous) return;
+    if (this.pointer?.direction) this.pointer.direction.refresh();
+    else this.endPointer(false);
+    this.render();
+  }
+  /**
+   * Reflect the direction on the root. When Runtime owns the value, check the computed direction
+   * after a write: CSS `direction` on the root wins over the attribute, so the reflection carries
+   * the CSS value. `verify` runs the check without a write.
+   */
+  private projectDirectionAttribute(verify = false) {
+    const projected = this.optionDir ?? this.authoredDir ?? this.dir;
+    if (this.root.getAttribute("dir") !== projected) {
+      this.root.setAttribute("dir", projected);
+      verify = true;
+    }
+    this.projectedDir = projected;
+    if (!verify || this.optionDir !== undefined || this.authoredDir !== null) return;
+    const computed = readDirection(this.root);
+    if (computed === projected) return;
+    this.rootCssDirection = computed;
+    this.dir = computed;
+    this.root.setAttribute("dir", computed);
+    this.projectedDir = computed;
+  }
   private projectionState(value: ColorPickerColor | null = this.value): ColorPickerInitialState {
     return createColorPickerInitialState({
       value,
@@ -1146,13 +1284,14 @@ class ColorPickerController implements ColorPickerInstance {
       name: this.name,
       form: this.form,
       locale: this.locale,
-      dir: this.reflectedDir,
+      dir: this.dir,
       getAriaValueText: this.options.getAriaValueText,
       getAreaRoleDescription: this.options.getAreaRoleDescription,
       getColorDescription: this.options.getColorDescription,
     });
   }
   private render() {
+    this.consumeRootDirectionMutations();
     const state = this.projectionState();
     const editingState = this.projectionState(this.editingValue);
     const formProxyStateTarget = this.getFormProxyStateTarget();
@@ -1162,8 +1301,9 @@ class ColorPickerController implements ColorPickerInstance {
     // Field and external validation own data-invalid after enhancement. Every other Root
     // projection fact is safe for Runtime to converge and keep setter-backed state current.
     applyProjection(this.root, projectColorPickerInitialPart(state, { part: "root" }), {
-      excludedAttributes: new Set(["data-invalid"]),
+      excludedAttributes: new Set(["data-invalid", "dir"]),
     });
+    this.projectDirectionAttribute();
     this.queryOwnedAll<HTMLInputElement>(
       "[data-sw-color-picker-area-input], [data-sw-color-picker-channel-input]",
     ).forEach((input) => this.renderInput(input, editingState));
@@ -1668,8 +1808,7 @@ class ColorPickerController implements ColorPickerInstance {
   private renderInput(input: HTMLInputElement, state: ColorPickerInitialState) {
     input.removeAttribute("name");
     const area = input.hasAttribute("data-sw-color-picker-area-input"),
-      channel = this.inputChannel(input),
-      displayed = projectChannel(this.value, channel, input).displayed;
+      channel = this.inputChannel(input);
     let partProjection: ColorPickerInitialPartProjection;
     if (area) {
       this.classifyAreaRoleDescription(input);
@@ -1774,15 +1913,6 @@ function validFormat(value: unknown): ColorPickerFormat | undefined {
   return COLOR_PICKER_FORMATS.includes(value as ColorPickerFormat)
     ? (value as ColorPickerFormat)
     : undefined;
-}
-function readDirectionAttribute(element: HTMLElement): ColorPickerDirection | undefined {
-  const value = element.getAttribute("dir");
-  return value === "ltr" || value === "rtl" ? value : undefined;
-}
-function inheritedDirection(element: HTMLElement): ColorPickerDirection {
-  const inherited = element.parentElement?.closest<HTMLElement>("[dir]");
-  const documentDirection = element.ownerDocument.documentElement.getAttribute("dir");
-  return (inherited?.getAttribute("dir") ?? documentDirection) === "rtl" ? "rtl" : "ltr";
 }
 function equal(a: ColorPickerColor | null, b: ColorPickerColor | null) {
   return a === b || (!!a && !!b && a.equals(b));

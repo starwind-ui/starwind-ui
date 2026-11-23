@@ -6,9 +6,9 @@ import type { HTMLAttributes } from "svelte/elements";
 import { getFieldRefresh } from "../form/FormFieldContext.js";
 const refresh = getFieldRefresh();
 const attachPart: Attachment<HTMLDivElement> = () => { refresh?.(); return () => refresh?.(); };
-type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; ref?: (element: HTMLDivElement | null) => void; "data-slot"?: string; match?: boolean | "badInput" | "customError" | "patternMismatch" | "rangeOverflow" | "rangeUnderflow" | "stepMismatch" | "tooLong" | "tooShort" | "typeMismatch" | "valid" | "valueMissing";  };
-let { children, ref, "data-slot": dataSlot = "field-validity", match = true, hidden = true,  ...rest }: Props = $props();
+type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; ref?: (element: HTMLDivElement | null) => void; match?: boolean | "badInput" | "customError" | "patternMismatch" | "rangeOverflow" | "rangeUnderflow" | "stepMismatch" | "tooLong" | "tooShort" | "typeMismatch" | "valid" | "valueMissing";  };
+let { children, ref, match = true, hidden = true,  ...rest }: Props = $props();
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLDivElement>(() => ref);
 </script>
-<div {...rest} data-sw-field-validity="" data-slot={dataSlot} data-match={String(match)} {hidden}  {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>
+<div {...rest} data-sw-field-validity="" data-match={String(match)} {hidden}  {@attach attachPart} {@attach attachRef}>{@render children?.()}</div>

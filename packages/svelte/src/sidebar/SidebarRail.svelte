@@ -2,10 +2,10 @@
 <script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { HTMLAttributes, HTMLButtonAttributes } from "svelte/elements";
-  import { useSidebarContext } from "./SidebarContext.js";
+  import { useSidebarState } from "./SidebarContext.js";
   type Props = Omit<HTMLButtonAttributes, "children"> & { children?: Snippet; ref?: (element: HTMLButtonElement|null)=>void;  };
   let { children, ref,  ...rest }:Props=$props();
-  const context=useSidebarContext();
+  const context=useSidebarState();
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLButtonElement>(() => ref);
 </script>

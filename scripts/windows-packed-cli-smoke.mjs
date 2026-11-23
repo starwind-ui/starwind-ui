@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createReadStream } from "node:fs";
-import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
+// oxlint-disable-next-line eslint/no-control-regex -- strips ANSI escape codes from CLI output.
 const ANSI_PATTERN = /\x1b\[[0-?]*[ -/]*[@-~]/g;
 const INTRO_TEXT = "Welcome to the Starwind CLI";
 const OUTRO_TEXT = "Enjoy using Starwind UI";

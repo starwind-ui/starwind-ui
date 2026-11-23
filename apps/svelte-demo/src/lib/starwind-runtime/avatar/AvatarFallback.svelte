@@ -11,9 +11,9 @@
 
 <script lang="ts">
   let {
-    "delay": delay,
+    delay,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: AvatarFallbackProps = $props();
 </script>

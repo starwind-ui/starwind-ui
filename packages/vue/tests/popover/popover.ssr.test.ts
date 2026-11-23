@@ -1,14 +1,13 @@
+import * as Popover from "@starwind-ui/vue/popover";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import * as Popover from "@starwind-ui/vue/popover";
 import {
-  Popover as StyledPopover,
   PopoverContent,
   PopoverDescription,
   PopoverTitle,
   PopoverTrigger,
+  Popover as StyledPopover,
 } from "../../../../apps/vue-demo/src/components/starwind-runtime/popover";
 
 describe("Vue Popover SSR", () => {

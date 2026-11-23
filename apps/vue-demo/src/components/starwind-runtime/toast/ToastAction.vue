@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
 import type { ClassValue } from "tailwind-variants";
-import { type ButtonHTMLAttributes } from "vue";
+import type { ButtonHTMLAttributes } from "vue";
 import { toastAction } from "./variants";
 
 defineOptions({ inheritAttrs: false });

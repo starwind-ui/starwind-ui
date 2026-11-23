@@ -1,17 +1,19 @@
 import Dropzone from "./Dropzone.svelte";
-import DropzoneUploadIndicator from "./DropzoneUploadIndicator.svelte";
-import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.svelte";
 import DropzoneFilesList from "./DropzoneFilesList.svelte";
+import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.svelte";
+import DropzoneUploadIndicator from "./DropzoneUploadIndicator.svelte";
 import {
   dropzone,
   dropzoneFilesList,
   dropzoneLoadingIndicator,
   dropzoneUploadIndicator,
 } from "./variants.js";
+
 export type { DropzoneProps } from "./Dropzone.svelte";
-export type { DropzoneUploadIndicatorProps } from "./DropzoneUploadIndicator.svelte";
-export type { DropzoneLoadingIndicatorProps } from "./DropzoneLoadingIndicator.svelte";
 export type { DropzoneFilesListProps } from "./DropzoneFilesList.svelte";
+export type { DropzoneLoadingIndicatorProps } from "./DropzoneLoadingIndicator.svelte";
+export type { DropzoneUploadIndicatorProps } from "./DropzoneUploadIndicator.svelte";
+
 const DropzoneVariants = {
   dropzone,
   dropzoneFilesList,
@@ -24,6 +26,7 @@ const DropzoneParts = {
   LoadingIndicator: DropzoneLoadingIndicator,
   UploadIndicator: DropzoneUploadIndicator,
 };
+
 export {
   Dropzone,
   DropzoneFilesList,

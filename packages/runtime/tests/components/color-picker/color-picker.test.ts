@@ -328,6 +328,7 @@ describe("ColorPickerColor", () => {
 
   it("correlates channel update keys with their format", () => {
     const color = parseColor("#123456")!;
+    // oxlint-disable-next-line eslint/no-constant-condition -- type-only assertions must not run.
     if (false) {
       // @ts-expect-error brightness is not an HSL channel.
       color.withChannels("hsl", { brightness: 50 });

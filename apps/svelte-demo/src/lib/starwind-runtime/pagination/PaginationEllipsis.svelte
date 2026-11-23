@@ -10,17 +10,17 @@
 
 <script lang="ts">
   let {
-    "size": size,
+    size,
     "class": className,
     ref = $bindable(),
-    "icon": icon,
-    "children": children,
+    icon,
+    children,
     ...rest
   }: PaginationEllipsisProps = $props();
 </script>
 
 <span
-  aria-hidden={true}
+  aria-hidden={"true"}
   class={paginationEllipsis({ "size": size, "class": cx(className) })}
   {...rest}
   data-slot={"pagination-ellipsis"}

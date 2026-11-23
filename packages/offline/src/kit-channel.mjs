@@ -7,7 +7,7 @@ import semver from "semver";
  * leave the beta, set this to undefined: the kit then publishes at the `starwind` version with the
  * `starwind` tag. Also update the version sentence in `kit-readme.md` and the docs.
  */
-export const KIT_BETA = Object.freeze({ version: "0.1.0", tag: "beta" });
+export const KIT_BETA = Object.freeze({ version: "0.1.1", tag: "beta" });
 
 /** npm dist-tag for a kit that follows the starwind version. A prerelease must not move `latest`. */
 export function releaseTag(version) {

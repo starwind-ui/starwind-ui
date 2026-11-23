@@ -81,7 +81,7 @@ export async function verifyAstroToggleCases({ page }) {
     Number(toggleState.initial.disabled.opacity) > 0.8 ||
     toggleState.initial.controlledOff.hasPressed !== false ||
     toggleState.initial.controlledOff.dataState !== "off" ||
-    toggleState.initial.controlledOff.defaultPressedAttribute !== null ||
+    toggleState.initial.controlledOff.defaultPressedAttribute !== "true" ||
     toggleState.initial.nonNative.tagName !== "SPAN" ||
     toggleState.initial.nonNative.role !== "button" ||
     toggleState.initial.nonNative.tabIndex !== 0 ||

@@ -49,8 +49,8 @@ describe("React Portal server projection", () => {
 
     expect(html).toContain('<main data-ticket08-ssr-root="true">');
     for (const [family, , attribute] of portalParts) {
-      expect(html).toContain(`${attribute}=\"\"`);
-      expect(html).toContain(`data-container=\"#${family}-target\"`);
+      expect(html).toContain(`${attribute}=""`);
+      expect(html).toContain(`data-container="#${family}-target"`);
       expect(html).toContain('data-placement="pending"');
       expect(html).toContain('data-sw-portal-placement="framework"');
       expect(html).toContain(`${family} content`);

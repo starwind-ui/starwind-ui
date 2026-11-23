@@ -4,6 +4,7 @@ export const switchButton = tv({
   base: [
     "border-input bg-muted inline-flex h-(--height) w-(--width) items-center rounded-full border",
     "group peer ring-offset-background transition outline-none focus-visible:ring-3",
+    "before:w-[calc(var(--padding)-var(--border-offset))] before:shrink-0 before:transition-[width] aria-checked:before:w-(--translation)",
     "not-disabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
   ],
   variants: {
@@ -22,16 +23,13 @@ export const switchButton = tv({
 });
 
 export const switchToggle = tv({
-  base: [
-    "bg-foreground inline-block transform rounded-full transition-transform",
-    "group-aria-checked:translate-x-(--translation) group-aria-[checked=false]:translate-x-[calc(var(--padding)-var(--border-offset))]",
-  ],
+  base: ["bg-foreground inline-block shrink-0 rounded-full"],
   variants: { size: { sm: "size-4", md: "size-5", lg: "size-6" } },
   defaultVariants: { size: "md" },
 });
 
 export const switchLabel = tv({
-  base: "text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+  base: "text-foreground ms-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
   variants: { size: { sm: "text-sm", md: "text-base", lg: "text-lg" } },
   defaultVariants: { size: "md" },
 });

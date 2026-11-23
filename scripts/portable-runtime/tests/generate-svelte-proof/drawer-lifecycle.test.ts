@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createDrawerConsumer } from "../../../../packages/svelte/tests/drawer-consumer.js";
-import { verifyDrawerLifecycle } from "../../../../packages/svelte/tests/drawer-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyDrawerLifecycle } from "../../../../packages/svelte/tests/drawer-browser.js";
+import { createDrawerConsumer } from "../../../../packages/svelte/tests/drawer-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

@@ -1,13 +1,12 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
+import * as projectPath from "../../src/utils/project-path.js";
 import {
   getQuasarProjectPlan,
   setupQuasarProject,
   updateQuasarConfigContent,
   validateQuasarProjectSetup,
 } from "../../src/utils/quasar-project.js";
-import * as projectPath from "../../src/utils/project-path.js";
 
 vi.mock("fs-extra");
 vi.mock("../../src/utils/project-path.js");
@@ -17,7 +16,7 @@ const mockWriteFile = vi.mocked(fs.writeFile);
 const mockResolvePath = vi.mocked(projectPath.resolveProjectMutationPath);
 
 const pkg = {
-  dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+  dependencies: { quasar: "^2.18.0", vue: "^3.5.21" },
   devDependencies: { "@quasar/app-vite": "^3.0.0" },
 };
 
@@ -331,7 +330,7 @@ export default defineConfig(() => ({
     expect(
       getQuasarProjectPlan(
         {
-          dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+          dependencies: { quasar: "^2.18.0", vue: "^3.5.21" },
           devDependencies: { "@quasar/vite-plugin": "^1.10.0", vite: "^8.0.0" },
         },
         { existingPaths: new Set(["vite.config.ts", "src/main.ts", "src/App.vue"]) },

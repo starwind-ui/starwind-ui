@@ -35,12 +35,27 @@ describe("generated Vue Tabs", () => {
 
     expect(first.context).toContain("InjectionKey<TabsContextValue>");
     expect(first.context).toContain("Readonly<Ref<TabsOrientation>>");
-    expect(first.list).toContain("useTabsContext");
+    expect(first.context).toMatch(/export type TabsContextValue = Readonly<\{[^}]*\}>;/);
+    expect(
+      first.context.match(/export type TabsContextValue = Readonly<\{[^}]*\}>;/)?.[0],
+    ).not.toContain("refresh");
+    expect(first.list).toContain("useTabsInternalContext");
+    expect(first.index).not.toContain("TabsInternalContext");
     expect(compactCode(first.tab)).toContain(compactCode(':data-value="props.value"'));
     expect(compactCode(first.panel)).toContain(compactCode(':hidden="initialHidden"'));
     expect(first.indicator).toContain("data-sw-tabs-indicator");
     expect(first.index).toContain("const Tabs =");
     expect(first.index).toContain("TabsValueChangeDetails");
+  });
+
+  it("passes no slot props from the root, Tab, or Panel", async () => {
+    const output = await generateTabs();
+    for (const name of ["root", "tab", "panel"] as const) {
+      expect(output[name], name).not.toMatch(/<slot\s+:/);
+      expect(compactCode(output[name]), name).toContain(
+        compactCode("defineSlots<{ default?: () => unknown }>()"),
+      );
+    }
   });
 
   it("generates Styled Tabs with the default value model and canonical slots", async () => {

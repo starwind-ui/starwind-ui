@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkEvidence } from "./runtime-performance/interactions/evidence.mjs";
 import { repoRoot } from "./runtime-performance/interactions/build.mjs";
 import { parseArgs } from "./runtime-performance/interactions/command.mjs";
+import { checkEvidence } from "./runtime-performance/interactions/evidence.mjs";
 import { providers } from "./runtime-performance/interactions/registry.mjs";
 import { acceptedPath, loadAcceptedStress } from "./runtime-performance/stress/evidence.mjs";
 

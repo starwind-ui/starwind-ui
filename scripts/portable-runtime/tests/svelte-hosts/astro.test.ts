@@ -1,19 +1,20 @@
 import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { pathToFileURL } from "node:url";
-import { createRequire } from "node:module";
 import { access, cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ASTRO_TOOLS,
+  type HostSteps,
   runSvelteHost,
   selectHost,
   startHostProcess,
   verifyAstroToolEntries,
-  type HostSteps,
 } from "../../check-svelte-hosts.js";
+
 const owned: string[] = [];
 async function temporary() {
   const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "astro-host-unit-")));

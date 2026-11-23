@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createStyledContextMenuConsumer } from "../../../../packages/svelte/tests/styled-context-menu-consumer.js";
-import { verifyStyledContextMenuLifecycle } from "../../../../packages/svelte/tests/styled-context-menu-browser.js";
 import type { DistConsumer } from "../../../../packages/svelte/tests/dist-consumer.js";
+import { verifyStyledContextMenuLifecycle } from "../../../../packages/svelte/tests/styled-context-menu-browser.js";
+import { createStyledContextMenuConsumer } from "../../../../packages/svelte/tests/styled-context-menu-consumer.js";
+
 const consumers: DistConsumer[] = [];
 afterEach(async () => {
   await Promise.all(consumers.splice(0).map((consumer) => consumer.dispose()));

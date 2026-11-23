@@ -1,6 +1,8 @@
 import { renderTsValue } from "../../../shared.js";
 import {
   getStyledPartsIdentifier,
+  renderStyledTypeParameterArguments,
+  renderStyledTypeParameterDeclarations,
   type StyledOutputValueExpression,
 } from "../../../styled-output-model/index.js";
 import { svelteCommandName } from "../recipe-framework-operations.js";
@@ -69,13 +71,17 @@ export function renderSvelteStyledFiles(
     ...group.constants.map((entry) => entry.name),
     ...(collection && group.variantCollectionName ? [group.variantCollectionName] : []),
   ].sort();
+  const referenced = new Set([
+    ...named,
+    ...group.defaultExport.members.map((member) => member.localName),
+  ]);
   files.push({
     relativePath: `${group.component}/index.ts`,
     content:
       [
-        ...projection.components.map(
-          (component) => `import ${component.exportName} from "./${component.fileName}";`,
-        ),
+        ...projection.components
+          .filter((component) => referenced.has(component.exportName))
+          .map((component) => `import ${component.exportName} from "./${component.fileName}";`),
         ...(variants.length ? [`import { ${variants.join(", ")} } from "./variants.js";`] : []),
         ...projection.components.map(
           (component) =>
@@ -101,17 +107,19 @@ export function renderSvelteStyledFiles(
 }
 
 function renderComponent(component: SvelteStyledComponentProjection, styleImport?: string): string {
-  const imports = component.imports.map(
-    (entry) =>
-      `import ${entry.typeOnly ? "type " : ""}{ ${entry.names.join(", ")} } from ${JSON.stringify(entry.source)};`,
-  );
+  const imports = component.imports
+    .filter((entry) => entry.names.length > 0)
+    .map(
+      (entry) =>
+        `import ${entry.typeOnly ? "type " : ""}{ ${entry.names.join(", ")} } from ${JSON.stringify(entry.source)};`,
+    );
   if (styleImport) imports.push(`import ${JSON.stringify(styleImport)};`);
   const props = component.destructure.map((prop) =>
     prop.defaultValue?.startsWith("$bindable(") &&
     !prop.alias &&
     /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(prop.name)
       ? `${prop.name} = ${prop.defaultValue}`
-      : `${JSON.stringify(prop.name)}${prop.alias ? `: ${prop.alias}` : `: ${prop.name}`}${prop.defaultValue ? ` = ${prop.defaultValue}` : ""}`,
+      : `${renderDestructuredName(prop.name, prop.alias ?? prop.name)}${prop.defaultValue ? ` = ${prop.defaultValue}` : ""}`,
   );
   // Forward a model through the parent getter so a one-way parent keeps ownership past this wrapper.
   const models = new Set(
@@ -136,8 +144,18 @@ function renderComponent(component: SvelteStyledComponentProjection, styleImport
     if (model) props.push(`${JSON.stringify(model)}: ${svelteCommandName(model)}`);
   }
   if (component.rest) props.push(`...${component.rest}`);
+  const typeParameters = component.typeParameters?.length ? component.typeParameters : undefined;
+  if (typeParameters && component.generics)
+    throw new TypeError(
+      `Svelte Styled ${component.exportName}.svelte: type parameters cannot combine with element generics.`,
+    );
+  const propsType = `${component.exportName}Props${
+    typeParameters
+      ? `<${renderStyledTypeParameterArguments(typeParameters)}>`
+      : (component.generics?.arguments ?? "")
+  }`;
   const instance = [
-    `let {\n${indent(props.join(",\n"))}\n}: ${component.exportName}Props = $props();`,
+    `let {\n${indent(props.join(",\n"))}\n}: ${propsType} = $props();`,
     ...(component.initialization ?? []),
     ...component.variables.map((variable) =>
       variable.state
@@ -150,10 +168,57 @@ function renderComponent(component: SvelteStyledComponentProjection, styleImport
     ),
     ...component.setup,
   ].join("\n\n");
-  return `<script module lang="ts">\n${indent([...imports, "", component.publicTypes].join("\n"))}\n</script>\n\n<script lang="ts">\n${indent(instance)}\n</script>\n\n${markup}\n`;
+  const publicTypes = typeParameters
+    ? parameterizePublicPropsType(component.exportName, component.publicTypes, typeParameters)
+    : component.publicTypes;
+  const generics = typeParameters
+    ? ` generics="${renderStyledTypeParameterDeclarations(typeParameters)}"`
+    : component.generics
+      ? ` generics="${component.generics.declaration}"`
+      : "";
+  return `<script module lang="ts">\n${indent([...imports, "", publicTypes].join("\n"))}\n</script>\n\n<script lang="ts"${generics}>\n${indent(instance)}\n</script>\n\n${markup}\n`;
+}
+
+/**
+ * The module script cannot see instance generics, so the public props type declares its own
+ * parameters. Family projections write that type in different shapes, so match one declaration.
+ * A helper alias, such as Button's `CommonProps`, can hold a contract field outside the scope of
+ * the parameters, so a projection that declares one cannot take type parameters.
+ */
+function parameterizePublicPropsType(
+  exportName: string,
+  publicTypes: string,
+  typeParameters: NonNullable<SvelteStyledComponentProjection["typeParameters"]>,
+): string {
+  const helpers = [
+    ...publicTypes.matchAll(/\b(?:type|interface)\s+([A-Za-z_$][\w$]*)\s*(?:<|=|\{|extends\b)/g),
+  ]
+    .map((match) => match[1]!)
+    .filter((name) => name !== `${exportName}Props`);
+  if (helpers.length) {
+    throw new TypeError(
+      `Svelte Styled ${exportName}.svelte: type parameters are not supported by a projection that declares helper types (${helpers.join(", ")}).`,
+    );
+  }
+  const declaration = new RegExp(`export type ${exportName}Props\\s*=`, "g");
+  const matches = publicTypes.match(declaration) ?? [];
+  if (matches.length !== 1) {
+    throw new TypeError(
+      `Svelte Styled ${exportName}.svelte: type parameters need exactly one ${exportName}Props declaration.`,
+    );
+  }
+  return publicTypes.replace(
+    declaration,
+    `export type ${exportName}Props<${renderStyledTypeParameterDeclarations(typeParameters)}> =`,
+  );
 }
 
 /** A parent-controlled input is read past the local value of a one-way bindable. */
+/** A same-name binding uses shorthand; a rename keeps the quoted key for reserved names like class. */
+function renderDestructuredName(name: string, local: string): string {
+  return name === local ? name : `${JSON.stringify(name)}: ${local}`;
+}
+
 function renderAcceptedState(name: string, model: string, initial: string): string {
   const command = svelteCommandName(model);
   return `const ${model}Controlled = untrack(() => ${command}) !== undefined;
@@ -179,8 +244,8 @@ function renderNode(node: SvelteStyledRenderNode, models: ReadonlySet<string>): 
       return `{#snippet ${node.name}(${node.parameters.join(", ")})}\n${indent(renderAll(node.children))}\n{/snippet}`;
     case "snippet":
       return node.fallback.length
-        ? `{#if ${node.name}}{@render ${node.name}(${node.args?.join(", ") ?? ""})}{:else}${renderAll(node.fallback)}{/if}`
-        : `{@render ${node.name}?.(${node.args?.join(", ") ?? ""})}`;
+        ? `{#if ${node.name}}{@render ${node.name}()}{:else}${renderAll(node.fallback)}{/if}`
+        : `{@render ${node.name}?.()}`;
     case "expression":
       return `{${node.value}}`;
     case "text":

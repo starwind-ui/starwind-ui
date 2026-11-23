@@ -46,7 +46,7 @@ const subTriggerClassName = computed(() => className);
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
-        class="ml-auto size-4"
+        class="ms-auto size-4 rtl:rotate-180"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M9 6l6 6l-6 6" />

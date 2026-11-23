@@ -90,6 +90,14 @@ export function normalizeReactAttributeName(name: string): string {
   return name;
 }
 
+/**
+ * A Primitive class hook follows the React `class` rule, so `labelClass` becomes
+ * `labelClassName`. Other targets keep the contract name.
+ */
+export function normalizeReactClassHookName(name: string): string {
+  return name === "class" ? "className" : name.endsWith("Class") ? `${name}Name` : name;
+}
+
 export function normalizeSolidAttributeName(name: string): string {
   if (name === "className") return "class";
   if (name === "htmlFor") return "for";

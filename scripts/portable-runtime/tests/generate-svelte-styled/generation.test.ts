@@ -1,9 +1,10 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { it, expect } from "vitest";
-import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
+import { expect, it } from "vitest";
 import { readSvelteStyledTree } from "../../check-svelte-styled.js";
+import { generateSvelteStyled, SVELTE_STYLED_OUTPUT_DIR } from "../../generate-svelte-styled.js";
+
 it("generates the current Styled inventory deterministically and removes stale files", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "svelte-styled-generation-"));
   try {

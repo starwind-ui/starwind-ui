@@ -16,7 +16,7 @@ export type ContextMenuSubContentProps = React.ComponentPropsWithoutRef<"div"> &
 function ContextMenuSubContent(props: ContextMenuSubContentProps) {
   const {
     className,
-    side = "right",
+    side,
     align = "start",
     sideOffset = 0,
     avoidCollisions = true,
@@ -36,10 +36,11 @@ function ContextMenuSubContent(props: ContextMenuSubContentProps) {
     >
       <ContextMenuPrimitive.Popup
         className={contextMenuContent({ class: subContentClassName })}
-        side={side}
+        side={side ?? "right"}
         align={align}
         sideOffset={sideOffset}
         avoidCollisions={avoidCollisions}
+        data-sw-menu-side-intent={side ?? ""}
         {...rest}
         data-slot="context-menu-sub-content"
       >

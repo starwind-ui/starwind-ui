@@ -9,9 +9,9 @@
 
 <script lang="ts">
   let {
-    "targetId": targetId,
+    targetId,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: DialogTriggerProps = $props();
 

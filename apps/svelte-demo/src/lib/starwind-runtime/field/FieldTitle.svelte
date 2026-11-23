@@ -13,8 +13,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldTitleProps = $props();
 

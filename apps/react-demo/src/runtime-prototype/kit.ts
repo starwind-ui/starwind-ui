@@ -1,8 +1,8 @@
 export { toast } from "@starwind-ui/react/toast";
 export {
+  IconAlertCircle,
   IconArrowLeft,
   IconArrowRight,
-  IconAlertCircle,
   IconBell,
   IconBold,
   IconChartBar,

@@ -260,7 +260,7 @@ export const colorPickerRuntimeAdapterContract = {
         controlledWhen: "initial-defined",
         lifetime: "mount",
         laterUndefined: "retain-controlled-value",
-        laterDefined: "ignore-when-uncontrolled",
+        laterDefined: "silent-command",
       },
     },
     {
@@ -276,7 +276,7 @@ export const colorPickerRuntimeAdapterContract = {
         controlledWhen: "initial-defined",
         lifetime: "mount",
         laterUndefined: "retain-controlled-value",
-        laterDefined: "ignore-when-uncontrolled",
+        laterDefined: "silent-command",
       },
     },
   ],

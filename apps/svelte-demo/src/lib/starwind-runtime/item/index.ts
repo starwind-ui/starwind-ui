@@ -20,6 +20,7 @@ import {
   itemSeparator,
   itemTitle,
 } from "./variants.js";
+
 export type { ItemProps } from "./Item.svelte";
 export type { ItemActionsProps } from "./ItemActions.svelte";
 export type { ItemContentProps } from "./ItemContent.svelte";
@@ -30,6 +31,7 @@ export type { ItemHeaderProps } from "./ItemHeader.svelte";
 export type { ItemMediaProps } from "./ItemMedia.svelte";
 export type { ItemSeparatorProps } from "./ItemSeparator.svelte";
 export type { ItemTitleProps } from "./ItemTitle.svelte";
+
 const ItemVariants = {
   item,
   itemActions,
@@ -54,6 +56,7 @@ const ItemParts = {
   Separator: ItemSeparator,
   Title: ItemTitle,
 };
+
 export {
   Item,
   ItemActions,

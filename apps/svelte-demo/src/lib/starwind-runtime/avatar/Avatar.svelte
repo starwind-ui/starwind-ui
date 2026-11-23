@@ -10,10 +10,10 @@
 
 <script lang="ts">
   let {
-    "variant": variant,
-    "size": size = "md",
+    variant,
+    size = "md",
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: AvatarProps = $props();
 </script>

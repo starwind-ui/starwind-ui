@@ -1,9 +1,9 @@
-import { validateVuePerformanceEvidence } from "./vue-run-evidence.mjs";
 import {
   rekaUiScenarioDecisions,
   vuePerformanceProviderOrder,
   vuePerformanceTopology,
 } from "./vue-plan.mjs";
+import { validateVuePerformanceEvidence } from "./vue-run-evidence.mjs";
 
 const scenarioLabels = Object.freeze({
   "accordion-high-count-mount": "Accordion high-count mount",

@@ -73,18 +73,6 @@ function getDefault(prop: { defaultValue?: string }, fallback: string): string {
   return prop.defaultValue ?? fallback;
 }
 
-function formatOptions(options: Record<string, boolean | number | string> | undefined): string {
-  const entries = Object.entries(options ?? {});
-  if (entries.length === 0) return "{}";
-
-  return `{ ${entries
-    .map(
-      ([key, value]) =>
-        `${key}: ${typeof value === "string" ? JSON.stringify(value) : String(value)}`,
-    )
-    .join(", ")} }`;
-}
-
 function printSetRef(): string {
   return `function setRef<T>(ref: React.Ref<T> | undefined, value: T | null): void {\n  if (!ref) return;\n\n  if (typeof ref === "function") {\n    ref(value);\n    return;\n  }\n\n  ref.current = value;\n}`;
 }

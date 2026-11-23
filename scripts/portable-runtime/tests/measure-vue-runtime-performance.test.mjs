@@ -399,7 +399,7 @@ describe("Vue runtime performance runner", () => {
       "browser context close",
       "browser shutdown",
     ]) {
-      expect(source).toContain(`deadline(\"${label}\"`);
+      expect(source).toContain(`deadline("${label}"`);
     }
   });
 

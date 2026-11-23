@@ -2,12 +2,16 @@ const METHOD = "package-dist-static-gzip-v1";
 const bundleIds = new Map([
   ["@starwind-ui/runtime", "runtime.catalog"],
   ["@starwind-ui/runtime/color-picker", "runtime.color-picker"],
+  ["@starwind-ui/runtime/init-starwind", "runtime.init-starwind"],
+  ["@starwind-ui/runtime/chart", "runtime.chart"],
   ["@starwind-ui/react (adapter only)", "react.adapter"],
   ["@starwind-ui/react + runtime", "react.catalog"],
   ["@starwind-ui/vue (adapter only)", "vue.adapter"],
   ["@starwind-ui/vue + runtime", "vue.catalog"],
   ["@starwind-ui/vue complete catalog", "vue.complete-catalog"],
 ]);
+
+export const VUE_PACKED_LABEL = "@starwind-ui/vue packed tarball, excluding installed docs";
 
 export function collectPackageSizeMeasurements(results) {
   const measurements = [];
@@ -16,7 +20,13 @@ export function collectPackageSizeMeasurements(results) {
   };
   for (const row of [...(results.bundleResults ?? []), ...(results.vueBundleResults ?? [])]) {
     const id = bundleIds.get(row.label);
-    if (id) add(row, id, id === "runtime.color-picker" ? "component" : "aggregate");
+    if (id)
+      add(
+        row,
+        id,
+        ["runtime.color-picker", "runtime.chart"].includes(id) ? "component" : "aggregate",
+      );
+    if (id === "runtime.catalog") add(row, "runtime.root", "aggregate");
   }
   for (const row of results.supportResults ?? []) {
     if (row.provider !== "starwind") continue;
@@ -32,8 +42,10 @@ export function collectPackageSizeMeasurements(results) {
     }
   }
   if (results.vuePackagePayload) {
+    // The ceiling predates installed docs. The payload measures a doc-free copy of the pack file
+    // set, and the release pack step checks shipped docs against their own budget.
     add(
-      results.vuePackagePayload,
+      { ...results.vuePackagePayload, label: VUE_PACKED_LABEL },
       "vue.packed",
       "payload",
       results.vuePackagePayload.packageGzipBytes,
@@ -131,14 +143,17 @@ export function evaluatePackageSizeChanges(snapshot, baseline, { includePrivateV
     const growthPercent =
       before?.gzipBytes > 0 && valid ? (growthBytes / before.gzipBytes) * 100 : null;
     const aggregate = before?.kind === "aggregate";
+    const noGrowth = id === "runtime.root" || id === "runtime.init-starwind";
     const maxGzipBytes = before
       ? before.gzipBytes +
-        (aggregate
-          ? Math.min(Math.floor(before.gzipBytes / 10), 15 * 1024)
-          : Math.max(Math.ceil(before.gzipBytes / 10), 2 * 1024))
+        (noGrowth
+          ? 0
+          : aggregate
+            ? Math.min(Math.floor(before.gzipBytes / 10), 15 * 1024)
+            : Math.max(Math.ceil(before.gzipBytes / 10), 2 * 1024))
       : null;
     const warningGzipBytes = before
-      ? aggregate
+      ? noGrowth || aggregate
         ? maxGzipBytes
         : before.gzipBytes + Math.max(Math.ceil(before.gzipBytes / 20), 1024)
       : null;

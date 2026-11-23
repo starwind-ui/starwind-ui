@@ -8,7 +8,6 @@ import {
   type FieldControlNativeControlsOptions,
   type FieldNativeControl,
   getFieldControlBridge,
-  registerFieldControlBridge,
 } from "./field-control-registry";
 
 export type {

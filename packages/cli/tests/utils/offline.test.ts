@@ -20,7 +20,6 @@ import {
   OfflineKitError,
   parseOfflineRequestPath,
   repairOfflineLockfiles,
-  repairOfflineLockfilesSync,
   selectOfflineVersion,
   splitPackageSpec,
   startOfflineRegistry,

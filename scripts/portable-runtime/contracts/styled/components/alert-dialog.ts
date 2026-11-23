@@ -1,6 +1,12 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type { ClassVariantDefinition, StyledAdapterContract } from "../types.js";
-
 import { buttonStyledContract } from "./button.js";
+
+/**
+ * Styled Action and Cancel import this Primitive helper in React, Vue, and Svelte. Each framework
+ * gives it a native shape, but the name stays the same.
+ */
+export const alertDialogStyledControlHelper = "__useAlertDialogControl";
 
 const buttonVariant = buttonStyledContract.variants!.button;
 
@@ -20,6 +26,7 @@ function createAlertDialogAsChildButtonVariant(
 
 export const alertDialogStyledContract: StyledAdapterContract = {
   component: "alert-dialog",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "AlertDialog",
     "AlertDialogAction",
@@ -55,7 +62,7 @@ export const alertDialogStyledContract: StyledAdapterContract = {
     alertDialogContent: {
       base: [
         "bg-background space-y-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
-        "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
+        "fixed top-[50%] right-auto left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
         "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in fade-in zoom-in-95 will-change-transform duration-200",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
@@ -65,7 +72,7 @@ export const alertDialogStyledContract: StyledAdapterContract = {
     alertDialogFooter: {
       base: "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
     },
-    alertDialogHeader: { base: "flex flex-col gap-2 text-center sm:text-left" },
+    alertDialogHeader: { base: "flex flex-col gap-2 text-center sm:text-start" },
     alertDialogTitle: { base: "font-heading text-xl font-semibold" },
     alertDialogAction: {
       base: "",

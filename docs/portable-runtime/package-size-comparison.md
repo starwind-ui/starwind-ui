@@ -97,6 +97,8 @@ This table explains why isolated component rows can look very different from mat
 
 These rows measure the published package's own runtime-bearing source files after minification. They are useful for `@starwind-ui/astro`, whose package ships `.astro` source files rather than a JS bundle entry.
 
+The archive figures below come from releases before installed Markdown docs. Current release packs report the full archive size and the docs budget separately.
+
 | Package                | Version | Minified source payload | Minified + gzip | npm tarball gzip | npm unpacked | Notes                                                                                                    |
 | ---------------------- | ------: | ----------------------: | --------------: | ---------------: | -----------: | -------------------------------------------------------------------------------------------------------- |
 | `@starwind-ui/astro`   |   1.2.0 |               197.6 KiB |        20.9 KiB |         32.3 KiB |    238.4 KiB | Source-published Astro package; measured published .astro/.ts source payload, not compiled Astro output. |

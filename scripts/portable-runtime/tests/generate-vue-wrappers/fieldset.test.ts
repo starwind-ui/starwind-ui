@@ -54,7 +54,7 @@ describe("generated Vue Fieldset Primitive", () => {
     expect(() => assertVueSfcCompiles(first.root, "Component.vue")).not.toThrow();
 
     expect(first.legend).toContain("data-sw-fieldset-legend");
-    await expect(normalizeVueSource(first.root)).toBe(
+    expect(normalizeVueSource(first.root)).toBe(
       normalizeVueSource(
         await readFile(
           path.join(process.cwd(), "packages/vue/src/fieldset/FieldsetRoot.vue"),

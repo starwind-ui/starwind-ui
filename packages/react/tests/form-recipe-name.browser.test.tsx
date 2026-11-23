@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import { Field } from "../src/field";
 import Candidate from "../src/switch/SwitchRoot";
+
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 describe("Form recipe Field name ownership", () => {
   const Component = Candidate;

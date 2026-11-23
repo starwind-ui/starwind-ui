@@ -3,12 +3,15 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type HostSteps,
+  isSvelteKitHost,
   runSvelteHost,
+  SVELTEKIT_3_TOOLS,
+  SVELTEKIT_TOOLS,
   selectHost,
   startHostProcess,
-  SVELTEKIT_TOOLS,
-  type HostSteps,
 } from "../../check-svelte-hosts.js";
+
 const owned: string[] = [];
 async function temporary() {
   const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "kit-host-unit-")));
@@ -27,6 +30,19 @@ describe("SvelteKit packed host", () => {
       svelte: "5.29.0",
       vite: "7.3.5",
       "@sveltejs/vite-plugin-svelte": "6.2.1",
+    });
+  });
+  it("selects SvelteKit 3 with its raised Svelte, Vite, plugin, and TypeScript floors", () => {
+    expect(selectHost("sveltekit-3")).toBe("sveltekit-3");
+    expect(isSvelteKitHost("sveltekit-3")).toBe(true);
+    expect(isSvelteKitHost("vite")).toBe(false);
+    expect(SVELTEKIT_3_TOOLS).toMatchObject({
+      "@sveltejs/kit": "3.4.0",
+      "@sveltejs/adapter-node": "6.0.5",
+      svelte: "5.57.1",
+      vite: "8.3.8",
+      "@sveltejs/vite-plugin-svelte": "7.3.1",
+      typescript: "6.0.3",
     });
   });
   it("reports a failed request-server startup and reaps the child", async () => {

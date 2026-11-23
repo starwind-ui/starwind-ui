@@ -9,15 +9,15 @@ export type ${f.context.typeName} = Readonly<{
   mobileOpen: boolean;
   state: "collapsed"|"expanded";
   expanded: boolean;
-  isMobile: boolean;
-  /** Accept a Sheet binding output through the Provider's silent public setter. */
-  setMobileOpen(open: boolean): void;
 }>;
 export const ${f.context.name}:symbol = Symbol("StarwindSidebarContext");
-export function ${f.context.hook}():${f.context.typeName} {
-  const context=getContext<${f.context.typeName}|undefined>(${f.context.name});
-  if(!context) throw new Error("Sidebar parts must be used within SidebarProvider.");
-  return context;
+export function ${f.context.hook}():${f.context.typeName}|null {
+  return getContext<${f.context.typeName}|undefined>(${f.context.name}) ?? null;
+}
+const expanded = { state: "expanded", expanded: false } as const;
+/** Sidebar parts outside a Provider render state expanded with aria-expanded false, as React does. Not exported from the package. */
+export function useSidebarState():Pick<${f.context.typeName},"state"|"expanded"> {
+  return ${f.context.hook}() ?? expanded;
 }
 `;
 }

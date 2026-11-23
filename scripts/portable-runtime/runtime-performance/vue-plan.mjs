@@ -1,7 +1,7 @@
 import {
-  ZAG_VUE_COMPARATOR_VERSION,
   starwindZagVueOverlapMappings,
   validateZagVueResolvedVersions,
+  ZAG_VUE_COMPARATOR_VERSION,
   zagVueExpectedResolvedVersions,
 } from "../package-size-vue-plan.mjs";
 import { scenarioRows } from "./model.mjs";

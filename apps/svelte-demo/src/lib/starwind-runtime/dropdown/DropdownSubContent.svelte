@@ -10,13 +10,13 @@
 <script lang="ts">
   let {
     "class": className,
-    "side": side = "right",
-    "align": align = "start",
-    "sideOffset": sideOffset = 0,
-    "avoidCollisions": avoidCollisions = true,
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "children": children,
+    side,
+    align = "start",
+    sideOffset = 0,
+    avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
+    children,
     ...rest
   }: DropdownSubContentProps = $props();
 
@@ -30,10 +30,11 @@
 >
   <MenuPopup
     class={dropdownContent({ "class": cx(subContentClassName) })}
-    side={side}
+    side={side ?? "right"}
     align={align}
     sideOffset={sideOffset}
     avoidCollisions={avoidCollisions}
+    data-sw-menu-side-intent={side ?? ""}
     {...rest}
     data-slot={"dropdown-sub-content"}
   >

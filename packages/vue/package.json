@@ -1,7 +1,7 @@
 {
   "name": "@starwind-ui/vue",
   "version": "0.4.0",
-  "description": "Public-beta Vue 3.5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
+  "description": "Accessible Vue 3.5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",
   "author": {
@@ -29,8 +29,7 @@
     "runtime",
     "tailwindcss",
     "design-system",
-    "typescript",
-    "beta"
+    "typescript"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -59,6 +58,10 @@
     "./carousel": {
       "types": "./dist/carousel/index.d.ts",
       "import": "./dist/carousel/index.js"
+    },
+    "./chart": {
+      "types": "./dist/chart/index.d.ts",
+      "import": "./dist/chart/index.js"
     },
     "./checkbox": {
       "types": "./dist/checkbox/index.d.ts",
@@ -187,12 +190,15 @@
     "./theme": {
       "types": "./dist/theme/index.d.ts",
       "import": "./dist/theme/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "scripts": {
+    "prepack": "tsx ../../scripts/portable-runtime/generate-package-docs.ts --package vue",
     "build": "node --experimental-strip-types scripts/build.mjs",
     "test:run": "vitest run --config tests/vitest.config.ts --project=source-ssr",
     "test:browser": "tsx tests/run-browser-tests.mjs",
@@ -203,20 +209,18 @@
     "test:all": "pnpm --filter=@starwind-ui/runtime build && pnpm build && pnpm test:all:built",
     "test:select:built": "pnpm build && node tests/select/run-select-playwright.mjs",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
-    "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,vue,md,json}\"",
-    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,vue,md,json}\" --cache",
     "test:all:built": "pnpm test:run && pnpm test:browser && pnpm test:hydration:built && pnpm test:release:built"
   },
   "dependencies": {
-    "@starwind-ui/runtime": "1.5.0"
+    "@starwind-ui/runtime": "workspace:*"
   },
   "peerDependencies": {
-    "vue": ">=3.5"
+    "vue": ">=3.5.21"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@vitest/browser-playwright": "^4.1.12",
-    "playwright": "1.62.0",
+    "playwright": "1.64.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.12",

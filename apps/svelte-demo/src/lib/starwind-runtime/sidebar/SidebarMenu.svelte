@@ -13,7 +13,7 @@
     "data-slot": dataSlot = "sidebar-menu",
     "class": className,
     ref = $bindable(),
-    "children": children,
+    children,
     ...rest
   }: SidebarMenuProps = $props();
 </script>

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createCombobox } from "../../../src/components/combobox/combobox";
 import { createDialog } from "../../../src/components/dialog/dialog";
 import { createPopover } from "../../../src/components/popover/popover";
 import { createSelect } from "../../../src/components/select/select";
@@ -485,6 +486,98 @@ describe("createPopover", () => {
     window.scrollTo(0, 0);
   });
 
+  it("keeps the inline pointer-events of a positioner through a close", async () => {
+    const root = renderPopoverWithPositioner();
+    const popup = getPopup();
+    const positioner = getPositioner();
+    popup.style.transition = "opacity 300ms linear";
+    positioner.style.setProperty("pointer-events", "auto", "important");
+    const popover = createPopover(root);
+
+    try {
+      popover.setOpen(true);
+      await waitForFloatingPosition();
+      popover.setOpen(false);
+      expect(popup.hasAttribute("data-ending-style")).toBe(true);
+      expect(positioner.inert).toBe(true);
+
+      await vi.waitFor(() => expect(popup.hidden).toBe(true));
+      expect(positioner.inert).toBe(false);
+      expect(positioner.style.getPropertyValue("pointer-events")).toBe("auto");
+      expect(positioner.style.getPropertyPriority("pointer-events")).toBe("important");
+    } finally {
+      popover.destroy();
+    }
+  });
+
+  it("keeps an inline pointer-events value that the app sets while the popup exits", async () => {
+    const root = renderPopoverWithPositioner();
+    const popup = getPopup();
+    const positioner = getPositioner();
+    popup.style.transition = "opacity 300ms linear";
+    positioner.style.setProperty("pointer-events", "auto");
+    const popover = createPopover(root);
+
+    try {
+      popover.setOpen(true);
+      await waitForFloatingPosition();
+      popover.setOpen(false);
+      expect(popup.hasAttribute("data-ending-style")).toBe(true);
+      expect(positioner.inert).toBe(true);
+      positioner.style.setProperty("pointer-events", "visible");
+      popup.style.setProperty("pointer-events", "auto", "important");
+
+      await vi.waitFor(() => expect(popup.hidden).toBe(true));
+      expect(positioner.inert).toBe(false);
+      expect(positioner.style.getPropertyValue("pointer-events")).toBe("visible");
+      expect(popup.style.getPropertyValue("pointer-events")).toBe("auto");
+    } finally {
+      popover.destroy();
+    }
+  });
+
+  it("lets a click reach the page below the popup while its exit animation runs", async () => {
+    const root = renderPopover();
+    const popup = getPopup();
+    popup.style.transition = "opacity 400ms linear";
+    const below = document.createElement("button");
+    below.textContent = "Below";
+    below.style.cssText = "position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0";
+    document.body.prepend(below);
+    popup.style.zIndex = "10";
+    const onBelowClick = vi.fn();
+    below.addEventListener("click", onBelowClick);
+    const popover = createPopover(root);
+
+    try {
+      getTrigger().click();
+      await waitForFloatingPosition();
+      const popupRect = popup.getBoundingClientRect();
+      const x = popupRect.left + popupRect.width / 2;
+      const y = popupRect.top + popupRect.height / 2;
+      expect(document.elementFromPoint(x, y)?.closest("[data-sw-popover-popup]")).toBe(popup);
+
+      popover.setOpen(false);
+      expect(popup.hidden).toBe(false);
+      expect(popup.hasAttribute("data-ending-style")).toBe(true);
+      expect(document.elementFromPoint(x, y)).toBe(below);
+      (document.elementFromPoint(x, y) as HTMLElement).click();
+      expect(onBelowClick).toHaveBeenCalledTimes(1);
+
+      popover.setOpen(true);
+      await waitForFloatingPosition();
+      expect(popup.hasAttribute("data-ending-style")).toBe(false);
+      expect(popup.inert).toBe(false);
+      expect(document.elementFromPoint(x, y)?.closest("[data-sw-popover-popup]")).toBe(popup);
+
+      popover.setOpen(false);
+      await vi.waitFor(() => expect(popup.hidden).toBe(true));
+      expect(popup.inert).toBe(false);
+    } finally {
+      popover.destroy();
+    }
+  });
+
   it("syncs optional backdrop visibility and state with the popover", () => {
     const popover = createPopover(renderPopover({ withBackdrop: true }));
 
@@ -813,6 +906,66 @@ describe("createPopover", () => {
 
     expect(popover.getOpen()).toBe(true);
     expect(popoverPopup.hidden).toBe(false);
+  });
+
+  it("closes only a nested Select when Escape comes from its trigger", () => {
+    const root = renderPopoverWithNestedSelect();
+    const popover = createPopover(root);
+    const selectRoot = root.querySelector<HTMLElement>("[data-sw-select]")!;
+    const selectTrigger = selectRoot.querySelector<HTMLButtonElement>("[data-sw-select-trigger]")!;
+    const select = createSelect(selectRoot);
+
+    getTrigger().click();
+    selectTrigger.click();
+    selectTrigger.focus();
+    expect(select.getOpen()).toBe(true);
+
+    const escape = () =>
+      selectTrigger.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+    escape();
+    expect(select.getOpen()).toBe(false);
+    expect(popover.getOpen()).toBe(true);
+
+    escape();
+    expect(popover.getOpen()).toBe(false);
+  });
+
+  it("closes only a nested Combobox when Escape comes from its input", () => {
+    const root = renderPopoverWithNestedSelect();
+    root.querySelector("[data-sw-popover-popup]")!.innerHTML = `
+      <div data-sw-combobox>
+        <input data-sw-combobox-input />
+        <div data-sw-combobox-positioner data-side="bottom" data-align="start">
+          <div data-sw-combobox-popup hidden>
+            <div data-sw-combobox-list>
+              <div data-sw-combobox-item data-value="apple">
+                <span data-sw-combobox-item-text>Apple</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const popover = createPopover(root);
+    const input = root.querySelector<HTMLInputElement>("[data-sw-combobox-input]")!;
+    const combobox = createCombobox(root.querySelector<HTMLElement>("[data-sw-combobox]")!);
+
+    getTrigger().click();
+    input.focus();
+    combobox.setOpen(true, { emit: false });
+    expect(combobox.getOpen()).toBe(true);
+
+    const escape = () =>
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+    escape();
+    expect(combobox.getOpen()).toBe(false);
+    expect(popover.getOpen()).toBe(true);
   });
 
   it("allows open changes and close intents to be canceled before DOM state changes", () => {

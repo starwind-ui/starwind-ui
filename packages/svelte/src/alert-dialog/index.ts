@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import AlertDialogBackdrop from "./AlertDialogBackdrop.svelte";
 import AlertDialogClose from "./AlertDialogClose.svelte";
 import AlertDialogDescription from "./AlertDialogDescription.svelte";
@@ -41,10 +39,10 @@ export {
 };
 
 export default AlertDialog;
-export { getAlertDialogControlRefresh } from "./AlertDialogRoot.svelte";
-export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
 
 export type {
   AlertDialogCloseCompleteDetails,
   AlertDialogOpenChangeDetails,
 } from "@starwind-ui/runtime";
+export type { ButtonChildPayload, ButtonChildProps } from "../button/ButtonRoot.svelte";
+export { __useAlertDialogControl } from "./AlertDialogRoot.svelte";

@@ -12,10 +12,10 @@
 
 <script lang="ts">
   let {
-    "variant": variant = "default",
+    variant = "default",
     "class": className,
-    "children": children,
-    "ref": ref,
+    children,
+    ref,
     ...rest
   }: FieldGroupProps = $props();
 

@@ -98,7 +98,9 @@ const buildAstroBehavior = (
   const actions = [
     initialProps.length > 0 ? `Use ${initialPropNames} for initial state` : undefined,
     domEvents.length > 0 ? `listen for ${formatNaturalList(domEvents)}` : undefined,
-    state.runtimeSetter ? `call ${state.runtimeSetter} for later updates` : undefined,
+    state.runtimeSetter
+      ? (state.runtimeSetterUsage ?? `call ${state.runtimeSetter} for later updates`)
+      : undefined,
   ].filter((action): action is string => action !== undefined);
 
   return {
@@ -127,7 +129,9 @@ const buildRuntimeHtmlBehavior = (
   const actions = [
     state.initialAttribute ? `Use ${state.initialAttribute} for initial state` : undefined,
     domEvents.length > 0 ? `listen for ${formatNaturalList(domEvents)}` : undefined,
-    state.runtimeSetter ? `call ${state.runtimeSetter} for later updates` : undefined,
+    state.runtimeSetter
+      ? (state.runtimeSetterUsage ?? `call ${state.runtimeSetter} for later updates`)
+      : undefined,
   ].filter((action): action is string => action !== undefined);
 
   return {

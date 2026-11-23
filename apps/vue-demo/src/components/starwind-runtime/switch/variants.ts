@@ -30,8 +30,9 @@ export const switchButton = tv({
 
 export const switchToggle = tv({
   base: [
-    "bg-foreground inline-block transform rounded-full transition-transform",
-    "group-aria-checked:translate-x-(--translation) group-aria-[checked=false]:translate-x-[calc(var(--padding)-var(--border-offset))]",
+    "bg-foreground inline-block rounded-full transition-[--sw-switch-thumb-offset] motion-reduce:transition-none",
+    "translate-x-(--sw-switch-thumb-offset) rtl:-translate-x-(--sw-switch-thumb-offset)",
+    "group-aria-checked:[--sw-switch-thumb-offset:var(--translation)] group-aria-[checked=false]:[--sw-switch-thumb-offset:calc(var(--padding)-var(--border-offset))]",
   ],
   variants: {
     size: {
@@ -46,7 +47,7 @@ export const switchToggle = tv({
 });
 
 export const switchLabel = tv({
-  base: "text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+  base: "text-foreground ms-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
   variants: {
     size: {
       sm: "text-sm",

@@ -64,19 +64,18 @@ describe("Vue Popover browser contract", () => {
     );
     await waitForFloating();
     expect(document.querySelectorAll('[data-sw-portal-placement="framework"]')).toHaveLength(4);
-    expect(observers.size).toBe(1);
-    const sharedObserver = [...observers.keys()][0];
+    const shared = observers.pair(document);
 
     state.count = 1;
     await waitForFloating();
-    expect([...observers.keys()]).toEqual([sharedObserver]);
+    expect(observers.pair(document)).toEqual(shared);
 
     const target = document.createElement("section");
     target.id = "shared-vue-target";
     document.body.append(target);
     await waitForFloating();
     expect(target.querySelectorAll('[data-sw-portal-placement="framework"]')).toHaveLength(2);
-    expect(observers.size).toBe(1);
+    expect(observers.pair(document)).toEqual(shared);
 
     target.remove();
     await waitForFloating();
@@ -87,47 +86,61 @@ describe("Vue Popover browser contract", () => {
     state.disabled = true;
     state.tooltip = false;
     await waitForFloating();
-    expect(observers.size).toBe(0);
+    expect(observers.active.size).toBe(0);
 
     state.disabled = false;
     await waitForFloating();
-    expect(observers.size).toBe(1);
+    observers.pair(document);
     state.count = 0;
     await waitForFloating();
-    expect(observers.size).toBe(0);
+    expect(observers.active.size).toBe(0);
   });
 
-  it("keeps shared portal observation separate for each owner document", async () => {
-    const observers = trackPortalDocumentObservers();
-    const showFirst = ref(true);
-    mount(h({ render: () => (showFirst.value ? tree() : null) }));
+  it.each(["detached", "iframe"])(
+    "keeps shared portal observation separate for each owner document (%s)",
+    async (kind) => {
+      const observers = trackPortalDocumentObservers();
+      const showFirst = ref(true);
+      mount(h({ render: () => (showFirst.value ? tree() : null) }));
 
-    const otherDocument = document.implementation.createHTMLDocument("Vue portal owner");
-    const otherHost = otherDocument.createElement("div");
-    otherDocument.body.append(otherHost);
-    const showOther = ref(true);
-    const otherApp = createApp({
-      render: () => (showOther.value ? tree({}, { container: "#other-vue-target" }) : null),
-    });
-    otherApp.mount(otherHost);
-    cleanups.push(() => otherApp.unmount());
-    await waitForFloating();
-    expect(observers.size).toBe(2);
-    expect([...observers.values()]).toEqual(expect.arrayContaining([document, otherDocument]));
+      const frame = document.createElement("iframe");
+      document.body.append(frame);
+      cleanups.push(() => frame.remove());
+      const otherDocument =
+        kind === "iframe"
+          ? frame.contentDocument!
+          : document.implementation.createHTMLDocument("Vue portal owner");
+      const otherObservers = trackPortalDocumentObservers(
+        (frame.contentWindow as Window & typeof globalThis).MutationObserver,
+      );
+      const otherHost = otherDocument.createElement("div");
+      otherDocument.body.append(otherHost);
+      const showOther = ref(true);
+      const otherApp = createApp({
+        render: () => (showOther.value ? tree({}, { container: "#other-vue-target" }) : null),
+      });
+      otherApp.mount(otherHost);
+      cleanups.push(() => otherApp.unmount());
+      await waitForFloating();
+      const primary = observers.pair(document);
+      const foreign = observers.pair(otherDocument, otherObservers.active);
+      expect(primary[0]).not.toBe(foreign[0]);
 
-    showFirst.value = false;
-    await waitForFloating();
-    expect([...observers.values()]).toEqual([otherDocument]);
+      showFirst.value = false;
+      await waitForFloating();
+      expect(observers.active.size + otherObservers.active.size).toBe(1);
+      expect(observers.pair(otherDocument, otherObservers.active)).toEqual(foreign);
 
-    const target = otherDocument.createElement("section");
-    target.id = "other-vue-target";
-    otherDocument.body.append(target);
-    await waitForFloating();
-    expect(target.querySelector("[data-sw-popover-portal]")).not.toBeNull();
-    showOther.value = false;
-    await waitForFloating();
-    expect(observers.size).toBe(0);
-  });
+      const target = otherDocument.createElement("section");
+      target.id = "other-vue-target";
+      otherDocument.body.append(target);
+      await waitForFloating();
+      expect(target.querySelector("[data-sw-popover-portal]")).not.toBeNull();
+      showOther.value = false;
+      await waitForFloating();
+      expect(observers.active.size + otherObservers.active.size).toBe(0);
+    },
+  );
 
   it("orders cancelable details before the named model and supports default open", async () => {
     const events: string[] = [];
@@ -467,6 +480,195 @@ describe("Vue Popover browser contract", () => {
     expect(popup.hidden).toBe(true);
   });
 
+  it.each([
+    ["mounts after the root inside a Portal", true, [true]],
+    ["mounts after the root without a Portal", false, [true]],
+    ["is hidden and shown again inside a Portal", true, [true, false, true]],
+    ["is hidden and shown again inside a mounted Portal", "mounted", [true, false, true]],
+    ["is hidden and shown again without a Portal", false, [true, false, true]],
+    ["is replaced inside a mounted Portal", "mounted", [true, "replace"]],
+    ["is replaced without a Portal", false, [true, "replace"]],
+  ] as const)("opens and closes a Popup that %s", async (_name, portal, sequence) => {
+    const { show, key, trigger, popup } = mountTogglePopover(portal);
+    await waitForFloating();
+    expect(popup()).toBeNull();
+    for (const value of sequence) {
+      if (value === "replace") key.value++;
+      else show.value = value;
+      await waitForFloating();
+    }
+    expect(popup()!.hidden).toBe(true);
+
+    trigger().focus();
+    trigger().click();
+    await waitForFloating();
+    expect(trigger().getAttribute("aria-expanded")).toBe("true");
+    expect(popup()!.hidden).toBe(false);
+
+    await pressEscape();
+    expect(trigger().getAttribute("aria-expanded")).toBe("false");
+    expect(popup()!.hidden).toBe(true);
+  });
+
+  it.each([
+    ["inside a Portal", true],
+    ["without a Portal", false],
+  ])("recovers when an open Popup unmounts and mounts again %s", async (_name, withPortal) => {
+    const { show, trigger, popup, root, proposals } = mountTogglePopover(withPortal, true);
+    show.value = true;
+    await waitForFloating();
+    trigger().click();
+    await waitForFloating();
+    expect(popup()!.hidden).toBe(false);
+    proposals.length = 0;
+
+    show.value = false;
+    await waitForFloating();
+    expect(root().getAttribute("data-state")).toBe("closed");
+    expect(trigger().getAttribute("aria-expanded")).toBe("false");
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+    show.value = true;
+    await waitForFloating();
+    expect(root().getAttribute("data-state")).toBe("open");
+    expect(popup()!.hidden).toBe(false);
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+    expect(proposals).toEqual([]);
+
+    await pressEscape();
+    expect(root().getAttribute("data-state")).toBe("closed");
+    expect(trigger().getAttribute("aria-expanded")).toBe("false");
+    expect(popup()!.hidden).toBe(true);
+
+    trigger().click();
+    await waitForFloating();
+    expect(root().getAttribute("data-state")).toBe("open");
+    expect(popup()!.hidden).toBe(false);
+  });
+
+  it.each([
+    ["inside a Portal", true],
+    ["without a Portal", false],
+  ])("keeps an open Popup open when its placement changes %s", async (_name, withPortal) => {
+    const side = ref<"bottom" | "top">("bottom");
+    const proposals: boolean[] = [];
+    const popup = () =>
+      h(PopoverPopup, { id: "side-popup", side: side.value }, { default: () => h("input") });
+    const host = mount(
+      h({
+        render: () =>
+          h(
+            PopoverRoot,
+            { modal: true, onOpenChange: (open: boolean) => proposals.push(open) },
+            {
+              default: () => [
+                h(PopoverTrigger, { id: "side-trigger" }, { default: () => "Open" }),
+                withPortal ? h(PopoverPortal, null, { default: popup }) : popup(),
+              ],
+            },
+          ),
+      }),
+    );
+    await waitForFloating();
+    host.querySelector<HTMLButtonElement>("#side-trigger")!.click();
+    await waitForFloating();
+    const input = document.body.querySelector<HTMLInputElement>("#side-popup input")!;
+    input.focus();
+    proposals.length = 0;
+
+    side.value = "top";
+    await waitForFloating();
+    expect(document.body.querySelector<HTMLElement>("#side-popup")!.hidden).toBe(false);
+    expect(document.activeElement).toBe(input);
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+    expect(proposals).toEqual([]);
+  });
+
+  it("removes a hidden open Positioner subtree and positions the new one", async () => {
+    const show = ref(true);
+    const host = mount(
+      h({
+        render: () =>
+          h(PopoverRoot, null, {
+            default: () => [
+              h(PopoverTrigger, { id: "positioned-trigger" }, { default: () => "Open" }),
+              show.value
+                ? h(
+                    PopoverPositioner,
+                    { id: "positioned-positioner" },
+                    { default: () => h(PopoverPopup, { id: "positioned-popup" }) },
+                  )
+                : null,
+            ],
+          }),
+      }),
+    );
+    await waitForFloating();
+    const trigger = host.querySelector<HTMLButtonElement>("#positioned-trigger")!;
+    trigger.click();
+    await waitForFloating();
+    const oldPositioner = document.querySelector<HTMLElement>("#positioned-positioner")!;
+    expect(document.querySelector<HTMLElement>("#positioned-popup")!.hidden).toBe(false);
+
+    show.value = false;
+    await waitForFloating();
+    expect(document.querySelector("#positioned-positioner")).toBeNull();
+    expect(document.querySelector("#positioned-popup")).toBeNull();
+    expect(oldPositioner.isConnected).toBe(false);
+
+    show.value = true;
+    await waitForFloating();
+    const positioner = document.querySelector<HTMLElement>("#positioned-positioner")!;
+    const popup = document.querySelector<HTMLElement>("#positioned-popup")!;
+    expect(document.querySelectorAll("#positioned-positioner")).toHaveLength(1);
+    expect(positioner).not.toBe(oldPositioner);
+    expect(popup.hidden).toBe(false);
+    expect(positioner.style.transform || positioner.style.left || positioner.style.top).not.toBe(
+      "",
+    );
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+    await waitForFloating();
+    expect(popup.hidden).toBe(true);
+    trigger.click();
+    await waitForFloating();
+    expect(popup.hidden).toBe(false);
+  });
+
+  it.each([
+    ["inside a Portal", true],
+    ["without a Portal", false],
+  ])("opens a default-open Popover on mount %s", async (_name, withPortal) => {
+    const errors = vi.spyOn(console, "error");
+    const warnings = vi.spyOn(console, "warn");
+    const popup = () => h(PopoverPopup, { id: "default-popup" }, { default: () => "Details" });
+    const host = mount(
+      h(
+        PopoverRoot,
+        { defaultOpen: true },
+        {
+          default: () => [
+            h(PopoverTrigger, { id: "default-trigger" }, { default: () => "Open" }),
+            withPortal ? h(PopoverPortal, null, { default: popup }) : popup(),
+          ],
+        },
+      ),
+    );
+    await waitForFloating();
+    const trigger = host.querySelector<HTMLButtonElement>("#default-trigger")!;
+    expect(document.querySelector<HTMLElement>("#default-popup")!.hidden).toBe(false);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+
+    await pressEscape();
+    expect(document.querySelector<HTMLElement>("#default-popup")!.hidden).toBe(true);
+    trigger.click();
+    await waitForFloating();
+    expect(document.querySelector<HTMLElement>("#default-popup")!.hidden).toBe(false);
+    expect(errors).not.toHaveBeenCalled();
+    expect(warnings).not.toHaveBeenCalled();
+  });
+
   it("closes only the nested topmost Popover on Escape", async () => {
     const host = mount(
       h(PopoverRoot, null, {
@@ -601,25 +803,50 @@ async function waitForFloating(): Promise<void> {
   await nextTick();
 }
 
-function trackPortalDocumentObservers(): Map<MutationObserver, Document> {
-  const observers = new Map<MutationObserver, Document>();
-  const nativeObserve = MutationObserver.prototype.observe;
-  const nativeDisconnect = MutationObserver.prototype.disconnect;
-  vi.spyOn(MutationObserver.prototype, "observe").mockImplementation(function (
+function trackPortalDocumentObservers(Observer = MutationObserver) {
+  const observers = new Map<MutationObserver, { owner: Document; purpose: string }>();
+  const nativeObserve = Observer.prototype.observe;
+  const nativeDisconnect = Observer.prototype.disconnect;
+  vi.spyOn(Observer.prototype, "observe").mockImplementation(function (
     this: MutationObserver,
     target,
     options,
   ) {
-    if (target.nodeType === Node.DOCUMENT_NODE) observers.set(this, target as Document);
+    if (target.nodeType === Node.DOCUMENT_NODE) {
+      // Runtime reads direction without a document observer; only placement observes.
+      expect(options).toEqual({ childList: true, subtree: true });
+      observers.set(this, { owner: target as Document, purpose: "placement" });
+    }
     nativeObserve.call(this, target, options);
   });
-  vi.spyOn(MutationObserver.prototype, "disconnect").mockImplementation(function (
-    this: MutationObserver,
-  ) {
+  vi.spyOn(Observer.prototype, "disconnect").mockImplementation(function (this: MutationObserver) {
     observers.delete(this);
     nativeDisconnect.call(this);
   });
-  return observers;
+  return {
+    active: observers,
+    pair(
+      owner: Document,
+      foreign = new Map<MutationObserver, { owner: Document; purpose: string }>(),
+    ) {
+      return ["placement"].map((purpose) => {
+        const matching = [...observers, ...foreign].filter(
+          ([, entry]) => entry.owner === owner && entry.purpose === purpose,
+        );
+        expect(
+          matching,
+          purpose +
+            " in " +
+            owner.URL +
+            ": " +
+            [...observers.values(), ...foreign.values()]
+              .map((entry) => entry.purpose + "@" + entry.owner.URL)
+              .join(","),
+        ).toHaveLength(1);
+        return matching[0]![0];
+      });
+    },
+  };
 }
 
 testAcceptedModelPublication({
@@ -636,3 +863,45 @@ testAcceptedModelPublication({
 });
 
 testOverlayCommandAuthority({ name: "popover", tree: tree, controller: createPopover, cleanups });
+
+function mountTogglePopover(portal: boolean | "mounted", modal = false) {
+  const show = ref(false);
+  const key = ref(0);
+  const proposals: boolean[] = [];
+  const latePopup = () =>
+    show.value
+      ? h(PopoverPopup, { id: "late-popup", key: key.value }, { default: () => "Late" })
+      : null;
+  const host = mount(
+    h({
+      render: () =>
+        h(
+          PopoverRoot,
+          { modal, onOpenChange: (open: boolean) => proposals.push(open) },
+          {
+            default: () => [
+              h(PopoverTrigger, { id: "late-trigger" }, { default: () => "Open" }),
+              portal === "mounted" || (portal && show.value)
+                ? h(PopoverPortal, null, { default: latePopup })
+                : latePopup(),
+            ],
+          },
+        ),
+    }),
+  );
+  return {
+    show,
+    key,
+    proposals,
+    root: () => host.querySelector<HTMLElement>("[data-sw-popover]")!,
+    trigger: () => host.querySelector<HTMLButtonElement>("#late-trigger")!,
+    popup: () => document.body.querySelector<HTMLElement>("#late-popup"),
+  };
+}
+
+async function pressEscape(): Promise<void> {
+  document.dispatchEvent(
+    new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+  );
+  await waitForFloating();
+}

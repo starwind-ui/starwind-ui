@@ -199,7 +199,7 @@ import { Toggle } from "./styled/toggle";
     expect(compiled).toContain('"data-slot": __props.dataSlot');
     await writeFile(
       path.join(root, "index.html"),
-      '<div id="app"></div><script type="module" src="/proof.ts"></script>\n',
+      '<link rel="icon" href="data:,"><div id="app"></div><script type="module" src="/proof.ts"></script>\n',
       "utf8",
     );
     await writeFile(path.join(root, "proof.ts"), BROWSER_PROOF_SOURCE, "utf8");
@@ -211,7 +211,7 @@ import { Toggle } from "./styled/toggle";
       await server.listen();
       const url = server.resolvedUrls?.local[0];
       if (!url) throw new TypeError("Ticket 18 browser server did not expose a local URL.");
-      browser = await chromium.launch({ headless: true });
+      browser = await chromium.launch({ channel: "chrome", headless: true });
       const page = await browser.newPage();
       const browserErrors: string[] = [];
       page.on("pageerror", (error) => browserErrors.push(String(error)));
@@ -264,7 +264,7 @@ type Browser = {
 
 type PlaywrightModule = {
   chromium: {
-    launch(options: { headless: boolean }): Promise<Browser>;
+    launch(options: { headless: boolean; channel?: string }): Promise<Browser>;
   };
 };
 

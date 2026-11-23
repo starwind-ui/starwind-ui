@@ -232,6 +232,7 @@ class TooltipController implements TooltipInstance {
       onOutsidePointerDown: (event) => {
         this.requestOpen(false, { event, reason: "outside-press" });
       },
+      getPointerPassThroughWrapper: () => this.elements.positioner,
       popup: this.elements.popup,
       renderState: (open) => this.renderState(open),
       root: this.root,
@@ -671,7 +672,10 @@ class TooltipController implements TooltipInstance {
         ? this.elements.arrows
         : [this.elements.popup, ...this.elements.arrows];
 
-    return createFloatingPositioner({
+    const sidebarDefault = this.elements.popup.hasAttribute("data-sw-sidebar-tooltip-default");
+    const positioner = createFloatingPositioner({
+      arrow: this.elements.arrows[0],
+      getSideIntent: sidebarDefault ? () => getSidebarTooltipSide(reference) : undefined,
       floating,
       getOptions: () => ({
         align: readFloatingAlignAttribute(
@@ -681,7 +685,7 @@ class TooltipController implements TooltipInstance {
         avoidCollisions:
           options.avoidCollisions ??
           readBooleanAttribute(placementElement, TOOLTIP_AVOID_COLLISIONS_ATTRIBUTE, true),
-        preserveAnchor: true,
+        preserveAnchor: "side",
         side: readFloatingSideAttribute(
           placementElement.getAttribute(TOOLTIP_SIDE_ATTRIBUTE),
           "top",
@@ -691,6 +695,7 @@ class TooltipController implements TooltipInstance {
       placementStateElements,
       reference,
     });
+    return sidebarDefault ? watchSidebarTooltipOwner(positioner, reference) : positioner;
   }
 
   private openAfterDelay(
@@ -894,4 +899,61 @@ function getElementDebugName(element: HTMLElement): string {
   const slot = dataSlot ? `[data-slot="${dataSlot}"]` : "";
 
   return `${tagName}${id}${slot}`;
+}
+
+const SIDEBAR_TOOLTIP_OWNER =
+  "[data-sw-sidebar], [data-sw-sidebar-side], [data-sw-sidebar-provider]";
+
+// The popup can be portaled. The trigger remains in its physical Sidebar.
+function getSidebarTooltipSide(trigger: HTMLElement): "left" | "right" {
+  const owner = trigger.closest(SIDEBAR_TOOLTIP_OWNER);
+  if (!owner || owner.hasAttribute("data-sw-sidebar-provider")) return "right";
+  const side = owner.getAttribute("data-sw-sidebar-side") ?? owner.getAttribute("data-side");
+  return side === "right" ? "left" : "right";
+}
+
+function watchSidebarTooltipOwner(
+  positioner: FloatingPositioner,
+  trigger: HTMLElement,
+): FloatingPositioner {
+  let side = getSidebarTooltipSide(trigger);
+  const observer = new MutationObserver(() => {
+    bind();
+    const next = getSidebarTooltipSide(trigger);
+    if (next !== side) {
+      side = next;
+      void positioner.update();
+    }
+  });
+  function bind() {
+    observer.disconnect();
+    const owner = trigger.closest(SIDEBAR_TOOLTIP_OWNER);
+    if (!owner) return;
+    for (let parent = trigger.parentElement; parent; parent = parent.parentElement) {
+      if (parent === owner) {
+        observer.observe(parent, {
+          childList: true,
+          attributeFilter: ["data-side", "data-sw-sidebar-side"],
+        });
+        break;
+      }
+      observer.observe(parent, { childList: true });
+    }
+  }
+  return {
+    ...positioner,
+    startAutoUpdate(options) {
+      side = getSidebarTooltipSide(trigger);
+      bind();
+      positioner.startAutoUpdate(options);
+    },
+    stopAutoUpdate() {
+      observer.disconnect();
+      positioner.stopAutoUpdate();
+    },
+    destroy() {
+      observer.disconnect();
+      positioner.destroy();
+    },
+  };
 }

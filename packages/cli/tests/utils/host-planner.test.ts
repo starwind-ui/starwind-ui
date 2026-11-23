@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { tailwindConfig } from "../../src/templates/starwind.css.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import {
   ASTRO_CONFIG_PATHS,
@@ -13,6 +15,46 @@ import {
 } from "../../src/utils/host-planner.js";
 
 describe("host planning", () => {
+  it("uses one scoped direction variant in each fresh stylesheet entry", () => {
+    const demoSheets = ["apps/demo/src/styles/global.css", "apps/demo/src/styles/starwind.css"].map(
+      (file) => readFileSync(new URL(`../../../../${file}`, import.meta.url), "utf8"),
+    );
+    for (const [label, sheet] of [
+      ["template", tailwindConfig],
+      ...demoSheets.map((sheet, index) => [index ? "demo starwind" : "demo global", sheet]),
+    ] as const)
+      for (const direction of ["rtl", "ltr"] as const)
+        expect(
+          sheet.match(new RegExp(`@custom-variant ${direction}\\b`, "g")),
+          `${label} ${direction}`,
+        ).toHaveLength(1);
+    for (const [label, sheet] of [
+      ["template", tailwindConfig],
+      ...demoSheets.map((sheet, index) => [index ? "demo starwind" : "demo global", sheet]),
+    ] as const) {
+      expect(sheet, `${label} rtl line`).toContain(
+        '@custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)));',
+      );
+      expect(sheet, `${label} ltr line`).toContain(
+        '@custom-variant ltr (&:where(:not([dir="rtl"], [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *))));',
+      );
+      expect(sheet, `${label} has no :dir() selector`).not.toContain(":dir(");
+    }
+
+    for (const file of [
+      "apps/react-demo/src/styles.css",
+      "apps/vue-demo/src/styles.css",
+      "apps/svelte-demo/src/app.css",
+    ]) {
+      const entry = readFileSync(new URL(`../../../../${file}`, import.meta.url), "utf8");
+      expect(
+        entry.match(/@import "\.\.\/\.\.\/demo\/src\/styles\/starwind\.css";/g),
+        file,
+      ).toHaveLength(1);
+      expect(entry).not.toContain("@custom-variant rtl");
+      expect(entry).not.toContain("@custom-variant ltr");
+    }
+  });
   it("gathers configured Astro React evidence with the editable config extension set", async () => {
     const content =
       'import react from "@astrojs/react";\nexport default defineConfig({ integrations: [react()] });';
@@ -56,7 +98,7 @@ describe("host planning", () => {
     const paths = new Set(["vite.config.ts", "src/main.tsx"]);
     const plan = await detectHostPlan(
       {
-        dependencies: { react: "^19.2.0", vue: "^3.5.0" },
+        dependencies: { react: "^19.2.0", vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-react": "latest", vite: "^8.2.0" },
       },
       {
@@ -296,7 +338,7 @@ export default defineConfig({
   it("keeps public host planning free of Vue targets", () => {
     const plan = getHostPlan(
       {
-        dependencies: { vue: "^3.5.0" },
+        dependencies: { vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
       },
       {
@@ -310,7 +352,7 @@ export default defineConfig({
   it("plans an official Vite Vue project only through the private policy", () => {
     const plan = getPrivateVueHostPlan(
       {
-        dependencies: { vue: "^3.5.0" },
+        dependencies: { vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
       },
       {
@@ -339,7 +381,7 @@ export default defineConfig({
       name: "Vite Vue",
       paths: ["vite.config.ts", "src/main.ts", "src/App.vue"],
       pkg: {
-        dependencies: { vue: "^3.5.13" },
+        dependencies: { vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
       },
       projectFiles: {},
@@ -349,7 +391,7 @@ export default defineConfig({
       name: "Astro with Vue",
       paths: ["astro.config.ts"],
       pkg: {
-        dependencies: { "@astrojs/vue": "^5.1.5", astro: "^7.0.0", vue: "^3.5.13" },
+        dependencies: { "@astrojs/vue": "^5.1.5", astro: "^7.0.0", vue: "^3.5.21" },
       },
       projectFiles: {
         "astro.config.ts":
@@ -360,14 +402,14 @@ export default defineConfig({
       expectedHost: { kind: "nuxt", label: "Nuxt 3" },
       name: "Nuxt 3",
       paths: ["nuxt.config.ts", "app.vue"],
-      pkg: { dependencies: { nuxt: "^3.21.0", vue: "^3.5.13" } },
+      pkg: { dependencies: { nuxt: "^3.21.0", vue: "^3.5.21" } },
       projectFiles: {},
     },
     {
       expectedHost: { kind: "nuxt", label: "Nuxt 4" },
       name: "Nuxt 4",
       paths: ["nuxt.config.ts", "app/app.vue"],
-      pkg: { dependencies: { nuxt: "^4.2.0", vue: "^3.5.13" } },
+      pkg: { dependencies: { nuxt: "^4.2.0", vue: "^3.5.21" } },
       projectFiles: {},
     },
     {
@@ -389,7 +431,7 @@ export default defineConfig({
           "@vitejs/plugin-vue": "^6.0.0",
           "laravel-vite-plugin": "^3.0.0",
           tailwindcss: "^4.1.0",
-          vue: "^3.5.13",
+          vue: "^3.5.21",
         },
       },
       projectFiles: {
@@ -416,7 +458,7 @@ export default defineConfig({
         ...(mode === "SSR" ? ["src-ssr"] : []),
       ],
       pkg: {
-        dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+        dependencies: { quasar: "^2.18.0", vue: "^3.5.21" },
         devDependencies: { "@quasar/app-vite": "^3.0.0" },
       },
       projectFiles: {
@@ -463,7 +505,7 @@ export default defineConfig({
       dependencies: {
         "@astrojs/vue": "^5.1.5",
         astro: "^7.0.0",
-        vue: "^3.5.0",
+        vue: "^3.5.21",
       },
       source:
         'import vueRenderer from "@astrojs/vue";\nexport default defineConfig({ integrations: [vueRenderer()] });',
@@ -520,7 +562,7 @@ export default defineConfig({
     "plans exact private Nuxt evidence for %s",
     (nuxt, paths, label, componentDir, cssFile, utilsDir) => {
       const plan = getPrivateVueHostPlan(
-        { dependencies: { nuxt, vue: "^3.5.0" } },
+        { dependencies: { nuxt, vue: "^3.5.21" } },
         { existingPaths: new Set<string>(paths) },
         PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
       );
@@ -601,7 +643,7 @@ export default defineConfig(() => ({ css: ['app.css'], build: { vitePlugins: [] 
     ]);
     const plan = getPrivateVueHostPlan(
       {
-        dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+        dependencies: { quasar: "^2.18.0", vue: "^3.5.21" },
         devDependencies: { "@quasar/app-vite": "^3.0.0" },
       },
       { existingPaths: paths, projectFiles: { "quasar.config.ts": source } },
@@ -666,7 +708,7 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
   it("returns a manual-action Quasar diagnostic for partial CLI evidence before generic Vite", () => {
     const plan = getPrivateVueHostPlan(
       {
-        dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+        dependencies: { quasar: "^2.18.0", vue: "^3.5.21" },
         devDependencies: {
           "@quasar/app-vite": "^3.0.0",
           "@vitejs/plugin-vue": "^6.0.0",
@@ -693,7 +735,7 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
   it("keeps a Quasar Vite-plugin-only project on generic Vite Vue", () => {
     const plan = getPrivateVueHostPlan(
       {
-        dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+        dependencies: { quasar: "^2.18.0", vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.0.0" },
       },
       { existingPaths: new Set(["vite.config.ts", "src/main.ts", "src/App.vue"]) },
@@ -724,7 +766,7 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
         "@vitejs/plugin-vue": "^6.0.0",
         "laravel-vite-plugin": "^3.0.0",
         tailwindcss: "^4.1.0",
-        vue: "^3.5.13",
+        vue: "^3.5.21",
       },
     };
     const reader = {
@@ -763,7 +805,7 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
   it("keeps generic Vite Vue when common PHP and resources paths exist", () => {
     const plan = getPrivateVueHostPlan(
       {
-        dependencies: { vue: "^3.5.13" },
+        dependencies: { vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.0.0" },
       },
       {
@@ -786,7 +828,7 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
   it("returns a manual-action Laravel diagnostic for partial evidence before generic Vite", () => {
     const plan = getPrivateVueHostPlan(
       {
-        dependencies: { "@inertiajs/vue3": "^3.0.0", vue: "^3.5.13" },
+        dependencies: { "@inertiajs/vue3": "^3.0.0", vue: "^3.5.21" },
         devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.0.0" },
       },
       {

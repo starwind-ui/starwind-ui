@@ -48,7 +48,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Check source and test ownership
-        run: pnpm check && pnpm test:homes && pnpm runtime:generate:typecheck
+        run: pnpm check && pnpm test:homes && pnpm runtime:generate:typecheck && pnpm direction:inventory --self-test > /dev/null && pnpm direction:stage:test
       - name: Check release metadata
         run: pnpm styled:versions:check && pnpm primitive:versions:check && pnpm runtime:docs:metadata:check
       - name: Verify Styled Component Version Intent
@@ -98,10 +98,10 @@ jobs:
           cache: pnpm
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright Chromium and WebKit
-        run: pnpm exec playwright install --with-deps chromium webkit
+      - name: Install Google Chrome and WebKit
+        run: pnpm exec playwright install --with-deps chrome webkit
       - name: Run browser suites
-        run: pnpm runtime:test:browser && pnpm runtime:test:webkit && pnpm react:test:browser && pnpm vue:test:browser:ci
+        run: pnpm runtime:test:browser && pnpm runtime:test:webkit && pnpm react:test:browser && pnpm vue:test:browser:ci && pnpm exec vitest run --config packages/vue/tests/popover/vitest.config.ts --project=browser
       - name: Check Form parity across frameworks
         run: pnpm test:form-parity
       - name: Check target conformance
@@ -126,7 +126,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Regenerate Runtime adapters and CLI registries
-        run: pnpm runtime:generate:all && pnpm runtime:registry:generate
+        run: pnpm runtime:generate:all && pnpm svelte:styled:generate && pnpm runtime:registry:generate
       - name: Build shipping packages
         run: pnpm exec turbo build --filter=@starwind-ui/runtime --filter=@starwind-ui/react --filter=@starwind-ui/vue --filter=@starwind-ui/svelte --filter=starwind
       - name: Reject Generated Drift

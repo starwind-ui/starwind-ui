@@ -15,11 +15,12 @@ export default defineConfig({
       {
         test: {
           include: ["tests/**/*.browser.test.ts", "tests/**/*.browser.spec.ts"],
+          globalSetup: ["./tests/build/build-runtime-dist.ts"],
           name: "browser",
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright({ launchOptions: { channel: "chromium" } }),
+            provider: playwright({ launchOptions: { channel: "chrome" } }),
             instances: [{ browser: "chromium" }],
           },
         },
@@ -34,6 +35,18 @@ export default defineConfig({
             headless: true,
             provider: playwright(),
             instances: [{ browser: "webkit" }],
+          },
+        },
+      },
+      {
+        test: {
+          include: ["tests/cross-browser/**/*.browser.test.ts"],
+          name: "firefox",
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [{ browser: "firefox" }],
           },
         },
       },

@@ -10,8 +10,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "showIcon": showIcon = true,
-    "children": children,
+    showIcon = true,
+    children,
     ...rest
   }: ToastCloseProps = $props();
 </script>

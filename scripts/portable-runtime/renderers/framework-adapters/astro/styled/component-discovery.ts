@@ -1,17 +1,18 @@
-import path from 'node:path';
+import path from "node:path";
 
-import type { FrameworkTarget } from '../../../../contracts/styled/types.js';
-import { getRelativeImportPath } from '../../../shared.js';
+import type { FrameworkTarget } from "../../../../contracts/styled/types.js";
+import { getRelativeImportPath } from "../../../shared.js";
 import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
   StyledOutputComponentReference,
-} from '../../../styled-output-model/index.js';
+} from "../../../styled-output-model/index.js";
 import {
   collectStyledOutputComposedComponentReferences,
   collectStyledOutputVariantReferences,
-} from '../../../styled-output-model/index.js';
-import { ASTRO_FRAMEWORK } from './constants.js';
+} from "../../../styled-output-model/index.js";
+import { ASTRO_FRAMEWORK } from "./constants.js";
+import { isForFramework } from "./formatting.js";
 
 export function collectComponentVariants(
   component: StyledOutputComponent,
@@ -35,9 +36,25 @@ export function renderComposedComponentImports(
     ]),
   );
 
-  for (const reference of collectStyledOutputComposedComponentReferences(component, {
+  const references = collectStyledOutputComposedComponentReferences(component, {
     target: ASTRO_FRAMEWORK,
-  })) {
+  });
+  // A raw attribute value, such as a component passed as a prop, can name a sibling part.
+  const rawValues = collectAstroRawAttributeValues(component.render).join("\n");
+  for (const sibling of group.components) {
+    if (
+      sibling.exportName !== component.exportName &&
+      !references.some(
+        (reference) =>
+          reference.component === group.component && reference.exportName === sibling.exportName,
+      ) &&
+      new RegExp(`\\b${sibling.exportName}\\b`).test(rawValues)
+    ) {
+      references.push({ component: group.component, exportName: sibling.exportName });
+    }
+  }
+
+  for (const reference of references) {
     if (reference.component === group.component) {
       const fileName = siblingFiles.get(reference.exportName) ?? reference.exportName;
       siblingImports.push(
@@ -64,6 +81,31 @@ export function renderComposedComponentImports(
   });
 
   return [...siblingImports.sort(), ...packageImports];
+}
+
+function collectAstroRawAttributeValues(nodes: readonly unknown[] | undefined): string[] {
+  const values: string[] = [];
+  for (const node of nodes ?? []) {
+    if (!node || typeof node !== "object") continue;
+    const record = node as {
+      attrs?: Array<{ targetScopes?: string[]; value?: { type: string; code?: string } }>;
+      children?: unknown[];
+      else?: unknown[];
+      fallback?: unknown[];
+      then?: unknown[];
+    };
+    for (const attr of record.attrs ?? []) {
+      if (isForFramework(attr, ASTRO_FRAMEWORK) && attr.value?.type === "raw" && attr.value.code)
+        values.push(attr.value.code);
+    }
+    values.push(
+      ...collectAstroRawAttributeValues(record.children),
+      ...collectAstroRawAttributeValues(record.then),
+      ...collectAstroRawAttributeValues(record.else),
+      ...collectAstroRawAttributeValues(record.fallback),
+    );
+  }
+  return values;
 }
 
 export function getComponentReferenceName(reference: StyledOutputComponentReference): string {

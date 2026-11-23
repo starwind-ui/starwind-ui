@@ -42,7 +42,6 @@ export function printVueNotificationSystemIndex(
 }
 
 function printViewport(facts: AdapterNotificationSystemFacts): string {
-  const component = facts.exports.viewport;
   const options = facts.viewportOptions;
   const semantics = facts.viewportSemantics;
 

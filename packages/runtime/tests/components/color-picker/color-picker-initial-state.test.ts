@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { parseColor } from "../../../src/components/color-picker/color-picker";
 import {
   COLOR_PICKER_INITIAL_OWNERSHIP_ATTRIBUTE,
   COLOR_PICKER_INITIAL_PARTS,
+  type ColorPickerInitialPartRequest,
   createColorPickerInitialState,
   projectColorPickerInitialPart,
-  type ColorPickerInitialPartRequest,
 } from "../../../src/components/color-picker/initial-state";
-import { parseColor } from "../../../src/components/color-picker/color-picker";
 
 describe("Color Picker initial state projection", () => {
   it("normalizes invalid, empty, translucent, opaque, and formatted values immutably", () => {

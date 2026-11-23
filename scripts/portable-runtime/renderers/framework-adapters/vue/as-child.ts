@@ -2,12 +2,8 @@ import { createTsHeader } from "../../shared.js";
 
 export function renderVueAsChildHelper(generatedBy: string): string {
   return `${createTsHeader(generatedBy)}import {
-  Comment,
-  Fragment,
-  Text,
   cloneVNode,
   isRef,
-  isVNode,
   mergeProps,
   nextTick,
   onBeforeUnmount,
@@ -16,6 +12,7 @@ export function renderVueAsChildHelper(generatedBy: string): string {
   type Ref,
   type VNode,
 } from "vue";
+import { resolveVueAsChildTarget } from "./as-child-target";
 
 type ComponentRoot = ComponentPublicInstance & {
   element?: unknown;
@@ -94,7 +91,7 @@ export function createVueAsChild(name: string, element: Ref<HTMLElement | null>)
     defaultNativeButtonType,
     protectedProps = {},
   }: VueAsChildRenderOptions): VNode {
-    const child = normalizeChild(name, children);
+    const child = resolveVueAsChildTarget(name, children);
     const nativeButtonDefault =
       defaultNativeButtonType !== undefined &&
       child.type === "button" &&
@@ -141,7 +138,7 @@ export function useVueAsChildRuntimeOwner(
 /** True when the slot holds the one child that \`asChild\` can compose. */
 export function hasVueAsChildTarget(name: string, children: readonly VNode[]): boolean {
   try {
-    normalizeChild(name, children);
+    resolveVueAsChildTarget(name, children);
     return true;
   } catch {
     return false;
@@ -182,64 +179,6 @@ function componentDeclaresProp(type: VNode["type"], key: string): boolean {
 
 function normalizePropName(name: string): string {
   return name.replaceAll("-", "").toLowerCase();
-}
-
-/** A v-if that renders nothing leaves a Comment. It is not a second child. */
-function withoutEmptyBranches<T>(children: readonly T[]): readonly T[] {
-  const rendered = children.filter((child) => !isVNode(child) || child.type !== Comment);
-  return rendered.length ? rendered : children;
-}
-
-function normalizeChild(name: string, sourceChildren: readonly VNode[]): VNode {
-  const children = withoutEmptyBranches(sourceChildren);
-  if (children.length !== 1) {
-    throw new TypeError(
-      \`\${name} asChild requires exactly one child VNode; received \${children.length}.\`,
-    );
-  }
-
-  let child: unknown = children[0];
-  if (!isVNode(child)) throw invalidVNodeError(name, child);
-
-  if (child.type === Fragment) {
-    const fragmentChildren = withoutEmptyBranches(
-      Array.isArray(child.children) ? child.children : [],
-    );
-    if (fragmentChildren.length !== 1) {
-      throw new TypeError(
-        \`\${name} asChild accepts one Fragment boundary with exactly one child VNode; received \${fragmentChildren.length}.\`,
-      );
-    }
-    child = fragmentChildren[0];
-    if (!isVNode(child)) throw invalidVNodeError(name, child);
-  }
-
-  if (
-    child.type === Comment ||
-    child.type === Text ||
-    child.type === Fragment ||
-    (typeof child.type !== "string" &&
-      typeof child.type !== "object" &&
-      typeof child.type !== "function")
-  ) {
-    throw invalidVNodeError(name, child);
-  }
-
-  return child;
-}
-
-function invalidVNodeError(name: string, value: unknown): TypeError {
-  const kind =
-    isVNode(value) && value.type === Comment
-      ? "Comment"
-      : isVNode(value) && value.type === Text
-        ? "Text"
-        : isVNode(value) && value.type === Fragment
-          ? "nested Fragment"
-          : "non-VNode";
-  return new TypeError(
-    \`\${name} asChild requires one native element VNode or one component VNode with a single native root; received \${kind}.\`,
-  );
 }
 
 function resolveNativeElement(value: Element | ComponentPublicInstance): HTMLElement | null {

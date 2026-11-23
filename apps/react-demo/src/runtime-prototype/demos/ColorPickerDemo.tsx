@@ -1,7 +1,7 @@
 import {
-  parseColor,
   type ColorPickerColor,
   type ColorPickerFormat,
+  parseColor,
 } from "@starwind-ui/react/color-picker";
 import { useCallback, useState } from "react";
 

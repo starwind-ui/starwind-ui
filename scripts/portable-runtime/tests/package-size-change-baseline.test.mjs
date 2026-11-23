@@ -39,6 +39,8 @@ describe("package size change baseline", () => {
       bundleResults: [
         row("@starwind-ui/runtime"),
         row("@starwind-ui/runtime/color-picker"),
+        row("@starwind-ui/runtime/init-starwind"),
+        row("@starwind-ui/runtime/chart"),
         row("@starwind-ui/react (adapter only)"),
         row("@starwind-ui/react + runtime"),
         row("@base-ui/react"),
@@ -69,7 +71,10 @@ describe("package size change baseline", () => {
       "react.fieldset",
       "react.matched.all-three-overlap",
       "runtime.catalog",
+      "runtime.chart",
       "runtime.color-picker",
+      "runtime.init-starwind",
+      "runtime.root",
       "vue.adapter",
       "vue.catalog",
       "vue.complete-catalog",
@@ -91,6 +96,18 @@ describe("package size change baseline", () => {
       provenance,
       measurements: rows,
     });
+  });
+
+  it.each(["runtime.root", "runtime.init-starwind"])("rejects any gzip growth in %s", (id) => {
+    const baseline = snapshot(measurement(100_000, "aggregate", id));
+    expect(
+      evaluatePackageSizeChanges(snapshot(measurement(100_000, "aggregate", id)), baseline)[0]
+        .status,
+    ).toBe("Pass");
+    expect(
+      evaluatePackageSizeChanges(snapshot(measurement(100_001, "aggregate", id)), baseline)[0]
+        .status,
+    ).toBe("Fail");
   });
 
   it("accepts the same snapshot and reports decreases", () => {

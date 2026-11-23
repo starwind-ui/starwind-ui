@@ -10,13 +10,13 @@
 <script lang="ts">
   let {
     "class": className,
-    "side": side = "bottom",
-    "align": align = "start",
-    "sideOffset": sideOffset = 4,
-    "avoidCollisions": avoidCollisions = true,
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "children": children,
+    side = "bottom",
+    align = "start",
+    sideOffset = 4,
+    avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
+    children,
     ...rest
   }: DropdownContentProps = $props();
 </script>

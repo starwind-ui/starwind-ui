@@ -16,7 +16,7 @@ export type DropdownSubContentProps = React.ComponentPropsWithoutRef<"div"> & {
 function DropdownSubContent(props: DropdownSubContentProps) {
   const {
     className,
-    side = "right",
+    side,
     align = "start",
     sideOffset = 0,
     avoidCollisions = true,
@@ -36,10 +36,11 @@ function DropdownSubContent(props: DropdownSubContentProps) {
     >
       <MenuPrimitive.Popup
         className={dropdownContent({ class: subContentClassName })}
-        side={side}
+        side={side ?? "right"}
         align={align}
         sideOffset={sideOffset}
         avoidCollisions={avoidCollisions}
+        data-sw-menu-side-intent={side ?? ""}
         {...rest}
         data-slot="dropdown-sub-content"
       >

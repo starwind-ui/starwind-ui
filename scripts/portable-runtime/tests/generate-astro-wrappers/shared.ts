@@ -76,7 +76,7 @@ export async function readFormattedGeneratedTree(
         const config =
           (await resolveConfig(entryPath)) ??
           (await resolveConfig(path.join(process.cwd(), "packages/astro/src", relativePath)));
-        return { [relativePath]: await format(contents, { ...(config ?? {}), filepath: entryPath }) };
+        return { [relativePath]: await format(contents, { ...config, filepath: entryPath }) };
       }),
   );
 

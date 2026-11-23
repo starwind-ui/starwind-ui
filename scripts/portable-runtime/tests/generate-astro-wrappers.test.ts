@@ -5,8 +5,9 @@ import path from "node:path";
 import { afterEach, beforeEach, describe } from "vitest";
 
 import { defineAstroCarouselOutputTests } from "./generate-astro-wrappers/carousel-output.cases.js";
-import { defineAstroCompositionOutputTests } from "./generate-astro-wrappers/composition-output.cases.js";
+import { defineAstroChartOutputTests } from "./generate-astro-wrappers/chart-output.cases.js";
 import { defineAstroColorPickerOutputTests } from "./generate-astro-wrappers/color-picker-output.cases.js";
+import { defineAstroCompositionOutputTests } from "./generate-astro-wrappers/composition-output.cases.js";
 import { defineAstroDropzoneOutputTests } from "./generate-astro-wrappers/dropzone-output.cases.js";
 import { defineAstroPreviewCardOutputTests } from "./generate-astro-wrappers/preview-card-output.cases.js";
 import { defineAstroPrimitiveOutputTests } from "./generate-astro-wrappers/primitive-output.cases.js";
@@ -31,6 +32,7 @@ describe("generateAstroWrappers", () => {
   defineAstroPrimitiveOutputTests(getTempRoot);
   defineAstroColorPickerOutputTests(getTempRoot);
   defineAstroCarouselOutputTests(getTempRoot);
+  defineAstroChartOutputTests(getTempRoot);
   defineAstroPreviewCardOutputTests(getTempRoot);
   defineAstroDropzoneOutputTests(getTempRoot);
   defineAstroStyledOutputTests(getTempRoot);

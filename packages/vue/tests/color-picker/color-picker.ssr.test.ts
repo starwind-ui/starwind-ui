@@ -1,8 +1,7 @@
+import { ColorPickerRoot } from "@starwind-ui/vue/color-picker";
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
-
-import { ColorPickerRoot } from "@starwind-ui/vue/color-picker";
 import { colorPickerChildren } from "./tree.js";
 
 describe("Vue Color Picker SSR", () => {

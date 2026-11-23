@@ -8,8 +8,6 @@ import type {
 import { printSvelteRefAttachment } from "./attachments.js";
 import { printSvelteOverlayPortal } from "./overlay-portal.js";
 
-const NON_SHIPPING_COMMENT = "Svelte 5 public beta adapter output.";
-
 export function printSvelteNativeOverlayIndex(file: AdapterIndexFile): AdapterPrintedFile {
   const family = file.family;
   if (family?.kind !== "native-overlay") {
@@ -24,8 +22,7 @@ export function printSvelteNativeOverlayIndex(file: AdapterIndexFile): AdapterPr
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -38,7 +35,7 @@ export {
 };
 
 export default ${facts.exports.namespace};
-${facts.displayName === "AlertDialog" ? `export { getAlertDialogControlRefresh } from "./${facts.exports.root}.svelte";\n` : ""}export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
+${facts.displayName === "AlertDialog" ? `export { __useAlertDialogControl } from "./${facts.exports.root}.svelte";\n` : ""}export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
 
 export type { ${facts.index.typeExports.join(", ")} } from "${facts.runtime.typeImportSource}";
 `,
@@ -77,7 +74,6 @@ function printRoot(facts: AdapterNativeOverlayFacts): string {
 
 function printTrigger(facts: AdapterNativeOverlayFacts): string {
   return printControl(facts, {
-    name: facts.exports.trigger,
     extraProps: `${facts.props.targetId.name}?: ${facts.props.targetId.type};`,
     omit: `${facts.props.targetId.name}: _targetId,`,
     attributes: `"${facts.attrs.trigger}": "", type: "button", "${facts.attrs.triggerAriaHaspopup}": "dialog", "${facts.attrs.targetId}": allProps.${facts.props.targetId.name}, "${facts.attrs.triggerState}": dialog?.open ? "open" : "closed", "data-sw-part": "${facts.parts.trigger.name}",`,
@@ -108,7 +104,6 @@ function printPopup(facts: AdapterNativeOverlayFacts): string {
 
 function printClose(facts: AdapterNativeOverlayFacts): string {
   return printControl(facts, {
-    name: facts.exports.close,
     attributes: `"${facts.attrs.close}": "", type: "button", "data-sw-part": "${facts.parts.close.name}",`,
   });
 }
@@ -116,14 +111,12 @@ function printClose(facts: AdapterNativeOverlayFacts): string {
 function printControl(
   facts: AdapterNativeOverlayFacts,
   {
-    name,
     extraProps = "",
     omit = "",
     attributes,
-  }: { name: string; extraProps?: string; omit?: string; attributes: string },
+  }: { extraProps?: string; omit?: string; attributes: string },
 ): string {
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script module lang="ts">
+  return `<script module lang="ts">
   export type { ButtonChildProps, ButtonChildPayload } from "../button/ButtonRoot.svelte";
 </script>
 <script lang="ts">
@@ -220,8 +213,7 @@ function printPart({
 }): string {
   const elementImport =
     htmlType === "HTMLButtonAttributes" ? "HTMLButtonAttributes" : "HTMLAttributes";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { ${elementImport} } from "svelte/elements";

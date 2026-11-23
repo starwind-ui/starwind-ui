@@ -3,8 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Svelte 5 public beta adapter output.
-
 import SliderControl from "./SliderControl.svelte";
 import SliderIndicator from "./SliderIndicator.svelte";
 import SliderLabel from "./SliderLabel.svelte";

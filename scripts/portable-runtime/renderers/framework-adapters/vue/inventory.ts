@@ -108,6 +108,31 @@ const vueRuntimePrimitives = [
     ],
   },
   {
+    component: "chart",
+    sourceFiles: [
+      "chart/ChartContext.ts",
+      "chart/ChartLegend.vue",
+      "chart/ChartLegendIcon.vue",
+      "chart/ChartLegendItem.vue",
+      "chart/ChartLegendItems.vue",
+      "chart/ChartLegendLabel.vue",
+      "chart/ChartLegendSwatch.vue",
+      "chart/ChartRoot.vue",
+      "chart/ChartStyle.vue",
+      "chart/ChartSurface.vue",
+      "chart/ChartTooltip.vue",
+      "chart/ChartTooltipContent.vue",
+      "chart/ChartTooltipIcon.vue",
+      "chart/ChartTooltipIndicator.vue",
+      "chart/ChartTooltipItem.vue",
+      "chart/ChartTooltipItems.vue",
+      "chart/ChartTooltipLabel.vue",
+      "chart/ChartTooltipName.vue",
+      "chart/ChartTooltipValue.vue",
+      "chart/index.ts",
+    ],
+  },
+  {
     component: "checkbox",
     sourceFiles: [
       "checkbox/CheckboxIndicator.vue",
@@ -492,6 +517,7 @@ const vuePortableStyledComponents = [
   "avatar",
   "button",
   "carousel",
+  "chart",
   "checkbox",
   "checkbox-group",
   "collapsible",
@@ -586,6 +612,7 @@ export const vueBuildEntryPoints = Object.fromEntries(
 ) as Record<string, string>;
 
 export const vueGeneratedSourceFiles = [
+  "_internal/as-child-target.ts",
   "_internal/as-child.ts",
   "_internal/form-discovery.ts",
   "_internal/native-control.ts",
@@ -603,7 +630,10 @@ export function validateVueInventorySnapshot({
   sourceFiles: readonly string[];
 }): VueInventoryDiagnostics {
   const expectedExportNames = Object.keys(vuePackageExports);
-  const actualExportNames = Object.keys(packageExports);
+  // The package metadata subpath is not a Primitive entry, so the inventory does not own it.
+  const actualExportNames = Object.keys(packageExports).filter(
+    (name) => !(name === "./package.json" && packageExports[name] === "./package.json"),
+  );
   const expectedSourceFiles = new Set(vueGeneratedSourceFiles);
   const actualSourceFiles = new Set(sourceFiles);
 

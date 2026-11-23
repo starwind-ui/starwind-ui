@@ -12,10 +12,10 @@
 
 <script lang="ts">
   let {
-    "value": value,
-    "disabled": disabled = false,
+    value,
+    disabled = false,
     "class": className,
-    "children": children,
+    children,
     ...rest
   }: ColorPickerSwatchProps = $props();
 </script>

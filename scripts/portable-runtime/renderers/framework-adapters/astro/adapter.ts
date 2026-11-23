@@ -1,4 +1,5 @@
 import {
+  defaultMarker,
   initialCheckedValue,
   initialListValue,
   initialModelValue,
@@ -78,6 +79,14 @@ import {
   printAstroAnchoredMenuOverlayIndex,
 } from "./anchored-menu-overlay.js";
 import {
+  type AstroChartSurfaceIndexProjection,
+  isAstroChartSupportProjection,
+  isAstroChartSurfaceProjection,
+  printAstroChartSurfaceComponent,
+  printAstroChartSurfaceHelper,
+  printAstroChartSurfaceIndex,
+} from "./chart-surface.js";
+import {
   type AstroColorPickerComponentProjection,
   type AstroColorPickerIndexProjection,
   printAstroColorPickerComponent,
@@ -144,6 +153,10 @@ export const astroFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printHelperFile(file) {
+    if (isAstroChartSupportProjection(file.family)) {
+      return { contents: printAstroChartSurfaceHelper(file.family), path: file.path };
+    }
+
     return {
       contents: [
         printImports(file.imports),
@@ -157,6 +170,15 @@ export const astroFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printIndexFile(file) {
+    if (isAstroChartSurfaceProjection(file.family)) {
+      return {
+        contents: printAstroChartSurfaceIndex(
+          file.family as unknown as AstroChartSurfaceIndexProjection,
+        ),
+        path: file.path,
+      };
+    }
+
     if (isAstroColorPickerIndexProjection(file.family)) {
       return {
         contents: printAstroColorPickerIndex(
@@ -394,6 +416,13 @@ export const astroFrameworkAdapter = defineFrameworkAdapter({
 
 function printAstroComponent(file: AdapterComponentFile): string {
   const component = file.component;
+
+  if (
+    isAstroChartSurfaceProjection(component.family) ||
+    isAstroChartSupportProjection(component.family)
+  ) {
+    return printAstroChartSurfaceComponent(component.family);
+  }
 
   if (isAstroColorPickerComponentProjection(component.family)) {
     return printAstroColorPickerComponent(
@@ -1245,16 +1274,6 @@ function printAstroTimedFloatingOverlayArrow(facts: AdapterTimedFloatingOverlayF
   return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}">;\n\nconst { ...rest } = Astro.props;\n---\n\n<${part.defaultElement} ${facts.attrs.arrow} ${facts.attrs.arrowState}="closed" {...rest}>\n  <slot />\n</${part.defaultElement}>\n`;
 }
 
-function printAstroTimedFloatingOverlaySimplePart(
-  part: { defaultElement: string },
-  discoveryAttribute: string,
-): string {
-  return printAstroSimpleSlottedRestPropsComponent({
-    attributes: [discoveryAttribute],
-    defaultElement: part.defaultElement,
-  });
-}
-
 function printAstroTimedFloatingOverlayBackdrop(facts: AdapterTimedFloatingOverlayFacts): string {
   const part = requireTimedFloatingPart(facts, "backdrop");
   const discoveryAttribute = requireTimedFloatingString(
@@ -1942,7 +1961,7 @@ function printAstroSingleBooleanControlComponent(
 }
 
 function printAstroSingleBooleanControlRoot(facts: AdapterSingleBooleanControlFacts): string {
-  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ninterface Props\n  extends Omit<\n    HTMLAttributes<"${facts.part.defaultElement}">,\n    "${facts.attrs.ariaState}" | "${facts.props.defaultState.name}" | "${facts.props.disabled.name}" | "onChange" | "type" | "${facts.props.value.name}"\n  > {\n  ${facts.props.defaultState.name}?: ${facts.props.defaultState.type};\n  ${facts.props.disabled.name}?: ${facts.props.disabled.type};\n  ${facts.props.nativeButton.name}?: ${facts.props.nativeButton.type};\n  ${facts.props.state.name}?: ${facts.props.state.type};\n  ${facts.props.syncGroup.name}?: ${facts.props.syncGroup.type};\n  ${facts.props.value.name}?: ${facts.props.value.type};\n}\n\nconst {\n  ${facts.props.defaultState.name} = ${facts.props.defaultState.defaultValue},\n  ${facts.props.disabled.name} = ${facts.props.disabled.defaultValue},\n  ${facts.props.nativeButton.name} = ${facts.props.nativeButton.defaultValue},\n  ${facts.props.state.name},\n  ${facts.props.syncGroup.name},\n  ${facts.props.value.name},\n  ...rest\n} = Astro.props;\n\nconst Tag = ${facts.props.nativeButton.name} ? "${facts.part.defaultElement}" : "${facts.render.nonNativeElement}";\nconst initial${facts.state.pascalName} = ${initialCheckedValue(facts.props.state.name, facts.props.defaultState.name)};\nconst default${facts.state.pascalName}Attribute = ${facts.props.state.name} === undefined && ${facts.props.defaultState.name} ? "true" : undefined;\n---\n\n<Tag\n  {...rest}\n  ${facts.part.discoveryAttribute}\n  ${facts.attrs.defaultState}={default${facts.state.pascalName}Attribute}\n  ${facts.attrs.native}={!${facts.props.nativeButton.name} ? "false" : undefined}\n  ${facts.attrs.syncGroup}={${facts.props.syncGroup.name}}\n  ${facts.attrs.value}={${facts.props.value.name}}\n  ${facts.attrs.ariaDisabled}={!${facts.props.nativeButton.name} && ${facts.props.disabled.name} ? "true" : undefined}\n  ${facts.attrs.ariaState}={initial${facts.state.pascalName} ? "true" : "false"}\n  ${facts.attrs.disabled}={${facts.props.disabled.name} ? "" : undefined}\n  ${facts.attrs.truthyPresence}={initial${facts.state.pascalName} ? "" : undefined}\n  ${facts.attrs.state}={initial${facts.state.pascalName} ? "on" : "off"}\n  ${facts.attrs.falsyPresence}={!initial${facts.state.pascalName} ? "" : undefined}\n  disabled={${facts.props.nativeButton.name} && ${facts.props.disabled.name} ? true : undefined}\n  role={!${facts.props.nativeButton.name} ? "button" : undefined}\n  tabindex={!${facts.props.nativeButton.name} ? (${facts.props.disabled.name} ? -1 : 0) : undefined}\n  type={${facts.props.nativeButton.name} ? "button" : undefined}\n  value={${facts.props.nativeButton.name} ? ${facts.props.value.name} : undefined}\n>\n  <slot />\n</Tag>\n\n<script>\n  import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";\n\n  const ${facts.runtime.instancesName} = new Set<ReturnType<typeof ${facts.runtime.factory}>>();\n\n  import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";\n\n  const ${facts.runtime.setupFunction} = (event?: Event) => {\n    getInitCandidates(event, "[${facts.part.discoveryAttribute}]").forEach((root) =>\n      ${facts.runtime.instancesName}.add(${facts.runtime.factory}(root)),\n    );\n  };\n\n  const ${facts.runtime.destroyFunction} = () => {\n    ${facts.runtime.instancesName}.forEach((instance) => instance.destroy());\n    ${facts.runtime.instancesName}.clear();\n  };\n\n  ${facts.runtime.setupFunction}();\n  document.addEventListener("astro:after-swap", ${facts.runtime.setupFunction});\n  document.addEventListener("astro:before-swap", ${facts.runtime.destroyFunction});\n  document.addEventListener("starwind:init", ${facts.runtime.setupFunction});\n</script>\n`;
+  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ninterface Props\n  extends Omit<\n    HTMLAttributes<"${facts.part.defaultElement}">,\n    "${facts.attrs.ariaState}" | "${facts.props.defaultState.name}" | "${facts.props.disabled.name}" | "onChange" | "type" | "${facts.props.value.name}"\n  > {\n  ${facts.props.defaultState.name}?: ${facts.props.defaultState.type};\n  ${facts.props.disabled.name}?: ${facts.props.disabled.type};\n  ${facts.props.nativeButton.name}?: ${facts.props.nativeButton.type};\n  ${facts.props.state.name}?: ${facts.props.state.type};\n  ${facts.props.syncGroup.name}?: ${facts.props.syncGroup.type};\n  ${facts.props.value.name}?: ${facts.props.value.type};\n}\n\nconst {\n  ${facts.props.defaultState.name} = ${facts.props.defaultState.defaultValue},\n  ${facts.props.disabled.name} = ${facts.props.disabled.defaultValue},\n  ${facts.props.nativeButton.name} = ${facts.props.nativeButton.defaultValue},\n  ${facts.props.state.name},\n  ${facts.props.syncGroup.name},\n  ${facts.props.value.name},\n  ...rest\n} = Astro.props;\n\nconst Tag = ${facts.props.nativeButton.name} ? "${facts.part.defaultElement}" : "${facts.render.nonNativeElement}";\nconst initial${facts.state.pascalName} = ${initialCheckedValue(facts.props.state.name, facts.props.defaultState.name)};\nconst default${facts.state.pascalName}Attribute = ${defaultMarker(facts.props.defaultState.name)};\n---\n\n<Tag\n  {...rest}\n  ${facts.part.discoveryAttribute}\n  ${facts.attrs.defaultState}={default${facts.state.pascalName}Attribute}\n  ${facts.attrs.native}={!${facts.props.nativeButton.name} ? "false" : undefined}\n  ${facts.attrs.syncGroup}={${facts.props.syncGroup.name}}\n  ${facts.attrs.value}={${facts.props.value.name}}\n  ${facts.attrs.ariaDisabled}={!${facts.props.nativeButton.name} && ${facts.props.disabled.name} ? "true" : undefined}\n  ${facts.attrs.ariaState}={initial${facts.state.pascalName} ? "true" : "false"}\n  ${facts.attrs.disabled}={${facts.props.disabled.name} ? "" : undefined}\n  ${facts.attrs.truthyPresence}={initial${facts.state.pascalName} ? "" : undefined}\n  ${facts.attrs.state}={initial${facts.state.pascalName} ? "on" : "off"}\n  ${facts.attrs.falsyPresence}={!initial${facts.state.pascalName} ? "" : undefined}\n  disabled={${facts.props.nativeButton.name} && ${facts.props.disabled.name} ? true : undefined}\n  role={!${facts.props.nativeButton.name} ? "button" : undefined}\n  tabindex={!${facts.props.nativeButton.name} ? (${facts.props.disabled.name} ? -1 : 0) : undefined}\n  type={${facts.props.nativeButton.name} ? "button" : undefined}\n  value={${facts.props.nativeButton.name} ? ${facts.props.value.name} : undefined}\n>\n  <slot />\n</Tag>\n\n<script>\n  import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";\n\n  const ${facts.runtime.instancesName} = new Set<ReturnType<typeof ${facts.runtime.factory}>>();\n\n  import { getAstroInitCandidates as getInitCandidates } from "../internal/controller-lifecycle";\n\n  const ${facts.runtime.setupFunction} = (event?: Event) => {\n    getInitCandidates(event, "[${facts.part.discoveryAttribute}]").forEach((root) =>\n      ${facts.runtime.instancesName}.add(${facts.runtime.factory}(root)),\n    );\n  };\n\n  const ${facts.runtime.destroyFunction} = () => {\n    ${facts.runtime.instancesName}.forEach((instance) => instance.destroy());\n    ${facts.runtime.instancesName}.clear();\n  };\n\n  ${facts.runtime.setupFunction}();\n  document.addEventListener("astro:after-swap", ${facts.runtime.setupFunction});\n  document.addEventListener("astro:before-swap", ${facts.runtime.destroyFunction});\n  document.addEventListener("starwind:init", ${facts.runtime.setupFunction});\n</script>\n`;
 }
 
 function printAstroSingleBooleanControlRootWithOwnershipGuards(
@@ -2220,10 +2239,6 @@ function escapeAttribute(value: string): string {
 
 function escapeText(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
-}
-
-function escapeStringLiteral(value: string): string {
-  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
 function indent(value: string, depth = 1): string {

@@ -1,23 +1,16 @@
 import { pathToFileURL } from "node:url";
-
-import {
-  checkLayeredDocsMetadata,
-  generateLayeredDocsMetadata,
-} from "./docs/layered-docs/generator/orchestrate.js";
 import type {
   GenerateLayeredDocsMetadataOptions,
   LayeredDocsCheckFailureOptions,
   LayeredDocsValidationReport,
 } from "./docs/layered-docs/generator/options.js";
+import {
+  checkLayeredDocsMetadata,
+  generateLayeredDocsMetadata,
+} from "./docs/layered-docs/generator/orchestrate.js";
 import { getLayeredDocsCheckFailures } from "./docs/layered-docs/generator/validate-metadata.js";
 
 export { buildLayeredDocsMetadata } from "./docs/layered-docs/generator/build-metadata.js";
-export {
-  checkLayeredDocsMetadata,
-  generateLayeredDocsMetadata,
-  validateLayeredDocsMetadata,
-  validateLayeredDocsMetadataArtifact,
-} from "./docs/layered-docs/generator/orchestrate.js";
 export type {
   BuildLayeredDocsMetadataOptions,
   CheckLayeredDocsMetadataOptions,
@@ -29,6 +22,12 @@ export type {
   LayeredDocsValidationReport,
   ValidateLayeredDocsMetadataOptions,
 } from "./docs/layered-docs/generator/options.js";
+export {
+  checkLayeredDocsMetadata,
+  generateLayeredDocsMetadata,
+  validateLayeredDocsMetadata,
+  validateLayeredDocsMetadataArtifact,
+} from "./docs/layered-docs/generator/orchestrate.js";
 export { formatPrimitiveStateControlSupport } from "./docs/layered-docs/generator/render-reference.js";
 export { renderCanonicalLayeredDocsMetadata } from "./docs/layered-docs/generator/serialize-metadata.js";
 export {

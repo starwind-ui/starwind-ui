@@ -274,7 +274,7 @@ export async function verifyRadioGroupStockStyles(page) {
   assert.ok(
     actual.controls.every(
       ([border, radius]) =>
-        border === "1px" && (radius === "3.40282e+38px" || parseFloat(radius) > 1000),
+        border === "1px" && (radius === "3.40282e+38px" || Number.parseFloat(radius) > 1000),
     ),
   );
   assert.equal(actual.defaultIcon, true);
@@ -570,7 +570,7 @@ export async function verifySliderStockStyles(page) {
       { width: thumb.width, height: thumb.height, border: thumb.border },
       { width: "16px", height: "16px", border: "1px" },
     );
-    assert.ok(parseFloat(thumb.radius) >= 8, "round thumb");
+    assert.ok(Number.parseFloat(thumb.radius) >= 8, "round thumb");
   }
   assert.deepEqual(result.horizontal, ["6px", "6px", "6px"]);
   assert.deepEqual(result.vertical, ["6px", "176px"]);

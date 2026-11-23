@@ -10,10 +10,10 @@ export type ReactAsChildCloneBranchOptions = {
 
 export function renderReactAsChildImports(format: ReactAsChildImportFormat = "compact"): string {
   if (format === "multiline") {
-    return `import type { RefCapableElementProps } from "../internal/compose-refs";\nimport {\n  getAsChildElement,\n  getElementRef,\n  mergeAsChildProps,\n  useComposedRefs,\n} from "../internal/compose-refs";`;
+    return `import {\n  getAsChildElement,\n  getElementRef,\n  mergeAsChildProps,\n  useComposedRefs,\n} from "../internal/compose-refs";`;
   }
 
-  return `import type { RefCapableElementProps } from "../internal/compose-refs";\nimport { getAsChildElement, getElementRef, mergeAsChildProps, useComposedRefs } from "../internal/compose-refs";`;
+  return `import { getAsChildElement, getElementRef, mergeAsChildProps, useComposedRefs } from "../internal/compose-refs";`;
 }
 
 export function renderReactAsChildSetup(indent: string): string {

@@ -206,6 +206,7 @@ class PreviewCardController implements PreviewCardInstance {
       onOutsidePointerDown: (event) => {
         this.requestOpen(false, { event, reason: "outside-press" });
       },
+      getPointerPassThroughWrapper: () => this.elements.positioner,
       popup: this.elements.popup,
       renderState: (open, closeSignal) => this.renderState(open, closeSignal),
       root: this.root,

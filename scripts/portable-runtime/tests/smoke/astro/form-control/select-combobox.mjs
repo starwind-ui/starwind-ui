@@ -613,6 +613,14 @@ export async function verifyAstroSelectComboboxCases({ page }) {
   await assertPublicPortalTopology(page.locator("#runtime-combobox-fruit-content"), {
     portalSlot: "combobox-portal",
   });
+  // Measure the item after the popup finishes opening, so the press lands where the item rests.
+  await page
+    .locator("#runtime-combobox-fruit-content")
+    .evaluate((popup) =>
+      Promise.all(
+        popup.getAnimations({ subtree: true }).map((animation) => animation.finished),
+      ).then(() => undefined),
+    );
   const astroComboboxAppleBox = await page.locator("#runtime-combobox-fruit-apple").boundingBox();
   if (!astroComboboxAppleBox) {
     throw new Error("Expected Astro Combobox apple item to have a bounding box.");

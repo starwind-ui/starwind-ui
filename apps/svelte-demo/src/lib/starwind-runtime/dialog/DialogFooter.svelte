@@ -12,8 +12,8 @@
 <script lang="ts">
   let {
     "class": className,
-    "ref": ref,
-    "children": children,
+    ref,
+    children,
     ...rest
   }: DialogFooterProps = $props();
 

@@ -1,7 +1,7 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-11-05T12:10:49.932Z",
+  "capturedAt": "2026-11-21T20:29:24.805Z",
   "catalog": {
     "brotliBytes": 175969,
     "gzipBytes": 230410,
@@ -325,7 +325,9 @@
   "measurementEntries": {
     "catalog": [
       {
-        "exports": ["*"],
+        "exports": [
+          "*"
+        ],
         "specifier": "reka-ui"
       }
     ],
@@ -360,19 +362,31 @@
       ],
       "avatar": [
         {
-          "exports": ["AvatarFallback", "AvatarImage", "AvatarRoot"],
+          "exports": [
+            "AvatarFallback",
+            "AvatarImage",
+            "AvatarRoot"
+          ],
           "specifier": "reka-ui"
         }
       ],
       "checkbox": [
         {
-          "exports": ["CheckboxGroupRoot", "CheckboxIndicator", "CheckboxRoot"],
+          "exports": [
+            "CheckboxGroupRoot",
+            "CheckboxIndicator",
+            "CheckboxRoot"
+          ],
           "specifier": "reka-ui"
         }
       ],
       "collapsible": [
         {
-          "exports": ["CollapsibleContent", "CollapsibleRoot", "CollapsibleTrigger"],
+          "exports": [
+            "CollapsibleContent",
+            "CollapsibleRoot",
+            "CollapsibleTrigger"
+          ],
           "specifier": "reka-ui"
         }
       ],
@@ -439,7 +453,10 @@
       ],
       "input-otp": [
         {
-          "exports": ["PinInputInput", "PinInputRoot"],
+          "exports": [
+            "PinInputInput",
+            "PinInputRoot"
+          ],
           "specifier": "reka-ui"
         }
       ],
@@ -511,19 +528,30 @@
       ],
       "progress": [
         {
-          "exports": ["ProgressIndicator", "ProgressRoot"],
+          "exports": [
+            "ProgressIndicator",
+            "ProgressRoot"
+          ],
           "specifier": "reka-ui"
         }
       ],
       "radio": [
         {
-          "exports": ["RadioGroupIndicator", "RadioGroupItem", "RadioGroupRoot"],
+          "exports": [
+            "RadioGroupIndicator",
+            "RadioGroupItem",
+            "RadioGroupRoot"
+          ],
           "specifier": "reka-ui"
         }
       ],
       "radio-group": [
         {
-          "exports": ["RadioGroupIndicator", "RadioGroupItem", "RadioGroupRoot"],
+          "exports": [
+            "RadioGroupIndicator",
+            "RadioGroupItem",
+            "RadioGroupRoot"
+          ],
           "specifier": "reka-ui"
         }
       ],
@@ -565,19 +593,33 @@
       ],
       "slider": [
         {
-          "exports": ["SliderRange", "SliderRoot", "SliderThumb", "SliderTrack"],
+          "exports": [
+            "SliderRange",
+            "SliderRoot",
+            "SliderThumb",
+            "SliderTrack"
+          ],
           "specifier": "reka-ui"
         }
       ],
       "switch": [
         {
-          "exports": ["SwitchRoot", "SwitchThumb"],
+          "exports": [
+            "SwitchRoot",
+            "SwitchThumb"
+          ],
           "specifier": "reka-ui"
         }
       ],
       "tabs": [
         {
-          "exports": ["TabsContent", "TabsIndicator", "TabsList", "TabsRoot", "TabsTrigger"],
+          "exports": [
+            "TabsContent",
+            "TabsIndicator",
+            "TabsList",
+            "TabsRoot",
+            "TabsTrigger"
+          ],
           "specifier": "reka-ui"
         }
       ],
@@ -600,13 +642,18 @@
       ],
       "toggle": [
         {
-          "exports": ["Toggle"],
+          "exports": [
+            "Toggle"
+          ],
           "specifier": "reka-ui"
         }
       ],
       "toggle-group": [
         {
-          "exports": ["ToggleGroupItem", "ToggleGroupRoot"],
+          "exports": [
+            "ToggleGroupItem",
+            "ToggleGroupRoot"
+          ],
           "specifier": "reka-ui"
         }
       ],

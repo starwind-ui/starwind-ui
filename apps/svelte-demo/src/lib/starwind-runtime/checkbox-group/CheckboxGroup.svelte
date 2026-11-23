@@ -9,14 +9,14 @@
 
 <script lang="ts">
   let {
-    "defaultValue": defaultValue,
-    "disabled": disabled = false,
+    defaultValue,
+    disabled = false,
     "class": className,
     value = $bindable(),
     "value": commandValue,
-    "onValueChange": onValueChange,
-    "ref": ref,
-    "children": children,
+    onValueChange,
+    ref,
+    children,
     ...rest
   }: CheckboxGroupProps = $props();
 </script>

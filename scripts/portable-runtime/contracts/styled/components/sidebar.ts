@@ -1,3 +1,4 @@
+import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
 import type {
   AttributeContract,
   RenderNode,
@@ -12,6 +13,11 @@ const dataSlotField = {
 } as const;
 
 const sidebarStyle = [
+  "@property --sw-sidebar-menu-end-padding {",
+  '  syntax: "<length>";',
+  "  inherits: false;",
+  "  initial-value: 0px;",
+  "}",
   ':root:not([data-starwind-sidebar-tooltips="enabled"]) [data-sw-sidebar-tooltip-content] {',
   "  display: none !important;",
   "}",
@@ -27,6 +33,7 @@ export const sidebarStyledContract: StyledAdapterContract = {
     ],
   },
   component: "sidebar",
+  dependencies: { packages: [LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT] },
   publicExports: [
     "Sidebar",
     "SidebarContent",
@@ -84,7 +91,7 @@ export const sidebarStyledContract: StyledAdapterContract = {
   variantCollectionName: "SidebarVariants",
   variants: {
     sidebar: {
-      base: "group peer text-sidebar-foreground hidden md:block",
+      base: "group peer text-sidebar-foreground hidden md:block data-[side=left]:order-(--sw-sidebar-left-order) data-[side=right]:order-(--sw-sidebar-right-order)",
     },
     sidebarContent: {
       base: [
@@ -135,7 +142,7 @@ export const sidebarStyledContract: StyledAdapterContract = {
     sidebarGroupAction: {
       base: [
         "text-sidebar-foreground ring-sidebar-outline",
-        "absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0",
+        "absolute top-3.5 end-3 flex aspect-square w-5 items-center justify-center rounded-md p-0",
         "outline-hidden transition-transform",
         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         "focus-visible:ring-2",
@@ -177,9 +184,8 @@ export const sidebarStyledContract: StyledAdapterContract = {
     sidebarInset: {
       base: [
         "bg-background relative flex w-full flex-1 flex-col",
-        "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0",
+        "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=left]:ml-0 md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=right]:mr-0",
         "md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm",
-        "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
       ],
     },
     sidebarMenu: {
@@ -188,7 +194,7 @@ export const sidebarStyledContract: StyledAdapterContract = {
     sidebarMenuAction: {
       base: [
         "text-sidebar-foreground ring-sidebar-outline",
-        "absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0",
+        "absolute top-1.5 end-1 flex aspect-square w-5 items-center justify-center rounded-md p-0",
         "outline-hidden transition-transform",
         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         "peer-hover/menu-button:text-sidebar-accent-foreground",
@@ -212,7 +218,7 @@ export const sidebarStyledContract: StyledAdapterContract = {
     },
     sidebarMenuBadge: {
       base: [
-        "text-sidebar-foreground pointer-events-none absolute right-1 flex h-5 min-w-5",
+        "text-sidebar-foreground pointer-events-none absolute end-1 flex h-5 min-w-5",
         "items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums select-none",
         "peer-hover/menu-button:text-sidebar-accent-foreground",
         "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
@@ -224,14 +230,16 @@ export const sidebarStyledContract: StyledAdapterContract = {
     },
     sidebarMenuButton: {
       base: [
-        "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2.5 text-left",
+        "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2.5 text-start",
         "ring-sidebar-outline outline-hidden transition-[width,height,padding]",
         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         "focus-visible:ring-2",
         "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
         "disabled:pointer-events-none disabled:opacity-50",
         "aria-disabled:pointer-events-none aria-disabled:opacity-50",
-        "group-has-data-[sidebar=menu-action]/menu-item:pr-8",
+        "group-has-data-[sidebar=menu-action]/menu-item:[--sw-sidebar-menu-end-padding:calc(var(--spacing)*8)] group-has-data-[sidebar=menu-action]/menu-item:pe-(--sw-sidebar-menu-end-padding)",
+        "group-has-data-[sidebar=menu-action]/menu-item:transition-[width,height,padding-block,--sw-sidebar-menu-end-padding]",
+        "group-data-[collapsible=icon]:[--sw-sidebar-menu-end-padding:calc(var(--spacing)*2.5)]! group-data-[collapsible=icon]:group-has-data-[sidebar=menu-action]/menu-item:pe-(--sw-sidebar-menu-end-padding)!",
         "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
         "data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground",
         "group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2.5!",
@@ -248,7 +256,7 @@ export const sidebarStyledContract: StyledAdapterContract = {
         size: {
           sm: "h-8 text-sm",
           md: "h-10 text-base",
-          lg: "h-14 text-lg group-data-[collapsible=icon]:p-0!",
+          lg: "h-14 text-lg group-data-[collapsible=icon]:p-0! data-[size=lg]:group-data-[collapsible=icon]:[--sw-sidebar-menu-end-padding:0px]!",
         },
       },
       defaultVariants: { variant: "default", size: "md" },
@@ -261,7 +269,7 @@ export const sidebarStyledContract: StyledAdapterContract = {
     },
     sidebarMenuSub: {
       base: [
-        "border-sidebar-border mx-4.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5",
+        "border-sidebar-border mx-4.5 flex min-w-0 translate-x-px flex-col gap-1 border-s rtl:-translate-x-px px-2.5 py-0.5",
         "group-data-[collapsible=icon]:hidden",
       ],
     },
@@ -293,7 +301,10 @@ export const sidebarStyledContract: StyledAdapterContract = {
       base: "bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden",
     },
     sidebarProvider: {
-      base: ["group/sidebar-wrapper flex min-h-svh w-full", "has-data-[variant=inset]:bg-sidebar"],
+      base: [
+        "group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar",
+        "[--sw-sidebar-left-order:-1] [--sw-sidebar-right-order:1] rtl:[--sw-sidebar-left-order:1] rtl:[--sw-sidebar-right-order:-1]",
+      ],
     },
     sidebarRail: {
       base: [
@@ -603,7 +614,7 @@ function sidebarComponent(): StyledComponentContract {
                     {
                       type: "literal",
                       value:
-                        "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+                        "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col data-[sw-sidebar-side=left]:order-(--sw-sidebar-left-order) data-[sw-sidebar-side=right]:order-(--sw-sidebar-right-order)",
                     },
                     { type: "variable", name: "className" },
                   ],
@@ -611,6 +622,7 @@ function sidebarComponent(): StyledComponentContract {
               },
               { name: "spread", value: { type: "variable", name: "rest" } },
               { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
+              { name: "data-sw-sidebar-side", value: { type: "variable", name: "side" } },
               { name: "data-slot", value: { type: "literal", value: "sidebar" } },
             ],
             children: [{ type: "slot" }],
@@ -727,6 +739,7 @@ function sidebarComponent(): StyledComponentContract {
                         value: { type: "classVariant", variant: "sidebarMobileContent" },
                       },
                       { name: "style", value: { type: "variable", name: "mobileStyle" } },
+                      { name: "data-sw-sidebar-side", value: { type: "variable", name: "side" } },
                       { name: "data-sidebar", value: { type: "literal", value: "sidebar" } },
                       {
                         name: "data-slot",
@@ -1157,7 +1170,7 @@ function sidebarMenuButtonComponent(): StyledComponentContract {
     render: [
       {
         type: "conditional",
-        condition: "Boolean(tooltip)",
+        condition: "tooltip",
         then: [
           {
             type: "component",
@@ -1189,7 +1202,7 @@ function sidebarMenuButtonComponent(): StyledComponentContract {
                 component: "tooltip",
                 exportName: "TooltipContent",
                 attrs: [
-                  { name: "side", value: { type: "literal", value: "right" } },
+                  { name: "data-sw-sidebar-tooltip-default" },
                   { name: "align", value: { type: "literal", value: "center" } },
                   {
                     name: "class",

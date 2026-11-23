@@ -11,4 +11,4 @@ const Button = {
 
 export { Button, ButtonRoot };
 export default Button;
-export type { ButtonChildProps, ButtonChildPayload } from "./ButtonRoot.svelte";
+export type { ButtonChildPayload, ButtonChildProps } from "./ButtonRoot.svelte";

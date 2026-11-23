@@ -20,8 +20,6 @@ export function colorPickerLiveOptions(f: AdapterColorPickerFacts): string[] {
 export function printColorPickerConnection(
   f: AdapterColorPickerFacts,
   checkStructure = false,
-  /** Binding targets apply a later defined input on a Runtime-owned model as a silent command. */
-  laterCommands = false,
 ): string {
   requireColorPickerModelOwnership(Object.values(f.controlledness.states));
   if (
@@ -44,6 +42,9 @@ export function printColorPickerConnection(
     );
   const value = f.controlledness.states.value,
     format = f.controlledness.states.format;
+  // The contract fact owns the late-write rule: a later defined input on a Runtime-owned model is a silent command.
+  const valueCommands = value.ownership?.laterDefined === "silent-command",
+    formatCommands = format.ownership?.laterDefined === "silent-command";
   const live = colorPickerLiveOptions(f);
   const nullable = new Set(["name", "form", "locale", "dir"]);
   const option = (name: string) =>
@@ -72,6 +73,7 @@ export function printColorPickerConnection(
   return `type ColorPickerConnectionTransport = {
   seed: Pick<ColorPickerOptions, "value" | "defaultValue" | "format">;
   read(): ColorPickerOptions;
+  projectedDirection?: ReturnType<typeof captureProjectedDirection>;
   restoreAuthoredOwnership?(): void;
   captureAuthoredOwnership?(): void;
 ${checkStructure ? "  structureChanged(): boolean;\n" : ""}  own?(instance: ReturnType<typeof ${f.runtime.factory}> | undefined): void;
@@ -81,11 +83,33 @@ ${checkStructure ? "  structureChanged(): boolean;\n" : ""}  own?(instance: Retu
   afterUpdate(run: () => void): void;
 };
 
+// Start at native-node attachment, before consumer refs and mounted callbacks.
+function captureProjectedDirection(root: HTMLElement, projected: unknown) {
+  const owned = root.getAttribute("${f.initialStateProjection.ownershipAttribute}")?.split(",").includes("a:dir");
+  if (!owned || (projected !== "ltr" && projected !== "rtl") || root.getAttribute("dir") !== projected)
+    return undefined;
+  let active = true;
+  let authored = false;
+  const Observer = root.ownerDocument.defaultView?.MutationObserver ?? MutationObserver;
+  const observer = new Observer(() => { authored = true; });
+  observer.observe(root, { attributes: true, attributeFilter: ["dir"] });
+  return {
+    disconnect() { active = false; observer.disconnect(); },
+    handoff() {
+      if (!active) return;
+      active = false;
+      const touched = authored || observer.takeRecords().length > 0;
+      observer.disconnect();
+      if (!touched && root.getAttribute("dir") === projected) root.removeAttribute("dir");
+    },
+  };
+}
+
 function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionTransport) {
   const valueControlled = transport.seed.value !== undefined;
   const formatControlled = transport.seed.format !== undefined;
   let controlledValue = transport.seed.value;
-  let controlledFormat = transport.seed.format;${laterCommands ? "\n  let commandedValue = transport.seed.value;\n  let commandedFormat = transport.seed.format;" : ""}
+  let controlledFormat = transport.seed.format;${valueCommands ? "\n  let commandedValue = transport.seed.value;" : ""}${formatCommands ? "\n  let commandedFormat = transport.seed.format;" : ""}
   let active = true;
   let pending = false;
   let applied = transport.read();
@@ -94,6 +118,7 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
   const initialOptions = { ...applied, ...transport.seed };
   // Runtime captures value ownership from property presence at construction.
   if (!valueControlled) delete initialOptions.value;
+  transport.projectedDirection?.handoff();
   const owner = ${f.runtime.factory}(root, {
     ...initialOptions,
     ${f.events.valueChange.callbackProp}(next, details) {
@@ -123,8 +148,8 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
       if (parsed !== undefined) controlledValue = parsed;
       if (controlledValue !== undefined && !sameValue(owner.${value.runtimeGetter}(), controlledValue)) owner.${value.runtimeSetter}(controlledValue, { emit: false });
     }${
-      laterCommands
-        ? ` else if (!Object.is(next.value, commandedValue)) {
+      valueCommands
+        ? ` else if (!sameValue(next.value, commandedValue)) {
       // Apply a changed input once, so a stale one-way value never reverts an accepted interaction.
       commandedValue = next.value;
       const parsed = next.value === null ? (next.allowEmpty ? null : undefined) : typeof next.value === "string" ? parseColor(next.value) ?? undefined : next.value;
@@ -136,7 +161,7 @@ function connectColorPicker(root: HTMLElement, transport: ColorPickerConnectionT
       if (next.format !== undefined) controlledFormat = next.format;
       if (controlledFormat !== undefined && owner.${format.runtimeGetter}() !== controlledFormat) owner.${format.runtimeSetter}(controlledFormat, { emit: false });
     }${
-      laterCommands
+      formatCommands
         ? ` else if (next.format !== commandedFormat) {
       commandedFormat = next.format;
       if (next.format !== undefined && owner.${format.runtimeGetter}() !== next.format) owner.${format.runtimeSetter}(next.format, { emit: false });

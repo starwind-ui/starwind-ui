@@ -579,9 +579,12 @@ const { class: className, ...rest } = Astro.props;
     transform: rotateZ(90deg);
   }
 
-  [dir="rtl"] .sw-prose summary:not(:where(.not-sw-prose *))::before,
-  .sw-prose [dir="rtl"] summary:not(:where(.not-sw-prose *))::before {
-    transform: rotateZ(180deg);
+  .sw-prose
+    summary:where(
+      [dir="rtl"],
+      [dir="rtl"] *:not([dir="rtl"] [dir="ltr"], [dir="rtl"] [dir="ltr"] *)
+    ):not(:where(.not-sw-prose *))::before {
+    scale: -1 1;
   }
 
   /* Summary with only a paragraph (MDX) */

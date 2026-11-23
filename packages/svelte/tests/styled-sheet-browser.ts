@@ -1,5 +1,5 @@
 import type { DistConsumer } from "./dist-consumer.js";
-import { verifyDrawerBrowser, type DrawerCase } from "./drawer-browser.js";
+import { type DrawerCase, verifyDrawerBrowser } from "./drawer-browser.js";
 
 export function verifyStyledSheetBrowser(
   consumer: DistConsumer,

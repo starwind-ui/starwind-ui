@@ -2,7 +2,8 @@
 export const ZAG_VUE_COMPARATOR_VERSION = "1.42.0";
 export const ZAG_SIZE_COMPARATOR_VERSION = "1.43.3";
 
-export const starwindVueRuntimeComponents = Object.freeze([
+// Frozen inventory for the historical Vue baseline.
+export const starwindVueBaselineComponents = Object.freeze([
   "accordion",
   "alert-dialog",
   "avatar",
@@ -41,6 +42,10 @@ export const starwindVueRuntimeComponents = Object.freeze([
   "tooltip",
 ]);
 
+export const starwindVueRuntimeComponents = Object.freeze(
+  [...starwindVueBaselineComponents, "chart"].sort(),
+);
+
 export const starwindVueManualFacades = Object.freeze(["theme"]);
 
 export const starwindVueRootHeadlineComponents = Object.freeze(
@@ -54,6 +59,7 @@ export const starwindVueStyledComponents = Object.freeze(
     "avatar",
     "button",
     "carousel",
+    "chart",
     "checkbox",
     "checkbox-group",
     "collapsible",
@@ -403,6 +409,7 @@ export const existingPublicSupportMappingSnapshot = Object.freeze([
   { starwind: "avatar", zag: ["@zag-js/avatar"], base: "avatar" },
   { starwind: "button", base: "button" },
   { starwind: "carousel", zag: ["@zag-js/carousel"] },
+  { starwind: "chart" },
   { starwind: "checkbox", zag: ["@zag-js/checkbox"], base: "checkbox" },
   { starwind: "checkbox-group", zag: ["@zag-js/checkbox"], base: "checkbox-group" },
   { starwind: "collapsible", zag: ["@zag-js/collapsible"], base: "collapsible" },

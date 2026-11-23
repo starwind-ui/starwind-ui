@@ -199,6 +199,56 @@ describe("createFocusBoundary", () => {
     vi.useRealTimers();
   });
 
+  it("keeps adopted iframe focus inside its owner boundary and releases on teardown", async () => {
+    const frame = document.createElement("iframe");
+    document.body.append(frame);
+    const ownerDocument = frame.contentDocument!;
+    const portal = document.createElement("div");
+    const item = document.createElement("button");
+    item.id = "adopted-item";
+    portal.append(item);
+    const targetA = ownerDocument.createElement("div");
+    const targetB = ownerDocument.createElement("div");
+    const outside = ownerDocument.createElement("button");
+    targetA.append(portal);
+    ownerDocument.body.append(targetA, targetB, outside);
+    expect(item.ownerDocument).toBe(ownerDocument);
+    expect(item instanceof HTMLElement).toBe(true);
+    expect(item instanceof (frame.contentWindow as Window & typeof globalThis).HTMLElement).toBe(
+      false,
+    );
+
+    const onFocusDeparture = vi.fn();
+    const boundary = createFocusBoundary({
+      containsTarget: (target) => portal.contains(target),
+      onFocusDeparture,
+      ownerDocument,
+      surfaces: [portal],
+    });
+    item.focus();
+    expect(ownerDocument.activeElement).toBe(item);
+    targetB.append(portal);
+    item.focus();
+    await settleFocus();
+    expect(onFocusDeparture).not.toHaveBeenCalled();
+
+    const svg = ownerDocument.createElementNS("http://www.w3.org/2000/svg", "svg");
+    portal.append(svg);
+    svg.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    outside.focus();
+    await settleFocus();
+    expect(onFocusDeparture).toHaveBeenCalledExactlyOnceWith({
+      activeElement: outside,
+      lastFocusOwner: item,
+    });
+
+    boundary.destroy();
+    item.focus();
+    outside.focus();
+    await settleFocus();
+    expect(onFocusDeparture).toHaveBeenCalledTimes(1);
+  });
+
   it("treats multiple portaled surfaces as one owned focus tree", async () => {
     const root = document.createElement("div");
     const trigger = button("trigger");

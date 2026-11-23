@@ -17,7 +17,6 @@ const generatedLineHeaders = [
 ] as const;
 const vendoredLineHeader =
   "// Vendored by the Starwind CLI.\n// You own this file in your project.";
-const quarantineMessage = "Svelte 5 public beta adapter output.";
 
 export const sveltePrimitiveEditableContentMarkers = [
   { extensions: [".svelte"], markers: [vendoredHtmlHeader], position: "prefix" },
@@ -27,10 +26,7 @@ export const sveltePrimitiveEditableContentMarkers = [
     position: "prefix",
   },
 ] as const;
-export const sveltePrimitiveForbiddenContent = [
-  "Svelte 5 public beta adapter output.",
-  "Do not edit by hand",
-] as const;
+export const sveltePrimitiveForbiddenContent = ["Do not edit by hand"] as const;
 
 /** Preserve the Svelte printer's validated source; format its TypeScript helper files. */
 export async function formatSveltePrimitiveVendoringContent(
@@ -38,15 +34,13 @@ export async function formatSveltePrimitiveVendoringContent(
   sourcePath: string,
 ): Promise<string> {
   if (sourcePath.endsWith(".svelte")) return content;
-  return format(content, { ...((await resolveConfig(sourcePath)) ?? {}), filepath: sourcePath });
+  return format(content, { ...(await resolveConfig(sourcePath)), filepath: sourcePath });
 }
 
 export function projectSveltePrimitiveVendoringContent(content: string): string {
   let projected = content
     .replaceAll(generatedBlockHeader, vendoredBlockHeader)
-    .replaceAll(generatedHtmlHeader, vendoredHtmlHeader)
-    .replaceAll(`<!-- ${quarantineMessage} -->\n`, "")
-    .replaceAll(`// ${quarantineMessage}\n`, "");
+    .replaceAll(generatedHtmlHeader, vendoredHtmlHeader);
   // Match the longer header first so its suffix cannot remain in an editable file.
   for (const header of [...generatedLineHeaders].reverse()) {
     projected = projected.replaceAll(header, vendoredLineHeader);

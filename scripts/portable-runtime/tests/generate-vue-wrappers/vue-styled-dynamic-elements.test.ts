@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { aspectRatioStyledContract } from "../../contracts/styled/components/aspect-ratio.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
-import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import {
+  projectStyledOutputComponentGroup,
+  toStyledAdapterContract,
+} from "../../renderers/styled-output-model/index.js";
 import { compactCode } from "../source-comparison.js";
 import { DYNAMIC_ELEMENT_FIXTURE } from "../styled-contracts/vue-styled-dynamic-elements.test.js";
 
@@ -54,6 +57,24 @@ describe("generic Vue Styled dynamic elements", () => {
 
     expect(source).toMatch(/<component[\s\S]+:is="Tag"[\s\S]+data-slot="aspect-ratio"/);
     expect(compactCode(source)).not.toContain(compactCode("<Tag"));
+  });
+
+  it("projects a contract-owned void-child policy without a component identity", () => {
+    const contract = structuredClone(DYNAMIC_ELEMENT_FIXTURE);
+    contract.component = "native-media-fixture";
+    const owner = contract.components[0]!.render[0]!;
+    if (owner.type !== "element") throw new Error("Missing fixture owner");
+    const marked = { ...owner, omitVoidChildrenIn: ["vue" as const] };
+    contract.components[0]!.render[0] = marked;
+    const group = projectStyledOutputComponentGroup(contract);
+    const before = structuredClone(group);
+    const output = renderVueComponent(group, group.components[0]!, options);
+    expect(output).toContain(".includes(Tag)");
+    expect(output).toContain("v-else");
+    expect(output.match(/:is="Tag"/g)).toHaveLength(2);
+    expect(() => assertVueSfcCompiles(output, "NativeMedia.vue")).not.toThrow();
+    expect(group).toEqual(before);
+    expect(projectStyledOutputComponentGroup(toStyledAdapterContract(group))).toEqual(group);
   });
 
   function renderFixture(exportName: string): string {

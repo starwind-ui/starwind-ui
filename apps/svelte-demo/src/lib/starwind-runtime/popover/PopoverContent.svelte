@@ -12,15 +12,15 @@
 <script lang="ts">
   let {
     "class": className,
-    "side": side = "bottom",
-    "align": align = "center",
-    "sideOffset": sideOffset = 4,
-    "avoidCollisions": avoidCollisions = true,
-    "collisionStrategy": collisionStrategy = "initial-placement",
-    "exitMotion": exitMotion = "popover",
-    "portalContainer": portalContainer,
-    "disablePortal": disablePortal = false,
-    "children": children,
+    side = "bottom",
+    align = "center",
+    sideOffset = 4,
+    avoidCollisions = true,
+    collisionStrategy = "initial-placement",
+    exitMotion = "popover",
+    portalContainer,
+    disablePortal = false,
+    children,
     ...rest
   }: PopoverContentProps = $props();
 </script>

@@ -1,6 +1,6 @@
+import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { describe, expect, it } from "vitest";
 
 import Avatar from "../../../../apps/vue-demo/src/components/starwind-runtime/avatar/Avatar.vue";
 import AvatarFallback from "../../../../apps/vue-demo/src/components/starwind-runtime/avatar/AvatarFallback.vue";

@@ -10,15 +10,15 @@
 
 <script lang="ts">
   let {
-    "disabled": disabled = false,
-    "openDelay": openDelay,
-    "closeDelay": closeDelay,
-    "showIcon": showIcon = true,
+    disabled = false,
+    openDelay,
+    closeDelay,
+    showIcon = true,
     "iconClass": iconClassName,
     "class": className,
-    "child": child,
-    "icon": icon,
-    "children": children,
+    child,
+    icon,
+    children,
     ...rest
   }: NavigationMenuTriggerProps = $props();
 

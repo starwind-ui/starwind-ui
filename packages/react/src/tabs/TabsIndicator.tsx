@@ -12,7 +12,7 @@ const TabsIndicator = React.forwardRef<HTMLSpanElement, TabsIndicatorProps>(func
   { children, ...rest },
   ref,
 ) {
-  const { orientation, value: selected } = useTabsContext();
+  const { orientation } = useTabsContext();
   return (
     <span
       {...rest}

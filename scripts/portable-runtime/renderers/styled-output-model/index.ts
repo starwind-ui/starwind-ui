@@ -12,6 +12,7 @@ import type {
   StyledAdapterContract,
   StyledComponentContract,
   StyledComponentForwardRefContract,
+  SvgAsset,
   ValueExpression,
 } from "../../contracts/styled/types.js";
 import { allocateStyledPartsIdentifier } from "./default-export.js";
@@ -27,6 +28,7 @@ import type {
   StyledOutputPropExtend,
   StyledOutputPropField,
   StyledOutputRenderNode,
+  StyledOutputSvgAsset,
   StyledOutputTargetScope,
   StyledOutputValueExpression,
   StyledOutputVariable,
@@ -34,6 +36,7 @@ import type {
 
 export * from "./analysis.js";
 export * from "./default-export.js";
+export * from "./type-parameters.js";
 export type * from "./types.js";
 
 export function createStyledOutputModelSkeleton(
@@ -96,6 +99,9 @@ export function projectStyledOutputComponentGroup(
     primitiveFacadeExports: contract.primitiveFacadeExports
       ? {
           component: contract.primitiveFacadeExports.component,
+          ...(contract.primitiveFacadeExports.frameworkValues
+            ? { frameworkValues: contract.primitiveFacadeExports.frameworkValues }
+            : {}),
           types: [...contract.primitiveFacadeExports.types].sort(),
           values: [...contract.primitiveFacadeExports.values].sort(),
         }
@@ -162,6 +168,9 @@ export function toStyledAdapterContract(group: StyledOutputComponentGroup): Styl
     primitiveFacadeExports: group.primitiveFacadeExports
       ? {
           component: group.primitiveFacadeExports.component,
+          ...(group.primitiveFacadeExports.frameworkValues
+            ? { frameworkValues: group.primitiveFacadeExports.frameworkValues }
+            : {}),
           types: [...group.primitiveFacadeExports.types],
           values: [...group.primitiveFacadeExports.values],
         }
@@ -230,7 +239,18 @@ function projectStyledOutputComponent(component: StyledComponentContract): Style
         }
       : undefined,
     render: attachSvgAssets(component.render.map(projectRenderNode), imports),
+    ...(component.slots?.length
+      ? {
+          slots: component.slots.map((slot) => {
+            const targetScopes = projectTargetScopes(slot.frameworks);
+            return { name: slot.name, ...(targetScopes ? { targetScopes } : {}) };
+          }),
+        }
+      : {}),
     sourceFileName: component.fileName,
+    ...(component.typeParameters?.length
+      ? { typeParameters: component.typeParameters.map((parameter) => ({ ...parameter })) }
+      : {}),
     variables: (component.variables ?? []).map(projectVariable),
   };
 }
@@ -270,6 +290,17 @@ function toStyledComponentContract(component: StyledOutputComponent): StyledComp
         }
       : undefined,
     render: component.render.map(toRenderNode),
+    ...(component.slots?.length
+      ? {
+          slots: component.slots.map((slot) => {
+            const frameworks = toFrameworkTargets(slot.targetScopes);
+            return { name: slot.name, ...(frameworks ? { frameworks } : {}) };
+          }),
+        }
+      : {}),
+    ...(component.typeParameters?.length
+      ? { typeParameters: component.typeParameters.map((parameter) => ({ ...parameter })) }
+      : {}),
     variables: component.variables.map(toVariable),
   };
 }
@@ -376,6 +407,7 @@ function toPropExtend(propExtend: StyledOutputPropExtend): PropExtendContract {
 
 function projectPropField(field: PropFieldContract): StyledOutputPropField {
   return {
+    ...(field.comment ? { comment: field.comment } : {}),
     name: field.name,
     optional: Boolean(field.optional),
     targetScopes: projectTargetScopes(field.frameworks),
@@ -385,6 +417,7 @@ function projectPropField(field: PropFieldContract): StyledOutputPropField {
 
 function toPropField(field: StyledOutputPropField): PropFieldContract {
   return {
+    ...(field.comment ? { comment: field.comment } : {}),
     frameworks: toFrameworkTargets(field.targetScopes),
     name: field.name,
     optional: field.optional || undefined,
@@ -461,6 +494,40 @@ function toImport(importContract: StyledOutputImport): ImportContract {
   };
 }
 
+const ICON_ACCESSIBILITY_TARGETS = ["astro", "react", "vue", "svelte"] as const;
+const DECORATIVE_ROLES = new Set(["presentation", "none"]);
+
+/** True when the icon attributes in one target give it a role or an accessible name. */
+function isIconAnnouncedIn(target: string, attrs: readonly StyledOutputAttribute[]): boolean {
+  return attrs.some((attr) => {
+    if (attr.targetScopes && !attr.targetScopes.includes(target)) return false;
+    if (attr.name === "aria-label" || attr.name === "aria-labelledby") return true;
+    if (attr.name !== "role") return false;
+    const value = attr.value;
+    return !(value?.type === "literal" && DECORATIVE_ROLES.has(String(value.value)));
+  });
+}
+
+/**
+ * An icon with its own role or name is announced, so it must not keep the asset's aria-hidden.
+ * The check runs per target, because an attribute can be scoped to one framework.
+ */
+function projectIconAsset(
+  asset: SvgAsset,
+  attrs: readonly StyledOutputAttribute[],
+): StyledOutputSvgAsset {
+  const projected: StyledOutputSvgAsset = structuredClone(asset);
+  const hiddenTargets = ICON_ACCESSIBILITY_TARGETS.filter(
+    (target) => !isIconAnnouncedIn(target, attrs),
+  );
+  if (hiddenTargets.length === ICON_ACCESSIBILITY_TARGETS.length) return projected;
+  projected.attributes = projected.attributes.flatMap((attr) => {
+    if (attr.name !== "aria-hidden") return [attr];
+    return hiddenTargets.length ? [{ ...attr, targetScopes: [...hiddenTargets] }] : [];
+  });
+  return projected;
+}
+
 function attachSvgAssets(
   nodes: StyledOutputRenderNode[],
   imports: readonly StyledOutputImport[],
@@ -473,7 +540,7 @@ function attachSvgAssets(
         if (!asset) {
           throw new TypeError(`Styled icon ${node.importName} is missing its projected SVG asset.`);
         }
-        return { ...node, asset: structuredClone(asset) };
+        return { ...node, asset: projectIconAsset(asset, node.attrs) };
       }
       case "component":
       case "element":
@@ -519,6 +586,9 @@ function projectRenderNode(node: RenderNode): StyledOutputRenderNode {
         selfClosing: Boolean(node.selfClosing),
         tag: node.tag,
         tagBinding: node.tagBinding,
+        ...(node.omitVoidChildrenIn
+          ? { omitVoidChildrenIn: projectTargetScopes(node.omitVoidChildrenIn) }
+          : {}),
         type: "element",
       };
     case "fragment":
@@ -590,6 +660,9 @@ function toRenderNode(node: StyledOutputRenderNode): RenderNode {
         selfClosing: node.selfClosing || undefined,
         tag: node.tag,
         tagBinding: node.tagBinding,
+        ...(node.omitVoidChildrenIn
+          ? { omitVoidChildrenIn: toFrameworkTargets(node.omitVoidChildrenIn) }
+          : {}),
         type: "element",
       };
     case "fragment":
