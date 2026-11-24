@@ -632,6 +632,8 @@ export async function buildPrimitiveVendoringArtifacts(
       const targetContracts = contracts.filter((contract) =>
         isPrimitiveInventoryComponentAvailableForTarget(contract.component, target.framework),
       );
+      // Components share local helper files, so each file is formatted once per target.
+      const formattedFiles = new Map<string, Promise<string>>();
       const targetArtifacts = await Promise.all(
         targetContracts.map(async (contract) => {
           const files = await readGeneratedPrimitiveFiles({
@@ -641,6 +643,7 @@ export async function buildPrimitiveVendoringArtifacts(
             outputRoot,
             primitiveInstallRoot,
             formatContent: target.formatContent,
+            formattedFiles,
             projectContent: target.projectContent,
             repoRoot,
             sourceRoot: target.sourceRoot,
@@ -1344,6 +1347,7 @@ async function readGeneratedPrimitiveFiles(options: {
   outputRoot: string;
   primitiveInstallRoot: string;
   formatContent?(content: string, sourcePath: string): Promise<string>;
+  formattedFiles?: Map<string, Promise<string>>;
   projectContent(content: string): string;
   repoRoot: string;
   sourceRoot: string;
@@ -1358,15 +1362,20 @@ async function readGeneratedPrimitiveFiles(options: {
   return Promise.all(
     relativeFiles.map(async (relativePath) => {
       const sourcePath = path.join(options.repoRoot, options.sourceRoot, relativePath);
-      const generatedContent = await readFile(path.join(options.outputRoot, relativePath), "utf8");
-      const content = options.projectContent(
-        options.formatContent
-          ? await options.formatContent(generatedContent, sourcePath)
-          : await formatWithPrettier(generatedContent, {
-              ...(await resolvePrettierConfig(sourcePath)),
-              filepath: sourcePath,
-            }),
-      );
+      let formatted = options.formattedFiles?.get(relativePath);
+      if (!formatted) {
+        formatted = readFile(path.join(options.outputRoot, relativePath), "utf8").then(
+          async (generatedContent) =>
+            options.formatContent
+              ? options.formatContent(generatedContent, sourcePath)
+              : formatWithPrettier(generatedContent, {
+                  ...(await resolvePrettierConfig(sourcePath)),
+                  filepath: sourcePath,
+                }),
+        );
+        options.formattedFiles?.set(relativePath, formatted);
+      }
+      const content = options.projectContent(await formatted);
       const targetPath = createPrimitiveVendoringPath(options.primitiveInstallRoot, relativePath);
 
       return {
@@ -1567,14 +1576,28 @@ async function formatJsonDocument(value: unknown, filepath: string): Promise<str
 }
 
 async function formatVueRegistryOutput(outputRoot: string, repoRoot: string): Promise<void> {
-  await prettierVueRegistryOutput(outputRoot, repoRoot);
+  const formattedFiles = await prettierVueRegistryOutput(
+    outputRoot,
+    repoRoot,
+    await readFilesRecursively(outputRoot),
+  );
   await sortVueRegistryImports(outputRoot, repoRoot);
-  // Biome can rejoin a sorted import past the line width, so Prettier also runs last.
-  await prettierVueRegistryOutput(outputRoot, repoRoot);
+  // Biome can rejoin a sorted import past the line width, so Prettier runs again. Only the files
+  // that Biome changed need the second pass, because Prettier output is stable on a second run.
+  const sortedFiles: string[] = [];
+  for (const [relativeFile, formatted] of formattedFiles) {
+    if ((await readFile(path.join(outputRoot, relativeFile), "utf8")) !== formatted)
+      sortedFiles.push(relativeFile);
+  }
+  await prettierVueRegistryOutput(outputRoot, repoRoot, sortedFiles);
 }
 
-async function prettierVueRegistryOutput(outputRoot: string, repoRoot: string): Promise<void> {
-  const relativeFiles = await readFilesRecursively(outputRoot);
+async function prettierVueRegistryOutput(
+  outputRoot: string,
+  repoRoot: string,
+  relativeFiles: readonly string[],
+): Promise<Map<string, string>> {
+  const formattedFiles = new Map<string, string>();
 
   await Promise.all(
     relativeFiles.map(async (relativeFile) => {
@@ -1590,9 +1613,12 @@ async function prettierVueRegistryOutput(outputRoot: string, repoRoot: string): 
         filepath: canonicalFilepath,
       });
 
+      formattedFiles.set(relativeFile, formatted);
       if (formatted !== source) await writeFile(outputFile, formatted, "utf8");
     }),
   );
+
+  return formattedFiles;
 }
 
 async function sortVueRegistryImports(outputRoot: string, repoRoot: string): Promise<void> {

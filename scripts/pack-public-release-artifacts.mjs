@@ -178,11 +178,22 @@ export async function packPublicReleaseArtifacts({ outputDirectory, vueBeta = fa
   return artifactManifest;
 }
 
+// The release gate gives its lane stages the source fingerprint that it checked before the lanes
+// started. Other lanes write test folders into the tree while these stages run, so a new hash of
+// the tree would differ. The gate hashes the tree again after every lane finishes. Only the
+// acceptance stages read this value; the publish path always hashes the tree.
+export const RELEASE_GATE_SOURCE_ENV = "STARWIND_RELEASE_GATE_SOURCE_FINGERPRINT";
+
+export function releaseGateLaneSourceFingerprint(env = process.env) {
+  return env[RELEASE_GATE_SOURCE_ENV] || undefined;
+}
+
 export async function loadPublicReleaseArtifacts({
   outputDirectory,
   repoRoot = REPO_ROOT,
   requireVue = false,
   requireSvelte = false,
+  sourceFingerprint,
 }) {
   const manifest = JSON.parse(await readFile(path.join(outputDirectory, "manifest.json"), "utf8"));
   assert.equal(
@@ -192,7 +203,7 @@ export async function loadPublicReleaseArtifacts({
   );
   assert.equal(
     manifest.sourceFingerprint,
-    releaseSourceFingerprint(repoRoot),
+    sourceFingerprint ?? releaseSourceFingerprint(repoRoot),
     "Release sources or toolchain changed; rerun the release gate.",
   );
   assert(

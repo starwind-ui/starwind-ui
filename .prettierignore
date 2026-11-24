@@ -1,5 +1,6 @@
 # Ignore artifacts:
 dist
+.dist-staging-*
 packages/*/docs
 .astro
 **/.svelte-kit

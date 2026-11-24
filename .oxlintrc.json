@@ -14,6 +14,7 @@
   },
   "ignorePatterns": [
     "**/dist/**",
+    "**/.dist-staging-*/**",
     "apps/svelte-demo/build/**",
     "**/coverage/**",
     "**/.astro/**",

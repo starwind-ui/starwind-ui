@@ -9,7 +9,10 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { getPackageManagerCommand } from "./command-process.mjs";
-import { loadPublicReleaseArtifacts } from "./pack-public-release-artifacts.mjs";
+import {
+  loadPublicReleaseArtifacts,
+  releaseGateLaneSourceFingerprint,
+} from "./pack-public-release-artifacts.mjs";
 import {
   getFixtureFiles,
   runCommand,
@@ -826,7 +829,10 @@ export async function prepareCandidatePackages(
     const packages = await packPackages(packDirectory);
     return { packages, registryPackages: await getCandidateRegistryPackages(packages) };
   }
-  const artifacts = await loadArtifacts({ outputDirectory: path.resolve(packsDirectory) });
+  const artifacts = await loadArtifacts({
+    outputDirectory: path.resolve(packsDirectory),
+    sourceFingerprint: releaseGateLaneSourceFingerprint(),
+  });
   const packages = {};
   const registryPackages = {};
   for (const key of ["runtime", "astro", "react", "vue", "svelte", "cli"]) {

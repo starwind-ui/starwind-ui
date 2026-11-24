@@ -19,6 +19,20 @@ const vueDist = path.join(repoRoot, "packages/vue/dist");
 const runtimeDist = path.join(repoRoot, "packages/runtime/dist");
 const fixturePath = "/apps/vue-demo/tests/styled-hydration.fixture.ts";
 
+// The page HTML and the Vite middleware read `html` and `vite`, which exist before the server
+// listens.
+const server = createServer((request, response) => {
+  if (new URL(request.url ?? "/", "http://127.0.0.1").pathname === "/") {
+    response.setHeader("content-type", "text/html; charset=utf-8");
+    response.end(html);
+    return;
+  }
+  vite.middlewares(request, response, (error) => {
+    response.statusCode = 500;
+    response.end(error instanceof Error ? error.stack : String(error ?? "Vite middleware failed"));
+  });
+});
+
 const vite = await createViteServer({
   appType: "custom",
   configFile: false,
@@ -34,7 +48,11 @@ const vite = await createViteServer({
     dedupe: ["vue"],
   },
   root: repoRoot,
-  server: { middlewareMode: true },
+  // In middleware mode, Vite opens its HMR WebSocket on port 24678 unless it gets a server. The
+  // page loads the Vite client, so the WebSocket shares this script's server and its free port.
+  // A separate cache keeps it apart from other Vite servers at the repository root.
+  cacheDir: path.join(repoRoot, "node_modules/.vite/vue-styled-hydration"),
+  server: { middlewareMode: true, hmr: { server }, watch: null },
 });
 
 const { renderStyledFixture } = await vite.ssrLoadModule(fixturePath);
@@ -68,18 +86,6 @@ const html = await vite.transformIndexHtml(
   </body>
 </html>`,
 );
-
-const server = createServer((request, response) => {
-  if (new URL(request.url ?? "/", "http://127.0.0.1").pathname === "/") {
-    response.setHeader("content-type", "text/html; charset=utf-8");
-    response.end(html);
-    return;
-  }
-  vite.middlewares(request, response, (error) => {
-    response.statusCode = 500;
-    response.end(error instanceof Error ? error.stack : String(error ?? "Vite middleware failed"));
-  });
-});
 
 await new Promise((resolve, reject) => {
   server.once("error", reject);

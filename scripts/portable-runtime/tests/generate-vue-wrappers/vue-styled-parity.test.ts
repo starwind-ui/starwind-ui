@@ -244,7 +244,7 @@ type Page = {
   fill(selector: string, value: string): Promise<void>;
   focus(selector: string): Promise<void>;
   getAttribute(selector: string, name: string): Promise<string | null>;
-  goto(url: string): Promise<unknown>;
+  goto(url: string, options?: { timeout?: number }): Promise<unknown>;
   hover(selector: string): Promise<void>;
   inputValue(selector: string): Promise<string>;
   keyboard: { press(key: string): Promise<void>; type(text: string): Promise<void> };
@@ -373,7 +373,9 @@ afterAll(async () => {
 });
 
 async function open(): Promise<void> {
-  await page.goto(url);
+  // The first load transforms every module, which can take longer than the 3 s page default when
+  // other release gate lanes load the machine.
+  await page.goto(url, { timeout: 60_000 });
   await page.waitForFunction(
     () => (window as unknown as { __ready?: boolean }).__ready === true,
     undefined,

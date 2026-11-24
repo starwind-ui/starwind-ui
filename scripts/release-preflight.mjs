@@ -11,7 +11,7 @@ import { assertRoutineReleaseMetadata } from "./release-packages.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-export function runReleaseCommand(args, cwd = ROOT, { logFile } = {}) {
+export function runReleaseCommand(args, cwd = ROOT, { logFile, env = process.env } = {}) {
   const shape = createSpawnCommand(getPackageManagerCommand("pnpm"), args);
   return new Promise((resolve, reject) => {
     // A log file keeps concurrent gate stages from interleaving their output.
@@ -19,7 +19,7 @@ export function runReleaseCommand(args, cwd = ROOT, { logFile } = {}) {
     const child = spawn(shape.command, shape.args, {
       cwd,
       stdio: log ? ["ignore", "pipe", "pipe"] : "inherit",
-      env: process.env,
+      env,
     });
     if (log) {
       child.stdout.pipe(log, { end: false });

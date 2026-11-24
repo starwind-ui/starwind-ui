@@ -18,7 +18,6 @@ import {
 } from "./compositions";
 import { emissionExceptions } from "./exceptions";
 import {
-  EMISSION_TARGETS,
   type EmissionTarget,
   normalizeAttributeValue,
   type ParsedElement,
@@ -260,11 +259,15 @@ function mountPage(target: EmissionTarget): Promise<Page> {
   return page;
 }
 
-function elementsFor(html: string, part: PrimitivePartContract, family: string): ParsedElement[] {
+function elementsFor(
+  elements: ParsedElement[],
+  part: PrimitivePartContract,
+  family: string,
+): ParsedElement[] {
   const slot = slotIdentifiedFamilies.includes(family)
     ? part.initialAttributes?.find((attribute) => attribute.name === "data-slot")?.value
     : undefined;
-  return parseElements(html).filter(
+  return elements.filter(
     (element) =>
       element.attributes.has(part.discoveryAttribute) ||
       (slot !== undefined && element.attributes.get("data-slot") === slot),
@@ -418,10 +421,22 @@ async function checkFamily(
     }
   }
 
-  // State attributes need the prop values that switch them on, so every render above counts.
+  // State attributes need the prop values that switch them on, so every render above counts. The
+  // mount loop below asks again after each probe, so each distinct render is parsed only once.
+  const parsed = new Map<string, ParsedElement[]>();
+  const parse = (html: string) => {
+    let elements = parsed.get(html);
+    if (!elements) {
+      elements = parseElements(html);
+      parsed.set(html, elements);
+    }
+    return elements;
+  };
   const missing = () =>
     contract.parts.flatMap((part) => {
-      const seen = renders.flatMap((html) => elementsFor(html, part, contract.component));
+      const seen = [...new Set(renders)].flatMap((html) =>
+        elementsFor(parse(html), part, contract.component),
+      );
       return (part.initialAttributes ?? []).flatMap((attribute) => {
         if (attribute.source === "runtime") return [];
         const name = attribute.name === "className" ? "class" : attribute.name.toLowerCase();
@@ -507,20 +522,29 @@ async function checkFamily(
   return gaps;
 }
 
-beforeAll(async () => {
-  browser = await chromium.launch({ channel: "chrome" });
-});
+/** The family count, so that a new Primitive family cannot skip the emission check. */
+export function defineFamilyCount(): void {
+  describe("contract emission", () => {
+    it("covers all 37 Primitive families", () => {
+      expect(runtimeAdapterContracts).toHaveLength(37);
+    });
+  });
+}
 
-afterAll(async () => {
-  await browser.close();
-});
-
-describe("contract emission", () => {
-  it("covers all 37 Primitive families", () => {
-    expect(runtimeAdapterContracts).toHaveLength(37);
+/**
+ * Checks every Primitive family on one target. Each target entry file calls this once, so Vitest
+ * checks the targets in separate workers at the same time.
+ */
+export function defineEmission(target: EmissionTarget): void {
+  beforeAll(async () => {
+    browser = await chromium.launch({ channel: "chrome" });
   });
 
-  for (const target of EMISSION_TARGETS) {
+  afterAll(async () => {
+    await browser.close();
+  });
+
+  describe("contract emission", () => {
     describe(target, () => {
       for (const contract of runtimeAdapterContracts as readonly RuntimeAdapterContract[]) {
         it(contract.component, async () => {
@@ -532,14 +556,17 @@ describe("contract emission", () => {
         });
       }
     });
-  }
 
-  afterAll(() => {
-    // A filtered or failed run sees only some families, so only a full pass can judge this.
-    if (checkedFamilies !== EMISSION_TARGETS.length * runtimeAdapterContracts.length) return;
-    const unused = emissionExceptions
-      .map((entry) => entry.name)
-      .filter((name) => !usedExceptions.has(name));
-    if (unused.length > 0) throw new Error(`Unused emission exceptions: ${unused.join(", ")}`);
+    afterAll(() => {
+      // A filtered or failed run sees only some families, so only a full pass can judge this. An
+      // entry that names this target must match a fact on this target.
+      if (checkedFamilies !== runtimeAdapterContracts.length) return;
+      const unused = emissionExceptions
+        .filter((entry) => entry.targets.includes(target) && !usedExceptions.has(entry.name))
+        .map((entry) => entry.name);
+      if (unused.length > 0) {
+        throw new Error(`Unused ${target} emission exceptions: ${unused.join(", ")}`);
+      }
+    });
   });
-});
+}

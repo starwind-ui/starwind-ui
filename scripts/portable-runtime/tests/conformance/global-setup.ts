@@ -28,8 +28,10 @@ function serve(outDir: string): Promise<Server> {
       response.writeHead(404).end();
       return;
     }
+    // Built asset names carry a content hash, so a reused page may keep them. Pages stay fresh.
+    const hashed = pathname.startsWith("/assets/") || pathname.startsWith("/astro/_astro/");
     response.writeHead(200, {
-      "cache-control": "no-store",
+      "cache-control": hashed ? "public, max-age=31536000, immutable" : "no-store",
       "content-type": contentTypes[path.extname(file)] ?? "application/octet-stream",
     });
     createReadStream(file).pipe(response);

@@ -83,17 +83,19 @@ export default defineConfig({
           root,
           environment: "node",
           include: [
-            "scripts/portable-runtime/tests/conformance/conformance.browser.ts",
-            "scripts/portable-runtime/tests/conformance/emission/emission.check.ts",
+            "scripts/portable-runtime/tests/conformance/targets/*.browser.ts",
+            "scripts/portable-runtime/tests/conformance/emission/targets/*.check.ts",
             "scripts/portable-runtime/tests/conformance/emission/server-attributes.check.ts",
             "scripts/portable-runtime/tests/conformance/emission/default-markers.check.ts",
           ],
           globalSetup: [path.join(home, "global-setup.ts")],
-          // Each browser scenario has its own context, so scenarios can run at the same time. A
-          // failed known-defect entry waits for the poll timeout, so the budget stays small.
+          // Each target file has its own browser, and each running scenario has its own page, so
+          // scenarios can run at the same time. Four target files at four scenarios each gave the
+          // same time as eight each, with half the load on the other release gate lanes. A failed
+          // known-defect entry waits for the poll timeout, so the budget stays small.
           testTimeout: 60_000,
           hookTimeout: 120_000,
-          maxConcurrency: 8,
+          maxConcurrency: 4,
           server: { deps: { inline: [/packages\/(astro|react|vue|svelte)\/src/, /svelte/] } },
         },
       },

@@ -4,13 +4,17 @@ import os from "node:os";
 import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { RELEASE_GATE_SOURCE_ENV } from "../pack-public-release-artifacts.mjs";
 import {
   assertGateEvidence as assertGateEvidenceWith,
   assertReleaseGate as assertReleaseGateWith,
+  assertStageOrder,
   RELEASE_PACKS,
   releaseGateStages,
   reusableGateRecord,
+  runLanes,
   runReleaseGate as runReleaseGateWith,
+  stageAfter,
   verifyGateEvidence as verifyGateEvidenceWith,
 } from "../release-gate.mjs";
 import { releaseToolchain } from "../release-inputs.mjs";
@@ -127,7 +131,6 @@ describe("release gate checkpoints", () => {
       ["svelte:styled:test"],
       "generators",
     ]);
-    expect(index("svelte generator tests")).toBeLessThan(index("svelte styled tests"));
     expect(publicStages.find(([name]) => name === "Svelte hosts")[1]).toEqual([
       "test:svelte-cli-host-acceptance",
       `--packs=${RELEASE_PACKS}`,
@@ -146,7 +149,7 @@ describe("release gate checkpoints", () => {
     expect(stage("direction installed hosts")).toEqual([
       "direction installed hosts",
       ["direction:installed", "--packs", RELEASE_PACKS],
-      "direction",
+      "candidate",
     ]);
     expect(stage("Svelte compatibility")[1].join(" ")).not.toMatch(/build/);
   });
@@ -166,13 +169,16 @@ describe("release gate checkpoints", () => {
       "tests",
     ]);
     // The gallery starts the demo dev servers and reuses the gate build.
-    expect(stage("chart gallery")).toEqual([
+    expect(stage("chart gallery").slice(0, 3)).toEqual([
       "chart gallery",
       ["test:chart-gallery", "--skip-build"],
       "demos",
     ]);
     const demoLane = publicStages.filter(([, , lane]) => lane === "demos");
     expect(demoLane.at(-1)[0]).toBe("chart gallery");
+    // Bundle sizes reads packages/runtime/dist, which the Runtime tests rebuild.
+    expect(stage("bundle sizes")[2]).toBe(stage("runtime tests")[2]);
+    expect(index("runtime tests")).toBeLessThan(index("bundle sizes"));
     for (const name of ["chart parity", "chart styled", "chart gallery"])
       expect(index("pack")).toBeLessThan(index(name));
   });
@@ -196,7 +202,7 @@ describe("release gate checkpoints", () => {
         "scripts/portable-runtime/check-vue-compatibility.ts",
         `--packs=${RELEASE_PACKS}`,
       ],
-      "tests",
+      "generators",
     ]);
     expect(index("pack")).toBeLessThan(index("Vue compatibility"));
   });
@@ -275,12 +281,61 @@ describe("release gate checkpoints", () => {
     expect(publicStages[firstLane - 1][0]).toBe("pack");
     expect(publicStages.slice(firstLane).every(([, , lane]) => lane)).toBe(true);
     const laneOf = (name) => publicStages.find(([stage]) => stage === name)[2];
-    // These stages start Vite servers on the default HMR port, so they must not overlap.
-    for (const name of ["astro demo", "react demo", "chart gallery"])
-      expect(laneOf(name)).toBe(laneOf("vue tests"));
+    const index = (name) => publicStages.findIndex(([stage]) => stage === name);
+    // These stages write to apps/demo/.astro or the apps/react-demo Vite cache, so they run one
+    // after another, and the gallery runs after both writers.
+    for (const name of ["react demo", "target conformance"]) {
+      expect(laneOf(name)).toBe(laneOf("chart gallery"));
+      expect(index(name)).toBeLessThan(index("chart gallery"));
+    }
+    // Stages that write into folders that a later stage in another lane reads or serves are
+    // waits, not lane positions, so a resumed run cannot start the reader early.
+    const after = (name) => stageAfter(publicStages.find(([stage]) => stage === name));
+    expect(after("vue tests")).toEqual(["runtime tests"]);
+    expect(after("react demo")).toEqual(["repo and generator tests"]);
+    expect(after("chart gallery")).toEqual(
+      expect.arrayContaining([
+        "repo and generator tests",
+        "runtime tests",
+        "vue generator tests",
+        "svelte styled tests",
+      ]),
+    );
+    expect(() => assertStageOrder(publicStages)).not.toThrow();
     expect(new Set(publicStages.map(([, , lane]) => lane).filter(Boolean))).toEqual(
       new Set(["tests", "generators", "demos", "hosts", "candidate", "direction"]),
     );
+  });
+
+  it("rejects waits on unknown stages and waits that form a loop", () => {
+    expect(() => assertStageOrder([["a", [], "one", { after: ["missing"] }]])).toThrow(
+      "unknown stage: missing",
+    );
+    expect(() =>
+      assertStageOrder([
+        ["a", [], "one", { after: ["c"] }],
+        ["b", [], "one"],
+        ["c", [], "two", { after: ["b"] }],
+      ]),
+    ).toThrow("wait in a loop");
+  });
+
+  it("starts a stage only after the stages it waits on end, unless a resumed run has them", async () => {
+    const order = [];
+    const runStage = async ([name]) => {
+      order.push(`start ${name}`);
+      await new Promise((resolve) => setTimeout(resolve, name === "writer" ? 20 : 1));
+      order.push(`end ${name}`);
+      if (name === "writer") throw new Error("writer failed");
+    };
+    const lanes = [[["reader", [], "one", { after: ["writer"] }]], [["writer", [], "two"]]];
+    const failed = await runLanes(lanes, runStage);
+    expect(order.indexOf("start reader")).toBeGreaterThan(order.indexOf("end writer"));
+    expect(failed.map(({ stage }) => stage[0])).toEqual(["writer"]);
+
+    order.length = 0;
+    await runLanes([[lanes[0][0]]], runStage, { finished: new Set(["writer"]) });
+    expect(order).toEqual(["start reader", "end reader"]);
   });
 
   it("runs lanes at the same time with one log file per lane stage", async () => {
@@ -298,9 +353,11 @@ describe("release gate checkpoints", () => {
     let active = 0;
     let peak = 0;
     const logFiles = [];
+    const sources = new Set();
     const run = async (args, _root, options) => {
       if (!laneArgs.has(args.join(" "))) return;
       logFiles.push(options?.logFile);
+      sources.add(options?.env?.[RELEASE_GATE_SOURCE_ENV]);
       active += 1;
       peak = Math.max(peak, active);
       await new Promise((resolve) => setTimeout(resolve, 5));
@@ -312,6 +369,9 @@ describe("release gate checkpoints", () => {
 
     expect(peak).toBe(6);
     expect(logFiles).toHaveLength(laneNames.size);
+    // Every lane stage reads the one source fingerprint that the gate checked before the lanes.
+    expect(sources.size).toBe(1);
+    expect([...sources][0]).toMatch(/^[0-9a-f]{64}$/);
     expect(logFiles.every((file) => file?.startsWith(path.join(root, "node_modules")))).toBe(true);
     const record = await loadRecord(root);
     expect(record.completed).toHaveLength(releaseGateStages().length);

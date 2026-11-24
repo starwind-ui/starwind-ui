@@ -69,12 +69,12 @@ export const emissionExceptions: EmissionException[] = [
   {
     name: "combobox-input-text-is-a-dom-property",
     kind: "intended",
-    targets: ["astro", "vue"],
+    targets: ["vue"],
     family: /^combobox$/,
     part: /^input$/,
     fact: /^value$/,
     reason:
-      "These targets set the text as a DOM property at mount, so no attribute appears. The browser suite asserts the text on all targets.",
+      "Vue sets the text as a DOM property at mount, so no attribute appears. The browser suite asserts the text on all targets.",
   },
   {
     name: "react-avatar-image-renders-after-load",

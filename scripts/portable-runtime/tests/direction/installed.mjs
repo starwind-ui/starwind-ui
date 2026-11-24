@@ -6,7 +6,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { installCandidateHosts } from "../../../../packages/cli/tests/integration/direction/installed-hosts.ts";
 import { verifyInstalledHosts } from "../../../../packages/cli/tests/integration/direction/verify-installed-hosts.ts";
-import { loadPublicReleaseArtifacts } from "../../../pack-public-release-artifacts.mjs";
+import {
+  loadPublicReleaseArtifacts,
+  releaseGateLaneSourceFingerprint,
+} from "../../../pack-public-release-artifacts.mjs";
 import { ROOT } from "./inventory.ts";
 import { verifyInstalled, verifySealedPacks } from "./runner/promotion.mjs";
 
@@ -36,6 +39,7 @@ const manifest = await loadPublicReleaseArtifacts({
   repoRoot: sourceRoot,
   outputDirectory,
   requireSvelte: true,
+  sourceFingerprint: releaseGateLaneSourceFingerprint(),
 });
 const parent = path.resolve(parentArg ?? tmpdir());
 await mkdir(parent, { recursive: true });
