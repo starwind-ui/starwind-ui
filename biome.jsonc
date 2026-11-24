@@ -24,6 +24,7 @@
       "!**/.astro/**",
       "!**/.wrangler/**",
       "!**/dist/**",
+      "!**/.dist-staging-*/**",
       "!**/node_modules/**",
       "!**/.devin/**"
     ]

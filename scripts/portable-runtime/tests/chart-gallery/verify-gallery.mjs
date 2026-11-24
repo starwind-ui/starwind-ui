@@ -3,6 +3,7 @@
 // For each framework, the suite starts the demo app from this checkout, opens every gallery view,
 // and checks the nav, the card order and titles against shadcn's `/charts` list, that each chart
 // draws marks, and that each chart shows a tooltip. It also uses the interactive controls.
+// The frameworks run at the same time. Each one has its own dev server, port, and browser page.
 //
 // Usage: node scripts/portable-runtime/tests/chart-gallery/verify-gallery.mjs
 //   [--framework=astro,react,vue,svelte] [--views=pie,radar] [--screenshots=<folder>] [--skip-build]
@@ -363,7 +364,22 @@ async function waitForServer(url, child) {
   throw new Error(`${url} did not start in time.`);
 }
 
+/**
+ * Starts one demo app's dev server. The free port is released before the server binds it, and the
+ * other frameworks and gate lanes open ports at the same time. So when a Vite server exits early,
+ * which `--strictPort` does when another process took the port, it starts once more on a new port.
+ */
 async function startApp(framework) {
+  try {
+    return await startAppOnce(framework);
+  } catch (error) {
+    if (!/server exited early/.test(error.message)) throw error;
+    console.warn(`${framework} dev server exited early, starting it again on a new port.`);
+    return startAppOnce(framework);
+  }
+}
+
+async function startAppOnce(framework) {
   const app = APPS[framework];
   const cwd = path.join(root, app.dir);
   const port = await freePort();
@@ -871,63 +887,76 @@ if (frameworks.includes("svelte") && !skipBuild) {
   }
 }
 
-const browser = await chromium.launch({ channel: "chrome", headless: true });
-const failures = [];
-try {
-  for (const framework of frameworks) {
-    const app = await startApp(framework);
-    const warm = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-    try {
-      await warmUp({ page: warm, framework, baseUrl: app.baseUrl });
-    } catch (error) {
-      await app.stop();
-      failures.push(error);
-      console.error(`not ok ${framework}: ${error.message}`);
-      continue;
-    } finally {
-      await warm.close();
-    }
-    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-    const messages = [];
-    page.on("console", (message) => {
-      if (message.type() === "error") messages.push(`console error: ${message.text()}`);
-    });
-    page.on("pageerror", (error) => messages.push(`page error: ${error.message}`));
-    await page.addInitScript(() => {
-      try {
-        localStorage.setItem("colorTheme", "light");
-      } catch {
-        // Storage can be unavailable on the initial blank document.
-      }
-    });
-    try {
-      let count = 0;
-      for (const [type] of NAV.filter(([key]) => !views || views.includes(key))) {
-        try {
-          count += await verifyView({ page, framework, baseUrl: app.baseUrl, type });
-        } catch (error) {
-          if (!error.reloaded) throw error;
-          // Errors logged before the reload stay in `messages`, so a crash still fails the run.
-          console.log(
-            `${framework} ${type}: the dev server reloaded the page, checking again (${error.message.split("\n")[0]})`,
-          );
-          count += await verifyView({ page, framework, baseUrl: app.baseUrl, type });
-        }
-      }
-      if (messages.length > 0)
-        throw new Error(`${framework} logged errors:\n${messages.join("\n")}`);
-      if (screenshots) await saveScreenshots({ page, framework, baseUrl: app.baseUrl });
-      console.log(`ok ${framework}: ${views?.length ?? NAV.length} views, ${count} charts`);
-    } catch (error) {
-      failures.push(error);
-      console.error(`not ok ${framework}: ${error.message}`);
-    } finally {
-      await page.close();
-      await app.stop();
-    }
+/**
+ * Checks one framework's gallery on its own dev server and returns its result line. Each framework
+ * uses its own app folder, port, and browser page, so the frameworks run at the same time.
+ */
+async function verifyFramework(browser, framework) {
+  const app = await startApp(framework);
+  const warm = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  try {
+    await warmUp({ page: warm, framework, baseUrl: app.baseUrl });
+  } catch (error) {
+    await app.stop();
+    throw error;
+  } finally {
+    await warm.close();
   }
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const messages = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") messages.push(`console error: ${message.text()}`);
+  });
+  page.on("pageerror", (error) => messages.push(`page error: ${error.message}`));
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("colorTheme", "light");
+    } catch {
+      // Storage can be unavailable on the initial blank document.
+    }
+  });
+  try {
+    let count = 0;
+    for (const [type] of NAV.filter(([key]) => !views || views.includes(key))) {
+      try {
+        count += await verifyView({ page, framework, baseUrl: app.baseUrl, type });
+      } catch (error) {
+        if (!error.reloaded) throw error;
+        // Errors logged before the reload stay in `messages`, so a crash still fails the run.
+        console.log(
+          `${framework} ${type}: the dev server reloaded the page, checking again (${error.message.split("\n")[0]})`,
+        );
+        count += await verifyView({ page, framework, baseUrl: app.baseUrl, type });
+      }
+    }
+    if (messages.length > 0) throw new Error(`${framework} logged errors:\n${messages.join("\n")}`);
+    if (screenshots) await saveScreenshots({ page, framework, baseUrl: app.baseUrl });
+    return `ok ${framework}: ${views?.length ?? NAV.length} views, ${count} charts`;
+  } finally {
+    await page.close();
+    await app.stop();
+  }
+}
+
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+let results;
+try {
+  results = await Promise.allSettled(
+    frameworks.map((framework) => verifyFramework(browser, framework)),
+  );
 } finally {
   await browser.close();
+}
+
+// The results print in framework order, so the output is the same from run to run.
+const failures = [];
+for (const [index, result] of results.entries()) {
+  if (result.status === "fulfilled") {
+    console.log(result.value);
+  } else {
+    failures.push(result.reason);
+    console.error(`not ok ${frameworks[index]}: ${result.reason?.message ?? result.reason}`);
+  }
 }
 
 if (failures.length > 0) process.exit(1);

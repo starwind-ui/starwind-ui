@@ -638,8 +638,10 @@ async function assertRowSemantics(
     );
   } else if (spec.row === "card") {
     const action = page.locator('[data-slot="card-action"]').first();
+    // Tailwind sets `justify-self: flex-end`. Chrome 158 and later report that value as
+    // `flow-end`.
     assert(
-      ["end", "flex-end"].includes(
+      ["end", "flex-end", "flow-end"].includes(
         await action.evaluate((element) => getComputedStyle(element).justifySelf),
       ),
     );

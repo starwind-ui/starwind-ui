@@ -4,7 +4,10 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { loadPublicReleaseArtifacts } from "./pack-public-release-artifacts.mjs";
+import {
+  loadPublicReleaseArtifacts,
+  RELEASE_GATE_SOURCE_ENV,
+} from "./pack-public-release-artifacts.mjs";
 import {
   fingerprintFiles,
   releaseOutputFingerprint,
@@ -35,13 +38,18 @@ export function releaseGateStages() {
       "pack",
       ["exec", "node", "scripts/pack-public-release-artifacts.mjs", "--output", RELEASE_PACKS],
     ],
+    // Lanes: the gate runs six lanes at the same time, and each lane holds about six minutes of
+    // work. A seventh lane made timing tests fail under load more often, and the gate then reran
+    // them alone. Stages that write to the same folder run in order in one lane. Where a comment says
+    // so, a stage waits on stages in other lanes through `after`.
+    //
+    // tests lane: unit and source-level suites.
     ["repo and generator tests", ["test:run"], "tests"],
+    // The Runtime browser tests rebuild packages/runtime/dist before they run. The rebuild moves
+    // each new file into place with one rename, so stages in other lanes that import the built
+    // Runtime never find a file missing.
     ["runtime tests", ["runtime:test"], "tests"],
     ["react tests", ["react:test"], "tests"],
-    // The Vue browser tests and the demo dev servers share Vite's default HMR port, so they
-    // run in one lane.
-    ["vue tests", ["--filter=@starwind-ui/vue", "test:all:built"], "demos"],
-    ["vue generator tests", ["runtime:generate:vue:test"], "generators"],
     ["svelte tests", ["--filter=@starwind-ui/svelte", "test:run"], "tests"],
     // Installs the exact Svelte 5.29 and current compiler tools beside the built Svelte package.
     // It copies packages/runtime/dist, so it runs after "runtime tests" rebuilds that folder.
@@ -50,8 +58,31 @@ export function releaseGateStages() {
       ["exec", "tsx", "scripts/portable-runtime/check-svelte-compatibility.ts"],
       "tests",
     ],
+    // The Chart browser suites import the four frameworks from source and write only to the
+    // system temporary folder. Their fixture servers turn off HMR and the WebSocket server, so
+    // they can run beside any other lane. Four browser workers keep them from starving the
+    // other lanes.
+    ["chart parity", ["test:chart-parity", "--maxWorkers", "4"], "tests"],
+    ["chart styled", ["test:chart-styled", "--maxWorkers", "4"], "tests"],
+    // Measures the built package folders and writes only to the system temporary folder. It
+    // reads packages/runtime/dist, so it runs after "runtime tests" rebuilds that folder.
+    ["bundle sizes", ["runtime:size:check:prepared"], "tests"],
+    // generators lane: the generator suites and the Vue compatibility check. The Vue generator
+    // and Svelte Styled suites write to app folders that the gallery's dev servers use, so they
+    // run first in this lane and the gallery waits for them.
+    // The Vue generator tests write their temporary folders into apps/vue-demo/src/components,
+    // which the gallery's Vue dev server watches, so "chart gallery" waits for them.
+    ["vue generator tests", ["runtime:generate:vue:test"], "generators"],
+    // Runs `svelte-kit sync` when it starts, which writes apps/svelte-demo/.svelte-kit. The
+    // gallery's Svelte dev server writes that folder again minutes later. The Styled tests read
+    // only its tsconfig.json, and the dev server writes the same content to that file.
+    ["svelte styled tests", ["svelte:styled:test"], "generators"],
+    // The Svelte generator suite writes its temporary folders under unique names and reads no app
+    // build or cache folder.
+    ["svelte generator tests", ["runtime:generate:svelte:test"], "generators"],
     // Installs the exact Vue peer floor and the Vue version the package builds with beside the
-    // packed Runtime and Vue archives. It reads only the packs, so it needs no build.
+    // packed Runtime and Vue archives. It reads only the packs, so it needs no build. It runs in
+    // this lane to keep the hosts lane short.
     [
       "Vue compatibility",
       [
@@ -60,51 +91,147 @@ export function releaseGateStages() {
         "scripts/portable-runtime/check-vue-compatibility.ts",
         `--packs=${RELEASE_PACKS}`,
       ],
-      "tests",
+      "generators",
     ],
-    // The Chart browser suites import the four frameworks from source and write only to the
-    // system temporary folder. Their fixture servers turn off HMR and the WebSocket server, so they
-    // do not open the Vue tests' port and do not need the demo lane. Four browser workers keep
-    // them from starving the other lanes.
-    ["chart parity", ["test:chart-parity", "--maxWorkers", "4"], "tests"],
-    ["chart styled", ["test:chart-styled", "--maxWorkers", "4"], "tests"],
-    ["svelte generator tests", ["runtime:generate:svelte:test"], "generators"],
-    ["svelte styled tests", ["svelte:styled:test"], "generators"],
+    // demos lane: these stages serve or build the demo apps. The order keeps stages that write to
+    // the same app folder apart.
+    // The Astro smoke checks serve apps/demo/dist with Astro preview on fixed ports.
     ["astro demo", ["demo:smoke"], "demos"],
-    ["react demo", ["react-demo:smoke"], "demos"],
+    // The Vue and Svelte smoke checks serve their app builds and write nothing to the app folders.
     ["vue demo", ["--filter=vue-demo", "smoke:built"], "demos"],
     ["svelte demo", ["svelte:demo:test"], "demos"],
-    // Builds its Astro fixtures from apps/demo, so it shares the demo lane with that app's build.
+    // Starts a Vite dev server in apps/react-demo, which writes that app's Vite cache. The
+    // repository tests write temporary folders into apps/react-demo, so this stage waits for them.
+    ["react demo", ["react-demo:smoke"], "demos", { after: ["repo and generator tests"] }],
+    // Builds its Astro fixtures with apps/demo as the Astro root, so it writes apps/demo/.astro.
     ["target conformance", ["test:conformance"], "demos"],
-    ["bundle sizes", ["runtime:size:check:prepared"], "demos"],
-    // Starts each demo app's dev server, so it shares the demo lane. The build stage already
-    // built the Runtime and Svelte packages, and it runs last, after the demo smoke stages. It
-    // opens one browser page at a time, so it needs no worker cap.
-    ["chart gallery", ["test:chart-gallery", "--skip-build"], "demos"],
+    // Starts the dev servers of all four demo apps at the same time. The Astro server writes
+    // apps/demo/.astro, and the React server writes the apps/react-demo Vite cache, so it runs
+    // after "target conformance" and "react demo". It waits for the stages that write into the
+    // folders its dev servers watch, and for the Runtime rebuild that the Svelte app reads.
+    [
+      "chart gallery",
+      ["test:chart-gallery", "--skip-build"],
+      "demos",
+      {
+        after: [
+          "repo and generator tests",
+          "runtime tests",
+          "vue generator tests",
+          "svelte styled tests",
+        ],
+      },
+    ],
+    // hosts lane: install the packed archives into hosts in the system temporary folder.
     [
       "Vue hosts",
       ["test:vue-cli-host-acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"],
       "hosts",
     ],
     ["Svelte hosts", ["test:svelte-cli-host-acceptance", `--packs=${RELEASE_PACKS}`], "hosts"],
+    // The Vue browser projects let Vitest pick a free port, and the Vue hydration check attaches
+    // HMR to its own server. So these tests do not hold Vite's default HMR port (24678), and no
+    // demo stage waits on them. They read packages/runtime/dist, so they wait for "runtime tests"
+    // to rebuild that folder.
+    [
+      "vue tests",
+      ["--filter=@starwind-ui/vue", "test:all:built"],
+      "hosts",
+      { after: ["runtime tests"] },
+    ],
+    // candidate lane: also installs the packed archives into hosts in the system temporary folder.
     [
       "candidate hosts",
       ["release:candidate:acceptance", "--packs", RELEASE_PACKS, "--concurrency", "2"],
       "candidate",
     ],
-    // The direction suite builds its fixtures in its run folder with its own Astro root and Vite
-    // caches, so it does not write to apps/demo/.astro or the apps/demo caches that the demo lane
-    // uses. The gate runs every planned engine. Five other lanes run at the same time, so it caps
-    // the browser workers at 10.
+    // The hosts stay in the system temporary folder, because a host inside the checkout reads
+    // the checkout's configuration files. It reads only the packs, so it shares this lane to
+    // keep the direction lane short.
+    ["direction installed hosts", ["direction:installed", "--packs", RELEASE_PACKS], "candidate"],
+    // direction lane: the direction suite builds its fixtures in its run folder with its own
+    // Astro root and Vite caches, so it does not write to apps/demo/.astro or the apps/demo caches
+    // that the demo lane uses. The gate runs every planned engine. Five other lanes run at the same
+    // time, so it caps the browser workers at 10. It is the longest single stage, so it has a lane
+    // of its own.
     [
       "direction browsers",
       ["direction:test", "--engines", "all", "--max-workers", "10"],
       "direction",
     ],
-    // The hosts stay in the system temporary folder, because a host inside the checkout reads
-    // the checkout's configuration files.
-    ["direction installed hosts", ["direction:installed", "--packs", RELEASE_PACKS], "direction"],
   ];
+}
+
+/** Names of the stages in other lanes that must finish before this stage starts. */
+export function stageAfter([, , , options]) {
+  return options?.after ?? [];
+}
+
+/**
+ * Rejects a stage list where a stage waits on an unknown stage, or where waits and lane order
+ * form a loop, because the gate would then never finish.
+ */
+export function assertStageOrder(stages) {
+  const next = new Map(stages.map(([name]) => [name, []]));
+  for (const stage of stages) {
+    for (const name of stageAfter(stage)) {
+      if (!next.has(name)) throw new Error(`${stage[0]} waits on an unknown stage: ${name}`);
+      next.get(name).push(stage[0]);
+    }
+  }
+  const lanes = Object.groupBy(
+    stages.filter(([, , lane]) => lane),
+    ([, , lane]) => lane,
+  );
+  for (const lane of Object.values(lanes)) {
+    for (let index = 1; index < lane.length; index += 1) {
+      next.get(lane[index - 1][0]).push(lane[index][0]);
+    }
+  }
+  const state = new Map();
+  const visit = (name) => {
+    if (state.get(name) === "done") return;
+    if (state.get(name) === "open")
+      throw new Error(`Release gate stages wait in a loop at ${name}`);
+    state.set(name, "open");
+    for (const later of next.get(name)) visit(later);
+    state.set(name, "done");
+  };
+  for (const name of next.keys()) visit(name);
+}
+
+/**
+ * Runs each lane's stages in order, with the lanes at the same time. A stage with `after` waits
+ * until those stages pass or fail. Stages in `finished` count as done, so a resumed run does not
+ * wait on them. Returns the stages that failed.
+ */
+export async function runLanes(lanes, runStage, { finished = new Set(), wait = true } = {}) {
+  const ends = new Map();
+  const end = (name) => {
+    if (!ends.has(name)) {
+      let resolve;
+      const promise = new Promise((done) => (resolve = done));
+      ends.set(name, { promise, resolve });
+    }
+    return ends.get(name);
+  };
+  for (const name of finished) end(name).resolve();
+  const failed = [];
+  await Promise.all(
+    lanes.map(async (lane) => {
+      for (const stage of lane) {
+        if (wait) await Promise.all(stageAfter(stage).map((name) => end(name).promise));
+        try {
+          await runStage(stage);
+        } catch (error) {
+          failed.push({ stage, message: error.message });
+        } finally {
+          end(stage[0]).resolve();
+        }
+      }
+    }),
+  );
+  return failed;
 }
 
 export function reusableGateRecord(record, { source, outputs, stages }) {
@@ -350,6 +477,7 @@ export async function runReleaseGate({
   }
   await run(["exec", "node", "scripts/release-preflight.mjs", "--metadata"], root);
   const stages = releaseGateStages();
+  assertStageOrder(stages);
   const source = sourceFingerprint(root, toolchain);
   const packs = path.join(root, RELEASE_PACKS);
   const recordFile = path.join(root, RECORD);
@@ -382,8 +510,11 @@ export async function runReleaseGate({
     const start = Date.now();
     const logFile = lane && !serial ? logFileFor(root, name) : undefined;
     console.log(`[release-gate] start ${name}${logFile ? ` (log: ${logFile})` : ""}`);
+    // Concurrent stages read the source fingerprint from the gate, because other lanes write
+    // test folders into the tree. The drift check after the lanes covers the tree.
+    const env = concurrent ? { ...process.env, [RELEASE_GATE_SOURCE_ENV]: source } : undefined;
     try {
-      await run(args, root, logFile ? { logFile } : undefined);
+      await run(args, root, logFile || env ? { logFile, env } : undefined);
     } catch (error) {
       if (logFile) await printLogTail(logFile);
       throw error;
@@ -406,19 +537,11 @@ export async function runReleaseGate({
   for (const stage of stages.filter(([, , lane]) => !lane)) await runStage(stage);
   const laned = stages.filter(([, , lane]) => lane);
   const lanes = serial ? [laned] : Object.values(Object.groupBy(laned, ([, , lane]) => lane));
-  // Lane stages do not depend on each other, so one failure does not stop the others.
-  const failed = [];
-  await Promise.all(
-    lanes.map(async (lane) => {
-      for (const stage of lane) {
-        try {
-          await runStage(stage, { concurrent: !serial });
-        } catch (error) {
-          failed.push({ stage, message: error.message });
-        }
-      }
-    }),
-  );
+  // One failure does not stop the other lanes. A stage that waits on a failed stage still runs.
+  const failed = await runLanes(lanes, (stage) => runStage(stage, { concurrent: !serial }), {
+    finished: new Set(record.completed.map((entry) => entry.name)),
+    wait: !serial,
+  });
   await saving;
   const failures = [];
   const drifted = !serial && sourceFingerprint(root, toolchain) !== source;

@@ -15,6 +15,7 @@ export default defineConfig([
   {
     ignores: [
       "**/*/dist/**",
+      "**/*/.dist-staging-*/**",
       "**/*/node_modules/**",
       "**/*/.astro/**",
       "**/.svelte-kit/**",

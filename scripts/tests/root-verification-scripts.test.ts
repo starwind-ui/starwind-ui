@@ -21,6 +21,7 @@ type Workflow = {
       id?: string;
       name?: string;
       needs?: string | string[];
+      "timeout-minutes"?: number;
       permissions?: Record<string, string>;
       steps?: Array<{
         env?: Record<string, string>;
@@ -192,7 +193,7 @@ describe("root verification scripts", () => {
       },
     });
     expect(workflow.permissions).toEqual({ contents: "read" });
-    expect(workflow.jobs.static.steps).toEqual(
+    expect(workflow.jobs.types.steps).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           if: "github.event_name == 'workflow_dispatch'",
@@ -203,22 +204,24 @@ describe("root verification scripts", () => {
     );
     const phases = runs.flatMap(commandPhases);
     for (const command of [
-      "pnpm check",
+      "pnpm lint:check",
+      "pnpm format:check",
+      "pnpm exec turbo typecheck --filter='!svelte-demo'",
+      "pnpm exec turbo typecheck --filter=svelte-demo",
       "pnpm test:homes",
       "pnpm runtime:generate:typecheck",
       "pnpm test:node",
       "pnpm runtime:test:unit",
       "pnpm react:test:ssr",
       "pnpm --filter=@starwind-ui/vue test:run",
-      "pnpm svelte:test",
+      "pnpm --filter=@starwind-ui/svelte test:run",
+      "pnpm direction:stage:test",
       "pnpm runtime:generate:test:ci",
       "pnpm runtime:test:browser",
       "pnpm react:test:browser",
       "pnpm vue:test:browser:ci",
       "pnpm test:form-parity",
-      "pnpm test:conformance",
-      "pnpm runtime:generate:all",
-      "pnpm runtime:registry:generate",
+      "pnpm runtime:generate:ci",
       "git diff --exit-code",
       "pnpm --filter=starwind package:check",
     ]) {
@@ -242,8 +245,25 @@ describe("root verification scripts", () => {
       expect(buildPhase?.split(/\s+/)).toContain(`--filter=${name}`);
     }
     expect(runs.join("\n")).not.toMatch(
-      /pnpm (?:vue:verify|vue:test(?:\s|$)|svelte:verify|build(?:\s|$)|runtime:size:|runtime:perf:|test:vue-cli-host-acceptance|test:windows-packed-cli|release:consumer:node22)/,
+      /pnpm (?:vue:verify|vue:test(?:\s|$)|svelte:verify|svelte:test(?:\s|$)|build(?:\s|$)|runtime:size:|runtime:perf:|runtime:test:webkit|runtime:test:firefox|test:conformance|test:vue-cli-host-acceptance|test:windows-packed-cli|release:consumer:node22)/,
     );
+    // The release gate runs the heavy suites. Each CI job stays under five minutes, and the
+    // browser jobs use the runner image's Google Chrome unless the image lacks it.
+    for (const job of jobs) expect(job["timeout-minutes"]).toBeLessThanOrEqual(5);
+    for (const run of runs.filter((command) => command.includes("playwright install"))) {
+      expect(run).toBe(
+        "test -x /opt/google/chrome/chrome || pnpm exec playwright install --with-deps chrome",
+      );
+    }
+    const prettierCache = workflow.jobs.format.steps?.find(({ uses }) =>
+      uses?.startsWith("actions/cache@"),
+    );
+    expect(prettierCache?.uses).toMatch(/^actions\/cache@[0-9a-f]{40}$/);
+    expect(prettierCache?.with?.path).toBe("node_modules/.cache/prettier");
+    expect(prettierCache?.with?.key).toContain(
+      "hashFiles('pnpm-lock.yaml', 'prettier.config.mjs')",
+    );
+    expect(pkg.scripts?.["format:check"]).toContain("--cache --cache-strategy content");
     expect(pkg.scripts?.["runtime:generate:test:ci"]).toContain("generate-cli-registry.test.ts");
     expect(pkg.scripts?.["runtime:generate:test:ci"]).toContain("runtime-adapter-contract.test.ts");
     expect(pkg.scripts?.["runtime:generate:test"]).toBe("vitest run --project=portable-runtime");

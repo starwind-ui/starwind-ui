@@ -2749,7 +2749,11 @@ async function createVueSsrLoader(): Promise<VueViteServer> {
   return createServer({
     ...createVueViteOptions(process.cwd(), transformWithEsbuild),
     appType: "custom",
-    server: { middlewareMode: true },
+    // In middleware mode, Vite opens its HMR WebSocket on port 24678. This loader only renders on
+    // the server, so it turns HMR off and keeps its own cache. Then it can run beside other Vite
+    // servers in the release gate.
+    cacheDir: path.join(process.cwd(), "node_modules/.vite/vue-styled-ssr"),
+    server: { middlewareMode: true, hmr: false, watch: null, ws: false },
   });
 }
 
@@ -2758,11 +2762,16 @@ async function createVueBrowserServer(root: string): Promise<VueViteServer> {
   return createServer({
     ...createVueViteOptions(root, transformWithEsbuild),
     appType: "spa",
+    // Dependency discovery can finish after the first page load and then reload the page in the
+    // middle of a check. That happens most under load, so the server serves the aliased
+    // dependencies as they are and does not watch files.
+    optimizeDeps: { noDiscovery: true, include: [] },
     server: {
       fs: { allow: [process.cwd(), root] },
       host: "127.0.0.1",
       port: 0,
       strictPort: false,
+      watch: null,
     },
   });
 }

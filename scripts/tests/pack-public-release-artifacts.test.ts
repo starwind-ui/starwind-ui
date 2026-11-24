@@ -79,6 +79,17 @@ describe("public release artifact packing", () => {
       await expect(loadPublicReleaseArtifacts({ outputDirectory, repoRoot: root })).rejects.toThrow(
         "sources or toolchain changed",
       );
+      // A gate lane stage compares the packs with the fingerprint the gate checked.
+      await expect(
+        loadPublicReleaseArtifacts({
+          outputDirectory,
+          repoRoot: root,
+          sourceFingerprint: manifest.sourceFingerprint,
+        }),
+      ).resolves.toEqual(manifest);
+      await expect(
+        loadPublicReleaseArtifacts({ outputDirectory, repoRoot: root, sourceFingerprint: "other" }),
+      ).rejects.toThrow("sources or toolchain changed");
       await rm(path.join(root, "new-release-input.js"));
       await writeFile(archive, "replaced");
       await expect(loadPublicReleaseArtifacts({ outputDirectory, repoRoot: root })).rejects.toThrow(

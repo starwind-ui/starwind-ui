@@ -1,8 +1,6 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import { starwindStyledContracts } from "./contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "./contracts/styled/types.js";
 import { formatGeneratedOutput as runFormatGeneratedOutput } from "./format-generated-output.js";
@@ -88,40 +86,10 @@ export async function generateStarwindVueWrappers(
 if (isDirectExecution()) {
   await generateVueWrappers();
   await runFormatGeneratedOutput([VUE_PRIMITIVE_OUTPUT_DIR, VUE_STYLED_OUTPUT_DIR], REPO_ROOT);
-  await formatVueTypeScriptOutput(path.join(REPO_ROOT, VUE_PRIMITIVE_OUTPUT_DIR));
 }
 
 function isDirectExecution(): boolean {
   return (
     Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
   );
-}
-
-async function formatVueTypeScriptOutput(outputRoot: string): Promise<void> {
-  const files = await listTypeScriptFiles(outputRoot);
-  const prettierConfig =
-    (await resolvePrettierConfig(path.join(REPO_ROOT, "prettier.config.mjs"))) ?? {};
-
-  await Promise.all(
-    files.map(async (file) => {
-      const source = await readFile(file, "utf8");
-      const formatted = await formatWithPrettier(source, {
-        ...prettierConfig,
-        filepath: file,
-      });
-      if (formatted !== source) await writeFile(file, formatted, "utf8");
-    }),
-  );
-}
-
-async function listTypeScriptFiles(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files = await Promise.all(
-    entries.map(async (entry) => {
-      const candidate = path.join(directory, entry.name);
-      if (entry.isDirectory()) return listTypeScriptFiles(candidate);
-      return entry.isFile() && entry.name.endsWith(".ts") ? [candidate] : [];
-    }),
-  );
-  return files.flat().sort();
 }

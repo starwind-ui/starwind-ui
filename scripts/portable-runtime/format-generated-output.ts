@@ -1,6 +1,6 @@
 import { type SpawnOptions, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { cp, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -134,36 +134,89 @@ async function formatPaths(
     formatsOutsideRepo && existsSync(repoPrettierConfigPath) ? repoPrettierConfigPath : undefined;
 
   try {
-    const commands = getFormatGeneratedOutputCommands({
+    const [prettierCommand, biomeCommand] = getFormatGeneratedOutputCommands({
       biomeConfigPath,
       cwd,
       paths,
       prettierConfigPath,
-    }).filter(({ name }) => prettier || name !== "Prettier");
-    // Biome can rejoin a sorted import past the line width, so Prettier also runs last.
-    const prettierCommand = commands.find(({ name }) => name === "Prettier");
-    if (prettierCommand) commands.push(prettierCommand);
+    });
+    if (!prettier) {
+      await runCommand(biomeCommand);
+      return;
+    }
 
-    for (const { args, command, name, options } of commands) {
-      await new Promise<void>((resolve, reject) => {
-        const child = spawn(command, args, options);
-
-        child.on("error", reject);
-        child.on("exit", (code) => {
-          if (code === 0) {
-            resolve();
-            return;
-          }
-
-          reject(new Error(`${name} exited with code ${code}.`));
-        });
+    await runCommand(prettierCommand);
+    const beforeSort = await readFileContents(paths, cwd);
+    await runCommand(biomeCommand);
+    // Biome can rejoin a sorted import past the line width, so Prettier runs again. Only the files
+    // that Biome changed need the second pass, because Prettier output is stable on a second run.
+    const sortedFiles: string[] = [];
+    for (const [file, content] of await readFileContents(paths, cwd)) {
+      if (beforeSort.get(file) !== content) sortedFiles.push(file);
+    }
+    const relativeFiles = sortedFiles.map((file) => path.relative(cwd, file) || file);
+    for (const files of chunkPaths(relativeFiles, process.platform === "win32" ? 6000 : 100_000)) {
+      const [command] = getFormatGeneratedOutputCommands({
+        cwd,
+        paths: ["--ignore-unknown", ...files],
+        prettierConfigPath,
       });
+      await runCommand(command!);
     }
   } finally {
     if (temporaryBiomeConfigDir) {
       await rm(temporaryBiomeConfigDir, { force: true, recursive: true });
     }
   }
+}
+
+function runCommand({ args, command, name, options }: FormatGeneratedOutputCommand): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const child = spawn(command, args, options);
+
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+
+      reject(new Error(`${name} exited with code ${code}.`));
+    });
+  });
+}
+
+async function readFileContents(paths: string[], cwd: string): Promise<Map<string, string>> {
+  const contents = new Map<string, string>();
+  const visit = async (candidate: string): Promise<void> => {
+    const stats = await stat(candidate).catch(() => undefined);
+    if (stats?.isDirectory()) {
+      const entries = await readdir(candidate);
+      await Promise.all(entries.map((entry) => visit(path.join(candidate, entry))));
+    } else if (stats?.isFile()) {
+      contents.set(candidate, await readFile(candidate, "utf8"));
+    }
+  };
+  await Promise.all(paths.map((candidate) => visit(path.resolve(cwd, candidate))));
+  return contents;
+}
+
+/** Keep each command line short enough for the platform, mainly the Windows command shell. */
+function chunkPaths(files: string[], maxLength: number): string[][] {
+  const chunks: string[][] = [];
+  let chunk: string[] = [];
+  let length = 0;
+  for (const file of files.sort()) {
+    if (chunk.length > 0 && length + file.length + 1 > maxLength) {
+      chunks.push(chunk);
+      chunk = [];
+      length = 0;
+    }
+    chunk.push(file);
+    length += file.length + 1;
+  }
+  if (chunk.length > 0) chunks.push(chunk);
+  return chunks;
 }
 
 function isWindowsCommandScript(command: string): boolean {

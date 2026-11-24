@@ -22,7 +22,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { parse as parseYaml } from "yaml";
 
 import { runLoggedCommand } from "./cli-host-acceptance.mjs";
-import { loadPublicReleaseArtifacts } from "./pack-public-release-artifacts.mjs";
+import {
+  loadPublicReleaseArtifacts,
+  releaseGateLaneSourceFingerprint,
+} from "./pack-public-release-artifacts.mjs";
 import { runCandidateProjects, startCandidateRegistry } from "./release-candidate-acceptance.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -1567,7 +1570,10 @@ export async function prepareVueHostPackages(
   { loadArtifacts = loadPublicReleaseArtifacts, packPackages = packVueBetaPackages } = {},
 ) {
   if (!packsDirectory) return packPackages(outputDirectory, logsDirectory);
-  const artifacts = await loadArtifacts({ outputDirectory: path.resolve(packsDirectory) });
+  const artifacts = await loadArtifacts({
+    outputDirectory: path.resolve(packsDirectory),
+    sourceFingerprint: releaseGateLaneSourceFingerprint(),
+  });
   const manifests = {};
   const packages = {};
   const archiveHashes = {};
