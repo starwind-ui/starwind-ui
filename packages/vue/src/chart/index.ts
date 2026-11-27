@@ -3,7 +3,7 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-import type { ChartSource, TooltipItem } from "@starwind-ui/runtime/chart";
+import type { ChartFormat, ChartSource, TooltipItem } from "@starwind-ui/runtime/chart";
 import type {
   AllowedComponentProps,
   ComponentCustomProps,
@@ -11,13 +11,42 @@ import type {
   VNodeChild,
   VNodeProps,
 } from "vue";
-import type { ChartRootDefinitionProps, ChartRootSourceProps, ChartView } from "./ChartContext.js";
+import ChartAreaComponent from "./ChartArea.vue";
+import ChartBarComponent from "./ChartBar.vue";
+import type {
+  ChartAreaProps,
+  ChartBarProps,
+  ChartGridProps,
+  ChartLabelProps,
+  ChartLinearGradientProps,
+  ChartLineProps,
+  ChartPieProps,
+  ChartPolarAngleAxisProps,
+  ChartPolarGridProps,
+  ChartRadarProps,
+  ChartRadialBarProps,
+  ChartRootDefinitionProps,
+  ChartRootSourceProps,
+  ChartRootSpecProps,
+  ChartView,
+  ChartXAxisProps,
+  ChartYAxisProps,
+} from "./ChartContext.js";
+import ChartGridComponent from "./ChartGrid.vue";
+import ChartLabelComponent from "./ChartLabel.vue";
 import ChartLegendComponent from "./ChartLegend.vue";
 import ChartLegendIconComponent from "./ChartLegendIcon.vue";
 import ChartLegendItemComponent from "./ChartLegendItem.vue";
 import ChartLegendItemsComponent from "./ChartLegendItems.vue";
 import ChartLegendLabelComponent from "./ChartLegendLabel.vue";
 import ChartLegendSwatchComponent from "./ChartLegendSwatch.vue";
+import ChartLineComponent from "./ChartLine.vue";
+import ChartLinearGradientComponent from "./ChartLinearGradient.vue";
+import ChartPieComponent from "./ChartPie.vue";
+import ChartPolarAngleAxisComponent from "./ChartPolarAngleAxis.vue";
+import ChartPolarGridComponent from "./ChartPolarGrid.vue";
+import ChartRadarComponent from "./ChartRadar.vue";
+import ChartRadialBarComponent from "./ChartRadialBar.vue";
 import ChartRootComponent from "./ChartRoot.vue";
 import ChartStyleComponent from "./ChartStyle.vue";
 import ChartSurfaceComponent from "./ChartSurface.vue";
@@ -30,6 +59,8 @@ import ChartTooltipItemsComponent from "./ChartTooltipItems.vue";
 import ChartTooltipLabelComponent from "./ChartTooltipLabel.vue";
 import ChartTooltipNameComponent from "./ChartTooltipName.vue";
 import ChartTooltipValueComponent from "./ChartTooltipValue.vue";
+import ChartXAxisComponent from "./ChartXAxis.vue";
+import ChartYAxisComponent from "./ChartYAxis.vue";
 
 export type ChartStyleProps = Record<never, never>;
 export type ChartSurfaceProps = {
@@ -40,7 +71,15 @@ export type ChartSurfaceProps = {
   /** Uses the native TanStack tooltip body. */
   nativeTooltip?: boolean;
 };
-export type ChartTooltipProps = Record<never, never>;
+export type ChartTooltipProps = {
+  /**
+   * Draws the hover band of a bar chart. `false` removes it. Line and area charts draw no hover
+   * rule. In a parts chart, the first Tooltip at chart level sets it, because that Tooltip supplies
+   * the tooltip body. When it leaves `cursor` unset, the band shows. A Tooltip inside a tooltip
+   * body sets nothing.
+   */
+  cursor?: boolean;
+};
 export type ChartTooltipContentProps<T = unknown> = {
   indicator?: "dot" | "line" | "dashed";
   hideLabel?: boolean;
@@ -52,16 +91,23 @@ export type ChartTooltipContentProps<T = unknown> = {
   valueKey?: string;
   /** Overrides each row's indicator color. */
   color?: string;
-  /** Returns the complete row view, with shadcn's argument order. `payload` is the native datum. */
-  formatter?: (
-    value: unknown,
-    name: string,
-    item: TooltipItem<T>,
-    index: number,
-    payload: T,
-  ) => VNodeChild;
-  /** Returns the complete heading view. */
-  labelFormatter?: (label: unknown, payload: readonly TooltipItem<T>[]) => VNodeChild;
+  /**
+   * A function returns the complete row view, with shadcn's argument order. `payload` is the native
+   * datum. A ChartFormat object formats only the row value.
+   */
+  formatter?:
+    | ((
+        value: unknown,
+        name: string,
+        item: TooltipItem<T>,
+        index: number,
+        payload: T,
+      ) => VNodeChild)
+    | ChartFormat;
+  /** A function returns the complete heading view. A ChartFormat object formats the heading. */
+  labelFormatter?:
+    | ((label: unknown, payload: readonly TooltipItem<T>[]) => VNodeChild)
+    | ChartFormat;
 };
 export type ChartTooltipLabelProps = Record<never, never>;
 export type ChartTooltipItemsProps = Record<never, never>;
@@ -98,6 +144,7 @@ type ChartRootTemplateComponent = Omit<ChartRootSfc, never> & {
     $props: (
       | ChartRootSourceProps<any, any, any, any>
       | Omit<ChartRootDefinitionProps<any, any, any, any>, "onVisibleChange" | "onUpdate:visible">
+      | ChartRootSpecProps<any, any, any, any>
     ) &
       VNodeProps &
       AllowedComponentProps &
@@ -136,6 +183,21 @@ const ChartLegendIcon =
   ChartLegendIconComponent as unknown as DefineComponent<ChartLegendIconProps>;
 const ChartLegendLabel =
   ChartLegendLabelComponent as unknown as DefineComponent<ChartLegendLabelProps>;
+const ChartBar = ChartBarComponent as unknown as DefineComponent<ChartBarProps>;
+const ChartLine = ChartLineComponent as unknown as DefineComponent<ChartLineProps>;
+const ChartArea = ChartAreaComponent as unknown as DefineComponent<ChartAreaProps>;
+const ChartPie = ChartPieComponent as unknown as DefineComponent<ChartPieProps>;
+const ChartRadar = ChartRadarComponent as unknown as DefineComponent<ChartRadarProps>;
+const ChartRadialBar = ChartRadialBarComponent as unknown as DefineComponent<ChartRadialBarProps>;
+const ChartXAxis = ChartXAxisComponent as unknown as DefineComponent<ChartXAxisProps>;
+const ChartYAxis = ChartYAxisComponent as unknown as DefineComponent<ChartYAxisProps>;
+const ChartGrid = ChartGridComponent as unknown as DefineComponent<ChartGridProps>;
+const ChartPolarGrid = ChartPolarGridComponent as unknown as DefineComponent<ChartPolarGridProps>;
+const ChartPolarAngleAxis =
+  ChartPolarAngleAxisComponent as unknown as DefineComponent<ChartPolarAngleAxisProps>;
+const ChartLabel = ChartLabelComponent as unknown as DefineComponent<ChartLabelProps>;
+const ChartLinearGradient =
+  ChartLinearGradientComponent as unknown as DefineComponent<ChartLinearGradientProps>;
 
 const Chart = {
   Root: ChartRoot,
@@ -156,17 +218,41 @@ const Chart = {
   LegendSwatch: ChartLegendSwatch,
   LegendIcon: ChartLegendIcon,
   LegendLabel: ChartLegendLabel,
+  Bar: ChartBar,
+  Line: ChartLine,
+  Area: ChartArea,
+  Pie: ChartPie,
+  Radar: ChartRadar,
+  RadialBar: ChartRadialBar,
+  XAxis: ChartXAxis,
+  YAxis: ChartYAxis,
+  Grid: ChartGrid,
+  PolarGrid: ChartPolarGrid,
+  PolarAngleAxis: ChartPolarAngleAxis,
+  Label: ChartLabel,
+  LinearGradient: ChartLinearGradient,
 };
 
 export {
   Chart,
   Chart as ChartPrimitive,
+  ChartArea,
+  ChartBar,
+  ChartGrid,
+  ChartLabel,
   ChartLegend,
   ChartLegendIcon,
   ChartLegendItem,
   ChartLegendItems,
   ChartLegendLabel,
   ChartLegendSwatch,
+  ChartLine,
+  ChartLinearGradient,
+  ChartPie,
+  ChartPolarAngleAxis,
+  ChartPolarGrid,
+  ChartRadar,
+  ChartRadialBar,
   ChartRoot,
   ChartStyle,
   ChartSurface,
@@ -179,6 +265,8 @@ export {
   ChartTooltipLabel,
   ChartTooltipName,
   ChartTooltipValue,
+  ChartXAxis,
+  ChartYAxis,
 };
 export default Chart;
 
@@ -194,15 +282,29 @@ export type {
 } from "@starwind-ui/runtime/chart";
 export { defineChartModule, isChartIcon, tooltipView } from "@starwind-ui/runtime/chart";
 export type {
+  ChartAreaProps,
+  ChartBarProps,
   ChartConfig,
   ChartDefinition,
+  ChartGridProps,
+  ChartLabelProps,
+  ChartLinearGradientProps,
+  ChartLineProps,
+  ChartPieProps,
+  ChartPolarAngleAxisProps,
+  ChartPolarGridProps,
+  ChartRadarProps,
+  ChartRadialBarProps,
   ChartRootDefinitionProps,
   ChartRootProps,
   ChartRootSourceProps,
+  ChartRootSpecProps,
   ChartRootState,
   ChartTooltipBody,
   ChartValue,
   ChartView,
+  ChartXAxisProps,
+  ChartYAxisProps,
 } from "./ChartContext.js";
 export { useChartRoot, useChartTooltipBody } from "./ChartContext.js";
-export type { ChartSource };
+export type { ChartFormat, ChartSource };

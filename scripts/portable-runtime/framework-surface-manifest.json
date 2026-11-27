@@ -43,9 +43,9 @@
       },
       "counts": {
         "familySubpaths": 38,
-        "namespaceParts": 260,
-        "renderedPrimitivePaths": 246,
-        "styledNormalizedPaths": 404,
+        "namespaceParts": 273,
+        "renderedPrimitivePaths": 259,
+        "styledNormalizedPaths": 417,
         "styledRoots": 56
       },
       "familySubpaths": [
@@ -114,6 +114,10 @@
           "carousel/CarouselPrevious",
           "carousel/CarouselRoot",
           "carousel/CarouselViewport",
+          "chart/ChartArea",
+          "chart/ChartBar",
+          "chart/ChartGrid",
+          "chart/ChartLabel",
           "chart/ChartLegend",
           "chart/ChartLegendIcon",
           "chart/ChartLegendItem",
@@ -121,6 +125,13 @@
           "chart/ChartLegendLabel",
           "chart/ChartLegendSwatch",
           "chart/ChartLifecycle",
+          "chart/ChartLine",
+          "chart/ChartLinearGradient",
+          "chart/ChartPie",
+          "chart/ChartPolarAngleAxis",
+          "chart/ChartPolarGrid",
+          "chart/ChartRadar",
+          "chart/ChartRadialBar",
           "chart/ChartRoot",
           "chart/ChartStyle",
           "chart/ChartSurface",
@@ -133,6 +144,8 @@
           "chart/ChartTooltipLabel",
           "chart/ChartTooltipName",
           "chart/ChartTooltipValue",
+          "chart/ChartXAxis",
+          "chart/ChartYAxis",
           "checkbox-group/CheckboxGroupRoot",
           "checkbox/CheckboxIndicator",
           "checkbox/CheckboxRoot",
@@ -390,7 +403,20 @@
             "LegendItem",
             "LegendSwatch",
             "LegendIcon",
-            "LegendLabel"
+            "LegendLabel",
+            "Bar",
+            "Line",
+            "Area",
+            "Pie",
+            "Radar",
+            "RadialBar",
+            "XAxis",
+            "YAxis",
+            "Grid",
+            "PolarGrid",
+            "PolarAngleAxis",
+            "Label",
+            "LinearGradient"
           ],
           "checkbox": [
             "Root",
@@ -726,7 +752,20 @@
             "ChartLegendItem",
             "ChartLegendSwatch",
             "ChartLegendIcon",
-            "ChartLegendLabel"
+            "ChartLegendLabel",
+            "ChartBar",
+            "ChartLine",
+            "ChartArea",
+            "ChartPie",
+            "ChartRadar",
+            "ChartRadialBar",
+            "ChartXAxis",
+            "ChartYAxis",
+            "ChartGrid",
+            "ChartPolarGrid",
+            "ChartPolarAngleAxis",
+            "ChartLabel",
+            "ChartLinearGradient"
           ],
           "checkbox": [
             "CheckboxRoot",
@@ -1248,6 +1287,16 @@
               "classification": "namespace"
             },
             {
+              "name": "ChartAreaProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartBarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartConfig",
               "kind": "type",
               "classification": "helper-type"
@@ -1268,7 +1317,22 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartFormat",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartIcon",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLabelProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -1303,7 +1367,42 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartLinearGradientProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLineProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartModule",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPieProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarAngleAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadialBarProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -1319,6 +1418,11 @@
             },
             {
               "name": "ChartRootSourceProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRootSpecProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -1388,6 +1492,16 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartXAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartYAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "NativeHostOptions",
               "kind": "type",
               "classification": "helper-type"
@@ -1411,6 +1525,26 @@
               "name": "Chart",
               "kind": "value",
               "classification": "namespace"
+            },
+            {
+              "name": "ChartArea",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartBar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLabel",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartLegend",
@@ -1443,9 +1577,44 @@
               "classification": "rendered-component"
             },
             {
+              "name": "ChartLine",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLinearGradient",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPie",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarAngleAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
               "name": "ChartPrimitive",
               "kind": "value",
               "classification": "helper"
+            },
+            {
+              "name": "ChartRadar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartRadialBar",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartRoot",
@@ -1509,6 +1678,16 @@
             },
             {
               "name": "ChartTooltipValue",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartXAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartYAxis",
               "kind": "value",
               "classification": "rendered-component"
             },
@@ -3901,6 +4080,97 @@
               "runtimeHooks": [
                 "data-sw-chart-legend-label"
               ]
+            },
+            {
+              "name": "bar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-bar"
+              ]
+            },
+            {
+              "name": "line",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-line"
+              ]
+            },
+            {
+              "name": "area",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-area"
+              ]
+            },
+            {
+              "name": "pie",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-pie"
+              ]
+            },
+            {
+              "name": "radar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radar"
+              ]
+            },
+            {
+              "name": "radialBar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radial-bar"
+              ]
+            },
+            {
+              "name": "xAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-x-axis"
+              ]
+            },
+            {
+              "name": "yAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-y-axis"
+              ]
+            },
+            {
+              "name": "grid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-grid"
+              ]
+            },
+            {
+              "name": "polarGrid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-grid"
+              ]
+            },
+            {
+              "name": "polarAngleAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-angle-axis"
+              ]
+            },
+            {
+              "name": "label",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-label"
+              ]
+            },
+            {
+              "name": "linearGradient",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-linear-gradient"
+              ]
             }
           ],
           "checkbox": [
@@ -5820,11 +6090,24 @@
           "carousel/CarouselPrevious.component",
           "carousel/index.ts",
           "carousel/variants.ts",
+          "chart/ChartArea.component",
+          "chart/ChartBar.component",
           "chart/ChartContainer.component",
+          "chart/ChartGrid.component",
+          "chart/ChartLabel.component",
           "chart/ChartLegend.component",
           "chart/ChartLegendContent.component",
+          "chart/ChartLine.component",
+          "chart/ChartLinearGradient.component",
+          "chart/ChartPie.component",
+          "chart/ChartPolarAngleAxis.component",
+          "chart/ChartPolarGrid.component",
+          "chart/ChartRadar.component",
+          "chart/ChartRadialBar.component",
           "chart/ChartTooltip.component",
           "chart/ChartTooltipContent.component",
+          "chart/ChartXAxis.component",
+          "chart/ChartYAxis.component",
           "chart/index.ts",
           "chart/variants.ts",
           "checkbox-group/CheckboxGroup.component",
@@ -6230,9 +6513,9 @@
       },
       "counts": {
         "familySubpaths": 38,
-        "namespaceParts": 260,
-        "renderedPrimitivePaths": 244,
-        "styledNormalizedPaths": 401,
+        "namespaceParts": 273,
+        "renderedPrimitivePaths": 257,
+        "styledNormalizedPaths": 414,
         "styledRoots": 55
       },
       "familySubpaths": [
@@ -6301,12 +6584,23 @@
           "carousel/CarouselPrevious",
           "carousel/CarouselRoot",
           "carousel/CarouselViewport",
+          "chart/ChartArea",
+          "chart/ChartBar",
+          "chart/ChartGrid",
+          "chart/ChartLabel",
           "chart/ChartLegend",
           "chart/ChartLegendIcon",
           "chart/ChartLegendItem",
           "chart/ChartLegendItems",
           "chart/ChartLegendLabel",
           "chart/ChartLegendSwatch",
+          "chart/ChartLine",
+          "chart/ChartLinearGradient",
+          "chart/ChartPie",
+          "chart/ChartPolarAngleAxis",
+          "chart/ChartPolarGrid",
+          "chart/ChartRadar",
+          "chart/ChartRadialBar",
           "chart/ChartRoot",
           "chart/ChartStyle",
           "chart/ChartSurface",
@@ -6319,6 +6613,8 @@
           "chart/ChartTooltipLabel",
           "chart/ChartTooltipName",
           "chart/ChartTooltipValue",
+          "chart/ChartXAxis",
+          "chart/ChartYAxis",
           "checkbox-group/CheckboxGroupRoot",
           "checkbox/CheckboxIndicator",
           "checkbox/CheckboxRoot",
@@ -6575,7 +6871,20 @@
             "LegendItem",
             "LegendSwatch",
             "LegendIcon",
-            "LegendLabel"
+            "LegendLabel",
+            "Bar",
+            "Line",
+            "Area",
+            "Pie",
+            "Radar",
+            "RadialBar",
+            "XAxis",
+            "YAxis",
+            "Grid",
+            "PolarGrid",
+            "PolarAngleAxis",
+            "Label",
+            "LinearGradient"
           ],
           "checkbox": [
             "Root",
@@ -6911,7 +7220,20 @@
             "ChartLegendItem",
             "ChartLegendSwatch",
             "ChartLegendIcon",
-            "ChartLegendLabel"
+            "ChartLegendLabel",
+            "ChartBar",
+            "ChartLine",
+            "ChartArea",
+            "ChartPie",
+            "ChartRadar",
+            "ChartRadialBar",
+            "ChartXAxis",
+            "ChartYAxis",
+            "ChartGrid",
+            "ChartPolarGrid",
+            "ChartPolarAngleAxis",
+            "ChartLabel",
+            "ChartLinearGradient"
           ],
           "checkbox": [
             "CheckboxRoot",
@@ -7443,6 +7765,16 @@
               "classification": "namespace"
             },
             {
+              "name": "ChartAreaProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartBarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartConfig",
               "kind": "type",
               "classification": "helper-type"
@@ -7463,7 +7795,22 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartFormat",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartIcon",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLabelProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -7498,7 +7845,42 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartLinearGradientProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLineProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartModule",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPieProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarAngleAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadialBarProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -7514,6 +7896,11 @@
             },
             {
               "name": "ChartRootSourceProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRootSpecProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -7598,6 +7985,16 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartXAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartYAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "NativeHostOptions",
               "kind": "type",
               "classification": "helper-type"
@@ -7621,6 +8018,26 @@
               "name": "Chart",
               "kind": "value",
               "classification": "namespace"
+            },
+            {
+              "name": "ChartArea",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartBar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLabel",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartLegend",
@@ -7653,9 +8070,44 @@
               "classification": "rendered-component"
             },
             {
+              "name": "ChartLine",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLinearGradient",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPie",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarAngleAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
               "name": "ChartPrimitive",
               "kind": "value",
               "classification": "helper"
+            },
+            {
+              "name": "ChartRadar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartRadialBar",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartRoot",
@@ -7714,6 +8166,16 @@
             },
             {
               "name": "ChartTooltipValue",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartXAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartYAxis",
               "kind": "value",
               "classification": "rendered-component"
             },
@@ -10191,6 +10653,97 @@
               "runtimeHooks": [
                 "data-sw-chart-legend-label"
               ]
+            },
+            {
+              "name": "bar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-bar"
+              ]
+            },
+            {
+              "name": "line",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-line"
+              ]
+            },
+            {
+              "name": "area",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-area"
+              ]
+            },
+            {
+              "name": "pie",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-pie"
+              ]
+            },
+            {
+              "name": "radar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radar"
+              ]
+            },
+            {
+              "name": "radialBar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radial-bar"
+              ]
+            },
+            {
+              "name": "xAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-x-axis"
+              ]
+            },
+            {
+              "name": "yAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-y-axis"
+              ]
+            },
+            {
+              "name": "grid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-grid"
+              ]
+            },
+            {
+              "name": "polarGrid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-grid"
+              ]
+            },
+            {
+              "name": "polarAngleAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-angle-axis"
+              ]
+            },
+            {
+              "name": "label",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-label"
+              ]
+            },
+            {
+              "name": "linearGradient",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-linear-gradient"
+              ]
             }
           ],
           "checkbox": [
@@ -12154,11 +12707,24 @@
           "carousel/CarouselPrevious.component",
           "carousel/index.ts",
           "carousel/variants.ts",
+          "chart/ChartArea.component",
+          "chart/ChartBar.component",
           "chart/ChartContainer.component",
+          "chart/ChartGrid.component",
+          "chart/ChartLabel.component",
           "chart/ChartLegend.component",
           "chart/ChartLegendContent.component",
+          "chart/ChartLine.component",
+          "chart/ChartLinearGradient.component",
+          "chart/ChartPie.component",
+          "chart/ChartPolarAngleAxis.component",
+          "chart/ChartPolarGrid.component",
+          "chart/ChartRadar.component",
+          "chart/ChartRadialBar.component",
           "chart/ChartTooltip.component",
           "chart/ChartTooltipContent.component",
+          "chart/ChartXAxis.component",
+          "chart/ChartYAxis.component",
           "chart/index.ts",
           "chart/variants.ts",
           "checkbox-group/CheckboxGroup.component",
@@ -12561,9 +13127,9 @@
       },
       "counts": {
         "familySubpaths": 38,
-        "namespaceParts": 260,
-        "renderedPrimitivePaths": 244,
-        "styledNormalizedPaths": 401,
+        "namespaceParts": 273,
+        "renderedPrimitivePaths": 257,
+        "styledNormalizedPaths": 414,
         "styledRoots": 55
       },
       "familySubpaths": [
@@ -12632,12 +13198,23 @@
           "carousel/CarouselPrevious",
           "carousel/CarouselRoot",
           "carousel/CarouselViewport",
+          "chart/ChartArea",
+          "chart/ChartBar",
+          "chart/ChartGrid",
+          "chart/ChartLabel",
           "chart/ChartLegend",
           "chart/ChartLegendIcon",
           "chart/ChartLegendItem",
           "chart/ChartLegendItems",
           "chart/ChartLegendLabel",
           "chart/ChartLegendSwatch",
+          "chart/ChartLine",
+          "chart/ChartLinearGradient",
+          "chart/ChartPie",
+          "chart/ChartPolarAngleAxis",
+          "chart/ChartPolarGrid",
+          "chart/ChartRadar",
+          "chart/ChartRadialBar",
           "chart/ChartRoot",
           "chart/ChartStyle",
           "chart/ChartSurface",
@@ -12650,6 +13227,8 @@
           "chart/ChartTooltipLabel",
           "chart/ChartTooltipName",
           "chart/ChartTooltipValue",
+          "chart/ChartXAxis",
+          "chart/ChartYAxis",
           "checkbox-group/CheckboxGroupRoot",
           "checkbox/CheckboxIndicator",
           "checkbox/CheckboxRoot",
@@ -12906,7 +13485,20 @@
             "LegendItem",
             "LegendSwatch",
             "LegendIcon",
-            "LegendLabel"
+            "LegendLabel",
+            "Bar",
+            "Line",
+            "Area",
+            "Pie",
+            "Radar",
+            "RadialBar",
+            "XAxis",
+            "YAxis",
+            "Grid",
+            "PolarGrid",
+            "PolarAngleAxis",
+            "Label",
+            "LinearGradient"
           ],
           "checkbox": [
             "Root",
@@ -13242,7 +13834,20 @@
             "ChartLegendItem",
             "ChartLegendSwatch",
             "ChartLegendIcon",
-            "ChartLegendLabel"
+            "ChartLegendLabel",
+            "ChartBar",
+            "ChartLine",
+            "ChartArea",
+            "ChartPie",
+            "ChartRadar",
+            "ChartRadialBar",
+            "ChartXAxis",
+            "ChartYAxis",
+            "ChartGrid",
+            "ChartPolarGrid",
+            "ChartPolarAngleAxis",
+            "ChartLabel",
+            "ChartLinearGradient"
           ],
           "checkbox": [
             "CheckboxRoot",
@@ -13774,6 +14379,16 @@
               "classification": "namespace"
             },
             {
+              "name": "ChartAreaProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartBarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartConfig",
               "kind": "type",
               "classification": "helper-type"
@@ -13794,7 +14409,22 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartFormat",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartIcon",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLabelProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -13829,7 +14459,42 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartLinearGradientProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLineProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartModule",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPieProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarAngleAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadialBarProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -13845,6 +14510,11 @@
             },
             {
               "name": "ChartRootSourceProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRootSpecProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -13929,6 +14599,16 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartXAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartYAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "NativeHostOptions",
               "kind": "type",
               "classification": "helper-type"
@@ -13952,6 +14632,26 @@
               "name": "Chart",
               "kind": "value",
               "classification": "namespace"
+            },
+            {
+              "name": "ChartArea",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartBar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLabel",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartLegend",
@@ -13984,9 +14684,44 @@
               "classification": "rendered-component"
             },
             {
+              "name": "ChartLine",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLinearGradient",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPie",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarAngleAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
               "name": "ChartPrimitive",
               "kind": "value",
               "classification": "helper"
+            },
+            {
+              "name": "ChartRadar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartRadialBar",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartRoot",
@@ -14045,6 +14780,16 @@
             },
             {
               "name": "ChartTooltipValue",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartXAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartYAxis",
               "kind": "value",
               "classification": "rendered-component"
             },
@@ -16527,6 +17272,97 @@
               "runtimeHooks": [
                 "data-sw-chart-legend-label"
               ]
+            },
+            {
+              "name": "bar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-bar"
+              ]
+            },
+            {
+              "name": "line",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-line"
+              ]
+            },
+            {
+              "name": "area",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-area"
+              ]
+            },
+            {
+              "name": "pie",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-pie"
+              ]
+            },
+            {
+              "name": "radar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radar"
+              ]
+            },
+            {
+              "name": "radialBar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radial-bar"
+              ]
+            },
+            {
+              "name": "xAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-x-axis"
+              ]
+            },
+            {
+              "name": "yAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-y-axis"
+              ]
+            },
+            {
+              "name": "grid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-grid"
+              ]
+            },
+            {
+              "name": "polarGrid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-grid"
+              ]
+            },
+            {
+              "name": "polarAngleAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-angle-axis"
+              ]
+            },
+            {
+              "name": "label",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-label"
+              ]
+            },
+            {
+              "name": "linearGradient",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-linear-gradient"
+              ]
             }
           ],
           "checkbox": [
@@ -18445,11 +19281,24 @@
           "carousel/CarouselPrevious.component",
           "carousel/index.ts",
           "carousel/variants.ts",
+          "chart/ChartArea.component",
+          "chart/ChartBar.component",
           "chart/ChartContainer.component",
+          "chart/ChartGrid.component",
+          "chart/ChartLabel.component",
           "chart/ChartLegend.component",
           "chart/ChartLegendContent.component",
+          "chart/ChartLine.component",
+          "chart/ChartLinearGradient.component",
+          "chart/ChartPie.component",
+          "chart/ChartPolarAngleAxis.component",
+          "chart/ChartPolarGrid.component",
+          "chart/ChartRadar.component",
+          "chart/ChartRadialBar.component",
           "chart/ChartTooltip.component",
           "chart/ChartTooltipContent.component",
+          "chart/ChartXAxis.component",
+          "chart/ChartYAxis.component",
           "chart/index.ts",
           "chart/variants.ts",
           "checkbox-group/CheckboxGroup.component",
@@ -18852,9 +19701,9 @@
       },
       "counts": {
         "familySubpaths": 38,
-        "namespaceParts": 260,
-        "renderedPrimitivePaths": 244,
-        "styledNormalizedPaths": 401,
+        "namespaceParts": 273,
+        "renderedPrimitivePaths": 257,
+        "styledNormalizedPaths": 414,
         "styledRoots": 55
       },
       "familySubpaths": [
@@ -18923,12 +19772,23 @@
           "carousel/CarouselPrevious",
           "carousel/CarouselRoot",
           "carousel/CarouselViewport",
+          "chart/ChartArea",
+          "chart/ChartBar",
+          "chart/ChartGrid",
+          "chart/ChartLabel",
           "chart/ChartLegend",
           "chart/ChartLegendIcon",
           "chart/ChartLegendItem",
           "chart/ChartLegendItems",
           "chart/ChartLegendLabel",
           "chart/ChartLegendSwatch",
+          "chart/ChartLine",
+          "chart/ChartLinearGradient",
+          "chart/ChartPie",
+          "chart/ChartPolarAngleAxis",
+          "chart/ChartPolarGrid",
+          "chart/ChartRadar",
+          "chart/ChartRadialBar",
           "chart/ChartRoot",
           "chart/ChartStyle",
           "chart/ChartSurface",
@@ -18941,6 +19801,8 @@
           "chart/ChartTooltipLabel",
           "chart/ChartTooltipName",
           "chart/ChartTooltipValue",
+          "chart/ChartXAxis",
+          "chart/ChartYAxis",
           "checkbox-group/CheckboxGroupRoot",
           "checkbox/CheckboxIndicator",
           "checkbox/CheckboxRoot",
@@ -19197,7 +20059,20 @@
             "LegendItem",
             "LegendSwatch",
             "LegendIcon",
-            "LegendLabel"
+            "LegendLabel",
+            "Bar",
+            "Line",
+            "Area",
+            "Pie",
+            "Radar",
+            "RadialBar",
+            "XAxis",
+            "YAxis",
+            "Grid",
+            "PolarGrid",
+            "PolarAngleAxis",
+            "Label",
+            "LinearGradient"
           ],
           "checkbox": [
             "Root",
@@ -19533,7 +20408,20 @@
             "ChartLegendItem",
             "ChartLegendSwatch",
             "ChartLegendIcon",
-            "ChartLegendLabel"
+            "ChartLegendLabel",
+            "ChartBar",
+            "ChartLine",
+            "ChartArea",
+            "ChartPie",
+            "ChartRadar",
+            "ChartRadialBar",
+            "ChartXAxis",
+            "ChartYAxis",
+            "ChartGrid",
+            "ChartPolarGrid",
+            "ChartPolarAngleAxis",
+            "ChartLabel",
+            "ChartLinearGradient"
           ],
           "checkbox": [
             "CheckboxRoot",
@@ -20080,6 +20968,16 @@
               "classification": "namespace"
             },
             {
+              "name": "ChartAreaProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartBarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartConfig",
               "kind": "type",
               "classification": "helper-type"
@@ -20100,7 +20998,22 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartFormat",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartIcon",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLabelProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -20135,7 +21048,42 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartLinearGradientProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartLineProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "ChartModule",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPieProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarAngleAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartPolarGridProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadarProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRadialBarProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -20151,6 +21099,11 @@
             },
             {
               "name": "ChartRootSourceProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartRootSpecProps",
               "kind": "type",
               "classification": "helper-type"
             },
@@ -20240,6 +21193,16 @@
               "classification": "helper-type"
             },
             {
+              "name": "ChartXAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
+              "name": "ChartYAxisProps",
+              "kind": "type",
+              "classification": "helper-type"
+            },
+            {
               "name": "NativeHostOptions",
               "kind": "type",
               "classification": "helper-type"
@@ -20263,6 +21226,26 @@
               "name": "Chart",
               "kind": "value",
               "classification": "namespace"
+            },
+            {
+              "name": "ChartArea",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartBar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLabel",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartLegend",
@@ -20295,9 +21278,44 @@
               "classification": "rendered-component"
             },
             {
+              "name": "ChartLine",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartLinearGradient",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPie",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarAngleAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartPolarGrid",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
               "name": "ChartPrimitive",
               "kind": "value",
               "classification": "helper"
+            },
+            {
+              "name": "ChartRadar",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartRadialBar",
+              "kind": "value",
+              "classification": "rendered-component"
             },
             {
               "name": "ChartRoot",
@@ -20356,6 +21374,16 @@
             },
             {
               "name": "ChartTooltipValue",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartXAxis",
+              "kind": "value",
+              "classification": "rendered-component"
+            },
+            {
+              "name": "ChartYAxis",
               "kind": "value",
               "classification": "rendered-component"
             },
@@ -22903,6 +23931,97 @@
               "runtimeHooks": [
                 "data-sw-chart-legend-label"
               ]
+            },
+            {
+              "name": "bar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-bar"
+              ]
+            },
+            {
+              "name": "line",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-line"
+              ]
+            },
+            {
+              "name": "area",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-area"
+              ]
+            },
+            {
+              "name": "pie",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-pie"
+              ]
+            },
+            {
+              "name": "radar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radar"
+              ]
+            },
+            {
+              "name": "radialBar",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-radial-bar"
+              ]
+            },
+            {
+              "name": "xAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-x-axis"
+              ]
+            },
+            {
+              "name": "yAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-y-axis"
+              ]
+            },
+            {
+              "name": "grid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-grid"
+              ]
+            },
+            {
+              "name": "polarGrid",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-grid"
+              ]
+            },
+            {
+              "name": "polarAngleAxis",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-polar-angle-axis"
+              ]
+            },
+            {
+              "name": "label",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-label"
+              ]
+            },
+            {
+              "name": "linearGradient",
+              "defaultElement": "template",
+              "runtimeHooks": [
+                "data-sw-chart-part-linear-gradient"
+              ]
             }
           ],
           "checkbox": [
@@ -24821,11 +25940,24 @@
           "carousel/CarouselPrevious.component",
           "carousel/index.ts",
           "carousel/variants.ts",
+          "chart/ChartArea.component",
+          "chart/ChartBar.component",
           "chart/ChartContainer.component",
+          "chart/ChartGrid.component",
+          "chart/ChartLabel.component",
           "chart/ChartLegend.component",
           "chart/ChartLegendContent.component",
+          "chart/ChartLine.component",
+          "chart/ChartLinearGradient.component",
+          "chart/ChartPie.component",
+          "chart/ChartPolarAngleAxis.component",
+          "chart/ChartPolarGrid.component",
+          "chart/ChartRadar.component",
+          "chart/ChartRadialBar.component",
           "chart/ChartTooltip.component",
           "chart/ChartTooltipContent.component",
+          "chart/ChartXAxis.component",
+          "chart/ChartYAxis.component",
           "chart/index.ts",
           "chart/variants.ts",
           "checkbox-group/CheckboxGroup.component",

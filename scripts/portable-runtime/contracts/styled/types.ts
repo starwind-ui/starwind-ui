@@ -78,6 +78,17 @@ export type StyledComponentContract = {
   nativeModel?: StyledNativeModelContract;
   primitiveAliases?: Record<string, string>;
   props?: ComponentPropsContract;
+  /**
+   * Static properties on the component function, as property name and code. Only the React writer
+   * prints them. A chart spec part carries its part kind, so the chart Root finds it in its children.
+   */
+  componentStatics?: Record<string, string>;
+  /**
+   * Component options, as option name and code. Only the Vue writer prints them, in
+   * `defineOptions`. A chart spec part carries its part kind, so the chart Root finds it in its
+   * slot.
+   */
+  componentOptions?: Record<string, string>;
   destructure?: DestructureContract;
   variables?: LocalVariableContract[];
   imports?: ImportContract[];

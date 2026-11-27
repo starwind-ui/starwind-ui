@@ -450,6 +450,39 @@ describe("React chart Primitive", () => {
     expect(barCount(element)).toBe(6);
   });
 
+  it("starts a chart module that arrives after an empty parts render", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const element = container();
+    const root = createRoot(element);
+    roots.push(root);
+    // While data loads, the chart has no parts, no chart module and no definition.
+    await act(async () =>
+      root.render(
+        <ChartPrimitive.Root<VisitorRow> id="late-module" data={[]} config={config}>
+          <ChartPrimitive.Surface />
+        </ChartPrimitive.Root>,
+      ),
+    );
+    await nextFrame();
+    expect(getChartController(chartRoot(element))).toBeFalsy();
+    await act(async () =>
+      root.render(
+        <ChartPrimitive.Root<VisitorRow>
+          id="late-module"
+          chart={visitorBars}
+          data={visitorData()}
+          config={config}
+        >
+          <ChartPrimitive.Surface />
+        </ChartPrimitive.Root>,
+      ),
+    );
+    await nextFrame();
+    expect(getChartController(chartRoot(element))).toBeTruthy();
+    expect(barCount(element)).toBe(6);
+    warn.mockRestore();
+  });
+
   it("keeps a toggle when the controller restarts", async () => {
     const element = container();
     const root = createRoot(element);

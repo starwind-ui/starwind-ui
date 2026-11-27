@@ -5,7 +5,6 @@ import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import semver from "semver";
 import { ensureAstroReactIntegration } from "./astro-react-integration.js";
-import { type ChartTokenSyncResult, syncChartTokens } from "./chart-tokens.js";
 import type {
   ComponentConfigFor,
   StarwindConfigFor,
@@ -43,6 +42,12 @@ import {
   type RegistryTarget,
   type StarwindRegistryFor,
 } from "./registry.js";
+import {
+  CHART_TOKENS,
+  SIDEBAR_TOKENS,
+  syncThemeTokens,
+  type TokenSyncResult,
+} from "./theme-tokens.js";
 
 type RuntimeInstallStatus = {
   name: string;
@@ -53,7 +58,9 @@ type RuntimeInstallStatus = {
 
 export type RuntimeInstallSummary = {
   /** Present when this install added the `chart` component. */
-  chartTokens?: ChartTokenSyncResult;
+  chartTokens?: TokenSyncResult;
+  /** Present when this install added the `sidebar` component. */
+  sidebarTokens?: TokenSyncResult;
   failed: RuntimeInstallStatus[];
   installed: RuntimeInstallStatus[];
   skipped: RuntimeInstallStatus[];
@@ -435,7 +442,11 @@ export async function installRuntimeComponents<TFramework extends CliFrameworkTa
   }
 
   if (summary.installed.some((component) => component.name === "chart")) {
-    summary.chartTokens = await syncChartTokens(options.config.tailwind.css);
+    summary.chartTokens = await syncThemeTokens(options.config.tailwind.css, CHART_TOKENS);
+  }
+
+  if (summary.installed.some((component) => component.name === "sidebar")) {
+    summary.sidebarTokens = await syncThemeTokens(options.config.tailwind.css, SIDEBAR_TOKENS);
   }
 
   if (summary.installed.length > 0 && options.writeConfig !== false) {

@@ -6,9 +6,10 @@ import type {
   DomChartDefinition,
 } from "@tanstack/charts";
 import { tooltip } from "@tanstack/charts/tooltip";
-
+import { sourceRow, valueText } from "./datum";
 import { configText, rememberTooltip } from "./presentation";
 import { snapAnchor, snapPortal } from "./snap";
+import { chartSpecAriaLabel, chartSpecHost, createChartSpecFactory } from "./spec";
 import type {
   ChartConfig,
   ChartContext,
@@ -79,12 +80,17 @@ export function createChartOptions<
   instance: ChartOptionsInstance<D, X, Y>,
 ): ChartHostOptions<D, X, Y> {
   if (chart && instance.definition) throw new TypeError("Supply one chart source.");
+  if (input.spec && (chart || instance.definition))
+    throw new TypeError(
+      "A chart spec cannot be combined with chart or definition. Use chart parts, a chart module or a native definition, not more than one.",
+    );
   if (instance.definition && input.visible !== undefined)
     throw new TypeError(
       "Static native definitions own their visibility. Use a chart factory to filter data.",
     );
   assertChartId(instance.id);
   const module = typeof chart === "object" ? chart : undefined;
+  const specChart = input.spec ? createChartSpecFactory(input.spec) : undefined;
   const keys = Object.keys(input.config);
   const visible = visibleKeys(input.config, input.visible);
   const format =
@@ -131,13 +137,13 @@ export function createChartOptions<
               content: (points: readonly ChartPoint<any, any, any>[]): ChartTooltipContent => {
                 const items = points.map((point) => {
                   const datum = point.datum as Record<string, unknown>;
-                  const name = String(datum[nameKey] ?? datum[labelKey] ?? "");
+                  const name = valueText(datum[nameKey] ?? datum[labelKey] ?? "");
                   return {
                     dataKey: name,
                     name,
                     value: datum[valueKey],
                     formattedValue: format(datum[valueKey], String(datum[nameKey] ?? "")),
-                    payload: point.datum,
+                    payload: sourceRow(point.datum),
                     point,
                     color: point.color,
                   };
@@ -145,7 +151,7 @@ export function createChartOptions<
                 const first = points[0]?.datum as Record<string, unknown> | undefined;
                 return rememberTooltip(
                   {
-                    title: String(first?.[labelKey] ?? ""),
+                    title: valueText(first?.[labelKey] ?? ""),
                     rows: items.map((item) => ({
                       label: context.label(item.dataKey),
                       value: item.formattedValue,
@@ -171,8 +177,9 @@ export function createChartOptions<
             } as DomChartDefinition<D, X, Y>)
           : instance.definition;
     } else {
-      if (!chart) throw new TypeError("Supply chart or a native definition.");
-      definition = typeof chart === "function" ? chart(context) : chart.create(context);
+      const source = specChart ?? chart;
+      if (!source) throw new TypeError("Supply chart parts, chart or a native definition.");
+      definition = typeof source === "function" ? source(context) : source.create(context);
     }
     return instance.tooltipDisabled ? { ...definition, tooltip: false } : definition;
   };
@@ -180,15 +187,27 @@ export function createChartOptions<
     {
       initialWidth: 720,
       height: 340,
-      ariaLabel: module?.ariaLabel ?? "Chart",
+      ariaLabel:
+        module?.ariaLabel ??
+        (input.spec ? chartSpecAriaLabel(input.spec, input.config) : undefined) ??
+        "Chart",
       ariaDescription:
         module?.ariaDescription ??
         "Use arrow keys to inspect values. Enter pins details. Escape dismisses. Exact values follow in a table.",
       definition: resolveDefinition(),
       idPrefix: instance.id,
     },
-    { ...module?.host, ...instance.host },
+    { ...specHost(input, instance.host), ...module?.host, ...instance.host },
   );
+}
+
+/** Spec chart host defaults. Host options that set a size replace them. */
+function specHost<D, X extends ChartValue, Y extends ChartValue>(
+  input: ChartInput<unknown>,
+  host: NativeHostOptions<D, X, Y> | undefined,
+): NativeHostOptions<D, X, Y> {
+  if (!input.spec || host?.height !== undefined || host?.aspectRatio !== undefined) return {};
+  return chartSpecHost(input.spec);
 }
 
 /** Merges native host options without rebuilding the engine definition. */

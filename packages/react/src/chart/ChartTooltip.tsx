@@ -10,22 +10,32 @@ import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-eff
 import {
   ChartTooltipBodyContext,
   createChartTooltipEntry,
+  useChartSpecOptions,
   useOptionalChartRootInternal,
 } from "./ChartRoot";
 
 export type ChartTooltipProps = {
   /** Tooltip body content. */
   children?: React.ReactNode;
+  /**
+   * Draws the hover band of a bar chart. `false` removes it. Line and area charts draw no hover
+   * rule. In a parts chart, the first Tooltip at chart level sets it, because that Tooltip supplies
+   * the tooltip body. When it leaves `cursor` unset, the band shows. A Tooltip inside a tooltip
+   * body sets nothing.
+   */
+  cursor?: boolean;
 };
 
 /**
- * Inside a chart root, the first Tooltip supplies the tooltip body. Removing it hands over to the
- * next one or to the default. Inside a tooltip body it renders its content in place. Elsewhere it
- * renders nothing.
+ * Inside a chart root, the first Tooltip supplies the tooltip body, unless a Surface `tooltip`
+ * replaces it. Inside a tooltip body it renders its content in place. Elsewhere it renders nothing.
+ * Removing it hands over to the next one or to the default.
  */
-function ChartTooltip({ children }: ChartTooltipProps) {
+function ChartTooltip({ children, cursor }: ChartTooltipProps) {
   const root = useOptionalChartRootInternal();
   const body = React.useContext(ChartTooltipBodyContext);
+  // Its chart-level options reach a parts chart. A Tooltip inside a tooltip body sets none.
+  useChartSpecOptions({ cursor }, !body);
   // One stable registration per part, so a parent re-render keeps its place in the order.
   const [entry] = React.useState(() => createChartTooltipEntry(children));
   useIsomorphicLayoutEffect(() => {

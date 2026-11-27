@@ -1,5 +1,4 @@
 import * as p from "@clack/prompts";
-import type { ChartTokenSyncResult } from "@/utils/chart-tokens.js";
 import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import {
   getConfigState,
@@ -42,6 +41,7 @@ import {
   resolveStarwindProRegistryImport,
 } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
+import type { TokenSyncResult } from "@/utils/theme-tokens.js";
 
 import { init } from "./init.js";
 import { migrate } from "./migrate.js";
@@ -446,7 +446,7 @@ export async function add(
     // ================================================================
     //                      Install components
     // ================================================================
-    let chartTokens: ChartTokenSyncResult | undefined;
+    const themeTokens: Array<{ name: string; result: TokenSyncResult }> = [];
     if (componentsToInstall.length > 0) {
       if (!runtimeConfig) {
         p.log.error(
@@ -491,7 +491,10 @@ export async function add(
           );
 
       if (runtimeResults.setupOutcome) return;
-      chartTokens = runtimeResults.chartTokens;
+      if (runtimeResults.chartTokens)
+        themeTokens.push({ name: "chart", result: runtimeResults.chartTokens });
+      if (runtimeResults.sidebarTokens)
+        themeTokens.push({ name: "sidebar", result: runtimeResults.sidebarTokens });
 
       for (const result of [
         ...runtimeResults.installed,
@@ -538,7 +541,7 @@ ${sortComponentPresentation(results.installed)
       );
     }
 
-    if (chartTokens) reportChartTokens(chartTokens);
+    for (const { name, result } of themeTokens) reportThemeTokens(name, result);
 
     // Show registry component results in the final summary
     if (registryResults) {
@@ -589,24 +592,25 @@ ${sortComponentPresentation(registryResults.installed)
   }
 }
 
-function reportChartTokens(result: ChartTokenSyncResult): void {
+function reportThemeTokens(name: string, result: TokenSyncResult): void {
+  const title = `${name[0]?.toUpperCase() ?? ""}${name.slice(1)} tokens`;
   if (result.status === "added") {
     p.log.success(
-      `${highlighter.success(`Added chart tokens to ${result.cssPath}:`)}
+      `${highlighter.success(`Added ${name} tokens to ${result.cssPath}:`)}
 ${result.added.map((addition) => `  ${addition.block}: ${addition.tokens.join(", ")}`).join("\n")}`,
     );
     return;
   }
 
   if (result.status === "unchanged") {
-    p.log.info(`Chart tokens are already in ${result.cssPath}.`);
+    p.log.info(`${title} are already in ${result.cssPath}.`);
     return;
   }
 
   p.log.warn(
-    `${highlighter.warn(`Could not add chart tokens to ${result.cssPath}:`)} ${result.error}\nAdd the missing tokens below to your CSS file by hand.`,
+    `${highlighter.warn(`Could not add ${name} tokens to ${result.cssPath}:`)} ${result.error}\nAdd the missing tokens below to your CSS file by hand.`,
   );
-  p.note(result.block.trimEnd(), "Chart tokens");
+  p.note(result.block.trimEnd(), title);
 }
 
 function assertV2ProAddRequest(

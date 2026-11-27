@@ -10,7 +10,15 @@ export {
   type CreateChartOptions,
   createChart,
   getChartController,
+  hasChartSpec,
 } from "./controller";
+export { datesToStrings } from "./datum";
+export {
+  type ChartFormat,
+  type ChartTickFormatter,
+  formatChartValue,
+  resolveTickFormatter,
+} from "./format";
 export { initCharts, registerChartModules, startCharts } from "./lifecycle";
 export {
   assertChartId,
@@ -52,6 +60,43 @@ export {
   wireConfig,
   wireHostOptions,
 } from "./serialize";
+export {
+  assertChartSpecWire,
+  buildChartSpec,
+  type ChartAreaPart,
+  type ChartBarCornerRadii,
+  type ChartBarPart,
+  type ChartCurveType,
+  type ChartDot,
+  type ChartDotStyle,
+  type ChartGradientCoordinate,
+  type ChartGradientStop,
+  type ChartGridPart,
+  type ChartGuidePart,
+  type ChartLabelPart,
+  type ChartLinearGradientPart,
+  type ChartLinePart,
+  type ChartMarkPart,
+  type ChartPart,
+  type ChartPiePart,
+  type ChartPolarAngleAxisPart,
+  type ChartPolarGridPart,
+  type ChartRadarPart,
+  type ChartRadialBarPart,
+  type ChartRadius,
+  type ChartSpec,
+  type ChartSpecOptions,
+  type ChartStackOffset,
+  type ChartXAxisPart,
+  type ChartYAxisPart,
+  chartLegendKeys,
+  chartSpecAriaLabel,
+  createChartSpecFactory,
+  isChartSpecComplete,
+  isSameChartSpec,
+  warnEmptyChart,
+  warnIncompleteChart,
+} from "./spec";
 export { chartStyle } from "./style";
 export type {
   ChartConfig,

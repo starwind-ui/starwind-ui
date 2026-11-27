@@ -206,9 +206,16 @@ function ${component.exportName}(props: ${component.exportName}Props<React.Eleme
 }
 ${componentBody}
 }
-
+${renderComponentStatics(component)}
 export default ${component.exportName};
 `;
+}
+
+/** Static properties that the contract sets on the component. */
+function renderComponentStatics(component: StyledOutputComponent): string {
+  const statics = Object.entries(component.componentStatics ?? {});
+  if (!statics.length) return "";
+  return `\n${statics.map(([name, code]) => `${component.exportName}.${name} = ${code};`).join("\n")}\n`;
 }
 
 function projectForwardedRef(component: StyledOutputComponent): StyledOutputComponent {

@@ -11,7 +11,10 @@ import { useChartTooltipRow } from "./ChartTooltipItems";
 
 export type ChartTooltipIconProps = Omit<React.HTMLAttributes<HTMLSpanElement>, "children">;
 
-/** The config icon of a row. A row without an icon renders nothing. */
+/**
+ * The config icon of a row. Keep TooltipIndicator in the row too: a row with an icon shows the icon
+ * in place of the indicator, and a row without one shows the indicator.
+ */
 const ChartTooltipIcon = React.forwardRef<HTMLSpanElement, ChartTooltipIconProps>(
   function ChartTooltipIcon({ style, ...props }, forwardedRef) {
     const context = useChartTooltipRow();

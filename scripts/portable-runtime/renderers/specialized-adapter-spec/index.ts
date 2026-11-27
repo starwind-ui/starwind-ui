@@ -16,6 +16,8 @@ export {
 } from "./carousel-specialized-adapter-spec.js";
 export type {
   ChartSpecializedAdapterSpec,
+  ChartSpecPartFacts,
+  ChartSpecPartName,
   ChartSurfaceComponentProjection,
   ChartSurfaceFacts,
   ChartSurfaceIndexProjection,
@@ -26,6 +28,7 @@ export type {
 export {
   buildChartAdapterOutputModel,
   buildChartSpecializedAdapterSpec,
+  CHART_SPEC_PART_NAMES,
   CHART_SURFACE_PART_NAMES,
   validateChartSpecializedAdapterSpec,
 } from "./chart-specialized-adapter-spec.js";

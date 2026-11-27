@@ -757,3 +757,59 @@ describe("unpublished styled version rollback", () => {
     expect(validateStyledVersionPullRequest({ base, baseParent, head }).mode).toBe("intent");
   });
 });
+
+describe("styled components that have not shipped", () => {
+  function changedAccordion() {
+    const base = snapshot();
+    const head = structuredClone(base);
+    head.registry.components[0].targets!.astro!.files[0].content += "changed";
+    head.packageReleases = { "chart.md": { starwind: "minor" } };
+    return { base, head };
+  }
+
+  it("needs no intent for a component that the last release did not ship", () => {
+    const { base, head } = changedAccordion();
+    const result = validateStyledVersionPullRequest({
+      base,
+      head,
+      releasedComponents: new Set(["progress"]),
+    });
+    expect(result.changedComponents).toEqual(["accordion"]);
+  });
+
+  it("still needs an intent for a released component", () => {
+    const { base, head } = changedAccordion();
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base,
+        head,
+        releasedComponents: new Set(["accordion", "progress"]),
+      }),
+    ).toThrow(/Missing styled version intent/);
+  });
+
+  it("still needs an intent when the release history is unknown", () => {
+    const { base, head } = changedAccordion();
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(
+      /Missing styled version intent/,
+    );
+  });
+
+  it("refuses an intent that would move the first release past the initial version", () => {
+    const { base, head } = changedAccordion();
+    head.fragments = {
+      "accordion.json": parseStyledVersionIntent(
+        { components: { accordion: "patch" } },
+        "accordion.json",
+        new Set(["accordion", "progress"]),
+      ),
+    };
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base,
+        head,
+        releasedComponents: new Set(["progress"]),
+      }),
+    ).toThrow(/Unreleased styled component\(s\) keep their initial version/);
+  });
+});

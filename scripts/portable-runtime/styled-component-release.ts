@@ -22,9 +22,11 @@ import {
   parseChangesetReleaseFacts,
   type ReleaseDecision,
   type ReleaseImpact,
+  readReleasedManifestKeys,
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
+  unreleasedComponents,
   type VersionRollback,
   validateVersionRollback,
 } from "./release-intent-utils.js";
@@ -65,6 +67,8 @@ type ValidatePullRequestOptions = {
   /** First parent of `base`; enables recognition of an unpublished version rollback. */
   baseParent?: StyledReleaseSnapshot;
   head: StyledReleaseSnapshot;
+  /** Components in the manifest of the most recent release. Unknown keeps every intent required. */
+  releasedComponents?: Set<string>;
 };
 
 type VersionStyledComponentsOptions = {
@@ -307,8 +311,20 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
     head: options.head.manifest,
   });
   assertFeatureSourceVersions(options.base.manifest, options.head.manifest, existingVersionChanges);
+  const unreleased = unreleasedComponents(
+    Object.keys(options.base.manifest.components),
+    options.releasedComponents,
+  );
+  const unreleasedIntents = [...addedIntentComponents].filter((component) =>
+    unreleased.has(component),
+  );
+  if (unreleasedIntents.length > 0) {
+    throw new Error(
+      `Unreleased styled component(s) keep their initial version and take no version intent: ${unreleasedIntents.join(", ")}.`,
+    );
+  }
   const missingIntents = changedComponents.filter(
-    (component) => addedDecisions[component]?.impact !== "source",
+    (component) => !unreleased.has(component) && addedDecisions[component]?.impact !== "source",
   );
   const behaviorComponents = [...addedIntentComponents].filter(
     (component) => addedDecisions[component].impact === "behavior",
@@ -416,7 +432,13 @@ export async function checkStyledComponents(
   if (!options.baseRef) return { mode: "state" };
   const base = await readGitSnapshot(repoRoot, options.baseRef);
   const baseParent = await readGitSnapshot(repoRoot, `${options.baseRef}^1`).catch(() => undefined);
-  return validateStyledVersionPullRequest({ base, baseParent, head });
+  const releasedComponents = await readReleasedManifestKeys({
+    repoRoot,
+    ref: options.baseRef,
+    manifestPath: STYLED_VERSION_MANIFEST,
+    key: "components",
+  });
+  return validateStyledVersionPullRequest({ base, baseParent, head, releasedComponents });
 }
 
 async function readWorkingSnapshot(repoRoot: string): Promise<StyledReleaseSnapshot> {

@@ -533,6 +533,46 @@ describe.sequential("runtime component installs", () => {
       await expect(readFile(cssPath, "utf-8")).resolves.toBe(css);
     });
 
+    it("adds missing sidebar tokens after installing sidebar", async () => {
+      const chart = chartRegistry.components.at(-1)!;
+      const sidebarComponent = {
+        ...chart,
+        name: "sidebar",
+        targets: {
+          react: {
+            ...chart.targets!.react!,
+            files: [
+              {
+                path: "src/components/starwind/sidebar/index.tsx",
+                content: "export function Sidebar() { return null; }\n",
+              },
+            ],
+          },
+        },
+      };
+      mockLoadRegistry.mockResolvedValue({
+        ...chartRegistry,
+        components: [...registryFixture.components, sidebarComponent],
+      });
+      await writeFile(cssPath, legacyCss, "utf-8");
+
+      const result = await installRuntimeComponents(["sidebar"], {
+        config: runtimeConfig,
+        packageManager: "pnpm",
+        skipPrompts: true,
+      });
+
+      expect(result.installed).toEqual([
+        { name: "sidebar", status: "installed", version: "1.0.0" },
+      ]);
+      expect(result.chartTokens).toBeUndefined();
+      expect(result.sidebarTokens).toMatchObject({ status: "added", cssPath });
+      const css = await readFile(cssPath, "utf-8");
+      expect(css).toContain("--sidebar-background: var(--color-neutral-50);");
+      expect(css).toContain("--color-sidebar: var(--sidebar-background);");
+      expect(css).not.toContain("--chart-1");
+    });
+
     it("keeps the Next Pages style import and the chart tokens in the same stylesheet", async () => {
       await writeFile(
         "package.json",

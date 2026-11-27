@@ -36,6 +36,18 @@ export function vueChartOperations({ visibility: v }: ChartSurfaceFacts): ChartO
     tooltips: "tooltips.value",
     firstTooltip: "tooltips.value[0] ?? null",
     setTooltips: (next) => `tooltips.value = ${next("tooltips.value")};`,
+    specCell: "const specParts = shallowRef<readonly ChartSpecEntry[]>(EMPTY);",
+    specParts: "specParts.value",
+    setSpecParts: (next) => `specParts.value = ${next("specParts.value")};`,
+    ariaLabel: "props.ariaLabel",
+    // Parts register in setup. On the server the Surface draws after the sibling parts set up.
+    seed: "spec.value",
+    // Parts register in setup, before the Surface starts after mount.
+    settled: "true",
+    // A part registers in setup, after an earlier legend renders. Until the Root mounts, the legend
+    // reads the mark parts among the slot vnodes with the parts that registered so far, on the
+    // server and in hydration alike.
+    legendSpec: "legendMounted.value ? spec.value : mergeChartLegendSeed(legendSeed, spec.value)",
     // A declared emit is not a prop, so the guard reads the listeners from the vnode in every
     // compiled spelling.
     listenerDefined: "hasVisibilityListener(instance?.vnode.props)",

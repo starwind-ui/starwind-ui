@@ -1,0 +1,9 @@
+---
+import ChartPrimitive from "@starwind-ui/astro/chart";
+
+type Props = import("@starwind-ui/astro/chart").ChartXAxisProps;
+
+const { ...rest } = Astro.props;
+---
+
+<ChartPrimitive.XAxis {...rest} />

@@ -1,4 +1,5 @@
-import { type ChartController, chartHosts, createChart } from "./controller";
+import { type ChartController, chartHosts, createChart, hasChartSpec } from "./controller";
+import { isDevelopment } from "./datum";
 import { getChartModule, onChartModule, registerChartModule, sharedChartState } from "./registry";
 import type { ChartModule } from "./types";
 
@@ -8,17 +9,9 @@ const WARNING_DELAY = 1000;
 const flags = () => sharedChartState("lifecycle", () => new Set<string>());
 const warned = () => sharedChartState("warned", () => new WeakSet<HTMLElement>());
 // Controllers that the page lifecycle started. The lifecycle destroys only these, so controllers
-// that a framework adapter or Raw HTML code created keep running on pagehide and Astro swaps.
+// that a framework adapter or Raw HTML code created keep running through Astro swaps.
 const started = () =>
   sharedChartState("lifecycle-controllers", () => new Set<ChartController<any, any, any, any>>());
-
-function isDevelopment(): boolean {
-  try {
-    return (import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV === true;
-  } catch {
-    return false;
-  }
-}
 
 function destroyStarted(test: (controller: ChartController<any, any, any, any>) => boolean) {
   const hosts = chartHosts();
@@ -56,12 +49,17 @@ function chartRoots(scope: ParentNode): HTMLElement[] {
   return roots;
 }
 
-/** Starts every interactive chart root in `scope` whose module is registered. */
+/** True when the lifecycle can start a root: its module is registered or it carries a spec. */
+function hasSource(root: HTMLElement): boolean {
+  return !!getChartModule(root.dataset.chartModule) || hasChartSpec(root);
+}
+
+/** Starts every interactive chart root in `scope` whose module is registered or that has a spec. */
 export function initCharts(scope: ParentNode = document): void {
   destroyDisconnected();
   const hosts = chartHosts();
   for (const root of chartRoots(scope)) {
-    if (hosts.has(root) || !getChartModule(root.dataset.chartModule)) continue;
+    if (hosts.has(root) || !hasSource(root)) continue;
     try {
       started().add(createChart(root));
     } catch (error) {
@@ -77,8 +75,7 @@ function scheduleMissingModuleWarning(): void {
     setTimeout(() => {
       const hosts = chartHosts();
       for (const root of document.querySelectorAll<HTMLElement>(ROOT_SELECTOR)) {
-        if (hosts.has(root) || warned().has(root) || getChartModule(root.dataset.chartModule))
-          continue;
+        if (hosts.has(root) || warned().has(root) || hasSource(root)) continue;
         warned().add(root);
         // biome-ignore lint/suspicious/noConsole: the development warning names the import fix.
         console.warn(
@@ -94,8 +91,9 @@ function scheduleMissingModuleWarning(): void {
 /**
  * Starts Astro and Raw HTML charts on the page lifecycle. Charts start on load,
  * `astro:after-swap`, `starwind:init`, `pageshow` and when their module registers, in either load
- * order. `astro:before-swap` and `pagehide` destroy the hosts that the lifecycle started. Any host
- * whose root leaves the document is destroyed. Calling it again only starts new roots.
+ * order. `astro:before-swap` destroys the hosts that the lifecycle started. Any host whose root
+ * leaves the document is destroyed. Charts keep running through the back-forward cache, so a page
+ * that comes back keeps its drawn chart and its size. Calling it again only starts new roots.
  */
 export function startCharts(): void {
   if (typeof document === "undefined") return;
@@ -105,7 +103,6 @@ export function startCharts(): void {
     document.addEventListener("astro:before-swap", destroyAll);
     document.addEventListener("astro:after-swap", () => initCharts());
     document.addEventListener("starwind:init", (event) => initCharts(initScope(event)));
-    window.addEventListener("pagehide", destroyAll);
     window.addEventListener("pageshow", () => initCharts());
     onChartModule(() => initCharts());
     new MutationObserver(() => {

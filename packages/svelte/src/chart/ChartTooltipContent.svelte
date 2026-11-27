@@ -3,7 +3,7 @@
   import { tooltipLayout } from "@starwind-ui/runtime/chart";
   import { setChartTooltipContent, useChartTooltipBody, useChartRootInternal, type ChartView, type ChartTooltipContentState, type ChartTooltipContentProps } from "./ChartContext.js";
 
-  // The tooltip body content. It renders inside a tooltip body only, and gives its parts the
+  // The tooltip body content. It renders inside a tooltip body only. It gives its parts the
   // presentation rows through context.
   let {
     indicator,

@@ -5,12 +5,23 @@
 
 "use client";
 
+import ChartArea from "./ChartArea";
+import ChartBar from "./ChartBar";
+import ChartGrid from "./ChartGrid";
+import ChartLabel from "./ChartLabel";
 import ChartLegend from "./ChartLegend";
 import ChartLegendIcon from "./ChartLegendIcon";
 import ChartLegendItem from "./ChartLegendItem";
 import ChartLegendItems from "./ChartLegendItems";
 import ChartLegendLabel from "./ChartLegendLabel";
 import ChartLegendSwatch from "./ChartLegendSwatch";
+import ChartLine from "./ChartLine";
+import ChartLinearGradient from "./ChartLinearGradient";
+import ChartPie from "./ChartPie";
+import ChartPolarAngleAxis from "./ChartPolarAngleAxis";
+import ChartPolarGrid from "./ChartPolarGrid";
+import ChartRadar from "./ChartRadar";
+import ChartRadialBar from "./ChartRadialBar";
 import ChartRoot, { useChartRoot, useChartTooltipBody } from "./ChartRoot";
 import ChartStyle from "./ChartStyle";
 import ChartSurface from "./ChartSurface";
@@ -23,6 +34,8 @@ import ChartTooltipItems from "./ChartTooltipItems";
 import ChartTooltipLabel from "./ChartTooltipLabel";
 import ChartTooltipName from "./ChartTooltipName";
 import ChartTooltipValue from "./ChartTooltipValue";
+import ChartXAxis from "./ChartXAxis";
+import ChartYAxis from "./ChartYAxis";
 
 const Chart = {
   Root: ChartRoot,
@@ -43,17 +56,41 @@ const Chart = {
   LegendSwatch: ChartLegendSwatch,
   LegendIcon: ChartLegendIcon,
   LegendLabel: ChartLegendLabel,
+  Bar: ChartBar,
+  Line: ChartLine,
+  Area: ChartArea,
+  Pie: ChartPie,
+  Radar: ChartRadar,
+  RadialBar: ChartRadialBar,
+  XAxis: ChartXAxis,
+  YAxis: ChartYAxis,
+  Grid: ChartGrid,
+  PolarGrid: ChartPolarGrid,
+  PolarAngleAxis: ChartPolarAngleAxis,
+  Label: ChartLabel,
+  LinearGradient: ChartLinearGradient,
 };
 
 export {
   Chart,
   Chart as ChartPrimitive,
+  ChartArea,
+  ChartBar,
+  ChartGrid,
+  ChartLabel,
   ChartLegend,
   ChartLegendIcon,
   ChartLegendItem,
   ChartLegendItems,
   ChartLegendLabel,
   ChartLegendSwatch,
+  ChartLine,
+  ChartLinearGradient,
+  ChartPie,
+  ChartPolarAngleAxis,
+  ChartPolarGrid,
+  ChartRadar,
+  ChartRadialBar,
   ChartRoot,
   ChartStyle,
   ChartSurface,
@@ -66,6 +103,8 @@ export {
   ChartTooltipLabel,
   ChartTooltipName,
   ChartTooltipValue,
+  ChartXAxis,
+  ChartYAxis,
   useChartRoot,
   useChartTooltipBody,
 };
@@ -75,6 +114,7 @@ export default Chart;
 export type {
   ChartContext,
   ChartFactory,
+  ChartFormat,
   ChartIcon,
   ChartModule,
   ChartSource,
@@ -84,18 +124,30 @@ export type {
   TooltipView,
 } from "@starwind-ui/runtime/chart";
 export { defineChartModule, isChartIcon, tooltipView } from "@starwind-ui/runtime/chart";
+export type { ChartAreaProps } from "./ChartArea";
+export type { ChartBarProps } from "./ChartBar";
+export type { ChartGridProps } from "./ChartGrid";
+export type { ChartLabelProps } from "./ChartLabel";
 export type { ChartLegendProps } from "./ChartLegend";
 export type { ChartLegendIconProps } from "./ChartLegendIcon";
 export type { ChartLegendItemProps } from "./ChartLegendItem";
 export type { ChartLegendItemsProps } from "./ChartLegendItems";
 export type { ChartLegendLabelProps } from "./ChartLegendLabel";
 export type { ChartLegendSwatchProps } from "./ChartLegendSwatch";
+export type { ChartLineProps } from "./ChartLine";
+export type { ChartLinearGradientProps } from "./ChartLinearGradient";
+export type { ChartPieProps } from "./ChartPie";
+export type { ChartPolarAngleAxisProps } from "./ChartPolarAngleAxis";
+export type { ChartPolarGridProps } from "./ChartPolarGrid";
+export type { ChartRadarProps } from "./ChartRadar";
+export type { ChartRadialBarProps } from "./ChartRadialBar";
 export type {
   ChartConfig,
   ChartDefinition,
   ChartRootDefinitionProps,
   ChartRootProps,
   ChartRootSourceProps,
+  ChartRootSpecProps,
   ChartRootState,
   ChartTooltipBody,
   ChartValue,
@@ -112,3 +164,5 @@ export type { ChartTooltipItemsProps } from "./ChartTooltipItems";
 export type { ChartTooltipLabelProps } from "./ChartTooltipLabel";
 export type { ChartTooltipNameProps } from "./ChartTooltipName";
 export type { ChartTooltipValueProps } from "./ChartTooltipValue";
+export type { ChartXAxisProps } from "./ChartXAxis";
+export type { ChartYAxisProps } from "./ChartYAxis";

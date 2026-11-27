@@ -1,3 +1,4 @@
+import { CHART_MARK_KINDS } from "../../../../../packages/runtime/src/components/chart/part-defaults.js";
 import {
   chartDefinitionGuard,
   chartLegendToggle,
@@ -6,6 +7,8 @@ import {
   chartRootInputs,
   chartRootState,
   chartRootStateValue,
+  chartSpecRegistry,
+  chartSpecSurfaceStyle,
   chartSurfaceHelpers,
   chartSurfaceLifecycle,
   chartTooltipAccessibility,
@@ -17,6 +20,7 @@ import {
   chartVisibleRequests,
 } from "../../shared-recipes/chart/recipe.js";
 import {
+  type ChartSpecPartName,
   type ChartSurfaceComponentProjection,
   type ChartSurfaceFacts,
   type ChartSurfaceIndexProjection,
@@ -24,14 +28,25 @@ import {
   type ChartSurfacePropFacts,
   type ChartTypeWords,
   chartComment,
+  chartLegendKeyMessage,
   chartNames,
+  chartOutsideRootMessage,
   chartPartProps,
   chartProp,
+  chartPropDefault,
   chartPropType,
   chartPublicTypes,
   chartSlot,
+  chartSpecOptions,
+  chartSpecPartDoc,
+  chartSpecPartFiles,
+  chartSpecPartProps,
+  printChartSpecOptionFields,
+  printChartSpecPartReader,
+  printChartSpecPartTypes,
 } from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
 import type {
+  AdapterComponentFile,
   AdapterFamilyHelperProjection,
   AdapterHelperFile,
   AdapterOutputModel,
@@ -48,8 +63,16 @@ export type VueChartSurfaceComponentProjection = ChartSurfaceComponentProjection
 export type VueChartSurfaceIndexProjection = ChartSurfaceIndexProjection;
 export type VueChartContextProjection = { facts: ChartSurfaceFacts; kind: "vue-chart-context" };
 
+/** A chart spec part. It registers its props with the Root and renders nothing. */
+type VueChartSpecPartProjection = {
+  facts: ChartSurfaceFacts;
+  kind: "vue-chart-spec-part";
+  part: ChartSpecPartName;
+};
+
 export function isVueChartSurfaceProjection(family: unknown): boolean {
-  return (family as { kind?: string } | undefined)?.kind === "chart-surface";
+  const kind = (family as { kind?: string } | undefined)?.kind;
+  return kind === "chart-surface" || kind === "vue-chart-spec-part";
 }
 
 export function isVueChartContextProjection(family: unknown): family is VueChartContextProjection {
@@ -59,7 +82,9 @@ export function isVueChartContextProjection(family: unknown): family is VueChart
 /** Adds the shared chart context module before the chart index. */
 export function projectVueChartSurfaceOutputModel(model: AdapterOutputModel): AdapterOutputModel {
   const index = model.files.find(
-    (file) => file.kind === "index" && isVueChartSurfaceProjection(file.family),
+    (file) =>
+      file.kind === "index" &&
+      (file.family as { kind?: string } | undefined)?.kind === "chart-surface",
   );
   if (!index || index.kind !== "index") return model;
   const facts = (index.family as unknown as ChartSurfaceIndexProjection).facts;
@@ -73,15 +98,24 @@ export function projectVueChartSurfaceOutputModel(model: AdapterOutputModel): Ad
     path: `${directory}/${names(facts).context}.ts`,
     target: "vue",
   };
+  const template = model.files.find(
+    (file): file is AdapterComponentFile =>
+      file.kind === "component" &&
+      (file.component.family as { kind?: string } | undefined)?.kind === "chart-surface",
+  );
+  if (!template) throw new Error("The Vue chart output needs a chart part file.");
+  const specParts = chartSpecPartFiles(facts, template, directory, "vue-chart-spec-part");
   const files = [...model.files];
-  files.splice(files.indexOf(index), 0, context);
+  files.splice(files.indexOf(index), 0, ...specParts, context);
   return { files };
 }
 
-export function printVueChartSurfaceComponent({
-  facts,
-  part,
-}: VueChartSurfaceComponentProjection): string {
+export function printVueChartSurfaceComponent(
+  projection: VueChartSurfaceComponentProjection | VueChartSpecPartProjection,
+): string {
+  if (projection.kind === "vue-chart-spec-part")
+    return printSpecPart(projection.facts, projection.part);
+  const { facts, part } = projection;
   const code = printPart(facts, part);
   // The Root and Surface expose their elements themselves. Other parts that forward a ref expose
   // the element they render, as ADR 0011 asks of a public component ref.
@@ -203,11 +237,13 @@ function runtimeProp(prop: ChartSurfacePropFacts): string {
         ? "String"
         : prop.type.startsWith('"')
           ? `String as PropType<${type}>`
-          : prop.type.startsWith("(")
-            ? `Function as PropType<${type}>`
-            : prop.type === "ChartClass"
-              ? "null"
-              : `null as unknown as PropType<${type}>`;
+          : prop.type.startsWith("((") && prop.type.endsWith("| ChartFormat")
+            ? `[Function, Object] as PropType<${type}>`
+            : prop.type.startsWith("(")
+              ? `Function as PropType<${type}>`
+              : prop.type === "ChartClass"
+                ? "null"
+                : `null as unknown as PropType<${type}>`;
   return `${prop.name}: { type: ${option}, default: ${prop.defaultValue ?? "undefined"} },`;
 }
 
@@ -258,7 +294,11 @@ export function printVueChartContext(facts: ChartSurfaceFacts): string {
   type ChartController,
   type ChartInput,
   type ChartModule,
+  type ChartPart,
   type ChartSource,
+  type ChartSpec,
+  type ChartSpecOptions,
+  type ChartTickFormatter,
   type ChartToggleOptions,
   type ChartVisibleChangeDetails,
   type CreateChartOptions,
@@ -278,12 +318,15 @@ import {
   type VNodeChild,
   Comment,
   Fragment,
+  camelize,
   defineComponent,
   h,
   inject,
   isVNode,
+  onBeforeUnmount,
   provide,
   toRef,
+  watch,
 } from "vue";
 
 /** A value type that a chart axis accepts. */
@@ -325,6 +368,9 @@ type ${n.root}CommonProps<D, X extends ChartValue, Y extends ChartValue> = {
   host?: NativeHostOptions<D, X, Y>;
   /** Sets the native \`definition.tooltip\` to false. */
   disableTooltip?: boolean;
+${printChartSpecOptionFields(facts, "root")}
+  /** A parts chart takes its accessible name from it. Other charts keep it on the root element. */
+  "aria-label"?: string;
 };
 
 /** A chart module or factory. It follows the visibility model. */
@@ -376,16 +422,34 @@ export type ${n.root}DefinitionProps<
 };
 
 /**
- * Props of ${d}.Root. Use \`chart\` (a chart module or factory) or \`definition\` (a static native
- * definition). A definition owns its visibility, so it rejects \`v-model:${v.controlledProp}\`,
- * \`${v.defaultProp}\` and \`${v.callbackProp}\`.
+ * Chart parts in the default slot, such as a bar and an x axis, describe the chart. It follows the
+ * visibility model, and \`aria-label\` names the chart.
+ */
+export type ${n.root}SpecProps<
+  T = unknown,
+  D = unknown,
+  X extends ChartValue = ChartValue,
+  Y extends ChartValue = ChartValue,
+> = Omit<${n.root}SourceProps<T, D, X, Y>, "chart"> & {
+  chart?: never;
+};
+
+/**
+ * Props of ${d}.Root. Use chart parts in the default slot, \`chart\` (a chart module or factory) or
+ * \`definition\` (a static native definition). A definition owns its visibility, so it rejects
+ * \`v-model:${v.controlledProp}\`, \`${v.defaultProp}\` and \`${v.callbackProp}\`.
  */
 export type ${n.root}Props<
   T = unknown,
   D = unknown,
   X extends ChartValue = ChartValue,
   Y extends ChartValue = ChartValue,
-> = ${n.root}SourceProps<T, D, X, Y> | ${n.root}DefinitionProps<T, D, X, Y>;
+> =
+  | ${n.root}SourceProps<T, D, X, Y>
+  | ${n.root}DefinitionProps<T, D, X, Y>
+  | ${n.root}SpecProps<T, D, X, Y>;
+
+${printChartSpecPartTypes(facts, "vue")}
 
 /** One Tooltip registration. The surface renders the first one. */
 export interface ${n.entry} {
@@ -435,7 +499,7 @@ export const ${n.keyKey}: InjectionKey<ComputedRef<string>> = Symbol("starwind-c
 /** The public chart state: config keys, visible keys and visibility requests. */
 export function ${n.useRoot}(): ${n.state} {
   const state = inject(${n.rootKey}, null);
-  if (!state) throw new Error("${d} parts must be rendered inside ${d}.Root.");
+  if (!state) throw new Error(${JSON.stringify(chartOutsideRootMessage(facts))});
   return state;
 }
 
@@ -445,7 +509,7 @@ export function ${n.useOptionalInternalRoot}(): ${n.internalState} | null {
 
 export function ${n.useInternalRoot}(): ${n.internalState} {
   const state = inject(${n.internalKey}, null);
-  if (!state) throw new Error("${d} parts must be rendered inside ${d}.Root.");
+  if (!state) throw new Error(${JSON.stringify(chartOutsideRootMessage(facts))});
   return state;
 }
 
@@ -463,11 +527,99 @@ export function ${n.useRow}(): ComputedRef<${d}TooltipRowState> | null {
 }
 
 export function ${n.useLegend}(): ${d}LegendState {
-  return inject(${n.legendKey}, null)?.value ?? { hideIcon: false };
+  return inject(${n.legendKey}, null)?.value ?? { hideIcon: ${chartPropDefault(facts, "legend", "hideIcon")} };
 }
 
 export function ${n.useKey}(): ComputedRef<string> | null {
   return inject(${n.keyKey}, null);
+}
+
+${printChartSpecPartReader(facts, "vue")}
+
+/** The mark part kinds, from the Runtime list. */
+const LEGEND_MARKS = new Set<string>(${JSON.stringify(CHART_MARK_KINDS)});
+
+/**
+ * The mark parts among a Root's slot vnodes, in source order, through arrays and fragments, or
+ * \`undefined\` when there is none. A legend before a mark part renders before the part registers,
+ * so the first legend lists their keys. It keeps only the props that the legend reads. A part inside
+ * another component is not found.
+ */
+export function collectChartLegendSeed(nodes: unknown): ChartSpec | undefined {
+  const parts: ChartPart[] = [];
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) node.forEach(walk);
+    else if (!isVNode(node)) return;
+    else if (node.type === Fragment) walk(node.children);
+    else {
+      const kind = (node.type as { chartSpecPart?: ChartPart["kind"] } | null)?.chartSpecPart;
+      if (!kind || !LEGEND_MARKS.has(kind)) return;
+      const part: Record<string, unknown> = { kind };
+      // A template can write a prop name in kebab case.
+      for (const [key, value] of Object.entries(node.props ?? {})) {
+        const name = camelize(key);
+        if (name === "dataKey" || name === "nameKey") part[name] = value;
+      }
+      parts.push(part as unknown as ChartPart);
+    }
+  };
+  walk(nodes);
+  return parts.length ? { parts } : undefined;
+}
+
+/**
+ * The spec whose keys a legend lists before the Root mounts: the parts that registered so far and
+ * the mark parts of the slot seed together. A part inside another component is not in the seed, but
+ * it registers before a later legend renders, on the server and in hydration alike. The legend
+ * lists keys in config order, so the order of the parts does not matter.
+ */
+export function mergeChartLegendSeed(
+  seed: ChartSpec | undefined,
+  live: ChartSpec | undefined,
+): ChartSpec | undefined {
+  if (!seed) return live;
+  if (!live) return seed;
+  return { ...live, parts: [...live.parts, ...seed.parts] };
+}
+
+/**
+ * Registers one chart spec part with the Root, in source order, and removes it on unmount. It
+ * registers in setup, so a server render knows the part before the Surface draws. A prop change
+ * updates the part in place. A function prop becomes a stable delegate that calls the current
+ * prop. A function with a new identity draws the chart again, so a formatter that reads new state
+ * shows its new text.
+ */
+export function use${d}SpecPart(kind: ChartPart["kind"], props: Record<string, unknown>): void {
+  const root = ${n.useOptionalInternalRoot}();
+  if (!root) return;
+  assertChartSpecPartRoot(root.partsMode);
+  const delegates = new Map<string, (...args: any[]) => unknown>();
+  const delegate = (name: string) => {
+    let call = delegates.get(name);
+    if (!call) {
+      call = (...args: any[]) => (readChartSpecProp(props, name) as (...args: any[]) => unknown)(...args);
+      delegates.set(name, call);
+    }
+    return call;
+  };
+  const read = () => readChartSpecPart(kind, props, delegate);
+  const registration = root.registerSpecPart(read(), readChartSpecFunctions(kind, props));
+  watch(read, (part) => registration.update(part, readChartSpecFunctions(kind, props)));
+  onBeforeUnmount(() => registration.remove());
+}
+
+/**
+ * Registers the chart-level options of a part, such as the Tooltip \`cursor\`, with a parts chart
+ * Root. It registers in setup, as a spec part does, so the chart starts with them. A prop change
+ * updates the options in place.
+ */
+export function use${d}SpecOptions(read: () => ChartSpecOptions): void {
+  const root = ${n.useOptionalInternalRoot}();
+  // A chart module ignores the options, and a later switch to parts keeps them.
+  if (!root) return;
+  const registration = root.registerSpecOptions(read());
+  watch(read, (options) => registration.update(options));
+  onBeforeUnmount(() => registration.remove());
 }
 
 /** Renders a config label, heading or formatter result: text, a VNode, a render function or a component. */
@@ -550,11 +702,17 @@ function printRoot(facts: ChartSurfaceFacts): string {
 import {
   type ChartController,
   type ChartInput,
+  type ChartPart,
   type ChartSource,
+  type ChartSpec,
+  type ChartSpecOptions,
   type ChartToggleOptions,
   type ChartVisibleChangeDetails,
   type NativeHostOptions,
+  buildChartSpec,
+  ${h.legendKeys},
   ${h.configText},
+  isSameChartSpec,
   ${h.toId},
   ${h.visibleKeys},
 } from "${facts.runtime.importSource}";
@@ -566,6 +724,7 @@ import {
   getCurrentInstance,
   h,
   mergeProps,
+  onMounted,
   provide,
   ref,
   shallowRef,
@@ -576,6 +735,9 @@ import {
 ${contextImport(facts, [
   "type ChartConfig",
   "type ChartDefinition",
+  "type ChartSpecEntry",
+  "collectChartLegendSeed",
+  "mergeChartLegendSeed",
   `type ${n.entry}`,
   `type ${n.internalState}`,
   `type ${n.state}`,
@@ -619,6 +781,9 @@ export default defineComponent({
     theme: { type: Object as PropType<ChartInput["theme"]>, default: undefined },
     host: { type: Object as PropType<NativeHostOptions<any, any, any>>, default: undefined },
     disableTooltip: { type: Boolean, default: false },
+${vueOptionProps(facts, "root", "    ")}
+    /** A parts chart takes its accessible name from it. Other charts keep it on the root element. */
+    ariaLabel: { type: String, default: undefined },
     ${v.controlledProp}: { type: Array as PropType<readonly string[]>, default: undefined },
     ${v.defaultProp}: { type: Array as PropType<readonly string[]>, default: undefined },
   },
@@ -637,6 +802,7 @@ export default defineComponent({
     ${chartVisibleModel(ops, facts)}
     // The engine reads raw values, not deep proxies.
     const config = computed(() => toRaw(props.config) as ChartConfig);
+    ${chartSpecRegistry(ops, facts)}
     ${chartRootInputs(ops, facts)}
 
     const element = ref<HTMLDivElement | null>(null);
@@ -644,21 +810,33 @@ export default defineComponent({
 
       ${chartTooltipRegistry(ops, n.entry)}
 
+    // The mark parts among the slot vnodes, read in each render before the Root mounts. A legend
+    // before a mark part renders before that part registers, so it lists their keys. The legend
+    // also reads the parts that registered so far, such as a part inside another component.
+    let legendSeed: ChartSpec | undefined;
+    const legendMounted = ref(false);
+    onMounted(() => {
+      legendMounted.value = true;
+    });
     ${chartRootStateValue(ops, facts, { name: "internal", type: n.internalState }, { name: "state", type: n.state })}
     provide(${n.internalKey}, internal);
     provide(${n.rootKey}, state);
     expose({ element });
 
-    return () =>
-      h(
+    return () => {
+      const children = slots.default?.();
+      if (!instance?.isMounted) legendSeed = partsMode.value ? collectChartLegendSeed(children) : undefined;
+      return h(
         "${facts.parts.root.element}",
         mergeProps(attrs, {
           ref: element,
+          "aria-label": partsMode.value ? undefined : props.ariaLabel,
           "data-slot": "${slot(facts, "root")}",
           "${facts.attrs.chartId}": id.value,
         }),
-        slots.default?.(),
+        children,
       );
+    };
   },
 });
 `);
@@ -690,11 +868,16 @@ function printSurface(facts: ChartSurfaceFacts): string {
   const h = facts.runtime.helpers;
   return sfc(`
 import {
+  chartSurfaceStyle,
+  createChartOptions,
   ${facts.runtime.factory},
   ${facts.runtime.getController},
   ${h.prerender},
   ${h.syncTooltipAccessibility},
   ${h.visibleKeys},
+  isChartSpecComplete,
+  warnEmptyChart,
+  warnIncompleteChart,
 } from "${facts.runtime.importSource}";
 import {
   type PropType,
@@ -707,6 +890,7 @@ import {
   onBeforeUnmount,
   onBeforeUpdate,
   onMounted,
+  onServerPrefetch,
   onUpdated,
   provide,
   ref,
@@ -733,8 +917,17 @@ ${runtimeProps(facts, "surface")}
   setup(props, { attrs, expose, slots }) {
     const root = ${n.useInternalRoot}();
     const element = ref<HTMLDivElement | null>(null);
+    const prerender = () => {
+      ${chartPrerender(facts)}
+    };
     // Computed once, so Vue keeps the server markup and never rewrites the adopted surface.
-    const initial = ${chartPrerender(facts)};
+    let initial = prerender();
+    // A parts chart registers its parts after this setup. On the server, the render waits for the
+    // sibling parts to set up, so the SVG draws them.
+    if (root.partsMode) onServerPrefetch(() => void (initial = prerender()));
+    const size = computed(() => {
+      ${chartSpecSurfaceStyle()}
+    });
 
     // Vue does not track slots. Every update of this part reads which tooltip slots exist, so a
     // slot that a parent adds or removes after mount changes the winner and the body handler.
@@ -805,8 +998,11 @@ ${runtimeProps(facts, "surface")}
     return () => [
       h(
         "${facts.parts.surface.element}",
-        mergeProps({ style: initial.surfaceStyle }, attrs, {
+        mergeProps({ style: size.value }, attrs, {
           ref: element,
+          // A parts chart learns its size from parts that register after this first render, so
+          // the browser keeps the server size during hydration.
+          "data-allow-mismatch": root.partsMode ? "style" : undefined,
           "data-sw-chart-surface": "",
           "data-slot": "${slot(facts, "surface")}",
           innerHTML: initial.markup,
@@ -832,14 +1028,19 @@ import {
   shallowRef,
   type VNode,
 } from "vue";
-${contextImport(facts, [`type ${n.entry}`, n.useBody, n.useOptionalInternalRoot])}
+${contextImport(facts, [`type ${n.entry}`, n.useBody, n.useOptionalInternalRoot, `use${facts.displayName}SpecOptions`])}
 
 ${doc(facts, "tooltip")}
 export default defineComponent({
   name: "${displayName(facts, "tooltip")}",
-  setup(_, { slots }) {
+  props: {
+${vueOptionProps(facts, "tooltip", "    ")}
+  },
+  setup(props, { slots }) {
     const root = ${n.useOptionalInternalRoot}();
     const inBody = ${n.useBody}() !== null;
+    // Its chart-level options reach a parts chart. A Tooltip inside a tooltip body sets none.
+    if (!inBody) use${facts.displayName}SpecOptions(() => (${chartSpecOptionsRead(facts, "tooltip")}));
     // One stable registration per part, so a parent re-render keeps its place in the order.
     const version = shallowRef(0);
     const entry: ${n.entry} = {
@@ -871,7 +1072,7 @@ function printTooltipContent(facts: ChartSurfaceFacts): string {
   const d = facts.displayName;
   const h = facts.runtime.helpers;
   return sfc(`
-import { type TooltipItem, ${h.tooltipLayout} } from "${facts.runtime.importSource}";
+import { type ChartFormat, type TooltipItem, ${h.tooltipLayout} } from "${facts.runtime.importSource}";
 import { type PropType, type VNodeChild, computed, defineComponent, h, mergeProps, provide } from "vue";
 ${contextImport(facts, [
   "type ChartView",
@@ -1178,15 +1379,15 @@ function printLegendItems(facts: ChartSurfaceFacts): string {
   const n = names(facts);
   return sfc(`
 import { defineComponent, h } from "vue";
-${contextImport(facts, [n.provider, n.useRoot])}
+${contextImport(facts, [n.provider, n.useInternalRoot])}
 
 ${doc(facts, "legendItems")}
 export default defineComponent({
   name: "${displayName(facts, "legendItems")}",
   setup(_, { slots }) {
-    const root = ${n.useRoot}();
+    const root = ${n.useInternalRoot}();
     return () =>
-      root.keys.map((key) =>
+      root.legendKeys.map((key) =>
         h(${n.provider}, { key, legendKey: key }, { default: () => slots.default?.() }),
       );
   },
@@ -1214,7 +1415,7 @@ ${runtimeProps(facts, "legendItem")}
     return () => {
       const key = props.value ?? contextKey?.value;
       if (key == null)
-        throw new Error("${facts.displayName}.LegendItem needs a value or a ${facts.displayName}.LegendItems parent.");
+        throw new Error(${JSON.stringify(chartLegendKeyMessage(facts))});
       const entry = root.config[key];
       const rich = entry?.label;
       const plain = rich == null || typeof rich === "string" || typeof rich === "number";
@@ -1363,13 +1564,63 @@ export default defineComponent({
 `);
 }
 
+/** A chart spec part registers its props with the Root and renders nothing. */
+function printSpecPart(facts: ChartSurfaceFacts, part: ChartSpecPartName): string {
+  const spec = facts.specParts[part];
+  const props = chartSpecPartProps(facts, part, "vue")
+    .map((prop) => {
+      // A boolean or object prop keeps Vue boolean casting, so a bare `dot` reads as true. The
+      // contract marks it, and another union with a boolean must say which it is.
+      if (
+        prop.type !== "boolean" &&
+        !prop.booleanOrObject &&
+        /(^|\|)\s*boolean\s*(\||$)/.test(prop.type)
+      )
+        throw new Error(
+          `Chart prop "${prop.name}" mixes boolean with another type. Mark it booleanOrObject in the contract, or change the type.`,
+        );
+      const option =
+        prop.type === "boolean"
+          ? "Boolean"
+          : prop.booleanOrObject
+            ? `[Boolean, Object] as PropType<${spec.exportName}Props["${prop.name}"]>`
+            : `null as unknown as PropType<${spec.exportName}Props["${prop.name}"]>`;
+      return [
+        prop.description ? chartComment(prop.description, "block", "    ") : "",
+        `    ${prop.name}: { type: ${option}, ${prop.required ? "required: true" : "default: undefined"} },`,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n");
+  return sfc(`
+import { type PropType, defineComponent } from "vue";
+${contextImport(facts, [`type ${spec.exportName}Props`, `use${facts.displayName}SpecPart`])}
+
+${chartComment(chartSpecPartDoc(facts, part), "block")}
+export default defineComponent({
+  name: "${facts.displayName}.${spec.namespaceKey}",
+  chartSpecPart: "${spec.kind}",
+  props: {
+${props.includes("Boolean") ? "    // An explicit undefined default keeps an absent boolean from turning into false.\n" : ""}${props}
+  },
+  setup(props) {
+    use${facts.displayName}SpecPart("${spec.kind}", props);
+    return () => null;
+  },
+});
+`);
+}
+
 export function printVueChartSurfaceIndex({ facts }: VueChartSurfaceIndexProjection): string {
   const n = names(facts);
-  const parts = Object.values(facts.parts);
+  const surfaceParts = Object.values(facts.parts);
+  const specParts = Object.values(facts.specParts);
+  const parts = [...surfaceParts, ...specParts];
   const imports = parts
     .map((part) => `import ${part.exportName}Component from "./${part.exportName}.vue";`)
     .join("\n");
-  const partNames = new Set(parts.map((part) => `${part.exportName}Props`));
+  const partNames = new Set(surfaceParts.map((part) => `${part.exportName}Props`));
   // The Root accepts any chart types, so a generic wrapper can pass its typed props through. The
   // component keeps the single-file component's options and instance, and replaces only its
   // \`$props\` with the Root props union, so a template rejects an invalid source or visibility
@@ -1391,6 +1642,7 @@ type ${n.root}TemplateComponent = Omit<${n.root}Sfc, never> & {
     $props: (
       | ${n.root}SourceProps<any, any, any, any>
       | Omit<${n.root}DefinitionProps<any, any, any, any>, ${listeners}>
+      | ${n.root}SpecProps<any, any, any, any>
     ) &
       VNodeProps &
       AllowedComponentProps &
@@ -1399,7 +1651,7 @@ type ${n.root}TemplateComponent = Omit<${n.root}Sfc, never> & {
 };`;
   const members = parts.map((part) => `  ${part.namespaceKey}: ${part.exportName},`).join("\n");
   const named = parts.map((part) => `  ${part.exportName},`).join("\n");
-  const partProps = parts
+  const partProps = surfaceParts
     .filter((part) => part.name !== "root")
     .map(
       (part) =>
@@ -1409,12 +1661,21 @@ type ${n.root}TemplateComponent = Omit<${n.root}Sfc, never> & {
 
   const types = chartPublicTypes(facts);
   // The index declares the part props. The other public types live in the context module.
-  const contextTypes = [...types.all, ...types.context, ...types.rootUnion].filter(
-    (name) => !partNames.has(name) || name === `${n.root}Props`,
-  );
-  const localTypes = ["ChartView", `${n.root}DefinitionProps`, `${n.root}SourceProps`];
+  const contextTypes = [
+    ...types.all,
+    ...types.context,
+    ...types.rootUnion,
+    ...types.specParts,
+  ].filter((name) => !partNames.has(name) || name === `${n.root}Props`);
+  const localTypes = [
+    "ChartView",
+    `${n.root}DefinitionProps`,
+    `${n.root}SourceProps`,
+    `${n.root}SpecProps`,
+    ...types.specParts,
+  ];
 
-  return `import type { ChartSource, TooltipItem } from "${facts.runtime.importSource}";
+  return `import type { ChartFormat, ChartSource, TooltipItem } from "${facts.runtime.importSource}";
 import type {
   AllowedComponentProps,
   ComponentCustomProps,
@@ -1444,16 +1705,42 @@ export default ${facts.exports.namespace};
 
 export { ${n.useBody}, ${n.useRoot} } from "./${n.context}.js";
 export type { ${contextTypes.join(", ")} } from "./${n.context}.js";
-export type { ChartSource };
+export type { ChartFormat, ChartSource };
 
 export type {
 ${facts.exports.helperTypes
-  .filter((name) => name !== "ChartSource")
+  .filter((name) => name !== "ChartSource" && name !== "ChartFormat")
   .map((name) => `  ${name},`)
   .join("\n")}
 } from "${facts.exports.runtimeImportSource}";
 export { ${facts.exports.helperValues.join(", ")} } from "${facts.exports.runtimeImportSource}";
 `;
+}
+
+/**
+ * The Vue props declarations of the chart-level spec options that a part sets. An explicit
+ * undefined default keeps an absent boolean from turning into false, so the Runtime default
+ * applies.
+ */
+function vueOptionProps(
+  facts: ChartSurfaceFacts,
+  part: ChartSurfacePartName,
+  indent: string,
+): string {
+  return chartSpecOptions(facts, part)
+    .map((prop) => {
+      const type =
+        prop.type === "boolean" ? "Boolean" : `null as unknown as PropType<${prop.type}>`;
+      return `${prop.description ? `${chartComment(prop.description, "block", indent)}\n` : ""}${indent}${prop.name}: { type: ${type}, default: undefined },`;
+    })
+    .join("\n");
+}
+
+/** The spec options object of a part from its Vue props. */
+function chartSpecOptionsRead(facts: ChartSurfaceFacts, part: ChartSurfacePartName): string {
+  return `{ ${chartSpecOptions(facts, part)
+    .map(({ name }) => `${name}: props.${name}`)
+    .join(", ")} }`;
 }
 
 /** The public props type of a part. Parts without contract props take only attributes and slots. */

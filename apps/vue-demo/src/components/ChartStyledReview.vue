@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ChartPartsExamples from "./chart/ChartPartsExamples.vue";
 import {
   areaChart,
   barChart,
@@ -104,5 +105,11 @@ import {
         </ChartContainer>
       </article>
     </div>
+
+    <h3 class="mt-10 mb-2 text-xl font-semibold">Charts from parts</h3>
+    <p class="text-muted-foreground mb-6 max-w-3xl text-sm">
+      The six docs charts built from chart parts, with no chart module.
+    </p>
+    <ChartPartsExamples />
   </section>
 </template>

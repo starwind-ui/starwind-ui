@@ -16,6 +16,19 @@ const exportsList = [
   "ChartTooltipContent",
   "ChartLegend",
   "ChartLegendContent",
+  "ChartBar",
+  "ChartLine",
+  "ChartArea",
+  "ChartPie",
+  "ChartRadar",
+  "ChartRadialBar",
+  "ChartXAxis",
+  "ChartYAxis",
+  "ChartGrid",
+  "ChartPolarGrid",
+  "ChartPolarAngleAxis",
+  "ChartLabel",
+  "ChartLinearGradient",
 ];
 
 const scopes = [
@@ -66,11 +79,71 @@ function styledChart(target: Target, id: string): string {
   return `<ChartContainer id="${id}" chart={visitors} data={chartData} config={chartConfig}><ChartTooltip><ChartTooltipContent slot="content" /></ChartTooltip><ChartLegend><ChartLegendContent slot="content" /></ChartLegend></ChartContainer>`;
 }
 
+/**
+ * One chart of each kind drawn from chart parts. Polar marks cannot share a chart, so each kind is
+ * its own chart. The charts sit outside the direction scopes and the audit host. The physical-token
+ * audit reads their drawings to prove each part.
+ */
+const partsCharts = [
+  {
+    kind: "cartesian",
+    data: "chartData",
+    parts: [
+      "<ChartGrid />",
+      '<ChartXAxis dataKey="month" />',
+      "<ChartYAxis />",
+      '<ChartBar dataKey="desktop" />',
+      '<ChartLine dataKey="mobile" />',
+      '<ChartArea dataKey="desktop" />',
+    ],
+  },
+  {
+    kind: "radar",
+    data: "chartData",
+    parts: [
+      "<ChartPolarGrid />",
+      '<ChartPolarAngleAxis dataKey="month" />',
+      '<ChartRadar dataKey="desktop" />',
+    ],
+  },
+  {
+    kind: "pie",
+    data: "sliceData",
+    parts: ['<ChartPie dataKey="visitors" nameKey="device" innerRadius="50%" />', "<ChartLabel />"],
+  },
+  {
+    kind: "radial-bar",
+    data: "sliceData",
+    parts: ['<ChartRadialBar dataKey="visitors" nameKey="device" />'],
+  },
+] as const;
+
+const partsDataSource = `const sliceData = [{ device: "desktop", visitors: 275 }, { device: "mobile", visitors: 200 }];`;
+
+function partsMarkup(target: Target): string {
+  const cls = target === "react" ? "className" : "class";
+  const bind = (name: string, value: string) =>
+    target === "vue" ? `:${name}="${value}"` : `${name}={${value}}`;
+  // The cartesian chart fills its bars from a gradient. Its stops are an array, so each target
+  // binds them in its own syntax.
+  const stops =
+    target === "vue"
+      ? `:stops="[{ offset: 0, stopColor: 'rgb(37, 99, 235)' }]"`
+      : `stops={[{ offset: 0, stopColor: "rgb(37, 99, 235)" }]}`;
+  const gradient = `<ChartLinearGradient id="fillDesktop" ${stops} />`;
+  const charts = partsCharts.map(
+    (chart) =>
+      `<div ${cls}="w-[380px]" data-direction-parts="${chart.kind}"><ChartContainer ${bind("data", chart.data)} ${bind("config", "chartConfig")}>${chart.kind === "cartesian" ? gradient : ""}${chart.parts.join("")}</ChartContainer></div>`,
+  );
+  return `<div ${cls}="flex flex-wrap items-start gap-3 p-3" dir="ltr">${charts.join("")}</div>`;
+}
+
 function styledSource(target: Target): string {
-  const markup = layout(target, (id) => styledChart(target, id));
+  const markup = layout(target, (id) => styledChart(target, id)) + partsMarkup(target);
   const imports = [
     `import { ${exportsList.join(", ")} } from "@direction/styled-${target}/chart";`,
     `import "@direction/sheet";`,
+    partsDataSource,
   ];
   if (target === "astro")
     return `---\n${imports.join("\n")}\n${factorySource}\n---\n<html lang="en" dir="ltr"><head><meta charset="utf-8" /><title>Chart direction</title></head><body>${markup}<script>\n${factorySource}\nvoid visitors;\n</script></body></html>`;

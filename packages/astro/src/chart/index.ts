@@ -3,12 +3,23 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+import ChartArea from "./ChartArea.astro";
+import ChartBar from "./ChartBar.astro";
+import ChartGrid from "./ChartGrid.astro";
+import ChartLabel from "./ChartLabel.astro";
 import ChartLegend from "./ChartLegend.astro";
 import ChartLegendIcon from "./ChartLegendIcon.astro";
 import ChartLegendItem from "./ChartLegendItem.astro";
 import ChartLegendItems from "./ChartLegendItems.astro";
 import ChartLegendLabel from "./ChartLegendLabel.astro";
 import ChartLegendSwatch from "./ChartLegendSwatch.astro";
+import ChartLine from "./ChartLine.astro";
+import ChartLinearGradient from "./ChartLinearGradient.astro";
+import ChartPie from "./ChartPie.astro";
+import ChartPolarAngleAxis from "./ChartPolarAngleAxis.astro";
+import ChartPolarGrid from "./ChartPolarGrid.astro";
+import ChartRadar from "./ChartRadar.astro";
+import ChartRadialBar from "./ChartRadialBar.astro";
 import ChartRoot from "./ChartRoot.astro";
 import ChartStyle from "./ChartStyle.astro";
 import ChartSurface from "./ChartSurface.astro";
@@ -21,6 +32,8 @@ import ChartTooltipItems from "./ChartTooltipItems.astro";
 import ChartTooltipLabel from "./ChartTooltipLabel.astro";
 import ChartTooltipName from "./ChartTooltipName.astro";
 import ChartTooltipValue from "./ChartTooltipValue.astro";
+import ChartXAxis from "./ChartXAxis.astro";
+import ChartYAxis from "./ChartYAxis.astro";
 
 const Chart = {
   Root: ChartRoot,
@@ -41,17 +54,41 @@ const Chart = {
   LegendSwatch: ChartLegendSwatch,
   LegendIcon: ChartLegendIcon,
   LegendLabel: ChartLegendLabel,
+  Bar: ChartBar,
+  Line: ChartLine,
+  Area: ChartArea,
+  Pie: ChartPie,
+  Radar: ChartRadar,
+  RadialBar: ChartRadialBar,
+  XAxis: ChartXAxis,
+  YAxis: ChartYAxis,
+  Grid: ChartGrid,
+  PolarGrid: ChartPolarGrid,
+  PolarAngleAxis: ChartPolarAngleAxis,
+  Label: ChartLabel,
+  LinearGradient: ChartLinearGradient,
 };
 
 export {
   Chart,
   Chart as ChartPrimitive,
+  ChartArea,
+  ChartBar,
+  ChartGrid,
+  ChartLabel,
   ChartLegend,
   ChartLegendIcon,
   ChartLegendItem,
   ChartLegendItems,
   ChartLegendLabel,
   ChartLegendSwatch,
+  ChartLine,
+  ChartLinearGradient,
+  ChartPie,
+  ChartPolarAngleAxis,
+  ChartPolarGrid,
+  ChartRadar,
+  ChartRadialBar,
   ChartRoot,
   ChartStyle,
   ChartSurface,
@@ -64,6 +101,8 @@ export {
   ChartTooltipLabel,
   ChartTooltipName,
   ChartTooltipValue,
+  ChartXAxis,
+  ChartYAxis,
 };
 
 export default Chart;
@@ -71,6 +110,7 @@ export default Chart;
 export type {
   ChartContext,
   ChartFactory,
+  ChartFormat,
   ChartIcon,
   ChartModule,
   ChartSource,
@@ -90,17 +130,29 @@ export {
   tooltipView,
 } from "@starwind-ui/runtime/chart";
 export type {
+  ChartAreaProps,
+  ChartBarProps,
   ChartConfig,
   ChartDefinition,
+  ChartGridProps,
+  ChartLabelProps,
   ChartLegendIconProps,
   ChartLegendItemProps,
   ChartLegendItemsProps,
   ChartLegendLabelProps,
   ChartLegendProps,
   ChartLegendSwatchProps,
+  ChartLinearGradientProps,
+  ChartLineProps,
+  ChartPieProps,
+  ChartPolarAngleAxisProps,
+  ChartPolarGridProps,
+  ChartRadarProps,
+  ChartRadialBarProps,
   ChartRootDefinitionProps,
   ChartRootProps,
   ChartRootSourceProps,
+  ChartRootSpecProps,
   ChartStyleProps,
   ChartSurfaceProps,
   ChartTooltipContentProps,
@@ -113,5 +165,7 @@ export type {
   ChartTooltipProps,
   ChartTooltipValueProps,
   ChartValue,
+  ChartXAxisProps,
+  ChartYAxisProps,
 } from "./ChartMarkup";
 export { collectChartViews } from "./ChartMarkup";

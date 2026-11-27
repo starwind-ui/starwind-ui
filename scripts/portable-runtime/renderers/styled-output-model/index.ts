@@ -238,6 +238,8 @@ function projectStyledOutputComponent(component: StyledComponentContract): Style
           fields: (component.props.fields ?? []).map(projectPropField),
         }
       : undefined,
+    ...(component.componentStatics ? { componentStatics: { ...component.componentStatics } } : {}),
+    ...(component.componentOptions ? { componentOptions: { ...component.componentOptions } } : {}),
     render: attachSvgAssets(component.render.map(projectRenderNode), imports),
     ...(component.slots?.length
       ? {
@@ -289,6 +291,8 @@ function toStyledComponentContract(component: StyledOutputComponent): StyledComp
           fields: component.props.fields.map(toPropField),
         }
       : undefined,
+    ...(component.componentStatics ? { componentStatics: { ...component.componentStatics } } : {}),
+    ...(component.componentOptions ? { componentOptions: { ...component.componentOptions } } : {}),
     render: component.render.map(toRenderNode),
     ...(component.slots?.length
       ? {

@@ -10,12 +10,15 @@ import { userEvent } from "vitest/browser";
 import { createSSRApp, h, nextTick } from "vue";
 import { renderToString as renderVue } from "vue/server-renderer";
 
-import type { ParityCase } from "./fixtures/cases";
+import type { ParityCase, SpecCase } from "./fixtures/cases";
 import type { ParityControls } from "./fixtures/controls";
 import { parityDefinition } from "./fixtures/modules";
 import ParityReact from "./fixtures/ParityReact";
 import ParitySvelte from "./fixtures/ParitySvelte.svelte";
 import ParityVue from "./fixtures/parity-vue";
+import SpecReact from "./fixtures/SpecReact";
+import SpecSvelte from "./fixtures/SpecSvelte.svelte";
+import SpecVue from "./fixtures/spec-vue";
 import type { ServerFixtures, ServerResult } from "./server/render-fixtures";
 
 export const FRAMEWORKS = ["astro", "react", "vue", "svelte"] as const;
@@ -26,6 +29,10 @@ const server = (await (await fetch(inject("chartParityServerUrl"))).json()) as S
 export const astroExports = server.astroExports;
 export const astroStyledExports = server.astroStyledExports;
 
+function isSpecCase(mode: ParityCase): mode is SpecCase {
+  return mode.startsWith("spec-");
+}
+
 function nodeResult(result: ServerResult | undefined, name: string): string {
   if (!result) throw new Error(`Missing server fixture "${name}".`);
   if ("error" in result) throw new Error(`Server fixture "${name}" failed: ${result.error}`);
@@ -34,8 +41,12 @@ function nodeResult(result: ServerResult | undefined, name: string): string {
 
 /** The server markup of one case, as each framework renders it before any script runs. */
 export async function serverHtml(framework: Framework, mode: ParityCase): Promise<string> {
+  if (framework === "react" && isSpecCase(mode)) return renderReact(<SpecReact mode={mode} />);
   if (framework === "react") return renderReact(<ParityReact mode={mode} />);
-  if (framework === "vue") return renderVue(createSSRApp({ render: () => h(ParityVue, { mode }) }));
+  if (framework === "vue")
+    return renderVue(
+      createSSRApp({ render: () => h(isSpecCase(mode) ? SpecVue : ParityVue, { mode }) }),
+    );
   return nodeResult(server[framework][mode], `${framework}/${mode}`);
 }
 
@@ -66,13 +77,21 @@ export interface Mounted {
 
 const mounted: Mounted[] = [];
 
-/** Puts the server markup on the page and starts it with JavaScript. */
-export async function start(framework: Framework, mode: ParityCase): Promise<Mounted> {
+/**
+ * Puts the server markup on the page and starts it with JavaScript. `beforeStart` reads the server
+ * markup on the page before any script runs.
+ */
+export async function start(
+  framework: Framework,
+  mode: ParityCase,
+  beforeStart?: (element: HTMLDivElement) => void,
+): Promise<Mounted> {
   const html = await serverHtml(framework, mode);
   const element = document.createElement("div");
   element.style.width = "600px";
   element.innerHTML = html;
   document.body.append(element);
+  beforeStart?.(element);
   const serverSvg = element.querySelector<SVGSVGElement>("svg.ts-chart");
   const controls: ParityControls = {};
   const warnings: string[] = [];
@@ -82,17 +101,28 @@ export async function start(framework: Framework, mode: ParityCase): Promise<Mou
   let destroy: () => Promise<void> | void;
   try {
     if (framework === "react") {
-      const root = hydrateRoot(element, <ParityReact mode={mode} controls={controls} />, {
+      const view = isSpecCase(mode) ? (
+        <SpecReact mode={mode} controls={controls} />
+      ) : (
+        <ParityReact mode={mode} controls={controls} />
+      );
+      const root = hydrateRoot(element, view, {
         onRecoverableError: (cause) => record(cause),
       });
       destroy = () => root.unmount();
     } else if (framework === "vue") {
-      const app = createSSRApp({ render: () => h(ParityVue, { mode, controls }) });
+      const app = createSSRApp({
+        render: () => h(isSpecCase(mode) ? SpecVue : ParityVue, { mode, controls }),
+      });
       app.config.warnHandler = (message) => record(message);
       app.mount(element);
       destroy = () => app.unmount();
     } else if (framework === "svelte") {
-      const instance = hydrate(ParitySvelte, { target: element, props: { mode, controls } });
+      const component = isSpecCase(mode) ? SpecSvelte : ParitySvelte;
+      const instance = hydrate(component as typeof ParitySvelte, {
+        target: element,
+        props: { mode, controls },
+      });
       destroy = () => unmount(instance);
     } else {
       startCharts();

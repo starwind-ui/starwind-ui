@@ -1,3 +1,7 @@
+import {
+  chartSpecPartExport,
+  chartSpecPartNames,
+} from "../../../../contracts/primitive/components/chart.js";
 import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
@@ -18,6 +22,11 @@ const chartSnippets: Record<string, { name: string; type: string }[]> = {
   ChartLegendContent: [],
 };
 
+/** Chart spec parts only forward their props, so they read no snippet and no variant. */
+const CHART_SPEC_PARTS = new Set(
+  chartSpecPartNames.map((name) => chartSpecPartExport(name).exportName),
+);
+
 /**
  * Chart parts forward their props to the chart Primitive. The Primitive owns tooltip
  * registration, tooltip rows and legend items, so this owner adds only Svelte types, imports and
@@ -36,7 +45,8 @@ export function specializeSvelteStyledChart(
       `Svelte Styled ${group.component}/${component.exportName}.svelte: ${detail}.`,
     );
   };
-  const snippets = chartSnippets[component.exportName];
+  const specPart = CHART_SPEC_PARTS.has(component.exportName);
+  const snippets = specPart ? [] : chartSnippets[component.exportName];
   if (!snippets) return fail("missing chart part owner");
   for (const entry of component.imports.filter((entry) => supportsSvelteScope(entry.targetScopes)))
     fail(`unsupported import "${entry.source}"`);
@@ -63,22 +73,24 @@ export function specializeSvelteStyledChart(
   const publicTypes = `export type ${component.exportName}Props = ${types.length ? types.join(" & ") : "Record<never, never>"};`;
 
   const container = component.exportName === "ChartContainer";
-  const imports: SvelteStyledImport[] = [
-    ...(container
-      ? [
-          { source: "@tanstack/charts", names: ["ChartValue"], typeOnly: true },
-          { source: "./ChartTooltipContent.svelte", names: ["default as ChartTooltipContent"] },
-        ]
-      : []),
-    { source: "tailwind-variants", names: ["cx"] },
-    {
-      source: "./variants.js",
-      names: [
-        ...group.variants.map((variant) => variant.name),
-        ...(group.variantAliases ?? []).map((alias) => alias.name),
-      ],
-    },
-  ];
+  const imports: SvelteStyledImport[] = specPart
+    ? []
+    : [
+        ...(container
+          ? [
+              { source: "@tanstack/charts", names: ["ChartValue"], typeOnly: true },
+              { source: "./ChartTooltipContent.svelte", names: ["default as ChartTooltipContent"] },
+            ]
+          : []),
+        { source: "tailwind-variants", names: ["cx"] },
+        {
+          source: "./variants.js",
+          names: [
+            ...group.variants.map((variant) => variant.name),
+            ...(group.variantAliases ?? []).map((alias) => alias.name),
+          ],
+        },
+      ];
   return {
     imports,
     publicTypes,

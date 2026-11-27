@@ -1,0 +1,207 @@
+---
+// Chart spec part cases: prop rules, function formatters, format objects and the default name.
+import {
+  ChartArea,
+  ChartBar,
+  ChartContainer,
+  ChartLabel,
+  ChartLegend,
+  ChartLine,
+  ChartLinearGradient,
+  ChartPie,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartXAxis,
+  ChartYAxis,
+} from "../../../../../apps/demo/src/components/starwind-runtime/chart";
+import {
+  browserConfig,
+  browserData,
+} from "../../../../../packages/runtime/tests/components/chart/reference-charts";
+import { visitorConfig, visitorData, visitors } from "./fixture-modules";
+
+const { mode } = Astro.props as {
+  mode:
+    | "combined"
+    | "tick-function"
+    | "label-function"
+    | "tooltip-function"
+    | "format"
+    | "default-name"
+    | "empty"
+    | "dates"
+    | "options"
+    | "pie-text"
+    | "tooltip-keys"
+    | "cursor-unset-first"
+    | "cursor-false-first"
+    | "cursor-nested"
+    | "gradient"
+    | "labels";
+};
+const top = { position: "top", offset: 12, fontSize: 12 } as const;
+/** A shadcn area gradient that fades from top to bottom. Both charts use the id "fillArea". */
+const gradient = (color: string) => ({
+  id: "fillArea",
+  x1: "0" as const,
+  y1: "0" as const,
+  x2: "0" as const,
+  y2: "1" as const,
+  stops: [
+    { offset: "5%" as const, stopColor: color, stopOpacity: 0.8 },
+    { offset: "95%" as const, stopColor: color, stopOpacity: 0.1 },
+  ],
+});
+const days = visitorData().map((row, index) => ({
+  ...row,
+  day: new Date(Date.UTC(2024, 3, index + 1)),
+}));
+const slice = (value: string) => value.slice(0, 3);
+---
+
+{
+  mode === "labels" ? (
+    <div>
+      <ChartContainer id="spec-labels-bar" data={visitorData()} config={visitorConfig}>
+        <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+        <ChartBar dataKey="desktop" radius={8} label={{ ...top, formatter: { prefix: "$" } }} />
+      </ChartContainer>
+      <ChartContainer id="spec-labels-line" data={browserData} config={browserConfig}>
+        <ChartLine
+          dataKey="visitors"
+          label={{ ...top, dataKey: "browser", formatter: { configLabel: true } }}
+        />
+      </ChartContainer>
+      <ChartContainer id="spec-labels-pie" data={browserData} config={browserConfig}>
+        <ChartPie dataKey="visitors" nameKey="browser" label labelLine={false} />
+      </ChartContainer>
+      <ChartContainer id="spec-labels-pie-inside" data={browserData} config={browserConfig}>
+        <ChartPie
+          dataKey="visitors"
+          nameKey="browser"
+          label={{
+            position: "inside",
+            dataKey: "browser",
+            fill: "var(--background)",
+            formatter: { configLabel: true },
+          }}
+        />
+      </ChartContainer>
+    </div>
+  ) : mode === "gradient" ? (
+    <div>
+      {["desktop", "mobile"].map((key) => (
+        <ChartContainer id={`spec-gradient-${key}`} data={visitorData()} config={visitorConfig}>
+          <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartLinearGradient {...gradient(`var(--color-${key})`)} />
+          <ChartArea dataKey={key} fill="url(#fillArea)" />
+        </ChartContainer>
+      ))}
+    </div>
+  ) : mode === "cursor-unset-first" ? (
+    <ChartContainer id="spec-cursor-unset-first" data={visitorData()} config={visitorConfig}>
+      <ChartXAxis dataKey="month" />
+      <ChartBar dataKey="desktop" />
+      <ChartTooltip />
+      <ChartTooltip cursor={false} />
+    </ChartContainer>
+  ) : mode === "cursor-false-first" ? (
+    <ChartContainer id="spec-cursor-false-first" data={visitorData()} config={visitorConfig}>
+      <ChartXAxis dataKey="month" />
+      <ChartBar dataKey="desktop" />
+      <ChartTooltip cursor={false} />
+      <ChartTooltip />
+    </ChartContainer>
+  ) : mode === "cursor-nested" ? (
+    <ChartContainer id="spec-cursor-nested" data={visitorData()} config={visitorConfig}>
+      <ChartXAxis dataKey="month" />
+      <ChartBar dataKey="desktop" />
+      <ChartTooltip>
+        <ChartTooltip slot="content" cursor={false} />
+      </ChartTooltip>
+    </ChartContainer>
+  ) : mode === "tooltip-keys" ? (
+    <ChartContainer
+      id="spec-tooltip-keys"
+      data={visitorData()}
+      config={{
+        views: { label: "Page Views" },
+        activities: { label: "Activities" },
+        ...visitorConfig,
+      }}
+    >
+      <ChartXAxis dataKey="month" />
+      <ChartBar dataKey="desktop" />
+      <ChartBar dataKey="mobile" />
+      <ChartTooltip>
+        <ChartTooltipContent slot="content" nameKey="views" labelKey="activities" />
+      </ChartTooltip>
+    </ChartContainer>
+  ) : mode === "pie-text" ? (
+    <ChartContainer id="spec-pie-text" data={browserData} config={browserConfig}>
+      <ChartPie dataKey="visitors" nameKey="browser" innerRadius={60} stroke="none" />
+      <ChartLabel position="center" fontWeight={700} />
+      <ChartLabel
+        position="center"
+        value="Visitors"
+        dy={24}
+        fontSize={12}
+        fill="var(--muted-foreground)"
+      />
+      <ChartLegend />
+    </ChartContainer>
+  ) : mode === "options" ? (
+    <ChartContainer
+      id="spec-options"
+      data={visitorData()}
+      config={visitorConfig}
+      stackOffset="expand"
+    >
+      <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+      <ChartYAxis />
+      <ChartBar dataKey="desktop" stackId="a" />
+      <ChartBar dataKey="mobile" stackId="a" />
+      <ChartTooltip cursor={false} />
+    </ChartContainer>
+  ) : mode === "empty" ? (
+    <ChartContainer id="spec-empty" data={visitorData()} config={visitorConfig} />
+  ) : mode === "dates" ? (
+    <ChartContainer id="spec-dates" data={days} config={visitorConfig}>
+      <ChartXAxis dataKey="day" tickFormatter={{ date: { month: "short", day: "numeric" } }} />
+      <ChartBar dataKey="desktop" />
+    </ChartContainer>
+  ) : mode === "combined" ? (
+    <ChartContainer id="spec-combined" chart={visitors} data={visitorData()} config={visitorConfig}>
+      <ChartBar dataKey="desktop" />
+    </ChartContainer>
+  ) : (
+    <ChartContainer id={`spec-${mode}`} data={visitorData()} config={visitorConfig}>
+      <ChartXAxis
+        dataKey="month"
+        tickFormatter={mode === "tick-function" ? (slice as never) : { maxLength: 3 }}
+      />
+      <ChartBar
+        dataKey="desktop"
+        label={mode === "label-function" ? ({ formatter: slice } as never) : undefined}
+      />
+      <ChartBar dataKey="mobile" />
+      {mode === "tooltip-function" && (
+        <ChartTooltip>
+          <ChartTooltipContent
+            slot="content"
+            formatter={((value: unknown) => String(value)) as never}
+          />
+        </ChartTooltip>
+      )}
+      {mode === "format" && (
+        <ChartTooltip>
+          <ChartTooltipContent
+            slot="content"
+            formatter={{ suffix: " visits" }}
+            labelFormatter={{ maxLength: 3 }}
+          />
+        </ChartTooltip>
+      )}
+    </ChartContainer>
+  )
+}

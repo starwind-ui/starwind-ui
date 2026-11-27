@@ -1,4 +1,9 @@
-import type { ChartSurfaceFacts } from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
+import {
+  CHART_MESSAGES,
+  type ChartSurfaceFacts,
+  chartSpecOptions,
+  chartSpecOptionsObject,
+} from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
 import type { FrameworkOperations } from "../structured/operations.js";
 
 /**
@@ -54,6 +59,31 @@ export interface ChartOperations {
   tooltips: string;
   firstTooltip: string;
   setTooltips(next: (list: string) => string): string;
+  /** Declares the chart spec part registrations, reads them and replaces them from the list. */
+  specCell: string;
+  specParts: string;
+  setSpecParts(next: (list: string) => string): string;
+  /** The `aria-label` input of the Root. A parts chart moves it to the chart. */
+  ariaLabel: string;
+  /** The spec that the first render draws before the parts register, and the settled flag. */
+  seed: string;
+  settled: string;
+  /**
+   * The spec whose keys the legend lists, when it is not the spec that the chart draws now. The
+   * server render and the hydration render must list the same keys at the same point in tree
+   * order, so a legend before a mark part reads a seed.
+   */
+  legendSpec?: string;
+  /**
+   * Wraps the legend keys expression, for a target whose hydration render must first list the keys
+   * of the server legend.
+   */
+  legendKeys?(keys: string): string;
+  /**
+   * Declares a value that computes again on each read, for a target whose server render keeps the
+   * first result of a derived value. `read` gives the read expression.
+   */
+  uncached?: { declare(name: string, expression: string): string; read(name: string): string };
   /** Declares the Root state from `[field, value]` pairs. `methods` name the function fields. */
   stateObject(name: string, type: string, fields: [string, string][], methods: Set<string>): string;
   /** The definition guard: the defined-listener check, the public names and the placement. */
@@ -112,7 +142,7 @@ export function chartDefinitionGuard(ops: ChartOperations, facts: ChartSurfaceFa
   const defaultModel = ops.prop(facts.visibility.defaultProp);
   return ops.guard(`if (${ops.read("mode")} === "definition" && (${ops.model} !== undefined || ${defaultModel} !== undefined || ${ops.listenerDefined})) {
   throw new TypeError(
-    "Static native definitions own their visibility. Remove ${ops.visibilityNames}, or use a chart factory.",
+    ${JSON.stringify(CHART_MESSAGES.definitionVisibility(ops.visibilityNames))},
   );
 }`);
 }
@@ -158,17 +188,96 @@ export function chartRootInputs(ops: ChartOperations, facts: ChartSurfaceFacts):
 ${ops.derive("requested", `${ops.read("mode")} === "definition" ? undefined : ${ops.snapshot(ops.accepted)}`)}
 ${ops.derive(ops.visibleName, `${facts.runtime.helpers.visibleKeys}(${config}, ${ops.read("requested")})`, { deps: [config, "requested"] })}
 ${ops.derive("keys", `Object.keys(${config})`, { deps: [config] })}
+// Without \`chart\` and \`definition\`, chart parts describe the chart. A parts chart takes its
+// accessible name from \`aria-label\`.
+${ops.derive("partsMode", `!${ops.prop("chart")} && !${ops.prop("definition")}`, { deps: [ops.prop("chart"), ops.prop("definition")] })}
 // The visible keys stay out of the input, so an accepted toggle does not come back through the
-// controller's \`update\` and render the chart a second time.
+// controller's \`update\` and render the chart a second time. The spec joins the input only in a
+// parts chart, because removed parts leave the registry after the render that adds a chart module.
 ${ops.derive(
   "input",
   `{
   data: (${ops.raw(data)} ?? EMPTY) as readonly ${ops.datum}[],
   ${field("config", config)},
+  ...(${ops.read("partsMode")} && ${ops.read("spec")} ? { ${field("spec", ops.read("spec"))} } : {}),
   ...(${params} ? { ${field("params", ops.raw(params))} } : {}),
   ...(${theme} ? { ${field("theme", ops.raw(theme))} } : {}),
 }`,
-  { deps: [data, config, params, theme], type: `ChartInput<${ops.datum}>` },
+  { deps: [data, config, "partsMode", "spec", params, theme], type: `ChartInput<${ops.datum}>` },
+)}
+${ops.derive(
+  "chartHost",
+  `${ops.read("partsMode")} && ${ops.ariaLabel} != null ? { ...${ops.raw(ops.prop("host"))}, ariaLabel: String(${ops.ariaLabel}) } : ${ops.raw(ops.prop("host"))}`,
+  { deps: ["partsMode", ops.ariaLabel, ops.prop("host")] },
+)}`;
+}
+
+/** The Root's own chart-level spec options, read from its props, as a TypeScript expression. */
+export function chartRootSpecOptions(ops: ChartOperations, facts: ChartSurfaceFacts): string {
+  return chartSpecOptionsObject(facts, "root", ops.prop);
+}
+
+/**
+ * Chart spec part registrations in mount order. A part updates its entry in place, so it keeps its
+ * place, and an update with the same props changes nothing. Another part, such as the Tooltip,
+ * registers chart-level options in the same list. The spec follows the registrations and the
+ * Root's own options.
+ */
+export function chartSpecRegistry(ops: ChartOperations, facts: ChartSurfaceFacts): string {
+  const list = ops.specParts;
+  const rootOptions = chartSpecOptions(facts, "root").map(({ name }) => ops.prop(name));
+  return `// Chart spec part registrations in mount order. An update keeps the part's place, and an update
+// with the same props keeps the spec, so the chart does not render again. A function prop with a
+// new identity replaces the part, so the chart draws the new function's result.
+${ops.specCell}
+const registerSpecPart = ${ops.callback(
+    "part: ChartPart, functions: Record<string, unknown> = {}",
+    `const entry: ChartSpecEntry & { part: ChartPart } = { part, functions };
+${ops.setSpecParts((current) => `[...${current}, entry]`)}
+return {
+  update(next: ChartPart, nextFunctions: Record<string, unknown> = {}) {
+    const names = Object.keys(nextFunctions);
+    const sameFunctions =
+      names.length === Object.keys(entry.functions).length &&
+      names.every((name) => entry.functions[name] === nextFunctions[name]);
+    if (sameFunctions && isSameChartSpec({ parts: [entry.part] }, { parts: [next] })) return;
+    entry.part = next;
+    entry.functions = nextFunctions;
+    ${ops.setSpecParts((current) => `[...${current}]`)}
+  },
+  remove() {
+    ${ops.setSpecParts((current) => `${current}.filter((candidate) => candidate !== entry)`)}
+  },
+};`,
+    [],
+  )};
+// Chart-level options from a part, in mount order. The first set that names an option decides it,
+// so the first Tooltip, which supplies the tooltip body, decides \`cursor\`.
+const registerSpecOptions = ${ops.callback(
+    "options: ChartSpecOptions",
+    `const entry: ChartSpecEntry = { options, functions: {} };
+${ops.setSpecParts((current) => `[...${current}, entry]`)}
+return {
+  update(next: ChartSpecOptions) {
+    if (isSameChartSpec({ parts: [], ...entry.options }, { parts: [], ...next })) return;
+    entry.options = next;
+    ${ops.setSpecParts((current) => `[...${current}]`)}
+  },
+  remove() {
+    ${ops.setSpecParts((current) => `${current}.filter((candidate) => candidate !== entry)`)}
+  },
+};`,
+    [],
+  )};
+// The Root's own options come first. Without parts there is no spec.
+${ops.derive(
+  "spec",
+  `buildChartSpec(
+  ${list}.flatMap((entry) => (entry.part ? [entry.part] : [])),
+  ${chartRootSpecOptions(ops, facts)},
+  ...${list}.map((entry) => entry.options),
+)`,
+  { deps: [list, ...rootOptions], type: "ChartSpec | undefined" },
 )}`;
 }
 
@@ -286,6 +395,11 @@ export interface ${internal} extends ${state} {
   ${ro}visibleModel: readonly string[] | undefined;
   /** True when a defined initial \`visible\` made the model parent-controlled. */
   ${ro}controlled: boolean;
+  /**
+   * The config keys that the legend lists, in config order. A parts chart lists the keys that it
+   * draws. A chart module or definition lists every config key.
+   */
+  ${ro}legendKeys: readonly string[];
   /** The Runtime controller's \`onVisibleChange\`. It sends the proposal to the consumer. */
   proposeVisible(visible: string[], details: ChartVisibleChangeDetails): void;
   /** Connects the Surface's controller. The root mirrors the keys that the controller accepts. */
@@ -293,10 +407,41 @@ export interface ${internal} extends ${state} {
   /** The first Tooltip registration, or \`null\`. */
   ${ro}tooltip: ${entry} | null;
   registerTooltip(entry: ${entry}): () => void;
+  /** True without \`chart\` and \`definition\`: chart parts describe the chart. */
+  ${ro}partsMode: boolean;
+  /** The spec that the first render draws, before the chart parts register. */
+  ${ro}seed: ChartSpec | undefined;
+  /** True once the chart parts of the first render registered. A parts chart starts then. */
+  ${ro}settled: boolean;
+  registerSpecPart(part: ChartPart, functions?: Record<string, unknown>): ChartSpecRegistration;
+  /** Registers the chart-level options of a part, such as the Tooltip \`cursor\`. */
+  registerSpecOptions(options: ChartSpecOptions): ChartSpecOptionsRegistration;
+}
+
+/** One chart spec registration: a spec part, or the chart-level options of a part. */
+export interface ChartSpecEntry {
+  part?: ChartPart;
+  options?: ChartSpecOptions;
+  /** The raw function props of the part. A new identity draws the chart again. */
+  functions: Record<string, unknown>;
+}
+
+/** Updates or removes the chart-level options of one part. */
+export interface ChartSpecOptionsRegistration {
+  update(options: ChartSpecOptions): void;
+  remove(): void;
+}
+
+/** Updates or removes one chart spec part registration. */
+export interface ChartSpecRegistration {
+  update(part: ChartPart, functions?: Record<string, unknown>): void;
+  remove(): void;
 }`;
 }
 
 export const chartSurfaceHelpers = `type ChartSurfaceSettings = {
+  /** True when chart parts describe the chart. A change restarts the controller. */
+  parts: boolean;
   chart: unknown;
   definition: unknown;
   host: object | undefined;
@@ -320,9 +465,25 @@ function sameKeys(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((key, index) => key === b[index]);
 }`;
 
-/** The first render shows the prerendered SVG. A source chart renders the Root's visible keys. */
+/**
+ * The first render shows the prerendered SVG, as statements that return it. A source chart renders
+ * the Root's visible keys. A parts chart draws the seed spec. Without a complete seed it shows a
+ * comment, because its other parts register after the first render, and the framework keeps the
+ * server markup. Svelte reads an empty comment as a hydration marker, so the comment has text.
+ */
 export function chartPrerender(facts: ChartSurfaceFacts): string {
-  return `${facts.runtime.helpers.prerender}(
+  const prerender = facts.runtime.helpers.prerender;
+  return `if (root.partsMode) {
+  // A part inside a wrapper or an async component registers after this render. The chart draws
+  // once its parts registered.
+  if (!isChartSpecComplete(root.seed, root.input.data, root.input.config)) return { markup: "<!--sw-chart-parts-->", surfaceStyle: "" };
+  return ${prerender}(
+    undefined,
+    { ...root.input, spec: root.seed, visible: root.visible },
+    { id: root.id, host: root.host, tooltipDisabled: root.disableTooltip },
+  );
+}
+return ${prerender}(
   root.chart,
   root.mode === "source" ? { ...root.input, visible: root.visible } : root.input,
   {
@@ -331,7 +492,21 @@ export function chartPrerender(facts: ChartSurfaceFacts): string {
     definition: root.definition,
     tooltipDisabled: root.disableTooltip,
   },
-)`;
+);`;
+}
+
+/**
+ * The surface size, as statements that return it. A parts chart reads it from its registered
+ * spec, so a size that the first render could not know follows the parts.
+ */
+export function chartSpecSurfaceStyle(): string {
+  return `if (!root.partsMode || !isChartSpecComplete(root.input.spec, root.input.data, root.input.config)) return initial.surfaceStyle;
+const options = createChartOptions(
+  undefined,
+  { ...root.input, visible: root.visible },
+  { id: root.id, host: root.host },
+);
+return chartSurfaceStyle(options);`;
 }
 
 /**
@@ -357,6 +532,7 @@ export function chartTooltipAccessibility(facts: ChartSurfaceFacts, target: stri
 export function chartSurfaceLifecycle(ops: ChartOperations, facts: ChartSurfaceFacts): string {
   const { controller, applied } = ops;
   return `const read = (): ChartSurfaceSettings => ({
+  parts: root.partsMode,
   chart: root.chart,
   definition: root.definition,
   host: root.host,
@@ -369,6 +545,16 @@ const chartRootElement = () => ${ops.element}?.closest<HTMLElement>("[${facts.at
 const start = () => {
   const chartRoot = chartRootElement();
   if (!${ops.element} || !chartRoot) return;
+  // A parts chart starts once its parts registered. Without a mark part or the category key that
+  // it needs, it renders nothing and warns once.
+  if (root.partsMode && !isChartSpecComplete(root.input.spec, root.input.data, root.input.config)) {
+    if (root.settled) {
+      if (root.input.spec)
+        warnIncompleteChart(root.id, root.input.spec, root.input.data, root.input.config);
+      else warnEmptyChart(root.id);
+    }
+    return;
+  }
   const settings = read();
   ${applied} = settings;
   ${controller} = ${facts.runtime.factory}(chartRoot, {
@@ -401,7 +587,20 @@ const stop = () => {
 const sync = (next: ChartSurfaceSettings) => {
   const owned = ${controller};
   const previous = ${applied};
+  // A Surface with no controller starts when it has a source: the parts that it needs, a chart
+  // module or a definition. A chart that first rendered with no parts while data loads starts
+  // when it later gets \`chart\` or \`definition\`. A parts chart stops when it loses a part.
+  if (!owned) return start();
+  if (root.partsMode && !isChartSpecComplete(next.input.spec, next.input.data, next.input.config))
+    return stop();
   if (!owned || !previous) return;
+  // A change between chart parts and a chart module or definition restarts the controller, so the
+  // new source and its input start together. A parts chart starts once its parts registered.
+  if (previous.parts !== next.parts) {
+    stop();
+    if (!next.parts) start();
+    return;
+  }
   ${applied} = next;
   const optionsChanged =
     previous.chart !== next.chart ||
@@ -475,6 +674,8 @@ const STATE_METHODS = new Set([
   "proposeVisible",
   "attachController",
   "registerTooltip",
+  "registerSpecPart",
+  "registerSpecOptions",
 ]);
 
 /**
@@ -495,18 +696,52 @@ export function chartRootStateValue(
     ["definition", cast("definition", "ChartDefinition<any, any, any>")],
     ["input", ops.read("input")],
     ["config", ops.read("config")],
-    ["host", cast("host", "NativeHostOptions<any, any, any>")],
+    ["host", `${ops.read("chartHost")} as NativeHostOptions<any, any, any> | undefined`],
     ["disableTooltip", ops.prop("disableTooltip")],
     ["keys", ops.read("keys")],
     ["visible", ops.read(ops.visibleName)],
     ["visibleModel", ops.read("requested")],
     ["controlled", ops.controlled],
+    ["legendKeys", ops.uncached ? ops.uncached.read("legendKeys") : ops.read("legendKeys")],
     ...[...STATE_METHODS].slice(0, 5).map((name): [string, string] => [name, name]),
     ["tooltip", ops.firstTooltip],
     ["registerTooltip", "registerTooltip"],
+    ["partsMode", ops.read("partsMode")],
+    ["seed", ops.seed],
+    ["settled", ops.settled],
+    ["registerSpecPart", "registerSpecPart"],
+    ["registerSpecOptions", "registerSpecOptions"],
   ];
   const isPublic = new Set<string>(CHART_PUBLIC_STATE_FIELDS);
-  return `const label = ${ops.callback("key: string", `return ${facts.runtime.helpers.configText}(${ops.read("config")}[key], key);`, [ops.read("config")])};
+  const spec = ops.read("spec");
+  // The spec that the chart draws now: the seed until the first parts register.
+  const drawn =
+    ops.legendSpec ??
+    (ops.seed === spec
+      ? spec
+      : ops.settled === "true"
+        ? `${spec} ?? ${ops.seed}`
+        : `${ops.settled} ? ${spec} : ${ops.seed}`);
+  const config = ops.read("config");
+  const liveKeys = `${ops.read("partsMode")} ? ${facts.runtime.helpers.legendKeys}(${drawn}, ${ops.read("input")}.data, ${config}) : ${ops.read("keys")}`;
+  const legendKeys = ops.legendKeys ? ops.legendKeys(liveKeys) : liveKeys;
+  return `// A parts chart lists the config keys that it draws in its legend, from the same spec as the chart.
+${
+  ops.uncached
+    ? ops.uncached.declare("legendKeys", legendKeys)
+    : ops.derive("legendKeys", legendKeys, {
+        deps: [
+          "partsMode",
+          spec,
+          ...(ops.settled === "true" ? [] : [ops.settled]),
+          ...(ops.seed === spec ? [] : [ops.seed]),
+          "input",
+          config,
+          "keys",
+        ].filter((dep, index, list) => list.indexOf(dep) === index),
+      })
+}
+const label = ${ops.callback("key: string", `return ${facts.runtime.helpers.configText}(${ops.read("config")}[key], key);`, [ops.read("config")])};
 ${ops.stateObject(internal.name, internal.type, fields, STATE_METHODS)}
 // The public state holds only the public fields, so \`use${facts.parts.root.exportName}()\` returns no plumbing.
 ${ops.stateObject(

@@ -5,19 +5,22 @@
   // status label in step with the rendered text.
   import { syncTooltipAccessibility } from "@starwind-ui/runtime/chart";
   import { untrack, type Snippet } from "svelte";
-  import { setChartLegendKey, setChartTooltipBody, setChartTooltipRow, useOptionalChartRootInternal, type ChartTooltipBody, type ChartTooltipRowState } from "./ChartContext.js";
+  import { setChartLegendKey, setChartTooltipBody, setChartTooltipRow, setChartSpecProbe, useOptionalChartRootInternal, type ChartTooltipBody, type ChartTooltipRowState, type ChartSpecProbe } from "./ChartContext.js";
 
   type Props = {
     row?: ChartTooltipRowState;
     legendKey?: string;
     body?: ChartTooltipBody | null;
+    probe?: ChartSpecProbe;
     tooltip?: Snippet;
     children?: Snippet;
   };
-  let { row, legendKey, body, tooltip, children }: Props = $props();
+  let { row, legendKey, body, probe, tooltip, children }: Props = $props();
 
-  // The role of a provider is fixed when it is created.
-  const role = untrack(() => (row ? "row" : legendKey !== undefined ? "key" : "body"));
+  // The role of a provider is fixed when it is created. A probe renders the children of a parts
+  // chart in an inert template on the server, so the Root learns its parts before the SVG renders.
+  const role = untrack(() => (row ? "row" : legendKey !== undefined ? "key" : probe ? "probe" : "body"));
+  if (role === "probe") setChartSpecProbe(untrack(() => probe!));
   if (role === "row") setChartTooltipRow({ get state() { return row!; } });
   if (role === "key") setChartLegendKey({ get key() { return legendKey!; } });
   if (role === "body") setChartTooltipBody({ get body() { return body ?? null; } });
@@ -32,4 +35,4 @@
   });
 </script>
 
-{#if role === "body"}{#if body}{@render tooltip?.()}{/if}{:else}{@render children?.()}{/if}
+{#if role === "body"}{#if body}{@render tooltip?.()}{/if}{:else if role === "probe"}<template>{@render children?.()}</template>{:else}{@render children?.()}{/if}

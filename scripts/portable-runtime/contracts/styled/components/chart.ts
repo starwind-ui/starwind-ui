@@ -1,5 +1,6 @@
+import { chartSpecPartExport, chartSpecPartNames } from "../../primitive/components/chart.js";
 import { LOGICAL_CLASS_TAILWIND_MERGE_REQUIREMENT } from "../package-requirements.js";
-import type { StyledAdapterContract } from "../types.js";
+import type { StyledAdapterContract, StyledComponentContract } from "../types.js";
 
 /** The TanStack scene colors. A user theme wins over them. */
 const SCENE_THEME = `{
@@ -9,6 +10,58 @@ const SCENE_THEME = `{
   background: "transparent",
   ...theme,
 }`;
+
+/** Chart spec parts, as Styled name, Primitive part and part kind. They describe the chart as data. */
+const SPEC_PARTS = chartSpecPartNames.map((name) => {
+  const { exportName, namespaceKey } = chartSpecPartExport(name);
+  return [exportName, namespaceKey, name] as const;
+});
+
+/**
+ * A spec part only forwards its props to the Primitive part. React and Vue mark it as a spec part,
+ * so the chart Root finds it in its children for the server render and the first legend.
+ */
+function specPartComponent([
+  exportName,
+  part,
+  kind,
+]: (typeof SPEC_PARTS)[number]): StyledComponentContract {
+  return {
+    exportName,
+    primitiveAliases: { chart: "ChartPrimitive" },
+    componentStatics: { chartSpecPart: `ChartPrimitive.${part}.chartSpecPart` },
+    componentOptions: { chartSpecPart: JSON.stringify(kind) },
+    props: {
+      extends: [
+        {
+          type: "raw",
+          code: `import("@starwind-ui/runtime").${exportName}Props`,
+          frameworks: ["astro", "react"],
+        },
+        {
+          type: "raw",
+          code: `import("@starwind-ui/vue/chart").${exportName}Props`,
+          frameworks: ["vue"],
+        },
+        {
+          type: "raw",
+          code: `import("@starwind-ui/svelte/chart").${exportName}Props`,
+          frameworks: ["svelte"],
+        },
+      ],
+    },
+    destructure: { props: [], rest: "rest" },
+    render: [
+      {
+        type: "primitive",
+        component: "chart",
+        part,
+        selfClosing: true,
+        attrs: [{ name: "spread", value: { type: "variable", name: "rest" } }],
+      },
+    ],
+  };
+}
 
 /**
  * Starwind chart parts on the chart Primitive. The Primitive owns tooltip registration, tooltip
@@ -26,6 +79,7 @@ export const chartStyledContract: StyledAdapterContract = {
     "ChartTooltipContent",
     "ChartLegend",
     "ChartLegendContent",
+    ...SPEC_PARTS.map(([exportName]) => exportName),
   ],
   defaultExport: {
     Container: "ChartContainer",
@@ -33,6 +87,7 @@ export const chartStyledContract: StyledAdapterContract = {
     TooltipContent: "ChartTooltipContent",
     Legend: "ChartLegend",
     LegendContent: "ChartLegendContent",
+    ...Object.fromEntries(SPEC_PARTS.map(([exportName, part]) => [part, exportName])),
   },
   primitiveFacadeExports: {
     component: "chart",
@@ -40,6 +95,7 @@ export const chartStyledContract: StyledAdapterContract = {
       "ChartConfig",
       "ChartContext",
       "ChartFactory",
+      "ChartFormat",
       "ChartIcon",
       "ChartModule",
       "ChartSource",
@@ -360,11 +416,33 @@ export const chartStyledContract: StyledAdapterContract = {
     {
       exportName: "ChartTooltip",
       primitiveAliases: { chart: "ChartPrimitive" },
+      // The Primitive Tooltip props, such as `cursor`, pass through. The `content` slot is the body.
+      props: {
+        extends: [
+          {
+            type: "raw",
+            code: 'Omit<import("@starwind-ui/runtime").ChartTooltipProps, "children">',
+            frameworks: ["astro", "react"],
+          },
+          {
+            type: "raw",
+            code: 'import("@starwind-ui/vue/chart").ChartTooltipProps',
+            frameworks: ["vue"],
+          },
+          {
+            type: "raw",
+            code: 'Omit<import("@starwind-ui/svelte/chart").ChartTooltipProps, "children">',
+            frameworks: ["svelte"],
+          },
+        ],
+      },
+      destructure: { props: [], rest: "rest" },
       render: [
         {
           type: "primitive",
           component: "chart",
           part: "Tooltip",
+          attrs: [{ name: "spread", value: { type: "variable", name: "rest" } }],
           children: [
             {
               type: "slot",
@@ -686,5 +764,6 @@ export const chartStyledContract: StyledAdapterContract = {
         },
       ],
     },
+    ...SPEC_PARTS.map(specPartComponent),
   ],
 };

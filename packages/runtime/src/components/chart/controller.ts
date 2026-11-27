@@ -27,6 +27,7 @@ import {
 } from "./presentation";
 import { getChartModule, sharedChartState } from "./registry";
 import { parseChartPayload, serializeChartPayload } from "./serialize";
+import { chartLegendKeys } from "./spec";
 import { chartStyle } from "./style";
 import type {
   ChartConfig,
@@ -180,6 +181,22 @@ const TOOLTIP_STATIC_ATTRIBUTE = "data-sw-chart-tooltip-static";
 const LEGEND_TEMPLATE_SELECTOR = "template[data-sw-chart-legend-template]";
 const LEGEND_ITEM_ATTRIBUTE = "data-sw-chart-legend-item";
 const STYLE_SELECTOR = "[data-slot=chart-style]";
+
+/**
+ * Returns true when a chart root carries a chart spec in its latest input or its wire payload. The
+ * page lifecycle starts such a root without a chart module.
+ */
+export function hasChartSpec(root: HTMLElement): boolean {
+  const latest = latestInputs().get(root);
+  if (latest) return latest.spec !== undefined;
+  try {
+    return (
+      parseChartPayload(root.querySelector(PAYLOAD_SELECTOR)?.textContent).input?.spec !== undefined
+    );
+  } catch {
+    return false;
+  }
+}
 
 export function getChartController<
   T = unknown,
@@ -357,7 +374,7 @@ function renderTooltipContent(
         element.replaceChildren();
         appendView(element, row.custom);
       } else {
-        const icon = iconNode(root, row.item.dataKey, row.icon);
+        const icon = iconNode(root, row.configKey, row.icon);
         if (marker) {
           if (icon) {
             marker.dataset.slot = "chart-tooltip-icon";
@@ -376,9 +393,9 @@ function renderTooltipContent(
             appendHeading(title);
             name.append(title);
           }
-          const display = config[row.item.dataKey];
-          if (options.formatter === undefined && display)
-            name.append(labelNode(root, row.item.dataKey, configText(display, row.item.dataKey)));
+          const display = config[row.configKey];
+          if (typeof options.formatter !== "function" && display)
+            name.append(labelNode(root, row.configKey, configText(display, row.configKey)));
           else appendView(name, row.name);
         }
         if (value) appendView(value, row.value);
@@ -390,8 +407,17 @@ function renderTooltipContent(
   return { fragment, body };
 }
 
-/** Keeps server-rendered and template legends in step with config and visibility. */
-function syncLegends(root: HTMLElement, config: ChartConfig, visible: readonly string[]): void {
+/**
+ * Keeps server-rendered and template legends in step with config and visibility. `keys` are the
+ * config keys that the legend lists, in config order.
+ */
+function syncLegends(
+  root: HTMLElement,
+  config: ChartConfig,
+  keys: readonly string[],
+  visible: readonly string[],
+): void {
+  const listed = new Set(keys);
   for (const template of root.querySelectorAll<HTMLTemplateElement>(LEGEND_TEMPLATE_SELECTOR)) {
     const group = template.parentElement;
     const prototype = template.content.firstElementChild;
@@ -400,9 +426,10 @@ function syncLegends(root: HTMLElement, config: ChartConfig, visible: readonly s
     for (const node of group.querySelectorAll<HTMLElement>(`[${LEGEND_ITEM_ATTRIBUTE}]`))
       if (node.parentElement === group)
         existing.set(node.getAttribute(LEGEND_ITEM_ATTRIBUTE) ?? "", node);
-    for (const [key, node] of existing) if (!Object.hasOwn(config, key)) node.remove();
+    for (const [key, node] of existing) if (!listed.has(key)) node.remove();
     let previous: Element | null = null;
-    for (const [key, entry] of Object.entries(config)) {
+    for (const key of keys) {
+      const entry = config[key]!;
       let node = existing.get(key);
       if (!node) {
         node = prototype.cloneNode(true) as HTMLElement;
@@ -494,21 +521,22 @@ export function createChart<
   // The visibility model is fixed at construction, as in the other Runtime families.
   const controlled = Object.hasOwn(options, "visible");
   let settings: ChartControllerOptions<T, D, X, Y> = { ...initialOptions };
-  if (!settings.chart && !settings.definition) {
-    const moduleId = root.dataset.chartModule;
-    const module = getChartModule(moduleId);
-    if (!module)
-      throw new TypeError(
-        `Chart "${id}" has no chart source. Pass chart or definition, or register chart module "${moduleId ?? ""}".`,
-      );
-    settings.chart = module as ChartSource<T, D, X, Y>;
-  }
   let input = (initialInput ??
     latestInputs().get(root) ??
     wire.input ?? {
       data: [],
       config: {},
     }) as ChartInput<T>;
+  // A spec chart builds its definition from the input, so it needs no chart module.
+  if (!settings.chart && !settings.definition && !input.spec) {
+    const moduleId = root.dataset.chartModule;
+    const module = getChartModule(moduleId);
+    if (!module)
+      throw new TypeError(
+        `Chart "${id}" has no chart source. Pass chart parts, chart or definition, or register chart module "${moduleId ?? ""}".`,
+      );
+    settings.chart = module as ChartSource<T, D, X, Y>;
+  }
   // `input.visible` stores the accepted visible keys, so `getInput()`, the wire payload and a
   // restart carry them. A controlled `visible` option, then `defaultVisible`, win over the
   // `input.visible` seed. An absent key means every config key, including keys added later.
@@ -576,7 +604,12 @@ export function createChart<
   const sync = () => {
     const style = root.querySelector(STYLE_SELECTOR);
     if (style) style.textContent = chartStyle(id, input.config);
-    syncLegends(root, input.config, visibleKeys(input.config, input.visible));
+    syncLegends(
+      root,
+      input.config,
+      chartLegendKeys(input.spec, input.data, input.config),
+      visibleKeys(input.config, input.visible),
+    );
   };
 
   const writePayload = () => {
@@ -692,13 +725,22 @@ export function createChart<
     setOptions(next) {
       if (destroyed) return;
       const previousHandler = settings.onTooltipBodyChange;
-      settings = { ...settings, ...next };
-      if (settings.chart && settings.definition) {
-        if ("definition" in next && next.definition) settings.chart = undefined;
-        else settings.definition = undefined;
+      const proposed = { ...settings, ...next };
+      if (proposed.chart && proposed.definition) {
+        if ("definition" in next && next.definition) proposed.chart = undefined;
+        else proposed.definition = undefined;
       }
       // A static native definition owns its visibility, so a swap to one drops the accepted keys.
-      if (settings.definition && input.visible !== undefined) {
+      const dropVisible = !!proposed.definition && input.visible !== undefined;
+      // Builds the proposed options first, so a rejected source changes no state.
+      createChartOptions(proposed.chart, dropVisible ? withVisible(input, undefined) : input, {
+        id,
+        host: { ...wireHost, ...proposed.host } as NativeHostOptions<D, X, Y>,
+        definition: proposed.definition,
+        tooltipDisabled: proposed.tooltipDisabled ?? wire.tooltipDisabled,
+      });
+      settings = proposed;
+      if (dropVisible) {
         input = withVisible(input, undefined);
         latestInputs().set(root, input);
         writePayload();

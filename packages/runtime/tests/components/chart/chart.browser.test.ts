@@ -1,13 +1,16 @@
 import type { ChartTooltipBodyTarget, DomChartDefinition } from "@tanstack/charts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
-
+import { layeredDocsMetadata } from "../../../../../scripts/portable-runtime/docs/layered-docs/generated/layered-docs-metadata";
 import {
   type ChartController,
   type ChartInput,
+  type ChartSpec,
   createChart,
+  createChartOptions,
   defineChartModule,
   getChartController,
+  initCharts,
   prerenderChart,
   registerChartModules,
   serializeChartPayload,
@@ -15,6 +18,7 @@ import {
   syncTooltipAccessibility,
 } from "../../../src/components/chart";
 import { type VisitorRow, visitorBars, visitorConfig, visitorInput } from "./fixtures";
+import { browserConfig, browserData, radialChart } from "./reference-charts";
 
 let moduleCount = 0;
 const controllers: ChartController[] = [];
@@ -141,6 +145,36 @@ describe("createChart", () => {
   it("throws a clear error for a root without a source", () => {
     const root = renderRoot({ attributes: 'data-chart-module="missing-module"' });
     expect(() => createChart(root)).toThrow(/missing-module/);
+  });
+
+  it("runs the Primitive docs raw HTML example as written", async () => {
+    const chart = layeredDocsMetadata.primitives.find((primitive) => primitive.id === "chart")!;
+    const code = chart.docsReference!.examples.find(
+      (example) => example.framework === "raw-html",
+    )!.code!;
+    const [markup, script] = code.split('<script type="module">') as [string, string];
+    const host = document.createElement("div");
+    host.style.width = "600px";
+    host.innerHTML = markup;
+    document.body.append(host);
+    const root = host.querySelector<HTMLElement>("[data-sw-chart]")!;
+    try {
+      // The module import becomes a function parameter, so the example code runs unchanged.
+      const body = script
+        .replace("</script>", "")
+        .replace('import { createChart } from "@starwind-ui/runtime/chart";', "");
+      new Function("createChart", body)(createChart);
+      expect(getChartController(root)).toBeTruthy();
+      expect(root.querySelector("[data-slot=chart-style]")!.textContent).toContain(
+        '[data-chart="visitors"]{--sw-chart-color-desktop:var(--chart-1)',
+      );
+      await vi.waitFor(() =>
+        expect(root.querySelectorAll('[data-ts-key^="bars:"]').length).toBe(6),
+      );
+    } finally {
+      getChartController(root)?.destroy();
+      host.remove();
+    }
   });
 
   it("writes config color styles", async () => {
@@ -875,6 +909,26 @@ describe("createChart", () => {
     expect(events.at(-1)).toBeTruthy();
   });
 
+  it("draws the bar hover band on focus unless the spec sets cursor false", async () => {
+    const band = async (cursor?: boolean) => {
+      document.body.innerHTML = "";
+      const spec: ChartSpec = {
+        parts: [
+          { kind: "xAxis", dataKey: "month" },
+          { kind: "bar", dataKey: "desktop" },
+        ],
+        ...(cursor === undefined ? {} : { cursor }),
+      };
+      const root = renderRoot();
+      track(createChart(root, { input: { ...visitorInput(), spec } }));
+      await nextFrame();
+      await focusFirstPoint(root);
+      return root.querySelectorAll('[data-ts-key^="category-hover"]').length;
+    };
+    expect(await band()).toBeGreaterThan(0);
+    expect(await band(false)).toBe(0);
+  });
+
   it("does not register a controller when the first sync throws", () => {
     const root = renderRoot();
     expect(() =>
@@ -1035,7 +1089,7 @@ describe("chart lifecycle", () => {
     expect(getChartController(root)).toBeUndefined();
   });
 
-  it("restarts with the latest input when the payload cannot carry it", async () => {
+  it("keeps the latest input through pagehide and pageshow", async () => {
     const moduleId = uniqueModuleId();
     defineChartModule({ id: moduleId, ariaLabel: "Dated", create: visitorBars });
     const root = renderServerRoot(moduleId, "chart-dated");
@@ -1045,11 +1099,10 @@ describe("chart lifecycle", () => {
       .map((row) => ({ ...row, at: new Date(0) }));
 
     getChartController(root)!.update({ data });
-    window.dispatchEvent(new Event("pagehide"));
-    window.dispatchEvent(new Event("pageshow"));
+    window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true }));
+    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
 
-    const restarted = getChartController(root)!;
-    expect(restarted.getInput().data).toBe(data);
+    expect(getChartController(root)!.getInput().data).toBe(data);
     await nextFrame();
     expect(barCount(root)).toBe(2);
   });
@@ -1068,20 +1121,24 @@ describe("chart lifecycle", () => {
     expect(getChartController(root)).toBeDefined();
   });
 
-  it("restarts charts after pagehide and pageshow", () => {
+  it("keeps the drawn chart when the page comes back from the back-forward cache", async () => {
     const moduleId = uniqueModuleId();
     defineChartModule({ id: moduleId, ariaLabel: "Page", create: visitorBars });
     const root = renderServerRoot(moduleId, "chart-page");
     startCharts();
-    const first = getChartController(root);
+    await nextFrame();
+    const controller = getChartController(root);
+    const svg = root.querySelector("svg");
 
-    window.dispatchEvent(new Event("pagehide"));
-    expect(getChartController(root)).toBeUndefined();
-    window.dispatchEvent(new Event("pageshow"));
+    // The page stays laid out while it is in the cache. A chart that restarts there measures a
+    // root without its SVG, and a root that takes its width from its content then draws too small.
+    window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true }));
+    await nextFrame();
+    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+    await nextFrame();
 
-    expect(getChartController(root)).toBeDefined();
-    expect(getChartController(root)).not.toBe(first);
-    expect(root.querySelectorAll("svg")).toHaveLength(1);
+    expect(root.querySelector("svg")).toBe(svg);
+    expect(getChartController(root)).toBe(controller);
   });
 
   it("starts charts in a starwind:init scope", () => {
@@ -1109,6 +1166,58 @@ describe("chart lifecycle", () => {
     expect(getChartController(root)).toBeUndefined();
   });
 
+  it("starts a spec chart without a module and keeps the spec through a toggle and a restart", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const spec: ChartSpec = {
+        parts: [
+          { kind: "xAxis", dataKey: "month", tickFormatter: { maxLength: 3 } },
+          { kind: "bar", dataKey: "desktop" },
+          { kind: "bar", dataKey: "mobile" },
+        ],
+      };
+      const input = { ...visitorInput(), spec };
+      const id = "chart-spec-lifecycle";
+      const { markup } = prerenderChart(undefined, input, { id });
+      const root = renderRoot({
+        id,
+        surface: markup,
+        attributes: 'data-sw-chart data-state="pending"',
+        extra: `${legendButtons(document.body)}<script type="application/json" data-sw-chart-input>${serializeChartPayload({ input })}</script>`,
+      });
+      const serverSvg = root.querySelector("svg");
+      const specBars = () => root.querySelectorAll('[data-ts-key^="bars:"]').length;
+
+      startCharts();
+      vi.advanceTimersByTime(1000);
+
+      const controller = getChartController(root);
+      expect(controller).toBeDefined();
+      expect(root.dataset.state).toBe("active");
+      expect(root.querySelector("svg")).toBe(serverSvg);
+      expect(specBars()).toBe(6);
+      expect(warn.mock.calls.some(([message]) => String(message).includes(id))).toBe(false);
+
+      root.querySelector<HTMLButtonElement>('[data-sw-chart-legend-item="mobile"]')!.click();
+      expect(specBars()).toBe(3);
+      const payload = JSON.parse(
+        root.querySelector("script[data-sw-chart-input]")!.textContent!,
+      ) as { input: ChartInput };
+      expect(payload.input.spec).toEqual(spec);
+      expect(payload.input.visible).toEqual(["desktop"]);
+
+      controller!.destroy();
+      expect(getChartController(root)).toBeUndefined();
+      initCharts();
+
+      expect(getChartController(root)).toBeDefined();
+      expect(specBars()).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("warns once in development for a chart whose module never registers", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout"] });
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -1133,5 +1242,203 @@ describe("chart lifecycle", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("chart spec controller", () => {
+  const radialSpec: ChartSpec = {
+    parts: [{ kind: "radialBar", dataKey: "visitors", nameKey: "browser", background: true }],
+  };
+
+  it("rejects a source change on a spec chart without changing any state", async () => {
+    const spec: ChartSpec = {
+      parts: [
+        { kind: "xAxis", dataKey: "month" },
+        { kind: "bar", dataKey: "desktop" },
+        { kind: "bar", dataKey: "mobile" },
+      ],
+    };
+    const input = { ...visitorInput(), spec, visible: ["desktop"] };
+    const root = renderRoot({
+      id: "chart-spec-reject",
+      extra: `<script type="application/json" data-sw-chart-input>${serializeChartPayload({ input })}</script>`,
+    });
+    const controller = track(createChart(root, { input }));
+    await nextFrame();
+    const payload = () => root.querySelector("script[data-sw-chart-input]")!.textContent;
+    const before = payload();
+    const definition = createChartOptions(visitorBars, visitorInput(), { id: "chart-native" })
+      .definition as DomChartDefinition<any, any, any>;
+    const message = "A chart spec cannot be combined with chart or definition.";
+
+    expect(() => controller.setOptions({ definition })).toThrow(message);
+    expect(() => controller.setOptions({ chart: visitorBars })).toThrow(message);
+
+    expect(controller.getVisible()).toEqual(["desktop"]);
+    expect(payload()).toBe(before);
+    expect(root.querySelectorAll('[data-ts-key^="bars:"]')).toHaveLength(3);
+    // The controller still works on its spec.
+    expect(controller.toggle("mobile")).toBe(true);
+    expect(controller.getVisible()).toEqual(["desktop", "mobile"]);
+    expect(root.querySelectorAll('[data-ts-key^="bars:"]')).toHaveLength(6);
+    controller.update({ data: visitorInput().data.slice(0, 2) });
+    expect(root.querySelectorAll('[data-ts-key^="bars:"]')).toHaveLength(4);
+  });
+
+  it("adopts, resizes and focuses a chart that keeps room below a negative bar label", async () => {
+    const id = "chart-spec-room";
+    const input = {
+      ...visitorInput(),
+      data: visitorInput().data.map((row, index) => ({
+        ...row,
+        desktop: index === 1 ? -400 : row.desktop,
+      })),
+      spec: {
+        parts: [
+          { kind: "xAxis", dataKey: "month" },
+          { kind: "bar", dataKey: "desktop", label: { position: "outside" } },
+        ],
+      } satisfies ChartSpec,
+    };
+    const { markup } = prerenderChart(undefined, input, { id, host: { initialWidth: 600 } });
+    const root = renderRoot({ id, surface: markup });
+    const serverSvg = root.querySelector("svg")!;
+    // The x and y of each label and tick label text.
+    const places = () =>
+      [
+        ...root.querySelectorAll('[data-ts-key^="bar-labels:"], [data-ts-key^="x-tick-label:"]'),
+      ].map((text) => ({
+        text: text.textContent,
+        x: Number(text.getAttribute("x")),
+        y: Number(text.getAttribute("y")),
+      }));
+    const serverPlaces = places();
+    track(createChart(root, { input }));
+    await nextFrame();
+    // The controller adopts the server SVG and draws each text where the server put it. The browser
+    // measures the tick text that the server estimates, so a place can move by a fraction of a pixel.
+    expect(root.querySelector("svg")).toBe(serverSvg);
+    const adopted = places();
+    expect(adopted.map((place) => place.text)).toEqual(serverPlaces.map((place) => place.text));
+    adopted.forEach((place, index) => {
+      expect(Math.abs(place.x - serverPlaces[index]!.x), place.text!).toBeLessThan(0.5);
+      expect(Math.abs(place.y - serverPlaces[index]!.y), place.text!).toBeLessThan(0.5);
+    });
+
+    const clear = () => {
+      const label = [...root.querySelectorAll('[data-ts-key^="bar-labels:"]')].find(
+        (text) => text.textContent === "-400",
+      )!;
+      const tick = [...root.querySelectorAll('[data-ts-key^="x-tick-label:"]')].find(
+        (text) => text.textContent === "February",
+      )!;
+      expect(label.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+        tick.getBoundingClientRect().top + 0.5,
+      );
+    };
+    clear();
+    root.style.width = "360px";
+    await vi.waitFor(() =>
+      expect(root.querySelector("svg")!.getAttribute("viewBox")).toMatch(/^0 0 360 /),
+    );
+    clear();
+    // The tooltip opens on the negative bar and shows its raw value.
+    root.querySelector<SVGElement>("svg[tabindex]")!.focus();
+    const tooltip = () => document.querySelector(".ts-chart-tooltip[role=status]")?.textContent;
+    // Focus starts on January, so one step reaches February.
+    await userEvent.keyboard("{ArrowRight}");
+    await vi.waitFor(() => expect(tooltip()).toContain("February"));
+    expect(tooltip()).toContain("-400");
+  });
+
+  it("keeps line dots out of focus, so the tooltip lists each value once", async () => {
+    const points = async (dot: boolean) => {
+      const controller = track(
+        createChart(renderRoot({ id: `chart-spec-dots-${dot}` }), {
+          input: {
+            ...visitorInput(),
+            spec: {
+              parts: [
+                { kind: "xAxis", dataKey: "month" },
+                { kind: "line", dataKey: "desktop", dot },
+              ],
+            },
+          },
+        }),
+      );
+      await nextFrame();
+      return controller.getScene()!.points.length;
+    };
+    const plain = await points(false);
+    expect(plain).toBeGreaterThan(0);
+    expect(await points(true)).toBe(plain);
+  });
+
+  function radialRoot(id: string): HTMLElement {
+    const root = renderRoot({ id });
+    root.style.width = "400px";
+    return root;
+  }
+
+  it("focuses radial bars at the same pointer places as the reference chart", async () => {
+    const spec = track(
+      createChart(radialRoot("chart-spec-radial"), {
+        input: { data: browserData, config: browserConfig, spec: radialSpec },
+      }),
+    );
+    const reference = track(
+      createChart(radialRoot("chart-reference-radial"), {
+        chart: radialChart,
+        input: { data: browserData, config: browserConfig },
+      }),
+    );
+    await nextFrame();
+    const scene = spec.getScene()!;
+    const points = scene.points;
+    expect(points.length).toBeGreaterThanOrEqual(5);
+    const focus = (controller: ChartController<any, any, any, any>) =>
+      (controller.getOptions().definition as any).focus;
+    const keys = (found: readonly { key: unknown }[]) => found.map((point) => point.key);
+    let hits = 0;
+    for (let x = 0; x <= scene.width; x += scene.width / 24)
+      for (let y = 0; y <= scene.height; y += scene.height / 24) {
+        const ours = keys(focus(spec).resolve(points, { x, y, maxDistance: 48 }));
+        const theirs = keys(
+          focus(reference).resolve(reference.getScene()!.points, { x, y, maxDistance: 48 }),
+        );
+        expect(ours, `${x},${y}`).toEqual(theirs);
+        if (ours.length) hits += 1;
+      }
+    expect(hits).toBeGreaterThan(20);
+  });
+
+  it("opens the tooltip focus for a single radial bar under the pointer", async () => {
+    const root = radialRoot("chart-spec-one-bar");
+    const events: unknown[] = [];
+    root.addEventListener("starwind-chart:focus-change", (event) =>
+      events.push((event as CustomEvent).detail.point),
+    );
+    const controller = track(
+      createChart(root, {
+        input: { data: browserData.slice(0, 1), config: browserConfig, spec: radialSpec },
+      }),
+    );
+    await nextFrame();
+    const scene = controller.getScene()!;
+    const [bar] = scene.points;
+    expect(bar).toBeDefined();
+    const svg = root.querySelector<SVGSVGElement>("svg.ts-chart")!;
+    const rect = svg.getBoundingClientRect();
+    // Halfway between the center and the top edge, on the ring.
+    svg.dispatchEvent(
+      new PointerEvent("pointermove", {
+        bubbles: true,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 4,
+        pointerType: "mouse",
+      }),
+    );
+    await vi.waitFor(() => expect(events.at(-1)).toBeTruthy());
+    expect((events.at(-1) as { key: unknown }).key).toBe(bar!.key);
   });
 });

@@ -11,6 +11,7 @@ import { normalizeReactClassHookName } from "../../../renderers/framework-adapte
 import {
   basePartProps,
   baseRootProps,
+  familyCompositions,
   partParents,
   skippedParts,
   slotIdentifiedFamilies,
@@ -35,6 +36,39 @@ import {
 
 type LoadedPart = { contract: PrimitivePartContract; component: unknown; facts: PartFacts };
 
+/** One rendered tree of a family: the root, a subset of its parts and the props that tree needs. */
+type Composition = {
+  parts: Map<string, LoadedPart>;
+  rootProps: () => Record<string, unknown>;
+  partProps: Record<string, Record<string, unknown>>;
+};
+
+/** The base tree first, then the family's extra trees from `familyCompositions`. */
+function compositionsFor(
+  contract: RuntimeAdapterContract,
+  parts: Map<string, LoadedPart>,
+): Composition[] {
+  const extra = familyCompositions[contract.component] ?? [];
+  const listed = new Set(extra.flatMap((composition) => composition.parts));
+  const rootName = contract.runtime.rootPart;
+  const subset = (keep: (name: string) => boolean) =>
+    new Map([...parts].filter(([name]) => name === rootName || keep(name)));
+  return [
+    {
+      parts: subset((name) => !listed.has(name)),
+      rootProps: () => baseRootProps[contract.component]?.() ?? {},
+      partProps: basePartProps[contract.component] ?? {},
+    },
+    ...extra.map((composition) => ({
+      parts: subset(
+        (name) => composition.parts.includes(name) || !!composition.shared?.includes(name),
+      ),
+      rootProps: composition.rootProps,
+      partProps: composition.partProps ?? {},
+    })),
+  ];
+}
+
 const usedExceptions = new Set<string>();
 let checkedFamilies = 0;
 
@@ -55,7 +89,8 @@ function probeValue(prop: PrimitivePropContract): unknown {
   const type = prop.type.trim();
   if (type.includes("=>") || /\['get[A-Z]/.test(type)) return () => "probe";
   if (/^number\b/.test(type)) return prop.defaultValue === "7" ? 8 : 7;
-  if (type === "boolean") return prop.defaultValue !== "true";
+  // A boolean or style object, such as a chart `dot`, flips the boolean default.
+  if (type === "boolean" || prop.booleanOrObject) return prop.defaultValue !== "true";
   const literals = [...type.matchAll(/"([^"]+)"/g)].map((match) => match[1]!);
   if (literals.length > 0) {
     return literals.find((literal) => `"${literal}"` !== prop.defaultValue) ?? literals[0];
@@ -63,6 +98,8 @@ function probeValue(prop: PrimitivePropContract): unknown {
   if (type.endsWith("Orientation")) return "vertical";
   if (type.endsWith("[]") || /^(readonly )?string\[\]/.test(type)) return ["probe"];
   if (type.endsWith("Value") && /slider/i.test(prop.type)) return 7;
+  // A tick formatter is a function or a ChartFormat object. Astro takes only the object.
+  if (type === "ChartTickFormatter") return { prefix: "probe " };
   // A chart config must name CSS identifier keys with valid colors.
   if (type === "ChartConfig") {
     return {
@@ -147,6 +184,7 @@ async function loadParts(
 function requiredProps(
   part: LoadedPart,
   contract: RuntimeAdapterContract,
+  composition: Composition,
 ): Record<string, unknown> {
   const props: Record<string, unknown> = {};
   for (const prop of contract.props) {
@@ -155,8 +193,8 @@ function requiredProps(
     }
   }
   if (part.contract.name === contract.runtime.rootPart)
-    Object.assign(props, baseRootProps[contract.component]?.());
-  Object.assign(props, basePartProps[contract.component]?.[part.contract.name]);
+    Object.assign(props, composition.rootProps());
+  Object.assign(props, composition.partProps[part.contract.name]);
   if (part.facts.declared.has("src")) props.src = "probe.png";
   const isGroup = /group$/i.test(part.contract.name);
   if (
@@ -282,70 +320,86 @@ async function checkFamily(
 ): Promise<Gap[]> {
   const gaps: Gap[] = [];
   const parts = await loadParts(target, contract);
-  const baseProps = (part: LoadedPart) => requiredProps(part, contract);
-  const openBaseProps = (part: LoadedPart) => ({
-    ...requiredProps(part, contract),
-    ...openProps(contract, part.contract.name),
-  });
-  const render = (propsFor: (part: LoadedPart) => Record<string, unknown>) =>
-    renderTree(target, buildTree(contract, parts, propsFor));
+  const compositions = compositionsFor(contract, parts);
+  const renders: string[] = [];
+  const prepared = new Map<Composition, Awaited<ReturnType<typeof prepare>>>();
+  for (const composition of compositions) prepared.set(composition, await prepare(composition));
+  // A part's props are probed in the tree that owns it. The root and shared parts belong to the
+  // base tree, where index -1 lands.
+  const owned = familyCompositions[contract.component] ?? [];
+  const ownerOf = (partName: string) => {
+    const index = owned.findIndex((composition) => composition.parts.includes(partName));
+    return prepared.get(compositions[index + 1]!)!;
+  };
 
-  // Some attributes need two props at once, such as `aria-disabled` on a non-native disabled button.
-  // Part-level `disabled` and the portal facts live outside `contract.props`.
-  const allProbes =
-    (mode: "all" | "uncontrolled" | "disabled-parts") =>
-    (item: LoadedPart): Record<string, unknown> => {
-      const props = openBaseProps(item);
-      for (const prop of contract.props) {
-        if (prop.kind === "children" || prop.kind === "callback") continue;
-        if (prop.unsupportedTargets?.includes(target)) continue;
-        if (!propTargets(contract, prop).includes(item.contract.name)) continue;
-        if (mode !== "all" && prop.kind === "control") continue;
-        if (prop.name === "asChild") continue;
-        // A controlled value replaces its default, so a part never receives both.
-        if ((contract.stateModels ?? []).some((model) => model.defaultProp === prop.name)) continue;
-        props[targetPropName(target, prop, item.facts)] = probeValue(prop);
-      }
-      const isRoot = item.contract.name === contract.runtime.rootPart;
-      const printsDisabled = item.contract.initialAttributes?.some(({ name }) =>
-        /^(data-|aria-)?disabled$/.test(name),
-      );
-      if (mode !== "disabled-parts" || !isRoot) {
-        if (item.facts.declared.has("disabled") || printsDisabled) props.disabled = true;
-        if (item.facts.declared.has("readOnly")) props.readOnly = true;
-      }
-      if (mode === "disabled-parts" && isRoot) delete props.disabled;
-      // A part can restate a root option, such as `closeDelay` on a Preview Card trigger.
-      for (const attribute of item.contract.initialAttributes ?? []) {
-        const name = attributePropName(attribute.name);
-        const isModel = (contract.stateModels ?? []).some(
-          (model) => model.defaultProp === name || model.controlledProp === name,
-        );
-        if (attribute.source === "prop" && name && !isModel && item.facts.declared.has(name)) {
-          props[name] ??= "7";
+  async function prepare(composition: Composition) {
+    const baseProps = (part: LoadedPart) => requiredProps(part, contract, composition);
+    const openBaseProps = (part: LoadedPart) => ({
+      ...requiredProps(part, contract, composition),
+      ...openProps(contract, part.contract.name),
+    });
+    const render = (propsFor: (part: LoadedPart) => Record<string, unknown>) =>
+      renderTree(target, buildTree(contract, composition.parts, propsFor));
+
+    // Some attributes need two props at once, such as `aria-disabled` on a non-native disabled button.
+    // Part-level `disabled` and the portal facts live outside `contract.props`.
+    const allProbes =
+      (mode: "all" | "uncontrolled" | "disabled-parts") =>
+      (item: LoadedPart): Record<string, unknown> => {
+        const props = openBaseProps(item);
+        for (const prop of contract.props) {
+          if (prop.kind === "children" || prop.kind === "callback") continue;
+          if (prop.unsupportedTargets?.includes(target)) continue;
+          if (!propTargets(contract, prop).includes(item.contract.name)) continue;
+          if (mode !== "all" && prop.kind === "control") continue;
+          if (prop.name === "asChild") continue;
+          // A controlled value replaces its default, so a part never receives both.
+          if ((contract.stateModels ?? []).some((model) => model.defaultProp === prop.name))
+            continue;
+          props[targetPropName(target, prop, item.facts)] = probeValue(prop);
         }
+        const isRoot = item.contract.name === contract.runtime.rootPart;
+        const printsDisabled = item.contract.initialAttributes?.some(({ name }) =>
+          /^(data-|aria-)?disabled$/.test(name),
+        );
+        if (mode !== "disabled-parts" || !isRoot) {
+          if (item.facts.declared.has("disabled") || printsDisabled) props.disabled = true;
+          if (item.facts.declared.has("readOnly")) props.readOnly = true;
+        }
+        if (mode === "disabled-parts" && isRoot) delete props.disabled;
+        // A part can restate a root option, such as `closeDelay` on a Preview Card trigger.
+        for (const attribute of item.contract.initialAttributes ?? []) {
+          const name = attributePropName(attribute.name);
+          const isModel = (contract.stateModels ?? []).some(
+            (model) => model.defaultProp === name || model.controlledProp === name,
+          );
+          if (attribute.source === "prop" && name && !isModel && item.facts.declared.has(name)) {
+            props[name] ??= "7";
+          }
+        }
+        if (item.contract.name === "portal") props.container = "body";
+        return props;
+      };
+    const closedBase = await render(baseProps);
+    const openBase = await render(openBaseProps);
+    renders.push(closedBase, openBase);
+    const combined = [
+      allProbes("all"),
+      allProbes("uncontrolled"),
+      allProbes("disabled-parts"),
+      ...(togetherRootProps[contract.component] ?? []).map((rootProps) => (item: LoadedPart) => ({
+        ...openBaseProps(item),
+        ...(item.contract.name === contract.runtime.rootPart ? rootProps : {}),
+      })),
+    ];
+    for (const propsFor of combined) {
+      try {
+        renders.push(await render(propsFor));
+      } catch {
+        // Some families reject the full set together. Each prop still renders alone below.
       }
-      if (item.contract.name === "portal") props.container = "body";
-      return props;
-    };
-  const closedBase = await render(baseProps);
-  const openBase = await render(openBaseProps);
-  const renders: string[] = [closedBase, openBase];
-  const combined = [
-    allProbes("all"),
-    allProbes("uncontrolled"),
-    allProbes("disabled-parts"),
-    ...(togetherRootProps[contract.component] ?? []).map((rootProps) => (item: LoadedPart) => ({
-      ...openBaseProps(item),
-      ...(item.contract.name === contract.runtime.rootPart ? rootProps : {}),
-    })),
-  ];
-  for (const propsFor of combined) {
-    try {
-      renders.push(await render(propsFor));
-    } catch {
-      // Some families reject the full set together. Each prop still renders alone below.
     }
+    return { composition, baseProps, openBaseProps, render, combined, closedBase, openBase };
   }
 
   // Each prop renders alone over both baselines. Output that changes proves the part handles it.
@@ -355,6 +409,7 @@ async function checkFamily(
     for (const partName of propTargets(contract, prop)) {
       const part = parts.get(partName);
       if (!part) continue;
+      const { baseProps, openBaseProps, render, closedBase, openBase } = ownerOf(partName);
       const name = targetPropName(target, prop, part.facts);
       if (prop.kind === "callback") {
         const domEvent = contract.events?.find((event) => event.callbackProp === prop.name);
@@ -481,10 +536,13 @@ async function checkFamily(
         ),
       ]),
     );
-    const mounted = async (propsFor: (part: LoadedPart) => Record<string, unknown>) => {
+    const mounted = async (
+      composition: Composition,
+      propsFor: (part: LoadedPart) => Record<string, unknown>,
+    ) => {
       const page = await mountPage(target);
       try {
-        const tree = buildTree(contract, parts, propsFor);
+        const tree = buildTree(contract, composition.parts, propsFor);
         if (target === "astro") {
           const html = await renderTree(target, tree);
           renders.push(await page.evaluate((item) => window.__mountAstroHtml!(item), html));
@@ -496,19 +554,25 @@ async function checkFamily(
         // A probe that throws in the browser adds no output.
       }
     };
-    await mounted(baseProps);
-    await mounted(openBaseProps);
-    for (const propsFor of combined) await mounted(propsFor);
+    for (const { composition, baseProps, openBaseProps, combined } of prepared.values()) {
+      await mounted(composition, baseProps);
+      await mounted(composition, openBaseProps);
+      for (const propsFor of combined) await mounted(composition, propsFor);
+    }
     for (const prop of contract.props) {
       if (missing().length === 0) break;
       if (prop.kind === "children" || prop.kind === "callback") continue;
       for (const partName of propTargets(contract, prop)) {
         const part = parts.get(partName);
         if (!part) continue;
+        const { composition, baseProps, openBaseProps } = ownerOf(partName);
         const name = targetPropName(target, prop, part.facts);
         const probe = probeValue(prop);
         for (const base of [baseProps, openBaseProps]) {
-          await mounted((item) => ({ ...base(item), ...(item === part ? { [name]: probe } : {}) }));
+          await mounted(composition, (item) => ({
+            ...base(item),
+            ...(item === part ? { [name]: probe } : {}),
+          }));
         }
       }
     }

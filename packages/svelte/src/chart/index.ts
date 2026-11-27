@@ -3,12 +3,23 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+import ChartArea from "./ChartArea.svelte";
+import ChartBar from "./ChartBar.svelte";
+import ChartGrid from "./ChartGrid.svelte";
+import ChartLabel from "./ChartLabel.svelte";
 import ChartLegend from "./ChartLegend.svelte";
 import ChartLegendIcon from "./ChartLegendIcon.svelte";
 import ChartLegendItem from "./ChartLegendItem.svelte";
 import ChartLegendItems from "./ChartLegendItems.svelte";
 import ChartLegendLabel from "./ChartLegendLabel.svelte";
 import ChartLegendSwatch from "./ChartLegendSwatch.svelte";
+import ChartLine from "./ChartLine.svelte";
+import ChartLinearGradient from "./ChartLinearGradient.svelte";
+import ChartPie from "./ChartPie.svelte";
+import ChartPolarAngleAxis from "./ChartPolarAngleAxis.svelte";
+import ChartPolarGrid from "./ChartPolarGrid.svelte";
+import ChartRadar from "./ChartRadar.svelte";
+import ChartRadialBar from "./ChartRadialBar.svelte";
 import ChartRoot from "./ChartRoot.svelte";
 import ChartStyle from "./ChartStyle.svelte";
 import ChartSurface from "./ChartSurface.svelte";
@@ -21,6 +32,8 @@ import ChartTooltipItems from "./ChartTooltipItems.svelte";
 import ChartTooltipLabel from "./ChartTooltipLabel.svelte";
 import ChartTooltipName from "./ChartTooltipName.svelte";
 import ChartTooltipValue from "./ChartTooltipValue.svelte";
+import ChartXAxis from "./ChartXAxis.svelte";
+import ChartYAxis from "./ChartYAxis.svelte";
 
 // The type names each part, so declaration output can name the generic parts.
 const Chart: {
@@ -42,6 +55,19 @@ const Chart: {
   LegendSwatch: typeof ChartLegendSwatch;
   LegendIcon: typeof ChartLegendIcon;
   LegendLabel: typeof ChartLegendLabel;
+  Bar: typeof ChartBar;
+  Line: typeof ChartLine;
+  Area: typeof ChartArea;
+  Pie: typeof ChartPie;
+  Radar: typeof ChartRadar;
+  RadialBar: typeof ChartRadialBar;
+  XAxis: typeof ChartXAxis;
+  YAxis: typeof ChartYAxis;
+  Grid: typeof ChartGrid;
+  PolarGrid: typeof ChartPolarGrid;
+  PolarAngleAxis: typeof ChartPolarAngleAxis;
+  Label: typeof ChartLabel;
+  LinearGradient: typeof ChartLinearGradient;
 } = {
   Root: ChartRoot,
   Style: ChartStyle,
@@ -61,17 +87,41 @@ const Chart: {
   LegendSwatch: ChartLegendSwatch,
   LegendIcon: ChartLegendIcon,
   LegendLabel: ChartLegendLabel,
+  Bar: ChartBar,
+  Line: ChartLine,
+  Area: ChartArea,
+  Pie: ChartPie,
+  Radar: ChartRadar,
+  RadialBar: ChartRadialBar,
+  XAxis: ChartXAxis,
+  YAxis: ChartYAxis,
+  Grid: ChartGrid,
+  PolarGrid: ChartPolarGrid,
+  PolarAngleAxis: ChartPolarAngleAxis,
+  Label: ChartLabel,
+  LinearGradient: ChartLinearGradient,
 };
 
 export {
   Chart,
   Chart as ChartPrimitive,
+  ChartArea,
+  ChartBar,
+  ChartGrid,
+  ChartLabel,
   ChartLegend,
   ChartLegendIcon,
   ChartLegendItem,
   ChartLegendItems,
   ChartLegendLabel,
   ChartLegendSwatch,
+  ChartLine,
+  ChartLinearGradient,
+  ChartPie,
+  ChartPolarAngleAxis,
+  ChartPolarGrid,
+  ChartRadar,
+  ChartRadialBar,
   ChartRoot,
   ChartStyle,
   ChartSurface,
@@ -84,6 +134,8 @@ export {
   ChartTooltipLabel,
   ChartTooltipName,
   ChartTooltipValue,
+  ChartXAxis,
+  ChartYAxis,
 };
 
 export default Chart;
@@ -91,6 +143,7 @@ export default Chart;
 export type {
   ChartContext,
   ChartFactory,
+  ChartFormat,
   ChartIcon,
   ChartModule,
   ChartSource,
@@ -101,17 +154,29 @@ export type {
 } from "@starwind-ui/runtime/chart";
 export { defineChartModule, isChartIcon, tooltipView } from "@starwind-ui/runtime/chart";
 export type {
+  ChartAreaProps,
+  ChartBarProps,
   ChartConfig,
   ChartDefinition,
+  ChartGridProps,
+  ChartLabelProps,
   ChartLegendIconProps,
   ChartLegendItemProps,
   ChartLegendItemsProps,
   ChartLegendLabelProps,
   ChartLegendProps,
   ChartLegendSwatchProps,
+  ChartLinearGradientProps,
+  ChartLineProps,
+  ChartPieProps,
+  ChartPolarAngleAxisProps,
+  ChartPolarGridProps,
+  ChartRadarProps,
+  ChartRadialBarProps,
   ChartRootDefinitionProps,
   ChartRootProps,
   ChartRootSourceProps,
+  ChartRootSpecProps,
   ChartRootState,
   ChartStyleProps,
   ChartSurfaceProps,
@@ -128,5 +193,7 @@ export type {
   ChartTooltipValueProps,
   ChartValue,
   ChartView,
+  ChartXAxisProps,
+  ChartYAxisProps,
 } from "./ChartContext.js";
 export { useChartRoot, useChartTooltipBody } from "./ChartContext.js";

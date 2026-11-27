@@ -5,10 +5,17 @@ import fs from "fs-extra";
 
 import { resolveProjectMutationPath } from "./project-path.js";
 
-type ChartTokenBlockDefinition = {
+type TokenBlockDefinition = {
   /** Selector used when the block is printed or created. */
   selector: "@theme inline" | ":root" | ".dark";
   tokens: ReadonlyArray<readonly [name: string, value: string]>;
+};
+
+/** The theme tokens that one Styled component reads from the project stylesheet. */
+export type ThemeTokenSet = {
+  /** Lowercase name for messages, such as "chart". */
+  name: string;
+  blocks: readonly TokenBlockDefinition[];
 };
 
 const CHART_RAMP = [
@@ -19,7 +26,7 @@ const CHART_RAMP = [
   ["--chart-5", "var(--color-blue-800)"],
 ] as const;
 
-export const CHART_TOKEN_BLOCKS: readonly ChartTokenBlockDefinition[] = [
+export const CHART_TOKEN_BLOCKS: readonly TokenBlockDefinition[] = [
   {
     selector: "@theme inline",
     tokens: CHART_RAMP.map(([name]) => [`--color-${name.slice(2)}`, `var(${name})`] as const),
@@ -28,18 +35,68 @@ export const CHART_TOKEN_BLOCKS: readonly ChartTokenBlockDefinition[] = [
   { selector: ".dark", tokens: CHART_RAMP },
 ];
 
-export type ChartTokenAddition = {
-  block: ChartTokenBlockDefinition["selector"];
+const SIDEBAR_KEYS = [
+  "foreground",
+  "primary",
+  "primary-foreground",
+  "accent",
+  "accent-foreground",
+  "border",
+  "outline",
+] as const;
+
+// The values match the `starwind init` stylesheet.
+export const SIDEBAR_TOKEN_BLOCKS: readonly TokenBlockDefinition[] = [
+  {
+    selector: "@theme inline",
+    tokens: [
+      ["--color-sidebar", "var(--sidebar-background)"],
+      ...SIDEBAR_KEYS.map((key) => [`--color-sidebar-${key}`, `var(--sidebar-${key})`] as const),
+    ],
+  },
+  {
+    selector: ":root",
+    tokens: [
+      ["--sidebar-background", "var(--color-neutral-50)"],
+      ["--sidebar-foreground", "var(--color-neutral-950)"],
+      ["--sidebar-primary", "var(--color-blue-700)"],
+      ["--sidebar-primary-foreground", "var(--color-neutral-50)"],
+      ["--sidebar-accent", "var(--color-neutral-100)"],
+      ["--sidebar-accent-foreground", "var(--color-neutral-900)"],
+      ["--sidebar-border", "var(--color-neutral-200)"],
+      ["--sidebar-outline", "var(--color-neutral-400)"],
+    ],
+  },
+  {
+    selector: ".dark",
+    tokens: [
+      ["--sidebar-background", "var(--color-neutral-900)"],
+      ["--sidebar-foreground", "var(--color-neutral-50)"],
+      ["--sidebar-primary", "var(--color-blue-700)"],
+      ["--sidebar-primary-foreground", "var(--color-neutral-50)"],
+      ["--sidebar-accent", "var(--color-neutral-800)"],
+      ["--sidebar-accent-foreground", "var(--color-neutral-100)"],
+      ["--sidebar-border", "var(--color-neutral-800)"],
+      ["--sidebar-outline", "var(--color-neutral-600)"],
+    ],
+  },
+];
+
+export const CHART_TOKENS: ThemeTokenSet = { name: "chart", blocks: CHART_TOKEN_BLOCKS };
+export const SIDEBAR_TOKENS: ThemeTokenSet = { name: "sidebar", blocks: SIDEBAR_TOKEN_BLOCKS };
+
+export type TokenAddition = {
+  block: TokenBlockDefinition["selector"];
   tokens: string[];
 };
 
-export type ChartTokenInsertResult = {
-  added: ChartTokenAddition[];
+export type TokenInsertResult = {
+  added: TokenAddition[];
   content: string;
 };
 
-export type ChartTokenSyncResult =
-  | { status: "added"; cssPath: string; added: ChartTokenAddition[] }
+export type TokenSyncResult =
+  | { status: "added"; cssPath: string; added: TokenAddition[] }
   | { status: "unchanged"; cssPath: string }
   | { status: "failed"; cssPath: string; error: string; block: string };
 
@@ -138,7 +195,7 @@ function isThemePrelude(prelude: string): boolean {
  * Whether a block can hold an existing declaration of the token. Any depth and any selector list
  * that names the selector counts, so a new block never shadows a value the user already set.
  */
-function declaresFor(selector: ChartTokenBlockDefinition["selector"], prelude: string): boolean {
+function declaresFor(selector: TokenBlockDefinition["selector"], prelude: string): boolean {
   if (selector === "@theme inline") return isThemePrelude(prelude);
   return prelude.split(",").some((part) => part.trim() === selector);
 }
@@ -177,7 +234,7 @@ function firstNonWhitespace(text: string, start: number, end: number): number {
 }
 
 function formatDeclarations(
-  definition: ChartTokenBlockDefinition,
+  definition: TokenBlockDefinition,
   names: readonly string[],
   indent: string,
   eol: string,
@@ -222,30 +279,35 @@ function planBlockInsertion(
 }
 
 /**
- * Adds missing Starwind chart tokens to a stylesheet. Existing tokens and every other byte of the
+ * Adds the missing tokens of a set to a stylesheet. Existing tokens and every other byte of the
  * file stay unchanged. Throws when the CSS cannot be parsed.
  */
-export function insertMissingChartTokens(css: string): ChartTokenInsertResult {
+export function insertMissingTokens(css: string, set: ThemeTokenSet): TokenInsertResult {
   const { blocks, masked } = scanCss(css);
   const eol = css.includes("\r\n") ? "\r\n" : "\n";
   const edits: Array<{ position: number; text: string }> = [];
   const createdBlocks: string[] = [];
-  const added: ChartTokenAddition[] = [];
+  const added: TokenAddition[] = [];
 
-  const declaredIn = (selector: ChartTokenBlockDefinition["selector"], name: string) =>
+  const declaredIn = (selector: TokenBlockDefinition["selector"], name: string) =>
     blocks.some(
       (block) =>
         declaresFor(selector, block.prelude) &&
         declares(masked.slice(block.open + 1, block.close), name),
     );
 
-  for (const definition of CHART_TOKEN_BLOCKS) {
+  // The user's own :root colors also apply in dark mode. Default dark values for the other tokens
+  // of the set would mix with them, such as a light text color on the user's light background.
+  const userThemedRoot = set.blocks
+    .filter((definition) => definition.selector === ":root")
+    .some((definition) => definition.tokens.some(([name]) => declaredIn(":root", name)));
+
+  for (const definition of set.blocks) {
+    if (definition.selector === ".dark" && userThemedRoot) continue;
     const candidates = blocks.filter((block) => declaresFor(definition.selector, block.prelude));
     const missing = definition.tokens
       .map(([name]) => name)
-      .filter((name) => !declaredIn(definition.selector, name))
-      // A user's own :root chart color also applies in dark mode. A blue dark value would hide it.
-      .filter((name) => definition.selector !== ".dark" || !declaredIn(":root", name));
+      .filter((name) => !declaredIn(definition.selector, name));
     if (missing.length === 0) continue;
 
     added.push({ block: definition.selector, tokens: missing });
@@ -274,15 +336,24 @@ export function insertMissingChartTokens(css: string): ChartTokenInsertResult {
   return { added, content };
 }
 
-/** Prints chart token blocks for manual addition. With no argument, prints every token. */
-export function formatChartTokenBlock(additions?: readonly ChartTokenAddition[]): string {
-  return CHART_TOKEN_BLOCKS.flatMap((definition) => {
-    const names = additions
-      ? (additions.find((addition) => addition.block === definition.selector)?.tokens ?? [])
-      : definition.tokens.map(([name]) => name);
-    if (names.length === 0) return [];
-    return [`${definition.selector} {\n${formatDeclarations(definition, names, "  ", "\n")}\n}\n`];
-  }).join("\n");
+/** Adds missing Starwind chart tokens to a stylesheet. */
+export function insertMissingChartTokens(css: string): TokenInsertResult {
+  return insertMissingTokens(css, CHART_TOKENS);
+}
+
+/** Prints the token blocks of a set for manual addition. Without additions, prints every token. */
+export function formatTokenBlock(set: ThemeTokenSet, additions?: readonly TokenAddition[]): string {
+  return set.blocks
+    .flatMap((definition) => {
+      const names = additions
+        ? (additions.find((addition) => addition.block === definition.selector)?.tokens ?? [])
+        : definition.tokens.map(([name]) => name);
+      if (names.length === 0) return [];
+      return [
+        `${definition.selector} {\n${formatDeclarations(definition, names, "  ", "\n")}\n}\n`,
+      ];
+    })
+    .join("\n");
 }
 
 /**
@@ -308,12 +379,20 @@ async function replaceFileAtomically(filePath: string, content: string): Promise
   }
 }
 
+/** Prints chart token blocks for manual addition. With no argument, prints every token. */
+export function formatChartTokenBlock(additions?: readonly TokenAddition[]): string {
+  return formatTokenBlock(CHART_TOKENS, additions);
+}
+
 /**
- * Adds missing chart tokens to the project stylesheet. Never throws: a failure returns the token
- * block to print for manual addition.
+ * Adds the missing tokens of a set to the project stylesheet. Never throws: a failure returns the
+ * token block to print for manual addition.
  */
-export async function syncChartTokens(cssPath: string): Promise<ChartTokenSyncResult> {
-  let additions: ChartTokenAddition[] | undefined;
+export async function syncThemeTokens(
+  cssPath: string,
+  set: ThemeTokenSet,
+): Promise<TokenSyncResult> {
+  let additions: TokenAddition[] | undefined;
 
   try {
     const filePath = await resolveProjectMutationPath(cssPath);
@@ -322,7 +401,7 @@ export async function syncChartTokens(cssPath: string): Promise<ChartTokenSyncRe
     }
 
     const css = await fs.readFile(filePath, "utf8");
-    const result = insertMissingChartTokens(css);
+    const result = insertMissingTokens(css, set);
     if (result.added.length === 0 || result.content === css) {
       return { status: "unchanged", cssPath };
     }
@@ -335,7 +414,12 @@ export async function syncChartTokens(cssPath: string): Promise<ChartTokenSyncRe
       status: "failed",
       cssPath,
       error: error instanceof Error ? error.message : String(error),
-      block: formatChartTokenBlock(additions),
+      block: formatTokenBlock(set, additions),
     };
   }
+}
+
+/** Adds missing chart tokens to the project stylesheet. */
+export function syncChartTokens(cssPath: string): Promise<TokenSyncResult> {
+  return syncThemeTokens(cssPath, CHART_TOKENS);
 }

@@ -7,7 +7,7 @@
     "workingTreeDirty": false,
     "esbuildVersion": "0.28.2",
     "lockfileSha256": "67571337ef27e48d486fe98b8538fa89e54573ad6726afe9e5da23cfc6c1bc4a",
-    "reason": "Accepted main's RTL and arrow growth after merging main into the charts branch, captured twice from a clean tree with identical measurements. main's own size check passes. Four rows fail here only against the stricter baseline the chart branch captured in November: React Tooltip 19,414 B to 21,566 B, Vue Tooltip 20,216 B to 22,312 B, Runtime root 133,734 B to 138,287 B and init-starwind 132,386 B to 136,884 B. The Runtime catalog row measures the same root bundle as the Runtime root row, so it moves to 138,287 B with it. Only those five rows were updated. The chart rows changed by 2 B or less and stay as accepted. On 2026-11-22 the chart contract alignment moved chart visibility into the Runtime controller and added a shared tooltip layout helper. init-starwind moved from 136,884 B to 136,893 B (+9 B). The chart rows grew within their thresholds and stay as accepted. On 2026-11-22 the stable fix lanes changed Runtime pointer-press, Tab dismissal, Menu radio ARIA and Navigation Menu default handling. A clean rebuild measured Runtime root and the Runtime catalog at 138,312 B (+25 B) and init-starwind at 136,909 B (+16 B). Only those three rows were updated. On 2026-11-23 the public checkout measured Runtime root at 138,316 B (+4 B) from a byte-identical Runtime bundle. Chunk names in the measured bundle change with the install paths, so the private and public trees can differ by a few bytes. Runtime root and the Runtime catalog moved to 138,316 B."
+    "reason": "Accepted main's RTL and arrow growth after merging main into the charts branch, captured twice from a clean tree with identical measurements. main's own size check passes. Four rows fail here only against the stricter baseline the chart branch captured in November: React Tooltip 19,414 B to 21,566 B, Vue Tooltip 20,216 B to 22,312 B, Runtime root 133,734 B to 138,287 B and init-starwind 132,386 B to 136,884 B. The Runtime catalog row measures the same root bundle as the Runtime root row, so it moves to 138,287 B with it. Only those five rows were updated. The chart rows changed by 2 B or less and stay as accepted. On 2026-11-22 the chart contract alignment moved chart visibility into the Runtime controller and added a shared tooltip layout helper. init-starwind moved from 136,884 B to 136,893 B (+9 B). The chart rows grew within their thresholds and stay as accepted. On 2026-11-22 the stable fix lanes changed Runtime pointer-press, Tab dismissal, Menu radio ARIA and Navigation Menu default handling. A clean rebuild measured Runtime root and the Runtime catalog at 138,312 B (+25 B) and init-starwind at 136,909 B (+16 B). Only those three rows were updated. On 2026-11-23 the public checkout measured Runtime root at 138,316 B (+4 B) from a byte-identical Runtime bundle. Chunk names in the measured bundle change with the install paths, so the private and public trees can differ by a few bytes. Runtime root and the Runtime catalog moved to 138,316 B. On 2026-11-25 the chart parts work added the chart spec builder to the chart subpath. It draws bar, line, area, pie, radar and radial charts without a chart module, so the subpath now bundles those TanStack Charts marks, scales and polar helpers. The size check measured runtime.chart at 73,309 B (+30,424 B), React chart at 77,326 B, Vue chart at 78,360 B, the React catalog at 261,323 B, the Vue catalog at 279,368 B and the Vue complete catalog at 282,534 B. Only those six rows were updated. Runtime root and init-starwind did not change. On 2026-11-27 the chart coverage work added chart-level options (cursor, stackOffset), the ChartLinearGradient part, mark labels, polar grid, dot, center label and pie props, the drawn-key legend rule and the tooltip config-label fallback. The size check measured runtime.chart at 79,100 B (+5,791 B), React chart at 83,807 B, Vue chart at 85,135 B, the React catalog at 267,967 B, the Vue catalog at 286,113 B, the Vue complete catalog at 289,322 B and the packed Vue package at 183,508 B. Only those seven rows were updated. The Warn rows for overlay components come from earlier work on main and stay as accepted."
   },
   "measurements": [
     {
@@ -50,13 +50,13 @@
       "id": "react.catalog",
       "label": "@starwind-ui/react + runtime",
       "kind": "aggregate",
-      "gzipBytes": 224837
+      "gzipBytes": 267967
     },
     {
       "id": "react.chart",
       "label": "Starwind chart",
       "kind": "component",
-      "gzipBytes": 45846
+      "gzipBytes": 83807
     },
     {
       "id": "react.checkbox",
@@ -278,7 +278,7 @@
       "id": "runtime.chart",
       "label": "@starwind-ui/runtime/chart",
       "kind": "component",
-      "gzipBytes": 42885
+      "gzipBytes": 79100
     },
     {
       "id": "runtime.color-picker",
@@ -338,13 +338,13 @@
       "id": "vue.catalog",
       "label": "@starwind-ui/vue + runtime",
       "kind": "aggregate",
-      "gzipBytes": 242058
+      "gzipBytes": 286113
     },
     {
       "id": "vue.chart",
       "label": "@starwind-ui/vue/chart",
       "kind": "component",
-      "gzipBytes": 46470
+      "gzipBytes": 85135
     },
     {
       "id": "vue.checkbox",
@@ -380,7 +380,7 @@
       "id": "vue.complete-catalog",
       "label": "@starwind-ui/vue complete catalog",
       "kind": "aggregate",
-      "gzipBytes": 245196
+      "gzipBytes": 289322
     },
     {
       "id": "vue.context-menu",
@@ -458,7 +458,7 @@
       "id": "vue.packed",
       "label": "@starwind-ui/vue",
       "kind": "payload",
-      "gzipBytes": 165637
+      "gzipBytes": 183508
     },
     {
       "id": "vue.popover",

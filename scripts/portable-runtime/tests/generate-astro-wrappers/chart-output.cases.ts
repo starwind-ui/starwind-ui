@@ -1,5 +1,8 @@
 import { chartStyledContract } from "../../contracts/styled/components/chart.js";
-import { CHART_SURFACE_PART_NAMES } from "../../renderers/specialized-adapter-spec/index.js";
+import {
+  CHART_SPEC_PART_NAMES,
+  CHART_SURFACE_PART_NAMES,
+} from "../../renderers/specialized-adapter-spec/index.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -11,9 +14,11 @@ import {
   readGeneratedFile,
 } from "./shared.js";
 
-const PART_FILES = CHART_SURFACE_PART_NAMES.map(
-  (name) => `Chart${name[0]!.toUpperCase()}${name.slice(1)}.astro`,
+const pascal = (name: string) => `${name[0]!.toUpperCase()}${name.slice(1)}`;
+const PART_FILES = [...CHART_SURFACE_PART_NAMES, ...CHART_SPEC_PART_NAMES].map(
+  (name) => `Chart${pascal(name)}.astro`,
 );
+const SPEC_PART_EXPORTS = CHART_SPEC_PART_NAMES.map((name) => `Chart${pascal(name)}`);
 
 const DATA_SLOTS = [
   "chart",
@@ -76,13 +81,79 @@ export function defineAstroChartOutputTests(getTempRoot: GetTempRoot): void {
     const index = await readGeneratedFile(outputRoot, "chart/index.ts");
     expect(index).toContain("Chart as ChartPrimitive,");
     expect(index).toContain("export default Chart;");
-    for (const name of CHART_SURFACE_PART_NAMES) {
-      const key = `${name[0]!.toUpperCase()}${name.slice(1)}`;
+    for (const name of [...CHART_SURFACE_PART_NAMES, ...CHART_SPEC_PART_NAMES]) {
+      const key = pascal(name);
       expect(index).toContain(`  ${key}: Chart${key},`);
     }
+    for (const type of ["ChartFormat,", "ChartRootSpecProps,", "ChartXAxisProps,"])
+      expect(index).toContain(`  ${type}`);
     for (const helper of ["createChart", "getChartController", "registerChartModules"]) {
       expect(index).toContain(`  ${helper},`);
     }
+  });
+
+  it("generates Astro chart spec parts that the Root collects into a chart spec", async () => {
+    const tempRoot = getTempRoot();
+    await generateAstroPrimitiveWrappers({
+      outputDir: "generated/primitives/astro",
+      repoRoot: tempRoot,
+    });
+    const outputRoot = path.join(tempRoot, "generated/primitives/astro");
+
+    // Each part writes one marker with its kind and renders nothing else.
+    for (const name of CHART_SPEC_PART_NAMES) {
+      const source = await readGeneratedFile(outputRoot, `chart/Chart${pascal(name)}.astro`);
+      expect(source).toContain(`type Props = Chart${pascal(name)}Props;`);
+      expect(source).toContain(`<Fragment set:html={chartSpecPart("${name}", Astro.props)} />`);
+      expect(source).not.toMatch(/<(div|span|template|svg)/);
+    }
+
+    const markup = await readGeneratedFile(outputRoot, "chart/ChartMarkup.ts");
+    // Each part sends only its own props, with the Recharts names of the spec table.
+    expect(markup).toContain('  bar: ["dataKey", "stackId", "radius", "fill", "label"],');
+    expect(markup).toMatch(/ {2}pie: \[[^\]]*"nameKey",[^\]]*"stroke",[^\]]*"paddingAngle",?\s*\]/);
+    expect(markup).toContain(
+      '  yAxis: ["tickFormatter", "tickLine", "axisLine", "tickMargin", "hide", "tickCount"],',
+    );
+    expect(markup).toContain(
+      '  label: ["position", "value", "dy", "fontSize", "fontWeight", "fill"],',
+    );
+    // Astro takes only format objects for formatters.
+    expect(markup).toContain("  tickFormatter?: ChartFormat;");
+    expect(markup).not.toContain("ChartTickFormatter");
+    expect(markup).toContain("    formatter?: ChartFormat;");
+    expect(markup).toContain("    labelFormatter?: ChartFormat;");
+    expect(markup).toContain("assertChartSpecWire({ parts: [part as unknown as ChartPart] });");
+    expect(markup).toContain("export function collectChartSpec(");
+    expect(markup).toContain("| ChartRootSpecProps<T, D, X, Y>;");
+
+    const root = await readGeneratedFile(outputRoot, "chart/ChartRoot.astro");
+    expect(root).toContain(
+      "const { html: content, spec } = collectChartSpec(rendered, { stackOffset });",
+    );
+    expect(root).toContain("if (spec && (chart !== undefined || definition !== undefined)) {");
+    expect(root).toContain("...(spec ? { spec } : {}),");
+    expect(root).toContain(
+      "const lifecycle = interactive && (moduleId !== undefined || spec !== undefined);",
+    );
+    expect(root).toContain(
+      "const chartHost = spec && ariaLabel != null ? { ...host, ariaLabel: String(ariaLabel) } : host;",
+    );
+    expect(root).toContain("aria-label={spec ? undefined : ariaLabel}");
+
+    const tooltipContent = await readGeneratedFile(outputRoot, "chart/ChartTooltipContent.astro");
+    expect(tooltipContent).toContain(
+      'assertChartFormat("ChartTooltipContent formatter", formatter);',
+    );
+    expect(tooltipContent).toContain(
+      'assertChartFormat("ChartTooltipContent labelFormatter", labelFormatter);',
+    );
+  });
+
+  it("exports the chart spec Styled parts and ChartFormat for every target", () => {
+    expect(chartStyledContract.publicExports).toEqual(expect.arrayContaining(SPEC_PART_EXPORTS));
+    expect(chartStyledContract.defaultExport.XAxis).toBe("ChartXAxis");
+    expect(chartStyledContract.primitiveFacadeExports?.types).toContain("ChartFormat");
   });
 
   it("generates the Astro chart Styled folder with the five parts and no component CSS", async () => {
@@ -143,6 +214,17 @@ export function defineAstroChartOutputTests(getTempRoot: GetTempRoot): void {
       "serializeInput",
     ]);
     expect(index).toContain("Container: ChartContainer,");
+    expect(index).toContain("  XAxis: ChartXAxis,");
+    expect(index).toMatch(
+      /export type \{[^}]*\bChartFormat\b[^}]*\} from "@starwind-ui\/astro\/chart";/,
+    );
+
+    // A Styled spec part only forwards its props to the Primitive part.
+    for (const name of SPEC_PART_EXPORTS) {
+      const source = await readGeneratedFile(outputRoot, `chart/${name}.astro`);
+      expect(source).toContain(`type Props = import("@starwind-ui/astro/chart").${name}Props;`);
+      expect(source).toContain(`<ChartPrimitive.${name.slice("Chart".length)} {...rest} />`);
+    }
   });
 
   it("imports the Astro slot collector from a local chart Primitive", async () => {

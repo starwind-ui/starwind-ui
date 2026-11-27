@@ -1,0 +1,138 @@
+// The six docs charts built from chart parts. They need no chart module. The bar chart formats its
+// ticks with a function, which React parts accept.
+import {
+  ChartArea,
+  ChartBar,
+  ChartContainer,
+  ChartGrid,
+  ChartLabel,
+  ChartLegend,
+  ChartLine,
+  ChartPie,
+  ChartPolarAngleAxis,
+  ChartPolarGrid,
+  ChartRadar,
+  ChartRadialBar,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartXAxis,
+  ChartYAxis,
+} from "../../components/starwind-runtime/chart";
+import { monthConfig, visitorConfig, visitorData } from "./chart-recipes";
+
+const browserData = ["chrome", "safari", "firefox", "edge", "other"].map((browser, i) => ({
+  browser,
+  visitors: [275, 200, 187, 173, 90][i]!,
+}));
+const browserConfig = {
+  visitors: { label: "Visitors" },
+  chrome: { label: "Chrome", color: "var(--chart-1)" },
+  safari: { label: "Safari", color: "var(--chart-2)" },
+  firefox: { label: "Firefox", color: "var(--chart-3)" },
+  edge: { label: "Edge", color: "var(--chart-4)" },
+  other: { label: "Other", color: "var(--chart-5)" },
+};
+
+const card =
+  "bg-card text-card-foreground flex min-w-0 flex-col gap-4 rounded-xl border p-6 shadow-sm";
+
+export function ChartPartsExamples() {
+  return (
+    <div className="grid gap-6 md:grid-cols-2" data-testid="chart-parts-examples">
+      <section className={card} data-chart-example="bar" aria-labelledby="chart-parts-bar-heading">
+        <h2 id="chart-parts-bar-heading" className="text-lg font-semibold">
+          Bar chart
+        </h2>
+        <ChartContainer config={visitorConfig} data={visitorData}>
+          <ChartGrid vertical={false} />
+          <ChartXAxis dataKey="month" tickFormatter={(value: string) => value.slice(0, 3)} />
+          <ChartYAxis />
+          <ChartBar dataKey="desktop" radius={4} />
+          <ChartBar dataKey="mobile" radius={4} />
+          <ChartLegend />
+        </ChartContainer>
+      </section>
+
+      <section
+        className={card}
+        data-chart-example="area"
+        aria-labelledby="chart-parts-area-heading"
+      >
+        <h2 id="chart-parts-area-heading" className="text-lg font-semibold">
+          Area chart
+        </h2>
+        <ChartContainer config={visitorConfig} data={visitorData}>
+          <ChartGrid vertical={false} />
+          <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartYAxis />
+          <ChartArea dataKey="desktop" type="monotone" stackId="a" />
+          <ChartArea dataKey="mobile" type="monotone" stackId="a" />
+          <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+          <ChartLegend />
+        </ChartContainer>
+      </section>
+
+      <section
+        className={card}
+        data-chart-example="line"
+        aria-labelledby="chart-parts-line-heading"
+      >
+        <h2 id="chart-parts-line-heading" className="text-lg font-semibold">
+          Line chart
+        </h2>
+        <ChartContainer config={visitorConfig} data={visitorData}>
+          <ChartGrid vertical={false} />
+          <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartLine dataKey="desktop" />
+          <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+        </ChartContainer>
+      </section>
+
+      <section
+        className={card}
+        data-chart-example="donut"
+        aria-labelledby="chart-parts-donut-heading"
+      >
+        <h2 id="chart-parts-donut-heading" className="text-lg font-semibold">
+          Donut chart
+        </h2>
+        <ChartContainer config={monthConfig} data={visitorData}>
+          <ChartPie dataKey="desktop" nameKey="month" innerRadius="58.5%" />
+          <ChartLabel position="center" />
+          <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+          <ChartLegend />
+        </ChartContainer>
+      </section>
+
+      <section
+        className={card}
+        data-chart-example="radar"
+        aria-labelledby="chart-parts-radar-heading"
+      >
+        <h2 id="chart-parts-radar-heading" className="text-lg font-semibold">
+          Radar chart
+        </h2>
+        <ChartContainer config={visitorConfig} data={visitorData}>
+          <ChartPolarGrid />
+          <ChartPolarAngleAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartRadar dataKey="desktop" />
+          <ChartRadar dataKey="mobile" />
+          <ChartLegend />
+        </ChartContainer>
+      </section>
+
+      <section
+        className={card}
+        data-chart-example="radial"
+        aria-labelledby="chart-parts-radial-heading"
+      >
+        <h2 id="chart-parts-radial-heading" className="text-lg font-semibold">
+          Radial chart
+        </h2>
+        <ChartContainer config={browserConfig} data={browserData} className="mx-auto max-w-sm">
+          <ChartRadialBar dataKey="visitors" nameKey="browser" background />
+        </ChartContainer>
+      </section>
+    </div>
+  );
+}

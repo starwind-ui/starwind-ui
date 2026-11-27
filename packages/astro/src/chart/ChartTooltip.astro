@@ -7,10 +7,12 @@ import { type ChartTooltipProps, chartTooltipRegistration } from "./ChartMarkup"
 
 type Props = ChartTooltipProps;
 
+const { cursor } = Astro.props;
 /**
  * Inside a chart Root, the first Tooltip supplies the tooltip body. Elsewhere it renders nothing.
+ * Its registration carries its chart-level options, so the first chart-level Tooltip decides them.
  */
 const content = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
 ---
 
-<Fragment set:html={chartTooltipRegistration(content)} />
+<Fragment set:html={chartTooltipRegistration(content, { cursor })} />

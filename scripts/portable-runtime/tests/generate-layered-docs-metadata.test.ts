@@ -2324,7 +2324,7 @@ describe("generateLayeredDocsMetadata", () => {
     expect(chart.props.find((prop) => prop.name === "labelClass")!.type).toBe("string");
     expect(labelClass.description).toContain("React names it `labelClassName`.");
     expect(props.find((prop) => prop.name === "formatter")!.displayType).toMatch(
-      /=> string \| framework content$/,
+      /=> string \| framework content\) \| ChartFormat$/,
     );
     expect(validateLayeredDocsMetadata(metadata).requiredFailures).toEqual([]);
 

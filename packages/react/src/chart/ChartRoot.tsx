@@ -6,15 +6,21 @@
 "use client";
 
 import {
+  buildChartSpec,
   type ChartController,
   type ChartInput,
   type ChartModule,
+  type ChartPart,
   type ChartSource,
+  type ChartSpec,
+  type ChartSpecOptions,
   type ChartToggleOptions,
   type ChartVisibleChangeDetails,
   type CreateChartOptions,
+  chartLegendKeys,
   configText,
   isChartIcon,
+  isSameChartSpec,
   type NativeHostOptions,
   type ChartConfig as RuntimeChartConfig,
   toChartId,
@@ -108,6 +114,11 @@ export interface ChartRootInternalState extends ChartRootState {
   visibleModel: readonly string[] | undefined;
   /** True when a defined initial `visible` made the model parent-controlled. */
   controlled: boolean;
+  /**
+   * The config keys that the legend lists, in config order. A parts chart lists the keys that it
+   * draws. A chart module or definition lists every config key.
+   */
+  legendKeys: readonly string[];
   /** The Runtime controller's `onVisibleChange`. It sends the proposal to the consumer. */
   proposeVisible(visible: string[], details: ChartVisibleChangeDetails): void;
   /** Connects the Surface's controller. The root mirrors the keys that the controller accepts. */
@@ -115,11 +126,289 @@ export interface ChartRootInternalState extends ChartRootState {
   /** The first Tooltip registration, or `null`. */
   tooltip: ChartTooltipEntry | null;
   registerTooltip(entry: ChartTooltipEntry): () => void;
+  /** True without `chart` and `definition`: chart parts describe the chart. */
+  partsMode: boolean;
+  /** The spec that the first render draws, before the chart parts register. */
+  seed: ChartSpec | undefined;
+  /** True once the chart parts of the first render registered. A parts chart starts then. */
+  settled: boolean;
+  registerSpecPart(part: ChartPart, functions?: Record<string, unknown>): ChartSpecRegistration;
+  /** Registers the chart-level options of a part, such as the Tooltip `cursor`. */
+  registerSpecOptions(options: ChartSpecOptions): ChartSpecOptionsRegistration;
+}
+
+/** One chart spec registration: a spec part, or the chart-level options of a part. */
+export interface ChartSpecEntry {
+  part?: ChartPart;
+  options?: ChartSpecOptions;
+  /** The raw function props of the part. A new identity draws the chart again. */
+  functions: Record<string, unknown>;
+}
+
+/** Updates or removes the chart-level options of one part. */
+export interface ChartSpecOptionsRegistration {
+  update(options: ChartSpecOptions): void;
+  remove(): void;
+}
+
+/** Updates or removes one chart spec part registration. */
+export interface ChartSpecRegistration {
+  update(part: ChartPart, functions?: Record<string, unknown>): void;
+  remove(): void;
 }
 
 export const ChartRootContext = React.createContext<ChartRootState | null>(null);
 export const ChartRootInternalContext = React.createContext<ChartRootInternalState | null>(null);
 export const ChartTooltipBodyContext = React.createContext<ChartTooltipBody | null>(null);
+
+/** The props that each chart spec part sends, by part kind. */
+const CHART_SPEC_PART_PROPS: Record<ChartPart["kind"], readonly string[]> = {
+  bar: ["dataKey", "stackId", "radius", "fill", "label"],
+  line: ["dataKey", "type", "stroke", "strokeWidth", "dot", "activeDot", "label"],
+  area: [
+    "dataKey",
+    "stackId",
+    "type",
+    "fill",
+    "stroke",
+    "strokeWidth",
+    "fillOpacity",
+    "activeDot",
+    "label",
+  ],
+  pie: [
+    "dataKey",
+    "nameKey",
+    "stroke",
+    "strokeWidth",
+    "label",
+    "labelLine",
+    "innerRadius",
+    "outerRadius",
+    "paddingAngle",
+  ],
+  radar: ["dataKey", "strokeWidth", "fillOpacity", "dot", "activeDot"],
+  radialBar: ["dataKey", "nameKey", "innerRadius", "outerRadius", "background"],
+  xAxis: ["dataKey", "tickFormatter", "tickLine", "axisLine", "tickMargin", "hide"],
+  yAxis: ["tickFormatter", "tickLine", "axisLine", "tickMargin", "hide", "tickCount"],
+  grid: ["vertical", "horizontal"],
+  polarGrid: [
+    "gridType",
+    "radialLines",
+    "fill",
+    "fillOpacity",
+    "stroke",
+    "strokeWidth",
+    "polarRadius",
+  ],
+  polarAngleAxis: ["dataKey", "tickFormatter"],
+  label: ["position", "value", "dy", "fontSize", "fontWeight", "fill"],
+  linearGradient: ["id", "x1", "y1", "x2", "y2", "stops"],
+};
+
+/** A prop value by name, or by a path such as `"label.formatter"` for a function in an object prop. */
+export function readChartSpecProp(props: Record<string, unknown>, path: string): unknown {
+  return path
+    .split(".")
+    .reduce<unknown>(
+      (value, key) =>
+        value && typeof value === "object" ? (value as Record<string, unknown>)[key] : undefined,
+      props,
+    );
+}
+
+/** The function fields of an object prop, such as the `formatter` of a `label` object. */
+function nestedFunctionNames(value: unknown): string[] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.keys(value).filter(
+    (key) => typeof (value as Record<string, unknown>)[key] === "function",
+  );
+}
+
+/**
+ * A plain copy of a prop value. Arrays and plain objects copy field by field, also through a
+ * reactive proxy, so a reactive read of the part sees each nested field, and an edit in place, such
+ * as a new label formatter prefix or gradient stop color, gives a part that differs from the last
+ * one. Functions and other objects stay as they are.
+ */
+function plainChartSpecValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(plainChartSpecValue);
+  if (!value || typeof value !== "object") return value;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, plainChartSpecValue(entry)]),
+  );
+}
+
+/**
+ * One chart spec part from its props. The part keeps only its own defined props, as plain copies.
+ * A function prop, or a function in an object prop, becomes its stable delegate.
+ */
+export function readChartSpecPart(
+  kind: ChartPart["kind"],
+  props: Record<string, unknown>,
+  delegate?: (name: string) => (...args: any[]) => unknown,
+): ChartPart {
+  const part: Record<string, unknown> = { kind };
+  for (const name of CHART_SPEC_PART_PROPS[kind]) {
+    const value = props[name];
+    if (value === undefined) continue;
+    if (delegate && typeof value === "function") {
+      part[name] = delegate(name);
+      continue;
+    }
+    const copy = plainChartSpecValue(value);
+    const nested = delegate ? nestedFunctionNames(copy) : [];
+    part[name] = nested.length
+      ? {
+          ...(copy as Record<string, unknown>),
+          ...Object.fromEntries(nested.map((key) => [key, delegate!(`${name}.${key}`)])),
+        }
+      : copy;
+  }
+  return part as unknown as ChartPart;
+}
+
+/**
+ * The raw function props of one chart spec part, by name or path. A function with a new identity
+ * draws the chart again, so a formatter that reads new state shows its new text.
+ */
+export function readChartSpecFunctions(
+  kind: ChartPart["kind"],
+  props: Record<string, unknown>,
+): Record<string, unknown> {
+  const functions: Record<string, unknown> = {};
+  for (const name of CHART_SPEC_PART_PROPS[kind]) {
+    const value = props[name];
+    if (typeof value === "function") functions[name] = value;
+    for (const key of nestedFunctionNames(value))
+      functions[`${name}.${key}`] = (value as Record<string, unknown>)[key];
+  }
+  return functions;
+}
+
+/** Throws for a chart spec part inside a Root that has `chart` or `definition`. */
+export function assertChartSpecPartRoot(partsMode: boolean): void {
+  if (!partsMode)
+    throw new TypeError(
+      "Chart parts cannot be combined with chart or definition. Use chart parts, a chart module or a native definition, not more than one.",
+    );
+}
+
+/** A chart spec part component carries its part kind, so the Root finds it in its children. */
+type ChartSpecPartType = { chartSpecPart?: ChartPart["kind"] };
+
+const LAZY_TYPE = Symbol.for("react.lazy");
+const MEMO_TYPE = Symbol.for("react.memo");
+
+type WrappedType = {
+  $$typeof?: symbol;
+  type?: unknown;
+  _payload?: unknown;
+  _init?: (payload: unknown) => unknown;
+};
+
+/**
+ * The component behind `React.memo` and loaded `React.lazy` types. A Server Component gets
+ * client components as lazy references. A lazy type that still loads, or failed, stays wrapped.
+ */
+function unwrapChartPartType(type: unknown): unknown {
+  for (let depth = 0; depth < 8 && type && typeof type === "object"; depth++) {
+    const wrapped = type as WrappedType;
+    if (wrapped.$$typeof === MEMO_TYPE) type = wrapped.type;
+    else if (wrapped.$$typeof === LAZY_TYPE && wrapped._init) {
+      try {
+        type = wrapped._init(wrapped._payload);
+      } catch {
+        return undefined;
+      }
+    } else break;
+  }
+  return type;
+}
+
+/**
+ * The spec parts among a Root's children, in source order, through arrays and fragments. The
+ * first render draws them, because parts register after the Surface renders. A part inside
+ * another component registers after mount.
+ */
+function collectChartSpec(children: React.ReactNode, parts: ChartPart[] = []): ChartPart[] {
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement<Record<string, unknown>>(child)) return;
+    const type = unwrapChartPartType(child.type) as ChartSpecPartType | undefined;
+    const kind = type?.chartSpecPart;
+    if (kind) parts.push(readChartSpecPart(kind, child.props));
+    else if (child.type === React.Fragment)
+      collectChartSpec(child.props.children as React.ReactNode, parts);
+  });
+  return parts;
+}
+
+/**
+ * Registers one chart spec part with the Root, in source order, and removes it on unmount. A prop
+ * change updates the part in place. A function prop becomes a stable delegate that calls the
+ * latest function. A function with a new identity draws the chart again, so an inline formatter
+ * draws once per parent render, as in Recharts.
+ */
+export function useChartSpecPart(kind: ChartPart["kind"], props: Record<string, unknown>): void {
+  const root = React.useContext(ChartRootInternalContext);
+  if (root) assertChartSpecPartRoot(root.partsMode);
+  const latest = React.useRef(props);
+  const [delegates] = React.useState(() => new Map<string, (...args: any[]) => unknown>());
+  const delegate = (name: string) => {
+    let call = delegates.get(name);
+    if (!call) {
+      call = (...args: any[]) =>
+        (readChartSpecProp(latest.current, name) as (...args: any[]) => unknown)(...args);
+      delegates.set(name, call);
+    }
+    return call;
+  };
+  const part = readChartSpecPart(kind, props, delegate);
+  const registration = React.useRef<ChartSpecRegistration | null>(null);
+  const register = root?.registerSpecPart;
+  useIsomorphicLayoutEffect(() => {
+    if (!register) return;
+    const current = register(part, readChartSpecFunctions(kind, props));
+    registration.current = current;
+    return () => {
+      registration.current = null;
+      current.remove();
+    };
+    // The registration keeps its place. Prop changes reach it through `update`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [register]);
+  useIsomorphicLayoutEffect(() => {
+    latest.current = props;
+    registration.current?.update(part, readChartSpecFunctions(kind, props));
+  });
+}
+
+/**
+ * Registers the chart-level options of a part, such as the Tooltip `cursor`, with a parts chart
+ * Root. The registration keeps its place, and a prop change updates it in place. `active` false,
+ * as in a tooltip body, registers nothing.
+ */
+export function useChartSpecOptions(options: ChartSpecOptions, active = true): void {
+  const root = React.useContext(ChartRootInternalContext);
+  const register = active && root?.partsMode ? root.registerSpecOptions : undefined;
+  const registration = React.useRef<ChartSpecOptionsRegistration | null>(null);
+  useIsomorphicLayoutEffect(() => {
+    if (!register) return;
+    const current = register(options);
+    registration.current = current;
+    return () => {
+      registration.current = null;
+      current.remove();
+    };
+    // The registration keeps its place. Prop changes reach it through `update`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [register]);
+  useIsomorphicLayoutEffect(() => {
+    registration.current?.update(options);
+  });
+}
 
 /** The public chart state: config keys, visible keys and visibility requests. */
 export function useChartRoot(): ChartRootState {
@@ -193,6 +482,11 @@ type ChartRootCommonProps<D, X extends ChartValue, Y extends ChartValue> = Omit<
   host?: NativeHostOptions<NoInfer<D>, NoInfer<X>, NoInfer<Y>>;
   /** Sets the native `definition.tooltip` to false. */
   disableTooltip?: boolean;
+  /**
+   * How the stacked bars and areas of a parts chart stack. `"expand"` stacks each category to 100%,
+   * and the tooltip keeps the raw values.
+   */
+  stackOffset?: "none" | "expand";
   children?: React.ReactNode;
 };
 
@@ -232,12 +526,28 @@ export type ChartRootDefinitionProps<
   onVisibleChange?: never;
 };
 
+/**
+ * Chart parts in the children, such as a bar and an x axis, describe the chart. It follows the
+ * visibility model, and `aria-label` names the chart.
+ */
+export type ChartRootSpecProps<
+  T = unknown,
+  D = unknown,
+  X extends ChartValue = ChartValue,
+  Y extends ChartValue = ChartValue,
+> = Omit<ChartRootSourceProps<T, D, X, Y>, "chart"> & {
+  chart?: never;
+};
+
 export type ChartRootProps<
   T = unknown,
   D = unknown,
   X extends ChartValue = ChartValue,
   Y extends ChartValue = ChartValue,
-> = ChartRootSourceProps<T, D, X, Y> | ChartRootDefinitionProps<T, D, X, Y>;
+> =
+  | ChartRootSourceProps<T, D, X, Y>
+  | ChartRootDefinitionProps<T, D, X, Y>
+  | ChartRootSpecProps<T, D, X, Y>;
 
 const EMPTY: readonly never[] = [];
 
@@ -275,9 +585,11 @@ function ChartRoot<
     theme,
     host,
     disableTooltip = false,
+    stackOffset,
     visible: visibleProp,
     defaultVisible,
     onVisibleChange,
+    "aria-label": ariaLabel,
     children,
     ...rootProps
   } = props;
@@ -312,21 +624,90 @@ function ChartRoot<
     setLastCommand(copyModel(visibleProp));
     if (visibleProp !== undefined) setAccepted(copyModel(visibleProp));
   }
+  // Chart spec part registrations in mount order. An update keeps the part's place, and an update
+  // with the same props keeps the spec, so the chart does not render again. A function prop with a
+  // new identity replaces the part, so the chart draws the new function's result.
+  const [specParts, setSpecParts] = React.useState<readonly ChartSpecEntry[]>(EMPTY);
+  const registerSpecPart = React.useCallback(
+    (part: ChartPart, functions: Record<string, unknown> = {}) => {
+      const entry: ChartSpecEntry & { part: ChartPart } = { part, functions };
+      setSpecParts((list) => [...list, entry]);
+      return {
+        update(next: ChartPart, nextFunctions: Record<string, unknown> = {}) {
+          const names = Object.keys(nextFunctions);
+          const sameFunctions =
+            names.length === Object.keys(entry.functions).length &&
+            names.every((name) => entry.functions[name] === nextFunctions[name]);
+          if (sameFunctions && isSameChartSpec({ parts: [entry.part] }, { parts: [next] })) return;
+          entry.part = next;
+          entry.functions = nextFunctions;
+          setSpecParts((list) => [...list]);
+        },
+        remove() {
+          setSpecParts((list) => list.filter((candidate) => candidate !== entry));
+        },
+      };
+    },
+    [],
+  );
+  // Chart-level options from a part, in mount order. The first set that names an option decides it,
+  // so the first Tooltip, which supplies the tooltip body, decides `cursor`.
+  const registerSpecOptions = React.useCallback((options: ChartSpecOptions) => {
+    const entry: ChartSpecEntry = { options, functions: {} };
+    setSpecParts((list) => [...list, entry]);
+    return {
+      update(next: ChartSpecOptions) {
+        if (isSameChartSpec({ parts: [], ...entry.options }, { parts: [], ...next })) return;
+        entry.options = next;
+        setSpecParts((list) => [...list]);
+      },
+      remove() {
+        setSpecParts((list) => list.filter((candidate) => candidate !== entry));
+      },
+    };
+  }, []);
+  // The Root's own options come first. Without parts there is no spec.
+  const spec = React.useMemo<ChartSpec | undefined>(
+    () =>
+      buildChartSpec(
+        specParts.flatMap((entry) => (entry.part ? [entry.part] : [])),
+        { stackOffset },
+        ...specParts.map((entry) => entry.options),
+      ),
+    [specParts, stackOffset],
+  );
   // A plain snapshot, so the Runtime never stores a framework proxy.
   const requested = mode === "definition" ? undefined : accepted;
   const visible = React.useMemo(() => visibleKeys(config, requested), [config, requested]);
   const keys = React.useMemo(() => Object.keys(config), [config]);
+  // Without `chart` and `definition`, chart parts describe the chart. A parts chart takes its
+  // accessible name from `aria-label`.
+  const partsMode = React.useMemo(() => !chart && !definition, [chart, definition]);
   // The visible keys stay out of the input, so an accepted toggle does not come back through the
-  // controller's `update` and render the chart a second time.
+  // controller's `update` and render the chart a second time. The spec joins the input only in a
+  // parts chart, because removed parts leave the registry after the render that adds a chart module.
   const input = React.useMemo<ChartInput<T>>(
     () => ({
       data: (data ?? EMPTY) as readonly T[],
       config,
+      ...(partsMode && spec ? { spec } : {}),
       ...(params ? { params } : {}),
       ...(theme ? { theme } : {}),
     }),
-    [data, config, params, theme],
+    [data, config, partsMode, spec, params, theme],
   );
+  const chartHost = React.useMemo(
+    () => (partsMode && ariaLabel != null ? { ...host, ariaLabel: String(ariaLabel) } : host),
+    [partsMode, ariaLabel, host],
+  );
+  // The spec parts among the children draw the first render, on the server and in hydration. The
+  // Surface starts once the Root settles, after the parts of the first render registered.
+  const [seed] = React.useState(() => {
+    if (!partsMode) return undefined;
+    return buildChartSpec(collectChartSpec(children), { stackOffset });
+  });
+  const [settled, setSettled] = React.useState(false);
+  useIsomorphicLayoutEffect(() => setSettled(true), []);
 
   const controllerRef = React.useRef<ChartController<any, any, any, any> | null>(null);
   const latest = React.useRef({ mode, onVisibleChange });
@@ -371,6 +752,11 @@ function ChartRoot<
   }, []);
   const tooltip = tooltips[0] ?? null;
 
+  // A parts chart lists the config keys that it draws in its legend, from the same spec as the chart.
+  const legendKeys = React.useMemo(
+    () => (partsMode ? chartLegendKeys(settled ? spec : seed, input.data, config) : keys),
+    [partsMode, spec, settled, seed, input, config, keys],
+  );
   const label = React.useCallback(
     (key: string) => {
       return configText(config[key], key);
@@ -385,12 +771,13 @@ function ChartRoot<
       definition: definition as ChartDefinition<any, any, any> | undefined,
       input,
       config,
-      host: host as NativeHostOptions<any, any, any> | undefined,
+      host: chartHost as NativeHostOptions<any, any, any> | undefined,
       disableTooltip,
       keys,
       visible,
       visibleModel: requested,
       controlled,
+      legendKeys,
       label,
       setVisible,
       toggle,
@@ -398,6 +785,11 @@ function ChartRoot<
       attachController,
       tooltip,
       registerTooltip,
+      partsMode,
+      seed,
+      settled,
+      registerSpecPart,
+      registerSpecOptions,
     }),
     [
       id,
@@ -406,12 +798,13 @@ function ChartRoot<
       definition,
       input,
       config,
-      host,
+      chartHost,
       disableTooltip,
       keys,
       visible,
       requested,
       controlled,
+      legendKeys,
       label,
       setVisible,
       toggle,
@@ -419,6 +812,11 @@ function ChartRoot<
       attachController,
       tooltip,
       registerTooltip,
+      partsMode,
+      seed,
+      settled,
+      registerSpecPart,
+      registerSpecOptions,
     ],
   );
   // The public state holds only the public fields, so `useChartRoot()` returns no plumbing.
@@ -439,7 +837,12 @@ function ChartRoot<
   return (
     <ChartRootInternalContext.Provider value={internal}>
       <ChartRootContext.Provider value={state}>
-        <div {...rootProps} data-slot="chart" data-chart={id}>
+        <div
+          {...rootProps}
+          aria-label={partsMode ? undefined : ariaLabel}
+          data-slot="chart"
+          data-chart={id}
+        >
           {children}
         </div>
       </ChartRootContext.Provider>

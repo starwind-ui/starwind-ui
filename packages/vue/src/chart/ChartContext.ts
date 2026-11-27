@@ -7,7 +7,11 @@ import {
   type ChartController,
   type ChartInput,
   type ChartModule,
+  type ChartPart,
   type ChartSource,
+  type ChartSpec,
+  type ChartSpecOptions,
+  type ChartTickFormatter,
   type ChartToggleOptions,
   type ChartVisibleChangeDetails,
   type CreateChartOptions,
@@ -23,17 +27,20 @@ import {
   Comment,
   type Component,
   type ComputedRef,
+  camelize,
   defineComponent,
   Fragment,
   h,
   type InjectionKey,
   inject,
   isVNode,
+  onBeforeUnmount,
   type PropType,
   provide,
   toRef,
   type VNode,
   type VNodeChild,
+  watch,
 } from "vue";
 
 /** A value type that a chart axis accepts. */
@@ -75,6 +82,13 @@ type ChartRootCommonProps<D, X extends ChartValue, Y extends ChartValue> = {
   host?: NativeHostOptions<D, X, Y>;
   /** Sets the native `definition.tooltip` to false. */
   disableTooltip?: boolean;
+  /**
+   * How the stacked bars and areas of a parts chart stack. `"expand"` stacks each category to 100%,
+   * and the tooltip keeps the raw values.
+   */
+  stackOffset?: "none" | "expand";
+  /** A parts chart takes its accessible name from it. Other charts keep it on the root element. */
+  "aria-label"?: string;
 };
 
 /** A chart module or factory. It follows the visibility model. */
@@ -126,16 +140,340 @@ export type ChartRootDefinitionProps<
 };
 
 /**
- * Props of Chart.Root. Use `chart` (a chart module or factory) or `definition` (a static native
- * definition). A definition owns its visibility, so it rejects `v-model:visible`,
- * `defaultVisible` and `onVisibleChange`.
+ * Chart parts in the default slot, such as a bar and an x axis, describe the chart. It follows the
+ * visibility model, and `aria-label` names the chart.
+ */
+export type ChartRootSpecProps<
+  T = unknown,
+  D = unknown,
+  X extends ChartValue = ChartValue,
+  Y extends ChartValue = ChartValue,
+> = Omit<ChartRootSourceProps<T, D, X, Y>, "chart"> & {
+  chart?: never;
+};
+
+/**
+ * Props of Chart.Root. Use chart parts in the default slot, `chart` (a chart module or factory) or
+ * `definition` (a static native definition). A definition owns its visibility, so it rejects
+ * `v-model:visible`, `defaultVisible` and `onVisibleChange`.
  */
 export type ChartRootProps<
   T = unknown,
   D = unknown,
   X extends ChartValue = ChartValue,
   Y extends ChartValue = ChartValue,
-> = ChartRootSourceProps<T, D, X, Y> | ChartRootDefinitionProps<T, D, X, Y>;
+> =
+  | ChartRootSourceProps<T, D, X, Y>
+  | ChartRootDefinitionProps<T, D, X, Y>
+  | ChartRootSpecProps<T, D, X, Y>;
+
+/** Adds bars for one data key. Bars with the same `stackId` stack. Other bars group. */
+export type ChartBarProps = {
+  /** The data key of the values this part draws. */
+  dataKey: string;
+  /** Bars with the same stackId stack. Other bars group. */
+  stackId?: string | number;
+  /**
+   * The corner radius in pixels. A number rounds the bar end. Four numbers set the top left, top
+   * right, bottom right and bottom left corners, as in Recharts.
+   */
+  radius?: number | readonly [number, number, number, number];
+  /**
+   * The fill color, or `"url(#id)"` for the ChartLinearGradient with that id. Defaults to the
+   * config color.
+   */
+  fill?: string;
+  /**
+   * Draws a label on each bar or value, as a Recharts `label` or `LabelList`. An object sets the
+   * row field, position, offset, color, font size and formatter. Labels sit in the middle of the
+   * mark, 5px from it, unless `position` says otherwise.
+   */
+  label?:
+    | boolean
+    | {
+        dataKey?: string;
+        position?: "top" | "inside" | "insideLeft" | "insideStart" | "right" | "outside";
+        offset?: number;
+        fill?: string;
+        fontSize?: number;
+        formatter?: ChartTickFormatter;
+      };
+};
+
+/** Adds a line for one data key. */
+export type ChartLineProps = {
+  /** The data key of the values this part draws. */
+  dataKey: string;
+  /** The curve of the line. */
+  type?: "natural" | "monotone" | "linear" | "step";
+  /** The stroke color. Defaults to the config color. */
+  stroke?: string;
+  /** The stroke width in pixels. */
+  strokeWidth?: number;
+  /** Draws a dot at every value. An object sets the dot radius, fill and stroke. */
+  dot?:
+    | boolean
+    | { r?: number; fill?: string; fillOpacity?: number; stroke?: string; strokeWidth?: number };
+  /** Draws a dot at the focused value. An object sets the dot radius, fill and stroke. */
+  activeDot?:
+    | boolean
+    | { r?: number; fill?: string; fillOpacity?: number; stroke?: string; strokeWidth?: number };
+  /**
+   * Draws a label on each bar or value, as a Recharts `label` or `LabelList`. An object sets the
+   * row field, position, offset, color, font size and formatter. Labels sit in the middle of the
+   * mark, 5px from it, unless `position` says otherwise.
+   */
+  label?:
+    | boolean
+    | {
+        dataKey?: string;
+        position?: "top" | "inside" | "insideLeft" | "insideStart" | "right" | "outside";
+        offset?: number;
+        fill?: string;
+        fontSize?: number;
+        formatter?: ChartTickFormatter;
+      };
+};
+
+/** Adds an area for one data key. Areas with the same `stackId` stack. Other areas overlap. */
+export type ChartAreaProps = {
+  /** The data key of the values this part draws. */
+  dataKey: string;
+  /** Areas with the same stackId stack. Other areas overlap. */
+  stackId?: string | number;
+  /** The curve of the area edge. */
+  type?: "natural" | "monotone" | "linear" | "step";
+  /**
+   * The fill color, or `"url(#id)"` for the ChartLinearGradient with that id. Defaults to the
+   * config color.
+   */
+  fill?: string;
+  /** The stroke color. Defaults to the config color. */
+  stroke?: string;
+  /** The stroke width in pixels. */
+  strokeWidth?: number;
+  /**
+   * The fill opacity. A gradient fill without it takes 0.6, the Recharts default, so the stops look
+   * as in shadcn.
+   */
+  fillOpacity?: number;
+  /** Draws a dot at the focused value. */
+  activeDot?: boolean;
+  /**
+   * Draws a label on each bar or value, as a Recharts `label` or `LabelList`. An object sets the
+   * row field, position, offset, color, font size and formatter. Labels sit in the middle of the
+   * mark, 5px from it, unless `position` says otherwise.
+   */
+  label?:
+    | boolean
+    | {
+        dataKey?: string;
+        position?: "top" | "inside" | "insideLeft" | "insideStart" | "right" | "outside";
+        offset?: number;
+        fill?: string;
+        fontSize?: number;
+        formatter?: ChartTickFormatter;
+      };
+};
+
+/** Adds a pie or donut. Slice colors come from config by `nameKey` value. */
+export type ChartPieProps = {
+  /** The data key of the values this part draws. */
+  dataKey: string;
+  /**
+   * The data key whose values name the slices or bars. Their colors come from config by this value.
+   */
+  nameKey: string;
+  /** The color of the line between slices. `"none"` removes the line. */
+  stroke?: string;
+  /** The width of the line between slices in pixels. */
+  strokeWidth?: number;
+  /**
+   * Draws a label on each slice, as a Recharts pie `label`. Labels sit 20px outside the slices, and
+   * the pie shrinks to make room. `position: "inside"` puts them in the middle of the slices.
+   */
+  label?:
+    | boolean
+    | {
+        dataKey?: string;
+        position?: "top" | "inside" | "insideLeft" | "insideStart" | "right" | "outside";
+        offset?: number;
+        fill?: string;
+        fontSize?: number;
+        formatter?: ChartTickFormatter;
+      };
+  /** Draws a line from each slice to its outside label. */
+  labelLine?: boolean;
+  /** The inner radius: plain pixels at any chart size, or a percent of half the smaller side. */
+  innerRadius?: number | `${number}%`;
+  /** The outer radius: plain pixels at any chart size, or a percent of half the smaller side. */
+  outerRadius?: number | `${number}%`;
+  /** The gap between slices in degrees. Without it, slices keep a gap of about 1.4 degrees. */
+  paddingAngle?: number;
+};
+
+/** Adds a radar area for one data key. The angle key comes from the polar angle axis. */
+export type ChartRadarProps = {
+  /** The data key of the values this part draws. */
+  dataKey: string;
+  /** The stroke width in pixels. */
+  strokeWidth?: number;
+  /** The fill opacity. */
+  fillOpacity?: number;
+  /** Draws a dot at every value. An object sets the dot radius, fill and stroke. */
+  dot?:
+    | boolean
+    | { r?: number; fill?: string; fillOpacity?: number; stroke?: string; strokeWidth?: number };
+  /** Draws a dot at the focused value. An object sets the dot radius, fill and stroke. */
+  activeDot?:
+    | boolean
+    | { r?: number; fill?: string; fillOpacity?: number; stroke?: string; strokeWidth?: number };
+};
+
+/**
+ * Adds radial bars. `background` draws the muted track. Bar colors come from config by `nameKey`
+ * value.
+ */
+export type ChartRadialBarProps = {
+  /** The data key of the values this part draws. */
+  dataKey: string;
+  /**
+   * The data key whose values name the slices or bars. Their colors come from config by this value.
+   */
+  nameKey: string;
+  /** The inner radius: plain pixels at any chart size, or a percent of half the smaller side. */
+  innerRadius?: number | `${number}%`;
+  /** The outer radius: plain pixels at any chart size, or a percent of half the smaller side. */
+  outerRadius?: number | `${number}%`;
+  /** Draws the muted track behind each bar. */
+  background?: boolean;
+};
+
+/** Adds the category axis of a cartesian chart. */
+export type ChartXAxisProps = {
+  /** The data key of the categories. */
+  dataKey: string;
+  /**
+   * Formats the tick labels: a function or a ChartFormat object. Astro accepts only a ChartFormat
+   * object.
+   */
+  tickFormatter?: ChartTickFormatter;
+  /** Draws tick lines. */
+  tickLine?: boolean;
+  /** Draws the axis line. */
+  axisLine?: boolean;
+  /** The gap between a tick and its label in pixels. */
+  tickMargin?: number;
+  /** Keeps the scale and hides the axis. */
+  hide?: boolean;
+};
+
+/** Adds the value axis of a cartesian chart. Without it, the chart draws no value labels. */
+export type ChartYAxisProps = {
+  /**
+   * Formats the tick labels: a function or a ChartFormat object. Astro accepts only a ChartFormat
+   * object.
+   */
+  tickFormatter?: ChartTickFormatter;
+  /** Draws tick lines. */
+  tickLine?: boolean;
+  /** Draws the axis line. */
+  axisLine?: boolean;
+  /** The gap between a tick and its label in pixels. */
+  tickMargin?: number;
+  /** Keeps the scale and hides the axis. */
+  hide?: boolean;
+  /** The preferred number of ticks. */
+  tickCount?: number;
+};
+
+/** Adds cartesian grid lines. */
+export type ChartGridProps = {
+  /** Draws vertical grid lines. */
+  vertical?: boolean;
+  /** Draws horizontal grid lines. */
+  horizontal?: boolean;
+};
+
+/** Adds the radar grid: rings and the lines from the center to each category. */
+export type ChartPolarGridProps = {
+  /** The shape of the radar grid. */
+  gridType?: "polygon" | "circle";
+  /** Draws the lines from the center to each category. */
+  radialLines?: boolean;
+  /** The fill color of the rings. Without it, the rings have no fill. */
+  fill?: string;
+  /** The fill opacity of the rings. Each ring fills its whole disc. */
+  fillOpacity?: number;
+  /** The color of the rings and the lines. */
+  stroke?: string;
+  /** The width of the rings and the lines in pixels. */
+  strokeWidth?: number;
+  /** The ring radii in pixels, as in Recharts. Without it, the rings sit at the value ticks. */
+  polarRadius?: readonly number[];
+};
+
+/** Adds the radar categories and their labels. */
+export type ChartPolarAngleAxisProps = {
+  /** The data key of the categories. */
+  dataKey: string;
+  /**
+   * Formats the tick labels: a function or a ChartFormat object. Astro accepts only a ChartFormat
+   * object.
+   */
+  tickFormatter?: ChartTickFormatter;
+};
+
+/**
+ * Adds a center line of text to a pie. Without `value`, it shows the total of the visible slices.
+ * Each label adds one line, so a second label with `dy` adds a line below the total.
+ */
+export type ChartLabelProps = {
+  /** Where the label sits. */
+  position?: "center";
+  /** The label text. Without it, a pie shows the total of its visible slices. */
+  value?: string | number;
+  /** Moves the text down by this many pixels. A negative value moves it up. */
+  dy?: number;
+  /** The font size in pixels. */
+  fontSize?: number;
+  /**
+   * The font weight, such as 700 for the bold total of a shadcn donut chart. At the default, the
+   * text keeps the weight of the page.
+   */
+  fontWeight?: number;
+  /** The text color. */
+  fill?: string;
+};
+
+/**
+ * Adds a linear gradient that a bar or an area fills from with `fill="url(#id)"`. The chart scopes
+ * the id, so two charts can use the same id.
+ */
+export type ChartLinearGradientProps = {
+  /** The gradient id that a fill such as `"url(#fillDesktop)"` names. */
+  id: string;
+  /**
+   * The start x: 0 is the left edge and 1 the right edge, or a percent string. With the defaults,
+   * the gradient runs from left to right, as in SVG.
+   */
+  x1?: number | `${number}` | `${number}%`;
+  /** The start y: 0 is the top edge and 1 the bottom edge, or a percent string. */
+  y1?: number | `${number}` | `${number}%`;
+  /** The end x, as `x1`. */
+  x2?: number | `${number}` | `${number}%`;
+  /** The end y, as `y1`. For a gradient from top to bottom, shadcn sets `x2` to 0 and `y2` to 1. */
+  y2?: number | `${number}` | `${number}%`;
+  /**
+   * The color stops, as SVG `<stop>` elements. An offset is a number from 0 to 1 or a percent
+   * string such as `"5%"`.
+   */
+  stops: readonly {
+    offset: number | `${number}` | `${number}%`;
+    stopColor: string;
+    stopOpacity?: number;
+  }[];
+};
 
 /** One Tooltip registration. The surface renders the first one. */
 export interface ChartTooltipEntry {
@@ -178,6 +516,11 @@ export interface ChartRootInternalState extends ChartRootState {
   readonly visibleModel: readonly string[] | undefined;
   /** True when a defined initial `visible` made the model parent-controlled. */
   readonly controlled: boolean;
+  /**
+   * The config keys that the legend lists, in config order. A parts chart lists the keys that it
+   * draws. A chart module or definition lists every config key.
+   */
+  readonly legendKeys: readonly string[];
   /** The Runtime controller's `onVisibleChange`. It sends the proposal to the consumer. */
   proposeVisible(visible: string[], details: ChartVisibleChangeDetails): void;
   /** Connects the Surface's controller. The root mirrors the keys that the controller accepts. */
@@ -185,6 +528,35 @@ export interface ChartRootInternalState extends ChartRootState {
   /** The first Tooltip registration, or `null`. */
   readonly tooltip: ChartTooltipEntry | null;
   registerTooltip(entry: ChartTooltipEntry): () => void;
+  /** True without `chart` and `definition`: chart parts describe the chart. */
+  readonly partsMode: boolean;
+  /** The spec that the first render draws, before the chart parts register. */
+  readonly seed: ChartSpec | undefined;
+  /** True once the chart parts of the first render registered. A parts chart starts then. */
+  readonly settled: boolean;
+  registerSpecPart(part: ChartPart, functions?: Record<string, unknown>): ChartSpecRegistration;
+  /** Registers the chart-level options of a part, such as the Tooltip `cursor`. */
+  registerSpecOptions(options: ChartSpecOptions): ChartSpecOptionsRegistration;
+}
+
+/** One chart spec registration: a spec part, or the chart-level options of a part. */
+export interface ChartSpecEntry {
+  part?: ChartPart;
+  options?: ChartSpecOptions;
+  /** The raw function props of the part. A new identity draws the chart again. */
+  functions: Record<string, unknown>;
+}
+
+/** Updates or removes the chart-level options of one part. */
+export interface ChartSpecOptionsRegistration {
+  update(options: ChartSpecOptions): void;
+  remove(): void;
+}
+
+/** Updates or removes one chart spec part registration. */
+export interface ChartSpecRegistration {
+  update(part: ChartPart, functions?: Record<string, unknown>): void;
+  remove(): void;
 }
 
 export interface ChartTooltipContentState {
@@ -262,6 +634,228 @@ export function useChartLegend(): ChartLegendState {
 
 export function useChartLegendKey(): ComputedRef<string> | null {
   return inject(ChartLegendKeyKey, null);
+}
+
+/** The props that each chart spec part sends, by part kind. */
+const CHART_SPEC_PART_PROPS: Record<ChartPart["kind"], readonly string[]> = {
+  bar: ["dataKey", "stackId", "radius", "fill", "label"],
+  line: ["dataKey", "type", "stroke", "strokeWidth", "dot", "activeDot", "label"],
+  area: [
+    "dataKey",
+    "stackId",
+    "type",
+    "fill",
+    "stroke",
+    "strokeWidth",
+    "fillOpacity",
+    "activeDot",
+    "label",
+  ],
+  pie: [
+    "dataKey",
+    "nameKey",
+    "stroke",
+    "strokeWidth",
+    "label",
+    "labelLine",
+    "innerRadius",
+    "outerRadius",
+    "paddingAngle",
+  ],
+  radar: ["dataKey", "strokeWidth", "fillOpacity", "dot", "activeDot"],
+  radialBar: ["dataKey", "nameKey", "innerRadius", "outerRadius", "background"],
+  xAxis: ["dataKey", "tickFormatter", "tickLine", "axisLine", "tickMargin", "hide"],
+  yAxis: ["tickFormatter", "tickLine", "axisLine", "tickMargin", "hide", "tickCount"],
+  grid: ["vertical", "horizontal"],
+  polarGrid: [
+    "gridType",
+    "radialLines",
+    "fill",
+    "fillOpacity",
+    "stroke",
+    "strokeWidth",
+    "polarRadius",
+  ],
+  polarAngleAxis: ["dataKey", "tickFormatter"],
+  label: ["position", "value", "dy", "fontSize", "fontWeight", "fill"],
+  linearGradient: ["id", "x1", "y1", "x2", "y2", "stops"],
+};
+
+/** A prop value by name, or by a path such as `"label.formatter"` for a function in an object prop. */
+export function readChartSpecProp(props: Record<string, unknown>, path: string): unknown {
+  return path
+    .split(".")
+    .reduce<unknown>(
+      (value, key) =>
+        value && typeof value === "object" ? (value as Record<string, unknown>)[key] : undefined,
+      props,
+    );
+}
+
+/** The function fields of an object prop, such as the `formatter` of a `label` object. */
+function nestedFunctionNames(value: unknown): string[] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.keys(value).filter(
+    (key) => typeof (value as Record<string, unknown>)[key] === "function",
+  );
+}
+
+/**
+ * A plain copy of a prop value. Arrays and plain objects copy field by field, also through a
+ * reactive proxy, so a reactive read of the part sees each nested field, and an edit in place, such
+ * as a new label formatter prefix or gradient stop color, gives a part that differs from the last
+ * one. Functions and other objects stay as they are.
+ */
+function plainChartSpecValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(plainChartSpecValue);
+  if (!value || typeof value !== "object") return value;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, plainChartSpecValue(entry)]),
+  );
+}
+
+/**
+ * One chart spec part from its props. The part keeps only its own defined props, as plain copies.
+ * A function prop, or a function in an object prop, becomes its stable delegate.
+ */
+export function readChartSpecPart(
+  kind: ChartPart["kind"],
+  props: Record<string, unknown>,
+  delegate?: (name: string) => (...args: any[]) => unknown,
+): ChartPart {
+  const part: Record<string, unknown> = { kind };
+  for (const name of CHART_SPEC_PART_PROPS[kind]) {
+    const value = props[name];
+    if (value === undefined) continue;
+    if (delegate && typeof value === "function") {
+      part[name] = delegate(name);
+      continue;
+    }
+    const copy = plainChartSpecValue(value);
+    const nested = delegate ? nestedFunctionNames(copy) : [];
+    part[name] = nested.length
+      ? {
+          ...(copy as Record<string, unknown>),
+          ...Object.fromEntries(nested.map((key) => [key, delegate!(`${name}.${key}`)])),
+        }
+      : copy;
+  }
+  return part as unknown as ChartPart;
+}
+
+/**
+ * The raw function props of one chart spec part, by name or path. A function with a new identity
+ * draws the chart again, so a formatter that reads new state shows its new text.
+ */
+export function readChartSpecFunctions(
+  kind: ChartPart["kind"],
+  props: Record<string, unknown>,
+): Record<string, unknown> {
+  const functions: Record<string, unknown> = {};
+  for (const name of CHART_SPEC_PART_PROPS[kind]) {
+    const value = props[name];
+    if (typeof value === "function") functions[name] = value;
+    for (const key of nestedFunctionNames(value))
+      functions[`${name}.${key}`] = (value as Record<string, unknown>)[key];
+  }
+  return functions;
+}
+
+/** Throws for a chart spec part inside a Root that has `chart` or `definition`. */
+export function assertChartSpecPartRoot(partsMode: boolean): void {
+  if (!partsMode)
+    throw new TypeError(
+      "Chart parts cannot be combined with chart or definition. Use chart parts, a chart module or a native definition, not more than one.",
+    );
+}
+
+/** The mark part kinds, from the Runtime list. */
+const LEGEND_MARKS = new Set<string>(["bar", "line", "area", "pie", "radar", "radialBar"]);
+
+/**
+ * The mark parts among a Root's slot vnodes, in source order, through arrays and fragments, or
+ * `undefined` when there is none. A legend before a mark part renders before the part registers,
+ * so the first legend lists their keys. It keeps only the props that the legend reads. A part inside
+ * another component is not found.
+ */
+export function collectChartLegendSeed(nodes: unknown): ChartSpec | undefined {
+  const parts: ChartPart[] = [];
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) node.forEach(walk);
+    else if (!isVNode(node)) return;
+    else if (node.type === Fragment) walk(node.children);
+    else {
+      const kind = (node.type as { chartSpecPart?: ChartPart["kind"] } | null)?.chartSpecPart;
+      if (!kind || !LEGEND_MARKS.has(kind)) return;
+      const part: Record<string, unknown> = { kind };
+      // A template can write a prop name in kebab case.
+      for (const [key, value] of Object.entries(node.props ?? {})) {
+        const name = camelize(key);
+        if (name === "dataKey" || name === "nameKey") part[name] = value;
+      }
+      parts.push(part as unknown as ChartPart);
+    }
+  };
+  walk(nodes);
+  return parts.length ? { parts } : undefined;
+}
+
+/**
+ * The spec whose keys a legend lists before the Root mounts: the parts that registered so far and
+ * the mark parts of the slot seed together. A part inside another component is not in the seed, but
+ * it registers before a later legend renders, on the server and in hydration alike. The legend
+ * lists keys in config order, so the order of the parts does not matter.
+ */
+export function mergeChartLegendSeed(
+  seed: ChartSpec | undefined,
+  live: ChartSpec | undefined,
+): ChartSpec | undefined {
+  if (!seed) return live;
+  if (!live) return seed;
+  return { ...live, parts: [...live.parts, ...seed.parts] };
+}
+
+/**
+ * Registers one chart spec part with the Root, in source order, and removes it on unmount. It
+ * registers in setup, so a server render knows the part before the Surface draws. A prop change
+ * updates the part in place. A function prop becomes a stable delegate that calls the current
+ * prop. A function with a new identity draws the chart again, so a formatter that reads new state
+ * shows its new text.
+ */
+export function useChartSpecPart(kind: ChartPart["kind"], props: Record<string, unknown>): void {
+  const root = useOptionalChartRootInternal();
+  if (!root) return;
+  assertChartSpecPartRoot(root.partsMode);
+  const delegates = new Map<string, (...args: any[]) => unknown>();
+  const delegate = (name: string) => {
+    let call = delegates.get(name);
+    if (!call) {
+      call = (...args: any[]) =>
+        (readChartSpecProp(props, name) as (...args: any[]) => unknown)(...args);
+      delegates.set(name, call);
+    }
+    return call;
+  };
+  const read = () => readChartSpecPart(kind, props, delegate);
+  const registration = root.registerSpecPart(read(), readChartSpecFunctions(kind, props));
+  watch(read, (part) => registration.update(part, readChartSpecFunctions(kind, props)));
+  onBeforeUnmount(() => registration.remove());
+}
+
+/**
+ * Registers the chart-level options of a part, such as the Tooltip `cursor`, with a parts chart
+ * Root. It registers in setup, as a spec part does, so the chart starts with them. A prop change
+ * updates the options in place.
+ */
+export function useChartSpecOptions(read: () => ChartSpecOptions): void {
+  const root = useOptionalChartRootInternal();
+  // A chart module ignores the options, and a later switch to parts keeps them.
+  if (!root) return;
+  const registration = root.registerSpecOptions(read());
+  watch(read, (options) => registration.update(options));
+  onBeforeUnmount(() => registration.remove());
 }
 
 /** Renders a config label, heading or formatter result: text, a VNode, a render function or a component. */
