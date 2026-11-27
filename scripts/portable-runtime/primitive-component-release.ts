@@ -26,9 +26,11 @@ import {
   parseChangesetReleaseFacts,
   type ReleaseDecision,
   type ReleaseImpact,
+  readReleasedManifestKeys,
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
+  unreleasedComponents,
   type VersionRollback,
   validateVersionRollback,
 } from "./release-intent-utils.js";
@@ -170,6 +172,8 @@ export function validatePrimitiveVersionPullRequest(options: {
   /** First parent of `base`; enables recognition of an unpublished version rollback. */
   baseParent?: PrimitiveReleaseSnapshot;
   head: PrimitiveReleaseSnapshot;
+  /** Primitives in the manifest of the most recent release. Unknown keeps every intent required. */
+  releasedPrimitives?: Set<string>;
 }): {
   addedPrimitives?: string[];
   changedPrimitives?: string[];
@@ -329,8 +333,20 @@ export function validatePrimitiveVersionPullRequest(options: {
       aggregatePrimitiveVersionIntents(addedIntents),
     );
   const changedSet = new Set(changedPrimitives);
+  const unreleased = unreleasedComponents(
+    Object.keys(options.base.manifest.primitives),
+    options.releasedPrimitives,
+  );
+  const unreleasedIntents = [...addedIntentPrimitives].filter((primitive) =>
+    unreleased.has(primitive),
+  );
+  if (unreleasedIntents.length > 0) {
+    throw new Error(
+      `Unreleased primitive(s) keep their initial version and take no version intent: ${unreleasedIntents.join(", ")}.`,
+    );
+  }
   const missingIntents = changedPrimitives.filter(
-    (primitive) => addedDecisions[primitive]?.impact !== "source",
+    (primitive) => !unreleased.has(primitive) && addedDecisions[primitive]?.impact !== "source",
   );
   const behaviorPrimitives = [...addedIntentPrimitives].filter(
     (primitive) => addedDecisions[primitive].impact === "behavior",
@@ -441,7 +457,13 @@ export async function checkPrimitiveComponents(
   if (!options.baseRef) return { mode: "state" };
   const base = await readGitSnapshot(repoRoot, options.baseRef);
   const baseParent = await readGitSnapshot(repoRoot, `${options.baseRef}^1`).catch(() => undefined);
-  return validatePrimitiveVersionPullRequest({ base, baseParent, head });
+  const releasedPrimitives = await readReleasedManifestKeys({
+    repoRoot,
+    ref: options.baseRef,
+    manifestPath: PRIMITIVE_VERSION_MANIFEST,
+    key: "primitives",
+  });
+  return validatePrimitiveVersionPullRequest({ base, baseParent, head, releasedPrimitives });
 }
 
 async function readWorkingSnapshot(repoRoot: string): Promise<PrimitiveReleaseSnapshot> {

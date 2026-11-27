@@ -6,7 +6,7 @@
 "use client";
 
 import * as React from "react";
-import { useChartRoot } from "./ChartRoot";
+import { useChartRootInternal } from "./ChartRoot";
 
 export const ChartLegendKeyContext = React.createContext<string | null>(null);
 
@@ -15,16 +15,22 @@ export function useChartLegendKey(): string | null {
 }
 
 export type ChartLegendItemsProps = {
-  /** Rendered once per config key, with that key in context. */
+  /**
+   * Rendered once per config key, with that key in context. A parts chart lists only the keys that
+   * it draws.
+   */
   children?: React.ReactNode;
 };
 
-/** Renders its content once per config key, with that key in context. */
+/**
+ * Renders its content once per config key, with that key in context. A parts chart lists only the
+ * keys that it draws.
+ */
 function ChartLegendItems({ children }: ChartLegendItemsProps) {
-  const { keys } = useChartRoot();
+  const { legendKeys } = useChartRootInternal();
   return (
     <>
-      {keys.map((key) => (
+      {legendKeys.map((key) => (
         <ChartLegendKeyContext.Provider key={key} value={key}>
           {children}
         </ChartLegendKeyContext.Provider>

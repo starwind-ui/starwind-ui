@@ -8,11 +8,12 @@ import type {
   AdapterOutputModel,
   AdapterSidebarFacts,
 } from "../types.js";
+import { projectReactChartSurfaceOutputModel } from "./chart-surface.js";
 
 export function projectSpecializedAdapterOutputModel(
   model: AdapterOutputModel,
 ): AdapterOutputModel {
-  let projectedFiles = projectColorPickerFamily(model.files);
+  let projectedFiles = projectColorPickerFamily(projectReactChartSurfaceOutputModel(model).files);
   projectedFiles = addProjectedHelperFile(projectedFiles, {
     createHelper: createOptionCollectionOverlayContextHelperFile,
     findIndex: isOptionCollectionOverlayIndexFile,

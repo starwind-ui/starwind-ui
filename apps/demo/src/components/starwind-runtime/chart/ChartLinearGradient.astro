@@ -1,0 +1,9 @@
+---
+import ChartPrimitive from "@starwind-ui/astro/chart";
+
+type Props = import("@starwind-ui/astro/chart").ChartLinearGradientProps;
+
+const { ...rest } = Astro.props;
+---
+
+<ChartPrimitive.LinearGradient {...rest} />

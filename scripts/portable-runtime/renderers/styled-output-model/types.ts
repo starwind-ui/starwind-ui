@@ -45,6 +45,10 @@ export type StyledOutputComponent = {
   nativeModel?: StyledOutputNativeModel;
   primitiveAliases: StyledOutputPrimitiveAlias[];
   props?: StyledOutputProps;
+  /** Static properties on the component function, as name and code. */
+  componentStatics?: Record<string, string>;
+  /** Component options, as name and code. The Vue writer prints them in `defineOptions`. */
+  componentOptions?: Record<string, string>;
   render: StyledOutputRenderNode[];
   /** Named slots that the component reads without rendering a slot node. */
   slots?: StyledOutputSlotDeclaration[];

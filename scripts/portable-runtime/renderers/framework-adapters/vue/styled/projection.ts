@@ -133,6 +133,7 @@ export function projectVueStyledComponent(
     exportName: component.exportName,
     filtersComponentAttrs,
     manuallyForwardsAttrs,
+    componentOptions: { ...component.componentOptions },
     imports: projectVueImports(group, component, options, dedupeImports(imports)),
     models: collectVueStyledPublicModels(publicContract),
     props,

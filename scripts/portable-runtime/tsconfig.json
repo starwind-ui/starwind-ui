@@ -7,5 +7,5 @@
     "types": ["node"]
   },
   "include": ["./**/*.ts"],
-  "exclude": ["./tests/conformance/**"]
+  "exclude": ["./tests/conformance/**", "./tests/chart-parity/fixtures/spec-charts.ts"]
 }

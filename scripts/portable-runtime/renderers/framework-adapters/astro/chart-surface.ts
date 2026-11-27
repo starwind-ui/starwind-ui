@@ -1,4 +1,6 @@
 import {
+  CHART_MESSAGES,
+  type ChartSpecPartName,
   type ChartSurfaceComponentProjection,
   type ChartSurfaceFacts,
   type ChartSurfaceIndexProjection,
@@ -6,10 +8,18 @@ import {
   type ChartSurfacePropFacts,
   type ChartTypeWords,
   chartComment,
+  chartLegendKeyMessage,
   chartPartProps,
   chartProp,
+  chartPropDefault,
   chartPropType,
   chartPublicTypes,
+  chartSpecOptions,
+  chartSpecOptionsObject,
+  chartSpecPartFiles,
+  printChartSpecOptionFields,
+  printChartSpecPartPropsTable,
+  printChartSpecPartTypes,
 } from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
 import type {
   AdapterComponentFile,
@@ -21,11 +31,13 @@ import type {
 export type AstroChartSurfaceComponentProjection = ChartSurfaceComponentProjection;
 export type AstroChartSurfaceIndexProjection = ChartSurfaceIndexProjection;
 
-/** Astro-only support files: the conditional lifecycle script and the marker renderer. */
-type AstroChartSupportProjection = {
-  facts: ChartSurfaceFacts;
-  kind: "astro-chart-lifecycle" | "astro-chart-markup";
-};
+/**
+ * Astro-only support files: the conditional lifecycle script, the marker renderer and the chart
+ * spec parts, which write markers that the Root collects.
+ */
+type AstroChartSupportProjection =
+  | { facts: ChartSurfaceFacts; kind: "astro-chart-lifecycle" | "astro-chart-markup" }
+  | { facts: ChartSurfaceFacts; kind: "astro-chart-spec-part"; part: ChartSpecPartName };
 
 /**
  * Helper values that the Astro chart index adds for page scripts: Raw HTML control of a
@@ -45,7 +57,11 @@ export function isAstroChartSurfaceProjection(family: unknown): boolean {
 
 export function isAstroChartSupportProjection(family: unknown): boolean {
   const kind = (family as { kind?: string } | undefined)?.kind;
-  return kind === "astro-chart-lifecycle" || kind === "astro-chart-markup";
+  return (
+    kind === "astro-chart-lifecycle" ||
+    kind === "astro-chart-markup" ||
+    kind === "astro-chart-spec-part"
+  );
 }
 
 /**
@@ -89,8 +105,15 @@ export function projectAstroChartSurfaceOutputModel(model: AdapterOutputModel): 
     path: `${directory}/${n.markup}.ts`,
     target: "astro",
   };
+  const specParts = chartSpecPartFiles(
+    facts,
+    template,
+    directory,
+    "astro-chart-spec-part",
+    "astro",
+  );
   const files = [...model.files];
-  files.splice(files.indexOf(index), 0, lifecycle, markup);
+  files.splice(files.indexOf(index), 0, ...specParts, lifecycle, markup);
   return { files };
 }
 
@@ -98,6 +121,8 @@ export function printAstroChartSurfaceComponent(family: unknown): string {
   const projection = family as AstroChartSurfaceComponentProjection | AstroChartSupportProjection;
   if (projection.kind !== "chart-surface") {
     if (projection.kind === "astro-chart-lifecycle") return printLifecycle(projection.facts);
+    if (projection.kind === "astro-chart-spec-part")
+      return printSpecPart(projection.facts, projection.part);
     throw new Error("The Astro chart markup module prints as a helper file.");
   }
   const { facts, part } = projection;
@@ -146,7 +171,7 @@ export function printAstroChartSurfaceHelper(family: unknown): string {
 }
 
 export function printAstroChartSurfaceIndex({ facts }: AstroChartSurfaceIndexProjection): string {
-  const parts = Object.values(facts.parts);
+  const parts = [...Object.values(facts.parts), ...Object.values(facts.specParts)];
   const n = names(facts);
   const imports = parts
     .map((part) => `import ${part.exportName} from "./${part.exportName}.astro";`)
@@ -161,7 +186,8 @@ export function printAstroChartSurfaceIndex({ facts }: AstroChartSurfaceIndexPro
   const values = [...new Set([...facts.exports.helperValues, ...ASTRO_CHART_HELPER_VALUES])].sort();
   // Astro parts share no component context, so the index leaves out the context types.
   const publicTypes = chartPublicTypes(facts);
-  const types = [...publicTypes.all, ...publicTypes.rootUnion].sort();
+  const types = [...publicTypes.all, ...publicTypes.rootUnion, ...publicTypes.specParts].sort();
+  const helperTypes = [...facts.exports.helperTypes].sort();
 
   return `${imports}
 
@@ -178,7 +204,7 @@ ${named}
 export default ${facts.exports.namespace};
 
 export type {
-${facts.exports.helperTypes.map((name) => `  ${name},`).join("\n")}
+${helperTypes.map((name) => `  ${name},`).join("\n")}
 } from "${facts.exports.runtimeImportSource}";
 export {
 ${values.map((name) => `  ${name},`).join("\n")}
@@ -192,6 +218,7 @@ ${types.map((name) => `  ${name},`).join("\n")}
 
 function names(facts: ChartSurfaceFacts) {
   return {
+    collectSpec: `collect${facts.displayName}Spec`,
     collectViews: `collect${facts.displayName}Views`,
     lifecycle: `${facts.displayName}Lifecycle`,
     markup: `${facts.displayName}Markup`,
@@ -242,15 +269,19 @@ function printRoot(facts: ChartSurfaceFacts): string {
   return `---
 import {
   assertChartId,
+  chartLegendKeys,
   createChartId,
+  datesToStrings,
   serializeChartPayload,
   visibleKeys,
+  warnEmptyChart,
 } from "${facts.runtime.importSource}";
 import ${n.lifecycle} from "./${n.lifecycle}.astro";
 import {
   type ChartRootProps,
   type ChartValue,
   chartViewTemplates,
+  ${n.collectSpec},
   ${n.collectViews},
   renderChartContent,
 } from "./${n.markup}";
@@ -272,47 +303,71 @@ const {
   theme,
   host,
   disableTooltip = false,
-  interactive = true,
+${chartSpecOptions(facts, "root")
+  .map(({ name }) => `  ${name},`)
+  .join("\n")}
+  interactive: interactiveProp = true,
   labels: labelsProp,
   icons: iconsProp,
   visible: visibleProp,
   defaultVisible,
+  "aria-label": ariaLabel,
   // The part owns its data-slot, as in every framework.
   "data-slot": _dataSlot,
   ...rest
 } = Astro.props;
 
 assertChartId(id);
+const rendered = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
+// Chart spec parts in the default slot describe the chart as data, in source order. The Root's own
+// options and the options that a part such as the Tooltip writes join them.
+const { html: content, spec } = ${n.collectSpec}(rendered, ${chartSpecOptionsObject(facts, "root")});
+if (spec && (chart !== undefined || definition !== undefined)) {
+  throw new TypeError(
+    ${JSON.stringify(CHART_MESSAGES.partsMix)},
+  );
+}
+// Without chart parts, a chart and a definition, the chart renders nothing and warns once.
+const empty = !spec && chart === undefined && definition === undefined;
+if (empty) warnEmptyChart(id);
+const interactive = interactiveProp && !empty;
 const mode = definition ? "definition" : "source";
 if (mode === "definition" && (visibleProp !== undefined || defaultVisible !== undefined)) {
   throw new TypeError(
-    "Static native definitions own their visibility. Remove visible and defaultVisible, or use a chart factory.",
+    ${JSON.stringify(CHART_MESSAGES.definitionVisibility(`${facts.visibility.controlledProp} and ${facts.visibility.defaultProp}`))},
   );
 }
 const visible = visibleKeys(config, visibleProp ?? defaultVisible);
+// The wire payload carries Date fields as ISO strings, so the server render draws from the same
+// data and the browser restart matches it.
 const input = {
-  data,
+  data: spec ? datesToStrings(data) : data,
   config,
+  ...(spec ? { spec } : {}),
   ...(mode === "source" ? { visible } : {}),
   ...(params ? { params } : {}),
   ...(theme ? { theme } : {}),
 };
+// A parts chart takes its accessible name from \`aria-label\`. Other charts keep it on the root.
+const chartHost = spec && ariaLabel != null ? { ...host, ariaLabel: String(ariaLabel) } : host;
 const moduleId = typeof chart === "object" && chart !== null ? chart.id : undefined;
-// Only a registered chart module starts from the lifecycle script. Other interactive charts start
-// from a page script that calls createChart.
-const lifecycle = interactive && moduleId !== undefined;
+// A registered chart module and a parts chart start from the lifecycle script. Other interactive
+// charts start from a page script that calls createChart.
+const lifecycle = interactive && (moduleId !== undefined || spec !== undefined);
 
 const { labels, icons } = await ${n.collectViews}(Astro.slots, config, labelsProp, iconsProp);
-const content = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
 const html = renderChartContent(content, {
   id,
   chart,
   definition,
   input,
-  host,
+  host: chartHost,
   disableTooltip,
+  empty,
   legend: {
     config,
+    // A parts chart lists the config keys that it draws, as the Runtime does in the browser.
+    keys: chartLegendKeys(spec, input.data, config),
     visible,
     interactive: interactive && mode === "source",
     template: interactive,
@@ -322,12 +377,13 @@ const html = renderChartContent(content, {
 });
 const templates = interactive ? chartViewTemplates(config, labels, icons) : "";
 const payload = interactive
-  ? serializeChartPayload({ input, host, tooltipDisabled: disableTooltip })
+  ? serializeChartPayload({ input, host: chartHost, tooltipDisabled: disableTooltip })
   : "";
 ---
 
 <div
   {...rest}
+  aria-label={spec ? undefined : ariaLabel}
   data-slot="${slot(facts, "root")}"
   ${facts.attrs.chartId}={id}
   data-chart-module={moduleId}
@@ -367,7 +423,7 @@ import {
 
 type Props = ${propsName(facts, "surface")};
 
-const { tooltip, fallbackTooltip: FallbackTooltip, nativeTooltip = false, ...rest } = Astro.props;
+const { tooltip, fallbackTooltip: FallbackTooltip, nativeTooltip = ${chartPropDefault(facts, "surface", "nativeTooltip")}, ...rest } = Astro.props;
 
 // The chart Root renders the prerendered SVG and the reserved size in place of this marker.
 ---
@@ -391,20 +447,28 @@ import { type ${propsName(facts, "tooltip")}, chartTooltipRegistration } from ".
 
 type Props = ${propsName(facts, "tooltip")};
 
+const { ${chartSpecOptions(facts, "tooltip")
+    .map(({ name }) => name)
+    .join(", ")} } = Astro.props;
 /**
  * Inside a chart Root, the first Tooltip supplies the tooltip body. Elsewhere it renders nothing.
+ * Its registration carries its chart-level options, so the first chart-level Tooltip decides them.
  */
 const content = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
 ---
 
-<Fragment set:html={chartTooltipRegistration(content)} />
+<Fragment set:html={chartTooltipRegistration(content, ${chartSpecOptionsObject(facts, "tooltip")})} />
 `;
 }
 
 function printTooltipContent(facts: ChartSurfaceFacts): string {
   const n = names(facts);
   return `---
-import { type ChartTooltipContentProps, extractChartTooltipIconClass } from "./${n.markup}";
+import {
+  assertChartFormat,
+  type ChartTooltipContentProps,
+  extractChartTooltipIconClass,
+} from "./${n.markup}";
 
 type Props = ChartTooltipContentProps;
 
@@ -417,15 +481,20 @@ const {
   nameKey,
   valueKey,
   color,
+  formatter,
+  labelFormatter,
   // The part owns its data-slot, as in every framework.
   "data-slot": _dataSlot,
   ...rest
 } = Astro.props;
 
+// Functions cannot travel from the server, so formatters are ChartFormat objects. Function
+// formatters belong in the chart module's \`domPresentation\`.
+assertChartFormat("ChartTooltipContent formatter", formatter);
+assertChartFormat("ChartTooltipContent labelFormatter", labelFormatter);
 const children = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
 const { html, iconClass } = extractChartTooltipIconClass(children);
-// The Runtime fills this template for each tooltip body. Formatters come from the chart module's
-// \`domPresentation\`, because functions cannot travel from the server.
+// The Runtime fills this template for each tooltip body.
 const options = Object.fromEntries(
   Object.entries({
     indicator,
@@ -436,6 +505,8 @@ const options = Object.fromEntries(
     nameKey,
     valueKey,
     color,
+    formatter,
+    labelFormatter,
     iconClass,
   }).filter(([, value]) => value !== undefined),
 );
@@ -561,7 +632,7 @@ import { type ChartLegendProps, chartRegion, renderConfiguredChartLegend } from 
 type Props = ChartLegendProps;
 
 const {
-  hideIcon = false,
+  hideIcon = ${chartPropDefault(facts, "legend", "hideIcon")},
   config,
   visible,
   role = "group",
@@ -659,6 +730,21 @@ type Props = ${propsName(facts, "legendLabel")};
 `;
 }
 
+function printSpecPart(facts: ChartSurfaceFacts, part: ChartSpecPartName): string {
+  const n = names(facts);
+  const spec = facts.specParts[part];
+  return `---
+import { type ${spec.exportName}Props, chartSpecPart } from "./${n.markup}";
+
+type Props = ${spec.exportName}Props;
+
+${chartComment(`${spec.doc} The chart Root reads this part in source order. It renders nothing.`, "line")}
+---
+
+<Fragment set:html={chartSpecPart("${spec.kind}", Astro.props)} />
+`;
+}
+
 function printLifecycle(facts: ChartSurfaceFacts): string {
   return `---
 // Rendered only by interactive charts, so a static chart page loads no chart script.
@@ -674,11 +760,17 @@ function printLifecycle(facts: ChartSurfaceFacts): string {
 
 function printMarkup(facts: ChartSurfaceFacts): string {
   return `import {
+  assertChartSpecWire,
+  type ChartFormat,
   type ChartIcon,
   type ChartInput,
   type ChartModule,
+  type ChartPart,
   type ChartSource,
+  type ChartSpec,
+  type ChartSpecOptions,
   type CreateChartOptions,
+  buildChartSpec,
   chartStyle,
   colorVariable,
   configText,
@@ -720,6 +812,7 @@ type ChartRootCommonProps<D, X extends ChartValue, Y extends ChartValue> = Omit<
   host?: NativeHostOptions<NoInfer<D>, NoInfer<X>, NoInfer<Y>>;
   /** Sets the native \`definition.tooltip\` to false. */
   disableTooltip?: boolean;
+${printChartSpecOptionFields(facts, "root")}
 ${astroOnlyFields(facts, "root")}
 };
 
@@ -743,6 +836,22 @@ export type ChartRootSourceProps<
   defaultVisible?: readonly string[];
 };
 
+export type ChartRootSpecProps<
+  T = unknown,
+  D = unknown,
+  X extends ChartValue = ChartValue,
+  Y extends ChartValue = ChartValue,
+> = ChartRootCommonProps<D, X, Y> & {
+  chart?: never;
+  definition?: never;
+  /** The data rows. Chart spec parts in the default slot, such as a bar and an x axis, draw them. */
+  data: readonly T[];
+  /** Initial visible keys. Omit it and \`defaultVisible\` to show every config key. */
+  visible?: readonly string[];
+  /** Initial visible keys when \`visible\` is omitted. */
+  defaultVisible?: readonly string[];
+};
+
 export type ChartRootDefinitionProps<
   T = unknown,
   D = unknown,
@@ -762,14 +871,23 @@ export type ChartRootProps<
   D = unknown,
   X extends ChartValue = ChartValue,
   Y extends ChartValue = ChartValue,
-> = ChartRootSourceProps<T, D, X, Y> | ChartRootDefinitionProps<T, D, X, Y>;
+> =
+  | ChartRootSourceProps<T, D, X, Y>
+  | ChartRootDefinitionProps<T, D, X, Y>
+  | ChartRootSpecProps<T, D, X, Y>;
 
 /**
- * Tooltip content options. Formatters come from the chart module's \`domPresentation\`, because
- * functions cannot travel from the server. \`T\` is the datum type of those formatters.
+ * Tooltip content options. Formatters are \`ChartFormat\` objects, because functions cannot travel
+ * from the server. Function formatters belong in the chart module's \`domPresentation\`. \`T\` is
+ * the datum type of those formatters.
  */
 export type ChartTooltipContentProps<T = unknown> = HTMLAttributes<"div"> &
-  Omit<TooltipContentOptions<string, T>, "formatter" | "labelFormatter" | "hideIcon">;
+  Omit<TooltipContentOptions<string, T>, "formatter" | "labelFormatter" | "hideIcon"> & {
+    /** Formats each row value. The row keeps its indicator and name. */
+    formatter?: ChartFormat;
+    /** Formats the heading. */
+    labelFormatter?: ChartFormat;
+  };
 
 export type ChartLegendProps = Omit<HTMLAttributes<"div">, "children"> & {
 ${propFields(facts, "legend")}
@@ -787,7 +905,9 @@ ${chartComment(chartProp(facts, "surface", "nativeTooltip").description!, "block
 };
 
 /** Tooltip content goes in the default slot. */
-export type ${propsName(facts, "tooltip")} = Record<never, never>;
+export type ${propsName(facts, "tooltip")} = {
+${printChartSpecOptionFields(facts, "tooltip")}
+};
 
 export type ${propsName(facts, "tooltipLabel")} = Omit<HTMLAttributes<"div">, "children">;
 
@@ -820,6 +940,8 @@ export type ${propsName(facts, "legendSwatch")} = Omit<HTMLAttributes<"span">, "
 export type ${propsName(facts, "legendIcon")} = Omit<HTMLAttributes<"span">, "children">;
 
 export type ${propsName(facts, "legendLabel")} = Omit<HTMLAttributes<"span">, "children">;
+
+${printChartSpecPartTypes(facts, "astro", "ChartFormat")}
 
 const MARKER_PREFIX = "sw-chart:";
 const MARKER = /<!--(\\/?)sw-chart:([a-z-]+)(?: ([^\\s>]*))?-->/g;
@@ -856,11 +978,19 @@ export function chartRegion(name: string, html: string, data?: unknown): string 
   return \`\${chartMarker(name, data)}\${html}\${chartMarkerEnd(name)}\`;
 }
 
-/** Wraps Tooltip content in an inert template, so it renders nothing outside a chart Root. */
-export function chartTooltipRegistration(html: string): string {
+${printSpecPartHelpers(facts)}
+
+/**
+ * Wraps Tooltip content in an inert template, so it renders nothing outside a chart Root. The
+ * region marker carries the Tooltip's defined chart-level options, such as \`cursor\`, and the
+ * chart Root removes the marker.
+ */
+export function chartTooltipRegistration(html: string, options: ChartSpecOptions = {}): string {
+  const defined = Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined));
   return chartRegion(
     "tooltip",
     \`\${TOOLTIP_REGISTRATION_START}\${html}\${TOOLTIP_REGISTRATION_END}\`,
+    Object.keys(defined).length > 0 ? defined : undefined,
   );
 }
 
@@ -976,6 +1106,8 @@ const SELF_CLOSING = new Set(["legend-swatch", "legend-icon", "legend-label", "s
 /** Chart data that fills the legend parts. */
 export interface ChartLegendScope {
   config: ChartConfig;
+  /** The config keys that LegendItems lists, in config order. Defaults to every config key. */
+  keys?: readonly string[];
   /** Visible config keys, in config order. */
   visible: readonly string[];
   /** Legend items render buttons by default. A passive item renders a span. */
@@ -1032,7 +1164,7 @@ function renderLegendNode(
       });
     }
     case "legend-items": {
-      const items = Object.keys(scope.config)
+      const items = (scope.keys ?? Object.keys(scope.config))
         .map((key) => renderLegendNodes(node.children, { ...context, key }))
         .join("");
       if (!scope.template || !scope.interactive) return items;
@@ -1053,7 +1185,7 @@ function renderLegendNode(
       }
       const value = typeof node.data.value === "string" ? node.data.value : context.key;
       if (value === undefined)
-        throw new Error("Chart.LegendItem needs a value or a Chart.LegendItems parent.");
+        throw new Error(${JSON.stringify(chartLegendKeyMessage(facts))});
       colorVariable(value);
       const entry = scope.config[value];
       const rich = scope.labels[value] !== undefined;
@@ -1193,6 +1325,8 @@ export interface ChartContentOptions<T, D, X extends ChartValue, Y extends Chart
   input: ChartInput<T>;
   host?: NativeHostOptions<D, X, Y>;
   disableTooltip: boolean;
+  /** True without chart parts, a chart and a definition. The surface stays empty. */
+  empty?: boolean;
   legend: ChartLegendScope;
 }
 
@@ -1201,7 +1335,8 @@ export function renderChartContent<T, D, X extends ChartValue, Y extends ChartVa
   html: string,
   options: ChartContentOptions<T, D, X, Y>,
 ): string {
-  let surface: { markup: string; style: string } | undefined;
+  let surface: { markup: string; style: string } | undefined =
+    options.empty ? { markup: "", style: "" } : undefined;
   const prerender = () => {
     if (!surface) {
       const result = prerenderChart(options.chart, options.input, {
@@ -1287,4 +1422,56 @@ export function chartViewTemplates(
     .join("");
 }
 `;
+}
+
+/** The spec part marker, its collector and the format checks. */
+function printSpecPartHelpers(facts: ChartSurfaceFacts): string {
+  return `${printChartSpecPartPropsTable(facts, "astro")}
+const SPEC_PART = /<!--sw-chart:spec-part ([^\\s>]*)-->/g;
+
+/**
+ * A chart spec part marker. The part keeps only its own props. A function formatter fails here,
+ * because a function cannot travel from the server.
+ */
+export function chartSpecPart(kind: ChartPart["kind"], props: Record<string, unknown>): string {
+  const part: Record<string, unknown> = { kind };
+  for (const name of CHART_SPEC_PART_PROPS[kind]) if (props[name] !== undefined) part[name] = props[name];
+  assertChartSpecWire({ parts: [part as unknown as ChartPart] });
+  return chartMarker("spec-part", part);
+}
+
+/** The chart-level options that a Tooltip registration carries. */
+const TOOLTIP_OPTION_NAMES = ${JSON.stringify(chartSpecOptions(facts, "tooltip").map(({ name }) => name))} as const;
+
+/**
+ * Removes the spec part markers from a Root's rendered children and collects the parts in order.
+ * The Root's own options come first, then the options of each chart-level Tooltip in order. A
+ * Tooltip inside a tooltip body or a Surface \`tooltip\` sets nothing. Each Tooltip names all of
+ * its options, so the first one, which supplies the tooltip body, decides them.
+ */
+export function ${names(facts).collectSpec}(
+  html: string,
+  rootOptions?: ChartSpecOptions,
+): { html: string; spec?: ChartSpec } {
+  const parts: ChartPart[] = [];
+  const rest = html.replace(SPEC_PART, (_match, data: string) => {
+    parts.push(decode(data) as unknown as ChartPart);
+    return "";
+  });
+  const tooltips = parseMarkers(rest, (name) => TOOLTIP_KINDS.has(name)).flatMap((node) =>
+    typeof node !== "string" && node.name === "tooltip"
+      ? [Object.fromEntries(TOOLTIP_OPTION_NAMES.map((name) => [name, node.data[name]])) as ChartSpecOptions]
+      : [],
+  );
+  const spec = buildChartSpec(parts, rootOptions, ...tooltips);
+  return spec ? { html: rest, spec } : { html: rest };
+}
+
+/** Throws for a function formatter, which cannot travel from the server. */
+export function assertChartFormat(name: string, value: unknown): void {
+  if (typeof value === "function")
+    throw new TypeError(
+      \`\${name} is a function, and a function cannot reach the browser. Use a ChartFormat object such as { number: { maximumFractionDigits: 0 } }, or set the formatter in the chart module's domPresentation.\`,
+    );
+}`;
 }

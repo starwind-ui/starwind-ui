@@ -4,6 +4,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "../../components/starwind-runtime/chart";
+import { ChartPartsExamples } from "../charts/ChartPartsExamples";
 import {
   areaChart,
   barChart,
@@ -109,6 +110,14 @@ export function RuntimeChartsDemoPage() {
           </ChartContainer>
         </section>
       </div>
+
+      <header className="mt-16 mb-10 space-y-3">
+        <h2 className="font-heading text-3xl font-semibold tracking-tight">Charts from parts</h2>
+        <p className="text-muted-foreground max-w-3xl">
+          The six docs charts built from chart parts, with no chart module.
+        </p>
+      </header>
+      <ChartPartsExamples />
     </main>
   );
 }

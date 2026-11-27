@@ -98,7 +98,20 @@
       "ChartTooltip",
       "ChartTooltipContent",
       "ChartLegend",
-      "ChartLegendContent"
+      "ChartLegendContent",
+      "ChartBar",
+      "ChartLine",
+      "ChartArea",
+      "ChartPie",
+      "ChartRadar",
+      "ChartRadialBar",
+      "ChartXAxis",
+      "ChartYAxis",
+      "ChartGrid",
+      "ChartPolarGrid",
+      "ChartPolarAngleAxis",
+      "ChartLabel",
+      "ChartLinearGradient"
     ],
     "targets": ["astro", "react", "vue", "svelte"],
     "legacy": false

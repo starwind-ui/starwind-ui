@@ -5,15 +5,19 @@
  */
 import {
   assertChartId,
+  chartLegendKeys,
   createChartId,
+  datesToStrings,
   serializeChartPayload,
   visibleKeys,
+  warnEmptyChart,
 } from "@starwind-ui/runtime/chart";
 import ChartLifecycle from "./ChartLifecycle.astro";
 import {
   type ChartRootProps,
   type ChartValue,
   chartViewTemplates,
+  collectChartSpec,
   collectChartViews,
   renderChartContent,
 } from "./ChartMarkup";
@@ -35,17 +39,32 @@ const {
   theme,
   host,
   disableTooltip = false,
-  interactive = true,
+  stackOffset,
+  interactive: interactiveProp = true,
   labels: labelsProp,
   icons: iconsProp,
   visible: visibleProp,
   defaultVisible,
+  "aria-label": ariaLabel,
   // The part owns its data-slot, as in every framework.
   "data-slot": _dataSlot,
   ...rest
 } = Astro.props;
 
 assertChartId(id);
+const rendered = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
+// Chart spec parts in the default slot describe the chart as data, in source order. The Root's own
+// options and the options that a part such as the Tooltip writes join them.
+const { html: content, spec } = collectChartSpec(rendered, { stackOffset });
+if (spec && (chart !== undefined || definition !== undefined)) {
+  throw new TypeError(
+    "Chart parts cannot be combined with chart or definition. Use chart parts, a chart module or a native definition, not more than one.",
+  );
+}
+// Without chart parts, a chart and a definition, the chart renders nothing and warns once.
+const empty = !spec && chart === undefined && definition === undefined;
+if (empty) warnEmptyChart(id);
+const interactive = interactiveProp && !empty;
 const mode = definition ? "definition" : "source";
 if (mode === "definition" && (visibleProp !== undefined || defaultVisible !== undefined)) {
   throw new TypeError(
@@ -53,29 +72,36 @@ if (mode === "definition" && (visibleProp !== undefined || defaultVisible !== un
   );
 }
 const visible = visibleKeys(config, visibleProp ?? defaultVisible);
+// The wire payload carries Date fields as ISO strings, so the server render draws from the same
+// data and the browser restart matches it.
 const input = {
-  data,
+  data: spec ? datesToStrings(data) : data,
   config,
+  ...(spec ? { spec } : {}),
   ...(mode === "source" ? { visible } : {}),
   ...(params ? { params } : {}),
   ...(theme ? { theme } : {}),
 };
+// A parts chart takes its accessible name from `aria-label`. Other charts keep it on the root.
+const chartHost = spec && ariaLabel != null ? { ...host, ariaLabel: String(ariaLabel) } : host;
 const moduleId = typeof chart === "object" && chart !== null ? chart.id : undefined;
-// Only a registered chart module starts from the lifecycle script. Other interactive charts start
-// from a page script that calls createChart.
-const lifecycle = interactive && moduleId !== undefined;
+// A registered chart module and a parts chart start from the lifecycle script. Other interactive
+// charts start from a page script that calls createChart.
+const lifecycle = interactive && (moduleId !== undefined || spec !== undefined);
 
 const { labels, icons } = await collectChartViews(Astro.slots, config, labelsProp, iconsProp);
-const content = Astro.slots.has("default") ? await Astro.slots.render("default") : "";
 const html = renderChartContent(content, {
   id,
   chart,
   definition,
   input,
-  host,
+  host: chartHost,
   disableTooltip,
+  empty,
   legend: {
     config,
+    // A parts chart lists the config keys that it draws, as the Runtime does in the browser.
+    keys: chartLegendKeys(spec, input.data, config),
     visible,
     interactive: interactive && mode === "source",
     template: interactive,
@@ -85,12 +111,13 @@ const html = renderChartContent(content, {
 });
 const templates = interactive ? chartViewTemplates(config, labels, icons) : "";
 const payload = interactive
-  ? serializeChartPayload({ input, host, tooltipDisabled: disableTooltip })
+  ? serializeChartPayload({ input, host: chartHost, tooltipDisabled: disableTooltip })
   : "";
 ---
 
 <div
   {...rest}
+  aria-label={spec ? undefined : ariaLabel}
   data-slot="chart"
   data-chart={id}
   data-chart-module={moduleId}

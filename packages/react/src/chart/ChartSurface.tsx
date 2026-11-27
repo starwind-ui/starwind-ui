@@ -7,10 +7,15 @@
 
 import {
   type ChartInput,
+  chartSurfaceStyle,
   createChart,
+  createChartOptions,
+  isChartSpecComplete,
   prerenderChart,
   syncTooltipAccessibility,
   visibleKeys,
+  warnEmptyChart,
+  warnIncompleteChart,
 } from "@starwind-ui/runtime/chart";
 import * as React from "react";
 import { createPortal } from "react-dom";
@@ -48,6 +53,8 @@ function toStyleObject(css: string): React.CSSProperties {
 }
 
 type ChartSurfaceSettings = {
+  /** True when chart parts describe the chart. A change restarts the controller. */
+  parts: boolean;
   chart: unknown;
   definition: unknown;
   host: object | undefined;
@@ -87,22 +94,45 @@ const ChartSurface = React.forwardRef<HTMLDivElement, ChartSurfaceProps>(functio
   const root = useChartRootInternal();
   const surfaceRef = React.useRef<HTMLDivElement | null>(null);
   const [initial] = React.useState(() => {
-    const result = prerenderChart(
-      root.chart,
-      root.mode === "source" ? { ...root.input, visible: root.visible } : root.input,
-      {
-        id: root.id,
-        host: root.host,
-        definition: root.definition,
-        tooltipDisabled: root.disableTooltip,
-      },
-    );
-    return { html: { __html: result.markup }, style: toStyleObject(result.surfaceStyle) };
+    const result = (() => {
+      if (root.partsMode) {
+        // A part inside a wrapper or an async component registers after this render. The chart draws
+        // once its parts registered.
+        if (!isChartSpecComplete(root.seed, root.input.data, root.input.config))
+          return { markup: "<!--sw-chart-parts-->", surfaceStyle: "" };
+        return prerenderChart(
+          undefined,
+          { ...root.input, spec: root.seed, visible: root.visible },
+          { id: root.id, host: root.host, tooltipDisabled: root.disableTooltip },
+        );
+      }
+      return prerenderChart(
+        root.chart,
+        root.mode === "source" ? { ...root.input, visible: root.visible } : root.input,
+        {
+          id: root.id,
+          host: root.host,
+          definition: root.definition,
+          tooltipDisabled: root.disableTooltip,
+        },
+      );
+    })();
+    return { html: { __html: result.markup }, surfaceStyle: result.surfaceStyle };
   });
-  const surfaceStyle = React.useMemo(
-    () => ({ ...initial.style, ...style }),
-    [initial.style, style],
-  );
+  const size = React.useMemo(() => {
+    if (
+      !root.partsMode ||
+      !isChartSpecComplete(root.input.spec, root.input.data, root.input.config)
+    )
+      return initial.surfaceStyle;
+    const options = createChartOptions(
+      undefined,
+      { ...root.input, visible: root.visible },
+      { id: root.id, host: root.host },
+    );
+    return chartSurfaceStyle(options);
+  }, [root, initial.surfaceStyle]);
+  const surfaceStyle = React.useMemo(() => ({ ...toStyleObject(size), ...style }), [size, style]);
 
   const content: React.ReactNode = (() => {
     if (nativeTooltip) return null;
@@ -122,6 +152,7 @@ const ChartSurface = React.forwardRef<HTMLDivElement, ChartSurfaceProps>(functio
   const controllerRef = React.useRef<ReturnType<typeof createChart> | null>(null);
   const applied = React.useRef<ChartSurfaceSettings | null>(null);
   const read = (): ChartSurfaceSettings => ({
+    parts: root.partsMode,
     chart: root.chart,
     definition: root.definition,
     host: root.host,
@@ -134,6 +165,19 @@ const ChartSurface = React.forwardRef<HTMLDivElement, ChartSurfaceProps>(functio
   const start = () => {
     const chartRoot = chartRootElement();
     if (!surfaceRef.current || !chartRoot) return;
+    // A parts chart starts once its parts registered. Without a mark part or the category key that
+    // it needs, it renders nothing and warns once.
+    if (
+      root.partsMode &&
+      !isChartSpecComplete(root.input.spec, root.input.data, root.input.config)
+    ) {
+      if (root.settled) {
+        if (root.input.spec)
+          warnIncompleteChart(root.id, root.input.spec, root.input.data, root.input.config);
+        else warnEmptyChart(root.id);
+      }
+      return;
+    }
     const settings = read();
     applied.current = settings;
     controllerRef.current = createChart(chartRoot, {
@@ -166,7 +210,20 @@ const ChartSurface = React.forwardRef<HTMLDivElement, ChartSurfaceProps>(functio
   const sync = (next: ChartSurfaceSettings) => {
     const owned = controllerRef.current;
     const previous = applied.current;
+    // A Surface with no controller starts when it has a source: the parts that it needs, a chart
+    // module or a definition. A chart that first rendered with no parts while data loads starts
+    // when it later gets `chart` or `definition`. A parts chart stops when it loses a part.
+    if (!owned) return start();
+    if (root.partsMode && !isChartSpecComplete(next.input.spec, next.input.data, next.input.config))
+      return stop();
     if (!owned || !previous) return;
+    // A change between chart parts and a chart module or definition restarts the controller, so the
+    // new source and its input start together. A parts chart starts once its parts registered.
+    if (previous.parts !== next.parts) {
+      stop();
+      if (!next.parts) start();
+      return;
+    }
     applied.current = next;
     const optionsChanged =
       previous.chart !== next.chart ||

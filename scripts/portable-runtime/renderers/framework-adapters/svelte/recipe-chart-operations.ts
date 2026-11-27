@@ -1,5 +1,8 @@
 import { type ChartOperations, closureChartOperations } from "../../shared-recipes/chart/recipe.js";
-import type { ChartSurfaceFacts } from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
+import {
+  type ChartSurfaceFacts,
+  chartSpecOptionsObject,
+} from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
 import { svelteFrameworkOperations, svelteTrackModel } from "./recipe-framework-operations.js";
 
 /** Untracked blocks open on their own line, so the printer can nest their bodies. */
@@ -12,7 +15,8 @@ const fw = {
  * Svelte syntax for the chart recipe. The script runs once, runes derive values, a pre-effect
  * reads commands, and effects run their work untracked.
  */
-export function svelteChartOperations({ visibility: v }: ChartSurfaceFacts): ChartOperations {
+export function svelteChartOperations(facts: ChartSurfaceFacts): ChartOperations {
+  const v = facts.visibility;
   const model = v.controlledProp;
   return {
     ...closureChartOperations,
@@ -42,6 +46,29 @@ export function svelteChartOperations({ visibility: v }: ChartSurfaceFacts): Cha
     tooltips: "tooltips",
     firstTooltip: "tooltips[0] ?? null",
     setTooltips: (next) => `tooltips = ${next("tooltips")};`,
+    specCell: "let specParts = $state.raw<readonly ChartSpecEntry[]>(EMPTY);",
+    specParts: "specParts",
+    setSpecParts: (next) => `specParts = ${next("specParts")};`,
+    ariaLabel: "ariaLabel",
+    // The server probe fills the seed before the real pass renders the Surface. The Root's own
+    // options join it, because they change the first SVG.
+    seed: `buildChartSpec(seedParts, ${chartSpecOptionsObject(facts, "root")})`,
+    // Parts register when their script runs, before the Surface starts in an effect.
+    settled: "true",
+    // The server probe renders the legend too, before the probe reaches a later mark part, so the
+    // server legend reads the complete seed. The browser has no probe, and its parts register in
+    // the same hydration flush.
+    legendSpec: `probing ? buildChartSpec(seedParts, ${chartSpecOptionsObject(facts, "root")}) : spec`,
+    // The browser has no probe, and a legend before its parts renders before they register. So the
+    // hydration render first lists the keys of the server legend, and the Root switches to the live
+    // parts after mount.
+    legendKeys: (keys) => `serverLegendKeys ?? (${keys})`,
+    // The server keeps the first result of a derived value, and the probe reads the legend keys
+    // before its parts fill the seed.
+    uncached: {
+      declare: (name, expression) => `const ${name} = () => (${expression});`,
+      read: (name) => `${name}()`,
+    },
     mounted: (body) => `onMount(() => {\n${body("current")}\n});`,
     listenerDefined: `${v.callbackProp} !== undefined`,
     visibilityNames: `bind:${model}, ${v.defaultProp} and ${v.callbackProp}`,

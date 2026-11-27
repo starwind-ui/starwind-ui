@@ -162,20 +162,21 @@ describe("framework surface manifest", () => {
       },
     ]);
 
-    // Chart is generated for every target.
+    // Chart is generated for every target, with the same chart spec parts.
     expect(manifest.targets.astro.counts).toEqual({
       familySubpaths: 38,
-      namespaceParts: 260,
-      renderedPrimitivePaths: 246,
-      styledNormalizedPaths: 404,
+      namespaceParts: 273,
+      renderedPrimitivePaths: 259,
+      styledNormalizedPaths: 417,
       styledRoots: 56,
     });
+    expect(manifest.plannedCorrections).toEqual([]);
     for (const target of ["react", "vue", "svelte"]) {
       expect(manifest.targets[target].counts).toEqual({
         familySubpaths: 38,
-        namespaceParts: 260,
-        renderedPrimitivePaths: 244,
-        styledNormalizedPaths: 401,
+        namespaceParts: 273,
+        renderedPrimitivePaths: 257,
+        styledNormalizedPaths: 414,
         styledRoots: 55,
       });
     }

@@ -15,6 +15,7 @@
     visitorConfig,
     visitorData,
   } from "./chart/chart-recipes";
+  import ChartPartsExamples from "./chart/ChartPartsExamples.svelte";
 </script>
 
 <section
@@ -108,5 +109,8 @@
         </ChartContainer>
       </article>
     </div>
+    <h3 class="review-subheading">Charts from parts</h3>
+    <p>The six docs charts built from chart parts, with no chart module.</p>
+    <ChartPartsExamples />
   </div>
 </section>

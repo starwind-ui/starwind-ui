@@ -4,17 +4,20 @@
   import { ChartTooltip } from "@starwind-ui/svelte/chart";
   import { default as ChartTooltipContent } from "./ChartTooltipContent.svelte";
 
-  export type ChartTooltipProps = {
+  export type ChartTooltipProps = Omit<import("@starwind-ui/svelte/chart").ChartTooltipProps, "children"> & {
     content?: import("svelte").Snippet;
   };
 </script>
 
 <script lang="ts">
   let {
-    content
+    content,
+    ...rest
   }: ChartTooltipProps = $props();
 </script>
 
-<ChartTooltip>
+<ChartTooltip
+  {...rest}
+>
   {#if content}{@render content()}{:else}<ChartTooltipContent/>{/if}
 </ChartTooltip>

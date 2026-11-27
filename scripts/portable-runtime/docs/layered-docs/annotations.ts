@@ -689,7 +689,7 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
   chart: {
     liveDemo: true,
     summary:
-      "Use Chart to draw a TanStack Charts chart from your data and series config. People can read values in a tooltip with the pointer or the keyboard, and the legend can hide a series.",
+      "Use Chart to draw bar, line, area, pie, radar and radial charts from your data and series config. Add parts such as Bar, XAxis and Grid to describe the chart. For a chart that the parts cannot draw, pass a TanStack Charts chart module. People can read values in a tooltip with the pointer or the keyboard, and the legend can hide a series.",
     behaviorNotes: [
       "A Legend toggles series only when a Surface renders under the same Root, because the Surface starts the Runtime controller. Without a Surface, legend items show the visible keys, and a click changes nothing.",
     ],

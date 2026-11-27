@@ -4,7 +4,8 @@
   import type { Component } from "svelte";
   import { useChartTooltipRow, type ChartTooltipIconProps } from "./ChartContext.js";
 
-  // The config icon of a row. A row without an icon renders nothing.
+  // The config icon of a row. Keep TooltipIndicator in the row too: a row with an icon shows the
+  // icon in place of the indicator, and a row without one shows the indicator.
   let { ref, ...rest }: ChartTooltipIconProps = $props();
   import { createRefAttachment as createAttachRef } from "../_internal/ref-attachment.js";
   const attachRef = createAttachRef<HTMLSpanElement>(() => ref);

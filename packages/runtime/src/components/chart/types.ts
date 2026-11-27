@@ -8,6 +8,7 @@ import type {
 import type { tooltip } from "@tanstack/charts/tooltip";
 
 import type { TooltipContentOptions } from "./presentation";
+import type { ChartSpec } from "./spec";
 
 /**
  * Chart series config. `V` is a framework view type for rich labels, and `I` is a framework icon
@@ -28,6 +29,11 @@ export interface ChartInput<T = unknown> {
   visible?: readonly string[];
   params?: Record<string, unknown>;
   theme?: Partial<ChartTheme>;
+  /**
+   * The chart as plain data parts. The Runtime builds the chart from it, so the chart needs no
+   * chart module. It cannot be combined with `chart` or `definition`.
+   */
+  spec?: ChartSpec;
 }
 
 /** Native TanStack host options. The chart root owns `definition` and `idPrefix`. */

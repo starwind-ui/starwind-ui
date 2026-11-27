@@ -309,6 +309,23 @@ describe("one data-slot and attribute set across frameworks", () => {
   });
 });
 
+/** The chart spec parts, in namespace order. */
+const SPEC_PARTS = [
+  "Bar",
+  "Line",
+  "Area",
+  "Pie",
+  "Radar",
+  "RadialBar",
+  "XAxis",
+  "YAxis",
+  "Grid",
+  "PolarGrid",
+  "PolarAngleAxis",
+  "Label",
+  "LinearGradient",
+];
+
 const PARTS = [
   "Root",
   "Style",
@@ -328,8 +345,10 @@ const PARTS = [
   "LegendSwatch",
   "LegendIcon",
   "LegendLabel",
+  ...SPEC_PARTS,
 ];
 const PART_EXPORTS = ["Chart", "ChartPrimitive", "default", ...PARTS.map((part) => `Chart${part}`)];
+const SPEC_PART_EXPORTS = SPEC_PARTS.map((part) => `Chart${part}`);
 
 function extraExports(names: readonly string[], parts: readonly string[]): string[] {
   return names.filter((name) => !parts.includes(name)).sort();
@@ -391,6 +410,7 @@ describe("chart exports across frameworks", () => {
     const styled = ["ChartContainer", "ChartLegend", "ChartLegendContent", "ChartTooltip"];
     const common = [
       ...styled,
+      ...SPEC_PART_EXPORTS,
       "ChartTooltipContent",
       "ChartVariants",
       "default",
@@ -405,6 +425,7 @@ describe("chart exports across frameworks", () => {
         "TooltipContent",
         "Legend",
         "LegendContent",
+        ...SPEC_PARTS,
       ]);
       expect(Object.keys(module.ChartVariants).sort()).toEqual(
         Object.keys(ReactStyled.ChartVariants).sort(),
@@ -420,5 +441,67 @@ describe("chart exports across frameworks", () => {
         "serializeInput",
       ].sort(),
     );
+  });
+});
+
+/** The prop names of each `ChartXProps` type in a source, with `?` for an optional prop. */
+function specPartProps(source: string): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const part of SPEC_PARTS) {
+    const block = new RegExp(`export type Chart${part}Props = \\{\\n([\\s\\S]*?)\\n\\};`).exec(
+      source,
+    )?.[1];
+    if (block === undefined) continue;
+    result[part] = [...block.matchAll(/^ {2}(\w+)(\??):/gm)].map(([, name, optional]) =>
+      optional ? `${name}?` : name!,
+    );
+  }
+  return result;
+}
+
+const PROP_SOURCES = {
+  astro: import.meta.glob("../../../../packages/astro/src/chart/ChartMarkup.ts", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+  react: import.meta.glob("../../../../packages/react/src/chart/Chart*.tsx", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+  vue: import.meta.glob("../../../../packages/vue/src/chart/ChartContext.ts", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+  svelte: import.meta.glob("../../../../packages/svelte/src/chart/ChartContext.ts", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+} as Record<string, Record<string, string>>;
+
+describe("chart spec part props across frameworks", () => {
+  it("declares the same props for each spec part in every framework", () => {
+    const props = Object.fromEntries(
+      Object.entries(PROP_SOURCES).map(([framework, files]) => [
+        framework,
+        specPartProps(Object.values(files).join("\n")),
+      ]),
+    );
+    expect(Object.keys(props.astro!)).toEqual(SPEC_PARTS);
+    expect(props.astro!.Bar).toEqual(["dataKey", "stackId?", "radius?", "fill?", "label?"]);
+    for (const framework of ["react", "vue", "svelte"])
+      expect(props[framework]).toEqual(props.astro);
+    // The Vue parts declare the same props at runtime, so a template binds each one.
+    for (const part of SPEC_PARTS) {
+      const component = VuePrimitive[`Chart${part}` as keyof typeof VuePrimitive] as unknown as {
+        props: Record<string, unknown>;
+      };
+      expect(Object.keys(component.props), part).toEqual(
+        props.vue![part]!.map((name) => name.replace("?", "")),
+      );
+    }
   });
 });

@@ -167,6 +167,8 @@ export type VueStyledComponentProjection = {
   exportName: string;
   filtersComponentAttrs: boolean;
   manuallyForwardsAttrs: boolean;
+  /** Component options from the contract, as name and code, for `defineOptions`. */
+  componentOptions: Record<string, string>;
   imports: VueImportsProjection;
   models: ReadonlyArray<VueModelProjection>;
   props: VuePropsProjection;

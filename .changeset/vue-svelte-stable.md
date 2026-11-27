@@ -11,4 +11,4 @@ If you used the beta:
 - In Vue, upgrade `vue` to 3.5.21 or newer in the same step.
 - Run `starwind update` to update your copied Styled components.
 - Run `starwind primitives update --all` to update your vendored Primitive files.
-- Check the removed exports and context members in these release notes, and the [earlier beta API changes](https://starwind.dev/docs/getting-started/installation/#beta-api-changes), before you update.
+- Check the removed exports and context members in these release notes, and the [earlier beta API changes](https://starwind.dev/blog/starwind-ui-3-6/#removed-beta-only-apis), before you update.

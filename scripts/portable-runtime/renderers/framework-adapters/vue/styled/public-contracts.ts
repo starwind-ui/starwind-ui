@@ -1,9 +1,14 @@
+import {
+  chartSpecPartExport,
+  chartSpecPartNames,
+} from "../../../../contracts/primitive/components/chart.js";
 import type {
   StyledOutputAttribute,
   StyledOutputPropExtend,
   StyledOutputRenderNode,
   StyledOutputVariable,
 } from "../../../styled-output-model/index.js";
+
 import { projectVueModel } from "../public-contract.js";
 import { renderVueExpression } from "./expressions.js";
 import { renderVuePropKey } from "./props.js";
@@ -95,14 +100,32 @@ const sidebarMobileOpenModel = projectVueModel("mobileOpen");
 const tabsValueModel = projectVueModel("value");
 const toggleGroupValueModel = projectVueModel("value");
 
+/**
+ * A chart spec part forwards its props as attributes. A required prop such as \`dataKey\` needs a
+ * typed spread, so strict templates accept the forward.
+ */
+const CHART_SPEC_PART_CONTRACTS = Object.fromEntries(
+  chartSpecPartNames.map((name): [string, VueStyledPublicContract] => {
+    const { exportName, namespaceKey } = chartSpecPartExport(name);
+    return [
+      `chart:${exportName}`,
+      {
+        spreadExpression: `attrs as unknown as import("@starwind-ui/vue/chart").${exportName}Props`,
+        target: { component: "chart", part: namespaceKey },
+      },
+    ];
+  }),
+);
+
 const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
+  ...CHART_SPEC_PART_CONTRACTS,
   // The public ChartContainerProps is the strict Root props union. In a template, a union whose
   // definition branch forbids the visibility listeners stops vue-tsc from typing inline
   // \`@visible-change\` and \`@update:visible\` handlers. ChartContainer forwards listeners as
   // attributes and declares no emits, so its template props give the definition branch the same
   // listener types. The Root rejects a listener on a definition at setup.
   "chart:ChartContainer": {
-    declaredPublicExtension: `import("@starwind-ui/vue/chart").ChartRootSourceProps<T, D, X, Y> | (Omit<import("@starwind-ui/vue/chart").ChartRootDefinitionProps<T, D, X, Y>, "onVisibleChange" | "onUpdate:visible"> & Pick<import("@starwind-ui/vue/chart").ChartRootSourceProps<T, D, X, Y>, "onVisibleChange" | "onUpdate:visible">)`,
+    declaredPublicExtension: `import("@starwind-ui/vue/chart").ChartRootSourceProps<T, D, X, Y> | (Omit<import("@starwind-ui/vue/chart").ChartRootDefinitionProps<T, D, X, Y>, "onVisibleChange" | "onUpdate:visible"> & Pick<import("@starwind-ui/vue/chart").ChartRootSourceProps<T, D, X, Y>, "onVisibleChange" | "onUpdate:visible">) | import("@starwind-ui/vue/chart").ChartRootSpecProps<T, D, X, Y>`,
   },
   "accordion:Accordion": {
     emits: [

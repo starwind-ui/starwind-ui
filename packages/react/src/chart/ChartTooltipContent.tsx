@@ -6,6 +6,7 @@
 "use client";
 
 import {
+  type ChartFormat,
   type TooltipItem,
   type TooltipLayoutRow,
   type TooltipView,
@@ -53,20 +54,27 @@ export type ChartTooltipContentProps<T = unknown> = Omit<
   valueKey?: string;
   /** Overrides each row's indicator color. */
   color?: string;
-  /** Returns the complete row view, with shadcn's argument order. `payload` is the native datum. */
-  formatter?: (
-    value: unknown,
-    name: string,
-    item: TooltipItem<T>,
-    index: number,
-    payload: T,
-  ) => React.ReactNode;
-  /** Returns the complete heading view. */
-  labelFormatter?: (label: unknown, payload: readonly TooltipItem<T>[]) => React.ReactNode;
+  /**
+   * A function returns the complete row view, with shadcn's argument order. `payload` is the native
+   * datum. A ChartFormat object formats only the row value.
+   */
+  formatter?:
+    | ((
+        value: unknown,
+        name: string,
+        item: TooltipItem<T>,
+        index: number,
+        payload: T,
+      ) => React.ReactNode)
+    | ChartFormat;
+  /** A function returns the complete heading view. A ChartFormat object formats the heading. */
+  labelFormatter?:
+    | ((label: unknown, payload: readonly TooltipItem<T>[]) => React.ReactNode)
+    | ChartFormat;
 };
 
 /**
- * The tooltip body content. It renders inside a tooltip body only, and gives its parts the
+ * The tooltip body content. It renders inside a tooltip body only. It gives its parts the
  * presentation rows through context.
  */
 const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContentProps>(

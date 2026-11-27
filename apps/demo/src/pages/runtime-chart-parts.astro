@@ -1,0 +1,23 @@
+---
+import ChartPartsExamples from "@/components/demos/chart/ChartPartsExamples.astro";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout title="Runtime Chart Parts" description="Astro charts built from chart parts for review">
+  <main class="container mx-auto max-w-5xl px-4 py-12">
+    <header class="mb-10 space-y-3">
+      <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Runtime component review
+      </p>
+      <h1 class="font-heading text-4xl font-semibold tracking-tight">Chart parts</h1>
+      <p class="text-muted-foreground max-w-3xl">
+        The six docs charts built from chart parts, with no chart module and no page script. Compare
+        each chart with the same chart on the chart examples page.
+      </p>
+      <a class="text-sm font-medium underline underline-offset-4" href="/runtime-charts/">
+        Open the chart module examples
+      </a>
+    </header>
+    <ChartPartsExamples />
+  </main>
+</Layout>

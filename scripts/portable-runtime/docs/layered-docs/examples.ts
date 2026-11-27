@@ -700,54 +700,27 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
 } as const satisfies Readonly<Record<string, readonly ExampleNode[]>>;
 
 /**
- * Chart needs a chart module, data and a typed config, which the generic attribute renderer cannot
- * express. These basic examples are authored so the React example typechecks against the adapter.
+ * Chart draws from data, a typed config and chart parts, which the generic attribute renderer
+ * cannot express. These basic examples are authored so the React example typechecks against the
+ * adapter.
  */
-const chartExampleModuleSource = (
-  typed: boolean,
-  exported = false,
-) => `${exported ? "export " : ""}const data${typed ? ": VisitorRow[]" : ""} = [
+const chartExampleData = (typed: boolean) => `const data${typed ? ": VisitorRow[]" : ""} = [
   { month: "January", desktop: 186, mobile: 80 },
   { month: "February", desktop: 305, mobile: 200 },
   { month: "March", desktop: 237, mobile: 120 },
 ];
 
-${exported ? "export " : ""}const config = {
+const config = {
   desktop: { label: "Desktop", color: "var(--chart-1)" },
   mobile: { label: "Mobile", color: "var(--chart-2)" },
-}${typed ? " satisfies ChartConfig" : ""};
-
-${exported ? "export " : ""}const visitors = defineChartModule${typed ? "<VisitorRow>" : ""}({
-  id: "visitors",
-  ariaLabel: "Visitors by month",
-  create: (ctx) =>
-    defineChart(
-      {
-        marks: [
-          barY(
-            ctx.data.flatMap((row) =>
-              ctx.visible.map((series) => ({
-                id: \`\${row.month}-\${series}\`,
-                month: row.month,
-                series,
-                value: row[series${typed ? ' as "desktop" | "mobile"' : ""}],
-              })),
-            ),
-            { x: "month", y: "value", color: "series", key: "id", layout: group({ padding: 0.15 }) },
-          ),
-        ],
-        scales: {
-          x: { scale: () => scaleBand${typed ? "<string>" : ""}().domain(ctx.data.map((row) => row.month)) },
-          y: { scale: scaleLinear, nice: true },
-        },
-        color: ctx.color,
-        theme: ctx.theme,
-      },
-      { tooltip: ctx.tooltip({ labelKey: "month" }) },
-    ),
-});`;
+}${typed ? " satisfies ChartConfig" : ""};`;
 
 const chartExampleRowType = `type VisitorRow = { month: string; desktop: number; mobile: number };`;
+
+const chartExampleParts = `  <Chart.Grid vertical={false} />
+  <Chart.XAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+  <Chart.Bar dataKey="desktop" radius={4} />
+  <Chart.Bar dataKey="mobile" radius={4} />`;
 
 const indentLines = (source: string, indent: string) =>
   source
@@ -759,101 +732,92 @@ const primitiveBasicExampleCode: Readonly<
   Record<string, Readonly<Record<(typeof requiredExampleTargets)[number], string>>>
 > = {
   chart: {
-    "raw-html": `<div data-sw-chart data-slot="chart" data-chart="visitors" data-chart-module="visitors">
+    "raw-html": `<!-- data-chart holds the chart id. The style element receives the config colors. -->
+<div data-sw-chart data-slot="chart" data-chart="visitors">
+  <style data-slot="chart-style"></style>
   <div data-sw-chart-surface data-slot="chart-surface"></div>
 </div>
 
 <script type="module">
-  import { barY, defineChart, group } from "@tanstack/charts";
-  import { scaleBand } from "@tanstack/charts/scales/band";
-  import { scaleLinear } from "@tanstack/charts/scales/linear";
   import { createChart } from "@starwind-ui/runtime/chart";
-  import { defineChartModule } from "@starwind-ui/runtime/chart";
 
-${indentLines(chartExampleModuleSource(false), "  ")}
+${indentLines(chartExampleData(false), "  ")}
+
+  // The spec lists the chart parts as plain data. It needs no chart module.
+  const spec = {
+    parts: [
+      { kind: "grid", vertical: false },
+      { kind: "xAxis", dataKey: "month", tickFormatter: { maxLength: 3 } },
+      { kind: "bar", dataKey: "desktop", radius: 4 },
+      { kind: "bar", dataKey: "mobile", radius: 4 },
+    ],
+  };
 
   const root = document.querySelector("[data-sw-chart]");
-  if (root) {
-    // The root names the registered module, so pass only the input.
-    createChart(root, { input: { data, config } });
-  }
+  if (root) createChart(root, { input: { data, config, spec } });
 </script>`,
-    astro: `// src/charts/visitors.ts
-import { barY, defineChart, group } from "@tanstack/charts";
-import { scaleBand } from "@tanstack/charts/scales/band";
-import { scaleLinear } from "@tanstack/charts/scales/linear";
-import { type ChartConfig, defineChartModule } from "@starwind-ui/runtime/chart";
+    astro: `---
+import { Chart } from "@starwind-ui/astro/chart";
+import type { ChartConfig } from "@starwind-ui/astro/chart";
 
 ${chartExampleRowType}
 
-${chartExampleModuleSource(true, true)}
-
-// src/pages/example.astro
----
-import { Chart } from "@starwind-ui/astro/chart";
-import { visitors, data, config } from "../charts/visitors";
+${chartExampleData(true)}
 ---
 
-<Chart.Root id="visitors" chart={visitors} data={data} config={config}>
+<Chart.Root data={data} config={config}>
   <Chart.Style />
   <Chart.Surface />
-</Chart.Root>
-
-<script>
-  import "../charts/visitors";
-</script>`,
-    react: `import { barY, defineChart, group } from "@tanstack/charts";
-import { scaleBand } from "@tanstack/charts/scales/band";
-import { scaleLinear } from "@tanstack/charts/scales/linear";
-import { Chart } from "@starwind-ui/react/chart";
+${chartExampleParts}
+</Chart.Root>`,
+    react: `import { Chart } from "@starwind-ui/react/chart";
 import type { ChartConfig } from "@starwind-ui/react/chart";
-import { defineChartModule } from "@starwind-ui/runtime/chart";
 
 ${chartExampleRowType}
 
-${chartExampleModuleSource(true)}
+${chartExampleData(true)}
 
 export function Example() {
   return (
-    <Chart.Root id="visitors" chart={visitors} data={data} config={config}>
+    <Chart.Root data={data} config={config}>
       <Chart.Style />
       <Chart.Surface />
+${indentLines(chartExampleParts, "    ")}
     </Chart.Root>
   );
 }`,
     vue: `<script setup lang="ts">
-import { barY, defineChart, group } from "@tanstack/charts";
-import { scaleBand } from "@tanstack/charts/scales/band";
-import { scaleLinear } from "@tanstack/charts/scales/linear";
 import Chart from "@starwind-ui/vue/chart";
-import { type ChartConfig, defineChartModule } from "@starwind-ui/runtime/chart";
+import type { ChartConfig } from "@starwind-ui/vue/chart";
 
 ${chartExampleRowType}
 
-${chartExampleModuleSource(true)}
+${chartExampleData(true)}
 </script>
 
 <template>
-  <Chart.Root id="visitors" :chart="visitors" :data="data" :config="config">
+  <Chart.Root :data="data" :config="config">
     <Chart.Style />
     <Chart.Surface />
+    <Chart.Grid :vertical="false" />
+    <Chart.XAxis data-key="month" :tick-formatter="{ maxLength: 3 }" />
+    <Chart.Bar data-key="desktop" :radius="4" />
+    <Chart.Bar data-key="mobile" :radius="4" />
   </Chart.Root>
 </template>`,
     svelte: `<script lang="ts">
-  import { barY, defineChart, group } from "@tanstack/charts";
-  import { scaleBand } from "@tanstack/charts/scales/band";
-  import { scaleLinear } from "@tanstack/charts/scales/linear";
   import { Chart } from "@starwind-ui/svelte/chart";
-  import { type ChartConfig, defineChartModule } from "@starwind-ui/runtime/chart";
+  import type { ChartConfig } from "@starwind-ui/svelte/chart";
 
 ${indentLines(chartExampleRowType, "  ")}
 
-${indentLines(chartExampleModuleSource(true), "  ")}
+${indentLines(chartExampleData(true), "  ")}
 </script>
 
-<Chart.Root id="visitors" chart={visitors} {data} {config}>
+<Chart.Root {data} {config}>
   <Chart.Style />
   <Chart.Surface />
+${chartExampleParts}
 </Chart.Root>`,
   },
 };

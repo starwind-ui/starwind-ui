@@ -1,12 +1,17 @@
 // Browser behavior of the generated Astro chart Primitive and Styled parts. The global setup renders
 // the Astro fixtures on the server; each test adopts that HTML as the lifecycle script would.
-import { createChart, getChartController, startCharts } from "@starwind-ui/runtime/chart";
+import {
+  createChart,
+  getChartController,
+  prerenderChart,
+  startCharts,
+} from "@starwind-ui/runtime/chart";
 import { afterEach, describe, expect, inject, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
 import { chartAttributes } from "../../../../packages/astro/src/chart/ChartMarkup";
 import { visitorDefinition } from "./astro/fixture-modules";
-import type { AstroChartFixtureResult } from "./astro/render-fixtures";
+import type { AstroChartFixtureName, AstroChartFixtureResult } from "./astro/render-fixtures";
 
 const fixtures = (await (await fetch(inject("astroChartFixturesUrl"))).json()) as Record<
   string,
@@ -84,15 +89,12 @@ function legendShape(element: ParentNode) {
 }
 
 describe("Astro chart Primitive", () => {
-  it("starts the authored docs example when its client module registers", async () => {
+  it("starts the authored docs example with no chart module", async () => {
     const element = mount("docs");
     const root = chartRoot(element);
     expect(root.dataset.state).toBe("pending");
+    expect(root.hasAttribute("data-chart-module")).toBe(false);
     startCharts();
-    await nextFrame();
-    expect(root.dataset.state).toBe("pending");
-
-    await import(/* @vite-ignore */ inject("astroDocsChartModuleUrl"));
     await vi.waitFor(() => expect(root.dataset.state).toBe("active"));
     expect(getChartController(root)?.getScene()?.points.length).toBeGreaterThan(0);
   });
@@ -579,5 +581,276 @@ describe("Astro chart Styled parts", () => {
     expect(chartAttributes({ title: '"<b>"', 'bad"name': "x" })).toBe(
       ' title="&quot;&lt;b&gt;&quot;"',
     );
+  });
+});
+
+describe("Astro chart spec parts", () => {
+  const kinds = ["Bar", "Area", "Line", "Donut", "Radar", "Radial"] as const;
+  const parse = (name: string) => new DOMParser().parseFromString(html(name), "text/html");
+
+  it("renders the same chart SVG as the reference chart module for each docs chart", () => {
+    for (const kind of kinds) {
+      const parts = parse(`specParts${kind}`).querySelector("[data-slot=chart-surface]");
+      const module = parse(`specModule${kind}`).querySelector("[data-slot=chart-surface]");
+      expect(parts?.querySelector("svg.ts-chart"), kind).not.toBeNull();
+      expect(parts?.outerHTML, kind).toBe(module?.outerHTML);
+    }
+  });
+
+  it("loads no chart module and no page script besides the chart lifecycle", () => {
+    for (const kind of kinds) {
+      const page = html(`specParts${kind}`);
+      const document = parse(`specParts${kind}`);
+      const root = chartRoot(document);
+      expect(root.hasAttribute("data-chart-module"), kind).toBe(false);
+      expect(root.hasAttribute("data-sw-chart"), kind).toBe(true);
+      expect(page, kind).not.toContain("sw-chart:spec-part");
+      const scripts = [...document.querySelectorAll("script")];
+      expect(
+        scripts.map((script) => script.type),
+        kind,
+      ).toEqual(["application/json", "module"]);
+      expect(scripts[0]!.hasAttribute("data-sw-chart-input"), kind).toBe(true);
+      expect(scripts[1]!.getAttribute("src"), kind).toContain("/chart/ChartLifecycle.astro?");
+    }
+    const payload = JSON.parse(
+      parse("specPartsBar").querySelector("script[data-sw-chart-input]")!.textContent!,
+    );
+    // The parts arrive in source order, each with only its own props.
+    expect(payload.input.spec.parts).toEqual([
+      { kind: "grid", vertical: false },
+      { kind: "xAxis", dataKey: "month", tickFormatter: { maxLength: 3 } },
+      { kind: "yAxis" },
+      { kind: "bar", dataKey: "desktop", radius: 4 },
+      { kind: "bar", dataKey: "mobile", radius: 4 },
+    ]);
+    expect(payload.host.ariaLabel).toBe("Bar chart of monthly visitors");
+  });
+
+  it("starts from the lifecycle, toggles a series from the legend and shows the tooltip", async () => {
+    const element = await start("specPartsBar");
+    const root = chartRoot(element);
+    const serverSvg = element.querySelector("svg");
+    await vi.waitFor(() => expect(root.dataset.state).toBe("active"));
+    expect(element.querySelector("svg")).toBe(serverSvg);
+    const bars = () => element.querySelectorAll('path[data-ts-key^="bars:"]').length;
+    expect(bars()).toBe(12);
+
+    await userEvent.click(legendButton(element, "mobile"));
+    await vi.waitFor(() => expect(bars()).toBe(6));
+    expect(legendButton(element, "mobile").getAttribute("aria-pressed")).toBe("false");
+    expect(getChartController(root)?.getVisible()).toEqual(["desktop"]);
+
+    await focusFirstPoint(element);
+    await vi.waitFor(() =>
+      expect(status()!.querySelector("[data-slot=chart-tooltip-content]")).not.toBeNull(),
+    );
+    const content = status()!.querySelector<HTMLElement>("[data-slot=chart-tooltip-content]")!;
+    expect(content.querySelectorAll("[data-slot=chart-tooltip-item]")).toHaveLength(1);
+    expect(content.textContent).toContain("Desktop");
+    // The accessible name stays the aria-label after the client render.
+    expect(element.querySelector("svg")!.getAttribute("aria-label")).toBe(
+      "Bar chart of monthly visitors",
+    );
+  });
+
+  it("formats tooltip rows and headings with format objects", async () => {
+    const element = await start("specFormat");
+    await focusFirstPoint(element);
+    await vi.waitFor(() =>
+      expect(status()!.querySelector("[data-slot=chart-tooltip-value]")).not.toBeNull(),
+    );
+    const content = status()!.querySelector<HTMLElement>("[data-slot=chart-tooltip-content]")!;
+    // The first arrow key focuses February, as it does for the chart module.
+    expect(content.querySelector("[data-slot=chart-tooltip-label]")?.textContent).toBe("Feb");
+    const values = [...content.querySelectorAll("[data-slot=chart-tooltip-value]")].map(
+      (node) => node.textContent,
+    );
+    expect(values).toEqual(["305 visits", "200 visits"]);
+    // The rows keep their indicator and config name.
+    expect(content.querySelectorAll("[data-slot=chart-tooltip-indicator]")).toHaveLength(2);
+    expect(content.querySelector("[data-slot=chart-tooltip-name]")?.textContent).toBe("Desktop");
+  });
+
+  it("takes aria-label as the chart name and keeps the Runtime default without it", () => {
+    const named = parse("specPartsBar");
+    expect(chartRoot(named).hasAttribute("aria-label")).toBe(false);
+    expect(named.querySelector("svg")!.getAttribute("aria-label")).toBe(
+      "Bar chart of monthly visitors",
+    );
+    expect(parse("specDefaultName").querySelector("svg")!.getAttribute("aria-label")).toBe(
+      "Bar chart of Desktop and Mobile",
+    );
+  });
+
+  it("draws Date data on the server from the same ISO strings as the wire payload", () => {
+    const document = parse("specDates");
+    const surface = document.querySelector("[data-slot=chart-surface]")!;
+    const payload = JSON.parse(document.querySelector("script[data-sw-chart-input]")!.textContent!);
+    expect(payload.input.data[0].day).toBe("2024-04-01T00:00:00.000Z");
+    // A browser restart draws from the payload, so it gives the server SVG.
+    const restart = prerenderChart(undefined, payload.input, {
+      id: "spec-dates",
+      host: payload.host,
+    });
+    const restartSurface = document.createElement("div");
+    restartSurface.innerHTML = restart.markup;
+    expect(surface.innerHTML).toBe(restartSurface.innerHTML);
+    expect(surface.textContent).toContain("Apr 1");
+  });
+
+  it("sends stackOffset and the ChartTooltip cursor in the spec and removes the bar hover band", async () => {
+    const document = parse("specOptions");
+    const payload = JSON.parse(document.querySelector("script[data-sw-chart-input]")!.textContent!);
+    expect(payload.input.spec.stackOffset).toBe("expand");
+    expect(payload.input.spec.cursor).toBe(false);
+    // The chart Root removes the Tooltip options from the page.
+    expect(html("specOptions")).not.toMatch(/sw-chart:spec-options|%22cursor%22/);
+    const ticks = [...document.querySelectorAll('[data-ts-key^="y-tick-label:"]')];
+    expect(Number(ticks.at(-1)!.textContent)).toBe(1);
+
+    const element = await start("specOptions");
+    await vi.waitFor(() => expect(chartRoot(element).dataset.state).toBe("active"));
+    await focusFirstPoint(element);
+    await vi.waitFor(() =>
+      expect(status()?.querySelector("[data-slot=chart-tooltip-value]")).toBeTruthy(),
+    );
+    expect(element.querySelectorAll('[data-ts-key^="category-hover"]')).toHaveLength(0);
+    // The tooltip shows the raw February values, not their share of the stack.
+    const values = [...status()!.querySelectorAll("[data-slot=chart-tooltip-value]")].map(
+      (node) => node.textContent,
+    );
+    expect(values).toEqual(["305", "200"]);
+  });
+
+  const specCursor = (name: AstroChartFixtureName) =>
+    JSON.parse(parse(name).querySelector("script[data-sw-chart-input]")!.textContent!).input.spec
+      .cursor;
+
+  it("takes the cursor from the first chart-level ChartTooltip, which supplies the body", () => {
+    // An unset first cursor keeps the band, and the second Tooltip's false does not remove it.
+    expect(specCursor("specCursorUnsetFirst")).toBeUndefined();
+    expect(specCursor("specCursorFalseFirst")).toBe(false);
+    for (const name of ["specCursorUnsetFirst", "specCursorFalseFirst"] as const)
+      expect(html(name)).not.toMatch(/%22cursor%22/);
+  });
+
+  it("takes no cursor from a ChartTooltip inside another Tooltip's body", () => {
+    expect(specCursor("specCursorNested")).toBeUndefined();
+    // The inner Tooltip renders in the body, and its options leave the page.
+    expect(html("specCursorNested")).toContain("data-sw-chart-tooltip");
+    expect(html("specCursorNested")).not.toMatch(/%22cursor%22/);
+  });
+
+  it("lists only the drawn slices in the legend and draws two center lines, as shadcn", async () => {
+    const legendLabels = (scope: ParentNode) =>
+      [...scope.querySelectorAll("[data-slot=chart-legend-item]")].map((item) =>
+        item.textContent?.trim(),
+      );
+    const drawn = ["Chrome", "Safari", "Firefox", "Edge", "Other"];
+    // The server legend skips the colorless `visitors` config key.
+    const document = parse("specPieText");
+    expect(legendLabels(document)).toEqual(drawn);
+    const lines = [...document.querySelectorAll('[data-ts-key^="visible-total"] text')];
+    expect(lines.map((line) => line.getAttribute("y"))).toEqual(["0", "24"]);
+    expect(lines[1]!.textContent).toBe("Visitors");
+    expect(lines.map((line) => line.getAttribute("font-weight"))).toEqual(["700", null]);
+    expect(document.querySelector('[data-ts-key^="slices:"]')!.getAttribute("stroke")).toBe("none");
+    // The Runtime keeps the same legend when the chart starts.
+    const element = await start("specPieText");
+    await vi.waitFor(() => expect(chartRoot(element).dataset.state).toBe("active"));
+    expect(legendLabels(element)).toEqual(drawn);
+  });
+
+  it("draws mark labels from plain data, as the shadcn label examples", async () => {
+    const texts = (scope: ParentNode, id: string, prefix: string) =>
+      [...scope.querySelectorAll(`[data-chart="${id}"] [data-ts-key^="${prefix}:"]`)].map(
+        (text) => text.textContent,
+      );
+    const names = ["Chrome", "Safari", "Firefox", "Edge", "Other"];
+    const check = (scope: ParentNode) => {
+      expect(texts(scope, "spec-labels-bar", "bar-labels")[0]).toBe("$186");
+      expect(texts(scope, "spec-labels-line", "line-labels")).toEqual(names);
+      expect(texts(scope, "spec-labels-pie", "slice-labels")).toHaveLength(5);
+      expect(scope.querySelectorAll('[data-ts-key^="slice-label-lines:"]')).toHaveLength(0);
+      expect(texts(scope, "spec-labels-pie-inside", "slice-labels")).toEqual(names);
+    };
+    check(parse("specLabels"));
+    const element = await start("specLabels");
+    for (const chart of element.querySelectorAll<HTMLElement>("[data-slot=chart]"))
+      await vi.waitFor(() => expect(chart.dataset.state).toBe("active"));
+    check(element);
+    for (const surface of element.querySelectorAll<HTMLElement>("[data-slot=chart-surface]")) {
+      const box = surface.getBoundingClientRect();
+      for (const label of surface.querySelectorAll('[data-ts-key*="labels:"]')) {
+        const rect = label.getBoundingClientRect();
+        expect(rect.top, label.textContent ?? "").toBeGreaterThanOrEqual(box.top - 1);
+        expect(rect.left, label.textContent ?? "").toBeGreaterThanOrEqual(box.left - 1);
+        expect(rect.right, label.textContent ?? "").toBeLessThanOrEqual(box.right + 1);
+      }
+    }
+  });
+
+  it("scopes the same gradient id in two charts on one page, as shadcn area-gradient", async () => {
+    const check = (scope: ParentNode) => {
+      const charts = [...scope.querySelectorAll<HTMLElement>("[data-slot=chart]")];
+      expect(charts).toHaveLength(2);
+      const ids = charts.map((chart, index) => {
+        const area = chart.querySelector('[data-ts-key^="areas"][data-ts-key*="segment"]')!;
+        const id = /^url\(#(.+)\)$/.exec(area.getAttribute("fill") ?? "")?.[1];
+        const gradient = [...chart.querySelectorAll("linearGradient")].find(
+          (element) => element.id === id,
+        )!;
+        expect(gradient.querySelector("stop")!.getAttribute("stop-color")).toBe(
+          `var(--color-${index === 0 ? "desktop" : "mobile"})`,
+        );
+        return id;
+      });
+      expect(ids[0]).not.toBe(ids[1]);
+    };
+    check(parse("specGradient"));
+    const element = await start("specGradient");
+    for (const chart of element.querySelectorAll<HTMLElement>("[data-slot=chart]"))
+      await vi.waitFor(() => expect(chart.dataset.state).toBe("active"));
+    check(element);
+  });
+
+  it("names tooltip rows and the heading from config keys the rows lack, as shadcn", async () => {
+    const element = await start("specTooltipKeys");
+    await vi.waitFor(() => expect(chartRoot(element).dataset.state).toBe("active"));
+    await focusFirstPoint(element);
+    await vi.waitFor(() =>
+      expect(status()?.querySelector("[data-slot=chart-tooltip-label]")?.textContent).toBe(
+        "Activities",
+      ),
+    );
+    const items = [...status()!.querySelectorAll<HTMLElement>("[data-slot=chart-tooltip-item]")];
+    expect(items.map((item) => item.dataset.key)).toEqual(["desktop", "mobile"]);
+    for (const item of items)
+      expect(item.querySelector("[data-slot=chart-tooltip-name]")!.textContent).toBe("Page Views");
+  });
+
+  it("renders an empty chart without parts, chart or definition", () => {
+    const document = parse("specEmpty");
+    expect(chartRoot(document).dataset.state).toBe("static");
+    expect(document.querySelector("[data-slot=chart-surface]")!.innerHTML).toBe("");
+    expect(document.querySelector("script")).toBeNull();
+  });
+
+  it("fails during render for parts with chart and for function formatters", () => {
+    const error = (name: string) => {
+      const result = fixtures[name];
+      return result && "error" in result ? result.error : "";
+    };
+    expect(error("specCombined")).toBe(
+      "Chart parts cannot be combined with chart or definition. Use chart parts, a chart module or a native definition, not more than one.",
+    );
+    expect(error("specTickFunction")).toContain("ChartXAxis tickFormatter is a function");
+    expect(error("specTickFunction")).toContain("Use a ChartFormat object");
+    expect(error("specTickFunction")).toContain("chart module");
+    expect(error("specLabelFunction")).toContain("ChartBar label formatter is a function");
+    expect(error("specTooltipFunction")).toContain("ChartTooltipContent formatter is a function");
+    expect(error("specTooltipFunction")).toContain("Use a ChartFormat object");
+    expect(error("specTooltipFunction")).toContain("chart module's domPresentation");
   });
 });

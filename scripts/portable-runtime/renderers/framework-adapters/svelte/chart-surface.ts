@@ -6,6 +6,8 @@ import {
   chartRootInputs,
   chartRootState,
   chartRootStateValue,
+  chartSpecRegistry,
+  chartSpecSurfaceStyle,
   chartSurfaceHelpers,
   chartSurfaceLifecycle,
   chartTooltipAccessibility,
@@ -17,18 +19,29 @@ import {
   chartVisibleRequests,
 } from "../../shared-recipes/chart/recipe.js";
 import {
+  type ChartSpecPartName,
   type ChartSurfaceComponentProjection,
   type ChartSurfaceFacts,
   type ChartSurfaceIndexProjection,
   type ChartSurfacePartName,
   type ChartTypeWords,
   chartComment,
+  chartLegendKeyMessage,
   chartNames,
+  chartOutsideRootMessage,
   chartPartProps,
   chartProp,
+  chartPropDefault,
   chartPropType,
   chartPublicTypes,
   chartSlot,
+  chartSpecOptions,
+  chartSpecOptionsObject,
+  chartSpecPartDoc,
+  chartSpecPartFiles,
+  printChartSpecOptionFields,
+  printChartSpecPartReader,
+  printChartSpecPartTypes,
 } from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
 import type {
   AdapterComponentFile,
@@ -53,8 +66,16 @@ type SvelteChartHelperProjection = {
   kind: "svelte-chart-context" | "svelte-chart-provider";
 };
 
+/** A chart spec part. It registers its props with the Root and renders nothing. */
+type SvelteChartSpecPartProjection = {
+  facts: ChartSurfaceFacts;
+  kind: "svelte-chart-spec-part";
+  part: ChartSpecPartName;
+};
+
 export function isSvelteChartSurfaceProjection(family: unknown): boolean {
-  return (family as { kind?: string } | undefined)?.kind === "chart-surface";
+  const kind = (family as { kind?: string } | undefined)?.kind;
+  return kind === "chart-surface" || kind === "svelte-chart-spec-part";
 }
 
 function isSvelteChartHelperProjection(family: unknown): family is SvelteChartHelperProjection {
@@ -84,10 +105,17 @@ export function projectSvelteChartSurfaceOutput(model: AdapterOutputModel): Adap
     target: "svelte",
   });
   const n = names(facts);
+  const template = model.files.find(
+    (file): file is AdapterComponentFile =>
+      file.kind === "component" && isSvelteChartSurfaceProjection(file.component.family),
+  );
+  if (!template) throw new Error("The Svelte chart output needs a chart part file.");
+  const specParts = chartSpecPartFiles(facts, template, directory, "svelte-chart-spec-part");
   const files = [...model.files];
   files.splice(
     files.indexOf(index),
     0,
+    ...specParts,
     helper("svelte-chart-context", n.context, `${n.context}.ts`),
     helper("svelte-chart-provider", n.provider, `${n.provider}.svelte`),
   );
@@ -95,8 +123,12 @@ export function projectSvelteChartSurfaceOutput(model: AdapterOutputModel): Adap
 }
 
 export function printSvelteChartSurfaceComponent(file: AdapterComponentFile): AdapterPrintedFile {
-  const { facts, part } = file.component.family as unknown as ChartSurfaceComponentProjection;
-  return { contents: printPart(facts, part), path: `${file.path}.svelte` };
+  const family = file.component.family as unknown as
+    | ChartSurfaceComponentProjection
+    | SvelteChartSpecPartProjection;
+  if (family.kind === "svelte-chart-spec-part")
+    return { contents: printSpecPart(family.facts, family.part), path: `${file.path}.svelte` };
+  return { contents: printPart(family.facts, family.part), path: `${file.path}.svelte` };
 }
 
 export function printSvelteChartSurfaceHelper(file: AdapterHelperFile): AdapterPrintedFile | null {
@@ -124,6 +156,7 @@ function names(facts: ChartSurfaceFacts) {
     setContent: `set${d}TooltipContent`,
     setLegend: `set${d}Legend`,
     setRoot: `set${root}`,
+    readServerLegendKeys: "readChartServerLegendKeys",
   };
 }
 
@@ -333,9 +366,14 @@ function printContext(facts: ChartSurfaceFacts): string {
   return `import type {
   ChartConfig as RuntimeChartConfig,
   ChartController,
+  ChartFormat,
   ChartInput,
   ChartModule,
+  ChartPart,
   ChartSource,
+  ChartSpec,
+  ChartSpecOptions,
+  ChartTickFormatter,
   ChartToggleOptions,
   ChartVisibleChangeDetails,
   CreateChartOptions,
@@ -345,7 +383,7 @@ function printContext(facts: ChartSurfaceFacts): string {
   TooltipView,
   TooltipViewRow,
 } from "${facts.runtime.importSource}";
-import { getContext, setContext, type Component, type Snippet } from "svelte";
+import { getContext, onDestroy, setContext, type Component, type Snippet } from "svelte";
 import type { HTMLAttributes, HTMLButtonAttributes } from "svelte/elements";
 
 /** A value type that a chart axis accepts. */
@@ -389,6 +427,7 @@ type ${n.root}CommonProps<D, X extends ChartValue, Y extends ChartValue> = Omit<
   host?: NativeHostOptions<D, X, Y>;
   /** Sets the native \`definition.tooltip\` to false. */
   disableTooltip?: boolean;
+${printChartSpecOptionFields(facts, "root")}
   children?: Snippet;
 };
 
@@ -435,16 +474,32 @@ export type ${n.root}DefinitionProps<
 };
 
 /**
- * Props of ${d}.Root. Use \`chart\` (a chart module or factory) or \`definition\` (a static native
- * definition). A definition owns its visibility, so it rejects \`${v.controlledProp}\`,
- * \`${v.defaultProp}\` and \`${v.callbackProp}\`.
+ * Chart parts in the children, such as a bar and an x axis, describe the chart. It follows the
+ * visibility model, and \`aria-label\` names the chart.
+ */
+export type ${n.root}SpecProps<
+  T = unknown,
+  D = unknown,
+  X extends ChartValue = ChartValue,
+  Y extends ChartValue = ChartValue,
+> = Omit<${n.root}SourceProps<T, D, X, Y>, "chart"> & {
+  chart?: never;
+};
+
+/**
+ * Props of ${d}.Root. Use chart parts in the children, \`chart\` (a chart module or factory) or
+ * \`definition\` (a static native definition). A definition owns its visibility, so it rejects
+ * \`${v.controlledProp}\`, \`${v.defaultProp}\` and \`${v.callbackProp}\`.
  */
 export type ${n.root}Props<
   T = unknown,
   D = unknown,
   X extends ChartValue = ChartValue,
   Y extends ChartValue = ChartValue,
-> = ${n.root}SourceProps<T, D, X, Y> | ${n.root}DefinitionProps<T, D, X, Y>;
+> =
+  | ${n.root}SourceProps<T, D, X, Y>
+  | ${n.root}DefinitionProps<T, D, X, Y>
+  | ${n.root}SpecProps<T, D, X, Y>;
 
 export type ${propsName(facts, "style")} = Record<never, never>;
 
@@ -501,6 +556,8 @@ ${partProps(facts, "legendIcon", { children: false })}
 
 ${partProps(facts, "legendLabel", { children: false })}
 
+${printChartSpecPartTypes(facts, "svelte")}
+
 /** One Tooltip registration. The surface renders the first one. */
 export interface ${n.entry} {
   readonly content: Snippet | undefined;
@@ -555,7 +612,7 @@ export function ${n.setRoot}(state: ${n.state}, internal: ${n.internalState}): v
 /** The public chart state: config keys, visible keys and visibility requests. */
 export function ${n.useRoot}(): ${n.state} {
   const state = getContext<${n.state} | undefined>(rootKey);
-  if (!state) throw new Error("${d} parts must be rendered inside ${d}.Root.");
+  if (!state) throw new Error(${JSON.stringify(chartOutsideRootMessage(facts))});
   return state;
 }
 
@@ -565,7 +622,7 @@ export function ${n.useOptionalInternalRoot}(): ${n.internalState} | null {
 
 export function ${n.useInternalRoot}(): ${n.internalState} {
   const state = getContext<${n.internalState} | undefined>(rootInternalKey);
-  if (!state) throw new Error("${d} parts must be rendered inside ${d}.Root.");
+  if (!state) throw new Error(${JSON.stringify(chartOutsideRootMessage(facts))});
   return state;
 }
 
@@ -599,7 +656,7 @@ export function ${n.setLegend}(state: ${n.legendState}): void {
 }
 
 export function ${n.useLegend}(): ${n.legendState} {
-  return getContext<${n.legendState} | undefined>(legendKey) ?? { hideIcon: false };
+  return getContext<${n.legendState} | undefined>(legendKey) ?? { hideIcon: ${chartPropDefault(facts, "legend", "hideIcon")} };
 }
 
 export function set${d}LegendKey(state: ${n.keyState}): void {
@@ -608,6 +665,92 @@ export function set${d}LegendKey(state: ${n.keyState}): void {
 
 export function ${n.useKey}(): ${n.keyState} | null {
   return getContext<${n.keyState} | undefined>(legendKeyKey) ?? null;
+}
+
+${printChartSpecPartReader(facts, "svelte")}
+
+/**
+ * The keys of the server legend items of one chart Root, in markup order and each key once, or
+ * \`undefined\` when the page holds none, as in a client-only mount and on the server. Every legend
+ * of a Root lists the same keys, so a second legend adds none. The hydration render reads them
+ * before the Root takes over the markup. An item of a nested chart belongs to that chart.
+ */
+export function ${n.readServerLegendKeys}(id: string): string[] | undefined {
+  if (typeof document === "undefined") return undefined;
+  const root = [...document.querySelectorAll<HTMLElement>('[data-slot="${slot(facts, "root")}"]')].find(
+    (element) => element.getAttribute("${facts.attrs.chartId}") === id,
+  );
+  if (!root) return undefined;
+  const keys = [...root.querySelectorAll<HTMLElement>('[data-slot="${slot(facts, "legendItem")}"][data-key]')]
+    .filter((item) => item.closest('[data-slot="${slot(facts, "root")}"]') === root)
+    .map((item) => item.getAttribute("data-key")!);
+  return keys.length ? [...new Set(keys)] : undefined;
+}
+
+/**
+ * The server probe of a parts chart. The Root renders its children once in an inert template before
+ * the real pass, so the Surface knows the parts when it renders the SVG. Spec parts add their props
+ * to the seed, and the Surface skips its SVG.
+ */
+export interface ${d}SpecProbe {
+  add(part: ChartPart): void;
+}
+
+const probeKey = Symbol("starwind-chart-spec-probe");
+
+export function set${d}SpecProbe(probe: ${d}SpecProbe): void {
+  setContext(probeKey, probe);
+}
+
+export function use${d}SpecProbe(): ${d}SpecProbe | null {
+  return getContext<${d}SpecProbe | undefined>(probeKey) ?? null;
+}
+
+/**
+ * Registers one chart spec part with the Root, in source order, and removes it when the part goes.
+ * \`update\` sends new props. Inside the server probe the part adds its props to the seed.
+ */
+export function use${d}SpecPart(
+  kind: ChartPart["kind"],
+  props: Record<string, unknown>,
+): { read(): ChartPart; update(part: ChartPart): void } {
+  const probe = use${d}SpecProbe();
+  const root = ${n.useOptionalInternalRoot}();
+  const delegates = new Map<string, (...args: any[]) => unknown>();
+  // A function prop becomes a delegate that calls the current prop, so the spec keeps its value.
+  // A function with a new identity draws the chart again with the new result.
+  const delegate = (name: string) => {
+    let call = delegates.get(name);
+    if (!call) {
+      call = (...args: any[]) => (readChartSpecProp(props, name) as (...args: any[]) => unknown)(...args);
+      delegates.set(name, call);
+    }
+    return call;
+  };
+  const read = () => readChartSpecPart(kind, props, delegate);
+  if (probe) {
+    probe.add(read());
+    return { read, update() {} };
+  }
+  if (!root) return { read, update() {} };
+  assertChartSpecPartRoot(root.partsMode);
+  const registration = root.registerSpecPart(read(), readChartSpecFunctions(kind, props));
+  onDestroy(() => registration.remove());
+  return { read, update: (part) => registration.update(part, readChartSpecFunctions(kind, props)) };
+}
+
+/**
+ * Registers the chart-level options of a part, such as the Tooltip \`cursor\`, with a parts chart
+ * Root. It registers when the part's script runs, as a spec part does, so the chart starts with
+ * them. The part sends prop changes through \`update\`. The server probe registers nothing.
+ */
+export function use${d}SpecOptions(options: ChartSpecOptions): { update(options: ChartSpecOptions): void } {
+  const root = ${n.useOptionalInternalRoot}();
+  // A chart module ignores the options, and a later switch to parts keeps them.
+  if (use${d}SpecProbe() || !root) return { update() {} };
+  const registration = root.registerSpecOptions(options);
+  onDestroy(() => registration.remove());
+  return registration;
 }
 
 export type { TooltipItem };
@@ -628,22 +771,27 @@ ${contextImport(facts, [
   `set${d}LegendKey`,
   `set${d}TooltipBody`,
   `set${d}TooltipRow`,
+  `set${d}SpecProbe`,
   n.useOptionalInternalRoot,
   "type ChartTooltipBody",
   `type ${n.rowState}`,
+  `type ${d}SpecProbe`,
 ])}
 
   type Props = {
     row?: ${n.rowState};
     legendKey?: string;
     body?: ChartTooltipBody | null;
+    probe?: ${d}SpecProbe;
     tooltip?: Snippet;
     children?: Snippet;
   };
-  let { row, legendKey, body, tooltip, children }: Props = $props();
+  let { row, legendKey, body, probe, tooltip, children }: Props = $props();
 
-  // The role of a provider is fixed when it is created.
-  const role = untrack(() => (row ? "row" : legendKey !== undefined ? "key" : "body"));
+  // The role of a provider is fixed when it is created. A probe renders the children of a parts
+  // chart in an inert template on the server, so the Root learns its parts before the SVG renders.
+  const role = untrack(() => (row ? "row" : legendKey !== undefined ? "key" : probe ? "probe" : "body"));
+  if (role === "probe") set${d}SpecProbe(untrack(() => probe!));
   if (role === "row") set${d}TooltipRow({ get state() { return row!; } });
   if (role === "key") set${d}LegendKey({ get key() { return legendKey!; } });
   if (role === "body") set${d}TooltipBody({ get body() { return body ?? null; } });
@@ -657,7 +805,7 @@ ${contextImport(facts, [
     ${chartTooltipAccessibility(facts, "body")}
   });
 `,
-    `{#if role === "body"}{#if body}{@render tooltip?.()}{/if}{:else}{@render children?.()}{/if}`,
+    `{#if role === "body"}{#if body}{@render tooltip?.()}{/if}{:else if role === "probe"}<template>{@render children?.()}</template>{:else}{@render children?.()}{/if}`,
   );
 }
 
@@ -670,23 +818,32 @@ function printRoot(facts: ChartSurfaceFacts): string {
     `
   import {
     ${h.configText},
+    ${h.legendKeys},
+    buildChartSpec,
+    isSameChartSpec,
     ${h.toId},
     ${h.visibleKeys},
     type ChartController,
     type ChartInput,
+    type ChartPart,
     type ChartSource,
+    type ChartSpec,
+    type ChartSpecOptions,
     type ChartToggleOptions,
     type ChartVisibleChangeDetails,
     type NativeHostOptions,
   } from "${facts.runtime.importSource}";
   import { onMount, untrack } from "svelte";
+  import ${n.provider} from "./${n.provider}.svelte";
 ${contextImport(facts, [
   n.setRoot,
+  n.readServerLegendKeys,
   "type ChartDefinition",
   `type ${n.root}Props`,
   `type ${n.internalState}`,
   `type ${n.state}`,
   `type ${n.entry}`,
+  "type ChartSpecEntry",
   "type ChartValue",
 ])}
 
@@ -704,10 +861,14 @@ ${contextImport(facts, [
     theme,
     host,
     disableTooltip = false,
+${chartSpecOptions(facts, "root")
+  .map(({ name }) => `    ${name},`)
+  .join("\n")}
     ${v.controlledProp} = $bindable(),
     ${v.controlledProp}: commandVisible,
     ${v.defaultProp},
     ${v.callbackProp},
+    "aria-label": ariaLabel,
     children,
     ...rest
   }: ${n.root}Props<T, D, X, Y> = $props();
@@ -720,7 +881,25 @@ ${contextImport(facts, [
 
   ${chartVisibleModel(ops, facts)}
 
+  ${chartSpecRegistry(ops, facts)}
+
   ${chartRootInputs(ops, facts)}
+
+  // On the server, a parts chart renders its children once in an inert template before the real
+  // pass. Its spec parts fill the seed, so the Surface draws the server SVG from them. The browser
+  // skips the probe and keeps the server markup.
+  const seedParts: ChartPart[] = [];
+  const probing = typeof document === "undefined" && untrack(() => !chart && !definition && children !== undefined);
+  const probe = { add: (part: ChartPart) => void seedParts.push(part) };
+  // In hydration, a legend before its parts renders before they register. Its first pass lists the
+  // keys of the server legend, so each server item keeps its key. After mount, the legend lists the
+  // keys of the live parts. A client-only mount finds no server legend.
+  let serverLegendKeys = $state.raw<readonly string[] | undefined>(
+    untrack(() => (partsMode ? ${n.readServerLegendKeys}(id) : undefined)),
+  );
+  onMount(() => {
+    serverLegendKeys = undefined;
+  });
 
   let element = $state<HTMLDivElement | null>(null);
   ${chartVisibleRequests(ops, facts)}
@@ -730,7 +909,7 @@ ${contextImport(facts, [
   ${chartRootStateValue(ops, facts, { name: "chartInternal", type: n.internalState }, { name: "chartState", type: n.state })}
   ${n.setRoot}(chartState, chartInternal);
 `,
-    `<${facts.parts.root.element} {...rest} bind:this={element} data-slot="${slot(facts, "root")}" ${facts.attrs.chartId}={id}>{@render children?.()}</${facts.parts.root.element}>`,
+    `<${facts.parts.root.element} {...rest} aria-label={partsMode ? undefined : ariaLabel} bind:this={element} data-slot="${slot(facts, "root")}" ${facts.attrs.chartId}={id}>{#if probing}<${n.provider} {probe} {children} />{/if}{@render children?.()}</${facts.parts.root.element}>`,
     "T, D = unknown, X extends ChartValue = ChartValue, Y extends ChartValue = ChartValue",
   );
 }
@@ -757,16 +936,21 @@ function printSurface(facts: ChartSurfaceFacts): string {
   return component(
     `
   import {
+    chartSurfaceStyle,
+    createChartOptions,
     ${facts.runtime.factory},
     ${h.prerender},
     ${h.visibleKeys},
+    isChartSpecComplete,
+    warnEmptyChart,
+    warnIncompleteChart,
     type ChartInput,
   } from "${facts.runtime.importSource}";
   import { getAllContexts, mount, unmount, untrack, type Snippet } from "svelte";
   import ${n.provider} from "./${n.provider}.svelte";
-${contextImport(facts, [n.useInternalRoot, "type ChartTooltipBody", `type ${propsName(facts, "surface")}`])}
+${contextImport(facts, [n.useInternalRoot, `use${facts.displayName}SpecProbe`, "type ChartTooltipBody", `type ${propsName(facts, "surface")}`])}
 
-  let { tooltip, fallbackTooltip, nativeTooltip = false, style, ref, ...rest }: ${propsName(facts, "surface")} = $props();
+  let { tooltip, fallbackTooltip, nativeTooltip = ${chartPropDefault(facts, "surface", "nativeTooltip")}, style, ref, ...rest }: ${propsName(facts, "surface")} = $props();
 ${printSvelteRefAttachment("HTMLDivElement")}
 
   ${chartSurfaceHelpers}
@@ -777,9 +961,17 @@ ${printSvelteRefAttachment("HTMLDivElement")}
   // when no Tooltip is registered.
   const root = ${n.useInternalRoot}();
   const contexts = getAllContexts();
+  // The server probe of a parts chart only collects parts, so the Surface draws nothing there.
+  const probing = use${facts.displayName}SpecProbe() !== null;
   // Computed once, so hydration keeps the server markup and the adopted surface stays untouched.
-  const initial = untrack(() => ${chartPrerender(facts)});
-  const surfaceStyle = $derived([initial.surfaceStyle, style].filter(Boolean).join(";"));
+  const initial = untrack(() => {
+    if (probing) return { markup: "", surfaceStyle: "" };
+    ${chartPrerender(facts)}
+  });
+  const size = $derived.by(() => {
+    ${chartSpecSurfaceStyle()}
+  });
+  const surfaceStyle = $derived([size, style].filter(Boolean).join(";"));
 
   type Resolved = { render: Snippet | undefined } | null;
   const resolved = $derived.by<Resolved>(() => {
@@ -827,7 +1019,9 @@ ${printSvelteRefAttachment("HTMLDivElement")}
     };
   });
 `,
-    `<${facts.parts.surface.element}
+    `<!-- A parts chart registers its parts after the Surface, so its first client render keeps the server SVG. -->
+<!-- svelte-ignore hydration_html_changed -->
+<${facts.parts.surface.element}
   {...rest}
   bind:this={element}
   style={surfaceStyle}
@@ -842,13 +1036,22 @@ function printTooltip(facts: ChartSurfaceFacts): string {
   const n = names(facts);
   return component(
     `
-  import { onMount } from "svelte";
-${contextImport(facts, [n.useBody, n.useOptionalInternalRoot, `type ${n.entry}`, `type ${propsName(facts, "tooltip")}`])}
+  import { onMount, untrack } from "svelte";
+${contextImport(facts, [n.useBody, n.useOptionalInternalRoot, `use${facts.displayName}SpecOptions`, `type ${n.entry}`, `type ${propsName(facts, "tooltip")}`])}
 
 ${doc(facts, "tooltip")}
-  let { children }: ${propsName(facts, "tooltip")} = $props();
+  let { children, ${chartSpecOptions(facts, "tooltip")
+    .map(({ name }) => name)
+    .join(", ")} }: ${propsName(facts, "tooltip")} = $props();
   const root = ${n.useOptionalInternalRoot}();
   const body = ${n.useBody}();
+  // Its chart-level options reach a parts chart. A Tooltip inside a tooltip body sets none.
+  const readOptions = () => (${chartSpecOptionsObject(facts, "tooltip")});
+  const options = body ? { update() {} } : use${facts.displayName}SpecOptions(untrack(readOptions));
+  $effect.pre(() => {
+    const next = readOptions();
+    untrack(() => options.update(next));
+  });
   // One stable registration per part, so a parent update keeps its place in the order.
   const entry: ${n.entry} = {
     get content() {
@@ -1098,7 +1301,7 @@ function printLegend(facts: ChartSurfaceFacts): string {
 ${contextImport(facts, [n.setLegend, `type ${propsName(facts, "legend")}`])}
 
 ${doc(facts, "legend", "A consumer aria-label replaces the default.")}
-  let { hideIcon = false, children, ref, ...rest }: ${propsName(facts, "legend")} = $props();
+  let { hideIcon = ${chartPropDefault(facts, "legend", "hideIcon")}, children, ref, ...rest }: ${propsName(facts, "legend")} = $props();
 ${refAttachment(facts, "legend", "HTMLDivElement")}
   ${n.setLegend}({
     get hideIcon() {
@@ -1121,13 +1324,13 @@ function printLegendItems(facts: ChartSurfaceFacts): string {
   return component(
     `
   import ${n.provider} from "./${n.provider}.svelte";
-${contextImport(facts, [n.useRoot, `type ${propsName(facts, "legendItems")}`])}
+${contextImport(facts, [n.useInternalRoot, `type ${propsName(facts, "legendItems")}`])}
 
 ${doc(facts, "legendItems")}
   let { children }: ${propsName(facts, "legendItems")} = $props();
-  const root = ${n.useRoot}();
+  const root = ${n.useInternalRoot}();
 `,
-    `{#each root.keys as key (key)}<${n.provider} legendKey={key}>{@render children?.()}</${n.provider}>{/each}`,
+    `{#each root.legendKeys as key (key)}<${n.provider} legendKey={key}>{@render children?.()}</${n.provider}>{/each}`,
   );
 }
 
@@ -1156,7 +1359,7 @@ ${doc(facts, "legendItem")}
   const key = $derived.by(() => {
     const next = value ?? contextKey?.key;
     if (next == null)
-      throw new Error("${facts.displayName}.LegendItem needs a value or a ${facts.displayName}.LegendItems parent.");
+      throw new Error(${JSON.stringify(chartLegendKeyMessage(facts))});
     return next;
   });
   const ariaLabel = $derived.by(() => {
@@ -1281,10 +1484,32 @@ ${refAttachment(facts, "legendLabel", "HTMLSpanElement")}
   );
 }
 
+/** A chart spec part registers its props with the Root and renders nothing. */
+function printSpecPart(facts: ChartSurfaceFacts, part: ChartSpecPartName): string {
+  const spec = facts.specParts[part];
+  return component(
+    `
+  import { untrack } from "svelte";
+${contextImport(facts, [`use${facts.displayName}SpecPart`, `type ${spec.exportName}Props`])}
+
+${chartComment(chartSpecPartDoc(facts, part), "line", "  ")}
+  let { ...props }: ${spec.exportName}Props = $props();
+  // The part reads its props object when it registers and in the effect, so it follows changes.
+  // svelte-ignore state_referenced_locally
+  const part = use${facts.displayName}SpecPart("${spec.kind}", props);
+  $effect.pre(() => {
+    const next = part.read();
+    untrack(() => part.update(next));
+  });
+`,
+    "",
+  );
+}
+
 export function printSvelteChartSurfaceIndex(file: AdapterIndexFile): AdapterPrintedFile {
   const { facts } = file.family as unknown as ChartSurfaceIndexProjection;
   const n = names(facts);
-  const parts = Object.values(facts.parts);
+  const parts = [...Object.values(facts.parts), ...Object.values(facts.specParts)];
   const imports = parts
     .map((part) => `import ${part.exportName} from "./${part.exportName}.svelte";`)
     .join("\n");
@@ -1296,7 +1521,13 @@ export function printSvelteChartSurfaceIndex(file: AdapterIndexFile): AdapterPri
   const types = chartPublicTypes(facts);
   // Svelte context holds getter objects, so the tooltip body state that useChartTooltipBody()
   // returns is a Svelte type. The legend key state has no public accessor, so it stays internal.
-  const publicTypes = [...types.all, ...types.context, ...types.rootUnion, n.bodyState];
+  const publicTypes = [
+    ...types.all,
+    ...types.context,
+    ...types.rootUnion,
+    ...types.specParts,
+    n.bodyState,
+  ].sort();
 
   return {
     contents: `

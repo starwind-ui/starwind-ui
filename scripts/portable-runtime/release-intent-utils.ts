@@ -1,6 +1,7 @@
+import { execFile } from "node:child_process";
 import { rename, stat } from "node:fs/promises";
 import path from "node:path";
-import { isDeepStrictEqual } from "node:util";
+import { isDeepStrictEqual, promisify } from "node:util";
 
 import semver from "semver";
 
@@ -276,4 +277,79 @@ async function pathExists(target: string): Promise<boolean> {
 
 function capitalize(value: string): string {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * Returns the keys of a version manifest at the most recent release reachable from `ref`. Every
+ * release changes the `starwind` version in `packages/cli/package.json`, so the manifest at that
+ * commit lists each component that has shipped. A component that is missing there has never been
+ * released and keeps its explicit initial version without a deferred intent.
+ *
+ * Returns `undefined` when the history cannot show that release, such as in a shallow clone. Callers
+ * then treat every component as released and keep requiring intents.
+ */
+export async function readReleasedManifestKeys(options: {
+  repoRoot: string;
+  ref: string;
+  manifestPath: string;
+  key: "components" | "primitives";
+}): Promise<Set<string> | undefined> {
+  const git = async (args: string[]) =>
+    (
+      await execFileAsync("git", args, {
+        cwd: options.repoRoot,
+        encoding: "utf8",
+        maxBuffer: 8 * 1024 * 1024,
+      })
+    ).stdout;
+  const cliVersionAt = async (commit: string) => {
+    try {
+      const pkg = JSON.parse(await git(["show", `${commit}:packages/cli/package.json`])) as {
+        version?: unknown;
+      };
+      return typeof pkg.version === "string" ? pkg.version : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  try {
+    const commits = (
+      await git(["log", "--format=%H", options.ref, "--", "packages/cli/package.json"])
+    )
+      .split(/\r?\n/)
+      .filter(Boolean);
+    let releaseCommit: string | undefined;
+    for (const commit of commits) {
+      const version = await cliVersionAt(commit);
+      if (version && version !== (await cliVersionAt(`${commit}^1`))) {
+        releaseCommit = commit;
+        break;
+      }
+    }
+    if (!releaseCommit) return undefined;
+    const { stdout } = await execFileAsync(
+      "git",
+      ["show", `${releaseCommit}:${options.manifestPath.replaceAll("\\", "/")}`],
+      { cwd: options.repoRoot, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 },
+    );
+    const entries = (JSON.parse(stdout) as Record<string, unknown>)[options.key];
+    return isPlainObject(entries) ? new Set(Object.keys(entries)) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Splits the changed components of a feature PR by release state. A component in the base manifest
+ * that the last release did not ship needs no intent, and an intent for it would move its first
+ * release past the initial version.
+ */
+export function unreleasedComponents(
+  baseManifestKeys: Iterable<string>,
+  released: Set<string> | undefined,
+): Set<string> {
+  if (!released) return new Set();
+  return new Set([...baseManifestKeys].filter((name) => !released.has(name)));
 }

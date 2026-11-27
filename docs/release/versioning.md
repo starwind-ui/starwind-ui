@@ -287,6 +287,12 @@ queries. The publish flow verifies separately that target versions are unused.
 Give each new stable component an explicit initial version in its manifest. Existing legacy
 components continue their published history. New stable components normally start at `1.0.0`.
 
+A component that the last release did not ship keeps its initial version until its first release.
+Changes to it before then need no deferred intent, and `styled:versions:check` and
+`primitive:versions:check` refuse an intent for it. The checks find the last release as the most
+recent commit that changed the `starwind` version in `packages/cli/package.json`. When the history
+does not show that commit, the checks require intents for every changed component.
+
 ## Spec And Ticket Ownership
 
 Decide release impact in the spec before ticket decomposition. The spec Release Plan records:

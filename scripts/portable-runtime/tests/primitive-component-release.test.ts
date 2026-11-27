@@ -592,3 +592,59 @@ describe("unpublished primitive version rollback", () => {
     expect(validatePrimitiveVersionPullRequest({ base, baseParent, head }).mode).toBe("intent");
   });
 });
+
+describe("primitives that have not shipped", () => {
+  function changedAvatar() {
+    const base = snapshot();
+    const head = structuredClone(base);
+    head.artifacts.primitives[0].files[0].content += "changed";
+    head.packageReleases = { "chart.md": { starwind: "minor" } };
+    return { base, head };
+  }
+
+  it("needs no intent for a primitive that the last release did not ship", () => {
+    const { base, head } = changedAvatar();
+    const result = validatePrimitiveVersionPullRequest({
+      base,
+      head,
+      releasedPrimitives: new Set(["select"]),
+    });
+    expect(result.changedPrimitives).toEqual(["avatar"]);
+  });
+
+  it("still needs an intent for a released primitive", () => {
+    const { base, head } = changedAvatar();
+    expect(() =>
+      validatePrimitiveVersionPullRequest({
+        base,
+        head,
+        releasedPrimitives: new Set(["avatar", "select"]),
+      }),
+    ).toThrow(/Missing primitive version intent/);
+  });
+
+  it("still needs an intent when the release history is unknown", () => {
+    const { base, head } = changedAvatar();
+    expect(() => validatePrimitiveVersionPullRequest({ base, head })).toThrow(
+      /Missing primitive version intent/,
+    );
+  });
+
+  it("refuses an intent that would move the first release past the initial version", () => {
+    const { base, head } = changedAvatar();
+    head.fragments = {
+      "avatar.json": parsePrimitiveVersionIntent(
+        { primitives: { avatar: "patch" } },
+        "avatar.json",
+        new Set(["avatar", "select"]),
+      ),
+    };
+    expect(() =>
+      validatePrimitiveVersionPullRequest({
+        base,
+        head,
+        releasedPrimitives: new Set(["select"]),
+      }),
+    ).toThrow(/Unreleased primitive\(s\) keep their initial version/);
+  });
+});

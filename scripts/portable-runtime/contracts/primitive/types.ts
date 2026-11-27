@@ -82,6 +82,8 @@ export type PrimitiveRuntimeOptionLifecycle =
 
 export type PrimitivePartContract = {
   name: string;
+  /** What the part does, for its doc comment and the docs part reference. */
+  description?: string;
   defaultElement: string;
   discoveryAttribute: string;
   role?: string;
@@ -99,6 +101,11 @@ export type PrimitiveAttributeContract = {
 };
 
 export type PrimitivePropContract = {
+  /**
+   * The prop takes \`true\`, \`false\` or a style object, as a chart \`dot\`. A bare attribute reads
+   * as \`true\`, so Vue keeps boolean casting for it.
+   */
+  booleanOrObject?: true;
   /**
    * The prop is a class for an element that the part renders. Each target names it with its
    * `class` rule: React adds `Name`, so `labelClass` becomes `labelClassName`.

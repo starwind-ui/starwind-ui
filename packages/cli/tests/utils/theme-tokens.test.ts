@@ -8,8 +8,12 @@ import {
   CHART_TOKEN_BLOCKS,
   formatChartTokenBlock,
   insertMissingChartTokens,
+  insertMissingTokens,
+  SIDEBAR_TOKEN_BLOCKS,
+  SIDEBAR_TOKENS,
   syncChartTokens,
-} from "../../src/utils/chart-tokens.js";
+  syncThemeTokens,
+} from "../../src/utils/theme-tokens.js";
 
 const chartLinePattern = /^\s*--(?:color-)?chart-[1-5]:[^\n]*\n/gm;
 
@@ -48,6 +52,65 @@ describe("chart tokens in the CLI template", () => {
       added: [],
       content: tailwindConfig,
     });
+  });
+});
+
+function templateBlock(selector: string): string {
+  const start = tailwindConfig.indexOf(`\n${selector} {`) + 1;
+  return tailwindConfig.slice(start, tailwindConfig.indexOf("\n}", start) + 1);
+}
+
+describe("sidebar tokens", () => {
+  const sidebarLinePattern = /^\s*--(?:color-)?sidebar[\w-]*:[^\n]*\n/gm;
+  const withoutSidebar = tailwindConfig.replace(sidebarLinePattern, "");
+
+  it("use the same names and values as the init stylesheet", () => {
+    for (const definition of SIDEBAR_TOKEN_BLOCKS) {
+      const block = templateBlock(definition.selector);
+      for (const [name, value] of definition.tokens) {
+        expect(block).toContain(`  ${name}: ${value};\n`);
+      }
+    }
+    const templateLines = tailwindConfig.match(sidebarLinePattern) ?? [];
+    expect(templateLines).toHaveLength(
+      SIDEBAR_TOKEN_BLOCKS.reduce((count, definition) => count + definition.tokens.length, 0),
+    );
+  });
+
+  it("needs no sidebar tokens after init", () => {
+    expect(insertMissingTokens(tailwindConfig, SIDEBAR_TOKENS)).toEqual({
+      added: [],
+      content: tailwindConfig,
+    });
+  });
+
+  it("adds every sidebar token once to a stylesheet without them, and nothing on a second run", () => {
+    const first = insertMissingTokens(withoutSidebar, SIDEBAR_TOKENS);
+    expect(first.added.map((addition) => addition.block)).toEqual([
+      "@theme inline",
+      ":root",
+      ".dark",
+    ]);
+    for (const definition of SIDEBAR_TOKEN_BLOCKS) {
+      const block = first.content.slice(first.content.indexOf(`\n${definition.selector} {`) + 1);
+      const body = block.slice(0, block.indexOf("\n}") + 1);
+      for (const [name, value] of definition.tokens) {
+        expect(body.split(`  ${name}: ${value};\n`)).toHaveLength(2);
+      }
+    }
+    expect(insertMissingTokens(first.content, SIDEBAR_TOKENS)).toEqual({
+      added: [],
+      content: first.content,
+    });
+  });
+
+  it("adds no dark sidebar colors when the user set a sidebar color in :root", () => {
+    // A default light dark-mode text color would sit on the user's light background.
+    const css = ":root {\n  --sidebar-background: white;\n}\n.dark {\n}\n";
+    const result = insertMissingTokens(css, SIDEBAR_TOKENS);
+    expect(result.added.map((addition) => addition.block)).toEqual(["@theme inline", ":root"]);
+    expect(result.content).toContain("--sidebar-background: white;");
+    expect(result.content).toContain(".dark {\n}\n");
   });
 });
 
@@ -248,7 +311,7 @@ ${formatChartTokenBlock()}`);
     expect(result.content).not.toContain("@theme inline");
   });
 
-  it("does not add a dark token that :root already declares, so user colors stay in dark mode", () => {
+  it("adds no dark tokens when :root already sets some, so user colors stay in dark mode", () => {
     const css = `@layer base {
   :root {
     --chart-1: oklch(0.6 0.2 30);
@@ -266,12 +329,10 @@ ${formatChartTokenBlock()}`);
       block: ":root",
       tokens: ["--chart-3", "--chart-4", "--chart-5"],
     });
-    expect(result.added).toContainEqual({
-      block: ".dark",
-      tokens: ["--chart-3", "--chart-4", "--chart-5"],
-    });
-    const dark = result.content.slice(result.content.indexOf("\n.dark {"));
-    expect(dark).not.toMatch(/--chart-[12]:/);
+    expect(result.added.map((addition) => addition.block)).not.toContain(".dark");
+    const darkStart = result.content.indexOf("\n.dark {");
+    const dark = result.content.slice(darkStart, result.content.indexOf("\n}", darkStart));
+    expect(dark).not.toMatch(/--chart-/);
     expect(insertMissingChartTokens(result.content).added).toEqual([]);
   });
 
@@ -363,6 +424,16 @@ describe("syncChartTokens", () => {
     process.chdir(previousCwd);
     await chmod(join(tempDir, "src/styles"), 0o755).catch(() => undefined);
     await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it("prints the sidebar block when the stylesheet is missing", async () => {
+    const result = await syncThemeTokens("src/styles/missing.css", SIDEBAR_TOKENS);
+
+    expect(result.status).toBe("failed");
+    expect(result.status === "failed" && result.block).toContain(
+      "--sidebar-background: var(--color-neutral-50);",
+    );
+    expect(result.status === "failed" && result.block).not.toContain("--chart-1");
   });
 
   it("writes missing tokens and reports them", async () => {

@@ -35,7 +35,8 @@ function templateCases(tag: string, name: string, strictTemplates: boolean): str
     reject("inline-model", `${source} @update:visible="(keys) => keys.toFixed()"`),
     line(`:definition="definition" :data="rows" :config="config"`),
     reject("both", `:chart="visitors" :definition="definition" :data="rows" :config="config"`),
-    reject("neither", `:data="rows" :config="config"`),
+    // Without chart and definition, chart parts in the default slot describe the chart.
+    line(`:data="rows" :config="config"`),
     reject("no-data", `:chart="visitors" :config="config"`),
     reject("visible", `:definition="definition" :config="config" :visible="visible"`),
     reject(
@@ -94,8 +95,8 @@ const staticDefinition: ChartRootDefinitionProps = { definition, config };
 const union: ChartRootProps<VisitorRow> = { chart: visitors, data: rows, config, visible };
 // @expect-error-line both-props
 const bothProps: ChartRootProps = { chart: visitors, definition, data: rows, config };
-// @expect-error-line neither-props
-const neitherProps: ChartRootProps = { data: rows, config };
+// Chart parts in the default slot describe this chart.
+const partsProps: ChartRootProps = { data: rows, config, "aria-label": "Visitors" };
 // @expect-error-line no-data-props
 const noDataProps: ChartRootProps = { chart: visitors, config };
 // @expect-error-line visible-props
@@ -106,7 +107,7 @@ const defaultVisibleProps: ChartRootProps = { definition, config, defaultVisible
 const listenerProps: ChartRootProps = { definition, config, onVisibleChange };
 // @expect-error-line model-listener-props
 const modelListenerProps: ChartRootProps = { definition, config, "onUpdate:visible": onVisibleChange };
-void [source, staticDefinition, union, bothProps, neitherProps, noDataProps];
+void [source, staticDefinition, union, bothProps, partsProps, noDataProps];
 void [visibleProps, defaultVisibleProps, listenerProps, modelListenerProps];
 // The public root state has no Runtime plumbing.
 const root = useChartRoot();

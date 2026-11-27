@@ -10,20 +10,32 @@ import {
 } from "vue";
 import {
   type ChartTooltipEntry,
+  useChartSpecOptions,
   useChartTooltipBody,
   useOptionalChartRootInternal,
 } from "./ChartContext.js";
 
 /**
- * Inside a chart root, the first Tooltip supplies the tooltip body. Removing it hands over to the
- * next one or to the default. Inside a tooltip body it renders its content in place. Elsewhere it
- * renders nothing.
+ * Inside a chart root, the first Tooltip supplies the tooltip body, unless a Surface `tooltip`
+ * replaces it. Inside a tooltip body it renders its content in place. Elsewhere it renders nothing.
+ * Removing it hands over to the next one or to the default.
  */
 export default defineComponent({
   name: "Chart.Tooltip",
-  setup(_, { slots }) {
+  props: {
+    /**
+     * Draws the hover band of a bar chart. `false` removes it. Line and area charts draw no hover
+     * rule. In a parts chart, the first Tooltip at chart level sets it, because that Tooltip
+     * supplies the tooltip body. When it leaves `cursor` unset, the band shows. A Tooltip inside a
+     * tooltip body sets nothing.
+     */
+    cursor: { type: Boolean, default: undefined },
+  },
+  setup(props, { slots }) {
     const root = useOptionalChartRootInternal();
     const inBody = useChartTooltipBody() !== null;
+    // Its chart-level options reach a parts chart. A Tooltip inside a tooltip body sets none.
+    if (!inBody) useChartSpecOptions(() => ({ cursor: props.cursor }));
     // One stable registration per part, so a parent re-render keeps its place in the order.
     const version = shallowRef(0);
     const entry: ChartTooltipEntry = {

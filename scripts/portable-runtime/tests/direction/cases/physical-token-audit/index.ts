@@ -121,6 +121,23 @@ export const cases: DirectionCase[] = styledOriginals.map((item) => {
   }
   return { ...item, id: id(item), fixtures };
 });
+/** Each chart part, the parts chart that holds it, and the start of the TanStack key it draws. */
+const chartPartDrawings = [
+  ["ChartBar", "cartesian", "bars:"],
+  ["ChartLine", "cartesian", "lines:"],
+  ["ChartArea", "cartesian", "areas"],
+  ["ChartXAxis", "cartesian", "x-tick-label"],
+  ["ChartYAxis", "cartesian", "y-tick-label"],
+  ["ChartGrid", "cartesian", "x-grid"],
+  ["ChartRadar", "radar", "radar"],
+  ["ChartPolarGrid", "radar", "ring"],
+  ["ChartPolarAngleAxis", "radar", "angle-label"],
+  ["ChartPie", "pie", "slices"],
+  ["ChartLabel", "pie", "visible-total"],
+  ["ChartRadialBar", "radial-bar", "bars"],
+  ["ChartLinearGradient", "cartesian", "gradient:"],
+] as const;
+
 async function partReceipts(page: Page, item: DirectionCase, target: Target) {
   const row = matrix.get(item.row)!;
   const composite = composites.cases.includes(item);
@@ -223,7 +240,7 @@ async function partReceipts(page: Page, item: DirectionCase, target: Target) {
     const box = (await root.locator("svg").first().boundingBox())!;
     await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.5, { steps: 4 });
     await root.locator('.ts-chart-tooltip [data-audit-export="ChartTooltipContent"]').waitFor();
-    return root.evaluate((node) => {
+    const authored = await root.evaluate((node) => {
       const tooltip = node.querySelector(".ts-chart-tooltip");
       const content = tooltip?.querySelector('[data-audit-export="ChartTooltipContent"]');
       const legend = node.querySelector('[data-audit-export="ChartLegendContent"]');
@@ -236,6 +253,18 @@ async function partReceipts(page: Page, item: DirectionCase, target: Target) {
         { name: "ChartLegendContent", slot: legend.getAttribute("data-slot") },
       ];
     });
+    // Chart parts render no element. Each part is proven by the drawing it adds to its own parts
+    // chart, which the chart-direction fixture authors outside the audit host.
+    const drawn = [];
+    for (const [name, kind, key] of chartPartDrawings) {
+      const selector = `[data-ts-key^="${key}"]`;
+      await page
+        .locator(`[data-direction-parts="${kind}"] [data-slot="chart"] svg ${selector}`)
+        .first()
+        .waitFor({ state: "attached" });
+      drawn.push({ name, slot: selector });
+    }
+    return [...authored, ...drawn];
   }
   if (item.row === "toast") {
     const template = host
@@ -576,7 +605,7 @@ expectations.push({
           );
         }
       }
-      assert.equal(tuples, 1125);
+      assert.equal(tuples, 1177);
       ctx.observe("public-coverage", {
         styled: matrix.size,
         named: [...matrix.values()].reduce((n, r) => n + r.exports.length, 0),

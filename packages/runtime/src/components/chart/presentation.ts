@@ -5,6 +5,8 @@ import type {
   ChartValue,
 } from "@tanstack/charts";
 
+import { isMarkRow, SERIES, sourceRow, VALUE } from "./datum";
+import { type ChartFormat, formatChartValue } from "./format";
 import type { ChartConfig } from "./types";
 
 export interface TooltipItem<
@@ -31,12 +33,24 @@ export interface TooltipContentOptions<V = unknown, T = unknown> {
   labelKey?: string;
   valueKey?: string;
   color?: string;
-  formatter?: (value: unknown, name: string, item: TooltipItem<T>, index: number, payload: T) => V;
-  labelFormatter?: (label: unknown, payload: readonly TooltipItem<T>[]) => V;
+  /**
+   * A function returns the complete row view. A `ChartFormat` object formats only the row value,
+   * so the row keeps its indicator and name.
+   */
+  formatter?:
+    | ((value: unknown, name: string, item: TooltipItem<T>, index: number, payload: T) => V)
+    | ChartFormat;
+  /** A function returns the complete heading view. A `ChartFormat` object formats the heading. */
+  labelFormatter?: ((label: unknown, payload: readonly TooltipItem<T>[]) => V) | ChartFormat;
 }
 
 export interface TooltipViewRow<V = unknown> {
   key: string;
+  /**
+   * The config key that names the row and gives its icon: the series key, or the `nameKey` when
+   * the row has no field of that name, as shadcn reads `config[nameKey]`.
+   */
+  configKey: string;
   name: V | string;
   value: V | string;
   icon?: unknown;
@@ -81,11 +95,86 @@ function field(datum: unknown, path: string): unknown {
     );
 }
 
+/**
+ * The series name of a point. A `nameKey` reads the user's row. Without one, a spec chart mark
+ * row gives its series and another datum gives its `series` field.
+ */
+function pointName(datum: unknown, nameKey: string | undefined): unknown {
+  if (nameKey) return field(sourceRow(datum), nameKey);
+  return isMarkRow(datum) ? datum[SERIES] : field(datum, "series");
+}
+
+/** The value of a point without a `valueKey`, as `pointName` reads the name. */
+function pointValue(datum: unknown): unknown {
+  return isMarkRow(datum) ? datum[VALUE] : field(datum, "value");
+}
+
 /** The native tooltip content model. A string body becomes one row. */
 export function tooltipContent(body: ChartTooltipBodyContext): ChartTooltipContent {
   return typeof body.content === "string"
     ? { rows: [{ label: "", value: body.content }] }
     : body.content;
+}
+
+/** True when a config entry exists for a key. */
+const hasEntry = (config: ChartConfig, key: string | undefined): key is string =>
+  key !== undefined && Object.hasOwn(config, key);
+
+/**
+ * The config key that a `labelKey` or `nameKey` names for one row, in shadcn's order: a text field
+ * value that is a config key, then the key itself when config has it. `undefined` means neither.
+ */
+function keyConfigKey(config: ChartConfig, key: string, value: unknown): string | undefined {
+  if (typeof value === "string" && hasEntry(config, value)) return value;
+  return hasEntry(config, key) ? key : undefined;
+}
+
+/**
+ * The tooltip heading before `labelFormatter`. A `labelKey` reads the first row. A text value
+ * that is a config key names the heading. Another value gives way to the config entry of the
+ * `labelKey` when config has one, as shadcn reads `config[labelKey].label`. Without a formatter,
+ * the heading is that config key, and the layout shows its label, so a rich label renders. A
+ * `labelFormatter` function receives the config label itself, as shadcn passes
+ * `itemConfig.label`, and a `ChartFormat` formats its plain text. Without a config entry, the
+ * heading is the value. Without a `labelKey`, a string title that is a config key gives a formatter
+ * its config label in the same way.
+ */
+function tooltipHeading(
+  body: ChartTooltipBodyContext,
+  config: ChartConfig,
+  options: TooltipContentOptions<any>,
+  title: unknown,
+): unknown {
+  const { labelKey, labelFormatter } = options;
+  if (!labelKey) {
+    // A string title that names a config key gives a formatter its config label, as shadcn reads
+    // `config[label]?.label || label`. Without a formatter, the layout shows that label.
+    if (!labelFormatter || typeof title !== "string" || !hasEntry(config, title)) return title;
+    if (typeof labelFormatter === "function") return config[title]?.label || title;
+    return config[title]?.text || plainLabel(config[title]?.label) || title;
+  }
+  const value = field(sourceRow(body.points[0]?.datum), labelKey);
+  const key = keyConfigKey(config, labelKey, value);
+  if (key === undefined) return value;
+  if (typeof labelFormatter === "function") return config[key]?.label;
+  // A ChartFormat formats text, so it gets the plain config label. A rich label without `text`
+  // gives the key.
+  if (labelFormatter) return config[key]?.text ?? plainLabel(config[key]?.label) ?? key;
+  return key;
+}
+
+/** A string or number label as text, or `undefined` for a rich label. */
+function plainLabel(label: unknown): string | undefined {
+  return typeof label === "string" || typeof label === "number" ? String(label) : undefined;
+}
+
+/**
+ * The config key of a tooltip row. With a `nameKey`, it follows shadcn: a text field value that is
+ * a config key, then the `nameKey` itself when config has it. Otherwise it is the series key.
+ */
+function rowConfigKey(item: TooltipItem, config: ChartConfig, nameKey: string | undefined): string {
+  if (!nameKey) return item.dataKey;
+  return keyConfigKey(config, nameKey, pointName(item.point?.datum, nameKey)) ?? item.dataKey;
 }
 
 /** The presentation model that every tooltip body renders: a heading and one entry per row. */
@@ -95,6 +184,9 @@ export function tooltipView<V = unknown>(
   options: TooltipContentOptions<V> = {},
 ): TooltipView<V> {
   const content = tooltipContent(body);
+  const { formatter, labelFormatter } = options;
+  const rowFormatter = typeof formatter === "function" ? formatter : undefined;
+  const valueFormat = formatter && typeof formatter === "object" ? formatter : undefined;
   const saved = typeof body.content === "object" ? metadata.get(body.content) : undefined;
   const items: TooltipItem[] = content.rows.map((row, index) => {
     const known = saved?.[index];
@@ -102,31 +194,32 @@ export function tooltipView<V = unknown>(
       known?.point ??
       body.points.find(
         (p) =>
-          String(field(p.datum, options.nameKey ?? "series") ?? p.group) === row.label ||
-          configText(config[String(field(p.datum, options.nameKey ?? "series") ?? p.group)], "") ===
+          String(pointName(p.datum, options.nameKey) ?? p.group) === row.label ||
+          configText(config[String(pointName(p.datum, options.nameKey) ?? p.group)], "") ===
             row.label,
       ) ??
       body.points[index];
     const rawName = options.nameKey
-      ? field(point?.datum, options.nameKey)
-      : (known?.name ?? field(point?.datum, "series") ?? point?.group);
+      ? pointName(point?.datum, options.nameKey)
+      : (known?.name ?? pointName(point?.datum, undefined) ?? point?.group);
     const key =
       rawName == null
         ? (Object.keys(config).find((k) => configText(config[k], k) === row.label) ?? row.label)
         : String(rawName);
+    const value = options.valueKey
+      ? field(sourceRow(point?.datum), options.valueKey)
+      : known
+        ? known.value
+        : pointValue(point?.datum) !== undefined
+          ? pointValue(point?.datum)
+          : typeof point?.y1Value === "number" && typeof point?.y2Value === "number"
+            ? point.y2Value - point.y1Value
+            : (point?.yValue ?? row.value);
     return {
       dataKey: key,
       name: key,
-      value: options.valueKey
-        ? field(point?.datum, options.valueKey)
-        : known
-          ? known.value
-          : field(point?.datum, "value") !== undefined
-            ? field(point?.datum, "value")
-            : typeof point?.y1Value === "number" && typeof point?.y2Value === "number"
-              ? point.y2Value - point.y1Value
-              : (point?.yValue ?? row.value),
-      formattedValue: row.value,
+      value,
+      formattedValue: valueFormat ? formatChartValue(value, valueFormat, config) : row.value,
       color:
         options.color ??
         (row.color?.startsWith("url(") &&
@@ -134,29 +227,32 @@ export function tooltipView<V = unknown>(
         /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key)
           ? `var(--sw-chart-color-${key})`
           : row.color),
-      payload: point?.datum,
+      payload: sourceRow(point?.datum),
       point,
     };
   });
-  const heading =
-    options.label ??
-    (options.labelKey ? field(body.points[0]?.datum, options.labelKey) : content.title);
+  const heading = options.label ?? tooltipHeading(body, config, options, content.title);
   return {
-    label: options.labelFormatter
-      ? options.labelFormatter(heading, items)
-      : (heading as V | string | undefined),
+    label:
+      typeof labelFormatter === "function"
+        ? labelFormatter(heading, items)
+        : labelFormatter
+          ? formatChartValue(heading, labelFormatter, config)
+          : (heading as V | string | undefined),
     rows: items.map((item, index) => {
-      const entry = config[item.dataKey];
-      const result = options.formatter?.(item.value, item.name, item, index, item.payload);
+      const configKey = rowConfigKey(item, config, options.nameKey);
+      const entry = config[configKey];
+      const result = rowFormatter?.(item.value, item.name, item, index, item.payload);
       return {
         key: `${item.dataKey}:${index}`,
+        configKey,
         name: (entry?.label ?? content.rows[index]!.label) as V | string,
         value: item.formattedValue,
         icon: options.hideIcon ? undefined : entry?.icon,
         color: item.color,
         item,
         custom: result as V,
-        hasCustom: typeof options.formatter === "function",
+        hasCustom: rowFormatter !== undefined,
       };
     }),
   };

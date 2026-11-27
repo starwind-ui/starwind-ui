@@ -34,6 +34,7 @@ type ChartContainerDeclaredProps<
         import("@starwind-ui/vue/chart").ChartRootSourceProps<T, D, X, Y>,
         "onVisibleChange" | "onUpdate:visible"
       >)
+  | import("@starwind-ui/vue/chart").ChartRootSpecProps<T, D, X, Y>
 );
 </script>
 

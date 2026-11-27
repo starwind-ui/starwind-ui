@@ -15,10 +15,12 @@ import { barY, defineChart } from "@tanstack/charts";
 import { scaleBand } from "@tanstack/charts/scales/band";
 import { scaleLinear } from "@tanstack/charts/scales/linear";
 import {
+  ChartBar,
   type ChartConfig,
   ChartContainer,
   type ChartFactory,
   ChartTooltipContent,
+  ChartXAxis,
   defineChartModule,
   type NativeHostOptions,
 } from "../../src/components/starwind-runtime/chart";
@@ -97,8 +99,16 @@ export const staticDefault = <ChartContainer definition={definition} config={con
 export const staticListener = <ChartContainer definition={definition} config={config} onVisibleChange={() => {}} />;
 // @expect-error-line both
 export const both = <ChartContainer chart={factory} definition={definition} data={rows} config={config} />;
-// @expect-error-line neither
-export const neither = <ChartContainer data={rows} config={config} />;
+// Without chart and definition, chart parts in the children describe the chart.
+export const parts = (
+  <ChartContainer data={rows} config={config} aria-label="Visitors">
+    <ChartXAxis dataKey="month" tickFormatter={(value: string) => value.slice(0, 3)} />
+    <ChartBar dataKey="desktop" radius={4} />
+  </ChartContainer>
+);
+
+// @expect-error-line spec-part
+export const missingKey = <ChartBar radius={4} />;
 // @expect-error-line no-data
 export const noData = <ChartContainer chart={factory} config={config} />;
 

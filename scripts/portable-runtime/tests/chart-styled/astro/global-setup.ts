@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,44 +21,16 @@ export function astroChartFixtureDirectory(): string {
 // The fixtures render in a child process, so their Vite server stays apart from the browser run.
 // Server HTML is too large for provided context, so the browser fetches it from a file.
 export default function setup(project: TestProject) {
-  // The docs store both files in one code string. Split that exact string into files for Astro.
-  const code = primitiveDocsExamples.chart?.basic?.astro?.code;
-  if (!code) throw new Error("Missing Astro chart docs example");
-  const match =
-    /^\/\/ src\/charts\/visitors\.ts\n([\s\S]+?)\n\/\/ src\/pages\/example\.astro\n([\s\S]+)$/.exec(
-      code,
-    );
-  if (!match) throw new Error("Astro chart docs example file markers changed");
-  const [, moduleSource, pageSource] = match;
-  const clientScript = /<script>\s*import ["']([^"']+)["'];\s*<\/script>/.exec(pageSource!);
-  if (!clientScript)
-    throw new Error("Astro chart docs example must import its module in a client script");
+  // The docs example is one Astro page built from chart parts. It needs no chart module.
+  const pageSource = primitiveDocsExamples.chart?.basic?.astro?.code;
+  if (!pageSource) throw new Error("Missing Astro chart docs example");
+  if (/<script>/.test(pageSource))
+    throw new Error("The Astro chart docs example must not need a page script");
   const directory = astroChartFixtureDirectory();
-  const docsRoot = path.join(directory, "docs-example");
-  const chartDirectory = path.join(docsRoot, "src/charts");
-  const pageDirectory = path.join(docsRoot, "src/pages");
-  const modulePath = path.join(chartDirectory, "visitors.ts");
+  const pageDirectory = path.join(directory, "docs-example/src/pages");
   const pagePath = path.join(pageDirectory, "example.astro");
-  if (`${path.resolve(pageDirectory, clientScript[1]!)}.ts` !== modulePath) {
-    throw new Error("Astro chart docs client script must import the example module");
-  }
-  mkdirSync(chartDirectory, { recursive: true });
   mkdirSync(pageDirectory, { recursive: true });
-  const dependencyDirectory = path.join(docsRoot, "node_modules/@tanstack");
-  mkdirSync(dependencyDirectory, { recursive: true });
-  const dependencyLink = path.join(dependencyDirectory, "charts");
-  try {
-    symlinkSync(
-      path.join(root, "packages/runtime/node_modules/@tanstack/charts"),
-      dependencyLink,
-      "dir",
-    );
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-  }
-  writeFileSync(modulePath, moduleSource!);
-  writeFileSync(pagePath, pageSource!);
-  project.provide("astroDocsChartModuleUrl", `/@fs${modulePath}`);
+  writeFileSync(pagePath, pageSource);
   const output = execFileSync(
     path.join(root, "node_modules/.bin/tsx"),
     [path.join(here, "render-fixtures.ts"), pagePath],
@@ -73,6 +45,5 @@ export default function setup(project: TestProject) {
 declare module "vitest" {
   export interface ProvidedContext {
     astroChartFixturesUrl: string;
-    astroDocsChartModuleUrl: string;
   }
 }

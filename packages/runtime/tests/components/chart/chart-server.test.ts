@@ -38,6 +38,12 @@ describe("chart server surface", () => {
       "prerenderChart",
       "syncTooltipAccessibility",
       "isChartIcon",
+      "createChartSpecFactory",
+      "chartSpecAriaLabel",
+      "assertChartSpecWire",
+      "formatChartValue",
+      "resolveTickFormatter",
+      "hasChartSpec",
     ])
       expect(chart).toHaveProperty(name, expect.any(Function));
   });
@@ -227,6 +233,32 @@ describe("tooltip indicator colors", () => {
       points: [],
     } as unknown as Parameters<typeof chart.tooltipView>[0];
     expect(chart.tooltipView(body, {}).rows[0]!.color).toBe("url(#fill)");
+  });
+});
+
+describe("tooltip format objects", () => {
+  const body = {
+    content: { title: "January", rows: [{ label: "desktop", value: "1,234.5" }] },
+    points: [{ datum: { series: "desktop", value: 1234.5 } }],
+  } as unknown as Parameters<typeof chart.tooltipView>[0];
+  const config = { desktop: { label: "Desktop" } };
+
+  it("formats the row value and keeps the row layout", () => {
+    const view = chart.tooltipView(body, config, {
+      formatter: { number: { maximumFractionDigits: 0 }, suffix: " visits" },
+    });
+    expect(view.rows[0]).toMatchObject({
+      value: "1,235 visits",
+      name: "Desktop",
+      hasCustom: false,
+    });
+    expect(view.rows[0]!.item.value).toBe(1234.5);
+  });
+
+  it("formats the heading", () => {
+    expect(chart.tooltipView(body, config, { labelFormatter: { maxLength: 3 } }).label).toBe("Jan");
+    const layout = chart.tooltipLayout(body, config, { labelFormatter: { prefix: "Month: " } });
+    expect(layout.heading).toBe("Month: January");
   });
 });
 

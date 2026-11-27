@@ -1,0 +1,104 @@
+---
+// The six docs charts as Styled chart spec parts, or as the reference chart module. Both modes take
+// the same id, data, config and accessible name, so their server SVG can be compared.
+import {
+  ChartArea,
+  ChartBar,
+  ChartContainer,
+  ChartGrid,
+  ChartLabel,
+  ChartLegend,
+  ChartLine,
+  ChartPie,
+  ChartPolarAngleAxis,
+  ChartPolarGrid,
+  ChartRadar,
+  ChartRadialBar,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartXAxis,
+  ChartYAxis,
+} from "../../../../../apps/demo/src/components/starwind-runtime/chart";
+import {
+  areaChart,
+  barChart,
+  browserConfig,
+  browserData,
+  donutChart,
+  lineChart,
+  monthConfig,
+  radarChart,
+  radialChart,
+  visitorConfig,
+  visitorData,
+} from "../../../../../packages/runtime/tests/components/chart/reference-charts";
+
+type Kind = "bar" | "area" | "line" | "donut" | "radar" | "radial";
+
+const { kind, mode = "parts" } = Astro.props as { kind: Kind; mode?: "parts" | "module" };
+const charts = {
+  bar: { module: barChart, data: visitorData, config: visitorConfig },
+  area: { module: areaChart, data: visitorData, config: visitorConfig },
+  line: { module: lineChart, data: visitorData, config: visitorConfig },
+  donut: { module: donutChart, data: visitorData, config: monthConfig },
+  radar: { module: radarChart, data: visitorData, config: visitorConfig },
+  radial: { module: radialChart, data: browserData, config: browserConfig },
+};
+const { module, data, config } = charts[kind];
+const id = `spec-${kind}`;
+---
+
+{
+  mode === "module" ? (
+    <ChartContainer id={id} chart={module} data={data} config={config}>
+      {kind === "bar" && <ChartLegend />}
+    </ChartContainer>
+  ) : (
+    <ChartContainer id={id} data={data} config={config} aria-label={module.ariaLabel}>
+      {kind === "bar" && (
+        <>
+          <ChartGrid vertical={false} />
+          <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartYAxis />
+          <ChartBar dataKey="desktop" radius={4} />
+          <ChartBar dataKey="mobile" radius={4} />
+          <ChartLegend />
+        </>
+      )}
+      {kind === "area" && (
+        <>
+          <ChartGrid vertical={false} />
+          <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartYAxis />
+          <ChartArea dataKey="desktop" type="monotone" stackId="a" />
+          <ChartArea dataKey="mobile" type="monotone" stackId="a" />
+        </>
+      )}
+      {kind === "line" && (
+        <>
+          <ChartGrid vertical={false} />
+          <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartLine dataKey="desktop" type="natural" />
+          <ChartTooltip>
+            <ChartTooltipContent slot="content" hideLabel />
+          </ChartTooltip>
+        </>
+      )}
+      {kind === "donut" && (
+        <>
+          <ChartPie dataKey="desktop" nameKey="month" innerRadius="58.5%" />
+          <ChartLabel position="center" />
+        </>
+      )}
+      {kind === "radar" && (
+        <>
+          <ChartPolarGrid />
+          <ChartPolarAngleAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+          <ChartRadar dataKey="desktop" />
+          <ChartRadar dataKey="mobile" />
+        </>
+      )}
+      {kind === "radial" && <ChartRadialBar dataKey="visitors" nameKey="browser" background />}
+    </ChartContainer>
+  )
+}

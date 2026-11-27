@@ -1,0 +1,9 @@
+---
+import ChartPrimitive from "@starwind-ui/astro/chart";
+
+type Props = import("@starwind-ui/astro/chart").ChartPolarGridProps;
+
+const { ...rest } = Astro.props;
+---
+
+<ChartPrimitive.PolarGrid {...rest} />

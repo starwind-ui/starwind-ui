@@ -49,6 +49,12 @@ useIsomorphicLayoutEffect(() => {
     stateObject: (name, type, fields) =>
       `const ${name} = React.useMemo<${type}>(() => ({\n${fields.map(([key, value]) => (key === value ? key : `${key}: ${value}`)).join(",\n")}\n}), [${fields.map(([, value]) => /^[\w$]+/.exec(value)![0]).join(", ")}]);`,
     setTooltips: (next) => `setTooltips((list) => ${next("list")});`,
+    specCell: "const [specParts, setSpecParts] = React.useState<readonly ChartSpecEntry[]>(EMPTY);",
+    specParts: "specParts",
+    setSpecParts: (next) => `setSpecParts((list) => ${next("list")});`,
+    ariaLabel: "ariaLabel",
+    seed: "seed",
+    settled: "settled",
     listenerDefined: `${v.callbackProp} !== undefined`,
     visibilityNames: `${v.controlledProp}, ${v.defaultProp} and ${v.callbackProp}`,
     guard: (body) => body,

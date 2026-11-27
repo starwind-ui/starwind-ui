@@ -13,12 +13,30 @@ import {
   starwindStyledContracts,
 } from "./shared.js";
 
+/** The chart spec parts, as Styled name and Primitive part. */
+const CHART_SPEC_PARTS = [
+  "Bar",
+  "Line",
+  "Area",
+  "Pie",
+  "Radar",
+  "RadialBar",
+  "XAxis",
+  "YAxis",
+  "Grid",
+  "PolarGrid",
+  "PolarAngleAxis",
+  "Label",
+  "LinearGradient",
+];
+
 const CHART_PARTS = [
   "ChartContainer",
   "ChartTooltip",
   "ChartTooltipContent",
   "ChartLegend",
   "ChartLegendContent",
+  ...CHART_SPEC_PARTS.map((part) => `Chart${part}`),
 ];
 
 const CHART_VARIANTS = [
@@ -60,12 +78,30 @@ export function defineReactChartOutputTests(getTempRoot: GetTempRoot): void {
       TooltipContent: "ChartTooltipContent",
       Legend: "ChartLegend",
       LegendContent: "ChartLegendContent",
+      ...Object.fromEntries(CHART_SPEC_PARTS.map((part) => [part, `Chart${part}`])),
     });
     expect(Object.keys(chartStyledContract.variants ?? {}).sort()).toEqual(CHART_VARIANTS);
     expect(chartStyledContract.styles).toBeUndefined();
   });
 
-  it("generates the React chart folder with the five parts and no component CSS", async () => {
+  it("generates each Styled spec part as a marked forward to the Primitive part", async () => {
+    const outputRoot = await generateChart(getTempRoot());
+    const source = await readGeneratedFile(outputRoot, "chart/ChartXAxis.tsx");
+
+    expect(compactCode(source)).toContain(
+      compactCode(`export type ChartXAxisProps = import("@starwind-ui/react/chart").ChartXAxisProps;
+
+      function ChartXAxis(props: ChartXAxisProps) {
+        const { ...rest } = props;
+
+        return (<ChartPrimitive.XAxis {...rest} />);
+      }
+
+      ChartXAxis.chartSpecPart = ChartPrimitive.XAxis.chartSpecPart;`),
+    );
+  });
+
+  it("generates the React chart folder with every part and no component CSS", async () => {
     const outputRoot = await generateChart(getTempRoot());
     const files = (await readdir(path.join(outputRoot, "chart"))).sort();
 
@@ -140,7 +176,7 @@ export function defineReactChartOutputTests(getTempRoot: GetTempRoot): void {
 
     // Unformatted output keeps parentheses around the fallback element.
     expect(tooltip).toMatch(
-      /<ChartPrimitive\.Tooltip>\{content\?\?\(?<ChartTooltipContent\/>\)?\}<\/ChartPrimitive\.Tooltip>/,
+      /<ChartPrimitive\.Tooltip\{\.\.\.rest\}>\{content\?\?\(?<ChartTooltipContent\/>\)?\}<\/ChartPrimitive\.Tooltip>/,
     );
     expect(tooltip).toContain(compactCode("content?: React.ReactNode;"));
     expect(content).toContain(
@@ -220,6 +256,19 @@ export function defineReactChartOutputTests(getTempRoot: GetTempRoot): void {
         TooltipContent: ChartTooltipContent,
         Legend: ChartLegend,
         LegendContent: ChartLegendContent,
+        Bar: ChartBar,
+        Line: ChartLine,
+        Area: ChartArea,
+        Pie: ChartPie,
+        Radar: ChartRadar,
+        RadialBar: ChartRadialBar,
+        XAxis: ChartXAxis,
+        YAxis: ChartYAxis,
+        Grid: ChartGrid,
+        PolarGrid: ChartPolarGrid,
+        PolarAngleAxis: ChartPolarAngleAxis,
+        Label: ChartLabel,
+        LinearGradient: ChartLinearGradient,
       };`),
     );
     expect(index).toContain(
@@ -230,6 +279,7 @@ export function defineReactChartOutputTests(getTempRoot: GetTempRoot): void {
         ChartConfig,
         ChartContext,
         ChartFactory,
+        ChartFormat,
         ChartIcon,
         ChartModule,
         ChartSource,

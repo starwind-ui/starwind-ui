@@ -70,6 +70,30 @@ const STABLE_TARGET_POLICY = createCliRegistryBuildPolicy([
   reactFrameworkAdapterTarget,
 ]);
 
+/** The Styled chart parts that every target vendors. */
+const STYLED_CHART_PARTS = [
+  "ChartContainer",
+  "ChartLegend",
+  "ChartLegendContent",
+  "ChartTooltip",
+  "ChartTooltipContent",
+  ...[
+    "Bar",
+    "Line",
+    "Area",
+    "Pie",
+    "Radar",
+    "RadialBar",
+    "XAxis",
+    "YAxis",
+    "Grid",
+    "PolarGrid",
+    "PolarAngleAxis",
+    "Label",
+    "LinearGradient",
+  ].map((part) => `Chart${part}`),
+];
+
 describe("generateCliRegistry", () => {
   let tempRoot: string;
   let defaultPrimitiveArtifacts: Promise<PrimitiveVendoringArtifacts> | undefined;
@@ -1552,15 +1576,9 @@ describe("generateCliRegistry", () => {
       "vue",
     ]);
     expect(vue!.packageRequirements).toContainEqual({ name: "@tanstack/charts", range: "^1.5.0" });
-    expect(vue!.files.map((file) => path.basename(file.path)).sort()).toEqual([
-      "ChartContainer.vue",
-      "ChartLegend.vue",
-      "ChartLegendContent.vue",
-      "ChartTooltip.vue",
-      "ChartTooltipContent.vue",
-      "index.ts",
-      "variants.ts",
-    ]);
+    expect(vue!.files.map((file) => path.basename(file.path)).sort()).toEqual(
+      [...STYLED_CHART_PARTS.map((part) => `${part}.vue`), "index.ts", "variants.ts"].sort(),
+    );
   });
 
   it("lists TanStack Charts as a package requirement of the Svelte chart registry target", async () => {
@@ -1578,15 +1596,9 @@ describe("generateCliRegistry", () => {
       name: "@tanstack/charts",
       range: "^1.5.0",
     });
-    expect(svelte!.files.map((file) => path.basename(file.path)).sort()).toEqual([
-      "ChartContainer.svelte",
-      "ChartLegend.svelte",
-      "ChartLegendContent.svelte",
-      "ChartTooltip.svelte",
-      "ChartTooltipContent.svelte",
-      "index.ts",
-      "variants.ts",
-    ]);
+    expect(svelte!.files.map((file) => path.basename(file.path)).sort()).toEqual(
+      [...STYLED_CHART_PARTS.map((part) => `${part}.svelte`), "index.ts", "variants.ts"].sort(),
+    );
   });
 
   it("keeps the committed bundled registry synced with styled contract inventory", async () => {
@@ -2078,7 +2090,8 @@ describe("generateCliRegistry", () => {
     expect(astroChartFiles).toContain("ChartMarkup.ts");
     expect(astroChartFiles).toContain("ChartRoot.astro");
     expect(astroChartFiles).toContain("index.ts");
-    expect(astroChartFiles).toHaveLength(21);
+    expect(astroChartFiles).toContain("ChartBar.astro");
+    expect(astroChartFiles).toHaveLength(34);
 
     // Chart opened its Vue target gate: Vue vendors every part and the shared context module.
     const vueChartFiles = artifactsByComponent
@@ -2088,8 +2101,9 @@ describe("generateCliRegistry", () => {
     expect(vueChartFiles).toContain("ChartContext.ts");
     expect(vueChartFiles).toContain("ChartRoot.vue");
     expect(vueChartFiles).toContain("ChartSurface.vue");
+    expect(vueChartFiles).toContain("ChartBar.vue");
     expect(vueChartFiles).toContain("index.ts");
-    expect(vueChartFiles).toHaveLength(20);
+    expect(vueChartFiles).toHaveLength(33);
 
     // Chart opened its Svelte target gate: Svelte vendors every part, the context module, the
     // internal provider and the shared ref attachment helper.
@@ -2101,6 +2115,7 @@ describe("generateCliRegistry", () => {
     expect(svelteChartFiles).toContain("ChartContextProvider.svelte");
     expect(svelteChartFiles).toContain("ChartRoot.svelte");
     expect(svelteChartFiles).toContain("ChartSurface.svelte");
+    expect(svelteChartFiles).toContain("ChartBar.svelte");
     expect(svelteChartFiles).toContain("index.ts");
 
     for (const artifact of artifactSet.primitives) {

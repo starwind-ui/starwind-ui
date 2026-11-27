@@ -94,3 +94,92 @@ export const togetherRootProps: Record<string, Record<string, unknown>[]> = {
 
 /** Parts that must not render together with the rest of the family's tree. */
 export const skippedParts: Record<string, string[]> = {};
+
+/**
+ * One more tree of a family: a subset of its parts under the root, with the root and part props that
+ * this tree needs in place of the base props. Each listed part renders only in its own tree, and
+ * its props are probed there. The parts that no tree lists render in the base tree with the base
+ * props. The root and the `shared` parts render in every tree that names them, and their props are
+ * probed in the base tree.
+ */
+export type FamilyComposition = {
+  name: string;
+  parts: readonly string[];
+  /** Base tree parts that this tree also renders, such as the surface that holds the drawing. */
+  shared?: readonly string[];
+  rootProps: () => Record<string, unknown>;
+  partProps?: Record<string, Record<string, unknown>>;
+};
+
+// A parts chart draws into the surface.
+const chartShared = ["surface"];
+
+// Pie and radial bar slices take their colors from config by the `nameKey` value.
+const sliceData = () => [
+  { device: "desktop", visitors: 275 },
+  { device: "mobile", visitors: 200 },
+];
+
+/**
+ * Chart parts describe the chart in place of a chart module, and a polar mark cannot share a chart
+ * with another mark kind. Each chart kind is one parts tree.
+ */
+export const familyCompositions: Record<string, FamilyComposition[]> = {
+  chart: [
+    {
+      name: "cartesian parts",
+      parts: ["bar", "line", "area", "xAxis", "yAxis", "grid", "linearGradient"],
+      shared: chartShared,
+      rootProps: () => ({ data: visitorData(), config: visitorConfig }),
+      // The probe sets a value other than the contract default. Base values differ from both, or
+      // stay at the default, so each probe changes the drawing.
+      partProps: {
+        bar: { dataKey: "desktop" },
+        line: { dataKey: "mobile", type: "linear" },
+        area: { dataKey: "desktop", type: "linear" },
+        xAxis: { dataKey: "month" },
+        yAxis: { tickCount: 2 },
+        grid: {},
+        // The chart draws each gradient in its defs, so a probed prop changes the drawing. TanStack
+        // clamps a coordinate to 1, so x2 starts below the probe value.
+        linearGradient: { id: "fillDesktop", x2: 0, stops: [{ offset: 0, stopColor: "red" }] },
+      },
+    },
+    {
+      name: "radar parts",
+      parts: ["radar", "polarGrid", "polarAngleAxis"],
+      shared: chartShared,
+      rootProps: () => ({ data: visitorData(), config: visitorConfig }),
+      partProps: {
+        radar: { dataKey: "desktop" },
+        polarAngleAxis: { dataKey: "month" },
+        polarGrid: {},
+      },
+    },
+    {
+      name: "pie parts",
+      parts: ["pie", "label"],
+      shared: chartShared,
+      rootProps: () => ({ data: sliceData(), config: visitorConfig }),
+      // The center label sits in the hole of a donut. The slices have outside labels, so a probe of
+      // labelLine changes the drawing, and an offset other than the default, so a probe of label
+      // does too.
+      partProps: {
+        pie: {
+          dataKey: "visitors",
+          nameKey: "device",
+          innerRadius: 60,
+          label: { position: "outside", offset: 10 },
+        },
+        label: { value: "Visitors" },
+      },
+    },
+    {
+      name: "radial bar parts",
+      parts: ["radialBar"],
+      shared: chartShared,
+      rootProps: () => ({ data: sliceData(), config: visitorConfig }),
+      partProps: { radialBar: { dataKey: "visitors", nameKey: "device" } },
+    },
+  ],
+};

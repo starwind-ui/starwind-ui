@@ -71,8 +71,8 @@ export function validateRows(rows: MatrixRow[], contracts = starwindStyledContra
   assert.equal(rows.length, 56, "Styled matrix must contain 56 groups");
   assert.equal(
     rows.reduce((count, row) => count + row.exports.length, 0),
-    282,
-    "Styled matrix must contain 282 named exports",
+    295,
+    "Styled matrix must contain 295 named exports",
   );
   assert.deepEqual(
     rows.map((row) => row.id).sort(),
@@ -431,7 +431,7 @@ export async function selfTest(): Promise<void> {
   validateRows(rows);
   assert.throws(
     () => validateRows(rows.map((row) => (row.id === "button" ? { ...row, exports: [] } : row))),
-    /282|exports/,
+    /294|exports/,
   );
   assert.throws(() => validateRows([...rows, rows[0]!]), /Duplicate matrix row/);
   assert.throws(

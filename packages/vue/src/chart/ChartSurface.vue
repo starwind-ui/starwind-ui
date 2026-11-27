@@ -2,11 +2,16 @@
 <script lang="ts">
 import type { ChartInput } from "@starwind-ui/runtime/chart";
 import {
+  chartSurfaceStyle,
   createChart,
+  createChartOptions,
   getChartController,
+  isChartSpecComplete,
   prerenderChart,
   syncTooltipAccessibility,
   visibleKeys,
+  warnEmptyChart,
+  warnIncompleteChart,
 } from "@starwind-ui/runtime/chart";
 import {
   computed,
@@ -17,6 +22,7 @@ import {
   onBeforeUnmount,
   onBeforeUpdate,
   onMounted,
+  onServerPrefetch,
   onUpdated,
   type PropType,
   provide,
@@ -34,6 +40,8 @@ import {
 } from "./ChartContext.js";
 
 type ChartSurfaceSettings = {
+  /** True when chart parts describe the chart. A change restarts the controller. */
+  parts: boolean;
   chart: unknown;
   definition: unknown;
   host: object | undefined;
@@ -77,17 +85,47 @@ export default defineComponent({
   setup(props, { attrs, expose, slots }) {
     const root = useChartRootInternal();
     const element = ref<HTMLDivElement | null>(null);
+    const prerender = () => {
+      if (root.partsMode) {
+        // A part inside a wrapper or an async component registers after this render. The chart draws
+        // once its parts registered.
+        if (!isChartSpecComplete(root.seed, root.input.data, root.input.config))
+          return { markup: "<!--sw-chart-parts-->", surfaceStyle: "" };
+        return prerenderChart(
+          undefined,
+          { ...root.input, spec: root.seed, visible: root.visible },
+          { id: root.id, host: root.host, tooltipDisabled: root.disableTooltip },
+        );
+      }
+      return prerenderChart(
+        root.chart,
+        root.mode === "source" ? { ...root.input, visible: root.visible } : root.input,
+        {
+          id: root.id,
+          host: root.host,
+          definition: root.definition,
+          tooltipDisabled: root.disableTooltip,
+        },
+      );
+    };
     // Computed once, so Vue keeps the server markup and never rewrites the adopted surface.
-    const initial = prerenderChart(
-      root.chart,
-      root.mode === "source" ? { ...root.input, visible: root.visible } : root.input,
-      {
-        id: root.id,
-        host: root.host,
-        definition: root.definition,
-        tooltipDisabled: root.disableTooltip,
-      },
-    );
+    let initial = prerender();
+    // A parts chart registers its parts after this setup. On the server, the render waits for the
+    // sibling parts to set up, so the SVG draws them.
+    if (root.partsMode) onServerPrefetch(() => void (initial = prerender()));
+    const size = computed(() => {
+      if (
+        !root.partsMode ||
+        !isChartSpecComplete(root.input.spec, root.input.data, root.input.config)
+      )
+        return initial.surfaceStyle;
+      const options = createChartOptions(
+        undefined,
+        { ...root.input, visible: root.visible },
+        { id: root.id, host: root.host },
+      );
+      return chartSurfaceStyle(options);
+    });
 
     // Vue does not track slots. Every update of this part reads which tooltip slots exist, so a
     // slot that a parent adds or removes after mount changes the winner and the body handler.
@@ -128,6 +166,7 @@ export default defineComponent({
     let controller: ReturnType<typeof createChart> | null = null;
     let applied: ChartSurfaceSettings | null = null;
     const read = (): ChartSurfaceSettings => ({
+      parts: root.partsMode,
       chart: root.chart,
       definition: root.definition,
       host: root.host,
@@ -140,6 +179,19 @@ export default defineComponent({
     const start = () => {
       const chartRoot = chartRootElement();
       if (!element.value || !chartRoot) return;
+      // A parts chart starts once its parts registered. Without a mark part or the category key that
+      // it needs, it renders nothing and warns once.
+      if (
+        root.partsMode &&
+        !isChartSpecComplete(root.input.spec, root.input.data, root.input.config)
+      ) {
+        if (root.settled) {
+          if (root.input.spec)
+            warnIncompleteChart(root.id, root.input.spec, root.input.data, root.input.config);
+          else warnEmptyChart(root.id);
+        }
+        return;
+      }
       const settings = read();
       applied = settings;
       controller = createChart(chartRoot, {
@@ -174,7 +226,23 @@ export default defineComponent({
     const sync = (next: ChartSurfaceSettings) => {
       const owned = controller;
       const previous = applied;
+      // A Surface with no controller starts when it has a source: the parts that it needs, a chart
+      // module or a definition. A chart that first rendered with no parts while data loads starts
+      // when it later gets `chart` or `definition`. A parts chart stops when it loses a part.
+      if (!owned) return start();
+      if (
+        root.partsMode &&
+        !isChartSpecComplete(next.input.spec, next.input.data, next.input.config)
+      )
+        return stop();
       if (!owned || !previous) return;
+      // A change between chart parts and a chart module or definition restarts the controller, so the
+      // new source and its input start together. A parts chart starts once its parts registered.
+      if (previous.parts !== next.parts) {
+        stop();
+        if (!next.parts) start();
+        return;
+      }
       applied = next;
       const optionsChanged =
         previous.chart !== next.chart ||
@@ -239,8 +307,11 @@ export default defineComponent({
     return () => [
       h(
         "div",
-        mergeProps({ style: initial.surfaceStyle }, attrs, {
+        mergeProps({ style: size.value }, attrs, {
           ref: element,
+          // A parts chart learns its size from parts that register after this first render, so
+          // the browser keeps the server size during hydration.
+          "data-allow-mismatch": root.partsMode ? "style" : undefined,
           "data-sw-chart-surface": "",
           "data-slot": "chart-surface",
           innerHTML: initial.markup,

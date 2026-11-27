@@ -6,6 +6,8 @@ import { type Browser, chromium } from "playwright";
 import { createServer, type ViteDevServer } from "vite";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { chartStyledContract } from "../../contracts/styled/components/chart.js";
+
 const repo = process.cwd();
 const styledSource = path.join(repo, "apps/svelte-demo/src/lib/starwind-runtime/chart");
 const fixtures = path
@@ -24,8 +26,12 @@ afterEach(async () => {
 describe("generated Svelte Styled chart", () => {
   it("uses one Styled file set that matches the contract and imports TanStack only for types", async () => {
     const index = await readFile(path.join(styledSource, "index.ts"), "utf8");
+    const defaultEntries = Object.entries(chartStyledContract.defaultExport ?? {});
+    expect(defaultEntries.map(([, exportName]) => exportName)).toEqual(
+      chartStyledContract.publicExports,
+    );
     expect(index).toContain(
-      "const ChartParts = {\n  Container: ChartContainer,\n  Tooltip: ChartTooltip,\n  TooltipContent: ChartTooltipContent,\n  Legend: ChartLegend,\n  LegendContent: ChartLegendContent,\n};",
+      `const ChartParts = {\n${defaultEntries.map(([key, exportName]) => `  ${key}: ${exportName},\n`).join("")}};`,
     );
     expect(index).toContain("export default ChartParts;");
     expect(index).toMatch(

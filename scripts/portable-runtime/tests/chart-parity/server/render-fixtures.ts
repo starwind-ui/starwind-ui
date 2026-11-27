@@ -14,6 +14,7 @@ import {
   FRAMEWORK_ONLY_CASES,
   PARITY_MODES,
   SNAP_CASES,
+  SPEC_CASES,
 } from "../fixtures/cases.js";
 
 const root = fileURLToPath(new URL("../../../../../", import.meta.url));
@@ -108,6 +109,9 @@ async function renderFixtures(): Promise<ServerFixtures> {
     const parity = (await server.ssrLoadModule(path.join(fixtures, "ParitySvelte.svelte"))) as {
       default: unknown;
     };
+    const spec = (await server.ssrLoadModule(path.join(fixtures, "SpecSvelte.svelte"))) as {
+      default: unknown;
+    };
     // The Vite SSR copy of Svelte, so the renderer and the components share one context.
     const { render } = (await server.ssrLoadModule("svelte/server")) as {
       render(component: unknown, options: { props: object }): { body: string };
@@ -122,6 +126,13 @@ async function renderFixtures(): Promise<ServerFixtures> {
       result.astro[mode] = {
         html: await container.renderToString(astro.default, { props: { mode } }),
       };
+    }
+    for (const mode of SPEC_CASES) {
+      try {
+        result.svelte[mode] = { html: render(spec.default, { props: { mode } }).body };
+      } catch (error) {
+        result.svelte[mode] = { error: error instanceof Error ? error.message : String(error) };
+      }
     }
     for (const mode of FRAMEWORK_ONLY_CASES) {
       result.svelte[mode] = { html: render(parity.default, { props: { mode } }).body };

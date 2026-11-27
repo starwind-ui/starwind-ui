@@ -2,17 +2,24 @@
 <script lang="ts" generics="T, D = unknown, X extends ChartValue = ChartValue, Y extends ChartValue = ChartValue">
   import {
     configText,
+    chartLegendKeys,
+    buildChartSpec,
+    isSameChartSpec,
     toChartId,
     visibleKeys,
     type ChartController,
     type ChartInput,
+    type ChartPart,
     type ChartSource,
+    type ChartSpec,
+    type ChartSpecOptions,
     type ChartToggleOptions,
     type ChartVisibleChangeDetails,
     type NativeHostOptions,
   } from "@starwind-ui/runtime/chart";
   import { onMount, untrack } from "svelte";
-  import { setChartRoot, type ChartDefinition, type ChartRootProps, type ChartRootInternalState, type ChartRootState, type ChartTooltipEntry, type ChartValue } from "./ChartContext.js";
+  import ChartContextProvider from "./ChartContextProvider.svelte";
+  import { setChartRoot, readChartServerLegendKeys, type ChartDefinition, type ChartRootProps, type ChartRootInternalState, type ChartRootState, type ChartTooltipEntry, type ChartSpecEntry, type ChartValue } from "./ChartContext.js";
 
   const EMPTY: readonly never[] = [];
   // Svelte gives the same id on the server and in the browser, so hydration matches.
@@ -28,10 +35,12 @@
     theme,
     host,
     disableTooltip = false,
+    stackOffset,
     visible = $bindable(),
     visible: commandVisible,
     defaultVisible,
     onVisibleChange,
+    "aria-label": ariaLabel,
     children,
     ...rest
   }: ChartRootProps<T, D, X, Y> = $props();
@@ -87,17 +96,85 @@
     });
   });
 
+  // Chart spec part registrations in mount order. An update keeps the part's place, and an update
+  // with the same props keeps the spec, so the chart does not render again. A function prop with a
+  // new identity replaces the part, so the chart draws the new function's result.
+  let specParts = $state.raw<readonly ChartSpecEntry[]>(EMPTY);
+  const registerSpecPart = (part: ChartPart, functions: Record<string, unknown> = {}) => {
+    const entry: ChartSpecEntry & { part: ChartPart } = { part, functions };
+    specParts = [...specParts, entry];
+    return {
+      update(next: ChartPart, nextFunctions: Record<string, unknown> = {}) {
+        const names = Object.keys(nextFunctions);
+        const sameFunctions =
+          names.length === Object.keys(entry.functions).length &&
+          names.every((name) => entry.functions[name] === nextFunctions[name]);
+        if (sameFunctions && isSameChartSpec({ parts: [entry.part] }, { parts: [next] })) return;
+        entry.part = next;
+        entry.functions = nextFunctions;
+        specParts = [...specParts];
+      },
+      remove() {
+        specParts = specParts.filter((candidate) => candidate !== entry);
+      },
+    };
+  };
+  // Chart-level options from a part, in mount order. The first set that names an option decides it,
+  // so the first Tooltip, which supplies the tooltip body, decides `cursor`.
+  const registerSpecOptions = (options: ChartSpecOptions) => {
+    const entry: ChartSpecEntry = { options, functions: {} };
+    specParts = [...specParts, entry];
+    return {
+      update(next: ChartSpecOptions) {
+        if (isSameChartSpec({ parts: [], ...entry.options }, { parts: [], ...next })) return;
+        entry.options = next;
+        specParts = [...specParts];
+      },
+      remove() {
+        specParts = specParts.filter((candidate) => candidate !== entry);
+      },
+    };
+  };
+  // The Root's own options come first. Without parts there is no spec.
+  const spec = $derived<ChartSpec | undefined>(buildChartSpec(
+    specParts.flatMap((entry) => (entry.part ? [entry.part] : [])),
+    { stackOffset },
+    ...specParts.map((entry) => entry.options),
+  ));
+
   // A plain snapshot, so the Runtime never stores a framework proxy.
   const requested = $derived(mode === "definition" ? undefined : $state.snapshot(renderedVisible));
   const current = $derived(visibleKeys(config, requested));
   const keys = $derived(Object.keys(config));
+  // Without `chart` and `definition`, chart parts describe the chart. A parts chart takes its
+  // accessible name from `aria-label`.
+  const partsMode = $derived(!chart && !definition);
   // The visible keys stay out of the input, so an accepted toggle does not come back through the
-  // controller's `update` and render the chart a second time.
+  // controller's `update` and render the chart a second time. The spec joins the input only in a
+  // parts chart, because removed parts leave the registry after the render that adds a chart module.
   const input = $derived<ChartInput<T>>({
     data: (data ?? EMPTY) as readonly T[],
     config,
+    ...(partsMode && spec ? { spec } : {}),
     ...(params ? { params } : {}),
     ...(theme ? { theme } : {}),
+  });
+  const chartHost = $derived(partsMode && ariaLabel != null ? { ...host, ariaLabel: String(ariaLabel) } : host);
+
+  // On the server, a parts chart renders its children once in an inert template before the real
+  // pass. Its spec parts fill the seed, so the Surface draws the server SVG from them. The browser
+  // skips the probe and keeps the server markup.
+  const seedParts: ChartPart[] = [];
+  const probing = typeof document === "undefined" && untrack(() => !chart && !definition && children !== undefined);
+  const probe = { add: (part: ChartPart) => void seedParts.push(part) };
+  // In hydration, a legend before its parts renders before they register. Its first pass lists the
+  // keys of the server legend, so each server item keeps its key. After mount, the legend lists the
+  // keys of the live parts. A client-only mount finds no server legend.
+  let serverLegendKeys = $state.raw<readonly string[] | undefined>(
+    untrack(() => (partsMode ? readChartServerLegendKeys(id) : undefined)),
+  );
+  onMount(() => {
+    serverLegendKeys = undefined;
   });
 
   let element = $state<HTMLDivElement | null>(null);
@@ -153,6 +230,8 @@
     };
   };
 
+  // A parts chart lists the config keys that it draws in its legend, from the same spec as the chart.
+  const legendKeys = () => (serverLegendKeys ?? (partsMode ? chartLegendKeys(probing ? buildChartSpec(seedParts, { stackOffset }) : spec, input.data, config) : keys));
   const label = (key: string) => {
     return configText(config[key], key);
   };
@@ -176,7 +255,7 @@
       return config;
     },
     get host() {
-      return host as NativeHostOptions<any, any, any> | undefined;
+      return chartHost as NativeHostOptions<any, any, any> | undefined;
     },
     get disableTooltip() {
       return disableTooltip;
@@ -193,6 +272,9 @@
     get controlled() {
       return visibleControlled;
     },
+    get legendKeys() {
+      return legendKeys();
+    },
     label,
     setVisible,
     toggle,
@@ -202,6 +284,17 @@
       return tooltips[0] ?? null;
     },
     registerTooltip,
+    get partsMode() {
+      return partsMode;
+    },
+    get seed() {
+      return buildChartSpec(seedParts, { stackOffset });
+    },
+    get settled() {
+      return true;
+    },
+    registerSpecPart,
+    registerSpecOptions,
   };
   // The public state holds only the public fields, so `useChartRoot()` returns no plumbing.
   const chartState: ChartRootState = {
@@ -227,4 +320,4 @@
   setChartRoot(chartState, chartInternal);
 </script>
 
-<div {...rest} bind:this={element} data-slot="chart" data-chart={id}>{@render children?.()}</div>
+<div {...rest} aria-label={partsMode ? undefined : ariaLabel} bind:this={element} data-slot="chart" data-chart={id}>{#if probing}<ChartContextProvider {probe} {children} />{/if}{@render children?.()}</div>

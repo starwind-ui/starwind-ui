@@ -84,8 +84,8 @@ describe("CLI package metadata", () => {
   });
 
   it("enforces both package budgets and required artifact files", () => {
-    expect(MAX_TARBALL_BYTES).toBe(851_968);
-    expect(MAX_UNPACKED_BYTES).toBe(5_767_168);
+    expect(MAX_TARBALL_BYTES).toBe(860_160);
+    expect(MAX_UNPACKED_BYTES).toBe(6_029_312);
 
     const files = [{ path: "dist/index.js" }, { path: "dist/index.d.ts" }];
     expect(
@@ -94,14 +94,14 @@ describe("CLI package metadata", () => {
         unpackedBytes: MAX_UNPACKED_BYTES,
         files,
       }),
-    ).toEqual(["tarball is 851969 bytes; limit is 851968 bytes"]);
+    ).toEqual(["tarball is 860161 bytes; limit is 860160 bytes"]);
     expect(
       validatePackMetadata({
         tarballBytes: MAX_TARBALL_BYTES,
         unpackedBytes: MAX_UNPACKED_BYTES + 1,
         files,
       }),
-    ).toEqual(["unpacked package is 5767169 bytes; limit is 5767168 bytes"]);
+    ).toEqual(["unpacked package is 6029313 bytes; limit is 6029312 bytes"]);
     expect(
       validatePackMetadata({
         tarballBytes: MAX_TARBALL_BYTES,
@@ -121,8 +121,8 @@ describe("CLI package metadata", () => {
         ],
       }),
     ).toEqual([
-      "tarball is 851969 bytes; limit is 851968 bytes",
-      "unpacked package is 5767169 bytes; limit is 5767168 bytes",
+      "tarball is 860161 bytes; limit is 860160 bytes",
+      "unpacked package is 6029313 bytes; limit is 6029312 bytes",
       "package contains JavaScript source maps: dist/index.js.map",
     ]);
 

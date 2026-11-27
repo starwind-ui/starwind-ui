@@ -1,9 +1,13 @@
 ---
 import ChartPrimitive from "@starwind-ui/astro/chart";
 import ChartTooltipContent from "./ChartTooltipContent.astro";
+
+type Props = Omit<import("@starwind-ui/astro/chart").ChartTooltipProps, "children">;
+
+const { ...rest } = Astro.props;
 ---
 
-<ChartPrimitive.Tooltip>
+<ChartPrimitive.Tooltip {...rest}>
   <slot name="content">
     <ChartTooltipContent />
   </slot>

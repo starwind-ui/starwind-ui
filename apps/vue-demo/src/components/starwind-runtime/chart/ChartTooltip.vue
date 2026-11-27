@@ -2,7 +2,9 @@
 import * as ChartPrimitive from "@starwind-ui/vue/chart";
 import ChartTooltipContent from "./ChartTooltipContent.vue";
 
-export type ChartTooltipProps = {};
+defineOptions({ inheritAttrs: false });
+
+export type ChartTooltipProps = import("@starwind-ui/vue/chart").ChartTooltipProps;
 type ChartTooltipDeclaredProps = {} & /* @vue-ignore */ ChartTooltipProps;
 defineProps<ChartTooltipDeclaredProps>();
 defineSlots<{
@@ -11,7 +13,7 @@ defineSlots<{
 </script>
 
 <template>
-  <ChartPrimitive.ChartTooltip>
+  <ChartPrimitive.ChartTooltip v-bind="$attrs">
     <slot name="content">
       <ChartTooltipContent />
     </slot>

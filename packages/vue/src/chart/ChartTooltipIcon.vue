@@ -3,7 +3,10 @@
 import { defineComponent, h, mergeProps, ref } from "vue";
 import { renderChartIcon, useChartTooltipRow } from "./ChartContext.js";
 
-/** The config icon of a row. A row without an icon renders nothing. */
+/**
+ * The config icon of a row. Keep TooltipIndicator in the row too: a row with an icon shows the icon
+ * in place of the indicator, and a row without one shows the indicator.
+ */
 export default defineComponent({
   name: "Chart.TooltipIcon",
   inheritAttrs: false,

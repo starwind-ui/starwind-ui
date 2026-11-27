@@ -1,0 +1,9 @@
+---
+import ChartPrimitive from "@starwind-ui/astro/chart";
+
+type Props = import("@starwind-ui/astro/chart").ChartLabelProps;
+
+const { ...rest } = Astro.props;
+---
+
+<ChartPrimitive.Label {...rest} />

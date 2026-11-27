@@ -5,9 +5,9 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createSpawnCommand, getPackageManagerCommand } from "../../../scripts/command-process.mjs";
 
-// Four bundled framework targets: 768 KiB packed and 5.5 MiB unpacked.
-export const MAX_TARBALL_BYTES = 851_968;
-export const MAX_UNPACKED_BYTES = 5_767_168;
+// Four bundled framework targets: 840 KiB packed and 5.75 MiB unpacked.
+export const MAX_TARBALL_BYTES = 860_160;
+export const MAX_UNPACKED_BYTES = 6_029_312;
 export const INSTALLED_CLI_COMMAND = Object.freeze(["exec", "starwind", "--help"]);
 
 const PACKAGE_DIRECTORY = fileURLToPath(new URL("..", import.meta.url));

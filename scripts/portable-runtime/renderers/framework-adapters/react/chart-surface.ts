@@ -5,8 +5,11 @@ import {
   chartModelHelpers,
   chartPrerender,
   chartRootInputs,
+  chartRootSpecOptions,
   chartRootState,
   chartRootStateValue,
+  chartSpecRegistry,
+  chartSpecSurfaceStyle,
   chartSurfaceHelpers,
   chartSurfaceLifecycle,
   chartTooltipAccessibility,
@@ -18,6 +21,7 @@ import {
   chartVisibleRequests,
 } from "../../shared-recipes/chart/recipe.js";
 import {
+  type ChartSpecPartName,
   type ChartSurfaceComponentProjection,
   type ChartSurfaceFacts,
   type ChartSurfaceIndexProjection,
@@ -25,27 +29,70 @@ import {
   type ChartSurfacePropFacts,
   type ChartTypeWords,
   chartComment,
+  chartLegendKeyMessage,
   chartNames,
+  chartOutsideRootMessage,
   chartPartProps,
   chartProp,
+  chartPropDefault,
   chartPropType,
   chartPublicTypes,
   chartSlot,
+  chartSpecOptions,
+  chartSpecOptionsObject,
+  chartSpecPartDoc,
+  chartSpecPartFiles,
+  printChartSpecOptionFields,
+  printChartSpecPartReader,
+  printChartSpecPartType,
 } from "../../specialized-adapter-spec/chart-specialized-adapter-spec.js";
 import { normalizeReactClassHookName } from "../future-readiness.js";
+import type { AdapterComponentFile, AdapterOutputModel } from "../types.js";
 import { reactChartOperations } from "./recipe-chart-operations.js";
 
 export type ReactChartSurfaceComponentProjection = ChartSurfaceComponentProjection;
 export type ReactChartSurfaceIndexProjection = ChartSurfaceIndexProjection;
 
+/** A chart spec part. It registers its props with the Root and renders nothing. */
+type ReactChartSpecPartProjection = {
+  facts: ChartSurfaceFacts;
+  kind: "react-chart-spec-part";
+  part: ChartSpecPartName;
+};
+
 export function isReactChartSurfaceProjection(family: unknown): boolean {
-  return (family as { kind?: string } | undefined)?.kind === "chart-surface";
+  const kind = (family as { kind?: string } | undefined)?.kind;
+  return kind === "chart-surface" || kind === "react-chart-spec-part";
 }
 
-export function printReactChartSurfaceComponent({
-  facts,
-  part,
-}: ReactChartSurfaceComponentProjection): string {
+/** Adds the chart spec part files before the chart index. */
+export function projectReactChartSurfaceOutputModel(model: AdapterOutputModel): AdapterOutputModel {
+  const index = model.files.find(
+    (file) =>
+      file.kind === "index" &&
+      (file.family as { kind?: string } | undefined)?.kind === "chart-surface",
+  );
+  if (!index || index.kind !== "index") return model;
+  const facts = (index.family as unknown as ReactChartSurfaceIndexProjection).facts;
+  const template = model.files.find(
+    (file): file is AdapterComponentFile =>
+      file.kind === "component" &&
+      (file.component.family as { kind?: string } | undefined)?.kind === "chart-surface",
+  );
+  if (!template) throw new Error("The React chart output needs a chart part file.");
+  const directory = index.path.slice(0, index.path.lastIndexOf("/"));
+  const specParts = chartSpecPartFiles(facts, template, directory, "react-chart-spec-part");
+  const files = [...model.files];
+  files.splice(files.indexOf(index), 0, ...specParts);
+  return { files };
+}
+
+export function printReactChartSurfaceComponent(
+  projection: ReactChartSurfaceComponentProjection | ReactChartSpecPartProjection,
+): string {
+  if (projection.kind === "react-chart-spec-part")
+    return printSpecPart(projection.facts, projection.part);
+  const { facts, part } = projection;
   switch (facts.parts[part].role) {
     case "root":
       return printRoot(facts);
@@ -87,7 +134,7 @@ export function printReactChartSurfaceComponent({
 }
 
 export function printReactChartSurfaceIndex({ facts }: ReactChartSurfaceIndexProjection): string {
-  const parts = Object.values(facts.parts);
+  const parts = [...Object.values(facts.parts), ...Object.values(facts.specParts)];
   const root = facts.parts.root.exportName;
   const imports = parts
     .map((part) => `import ${part.exportName} from "./${part.exportName}";`)
@@ -100,7 +147,7 @@ export function printReactChartSurfaceIndex({ facts }: ReactChartSurfaceIndexPro
     parts.map((part) => [`${part.exportName}Props`, part.exportName]),
   );
   const byFile = new Map<string, string[]>();
-  for (const name of [...types.all, ...types.context, ...types.rootUnion]) {
+  for (const name of [...types.all, ...types.context, ...types.rootUnion, ...types.specParts]) {
     const file = homes[name] ?? root;
     byFile.set(file, [...(byFile.get(file) ?? []), name]);
   }
@@ -203,13 +250,19 @@ function printRoot(facts: ChartSurfaceFacts): string {
   type ChartController,
   type ChartInput,
   type ChartModule,
+  type ChartPart,
   type ChartSource,
+  type ChartSpec,
+  type ChartSpecOptions,
   type ChartToggleOptions,
   type ChartVisibleChangeDetails,
   type CreateChartOptions,
   type NativeHostOptions,
+  buildChartSpec,
+  ${h.legendKeys},
   ${h.configText},
   ${h.isIcon},
+  isSameChartSpec,
   ${h.toId},
   ${h.visibleKeys},
 } from "${facts.runtime.importSource}";
@@ -272,10 +325,128 @@ export const ${n.rootContext} = React.createContext<${n.state} | null>(null);
 export const ${n.internalContext} = React.createContext<${n.internalState} | null>(null);
 export const ${n.bodyContext} = React.createContext<ChartTooltipBody | null>(null);
 
+${printChartSpecPartReader(facts, "react")}
+
+/** A chart spec part component carries its part kind, so the Root finds it in its children. */
+type ChartSpecPartType = { chartSpecPart?: ChartPart["kind"] };
+
+const LAZY_TYPE = Symbol.for("react.lazy");
+const MEMO_TYPE = Symbol.for("react.memo");
+
+type WrappedType = {
+  $$typeof?: symbol;
+  type?: unknown;
+  _payload?: unknown;
+  _init?: (payload: unknown) => unknown;
+};
+
+/**
+ * The component behind \`React.memo\` and loaded \`React.lazy\` types. A Server Component gets
+ * client components as lazy references. A lazy type that still loads, or failed, stays wrapped.
+ */
+function unwrapChartPartType(type: unknown): unknown {
+  for (let depth = 0; depth < 8 && type && typeof type === "object"; depth++) {
+    const wrapped = type as WrappedType;
+    if (wrapped.$$typeof === MEMO_TYPE) type = wrapped.type;
+    else if (wrapped.$$typeof === LAZY_TYPE && wrapped._init) {
+      try {
+        type = wrapped._init(wrapped._payload);
+      } catch {
+        return undefined;
+      }
+    } else break;
+  }
+  return type;
+}
+
+/**
+ * The spec parts among a Root's children, in source order, through arrays and fragments. The
+ * first render draws them, because parts register after the Surface renders. A part inside
+ * another component registers after mount.
+ */
+function collectChartSpec(children: React.ReactNode, parts: ChartPart[] = []): ChartPart[] {
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement<Record<string, unknown>>(child)) return;
+    const type = unwrapChartPartType(child.type) as ChartSpecPartType | undefined;
+    const kind = type?.chartSpecPart;
+    if (kind) parts.push(readChartSpecPart(kind, child.props));
+    else if (child.type === React.Fragment)
+      collectChartSpec(child.props.children as React.ReactNode, parts);
+  });
+  return parts;
+}
+
+/**
+ * Registers one chart spec part with the Root, in source order, and removes it on unmount. A prop
+ * change updates the part in place. A function prop becomes a stable delegate that calls the
+ * latest function. A function with a new identity draws the chart again, so an inline formatter
+ * draws once per parent render, as in Recharts.
+ */
+export function use${facts.displayName}SpecPart(
+  kind: ChartPart["kind"],
+  props: Record<string, unknown>,
+): void {
+  const root = React.useContext(${n.internalContext});
+  if (root) assertChartSpecPartRoot(root.partsMode);
+  const latest = React.useRef(props);
+  const [delegates] = React.useState(() => new Map<string, (...args: any[]) => unknown>());
+  const delegate = (name: string) => {
+    let call = delegates.get(name);
+    if (!call) {
+      call = (...args: any[]) => (readChartSpecProp(latest.current, name) as (...args: any[]) => unknown)(...args);
+      delegates.set(name, call);
+    }
+    return call;
+  };
+  const part = readChartSpecPart(kind, props, delegate);
+  const registration = React.useRef<ChartSpecRegistration | null>(null);
+  const register = root?.registerSpecPart;
+  useIsomorphicLayoutEffect(() => {
+    if (!register) return;
+    const current = register(part, readChartSpecFunctions(kind, props));
+    registration.current = current;
+    return () => {
+      registration.current = null;
+      current.remove();
+    };
+    // The registration keeps its place. Prop changes reach it through \`update\`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [register]);
+  useIsomorphicLayoutEffect(() => {
+    latest.current = props;
+    registration.current?.update(part, readChartSpecFunctions(kind, props));
+  });
+}
+
+/**
+ * Registers the chart-level options of a part, such as the Tooltip \`cursor\`, with a parts chart
+ * Root. The registration keeps its place, and a prop change updates it in place. \`active\` false,
+ * as in a tooltip body, registers nothing.
+ */
+export function use${facts.displayName}SpecOptions(options: ChartSpecOptions, active = true): void {
+  const root = React.useContext(${n.internalContext});
+  const register = active && root?.partsMode ? root.registerSpecOptions : undefined;
+  const registration = React.useRef<ChartSpecOptionsRegistration | null>(null);
+  useIsomorphicLayoutEffect(() => {
+    if (!register) return;
+    const current = register(options);
+    registration.current = current;
+    return () => {
+      registration.current = null;
+      current.remove();
+    };
+    // The registration keeps its place. Prop changes reach it through \`update\`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [register]);
+  useIsomorphicLayoutEffect(() => {
+    registration.current?.update(options);
+  });
+}
+
 /** The public chart state: config keys, visible keys and visibility requests. */
 export function ${n.useRoot}(): ${n.state} {
   const context = React.useContext(${n.rootContext});
-  if (!context) throw new Error("${facts.displayName} parts must be rendered inside ${facts.displayName}.${facts.parts.root.namespaceKey}.");
+  if (!context) throw new Error(${JSON.stringify(chartOutsideRootMessage(facts))});
   return context;
 }
 
@@ -285,7 +456,7 @@ export function ${n.useOptionalInternalRoot}(): ${n.internalState} | null {
 
 export function ${n.useInternalRoot}(): ${n.internalState} {
   const context = React.useContext(${n.internalContext});
-  if (!context) throw new Error("${facts.displayName} parts must be rendered inside ${facts.displayName}.${facts.parts.root.namespaceKey}.");
+  if (!context) throw new Error(${JSON.stringify(chartOutsideRootMessage(facts))});
   return context;
 }
 
@@ -344,6 +515,7 @@ type ${n.root}CommonProps<D, X extends ChartValue, Y extends ChartValue> = Omit<
   host?: NativeHostOptions<NoInfer<D>, NoInfer<X>, NoInfer<Y>>;
   /** Sets the native \`definition.tooltip\` to false. */
   disableTooltip?: boolean;
+${printChartSpecOptionFields(facts, "root")}
   children?: React.ReactNode;
 };
 
@@ -383,12 +555,28 @@ export type ${n.root}DefinitionProps<
   ${v.callbackProp}?: never;
 };
 
+/**
+ * Chart parts in the children, such as a bar and an x axis, describe the chart. It follows the
+ * visibility model, and \`aria-label\` names the chart.
+ */
+export type ${n.root}SpecProps<
+  T = unknown,
+  D = unknown,
+  X extends ChartValue = ChartValue,
+  Y extends ChartValue = ChartValue,
+> = Omit<${n.root}SourceProps<T, D, X, Y>, "chart"> & {
+  chart?: never;
+};
+
 export type ${n.root}Props<
   T = unknown,
   D = unknown,
   X extends ChartValue = ChartValue,
   Y extends ChartValue = ChartValue,
-> = ${n.root}SourceProps<T, D, X, Y> | ${n.root}DefinitionProps<T, D, X, Y>;
+> =
+  | ${n.root}SourceProps<T, D, X, Y>
+  | ${n.root}DefinitionProps<T, D, X, Y>
+  | ${n.root}SpecProps<T, D, X, Y>;
 
 const EMPTY: readonly never[] = [];
 
@@ -410,9 +598,13 @@ function ${n.root}<
     theme,
     host,
     disableTooltip = false,
+${chartSpecOptions(facts, "root")
+  .map(({ name }) => `    ${name},`)
+  .join("\n")}
     ${v.controlledProp}: visibleProp,
     ${bindingProperty(v.defaultProp, "defaultVisible")},
     ${bindingProperty(v.callbackProp, "onVisibleChange")},
+    "aria-label": ariaLabel,
     children,
     ...rootProps
   } = props;
@@ -422,7 +614,16 @@ function ${n.root}<
   ${chartDefinitionGuard(ops, facts)}
 
   ${chartVisibleModel(ops, facts)}
+  ${chartSpecRegistry(ops, facts)}
   ${chartRootInputs(ops, facts)}
+  // The spec parts among the children draw the first render, on the server and in hydration. The
+  // Surface starts once the Root settles, after the parts of the first render registered.
+  const [seed] = React.useState(() => {
+    if (!partsMode) return undefined;
+    return buildChartSpec(collectChartSpec(children), ${chartRootSpecOptions(ops, facts)});
+  });
+  const [settled, setSettled] = React.useState(false);
+  useIsomorphicLayoutEffect(() => setSettled(true), []);
 
   ${chartVisibleRequests(ops, facts)}
 
@@ -434,7 +635,12 @@ function ${n.root}<
   return (
     <${n.internalContext}.Provider value={internal}>
       <${n.rootContext}.Provider value={state}>
-        <${facts.parts.root.element} {...rootProps} data-slot="${slot(facts, "root")}" ${facts.attrs.chartId}={id}>
+        <${facts.parts.root.element}
+          {...rootProps}
+          aria-label={partsMode ? undefined : ariaLabel}
+          data-slot="${slot(facts, "root")}"
+          ${facts.attrs.chartId}={id}
+        >
           {children}
         </${facts.parts.root.element}>
       </${n.rootContext}.Provider>
@@ -445,6 +651,32 @@ function ${n.root}<
 ${displayName(facts, "root")}
 
 export default ${n.root};
+`;
+}
+
+/**
+ * A chart spec part registers its props with the Root and renders nothing. It carries its part
+ * kind, so the Root finds it in its children for the server render.
+ */
+function printSpecPart(facts: ChartSurfaceFacts, part: ChartSpecPartName): string {
+  const spec = facts.specParts[part];
+  const name = spec.exportName;
+  const formats = spec.props.some((prop) => prop.type.includes("ChartTickFormatter"));
+  return `${formats ? `import type { ChartTickFormatter } from "${facts.runtime.importSource}";\n` : ""}${rootImport(facts, [`use${facts.displayName}SpecPart`])}
+
+${printChartSpecPartType(facts, part, "react")}
+
+${chartComment(chartSpecPartDoc(facts, part), "block")}
+function ${name}(props: ${name}Props): null {
+  use${facts.displayName}SpecPart("${spec.kind}", props);
+  return null;
+}
+
+${name}.displayName = "${facts.displayName}.${spec.namespaceKey}";
+// The chart Root reads the part kind when it finds this part in its children.
+${name}.chartSpecPart = "${spec.kind}" as const;
+
+export default ${name};
 `;
 }
 
@@ -481,10 +713,15 @@ function printSurface(facts: ChartSurfaceFacts): string {
   const h = facts.runtime.helpers;
   return `import {
   type ChartInput,
+  chartSurfaceStyle,
+  createChartOptions,
   ${facts.runtime.factory},
   ${h.prerender},
   ${h.syncTooltipAccessibility},
   ${h.visibleKeys},
+  isChartSpecComplete,
+  warnEmptyChart,
+  warnIncompleteChart,
 } from "${facts.runtime.importSource}";
 import * as React from "react";
 import { createPortal } from "react-dom";
@@ -523,16 +760,21 @@ function ${n.entry}Outlet({ entry }: { entry: ${n.entry} }) {
  * Runtime controller then adopts it, and React never writes the surface content again.
  */
 const ${name} = React.forwardRef<HTMLDivElement, ${name}Props>(function ${name}(
-  { tooltip, fallbackTooltip, nativeTooltip = false, style, ...props },
+  { tooltip, fallbackTooltip, nativeTooltip = ${chartPropDefault(facts, "surface", "nativeTooltip")}, style, ...props },
   forwardedRef,
 ) {
   const root = ${n.useInternalRoot}();
   const surfaceRef = React.useRef<HTMLDivElement | null>(null);
   const [initial] = React.useState(() => {
-    const result = ${chartPrerender(facts)};
-    return { html: { __html: result.markup }, style: toStyleObject(result.surfaceStyle) };
+    const result = (() => {
+      ${chartPrerender(facts)}
+    })();
+    return { html: { __html: result.markup }, surfaceStyle: result.surfaceStyle };
   });
-  const surfaceStyle = React.useMemo(() => ({ ...initial.style, ...style }), [initial.style, style]);
+  const size = React.useMemo(() => {
+    ${chartSpecSurfaceStyle()}
+  }, [root, initial.surfaceStyle]);
+  const surfaceStyle = React.useMemo(() => ({ ...toStyleObject(size), ...style }), [size, style]);
 
   const content: React.ReactNode = (() => {
     ${chartTooltipResolution({
@@ -597,16 +839,20 @@ function printTooltip(facts: ChartSurfaceFacts): string {
   const name = facts.parts.tooltip.exportName;
   return `import * as React from "react";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
-${rootImport(facts, [`create${n.entry}`, n.bodyContext, n.useOptionalInternalRoot])}
+${rootImport(facts, [`create${n.entry}`, n.bodyContext, n.useOptionalInternalRoot, `use${facts.displayName}SpecOptions`])}
 
 export type ${name}Props = {
 ${propFields(facts, "tooltip")}
 };
 
 ${doc(facts, "tooltip")}
-function ${name}({ children }: ${name}Props) {
+function ${name}({ children, ${chartSpecOptions(facts, "tooltip")
+    .map(({ name: option }) => option)
+    .join(", ")} }: ${name}Props) {
   const root = ${n.useOptionalInternalRoot}();
   const body = React.useContext(${n.bodyContext});
+  // Its chart-level options reach a parts chart. A Tooltip inside a tooltip body sets none.
+  use${facts.displayName}SpecOptions(${chartSpecOptionsObject(facts, "tooltip")}, !body);
   // One stable registration per part, so a parent re-render keeps its place in the order.
   const [entry] = React.useState(() => create${n.entry}(children));
   useIsomorphicLayoutEffect(() => {
@@ -631,6 +877,7 @@ function printTooltipContent(facts: ChartSurfaceFacts): string {
   const name = facts.parts.tooltipContent.exportName;
   const h = facts.runtime.helpers;
   return `import {
+  type ChartFormat,
   type TooltipItem,
   type TooltipLayoutRow,
   type TooltipView,
@@ -982,7 +1229,7 @@ export interface ${n.legendState} {
   hideIcon: boolean;
 }
 
-export const ${n.legendContext} = React.createContext<${n.legendState}>({ hideIcon: false });
+export const ${n.legendContext} = React.createContext<${n.legendState}>({ hideIcon: ${chartPropDefault(facts, "legend", "hideIcon")} });
 
 export function ${n.useLegend}(): ${n.legendState} {
   return React.useContext(${n.legendContext});
@@ -994,7 +1241,7 @@ ${propFields(facts, "legend")}
 
 ${doc(facts, "legend")}
 const ${name} = React.forwardRef<HTMLDivElement, ${name}Props>(function ${name}(
-  { hideIcon = false, "aria-label": ariaLabel = "${facts.defaults.legendAriaLabel}", children, ...props },
+  { hideIcon = ${chartPropDefault(facts, "legend", "hideIcon")}, "aria-label": ariaLabel = "${facts.defaults.legendAriaLabel}", children, ...props },
   forwardedRef,
 ) {
   const value = React.useMemo(() => ({ hideIcon }), [hideIcon]);
@@ -1023,7 +1270,7 @@ function printLegendItems(facts: ChartSurfaceFacts): string {
   const n = names(facts);
   const name = facts.parts.legendItems.exportName;
   return `import * as React from "react";
-${rootImport(facts, [n.useRoot])}
+${rootImport(facts, [n.useInternalRoot])}
 
 export const ${n.keyContext} = React.createContext<string | null>(null);
 
@@ -1037,10 +1284,10 @@ ${propFields(facts, "legendItems")}
 
 ${doc(facts, "legendItems")}
 function ${name}({ children }: ${name}Props) {
-  const { keys } = ${n.useRoot}();
+  const { legendKeys } = ${n.useInternalRoot}();
   return (
     <>
-      {keys.map((key) => (
+      {legendKeys.map((key) => (
         <${n.keyContext}.Provider key={key} value={key}>
           {children}
         </${n.keyContext}.Provider>
@@ -1080,7 +1327,7 @@ const ${name} = React.forwardRef<HTMLElement, ${name}Props>(function ${name}(
   const root = ${n.useRoot}();
   const contextKey = ${n.useKey}();
   const key = valueProp ?? contextKey;
-  if (key == null) throw new Error("${facts.displayName}.${facts.parts.legendItem.namespaceKey} needs a value or a ${facts.displayName}.${facts.parts.legendItems.namespaceKey} parent.");
+  if (key == null) throw new Error(${JSON.stringify(chartLegendKeyMessage(facts))});
   const entry = root.config[key];
   const rich = entry?.label;
   const plain = rich == null || typeof rich === "string" || typeof rich === "number";

@@ -116,4 +116,24 @@ export const emissionExceptions: EmissionException[] = [
     reason:
       "Functions cannot cross from the server to the browser, so Astro takes tooltip formatters from the chart module's domPresentation (spec SPEC-AC-12).",
   },
+  {
+    name: "chart-stack-needs-two-marks",
+    kind: "intended",
+    targets: ["react", "svelte"],
+    family: /^chart$/,
+    part: /^(bar|area)$/,
+    fact: /^stackId$/,
+    reason:
+      "A stack needs two marks of one kind with the same stackId, and the emission tree holds one part of each kind. These parts pass their props to the Root as one object, so the check cannot see the read. The Runtime chart spec tests check stacked and grouped bars and areas.",
+  },
+  {
+    name: "chart-label-has-one-position",
+    kind: "intended",
+    targets: ["react", "svelte"],
+    family: /^chart$/,
+    part: /^label$/,
+    fact: /^position$/,
+    reason:
+      "center is the only position, so no probe can change the output. The part passes its props to the Root as one object, so the check cannot see the read.",
+  },
 ];

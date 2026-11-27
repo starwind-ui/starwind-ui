@@ -1,5 +1,7 @@
+import { datesToStrings } from "./datum";
 import { isChartIcon } from "./options";
 import { configText } from "./presentation";
+import { assertChartSpecWire } from "./spec";
 import type {
   ChartConfig,
   ChartIcon,
@@ -75,7 +77,13 @@ export function wireHostOptions(host: NativeHostOptions | undefined): ChartWireH
 }
 
 function wireInput(input: ChartInput): ChartInput {
-  const wire = { ...input, config: wireConfig(input.config) };
+  // The spec check runs first, so a function formatter gets the message that names ChartFormat.
+  if (input.spec) assertChartSpecWire(input.spec);
+  const wire = {
+    ...input,
+    ...(input.spec ? { data: datesToStrings(input.data) } : {}),
+    config: wireConfig(input.config),
+  };
   assertWireData(wire, new Set());
   return wire;
 }

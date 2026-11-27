@@ -4,8 +4,6 @@ import { runtimeAdapterContracts } from "../../../scripts/portable-runtime/contr
 // The generated metadata is plain data. The examples module reads adapter files with Node APIs, so
 // it cannot load in the browser.
 import { layeredDocsMetadata } from "../../../scripts/portable-runtime/docs/layered-docs/generated/layered-docs-metadata.js";
-import { registerChartModule } from "../src/components/chart";
-import { visitorBars } from "./components/chart/fixtures";
 
 type RuntimeFactory = (root: HTMLElement) => { destroy?: () => void };
 type RuntimeInstance = {
@@ -42,7 +40,7 @@ describe("primitive docs raw HTML examples", () => {
   });
 
   for (const contract of runtimeAdapterContracts) {
-    it(`initializes the ${contract.component} raw HTML example with its documented factory`, () => {
+    it(`initializes the ${contract.component} raw HTML example with its documented factory`, async () => {
       const example = rawHtmlExample(contract.component);
       const rootPart = contract.parts.find((part) => part.name === contract.runtime.rootPart);
 
@@ -60,11 +58,21 @@ describe("primitive docs raw HTML examples", () => {
       expect(root).toBeInstanceOf(HTMLElement);
       expect(factory).toBeTypeOf("function");
 
-      if (contract.component === "chart") standInForChartModuleScript(root as HTMLElement);
-
-      const instance = factory?.(root as HTMLElement);
+      const instance =
+        contract.component === "chart"
+          ? runChartExampleScript(example?.code ?? "", factory!)
+          : factory?.(root as HTMLElement);
 
       expect(instance).toBeTruthy();
+      if (contract.component === "chart") {
+        // The documented spec draws a desktop and a mobile bar for each month of the example data.
+        const bars = (series: string) =>
+          root?.querySelectorAll(
+            `[data-sw-chart-surface] svg [data-ts-key^="bars:"][data-ts-key$="-${series}"]`,
+          ).length ?? 0;
+        await expect.poll(() => bars("desktop")).toBeGreaterThan(0);
+        expect(bars("mobile")).toBe(bars("desktop"));
+      }
       instance?.destroy?.();
     });
   }
@@ -126,14 +134,24 @@ describe("primitive docs raw HTML examples", () => {
 });
 
 /**
- * The chart example's module script registers its chart module, which `stripScript` removes. Register
- * a fixture module under the root's `data-chart-module` id, as the page would after that script loads.
+ * Runs the chart example's module script as the page would. The script imports `createChart`, so the
+ * test passes in the Runtime factory in place of that import and returns the instance it creates.
  */
-function standInForChartModuleScript(root: HTMLElement) {
-  const moduleId = root.dataset.chartModule;
+function runChartExampleScript(source: string, factory: RuntimeFactory) {
+  const script = source.match(/<script type="module">([\s\S]*)<\/script>\s*$/)?.[1] ?? "";
+  const importLine = 'import { createChart } from "@starwind-ui/runtime/chart";';
 
-  expect(moduleId).toBeTruthy();
-  registerChartModule({ id: moduleId!, ariaLabel: "Visitors by month", create: visitorBars });
+  expect(script).toContain(importLine);
+  let instance: ReturnType<RuntimeFactory> | undefined;
+  const createChart = (root: HTMLElement, options: unknown) => {
+    instance = (factory as (root: HTMLElement, options: unknown) => ReturnType<RuntimeFactory>)(
+      root,
+      options,
+    );
+    return instance;
+  };
+  new Function("createChart", script.replace(importLine, ""))(createChart);
+  return instance;
 }
 
 function stripScript(source: string) {

@@ -100,11 +100,24 @@ const EXPECTED_REQUESTED_ROOT_FILES = {
     "variants.ts",
   ],
   chart: [
+    "ChartArea.vue",
+    "ChartBar.vue",
     "ChartContainer.vue",
+    "ChartGrid.vue",
+    "ChartLabel.vue",
     "ChartLegend.vue",
     "ChartLegendContent.vue",
+    "ChartLine.vue",
+    "ChartLinearGradient.vue",
+    "ChartPie.vue",
+    "ChartPolarAngleAxis.vue",
+    "ChartPolarGrid.vue",
+    "ChartRadar.vue",
+    "ChartRadialBar.vue",
     "ChartTooltip.vue",
     "ChartTooltipContent.vue",
+    "ChartXAxis.vue",
+    "ChartYAxis.vue",
     "index.ts",
     "variants.ts",
   ],
@@ -1282,7 +1295,7 @@ describe("generated Vue Styled wrappers", () => {
       if (relativePath.endsWith(".vue")) {
         expect(() => assertVueSfcCompiles(source, relativePath)).not.toThrow();
         if (source.includes("useAttrs")) {
-          expect(source, relativePath).toContain("defineOptions({ inheritAttrs: false });");
+          expect(source, relativePath).toMatch(/defineOptions\(\{ inheritAttrs: false( }|,)/);
         }
       }
     }

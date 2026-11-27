@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import { chartRuntimeAdapterContract } from "../contracts/primitive/components/chart.js";
 import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
 import {
+  getPrimitiveFrameworkAdapterTarget,
   printAdapterOutput,
   reactFrameworkAdapter,
+  svelteFrameworkAdapter,
+  vueFrameworkAdapter,
 } from "../renderers/framework-adapters/index.js";
 import { getPrimitiveFrameworkAdapterTargetsForComponent } from "../renderers/framework-adapters/target-registry.js";
 import {
@@ -119,7 +122,7 @@ describe("Chart specialized adapter spec", () => {
         ChartView: "React.ReactNode",
       }),
     ).toBe(
-      "(value: unknown, name: string, item: TooltipItem<T>, index: number, payload: T) => React.ReactNode",
+      "((value: unknown, name: string, item: TooltipItem<T>, index: number, payload: T) => React.ReactNode) | ChartFormat",
     );
     expect(
       chartPropType(formatter, {
@@ -129,7 +132,7 @@ describe("Chart specialized adapter spec", () => {
         T: "any",
       }),
     ).toBe(
-      "(value: unknown, name: string, item: TooltipItem<any>, index: number, payload: any) => ChartView",
+      "((value: unknown, name: string, item: TooltipItem<any>, index: number, payload: any) => ChartView) | ChartFormat",
     );
     expect(chartPublicTypes(facts).context).toEqual([
       "ChartView",
@@ -203,6 +206,117 @@ describe("Chart specialized adapter spec", () => {
     }
     expect(getPrimitiveFrameworkAdapterTargetsForComponent("chart")).toEqual(
       getPrimitiveFrameworkAdapterTargetsForComponent("carousel"),
+    );
+  });
+
+  /** The printed chart files of one target, by path, after the target's specialized projection. */
+  function printTarget(
+    target: "react" | "vue" | "svelte",
+    source: RuntimeAdapterContract = contract,
+  ): Map<string, string> {
+    const adapter = {
+      react: reactFrameworkAdapter,
+      vue: vueFrameworkAdapter,
+      svelte: svelteFrameworkAdapter,
+    }[target];
+    const model = buildChartAdapterOutputModel(buildChartSpecializedAdapterSpec(source));
+    const project =
+      getPrimitiveFrameworkAdapterTarget(target).primitive.outputModel?.projectSpecialized;
+    const printed = printAdapterOutput(adapter, project ? project(model) : model);
+    return new Map(printed.map((file) => [file.path, file.contents]));
+  }
+
+  it("casts a bare boolean or object prop to true in Vue, from the contract marker", () => {
+    // The marker decides, so a type that names the object first still casts.
+    const reordered = {
+      ...contract,
+      props: contract.props.map((prop) =>
+        prop.name === "dot" ? { ...prop, type: "{ r?: number } | boolean" } : prop,
+      ),
+    } as RuntimeAdapterContract;
+    const line = printTarget("vue", reordered).get("chart/ChartLine.vue")!;
+    expect(line).toMatch(/dot: \{\s*type: \[Boolean, Object\]/);
+    expect(line).toMatch(/activeDot: \{\s*type: \[Boolean, Object\]/);
+  });
+
+  it.each([
+    ["react", "tsx"],
+    ["vue", "vue"],
+    ["svelte", "svelte"],
+  ] as const)(
+    "prints the twelve %s spec parts that register with the Root",
+    (target, extension) => {
+      const files = printTarget(target);
+      for (const part of [
+        "Bar",
+        "Line",
+        "Area",
+        "Pie",
+        "Radar",
+        "RadialBar",
+        "XAxis",
+        "YAxis",
+        "Grid",
+        "PolarGrid",
+        "PolarAngleAxis",
+        "Label",
+      ]) {
+        const kind = `${part[0]!.toLowerCase()}${part.slice(1)}`;
+        const source = files.get(`chart/Chart${part}.${extension}`);
+        expect(source, part).toBeDefined();
+        expect(source, part).toContain(`useChartSpecPart("${kind}", props)`);
+      }
+      const index = files.get("chart/index.ts")!;
+      expect(index).toContain("Bar: ChartBar");
+      expect(index).toContain("ChartBarProps");
+      expect(index).toContain("ChartRootSpecProps");
+      expect(index).toContain("ChartFormat");
+    },
+  );
+
+  it("prints a React part that renders nothing and carries its kind for the server walk", () => {
+    const files = printTarget("react");
+    const bar = files.get("chart/ChartBar.tsx")!;
+    expect(bar).toContain("function ChartBar(props: ChartBarProps): null {");
+    expect(bar).toContain('ChartBar.chartSpecPart = "bar" as const;');
+    expect(bar).toContain("dataKey: string;");
+    expect(files.get("chart/ChartXAxis.tsx")).toContain("tickFormatter?: ChartTickFormatter;");
+    const root = files.get("chart/ChartRoot.tsx")!;
+    // The server render and hydration draw the parts among the children.
+    expect(root).toContain("return buildChartSpec(collectChartSpec(children), { stackOffset });");
+    expect(root).toContain("aria-label={partsMode ? undefined : ariaLabel}");
+    expect(files.get("chart/ChartSurface.tsx")).toContain("warnEmptyChart(root.id)");
+  });
+
+  it("prints a Vue part with runtime props and a Surface that waits on the server", () => {
+    const files = printTarget("vue");
+    const grid = files.get("chart/ChartGrid.vue")!;
+    expect(grid).toContain("vertical: { type: Boolean, default: undefined },");
+    expect(files.get("chart/ChartBar.vue")).toContain(
+      'dataKey: { type: null as unknown as PropType<ChartBarProps["dataKey"]>, required: true },',
+    );
+    const surface = files.get("chart/ChartSurface.vue")!;
+    expect(surface).toContain(
+      "if (root.partsMode) onServerPrefetch(() => void (initial = prerender()));",
+    );
+    expect(surface).toContain('"data-allow-mismatch": root.partsMode ? "style" : undefined,');
+    expect(files.get("chart/ChartRoot.vue")).toContain(
+      "ariaLabel: { type: String, default: undefined },",
+    );
+  });
+
+  it("prints a Svelte Root that probes its parts on the server", () => {
+    const files = printTarget("svelte");
+    const root = files.get("chart/ChartRoot.svelte")!;
+    expect(root).toContain('const probing = typeof document === "undefined"');
+    expect(root).toContain(
+      "{#if probing}<ChartContextProvider {probe} {children} />{/if}{@render children?.()}",
+    );
+    expect(files.get("chart/ChartContextProvider.svelte")).toContain(
+      '{:else if role === "probe"}<template>{@render children?.()}</template>',
+    );
+    expect(files.get("chart/ChartSurface.svelte")).toContain(
+      "<!-- svelte-ignore hydration_html_changed -->",
     );
   });
 });

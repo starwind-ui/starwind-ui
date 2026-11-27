@@ -65,8 +65,12 @@ export function renderVueComponent(
   const setup = `${renderSetup(projection)}${
     exposedRefs.length ? `\n${exposedRefs.join("\n\n")}` : ""
   }${projection.setup.length ? `\n\n${projection.setup.join("\n\n")}` : ""}`;
-  const optionsDeclaration = projection.manuallyForwardsAttrs
-    ? "defineOptions({ inheritAttrs: false });\n\n"
+  const componentOptions = [
+    ...(projection.manuallyForwardsAttrs ? ["inheritAttrs: false"] : []),
+    ...Object.entries(projection.componentOptions).map(([name, code]) => `${name}: ${code}`),
+  ];
+  const optionsDeclaration = componentOptions.length
+    ? `defineOptions({ ${componentOptions.join(", ")} });\n\n`
     : "";
   return serializeVueSfc({
     ...(projection.typeParameters

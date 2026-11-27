@@ -40,7 +40,10 @@ export const buildPrimitivePartApiReference = (
 
   return {
     part: part.name,
-    description: partEnrichment?.description ?? getPrimitivePartFallbackDescription(contract, part),
+    description:
+      partEnrichment?.description ??
+      part.description ??
+      getPrimitivePartFallbackDescription(contract, part),
     descriptionSource: "authored",
     defaultElement: part.defaultElement,
     discoveryAttribute: part.discoveryAttribute,
