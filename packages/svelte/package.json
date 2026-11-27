@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/svelte",
-  "version": "0.3.0",
+  "version": "1.6.0",
   "description": "Accessible Svelte 5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",

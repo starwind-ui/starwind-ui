@@ -1,6 +1,0 @@
-{
-  "impact": "behavior",
-  "primitives": {
-    "popover": "patch"
-  }
-}

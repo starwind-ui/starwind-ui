@@ -1,7 +1,0 @@
-{
-  "impact": "source",
-  "components": {
-    "pagination": "patch",
-    "spinner": "patch"
-  }
-}

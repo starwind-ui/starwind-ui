@@ -1,5 +1,189 @@
 # starwind
 
+## 3.7.0
+
+### Minor Changes
+
+- `starwind add chart` now installs the Chart component at version 1.0.0. To copy the Chart Primitive source into your project, run `starwind primitives add chart`. Chart gives you shadcn-style parts in Astro, React, Vue and Svelte. Put `ChartBar`, `ChartLine`, `ChartArea`, `ChartPie`, `ChartRadar` or `ChartRadialBar` inside `ChartContainer` with your data and a `ChartConfig` for series labels and colors. A radar chart also needs `ChartPolarAngleAxis` for its categories. Without `ChartXAxis`, a bar, line or area chart takes its categories from the first text or date field in your data and shows no x-axis labels. Other parts are optional: add `ChartXAxis`, `ChartYAxis`, `ChartGrid`, `ChartTooltip` and `ChartLegend` as you need them. The parts also take the props of common shadcn/ui examples, such as `label` for values on the bars, `ChartLinearGradient` for gradient fills, four corner radii for stacked bars, `stackOffset="expand"` and `cursor={false}`:
+
+  ```astro
+  <ChartContainer config={chartConfig} data={chartData}>
+    <ChartGrid vertical={false} />
+    <ChartXAxis dataKey="month" tickFormatter={{ maxLength: 3 }} />
+    <ChartBar dataKey="desktop" radius={4} />
+    <ChartLegend />
+  </ChartContainer>
+  ```
+
+  For a chart that the parts cannot draw, pass a TanStack Charts chart module to the `chart` prop of `ChartContainer`. The command also installs `@tanstack/charts` and adds any missing chart color tokens to your CSS file. If it cannot edit that file, it prints the token block for you to paste.
+
+- Starwind Pro now works in Svelte projects. `starwind init`, `starwind setup`, and `starwind add` accept Pro in Vite Svelte, SvelteKit, and Astro with Svelte, as they do in React and Vue projects.
+
+### Patch Changes
+
+- AspectRatio now renders one element with a native CSS aspect ratio in Astro, React, Vue, and Svelte. The default ratio remains square. Classes, styles, attributes and refs now reach the element that controls the ratio. Tall in-flow content can grow beyond the preferred ratio.
+
+  Update copied component files and replace `aspect-ratio-wrapper` selectors and `aspectRatioWrapper` imports with `aspect-ratio` and `aspectRatio`. Review width, padding and border placement. See the [migration guide](https://github.com/starwind-ui/starwind-ui/blob/main/docs/migrations/aspect-ratio-single-element.md) for examples.
+
+  In React, the `as` element now sets the accepted props, so `as="img"` takes `src` and `as="a"` takes `href`. Svelte AspectRatio gets the same types. If a React wrapper types its props with `ComponentProps<typeof AspectRatio>`, use `AspectRatioProps` instead. In Svelte, if you spread typed props next to an `as` that is not `div`, type them as `AspectRatioProps<"tag">`, for example `AspectRatioProps<"img">`.
+
+- Installs now work at the root of a pnpm workspace that has more than one package. Before, each `starwind` command that installs packages, for example `init`, `add`, `update`, `setup` and `primitives add`, failed there with `ERR_PNPM_ADDING_TO_ROOT`. The packages now go into the root `package.json`, and the install command that the CLI prints includes the `-w` flag. Inside a workspace package, the packages still go into that package. npm, Yarn and Bun commands do not change.
+- When `starwind add` installs Sidebar, it now adds any missing sidebar color tokens to your CSS file, as it does for the chart tokens when it installs Chart. Before, a stylesheet from an older setup without these tokens gave the Sidebar no colors. The command adds only the missing `--sidebar-*` and `--color-sidebar-*` tokens and keeps the values that you set. If your `:root` already sets some sidebar colors, it adds no dark mode values, so your colors stay in dark mode. If it cannot edit the file, it prints the token block for you to paste.
+- The CLI now treats Vue and Svelte as stable. The help text no longer calls them beta, and Vue and Svelte components ask for a caret range of the adapter package, for example `^1.6.0`, in place of an exact beta version.
+
+  `starwind init` in a Vue project now checks the Vue version. Below 3.5.21, it asks to upgrade Vue and installs the upgrade together with the Vue adapter.
+
+  `starwind init` in a SvelteKit project now installs `tailwindcss`, `@tailwindcss/vite`, `tw-animate-css` and `@tailwindcss/forms` as dev dependencies. With pnpm and npm, it moves these packages out of `dependencies` when they are there. With Yarn and Bun, it prints a warning that tells you to move them. SvelteKit 3 with adapter-node 6 fails to build when these packages are in `dependencies`.
+
+  If an older CLI set up your SvelteKit 3 project, move `tailwindcss`, `@tailwindcss/vite`, `tw-animate-css` and `@tailwindcss/forms` from `dependencies` to `devDependencies` by hand. `starwind init` does not change a project that is already set up.
+
+- A click during a popup's close animation now goes to the page below the popup. Before, the closing popup caught the click until it was hidden, so a quick click on a trigger or button under it did nothing. Buttons and links inside the closing popup also let the click through, even when they set their own `pointer-events`. This applies to Popover, Color Picker, Tooltip, Preview Card (Styled Hover Card), Menu (Styled Dropdown), Context Menu, Select, Combobox, Navigation Menu, and Styled Sidebar tooltips. When you close a Popover, Menu, Context Menu or Select with focus inside it, or a Navigation Menu with Escape, focus goes back to the trigger as the close starts. The closing popup takes no keyboard input until it hides. A popup that opens again during its close animation takes clicks again at once. An `inert` attribute that your app sets on the popup or its positioner stays as you set it. An optional Popover or Preview Card backdrop still covers the page until it is hidden.
+
+  If an end-to-end test types into a popup right after it closes the popup, change the test to open the popup again before it types.
+
+- Color Picker in a popup now stays open when you press Escape to cancel an edit. Before, if you typed in the value input or a channel input and then pressed Escape, the input went back to the current color and the popup also closed. Now the first Escape only restores the input, and focus stays in it. Press Escape again to close the popup.
+
+  An inline Color Picker inside a Dialog no longer blocks Escape. Before, pressing Escape in its value input or a channel input kept the Dialog open even with nothing to cancel. Now Escape closes the Dialog when the input holds no edit.
+
+- Primitive parts now print the same attributes in Astro, React, Vue and Svelte. If your CSS or tests select these attributes, check the changes below.
+  - A `data-default-*` attribute now shows only the `default*` prop that the part got when it mounted. It no longer follows the current value. For example, a Toggle with both `pressed` and `defaultPressed` now prints `data-default-pressed` in Astro, React and Vue, and Menu checkbox and radio items keep their first marker after the user changes them.
+  - In Svelte, Popover, Menu, Context Menu, Select and Combobox take these attributes from their `default*` props, and they leave out `data-open-on-hover` and `data-close-on-click` when the value is `false`.
+  - In Vue and Svelte, Menu prints `data-open-on-hover="true"` in place of an empty value. A presence selector such as `[data-open-on-hover]` still matches.
+  - In Svelte, the server HTML of Navigation Menu, Select and Combobox now matches the other frameworks. Navigation Menu Root prints `data-default-value`. An enabled Select Trigger leaves out `aria-disabled` until it mounts. A disabled Combobox Trigger and Clear print `aria-disabled="true"`, and the Combobox Trigger prints `data-state`.
+  - In Svelte, Field parts no longer print a default `data-slot`. If your selectors use it, pass `data-slot` to the part. `Form.Root` prints its validation timing attributes only when you set the matching props.
+  - In Svelte, Avatar `onLoadingStatusChange` now runs before listeners on ancestor elements, as in the other frameworks.
+
+- Input and Textarea no longer show the browser's default outline on top of the Starwind focus ring when focused. Before, some browsers drew both rings around the field. The same fix applies in Astro, React, Vue, and Svelte. Run `starwind update input textarea` to get it.
+- Slider, Input OTP, and Color Picker now show a value that the parent sets after the first render. This applies when `value` starts as `undefined` and gets a value later. Before, React and Vue ignored that value. An in-range value does not fire a change callback, a change event, or a model update. If the Runtime corrects the value, for example a Slider value above `max`, Vue `v-model` and Svelte `bind:value` receive the corrected value, so your state matches what the user sees.
+
+  After that late value, a one-way parent that renders again with the same old value no longer undoes the user's last change. This also fixes Svelte Slider, where a later render undid a key press.
+
+  Svelte Color Picker now compares colors by value. A new color object with the same color, for example from `parseColor()` on each render, no longer resets the picker.
+
+  Vue Slider no longer sends an old value to `v-model` after the parent sets a new one.
+
+  React Input OTP with a parent-held `value` now goes back to the parent value when the parent refuses a change. Before, the refused text stayed in the input and in form data.
+
+- Internal cleanup in the installable component files. Unused imports, variables and helpers are gone. Type-only imports use `import type`, and imports follow one sort order in Astro, React and Vue files and in Svelte `index.ts` files. Svelte components use shorthand prop bindings. This cleanup does not change behavior or the public API.
+- Escape on a submenu trigger now closes only the open submenu in Menu, Dropdown, and Context Menu. Before, when you opened a submenu with the pointer and pressed Escape, the whole menu closed. Focus now stays on the submenu trigger. Press Escape again to close the menu.
+- Tooltip and Navigation Menu now stay on screen when their trigger is at the edge of the screen, for example on a phone. Before, the popup kept its alignment, so part of it went off screen. Now the popup moves along its trigger until it is inside the viewport padding. It stays next to the trigger and keeps its side. This also applies to Styled Sidebar tooltips.
+
+  The Styled Tooltip arrow now points at the center of the trigger for every `align` value. It stays inside the popup and away from its rounded corners. When the trigger is too narrow or partly off screen, the arrow points at the nearest part of the trigger that it can reach.
+
+  The Primitive Tooltip arrow and the Primitive Navigation Menu arrow get the same placement when the arrow has a width and a height. The positioner sets `--sw-floating-arrow-x` for a top or bottom side and `--sw-floating-arrow-y` for a left or right side. Each value is the distance from the left or top edge of the popup to the same edge of the arrow, in RTL too. To use it, position a custom arrow absolutely inside the popup, set `left: var(--sw-floating-arrow-x)` or `top: var(--sw-floating-arrow-y)`, and remove any centering transform on that axis.
+
+  Styled Navigation Menu content with no set width now takes the width of its links. Before, it filled the full width of the screen. This content is never wider than the screen minus 2rem. To set a width, add a width class to `NavigationMenuContent`.
+
+- Fixed Popover in React and Vue when the Popup mounts after the Root. Before, the trigger did not open it. A Popup that you hide and show again, or replace with a new `key`, also opens again.
+
+  An open Popup that unmounts now leaves the Root closed and removes the scroll lock. When it mounts again, it opens without a change event.
+
+  In React, a standalone `defaultOpen` Popover with no Portal no longer throws when it mounts.
+
+- Escape in a Select or Combobox inside a Popover now closes only that inner list. Before, when focus was on the inner trigger or input, the same Escape also closed the Popover. In React, Vue, and Svelte, this closed the whole Color Picker popup when you pressed Escape on its open format list. Press Escape again to close the Popover.
+- `starwind add` and `starwind update` now install the RTL-aware Styled components. New stylesheet setup includes scoped `rtl` and `ltr` variants. Use `starwind update` to review copied Styled components. Use `starwind primitives update --all` to update vendored Primitive files with the matching Runtime package.
+
+  Styled Dropdown and Context Menu submenus now open toward the reading end when there is room. In RTL they open on the left, and in LTR they open on the right. Near a screen edge, a submenu can still flip to the other side. A `side` that you set keeps its meaning. Styled Progress fills from the right in RTL.
+
+  `starwind init` and `starwind setup` now install `tailwind-merge` `^3.7.0` for Astro, React, Vue, and Svelte. Vue and Svelte setup did not install it before, although their Styled components import it. `starwind add` and `starwind update` raise an older `tailwind-merge` to `^3.7.0` when you add or update one of the 30 Styled components that changed for RTL. With an older version, a `px-*` class that you pass to one of these components does not replace its `ps-*` and `pe-*` padding.
+
+  An existing stylesheet needs the two scoped variants only if your app puts LTR content inside an RTL page, or if your own `ltr:` classes must work inside an RTL area. A page with one direction works without them, and so do RTL sections inside an LTR page. To add them, follow the [RTL guide](https://starwind.dev/docs/getting-started/rtl/), and review your own custom variant definitions first. The variants need no change to your Vite config, and Vite 8 production builds give the same result as dev.
+
+  The component styles read the `dir` attribute. When the text direction of a control is different from the page, set `dir="rtl"` or `dir="ltr"` on the control or its container. The guide explains the `dir="auto"` rules and the edge cases of stock Tailwind `ltr:`.
+
+- Combobox, Select, Menu (Styled Dropdown) and Context Menu now close when you press Tab right after the click that opened them. Before, a fast Tab after the click moved focus out of the popup, but the popup stayed open.
+
+  In React and Vue, a Navigation Menu with a `defaultValue` no longer opens again after the user closes it and a prop on its Root changes.
+
+  In a Menu or Context Menu radio group with no `value` or `defaultValue`, an explicit `aria-checked` on a radio item now decides its first state. Before, an item with `aria-checked="false"` and `defaultChecked` could take the group value from a later checked item.
+
+- Skeleton no longer pulses for people who turn on "reduce motion" in their system settings. The placeholder stays visible and still. The same fix applies in Astro, React, Vue, and Svelte. Run `starwind update skeleton` to get it.
+- The Vue and Svelte Styled Spinner now announces its loading status to screen readers, as in Astro and React. Before, the icon hid the status.
+
+  The Styled Pagination Ellipsis is now hidden from screen readers in Astro, React, Vue and Svelte, with `aria-hidden="true"`.
+
+  In Vue, the Styled Pagination Next and Previous parts now accept your own `aria-label`, and Pagination Link accepts your own `aria-current`. Before, the default value replaced yours.
+
+- The Svelte Styled `TooltipTrigger` with text content now has the same classes as in React and Vue. A Svelte `TooltipTrigger` without a `child` snippet no longer adds `inline-flex`. To use your own element as the trigger, use the `child` snippet. To keep the old layout on a text trigger, add `class="inline-flex"`.
+- The Svelte Alert Dialog package export `getAlertDialogControlRefresh` is removed. It is replaced by `__useAlertDialogControl()`, the same helper name that React and Vue use. In Svelte, it returns an attachment that you spread on the control element.
+
+  Copied Styled `AlertDialogAction.svelte` and `AlertDialogCancel.svelte` files from an older release import the removed export. When you update `@starwind-ui/svelte`, run `starwind update alert-dialog` in the same step. If you keep your own copies, change the import to `__useAlertDialogControl` and delete the old `createAttachmentKey` block. Call the helper once in the component script, then spread the result on the button. Keep the `data-sw-alert-dialog-close` attribute, because the dialog uses it to find the button that closes it:
+
+  ```svelte
+  <script lang="ts">
+    const controlAttachment = __useAlertDialogControl();
+  </script>
+
+  <Button data-sw-alert-dialog-close {...controlAttachment}>Continue</Button>
+  ```
+
+- Svelte Input no longer clears the text that the user typed when the parent changes another prop, such as `class` or `disabled`. This happened when the Input had no `value` prop or used `bind:value`. `Field.Control` gets the same fix.
+- Removed the snippet arguments that only Svelte passed to child content. These snippets now receive no arguments:
+  - `children` on the Navigation Menu, Slider, Tabs, and Accordion roots.
+  - `children` on `Tabs.Tab` and `Tabs.Panel`, which received `active`.
+  - `children` on `Select.Value`, which received `label` and `value`.
+  - `children` on the Styled `NavigationMenu` and `SelectValue`.
+
+  If you read the root value from a snippet argument, use `bind:value` on the root instead.
+
+  If you read `active` in a Tab or Panel snippet, style with the `data-state="active"` attribute, or compare the Tabs `bind:value` with the item value.
+
+  If you read `label` or `value` in a `Select.Value` snippet, use `bind:value` on the Select root and find the label from that value. Leave `Select.Value` empty to show the selected label.
+
+  Update copied Styled `NavigationMenu.svelte` and `SelectValue.svelte` files with `starwind update navigation-menu select`. The old files pass the removed arguments.
+
+- The Svelte `SidebarContextValue` type no longer has `isMobile` or `setMobileOpen()`. It now has the same members as the React type.
+
+  If you called `setMobileOpen()`, use `bind:mobileOpen` on `SidebarProvider` to open or close the mobile sidebar.
+
+  If you read `isMobile`, use your own media query to know if the viewport is mobile, such as `matchMedia()` with the query you pass to `mobileQuery`.
+
+- Vue Combobox now shows the item label in the input when the parent sets a value after the first render, with `v-model` or a one-way `value` prop. Before, the input stayed empty.
+- Fixed Vue controls so that they match React:
+  - `CollapsibleTrigger` with a bare `disabled` attribute is now disabled.
+  - A disabled `PreviewCardTrigger` no longer runs your click listener.
+  - With `asChild`, the Trigger and Close parts of Dialog, Alert Dialog, and Drawer, and `Select.Trigger`, now accept a child wrapped in one fragment or next to an empty `v-if`. Other `asChild` parts already accepted this.
+
+  Tooltip, Menu, Navigation Menu, Popover, Combobox, Collapsible, Preview Card, and Sidebar now use the same `asChild` child handling. Their public API is unchanged. An invalid `asChild` child in these parts now gives one shorter error message.
+
+- `@starwind-ui/vue` now needs Vue 3.5.21 or newer. Vue 3.5.0 to 3.5.20 throw an error when a hydrated component that renders a portal unmounts. The `vue` peer range is now `>=3.5.21`.
+
+  If your project uses an older Vue 3.5 version, upgrade Vue in the same step as `@starwind-ui/vue`, for example `npm install @starwind-ui/vue vue@^3.5.21`. Copied Styled components and vendored Primitive files ask for the same Vue range.
+
+- Removed the slot props that only Vue passed to child content. These default slots now receive no props:
+  - The Tabs root, which passed `value` and `orientation`.
+  - The Accordion root, which passed `value`.
+  - `Tabs.Tab` and `Tabs.Panel`, which passed `active`.
+  - `Select.Value` and the Styled `SelectValue`, which passed `label` and `value`.
+
+  If you read `value` from a root slot, use `v-model` on the root instead.
+
+  If you read `orientation` from the Tabs root slot, use the `orientation` prop that you pass, or the root's `data-orientation` attribute.
+
+  If you read `active` in a Tab or Panel slot, style with the `data-state="active"` attribute, or compare the Tabs `v-model` with the item value.
+
+  If you read `label` or `value` in a `Select.Value` slot, use `v-model` on the Select root and find the label from that value. Leave `Select.Value` empty to show the selected label.
+
+  Update a copied Styled `SelectValue.vue` file with `starwind update select`.
+
+- Vue and Svelte no longer export internal context keys and members that only the Primitive parts use. The public API now matches React.
+
+  Vue:
+  - `DialogContext`, `AlertDialogContext` and `DrawerContext` are removed.
+  - `SelectContextValue` no longer has `element`, `mounted`, `requestRefresh()` or `registerPortal()`.
+  - `ComboboxContextValue` no longer has `element`, `mounted` or `registerPortal()`.
+  - `TabsContextValue` no longer has `refresh()`.
+
+  Svelte:
+  - `CheckboxGroupContext` and `CheckboxGroupContextValue` are removed from `@starwind-ui/svelte/checkbox` and from `@starwind-ui/svelte`. Use the checkbox group components to group checkboxes.
+  - `SelectContextValue` no longer has `mounted`, `registerTrigger()` or `registerPortal()`.
+
+  The state fields stay, for example `open`, `value` and `disabled`. If your code imports a removed key or calls a removed member, delete that code. The parts get these values from their Root.
+
+- In Vue and Svelte, `useSidebarContext()` now returns `null` outside a `SidebarProvider`, as in React. Before, it threw an error. `Sidebar`, `SidebarTrigger`, `SidebarRail`, and `SidebarMenuButton` now render outside a Provider in the expanded state, with `aria-expanded="false"` on the trigger and rail.
+
+  If you call `useSidebarContext()`, check for `null` before you read its fields.
+
 ## 3.6.0
 
 ### Minor Changes
