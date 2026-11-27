@@ -59,6 +59,27 @@ function installedPackage(file: string) {
   return `file:${file}`;
 }
 
+// The packed adapters depend on the exact Runtime version of this release. Before publication that
+// version is not on npm yet, so the overrides resolve every Starwind package to its local archive.
+function workspace(framework: Framework, packs: CandidatePacks) {
+  const overrides = {
+    "@starwind-ui/runtime": installedPackage(packs.files.runtime),
+    [`@starwind-ui/${framework}`]: installedPackage(packs.files[framework]),
+    starwind: installedPackage(packs.files.cli),
+  };
+  return [
+    "packages: []",
+    "allowBuilds:",
+    "  esbuild: true",
+    "  sharp: true",
+    "overrides:",
+    ...Object.entries(overrides).map(
+      ([name, spec]) => `  ${JSON.stringify(name)}: ${JSON.stringify(spec)}`,
+    ),
+    "",
+  ].join("\n");
+}
+
 function manifest(framework: Framework, packs: CandidatePacks) {
   const dependencies: Record<string, string> = {
     "@starwind-ui/runtime": installedPackage(packs.files.runtime),
@@ -296,7 +317,7 @@ export async function installCandidateHosts(repoRoot: string, root: string, pack
       await mkdir(host, { recursive: true });
       await files(host, {
         "package.json": `${JSON.stringify(manifest(framework, packs), null, 2)}\n`,
-        "pnpm-workspace.yaml": "packages: []\nallowBuilds:\n  esbuild: true\n  sharp: true\n",
+        "pnpm-workspace.yaml": workspace(framework, packs),
         ...withCompensatedControls(framework, hostFiles(framework)),
       });
       await run(host, "install", "pnpm", ["install"]);
