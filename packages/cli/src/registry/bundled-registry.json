@@ -3,7 +3,7 @@
   "version": "2.2.0",
   "setup": {
     "astro": {
-      "adapterPackage": { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+      "adapterPackage": { "name": "@starwind-ui/astro", "range": "^1.6.0" },
       "packageRequirements": [
         { "name": "@tabler/icons", "range": "^3" },
         { "name": "@tailwindcss/forms", "range": "^0.5" },
@@ -15,7 +15,7 @@
       ]
     },
     "react": {
-      "adapterPackage": { "name": "@starwind-ui/react", "range": "^1.5.0" },
+      "adapterPackage": { "name": "@starwind-ui/react", "range": "^1.6.0" },
       "packageRequirements": [
         { "name": "@tabler/icons-react", "range": "^3" },
         { "name": "@tailwindcss/forms", "range": "^0.5" },
@@ -27,14 +27,14 @@
       ]
     },
     "vue": {
-      "adapterPackage": { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+      "adapterPackage": { "name": "@starwind-ui/vue", "range": "^1.6.0" },
       "packageRequirements": [
         { "name": "tailwind-merge", "range": "^3.7.0" },
         { "name": "vue", "range": ">=3.5.21" }
       ]
     },
     "svelte": {
-      "adapterPackage": { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+      "adapterPackage": { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
       "packageRequirements": [
         { "name": "svelte", "range": ">=5.29.0 <6" },
         { "name": "tailwind-merge", "range": "^3.7.0" }
@@ -44,8 +44,8 @@
   "components": [
     {
       "name": "badge",
-      "sourceVersion": "1.5.0",
-      "version": "1.5.0",
+      "sourceVersion": "1.5.1",
+      "version": "1.5.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -66,7 +66,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -88,7 +88,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -110,7 +110,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -132,7 +132,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -141,8 +141,8 @@
     },
     {
       "name": "label",
-      "sourceVersion": "1.3.1",
-      "version": "1.3.1",
+      "sourceVersion": "1.3.2",
+      "version": "1.3.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -163,7 +163,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -185,7 +185,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -207,7 +207,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -229,7 +229,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -238,8 +238,8 @@
     },
     {
       "name": "kbd",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -264,7 +264,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -290,7 +290,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -316,7 +316,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -342,7 +342,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -351,8 +351,8 @@
     },
     {
       "name": "textarea",
-      "sourceVersion": "1.4.1",
-      "version": "1.4.1",
+      "sourceVersion": "1.4.2",
+      "version": "1.4.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -373,7 +373,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -395,7 +395,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -417,7 +417,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -439,7 +439,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -448,8 +448,8 @@
     },
     {
       "name": "separator",
-      "sourceVersion": "1.1.1",
-      "version": "1.1.1",
+      "sourceVersion": "1.1.2",
+      "version": "1.1.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -470,7 +470,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -492,7 +492,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -514,7 +514,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -536,7 +536,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -545,8 +545,8 @@
     },
     {
       "name": "skeleton",
-      "sourceVersion": "1.3.1",
-      "version": "1.3.1",
+      "sourceVersion": "1.3.2",
+      "version": "1.3.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -567,7 +567,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -589,7 +589,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -611,7 +611,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -633,7 +633,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -642,8 +642,8 @@
     },
     {
       "name": "spinner",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -664,7 +664,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -687,7 +687,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -710,7 +710,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -732,7 +732,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -741,8 +741,8 @@
     },
     {
       "name": "card",
-      "sourceVersion": "2.3.2",
-      "version": "2.3.2",
+      "sourceVersion": "2.3.3",
+      "version": "2.3.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -787,7 +787,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -833,7 +833,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -879,7 +879,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -925,7 +925,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -934,8 +934,8 @@
     },
     {
       "name": "breadcrumb",
-      "sourceVersion": "1.2.2",
-      "version": "1.2.2",
+      "sourceVersion": "1.2.3",
+      "version": "1.2.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -980,7 +980,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -1028,7 +1028,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -1076,7 +1076,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -1123,7 +1123,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1133,8 +1133,8 @@
     },
     {
       "name": "alert",
-      "sourceVersion": "1.4.2",
-      "version": "1.4.2",
+      "sourceVersion": "1.4.3",
+      "version": "1.4.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1163,7 +1163,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1193,7 +1193,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1223,7 +1223,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -1253,7 +1253,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1262,8 +1262,8 @@
     },
     {
       "name": "aspect-ratio",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "2.0.0",
+      "version": "2.0.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1284,7 +1284,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1306,7 +1306,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1328,7 +1328,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -1350,7 +1350,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1359,8 +1359,8 @@
     },
     {
       "name": "avatar",
-      "sourceVersion": "2.1.1",
-      "version": "2.1.1",
+      "sourceVersion": "2.1.2",
+      "version": "2.1.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1397,7 +1397,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1435,7 +1435,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1473,7 +1473,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -1511,7 +1511,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1520,8 +1520,8 @@
     },
     {
       "name": "checkbox",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.1.1",
+      "version": "2.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1546,7 +1546,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -1574,7 +1574,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -1602,7 +1602,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -1629,7 +1629,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1639,8 +1639,8 @@
     },
     {
       "name": "checkbox-group",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1661,7 +1661,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1683,7 +1683,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1705,7 +1705,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -1727,7 +1727,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1736,8 +1736,8 @@
     },
     {
       "name": "combobox",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1814,7 +1814,7 @@
           ],
           "componentDependencies": ["input-group"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -1894,7 +1894,7 @@
           ],
           "componentDependencies": ["input-group"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -1974,7 +1974,7 @@
           ],
           "componentDependencies": ["input-group"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -2053,7 +2053,7 @@
           ],
           "componentDependencies": ["input-group"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2063,8 +2063,8 @@
     },
     {
       "name": "color-picker",
-      "sourceVersion": "2.3.0",
-      "version": "2.3.0",
+      "sourceVersion": "2.4.0",
+      "version": "2.4.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2137,7 +2137,7 @@
           ],
           "componentDependencies": ["input", "native-select", "popover", "select"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -2213,7 +2213,7 @@
           ],
           "componentDependencies": ["input", "native-select", "popover", "select"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -2289,8 +2289,8 @@
           ],
           "componentDependencies": ["input", "native-select", "popover", "select"],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.5.0" },
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "^1.6.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -2365,7 +2365,7 @@
           ],
           "componentDependencies": ["input", "native-select", "popover", "select"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2375,8 +2375,8 @@
     },
     {
       "name": "input",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.1.1",
+      "version": "2.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2397,7 +2397,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2420,7 +2420,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2443,7 +2443,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -2466,7 +2466,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2476,8 +2476,8 @@
     },
     {
       "name": "input-group",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.2.1",
+      "version": "1.2.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2518,7 +2518,7 @@
           ],
           "componentDependencies": ["button", "input", "textarea"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2561,7 +2561,7 @@
           ],
           "componentDependencies": ["button", "input", "textarea"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2604,7 +2604,7 @@
           ],
           "componentDependencies": ["button", "input", "textarea"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -2647,7 +2647,7 @@
           ],
           "componentDependencies": ["button", "input", "textarea"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2657,8 +2657,8 @@
     },
     {
       "name": "input-otp",
-      "sourceVersion": "3.1.0",
-      "version": "3.1.0",
+      "sourceVersion": "3.2.0",
+      "version": "3.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2695,7 +2695,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -2735,7 +2735,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -2775,7 +2775,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -2814,7 +2814,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2824,8 +2824,8 @@
     },
     {
       "name": "item",
-      "sourceVersion": "1.2.2",
-      "version": "1.2.2",
+      "sourceVersion": "1.2.3",
+      "version": "1.2.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2882,7 +2882,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2940,7 +2940,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2998,7 +2998,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -3056,7 +3056,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3065,8 +3065,8 @@
     },
     {
       "name": "native-select",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3095,7 +3095,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -3127,7 +3127,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -3159,7 +3159,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -3190,7 +3190,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3200,8 +3200,8 @@
     },
     {
       "name": "navigation-menu",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3250,7 +3250,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -3302,7 +3302,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -3354,7 +3354,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -3405,7 +3405,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3415,8 +3415,8 @@
     },
     {
       "name": "pagination",
-      "sourceVersion": "5.0.1",
-      "version": "5.0.1",
+      "sourceVersion": "5.0.2",
+      "version": "5.0.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3461,7 +3461,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -3509,7 +3509,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -3557,7 +3557,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -3604,7 +3604,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3614,8 +3614,8 @@
     },
     {
       "name": "progress",
-      "sourceVersion": "2.0.3",
-      "version": "2.0.3",
+      "sourceVersion": "2.1.0",
+      "version": "2.1.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3636,7 +3636,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3659,7 +3659,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3682,7 +3682,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -3705,7 +3705,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3715,8 +3715,8 @@
     },
     {
       "name": "prose",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3741,7 +3741,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3768,7 +3768,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3795,7 +3795,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -3822,7 +3822,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3832,8 +3832,8 @@
     },
     {
       "name": "radio-group",
-      "sourceVersion": "3.1.0",
-      "version": "3.1.0",
+      "sourceVersion": "3.2.0",
+      "version": "3.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3858,7 +3858,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3885,7 +3885,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3912,7 +3912,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -3938,7 +3938,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3947,8 +3947,8 @@
     },
     {
       "name": "scroll-area",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3993,7 +3993,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4040,7 +4040,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4087,7 +4087,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -4134,7 +4134,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4144,8 +4144,8 @@
     },
     {
       "name": "select",
-      "sourceVersion": "2.2.0",
-      "version": "2.2.0",
+      "sourceVersion": "2.3.0",
+      "version": "2.3.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -4210,7 +4210,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -4278,7 +4278,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -4346,7 +4346,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -4413,7 +4413,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4423,8 +4423,8 @@
     },
     {
       "name": "slider",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -4445,7 +4445,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4468,7 +4468,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4491,7 +4491,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -4514,7 +4514,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4524,8 +4524,8 @@
     },
     {
       "name": "switch",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.1.1",
+      "version": "2.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -4550,7 +4550,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4577,7 +4577,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4604,7 +4604,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -4631,7 +4631,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4641,8 +4641,8 @@
     },
     {
       "name": "tabs",
-      "sourceVersion": "2.2.0",
-      "version": "2.2.0",
+      "sourceVersion": "2.3.0",
+      "version": "2.3.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -4675,7 +4675,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4709,7 +4709,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4743,7 +4743,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -4777,7 +4777,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4786,8 +4786,8 @@
     },
     {
       "name": "table",
-      "sourceVersion": "1.2.2",
-      "version": "1.2.2",
+      "sourceVersion": "1.2.3",
+      "version": "1.2.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -4836,7 +4836,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4887,7 +4887,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4938,7 +4938,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -4989,7 +4989,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4999,8 +4999,8 @@
     },
     {
       "name": "toast",
-      "sourceVersion": "2.1.1",
-      "version": "2.1.1",
+      "sourceVersion": "2.1.2",
+      "version": "2.1.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5053,7 +5053,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -5109,7 +5109,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -5165,7 +5165,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -5220,7 +5220,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5230,8 +5230,8 @@
     },
     {
       "name": "hover-card",
-      "sourceVersion": "2.3.0",
-      "version": "2.3.0",
+      "sourceVersion": "2.4.0",
+      "version": "2.4.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5260,7 +5260,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5290,7 +5290,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5320,7 +5320,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -5350,7 +5350,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5359,8 +5359,8 @@
     },
     {
       "name": "tooltip",
-      "sourceVersion": "2.3.0",
-      "version": "2.3.0",
+      "sourceVersion": "2.4.0",
+      "version": "2.4.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5389,7 +5389,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5420,7 +5420,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5451,7 +5451,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -5481,7 +5481,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5490,8 +5490,8 @@
     },
     {
       "name": "theme-toggle",
-      "sourceVersion": "2.0.1",
-      "version": "2.0.1",
+      "sourceVersion": "2.0.2",
+      "version": "2.0.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5512,7 +5512,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5535,7 +5535,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5558,7 +5558,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -5580,7 +5580,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5589,8 +5589,8 @@
     },
     {
       "name": "toggle",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.1.1",
+      "version": "2.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5611,7 +5611,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5633,7 +5633,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5655,7 +5655,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -5677,7 +5677,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5686,8 +5686,8 @@
     },
     {
       "name": "toggle-group",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5712,7 +5712,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5739,7 +5739,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5766,7 +5766,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -5793,7 +5793,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5803,8 +5803,8 @@
     },
     {
       "name": "video",
-      "sourceVersion": "1.1.1",
-      "version": "1.1.1",
+      "sourceVersion": "1.1.2",
+      "version": "1.1.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5825,7 +5825,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5847,7 +5847,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5869,7 +5869,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -5891,7 +5891,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -5900,8 +5900,8 @@
     },
     {
       "name": "button-group",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -5930,7 +5930,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5961,7 +5961,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -5992,7 +5992,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -6023,7 +6023,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -6033,8 +6033,8 @@
     },
     {
       "name": "carousel",
-      "sourceVersion": "2.0.2",
-      "version": "2.0.2",
+      "sourceVersion": "2.1.0",
+      "version": "2.1.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -6071,7 +6071,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -6111,7 +6111,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -6151,8 +6151,8 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.5.0" },
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "^1.6.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -6191,7 +6191,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -6291,7 +6291,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tanstack/charts", "range": "^1.5.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -6383,7 +6383,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tanstack/charts", "range": "^1.5.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -6475,7 +6475,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "@tanstack/charts", "range": "^1.5.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
@@ -6567,7 +6567,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "@tanstack/charts", "range": "^1.5.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -6578,8 +6578,8 @@
     },
     {
       "name": "button",
-      "sourceVersion": "3.0.3",
-      "version": "3.0.3",
+      "sourceVersion": "3.0.4",
+      "version": "3.0.4",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -6600,7 +6600,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -6622,7 +6622,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -6644,7 +6644,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -6666,7 +6666,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -6675,8 +6675,8 @@
     },
     {
       "name": "collapsible",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.1.1",
+      "version": "2.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -6705,7 +6705,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -6735,7 +6735,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -6765,7 +6765,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -6795,7 +6795,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -6804,8 +6804,8 @@
     },
     {
       "name": "accordion",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.1.1",
+      "version": "2.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -6838,7 +6838,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -6874,7 +6874,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -6910,7 +6910,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -6945,7 +6945,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -6955,8 +6955,8 @@
     },
     {
       "name": "dialog",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -7009,7 +7009,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -7065,7 +7065,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -7121,7 +7121,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -7176,7 +7176,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -7186,8 +7186,8 @@
     },
     {
       "name": "dropdown",
-      "sourceVersion": "3.4.0",
-      "version": "3.4.0",
+      "sourceVersion": "3.5.0",
+      "version": "3.5.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -7272,7 +7272,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -7360,7 +7360,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -7448,7 +7448,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -7535,7 +7535,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -7545,8 +7545,8 @@
     },
     {
       "name": "dropzone",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.1.1",
+      "version": "2.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -7579,7 +7579,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -7614,7 +7614,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -7649,7 +7649,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -7683,7 +7683,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -7692,8 +7692,8 @@
     },
     {
       "name": "context-menu",
-      "sourceVersion": "2.3.0",
-      "version": "2.3.0",
+      "sourceVersion": "2.4.0",
+      "version": "2.4.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -7774,7 +7774,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -7858,7 +7858,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -7942,7 +7942,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -8025,7 +8025,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -8035,8 +8035,8 @@
     },
     {
       "name": "sheet",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -8085,7 +8085,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -8137,7 +8137,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -8189,7 +8189,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -8240,7 +8240,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -8250,8 +8250,8 @@
     },
     {
       "name": "sidebar",
-      "sourceVersion": "2.2.0",
-      "version": "2.2.0",
+      "sourceVersion": "2.3.0",
+      "version": "2.3.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -8364,7 +8364,7 @@
           ],
           "componentDependencies": ["button", "input", "separator", "sheet", "skeleton", "tooltip"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -8480,7 +8480,7 @@
           ],
           "componentDependencies": ["button", "input", "separator", "sheet", "skeleton", "tooltip"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
@@ -8596,7 +8596,7 @@
           ],
           "componentDependencies": ["button", "input", "separator", "sheet", "skeleton", "tooltip"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -8711,7 +8711,7 @@
           ],
           "componentDependencies": ["button", "input", "separator", "sheet", "skeleton", "tooltip"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -8743,7 +8743,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -8752,8 +8752,8 @@
     },
     {
       "name": "form",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.1",
+      "sourceVersion": "1.1.2",
+      "version": "1.1.2",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -8778,7 +8778,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -8805,7 +8805,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -8832,8 +8832,8 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.5.0" },
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "^1.6.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -8860,7 +8860,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -8870,8 +8870,8 @@
     },
     {
       "name": "field",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -8940,7 +8940,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -9011,7 +9011,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -9082,8 +9082,8 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/runtime", "range": "^1.5.0" },
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/runtime", "range": "^1.6.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -9154,7 +9154,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -9164,8 +9164,8 @@
     },
     {
       "name": "popover",
-      "sourceVersion": "2.2.0",
-      "version": "2.2.0",
+      "sourceVersion": "2.3.0",
+      "version": "2.3.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -9206,7 +9206,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -9248,7 +9248,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -9290,7 +9290,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
           ]
@@ -9332,7 +9332,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -9341,8 +9341,8 @@
     },
     {
       "name": "alert-dialog",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -9395,7 +9395,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.5.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.6.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -9450,7 +9450,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.5.0" },
+            { "name": "@starwind-ui/react", "range": "^1.6.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -9505,7 +9505,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/vue", "range": "^0.4.0" },
+            { "name": "@starwind-ui/vue", "range": "^1.6.0" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" },
             { "name": "vue", "range": ">=3.5.21" }
@@ -9560,7 +9560,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/svelte", "range": "^0.3.0" },
+            { "name": "@starwind-ui/svelte", "range": "^1.6.0" },
             { "name": "svelte", "range": ">=5.29.0 <6" },
             { "name": "tailwind-merge", "range": "^3.7.0" },
             { "name": "tailwind-variants", "range": "^3.2.2" }

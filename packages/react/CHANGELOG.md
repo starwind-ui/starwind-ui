@@ -1,5 +1,89 @@
 # @starwind-ui/react
 
+## 1.6.0
+
+### Minor Changes
+
+- Add the Chart Primitive at `@starwind-ui/<framework>/chart`. Put chart parts inside `Chart.Root` with your `data` and `config`: `Chart.Bar`, `Chart.Line`, `Chart.Area`, `Chart.Pie`, `Chart.Radar` and `Chart.RadialBar` draw the values, and `Chart.XAxis`, `Chart.YAxis`, `Chart.Grid`, `Chart.PolarGrid`, `Chart.PolarAngleAxis` and `Chart.Label` add axes, grid lines and center text. `Chart.LinearGradient` adds gradient fills. Compose the surface, tooltip and legend parts in the same root. The parts and props are the same in Astro, React, Vue and Svelte.
+
+  The parts take the props of common shadcn/ui examples, such as `label` on the mark parts in place of a nested `LabelList`, four corner radii on `Chart.Bar`, `stackOffset="expand"` on `Chart.Root` and `cursor={false}` on `Chart.Tooltip`. The legend lists only the series that the chart draws.
+
+  `tickFormatter`, `formatter` and `labelFormatter` take a `ChartFormat` object in every framework. React, Vue and Svelte also take functions. `{ configLabel: true }` shows the config label of a value. In Astro, functions cannot reach the browser, so use a format object or put the function in a chart module.
+
+  For a chart that the parts cannot draw, pass a chart module to the `chart` prop. Install `@tanstack/charts` in your app to write chart modules.
+
+- Components now follow HTML direction in Astro, React, Vue 3.5 and Svelte 5.29+. In RTL, horizontal arrow keys, Slider, Carousel and popups follow the direction of the element that contains the component. A popup that renders in a portal copies that direction while it is open. `side="left"` and `side="right"` still mean the physical side. Form values do not change with direction.
+
+  Primitive Menu submenus still default to `side="bottom"`. Styled Dropdown and Context Menu submenus now open toward the reading end.
+
+  Slider now sets `inset-inline-start` on the thumb and indicator in place of `left`. If your CSS animates or overrides `left` on these parts, or a script reads `style.left`, use `inset-inline-start`.
+
+  Set `dir` on the page or on the element that contains the component. The Styled stylesheet steps are in the `starwind` release notes and the [RTL guide](https://starwind.dev/docs/getting-started/rtl/).
+
+  In RTL apps, change padding meant for the reading edge to logical utilities, such as `pl-6` to `ps-6`. Remove your own RTL workarounds that the components now handle.
+
+  Components read the direction when the user interacts with them. If your app changes `dir` after the page loads, run `document.dispatchEvent(new Event("starwind:direction-change"))` after the change. The components on the page then update, open popups included. Without the event, each component uses the new direction at its next interaction.
+
+  Thanks @SalahAdDin for reporting [#283](https://github.com/starwind-ui/starwind-ui/issues/283) and starting this work in [#290](https://github.com/starwind-ui/starwind-ui/pull/290).
+
+### Patch Changes
+
+- A click during a popup's close animation now goes to the page below the popup. Before, the closing popup caught the click until it was hidden, so a quick click on a trigger or button under it did nothing. Buttons and links inside the closing popup also let the click through, even when they set their own `pointer-events`. This applies to Popover, Color Picker, Tooltip, Preview Card (Styled Hover Card), Menu (Styled Dropdown), Context Menu, Select, Combobox, Navigation Menu, and Styled Sidebar tooltips. When you close a Popover, Menu, Context Menu or Select with focus inside it, or a Navigation Menu with Escape, focus goes back to the trigger as the close starts. The closing popup takes no keyboard input until it hides. A popup that opens again during its close animation takes clicks again at once. An `inert` attribute that your app sets on the popup or its positioner stays as you set it. An optional Popover or Preview Card backdrop still covers the page until it is hidden.
+
+  If an end-to-end test types into a popup right after it closes the popup, change the test to open the popup again before it types.
+
+- Color Picker in a popup now stays open when you press Escape to cancel an edit. Before, if you typed in the value input or a channel input and then pressed Escape, the input went back to the current color and the popup also closed. Now the first Escape only restores the input, and focus stays in it. Press Escape again to close the popup.
+
+  An inline Color Picker inside a Dialog no longer blocks Escape. Before, pressing Escape in its value input or a channel input kept the Dialog open even with nothing to cancel. Now Escape closes the Dialog when the input holds no edit.
+
+- Primitive parts now print the same attributes in Astro, React, Vue and Svelte. If your CSS or tests select these attributes, check the changes below.
+  - A `data-default-*` attribute now shows only the `default*` prop that the part got when it mounted. It no longer follows the current value. For example, a Toggle with both `pressed` and `defaultPressed` now prints `data-default-pressed` in Astro, React and Vue, and Menu checkbox and radio items keep their first marker after the user changes them.
+  - In Svelte, Popover, Menu, Context Menu, Select and Combobox take these attributes from their `default*` props, and they leave out `data-open-on-hover` and `data-close-on-click` when the value is `false`.
+  - In Vue and Svelte, Menu prints `data-open-on-hover="true"` in place of an empty value. A presence selector such as `[data-open-on-hover]` still matches.
+  - In Svelte, the server HTML of Navigation Menu, Select and Combobox now matches the other frameworks. Navigation Menu Root prints `data-default-value`. An enabled Select Trigger leaves out `aria-disabled` until it mounts. A disabled Combobox Trigger and Clear print `aria-disabled="true"`, and the Combobox Trigger prints `data-state`.
+  - In Svelte, Field parts no longer print a default `data-slot`. If your selectors use it, pass `data-slot` to the part. `Form.Root` prints its validation timing attributes only when you set the matching props.
+  - In Svelte, Avatar `onLoadingStatusChange` now runs before listeners on ancestor elements, as in the other frameworks.
+
+- Each package now includes Markdown docs that match its installed version. Open `node_modules/<package>/docs/README.md`, or point a coding agent at `docs/llms.txt` in the same folder.
+
+  Runtime docs cover `initStarwind`, raw HTML setup, theme helpers, and a page for every controller. The Astro, React, Vue, and Svelte docs have a page for every Primitive. Each page uses that framework's imports and syntax. Vue pages list `v-model` bindings and events, and Svelte pages list `bind:` props and callbacks. Callback rows show the full signature, for example `(value, details) => void`. The Field page lists the `Field.Control` props, and the Preview Card page lists the Trigger delay props. Component behavior and the public API are unchanged.
+
+- Slider, Input OTP, and Color Picker now show a value that the parent sets after the first render. This applies when `value` starts as `undefined` and gets a value later. Before, React and Vue ignored that value. An in-range value does not fire a change callback, a change event, or a model update. If the Runtime corrects the value, for example a Slider value above `max`, Vue `v-model` and Svelte `bind:value` receive the corrected value, so your state matches what the user sees.
+
+  After that late value, a one-way parent that renders again with the same old value no longer undoes the user's last change. This also fixes Svelte Slider, where a later render undid a key press.
+
+  Svelte Color Picker now compares colors by value. A new color object with the same color, for example from `parseColor()` on each render, no longer resets the picker.
+
+  Vue Slider no longer sends an old value to `v-model` after the parent sets a new one.
+
+  React Input OTP with a parent-held `value` now goes back to the parent value when the parent refuses a change. Before, the refused text stayed in the input and in form data.
+
+- Escape on a submenu trigger now closes only the open submenu in Menu, Dropdown, and Context Menu. Before, when you opened a submenu with the pointer and pressed Escape, the whole menu closed. Focus now stays on the submenu trigger. Press Escape again to close the menu.
+- Tooltip and Navigation Menu now stay on screen when their trigger is at the edge of the screen, for example on a phone. Before, the popup kept its alignment, so part of it went off screen. Now the popup moves along its trigger until it is inside the viewport padding. It stays next to the trigger and keeps its side. This also applies to Styled Sidebar tooltips.
+
+  The Styled Tooltip arrow now points at the center of the trigger for every `align` value. It stays inside the popup and away from its rounded corners. When the trigger is too narrow or partly off screen, the arrow points at the nearest part of the trigger that it can reach.
+
+  The Primitive Tooltip arrow and the Primitive Navigation Menu arrow get the same placement when the arrow has a width and a height. The positioner sets `--sw-floating-arrow-x` for a top or bottom side and `--sw-floating-arrow-y` for a left or right side. Each value is the distance from the left or top edge of the popup to the same edge of the arrow, in RTL too. To use it, position a custom arrow absolutely inside the popup, set `left: var(--sw-floating-arrow-x)` or `top: var(--sw-floating-arrow-y)`, and remove any centering transform on that axis.
+
+  Styled Navigation Menu content with no set width now takes the width of its links. Before, it filled the full width of the screen. This content is never wider than the screen minus 2rem. To set a width, add a width class to `NavigationMenuContent`.
+
+- Fixed Popover in React and Vue when the Popup mounts after the Root. Before, the trigger did not open it. A Popup that you hide and show again, or replace with a new `key`, also opens again.
+
+  An open Popup that unmounts now leaves the Root closed and removes the scroll lock. When it mounts again, it opens without a change event.
+
+  In React, a standalone `defaultOpen` Popover with no Portal no longer throws when it mounts.
+
+- Escape in a Select or Combobox inside a Popover now closes only that inner list. Before, when focus was on the inner trigger or input, the same Escape also closed the Popover. In React, Vue, and Svelte, this closed the whole Color Picker popup when you pressed Escape on its open format list. Press Escape again to close the Popover.
+- Popover, Navigation Menu, and Combobox now return focus to the trigger or input without scrolling the page. Before, in Safari, closing one of them after you scrolled could make the page jump back to the trigger. Combobox does this when it closes with Escape or an item press.
+- Combobox, Select, Menu (Styled Dropdown) and Context Menu now close when you press Tab right after the click that opened them. Before, a fast Tab after the click moved focus out of the popup, but the popup stayed open.
+
+  In React and Vue, a Navigation Menu with a `defaultValue` no longer opens again after the user closes it and a prop on its Root changes.
+
+  In a Menu or Context Menu radio group with no `value` or `defaultValue`, an explicit `aria-checked` on a radio item now decides its first state. Before, an item with `aria-checked="false"` and `defaultChecked` could take the group value from a later checked item.
+
+- Updated dependencies
+  - @starwind-ui/runtime@1.6.0
+
 ## 1.5.0
 
 ### Patch Changes

@@ -1,7 +1,0 @@
-{
-  "impact": "behavior",
-  "primitives": {
-    "context-menu": "patch",
-    "menu": "patch"
-  }
-}

@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/vue",
-  "version": "0.4.0",
+  "version": "1.6.0",
   "description": "Accessible Vue 3.5 Primitive adapters for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",

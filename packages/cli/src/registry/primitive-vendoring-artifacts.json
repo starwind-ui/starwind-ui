@@ -4,8 +4,8 @@
     {
       "component": "button",
       "framework": "astro",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/button/ButtonRoot.astro",
@@ -29,7 +29,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -40,8 +40,8 @@
     {
       "component": "carousel",
       "framework": "astro",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/carousel/CarouselContainer.astro",
@@ -95,7 +95,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -106,8 +106,8 @@
     {
       "component": "toggle",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -131,7 +131,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -142,8 +142,8 @@
     {
       "component": "field",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/field/FieldControl.astro",
@@ -203,7 +203,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -214,8 +214,8 @@
     {
       "component": "fieldset",
       "framework": "astro",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/fieldset/FieldsetLegend.astro",
@@ -245,7 +245,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -256,8 +256,8 @@
     {
       "component": "form",
       "framework": "astro",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/form/FormErrorSummary.astro",
@@ -287,7 +287,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -298,8 +298,8 @@
     {
       "component": "input",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/input/InputRoot.astro",
@@ -323,7 +323,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -334,8 +334,8 @@
     {
       "component": "switch",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -365,7 +365,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -376,8 +376,8 @@
     {
       "component": "checkbox",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/checkbox/CheckboxIndicator.astro",
@@ -407,7 +407,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -418,8 +418,8 @@
     {
       "component": "radio",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -449,7 +449,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -460,8 +460,8 @@
     {
       "component": "slider",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -515,7 +515,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -526,8 +526,8 @@
     {
       "component": "collapsible",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/collapsible/CollapsiblePanel.astro",
@@ -563,7 +563,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -574,8 +574,8 @@
     {
       "component": "toggle-group",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -599,7 +599,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -610,8 +610,8 @@
     {
       "component": "radio-group",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -635,7 +635,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -646,8 +646,8 @@
     {
       "component": "checkbox-group",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/checkbox-group/CheckboxGroupRoot.astro",
@@ -671,7 +671,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -682,8 +682,8 @@
     {
       "component": "tabs",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -731,7 +731,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -742,8 +742,8 @@
     {
       "component": "accordion",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/accordion/AccordionHeader.astro",
@@ -791,7 +791,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -802,8 +802,8 @@
     {
       "component": "avatar",
       "framework": "astro",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/avatar/AvatarFallback.astro",
@@ -839,7 +839,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -850,8 +850,8 @@
     {
       "component": "progress",
       "framework": "astro",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -899,7 +899,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -910,8 +910,8 @@
     {
       "component": "scroll-area",
       "framework": "astro",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -965,7 +965,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -976,8 +976,8 @@
     {
       "component": "input-otp",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/input-otp/InputOtpGroup.astro",
@@ -1019,7 +1019,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1030,8 +1030,8 @@
     {
       "component": "tooltip",
       "framework": "astro",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -1085,7 +1085,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1096,8 +1096,8 @@
     {
       "component": "popover",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -1181,7 +1181,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1192,8 +1192,8 @@
     {
       "component": "preview-card",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -1259,7 +1259,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1270,8 +1270,8 @@
     {
       "component": "dialog",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/dialog/DialogBackdrop.astro",
@@ -1331,7 +1331,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1342,8 +1342,8 @@
     {
       "component": "alert-dialog",
       "framework": "astro",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/alert-dialog/AlertDialogBackdrop.astro",
@@ -1415,7 +1415,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1426,8 +1426,8 @@
     {
       "component": "drawer",
       "framework": "astro",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/drawer/DrawerBackdrop.astro",
@@ -1499,7 +1499,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1510,8 +1510,8 @@
     {
       "component": "dropzone",
       "framework": "astro",
-      "sourceVersion": "1.1.1",
-      "version": "1.1.1",
+      "sourceVersion": "1.1.2",
+      "version": "1.1.2",
       "files": [
         {
           "path": "src/components/starwind-primitives/dropzone/DropzoneFilesList.astro",
@@ -1559,7 +1559,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1570,8 +1570,8 @@
     {
       "component": "menu",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -1697,7 +1697,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1708,8 +1708,8 @@
     {
       "component": "navigation-menu",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -1799,7 +1799,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1810,8 +1810,8 @@
     {
       "component": "context-menu",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/context-menu/ContextMenuRoot.astro",
@@ -1955,7 +1955,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -1966,8 +1966,8 @@
     {
       "component": "select",
       "framework": "astro",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -2087,7 +2087,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -2098,8 +2098,8 @@
     {
       "component": "sidebar",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -2147,7 +2147,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -2158,8 +2158,8 @@
     {
       "component": "combobox",
       "framework": "astro",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/combobox/ComboboxClear.astro",
@@ -2291,7 +2291,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -2302,8 +2302,8 @@
     {
       "component": "color-picker",
       "framework": "astro",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/color-picker/ColorPickerArea.astro",
@@ -2465,7 +2465,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -2476,8 +2476,8 @@
     {
       "component": "toast",
       "framework": "astro",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.0.3",
+      "version": "1.0.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/controller-lifecycle.ts",
@@ -2549,7 +2549,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "astro",
@@ -2771,7 +2771,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "@tanstack/charts",
@@ -2786,8 +2786,8 @@
     {
       "component": "button",
       "framework": "react",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/button/ButtonRoot.tsx",
@@ -2817,7 +2817,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -2832,8 +2832,8 @@
     {
       "component": "carousel",
       "framework": "react",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/carousel/CarouselContainer.tsx",
@@ -2893,7 +2893,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -2908,8 +2908,8 @@
     {
       "component": "toggle",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -2945,7 +2945,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -2960,8 +2960,8 @@
     {
       "component": "field",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/field/FieldControl.tsx",
@@ -3039,7 +3039,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3054,8 +3054,8 @@
     {
       "component": "fieldset",
       "framework": "react",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/fieldset/FieldsetLegend.tsx",
@@ -3091,7 +3091,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3106,8 +3106,8 @@
     {
       "component": "form",
       "framework": "react",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/form/FormErrorSummary.tsx",
@@ -3143,7 +3143,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3158,8 +3158,8 @@
     {
       "component": "input",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/input/InputRoot.tsx",
@@ -3195,7 +3195,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3210,8 +3210,8 @@
     {
       "component": "switch",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -3247,7 +3247,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3262,8 +3262,8 @@
     {
       "component": "checkbox",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/checkbox-group/CheckboxGroupContext.tsx",
@@ -3305,7 +3305,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3320,8 +3320,8 @@
     {
       "component": "radio",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -3363,7 +3363,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3378,8 +3378,8 @@
     {
       "component": "slider",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -3439,7 +3439,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3454,8 +3454,8 @@
     {
       "component": "collapsible",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/collapsible/CollapsiblePanel.tsx",
@@ -3497,7 +3497,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3512,8 +3512,8 @@
     {
       "component": "toggle-group",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -3549,7 +3549,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3564,8 +3564,8 @@
     {
       "component": "radio-group",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -3601,7 +3601,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3616,8 +3616,8 @@
     {
       "component": "checkbox-group",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/checkbox-group/CheckboxGroupContext.tsx",
@@ -3653,7 +3653,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3668,8 +3668,8 @@
     {
       "component": "tabs",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -3729,7 +3729,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3744,8 +3744,8 @@
     {
       "component": "accordion",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/accordion/AccordionHeader.tsx",
@@ -3799,7 +3799,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3814,8 +3814,8 @@
     {
       "component": "avatar",
       "framework": "react",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/avatar/AvatarFallback.tsx",
@@ -3857,7 +3857,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3872,8 +3872,8 @@
     {
       "component": "progress",
       "framework": "react",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -3927,7 +3927,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -3942,8 +3942,8 @@
     {
       "component": "scroll-area",
       "framework": "react",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -4003,7 +4003,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4018,8 +4018,8 @@
     {
       "component": "input-otp",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/input-otp/InputOtpGroup.tsx",
@@ -4067,7 +4067,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4082,8 +4082,8 @@
     {
       "component": "tooltip",
       "framework": "react",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -4149,7 +4149,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4164,8 +4164,8 @@
     {
       "component": "popover",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -4261,7 +4261,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4276,8 +4276,8 @@
     {
       "component": "preview-card",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -4355,7 +4355,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4370,8 +4370,8 @@
     {
       "component": "dialog",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/dialog/DialogBackdrop.tsx",
@@ -4443,7 +4443,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4458,8 +4458,8 @@
     {
       "component": "alert-dialog",
       "framework": "react",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/alert-dialog/AlertDialogBackdrop.tsx",
@@ -4549,7 +4549,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4564,8 +4564,8 @@
     {
       "component": "drawer",
       "framework": "react",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/drawer/DrawerBackdrop.tsx",
@@ -4655,7 +4655,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4670,8 +4670,8 @@
     {
       "component": "dropzone",
       "framework": "react",
-      "sourceVersion": "1.1.1",
-      "version": "1.1.1",
+      "sourceVersion": "1.1.2",
+      "version": "1.1.2",
       "files": [
         {
           "path": "src/components/starwind-primitives/dropzone/DropzoneFilesList.tsx",
@@ -4731,7 +4731,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4746,8 +4746,8 @@
     {
       "component": "menu",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -4891,7 +4891,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -4906,8 +4906,8 @@
     {
       "component": "navigation-menu",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -5009,7 +5009,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -5024,8 +5024,8 @@
     {
       "component": "context-menu",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/context-menu/ContextMenuRoot.tsx",
@@ -5169,7 +5169,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -5184,8 +5184,8 @@
     {
       "component": "select",
       "framework": "react",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -5329,7 +5329,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -5344,8 +5344,8 @@
     {
       "component": "sidebar",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -5405,7 +5405,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -5420,8 +5420,8 @@
     {
       "component": "combobox",
       "framework": "react",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/combobox/ComboboxClear.tsx",
@@ -5577,7 +5577,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -5592,8 +5592,8 @@
     {
       "component": "color-picker",
       "framework": "react",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/color-picker/ColorPickerArea.tsx",
@@ -5755,7 +5755,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -5770,8 +5770,8 @@
     {
       "component": "toast",
       "framework": "react",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.0.3",
+      "version": "1.0.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/internal/compose-refs.ts",
@@ -5849,7 +5849,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "react",
@@ -6075,7 +6075,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "@tanstack/charts",
@@ -6094,8 +6094,8 @@
     {
       "component": "button",
       "framework": "vue",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/button/ButtonRoot.vue",
@@ -6113,7 +6113,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6124,8 +6124,8 @@
     {
       "component": "carousel",
       "framework": "vue",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/carousel/CarouselContainer.vue",
@@ -6179,7 +6179,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6190,8 +6190,8 @@
     {
       "component": "toggle",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/toggle-group/ToggleGroupContext.ts",
@@ -6215,7 +6215,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6226,8 +6226,8 @@
     {
       "component": "field",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/form-discovery.ts",
@@ -6293,7 +6293,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6304,8 +6304,8 @@
     {
       "component": "fieldset",
       "framework": "vue",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/fieldset/FieldsetLegend.vue",
@@ -6329,7 +6329,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6340,8 +6340,8 @@
     {
       "component": "form",
       "framework": "vue",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/form/FormErrorSummary.vue",
@@ -6365,7 +6365,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6376,8 +6376,8 @@
     {
       "component": "input",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/form-discovery.ts",
@@ -6401,7 +6401,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6412,8 +6412,8 @@
     {
       "component": "switch",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/switch/SwitchRoot.vue",
@@ -6437,7 +6437,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6448,8 +6448,8 @@
     {
       "component": "checkbox",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/checkbox-group/CheckboxGroupContext.ts",
@@ -6479,7 +6479,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6490,8 +6490,8 @@
     {
       "component": "radio",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/radio-group/RadioGroupContext.ts",
@@ -6521,7 +6521,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6532,8 +6532,8 @@
     {
       "component": "slider",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/slider/SliderControl.vue",
@@ -6581,7 +6581,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6592,8 +6592,8 @@
     {
       "component": "collapsible",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -6635,7 +6635,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6646,8 +6646,8 @@
     {
       "component": "toggle-group",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/toggle-group/ToggleGroupContext.ts",
@@ -6671,7 +6671,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6682,8 +6682,8 @@
     {
       "component": "radio-group",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/radio-group/RadioGroupContext.ts",
@@ -6707,7 +6707,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6718,8 +6718,8 @@
     {
       "component": "checkbox-group",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/checkbox-group/CheckboxGroupContext.ts",
@@ -6743,7 +6743,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6754,8 +6754,8 @@
     {
       "component": "tabs",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/tabs/TabsContext.ts",
@@ -6803,7 +6803,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6814,8 +6814,8 @@
     {
       "component": "accordion",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/accordion/AccordionHeader.vue",
@@ -6863,7 +6863,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6874,8 +6874,8 @@
     {
       "component": "avatar",
       "framework": "vue",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/avatar/AvatarFallback.vue",
@@ -6905,7 +6905,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6916,8 +6916,8 @@
     {
       "component": "progress",
       "framework": "vue",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/progress/ProgressIndicator.vue",
@@ -6959,7 +6959,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -6970,8 +6970,8 @@
     {
       "component": "scroll-area",
       "framework": "vue",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/scroll-area/ScrollAreaContent.vue",
@@ -7019,7 +7019,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7030,8 +7030,8 @@
     {
       "component": "input-otp",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/input-otp/InputOtpGroup.vue",
@@ -7067,7 +7067,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7078,8 +7078,8 @@
     {
       "component": "tooltip",
       "framework": "vue",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7145,7 +7145,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7156,8 +7156,8 @@
     {
       "component": "popover",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7253,7 +7253,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7264,8 +7264,8 @@
     {
       "component": "preview-card",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7343,7 +7343,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7354,8 +7354,8 @@
     {
       "component": "dialog",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7421,7 +7421,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7432,8 +7432,8 @@
     {
       "component": "alert-dialog",
       "framework": "vue",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7517,7 +7517,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7528,8 +7528,8 @@
     {
       "component": "drawer",
       "framework": "vue",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7613,7 +7613,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7624,8 +7624,8 @@
     {
       "component": "dropzone",
       "framework": "vue",
-      "sourceVersion": "1.1.1",
-      "version": "1.1.1",
+      "sourceVersion": "1.1.2",
+      "version": "1.1.2",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/form-discovery.ts",
@@ -7673,7 +7673,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7684,8 +7684,8 @@
     {
       "component": "menu",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7829,7 +7829,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7840,8 +7840,8 @@
     {
       "component": "navigation-menu",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -7943,7 +7943,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -7954,8 +7954,8 @@
     {
       "component": "context-menu",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal.ts",
@@ -8087,7 +8087,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -8098,8 +8098,8 @@
     {
       "component": "select",
       "framework": "vue",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -8231,7 +8231,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -8242,8 +8242,8 @@
     {
       "component": "sidebar",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -8303,7 +8303,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -8314,8 +8314,8 @@
     {
       "component": "combobox",
       "framework": "vue",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/as-child-target.ts",
@@ -8459,7 +8459,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -8470,8 +8470,8 @@
     {
       "component": "color-picker",
       "framework": "vue",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/color-picker/ColorPickerArea.vue",
@@ -8627,7 +8627,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -8638,8 +8638,8 @@
     {
       "component": "toast",
       "framework": "vue",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.0.3",
+      "version": "1.0.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/toast/ToastAction.vue",
@@ -8705,7 +8705,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "vue",
@@ -8921,7 +8921,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "@tanstack/charts",
@@ -8936,8 +8936,8 @@
     {
       "component": "button",
       "framework": "svelte",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -8961,7 +8961,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -8972,8 +8972,8 @@
     {
       "component": "carousel",
       "framework": "svelte",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9027,7 +9027,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9038,8 +9038,8 @@
     {
       "component": "toggle",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/toggle/ToggleRoot.svelte",
@@ -9057,7 +9057,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9068,8 +9068,8 @@
     {
       "component": "field",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/form-discovery.ts",
@@ -9147,7 +9147,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9158,8 +9158,8 @@
     {
       "component": "fieldset",
       "framework": "svelte",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9189,7 +9189,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9200,8 +9200,8 @@
     {
       "component": "form",
       "framework": "svelte",
-      "sourceVersion": "1.1.2",
-      "version": "1.1.2",
+      "sourceVersion": "1.1.3",
+      "version": "1.1.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9237,7 +9237,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9248,8 +9248,8 @@
     {
       "component": "input",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/form-discovery.ts",
@@ -9279,7 +9279,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9290,8 +9290,8 @@
     {
       "component": "switch",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9321,7 +9321,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9332,8 +9332,8 @@
     {
       "component": "checkbox",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9369,7 +9369,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9380,8 +9380,8 @@
     {
       "component": "radio",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/radio/RadioGroupContext.svelte.ts",
@@ -9411,7 +9411,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9422,8 +9422,8 @@
     {
       "component": "slider",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9477,7 +9477,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9488,8 +9488,8 @@
     {
       "component": "collapsible",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9531,7 +9531,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9542,8 +9542,8 @@
     {
       "component": "toggle-group",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/toggle-group/ToggleGroupRoot.svelte",
@@ -9567,7 +9567,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9578,8 +9578,8 @@
     {
       "component": "radio-group",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/radio-group/RadioGroupRoot.svelte",
@@ -9603,7 +9603,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9614,8 +9614,8 @@
     {
       "component": "checkbox-group",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.1.1",
+      "version": "1.1.1",
       "files": [
         {
           "path": "src/components/starwind-primitives/checkbox-group/CheckboxGroupRoot.svelte",
@@ -9639,7 +9639,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9650,8 +9650,8 @@
     {
       "component": "tabs",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9705,7 +9705,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9716,8 +9716,8 @@
     {
       "component": "accordion",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9771,7 +9771,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9782,8 +9782,8 @@
     {
       "component": "avatar",
       "framework": "svelte",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9819,7 +9819,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9830,8 +9830,8 @@
     {
       "component": "progress",
       "framework": "svelte",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.0.4",
+      "version": "1.0.4",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9879,7 +9879,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9890,8 +9890,8 @@
     {
       "component": "scroll-area",
       "framework": "svelte",
-      "sourceVersion": "1.0.3",
-      "version": "1.0.3",
+      "sourceVersion": "1.1.0",
+      "version": "1.1.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9945,7 +9945,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -9956,8 +9956,8 @@
     {
       "component": "input-otp",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -9999,7 +9999,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10010,8 +10010,8 @@
     {
       "component": "tooltip",
       "framework": "svelte",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -10083,7 +10083,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10094,8 +10094,8 @@
     {
       "component": "popover",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -10197,7 +10197,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10208,8 +10208,8 @@
     {
       "component": "preview-card",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -10287,7 +10287,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10298,8 +10298,8 @@
     {
       "component": "dialog",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -10365,7 +10365,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10376,8 +10376,8 @@
     {
       "component": "alert-dialog",
       "framework": "svelte",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/overlay-capture.ts",
@@ -10473,7 +10473,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10484,8 +10484,8 @@
     {
       "component": "drawer",
       "framework": "svelte",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/overlay-capture.ts",
@@ -10581,7 +10581,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10592,8 +10592,8 @@
     {
       "component": "dropzone",
       "framework": "svelte",
-      "sourceVersion": "1.1.1",
-      "version": "1.1.1",
+      "sourceVersion": "1.1.2",
+      "version": "1.1.2",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/form-discovery.ts",
@@ -10647,7 +10647,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10658,8 +10658,8 @@
     {
       "component": "menu",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -10803,7 +10803,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10814,8 +10814,8 @@
     {
       "component": "navigation-menu",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -10923,7 +10923,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -10934,8 +10934,8 @@
     {
       "component": "context-menu",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -11079,7 +11079,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -11090,8 +11090,8 @@
     {
       "component": "select",
       "framework": "svelte",
-      "sourceVersion": "1.3.0",
-      "version": "1.3.0",
+      "sourceVersion": "1.4.0",
+      "version": "1.4.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -11229,7 +11229,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -11240,8 +11240,8 @@
     {
       "component": "sidebar",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -11301,7 +11301,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -11312,8 +11312,8 @@
     {
       "component": "combobox",
       "framework": "svelte",
-      "sourceVersion": "1.2.0",
-      "version": "1.2.0",
+      "sourceVersion": "1.3.0",
+      "version": "1.3.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/portal-document-observer.ts",
@@ -11463,7 +11463,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -11474,8 +11474,8 @@
     {
       "component": "color-picker",
       "framework": "svelte",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -11637,7 +11637,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -11648,8 +11648,8 @@
     {
       "component": "toast",
       "framework": "svelte",
-      "sourceVersion": "1.0.2",
-      "version": "1.0.2",
+      "sourceVersion": "1.0.3",
+      "version": "1.0.3",
       "files": [
         {
           "path": "src/components/starwind-primitives/_internal/ref-attachment.ts",
@@ -11721,7 +11721,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "svelte",
@@ -11949,7 +11949,7 @@
       "packageRequirements": [
         {
           "name": "@starwind-ui/runtime",
-          "range": "^1.5.0"
+          "range": "^1.6.0"
         },
         {
           "name": "@tanstack/charts",
